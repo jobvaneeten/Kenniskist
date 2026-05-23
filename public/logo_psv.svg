@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 112">
+  <!-- Shield outline (drop shadow) -->
+  <path d="M50,6 L94,21 L94,70 Q94,95 50,108 Q6,95 6,70 L6,21 Z"
+        fill="rgba(0,0,0,0.35)" transform="translate(2,3)"/>
+  <!-- Shield main -->
+  <path d="M50,6 L94,21 L94,70 Q94,95 50,108 Q6,95 6,70 L6,21 Z" fill="#111111"/>
+  <!-- Red top section -->
+  <path d="M50,6 L94,21 L94,41 L6,41 L6,21 Z" fill="#CC0000"/>
+  <!-- Lighter red highlight on top -->
+  <path d="M50,8 L91,22 L91,33 L9,33 L9,22 Z" fill="#E80000" opacity="0.6"/>
+  <!-- Shield border -->
+  <path d="M50,6 L94,21 L94,70 Q94,95 50,108 Q6,95 6,70 L6,21 Z"
+        fill="none" stroke="#CC0000" stroke-width="3"/>
+
+  <!-- Cartoon lightbulb (Philips tribute) in red top area -->
+  <!-- Bulb glass -->
+  <circle cx="50" cy="24" r="9.5" fill="white" opacity="0.92"/>
+  <!-- Bulb glow -->
+  <circle cx="50" cy="24" r="9.5" fill="none" stroke="#FFD700" stroke-width="1.5" opacity="0.6"/>
+  <!-- Filament cross -->
+  <line x1="50" y1="19" x2="50" y2="29" stroke="#FFD700" stroke-width="1.5" opacity="0.8"/>
+  <line x1="45" y1="24" x2="55" y2="24" stroke="#FFD700" stroke-width="1.5" opacity="0.8"/>
+  <!-- Bulb base -->
+  <rect x="46.5" y="33.5" width="7" height="3.5" rx="1.5" fill="white" opacity="0.85"/>
+  <rect x="47.5" y="37" width="5" height="3" rx="1" fill="white" opacity="0.7"/>
+
+  <!-- PSV big text -->
+  <text x="50" y="82" text-anchor="middle" fill="white" font-weight="900" font-size="30"
+        font-family="Arial Black, Arial, sans-serif" letter-spacing="1">PSV</text>
+
+  <!-- Stars left and right of PSV -->
+  <polygon points="18,78 20,73 22,78 17.5,75 22.5,75" fill="#FFD700"/>
+  <polygon points="82,78 84,73 86,78 81.5,75 86.5,75" fill="#FFD700"/>
+
+  <!-- Eindhoven text at bottom of shield -->
+  <text x="50" y="98" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="7"
+        font-family="Arial, sans-serif" letter-spacing="2">EINDHOVEN</text>
+</svg>

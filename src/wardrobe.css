@@ -1,0 +1,246 @@
+.wardrobe-screen {
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  display: flex;
+  flex-direction: row;
+  font-family: 'Nunito', sans-serif;
+  color: #fff;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ── Back button ───────────────────────────── */
+.back-btn {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  z-index: 20;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 800;
+  padding: 8px 18px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.back-btn:hover { background: rgba(255,255,255,0.22); }
+
+/* ── Left panel ────────────────────────────── */
+.clothing-panel {
+  width: 260px;
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
+  padding: 80px 20px 32px;
+  gap: 6px;
+  background: rgba(0,0,0,0.25);
+  border-right: 1px solid rgba(255,255,255,0.08);
+  z-index: 10;
+}
+
+.panel-title {
+  font-size: 1.4rem;
+  font-weight: 900;
+  margin-bottom: 2px;
+}
+.panel-sub {
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.45);
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.clothing-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.clothing-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: rgba(255,255,255,0.06);
+  border: 2px solid rgba(255,255,255,0.12);
+  border-radius: 14px;
+  cursor: pointer;
+  font-family: inherit;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  transition: background 0.15s, border-color 0.15s, transform 0.12s;
+  position: relative;
+}
+.clothing-btn:hover {
+  background: rgba(255,255,255,0.13);
+  border-color: rgba(255,255,255,0.3);
+  transform: translateX(4px);
+}
+.clothing-btn:active { transform: scale(0.97); }
+
+.clothing-on {
+  background: rgba(255, 210, 63, 0.15) !important;
+  border-color: #FFD23F !important;
+  box-shadow: 0 0 14px rgba(255,210,63,0.2);
+}
+
+.clothing-emoji { font-size: 1.5rem; line-height: 1; }
+.clothing-label { flex: 1; text-align: left; }
+
+.clothing-check {
+  font-size: 0.9rem;
+  font-weight: 900;
+  color: #FFD23F;
+}
+
+/* ── Right: 3D viewer ──────────────────────── */
+.viewer-panel {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: stretch;
+}
+
+.three-canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+  outline: none;
+}
+
+/* ── Shirt colour section ──────────────────── */
+.clothing-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.clothing-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: rgba(255,255,255,0.06);
+  border: 2px solid rgba(255,255,255,0.12);
+  border-radius: 14px;
+  font-size: 1rem;
+  font-weight: 700;
+  pointer-events: none;
+}
+.clothing-header.clothing-on {
+  background: rgba(255,210,63,0.15);
+  border-color: #FFD23F;
+  box-shadow: 0 0 14px rgba(255,210,63,0.2);
+}
+
+.color-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 4px 4px 4px 8px;
+}
+
+.color-swatch {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.2);
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+  flex-shrink: 0;
+}
+.color-swatch:hover {
+  transform: scale(1.2);
+  border-color: rgba(255,255,255,0.6);
+}
+.texture-swatch {
+  border-color: rgba(255,255,255,0.4) !important;
+  background-color: #fff;
+}
+
+.swatch-active {
+  border-color: #FFD23F !important;
+  box-shadow: 0 0 0 3px rgba(255,210,63,0.4);
+  transform: scale(1.15);
+}
+
+.swatch-locked {
+  opacity: 0.28;
+  filter: grayscale(0.7);
+  cursor: not-allowed;
+  position: relative;
+}
+.swatch-locked:hover { transform: none !important; border-color: rgba(255,255,255,0.2) !important; }
+
+/* ── Right: emotes panel ──────────────────── */
+.emotes-panel {
+  width: 200px;
+  min-width: 180px;
+  display: flex;
+  flex-direction: column;
+  padding: 80px 16px 32px;
+  gap: 6px;
+  background: rgba(0,0,0,0.25);
+  border-left: 1px solid rgba(255,255,255,0.08);
+  z-index: 10;
+  overflow-y: auto;
+}
+
+.emote-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.emote-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: rgba(255,255,255,0.06);
+  border: 2px solid rgba(255,255,255,0.12);
+  border-radius: 14px;
+  cursor: pointer;
+  font-family: inherit;
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 700;
+  transition: background 0.15s, border-color 0.15s, transform 0.12s;
+  width: 100%;
+  text-align: left;
+}
+.emote-btn:hover:not(:disabled) {
+  background: rgba(255,255,255,0.13);
+  border-color: rgba(255,255,255,0.3);
+  transform: translateX(-4px);
+}
+.emote-btn:active:not(:disabled) { transform: scale(0.97); }
+.emote-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.emote-on {
+  background: rgba(255, 210, 63, 0.15) !important;
+  border-color: #FFD23F !important;
+  box-shadow: 0 0 14px rgba(255,210,63,0.2);
+}
+
+.emote-emoji { font-size: 1.4rem; line-height: 1; flex-shrink: 0; }
+.emote-label { flex: 1; }
+.emote-play  { font-size: 0.7rem; color: #FFD23F; }
+
+/* ── 3D viewer loading ──────────────────────── */
+.viewer-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.4);
+  pointer-events: none;
+}

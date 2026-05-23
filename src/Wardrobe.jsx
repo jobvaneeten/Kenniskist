@@ -1,0 +1,528 @@
+import { useEffect, useRef, useState } from 'react'
+import {
+  Engine, Scene, ArcRotateCamera,
+  HemisphericLight, DirectionalLight,
+  Vector3, Color3, Color4, Texture,
+  MeshBuilder, StandardMaterial, Quaternion,
+} from '@babylonjs/core'
+import { SceneLoader } from '@babylonjs/core/Loading/sceneLoader'
+import '@babylonjs/loaders/glTF'
+import { SHIRT_COLORS } from './data'
+import './wardrobe.css'
+
+const SHIRT_TEXTURES = []
+const SHIRT_MODELS = [
+  { key: 'ajax', label: 'Ajax', file: '/poppetjemetajaxshirt.glb', preview: '/logo_ajax.svg' },
+  { key: 'psv',  label: 'PSV',  file: '/poppetjemetpsvshirt.glb',  preview: '/logo_psv.svg' },
+]
+const CLOTHING_MESHES = ['Shirt', 'Broek', 'Sokken', 'Schoenen']
+const ITEMS = [
+  { key: 'broek',    label: 'Broek',    emoji: '👖' },
+  { key: 'sokken',   label: 'Sokken',   emoji: '🧦' },
+  { key: 'schoenen', label: 'Schoenen', emoji: '👟' },
+]
+
+// All animation GLBs use the same bone names as Poppetje.glb — no remapping needed.
+// Hips excluded: Mixamo FBX bakes the root orientation into Hips data.
+const RETARGET_BONES = new Set([
+  'Root',
+  'Hips','Spine','Spine1',
+  'Neck','Head',
+  'LeftShoulder','LeftArm','LeftForeArm','LeftHand',
+  'RightShoulder','RightArm','RightForeArm','RightHand',
+  'LeftUpLeg','LeftLeg','LeftFoot','LeftToeBase',
+  'RightUpLeg','RightLeg','RightFoot','RightToeBase',
+])
+
+// Each file has one animation; we store it under a stable key (not the internal name).
+const ANIM_FILES = [
+  { key: 'hip_hop',    file: 'hip_hop_dancing.glb' },
+  { key: 'breakdance', file: 'emote_breakdance.glb' },
+  { key: 'lopen',      file: 'emote_lopen.glb'      },
+  { key: 'verloren',   file: 'emote_verloren.glb'   },
+]
+
+const EMOTE_META = {
+  hip_hop:    { emoji: '💃', label: 'Hip Hop'    },
+  breakdance: { emoji: '🕺', label: 'Breakdance' },
+  lopen:      { emoji: '🚶', label: 'Lopen'      },
+  verloren:   { emoji: '😢', label: 'Verloren'   },
+}
+
+// ── Material helpers ──────────────────────────────────────────────
+function walkMeshes(node, fn) {
+  fn(node)
+  ;(node.getChildMeshes ? node.getChildMeshes(false) : []).forEach(fn)
+}
+
+function applyColor(mesh, hex) {
+  const col = Color3.FromHexString(hex)
+  walkMeshes(mesh, m => {
+    if (!m.material) return
+    const mat = m.material.clone(m.material.name + '_col')
+    m.material = mat
+    if (mat.albedoColor !== undefined) {
+      mat.albedoTexture = null
+      mat.albedoColor   = col
+      mat.metallic      = 0
+      mat.roughness     = 0.8
+      mat.unlit         = false
+    } else if (mat.diffuseColor !== undefined) {
+      mat.diffuseTexture = null
+      mat.diffuseColor   = col
+    }
+  })
+}
+
+function applyTexture(mesh, texture) {
+  walkMeshes(mesh, m => {
+    if (!m.material) return
+    const mat = m.material.clone(m.material.name + '_tex')
+    m.material = mat
+    if (mat.albedoColor !== undefined) {
+      mat.albedoTexture = texture
+      mat.albedoColor   = Color3.White()
+      mat.metallic      = 0
+      mat.roughness     = 0.8
+    } else if (mat.diffuseColor !== undefined) {
+      mat.diffuseTexture = texture
+      mat.diffuseColor   = Color3.White()
+    }
+  })
+}
+
+// ── Component ─────────────────────────────────────────────────────
+export default function Wardrobe({ onBack, unlockedColors = {} }) {
+  const canvasRef      = useRef(null)
+  const sceneRef       = useRef(null)
+  const skeletonRef    = useRef(null)
+  const meshesRef      = useRef({})
+  const extraMeshesRef = useRef([])
+  const animGroupsRef  = useRef({})
+  const restPoseRef    = useRef({})   // bone name → { node, rot, pos } captured at T-pose
+
+  const [shirtColor, setShirtColor] = useState(() => {
+    try { return localStorage.getItem('kk_shirt') || null } catch { return null }
+  })
+  const [wearing, setWearing] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('kk_wearing') || '{}') } catch { return {} }
+  })
+  const [loading,    setLoading]    = useState(true)
+  const [activeAnim, setActiveAnim] = useState(null)
+  const [animsReady, setAnimsReady] = useState(false)
+
+  useEffect(() => {
+    if (shirtColor) localStorage.setItem('kk_shirt', shirtColor)
+    else localStorage.removeItem('kk_shirt')
+  }, [shirtColor])
+
+  useEffect(() => {
+    localStorage.setItem('kk_wearing', JSON.stringify(wearing))
+  }, [wearing])
+
+  const clearExtraMeshes = () => {
+    extraMeshesRef.current.forEach(m => m.dispose())
+    extraMeshesRef.current = []
+  }
+
+  const pickShirt = (key) => {
+    const next = shirtColor === key ? null : key
+    setShirtColor(next)
+    clearExtraMeshes()
+    const m = meshesRef.current.shirt
+    if (!m) return
+    if (!next) { m.setEnabled(false); return }
+
+    const colorItem   = SHIRT_COLORS.find(c => c.key === next)
+    const textureItem = SHIRT_TEXTURES.find(t => t.key === next)
+    const modelItem   = SHIRT_MODELS.find(t => t.key === next)
+
+    if (modelItem && sceneRef.current) {
+      m.setEnabled(false)
+      SceneLoader.ImportMesh('', '/', modelItem.file.replace(/^\//, ''), sceneRef.current, (meshes) => {
+        // Reassign skeleton so the shirt deforms with Poppetje's animations
+        if (skeletonRef.current) {
+          meshes.forEach(em => { if (em.skeleton) em.skeleton = skeletonRef.current })
+        }
+        extraMeshesRef.current = meshes
+      })
+    } else if (textureItem && sceneRef.current) {
+      const scene = sceneRef.current
+      const img = new Image()
+      img.onload = () => {
+        const canvas = document.createElement('canvas')
+        canvas.width  = img.naturalWidth
+        canvas.height = img.naturalHeight
+        const ctx = canvas.getContext('2d')
+        ctx.fillStyle = '#ffffff'
+        ctx.fillRect(0, 0, canvas.width, canvas.height)
+        ctx.drawImage(img, 0, 0)
+        const tex = new Texture(canvas.toDataURL(), scene, false, false)
+        tex.onLoadObservable.addOnce(() => applyTexture(m, tex))
+      }
+      img.src = textureItem.file
+      m.setEnabled(true)
+    } else if (colorItem) {
+      applyColor(m, colorItem.hex)
+      m.setEnabled(true)
+    }
+  }
+
+  const pickClothing = (itemKey, colorKey) => {
+    setWearing(prev => {
+      const next = prev[itemKey] === colorKey ? null : colorKey
+      const mesh = meshesRef.current[itemKey]
+      if (mesh) {
+        if (!next) {
+          mesh.setEnabled(false)
+        } else {
+          const colorItem = SHIRT_COLORS.find(c => c.key === colorKey)
+          if (colorItem) applyColor(mesh, colorItem.hex)
+          mesh.setEnabled(true)
+        }
+      }
+      return { ...prev, [itemKey]: next }
+    })
+  }
+
+  const resetToTPose = () => {
+    Object.values(restPoseRef.current).forEach(({ node, rot, pos }) => {
+      if (node.rotationQuaternion) node.rotationQuaternion.copyFrom(rot)
+      else node.rotationQuaternion = rot.clone()
+      node.position.copyFrom(pos)
+    })
+  }
+
+  const pickEmote = (name) => {
+    const groups = animGroupsRef.current
+    if (activeAnim === name) {
+      groups[name]?.stop()
+      setActiveAnim(null)
+      resetToTPose()
+    } else {
+      if (activeAnim) groups[activeAnim]?.stop()
+      resetToTPose()
+      groups[name]?.play(true)
+      setActiveAnim(name)
+    }
+  }
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    const engine = new Engine(canvas, true)
+    const scene  = new Scene(engine)
+    sceneRef.current = scene
+    scene.clearColor = new Color4(0, 0, 0, 0)
+
+    const camera = new ArcRotateCamera('cam', Math.PI / 2, Math.PI / 2.5, 5, Vector3.Zero(), scene)
+    camera.wheelPrecision = 50
+    camera.lowerBetaLimit = Math.PI / 2.5
+    camera.upperBetaLimit = Math.PI / 2.5
+    camera.attachControl(canvas, true)
+
+    new HemisphericLight('hemi', new Vector3(0, 1, 0), scene).intensity = 1.6
+    const sun = new DirectionalLight('sun', new Vector3(-1, -2, -1), scene)
+    sun.intensity = 1.8
+
+    SceneLoader.ImportMesh('', '/', 'Poppetje.glb', scene, (meshes) => {
+      // Store Poppetje's skeleton so extra meshes (Ajax shirt) can share it
+      skeletonRef.current = scene.skeletons[0] ?? null
+
+      // Store clothing mesh refs
+      meshes.forEach(mesh => {
+        const name = mesh.name
+        const key  = name.toLowerCase()
+        if (CLOTHING_MESHES.includes(name)) {
+          mesh.setEnabled(false)
+          meshesRef.current[key] = mesh
+        }
+      })
+
+      // Fit camera to character
+      let min = new Vector3( 1e9,  1e9,  1e9)
+      let max = new Vector3(-1e9, -1e9, -1e9)
+      meshes.forEach(m => {
+        if (!m.getHierarchyBoundingVectors) return
+        const b = m.getHierarchyBoundingVectors(true)
+        min = Vector3.Minimize(min, b.min)
+        max = Vector3.Maximize(max, b.max)
+      })
+      const center = Vector3.Lerp(min, max, 0.5)
+      const maxDim = Math.max(...max.subtract(min).asArray())
+      camera.target           = center
+      camera.radius           = maxDim * 1.8
+      camera.lowerRadiusLimit = maxDim * 0.8
+      camera.upperRadiusLimit = maxDim * 5
+
+      // Floor plane at the character's feet
+      const ground = MeshBuilder.CreateGround('ground', { width: maxDim * 3, height: maxDim * 3 }, scene)
+      ground.position.y = min.y
+      const groundMat = new StandardMaterial('groundMat', scene)
+      groundMat.emissiveColor = new Color3(0.10, 0.11, 0.20)
+      groundMat.diffuseColor  = Color3.Black()
+      groundMat.specularColor = Color3.Black()
+      ground.material = groundMat
+
+      // Restore saved clothing
+      if (shirtColor) {
+        const colorItem = SHIRT_COLORS.find(c => c.key === shirtColor)
+        const modelItem = SHIRT_MODELS.find(t => t.key === shirtColor)
+        const m = meshesRef.current.shirt
+        if (modelItem) {
+          SceneLoader.ImportMesh('', '/', modelItem.file.replace(/^\//, ''), scene, ms => {
+            if (skeletonRef.current) {
+              ms.forEach(em => { if (em.skeleton) em.skeleton = skeletonRef.current })
+            }
+            extraMeshesRef.current = ms
+          })
+        } else if (colorItem && m) {
+          applyColor(m, colorItem.hex)
+          m.setEnabled(true)
+        }
+      }
+      Object.entries(wearing).forEach(([key, colorKey]) => {
+        if (!colorKey) return
+        const mesh = meshesRef.current[key]
+        const colorItem = SHIRT_COLORS.find(c => c.key === colorKey)
+        if (mesh && colorItem) { applyColor(mesh, colorItem.hex); mesh.setEnabled(true) }
+      })
+
+      setLoading(false)
+
+      // ── Build Poppetje node map + capture T-pose for reset ──
+      const nodeMap = {}
+      const dstRestRots = {}
+      scene.transformNodes.forEach(n => {
+        nodeMap[n.name] = n
+        if (RETARGET_BONES.has(n.name)) {
+          dstRestRots[n.name] = n.rotationQuaternion
+            ? n.rotationQuaternion.clone()
+            : Quaternion.Identity()
+          restPoseRef.current[n.name] = {
+            node: n,
+            rot:  n.rotationQuaternion ? n.rotationQuaternion.clone() : Quaternion.Identity(),
+            pos:  n.position.clone(),
+          }
+        }
+      })
+      scene.meshes.forEach(m2 => { if (!nodeMap[m2.name]) nodeMap[m2.name] = m2 })
+
+      // ── Load all animation files with rest-pose-corrected retargeting ──
+      const groups = {}
+      let pending = ANIM_FILES.length
+
+      const onFileLoaded = () => {
+        pending--
+        if (pending === 0) {
+          animGroupsRef.current = groups
+          setAnimsReady(true)
+        }
+      }
+
+      ANIM_FILES.forEach(({ key, file }) => {
+        SceneLoader.ImportMesh('', '/', file, scene,
+          (aMeshes, _ps, _sk, aGroups) => {
+            aMeshes.forEach(m2 => m2.setEnabled(false))
+            if (aGroups.length > 0) {
+              const orig = aGroups[0]
+
+              // Capture SOURCE rest rotations before cloning remaps the targets
+              const srcRestRots = {}
+              orig.targetedAnimations.forEach(ta => {
+                const n = ta.target
+                srcRestRots[n.name] = n.rotationQuaternion
+                  ? n.rotationQuaternion.clone()
+                  : Quaternion.Identity()
+              })
+
+              // Clone and remap targets to Poppetje's nodes
+              const retargeted = orig.clone(key, target => {
+                if (!RETARGET_BONES.has(target.name)) return target
+                return nodeMap[target.name] ?? target
+              })
+
+              // Process each track
+              const tas = retargeted.targetedAnimations
+              for (let i = tas.length - 1; i >= 0; i--) {
+                const ta   = tas[i]
+                const prop = ta.animation.targetProperty
+                const name = ta.target.name
+
+                // Strip scale always
+                if (prop === 'scaling' || prop === 'scale') { tas.splice(i, 1); continue }
+
+                // Strip position for all bones except Root (Root carries the actual movement)
+                if (prop === 'position') {
+                  if (name !== 'Root') { tas.splice(i, 1); continue }
+                  // Keep Root position as-is (no rotation correction needed for translation)
+                  continue
+                }
+
+                // Rotation tracks: only keep retargeted bones
+                if (!RETARGET_BONES.has(name)) { tas.splice(i, 1); continue }
+
+                // Apply rest-pose correction: corrected = inv(dst_rest) * src_rest * keyframe
+                const srcRest = srcRestRots[name] ?? Quaternion.Identity()
+                const dstRest = dstRestRots[name] ?? Quaternion.Identity()
+                const correction = Quaternion.Inverse(dstRest).multiply(srcRest)
+                ta.animation.getKeys().forEach(kf => {
+                  kf.value.copyFrom(correction.multiply(kf.value))
+                })
+              }
+
+              retargeted.stop()
+              groups[key] = retargeted
+              orig.dispose()
+            }
+            onFileLoaded()
+          },
+          null,
+          (_, msg) => { console.warn(file + ' load error:', msg); onFileLoaded() }
+        )
+      })
+    }, null, (_, msg, err) => {
+      console.error('Poppetje load error:', msg, err)
+      setLoading(false)
+    })
+
+    engine.runRenderLoop(() => scene.render())
+    const onResize = () => engine.resize()
+    window.addEventListener('resize', onResize)
+
+    return () => {
+      window.removeEventListener('resize', onResize)
+      Object.values(animGroupsRef.current).forEach(g => { try { g.dispose() } catch {} })
+      clearExtraMeshes()
+      scene.dispose()
+      engine.dispose()
+    }
+  }, [])
+
+  return (
+    <div className="wardrobe-screen">
+      <button className="back-btn" onClick={onBack}>← Terug</button>
+
+      {/* ── Left: clothing ── */}
+      <aside className="clothing-panel">
+        <h2 className="panel-title">Kledingkast</h2>
+        <p className="panel-sub">Klik om aan te trekken</p>
+
+        <div className="clothing-list">
+          <div className="clothing-section">
+            <div className={`clothing-header ${shirtColor ? 'clothing-on' : ''}`}>
+              <span className="clothing-emoji">👕</span>
+              <span className="clothing-label">Shirt</span>
+              {shirtColor && <span className="clothing-check">✓</span>}
+            </div>
+            <div className="color-swatches">
+              {SHIRT_COLORS.map(c => {
+                const locked = !(unlockedColors.shirt || []).includes(c.key)
+                return (
+                  <button
+                    key={c.key}
+                    className={`color-swatch ${shirtColor === c.key ? 'swatch-active' : ''} ${locked ? 'swatch-locked' : ''}`}
+                    style={{ background: c.hex }}
+                    title={locked ? '🔒 Win via lootbox' : c.label}
+                    onClick={() => !locked && pickShirt(c.key)}
+                  />
+                )
+              })}
+              {SHIRT_TEXTURES.map(t => (
+                <button
+                  key={t.key}
+                  className={`color-swatch texture-swatch ${shirtColor === t.key ? 'swatch-active' : ''}`}
+                  style={{ backgroundImage: `url('${t.file}')`, backgroundSize: 'cover' }}
+                  title={t.label}
+                  onClick={() => pickShirt(t.key)}
+                />
+              ))}
+              {SHIRT_MODELS.map(t => {
+                const locked = !(unlockedColors.shirt || []).includes(t.key)
+                return (
+                  <button
+                    key={t.key}
+                    className={`color-swatch texture-swatch ${shirtColor === t.key ? 'swatch-active' : ''} ${locked ? 'swatch-locked' : ''}`}
+                    style={{ backgroundImage: `url('${t.preview}')`, backgroundSize: 'cover' }}
+                    title={locked ? '🔒 Win via lootbox' : t.label}
+                    onClick={() => !locked && pickShirt(t.key)}
+                  />
+                )
+              })}
+            </div>
+          </div>
+
+          {ITEMS.map(item => (
+            <div key={item.key} className="clothing-section">
+              <div className={`clothing-header ${wearing[item.key] ? 'clothing-on' : ''}`}>
+                <span className="clothing-emoji">{item.emoji}</span>
+                <span className="clothing-label">{item.label}</span>
+                {wearing[item.key] && <span className="clothing-check">✓</span>}
+              </div>
+              <div className="color-swatches">
+                {SHIRT_COLORS.map(c => {
+                  const locked = !(unlockedColors[item.key] || []).includes(c.key)
+                  return (
+                    <button
+                      key={c.key}
+                      className={`color-swatch ${wearing[item.key] === c.key ? 'swatch-active' : ''} ${locked ? 'swatch-locked' : ''}`}
+                      style={{ background: c.hex }}
+                      title={locked ? '🔒 Win via lootbox' : c.label}
+                      onClick={() => !locked && pickClothing(item.key, c.key)}
+                    />
+                  )
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      </aside>
+
+      {/* ── Center: 3D viewer ── */}
+      <div className="viewer-panel">
+        <canvas ref={canvasRef} className="three-canvas" />
+        {loading && <div className="viewer-loading">Laden...</div>}
+      </div>
+
+      {/* ── Right: emotes ── */}
+      <aside className="emotes-panel">
+        <h2 className="panel-title">Emotes</h2>
+        <p className="panel-sub">Klik om te bewegen</p>
+        <div className="emote-list">
+          {/* Rest button — stops all animations */}
+          <button
+            className={`emote-btn ${activeAnim === null ? 'emote-on' : ''}`}
+            onClick={() => {
+              if (activeAnim) animGroupsRef.current[activeAnim]?.stop()
+              setActiveAnim(null)
+              resetToTPose()
+            }}
+            disabled={!animsReady}
+            title={!animsReady ? 'Laden…' : ''}
+          >
+            <span className="emote-emoji">🧍</span>
+            <span className="emote-label">Rust</span>
+          </button>
+
+          {Object.entries(EMOTE_META).map(([name, meta]) => (
+            <button
+              key={name}
+              className={`emote-btn ${activeAnim === name ? 'emote-on' : ''}`}
+              onClick={() => pickEmote(name)}
+              disabled={!animsReady}
+              title={!animsReady ? 'Laden…' : ''}
+            >
+              <span className="emote-emoji">{meta.emoji}</span>
+              <span className="emote-label">{meta.label}</span>
+              {activeAnim === name && <span className="emote-play">▶</span>}
+            </button>
+          ))}
+        </div>
+        {!animsReady && !loading && (
+          <p className="panel-sub" style={{ marginTop: 8 }}>Animaties laden…</p>
+        )}
+      </aside>
+    </div>
+  )
+}
