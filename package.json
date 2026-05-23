@@ -11,6 +11,7 @@
     "deploy": "npm run build && wrangler deploy"
   },
   "dependencies": {
+    "@babylonjs/core": "^9.9.1",
     "react": "^19.2.6",
     "react-dom": "^19.2.6"
   },

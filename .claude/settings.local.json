@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(try { $r = Invoke-WebRequest -Uri \"http://localhost:5173\" -UseBasicParsing -TimeoutSec 4; $r.StatusCode } catch { \"niet bereikbaar\" })",
+      "PowerShell(Get-Command *)",
+      "PowerShell(try { $r = Invoke-WebRequest -Uri \"http://localhost:5173\" -UseBasicParsing -TimeoutSec 3; $r.StatusCode } catch { \"offline\" })",
+      "PowerShell(Start-Process \"msedge\" -ArgumentList \"http://localhost:5173\" -ErrorAction SilentlyContinue)",
+      "PowerShell(Start-Process \"chrome\" -ArgumentList \"http://localhost:5173\" -ErrorAction SilentlyContinue)",
+      "PowerShell(Start-Process \"firefox\" -ArgumentList \"http://localhost:5173\" -ErrorAction SilentlyContinue)",
+      "PowerShell(Start-Process \"http://localhost:5173\")",
+      "PowerShell(Copy-Item *)",
+      "PowerShell(Start-Process -FilePath \"cmd.exe\" -ArgumentList \"/k\", \"cd /d C:\\\\Users\\\\nieuwaccount\\\\kenniskist && npm run dev\" -WindowStyle Normal)"
+    ]
+  }
+}
