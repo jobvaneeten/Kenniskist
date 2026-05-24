@@ -349,46 +349,192 @@ function drawEnemy(ctx, e) {
 }
 
 function drawProjectile(ctx, p) {
+  const angle = Math.atan2(p.vy || 0, p.vx || 1)
+  const r = p.radius
   ctx.save()
-  ctx.shadowColor=p.color; ctx.shadowBlur=8
-  ctx.fillStyle=p.color
+  ctx.translate(p.x, p.y)
 
-  if (p.shape==='coconut') {
-    ctx.fillStyle='#8B5E3C'; ctx.beginPath(); ctx.arc(p.x,p.y,p.radius,0,Math.PI*2); ctx.fill()
-    ctx.strokeStyle='#5a3a1a'; ctx.lineWidth=1.5
-    ctx.beginPath(); ctx.arc(p.x,p.y,p.radius,0,Math.PI*2); ctx.stroke()
-    ctx.strokeStyle='rgba(0,0,0,0.3)'; ctx.lineWidth=1
-    ctx.beginPath(); ctx.moveTo(p.x-p.radius*0.5,p.y-p.radius*0.5); ctx.lineTo(p.x+p.radius*0.4,p.y+p.radius*0.4); ctx.stroke()
-  } else if (p.shape==='ice') {
-    ctx.strokeStyle=p.color; ctx.lineWidth=2
-    for (let i=0;i<6;i++) {
-      const a=i/6*Math.PI*2
-      ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(p.x+Math.cos(a)*p.radius*1.4,p.y+Math.sin(a)*p.radius*1.4); ctx.stroke()
+  switch (p.towerKey) {
+
+    case 'lion': { // Vurige oranje vuurbal
+      ctx.shadowColor='#FF4500'; ctx.shadowBlur=14
+      const fg = ctx.createRadialGradient(-r*0.3,-r*0.3,0,0,0,r*1.2)
+      fg.addColorStop(0,'#FFFFFF'); fg.addColorStop(0.25,'#FFD700')
+      fg.addColorStop(0.6,'#FF6B35'); fg.addColorStop(1,'rgba(200,30,0,0.7)')
+      ctx.fillStyle=fg; ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.fill()
+      // Vlam tong
+      ctx.fillStyle='rgba(255,200,0,0.5)'
+      ctx.beginPath(); ctx.ellipse(-r*0.5,-r*0.4,r*0.35,r*0.2,0.5,0,Math.PI*2); ctx.fill()
+      break
     }
-    ctx.beginPath(); ctx.arc(p.x,p.y,p.radius*0.5,0,Math.PI*2); ctx.fill()
-  } else if (p.shape==='bubble') {
-    ctx.beginPath(); ctx.arc(p.x,p.y,p.radius,0,Math.PI*2); ctx.fill()
-    ctx.strokeStyle='rgba(255,255,255,0.4)'; ctx.lineWidth=1.5
-    ctx.beginPath(); ctx.arc(p.x,p.y,p.radius,0,Math.PI*2); ctx.stroke()
-    ctx.fillStyle='rgba(255,255,255,0.35)'
-    ctx.beginPath(); ctx.arc(p.x-p.radius*0.3,p.y-p.radius*0.3,p.radius*0.3,0,Math.PI*2); ctx.fill()
-  } else if (p.shape==='spike') {
-    for (let i=0;i<8;i++) {
-      const a=i/8*Math.PI*2
-      ctx.beginPath(); ctx.moveTo(p.x,p.y)
-      ctx.lineTo(p.x+Math.cos(a)*p.radius*1.6,p.y+Math.sin(a)*p.radius*1.6); ctx.stroke()
+
+    case 'elephant': { // Bruine rotsblok
+      ctx.shadowColor='#5C3A1E'; ctx.shadowBlur=8
+      ctx.fillStyle='#8B6914'
+      ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.fill()
+      // Donkere rand
+      ctx.strokeStyle='#4A2E00'; ctx.lineWidth=1.5
+      ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.stroke()
+      // Barsten
+      ctx.strokeStyle='rgba(40,20,0,0.6)'; ctx.lineWidth=1.2
+      ctx.beginPath(); ctx.moveTo(-r*0.3,r*0.1); ctx.lineTo(r*0.2,-r*0.3); ctx.stroke()
+      ctx.beginPath(); ctx.moveTo(r*0.1,r*0.3); ctx.lineTo(-r*0.2,r*0.5); ctx.stroke()
+      // Licht vlekje
+      ctx.fillStyle='rgba(200,160,80,0.45)'
+      ctx.beginPath(); ctx.ellipse(-r*0.3,-r*0.35,r*0.35,r*0.22,0.4,0,Math.PI*2); ctx.fill()
+      break
     }
-    ctx.strokeStyle=p.color; ctx.lineWidth=2
-    ctx.beginPath(); ctx.arc(p.x,p.y,p.radius*0.7,0,Math.PI*2); ctx.fill()
-  } else if (p.shape==='dart') {
-    ctx.save()
-    const a=Math.atan2(p.vy||0,p.vx||1)
-    ctx.translate(p.x,p.y); ctx.rotate(a)
-    ctx.fillRect(-p.radius*1.5,-p.radius*0.4,p.radius*2,p.radius*0.8)
-    ctx.restore()
-  } else {
-    ctx.beginPath(); ctx.arc(p.x,p.y,p.radius,0,Math.PI*2); ctx.fill()
+
+    case 'panda': { // Groene bamboestok
+      ctx.rotate(angle)
+      ctx.shadowColor='#2E7D32'; ctx.shadowBlur=6
+      // Stok
+      ctx.fillStyle='#4CAF50'
+      ctx.fillRect(-r*2.2,-r*0.45,r*4.4,r*0.9)
+      // Segmenten
+      ctx.strokeStyle='#2E7D32'; ctx.lineWidth=1.8
+      ctx.beginPath(); ctx.moveTo(-r*0.6,-r*0.5); ctx.lineTo(-r*0.6,r*0.5); ctx.stroke()
+      ctx.beginPath(); ctx.moveTo(r*0.6,-r*0.5); ctx.lineTo(r*0.6,r*0.5); ctx.stroke()
+      // Punt
+      ctx.fillStyle='#1B5E20'
+      ctx.beginPath(); ctx.moveTo(r*2.2,-r*0.45); ctx.lineTo(r*3,0); ctx.lineTo(r*2.2,r*0.45); ctx.closePath(); ctx.fill()
+      // Glans
+      ctx.fillStyle='rgba(255,255,255,0.25)'
+      ctx.fillRect(-r*1.8,-r*0.4,r*3.6,r*0.22)
+      break
+    }
+
+    case 'monkey': { // Kokosnoot met 3 vlekken
+      ctx.shadowColor='#6D3B1E'; ctx.shadowBlur=7
+      ctx.fillStyle='#8B5E3C'; ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.fill()
+      ctx.strokeStyle='#5C3317'; ctx.lineWidth=1.5
+      ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.stroke()
+      // 3 donkere ogen in driehoek
+      ctx.fillStyle='rgba(25,10,0,0.85)'
+      const sa=[Math.PI*1.5, Math.PI*1.5+Math.PI*2/3, Math.PI*1.5+Math.PI*4/3]
+      sa.forEach(a => { ctx.beginPath(); ctx.arc(Math.cos(a)*r*0.42,Math.sin(a)*r*0.42,r*0.2,0,Math.PI*2); ctx.fill() })
+      // Glans
+      ctx.fillStyle='rgba(220,180,130,0.35)'
+      ctx.beginPath(); ctx.ellipse(-r*0.28,-r*0.32,r*0.28,r*0.18,0.4,0,Math.PI*2); ctx.fill()
+      break
+    }
+
+    case 'tiger': { // Gouden laserbead met sleepspoor
+      ctx.shadowColor='#FFD700'; ctx.shadowBlur=22
+      // Spoor
+      ctx.strokeStyle='rgba(255,200,0,0.35)'; ctx.lineWidth=r*0.8
+      ctx.lineCap='round'
+      ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-Math.cos(angle)*24,-Math.sin(angle)*24); ctx.stroke()
+      // Kern gloed
+      const tg = ctx.createRadialGradient(0,0,0,0,0,r*2)
+      tg.addColorStop(0,'#FFFFFF'); tg.addColorStop(0.3,'#FFE566'); tg.addColorStop(0.7,'#FFD700'); tg.addColorStop(1,'rgba(200,160,0,0)')
+      ctx.fillStyle=tg; ctx.beginPath(); ctx.arc(0,0,r*2,0,Math.PI*2); ctx.fill()
+      break
+    }
+
+    case 'bear': { // Gele ster/burst
+      ctx.shadowColor='#FFD23F'; ctx.shadowBlur=12
+      ctx.fillStyle='#FFD23F'
+      const pts=6, out=r, inn=r*0.45
+      ctx.beginPath()
+      for(let i=0;i<pts*2;i++) {
+        const rad=i%2===0?out:inn, ang=i*Math.PI/pts-Math.PI/2
+        i===0?ctx.moveTo(Math.cos(ang)*rad,Math.sin(ang)*rad):ctx.lineTo(Math.cos(ang)*rad,Math.sin(ang)*rad)
+      }
+      ctx.closePath(); ctx.fill()
+      ctx.fillStyle='rgba(255,255,200,0.6)'
+      ctx.beginPath(); ctx.arc(0,0,r*0.35,0,Math.PI*2); ctx.fill()
+      break
+    }
+
+    case 'rhino': { // Grijze hoorn/pijl
+      ctx.rotate(angle)
+      ctx.shadowColor='#AAB0B5'; ctx.shadowBlur=8
+      const rg = ctx.createLinearGradient(-r,-r*0.6,r*1.8,0)
+      rg.addColorStop(0,'#9BA0A5'); rg.addColorStop(0.5,'#C8CDD0'); rg.addColorStop(1,'#6c7275')
+      ctx.fillStyle=rg
+      ctx.beginPath()
+      ctx.moveTo(r*1.8,0); ctx.lineTo(-r*0.6,r*0.7); ctx.lineTo(-r*0.3,0); ctx.lineTo(-r*0.6,-r*0.7)
+      ctx.closePath(); ctx.fill()
+      ctx.strokeStyle='#4a5055'; ctx.lineWidth=1; ctx.stroke()
+      break
+    }
+
+    case 'hippo': { // Blauwe waterdruppel
+      ctx.rotate(angle)
+      ctx.shadowColor='#29B6F6'; ctx.shadowBlur=12
+      const wg = ctx.createLinearGradient(-r,0,r*1.8,0)
+      wg.addColorStop(0,'#B3E5FC'); wg.addColorStop(0.45,'#29B6F6'); wg.addColorStop(1,'#0277BD')
+      ctx.fillStyle=wg
+      ctx.beginPath()
+      ctx.moveTo(r*1.8,0)
+      ctx.bezierCurveTo(r*0.5,r*0.95,-r*1.1,r*0.75,-r*1.1,0)
+      ctx.bezierCurveTo(-r*1.1,-r*0.75,r*0.5,-r*0.95,r*1.8,0)
+      ctx.closePath(); ctx.fill()
+      // Glans
+      ctx.fillStyle='rgba(255,255,255,0.45)'
+      ctx.beginPath(); ctx.ellipse(r*0.1,-r*0.22,r*0.38,r*0.2,-0.4,0,Math.PI*2); ctx.fill()
+      break
+    }
+
+    case 'croc': { // Gifgroene zuurbol met bellen
+      ctx.shadowColor='#00C853'; ctx.shadowBlur=12
+      const ag = ctx.createRadialGradient(-r*0.25,-r*0.25,0,0,0,r*1.1)
+      ag.addColorStop(0,'#CCFF90'); ag.addColorStop(0.5,'#69F0AE'); ag.addColorStop(1,'rgba(0,100,30,0.9)')
+      ctx.fillStyle=ag; ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.fill()
+      ctx.strokeStyle='rgba(0,150,50,0.6)'; ctx.lineWidth=1.5
+      ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.stroke()
+      // Bellen
+      ctx.fillStyle='rgba(255,255,255,0.5)'
+      ctx.beginPath(); ctx.arc(-r*0.35,-r*0.3,r*0.22,0,Math.PI*2); ctx.fill()
+      ctx.fillStyle='rgba(255,255,255,0.35)'
+      ctx.beginPath(); ctx.arc(r*0.3,r*0.1,r*0.15,0,Math.PI*2); ctx.fill()
+      break
+    }
+
+    case 'penguin': { // Ijskristal (6-puntige ster)
+      ctx.shadowColor='#81D4FA'; ctx.shadowBlur=14
+      ctx.strokeStyle='#E1F5FE'; ctx.lineWidth=2.2; ctx.lineCap='round'
+      for(let i=0;i<6;i++) {
+        const a=i*Math.PI/3, len=r*1.5
+        ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(Math.cos(a)*len,Math.sin(a)*len); ctx.stroke()
+        // Zij-takjes
+        const mx=Math.cos(a)*len*0.55, my=Math.sin(a)*len*0.55
+        const na=a+Math.PI/2, tl=r*0.38
+        ctx.beginPath(); ctx.moveTo(mx+Math.cos(na)*tl,my+Math.sin(na)*tl)
+        ctx.lineTo(mx-Math.cos(na)*tl,my-Math.sin(na)*tl); ctx.stroke()
+      }
+      ctx.fillStyle='rgba(179,229,252,0.7)'
+      ctx.beginPath(); ctx.arc(0,0,r*0.42,0,Math.PI*2); ctx.fill()
+      break
+    }
+
+    case 'hedgehog': { // Stekelige gele pinbal
+      ctx.shadowColor='#FFD23F'; ctx.shadowBlur=10
+      ctx.strokeStyle='#FFD23F'; ctx.lineWidth=1.8; ctx.lineCap='round'
+      for(let i=0;i<8;i++) {
+        const a=i*Math.PI/4
+        ctx.beginPath(); ctx.moveTo(Math.cos(a)*r*0.6,Math.sin(a)*r*0.6)
+        ctx.lineTo(Math.cos(a)*r*2,Math.sin(a)*r*2); ctx.stroke()
+      }
+      ctx.fillStyle='#FFE066'
+      ctx.beginPath(); ctx.arc(0,0,r*0.65,0,Math.PI*2); ctx.fill()
+      ctx.fillStyle='rgba(255,255,200,0.5)'
+      ctx.beginPath(); ctx.arc(-r*0.18,-r*0.18,r*0.28,0,Math.PI*2); ctx.fill()
+      break
+    }
+
+    default: { // Varken: roze bolletje
+      ctx.shadowColor='#FF80AB'; ctx.shadowBlur=7
+      ctx.fillStyle='#FFB6C1'; ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.fill()
+      ctx.strokeStyle='#FF80AB'; ctx.lineWidth=1.5
+      ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.stroke()
+      ctx.fillStyle='rgba(255,255,255,0.4)'
+      ctx.beginPath(); ctx.arc(-r*0.3,-r*0.3,r*0.28,0,Math.PI*2); ctx.fill()
+      break
+    }
   }
+
   ctx.shadowBlur=0
   ctx.restore()
 }
@@ -761,14 +907,14 @@ export default function TowerDefenseGame({ onBack }) {
   function fireProjectile(game, tower, target, damage, special, animType) {
     const ox=tx(tower.col), oy=ty(tower.row)
     const tDef = TOWER_MAP[tower.type]
-    const shapeMap = { monkey:'coconut', penguin:'ice', raccoon:'bubble', croc:'bubble', hedgehog:'spike', rhino:'spike', fox:'dart' }
+    const radMap = { lion:7, elephant:9, panda:5, monkey:7, tiger:4, bear:7, hippo:8, rhino:6, croc:7, penguin:6, hedgehog:5, pig:4 }
     game.projectiles.push({
       id:uid(), x:ox, y:oy, vx:0, vy:0,
       targetId:target.id,
+      towerKey:tower.type,
       damage, special,
-      color:tDef.projColor||'#fff',
-      radius:Math.max(3,Math.round(tDef.damage/10)+2),
-      shape:shapeMap[tower.type]||'circle',
+      color:'#fff',
+      radius:radMap[tower.type]||5,
       bounceLeft:special==='chain'?2:0,
       hitIds:new Set([target.id]),
     })
@@ -818,11 +964,11 @@ export default function TowerDefenseGame({ onBack }) {
       const next = game.enemies.filter(e => !proj.hitIds.has(e.id)&&dist(e,target)<90)
         .sort((a,b)=>dist(a,target)-dist(b,target))[0]
       if (next) {
-        const tDef = TOWER_MAP[Object.values(TOWER_MAP).find(t=>t.special==='chain')?.key||'monkey']
         game.projectiles.push({
           id:uid(), x:target.x, y:target.y, vx:0, vy:0,
-          targetId:next.id, damage:damage*0.7, special:'chain',
-          color:'#8B5E3C', radius:5, shape:'coconut',
+          targetId:next.id, towerKey:proj.towerKey||'monkey',
+          damage:damage*0.7, special:'chain',
+          color:'#8B5E3C', radius:7,
           bounceLeft:proj.bounceLeft-1, hitIds:new Set([...proj.hitIds,next.id]),
         })
       }
@@ -1102,11 +1248,12 @@ export default function TowerDefenseGame({ onBack }) {
                     >
                       <div className="td-shop-sprite" style={{
                         backgroundImage:"url('/Towerdefence.png')",
-                        backgroundSize:'180px 180px',
-                        backgroundPosition:`-${t.col*36}px -${t.row*36}px`,
+                        backgroundSize:'220px 220px',
+                        backgroundPosition:`-${t.col*44}px -${t.row*44}px`,
                       }} />
+                      <span className="td-shop-label">{t.name}</span>
                       <span className="td-shop-price" style={{color:canAfford?'#FFD23F':'#ff6b6b'}}>
-                        {t.cost}{isPremium?'⭐':''}
+                        🪙{t.cost}
                       </span>
                     </button>
                   )
