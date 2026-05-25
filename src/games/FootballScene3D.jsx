@@ -25,7 +25,7 @@ const RETARGET_BONES = new Set([
 const BALL_RADIUS  = 0.22
 const KICK_DIST    = 1.1
 const FIELD_HALF   = 38
-const GOAL_Z       = 15   // goals at ±15 → 30 units apart
+const GOAL_Z       = 35   // goals at the ends of the field
 const GOAL_HALF_W  = 3.65
 const GOAL_H       = 2.44
 const GOAL_DEPTH   = 1.6
@@ -167,10 +167,11 @@ class CharacterController {
     const k = this._keys
 
     // World-space 4-directional movement — keyboard OR joystick
-    const kx = k['ArrowRight'] ? 1 : k['ArrowLeft'] ? -1 : 0
+    // LEFT = -X, RIGHT = +X, UP = -Z (into field), DOWN = +Z
+    const kx = k['ArrowLeft'] ? 1 : k['ArrowRight'] ? -1 : 0   // flipped: left=+X from camera view
     const kz = k['ArrowDown']  ? 1 : k['ArrowUp']   ? -1 : 0
-    const jx = Math.abs(this.joy.x) > 0.12 ? this.joy.x : 0
-    const jz = Math.abs(this.joy.z) > 0.12 ? this.joy.z : 0
+    const jx = Math.abs(this.joy.x) > 0.12 ? -this.joy.x : 0  // joystick also flipped to match
+    const jz = Math.abs(this.joy.z) > 0.12 ?  this.joy.z : 0
     const rawX = kx !== 0 ? kx : jx
     const rawZ = kz !== 0 ? kz : jz
     const vx = rawX * this.speed
@@ -192,8 +193,8 @@ class CharacterController {
       while (diff < -Math.PI) diff += Math.PI * 2
       this.rotY += diff * Math.min(1, 14 * dt)
     }
-    // Use quaternion so it works even when rotationQuaternion is set by the GLB loader
-    this.root.rotationQuaternion = Quaternion.RotationYawPitchRoll(this.rotY, 0, 0)
+    // +π offset because the GLB model's face points in +Z; we want it to face movement dir
+    this.root.rotationQuaternion = Quaternion.RotationYawPitchRoll(this.rotY + Math.PI, 0, 0)
     this.velocity = spd
 
     // Animation
@@ -449,38 +450,53 @@ class Goal {
 // ── SceneBuilder ───────────────────────────────────────────────────
 class SceneBuilder {
   static buildWorld(scene, shadowGen) {
-    // Bright cartoon sky
-    scene.clearColor = new Color4(0.38, 0.75, 1.0, 1)
-    scene.fogMode = Scene.FOGMODE_NONE
+    // Evening arena sky
+    scene.clearColor = new Color4(0.04, 0.06, 0.14, 1)
+    scene.fogMode    = Scene.FOGMODE_EXP2
+    scene.fogColor   = new Color3(0.04, 0.06, 0.14)
+    scene.fogDensity = 0.006
 
-    // Cartoon lighting — soft + bright
+    // Soft ambient — dark ground, cool sky
     const ambient = new HemisphericLight('hemi', new Vector3(0, 1, 0), scene)
-    ambient.intensity   = 0.9
-    ambient.groundColor = new Color3(0.15, 0.55, 0.10)
-    ambient.diffuse     = new Color3(1.0, 0.97, 0.85)
+    ambient.intensity   = 0.25
+    ambient.groundColor = new Color3(0.02, 0.06, 0.02)
+    ambient.diffuse     = new Color3(0.5, 0.6, 0.8)
 
-    const sun = new DirectionalLight('sun', new Vector3(-0.4, -1, -0.3), scene)
-    sun.intensity = 1.4
-    sun.position  = new Vector3(20, 50, 20)
-    const sg = new ShadowGenerator(1024, sun)
+    // Four stadium floodlights (one at each corner above stands)
+    const lightPositions = [
+      new Vector3(-FIELD_HALF - 8,  28,  FIELD_HALF + 8),
+      new Vector3( FIELD_HALF + 8,  28,  FIELD_HALF + 8),
+      new Vector3(-FIELD_HALF - 8,  28, -FIELD_HALF - 8),
+      new Vector3( FIELD_HALF + 8,  28, -FIELD_HALF - 8),
+    ]
+    const lights = lightPositions.map((pos, i) => {
+      const l = new DirectionalLight('fl' + i, new Vector3(0, 0, 0).subtract(pos).normalize(), scene)
+      l.position  = pos
+      l.intensity = 1.8
+      l.diffuse   = new Color3(1.0, 0.97, 0.88)
+      return l
+    })
+
+    // Main shadow from first light
+    const sg = new ShadowGenerator(2048, lights[0])
     sg.usePoissonSampling = true
-    sg.bias = 0.0005
+    sg.bias = 0.0003
 
-    // Ground
+    // Ground field
     const ground = MeshBuilder.CreateGround('ground',
       { width: FIELD_HALF * 2, height: FIELD_HALF * 2, subdivisions: 1 }, scene)
     ground.receiveShadows = true
     ground.isPickable = false
     const gmat = new StandardMaterial('gmat', scene)
     gmat.diffuseTexture = this._makeFieldTexture(scene)
-    gmat.specularColor  = Color3.Black()
+    gmat.specularColor  = new Color3(0.05, 0.05, 0.05)
     ground.material = gmat
 
-    // Cartoon crowd stands (coloured bleachers around the field)
-    this._buildStands(scene)
-    this._buildTrees(scene, sg)
+    this._buildStands(scene, sg)
+    this._buildFloodlightPoles(scene, lightPositions)
+    this._buildFence(scene)
 
-    return { sun, shadowGen: sg }
+    return { sun: lights[0], shadowGen: sg }
   }
 
   static _makeFieldTexture(scene) {
@@ -544,86 +560,120 @@ class SceneBuilder {
     return tex
   }
 
-  static _buildStands(scene) {
-    // Colourful cartoon bleacher blocks around the field
-    const colours = [
-      new Color3(1.0, 0.25, 0.25),
-      new Color3(0.25, 0.55, 1.0),
-      new Color3(1.0, 0.85, 0.15),
-      new Color3(0.95, 0.45, 0.05),
-      new Color3(0.5, 0.2, 0.9),
-    ]
-    const sideZ  = FIELD_HALF + 5
-    const sideX  = FIELD_HALF + 5
-    const rows   = 3
-    const blocks = 14
+  static _buildStands(scene, sg) {
+    // Stepped concrete stands on all 4 sides
+    const concreteMat = new StandardMaterial('conc', scene)
+    concreteMat.diffuseColor  = new Color3(0.18, 0.18, 0.22)
+    concreteMat.specularColor = Color3.Black()
 
-    const mkMat = col => {
-      const m = new StandardMaterial('sm' + Math.random(), scene)
-      m.diffuseColor = col; m.specularColor = Color3.Black(); return m
+    const seatMat = new StandardMaterial('seat', scene)
+    seatMat.diffuseColor  = new Color3(0.08, 0.12, 0.28)
+    seatMat.emissiveColor = new Color3(0.02, 0.04, 0.12)
+    seatMat.specularColor = Color3.Black()
+
+    const ROWS = 8, ROW_H = 1.4, ROW_D = 1.8, GAP = 4
+
+    // Build one stand (along X axis, later rotated for sides)
+    const buildSide = (offsetZ, rotY, len) => {
+      for (let r = 0; r < ROWS; r++) {
+        // Concrete step
+        const step = MeshBuilder.CreateBox('st', {
+          width: len, height: ROW_H, depth: ROW_D
+        }, scene)
+        step.isPickable = false
+        step.material   = concreteMat
+        const y = r * ROW_H + ROW_H / 2
+        const d = GAP + r * ROW_D + ROW_D / 2
+        step.position.set(0, y, offsetZ > 0 ? offsetZ + d : offsetZ - d)
+        step.rotation.y = rotY
+
+        // Seat row (thinner colored strip on top of step)
+        const seat = MeshBuilder.CreateBox('seat', {
+          width: len, height: 0.18, depth: ROW_D * 0.7
+        }, scene)
+        seat.isPickable = false
+        seat.material   = seatMat
+        seat.position.set(0, y + ROW_H / 2 + 0.09, offsetZ > 0 ? offsetZ + d : offsetZ - d)
+        seat.rotation.y = rotY
+      }
     }
 
-    for (let side = 0; side < 4; side++) {
-      for (let b = 0; b < blocks; b++) {
-        for (let r = 0; r < rows; r++) {
-          const col = colours[(b + r + side) % colours.length]
-          const box = MeshBuilder.CreateBox('bl', { width: 4.2, height: 1.2 + r * 0.6, depth: 2.2 }, scene)
-          box.isPickable = false
-          box.material   = mkMat(col)
-          const t = (b / (blocks - 1)) * 2 - 1
-          const baseX = t * (FIELD_HALF - 2)
-          const baseZ = sideZ + r * 1.8
+    buildSide( FIELD_HALF, 0, FIELD_HALF * 2 + 4)   // +Z side
+    buildSide(-FIELD_HALF, 0, FIELD_HALF * 2 + 4)   // -Z side
 
-          if (side === 0) box.position.set(baseX, (1.2 + r * 0.6) / 2, baseZ)
-          else if (side === 1) box.position.set(baseX, (1.2 + r * 0.6) / 2, -baseZ)
-          else if (side === 2) box.position.set(sideX + r * 1.8, (1.2 + r * 0.6) / 2, baseX)
-          else                  box.position.set(-sideX - r * 1.8, (1.2 + r * 0.6) / 2, baseX)
-        }
+    // Side stands (perpendicular)
+    for (let r = 0; r < ROWS; r++) {
+      for (const sx of [1, -1]) {
+        const step = MeshBuilder.CreateBox('stX', {
+          width: ROW_D, height: ROW_H, depth: FIELD_HALF * 2 + 4
+        }, scene)
+        step.isPickable = false
+        step.material   = concreteMat
+        const y = r * ROW_H + ROW_H / 2
+        const d = GAP + r * ROW_D + ROW_D / 2
+        step.position.set(sx * (FIELD_HALF + d), y, 0)
+
+        const seat = MeshBuilder.CreateBox('seatX', {
+          width: ROW_D * 0.7, height: 0.18, depth: FIELD_HALF * 2 + 4
+        }, scene)
+        seat.isPickable = false
+        seat.material   = seatMat
+        seat.position.set(sx * (FIELD_HALF + d), y + ROW_H / 2 + 0.09, 0)
       }
     }
   }
 
-  static _buildTrees(scene, sg) {
-    const trunkMat = new StandardMaterial('trm', scene)
-    trunkMat.diffuseColor = new Color3(0.45, 0.26, 0.08)
-    const foliageColors = [
-      new Color3(0.15, 0.80, 0.15),
-      new Color3(0.10, 0.65, 0.10),
-      new Color3(0.55, 0.85, 0.10),
-    ]
-    const foliageMats = foliageColors.map((c, i) => {
-      const m = new StandardMaterial('f' + i, scene)
-      m.diffuseColor = c; m.specularColor = Color3.Black(); return m
-    })
+  static _buildFloodlightPoles(scene, positions) {
+    const poleMat = new StandardMaterial('pole', scene)
+    poleMat.diffuseColor  = new Color3(0.7, 0.7, 0.75)
+    poleMat.specularColor = new Color3(0.2, 0.2, 0.2)
 
-    const positions = []
-    for (let i = 0; i < 24; i++) {
-      const a = (i / 24) * Math.PI * 2
-      const r = FIELD_HALF + 14 + (i % 3) * 5
-      positions.push(new Vector3(Math.cos(a) * r, 0, Math.sin(a) * r))
-    }
+    const lampMat = new StandardMaterial('lamp', scene)
+    lampMat.diffuseColor  = new Color3(1, 0.97, 0.85)
+    lampMat.emissiveColor = new Color3(1.0, 0.94, 0.70)
 
-    positions.forEach((pos, idx) => {
-      const h = 4 + (idx % 4) * 1.2
-      const w = 2.2 + (idx % 3) * 0.6
-
-      const trunk = MeshBuilder.CreateCylinder('tr', {
-        height: h * 0.4, diameterTop: 0.22, diameterBottom: 0.38, tessellation: 8
+    positions.forEach(pos => {
+      // Pole
+      const pole = MeshBuilder.CreateCylinder('flp', {
+        height: pos.y, diameterTop: 0.35, diameterBottom: 0.55, tessellation: 10
       }, scene)
-      trunk.position.set(pos.x, h * 0.2, pos.z)
-      trunk.material = trunkMat
+      pole.position.set(pos.x, pos.y / 2, pos.z)
+      pole.material   = poleMat
+      pole.isPickable = false
 
-      const fol = MeshBuilder.CreateSphere('fo', { diameter: w * 1.1, segments: 8 }, scene)
-      fol.position.set(pos.x, h * 0.65, pos.z)
-      fol.material = foliageMats[idx % 3]
-      fol.scaling.y = 1.25
-      sg?.addShadowCaster(fol)
+      // Lamp head
+      const head = MeshBuilder.CreateBox('flh', { width: 4, height: 0.6, depth: 1.5 }, scene)
+      head.position.set(pos.x, pos.y + 0.3, pos.z)
+      head.material   = lampMat
+      head.isPickable = false
+    })
+  }
+
+  static _buildFence(scene) {
+    const fenceMat = new StandardMaterial('fence', scene)
+    fenceMat.diffuseColor    = new Color3(0.12, 0.18, 0.10)
+    fenceMat.specularColor   = Color3.Black()
+    fenceMat.alpha           = 0.85
+    fenceMat.backFaceCulling = false
+
+    const H = 1.4, T = 0.12
+    const sides = [
+      { w: FIELD_HALF * 2 + T*2, d: T, x: 0,           z:  FIELD_HALF },
+      { w: FIELD_HALF * 2 + T*2, d: T, x: 0,           z: -FIELD_HALF },
+      { w: T, d: FIELD_HALF * 2, x:  FIELD_HALF,       z: 0 },
+      { w: T, d: FIELD_HALF * 2, x: -FIELD_HALF,       z: 0 },
+    ]
+    sides.forEach(({ w, d, x, z }) => {
+      const f = MeshBuilder.CreateBox('fence', { width: w, height: H, depth: d }, scene)
+      f.position.set(x, H / 2, z)
+      f.material   = fenceMat
+      f.isPickable = false
     })
   }
 }
 
 // ── Main scene init ────────────────────────────────────────────────
-function initScene(canvas, { shirtKey, wearing, joy, onScoreA, onScoreB, onLoad }) {
+function initScene(canvas, { shirtKey, wearing, joy, teamColor, onScoreA, onScoreB, onLoad }) {
   const engine = new Engine(canvas, true, { adaptToDeviceRatio: true, stencil: true })
   const scene  = new Scene(engine)
 
@@ -685,29 +735,41 @@ function initScene(canvas, { shirtKey, wearing, joy, onScoreA, onScoreB, onLoad 
     // Shadows
     meshes.forEach(m => { shadowGen.addShadowCaster(m); m.receiveShadows = true })
 
-    // Apply saved clothing colors (base model only)
+    const CLOTHING_NAMES = new Set(['Shirt', 'Broek', 'Sokken', 'Schoenen'])
+
+    // Apply clothing colors (from wardrobe)
     if (modelFile === 'Poppetje.glb') {
-      const clothingMap = { shirt: 'Shirt', broek: 'Broek', sokken: 'Sokken', schoenen: 'Schoenen' }
       meshes.forEach(m => {
-        const itemKey = Object.entries(clothingMap).find(([, n]) => n === m.name)?.[0]
-        if (!itemKey) return
+        if (!CLOTHING_NAMES.has(m.name)) return
+        const itemKey = m.name.toLowerCase()
         const colorKey = itemKey === 'shirt' ? shirtKey : wearing?.[itemKey]
         if (!colorKey) { m.setEnabled(false); return }
         const col = SHIRT_COLORS.find(c => c.key === colorKey)
         if (col) {
           m.setEnabled(true)
           const c3 = Color3.FromHexString(col.hex)
-          const applyColor = mesh => {
+          const applyCol = mesh => {
             if (!mesh.material) return
             const mat = mesh.material.clone(mesh.material.name + '_c')
             mesh.material = mat
             if (mat.albedoColor !== undefined) { mat.albedoTexture = null; mat.albedoColor = c3 }
             else if (mat.diffuseColor !== undefined) { mat.diffuseTexture = null; mat.diffuseColor = c3 }
           }
-          applyColor(m)
-          m.getChildMeshes?.(false)?.forEach(applyColor)
+          applyCol(m); m.getChildMeshes?.(false)?.forEach(applyCol)
         } else { m.setEnabled(false) }
       })
+
+      // Apply team skin color to all non-clothing meshes
+      if (teamColor) {
+        const tc = Color3.FromHexString(teamColor)
+        meshes.forEach(m => {
+          if (CLOTHING_NAMES.has(m.name) || !m.material) return
+          const mat = m.material.clone(m.material.name + '_team')
+          m.material = mat
+          if (mat.albedoColor !== undefined) { mat.albedoTexture = null; mat.albedoColor = tc }
+          else if (mat.diffuseColor !== undefined) { mat.diffuseTexture = null; mat.diffuseColor = tc }
+        })
+      }
     }
 
     // Build node map + capture T-pose rest rotations
@@ -853,69 +915,93 @@ function initScene(canvas, { shirtKey, wearing, joy, onScoreA, onScoreB, onLoad 
 }
 
 // ── React component ────────────────────────────────────────────────
-// ── Virtual joystick component ──────────────────────────────────────
+// ── Virtual joystick (touch + mouse) ───────────────────────────────
 function VirtualJoystick({ joyRef }) {
-  const baseRef  = useRef(null)
-  const knobRef  = useRef(null)
-  const tidRef   = useRef(null)
-  const RADIUS   = 52   // outer ring radius in px
-  const KNOB_R   = 22
+  const baseRef   = useRef(null)
+  const knobRef   = useRef(null)
+  const activeRef = useRef(false)
+  const RADIUS    = 52
 
-  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v))
-
-  const move = (clientX, clientY) => {
-    const rect = baseRef.current.getBoundingClientRect()
-    const cx   = rect.left + rect.width  / 2
-    const cy   = rect.top  + rect.height / 2
-    let dx = clientX - cx
-    let dy = clientY - cy
+  const applyOffset = (dx, dy) => {
     const len = Math.hypot(dx, dy)
     if (len > RADIUS) { dx = dx / len * RADIUS; dy = dy / len * RADIUS }
-    joyRef.current.x =  dx / RADIUS
-    joyRef.current.z =  dy / RADIUS
-    if (knobRef.current) {
-      knobRef.current.style.transform = `translate(${dx}px, ${dy}px)`
-    }
+    joyRef.current.x = dx / RADIUS
+    joyRef.current.z = dy / RADIUS
+    if (knobRef.current) knobRef.current.style.transform = `translate(${dx}px,${dy}px)`
   }
-
   const release = () => {
-    joyRef.current.x = 0
-    joyRef.current.z = 0
+    activeRef.current = false
+    joyRef.current.x = 0; joyRef.current.z = 0
     if (knobRef.current) knobRef.current.style.transform = 'translate(0,0)'
   }
+  const getCenter = () => {
+    const r = baseRef.current.getBoundingClientRect()
+    return { cx: r.left + r.width / 2, cy: r.top + r.height / 2 }
+  }
 
-  const onTouchStart = e => { e.preventDefault(); tidRef.current = e.targetTouches[0].identifier; move(e.targetTouches[0].clientX, e.targetTouches[0].clientY) }
-  const onTouchMove  = e => { e.preventDefault(); const t = [...e.targetTouches].find(t => t.identifier === tidRef.current); if (t) move(t.clientX, t.clientY) }
-  const onTouchEnd   = e => { if (![...e.targetTouches].find(t => t.identifier === tidRef.current)) release() }
+  // Touch
+  const onTouchStart = e => { e.preventDefault(); activeRef.current = true; const t = e.targetTouches[0]; const {cx,cy} = getCenter(); applyOffset(t.clientX-cx, t.clientY-cy) }
+  const onTouchMove  = e => { e.preventDefault(); if (!activeRef.current) return; const t = e.targetTouches[0]; const {cx,cy} = getCenter(); applyOffset(t.clientX-cx, t.clientY-cy) }
+  const onTouchEnd   = () => release()
+
+  // Mouse
+  useEffect(() => {
+    const onMove = e => { if (!activeRef.current) return; const {cx,cy} = getCenter(); applyOffset(e.clientX-cx, e.clientY-cy) }
+    const onUp   = () => { if (activeRef.current) release() }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup',   onUp)
+    return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp) }
+  }, [])
+
+  const onMouseDown = e => { activeRef.current = true; const {cx,cy} = getCenter(); applyOffset(e.clientX-cx, e.clientY-cy) }
 
   return (
-    <div
-      ref={baseRef}
-      className="fb3d-joy-base"
-      onTouchStart={onTouchStart}
-      onTouchMove={onTouchMove}
-      onTouchEnd={onTouchEnd}
-      onTouchCancel={onTouchEnd}
+    <div ref={baseRef} className="fb3d-joy-base"
+      onTouchStart={onTouchStart} onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd} onTouchCancel={onTouchEnd}
+      onMouseDown={onMouseDown}
     >
       <div ref={knobRef} className="fb3d-joy-knob" />
     </div>
   )
 }
 
+// ── Team selection screen ───────────────────────────────────────────
+function TeamSelect({ onSelect }) {
+  return (
+    <div className="fb3d-teamselect">
+      <h2 className="fb3d-ts-title">Kies je team</h2>
+      <div className="fb3d-ts-teams">
+        <button className="fb3d-ts-btn fb3d-ts-red" onClick={() => onSelect('#cc2222')}>
+          <div className="fb3d-ts-swatch" style={{ background: '#cc2222' }} />
+          <span>Rood Team</span>
+        </button>
+        <button className="fb3d-ts-btn fb3d-ts-blue" onClick={() => onSelect('#1a55cc')}>
+          <div className="fb3d-ts-swatch" style={{ background: '#1a55cc' }} />
+          <span>Blauw Team</span>
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export default function FootballScene3D({ onBack }) {
-  const canvasRef = useRef(null)
-  const joyRef    = useRef({ x: 0, z: 0 })
-  const [scoreA,  setScoreA]  = useState(0)
-  const [scoreB,  setScoreB]  = useState(0)
-  const [loading, setLoading] = useState(true)
-  const [showHint,setShowHint]= useState(true)
+  const canvasRef   = useRef(null)
+  const joyRef      = useRef({ x: 0, z: 0 })
+  const [team,      setTeam]      = useState(null)   // null = not chosen yet
+  const [scoreA,    setScoreA]    = useState(0)
+  const [scoreB,    setScoreB]    = useState(0)
+  const [loading,   setLoading]   = useState(true)
+  const [showHint,  setShowHint]  = useState(true)
 
   useEffect(() => {
+    if (!team) return
     const t = setTimeout(() => setShowHint(false), 6000)
     return () => clearTimeout(t)
-  }, [])
+  }, [team])
 
   useEffect(() => {
+    if (!team) return
     const canvas = canvasRef.current
     if (!canvas) return
 
@@ -923,15 +1009,23 @@ export default function FootballScene3D({ onBack }) {
     const wearing = (() => { try { return JSON.parse(localStorage.getItem('kk_wearing') || '{}') } catch { return {} } })()
 
     const cleanup = initScene(canvas, {
-      shirtKey: shirt,
+      shirtKey:   shirt,
       wearing,
-      joy:      joyRef.current,
-      onScoreA: v => setScoreA(v),
-      onScoreB: v => setScoreB(v),
-      onLoad:   () => setLoading(false),
+      joy:        joyRef.current,
+      teamColor:  team,
+      onScoreA:   v => setScoreA(v),
+      onScoreB:   v => setScoreB(v),
+      onLoad:     () => setLoading(false),
     })
     return cleanup
-  }, [])
+  }, [team])
+
+  if (!team) return (
+    <div className="fb3d-outer">
+      <button className="fb3d-back" onClick={onBack}>← Kledingkast</button>
+      <TeamSelect onSelect={setTeam} />
+    </div>
+  )
 
   return (
     <div className="fb3d-outer">

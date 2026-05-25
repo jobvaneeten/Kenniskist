@@ -124,6 +124,55 @@
   to { transform: rotate(360deg); }
 }
 
+/* ── Team selection ── */
+.fb3d-teamselect {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 40px;
+  background: radial-gradient(ellipse at center, #0a2a0a 0%, #020c02 100%);
+}
+.fb3d-ts-title {
+  color: #fff;
+  font-size: 32px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  text-shadow: 0 2px 16px rgba(0,255,80,0.3);
+  margin: 0;
+}
+.fb3d-ts-teams {
+  display: flex;
+  gap: 32px;
+}
+.fb3d-ts-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  background: rgba(255,255,255,0.06);
+  border: 2px solid rgba(255,255,255,0.15);
+  border-radius: 20px;
+  padding: 28px 36px;
+  cursor: pointer;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 800;
+  font-family: inherit;
+  transition: transform 0.15s, background 0.15s, border-color 0.15s;
+}
+.fb3d-ts-btn:hover { transform: translateY(-4px); background: rgba(255,255,255,0.14); }
+.fb3d-ts-red:hover  { border-color: #cc2222; box-shadow: 0 0 28px rgba(204,34,34,0.4); }
+.fb3d-ts-blue:hover { border-color: #1a55cc; box-shadow: 0 0 28px rgba(26,85,204,0.4); }
+.fb3d-ts-swatch {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+}
+
 /* ── Virtual joystick ── */
 .fb3d-joy-base {
   position: absolute;
