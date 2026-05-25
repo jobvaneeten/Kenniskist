@@ -92,7 +92,7 @@ function applyTexture(mesh, texture) {
 }
 
 // ── Component ─────────────────────────────────────────────────────
-export default function Wardrobe({ onBack, unlockedColors = {} }) {
+export default function Wardrobe({ onBack, onPlay3D, unlockedColors = {} }) {
   const canvasRef      = useRef(null)
   const sceneRef       = useRef(null)
   const skeletonRef    = useRef(null)
@@ -483,6 +483,11 @@ export default function Wardrobe({ onBack, unlockedColors = {} }) {
       <div className="viewer-panel">
         <canvas ref={canvasRef} className="three-canvas" />
         {loading && <div className="viewer-loading">Laden...</div>}
+        {!loading && onPlay3D && (
+          <button className="play3d-btn" onClick={onPlay3D}>
+            ⚽ Speel in 3D
+          </button>
+        )}
       </div>
 
       {/* ── Right: emotes ── */}

@@ -232,6 +232,32 @@
 .emote-label { flex: 1; }
 .emote-play  { font-size: 0.7rem; color: #FFD23F; }
 
+/* ── Play 3D button ─────────────────────────── */
+.play3d-btn {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  background: linear-gradient(135deg, #11aa55, #0d8844);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 12px 28px;
+  font-size: 16px;
+  font-weight: 800;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.4);
+  transition: transform 0.1s, box-shadow 0.1s;
+  white-space: nowrap;
+}
+.play3d-btn:hover {
+  transform: translateX(-50%) translateY(-2px);
+  box-shadow: 0 7px 22px rgba(0,0,0,0.5);
+}
+.play3d-btn:active { transform: translateX(-50%) translateY(0); }
+
 /* ── 3D viewer loading ──────────────────────── */
 .viewer-loading {
   position: absolute;

@@ -1,729 +1,191 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { TOWERS, TOWER_MAP, LVL_DMG, LVL_RATE, LVL_RANGE, upgradeCost, ENEMY_TYPES, generateWave } from './td_data'
+import * as PIXI from 'pixi.js'
+import Matter from 'matter-js'
+import { gsap } from 'gsap'
+import {
+  TOWERS, TOWER_MAP, LVL_DMG, LVL_RATE, LVL_RANGE,
+  upgradeCost, ENEMY_TYPES, generateWave,
+} from './td_data'
+import { drawAnimal } from './td_sprites'
+import {
+  CW, CH, CELL, COLS, ROWS, SAVE_KEY, tx, ty, WAYPOINTS, PATH_TILES,
+  uid, resetIds, setNextId, dist, towerStats, pathProgress,
+  saveGame, loadSave, clearSave,
+  getTowerTexture, buildStaticBg,
+  updateEnemyGfx, drawProjectile, drawAnim,
+  drawHoverPreview, drawInspectRange,
+  createPhysicsEngine, shouldUsePhysics, createPhysicsProjectile,
+} from './td_game'
 import './towerdefense.css'
 
-// ── Constants ─────────────────────────────────────────────────────────
-const CW   = 720
-const CH   = 480
-const CELL = 40
-const COLS = 18
-const ROWS = 12
-const SAVE_KEY = 'td_kenniskist_save'
+// ── Shop thumbnail component ──────────────────────────────────────────
+function TowerThumb({ towerKey, size = 44 }) {
+  const ref = useRef(null)
+  useEffect(() => {
+    const c = ref.current; if (!c) return
+    const ctx = c.getContext('2d')
+    ctx.clearRect(0, 0, size, size)
+    draw2d(ctx, towerKey, size)
+  }, [towerKey, size])
+  return <canvas ref={ref} width={size} height={size} style={{ display:'block', width:size, height:size }} />
+}
 
-const tx = c => c * CELL + CELL / 2
-const ty = r => r * CELL + CELL / 2
-
-// ── Path ──────────────────────────────────────────────────────────────
-const BEND_TILES = [[0,2],[4,2],[4,8],[10,8],[10,2],[14,2],[14,9],[17,9]]
-const WAYPOINTS = [
-  { x: -CELL,     y: ty(2) },
-  ...BEND_TILES.map(([c,r]) => ({ x: tx(c), y: ty(r) })),
-  { x: CW + CELL, y: ty(9) },
-]
-
-function computePathTiles() {
-  const segs = [
-    [[0,2],[4,2]],[[4,2],[4,8]],[[4,8],[10,8]],
-    [[10,8],[10,2]],[[10,2],[14,2]],[[14,2],[14,9]],[[14,9],[17,9]],
-  ]
-  const s = new Set()
-  for (const [[c1,r1],[c2,r2]] of segs) {
-    if (c1 === c2) for (let r = Math.min(r1,r2); r <= Math.max(r1,r2); r++) s.add(`${c1},${r}`)
-    else           for (let c = Math.min(c1,c2); c <= Math.max(c1,c2); c++) s.add(`${c},${r1}`)
+// ── 2D canvas animal drawing (for thumbnails, no white border) ─────────
+function draw2d(ctx, key, s) {
+  const r = s * 0.42
+  const cx = s / 2, cy = s / 2
+  const c = (x, y, rad, col, alpha = 1) => {
+    ctx.globalAlpha = alpha
+    ctx.fillStyle = col
+    ctx.beginPath(); ctx.arc(cx+x, cy+y, rad, 0, Math.PI*2); ctx.fill()
   }
-  return s
-}
-const PATH_TILES = computePathTiles()
-
-// ── Static map decorations ────────────────────────────────────────────
-function isOnPath(x, y) { return PATH_TILES.has(`${Math.floor(x/CELL)},${Math.floor(y/CELL)}`) }
-function isTooClose(x, y, list, minD) { return list.some(o => Math.hypot(o.x-x, o.y-y) < minD) }
-
-const DECO_TREES = (() => {
-  const pts = []
-  const candidates = [
-    [1,0.5],[16.5,0.5],[16.5,11.5],[0.5,11.5],[1.5,5.5],[16,5.5],
-    [6.5,0.5],[12,0.5],[6.5,11.5],[12,11.5],[2,10],[16,10],
-    [6,5],[8,5],[12,5],[2,4],[5.5,10.5],[11.5,1],
-  ]
-  for (const [cx,cy] of candidates) {
-    const x = cx*CELL, y = cy*CELL
-    if (!isOnPath(x,y) && !isTooClose(x,y,pts,30)) {
-      pts.push({ x, y, r: 13+Math.floor((cx*7+cy*3)%8), dark: (cx+cy)%3===0 })
-    }
-  }
-  return pts
-})()
-
-const DECO_FLOWERS = (() => {
-  const pts = []
-  for (let i = 0; i < 55; i++) {
-    const x = (i*211+60) % CW, y = (i*163+80) % CH
-    if (!isOnPath(x,y) && !isTooClose(x,y,DECO_TREES,18) && !isTooClose(x,y,pts,14)) {
-      const colors = ['#FF9BE8','#FFD23F','#FF7B7B','#B8F0A0','#7fd4ff','#FFAA55']
-      pts.push({ x, y, color: colors[i%6], r: 2+(i%3) })
-    }
-  }
-  return pts
-})()
-
-const DECO_ROCKS = (() => {
-  const pts = []
-  for (let i = 0; i < 20; i++) {
-    const x = (i*277+100)%CW, y = (i*191+130)%CH
-    if (!isOnPath(x,y) && !isTooClose(x,y,DECO_TREES,20) && !isTooClose(x,y,pts,25)) {
-      pts.push({ x, y, w: 6+(i%5), h: 4+(i%3) })
-    }
-  }
-  return pts
-})()
-
-// ── Helpers ───────────────────────────────────────────────────────────
-let _nextId = 1
-const uid = () => _nextId++
-function dist(a, b) { return Math.hypot(a.x-b.x, a.y-b.y) }
-
-function towerStats(key, level) {
-  const base = TOWER_MAP[key]
-  return {
-    damage: base.damage * LVL_DMG[level],
-    range:  base.range  * LVL_RANGE[level],
-    rate:   base.rate   * LVL_RATE[level],
-  }
-}
-
-function pathProgress(e) {
-  return e.wpIdx * 10000 + (e.wpIdx < WAYPOINTS.length ? (WAYPOINTS[e.wpIdx].x - e.x) : 0)
-}
-
-function roundRect(ctx, x, y, w, h, r) {
-  ctx.beginPath()
-  ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.arcTo(x+w,y,x+w,y+r,r)
-  ctx.lineTo(x+w,y+h-r); ctx.arcTo(x+w,y+h,x+w-r,y+h,r)
-  ctx.lineTo(x+r,y+h); ctx.arcTo(x,y+h,x,y+h-r,r)
-  ctx.lineTo(x,y+r); ctx.arcTo(x,y,x+r,y,r)
-  ctx.closePath()
-}
-
-function lighten(hex, amt) {
-  const n = parseInt(hex.slice(1),16)
-  const r = Math.min(255,(n>>16)+amt), g = Math.min(255,((n>>8)&0xff)+amt), b = Math.min(255,(n&0xff)+amt)
-  return `rgb(${r},${g},${b})`
-}
-
-// ── Save / Load ───────────────────────────────────────────────────────
-function saveGame(game, wave) {
-  try {
-    localStorage.setItem(SAVE_KEY, JSON.stringify({
-      towers: game.towers.map(t => ({ id:t.id, type:t.type, col:t.col, row:t.row, level:t.level, invested:t.invested })),
-      gold: game.gold, lives: game.lives, wave, savedAt: Date.now(),
-    }))
-  } catch {}
-}
-
-function loadSave() {
-  try { const s = localStorage.getItem(SAVE_KEY); return s ? JSON.parse(s) : null } catch { return null }
-}
-function clearSave() { try { localStorage.removeItem(SAVE_KEY) } catch {} }
-
-// ── Drawing ───────────────────────────────────────────────────────────
-
-function drawMapBackground(ctx) {
-  // Rich grass base
-  const gGrass = ctx.createLinearGradient(0,0,CW,CH)
-  gGrass.addColorStop(0,'#5eb84d')
-  gGrass.addColorStop(0.5,'#68c457')
-  gGrass.addColorStop(1,'#4da03e')
-  ctx.fillStyle = gGrass
-  ctx.fillRect(0,0,CW,CH)
-
-  // Darker border shadow
-  const gBorder = ctx.createLinearGradient(0,0,0,30)
-  gBorder.addColorStop(0,'rgba(0,0,0,0.15)')
-  gBorder.addColorStop(1,'transparent')
-  ctx.fillStyle = gBorder; ctx.fillRect(0,0,CW,30)
-  const gBottom = ctx.createLinearGradient(0,CH-30,0,CH)
-  gBottom.addColorStop(0,'transparent'); gBottom.addColorStop(1,'rgba(0,0,0,0.15)')
-  ctx.fillStyle = gBottom; ctx.fillRect(0,CH-30,CW,30)
-}
-
-function drawPath(ctx) {
-  for (let r = 0; r < ROWS; r++) {
-    for (let c = 0; c < COLS; c++) {
-      if (!PATH_TILES.has(`${c},${r}`)) continue
-      const px = c*CELL, py = r*CELL
-      // Shadow edge
-      ctx.fillStyle = 'rgba(0,0,0,0.18)'
-      ctx.fillRect(px,py,CELL,CELL)
-      // Dirt base
-      ctx.fillStyle = '#c4975a'
-      ctx.fillRect(px+1,py+1,CELL-2,CELL-2)
-      // Worn center
-      ctx.fillStyle = '#b8894e'
-      ctx.fillRect(px+3,py+3,CELL-6,CELL-6)
-      // Random stone-like patches
-      const seed = c*17+r*31
-      if (seed%5===0) {
-        ctx.fillStyle = 'rgba(100,70,30,0.2)'
-        ctx.beginPath(); ctx.ellipse(px+CELL*0.3,py+CELL*0.6,5,3,0.5,0,Math.PI*2); ctx.fill()
-      }
-      if (seed%7===2) {
-        ctx.fillStyle = 'rgba(180,150,90,0.3)'
-        ctx.beginPath(); ctx.ellipse(px+CELL*0.7,py+CELL*0.35,4,3,0.8,0,Math.PI*2); ctx.fill()
-      }
-    }
-  }
-}
-
-function drawDecorations(ctx) {
-  // Grass blades (subtle)
-  for (let i = 0; i < 180; i++) {
-    const x = (i*137.5+23)%CW, y = (i*97.3+47)%CH
-    if (isOnPath(x,y)) continue
-    ctx.globalAlpha = 0.12 + (i%5)*0.03
-    ctx.fillStyle = i%3===0 ? '#3a8830' : i%3===1 ? '#4aaa3a' : '#2d6a24'
-    ctx.fillRect(x,y,1+i%2,3+i%4)
+  const e = (x, y, w, h, col, alpha = 1) => {
+    ctx.globalAlpha = alpha
+    ctx.fillStyle = col
+    ctx.beginPath(); ctx.ellipse(cx+x, cy+y, w, h, 0, 0, Math.PI*2); ctx.fill()
   }
   ctx.globalAlpha = 1
 
-  // Rocks
-  DECO_ROCKS.forEach(rock => {
-    ctx.fillStyle = '#8a8a8a'
-    ctx.beginPath(); ctx.ellipse(rock.x,rock.y,rock.w,rock.h,0.4,0,Math.PI*2); ctx.fill()
-    ctx.fillStyle = '#aaaaaa'
-    ctx.beginPath(); ctx.ellipse(rock.x-1,rock.y-1,rock.w*0.5,rock.h*0.5,0.4,0,Math.PI*2); ctx.fill()
-  })
-
-  // Flowers
-  DECO_FLOWERS.forEach(f => {
-    ctx.fillStyle = '#2a8a1a'; ctx.beginPath(); ctx.arc(f.x,f.y+f.r+2,2,0,Math.PI*2); ctx.fill()
-    ctx.fillStyle = f.color; ctx.beginPath(); ctx.arc(f.x,f.y,f.r,0,Math.PI*2); ctx.fill()
-    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(f.x,f.y,f.r*0.4,0,Math.PI*2); ctx.fill()
-  })
-
-  // Trees
-  DECO_TREES.forEach(tree => {
-    // Trunk
-    ctx.fillStyle = '#7a4a1e'
-    ctx.fillRect(tree.x-3,tree.y,6,tree.r*0.6)
-    // Shadow
-    ctx.globalAlpha = 0.2
-    ctx.fillStyle = '#000'
-    ctx.beginPath(); ctx.ellipse(tree.x+4,tree.y+2,tree.r*0.7,tree.r*0.35,0,0,Math.PI*2); ctx.fill()
-    ctx.globalAlpha = 1
-    // Canopy dark
-    ctx.fillStyle = tree.dark ? '#2a6e18' : '#338a20'
-    ctx.beginPath(); ctx.arc(tree.x,tree.y-tree.r*0.2,tree.r,0,Math.PI*2); ctx.fill()
-    // Canopy highlight
-    ctx.fillStyle = tree.dark ? '#3a9428' : '#4aab30'
-    ctx.beginPath(); ctx.arc(tree.x-tree.r*0.25,tree.y-tree.r*0.45,tree.r*0.65,0,Math.PI*2); ctx.fill()
-    // Top shine
-    ctx.fillStyle = 'rgba(255,255,255,0.15)'
-    ctx.beginPath(); ctx.arc(tree.x-tree.r*0.3,tree.y-tree.r*0.55,tree.r*0.35,0,Math.PI*2); ctx.fill()
-  })
-}
-
-function drawPathArrows(ctx) {
-  ctx.fillStyle = 'rgba(150,110,60,0.4)'
-  ctx.font = 'bold 13px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
-  for (let c=1;c<=3;c++) ctx.fillText('›',tx(c),ty(2))
-  for (let r=3;r<=7;r++) ctx.fillText('⌄',tx(4),ty(r))
-  for (let c=5;c<=9;c++) ctx.fillText('›',tx(c),ty(8))
-  for (let r=7;r>=3;r--) ctx.fillText('˄',tx(10),ty(r))
-  for (let c=11;c<=13;c++) ctx.fillText('›',tx(c),ty(2))
-  for (let r=3;r<=8;r++) ctx.fillText('⌄',tx(14),ty(r))
-  for (let c=15;c<=16;c++) ctx.fillText('›',tx(c),ty(9))
-}
-
-function drawGrid(ctx) {
-  ctx.strokeStyle = 'rgba(0,0,0,0.05)'; ctx.lineWidth = 1
-  for (let c=0;c<=COLS;c++) { ctx.beginPath(); ctx.moveTo(c*CELL,0); ctx.lineTo(c*CELL,CH); ctx.stroke() }
-  for (let r=0;r<=ROWS;r++) { ctx.beginPath(); ctx.moveTo(0,r*CELL); ctx.lineTo(CW,r*CELL); ctx.stroke() }
-}
-
-function drawTower(ctx, t, img, cellW, cellH, now) {
-  const px = t.col*CELL, py = t.row*CELL
-  const tDef = TOWER_MAP[t.type]
-
-  // Level glow
-  if (t.level === 1) { ctx.shadowColor = '#4FC3F7'; ctx.shadowBlur = 12 }
-  if (t.level === 2) { ctx.shadowColor = '#FFD700'; ctx.shadowBlur = 20 }
-
-  // Platform
-  if (t.level === 0) {
-    ctx.fillStyle = 'rgba(0,0,0,0.3)'
-    roundRect(ctx, px+4,py+4,CELL-8,CELL-8,6); ctx.fill()
-  } else if (t.level === 1) {
-    const g = ctx.createLinearGradient(px+4,py+4,px+CELL-4,py+CELL-4)
-    g.addColorStop(0,'rgba(30,100,200,0.55)'); g.addColorStop(1,'rgba(10,50,120,0.55)')
-    ctx.fillStyle = g; roundRect(ctx, px+4,py+4,CELL-8,CELL-8,7); ctx.fill()
-  } else {
-    const g = ctx.createLinearGradient(px+4,py+4,px+CELL-4,py+CELL-4)
-    g.addColorStop(0,'rgba(220,170,20,0.65)'); g.addColorStop(1,'rgba(120,80,10,0.65)')
-    ctx.fillStyle = g; roundRect(ctx, px+3,py+3,CELL-6,CELL-6,8); ctx.fill()
-  }
-  ctx.shadowBlur = 0
-
-  // Sprite clipped to rounded rect
-  if (img) {
-    ctx.save()
-    roundRect(ctx, px+4,py+4,CELL-8,CELL-8,6); ctx.clip()
-    ctx.drawImage(img, tDef.col*cellW, tDef.row*cellH, cellW, cellH, px+3, py+3, CELL-6, CELL-6)
-    ctx.restore()
-  }
-
-  // Level border
-  if (t.level === 1) {
-    ctx.strokeStyle = '#4FC3F7'; ctx.lineWidth = 2
-    roundRect(ctx, px+2,py+2,CELL-4,CELL-4,8); ctx.stroke()
-  } else if (t.level === 2) {
-    // Animated dashed gold border
-    const dash = now ? (Math.floor(now*4)%8) : 0
-    ctx.strokeStyle = '#FFD700'; ctx.lineWidth = 2.5
-    ctx.setLineDash([5,3]); ctx.lineDashOffset = -dash
-    roundRect(ctx, px+1,py+1,CELL-2,CELL-2,9); ctx.stroke()
-    ctx.setLineDash([]); ctx.lineDashOffset = 0
-    // Extra gem corners
-    const gemPos = [[px+2,py+2],[px+CELL-4,py+2],[px+2,py+CELL-4],[px+CELL-4,py+CELL-4]]
-    ctx.fillStyle = '#FFD700'
-    gemPos.forEach(([gx,gy]) => { ctx.beginPath(); ctx.arc(gx,gy,3,0,Math.PI*2); ctx.fill() })
-  }
-
-  // Stars
-  if (t.level > 0) {
-    ctx.fillStyle = t.level===2 ? '#FFD700' : '#7fd4ff'
-    ctx.font = `${8+t.level}px Arial`
-    ctx.textAlign='center'; ctx.textBaseline='middle'
-    ctx.shadowColor='#000'; ctx.shadowBlur=3
-    ctx.fillText('★'.repeat(t.level), px+CELL/2, py+CELL-7)
-    ctx.shadowBlur=0
-  }
-}
-
-function drawEnemy(ctx, e) {
-  const { color, outline, radius } = ENEMY_TYPES[e.type]
-  const r = radius
-
-  ctx.fillStyle='rgba(0,0,0,0.18)'
-  ctx.beginPath(); ctx.ellipse(e.x,e.y+r,r*0.9,r*0.35,0,0,Math.PI*2); ctx.fill()
-
-  const g = ctx.createRadialGradient(e.x-r*0.3,e.y-r*0.3,1,e.x,e.y,r)
-  g.addColorStop(0,lighten(color,40)); g.addColorStop(1,color)
-  ctx.fillStyle=g; ctx.beginPath(); ctx.arc(e.x,e.y,r,0,Math.PI*2); ctx.fill()
-  ctx.strokeStyle=outline; ctx.lineWidth=2
-  ctx.beginPath(); ctx.arc(e.x,e.y,r,0,Math.PI*2); ctx.stroke()
-
-  const eyeR=r*0.22,eOX=r*0.32,eOY=r*-0.15
-  ctx.fillStyle='#fff'
-  ctx.beginPath(); ctx.arc(e.x-eOX,e.y+eOY,eyeR,0,Math.PI*2); ctx.fill()
-  ctx.beginPath(); ctx.arc(e.x+eOX,e.y+eOY,eyeR,0,Math.PI*2); ctx.fill()
-  ctx.fillStyle='#222'
-  ctx.beginPath(); ctx.arc(e.x-eOX+1,e.y+eOY+1,eyeR*0.55,0,Math.PI*2); ctx.fill()
-  ctx.beginPath(); ctx.arc(e.x+eOX+1,e.y+eOY+1,eyeR*0.55,0,Math.PI*2); ctx.fill()
-
-  if (e.type==='armored') {
-    ctx.strokeStyle='rgba(200,220,255,0.6)'; ctx.lineWidth=3
-    ctx.beginPath(); ctx.arc(e.x,e.y,r+2,0,Math.PI*2); ctx.stroke()
-  }
-  if (e.effects.slow>0) {
-    ctx.strokeStyle='rgba(100,180,255,0.55)'; ctx.lineWidth=2.5; ctx.setLineDash([3,3])
-    ctx.beginPath(); ctx.arc(e.x,e.y,r+3,0,Math.PI*2); ctx.stroke(); ctx.setLineDash([])
-  }
-  if (e.effects.poison>0) {
-    ctx.fillStyle='rgba(100,200,60,0.7)'
-    ctx.beginPath(); ctx.arc(e.x+r*0.5,e.y-r*0.8,3,0,Math.PI*2); ctx.fill()
-    ctx.beginPath(); ctx.arc(e.x-r*0.4,e.y-r*1.0,2,0,Math.PI*2); ctx.fill()
-  }
-  if (e.effects.stun>0) {
-    ctx.fillStyle='#FFD700'
-    ctx.font='10px Arial'; ctx.textAlign='center'; ctx.textBaseline='middle'
-    ctx.fillText('★',e.x,e.y-r-8)
-  }
-
-  const bw=r*2+4,bh=5,bx=e.x-bw/2,by=e.y-r-12
-  ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.fillRect(bx-1,by-1,bw+2,bh+2)
-  ctx.fillStyle='#444'; ctx.fillRect(bx,by,bw,bh)
-  const pct=Math.max(0,e.hp/e.maxHp)
-  ctx.fillStyle=pct>0.5?'#3e3':pct>0.25?'#ee3':'#e33'
-  ctx.fillRect(bx,by,bw*pct,bh)
-}
-
-function drawProjectile(ctx, p) {
-  const angle = Math.atan2(p.vy || 0, p.vx || 1)
-  const r = p.radius
-  ctx.save()
-  ctx.translate(p.x, p.y)
-
-  switch (p.towerKey) {
-
-    case 'lion': { // Vurige oranje vuurbal
-      ctx.shadowColor='#FF4500'; ctx.shadowBlur=14
-      const fg = ctx.createRadialGradient(-r*0.3,-r*0.3,0,0,0,r*1.2)
-      fg.addColorStop(0,'#FFFFFF'); fg.addColorStop(0.25,'#FFD700')
-      fg.addColorStop(0.6,'#FF6B35'); fg.addColorStop(1,'rgba(200,30,0,0.7)')
-      ctx.fillStyle=fg; ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.fill()
-      // Vlam tong
-      ctx.fillStyle='rgba(255,200,0,0.5)'
-      ctx.beginPath(); ctx.ellipse(-r*0.5,-r*0.4,r*0.35,r*0.2,0.5,0,Math.PI*2); ctx.fill()
-      break
+  if (key === 'lion') {
+    // Mane
+    ctx.fillStyle='#C07A20'; ctx.beginPath()
+    for (let i=0;i<14;i++) {
+      const a1=i/14*Math.PI*2, a2=(i+.5)/14*Math.PI*2
+      const mr=r*1.22
+      ctx.lineTo(cx+Math.cos(a1)*mr, cy+Math.sin(a1)*mr)
+      ctx.lineTo(cx+Math.cos(a2)*mr*.78, cy+Math.sin(a2)*mr*.78)
     }
-
-    case 'elephant': { // Bruine rotsblok
-      ctx.shadowColor='#5C3A1E'; ctx.shadowBlur=8
-      ctx.fillStyle='#8B6914'
-      ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.fill()
-      // Donkere rand
-      ctx.strokeStyle='#4A2E00'; ctx.lineWidth=1.5
-      ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.stroke()
-      // Barsten
-      ctx.strokeStyle='rgba(40,20,0,0.6)'; ctx.lineWidth=1.2
-      ctx.beginPath(); ctx.moveTo(-r*0.3,r*0.1); ctx.lineTo(r*0.2,-r*0.3); ctx.stroke()
-      ctx.beginPath(); ctx.moveTo(r*0.1,r*0.3); ctx.lineTo(-r*0.2,r*0.5); ctx.stroke()
-      // Licht vlekje
-      ctx.fillStyle='rgba(200,160,80,0.45)'
-      ctx.beginPath(); ctx.ellipse(-r*0.3,-r*0.35,r*0.35,r*0.22,0.4,0,Math.PI*2); ctx.fill()
-      break
+    ctx.closePath(); ctx.fill()
+    c(0,0,r,'#F5C542'); e(0,r*.2,r*.55,r*.45,'#FFE08A')
+    c(-r*.32,-r*.15,r*.13,'#3B2000'); c(r*.32,-r*.15,r*.13,'#3B2000')
+    e(0,r*.12,r*.2,r*.14,'#E08050')
+  } else if (key === 'elephant') {
+    e(-r*.9,0,r*.45,r*.65,'#90A0B0'); e(r*.9,0,r*.45,r*.65,'#90A0B0')
+    c(0,0,r,'#8090A0')
+    ctx.strokeStyle='#8090A0'; ctx.lineWidth=r*.22; ctx.lineCap='round'
+    ctx.beginPath(); ctx.moveTo(cx,cy+r*.3)
+    ctx.bezierCurveTo(cx+r*.1,cy+r*.7, cx+r*.45,cy+r*.9, cx+r*.3,cy+r*1.1)
+    ctx.stroke(); ctx.lineWidth=1
+    c(-r*.35,-r*.2,r*.12,'#1A1A1A'); c(r*.35,-r*.2,r*.12,'#1A1A1A')
+  } else if (key === 'panda') {
+    c(0,0,r,'#FFFFFF')
+    e(-r*.38,-r*.18,r*.28,r*.22,'#222222'); e(r*.38,-r*.18,r*.28,r*.22,'#222222')
+    c(-r*.38,-r*.2,r*.13,'#FFFFFF'); c(r*.38,-r*.2,r*.13,'#FFFFFF')
+    c(-r*.35,-r*.18,r*.07,'#111111'); c(r*.35,-r*.18,r*.07,'#111111')
+    c(-r*.62,-r*.7,r*.25,'#222222'); c(r*.62,-r*.7,r*.25,'#222222')
+    e(0,r*.08,r*.18,r*.12,'#111111')
+  } else if (key === 'monkey') {
+    // Fur tufts ring
+    ctx.fillStyle='#5A3015'
+    for (let i=0;i<12;i++) {
+      const a=i/12*Math.PI*2, sz=r*.22+(i%3)*r*.07
+      ctx.beginPath(); ctx.arc(cx+Math.cos(a)*r*1.06, cy+Math.sin(a)*r*1.06, sz, 0, Math.PI*2); ctx.fill()
     }
-
-    case 'panda': { // Groene bamboestok
-      ctx.rotate(angle)
-      ctx.shadowColor='#2E7D32'; ctx.shadowBlur=6
-      // Stok
-      ctx.fillStyle='#4CAF50'
-      ctx.fillRect(-r*2.2,-r*0.45,r*4.4,r*0.9)
-      // Segmenten
-      ctx.strokeStyle='#2E7D32'; ctx.lineWidth=1.8
-      ctx.beginPath(); ctx.moveTo(-r*0.6,-r*0.5); ctx.lineTo(-r*0.6,r*0.5); ctx.stroke()
-      ctx.beginPath(); ctx.moveTo(r*0.6,-r*0.5); ctx.lineTo(r*0.6,r*0.5); ctx.stroke()
-      // Punt
-      ctx.fillStyle='#1B5E20'
-      ctx.beginPath(); ctx.moveTo(r*2.2,-r*0.45); ctx.lineTo(r*3,0); ctx.lineTo(r*2.2,r*0.45); ctx.closePath(); ctx.fill()
-      // Glans
-      ctx.fillStyle='rgba(255,255,255,0.25)'
-      ctx.fillRect(-r*1.8,-r*0.4,r*3.6,r*0.22)
-      break
+    c(0,0,r,'#8B5E3C')
+    c(-r*.85,-r*.1,r*.27,'#7A4E2A'); c(r*.85,-r*.1,r*.27,'#7A4E2A')
+    c(-r*.85,-r*.1,r*.17,'#D4A070'); c(r*.85,-r*.1,r*.17,'#D4A070')
+    e(0,r*.06,r*.72,r*.68,'#D4A070')
+    // Eyebrows
+    ctx.strokeStyle='#3A1800'; ctx.lineWidth=r*.07; ctx.beginPath()
+    ctx.arc(cx-r*.28,cy-r*.3,r*.15,Math.PI,0,false); ctx.stroke()
+    ctx.beginPath(); ctx.arc(cx+r*.28,cy-r*.3,r*.15,Math.PI,0,false); ctx.stroke()
+    // Amber eyes
+    c(-r*.28,-r*.15,r*.16,'#1A1A1A'); c(r*.28,-r*.15,r*.16,'#1A1A1A')
+    c(-r*.28,-r*.13,r*.1,'#8B5A10'); c(r*.28,-r*.13,r*.1,'#8B5A10')
+    c(-r*.28,-r*.13,r*.055,'#1A1A1A'); c(r*.28,-r*.13,r*.055,'#1A1A1A')
+    c(-r*.24,-r*.17,r*.04,'#FFFFFF'); c(r*.24,-r*.17,r*.04,'#FFFFFF')
+    // Muzzle + teeth
+    e(0,r*.28,r*.4,r*.3,'#E0B888')
+    c(-r*.12,r*.26,r*.08,'#7A4020'); c(r*.12,r*.26,r*.08,'#7A4020')
+    ctx.fillStyle='#FFFFFF'; ctx.beginPath(); ctx.roundRect?.(cx-r*.25,cy+r*.34,r*.5,r*.18,r*.04)||ctx.rect(cx-r*.25,cy+r*.34,r*.5,r*.18); ctx.fill()
+    ctx.strokeStyle='#7A4020'; ctx.lineWidth=r*.045
+    ctx.beginPath(); ctx.moveTo(cx-r*.25,cy+r*.43); ctx.lineTo(cx+r*.25,cy+r*.43); ctx.stroke()
+    ctx.lineWidth=1
+  } else if (key === 'tiger') {
+    c(0,0,r,'#FF8C00'); e(0,r*.2,r*.5,r*.42,'#FFD090')
+    ctx.fillStyle='#1A0A00'
+    ctx.fillRect(cx-r*.08,cy-r*.9,r*.16,r*.5)
+    c(-r*.3,-r*.2,r*.15,'#22EE44'); c(r*.3,-r*.2,r*.15,'#22EE44')
+    c(-r*.3,-r*.2,r*.08,'#111111'); c(r*.3,-r*.2,r*.08,'#111111')
+    ctx.strokeStyle='rgba(255,255,255,0.6)'; ctx.lineWidth=r*.04
+    ctx.beginPath(); ctx.moveTo(cx-r*.18,cy+r*.18); ctx.lineTo(cx-r*.85,cy+r*.1); ctx.stroke()
+    ctx.beginPath(); ctx.moveTo(cx+r*.18,cy+r*.18); ctx.lineTo(cx+r*.85,cy+r*.1); ctx.stroke()
+    ctx.lineWidth=1
+  } else if (key === 'bear') {
+    c(0,0,r,'#6B4226')
+    c(-r*.62,-r*.68,r*.25,'#6B4226'); c(r*.62,-r*.68,r*.25,'#6B4226')
+    c(-r*.62,-r*.68,r*.14,'#A07050'); c(r*.62,-r*.68,r*.14,'#A07050')
+    e(0,r*.22,r*.4,r*.32,'#C09070')
+    c(-r*.32,-r*.15,r*.13,'#1A1A1A'); c(r*.32,-r*.15,r*.13,'#1A1A1A')
+    e(0,r*.12,r*.16,r*.11,'#1A1A1A')
+  } else if (key === 'hippo') {
+    e(0,0,r,r*.88,'#9090B8')
+    e(0,r*.38,r*.5,r*.32,'#A0A0C0')
+    c(-r*.18,r*.35,r*.1,'#6868A0'); c(r*.18,r*.35,r*.1,'#6868A0')
+    c(-r*.35,-r*.35,r*.14,'#3A3A3A'); c(r*.35,-r*.35,r*.14,'#3A3A3A')
+    c(-r*.65,-r*.55,r*.15,'#9090B8'); c(r*.65,-r*.55,r*.15,'#9090B8')
+  } else if (key === 'rhino') {
+    c(0,0,r,'#8A8A7A')
+    ctx.fillStyle='#BBB8A0'
+    ctx.beginPath(); ctx.moveTo(cx,cy-r*1.25); ctx.lineTo(cx-r*.15,cy-r*.75); ctx.lineTo(cx+r*.15,cy-r*.75); ctx.closePath(); ctx.fill()
+    c(-r*.35,-r*.1,r*.12,'#2A2A2A'); c(r*.35,-r*.1,r*.12,'#2A2A2A')
+    c(-r*.7,-r*.5,r*.18,'#8A8A7A'); c(r*.7,-r*.5,r*.18,'#8A8A7A')
+    c(-r*.7,-r*.5,r*.1,'#D0C8A0'); c(r*.7,-r*.5,r*.1,'#D0C8A0')
+  } else if (key === 'croc') {
+    // Front-facing croc: body, lower jaw, belly, top scales, protruding eyes, teeth, nostrils
+    e(0,0,r*.9,r*.8,'#2E8B57')
+    e(0,r*.4,r*.7,r*.38,'#267A44')
+    e(0,r*.18,r*.58,r*.62,'#A8D8A0')
+    ctx.fillStyle='#1A6640'
+    for(let i=-2;i<=2;i++){ctx.beginPath();ctx.ellipse(cx+i*r*.26,cy-r*.44,r*.12,r*.08,0,0,Math.PI*2);ctx.fill()}
+    c(-r*.35,-r*.42,r*.18,'#1A6640'); c(r*.35,-r*.42,r*.18,'#1A6640')
+    c(-r*.35,-r*.42,r*.12,'#DDCC00'); c(r*.35,-r*.42,r*.12,'#DDCC00')
+    ctx.fillStyle='#111111'
+    ctx.beginPath();ctx.ellipse(cx-r*.35,cy-r*.42,r*.04,r*.09,0,0,Math.PI*2);ctx.fill()
+    ctx.beginPath();ctx.ellipse(cx+r*.35,cy-r*.42,r*.04,r*.09,0,0,Math.PI*2);ctx.fill()
+    ctx.fillStyle='#FFFDE0'
+    for(let i=0;i<4;i++){const tx2=cx-r*.42+i*r*.28;ctx.beginPath();ctx.moveTo(tx2,cy+r*.05);ctx.lineTo(tx2-r*.07,cy+r*.24);ctx.lineTo(tx2+r*.07,cy+r*.24);ctx.closePath();ctx.fill()}
+    c(-r*.14,-r*.04,r*.07,'#1A5530'); c(r*.14,-r*.04,r*.07,'#1A5530')
+  } else if (key === 'penguin') {
+    c(0,0,r,'#1A1A2E')
+    e(0,r*.15,r*.55,r*.7,'#F0F0FF')
+    c(-r*.3,-r*.25,r*.18,'#FFFFFF'); c(r*.3,-r*.25,r*.18,'#FFFFFF')
+    c(-r*.28,-r*.23,r*.1,'#1A1A2E'); c(r*.28,-r*.23,r*.1,'#1A1A2E')
+    c(-r*.24,-r*.26,r*.04,'#FFFFFF'); c(r*.24,-r*.26,r*.04,'#FFFFFF')
+    ctx.fillStyle='#FF8C00'
+    ctx.beginPath(); ctx.moveTo(cx,cy+r*.02); ctx.lineTo(cx-r*.15,cy+r*.2); ctx.lineTo(cx+r*.15,cy+r*.2); ctx.closePath(); ctx.fill()
+  } else if (key === 'hedgehog') {
+    // Spikes on top: angles π→2π trace left→up→right (canvas y-down, 3π/2 = up)
+    const sn = 14
+    ctx.strokeStyle='#5C3A1E'; ctx.lineWidth=r*.12; ctx.lineCap='round'
+    for(let i=0;i<=sn;i++){const a=Math.PI+(i/sn)*Math.PI;ctx.beginPath();ctx.moveTo(cx+Math.cos(a)*r*.72,cy+Math.sin(a)*r*.72);ctx.lineTo(cx+Math.cos(a)*r*1.42,cy+Math.sin(a)*r*1.42);ctx.stroke()}
+    ctx.lineWidth=1; ctx.lineCap='butt'
+    c(0,0,r,'#8B6538')
+    // Face = bottom half (0→π clockwise = bottom)
+    ctx.fillStyle='#C8956C'; ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI,false); ctx.closePath(); ctx.fill()
+    // Eyes above center, nose, smile
+    c(-r*.3,-r*.18,r*.14,'#1A1A1A'); c(r*.3,-r*.18,r*.14,'#1A1A1A')
+    c(0,r*.05,r*.12,'#2A1000')
+    ctx.strokeStyle='#2A1000'; ctx.lineWidth=r*.065
+    ctx.beginPath(); ctx.arc(cx,cy+r*.18,r*.18,Math.PI,0,false); ctx.stroke()
+    ctx.lineWidth=1
+  } else { // pig
+    c(0,0,r,'#FFAEB5'); e(0,r*.18,r*.55,r*.45,'#FFD0D5')
+    ctx.fillStyle='#FF9AA0'
+    for (const side of [-1,1]) {
+      ctx.beginPath(); ctx.moveTo(cx+side*r*.3,cy-r*.75); ctx.lineTo(cx+side*r*.62,cy-r*1.05); ctx.lineTo(cx+side*r*.7,cy-r*.65); ctx.closePath(); ctx.fill()
     }
-
-    case 'monkey': { // Kokosnoot met 3 vlekken
-      ctx.shadowColor='#6D3B1E'; ctx.shadowBlur=7
-      ctx.fillStyle='#8B5E3C'; ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.fill()
-      ctx.strokeStyle='#5C3317'; ctx.lineWidth=1.5
-      ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.stroke()
-      // 3 donkere ogen in driehoek
-      ctx.fillStyle='rgba(25,10,0,0.85)'
-      const sa=[Math.PI*1.5, Math.PI*1.5+Math.PI*2/3, Math.PI*1.5+Math.PI*4/3]
-      sa.forEach(a => { ctx.beginPath(); ctx.arc(Math.cos(a)*r*0.42,Math.sin(a)*r*0.42,r*0.2,0,Math.PI*2); ctx.fill() })
-      // Glans
-      ctx.fillStyle='rgba(220,180,130,0.35)'
-      ctx.beginPath(); ctx.ellipse(-r*0.28,-r*0.32,r*0.28,r*0.18,0.4,0,Math.PI*2); ctx.fill()
-      break
-    }
-
-    case 'tiger': { // Gouden laserbead met sleepspoor
-      ctx.shadowColor='#FFD700'; ctx.shadowBlur=22
-      // Spoor
-      ctx.strokeStyle='rgba(255,200,0,0.35)'; ctx.lineWidth=r*0.8
-      ctx.lineCap='round'
-      ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-Math.cos(angle)*24,-Math.sin(angle)*24); ctx.stroke()
-      // Kern gloed
-      const tg = ctx.createRadialGradient(0,0,0,0,0,r*2)
-      tg.addColorStop(0,'#FFFFFF'); tg.addColorStop(0.3,'#FFE566'); tg.addColorStop(0.7,'#FFD700'); tg.addColorStop(1,'rgba(200,160,0,0)')
-      ctx.fillStyle=tg; ctx.beginPath(); ctx.arc(0,0,r*2,0,Math.PI*2); ctx.fill()
-      break
-    }
-
-    case 'bear': { // Gele ster/burst
-      ctx.shadowColor='#FFD23F'; ctx.shadowBlur=12
-      ctx.fillStyle='#FFD23F'
-      const pts=6, out=r, inn=r*0.45
-      ctx.beginPath()
-      for(let i=0;i<pts*2;i++) {
-        const rad=i%2===0?out:inn, ang=i*Math.PI/pts-Math.PI/2
-        i===0?ctx.moveTo(Math.cos(ang)*rad,Math.sin(ang)*rad):ctx.lineTo(Math.cos(ang)*rad,Math.sin(ang)*rad)
-      }
-      ctx.closePath(); ctx.fill()
-      ctx.fillStyle='rgba(255,255,200,0.6)'
-      ctx.beginPath(); ctx.arc(0,0,r*0.35,0,Math.PI*2); ctx.fill()
-      break
-    }
-
-    case 'rhino': { // Grijze hoorn/pijl
-      ctx.rotate(angle)
-      ctx.shadowColor='#AAB0B5'; ctx.shadowBlur=8
-      const rg = ctx.createLinearGradient(-r,-r*0.6,r*1.8,0)
-      rg.addColorStop(0,'#9BA0A5'); rg.addColorStop(0.5,'#C8CDD0'); rg.addColorStop(1,'#6c7275')
-      ctx.fillStyle=rg
-      ctx.beginPath()
-      ctx.moveTo(r*1.8,0); ctx.lineTo(-r*0.6,r*0.7); ctx.lineTo(-r*0.3,0); ctx.lineTo(-r*0.6,-r*0.7)
-      ctx.closePath(); ctx.fill()
-      ctx.strokeStyle='#4a5055'; ctx.lineWidth=1; ctx.stroke()
-      break
-    }
-
-    case 'hippo': { // Blauwe waterdruppel
-      ctx.rotate(angle)
-      ctx.shadowColor='#29B6F6'; ctx.shadowBlur=12
-      const wg = ctx.createLinearGradient(-r,0,r*1.8,0)
-      wg.addColorStop(0,'#B3E5FC'); wg.addColorStop(0.45,'#29B6F6'); wg.addColorStop(1,'#0277BD')
-      ctx.fillStyle=wg
-      ctx.beginPath()
-      ctx.moveTo(r*1.8,0)
-      ctx.bezierCurveTo(r*0.5,r*0.95,-r*1.1,r*0.75,-r*1.1,0)
-      ctx.bezierCurveTo(-r*1.1,-r*0.75,r*0.5,-r*0.95,r*1.8,0)
-      ctx.closePath(); ctx.fill()
-      // Glans
-      ctx.fillStyle='rgba(255,255,255,0.45)'
-      ctx.beginPath(); ctx.ellipse(r*0.1,-r*0.22,r*0.38,r*0.2,-0.4,0,Math.PI*2); ctx.fill()
-      break
-    }
-
-    case 'croc': { // Gifgroene zuurbol met bellen
-      ctx.shadowColor='#00C853'; ctx.shadowBlur=12
-      const ag = ctx.createRadialGradient(-r*0.25,-r*0.25,0,0,0,r*1.1)
-      ag.addColorStop(0,'#CCFF90'); ag.addColorStop(0.5,'#69F0AE'); ag.addColorStop(1,'rgba(0,100,30,0.9)')
-      ctx.fillStyle=ag; ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.fill()
-      ctx.strokeStyle='rgba(0,150,50,0.6)'; ctx.lineWidth=1.5
-      ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.stroke()
-      // Bellen
-      ctx.fillStyle='rgba(255,255,255,0.5)'
-      ctx.beginPath(); ctx.arc(-r*0.35,-r*0.3,r*0.22,0,Math.PI*2); ctx.fill()
-      ctx.fillStyle='rgba(255,255,255,0.35)'
-      ctx.beginPath(); ctx.arc(r*0.3,r*0.1,r*0.15,0,Math.PI*2); ctx.fill()
-      break
-    }
-
-    case 'penguin': { // Ijskristal (6-puntige ster)
-      ctx.shadowColor='#81D4FA'; ctx.shadowBlur=14
-      ctx.strokeStyle='#E1F5FE'; ctx.lineWidth=2.2; ctx.lineCap='round'
-      for(let i=0;i<6;i++) {
-        const a=i*Math.PI/3, len=r*1.5
-        ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(Math.cos(a)*len,Math.sin(a)*len); ctx.stroke()
-        // Zij-takjes
-        const mx=Math.cos(a)*len*0.55, my=Math.sin(a)*len*0.55
-        const na=a+Math.PI/2, tl=r*0.38
-        ctx.beginPath(); ctx.moveTo(mx+Math.cos(na)*tl,my+Math.sin(na)*tl)
-        ctx.lineTo(mx-Math.cos(na)*tl,my-Math.sin(na)*tl); ctx.stroke()
-      }
-      ctx.fillStyle='rgba(179,229,252,0.7)'
-      ctx.beginPath(); ctx.arc(0,0,r*0.42,0,Math.PI*2); ctx.fill()
-      break
-    }
-
-    case 'hedgehog': { // Stekelige gele pinbal
-      ctx.shadowColor='#FFD23F'; ctx.shadowBlur=10
-      ctx.strokeStyle='#FFD23F'; ctx.lineWidth=1.8; ctx.lineCap='round'
-      for(let i=0;i<8;i++) {
-        const a=i*Math.PI/4
-        ctx.beginPath(); ctx.moveTo(Math.cos(a)*r*0.6,Math.sin(a)*r*0.6)
-        ctx.lineTo(Math.cos(a)*r*2,Math.sin(a)*r*2); ctx.stroke()
-      }
-      ctx.fillStyle='#FFE066'
-      ctx.beginPath(); ctx.arc(0,0,r*0.65,0,Math.PI*2); ctx.fill()
-      ctx.fillStyle='rgba(255,255,200,0.5)'
-      ctx.beginPath(); ctx.arc(-r*0.18,-r*0.18,r*0.28,0,Math.PI*2); ctx.fill()
-      break
-    }
-
-    default: { // Varken: roze bolletje
-      ctx.shadowColor='#FF80AB'; ctx.shadowBlur=7
-      ctx.fillStyle='#FFB6C1'; ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.fill()
-      ctx.strokeStyle='#FF80AB'; ctx.lineWidth=1.5
-      ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.stroke()
-      ctx.fillStyle='rgba(255,255,255,0.4)'
-      ctx.beginPath(); ctx.arc(-r*0.3,-r*0.3,r*0.28,0,Math.PI*2); ctx.fill()
-      break
-    }
+    e(0,r*.3,r*.38,r*.28,'#FFB0B8')
+    c(-r*.14,r*.3,r*.09,'#FF8090'); c(r*.14,r*.3,r*.09,'#FF8090')
+    c(-r*.32,-r*.08,r*.13,'#2A1A1A'); c(r*.32,-r*.08,r*.13,'#2A1A1A')
   }
-
-  ctx.shadowBlur=0
-  ctx.restore()
-}
-
-function drawAnim(ctx, a) {
-  const t = 1 - a.life/a.maxLife
-  ctx.save()
-
-  if (a.type==='ring') {
-    const r = a.r*(0.3+t*0.7)
-    ctx.globalAlpha=(1-t)*0.8; ctx.strokeStyle=a.color
-    ctx.lineWidth=4*(1-t*0.8)+1
-    ctx.shadowColor=a.color; ctx.shadowBlur=8
-    ctx.beginPath(); ctx.arc(a.x,a.y,r,0,Math.PI*2); ctx.stroke()
-  }
-  else if (a.type==='stomp') {
-    for (let i=0;i<4;i++) {
-      const phase=Math.min(1,(t+i*0.12)%1.0)
-      const r=a.r*phase
-      ctx.globalAlpha=(1-phase)*0.85
-      ctx.strokeStyle='#8B4513'; ctx.lineWidth=5*(1-phase)+1
-      ctx.shadowColor='#8B4513'; ctx.shadowBlur=6
-      ctx.beginPath(); ctx.arc(a.x,a.y,r,0,Math.PI*2); ctx.stroke()
-    }
-    for (let i=0;i<10;i++) {
-      const ang=(i/10)*Math.PI*2, d=a.r*0.5*t
-      const px=a.x+Math.cos(ang)*d, py=a.y+Math.sin(ang)*d
-      ctx.globalAlpha=(1-t)*0.9; ctx.fillStyle='#8B6914'
-      ctx.shadowBlur=0
-      ctx.beginPath(); ctx.arc(px,py,5*(1-t*0.6),0,Math.PI*2); ctx.fill()
-    }
-  }
-  else if (a.type==='laser') {
-    ctx.globalAlpha=(1-t)*0.9
-    ctx.strokeStyle='#FFD700'; ctx.lineWidth=4*(1-t*0.7)+1
-    ctx.shadowColor='#FFD700'; ctx.shadowBlur=15
-    ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(a.tx,a.ty); ctx.stroke()
-    ctx.strokeStyle='#fff'; ctx.lineWidth=1.5*(1-t)
-    ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(a.tx,a.ty); ctx.stroke()
-  }
-  else if (a.type==='beam') {
-    ctx.globalAlpha=(1-t)*0.85
-    ctx.strokeStyle=a.color; ctx.lineWidth=2.5*(1-t)+0.5
-    ctx.shadowColor=a.color; ctx.shadowBlur=10
-    ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(a.tx,a.ty); ctx.stroke()
-  }
-  else if (a.type==='horn') {
-    const numH=5, rise=20*t
-    ctx.globalAlpha=Math.min(1,t*3)*(1-t*t)
-    ctx.fillStyle='#9BA0A5'; ctx.strokeStyle='#555'; ctx.lineWidth=1
-    ctx.shadowColor='#ccc'; ctx.shadowBlur=5
-    for (let i=0;i<numH;i++) {
-      const sx=a.x+(i-2)*10, baseY=a.y+CELL*0.4
-      const h=rise*(0.6+i%2*0.4)
-      ctx.beginPath(); ctx.moveTo(sx-5,baseY); ctx.lineTo(sx,baseY-h); ctx.lineTo(sx+5,baseY); ctx.closePath()
-      ctx.fill(); ctx.stroke()
-    }
-  }
-  else if (a.type==='freeze') {
-    const n=8, len=22*t
-    ctx.globalAlpha=1-t; ctx.strokeStyle='#C8EFFF'; ctx.lineWidth=2.5
-    ctx.shadowColor='#7fd4ff'; ctx.shadowBlur=10
-    for (let i=0;i<n;i++) {
-      const ang=(i/n)*Math.PI*2
-      ctx.beginPath(); ctx.moveTo(a.x+Math.cos(ang)*5,a.y+Math.sin(ang)*5)
-      ctx.lineTo(a.x+Math.cos(ang)*len,a.y+Math.sin(ang)*len); ctx.stroke()
-    }
-    ctx.beginPath(); ctx.arc(a.x,a.y,20*t,0,Math.PI*2)
-    ctx.strokeStyle='rgba(100,200,255,0.6)'; ctx.lineWidth=3*(1-t)+1; ctx.stroke()
-  }
-  else if (a.type==='acid') {
-    ctx.globalAlpha=(1-t)*0.75
-    ctx.fillStyle='rgba(60,150,60,0.5)'
-    ctx.beginPath(); ctx.arc(a.x,a.y,18*Math.sqrt(t),0,Math.PI*2); ctx.fill()
-    for (let i=0;i<8;i++) {
-      const ang=(i/8)*Math.PI*2, d=16*t
-      ctx.globalAlpha=(1-t)*0.85; ctx.fillStyle='#66BB6A'
-      ctx.shadowColor='#66BB6A'; ctx.shadowBlur=5
-      ctx.beginPath(); ctx.arc(a.x+Math.cos(ang)*d,a.y+Math.sin(ang)*d,5*(1-t*0.5),0,Math.PI*2); ctx.fill()
-    }
-  }
-  else if (a.type==='shockwave') {
-    const r=55*t
-    ctx.globalAlpha=(1-t)*0.65; ctx.strokeStyle='#FFD23F'; ctx.lineWidth=6*(1-t)+1
-    ctx.shadowColor='#FFD23F'; ctx.shadowBlur=12
-    ctx.beginPath(); ctx.arc(a.x,a.y,r,0,Math.PI*2); ctx.stroke()
-    ctx.globalAlpha=(1-t)*0.12; ctx.fillStyle='#FFD23F'
-    ctx.beginPath(); ctx.arc(a.x,a.y,r,0,Math.PI*2); ctx.fill()
-  }
-  else if (a.type==='spikes') {
-    const n=12, len=32*t
-    ctx.globalAlpha=(1-t)*0.9; ctx.strokeStyle='#FFD23F'; ctx.lineWidth=2.5
-    ctx.shadowColor='#FFD23F'; ctx.shadowBlur=8
-    for (let i=0;i<n;i++) {
-      const ang=(i/n)*Math.PI*2
-      ctx.beginPath(); ctx.moveTo(a.x,a.y)
-      ctx.lineTo(a.x+Math.cos(ang)*len,a.y+Math.sin(ang)*len); ctx.stroke()
-    }
-    ctx.fillStyle='#FFD23F'; ctx.globalAlpha=(1-t)*0.8
-    ctx.beginPath(); ctx.arc(a.x,a.y,6*(1-t*0.5),0,Math.PI*2); ctx.fill()
-  }
-  else if (a.type==='wave') {
-    for (let i=0;i<4;i++) {
-      const phase=Math.min(1,(t+i*0.18)%1.0)
-      ctx.globalAlpha=(1-phase)*0.65; ctx.strokeStyle='#4FC3F7'; ctx.lineWidth=3*(1-phase)+0.5
-      ctx.shadowColor='#4FC3F7'; ctx.shadowBlur=6
-      ctx.beginPath(); ctx.arc(a.x,a.y,a.r*phase,0,Math.PI*2); ctx.stroke()
-    }
-  }
-  else if (a.type==='roar') {
-    for (let i=0;i<3;i++) {
-      const phase=Math.min(1,(t+i*0.2)%1.0)
-      ctx.globalAlpha=(1-phase)*0.5; ctx.strokeStyle='#FF6B35'; ctx.lineWidth=4*(1-phase)+1
-      ctx.shadowColor='#FF6B35'; ctx.shadowBlur=8
-      ctx.beginPath(); ctx.arc(a.x,a.y,a.r*phase,0,Math.PI*2); ctx.stroke()
-    }
-  }
-  else if (a.type==='bamboo') {
-    ctx.globalAlpha=Math.min(1,t*2)*(1-t)
-    ctx.strokeStyle='#4a9e2a'; ctx.lineWidth=3
-    ctx.shadowColor='#4a9e2a'; ctx.shadowBlur=5
-    for (let i=0;i<3;i++) {
-      const ox=(i-1)*10, len=25*t, ang=-Math.PI/2+0.3*(i-1)
-      ctx.beginPath()
-      ctx.moveTo(a.x+ox,a.y+10)
-      ctx.lineTo(a.x+ox+Math.cos(ang)*len,a.y+10+Math.sin(ang)*len)
-      ctx.stroke()
-    }
-  }
-
-  ctx.restore()
-}
-
-function drawField(ctx, img, game, hoverTile, selectedType, inspectedId, cellW, cellH, now) {
-  drawMapBackground(ctx)
-  drawDecorations(ctx)
-  drawPath(ctx)
-  drawGrid(ctx)
-  drawPathArrows(ctx)
-
-  // Hover preview
-  if (selectedType && hoverTile) {
-    const { col, row } = hoverTile
-    const valid = !PATH_TILES.has(`${col},${row}`) && !game.towers.find(t => t.col===col && t.row===row)
-    ctx.fillStyle = valid ? 'rgba(100,255,100,0.3)' : 'rgba(255,60,60,0.3)'
-    ctx.fillRect(col*CELL,row*CELL,CELL,CELL)
-    ctx.strokeStyle = valid ? 'rgba(100,255,100,0.6)' : 'rgba(255,100,100,0.6)'
-    ctx.lineWidth=1.5; ctx.setLineDash([5,5])
-    const base = TOWER_MAP[selectedType]
-    ctx.beginPath(); ctx.arc(tx(col),ty(row),base.range,0,Math.PI*2); ctx.stroke()
-    ctx.setLineDash([])
-  }
-
-  // Towers
-  game.towers.forEach(t => drawTower(ctx, t, img, cellW, cellH, now))
-
-  // Inspected ring
-  const ins = inspectedId ? game.towers.find(t => t.id===inspectedId) : null
-  if (ins) {
-    const { range } = towerStats(ins.type, ins.level)
-    ctx.strokeStyle='rgba(255,220,50,0.6)'; ctx.lineWidth=1.5; ctx.setLineDash([5,5])
-    ctx.beginPath(); ctx.arc(tx(ins.col),ty(ins.row),range,0,Math.PI*2); ctx.stroke()
-    ctx.setLineDash([])
-    ctx.strokeStyle='rgba(255,220,50,0.9)'; ctx.lineWidth=2
-    ctx.strokeRect(ins.col*CELL+1,ins.row*CELL+1,CELL-2,CELL-2)
-  }
-
-  // Enemies
-  game.enemies.forEach(e => drawEnemy(ctx, e))
-
-  // Projectiles
-  game.projectiles.forEach(p => drawProjectile(ctx, p))
-
-  // Animations
-  game.anims.forEach(a => drawAnim(ctx, a))
-
-  // Particles
-  game.particles.forEach(p => {
-    ctx.globalAlpha = Math.max(0, p.life/p.maxLife)
-    ctx.fillStyle = p.color
-    ctx.beginPath(); ctx.arc(p.x,p.y,p.size,0,Math.PI*2); ctx.fill()
-  })
   ctx.globalAlpha = 1
 }
 
-// ── Main component ────────────────────────────────────────────────────
+// ── Main component ─────────────────────────────────────────────────────
 export default function TowerDefenseGame({ onBack }) {
-  const [gold,      setGold]      = useState(150)
-  const [lives,     setLives]     = useState(15)
+  const [gold,      setGold]      = useState(250)
+  const [lives,     setLives]     = useState(20)
   const [wave,      setWave]      = useState(0)
   const [phase,     setPhase]     = useState('idle')
   const [selType,   setSelType]   = useState(null)
@@ -735,116 +197,150 @@ export default function TowerDefenseGame({ onBack }) {
   const [isFS,      setIsFS]      = useState(false)
   const [,          forceUpdate]  = useState(0)
 
-  const canvasRef    = useRef(null)
-  const wrapperRef   = useRef(null)
-  const gameRef      = useRef(null)
-  const rafRef       = useRef(null)
-  const imgRef       = useRef(null)
-  const cellSzRef    = useRef({ w:100, h:100 })
-  const selTypeRef   = useRef(null)
-  const hoverTileRef = useRef(null)
-  const inspectedRef = useRef(null)
-  const speedRef     = useRef(1)
+  const containerRef  = useRef(null)
+  const wrapperRef    = useRef(null)
+  const pixiRef       = useRef(null)
+  const gameRef       = useRef(null)
+  const matterRef     = useRef(null)
+  const physProjs     = useRef(new Map())   // projId -> Matter.Body
+  const enemyGfxMap   = useRef(new Map())   // enemyId -> PIXI.Graphics
+  const projGfxMap    = useRef(new Map())   // projId -> PIXI.Graphics
+  const animGfxMap    = useRef(new Map())   // animId -> PIXI.Graphics
+  const particleGfxs  = useRef([])          // [{p, gfx}]
+  const towerSprites  = useRef(new Map())   // towerId -> PIXI.Container
+  const selTypeRef    = useRef(null)
+  const hoverTileRef  = useRef(null)
+  const inspectedRef  = useRef(null)
+  const speedRef      = useRef(1)
+  const goldRef       = useRef(null)        // DOM ref for GSAP
+  const livesRef      = useRef(null)
+  const waveStartRef  = useRef(null)
 
   selTypeRef.current   = selType
   hoverTileRef.current = hoverTile
   inspectedRef.current = inspected
   speedRef.current     = speed
 
-  // Load spritesheet
+  // ── PixiJS init ──────────────────────────────────────────────────────
   useEffect(() => {
-    const img = new Image()
-    img.src = '/Towerdefence.png'
-    img.onload = () => { imgRef.current = img; cellSzRef.current = { w:img.width/5, h:img.height/5 } }
-  }, [])
+    const app = new PIXI.Application({
+      width: CW, height: CH,
+      backgroundAlpha: 0,
+      resolution: 1,
+      antialias: true,
+    })
+    app.view.className = 'td-canvas'
+    containerRef.current.appendChild(app.view)
 
-  // Check for save on mount
-  useEffect(() => { setHasSave(!!loadSave()) }, [])
+    // Layers (order = z-order)
+    const bgSprite    = new PIXI.Sprite(buildStaticBg(app.renderer))
+    const hoverLayer  = new PIXI.Graphics()
+    const rangeLayer  = new PIXI.Graphics()
+    const towerLayer  = new PIXI.Container()
+    const enemyLayer  = new PIXI.Container()
+    const projLayer   = new PIXI.Container()
+    const animLayer   = new PIXI.Container()
+    const partLayer   = new PIXI.Container()
 
-  // Fullscreen listener
-  useEffect(() => {
-    const handler = () => setIsFS(!!document.fullscreenElement)
-    document.addEventListener('fullscreenchange', handler)
-    return () => document.removeEventListener('fullscreenchange', handler)
-  }, [])
+    app.stage.addChild(bgSprite)
+    app.stage.addChild(hoverLayer)
+    app.stage.addChild(rangeLayer)
+    app.stage.addChild(towerLayer)
+    app.stage.addChild(enemyLayer)
+    app.stage.addChild(projLayer)
+    app.stage.addChild(animLayer)
+    app.stage.addChild(partLayer)
 
-  const newGame = useCallback(() => {
-    _nextId = 1
-    gameRef.current = {
-      towers:[], enemies:[], projectiles:[], particles:[], anims:[],
-      gold:150, lives:15, wave:0,
-      spawnQueue:[], spawnTimer:0, waveActive:false,
-      running:false, lastTs:null,
-    }
-  }, [])
+    // Matter.js engine
+    const physEngine = createPhysicsEngine()
+    matterRef.current = physEngine
 
-  const applyLoad = useCallback(save => {
-    _nextId = 1
-    gameRef.current = {
-      towers: save.towers.map(t => ({ ...t, lastShot:0 })),
-      enemies:[], projectiles:[], particles:[], anims:[],
-      gold:save.gold, lives:save.lives, wave:save.wave,
-      spawnQueue:[], spawnTimer:0, waveActive:false,
-      running:false, lastTs:null,
-    }
-    _nextId = Math.max(...save.towers.map(t=>t.id), 0) + 1
-  }, [])
+    pixiRef.current = { app, bgSprite, hoverLayer, rangeLayer, towerLayer, enemyLayer, projLayer, animLayer, partLayer }
 
-  useEffect(() => { newGame() }, [newGame])
+    // ── Ticker ──────────────────────────────────────────────────────────
+    let lastTs = performance.now()
 
-  // ── Game loop ─────────────────────────────────────────────────────
-  const startLoop = useCallback(() => {
-    const canvas = canvasRef.current; if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    const game = gameRef.current
-    game.running = true
+    const tick = () => {
+      const now = performance.now()
+      const rawDt = Math.min((now - lastTs) / 1000, 0.05)
+      lastTs = now
+      const game = gameRef.current
+      if (!game || !game.running) return
 
-    const tick = ts => {
-      if (!game.running) return
-      const rawDt = Math.min((ts-(game.lastTs||ts))/1000, 0.05)
       const dt = rawDt * speedRef.current
-      game.lastTs = ts
 
-      // Spawner
+      // Update matter.js physics
+      Matter.Engine.update(physEngine, rawDt * 1000 * speedRef.current)
+
+      // ── Spawn ────────────────────────────────────────────────────────
       if (game.waveActive && game.spawnQueue.length > 0) {
         game.spawnTimer -= dt
         if (game.spawnTimer <= 0) {
           const entry = game.spawnQueue.shift()
           const et = ENEMY_TYPES[entry.type]
-          game.enemies.push({
-            id:uid(), type:entry.type,
-            x:WAYPOINTS[0].x, y:WAYPOINTS[0].y,
-            hp:Math.round(et.baseHp*entry.hpScale),
-            maxHp:Math.round(et.baseHp*entry.hpScale),
-            speed:et.baseSpd*entry.spdScale,
-            wpIdx:1,
-            effects:{ slow:0, poison:0, poisonDmg:0, stun:0 },
-            reward:et.reward, armor:et.armor,
-          })
+          const e = {
+            id: uid(), type: entry.type,
+            x: WAYPOINTS[0].x, y: WAYPOINTS[0].y,
+            hp: Math.round(et.baseHp * entry.hpScale),
+            maxHp: Math.round(et.baseHp * entry.hpScale),
+            speed: et.baseSpd * entry.spdScale,
+            wpIdx: 1,
+            effects: { slow: 0, poison: 0, poisonDmg: 0, stun: 0 },
+            reward: et.reward, armor: et.armor,
+          }
+          game.enemies.push(e)
+          // Create enemy graphics
+          const gfx = new PIXI.Graphics()
+          gfx.x = e.x; gfx.y = e.y
+          enemyLayer.addChild(gfx)
+          enemyGfxMap.current.set(e.id, gfx)
           game.spawnTimer = game.spawnQueue.length > 0 ? entry.delay * 0.5 : 0
         }
       }
 
-      // Enemies
+      // ── Enemies ──────────────────────────────────────────────────────
       game.enemies = game.enemies.filter(e => {
-        e.effects.slow   = Math.max(0,e.effects.slow-dt)
-        e.effects.stun   = Math.max(0,e.effects.stun-dt)
-        e.effects.poison = Math.max(0,e.effects.poison-dt)
+        e.effects.slow   = Math.max(0, e.effects.slow   - dt)
+        e.effects.stun   = Math.max(0, e.effects.stun   - dt)
+        e.effects.poison = Math.max(0, e.effects.poison - dt)
         if (e.effects.poison > 0) {
-          e.hp -= e.effects.poisonDmg*dt
-          if (e.hp <= 0) { game.gold+=e.reward; spawnDeathParticles(game,e); handleSplitter(game,e); return false }
+          e.hp -= e.effects.poisonDmg * dt
+          if (e.hp <= 0) {
+            game.gold += e.reward
+            spawnDeath(partLayer, e)
+            handleSplitter(game, e)
+            removeEnemyGfx(e.id)
+            return false
+          }
         }
-        if (e.effects.stun > 0) return true
-        const spd = e.speed*(e.effects.slow>0?0.4:1)
-        const wp  = WAYPOINTS[e.wpIdx]
-        if (!wp) { game.lives=Math.max(0,game.lives-1); return false }
-        const dx=wp.x-e.x, dy=wp.y-e.y, d=Math.sqrt(dx*dx+dy*dy)
+        if (e.effects.stun > 0) {
+          const gfx = enemyGfxMap.current.get(e.id)
+          if (gfx) { updateEnemyGfx(gfx, e); gfx.x = e.x; gfx.y = e.y }
+          return true
+        }
+
+        const spd = e.speed * (e.effects.slow > 0 ? 0.4 : 1)
+        const wp = WAYPOINTS[e.wpIdx]
+        if (!wp) {
+          game.lives = Math.max(0, game.lives - 1)
+          removeEnemyGfx(e.id)
+          return false
+        }
+        const dx = wp.x - e.x, dy = wp.y - e.y, d = Math.sqrt(dx*dx+dy*dy)
         if (d < 4) {
           e.wpIdx++
-          if (e.wpIdx >= WAYPOINTS.length) { game.lives=Math.max(0,game.lives-1); return false }
+          if (e.wpIdx >= WAYPOINTS.length) {
+            game.lives = Math.max(0, game.lives - 1)
+            removeEnemyGfx(e.id)
+            if (livesRef.current) gsap.to(livesRef.current, { x: -4, duration: 0.05, yoyo: true, repeat: 5, ease: 'power1.inOut' })
+            return false
+          }
         } else {
-          e.x+=(dx/d)*spd*dt; e.y+=(dy/d)*spd*dt
+          e.x += (dx/d)*spd*dt; e.y += (dy/d)*spd*dt
         }
+
+        const gfx = enemyGfxMap.current.get(e.id)
+        if (gfx) { updateEnemyGfx(gfx, e); gfx.x = e.x; gfx.y = e.y }
         return true
       })
 
@@ -856,253 +352,588 @@ export default function TowerDefenseGame({ onBack }) {
         }
       }
 
-      // Towers
-      const now = ts/1000
+      // ── Towers fire ──────────────────────────────────────────────────
+      const nowSec = now / 1000
       game.towers.forEach(t => {
         const { damage, range, rate } = towerStats(t.type, t.level)
-        const special = TOWER_MAP[t.type].special
-        const animType = TOWER_MAP[t.type].animType
-        if (now-(t.lastShot||0) < 1/rate) return
-        const inRange = game.enemies.filter(e => dist({x:tx(t.col),y:ty(t.row)},e) <= range)
+        const special   = TOWER_MAP[t.type].special
+        const animType  = TOWER_MAP[t.type].animType
+        if (nowSec - (t.lastShot||0) < 1/rate) return
+        const inRange = game.enemies.filter(e => dist({ x:tx(t.col), y:ty(t.row) }, e) <= range)
         if (!inRange.length) return
-        const target = inRange.reduce((a,b) => pathProgress(b)>pathProgress(a)?b:a)
+        const target = inRange.reduce((a, b) => pathProgress(b) > pathProgress(a) ? b : a)
         if (!target) return
-        t.lastShot = now
-        fireProjectile(game, t, target, damage, special, animType)
+        t.lastShot = nowSec
+        if (t.type === 'pig' && t.level > 0) {
+          const sorted = [...inRange].sort((a,b) => pathProgress(b)-pathProgress(a))
+          const numShots = 1 + t.level
+          for (let s = 0; s < numShots; s++) doFire(game, t, sorted[s % sorted.length], damage, special, animType)
+        } else {
+          doFire(game, t, target, damage, special, animType)
+        }
       })
 
-      // Projectiles
+      // ── Projectiles ──────────────────────────────────────────────────
+      // Bounces pushed during filter would be lost (new array replaces old),
+      // so collect them separately and merge afterwards.
+      game._newProjs = []
       game.projectiles = game.projectiles.filter(p => {
-        const target = game.enemies.find(e => e.id===p.targetId)
-        if (!target) return false
-        const dx=target.x-p.x, dy=target.y-p.y, d=Math.sqrt(dx*dx+dy*dy)
-        p.vx=dx/d; p.vy=dy/d
-        if (d < 12+(ENEMY_TYPES[target.type]?.radius||14)) {
-          applyHit(game,p,target); spawnHitParticles(game,p); return false
+        const target = game.enemies.find(e => e.id === p.targetId)
+        const gfx = projGfxMap.current.get(p.id)
+
+        // Physics-driven arc projectiles
+        const body = physProjs.current.get(p.id)
+        if (body) {
+          p.x = body.position.x; p.y = body.position.y
+          p.vx = body.velocity.x; p.vy = body.velocity.y
+          // Bounce within screen bounds
+          if (p.y > CH - 20) {
+            Matter.Body.setPosition(body, { x: p.x, y: CH - 20 })
+            Matter.Body.setVelocity(body, { x: p.vx * 0.8, y: -Math.abs(p.vy) * 0.6 })
+          }
+          if (gfx) { drawProjectile(gfx, p); gfx.x = p.x; gfx.y = p.y }
+          // Hit detection by proximity
+          if (target && dist(p, target) < 18 + (ENEMY_TYPES[target.type]?.radius||14)) {
+            applyHit(game, p, target)
+            spawnHit(partLayer, p)
+            removeProjGfx(p.id)
+            return false
+          }
+          // Time-based expiry
+          p.life = (p.life||0) + dt
+          if (p.life > 3.5) { removeProjGfx(p.id); return false }
+          return true
         }
-        const spd=320; p.x+=(dx/d)*spd*dt; p.y+=(dy/d)*spd*dt
+
+        // Standard homing projectiles
+        if (!target) { removeProjGfx(p.id); return false }
+        const dx = target.x-p.x, dy = target.y-p.y, d = Math.sqrt(dx*dx+dy*dy)
+        p.vx = dx/d; p.vy = dy/d
+        if (d < 12 + (ENEMY_TYPES[target.type]?.radius||14)) {
+          applyHit(game, p, target)
+          spawnHit(partLayer, p)
+          removeProjGfx(p.id)
+          return false
+        }
+        p.x += (dx/d)*320*dt; p.y += (dy/d)*320*dt
+        if (gfx) { drawProjectile(gfx, p); gfx.x = p.x; gfx.y = p.y }
         return true
       })
 
-      // Anims
-      game.anims = game.anims.filter(a => { a.life-=dt; return a.life>0 })
+      if (game._newProjs?.length) { game.projectiles.push(...game._newProjs); game._newProjs = [] }
 
-      // Particles
-      game.particles = game.particles.filter(p => {
-        p.x+=p.vx*dt; p.y+=p.vy*dt; p.vy+=200*dt; p.life-=dt; return p.life>0
+      // ── Animations ───────────────────────────────────────────────────
+      game.anims = game.anims.filter(a => {
+        a.life -= dt
+        const gfx = animGfxMap.current.get(a.id)
+        if (!gfx) return false
+        if (a.life <= 0) { removeAnimGfx(a.id); return false }
+        const t = 1 - a.life / a.maxLife
+        drawAnim(gfx, a, t)
+        return true
       })
 
-      setGold(game.gold); setLives(game.lives)
-      if (game.lives <= 0) { game.running=false; clearSave(); setPhase('gameover'); return }
+      // ── Particles ────────────────────────────────────────────────────
+      particleGfxs.current = particleGfxs.current.filter(({ p, gfx }) => {
+        p.x += p.vx*dt; p.y += p.vy*dt; p.vy += 200*dt; p.life -= dt
+        if (p.life <= 0) { partLayer.removeChild(gfx); gfx.destroy(); return false }
+        gfx.alpha = Math.max(0, p.life / p.maxLife)
+        gfx.x = p.x; gfx.y = p.y
+        return true
+      })
 
-      const { w:cw, h:ch } = cellSzRef.current
-      drawField(ctx, imgRef.current, game, hoverTileRef.current, selTypeRef.current, inspectedRef.current, cw, ch, ts/1000)
+      // ── Hover & range preview ─────────────────────────────────────────
+      const ht = hoverTileRef.current
+      const st = selTypeRef.current
+      if (st && ht) {
+        const valid = !PATH_TILES.has(`${ht.col},${ht.row}`) && !game.towers.find(t => t.col===ht.col && t.row===ht.row)
+        const base = TOWER_MAP[st]
+        hoverLayer.clear()
+        drawHoverPreview(hoverLayer, ht.col, ht.row, valid, base.range)
+      } else {
+        hoverLayer.clear()
+      }
+      drawInspectRange(rangeLayer, inspectedRef.current ? game.towers.find(t => t.id===inspectedRef.current) : null)
 
-      rafRef.current = requestAnimationFrame(tick)
+      // React state sync
+      setGold(game.gold)
+      setLives(game.lives)
+      if (game.lives <= 0) { game.running = false; clearSave(); setPhase('gameover') }
     }
-    rafRef.current = requestAnimationFrame(tick)
+
+    app.ticker.add(tick)
+
+    return () => {
+      app.ticker.remove(tick)
+      app.destroy(true, { children: true, texture: true })
+      Matter.World.clear(physEngine.world)
+      Matter.Engine.clear(physEngine)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // ── Combat helpers ────────────────────────────────────────────────
-  function fireProjectile(game, tower, target, damage, special, animType) {
-    const ox=tx(tower.col), oy=ty(tower.row)
-    const tDef = TOWER_MAP[tower.type]
-    const radMap = { lion:7, elephant:9, panda:5, monkey:7, tiger:4, bear:7, hippo:8, rhino:6, croc:7, penguin:6, hedgehog:5, pig:4 }
-    game.projectiles.push({
-      id:uid(), x:ox, y:oy, vx:0, vy:0,
-      targetId:target.id,
-      towerKey:tower.type,
-      damage, special,
-      color:'#fff',
-      radius:radMap[tower.type]||5,
-      bounceLeft:special==='chain'?2:0,
-      hitIds:new Set([target.id]),
-    })
+  // ── Cleanup helpers ───────────────────────────────────────────────────
+  function removeEnemyGfx(id) {
+    const gfx = enemyGfxMap.current.get(id)
+    if (gfx) { pixiRef.current?.enemyLayer.removeChild(gfx); gfx.destroy(); enemyGfxMap.current.delete(id) }
+  }
+  function removeProjGfx(id) {
+    const gfx = projGfxMap.current.get(id)
+    if (gfx) { pixiRef.current?.projLayer.removeChild(gfx); gfx.destroy(); projGfxMap.current.delete(id) }
+    const body = physProjs.current.get(id)
+    if (body) { Matter.Composite.remove(matterRef.current.world, body); physProjs.current.delete(id) }
+  }
+  function removeAnimGfx(id) {
+    const gfx = animGfxMap.current.get(id)
+    if (gfx) { pixiRef.current?.animLayer.removeChild(gfx); gfx.destroy(); animGfxMap.current.delete(id) }
+  }
 
-    // Trigger special animation
-    const animDur = 0.5
-    const range = towerStats(tower.type, tower.level).range
-    if (animType==='stomp'||animType==='roar'||animType==='wave') {
-      game.anims.push({ id:uid(), type:animType, x:ox, y:oy, r:range, life:animDur, maxLife:animDur, color:tDef.projColor })
-    } else if (animType==='shockwave'||animType==='spikes') {
-      game.anims.push({ id:uid(), type:animType, x:ox, y:oy, r:range, life:animDur, maxLife:animDur, color:tDef.projColor })
-    } else if (animType==='laser') {
-      game.anims.push({ id:uid(), type:'laser', x:ox, y:oy, tx:target.x, ty:target.y, r:0, life:0.3, maxLife:0.3, color:'#FFD700' })
-    } else if (animType==='beam') {
-      game.anims.push({ id:uid(), type:'beam', x:ox, y:oy, tx:target.x, ty:target.y, r:0, life:0.25, maxLife:0.25, color:tDef.projColor })
-    } else if (animType==='horn') {
-      game.anims.push({ id:uid(), type:'horn', x:target.x, y:target.y, r:0, life:0.6, maxLife:0.6, color:'#9BA0A5' })
-    } else if (animType==='freeze') {
-      game.anims.push({ id:uid(), type:'freeze', x:target.x, y:target.y, r:0, life:0.5, maxLife:0.5, color:'#C8EFFF' })
-    } else if (animType==='acid') {
-      game.anims.push({ id:uid(), type:'acid', x:target.x, y:target.y, r:0, life:0.55, maxLife:0.55, color:'#66BB6A' })
-    } else if (animType==='bamboo') {
-      game.anims.push({ id:uid(), type:'bamboo', x:target.x, y:target.y, r:0, life:0.45, maxLife:0.45, color:'#4a9e2a' })
+  // ── Particle helpers ──────────────────────────────────────────────────
+  function spawnDeath(layer, e) {
+    const col = parseInt(ENEMY_TYPES[e.type].color.slice(1), 16)
+    for (let i = 0; i < 12; i++) {
+      const a = (i/12)*Math.PI*2, spd = 70 + Math.random()*120
+      const gfx = new PIXI.Graphics()
+      gfx.beginFill(col); gfx.drawCircle(0,0, 3+Math.random()*4); gfx.endFill()
+      layer.addChild(gfx)
+      const p = { x: e.x, y: e.y, vx: Math.cos(a)*spd, vy: Math.sin(a)*spd-70, life: 0.8, maxLife: 0.8 }
+      gfx.x = p.x; gfx.y = p.y
+      particleGfxs.current.push({ p, gfx })
+    }
+    // Big flash ring
+    const ring = new PIXI.Graphics()
+    ring.lineStyle(3, col, 0.8); ring.drawCircle(0,0,5)
+    ring.x = e.x; ring.y = e.y
+    layer.addChild(ring)
+    gsap.to(ring.scale, { x: 5, y: 5, duration: 0.35, ease: 'power2.out' })
+    gsap.to(ring, { alpha: 0, duration: 0.35, ease: 'power2.out', onComplete: () => { layer.removeChild(ring); ring.destroy() } })
+  }
+
+  function spawnHit(layer, p) {
+    const col = 0xFFFFFF
+    for (let i = 0; i < 5; i++) {
+      const a = Math.random()*Math.PI*2, spd = 40+Math.random()*70
+      const gfx = new PIXI.Graphics()
+      gfx.beginFill(col, 0.9); gfx.drawCircle(0,0,2); gfx.endFill()
+      layer.addChild(gfx)
+      const part = { x: p.x, y: p.y, vx: Math.cos(a)*spd, vy: Math.sin(a)*spd, life: 0.28, maxLife: 0.28 }
+      gfx.x = part.x; gfx.y = part.y
+      particleGfxs.current.push({ p: part, gfx })
     }
   }
 
-  function applyHit(game, proj, target) {
-    const { special, damage } = proj
-    let dmg = damage
-    if (target.armor && special==='poison') dmg *= 0.1
-    target.hp -= dmg
-    if (target.hp <= 0) {
-      target.hp = 0; game.gold+=target.reward
-      spawnDeathParticles(game,target); handleSplitter(game,target)
-      game.enemies = game.enemies.filter(e => e.id!==target.id)
+  // ── Combat helpers ────────────────────────────────────────────────────
+  function doFire(game, tower, target, damage, special, animType) {
+    const ox = tx(tower.col), oy = ty(tower.row)
+    const radMap = { lion:7, elephant:9, panda:5, monkey:7, tiger:4, bear:7, hippo:8, rhino:6, croc:7, penguin:6, hedgehog:5, pig:4 }
+    const proj = {
+      id: uid(), x: ox, y: oy, vx: 0, vy: 0,
+      targetId: target.id, towerKey: tower.type,
+      towerLevel: tower.level, towerId: tower.id,
+      damage, special,
+      radius: radMap[tower.type]||5,
+      bounceLeft: special==='chain' ? (2 + tower.level) : 0,
+      hitIds: new Set([target.id]),
     }
-    if (special==='slow')   target.effects.slow=2.5
-    if (special==='stun')   target.effects.stun=0.7
-    if (special==='poison' && !target.armor) { target.effects.poison=4; target.effects.poisonDmg=damage*0.4 }
-    if (special==='splash') {
+    game.projectiles.push(proj)
+
+    // Create projectile graphics
+    const gfx = new PIXI.Graphics()
+    gfx.x = ox; gfx.y = oy
+    pixiRef.current?.projLayer.addChild(gfx)
+    projGfxMap.current.set(proj.id, gfx)
+
+    // Physics for arc towers
+    if (shouldUsePhysics(tower.type) && matterRef.current) {
+      const body = createPhysicsProjectile(matterRef.current, proj, target.x, target.y)
+      physProjs.current.set(proj.id, body)
+    }
+
+    // Animation effects
+    const dur = 0.5
+    const range = towerStats(tower.type, tower.level).range
+    const newAnim = (type, ox2, oy2, tx2, ty2) => {
+      const a = { id: uid(), type, x: ox2||ox, y: oy2||oy, ox: ox2||ox, oy: oy2||oy, tx: tx2||target.x, ty: ty2||target.y, r: range, life: dur, maxLife: dur }
+      game.anims.push(a)
+      const agfx = new PIXI.Graphics()
+      agfx.x = a.x; agfx.y = a.y
+      pixiRef.current?.animLayer.addChild(agfx)
+      animGfxMap.current.set(a.id, agfx)
+    }
+
+    if (animType==='stomp'||animType==='roar'||animType==='wave') newAnim(animType)
+    else if (animType==='shockwave'||animType==='spikes') newAnim(animType)
+    else if (animType==='laser') {
+      const a = { id: uid(), type: 'laser', ox, oy, tx: target.x, ty: target.y, r: 0, life: 0.3, maxLife: 0.3 }
+      game.anims.push(a)
+      const agfx = new PIXI.Graphics()
+      agfx.x = 0; agfx.y = 0
+      pixiRef.current?.animLayer.addChild(agfx)
+      animGfxMap.current.set(a.id, agfx)
+    }
+    else if (animType==='horn') newAnim('horn', target.x, target.y, target.x, target.y)
+    else if (animType==='freeze') newAnim('freeze', target.x, target.y, target.x, target.y)
+    else if (animType==='acid') newAnim('acid', target.x, target.y, target.x, target.y)
+    else if (animType==='bamboo') newAnim('bamboo', target.x, target.y, target.x, target.y)
+  }
+
+  function applyHit(game, proj, target) {
+    const lvl = proj.towerLevel || 0
+    const key = proj.towerKey
+
+    // Damage (croc armor pierce scales with level)
+    let dmg = proj.damage
+    if (target.armor && proj.special==='poison') {
+      dmg *= lvl>=2 ? 1 : lvl>=1 ? 0.5 : 0.1
+    }
+    target.hp -= dmg
+
+    if (target.hp <= 0) {
+      target.hp = 0
+      game.gold += target.reward
+      handleSplitter(game, target)
+      game.enemies = game.enemies.filter(e => e.id !== target.id)
+      removeEnemyGfx(target.id)
+      if (goldRef.current) gsap.fromTo(goldRef.current, { scale: 1.25, color: '#FFD23F' }, { scale: 1, duration: 0.3, ease: 'back.out' })
+    }
+
+    // ── Base special effects (upgraded by level) ──────────────────────
+    if (proj.special==='slow') {
+      const dur = key==='panda' ? (lvl===2?6:lvl===1?4:2.5) : 2.5
+      target.effects.slow = Math.max(target.effects.slow, dur)
+      // Penguin lvl1+: full freeze (stun)
+      if (key==='penguin' && lvl>=1) {
+        target.effects.stun = Math.max(target.effects.stun, lvl===2?1.2:0.8)
+      }
+      // Penguin lvl2: freeze adjacent too
+      if (key==='penguin' && lvl===2) {
+        game.enemies.forEach(e => { if (e.id!==target.id && dist(e,target)<50) { e.effects.slow=6; e.effects.stun=0.8 } })
+      }
+    }
+
+    if (proj.special==='stun') {
+      const baseDur = key==='rhino' ? (lvl===2?1.5:lvl===1?0.9:0.7) : 0.7
+      target.effects.stun = Math.max(target.effects.stun, baseDur)
+      // Rhino lvl1+: also slow
+      if (key==='rhino' && lvl>=1) target.effects.slow = Math.max(target.effects.slow, lvl===2?4:2)
+      // Bear/Hedgehog lvl1+: area stun
+      if ((key==='bear'||key==='hedgehog') && lvl>=1) {
+        const aoeR = lvl===2 ? 70 : 50
+        game.enemies.forEach(e => { if (e.id!==target.id && dist(e,target)<aoeR) e.effects.stun=Math.max(e.effects.stun,baseDur) })
+      }
+      // Hedgehog lvl2: also poison
+      if (key==='hedgehog' && lvl===2) {
+        const aoeR = 70
+        game.enemies.forEach(e => { if (dist(e,target)<aoeR) { e.effects.poison=Math.max(e.effects.poison,3); e.effects.poisonDmg=Math.max(e.effects.poisonDmg,proj.damage*.3) } })
+      }
+    }
+
+    if (proj.special==='poison') {
+      const canPoison = !target.armor || lvl>=2 || (lvl===1 && Math.random()<0.5)
+      if (canPoison) { target.effects.poison=Math.max(target.effects.poison,4); target.effects.poisonDmg=Math.max(target.effects.poisonDmg,proj.damage*.4) }
+    }
+
+    if (proj.special==='snipe') {
+      // Tiger lvl1+: slow; lvl2: also stun
+      if (lvl>=1) target.effects.slow = Math.max(target.effects.slow, lvl===2?3:1.5)
+      if (lvl===2) target.effects.stun = Math.max(target.effects.stun, 0.4)
+    }
+
+    if (proj.special==='splash') {
+      const splashR = key==='elephant'&&lvl===2 ? 100 : key==='hippo'&&lvl===2 ? 90 : 55
+      const splashDmgMul = lvl===2 ? 0.85 : 0.6
       game.enemies.forEach(e => {
         if (e.id===target.id||proj.hitIds.has(e.id)) return
-        if (dist(e,target)<55) { e.hp-=damage*0.6; proj.hitIds.add(e.id) }
+        if (dist(e,target)<splashR) {
+          e.hp -= proj.damage*splashDmgMul; proj.hitIds.add(e.id)
+          // Lion/Elephant/Hippo lvl1+: splash slows
+          if (lvl>=1) { e.effects.slow = Math.max(e.effects.slow, key==='hippo'&&lvl===2?4:2) }
+          // Lion lvl2 / Elephant lvl2: also stun
+          if ((key==='lion'||key==='elephant') && lvl===2) e.effects.stun = Math.max(e.effects.stun, 0.5)
+        }
       })
     }
-    if (special==='chain' && proj.bounceLeft>0) {
-      const next = game.enemies.filter(e => !proj.hitIds.has(e.id)&&dist(e,target)<90)
+
+    if (proj.special==='chain' && proj.bounceLeft>0) {
+      const chainDmg = proj.damage * (key==='monkey'&&lvl===2 ? 0.85 : 0.7)
+      const next = game.enemies.filter(e => !proj.hitIds.has(e.id) && dist(e,target)<90)
         .sort((a,b)=>dist(a,target)-dist(b,target))[0]
       if (next) {
-        game.projectiles.push({
-          id:uid(), x:target.x, y:target.y, vx:0, vy:0,
-          targetId:next.id, towerKey:proj.towerKey||'monkey',
-          damage:damage*0.7, special:'chain',
-          color:'#8B5E3C', radius:7,
-          bounceLeft:proj.bounceLeft-1, hitIds:new Set([...proj.hitIds,next.id]),
-        })
+        const bounce = { ...proj, id:uid(), x:target.x, y:target.y, targetId:next.id, damage:chainDmg, bounceLeft:proj.bounceLeft-1, hitIds:new Set([...proj.hitIds,next.id]) }
+        // Push to pending queue — game.projectiles is being filtered right now
+        // and would discard anything pushed to the old array
+        ;(game._newProjs || game.projectiles).push(bounce)
+        const bgfx = new PIXI.Graphics(); bgfx.x = bounce.x; bgfx.y = bounce.y
+        pixiRef.current?.projLayer.addChild(bgfx)
+        projGfxMap.current.set(bounce.id, bgfx)
+
+        // Spawn electric chain arc animation
+        const ca = { id:uid(), type:'chain', x:0, y:0, ox:target.x, oy:target.y, tx:next.x, ty:next.y, r:0, life:0.4, maxLife:0.4 }
+        game.anims.push(ca)
+        const cgfx = new PIXI.Graphics(); cgfx.x=0; cgfx.y=0
+        pixiRef.current?.animLayer.addChild(cgfx)
+        animGfxMap.current.set(ca.id, cgfx)
       }
     }
   }
 
   function handleSplitter(game, e) {
-    if (e.type!=='splitter') return
+    if (e.type !== 'splitter') return
     const et = ENEMY_TYPES.mini
     for (let i=0;i<2;i++) {
-      game.enemies.push({
-        id:uid(), type:'mini', x:e.x+(i===0?-8:8), y:e.y,
-        hp:et.baseHp, maxHp:et.baseHp, speed:et.baseSpd,
-        wpIdx:e.wpIdx, effects:{slow:0,poison:0,poisonDmg:0,stun:0},
-        reward:et.reward, armor:false,
-      })
+      const mini = { id:uid(), type:'mini', x:e.x+(i===0?-8:8), y:e.y, hp:et.baseHp, maxHp:et.baseHp, speed:et.baseSpd, wpIdx:e.wpIdx, effects:{slow:0,poison:0,poisonDmg:0,stun:0}, reward:et.reward, armor:false }
+      game.enemies.push(mini)
+      const gfx = new PIXI.Graphics()
+      gfx.x = mini.x; gfx.y = mini.y
+      pixiRef.current?.enemyLayer.addChild(gfx)
+      enemyGfxMap.current.set(mini.id, gfx)
     }
   }
 
-  function spawnDeathParticles(game, e) {
-    const { color } = ENEMY_TYPES[e.type]
-    for (let i=0;i<8;i++) {
-      const a=(i/8)*Math.PI*2, spd=60+Math.random()*100
-      game.particles.push({ x:e.x, y:e.y, vx:Math.cos(a)*spd, vy:Math.sin(a)*spd-60, life:0.7, maxLife:0.7, color, size:3+Math.random()*3 })
+  // ── Tower sprite helpers ───────────────────────────────────────────────
+  function addTowerSprite(tower) {
+    const pixi = pixiRef.current; if (!pixi) return
+    const size = CELL - 6
+    const tex = getTowerTexture(pixi.app.renderer, tower.type, size)
+    const spr = new PIXI.Sprite(tex)
+    spr.anchor.set(0.5)
+    spr.x = tx(tower.col); spr.y = ty(tower.row)
+
+    const cont = new PIXI.Container()
+    cont.addChild(spr)
+    cont.x = 0; cont.y = 0
+
+    // Platform background circle (light, so tower blends in)
+    const bg = new PIXI.Graphics()
+    bg.beginFill(0xE0EAEF); bg.drawRoundedRect(tower.col*CELL+4, tower.row*CELL+4, CELL-8, CELL-8, 6); bg.endFill()
+
+    pixi.towerLayer.addChild(bg)
+    pixi.towerLayer.addChild(cont)
+    towerSprites.current.set(tower.id, { cont, spr, bg })
+
+    // Pop-in animation
+    cont.scale.set(0.1)
+    spr.scale.set(0.1)
+    gsap.to(cont.scale, { x: 1, y: 1, duration: 0.35, ease: 'back.out(1.7)' })
+    gsap.to(spr.scale, { x: 1, y: 1, duration: 0.35, ease: 'back.out(1.7)' })
+
+    refreshTowerVisual(tower)
+  }
+
+  function refreshTowerVisual(tower) {
+    const entry = towerSprites.current.get(tower.id); if (!entry) return
+    const { cont, bg } = entry
+
+    // Remove old border if any
+    if (entry.border) { entry.border.parent?.removeChild(entry.border); entry.border.destroy(); delete entry.border }
+    if (entry.stars) { entry.stars.parent?.removeChild(entry.stars); entry.stars.destroy(); delete entry.stars }
+
+    if (tower.level >= 1) {
+      const border = new PIXI.Graphics()
+      if (tower.level === 1) {
+        border.lineStyle(2, 0x4FC3F7, 0.9); border.drawRoundedRect(tower.col*CELL+2, tower.row*CELL+2, CELL-4, CELL-4, 8)
+      } else {
+        border.lineStyle(2.5, 0xFFD700, 0.9); border.drawRoundedRect(tower.col*CELL+1, tower.row*CELL+1, CELL-2, CELL-2, 9)
+        const gemPos = [[tower.col*CELL+2,tower.row*CELL+2],[tower.col*CELL+CELL-4,tower.row*CELL+2],[tower.col*CELL+2,tower.row*CELL+CELL-4],[tower.col*CELL+CELL-4,tower.row*CELL+CELL-4]]
+        border.beginFill(0xFFD700)
+        gemPos.forEach(([gx,gy]) => border.drawCircle(gx,gy,3))
+        border.endFill()
+      }
+      pixiRef.current?.towerLayer.addChild(border)
+      entry.border = border
+
+      // Stars text
+      const style = new PIXI.TextStyle({ fontSize: 8+tower.level, fill: tower.level===2?0xFFD700:0x7fd4ff, dropShadow: true, dropShadowDistance: 1 })
+      const stars = new PIXI.Text('★'.repeat(tower.level), style)
+      stars.anchor.set(0.5, 0.5)
+      stars.x = tx(tower.col); stars.y = tower.row*CELL + CELL - 7
+      pixiRef.current?.towerLayer.addChild(stars)
+      entry.stars = stars
+
+      // Glow on upgrade
+      gsap.to(border, { alpha: 0.5, duration: 0.4, yoyo: true, repeat: 3, onComplete: () => { border.alpha = 1 } })
     }
   }
 
-  function spawnHitParticles(game, p) {
-    for (let i=0;i<4;i++) {
-      const a=Math.random()*Math.PI*2, spd=40+Math.random()*60
-      game.particles.push({ x:p.x, y:p.y, vx:Math.cos(a)*spd, vy:Math.sin(a)*spd, life:0.35, maxLife:0.35, color:p.color, size:2 })
-    }
+  function removeTowerSprite(id) {
+    const entry = towerSprites.current.get(id); if (!entry) return
+    const { cont, bg, border, stars } = entry
+    cont.parent?.removeChild(cont); cont.destroy({ children: true })
+    bg.parent?.removeChild(bg); bg.destroy()
+    border?.parent?.removeChild(border); border?.destroy()
+    stars?.parent?.removeChild(stars); stars?.destroy()
+    towerSprites.current.delete(id)
   }
 
-  // ── Wave management ───────────────────────────────────────────────
+  // ── Game management ────────────────────────────────────────────────────
+  const newGame = useCallback(() => {
+    resetIds()
+    gameRef.current = {
+      towers:[], enemies:[], projectiles:[], anims:[],
+      gold: 250, lives: 20, wave: 0,
+      spawnQueue:[], spawnTimer:0, waveActive:false,
+      running: false, lastTs: null,
+    }
+  }, [])
+
+  const applyLoad = useCallback(save => {
+    resetIds()
+    gameRef.current = {
+      towers: save.towers.map(t => ({ ...t, lastShot:0 })),
+      enemies:[], projectiles:[], anims:[],
+      gold: save.gold, lives: save.lives, wave: save.wave,
+      spawnQueue:[], spawnTimer:0, waveActive:false,
+      running: false, lastTs: null,
+    }
+    setNextId(Math.max(...save.towers.map(t => t.id), 0) + 1)
+    // Re-add tower sprites
+    save.towers.forEach(t => addTowerSprite(t))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => { newGame() }, [newGame])
+  useEffect(() => { setHasSave(!!loadSave()) }, [])
+  useEffect(() => {
+    const h = () => setIsFS(!!document.fullscreenElement)
+    document.addEventListener('fullscreenchange', h)
+    return () => document.removeEventListener('fullscreenchange', h)
+  }, [])
+
+  // ── Fullscreen ─────────────────────────────────────────────────────────
+  const toggleFullscreen = useCallback(() => {
+    const el = wrapperRef.current; if (!el) return
+    document.fullscreenElement ? document.exitFullscreen() : el.requestFullscreen?.()
+  }, [])
+
+  // ── Wave start ─────────────────────────────────────────────────────────
   const startWave = useCallback(() => {
     const game = gameRef.current; if (!game) return
-    const nextWave = game.wave+1
-    game.wave=nextWave; game.waveActive=true
-    game.spawnQueue=generateWave(nextWave); game.spawnTimer=0
+    const nextWave = game.wave + 1
+    game.wave = nextWave; game.waveActive = true
+    game.spawnQueue = generateWave(nextWave); game.spawnTimer = 0
     setWave(nextWave); setPhase('playing'); setInspected(null)
-    if (!game.running) startLoop()
-  }, [startLoop])
+    if (!game.running) { game.running = true }
+  }, [])
 
-  // ── Start / Continue / Restart ────────────────────────────────────
+  // ── Start fresh / continue ─────────────────────────────────────────────
+  function clearAllDisplayObjects() {
+    // Clear all tracking maps
+    enemyGfxMap.current.forEach(gfx => { gfx.parent?.removeChild(gfx); gfx.destroy() })
+    enemyGfxMap.current.clear()
+    projGfxMap.current.forEach(gfx => { gfx.parent?.removeChild(gfx); gfx.destroy() })
+    projGfxMap.current.clear()
+    animGfxMap.current.forEach(gfx => { gfx.parent?.removeChild(gfx); gfx.destroy() })
+    animGfxMap.current.clear()
+    particleGfxs.current.forEach(({ gfx }) => { gfx.parent?.removeChild(gfx); gfx.destroy() })
+    particleGfxs.current = []
+    towerSprites.current.forEach((_, id) => removeTowerSprite(id))
+    physProjs.current.forEach(body => { try { Matter.Composite.remove(matterRef.current.world, body) } catch {} })
+    physProjs.current.clear()
+  }
+
   const startFresh = useCallback(() => {
-    if (rafRef.current) cancelAnimationFrame(rafRef.current)
+    clearAllDisplayObjects()
     clearSave(); newGame()
-    setGold(150); setLives(15); setWave(0)
+    setGold(250); setLives(20); setWave(0)
     setPhase('between'); setSelType(null); setInspected(null); setHasSave(false)
-    startLoop()
-  }, [newGame, startLoop])
+    gameRef.current.running = true
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [newGame])
 
   const continueSave = useCallback(() => {
     const save = loadSave(); if (!save) return
-    if (rafRef.current) cancelAnimationFrame(rafRef.current)
+    clearAllDisplayObjects()
     applyLoad(save)
     setGold(save.gold); setLives(save.lives); setWave(save.wave)
     setPhase('between'); setSelType(null); setInspected(null)
-    startLoop()
-  }, [applyLoad, startLoop])
+    gameRef.current.running = true
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [applyLoad])
 
-  // ── Canvas events ─────────────────────────────────────────────────
+  // ── Canvas events ──────────────────────────────────────────────────────
   const getTile = useCallback(e => {
-    const rect = canvasRef.current.getBoundingClientRect()
-    const sx=CW/rect.width, sy=CH/rect.height
-    const cx=(e.clientX-rect.left)*sx, cy=(e.clientY-rect.top)*sy
-    const col=Math.floor(cx/CELL), row=Math.floor(cy/CELL)
+    const pixi = pixiRef.current; if (!pixi) return null
+    const rect = pixi.app.view.getBoundingClientRect()
+    const sx = CW / rect.width, sy = CH / rect.height
+    const cx = (e.clientX - rect.left) * sx
+    const cy = (e.clientY - rect.top) * sy
+    const col = Math.floor(cx / CELL), row = Math.floor(cy / CELL)
     if (col<0||col>=COLS||row<0||row>=ROWS) return null
     return { col, row }
   }, [])
 
-  const handleMouseMove  = useCallback(e => { const t=getTile(e); setHoverTile(t?{col:t.col,row:t.row}:null) }, [getTile])
-  const handleMouseLeave = useCallback(()=>setHoverTile(null),[])
+  const handleMouseMove = useCallback(e => {
+    const t = getTile(e); setHoverTile(t ? { col:t.col, row:t.row } : null)
+  }, [getTile])
+
+  const handleMouseLeave = useCallback(() => setHoverTile(null), [])
 
   const handleClick = useCallback(e => {
-    const game=gameRef.current; if (!game) return
-    const tile=getTile(e); if (!tile) return
+    const game = gameRef.current; if (!game) return
+    const tile = getTile(e); if (!tile) return
     const { col, row } = tile
-    const existing = game.towers.find(t=>t.col===col&&t.row===row)
+    const existing = game.towers.find(t => t.col===col && t.row===row)
     if (selTypeRef.current && !existing && !PATH_TILES.has(`${col},${row}`)) {
-      const cost=TOWER_MAP[selTypeRef.current].cost
-      if (game.gold<cost) return
-      game.gold-=cost
-      game.towers.push({ id:uid(), type:selTypeRef.current, col, row, level:0, lastShot:0, invested:cost })
-      setGold(game.gold); setSelType(null); return
+      const cost = TOWER_MAP[selTypeRef.current].cost
+      if (game.gold < cost) return
+      game.gold -= cost
+      const tower = { id:uid(), type:selTypeRef.current, col, row, level:0, lastShot:0, invested:cost }
+      game.towers.push(tower)
+      addTowerSprite(tower)
+      setGold(game.gold); setSelType(null)
+      return
     }
-    if (existing) { setInspected(id=>id===existing.id?null:existing.id); setSelType(null); return }
+    if (existing) { setInspected(id => id===existing.id ? null : existing.id); setSelType(null); return }
     setInspected(null)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [getTile])
 
   const handleRightClick = useCallback(e => { e.preventDefault(); setSelType(null); setInspected(null) }, [])
-
-  // Touch support
   const handleTouch = useCallback(e => {
     e.preventDefault()
-    if (e.touches.length===1) {
-      const t = e.touches[0]
-      handleClick({ clientX:t.clientX, clientY:t.clientY })
-    }
+    if (e.touches.length===1) handleClick({ clientX:e.touches[0].clientX, clientY:e.touches[0].clientY })
   }, [handleClick])
 
-  // ── Upgrade / Sell ────────────────────────────────────────────────
+  // ── Upgrade / Sell ─────────────────────────────────────────────────────
   const upgradeInspected = useCallback(() => {
-    const game=gameRef.current; if (!game) return
-    const t=game.towers.find(t=>t.id===inspected); if (!t||t.level>=2) return
-    const cost=upgradeCost(t.type,t.level)
-    if (game.gold<cost) return
-    game.gold-=cost; t.level++; t.invested=(t.invested||TOWER_MAP[t.type].cost)+cost
-    setGold(game.gold); forceUpdate(n=>n+1)
+    const game = gameRef.current; if (!game) return
+    const t = game.towers.find(t => t.id===inspected); if (!t||t.level>=2) return
+    const cost = upgradeCost(t.type, t.level)
+    if (game.gold < cost) return
+    game.gold -= cost; t.level++; t.invested = (t.invested||TOWER_MAP[t.type].cost) + cost
+    refreshTowerVisual(t)
+    setGold(game.gold); forceUpdate(n => n+1)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inspected])
 
   const sellInspected = useCallback(() => {
-    const game=gameRef.current; if (!game) return
-    const t=game.towers.find(t=>t.id===inspected); if (!t) return
-    game.gold+=Math.floor((t.invested||TOWER_MAP[t.type].cost)*0.5)
-    game.towers=game.towers.filter(x=>x.id!==t.id)
-    setGold(game.gold); setInspected(null); forceUpdate(n=>n+1)
+    const game = gameRef.current; if (!game) return
+    const t = game.towers.find(t => t.id===inspected); if (!t) return
+    game.gold += Math.floor((t.invested||TOWER_MAP[t.type].cost)*.5)
+    removeTowerSprite(t.id)
+    game.towers = game.towers.filter(x => x.id !== t.id)
+    setGold(game.gold); setInspected(null); forceUpdate(n => n+1)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inspected])
 
-  // ── Fullscreen ────────────────────────────────────────────────────
-  const toggleFullscreen = useCallback(() => {
-    const el=wrapperRef.current; if (!el) return
-    if (document.fullscreenElement) document.exitFullscreen()
-    else el.requestFullscreen?.()
-  }, [])
-
+  // Cleanup on unmount
   useEffect(() => () => {
-    if (rafRef.current) cancelAnimationFrame(rafRef.current)
-    if (gameRef.current) gameRef.current.running=false
+    if (gameRef.current) gameRef.current.running = false
   }, [])
 
-  // ── Render ────────────────────────────────────────────────────────
-  const inspTower = inspected ? gameRef.current?.towers.find(t=>t.id===inspected) : null
+  // ── GSAP wave button pulse ─────────────────────────────────────────────
+  useEffect(() => {
+    if (phase === 'between' && waveStartRef.current) {
+      gsap.fromTo(waveStartRef.current,
+        { boxShadow: '0 0 0 0 rgba(255,210,63,0.8)' },
+        { boxShadow: '0 0 0 12px rgba(255,210,63,0)', duration: 1, repeat: -1, ease: 'power2.out' }
+      )
+    }
+    return () => { if (waveStartRef.current) gsap.killTweensOf(waveStartRef.current) }
+  }, [phase])
+
+  // ── Render ─────────────────────────────────────────────────────────────
+  const inspTower = inspected ? gameRef.current?.towers.find(t => t.id===inspected) : null
   const tDef      = inspTower ? TOWER_MAP[inspTower.type] : null
   const stats     = inspTower ? towerStats(inspTower.type, inspTower.level) : null
   const shopTower = hoverType ? TOWER_MAP[hoverType] : null
@@ -1111,19 +942,25 @@ export default function TowerDefenseGame({ onBack }) {
     <div className="td-outer" ref={wrapperRef}>
       <div className="td-layout">
         <div className="td-left">
+          {/* HUD */}
           <div className="td-hud">
             <button className="back-btn td-back-inline" onClick={() => {
-              if (rafRef.current) cancelAnimationFrame(rafRef.current)
-              if (gameRef.current) gameRef.current.running=false
+              if (gameRef.current) gameRef.current.running = false
               onBack()
             }}>← Terug</button>
-            <div className="td-hud-item"><span className="td-hud-icon">❤️</span>
-              <span className="td-hud-val" style={{color:lives<=5?'#ff6b6b':'#fff'}}>{lives}</span></div>
-            <div className="td-hud-item"><span className="td-hud-icon">🪙</span>
-              <span className="td-hud-val" style={{color:'#FFD23F'}}>{gold}</span></div>
-            <div className="td-hud-item"><span className="td-hud-icon">🌊</span>
-              <span className="td-hud-val">{wave===0?'—':wave}</span></div>
-            <div style={{marginLeft:'auto',display:'flex',gap:4,alignItems:'center'}}>
+            <div className="td-hud-item">
+              <span className="td-hud-icon">❤️</span>
+              <span ref={livesRef} className="td-hud-val" style={{ color: lives<=5?'#ff6b6b':'#fff' }}>{lives}</span>
+            </div>
+            <div className="td-hud-item">
+              <span className="td-hud-icon">🪙</span>
+              <span ref={goldRef} className="td-hud-val" style={{ color:'#FFD23F', display:'inline-block' }}>{gold}</span>
+            </div>
+            <div className="td-hud-item">
+              <span className="td-hud-icon">🌊</span>
+              <span className="td-hud-val">{wave===0?'—':wave}</span>
+            </div>
+            <div style={{ marginLeft:'auto', display:'flex', gap:4, alignItems:'center' }}>
               {[1,2,3].map(s => (
                 <button key={s} className={`td-speed-btn ${speed===s?'td-speed-active':''}`}
                   onClick={() => { setSpeed(s); speedRef.current=s }}>
@@ -1136,9 +973,10 @@ export default function TowerDefenseGame({ onBack }) {
             </div>
           </div>
 
-          <canvas
-            ref={canvasRef} width={CW} height={CH}
-            className="td-canvas"
+          {/* PixiJS canvas container */}
+          <div
+            ref={containerRef}
+            style={{ position:'relative', lineHeight:0 }}
             onClick={handleClick}
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
@@ -1167,7 +1005,7 @@ export default function TowerDefenseGame({ onBack }) {
                   Zet dieren neer langs het pad.<br/>Verdedig je basis!
                 </p>
                 {hasSave && (() => {
-                  const save=loadSave()
+                  const save = loadSave()
                   return save ? (
                     <button className="td-btn td-btn-gold" onClick={continueSave}>
                       ▶ Doorgaan (golf {save.wave}) 🪙{save.gold}
@@ -1183,10 +1021,11 @@ export default function TowerDefenseGame({ onBack }) {
           )}
         </div>
 
+        {/* Sidebar */}
         <div className="td-sidebar">
           <div className="td-wave-section">
             {phase==='between' ? (
-              <button className="td-btn td-btn-gold td-wave-btn" onClick={startWave}>
+              <button ref={waveStartRef} className="td-btn td-btn-gold td-wave-btn" onClick={startWave}>
                 ▶ Golf {wave+1} starten
               </button>
             ) : phase==='playing' ? (
@@ -1197,14 +1036,14 @@ export default function TowerDefenseGame({ onBack }) {
           {inspTower && tDef && stats ? (
             <div className="td-inspect">
               <div className="td-inspect-header">
+                {/* Inspect thumbnail: small canvas, no white border */}
                 <div style={{
-                  width:44,height:44,borderRadius:8,flexShrink:0,overflow:'hidden',
-                  backgroundImage:"url('/Towerdefence.png')",
-                  backgroundSize:'220px 220px',
-                  backgroundPosition:`-${tDef.col*44}px -${tDef.row*44}px`,
-                  border:inspTower.level===1?'2px solid #4FC3F7':inspTower.level===2?'2px solid #FFD700':'2px solid rgba(255,255,255,0.15)',
-                  boxShadow:inspTower.level===2?'0 0 10px #FFD700':inspTower.level===1?'0 0 8px #4FC3F7':'none',
-                }} />
+                  width:44, height:44, borderRadius:8, flexShrink:0, overflow:'hidden',
+                  border: inspTower.level===1?'2px solid #4FC3F7':inspTower.level===2?'2px solid #FFD700':'2px solid rgba(255,255,255,0.15)',
+                  boxShadow: inspTower.level===2?'0 0 10px #FFD700':inspTower.level===1?'0 0 8px #4FC3F7':'none',
+                }}>
+                  <TowerThumb towerKey={inspTower.type} size={44} />
+                </div>
                 <div>
                   <div className="td-inspect-name">{tDef.name}</div>
                   <div className="td-inspect-level">
@@ -1217,6 +1056,14 @@ export default function TowerDefenseGame({ onBack }) {
               <div className="td-stat-row"><span>⚡ Snelheid</span><span>{stats.rate.toFixed(1)}/s</span></div>
               <div className="td-stat-row"><span>✨ Kracht</span>
                 <span style={{color:'#FFD23F',textTransform:'capitalize'}}>{tDef.special}</span></div>
+              {inspTower.level<2 && (
+                <div style={{fontSize:'0.68rem',color:'rgba(255,255,255,0.5)',padding:'5px 0 3px',lineHeight:1.35}}>
+                  <span style={{color:inspTower.level===0?'#4FC3F7':'#FFD700',fontWeight:900}}>
+                    {inspTower.level===0?'⭐ Level 2: ':'⭐⭐ Level 3: '}
+                  </span>
+                  {tDef[inspTower.level===0?'lvl1':'lvl2']}
+                </div>
+              )}
               <div className="td-inspect-btns">
                 {inspTower.level<2 && (
                   <button
@@ -1227,7 +1074,7 @@ export default function TowerDefenseGame({ onBack }) {
                 )}
                 {inspTower.level===2 && <div className="td-max-badge">✅ Max level!</div>}
                 <button className="td-btn td-btn-sell" onClick={sellInspected}>
-                  💰 Verkopen (🪙{Math.floor((inspTower.invested||tDef.cost)*0.5)})
+                  💰 Verkopen (🪙{Math.floor((inspTower.invested||tDef.cost)*.5)})
                 </button>
               </div>
             </div>
@@ -1236,23 +1083,19 @@ export default function TowerDefenseGame({ onBack }) {
               <div className="td-shop-title">Dieren — klik om te plaatsen</div>
               <div className="td-shop-grid">
                 {TOWERS.map(t => {
-                  const canAfford=gold>=t.cost
-                  const isPremium=t.cost>=250
+                  const canAfford = gold >= t.cost
+                  const isPremium = t.cost >= 250
                   return (
                     <button key={t.key}
                       className={`td-shop-btn ${selType===t.key?'td-shop-selected':''} ${!canAfford?'td-shop-poor':''} ${isPremium?'td-shop-premium':''}`}
-                      onClick={() => setSelType(k=>k===t.key?null:t.key)}
+                      onClick={() => setSelType(k => k===t.key ? null : t.key)}
                       onMouseEnter={() => setHoverType(t.key)}
                       onMouseLeave={() => setHoverType(null)}
                       title={`${t.name} — 🪙${t.cost}`}
                     >
-                      <div className="td-shop-sprite" style={{
-                        backgroundImage:"url('/Towerdefence.png')",
-                        backgroundSize:'220px 220px',
-                        backgroundPosition:`-${t.col*44}px -${t.row*44}px`,
-                      }} />
+                      <TowerThumb towerKey={t.key} size={44} />
                       <span className="td-shop-label">{t.name}</span>
-                      <span className="td-shop-price" style={{color:canAfford?'#FFD23F':'#ff6b6b'}}>
+                      <span className="td-shop-price" style={{ color: canAfford?'#FFD23F':'#ff6b6b' }}>
                         🪙{t.cost}
                       </span>
                     </button>

@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import './App.css'
-import Wardrobe  from './Wardrobe'
-import Shop      from './Shop'
-import GameMenu  from './GameMenu'
+import Wardrobe       from './Wardrobe'
+import Shop           from './Shop'
+import GameMenu       from './GameMenu'
+import FootballScene3D from './games/FootballScene3D'
 
 const CODES = { pabo: 100000 }
 
@@ -108,9 +109,14 @@ export default function App() {
       <CuruntieBadge amount={curuntie} />
       <Wardrobe
         onBack={() => setScreen('menu')}
+        onPlay3D={() => setScreen('football3d')}
         unlockedColors={unlockedColors}
       />
     </>
+  )
+
+  if (screen === 'football3d') return (
+    <FootballScene3D onBack={() => setScreen('wardrobe')} />
   )
 
   if (screen === 'shop') return (
