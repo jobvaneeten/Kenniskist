@@ -167,24 +167,36 @@ class CharacterController {
     if (this._state === 'emote') return
     const k = this._keys
 
-    if (k['ArrowLeft'])  this.rotY += this.rotSpd * dt
-    if (k['ArrowRight']) this.rotY -= this.rotSpd * dt
+    // 4-directional strafe movement — arrows move the character, not the camera
+    const fwdInput  = k['ArrowUp']    ?  1 : k['ArrowDown']  ? -0.55 : 0
+    const sideInput = k['ArrowRight'] ?  1 : k['ArrowLeft']  ? -1    : 0
 
-    const targetV = k['ArrowUp'] ? this.speed : k['ArrowDown'] ? -this.speed * 0.55 : 0
-    const diff = targetV - this.velocity
-    this.velocity += Math.sign(diff) * Math.min(Math.abs(diff), this.accel * dt)
+    // Velocity in world space (field: forward = -Z, right = +X)
+    const vx = sideInput * this.speed
+    const vz = -fwdInput  * this.speed
+    const spd = Math.sqrt(vx * vx + vz * vz)
 
-    this.root.position.x += Math.sin(this.rotY) * this.velocity * dt
-    this.root.position.z += Math.cos(this.rotY) * this.velocity * dt
-    this.root.position.y  = 0
-    this.root.rotation.y  = this.rotY
+    this.root.position.x = Math.max(-FIELD_HALF + 1, Math.min(FIELD_HALF - 1,
+      this.root.position.x + vx * dt))
+    this.root.position.z = Math.max(-FIELD_HALF + 1, Math.min(FIELD_HALF - 1,
+      this.root.position.z + vz * dt))
+    this.root.position.y = 0
 
-    // Clamp to field
-    this.root.position.x = Math.max(-FIELD_HALF + 1, Math.min(FIELD_HALF - 1, this.root.position.x))
-    this.root.position.z = Math.max(-FIELD_HALF + 1, Math.min(FIELD_HALF - 1, this.root.position.z))
+    // Auto-rotate character to face movement direction
+    if (spd > 0.1) {
+      const targetRot = Math.atan2(vx, -vz)
+      let diff = targetRot - this.rotY
+      while (diff >  Math.PI) diff -= Math.PI * 2
+      while (diff < -Math.PI) diff += Math.PI * 2
+      this.rotY += diff * Math.min(1, 12 * dt)
+    }
+    this.root.rotation.y = this.rotY
+
+    // velocity scalar for animation blend
+    this.velocity = spd
 
     // Animation state machine
-    const blend = Math.abs(this.velocity) / this.speed
+    const blend = spd / this.speed
     if (blend > 0.12) {
       if (this._state !== 'walk') {
         this._resetRest()
