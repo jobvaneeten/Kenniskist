@@ -118,15 +118,14 @@ class ParticlePool {
 class CharacterController {
   constructor(root, scene, anims, restPose) {
     this.root     = root
-    this._anims   = anims    // { lopen, hip_hop, breakdance, verloren }
+    this._anims   = anims
     this._rest    = restPose
     this.speed    = 4.8
-    this.rotSpd   = 2.3
-    this.accel    = 11
     this.velocity = 0
-    this.rotY     = Math.PI   // face toward center
-    this._state   = 'idle'    // 'idle' | 'walk' | 'emote'
+    this.rotY     = 0
+    this._state   = 'idle'
     this._keys    = {}
+    this.joy      = { x: 0, z: 0 }   // set externally by joystick
 
     this._kd = e => { this._keys[e.code] = true;  this._onKeyDown(e.code) }
     this._ku = e => { this._keys[e.code] = false }
@@ -167,10 +166,15 @@ class CharacterController {
     if (this._state === 'emote') return
     const k = this._keys
 
-    // World-space 4-directional movement (camera is always at fixed +Z offset)
-    // UP = forward into field (-Z), DOWN = back (+Z), LEFT = -X, RIGHT = +X
-    const vx = (k['ArrowRight'] ? 1 : k['ArrowLeft']  ? -1 : 0) * this.speed
-    const vz = (k['ArrowDown']  ? 1 : k['ArrowUp']    ? -1 : 0) * this.speed * 0.55
+    // World-space 4-directional movement — keyboard OR joystick
+    const kx = k['ArrowRight'] ? 1 : k['ArrowLeft'] ? -1 : 0
+    const kz = k['ArrowDown']  ? 1 : k['ArrowUp']   ? -1 : 0
+    const jx = Math.abs(this.joy.x) > 0.12 ? this.joy.x : 0
+    const jz = Math.abs(this.joy.z) > 0.12 ? this.joy.z : 0
+    const rawX = kx !== 0 ? kx : jx
+    const rawZ = kz !== 0 ? kz : jz
+    const vx = rawX * this.speed
+    const vz = rawZ * this.speed * 0.9
 
     this.root.position.x = Math.max(-FIELD_HALF + 1, Math.min(FIELD_HALF - 1,
       this.root.position.x + vx * dt))
@@ -355,8 +359,9 @@ class Goal {
 
   _build() {
     const mat = new StandardMaterial('goalMat' + this.posZ, this._scene)
-    mat.diffuseColor  = new Color3(0.92, 0.94, 0.96)
-    mat.specularColor = new Color3(0.05, 0.05, 0.05)
+    mat.diffuseColor  = new Color3(1.0, 0.82, 0.0)   // bright yellow
+    mat.emissiveColor = new Color3(0.25, 0.18, 0.0)
+    mat.specularColor = new Color3(0.3, 0.25, 0.0)
 
     const post = (x, y, h, rx = 0, rz = 0) => {
       const m = MeshBuilder.CreateCylinder('gp', { height: h, diameter: 0.12, tessellation: 8 }, this._scene)
@@ -444,141 +449,181 @@ class Goal {
 // ── SceneBuilder ───────────────────────────────────────────────────
 class SceneBuilder {
   static buildWorld(scene, shadowGen) {
-    // Background / sky colour
-    scene.clearColor = new Color4(0.45, 0.70, 0.95, 1)
+    // Bright cartoon sky
+    scene.clearColor = new Color4(0.38, 0.75, 1.0, 1)
+    scene.fogMode = Scene.FOGMODE_NONE
 
-    // Fog — matches sky colour for depth
-    scene.fogMode    = Scene.FOGMODE_EXP2
-    scene.fogColor   = new Color3(0.55, 0.76, 0.94)
-    scene.fogDensity = 0.009
-
-    // Lighting
+    // Cartoon lighting — soft + bright
     const ambient = new HemisphericLight('hemi', new Vector3(0, 1, 0), scene)
-    ambient.intensity    = 0.55
-    ambient.groundColor  = new Color3(0.08, 0.18, 0.04)
-    ambient.diffuse      = new Color3(0.7, 0.85, 1.0)
+    ambient.intensity   = 0.9
+    ambient.groundColor = new Color3(0.15, 0.55, 0.10)
+    ambient.diffuse     = new Color3(1.0, 0.97, 0.85)
 
-    const sun = new DirectionalLight('sun', new Vector3(-0.55, -1, -0.35), scene)
-    sun.intensity = 1.6
-    sun.position  = new Vector3(25, 50, 15)
-    const sg = new ShadowGenerator(2048, sun)
+    const sun = new DirectionalLight('sun', new Vector3(-0.4, -1, -0.3), scene)
+    sun.intensity = 1.4
+    sun.position  = new Vector3(20, 50, 20)
+    const sg = new ShadowGenerator(1024, sun)
     sg.usePoissonSampling = true
-    sg.bias = 0.0003
+    sg.bias = 0.0005
 
-    // Ground — football field stripes
+    // Ground
     const ground = MeshBuilder.CreateGround('ground',
       { width: FIELD_HALF * 2, height: FIELD_HALF * 2, subdivisions: 1 }, scene)
     ground.receiveShadows = true
-    ground.isPickable     = false
-    const gtex = this._makeFieldTexture(scene)
+    ground.isPickable = false
     const gmat = new StandardMaterial('gmat', scene)
-    gmat.diffuseTexture  = gtex
-    gmat.specularColor   = Color3.Black()
+    gmat.diffuseTexture = this._makeFieldTexture(scene)
+    gmat.specularColor  = Color3.Black()
     ground.material = gmat
 
-    // Ground UV animation (subtle wind sway)
-    scene.registerBeforeRender(() => {
-      gtex.uOffset = Math.sin(performance.now() / 4000) * 0.003
-    })
-
-    // Trees
+    // Cartoon crowd stands (coloured bleachers around the field)
+    this._buildStands(scene)
     this._buildTrees(scene, sg)
 
     return { sun, shadowGen: sg }
   }
 
   static _makeFieldTexture(scene) {
-    const W = 512, H = 512
+    const W = 1024, H = 1024
     const tex = new DynamicTexture('gt', { width: W, height: H }, scene)
     const ctx = tex.getContext()
-    // Alternating green stripes
-    for (let i = 0; i < 16; i++) {
-      ctx.fillStyle = i % 2 === 0 ? '#1a5c10' : '#1f6e13'
-      ctx.fillRect(0, i * (H / 16), W, H / 16)
+
+    // Bright alternating green stripes
+    const stripes = 12
+    for (let i = 0; i < stripes; i++) {
+      ctx.fillStyle = i % 2 === 0 ? '#3ecf3e' : '#33bb33'
+      ctx.fillRect(0, i * (H / stripes), W, H / stripes)
     }
-    // White field markings
-    ctx.strokeStyle = 'rgba(255,255,255,0.75)'
-    ctx.lineWidth   = 5
+
+    // Bold white lines
+    ctx.strokeStyle = '#ffffff'
+    ctx.lineWidth   = 9
+    ctx.lineJoin    = 'round'
+
+    const pad = 28
     // Outer boundary
-    ctx.strokeRect(18, 18, W - 36, H - 36)
-    // Halfway line
-    ctx.beginPath(); ctx.moveTo(W / 2, 18); ctx.lineTo(W / 2, H - 18); ctx.stroke()
+    ctx.strokeRect(pad, pad, W - pad * 2, H - pad * 2)
+
+    // Halfway line (horizontal, field rotated 90° on ground)
+    ctx.beginPath(); ctx.moveTo(pad, H / 2); ctx.lineTo(W - pad, H / 2); ctx.stroke()
+
     // Centre circle
-    ctx.beginPath(); ctx.arc(W / 2, H / 2, 65, 0, Math.PI * 2); ctx.stroke()
+    ctx.beginPath(); ctx.arc(W / 2, H / 2, 110, 0, Math.PI * 2); ctx.stroke()
+
     // Centre spot
-    ctx.fillStyle = 'rgba(255,255,255,0.75)'
-    ctx.beginPath(); ctx.arc(W / 2, H / 2, 6, 0, Math.PI * 2); ctx.fill()
+    ctx.fillStyle = '#ffffff'
+    ctx.beginPath(); ctx.arc(W / 2, H / 2, 10, 0, Math.PI * 2); ctx.fill()
+
+    // Penalty areas (top + bottom)
+    const paW = W * 0.44, paH = H * 0.16
+    ctx.strokeRect((W - paW) / 2, pad, paW, paH)
+    ctx.strokeRect((W - paW) / 2, H - pad - paH, paW, paH)
+
+    // Goal areas (small box)
+    const gaW = W * 0.22, gaH = H * 0.07
+    ctx.strokeRect((W - gaW) / 2, pad, gaW, gaH)
+    ctx.strokeRect((W - gaW) / 2, H - pad - gaH, gaW, gaH)
+
     // Penalty spots
-    ctx.beginPath(); ctx.arc(W / 2, H * 0.16, 5, 0, Math.PI * 2); ctx.fill()
-    ctx.beginPath(); ctx.arc(W / 2, H * 0.84, 5, 0, Math.PI * 2); ctx.fill()
+    ctx.beginPath(); ctx.arc(W / 2, pad + paH * 0.72, 10, 0, Math.PI * 2); ctx.fill()
+    ctx.beginPath(); ctx.arc(W / 2, H - pad - paH * 0.72, 10, 0, Math.PI * 2); ctx.fill()
+
+    // Corner arcs
+    ctx.lineWidth = 7
+    const cr = 42
+    for (const [cx, cy, sa, ea] of [
+      [pad, pad, 0, Math.PI / 2],
+      [W - pad, pad, Math.PI / 2, Math.PI],
+      [W - pad, H - pad, Math.PI, 3 * Math.PI / 2],
+      [pad, H - pad, 3 * Math.PI / 2, Math.PI * 2],
+    ]) {
+      ctx.beginPath(); ctx.arc(cx, cy, cr, sa, ea); ctx.stroke()
+    }
+
     tex.update()
     return tex
   }
 
+  static _buildStands(scene) {
+    // Colourful cartoon bleacher blocks around the field
+    const colours = [
+      new Color3(1.0, 0.25, 0.25),
+      new Color3(0.25, 0.55, 1.0),
+      new Color3(1.0, 0.85, 0.15),
+      new Color3(0.95, 0.45, 0.05),
+      new Color3(0.5, 0.2, 0.9),
+    ]
+    const sideZ  = FIELD_HALF + 5
+    const sideX  = FIELD_HALF + 5
+    const rows   = 3
+    const blocks = 14
+
+    const mkMat = col => {
+      const m = new StandardMaterial('sm' + Math.random(), scene)
+      m.diffuseColor = col; m.specularColor = Color3.Black(); return m
+    }
+
+    for (let side = 0; side < 4; side++) {
+      for (let b = 0; b < blocks; b++) {
+        for (let r = 0; r < rows; r++) {
+          const col = colours[(b + r + side) % colours.length]
+          const box = MeshBuilder.CreateBox('bl', { width: 4.2, height: 1.2 + r * 0.6, depth: 2.2 }, scene)
+          box.isPickable = false
+          box.material   = mkMat(col)
+          const t = (b / (blocks - 1)) * 2 - 1
+          const baseX = t * (FIELD_HALF - 2)
+          const baseZ = sideZ + r * 1.8
+
+          if (side === 0) box.position.set(baseX, (1.2 + r * 0.6) / 2, baseZ)
+          else if (side === 1) box.position.set(baseX, (1.2 + r * 0.6) / 2, -baseZ)
+          else if (side === 2) box.position.set(sideX + r * 1.8, (1.2 + r * 0.6) / 2, baseX)
+          else                  box.position.set(-sideX - r * 1.8, (1.2 + r * 0.6) / 2, baseX)
+        }
+      }
+    }
+  }
+
   static _buildTrees(scene, sg) {
     const trunkMat = new StandardMaterial('trm', scene)
-    trunkMat.diffuseColor = new Color3(0.33, 0.20, 0.08)
-    const foliageMats = [
-      (() => { const m = new StandardMaterial('f0', scene); m.diffuseColor = new Color3(0.07, 0.42, 0.07); return m })(),
-      (() => { const m = new StandardMaterial('f1', scene); m.diffuseColor = new Color3(0.10, 0.35, 0.05); return m })(),
-      (() => { const m = new StandardMaterial('f2', scene); m.diffuseColor = new Color3(0.12, 0.50, 0.10); return m })(),
+    trunkMat.diffuseColor = new Color3(0.45, 0.26, 0.08)
+    const foliageColors = [
+      new Color3(0.15, 0.80, 0.15),
+      new Color3(0.10, 0.65, 0.10),
+      new Color3(0.55, 0.85, 0.10),
     ]
+    const foliageMats = foliageColors.map((c, i) => {
+      const m = new StandardMaterial('f' + i, scene)
+      m.diffuseColor = c; m.specularColor = Color3.Black(); return m
+    })
 
-    // 18 trees arranged around field perimeter
     const positions = []
-    for (let i = 0; i < 18; i++) {
-      const a = (i / 18) * Math.PI * 2
-      const r = FIELD_HALF + 9 + (i % 3) * 4
+    for (let i = 0; i < 24; i++) {
+      const a = (i / 24) * Math.PI * 2
+      const r = FIELD_HALF + 14 + (i % 3) * 5
       positions.push(new Vector3(Math.cos(a) * r, 0, Math.sin(a) * r))
     }
 
     positions.forEach((pos, idx) => {
-      const h = 3.5 + (idx % 4) * 0.7
-      const w = 1.8 + (idx % 3) * 0.5
+      const h = 4 + (idx % 4) * 1.2
+      const w = 2.2 + (idx % 3) * 0.6
 
-      // High-detail trunk + foliage
       const trunk = MeshBuilder.CreateCylinder('tr', {
-        height: h * 0.45, diameterTop: 0.18, diameterBottom: 0.32, tessellation: 8
+        height: h * 0.4, diameterTop: 0.22, diameterBottom: 0.38, tessellation: 8
       }, scene)
-      trunk.position.set(pos.x, h * 0.225, pos.z)
+      trunk.position.set(pos.x, h * 0.2, pos.z)
       trunk.material = trunkMat
-      trunk.receiveShadows = true; sg?.addShadowCaster(trunk)
 
-      const fol1 = MeshBuilder.CreateCylinder('fo1', {
-        height: h * 0.72, diameterTop: 0, diameterBottom: w, tessellation: 7
-      }, scene)
-      fol1.position.set(pos.x, h * 0.6, pos.z)
-      fol1.material = foliageMats[idx % 3]
-      fol1.receiveShadows = true; sg?.addShadowCaster(fol1)
-
-      const fol2 = MeshBuilder.CreateCylinder('fo2', {
-        height: h * 0.52, diameterTop: 0, diameterBottom: w * 0.68, tessellation: 7
-      }, scene)
-      fol2.position.set(pos.x, h * 0.85, pos.z)
-      fol2.material = foliageMats[(idx + 1) % 3]
-      fol2.receiveShadows = true; sg?.addShadowCaster(fol2)
-
-      // LOD: simplified single cone for distant trees
-      if (positions.length > 10) {
-        const lodMesh = MeshBuilder.CreateCylinder('lod' + idx, {
-          height: h, diameterTop: 0, diameterBottom: w, tessellation: 5
-        }, scene)
-        lodMesh.position.set(pos.x, h / 2, pos.z)
-        lodMesh.material = foliageMats[0]
-        lodMesh.isPickable = false
-
-        // Use BabylonJS LOD levels (screen coverage ratio)
-        fol1.addLODLevel(0.08, lodMesh)
-        fol1.addLODLevel(0.03, null)
-        fol2.addLODLevel(0.08, null)
-        trunk.addLODLevel(0.08, null)
-      }
+      const fol = MeshBuilder.CreateSphere('fo', { diameter: w * 1.1, segments: 8 }, scene)
+      fol.position.set(pos.x, h * 0.65, pos.z)
+      fol.material = foliageMats[idx % 3]
+      fol.scaling.y = 1.25
+      sg?.addShadowCaster(fol)
     })
   }
 }
 
 // ── Main scene init ────────────────────────────────────────────────
-function initScene(canvas, { shirtKey, wearing, onScoreA, onScoreB, onLoad }) {
+function initScene(canvas, { shirtKey, wearing, joy, onScoreA, onScoreB, onLoad }) {
   const engine = new Engine(canvas, true, { adaptToDeviceRatio: true, stencil: true })
   const scene  = new Scene(engine)
 
@@ -635,7 +680,7 @@ function initScene(canvas, { shirtKey, wearing, onScoreA, onScoreB, onLoad }) {
   SceneLoader.ImportMesh('', '/', modelFile, scene, (meshes) => {
     const charRoot = meshes[0]
     charRoot.position.set(0, 0, 5)
-    charRoot.rotationQuaternion = Quaternion.RotationYawPitchRoll(Math.PI, 0, 0)
+    charRoot.rotationQuaternion = Quaternion.RotationYawPitchRoll(0, 0, 0)
 
     // Shadows
     meshes.forEach(m => { shadowGen.addShadowCaster(m); m.receiveShadows = true })
@@ -690,6 +735,7 @@ function initScene(canvas, { shirtKey, wearing, onScoreA, onScoreB, onLoad }) {
     const done = () => {
       if (--pending > 0) return
       controller = new CharacterController(charRoot, scene, animGroups, restPose)
+      if (joy) controller.joy = joy
       onLoad()
     }
 
@@ -807,17 +853,65 @@ function initScene(canvas, { shirtKey, wearing, onScoreA, onScoreB, onLoad }) {
 }
 
 // ── React component ────────────────────────────────────────────────
+// ── Virtual joystick component ──────────────────────────────────────
+function VirtualJoystick({ joyRef }) {
+  const baseRef  = useRef(null)
+  const knobRef  = useRef(null)
+  const tidRef   = useRef(null)
+  const RADIUS   = 52   // outer ring radius in px
+  const KNOB_R   = 22
+
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v))
+
+  const move = (clientX, clientY) => {
+    const rect = baseRef.current.getBoundingClientRect()
+    const cx   = rect.left + rect.width  / 2
+    const cy   = rect.top  + rect.height / 2
+    let dx = clientX - cx
+    let dy = clientY - cy
+    const len = Math.hypot(dx, dy)
+    if (len > RADIUS) { dx = dx / len * RADIUS; dy = dy / len * RADIUS }
+    joyRef.current.x =  dx / RADIUS
+    joyRef.current.z =  dy / RADIUS
+    if (knobRef.current) {
+      knobRef.current.style.transform = `translate(${dx}px, ${dy}px)`
+    }
+  }
+
+  const release = () => {
+    joyRef.current.x = 0
+    joyRef.current.z = 0
+    if (knobRef.current) knobRef.current.style.transform = 'translate(0,0)'
+  }
+
+  const onTouchStart = e => { e.preventDefault(); tidRef.current = e.targetTouches[0].identifier; move(e.targetTouches[0].clientX, e.targetTouches[0].clientY) }
+  const onTouchMove  = e => { e.preventDefault(); const t = [...e.targetTouches].find(t => t.identifier === tidRef.current); if (t) move(t.clientX, t.clientY) }
+  const onTouchEnd   = e => { if (![...e.targetTouches].find(t => t.identifier === tidRef.current)) release() }
+
+  return (
+    <div
+      ref={baseRef}
+      className="fb3d-joy-base"
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+      onTouchCancel={onTouchEnd}
+    >
+      <div ref={knobRef} className="fb3d-joy-knob" />
+    </div>
+  )
+}
+
 export default function FootballScene3D({ onBack }) {
   const canvasRef = useRef(null)
-  const [scoreA,   setScoreA]   = useState(0)
-  const [scoreB,   setScoreB]   = useState(0)
-  const [loading,  setLoading]  = useState(true)
-  const [showHint, setShowHint] = useState(true)
-  const goalSound = useRef(null)
+  const joyRef    = useRef({ x: 0, z: 0 })
+  const [scoreA,  setScoreA]  = useState(0)
+  const [scoreB,  setScoreB]  = useState(0)
+  const [loading, setLoading] = useState(true)
+  const [showHint,setShowHint]= useState(true)
 
-  // Fade controls hint after 5 s
   useEffect(() => {
-    const t = setTimeout(() => setShowHint(false), 5000)
+    const t = setTimeout(() => setShowHint(false), 6000)
     return () => clearTimeout(t)
   }, [])
 
@@ -831,6 +925,7 @@ export default function FootballScene3D({ onBack }) {
     const cleanup = initScene(canvas, {
       shirtKey: shirt,
       wearing,
+      joy:      joyRef.current,
       onScoreA: v => setScoreA(v),
       onScoreB: v => setScoreB(v),
       onLoad:   () => setLoading(false),
@@ -850,10 +945,12 @@ export default function FootballScene3D({ onBack }) {
         <span className="fb3d-score-b">{scoreB} 🥅</span>
       </div>
 
+      {/* Joystick — only visible on touch devices */}
+      <VirtualJoystick joyRef={joyRef} />
+
       <div className={`fb3d-hint ${showHint ? 'fb3d-hint-show' : ''}`}>
-        <div className="fb3d-hint-row"><kbd>↑</kbd><kbd>↓</kbd> Bewegen</div>
-        <div className="fb3d-hint-row"><kbd>←</kbd><kbd>→</kbd> Draaien</div>
-        <div className="fb3d-hint-row"><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> Emotes</div>
+        <div className="fb3d-hint-row"><kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> Bewegen</div>
+        <div className="fb3d-hint-row"><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> Emotes</div>
       </div>
 
       {loading && (

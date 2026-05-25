@@ -123,3 +123,33 @@
 @keyframes fb3d-spin {
   to { transform: rotate(360deg); }
 }
+
+/* ── Virtual joystick ── */
+.fb3d-joy-base {
+  position: absolute;
+  bottom: 32px;
+  left: 32px;
+  z-index: 15;
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  border: 3px solid rgba(255, 255, 255, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: none;
+  user-select: none;
+  backdrop-filter: blur(2px);
+}
+
+.fb3d-joy-knob {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.75);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  pointer-events: none;
+  transition: transform 0.04s;
+  will-change: transform;
+}
