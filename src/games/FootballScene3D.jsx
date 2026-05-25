@@ -188,7 +188,8 @@ class CharacterController {
       while (diff < -Math.PI) diff += Math.PI * 2
       this.rotY += diff * Math.min(1, 14 * dt)
     }
-    this.root.rotation.y = this.rotY
+    // Use quaternion so it works even when rotationQuaternion is set by the GLB loader
+    this.root.rotationQuaternion = Quaternion.RotationYawPitchRoll(this.rotY, 0, 0)
     this.velocity = spd
 
     // Animation
@@ -634,7 +635,7 @@ function initScene(canvas, { shirtKey, wearing, onScoreA, onScoreB, onLoad }) {
   SceneLoader.ImportMesh('', '/', modelFile, scene, (meshes) => {
     const charRoot = meshes[0]
     charRoot.position.set(0, 0, 5)
-    charRoot.rotation.y = Math.PI
+    charRoot.rotationQuaternion = Quaternion.RotationYawPitchRoll(Math.PI, 0, 0)
 
     // Shadows
     meshes.forEach(m => { shadowGen.addShadowCaster(m); m.receiveShadows = true })
