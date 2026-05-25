@@ -43,10 +43,11 @@ const RETARGET_BONES = new Set([
 
 // Each file has one animation; we store it under a stable key (not the internal name).
 const ANIM_FILES = [
-  { key: 'hip_hop',    file: 'hip_hop_dancing.glb' },
-  { key: 'breakdance', file: 'emote_breakdance.glb' },
-  { key: 'lopen',      file: 'emote_lopen.glb'      },
-  { key: 'verloren',   file: 'emote_verloren.glb'   },
+  { key: 'restpose',   file: 'Restpose.glb'          },
+  { key: 'hip_hop',    file: 'hip_hop_dancing.glb'   },
+  { key: 'breakdance', file: 'emote_breakdance.glb'  },
+  { key: 'lopen',      file: 'emote_lopen.glb'       },
+  { key: 'verloren',   file: 'emote_verloren.glb'    },
 ]
 
 const EMOTE_META = {
@@ -334,6 +335,9 @@ export default function Wardrobe({ onBack, onPlay3D, unlockedColors = {} }) {
         if (pending === 0) {
           animGroupsRef.current = groups
           setAnimsReady(true)
+          // Start in rest pose by default
+          groups['restpose']?.play(true)
+          setActiveAnim('restpose')
         }
       }
 
@@ -511,13 +515,14 @@ export default function Wardrobe({ onBack, onPlay3D, unlockedColors = {} }) {
         <h2 className="panel-title">Emotes</h2>
         <p className="panel-sub">Klik om te bewegen</p>
         <div className="emote-list">
-          {/* Rest button — stops all animations */}
+          {/* Rest button — plays rest pose */}
           <button
-            className={`emote-btn ${activeAnim === null ? 'emote-on' : ''}`}
+            className={`emote-btn ${activeAnim === 'restpose' ? 'emote-on' : ''}`}
             onClick={() => {
-              if (activeAnim) animGroupsRef.current[activeAnim]?.stop()
-              setActiveAnim(null)
+              if (activeAnim && activeAnim !== 'restpose') animGroupsRef.current[activeAnim]?.stop()
               resetToTPose()
+              animGroupsRef.current['restpose']?.play(true)
+              setActiveAnim('restpose')
             }}
             disabled={!animsReady}
             title={!animsReady ? 'Laden…' : ''}

@@ -160,8 +160,15 @@ class CharacterController {
     this._anims[name].play(false)
     this._anims[name].onAnimationGroupEndObservable.addOnce(() => {
       this._resetRest()
-      this._state = 'idle'
+      this._playRest()
     })
+  }
+
+  _playRest() {
+    this._stopAll()
+    this._resetRest()
+    this._anims.restpose?.play(true)
+    this._state = 'idle'
   }
 
   _stopAll() { Object.values(this._anims).forEach(g => g?.stop()) }
@@ -185,7 +192,7 @@ class CharacterController {
     const rawX = kx !== 0 ? kx : jx
     const rawZ = kz !== 0 ? kz : jz
     const vx = rawX * this.speed
-    const vz = rawZ * this.speed   // same speed in all directions
+    const vz = rawZ * this.speed
 
     this.root.position.x = Math.max(-FIELD_HALF + 1, Math.min(FIELD_HALF - 1,
       this.root.position.x + vx * dt))
@@ -208,6 +215,7 @@ class CharacterController {
     const blend = spd / this.speed
     if (blend > 0.08) {
       if (this._state !== 'walk') {
+        this._stopAll()
         this._resetRest()
         this._anims.lopen?.play(true)
         this._state = 'walk'
@@ -215,7 +223,7 @@ class CharacterController {
       if (this._anims.lopen) this._anims.lopen.speedRatio = Math.max(0.3, blend * 1.6)
     } else {
       if (this._state === 'walk') {
-        this._stopAll(); this._resetRest(); this._state = 'idle'
+        this._playRest()
       }
     }
   }
@@ -773,7 +781,8 @@ function initScene(canvas, {
     scene.meshes.forEach(m => { if (!nodeMap[m.name]) nodeMap[m.name] = m })
 
     const ANIMS = [
-      { key: 'lopen',      file: 'emote_lopen.glb',      stripRoot: true  },
+      { key: 'restpose',   file: 'Restpose.glb',          stripRoot: true  },
+      { key: 'lopen',      file: 'emote_lopen.glb',       stripRoot: true  },
       { key: 'hip_hop',    file: 'hip_hop_dancing.glb',   stripRoot: false },
       { key: 'breakdance', file: 'emote_breakdance.glb',  stripRoot: false },
       { key: 'verloren',   file: 'emote_verloren.glb',    stripRoot: false },
@@ -784,6 +793,7 @@ function initScene(canvas, {
       if (--pending > 0) return
       controller = new CharacterController(charRoot, scene, animGroups, restPose)
       if (joy) controller.joy = joy
+      controller._playRest()   // start in rest pose, not T-pose
       onLoad()
     }
 
