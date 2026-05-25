@@ -16,6 +16,13 @@ const SHIRT_MODELS = [
   { key: 'psv',  label: 'PSV',  file: '/poppetjemetpsvshirt.glb',  preview: '/logo_psv.svg' },
 ]
 const CLOTHING_MESHES = ['Shirt', 'Broek', 'Sokken', 'Schoenen']
+const FACE_MESH_NAMES = new Set([
+  'Gezicht', 'Face',
+  'Ogen', 'Eyes',
+  'Wenkbrauwen', 'Eyebrows',
+  'Mond', 'Mouth',
+  'Neus', 'Nose',
+])
 const ITEMS = [
   { key: 'broek',    label: 'Broek',    emoji: '👖' },
   { key: 'sokken',   label: 'Sokken',   emoji: '🧦' },
@@ -287,6 +294,15 @@ export default function Wardrobe({ onBack, onPlay3D, unlockedColors = {} }) {
         const mesh = meshesRef.current[key]
         const colorItem = SHIRT_COLORS.find(c => c.key === colorKey)
         if (mesh && colorItem) { applyColor(mesh, colorItem.hex); mesh.setEnabled(true) }
+      })
+
+      // Face features always black
+      meshes.forEach(m => {
+        if (!FACE_MESH_NAMES.has(m.name) || !m.material) return
+        const mat = m.material.clone(m.material.name + '_face')
+        m.material = mat
+        if (mat.albedoColor !== undefined) { mat.albedoTexture = null; mat.albedoColor = Color3.Black() }
+        else if (mat.diffuseColor !== undefined) { mat.diffuseTexture = null; mat.diffuseColor = Color3.Black() }
       })
 
       setLoading(false)

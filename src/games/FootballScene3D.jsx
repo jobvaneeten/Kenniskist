@@ -12,7 +12,7 @@ import '@babylonjs/loaders/glTF'
 import { SHIRT_COLORS } from '../data'
 import './football3d.css'
 
-// ── Shared bone list (same as Wardrobe.jsx) ────────────────────────
+// ── Shared bone list ───────────────────────────────────────────────
 const RETARGET_BONES = new Set([
   'Root','Hips','Spine','Spine1','Neck','Head',
   'LeftShoulder','LeftArm','LeftForeArm','LeftHand',
@@ -22,15 +22,26 @@ const RETARGET_BONES = new Set([
 ])
 
 // ── Constants ──────────────────────────────────────────────────────
-const BALL_RADIUS  = 0.22
-const KICK_DIST    = 1.1
-const FIELD_HALF   = 38
-const GOAL_Z       = 35   // goals at the ends of the field
-const GOAL_HALF_W  = 3.65
-const GOAL_H       = 2.44
-const GOAL_DEPTH   = 1.6
+const BALL_RADIUS    = 0.22
+const KICK_DIST      = 1.1
+const FIELD_HALF     = 38
+const GOAL_Z         = 36   // aligns with outer white line on field texture
+const GOAL_HALF_W    = 3.65
+const GOAL_H         = 2.44
+const GOAL_DEPTH     = 1.6
+const GAME_DURATION  = 120   // seconds
 
-// ── Synthetic crowd cheer (Web Audio API) ──────────────────────────
+const CLOTHING_NAMES = new Set(['Shirt', 'Broek', 'Sokken', 'Schoenen'])
+// Face features that must always be rendered black
+const FACE_MESH_NAMES = new Set([
+  'Gezicht', 'Face',
+  'Ogen', 'Eyes',
+  'Wenkbrauwen', 'Eyebrows',
+  'Mond', 'Mouth',
+  'Neus', 'Nose',
+])
+
+// ── Crowd cheer ────────────────────────────────────────────────────
 function playCrowdCheer() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)()
@@ -125,7 +136,8 @@ class CharacterController {
     this.rotY     = 0
     this._state   = 'idle'
     this._keys    = {}
-    this.joy      = { x: 0, z: 0 }   // set externally by joystick
+    this.joy      = { x: 0, z: 0 }
+    this.paused   = false
 
     this._kd = e => { this._keys[e.code] = true;  this._onKeyDown(e.code) }
     this._ku = e => { this._keys[e.code] = false }
@@ -163,19 +175,17 @@ class CharacterController {
   }
 
   update(dt) {
-    if (this._state === 'emote') return
+    if (this._state === 'emote' || this.paused) return
     const k = this._keys
 
-    // World-space 4-directional movement — keyboard OR joystick
-    // LEFT = -X, RIGHT = +X, UP = -Z (into field), DOWN = +Z
-    const kx = k['ArrowLeft'] ? 1 : k['ArrowRight'] ? -1 : 0   // flipped: left=+X from camera view
+    const kx = k['ArrowLeft'] ? 1 : k['ArrowRight'] ? -1 : 0
     const kz = k['ArrowDown']  ? 1 : k['ArrowUp']   ? -1 : 0
-    const jx = Math.abs(this.joy.x) > 0.12 ? -this.joy.x : 0  // joystick also flipped to match
+    const jx = Math.abs(this.joy.x) > 0.12 ? -this.joy.x : 0
     const jz = Math.abs(this.joy.z) > 0.12 ?  this.joy.z : 0
     const rawX = kx !== 0 ? kx : jx
     const rawZ = kz !== 0 ? kz : jz
     const vx = rawX * this.speed
-    const vz = rawZ * this.speed * 0.9
+    const vz = rawZ * this.speed   // same speed in all directions
 
     this.root.position.x = Math.max(-FIELD_HALF + 1, Math.min(FIELD_HALF - 1,
       this.root.position.x + vx * dt))
@@ -185,19 +195,16 @@ class CharacterController {
 
     const spd = Math.hypot(vx, vz)
 
-    // Character model rotates to face direction of movement
     if (spd > 0.05) {
-      const targetRot = Math.atan2(vx, vz)   // atan2(x, z) gives correct Y-rotation
+      const targetRot = Math.atan2(vx, vz)
       let diff = targetRot - this.rotY
       while (diff >  Math.PI) diff -= Math.PI * 2
       while (diff < -Math.PI) diff += Math.PI * 2
       this.rotY += diff * Math.min(1, 14 * dt)
     }
-    // +π offset because the GLB model's face points in +Z; we want it to face movement dir
     this.root.rotationQuaternion = Quaternion.RotationYawPitchRoll(this.rotY + Math.PI, 0, 0)
     this.velocity = spd
 
-    // Animation
     const blend = spd / this.speed
     if (blend > 0.08) {
       if (this._state !== 'walk') {
@@ -226,7 +233,6 @@ class PhysicsObject {
     this.onGround = true
     this._prevZ   = 0
 
-    // Mesh
     const ball = MeshBuilder.CreateSphere('ball', { diameter: BALL_RADIUS * 2, segments: 16 }, scene)
     ball.position.set(0, BALL_RADIUS, 0)
     ball.receiveShadows = true
@@ -236,7 +242,6 @@ class PhysicsObject {
     if (shadowGen) shadowGen.addShadowCaster(ball)
     this.mesh = ball
 
-    // Shadow disk stretches with sun angle (static sun from upper-left)
     const disc = MeshBuilder.CreateDisc('bShadow', { radius: BALL_RADIUS * 1.6, tessellation: 16 }, scene)
     disc.rotation.x = Math.PI / 2
     disc.isPickable = false
@@ -251,9 +256,7 @@ class PhysicsObject {
     const sz  = 256
     const tex = new DynamicTexture('ballTex', { width: sz, height: sz }, scene)
     const ctx = tex.getContext()
-    // White base
     ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, sz, sz)
-    // Black pentagon patches
     ctx.fillStyle = '#111111'
     const r = sz * 0.15
     const drawHex = (cx, cy) => {
@@ -276,7 +279,6 @@ class PhysicsObject {
   }
 
   kick(dir, spd) {
-    // dir should be a Vector3 with y = 0
     this.vel.x = dir.x * spd
     this.vel.z = dir.z * spd
     this.vel.y = Math.min(spd * 0.22, 2.8)
@@ -294,12 +296,10 @@ class PhysicsObject {
   update(dt) {
     this._prevZ = this.mesh.position.z
 
-    // Gravity
     if (!this.onGround) this.vel.y -= 9.82 * dt
 
     this.mesh.position.addInPlace(this.vel.scale(dt))
 
-    // Ground bounce
     if (this.mesh.position.y <= BALL_RADIUS) {
       this.mesh.position.y = BALL_RADIUS
       if (Math.abs(this.vel.y) > 0.6) {
@@ -311,18 +311,23 @@ class PhysicsObject {
       this.onGround = false
     }
 
-    // Friction (ground slows faster than air)
-    const f = this.onGround ? Math.pow(0.982, dt * 60) : Math.pow(0.999, dt * 60)
+    // Higher friction — ball slows down quickly on the ground
+    const f = this.onGround ? Math.pow(0.91, dt * 60) : Math.pow(0.999, dt * 60)
     this.vel.x *= f; this.vel.z *= f
 
-    // Field boundary
     const fx = FIELD_HALF - BALL_RADIUS
     if (Math.abs(this.mesh.position.x) > fx) {
       this.mesh.position.x = Math.sign(this.mesh.position.x) * fx
       this.vel.x *= -0.5
     }
 
-    // Rolling rotation
+    // Z walls — ball bounces off back fence and goal back-net
+    const fz = FIELD_HALF - BALL_RADIUS
+    if (Math.abs(this.mesh.position.z) > fz) {
+      this.mesh.position.z = Math.sign(this.mesh.position.z) * fz
+      this.vel.z *= -0.5
+    }
+
     const hSpd = Math.sqrt(this.vel.x * this.vel.x + this.vel.z * this.vel.z)
     if (hSpd > 0.05) {
       const rollAng = (hSpd * dt) / BALL_RADIUS
@@ -332,9 +337,8 @@ class PhysicsObject {
       this.mesh.rotationQuaternion = rot.multiply(this.mesh.rotationQuaternion)
     }
 
-    // Shadow disk: follows ball, stretches with height
     const h  = this.mesh.position.y - BALL_RADIUS
-    this._shadow.position.x = this.mesh.position.x + h * 0.4  // sun from upper-left
+    this._shadow.position.x = this.mesh.position.x + h * 0.4
     this._shadow.position.z = this.mesh.position.z
     this._shadow.position.y = 0.01
     this._shadow.scaling.x  = 1 + h * 0.12
@@ -350,7 +354,7 @@ class Goal {
   constructor(scene, posZ, openDir, particles, onScore) {
     this._scene    = scene
     this.posZ      = posZ
-    this._openDir  = openDir  // +1 = opening faces +z, -1 = faces -z
+    this._openDir  = openDir
     this._parts    = particles
     this._onScore  = onScore
     this.scored    = false
@@ -358,61 +362,80 @@ class Goal {
     this._build()
   }
 
-  _build() {
-    const mat = new StandardMaterial('goalMat' + this.posZ, this._scene)
-    mat.diffuseColor  = new Color3(1.0, 0.82, 0.0)   // bright yellow
-    mat.emissiveColor = new Color3(0.25, 0.18, 0.0)
-    mat.specularColor = new Color3(0.3, 0.25, 0.0)
+  _makeNetTexture() {
+    const sz  = 512
+    const tex = new DynamicTexture('netTex' + this.posZ, { width: sz, height: sz }, this._scene)
+    tex.hasAlpha = true
+    const ctx = tex.getContext()
+    ctx.clearRect(0, 0, sz, sz)
+    ctx.strokeStyle = 'rgba(255,255,255,0.88)'
+    ctx.lineWidth   = 3
+    const sp = 22   // grid cell size in px
+    for (let x = 0; x <= sz; x += sp) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, sz); ctx.stroke()
+    }
+    for (let y = 0; y <= sz; y += sp) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(sz, y); ctx.stroke()
+    }
+    tex.update()
+    return tex
+  }
 
-    const post = (x, y, h, rx = 0, rz = 0) => {
-      const m = MeshBuilder.CreateCylinder('gp', { height: h, diameter: 0.12, tessellation: 8 }, this._scene)
-      m.material = mat; m.isPickable = false
-      m.position.set(x, y, this.posZ)
+  _build() {
+    // White post material
+    const postMat = new StandardMaterial('goalPost' + this.posZ, this._scene)
+    postMat.diffuseColor  = Color3.White()
+    postMat.emissiveColor = new Color3(0.14, 0.14, 0.14)
+    postMat.specularColor = new Color3(0.6, 0.6, 0.6)
+    postMat.specularPower = 48
+
+    const bZ  = this.posZ - this._openDir * GOAL_DEPTH
+    const midZ = (this.posZ + bZ) / 2
+
+    const cyl = (x, y, z, h, d, rx = 0, rz = 0) => {
+      const m = MeshBuilder.CreateCylinder('gp', { height: h, diameter: d, tessellation: 14 }, this._scene)
+      m.material = postMat; m.isPickable = false
+      m.position.set(x, y, z)
       m.rotation.x = rx; m.rotation.z = rz
       return m
     }
 
-    const bZ = this.posZ - this._openDir * GOAL_DEPTH  // back of goal
+    // ── Front frame only: 2 uprights + crossbar ────────────────────
+    cyl(-GOAL_HALF_W, GOAL_H / 2, this.posZ, GOAL_H,            0.14)
+    cyl( GOAL_HALF_W, GOAL_H / 2, this.posZ, GOAL_H,            0.14)
+    cyl(0,            GOAL_H,     this.posZ, GOAL_HALF_W * 2 + 0.14, 0.12, 0, Math.PI / 2)
 
-    // Uprights
-    post(-GOAL_HALF_W, GOAL_H / 2, GOAL_H)
-    post( GOAL_HALF_W, GOAL_H / 2, GOAL_H)
-    // Crossbar
-    const bar = post(0, GOAL_H, GOAL_HALF_W * 2, 0, Math.PI / 2)
-    bar.position.z = this.posZ
-    // Back uprights
-    const bl = post(-GOAL_HALF_W, GOAL_H / 2, GOAL_H); bl.position.z = bZ
-    const br = post( GOAL_HALF_W, GOAL_H / 2, GOAL_H); br.position.z = bZ
-    // Top back bar
-    const tb = post(0, GOAL_H, GOAL_HALF_W * 2, 0, Math.PI / 2); tb.position.z = bZ
-    // Depth bars at top
-    for (const sx of [-GOAL_HALF_W, GOAL_HALF_W]) {
-      const db = MeshBuilder.CreateCylinder('db', { height: GOAL_DEPTH, diameter: 0.09, tessellation: 6 }, this._scene)
-      db.material = mat; db.isPickable = false
-      db.rotation.x = Math.PI / 2
-      db.position.set(sx, GOAL_H, (this.posZ + bZ) / 2)
-    }
+    // ── Top rails running from post tops to back ────────────────────
+    cyl(-GOAL_HALF_W, GOAL_H, midZ, GOAL_DEPTH, 0.08, Math.PI / 2)
+    cyl( GOAL_HALF_W, GOAL_H, midZ, GOAL_DEPTH, 0.08, Math.PI / 2)
 
-    // Net planes (semi-transparent wireframe)
-    const netColors = ['#dddddd']
-    const mkNet = (w, h2, x, y, z, ry) => {
+    // ── Net panels with grid texture ───────────────────────────────
+    const netTex = this._makeNetTexture()
+
+    const mkNet = (w, h2, x, y, z, ry, rx = 0) => {
       const nm = MeshBuilder.CreatePlane('net', { width: w, height: h2 }, this._scene)
-      nm.position.set(x, y, z); nm.rotation.y = ry
+      nm.position.set(x, y, z)
+      nm.rotation.y = ry
+      nm.rotation.x = rx
       nm.isPickable = false
       const nmat = new StandardMaterial('nmat' + Math.random(), this._scene)
-      nmat.diffuseColor    = Color3.White()
-      nmat.alpha           = 0.22
-      nmat.wireframe       = true
+      nmat.diffuseTexture = netTex
+      nmat.diffuseTexture.hasAlpha = true
+      nmat.useAlphaFromDiffuseTexture = true
       nmat.backFaceCulling = false
+      nmat.specularColor   = Color3.Black()
       nm.material = nmat
       this._nets.push(nm)
     }
-    const midZ = (this.posZ + bZ) / 2
-    mkNet(GOAL_HALF_W * 2, GOAL_H, 0, GOAL_H / 2, bZ, this._openDir < 0 ? Math.PI : 0)  // back
-    mkNet(GOAL_DEPTH, GOAL_H, -GOAL_HALF_W, GOAL_H / 2, midZ,  Math.PI / 2)  // left
-    mkNet(GOAL_DEPTH, GOAL_H,  GOAL_HALF_W, GOAL_H / 2, midZ, -Math.PI / 2)  // right
-    mkNet(GOAL_HALF_W * 2, GOAL_DEPTH, 0, GOAL_H, midZ, 0)   // top (rotated)
-    this._nets[3].rotation.x = -Math.PI / 2
+
+    // Back net
+    mkNet(GOAL_HALF_W * 2, GOAL_H, 0, GOAL_H / 2, bZ, this._openDir < 0 ? Math.PI : 0)
+    // Left side net
+    mkNet(GOAL_DEPTH, GOAL_H, -GOAL_HALF_W, GOAL_H / 2, midZ,  Math.PI / 2)
+    // Right side net
+    mkNet(GOAL_DEPTH, GOAL_H,  GOAL_HALF_W, GOAL_H / 2, midZ, -Math.PI / 2)
+    // Top net (horizontal)
+    mkNet(GOAL_HALF_W * 2, GOAL_DEPTH, 0, GOAL_H, midZ, 0, -Math.PI / 2)
   }
 
   checkScore(ball) {
@@ -420,19 +443,22 @@ class Goal {
     const p = ball.mesh.position
     const inX = Math.abs(p.x) < GOAL_HALF_W - 0.05
     const inY = p.y > 0.05 && p.y < GOAL_H + 0.1
-    // Ball crossed the goal line from the open side
     const prev = ball._prevZ
     const curr = p.z
     const line = this.posZ
+    // openDir=+1 → goal at -Z end, ball enters from +Z (prev > line, curr <= line)
+    // openDir=-1 → goal at +Z end, ball enters from -Z (prev < line, curr >= line)
     const crossed = this._openDir > 0
-      ? prev < line && curr >= line
-      : prev > line && curr <= line
+      ? prev > line && curr <= line
+      : prev < line && curr >= line
     return inX && inY && crossed
   }
 
   flash() {
     this.scored = true
-    this._nets.forEach(n => { n.material.emissiveColor = new Color3(1, 0.9, 0.1); n.material.alpha = 0.6 })
+    this._nets.forEach(n => {
+      if (n.material) n.material.emissiveColor = new Color3(1, 0.85, 0.1)
+    })
     this._parts.burst(
       new Vector3(0, GOAL_H / 2, this.posZ),
       40,
@@ -441,7 +467,9 @@ class Goal {
     playCrowdCheer()
     this._onScore()
     setTimeout(() => {
-      this._nets.forEach(n => { n.material.emissiveColor = Color3.Black(); n.material.alpha = 0.22 })
+      this._nets.forEach(n => {
+        if (n.material) n.material.emissiveColor = Color3.Black()
+      })
       this.scored = false
     }, 2200)
   }
@@ -450,19 +478,16 @@ class Goal {
 // ── SceneBuilder ───────────────────────────────────────────────────
 class SceneBuilder {
   static buildWorld(scene, shadowGen) {
-    // Evening arena sky
     scene.clearColor = new Color4(0.04, 0.06, 0.14, 1)
     scene.fogMode    = Scene.FOGMODE_EXP2
     scene.fogColor   = new Color3(0.04, 0.06, 0.14)
     scene.fogDensity = 0.006
 
-    // Soft ambient — dark ground, cool sky
     const ambient = new HemisphericLight('hemi', new Vector3(0, 1, 0), scene)
     ambient.intensity   = 0.25
     ambient.groundColor = new Color3(0.02, 0.06, 0.02)
     ambient.diffuse     = new Color3(0.5, 0.6, 0.8)
 
-    // Four stadium floodlights (one at each corner above stands)
     const lightPositions = [
       new Vector3(-FIELD_HALF - 8,  28,  FIELD_HALF + 8),
       new Vector3( FIELD_HALF + 8,  28,  FIELD_HALF + 8),
@@ -477,12 +502,10 @@ class SceneBuilder {
       return l
     })
 
-    // Main shadow from first light
     const sg = new ShadowGenerator(2048, lights[0])
     sg.usePoissonSampling = true
     sg.bias = 0.0003
 
-    // Ground field
     const ground = MeshBuilder.CreateGround('ground',
       { width: FIELD_HALF * 2, height: FIELD_HALF * 2, subdivisions: 1 }, scene)
     ground.receiveShadows = true
@@ -504,47 +527,29 @@ class SceneBuilder {
     const tex = new DynamicTexture('gt', { width: W, height: H }, scene)
     const ctx = tex.getContext()
 
-    // Bright alternating green stripes
     const stripes = 12
     for (let i = 0; i < stripes; i++) {
       ctx.fillStyle = i % 2 === 0 ? '#3ecf3e' : '#33bb33'
       ctx.fillRect(0, i * (H / stripes), W, H / stripes)
     }
 
-    // Bold white lines
     ctx.strokeStyle = '#ffffff'
     ctx.lineWidth   = 9
     ctx.lineJoin    = 'round'
-
     const pad = 28
-    // Outer boundary
     ctx.strokeRect(pad, pad, W - pad * 2, H - pad * 2)
-
-    // Halfway line (horizontal, field rotated 90° on ground)
     ctx.beginPath(); ctx.moveTo(pad, H / 2); ctx.lineTo(W - pad, H / 2); ctx.stroke()
-
-    // Centre circle
     ctx.beginPath(); ctx.arc(W / 2, H / 2, 110, 0, Math.PI * 2); ctx.stroke()
-
-    // Centre spot
     ctx.fillStyle = '#ffffff'
     ctx.beginPath(); ctx.arc(W / 2, H / 2, 10, 0, Math.PI * 2); ctx.fill()
-
-    // Penalty areas (top + bottom)
     const paW = W * 0.44, paH = H * 0.16
     ctx.strokeRect((W - paW) / 2, pad, paW, paH)
     ctx.strokeRect((W - paW) / 2, H - pad - paH, paW, paH)
-
-    // Goal areas (small box)
     const gaW = W * 0.22, gaH = H * 0.07
     ctx.strokeRect((W - gaW) / 2, pad, gaW, gaH)
     ctx.strokeRect((W - gaW) / 2, H - pad - gaH, gaW, gaH)
-
-    // Penalty spots
     ctx.beginPath(); ctx.arc(W / 2, pad + paH * 0.72, 10, 0, Math.PI * 2); ctx.fill()
     ctx.beginPath(); ctx.arc(W / 2, H - pad - paH * 0.72, 10, 0, Math.PI * 2); ctx.fill()
-
-    // Corner arcs
     ctx.lineWidth = 7
     const cr = 42
     for (const [cx, cy, sa, ea] of [
@@ -561,7 +566,6 @@ class SceneBuilder {
   }
 
   static _buildStands(scene, sg) {
-    // Stepped concrete stands on all 4 sides
     const concreteMat = new StandardMaterial('conc', scene)
     concreteMat.diffuseColor  = new Color3(0.18, 0.18, 0.22)
     concreteMat.specularColor = Color3.Black()
@@ -573,51 +577,33 @@ class SceneBuilder {
 
     const ROWS = 8, ROW_H = 1.4, ROW_D = 1.8, GAP = 4
 
-    // Build one stand (along X axis, later rotated for sides)
     const buildSide = (offsetZ, rotY, len) => {
       for (let r = 0; r < ROWS; r++) {
-        // Concrete step
-        const step = MeshBuilder.CreateBox('st', {
-          width: len, height: ROW_H, depth: ROW_D
-        }, scene)
-        step.isPickable = false
-        step.material   = concreteMat
+        const step = MeshBuilder.CreateBox('st', { width: len, height: ROW_H, depth: ROW_D }, scene)
+        step.isPickable = false; step.material = concreteMat
         const y = r * ROW_H + ROW_H / 2
         const d = GAP + r * ROW_D + ROW_D / 2
         step.position.set(0, y, offsetZ > 0 ? offsetZ + d : offsetZ - d)
         step.rotation.y = rotY
-
-        // Seat row (thinner colored strip on top of step)
-        const seat = MeshBuilder.CreateBox('seat', {
-          width: len, height: 0.18, depth: ROW_D * 0.7
-        }, scene)
-        seat.isPickable = false
-        seat.material   = seatMat
+        const seat = MeshBuilder.CreateBox('seat', { width: len, height: 0.18, depth: ROW_D * 0.7 }, scene)
+        seat.isPickable = false; seat.material = seatMat
         seat.position.set(0, y + ROW_H / 2 + 0.09, offsetZ > 0 ? offsetZ + d : offsetZ - d)
         seat.rotation.y = rotY
       }
     }
 
-    buildSide( FIELD_HALF, 0, FIELD_HALF * 2 + 4)   // +Z side
-    buildSide(-FIELD_HALF, 0, FIELD_HALF * 2 + 4)   // -Z side
+    buildSide( FIELD_HALF, 0, FIELD_HALF * 2 + 4)
+    buildSide(-FIELD_HALF, 0, FIELD_HALF * 2 + 4)
 
-    // Side stands (perpendicular)
     for (let r = 0; r < ROWS; r++) {
       for (const sx of [1, -1]) {
-        const step = MeshBuilder.CreateBox('stX', {
-          width: ROW_D, height: ROW_H, depth: FIELD_HALF * 2 + 4
-        }, scene)
-        step.isPickable = false
-        step.material   = concreteMat
+        const step = MeshBuilder.CreateBox('stX', { width: ROW_D, height: ROW_H, depth: FIELD_HALF * 2 + 4 }, scene)
+        step.isPickable = false; step.material = concreteMat
         const y = r * ROW_H + ROW_H / 2
         const d = GAP + r * ROW_D + ROW_D / 2
         step.position.set(sx * (FIELD_HALF + d), y, 0)
-
-        const seat = MeshBuilder.CreateBox('seatX', {
-          width: ROW_D * 0.7, height: 0.18, depth: FIELD_HALF * 2 + 4
-        }, scene)
-        seat.isPickable = false
-        seat.material   = seatMat
+        const seat = MeshBuilder.CreateBox('seatX', { width: ROW_D * 0.7, height: 0.18, depth: FIELD_HALF * 2 + 4 }, scene)
+        seat.isPickable = false; seat.material = seatMat
         seat.position.set(sx * (FIELD_HALF + d), y + ROW_H / 2 + 0.09, 0)
       }
     }
@@ -633,19 +619,12 @@ class SceneBuilder {
     lampMat.emissiveColor = new Color3(1.0, 0.94, 0.70)
 
     positions.forEach(pos => {
-      // Pole
-      const pole = MeshBuilder.CreateCylinder('flp', {
-        height: pos.y, diameterTop: 0.35, diameterBottom: 0.55, tessellation: 10
-      }, scene)
+      const pole = MeshBuilder.CreateCylinder('flp', { height: pos.y, diameterTop: 0.35, diameterBottom: 0.55, tessellation: 10 }, scene)
       pole.position.set(pos.x, pos.y / 2, pos.z)
-      pole.material   = poleMat
-      pole.isPickable = false
-
-      // Lamp head
+      pole.material = poleMat; pole.isPickable = false
       const head = MeshBuilder.CreateBox('flh', { width: 4, height: 0.6, depth: 1.5 }, scene)
       head.position.set(pos.x, pos.y + 0.3, pos.z)
-      head.material   = lampMat
-      head.isPickable = false
+      head.material = lampMat; head.isPickable = false
     })
   }
 
@@ -666,40 +645,46 @@ class SceneBuilder {
     sides.forEach(({ w, d, x, z }) => {
       const f = MeshBuilder.CreateBox('fence', { width: w, height: H, depth: d }, scene)
       f.position.set(x, H / 2, z)
-      f.material   = fenceMat
-      f.isPickable = false
+      f.material = fenceMat; f.isPickable = false
     })
   }
 }
 
+// ── Helpers ────────────────────────────────────────────────────────
+function fmtTime(s) {
+  const m = Math.floor(s / 60)
+  const sec = Math.floor(s) % 60
+  return `${m}:${sec.toString().padStart(2, '0')}`
+}
+
 // ── Main scene init ────────────────────────────────────────────────
-function initScene(canvas, { shirtKey, wearing, joy, teamColor, onScoreA, onScoreB, onLoad }) {
+function initScene(canvas, {
+  shirtKey, wearing, joy, teamColor,
+  onScoreA, onScoreB, onLoad, onGoal, onGameOver,
+  followBallRef, timerDomRef,
+}) {
   const engine = new Engine(canvas, true, { adaptToDeviceRatio: true, stencil: true })
   const scene  = new Scene(engine)
 
-  // Camera — FreeCamera driven programmatically for smooth follow
   const camera = new FreeCamera('cam', new Vector3(0, 5, 20), scene)
   camera.inputs.clear()
   camera.minZ = 0.1
   camera.maxZ = 450
 
-  // ── World ──────────────────────────────────────────────────────
   const { shadowGen } = SceneBuilder.buildWorld(scene, null)
+  const ball           = new PhysicsObject(scene, shadowGen)
+  const particles      = new ParticlePool(scene, 50)
 
-  // ── Ball ───────────────────────────────────────────────────────
-  const ball = new PhysicsObject(scene, shadowGen)
-
-  // ── Particles ──────────────────────────────────────────────────
-  const particles = new ParticlePool(scene, 50)
-
-  // ── Goals ──────────────────────────────────────────────────────
   let scoreA = 0, scoreB = 0
+  let goalPaused  = false
+  let gameActive  = true
+  let timeLeft    = GAME_DURATION
+
   const goals = [
     new Goal(scene, -GOAL_Z,  1, particles, () => { scoreA++; onScoreA(scoreA) }),
     new Goal(scene,  GOAL_Z, -1, particles, () => { scoreB++; onScoreB(scoreB) }),
   ]
 
-  // ── Post-processing ────────────────────────────────────────────
   try {
     const pipe = new DefaultRenderingPipeline('pipe', true, scene, [camera])
     pipe.bloomEnabled = true; pipe.bloomThreshold = 0.82; pipe.bloomWeight = 0.22
@@ -711,18 +696,15 @@ function initScene(canvas, { shirtKey, wearing, joy, teamColor, onScoreA, onScor
     pipe.sharpenEnabled = true; pipe.sharpen.edgeAmount = 0.2
   } catch {}
 
-  // ── Camera follow state ────────────────────────────────────────
   const camPos    = new Vector3(0, 5, 20)
   const camLookAt = new Vector3(0, 1.5, 0)
 
-  // ── Character ─────────────────────────────────────────────────
   let controller = null
   const nodeMap    = {}
   const dstRests   = {}
   const restPose   = {}
   const animGroups = {}
 
-  // Pick model file based on current shirt
   let modelFile = 'Poppetje.glb'
   if (shirtKey === 'ajax') modelFile = 'poppetjemetajaxshirt.glb'
   if (shirtKey === 'psv')  modelFile = 'poppetjemetpsvshirt.glb'
@@ -732,16 +714,13 @@ function initScene(canvas, { shirtKey, wearing, joy, teamColor, onScoreA, onScor
     charRoot.position.set(0, 0, 5)
     charRoot.rotationQuaternion = Quaternion.RotationYawPitchRoll(0, 0, 0)
 
-    // Shadows
     meshes.forEach(m => { shadowGen.addShadowCaster(m); m.receiveShadows = true })
 
-    const CLOTHING_NAMES = new Set(['Shirt', 'Broek', 'Sokken', 'Schoenen'])
-
-    // Apply clothing colors (from wardrobe)
+    // Apply clothing colors (wardrobe)
     if (modelFile === 'Poppetje.glb') {
       meshes.forEach(m => {
         if (!CLOTHING_NAMES.has(m.name)) return
-        const itemKey = m.name.toLowerCase()
+        const itemKey  = m.name.toLowerCase()
         const colorKey = itemKey === 'shirt' ? shirtKey : wearing?.[itemKey]
         if (!colorKey) { m.setEnabled(false); return }
         const col = SHIRT_COLORS.find(c => c.key === colorKey)
@@ -759,25 +738,33 @@ function initScene(canvas, { shirtKey, wearing, joy, teamColor, onScoreA, onScor
         } else { m.setEnabled(false) }
       })
 
-      // Apply team skin color to all non-clothing meshes
+      // Apply team skin color — skip clothing AND face features
       if (teamColor) {
         const tc = Color3.FromHexString(teamColor)
         meshes.forEach(m => {
-          if (CLOTHING_NAMES.has(m.name) || !m.material) return
+          if (CLOTHING_NAMES.has(m.name) || FACE_MESH_NAMES.has(m.name) || !m.material) return
           const mat = m.material.clone(m.material.name + '_team')
           m.material = mat
           if (mat.albedoColor !== undefined) { mat.albedoTexture = null; mat.albedoColor = tc }
           else if (mat.diffuseColor !== undefined) { mat.diffuseTexture = null; mat.diffuseColor = tc }
         })
       }
+
+      // Face features always black
+      meshes.forEach(m => {
+        if (!FACE_MESH_NAMES.has(m.name) || !m.material) return
+        const mat = m.material.clone(m.material.name + '_face')
+        m.material = mat
+        if (mat.albedoColor !== undefined) { mat.albedoTexture = null; mat.albedoColor = Color3.Black() }
+        else if (mat.diffuseColor !== undefined) { mat.diffuseTexture = null; mat.diffuseColor = Color3.Black() }
+      })
     }
 
-    // Build node map + capture T-pose rest rotations
     scene.transformNodes.forEach(n => {
       nodeMap[n.name] = n
       if (!RETARGET_BONES.has(n.name)) return
-      dstRests[n.name]  = n.rotationQuaternion ? n.rotationQuaternion.clone() : Quaternion.Identity()
-      restPose[n.name]  = {
+      dstRests[n.name] = n.rotationQuaternion ? n.rotationQuaternion.clone() : Quaternion.Identity()
+      restPose[n.name] = {
         node: n,
         rot:  n.rotationQuaternion ? n.rotationQuaternion.clone() : Quaternion.Identity(),
         pos:  n.position.clone(),
@@ -785,7 +772,6 @@ function initScene(canvas, { shirtKey, wearing, joy, teamColor, onScoreA, onScor
     })
     scene.meshes.forEach(m => { if (!nodeMap[m.name]) nodeMap[m.name] = m })
 
-    // ── Load animations ──────────────────────────────────────────
     const ANIMS = [
       { key: 'lopen',      file: 'emote_lopen.glb',      stripRoot: true  },
       { key: 'hip_hop',    file: 'hip_hop_dancing.glb',   stripRoot: false },
@@ -828,9 +814,8 @@ function initScene(canvas, { shirtKey, wearing, joy, teamColor, onScoreA, onScor
             continue
           }
           if (!RETARGET_BONES.has(name)) { tas.splice(i, 1); continue }
-          // Rest-pose correction: inv(dstRest) * srcRest * keyframe
-          const src = srcRests[name] ?? Quaternion.Identity()
-          const dst = dstRests[name] ?? Quaternion.Identity()
+          const src  = srcRests[name] ?? Quaternion.Identity()
+          const dst  = dstRests[name] ?? Quaternion.Identity()
           const corr = Quaternion.Inverse(dst).multiply(src)
           anim.getKeys().forEach(kf => kf.value.copyFrom(corr.multiply(kf.value)))
         }
@@ -845,14 +830,28 @@ function initScene(canvas, { shirtKey, wearing, joy, teamColor, onScoreA, onScor
 
   // ── Game loop ──────────────────────────────────────────────────
   scene.registerBeforeRender(() => {
+    if (!gameActive) return
     const dt = Math.min(engine.getDeltaTime() / 1000, 0.05)
 
-    controller?.update(dt)
+    // Timer countdown
+    timeLeft -= dt
+    if (timeLeft <= 0) {
+      timeLeft = 0
+      gameActive = false
+      if (timerDomRef?.current) timerDomRef.current.textContent = '0:00'
+      onGameOver()
+      return
+    }
+    if (timerDomRef?.current) timerDomRef.current.textContent = fmtTime(timeLeft)
+
+    if (!goalPaused) {
+      controller?.update(dt)
+    }
     ball.update(dt)
     particles.update(dt)
 
     // Ball ↔ character collision
-    if (controller) {
+    if (controller && !goalPaused) {
       const cp  = controller.root.position
       const bp  = ball.mesh.position
       const dx  = bp.x - cp.x, dz = bp.z - cp.z
@@ -864,34 +863,57 @@ function initScene(canvas, { shirtKey, wearing, joy, teamColor, onScoreA, onScor
         const toB = new Vector3(dx / d, 0, dz / d)
         if (spd > 0.3) {
           const kickDir = Vector3.Lerp(fwd, toB, 0.35).normalize()
-          ball.kick(kickDir, spd * 7 + 4)
+          ball.kick(kickDir, spd * 2.5 + 1)  // much slower kick
         } else {
-          ball.kick(toB, 2)
+          ball.kick(toB, 0.8)
         }
       }
     }
 
     // Goal scoring
-    goals.forEach(goal => {
-      if (!goal.scored && goal.checkScore(ball)) {
-        goal.flash()
-        setTimeout(() => ball.reset(), 2300)
-      }
-    })
+    if (!goalPaused) {
+      goals.forEach(goal => {
+        if (!goal.scored && goal.checkScore(ball)) {
+          goalPaused = true
+          goal.flash()
+          onGoal()
+          setTimeout(() => {
+            ball.reset()
+            if (controller) {
+              controller.root.position.set(0, 0, 5)
+              controller.rotY = 0
+              controller.velocity = 0
+            }
+            goalPaused = false
+          }, 2200)
+        }
+      })
+    }
 
-    // Camera: fixed offset behind character (+Z) — follows position, never rotates
+    // Camera: always positioned behind the player
     if (controller) {
       const cp  = controller.root.position
+      const bp  = ball.mesh.position
       const Lp  = 1 - Math.exp(-dt * 9)
       const Ll  = 1 - Math.exp(-dt * 14)
 
+      // Camera position always follows player
       camPos.x += (cp.x      - camPos.x) * Lp
       camPos.y += (cp.y + 6  - camPos.y) * Lp
       camPos.z += (cp.z + 11 - camPos.z) * Lp
 
-      camLookAt.x += (cp.x       - camLookAt.x) * Ll
-      camLookAt.y += (cp.y + 1.2 - camLookAt.y) * Ll
-      camLookAt.z += (cp.z       - camLookAt.z) * Ll
+      const followBall = followBallRef?.current ?? false
+      if (followBall) {
+        // Ball cam: look AT the ball (Rocket League style)
+        camLookAt.x += (bp.x       - camLookAt.x) * Ll
+        camLookAt.y += (bp.y + 0.5 - camLookAt.y) * Ll
+        camLookAt.z += (bp.z       - camLookAt.z) * Ll
+      } else {
+        // Normal cam: look at player
+        camLookAt.x += (cp.x       - camLookAt.x) * Ll
+        camLookAt.y += (cp.y + 1.2 - camLookAt.y) * Ll
+        camLookAt.z += (cp.z       - camLookAt.z) * Ll
+      }
 
       camera.position.copyFrom(camPos)
       camera.setTarget(camLookAt)
@@ -902,8 +924,8 @@ function initScene(canvas, { shirtKey, wearing, joy, teamColor, onScoreA, onScor
   const onResize = () => engine.resize()
   window.addEventListener('resize', onResize)
 
-  // Return cleanup
   return () => {
+    gameActive = false
     controller?.dispose()
     ball.dispose()
     particles.dispose()
@@ -914,8 +936,7 @@ function initScene(canvas, { shirtKey, wearing, joy, teamColor, onScoreA, onScor
   }
 }
 
-// ── React component ────────────────────────────────────────────────
-// ── Virtual joystick (touch + mouse) ───────────────────────────────
+// ── Virtual joystick ────────────────────────────────────────────────
 function VirtualJoystick({ joyRef }) {
   const baseRef   = useRef(null)
   const knobRef   = useRef(null)
@@ -939,12 +960,10 @@ function VirtualJoystick({ joyRef }) {
     return { cx: r.left + r.width / 2, cy: r.top + r.height / 2 }
   }
 
-  // Touch
   const onTouchStart = e => { e.preventDefault(); activeRef.current = true; const t = e.targetTouches[0]; const {cx,cy} = getCenter(); applyOffset(t.clientX-cx, t.clientY-cy) }
   const onTouchMove  = e => { e.preventDefault(); if (!activeRef.current) return; const t = e.targetTouches[0]; const {cx,cy} = getCenter(); applyOffset(t.clientX-cx, t.clientY-cy) }
   const onTouchEnd   = () => release()
 
-  // Mouse
   useEffect(() => {
     const onMove = e => { if (!activeRef.current) return; const {cx,cy} = getCenter(); applyOffset(e.clientX-cx, e.clientY-cy) }
     const onUp   = () => { if (activeRef.current) release() }
@@ -985,14 +1004,43 @@ function TeamSelect({ onSelect }) {
   )
 }
 
+// ── Game over screen ────────────────────────────────────────────────
+function GameOver({ scoreA, scoreB, onRestart, onBack }) {
+  const winner = scoreA > scoreB ? 'Jij wint! 🏆' : scoreB > scoreA ? 'AI wint! 😅' : 'Gelijkspel! 🤝'
+  return (
+    <div className="fb3d-gameover">
+      <div className="fb3d-gameover-box">
+        <div className="fb3d-gameover-title">Tijd is om!</div>
+        <div className="fb3d-gameover-score">{scoreA} — {scoreB}</div>
+        <div className="fb3d-gameover-winner">{winner}</div>
+        <div className="fb3d-gameover-btns">
+          <button className="fb3d-gameover-btn fb3d-gameover-play" onClick={onRestart}>
+            ⚽ Opnieuw spelen
+          </button>
+          <button className="fb3d-gameover-btn fb3d-gameover-back" onClick={onBack}>
+            ← Kledingkast
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Main component ──────────────────────────────────────────────────
 export default function FootballScene3D({ onBack }) {
-  const canvasRef   = useRef(null)
-  const joyRef      = useRef({ x: 0, z: 0 })
-  const [team,      setTeam]      = useState(null)   // null = not chosen yet
-  const [scoreA,    setScoreA]    = useState(0)
-  const [scoreB,    setScoreB]    = useState(0)
-  const [loading,   setLoading]   = useState(true)
-  const [showHint,  setShowHint]  = useState(true)
+  const canvasRef     = useRef(null)
+  const joyRef        = useRef({ x: 0, z: 0 })
+  const followBallRef = useRef(false)
+  const timerDomRef   = useRef(null)
+
+  const [team,       setTeam]       = useState(null)
+  const [scoreA,     setScoreA]     = useState(0)
+  const [scoreB,     setScoreB]     = useState(0)
+  const [loading,    setLoading]    = useState(true)
+  const [showHint,   setShowHint]   = useState(true)
+  const [goalFlash,  setGoalFlash]  = useState(false)
+  const [followBall, setFollowBall] = useState(false)
+  const [gameOver,   setGameOver]   = useState(false)
 
   useEffect(() => {
     if (!team) return
@@ -1009,21 +1057,44 @@ export default function FootballScene3D({ onBack }) {
     const wearing = (() => { try { return JSON.parse(localStorage.getItem('kk_wearing') || '{}') } catch { return {} } })()
 
     const cleanup = initScene(canvas, {
-      shirtKey:   shirt,
+      shirtKey:      shirt,
       wearing,
-      joy:        joyRef.current,
-      teamColor:  team,
-      onScoreA:   v => setScoreA(v),
-      onScoreB:   v => setScoreB(v),
-      onLoad:     () => setLoading(false),
+      joy:           joyRef.current,
+      teamColor:     team,
+      onScoreA:      v => setScoreA(v),
+      onScoreB:      v => setScoreB(v),
+      onLoad:        () => setLoading(false),
+      onGoal:        () => {
+        setGoalFlash(true)
+        setTimeout(() => setGoalFlash(false), 2200)
+      },
+      onGameOver:    () => setGameOver(true),
+      followBallRef,
+      timerDomRef,
     })
     return cleanup
   }, [team])
 
+  const toggleCamera = () => {
+    const next = !followBallRef.current
+    followBallRef.current = next
+    setFollowBall(next)
+  }
+
   if (!team) return (
     <div className="fb3d-outer">
       <button className="fb3d-back" onClick={onBack}>← Kledingkast</button>
-      <TeamSelect onSelect={setTeam} />
+      <TeamSelect onSelect={t => { setTeam(t); setScoreA(0); setScoreB(0); setGameOver(false); setLoading(true) }} />
+    </div>
+  )
+
+  if (gameOver) return (
+    <div className="fb3d-outer">
+      <GameOver
+        scoreA={scoreA} scoreB={scoreB}
+        onRestart={() => { setTeam(null); setGameOver(false) }}
+        onBack={onBack}
+      />
     </div>
   )
 
@@ -1033,13 +1104,23 @@ export default function FootballScene3D({ onBack }) {
 
       <button className="fb3d-back" onClick={onBack}>← Kledingkast</button>
 
+      {/* Score + timer bar */}
       <div className="fb3d-score">
         <span className="fb3d-score-a">🥅 {scoreA}</span>
+        <span className="fb3d-score-sep"> — </span>
+        <span ref={timerDomRef} className="fb3d-timer">2:00</span>
         <span className="fb3d-score-sep"> — </span>
         <span className="fb3d-score-b">{scoreB} 🥅</span>
       </div>
 
-      {/* Joystick — only visible on touch devices */}
+      {/* Camera toggle */}
+      <button className="fb3d-cam-btn" onClick={toggleCamera}>
+        {followBall ? '📷 Bal' : '📷 Speler'}
+      </button>
+
+      {/* GOAL! flash */}
+      {goalFlash && <div className="fb3d-goal-flash">GOAL! 🎉</div>}
+
       <VirtualJoystick joyRef={joyRef} />
 
       <div className={`fb3d-hint ${showHint ? 'fb3d-hint-show' : ''}`}>
