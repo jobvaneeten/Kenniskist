@@ -167,7 +167,20 @@ class CharacterController {
   _playRest() {
     this._stopAll()
     this._resetRest()
-    this._anims.restpose?.play(true)
+    const rp = this._anims.restpose
+    if (rp) {
+      // Single-frame pose — apply the first keyframe directly to each bone node.
+      // Skip Root: charRoot mesh controls global orientation; Root keyframe causes lay-flat.
+      rp.targetedAnimations.forEach(ta => {
+        if (ta.animation.targetProperty !== 'rotationQuaternion') return
+        if (ta.target.name === 'Root') return
+        const keys = ta.animation.getKeys()
+        if (!keys.length) return
+        const node = ta.target
+        if (!node.rotationQuaternion) node.rotationQuaternion = Quaternion.Identity()
+        node.rotationQuaternion.copyFrom(keys[0].value)
+      })
+    }
     this._state = 'idle'
   }
 
@@ -824,10 +837,14 @@ function initScene(canvas, {
             continue
           }
           if (!RETARGET_BONES.has(name)) { tas.splice(i, 1); continue }
-          const src  = srcRests[name] ?? Quaternion.Identity()
-          const dst  = dstRests[name] ?? Quaternion.Identity()
-          const corr = Quaternion.Inverse(dst).multiply(src)
-          anim.getKeys().forEach(kf => kf.value.copyFrom(corr.multiply(kf.value)))
+          // Skip rest-pose correction for the static pose file — applying correction
+          // when srcRest ≈ pose (non-T-pose bind) doubles the rotation and collapses the mesh
+          if (key !== 'restpose') {
+            const src  = srcRests[name] ?? Quaternion.Identity()
+            const dst  = dstRests[name] ?? Quaternion.Identity()
+            const corr = Quaternion.Inverse(dst).multiply(src)
+            anim.getKeys().forEach(kf => kf.value.copyFrom(corr.multiply(kf.value)))
+          }
         }
 
         retargeted.stop()

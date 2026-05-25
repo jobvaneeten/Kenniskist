@@ -201,6 +201,23 @@ export default function Wardrobe({ onBack, onPlay3D, unlockedColors = {} }) {
     })
   }
 
+  const applyRestPose = (groups) => {
+    const rp = (groups ?? animGroupsRef.current)['restpose']
+    if (!rp) return
+    resetToTPose()
+    // Single-frame pose — apply first keyframe directly to each bone.
+    // Skip Root: the mesh root controls global orientation; Root keyframe causes lay-flat.
+    rp.targetedAnimations.forEach(ta => {
+      if (ta.animation.targetProperty !== 'rotationQuaternion') return
+      if (ta.target.name === 'Root') return
+      const keys = ta.animation.getKeys()
+      if (!keys.length) return
+      const node = ta.target
+      if (!node.rotationQuaternion) node.rotationQuaternion = Quaternion.Identity()
+      node.rotationQuaternion.copyFrom(keys[0].value)
+    })
+  }
+
   const pickEmote = (name) => {
     const groups = animGroupsRef.current
     if (activeAnim === name) {
@@ -335,8 +352,7 @@ export default function Wardrobe({ onBack, onPlay3D, unlockedColors = {} }) {
         if (pending === 0) {
           animGroupsRef.current = groups
           setAnimsReady(true)
-          // Start in rest pose by default
-          groups['restpose']?.play(true)
+          applyRestPose(groups)
           setActiveAnim('restpose')
         }
       }
@@ -383,13 +399,16 @@ export default function Wardrobe({ onBack, onPlay3D, unlockedColors = {} }) {
                 // Rotation tracks: only keep retargeted bones
                 if (!RETARGET_BONES.has(name)) { tas.splice(i, 1); continue }
 
-                // Apply rest-pose correction: corrected = inv(dst_rest) * src_rest * keyframe
-                const srcRest = srcRestRots[name] ?? Quaternion.Identity()
-                const dstRest = dstRestRots[name] ?? Quaternion.Identity()
-                const correction = Quaternion.Inverse(dstRest).multiply(srcRest)
-                ta.animation.getKeys().forEach(kf => {
-                  kf.value.copyFrom(correction.multiply(kf.value))
-                })
+                // Skip rest-pose correction for the static pose file — correction doubles
+                // the rotation when the source bind pose is the pose itself, collapsing the mesh
+                if (key !== 'restpose') {
+                  const srcRest = srcRestRots[name] ?? Quaternion.Identity()
+                  const dstRest = dstRestRots[name] ?? Quaternion.Identity()
+                  const correction = Quaternion.Inverse(dstRest).multiply(srcRest)
+                  ta.animation.getKeys().forEach(kf => {
+                    kf.value.copyFrom(correction.multiply(kf.value))
+                  })
+                }
               }
 
               retargeted.stop()
@@ -520,8 +539,7 @@ export default function Wardrobe({ onBack, onPlay3D, unlockedColors = {} }) {
             className={`emote-btn ${activeAnim === 'restpose' ? 'emote-on' : ''}`}
             onClick={() => {
               if (activeAnim && activeAnim !== 'restpose') animGroupsRef.current[activeAnim]?.stop()
-              resetToTPose()
-              animGroupsRef.current['restpose']?.play(true)
+              applyRestPose()
               setActiveAnim('restpose')
             }}
             disabled={!animsReady}
