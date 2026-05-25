@@ -167,14 +167,10 @@ class CharacterController {
     if (this._state === 'emote') return
     const k = this._keys
 
-    // 4-directional strafe movement — arrows move the character, not the camera
-    const fwdInput  = k['ArrowUp']    ?  1 : k['ArrowDown']  ? -0.55 : 0
-    const sideInput = k['ArrowRight'] ?  1 : k['ArrowLeft']  ? -1    : 0
-
-    // Velocity in world space (field: forward = -Z, right = +X)
-    const vx = sideInput * this.speed
-    const vz = -fwdInput  * this.speed
-    const spd = Math.sqrt(vx * vx + vz * vz)
+    // World-space 4-directional movement (camera is always at fixed +Z offset)
+    // UP = forward into field (-Z), DOWN = back (+Z), LEFT = -X, RIGHT = +X
+    const vx = (k['ArrowRight'] ? 1 : k['ArrowLeft']  ? -1 : 0) * this.speed
+    const vz = (k['ArrowDown']  ? 1 : k['ArrowUp']    ? -1 : 0) * this.speed * 0.55
 
     this.root.position.x = Math.max(-FIELD_HALF + 1, Math.min(FIELD_HALF - 1,
       this.root.position.x + vx * dt))
@@ -182,28 +178,28 @@ class CharacterController {
       this.root.position.z + vz * dt))
     this.root.position.y = 0
 
-    // Auto-rotate character to face movement direction
-    if (spd > 0.1) {
-      const targetRot = Math.atan2(vx, -vz)
+    const spd = Math.hypot(vx, vz)
+
+    // Character model rotates to face direction of movement
+    if (spd > 0.05) {
+      const targetRot = Math.atan2(vx, vz)   // atan2(x, z) gives correct Y-rotation
       let diff = targetRot - this.rotY
       while (diff >  Math.PI) diff -= Math.PI * 2
       while (diff < -Math.PI) diff += Math.PI * 2
-      this.rotY += diff * Math.min(1, 12 * dt)
+      this.rotY += diff * Math.min(1, 14 * dt)
     }
     this.root.rotation.y = this.rotY
-
-    // velocity scalar for animation blend
     this.velocity = spd
 
-    // Animation state machine
+    // Animation
     const blend = spd / this.speed
-    if (blend > 0.12) {
+    if (blend > 0.08) {
       if (this._state !== 'walk') {
         this._resetRest()
         this._anims.lopen?.play(true)
         this._state = 'walk'
       }
-      if (this._anims.lopen) this._anims.lopen.speedRatio = Math.max(0.3, blend * 1.4)
+      if (this._anims.lopen) this._anims.lopen.speedRatio = Math.max(0.3, blend * 1.6)
     } else {
       if (this._state === 'walk') {
         this._stopAll(); this._resetRest(); this._state = 'idle'
@@ -774,27 +770,19 @@ function initScene(canvas, { shirtKey, wearing, onScoreA, onScoreB, onLoad }) {
       }
     })
 
-    // Camera: locked from behind the character, time-based lerp
+    // Camera: fixed offset behind character (+Z) — follows position, never rotates
     if (controller) {
-      const cp   = controller.root.position
-      const rot  = controller.rotY
-      const dist = 9, h = 5
+      const cp  = controller.root.position
+      const Lp  = 1 - Math.exp(-dt * 9)
+      const Ll  = 1 - Math.exp(-dt * 14)
 
-      const targetX = cp.x - Math.sin(rot) * dist
-      const targetY = cp.y + h
-      const targetZ = cp.z - Math.cos(rot) * dist
+      camPos.x += (cp.x      - camPos.x) * Lp
+      camPos.y += (cp.y + 6  - camPos.y) * Lp
+      camPos.z += (cp.z + 11 - camPos.z) * Lp
 
-      // Exponential decay — camera snaps behind within ~0.3 s
-      const Lpos  = 1 - Math.exp(-dt * 11)
-      const Llook = 1 - Math.exp(-dt * 16)
-
-      camPos.x += (targetX - camPos.x) * Lpos
-      camPos.y += (targetY - camPos.y) * Lpos
-      camPos.z += (targetZ - camPos.z) * Lpos
-
-      camLookAt.x += (cp.x       - camLookAt.x) * Llook
-      camLookAt.y += (cp.y + 1.4 - camLookAt.y) * Llook
-      camLookAt.z += (cp.z       - camLookAt.z) * Llook
+      camLookAt.x += (cp.x       - camLookAt.x) * Ll
+      camLookAt.y += (cp.y + 1.2 - camLookAt.y) * Ll
+      camLookAt.z += (cp.z       - camLookAt.z) * Ll
 
       camera.position.copyFrom(camPos)
       camera.setTarget(camLookAt)
