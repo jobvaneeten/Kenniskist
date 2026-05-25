@@ -762,24 +762,27 @@ function initScene(canvas, { shirtKey, wearing, onScoreA, onScoreB, onLoad }) {
       }
     })
 
-    // Camera follow with lerp (0.05)
+    // Camera: locked from behind the character, time-based lerp
     if (controller) {
-      const cp  = controller.root.position
-      const rot = controller.rotY
-      const dist = 8, h = 4
+      const cp   = controller.root.position
+      const rot  = controller.rotY
+      const dist = 9, h = 5
 
-      // Desired position: behind + above character
-      const dx  = -Math.sin(rot) * dist
-      const dz  = -Math.cos(rot) * dist
-      const L   = 0.05
+      const targetX = cp.x - Math.sin(rot) * dist
+      const targetY = cp.y + h
+      const targetZ = cp.z - Math.cos(rot) * dist
 
-      camPos.x  += ((cp.x + dx) - camPos.x) * L
-      camPos.y  += ((cp.y + h)  - camPos.y) * L
-      camPos.z  += ((cp.z + dz) - camPos.z) * L
+      // Exponential decay — camera snaps behind within ~0.3 s
+      const Lpos  = 1 - Math.exp(-dt * 11)
+      const Llook = 1 - Math.exp(-dt * 16)
 
-      camLookAt.x += (cp.x - camLookAt.x) * 0.08
-      camLookAt.y += (cp.y + 1.6 - camLookAt.y) * 0.08
-      camLookAt.z += (cp.z - camLookAt.z) * 0.08
+      camPos.x += (targetX - camPos.x) * Lpos
+      camPos.y += (targetY - camPos.y) * Lpos
+      camPos.z += (targetZ - camPos.z) * Lpos
+
+      camLookAt.x += (cp.x       - camLookAt.x) * Llook
+      camLookAt.y += (cp.y + 1.4 - camLookAt.y) * Llook
+      camLookAt.z += (cp.z       - camLookAt.z) * Llook
 
       camera.position.copyFrom(camPos)
       camera.setTarget(camLookAt)
