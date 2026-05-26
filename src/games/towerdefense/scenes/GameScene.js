@@ -468,7 +468,22 @@ class Tower {
   }
 
   update(time, _delta) {
-    if (this.data.special === 'aura') return // passive
+    if (this.data.special === 'aura') {
+      // Pulse particles to each boosted neighbour every 1.2 s
+      if (!this._auraPulse) this._auraPulse = 0
+      if (time - this._auraPulse > 1200) {
+        this._auraPulse = time
+        const range = this.getRange()
+        const hasNeighbour = this.scene.towers.some(t => {
+          if (t === this) return false
+          const dx = (t.col - this.col) * TILE_SIZE
+          const dy = (t.row - this.row) * TILE_SIZE
+          return Math.sqrt(dx*dx + dy*dy) <= range
+        })
+        if (hasNeighbour) this.scene.spawnParticles(this.x, this.y, 'aura', 0xFFFF88)
+      }
+      return
+    }
 
     const fr = this.getFireRate()
     if (fr <= 0) return
@@ -921,6 +936,7 @@ export default class GameScene extends Phaser.Scene {
       spark:     { tex: 'spark_02',  count: 6,  speedMin: 80,  speedMax: 180, scale: 0.07, life: 400  },
       levelup:   { tex: 'star_01',   count: 14, speedMin: 60,  speedMax: 160, scale: 0.08, life: 800  },
       firework:  { tex: 'star_03',   count: 30, speedMin: 100, speedMax: 320, scale: 0.12, life: 1200 },
+      aura:      { tex: 'magic_01',  count: 8,  speedMin: 20,  speedMax: 80,  scale: 0.07, life: 700  },
     }
     const cfg = configs[type] || configs.hit
 
