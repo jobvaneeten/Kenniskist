@@ -1,7 +1,17 @@
 // Mini Golf – Babylon.js + Havok v2
-// Tile channel: X [-1, +1] = 2 units wide.  Surface at world Y = 0.
-// Physics: invisible box colliders per tile (floor + 2 walls).
-// Ball:    visible colored MeshBuilder.CreateSphere.
+//
+// GLB geometry (measured from accessors):
+//   node.translation.Y = -1 for all tiles
+//   → spawn tiles at world Y = 1  so  surface = world Y = 0
+//   channel width:  1.0 unit   (mesh X: -0.5 → +0.5)
+//   straight tile:  mesh Y 0 → 0.15   (floor at 0, thin walls)
+//   hill peak:      mesh Y ≈ 1.1       (HB/HC/HE)
+//   bump up peak:   mesh Y ≈ 0.65
+//   bump down min:  mesh Y ≈ -0.5
+//   Z span per tile: 0 → 4   (TILE_SIZE = 4, no overlap)
+//
+// Physics: per-tile invisible BOX colliders (floor + 2 walls)
+// Ball:    MeshBuilder.CreateSphere – always visible
 import {
   Engine, Scene, Vector3, Color3, Color4,
   HemisphericLight, DirectionalLight, ShadowGenerator,
@@ -16,26 +26,21 @@ import { HavokPlugin } from '@babylonjs/core/Physics/v2/Plugins/havokPlugin.js'
 import { HOLES } from './data/CourseData.js'
 
 // ── constants ─────────────────────────────────────────────────────────
-const GOLF_PATH  = '/golf/'
+const GOLF_PATH = '/golf/'
 const MAX_SHOTS  = 10
-const MAX_POWER  = 9        // maximum impulse force (N·s)
-const DRAG_SCALE = 0.10     // pixels → power ratio
-const HOLE_R     = 0.45     // XZ radius that counts as "in hole"
-const BALL_R     = 0.16     // physics sphere radius → diameter 0.32
+const MAX_POWER  = 8
+const DRAG_SCALE = 0.09
+const HOLE_R     = 0.30   // XZ detection radius for "ball in hole"
+const BALL_R     = 0.15   // physics + visual sphere radius
 
-// Tile geometry (from GLB analysis)
-const CHAN_HW  = 1.0         // half-width of channel  (tile X: -1 → +1)
-const WALL_TH  = 0.16        // physics wall thickness
-const WALL_H   = 1.0         // physics wall height
-const HILL_H   = 0.15        // hill peak height above surface
-
-// Tile type strings
-const S  = 'spline-default-straight'
-const HB = 'spline-default-straight-hill-beginning'
-const HC = 'spline-default-straight-hill-complete'
-const HE = 'spline-default-straight-hill-end'
-const BU = 'spline-default-straight-bump-up'
-const BD = 'spline-default-straight-bump-down'
+// Tile geometry (from GLB accessor min/max)
+const CHAN_HW  = 0.50   // channel half-width  (mesh X: -0.5 → +0.5)
+const WALL_TH  = 0.08   // invisible wall thickness
+const WALL_H   = 2.60   // wall height – tall enough to contain ball on hills (peak ≈ 1.1)
+const HILL_H   = 1.10   // hill peak height (HB end / HC / HE start)
+const BUMP_H   = 0.60   // bump-up peak height
+const BUMP_LO  = -0.45  // bump-down trough
+const TILE_Y   = 1.0    // world Y at which to place tile wrapper so surface = 0
 
 // ── score helper ──────────────────────────────────────────────────────
 export function scoreName(strokes, par) {
@@ -49,27 +54,24 @@ export function scoreName(strokes, par) {
   return `+${d}`
 }
 
-// ── GLB visual cache ──────────────────────────────────────────────────
-const _glbCache = {}
+// ── GLB cache (visual only, no physics on GLB meshes) ─────────────────
+const _cache = {}
 
 async function loadGlb(name, scene) {
-  if (_glbCache[name]) return _glbCache[name]
+  if (_cache[name]) return _cache[name]
   const res  = await SceneLoader.ImportMeshAsync('', GOLF_PATH, `${name}.glb`, scene)
   const root = new TransformNode(`tmpl_${name}`, scene)
-  res.meshes.forEach(m => {
-    if (!m.parent) m.parent = root
-    m.isPickable = false
-  })
+  res.meshes.forEach(m => { if (!m.parent) m.parent = root; m.isPickable = false })
   root.setEnabled(false)
-  _glbCache[name] = root
+  _cache[name] = root
   return root
 }
 
 function cloneGlb(src, id) {
   const node = src.clone(id, null)
   node.setEnabled(true)
-  const enable = n => { n.setEnabled(true); n.getChildren(undefined, false).forEach(enable) }
-  enable(node)
+  const wake = n => { n.setEnabled(true); n.getChildren(undefined, false).forEach(wake) }
+  wake(node)
   return node
 }
 
@@ -82,44 +84,44 @@ export async function createMiniGolf(canvas, opts = {}) {
     onStateChanged, onShotCountChanged,
   } = opts
 
-  // ── engine / scene ────────────────────────────────────────────────
+  // ── engine & scene ────────────────────────────────────────────────
   const engine = new Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true })
   const scene  = new Scene(engine)
-  scene.clearColor = new Color4(0.47, 0.73, 0.88, 1)   // sky blue
+  scene.clearColor = new Color4(0.45, 0.70, 0.87, 1)
 
-  // ── physics ───────────────────────────────────────────────────────
+  // ── Havok ─────────────────────────────────────────────────────────
   const havok = await HavokPhysics()
   scene.enablePhysics(new Vector3(0, -9.81, 0), new HavokPlugin(true, havok))
 
-  // ── lighting ──────────────────────────────────────────────────────
+  // ── Lighting (warm sun + green-tinted ambient) ─────────────────────
   const amb = new HemisphericLight('amb', Vector3.Up(), scene)
-  amb.intensity   = 0.75
-  amb.diffuse     = new Color3(0.95, 1.0, 0.95)
-  amb.groundColor = new Color3(0.28, 0.42, 0.28)
+  amb.intensity   = 0.70
+  amb.diffuse     = new Color3(0.92, 1.0, 0.92)
+  amb.groundColor = new Color3(0.25, 0.40, 0.25)
 
-  const sun = new DirectionalLight('sun', new Vector3(-0.6, -1.0, -0.4).normalize(), scene)
-  sun.intensity = 1.3
+  const sun = new DirectionalLight('sun', new Vector3(-0.55, -1.0, -0.35).normalize(), scene)
+  sun.intensity = 1.25
   sun.diffuse   = new Color3(1.0, 0.97, 0.88)
-  sun.position  = new Vector3(15, 25, 15)
+  sun.position  = new Vector3(12, 20, 12)
 
   const shadow = new ShadowGenerator(2048, sun)
   shadow.useBlurExponentialShadowMap = true
-  shadow.blurKernel = 8
+  shadow.blurKernel = 6
 
-  // ── ball materials ────────────────────────────────────────────────
-  function makeMat(r, g, b) {
-    const m = new StandardMaterial('m', scene)
+  // ── Ball materials ────────────────────────────────────────────────
+  const mkMat = (r, g, b) => {
+    const m = new StandardMaterial('', scene)
     m.diffuseColor  = new Color3(r, g, b)
-    m.specularColor = new Color3(0.6, 0.6, 0.6)
-    m.specularPower = 80
+    m.specularColor = new Color3(0.7, 0.7, 0.7)
+    m.specularPower = 90
     return m
   }
-  const MATS = [makeMat(0.92, 0.12, 0.12), makeMat(0.12, 0.30, 0.95)]
+  const MATS = [mkMat(0.95, 0.10, 0.10), mkMat(0.10, 0.28, 0.95)]
 
-  // ── camera ────────────────────────────────────────────────────────
-  const camera = new ArcRotateCamera('cam', -Math.PI / 2, 0.90, 20, Vector3.Zero(), scene)
+  // ── Camera ────────────────────────────────────────────────────────
+  const camera = new ArcRotateCamera('cam', -Math.PI / 2, 0.88, 18, Vector3.Zero(), scene)
   camera.lowerBetaLimit   = 0.15
-  camera.upperBetaLimit   = Math.PI / 2.1
+  camera.upperBetaLimit   = Math.PI / 2.08
   camera.lowerRadiusLimit = 4
   camera.upperRadiusLimit = 55
   camera.inputs.remove(camera.inputs.attached.mousewheel)
@@ -129,86 +131,93 @@ export async function createMiniGolf(canvas, opts = {}) {
       Math.min(camera.upperRadiusLimit, camera.radius + e.deltaY * 0.04))
   }, { passive: true })
 
-  // ── game state ────────────────────────────────────────────────────
+  // ── State ─────────────────────────────────────────────────────────
   const players = [
     { id: 0, name: 'Rood',  ballKey: 'ball-red',  shots: 0, scores: [], finished: false },
     { id: 1, name: 'Blauw', ballKey: 'ball-blue', shots: 0, scores: [], finished: false },
   ]
   const balls = [{ mesh: null, agg: null }, { mesh: null, agg: null }]
-
   let currentHole   = 0
   let currentPlayer = 0
   let turnQueue     = [0, 1]
   let disposables   = []
 
-  // ── physics box helper ────────────────────────────────────────────
-  function staticBox(cx, cy, cz, w, h, d, rotX = 0, opts2 = {}) {
-    const b = MeshBuilder.CreateBox('b', { width: w, height: h, depth: d }, scene)
+  // ── Physics helpers ───────────────────────────────────────────────
+  function phyBox(cx, cy, cz, w, h, d, rotX = 0, extra = {}) {
+    const b = MeshBuilder.CreateBox('pb', { width: w, height: h, depth: d }, scene)
     b.position.set(cx, cy, cz)
-    if (rotX !== 0) b.rotation.x = rotX
+    if (rotX) b.rotation.x = rotX
     b.isVisible = false
     new PhysicsAggregate(b, PhysicsShapeType.BOX,
-      { mass: 0, restitution: 0.25, friction: 0.55, ...opts2 }, scene)
+      { mass: 0, restitution: 0.25, friction: 0.55, ...extra }, scene)
     disposables.push(b)
     return b
   }
 
-  // ── per-tile colliders ────────────────────────────────────────────
-  // Tile placed at world (tx, 0, tz).
-  // Z extent: tz-1 → tz+4 (5 u), so centre is at tz+1.5, half-depth 2.5.
-  // We extend slightly (hd=2.7) to seal the 1-unit overlapping seam.
+  // Flat floor box: top surface at surfaceY, full channel width
+  function flatFloor(tx, surfaceY, tz) {
+    const cz = tz + 2.1   // half-depth 2.1 → covers tile Z: 0→4 with small seam margin
+    phyBox(tx, surfaceY - 0.06, cz, CHAN_HW * 2, 0.12, 4.2)
+  }
+
+  // Ramp floor box: surface goes from yA (at Z=tz) to yB (at Z=tz+4)
+  function rampFloor(tx, tz, yA, yB) {
+    const dZ  = 4.1                          // slightly wider than tile for seam coverage
+    const dY  = yB - yA
+    const ang = Math.atan2(dY, dZ)           // rotation around X (negative = rises toward +Z)
+    const len = Math.sqrt(dZ * dZ + dY * dY)
+    const cy  = (yA + yB) / 2 - 0.06
+    const cz  = tz + 2
+    phyBox(tx, cy, cz, CHAN_HW * 2, 0.12, len, -ang)
+  }
+
+  // Pair of ramp boxes forming a peak or trough at the tile midpoint
+  function rampPair(tx, tz, yStart, yPeak, yEnd) {
+    rampFloor(tx, tz,     yStart, yPeak)     // first half Z: tz → tz+2
+    rampFloor(tx, tz + 2, yPeak,  yEnd)      // second half Z: tz+2 → tz+4
+  }
+
+  // ── Per-tile colliders ────────────────────────────────────────────
   function addTileColliders(tx, tz, tileType) {
-    const cz = tz + 1.5
-    const hd = 2.7     // slightly wider than 2.5 to seal seams
+    // Side walls: placed outside the channel edges (X = ±CHAN_HW)
+    // They're tall enough to contain the ball even at the hill peaks
+    const wallCX = CHAN_HW + WALL_TH / 2   // = 0.54
+    const wallCY = WALL_H / 2              // = 1.30  (covers Y 0 → 2.6)
+    const wallCZ = tz + 2.1
+    const wallD  = 4.4                      // slightly wider than tile depth
+    phyBox(tx - wallCX, wallCY, wallCZ, WALL_TH, WALL_H, wallD, 0, { restitution: 0.35, friction: 0.3 })
+    phyBox(tx + wallCX, wallCY, wallCZ, WALL_TH, WALL_H, wallD, 0, { restitution: 0.35, friction: 0.3 })
 
-    // ── side walls (same for every tile type) ──
-    // Outer face at X = tx ± CHAN_HW, wall extends inward by WALL_TH
-    const wxL = tx - CHAN_HW + WALL_TH / 2
-    const wxR = tx + CHAN_HW - WALL_TH / 2
-    const wallCY = WALL_H / 2   // wall sits from Y=0 upward
-    staticBox(wxL, wallCY, cz, WALL_TH, WALL_H, hd * 2, 0, { restitution: 0.35, friction: 0.3 })
-    staticBox(wxR, wallCY, cz, WALL_TH, WALL_H, hd * 2, 0, { restitution: 0.35, friction: 0.3 })
-
-    // ── floor ──
-    const fw = CHAN_HW * 2 - WALL_TH * 2   // floor width between the walls
+    // Floor (type-specific)
     switch (tileType) {
-      case S:
-      case BU:
-      case BD:
-        // flat surface at Y = 0
-        staticBox(tx, -0.06, cz, fw, 0.12, hd * 2)
+      case 'spline-default-straight':
+        flatFloor(tx, 0, tz)
         break
-
-      case HB: {
-        // ramp rising 0 → HILL_H over the 4-unit tile step
-        const dZ = 4.2, dY = HILL_H
-        const ang = Math.atan2(dY, dZ)
-        const len = Math.sqrt(dZ * dZ + dY * dY)
-        staticBox(tx, (dY / 2) - 0.06, tz + 2, fw, 0.12, len, -ang)
+      case 'spline-default-straight-hill-beginning':
+        rampFloor(tx, tz, 0, HILL_H)
         break
-      }
-      case HC:
-        // flat surface elevated by HILL_H
-        staticBox(tx, HILL_H - 0.06, cz, fw, 0.12, hd * 2)
+      case 'spline-default-straight-hill-complete':
+        flatFloor(tx, HILL_H, tz)
         break
-
-      case HE: {
-        // ramp falling HILL_H → 0 over the 4-unit tile step
-        const dZ = 4.2, dY = HILL_H
-        const ang = Math.atan2(dY, dZ)
-        const len = Math.sqrt(dZ * dZ + dY * dY)
-        staticBox(tx, (dY / 2) - 0.06, tz + 2, fw, 0.12, len, ang)
+      case 'spline-default-straight-hill-end':
+        rampFloor(tx, tz, HILL_H, 0)
         break
-      }
+      case 'spline-default-straight-bump-up':
+        rampPair(tx, tz, 0, BUMP_H, 0)
+        break
+      case 'spline-default-straight-bump-down':
+        rampPair(tx, tz, 0, BUMP_LO, 0)
+        break
     }
   }
 
-  // ── spawn tile (visual + colliders) ──────────────────────────────
+  // ── Spawn tile (visual + colliders) ──────────────────────────────
   async function spawnTile(tileDef) {
     const { model, x, z, rotY } = tileDef
     const src  = await loadGlb(model, scene)
     const node = cloneGlb(src, `vis_${model}_${Date.now()}`)
-    node.position.set(x, 0, z)
+    // Place at Y=TILE_Y=1 so node Y=-1 offset aligns surface with world Y=0
+    node.position.set(x, TILE_Y, z)
     node.rotation.y = Tools.ToRadians(rotY ?? 0)
     node.getChildMeshes(false).forEach(m => {
       m.receiveShadows = true
@@ -218,7 +227,7 @@ export async function createMiniGolf(canvas, opts = {}) {
     addTileColliders(x, z, model)
   }
 
-  // ── ball ──────────────────────────────────────────────────────────
+  // ── Balls ─────────────────────────────────────────────────────────
   function makeBall(pid, x, y, z) {
     const b = balls[pid]
     b.agg?.dispose();  b.agg  = null
@@ -231,17 +240,16 @@ export async function createMiniGolf(canvas, opts = {}) {
 
     const agg = new PhysicsAggregate(mesh, PhysicsShapeType.SPHERE,
       { mass: 0.046, radius: BALL_R, restitution: 0.35, friction: 0.55 }, scene)
-    agg.body.setLinearDamping(0.40)
-    agg.body.setAngularDamping(0.55)
+    agg.body.setLinearDamping(0.42)
+    agg.body.setAngularDamping(0.58)
 
     b.mesh = mesh; b.agg = agg
     disposables.push(mesh)
-    return b
   }
 
   function teleportBall(pid, x, y, z) { makeBall(pid, x, y, z) }
 
-  // ── load hole ─────────────────────────────────────────────────────
+  // ── Load hole ─────────────────────────────────────────────────────
   async function loadHole(idx) {
     for (const d of disposables) {
       try {
@@ -257,49 +265,67 @@ export async function createMiniGolf(canvas, opts = {}) {
     players[1].shots = 0; players[1].finished = false
 
     const hole = HOLES[idx]
+    const n    = hole.tiles.length
 
-    // Safety floor (catches any ball that escapes the course)
-    staticBox(0, -9, 0, 400, 0.5, 400)
+    // Safety net
+    phyBox(0, -8, n * 2, 400, 0.5, 400)
 
-    // Back wall (behind tee, at tile start)
-    staticBox(0, 0.5, -1.4, CHAN_HW * 2, WALL_H, 0.15, 0, { restitution: 0.2 })
+    // Back wall (behind tee, Z < 0)
+    phyBox(0, 1.2, -0.2, CHAN_HW * 2 + 0.2, 2.4, 0.1, 0, { restitution: 0.2 })
 
     // End wall (after last tile)
-    const lastZ = (hole.tiles.length - 1) * 4
-    staticBox(0, 0.5, lastZ + 4.2, CHAN_HW * 2, WALL_H, 0.15, 0, { restitution: 0.2 })
+    phyBox(0, 1.2, n * 4 + 0.2, CHAN_HW * 2 + 0.2, 2.4, 0.1, 0, { restitution: 0.2 })
 
-    // Visual tiles + per-tile box colliders
+    // Tile visuals + colliders
     for (const t of hole.tiles) await spawnTile(t)
+
+    // Visual hole: black disk + short cup cylinder
+    const holeMat = new StandardMaterial('holeMat', scene)
+    holeMat.diffuseColor   = new Color3(0.02, 0.04, 0.02)
+    holeMat.emissiveColor  = new Color3(0.0,  0.0,  0.0)
+
+    const disk = MeshBuilder.CreateCylinder('holeDisk', {
+      height: 0.04, diameter: HOLE_R * 2.5, tessellation: 32,
+    }, scene)
+    disk.position.set(hole.hole.x, 0.02, hole.hole.z)
+    disk.material = holeMat
+    disposables.push(disk)
+
+    const cup = MeshBuilder.CreateCylinder('holeCup', {
+      height: 0.35, diameter: HOLE_R * 2.2, tessellation: 32,
+    }, scene)
+    cup.position.set(hole.hole.x, -0.17, hole.hole.z)
+    cup.material = holeMat
+    disposables.push(cup)
 
     // Flag
     try {
       const fsrc = await loadGlb('flag-large-red', scene)
       const fn   = cloneGlb(fsrc, 'flag')
-      fn.position.set(hole.hole.x, 0, hole.hole.z)
-      fn.scaling.setAll(0.5)
-      fn.getChildMeshes(false).forEach(m => shadow.addShadowCaster(m))
+      fn.position.set(hole.hole.x, 0, hole.hole.z)   // flag base at world Y=0 (surface)
+      fn.scaling.setAll(0.55)
+      fn.getChildMeshes(false).forEach(m => { m.receiveShadows = true; shadow.addShadowCaster(m) })
       disposables.push(fn)
     } catch {}
 
-    // Spawn balls slightly above tee surface
+    // Balls – spawn slightly above tee surface so they fall naturally
     const tee = hole.tee
-    makeBall(0, tee.x - 0.22, tee.y, tee.z)
-    makeBall(1, tee.x + 0.22, tee.y, tee.z)
+    makeBall(0, tee.x - 0.12, tee.y, tee.z)
+    makeBall(1, tee.x + 0.12, tee.y, tee.z)
 
-    // Camera: look along the hole, slight top-down angle
-    const mid  = new Vector3((tee.x + hole.hole.x) / 2, 0, (tee.z + hole.hole.z) / 2)
-    const hlen = Math.abs(hole.hole.z - tee.z)
-    camera.target.copyFrom(mid)
-    camera.radius = Math.min(50, Math.max(12, hlen * 0.72))
+    // Camera: look down the hole
+    const hlen = hole.hole.z - tee.z
+    camera.target.set((tee.x + hole.hole.x) / 2, 0.5, (tee.z + hole.hole.z) / 2)
+    camera.radius = Math.min(52, Math.max(10, hlen * 0.70))
     camera.alpha  = -Math.PI / 2
-    camera.beta   = 0.88
+    camera.beta   = 0.86
 
     turnQueue     = [0, 1]
     currentPlayer = 0
     emit('aiming')
   }
 
-  // ── flow ──────────────────────────────────────────────────────────
+  // ── Game flow ─────────────────────────────────────────────────────
   function emit(state, extra = {}) {
     onStateChanged?.({ state, player: players[currentPlayer],
       hole: currentHole, par: HOLES[currentHole]?.par, ...extra })
@@ -335,7 +361,7 @@ export async function createMiniGolf(canvas, opts = {}) {
     nextTurn()
   }
 
-  // ── per-frame ─────────────────────────────────────────────────────
+  // ── Per-frame ─────────────────────────────────────────────────────
   scene.registerBeforeRender(() => {
     const hole = HOLES[currentHole]
     if (!hole) return
@@ -344,10 +370,9 @@ export async function createMiniGolf(canvas, opts = {}) {
       const b = balls[p.id]
       if (p.finished || !b.mesh) continue
 
-      // In-hole check
       const dx = b.mesh.position.x - hole.hole.x
       const dz = b.mesh.position.z - hole.hole.z
-      if (dx * dx + dz * dz < HOLE_R * HOLE_R && b.mesh.position.y < 0.6) {
+      if (dx * dx + dz * dz < HOLE_R * HOLE_R && b.mesh.position.y < 0.5) {
         b.agg.body.setLinearVelocity(Vector3.Zero())
         b.agg.body.setAngularVelocity(Vector3.Zero())
         onStateChanged?.({ state: 'ball-in-hole', player: p })
@@ -355,22 +380,19 @@ export async function createMiniGolf(canvas, opts = {}) {
         continue
       }
 
-      // Fell off course
-      if (b.mesh.position.y < -4) {
-        teleportBall(p.id, hole.tee.x + (p.id === 0 ? -0.22 : 0.22), hole.tee.y, hole.tee.z)
+      if (b.mesh.position.y < -5) {
+        teleportBall(p.id, hole.tee.x + (p.id === 0 ? -0.12 : 0.12), hole.tee.y, hole.tee.z)
         continue
       }
 
-      // Max shots
       if (p.shots >= MAX_SHOTS) markDone(p)
     }
 
-    // Camera smoothly follows active ball
     const ab = balls[currentPlayer]
     if (ab?.mesh) Vector3.LerpToRef(camera.target, ab.mesh.position, 0.07, camera.target)
   })
 
-  // ── helpers ───────────────────────────────────────────────────────
+  // ── Helpers ───────────────────────────────────────────────────────
   function isMoving(pid) {
     const b = balls[pid]
     return b.agg ? b.agg.body.getLinearVelocity().length() > 0.05 : false
@@ -384,7 +406,7 @@ export async function createMiniGolf(canvas, opts = {}) {
     }, 100)
   }
 
-  // ── shoot ─────────────────────────────────────────────────────────
+  // ── Shoot ─────────────────────────────────────────────────────────
   function shoot(pid, wdx, wdz, power) {
     const b = balls[pid], p = players[pid]
     if (!b.agg || p.finished) return
@@ -412,7 +434,7 @@ export async function createMiniGolf(canvas, opts = {}) {
     shoot(pid, dir.x, dir.z, Math.min(MAX_POWER, dist * 1.1 + 0.5))
   }
 
-  // ── pointer / drag-to-shoot ───────────────────────────────────────
+  // ── Pointer / drag-to-shoot ───────────────────────────────────────
   let drag = null
 
   scene.onPointerObservable.add(evt => {
@@ -423,7 +445,6 @@ export async function createMiniGolf(canvas, opts = {}) {
     if (evt.type === PointerEventTypes.POINTERDOWN && evt.event.button === 0) {
       drag = { x: evt.event.clientX, y: evt.event.clientY }
     }
-
     if (evt.type === PointerEventTypes.POINTERMOVE && drag) {
       const dx = evt.event.clientX - drag.x
       const dy = evt.event.clientY - drag.y
@@ -436,7 +457,6 @@ export async function createMiniGolf(canvas, opts = {}) {
       const nz = -(dx * Math.sin(a) + dy * Math.cos(a)) / dist
       onDirLineChange?.({ power: power / MAX_POWER, dirX: nx, dirZ: nz })
     }
-
     if (evt.type === PointerEventTypes.POINTERUP && drag) {
       const dx = evt.event.clientX - drag.x
       const dy = evt.event.clientY - drag.y
@@ -451,7 +471,7 @@ export async function createMiniGolf(canvas, opts = {}) {
     }
   })
 
-  // ── run ───────────────────────────────────────────────────────────
+  // ── Render loop ───────────────────────────────────────────────────
   engine.runRenderLoop(() => scene.render())
   window.addEventListener('resize', () => engine.resize())
 

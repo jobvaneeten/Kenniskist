@@ -1,12 +1,14 @@
 // ── Tile measurements (verified from GLB accessors) ───────────────────
-// spline-default-straight : Z[-1 → 4]  (5 units total, 4-unit step)
-//   node Y=-1  →  playing surface at world Y = 0 when tile placed at Y=0
-//   channel width (X): 2 units  (-1 to 1)
+// spline-default-straight:
+//   node.translation.Y = -1  → place tile wrapper at Y=1 so surface = world Y=0
+//   mesh vertex X: -0.5 → +0.5   (channel width = 1 unit)
+//   mesh vertex Y:  0.0 → 0.147  (surface at 0, walls only 0.15 units tall)
+//   mesh vertex Z:  0.0 → 4.0    (TILE_SIZE = 4, tiles placed 4 apart, no overlap)
 //
-// hill tiles: same Z extents as straight, peak ≈ +0.15 above surface
+// hill tiles (HB/HC/HE): peak Y ≈ 1.1 in mesh space → world Y ≈ 1.1
+// bump tiles (BU): peak Y ≈ 0.65   bump-down (BD): min Y ≈ -0.5
 //
-// Tile origin → next tile origin = 4 units in the travel direction
-// Ball radius  = 0.17 (ball GLB is ~2 units diameter; we scale to 0.34)
+// Ball radius = 0.16  (diameter 0.32 fits in 1-unit channel)
 // ─────────────────────────────────────────────────────────────────────
 
 export const TILE_SIZE  = 4    // units between tile origins (spline tiles)
@@ -39,7 +41,7 @@ function straightHole(name, par, tileTypes) {
     tiles: tileTypes.map((model, i) => ({
       model, x: 0, z: i * TILE_SIZE, rotY: 0,
     })),
-    tee:  { x:  0.3, y: 0.5, z: 1.5 },
+    tee:  { x:  0,   y: 0.5, z: 1.5 },
     hole: { x:  0,   y: 0,   z: (n - 1) * TILE_SIZE + 1.5 },
   }
 }
