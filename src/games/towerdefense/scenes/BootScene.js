@@ -21,17 +21,9 @@ export default class BootScene extends Phaser.Scene {
     // ── Map tiles ─────────────────────────────────────────────────
     // Base terrain
     const mapTiles = [
-      50,   // pure sand (path center)
-      76,   // pure grass (buildable)
-      // Grass↔Sand transition tiles (used for auto-tiling path edges)
-      1,    // grass cell, path to N  (sand top, grass bottom)
-      77,   // grass cell, path N+E corner (sand top-right)
-      78,   // grass cell, path N+W corner (sand top-left)
-      94,   // grass cell, path to E  (grass left, sand right)
-      99,   // grass cell, path to W  (sand left, grass right)
-      // Decorations
-      130,  // bush
-      54,   // stone circle (path detail)
+      50,   // plain sand (path)
+      24,   // clean solid green (buildable grass)
+      130,  // bush (deco)
     ]
     mapTiles.forEach(n => {
       const id = String(n).padStart(3, '0')

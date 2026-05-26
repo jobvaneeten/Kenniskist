@@ -621,7 +621,7 @@ export default class GameScene extends Phaser.Scene {
           this.add.image(cx, cy, 'tile050').setDisplaySize(TILE_SIZE, TILE_SIZE).setDepth(0)
         } else {
           // GRASS: plain green
-          this.add.image(cx, cy, 'tile076').setDisplaySize(TILE_SIZE, TILE_SIZE).setDepth(0)
+          this.add.image(cx, cy, 'tile024').setDisplaySize(TILE_SIZE, TILE_SIZE).setDepth(0)
           // Bush decoration on deco cells
           if (cell === 2) {
             this.add.image(cx, cy, 'tile130')
