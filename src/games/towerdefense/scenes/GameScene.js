@@ -666,9 +666,9 @@ export default class GameScene extends Phaser.Scene {
       }
     }
 
-    // Spawn & exit markers
-    const spawnY = this.mapData.spawnRow * TILE_SIZE + 4
-    const exitY  = this.mapData.exitRow  * TILE_SIZE + 4
+    // Spawn & exit markers — centered in the 2-wide entry/exit rows
+    const spawnY = this.mapData.spawnRow * TILE_SIZE + TILE_SIZE / 2 - 13
+    const exitY  = this.mapData.exitRow  * TILE_SIZE + TILE_SIZE / 2 - 13
     this.add.text(4, spawnY, '▶', { fontSize: '26px' }).setDepth(2)
     this.add.text(MAP_COLS * TILE_SIZE - 38, exitY, '🏁', { fontSize: '26px' }).setDepth(2)
   }
