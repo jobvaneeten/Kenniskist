@@ -1,51 +1,62 @@
 import {
   Engine, Scene, Vector3, Color4, Quaternion,
   HemisphericLight, DirectionalLight, ShadowGenerator,
-  MeshBuilder, StandardMaterial, Color3,
-  ArcRotateCamera, PointerEventTypes, Tools,
+  MeshBuilder, ArcRotateCamera, PointerEventTypes, Tools,
   SceneLoader, TransformNode,
   PhysicsAggregate, PhysicsShapeType,
 } from '@babylonjs/core'
 import '@babylonjs/loaders/glTF'
 import HavokPhysics from '@babylonjs/havok'
 import { HavokPlugin } from '@babylonjs/core/Physics/v2/Plugins/havokPlugin.js'
-import { HOLES, TILE_SIZE } from './data/CourseData.js'
+import { HOLES, TILE_SIZE, BALL_SCALE, BALL_RADIUS } from './data/CourseData.js'
 
-const GOLF_PATH  = '/golf/'
-const MAX_SHOTS  = 10
-const MAX_POWER  = 14     // impulse
-const DRAG_SCALE = 0.14   // px → power
-const HOLE_RADIUS = 0.6
-const BALL_RADIUS = 0.21
+// ── Constants ─────────────────────────────────────────────────────────
+const GOLF_PATH   = '/golf/'
+const MAX_SHOTS   = 10
+const MAX_POWER   = 12     // impulse units
+const DRAG_SCALE  = 0.13   // screen-px → power
+const HOLE_RADIUS = 0.5    // XZ-distance to count as "in hole"
 
 export function scoreName(strokes, par) {
-  const diff = strokes - par
+  const d = strokes - par
   if (strokes === 1) return 'Hole-in-one!'
-  if (diff <= -2)    return 'Eagle'
-  if (diff === -1)   return 'Birdie'
-  if (diff === 0)    return 'Par'
-  if (diff === 1)    return 'Bogey'
-  if (diff === 2)    return 'Double bogey'
-  return `+${diff}`
+  if (d <= -2) return 'Eagle'
+  if (d === -1) return 'Birdie'
+  if (d ===  0) return 'Par'
+  if (d ===  1) return 'Bogey'
+  if (d ===  2) return 'Double Bogey'
+  return `+${d}`
 }
 
 // ── GLB cache ─────────────────────────────────────────────────────────
-const modelCache = {}
+const _cache = {}
 
 async function loadGlb(name, scene) {
-  if (modelCache[name]) return modelCache[name]
+  if (_cache[name]) return _cache[name]
+
   const res  = await SceneLoader.ImportMeshAsync('', GOLF_PATH, `${name}.glb`, scene)
   const root = new TransformNode(`tmpl_${name}`, scene)
-  res.meshes.forEach(m => { if (!m.parent) m.parent = root })
+
+  res.meshes.forEach(m => {
+    if (!m.parent) m.parent = root
+    m.isPickable = false
+    m.receiveShadows = true
+  })
   root.setEnabled(false)
-  modelCache[name] = root
+  _cache[name] = root
   return root
 }
 
-function cloneGlb(src, name, parent, scene) {
-  const node = src.clone(name, parent ?? null, false)
-  node.getChildMeshes().forEach(m => m.isPickable = false)
+// Clone a cached GLB into the scene
+function cloneGlb(src, id, scene) {
+  const node = src.clone(id, null)
   node.setEnabled(true)
+
+  // Make sure every descendant mesh is visible
+  node.getChildMeshes(false).forEach(m => {
+    m.setEnabled(true)
+    m.isPickable = false
+  })
   return node
 }
 
@@ -58,32 +69,31 @@ export async function createMiniGolf(canvas, opts = {}) {
     onStateChanged, onShotCountChanged,
   } = opts
 
-  // ── Engine ────────────────────────────────────────────────────────
+  // ── Engine & scene ────────────────────────────────────────────────
   const engine = new Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true })
   const scene  = new Scene(engine)
-  scene.clearColor = new Color4(0.13, 0.44, 0.25, 1)
-  scene.gravity    = new Vector3(0, -9.81, 0)
+  scene.clearColor = new Color4(0.12, 0.42, 0.22, 1)
 
-  // ── Havok ─────────────────────────────────────────────────────────
+  // ── Havok physics ─────────────────────────────────────────────────
   const havok = await HavokPhysics()
   scene.enablePhysics(new Vector3(0, -9.81, 0), new HavokPlugin(true, havok))
 
   // ── Lights ────────────────────────────────────────────────────────
   const amb = new HemisphericLight('amb', Vector3.Up(), scene)
-  amb.intensity = 0.55
+  amb.intensity = 0.6
 
   const sun = new DirectionalLight('sun', new Vector3(-1, -2, -0.5).normalize(), scene)
-  sun.intensity = 1.1
-  sun.position  = new Vector3(20, 30, 10)
+  sun.intensity = 1.0
+  sun.position  = new Vector3(10, 20, 10)
 
   const shadow = new ShadowGenerator(1024, sun)
   shadow.useBlurExponentialShadowMap = true
 
   // ── Camera ────────────────────────────────────────────────────────
-  const camera = new ArcRotateCamera('cam', -Math.PI / 2, 1.05, 20, Vector3.Zero(), scene)
-  camera.lowerBetaLimit   = 0.25
-  camera.upperBetaLimit   = Math.PI / 2.1
-  camera.lowerRadiusLimit = 7
+  const camera = new ArcRotateCamera('cam', -Math.PI / 2, 1.1, 18, Vector3.Zero(), scene)
+  camera.lowerBetaLimit   = 0.2
+  camera.upperBetaLimit   = Math.PI / 2.05
+  camera.lowerRadiusLimit = 6
   camera.upperRadiusLimit = 40
   camera.inputs.remove(camera.inputs.attached.mousewheel)
   camera.attachControl(canvas, true)
@@ -93,331 +103,341 @@ export async function createMiniGolf(canvas, opts = {}) {
       Math.min(camera.upperRadiusLimit, camera.radius + e.deltaY * 0.04))
   }, { passive: true })
 
-  // ── State ─────────────────────────────────────────────────────────
+  // ── Game state ────────────────────────────────────────────────────
   const players = [
-    { id: 0, name: 'Rood',  ballKey: 'ball-red',  shots: 0, scores: [], finished: false, ballMesh: null, ballAgg: null },
-    { id: 1, name: 'Blauw', ballKey: 'ball-blue', shots: 0, scores: [], finished: false, ballMesh: null, ballAgg: null },
+    { id: 0, name: 'Rood',  ballKey: 'ball-red',  shots: 0, scores: [], finished: false },
+    { id: 1, name: 'Blauw', ballKey: 'ball-blue', shots: 0, scores: [], finished: false },
   ]
   let currentHole   = 0
   let currentPlayer = 0
-  let turnOrder     = [0, 1]   // indices of players still on this hole
-  let sceneMeshes   = []       // all disposable meshes for current hole
-  let tileScale     = null     // measured at first load
+  let turnQueue     = [0, 1]   // players still active this hole
+  let disposables   = []       // all scene objects created for current hole
 
-  // ── Ball factory ──────────────────────────────────────────────────
-  async function spawnBall(p, pos) {
-    // Clean old
-    if (p.ballAgg)  { p.ballAgg.dispose();  p.ballAgg  = null }
-    if (p.ballMesh) { p.ballMesh.dispose();  p.ballMesh = null }
-    if (p.ballVisual) { p.ballVisual.dispose(); p.ballVisual = null }
+  // Ball handles per player
+  const balls = [
+    { physMesh: null, agg: null, visual: null },
+    { physMesh: null, agg: null, visual: null },
+  ]
 
-    // Invisible physics sphere (so Havok has clean geometry)
-    const sphere = MeshBuilder.CreateSphere(`ball_${p.id}`, { diameter: BALL_RADIUS * 2, segments: 8 }, scene)
-    sphere.position  = new Vector3(pos.x, pos.y, pos.z)
-    sphere.isVisible = false
-    p.ballMesh = sphere
-
-    const agg = new PhysicsAggregate(sphere, PhysicsShapeType.SPHERE,
-      { mass: 0.045, radius: BALL_RADIUS, restitution: 0.45, friction: 0.55 }, scene)
-    agg.body.setLinearDamping(0.4)
-    agg.body.setAngularDamping(0.6)
-    p.ballAgg = agg
-
-    // GLB visual parented to sphere
-    const glbSrc  = await loadGlb(p.ballKey, scene)
-    const visual  = cloneGlb(glbSrc, `ballvis_${p.id}`, null, scene)
-    visual.setEnabled(true)
-    // Scale visual to ~2× ball radius
-    visual.scaling = new Vector3(BALL_RADIUS * 2.2, BALL_RADIUS * 2.2, BALL_RADIUS * 2.2)
-    p.ballVisual = visual
-
-    visual.getChildMeshes().forEach(m => {
-      m.receiveShadows = true
-      shadow.addShadowCaster(m)
-    })
-
-    sceneMeshes.push(sphere, visual)
-  }
-
-  // ── Tile factory ──────────────────────────────────────────────────
+  // ── Spawn tile ────────────────────────────────────────────────────
   async function spawnTile(tileDef) {
     const { model, x, z, rotY } = tileDef
     const src  = await loadGlb(model, scene)
-    const node = cloneGlb(src, `tile_${model}_${x}_${z}`, null, scene)
+    const node = cloneGlb(src, `tile_${model}_${x}_${z}_${Date.now()}`, scene)
 
-    // Measure tile size once
-    if (tileScale === null) {
-      node.computeWorldMatrix(true)
-      const bb = node.getHierarchyBoundingVectors(true)
-      const sz = bb.max.subtract(bb.min)
-      tileScale = TILE_SIZE / Math.max(sz.x, sz.z, 0.01)
-    }
-
-    node.scaling  = new Vector3(tileScale, tileScale, tileScale)
-    node.position = new Vector3(x * TILE_SIZE, 0, z * TILE_SIZE)
+    node.position = new Vector3(x, 0, z)
     node.rotation = new Vector3(0, Tools.ToRadians(rotY), 0)
+    // No extra scaling — tiles at natural scale (TILE_SIZE=4 matches their Z extent)
 
-    node.getChildMeshes().forEach(m => {
+    // Force world matrix so physics picks up correct positions
+    node.computeWorldMatrix(true)
+
+    node.getChildMeshes(false).forEach(m => {
       m.receiveShadows = true
       shadow.addShadowCaster(m)
+      m.computeWorldMatrix(true)
+
       if (m.getTotalVertices() > 0) {
         try {
-          new PhysicsAggregate(m, PhysicsShapeType.CONVEX_HULL,
-            { mass: 0, restitution: 0.3, friction: 0.65 }, scene)
-        } catch (e) { /* skip non-physics meshes */ }
+          new PhysicsAggregate(m, PhysicsShapeType.MESH,
+            { mass: 0, restitution: 0.3, friction: 0.7 }, scene)
+        } catch { /* non-physical sub-meshes */ }
       }
     })
 
-    sceneMeshes.push(node)
+    disposables.push(node)
     return node
+  }
+
+  // ── Spawn ball ────────────────────────────────────────────────────
+  async function spawnBall(p, pos) {
+    const b = balls[p.id]
+
+    // Remove old ball
+    b.agg?.dispose()
+    b.physMesh?.dispose()
+    b.visual?.getChildMeshes(false).forEach(m => { m.physicsBody?.dispose(); m.dispose() })
+    b.visual?.dispose()
+
+    // Physics sphere (invisible)
+    const sphere = MeshBuilder.CreateSphere(`ball_phys_${p.id}`, {
+      diameter: BALL_RADIUS * 2, segments: 6,
+    }, scene)
+    sphere.position  = new Vector3(pos.x, pos.y, pos.z)
+    sphere.isVisible = false
+
+    const agg = new PhysicsAggregate(sphere, PhysicsShapeType.SPHERE, {
+      mass: 0.046, radius: BALL_RADIUS, restitution: 0.4, friction: 0.6,
+    }, scene)
+    agg.body.setLinearDamping(0.45)
+    agg.body.setAngularDamping(0.6)
+
+    b.physMesh = sphere
+    b.agg      = agg
+
+    // GLB visual (scaled down to fit channel)
+    const src    = await loadGlb(p.ballKey, scene)
+    const visual = cloneGlb(src, `ball_vis_${p.id}`, scene)
+    visual.scaling = new Vector3(BALL_SCALE, BALL_SCALE, BALL_SCALE)
+    visual.getChildMeshes(false).forEach(m => shadow.addShadowCaster(m))
+    b.visual = visual
+
+    disposables.push(sphere, visual)
+    p.shots    = 0
+    p.finished = false
   }
 
   // ── Load hole ─────────────────────────────────────────────────────
   async function loadHole(idx) {
-    // Dispose previous
-    sceneMeshes.forEach(m => {
-      m.getChildMeshes?.().forEach(c => { c.physicsBody?.dispose(); c.dispose() })
-      m.physicsBody?.dispose()
-      m.dispose()
-    })
-    sceneMeshes = []
-    players.forEach(p => {
-      p.shots    = 0
-      p.finished = false
-      p.ballAgg  = null
-      p.ballMesh = null
-      p.ballVisual = null
-    })
+    // Dispose everything from previous hole
+    for (const d of disposables) {
+      try {
+        d.getChildMeshes?.(false).forEach(m => { m.physicsBody?.dispose(); m.dispose() })
+        d.physicsBody?.dispose()
+        d.dispose()
+      } catch {}
+    }
+    disposables = []
+    balls.forEach(b => { b.physMesh=null; b.agg=null; b.visual=null })
 
     const hole = HOLES[idx]
 
-    // Safety floor
-    const floor = MeshBuilder.CreateGround('floor', { width: 300, height: 300 }, scene)
-    floor.position.y = -8
+    // Safety net floor (catches ball if it falls off)
+    const floor = MeshBuilder.CreateGround('floor', { width: 200, height: 200 }, scene)
+    floor.position.y = -5
     floor.isVisible  = false
     new PhysicsAggregate(floor, PhysicsShapeType.BOX, { mass: 0 }, scene)
-    sceneMeshes.push(floor)
+    disposables.push(floor)
 
-    // Spawn tiles
-    for (const t of hole.tiles) await spawnTile(t)
-
-    // Flag / hole marker
-    try {
-      const flagSrc  = await loadGlb('flag-red', scene)
-      const flagNode = cloneGlb(flagSrc, 'flag', null, scene)
-      flagNode.scaling  = new Vector3(tileScale ?? 1, tileScale ?? 1, tileScale ?? 1)
-      flagNode.position = new Vector3(hole.hole.x, hole.hole.y - 0.2, hole.hole.z)
-      sceneMeshes.push(flagNode)
-    } catch {}
-
-    // Spawn balls
-    const tee = hole.tee
-    for (const p of players) {
-      const offset = p.id === 0 ? -0.35 : 0.35
-      await spawnBall(p, { x: tee.x + offset, y: tee.y, z: tee.z })
+    // Spawn tiles sequentially (order matters for physics)
+    for (const t of hole.tiles) {
+      await spawnTile(t)
     }
 
-    // Camera
-    const hp   = hole.hole
-    const midX = (tee.x + hp.x) / 2
-    const midZ = (tee.z + hp.z) / 2
-    camera.target = new Vector3(midX, 0, midZ)
-    camera.radius = Math.min(38, Math.max(16, Math.hypot(hp.x - tee.x, hp.z - tee.z) * 1.6))
+    // Flag marker
+    try {
+      const flagSrc  = await loadGlb('flag-large-red', scene)
+      const flagNode = cloneGlb(flagSrc, 'flag', scene)
+      flagNode.position = new Vector3(hole.hole.x, 0, hole.hole.z)
+      flagNode.scaling  = new Vector3(0.5, 0.5, 0.5)
+      flagNode.getChildMeshes(false).forEach(m => shadow.addShadowCaster(m))
+      disposables.push(flagNode)
+    } catch {}
 
-    turnOrder     = [0, 1]
+    // Spawn both balls (side by side on tee)
+    const tee = hole.tee
+    for (const p of players) {
+      const xOff = p.id === 0 ? -0.25 : 0.25
+      await spawnBall(p, { x: tee.x + xOff, y: tee.y, z: tee.z })
+    }
+
+    // Camera: look down the length of the hole
+    const holeCenter = new Vector3(
+      (tee.x + hole.hole.x) / 2,
+      0,
+      (tee.z + hole.hole.z) / 2
+    )
+    camera.target = holeCenter.clone()
+    const holeLen  = Math.abs(hole.hole.z - tee.z) + 8
+    camera.radius  = Math.min(40, Math.max(16, holeLen * 0.7))
+    camera.alpha   = -Math.PI / 2   // face along Z axis
+    camera.beta    = 1.1
+
+    turnQueue     = [0, 1]
     currentPlayer = 0
-    emitState('aiming')
+    emit('aiming')
   }
 
-  // ── Turn / game flow ──────────────────────────────────────────────
-  function emitState(state, extra = {}) {
+  // ── Game flow ─────────────────────────────────────────────────────
+  function emit(state, extra = {}) {
     const p = players[currentPlayer]
-    onStateChanged?.({ state, player: p, hole: currentHole, par: HOLES[currentHole].par, ...extra })
+    onStateChanged?.({
+      state, player: p,
+      hole: currentHole,
+      par:  HOLES[currentHole]?.par,
+      ...extra,
+    })
   }
 
   function nextTurn() {
-    if (turnOrder.length === 0) { finishHole(); return }
-    currentPlayer = turnOrder[0]
-    const p = players[currentPlayer]
-    if (p.ballMesh) {
-      Vector3.LerpToRef(camera.target, p.ballMesh.position, 1, camera.target)
-    }
-    emitState('aiming')
-    if (mode === 'vs-ai' && currentPlayer === 1) {
-      setTimeout(doAiShot, 900)
-    }
+    if (turnQueue.length === 0) { endHole(); return }
+    currentPlayer = turnQueue[0]
+    const b = balls[currentPlayer]
+    if (b.physMesh) camera.target.copyFrom(b.physMesh.position)
+    emit('aiming')
+    if (mode === 'vs-ai' && currentPlayer === 1) setTimeout(doAiShot, 900)
   }
 
-  function finishHole() {
+  function endHole() {
     const scores = players.map(p => ({
-      player: p, shots: p.shots, name: scoreName(p.shots, HOLES[currentHole].par),
+      player: p, shots: p.shots,
+      name:   scoreName(p.shots, HOLES[currentHole].par),
     }))
     players.forEach(p => p.scores.push(p.shots))
     onHoleComplete?.({ hole: currentHole, scores, par: HOLES[currentHole].par })
     currentHole++
-    if (currentHole >= HOLES.length) {
-      onGameComplete?.({ players })
-    }
-  }
-
-  function advanceTurn(p) {
-    if (turnOrder.length > 1) {
-      // Move current player to back of queue
-      const idx = turnOrder.indexOf(p.id)
-      if (idx >= 0) turnOrder.splice(idx, 1)
-      turnOrder.push(p.id)
-      nextTurn()
-    }
+    if (currentHole >= HOLES.length) onGameComplete?.({ players })
   }
 
   function markFinished(p) {
     p.finished = true
-    turnOrder  = turnOrder.filter(id => id !== p.id)
-    if (turnOrder.length === 0) finishHole()
+    turnQueue  = turnQueue.filter(id => id !== p.id)
+    if (turnQueue.length === 0) endHole()
     else nextTurn()
   }
 
-  // ── Per-frame updates ─────────────────────────────────────────────
+  function rotateTurn(p) {
+    if (turnQueue.length < 2) return
+    const idx = turnQueue.indexOf(p.id)
+    if (idx >= 0) {
+      turnQueue.splice(idx, 1)
+      turnQueue.push(p.id)
+    }
+    nextTurn()
+  }
+
+  // ── Per-frame ─────────────────────────────────────────────────────
   scene.registerBeforeRender(() => {
     const hole = HOLES[currentHole]
     if (!hole) return
-    const hp = new Vector3(hole.hole.x, hole.hole.y, hole.hole.z)
+    const hx = hole.hole.x, hz = hole.hole.z
 
     for (const p of players) {
-      if (p.finished || !p.ballMesh) continue
+      const b = balls[p.id]
+      if (p.finished || !b.physMesh) continue
 
       // Sync visual to physics sphere
-      if (p.ballVisual) {
-        p.ballVisual.position.copyFrom(p.ballMesh.position)
-        if (p.ballAgg?.body) {
-          const q = p.ballAgg.body.getOrientation()
-          if (q) p.ballVisual.rotationQuaternion = new Quaternion(q.x, q.y, q.z, q.w)
-        }
+      if (b.visual) {
+        b.visual.position.copyFrom(b.physMesh.position)
+        const q = b.agg?.body.getOrientation()
+        if (q) b.visual.rotationQuaternion = new Quaternion(q.x, q.y, q.z, q.w)
       }
 
-      // In-hole check (XZ only — Y varies with tile height)
-      const dx2d = p.ballMesh.position.x - hp.x
-      const dz2d = p.ballMesh.position.z - hp.z
-      const dist = Math.sqrt(dx2d * dx2d + dz2d * dz2d)
-      if (dist < HOLE_RADIUS) {
-        p.ballAgg?.body.setLinearVelocity(Vector3.Zero())
-        p.ballAgg?.body.setAngularVelocity(Vector3.Zero())
+      // In-hole detection (XZ only)
+      const dx = b.physMesh.position.x - hx
+      const dz = b.physMesh.position.z - hz
+      if (Math.sqrt(dx*dx + dz*dz) < HOLE_RADIUS) {
+        b.agg.body.setLinearVelocity(Vector3.Zero())
+        b.agg.body.setAngularVelocity(Vector3.Zero())
         onStateChanged?.({ state: 'ball-in-hole', player: p })
         markFinished(p)
         continue
       }
 
-      // Fell off
-      if (p.ballMesh.position.y < -5) {
+      // Fell off → reset to tee
+      if (b.physMesh.position.y < -3) {
         const tee = hole.tee
-        const off = p.id === 0 ? -0.35 : 0.35
-        p.ballMesh.position = new Vector3(tee.x + off, tee.y + 0.5, tee.z)
-        p.ballAgg?.body.setLinearVelocity(Vector3.Zero())
-        p.ballAgg?.body.setAngularVelocity(Vector3.Zero())
+        const xOff = p.id === 0 ? -0.25 : 0.25
+        b.physMesh.position.set(tee.x + xOff, tee.y, tee.z)
+        b.agg.body.setLinearVelocity(Vector3.Zero())
+        b.agg.body.setAngularVelocity(Vector3.Zero())
       }
 
-      // Max shots
-      if (p.shots >= MAX_SHOTS) {
-        markFinished(p)
-        continue
-      }
+      // Max shots exceeded
+      if (!p.finished && p.shots >= MAX_SHOTS) markFinished(p)
     }
 
-    // Camera follows active ball
-    const active = players[currentPlayer]
-    if (active?.ballMesh) {
-      Vector3.LerpToRef(camera.target, active.ballMesh.position, 0.07, camera.target)
+    // Smooth camera follow active ball
+    const ab = balls[currentPlayer]
+    if (ab?.physMesh) {
+      Vector3.LerpToRef(camera.target, ab.physMesh.position, 0.06, camera.target)
     }
   })
 
-  // ── Ball speed check ──────────────────────────────────────────────
-  function isMoving(p) {
-    if (!p.ballAgg) return false
-    return p.ballAgg.body.getLinearVelocity().length() > 0.12
+  // ── Speed check ───────────────────────────────────────────────────
+  function isMoving(pid) {
+    const b = balls[pid]
+    if (!b.agg) return false
+    return b.agg.body.getLinearVelocity().length() > 0.1
   }
 
-  function waitStop(p, onStop) {
+  function whenStopped(pid, cb) {
     let ticks = 0
     const id = setInterval(() => {
       ticks++
-      if (!isMoving(p) || ticks > 300) {
-        clearInterval(id)
-        onStop()
-      }
-    }, 100)
+      if (!isMoving(pid) || ticks > 250) { clearInterval(id); cb() }
+    }, 120)
   }
 
   // ── Shoot ─────────────────────────────────────────────────────────
-  function shoot(p, worldDirX, worldDirZ, power) {
-    if (!p.ballAgg) return
-    const imp = new Vector3(worldDirX * power, power * 0.15, worldDirZ * power)
-    p.ballAgg.body.applyImpulse(imp, p.ballMesh.getAbsolutePosition())
+  function shoot(pid, wdx, wdz, power) {
+    const b = balls[pid]
+    const p = players[pid]
+    if (!b.agg || p.finished) return
+
+    const imp = new Vector3(wdx * power, power * 0.12, wdz * power)
+    b.agg.body.applyImpulse(imp, b.physMesh.getAbsolutePosition())
     p.shots++
     onShotCountChanged?.({ player: p, shots: p.shots })
-    emitState('rolling')
-    waitStop(p, () => {
-      if (!p.finished) advanceTurn(p)
+    emit('rolling')
+
+    whenStopped(pid, () => {
+      if (!p.finished) rotateTurn(p)
     })
   }
 
   // ── AI ────────────────────────────────────────────────────────────
   function doAiShot() {
-    const p = players[1]
-    if (!p.ballMesh || p.finished || isMoving(p)) return
+    const pid = 1
+    if (players[pid].finished || isMoving(pid)) return
     const hole = HOLES[currentHole]
-    const hp   = new Vector3(hole.hole.x, hole.hole.y, hole.hole.z)
-    const dir  = hp.subtract(p.ballMesh.position)
+    const b    = balls[pid]
+    const dir  = new Vector3(hole.hole.x - b.physMesh.position.x, 0, hole.hole.z - b.physMesh.position.z)
     const dist = dir.length()
-    dir.normalizeToRef(dir)
-    dir.x += (Math.random() - 0.5) * 0.22
-    dir.z += (Math.random() - 0.5) * 0.22
     dir.normalize()
-    const power = Math.min(MAX_POWER, dist * 1.2 + Math.random() * 2 - 1)
-    shoot(p, dir.x, dir.z, power)
+    dir.x += (Math.random() - 0.5) * 0.2
+    dir.z += (Math.random() - 0.5) * 0.2
+    dir.normalize()
+    const power = Math.min(MAX_POWER, dist * 1.1 + Math.random() * 2 - 1)
+    shoot(pid, dir.x, dir.z, power)
   }
 
   // ── Input ─────────────────────────────────────────────────────────
-  let dragStart = null
+  let drag = null
 
   scene.onPointerObservable.add(evt => {
+    if (mode === 'vs-ai' && currentPlayer === 1) return
     const p = players[currentPlayer]
-    if (!p || p.finished || isMoving(p)) return
-    if (mode === 'vs-ai' && currentPlayer === 1) return   // AI controls player 1
+    if (!p || p.finished || isMoving(currentPlayer)) return
 
     if (evt.type === PointerEventTypes.POINTERDOWN && evt.event.button === 0) {
-      dragStart = { x: evt.event.clientX, y: evt.event.clientY }
+      drag = { x: evt.event.clientX, y: evt.event.clientY }
     }
 
-    if (evt.type === PointerEventTypes.POINTERMOVE && dragStart) {
-      const dx   = evt.event.clientX - dragStart.x
-      const dy   = evt.event.clientY - dragStart.y
+    if (evt.type === PointerEventTypes.POINTERMOVE && drag) {
+      const dx   = evt.event.clientX - drag.x
+      const dy   = evt.event.clientY - drag.y
       const dist = Math.hypot(dx, dy)
-      const pow  = Math.min(MAX_POWER, dist * DRAG_SCALE)
-      onPowerChange?.(pow / MAX_POWER)
+      if (dist < 4) return
 
-      if (dist > 3) {
-        // Map screen drag → world direction using camera azimuth
-        const a   = camera.alpha
-        const nx  = -(dx * Math.cos(a) - dy * Math.sin(a)) / dist
-        const nz  = -(dx * Math.sin(a) + dy * Math.cos(a)) / dist
-        onDirLineChange?.({ ballPos: p.ballMesh.position, dirX: nx, dirZ: nz, power: pow / MAX_POWER })
-      }
+      const power = Math.min(MAX_POWER, dist * DRAG_SCALE)
+      onPowerChange?.(power / MAX_POWER)
+
+      // Map screen drag → world direction using camera azimuth
+      const a  = camera.alpha
+      const nx = -(dx * Math.cos(a) - dy * Math.sin(a)) / dist
+      const nz = -(dx * Math.sin(a) + dy * Math.cos(a)) / dist
+      onDirLineChange?.({
+        ballPos: balls[currentPlayer].physMesh?.position,
+        dirX: nx, dirZ: nz,
+        power: power / MAX_POWER,
+      })
     }
 
-    if (evt.type === PointerEventTypes.POINTERUP && dragStart) {
-      const dx   = evt.event.clientX - dragStart.x
-      const dy   = evt.event.clientY - dragStart.y
+    if (evt.type === PointerEventTypes.POINTERUP && drag) {
+      const dx   = evt.event.clientX - drag.x
+      const dy   = evt.event.clientY - drag.y
       const dist = Math.hypot(dx, dy)
-      dragStart  = null
+      drag = null
       onPowerChange?.(0)
       onDirLineChange?.(null)
-      if (dist < 6) return
+      if (dist < 8) return
 
-      const pow  = Math.min(MAX_POWER, dist * DRAG_SCALE)
-      const a    = camera.alpha
-      const nx   = -(dx * Math.cos(a) - dy * Math.sin(a)) / dist
-      const nz   = -(dx * Math.sin(a) + dy * Math.cos(a)) / dist
-      shoot(p, nx, nz, pow)
+      const power = Math.min(MAX_POWER, dist * DRAG_SCALE)
+      const a     = camera.alpha
+      const nx    = -(dx * Math.cos(a) - dy * Math.sin(a)) / dist
+      const nz    = -(dx * Math.sin(a) + dy * Math.cos(a)) / dist
+      shoot(currentPlayer, nx, nz, power)
     }
   })
 

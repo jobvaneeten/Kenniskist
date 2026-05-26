@@ -1,162 +1,74 @@
-// Each tile: { model, x, z, rotY (degrees), scaleY (for ramps) }
-// Tile unit = 4 Babylon units. Rotations: 0=+Z, 90=+X, 180=-Z, 270=-X
-// Hole origin is always (0,0,0); tiles offset from there.
+// ── Tile measurements (verified from GLB accessors) ───────────────────
+// spline-default-straight : Z[-1 → 4]  (5 units total, 4-unit step)
+//   node Y=-1  →  playing surface at world Y = 0 when tile placed at Y=0
+//   channel width (X): 2 units  (-1 to 1)
+//
+// hill tiles: same Z extents as straight, peak ≈ +0.15 above surface
+//
+// Tile origin → next tile origin = 4 units in the travel direction
+// Ball radius  = 0.17 (ball GLB is ~2 units diameter; we scale to 0.34)
+// ─────────────────────────────────────────────────────────────────────
 
-export const TILE_SIZE = 4   // Babylon units per tile slot
-// Ball spawn Y is intentionally high (2.5) so it drops onto the surface from above.
-// Hole Y is only used for the flag visual; XZ-proximity drives in-hole detection.
+export const TILE_SIZE  = 4    // units between tile origins (spline tiles)
+export const BALL_SCALE = 0.17 // ball GLB visual scale → diameter ≈ 0.34
+export const BALL_RADIUS = 0.16
 
-// Hole definitions. tee/hole in tile-local coords (multiply by TILE_SIZE for world).
+// Tile type keywords used in tile arrays:
+//   'S'  = spline-default-straight
+//   'HB' = spline-default-straight-hill-beginning
+//   'HC' = spline-default-straight-hill-complete
+//   'HE' = spline-default-straight-hill-end
+//   'BD' = spline-default-straight-bump-down
+//   'BU' = spline-default-straight-bump-up
+
+const S  = 'spline-default-straight'
+const HB = 'spline-default-straight-hill-beginning'
+const HC = 'spline-default-straight-hill-complete'
+const HE = 'spline-default-straight-hill-end'
+const BU = 'spline-default-straight-bump-up'
+const BD = 'spline-default-straight-bump-down'
+
+// Build a straight Z-direction hole from a tile-type array.
+// All tiles placed at x=0, z = index*TILE_SIZE, rotY=0.
+// tee  = center of first tile: z = 0 + 1.5
+// hole = center of last  tile: z = (n-1)*TILE_SIZE + 1.5
+function straightHole(name, par, tileTypes) {
+  const n = tileTypes.length
+  return {
+    name, par,
+    tiles: tileTypes.map((model, i) => ({
+      model, x: 0, z: i * TILE_SIZE, rotY: 0,
+    })),
+    tee:  { x:  0.3, y: 0.5, z: 1.5 },
+    hole: { x:  0,   y: 0,   z: (n - 1) * TILE_SIZE + 1.5 },
+  }
+}
+
 export const HOLES = [
-  // ── Hole 1 – Straight shot ─────────────────────────────────────────
-  {
-    name: 'Rechte baan', par: 2,
-    tiles: [
-      { model: 'spline-default-cap-front',   x: 0, z: 0,  rotY: 0   },
-      { model: 'spline-default-straight',    x: 0, z: 1,  rotY: 0   },
-      { model: 'spline-default-straight',    x: 0, z: 2,  rotY: 0   },
-      { model: 'spline-default-straight',    x: 0, z: 3,  rotY: 0   },
-      { model: 'spline-default-cap-back',    x: 0, z: 4,  rotY: 0   },
-    ],
-    tee:  { x: 0, y: 2.5, z: 0.5 },
-    hole: { x: 0, y: 0.5, z: 15.5 },
-  },
+  // Hole 1 – Short & straight   (3 tiles = 12 units)
+  straightHole('Recht vooruit', 2, [S, S, S]),
 
-  // ── Hole 2 – Left corner ───────────────────────────────────────────
-  {
-    name: 'Bocht links', par: 3,
-    tiles: [
-      { model: 'spline-default-cap-front',       x: 0, z: 0,  rotY: 0   },
-      { model: 'spline-default-straight',         x: 0, z: 1,  rotY: 0   },
-      { model: 'spline-default-straight',         x: 0, z: 2,  rotY: 0   },
-      { model: 'spline-default-corner-small',     x: 0, z: 3,  rotY: 270 },
-      { model: 'spline-default-straight',         x:-1, z: 3,  rotY: 90  },
-      { model: 'spline-default-straight',         x:-2, z: 3,  rotY: 90  },
-      { model: 'spline-default-cap-back',         x:-3, z: 3,  rotY: 90  },
-    ],
-    tee:  { x: 0,   y: 2.5, z: 0.5 },
-    hole: { x:-11.5,y: 0.5, z: 12  },
-  },
+  // Hole 2 – Medium straight    (5 tiles = 20 units)
+  straightHole('Langere baan',  3, [S, S, S, S, S]),
 
-  // ── Hole 3 – S-curve ──────────────────────────────────────────────
-  {
-    name: 'S-bocht', par: 3,
-    tiles: [
-      { model: 'spline-default-cap-front',       x: 0, z: 0,  rotY: 0   },
-      { model: 'spline-default-straight',         x: 0, z: 1,  rotY: 0   },
-      { model: 'spline-default-corner-small',     x: 0, z: 2,  rotY: 90  },
-      { model: 'spline-default-straight',         x: 1, z: 2,  rotY: 90  },
-      { model: 'spline-default-corner-small',     x: 2, z: 2,  rotY: 0   },
-      { model: 'spline-default-straight',         x: 2, z: 3,  rotY: 0   },
-      { model: 'spline-default-straight',         x: 2, z: 4,  rotY: 0   },
-      { model: 'spline-default-cap-back',         x: 2, z: 5,  rotY: 0   },
-    ],
-    tee:  { x: 0,  y: 2.5, z: 0.5 },
-    hole: { x: 8,  y: 0.5, z: 19.5 },
-  },
+  // Hole 3 – Hill in the middle (5 tiles)
+  straightHole('Over de heuvel', 3, [S, HB, HC, HE, S]),
 
-  // ── Hole 4 – Ramp up then down ────────────────────────────────────
-  {
-    name: 'Heuvel', par: 3,
-    tiles: [
-      { model: 'spline-default-cap-front',                  x: 0, z: 0,  rotY: 0 },
-      { model: 'spline-default-straight',                    x: 0, z: 1,  rotY: 0 },
-      { model: 'spline-default-straight-hill-beginning',     x: 0, z: 2,  rotY: 0 },
-      { model: 'spline-default-straight-hill-complete',      x: 0, z: 3,  rotY: 0 },
-      { model: 'spline-default-straight-hill-end',           x: 0, z: 4,  rotY: 0 },
-      { model: 'spline-default-straight',                    x: 0, z: 5,  rotY: 0 },
-      { model: 'spline-default-cap-back',                    x: 0, z: 6,  rotY: 0 },
-    ],
-    tee:  { x: 0, y: 2.5, z: 0.5 },
-    hole: { x: 0, y: 0.5, z: 23.5 },
-  },
+  // Hole 4 – Double hill        (6 tiles)
+  straightHole('Dubbele heuvel', 3, [S, HB, HC, HE, HB, HE]),
 
-  // ── Hole 5 – Zigzag ───────────────────────────────────────────────
-  {
-    name: 'Zigzag', par: 4,
-    tiles: [
-      { model: 'spline-default-cap-front',   x: 0, z: 0,  rotY: 0   },
-      { model: 'spline-default-straight',    x: 0, z: 1,  rotY: 0   },
-      { model: 'spline-default-corner-small',x: 0, z: 2,  rotY: 90  },
-      { model: 'spline-default-straight',    x: 1, z: 2,  rotY: 90  },
-      { model: 'spline-default-straight',    x: 2, z: 2,  rotY: 90  },
-      { model: 'spline-default-corner-small',x: 3, z: 2,  rotY: 180 },
-      { model: 'spline-default-straight',    x: 3, z: 3,  rotY: 0   },
-      { model: 'spline-default-straight',    x: 3, z: 4,  rotY: 0   },
-      { model: 'spline-default-cap-back',    x: 3, z: 5,  rotY: 0   },
-    ],
-    tee:  { x: 0,  y: 2.5, z: 0.5 },
-    hole: { x: 12, y: 0.5, z: 19.5 },
-  },
+  // Hole 5 – Long straight      (7 tiles)
+  straightHole('Lange rechte baan', 4, [S, S, S, S, S, S, S]),
 
-  // ── Hole 6 – Large corner ─────────────────────────────────────────
-  {
-    name: 'Grote bocht', par: 3,
-    tiles: [
-      { model: 'spline-default-cap-front',      x: 0, z: 0,  rotY: 0   },
-      { model: 'spline-default-straight',        x: 0, z: 1,  rotY: 0   },
-      { model: 'spline-default-corner-large',    x: 0, z: 2,  rotY: 90  },
-      { model: 'spline-default-straight',        x: 2, z: 0,  rotY: 90  },
-      { model: 'spline-default-straight',        x: 3, z: 0,  rotY: 90  },
-      { model: 'spline-default-cap-back',        x: 4, z: 0,  rotY: 90  },
-    ],
-    tee:  { x: 0,  y: 2.5, z: 0.5 },
-    hole: { x: 16, y: 0.5, z: 1.5  },
-  },
+  // Hole 6 – Bump then long     (6 tiles)
+  straightHole('Hobbel & door', 3, [S, BU, BD, S, S, S]),
 
-  // ── Hole 7 – Bend + ramp ──────────────────────────────────────────
-  {
-    name: 'Bocht & helling', par: 4,
-    tiles: [
-      { model: 'spline-default-cap-front',               x: 0, z: 0,  rotY: 0   },
-      { model: 'spline-default-straight',                 x: 0, z: 1,  rotY: 0   },
-      { model: 'spline-default-straight-bend',            x: 0, z: 2,  rotY: 0   },
-      { model: 'spline-default-straight',                 x: 0, z: 3,  rotY: 0   },
-      { model: 'spline-default-straight-hill-beginning',  x: 0, z: 4,  rotY: 0   },
-      { model: 'spline-default-straight-hill-complete',   x: 0, z: 5,  rotY: 0   },
-      { model: 'spline-default-straight-hill-end',        x: 0, z: 6,  rotY: 0   },
-      { model: 'spline-default-cap-back',                 x: 0, z: 7,  rotY: 0   },
-    ],
-    tee:  { x: 0, y: 2.5, z: 0.5 },
-    hole: { x: 0, y: 0.5, z: 27.5 },
-  },
+  // Hole 7 – Hill + bump        (7 tiles)
+  straightHole('Heuvel & hobbel', 4, [S, HB, HC, HE, BU, BD, S]),
 
-  // ── Hole 8 – Curve ────────────────────────────────────────────────
-  {
-    name: 'Curve', par: 3,
-    tiles: [
-      { model: 'spline-default-cap-front',  x: 0, z: 0,  rotY: 0   },
-      { model: 'spline-default-straight',   x: 0, z: 1,  rotY: 0   },
-      { model: 'spline-default-curve',      x: 0, z: 2,  rotY: 0   },
-      { model: 'spline-default-curve',      x: 1, z: 3,  rotY: 0   },
-      { model: 'spline-default-straight',   x: 2, z: 4,  rotY: 90  },
-      { model: 'spline-default-cap-back',   x: 3, z: 4,  rotY: 90  },
-    ],
-    tee:  { x: 0,  y: 2.5, z: 0.5 },
-    hole: { x: 12, y: 0.5, z: 17.5 },
-  },
+  // Hole 8 – Long with hills    (8 tiles)
+  straightHole('Lange heuvelroute', 4, [S, S, HB, HC, HC, HE, S, S]),
 
-  // ── Hole 9 – Long zigzag finale ───────────────────────────────────
-  {
-    name: 'Finale', par: 5,
-    tiles: [
-      { model: 'spline-default-cap-front',   x: 0, z: 0,  rotY: 0   },
-      { model: 'spline-default-straight',    x: 0, z: 1,  rotY: 0   },
-      { model: 'spline-default-straight',    x: 0, z: 2,  rotY: 0   },
-      { model: 'spline-default-corner-small',x: 0, z: 3,  rotY: 90  },
-      { model: 'spline-default-straight',    x: 1, z: 3,  rotY: 90  },
-      { model: 'spline-default-straight',    x: 2, z: 3,  rotY: 90  },
-      { model: 'spline-default-corner-small',x: 3, z: 3,  rotY: 180 },
-      { model: 'spline-default-straight',    x: 3, z: 4,  rotY: 0   },
-      { model: 'spline-default-straight',    x: 3, z: 5,  rotY: 0   },
-      { model: 'spline-default-corner-small',x: 3, z: 6,  rotY: 270 },
-      { model: 'spline-default-straight',    x: 2, z: 6,  rotY: 270 },
-      { model: 'spline-default-straight',    x: 1, z: 6,  rotY: 270 },
-      { model: 'spline-default-corner-small',x: 0, z: 6,  rotY: 0   },
-      { model: 'spline-default-straight',    x: 0, z: 7,  rotY: 0   },
-      { model: 'spline-default-cap-back',    x: 0, z: 8,  rotY: 0   },
-    ],
-    tee:  { x: 0,  y: 2.5, z: 0.5 },
-    hole: { x: 0,  y: 0.5, z: 31.5 },
-  },
+  // Hole 9 – Finale             (9 tiles)
+  straightHole('Grote finale', 5, [S, HB, HC, HE, S, S, HB, HC, HE]),
 ]
