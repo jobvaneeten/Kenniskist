@@ -394,9 +394,10 @@ class Tower {
     this.lastFired = 0
     this.target = null
 
-    // Sprite
+    // Sprite — save scale after setDisplaySize so tweens can respect it
     this.sprite = scene.add.image(this.x, this.y, key)
       .setDisplaySize(52, 52).setDepth(6)
+    this._spriteScale = this.sprite.scaleX
 
     // Platform under tower
     this.platform = scene.add.circle(this.x, this.y, 30, 0x224422, 0.7).setDepth(5)
@@ -412,9 +413,14 @@ class Tower {
       backgroundColor: '#225522', padding: { x: 3, y: 1 },
     }).setDepth(9).setOrigin(0.5)
 
-    // Spawn pop animation
+    // Spawn pop animation — tween to saved scale, not 1.0
     scene.tweens.add({
-      targets: [this.sprite, this.platform],
+      targets: this.sprite,
+      scale: { from: 0, to: this._spriteScale },
+      duration: 220, ease: 'Back.Out',
+    })
+    scene.tweens.add({
+      targets: this.platform,
       scale: { from: 0, to: 1 },
       duration: 220, ease: 'Back.Out',
     })
@@ -455,7 +461,9 @@ class Tower {
     // Level-up sparkle
     this.scene.spawnParticles(this.x, this.y, 'levelup', 0xFFD700)
     this.scene.tweens.add({
-      targets: this.sprite, scale: { from: 1.3, to: 1 }, duration: 200, ease: 'Back.Out',
+      targets: this.sprite,
+      scale: { from: this._spriteScale * 1.3, to: this._spriteScale },
+      duration: 200, ease: 'Back.Out',
     })
   }
 
@@ -602,11 +610,6 @@ export default class GameScene extends Phaser.Scene {
   _buildMap() {
     const grid = this.mapData.grid
 
-    const isPath = (c, r) => {
-      if (r < 0 || r >= MAP_ROWS || c < 0 || c >= MAP_COLS) return false
-      return grid[r][c] === 1
-    }
-
     for (let row = 0; row < MAP_ROWS; row++) {
       for (let col = 0; col < MAP_COLS; col++) {
         const cell = grid[row][col]
@@ -614,42 +617,16 @@ export default class GameScene extends Phaser.Scene {
         const cy = row * TILE_SIZE + TILE_SIZE / 2
 
         if (cell === 1) {
-          // PATH: plain sand base
+          // PATH: plain brown sand
           this.add.image(cx, cy, 'tile050').setDisplaySize(TILE_SIZE, TILE_SIZE).setDepth(0)
         } else {
-          // GRASS: green base
+          // GRASS: plain green
           this.add.image(cx, cy, 'tile076').setDisplaySize(TILE_SIZE, TILE_SIZE).setDepth(0)
-
-          // Auto-tile: overlay edge/corner tile where grass meets path
-          const N = isPath(col, row - 1)
-          const S = isPath(col, row + 1)
-          const E = isPath(col + 1, row)
-          const W = isPath(col - 1, row)
-
-          let key = null, fx = false, fy = false
-
-          if      (N && E && !S && !W) { key = 'tile077'                   } // NE corner
-          else if (N && W && !S && !E) { key = 'tile078'                   } // NW corner
-          else if (S && E && !N && !W) { key = 'tile077'; fy = true        } // SE corner
-          else if (S && W && !N && !E) { key = 'tile078'; fy = true        } // SW corner
-          else if (N            )      { key = 'tile001'                   } // N edge
-          else if (S            )      { key = 'tile001'; fy = true        } // S edge
-          else if (E            )      { key = 'tile094'                   } // E edge
-          else if (W            )      { key = 'tile099'                   } // W edge
-
-          if (key) {
-            this.add.image(cx, cy, key)
-              .setDisplaySize(TILE_SIZE, TILE_SIZE)
-              .setDepth(1)
-              .setFlipX(fx)
-              .setFlipY(fy)
-          }
-
-          // Bush decoration
+          // Bush decoration on deco cells
           if (cell === 2) {
             this.add.image(cx, cy, 'tile130')
               .setDisplaySize(TILE_SIZE - 10, TILE_SIZE - 10)
-              .setDepth(2)
+              .setDepth(1)
           }
         }
       }
