@@ -601,20 +601,22 @@ export default class GameScene extends Phaser.Scene {
   // ── Map building ──────────────────────────────────────────────────
   _buildMap() {
     const grid = this.mapData.grid
-    const rt   = this.add.renderTexture(0, 0, MAP_COLS * TILE_SIZE, MAP_ROWS * TILE_SIZE).setDepth(0)
 
     for (let row = 0; row < MAP_ROWS; row++) {
       for (let col = 0; col < MAP_COLS; col++) {
         const cell = grid[row][col]
-        const x = col * TILE_SIZE, y = row * TILE_SIZE
+        const cx = col * TILE_SIZE + TILE_SIZE / 2
+        const cy = row * TILE_SIZE + TILE_SIZE / 2
         const key = cell === 1 ? 'tile050' : 'tile076'
-        rt.draw(key, x, y)
-        if (cell === 2) rt.draw('tile130', x + 8, y + 6)
+        this.add.image(cx, cy, key).setDisplaySize(TILE_SIZE, TILE_SIZE).setDepth(0)
+        if (cell === 2) {
+          this.add.image(cx, cy, 'tile130').setDisplaySize(TILE_SIZE - 10, TILE_SIZE - 10).setDepth(1)
+        }
       }
     }
 
     // Subtle grid overlay on buildable cells
-    const overlay = this.add.graphics().setDepth(1).setAlpha(0.15)
+    const overlay = this.add.graphics().setDepth(1).setAlpha(0.12)
     for (let row = 0; row < MAP_ROWS; row++) {
       for (let col = 0; col < MAP_COLS; col++) {
         if (grid[row][col] === 0) {
@@ -625,11 +627,10 @@ export default class GameScene extends Phaser.Scene {
     }
 
     // Spawn & exit markers
-    const spawnX = 0, spawnY = this.mapData.spawnRow * TILE_SIZE
-    const exitX  = (MAP_COLS - 1) * TILE_SIZE, exitY = this.mapData.exitRow * TILE_SIZE
-    const markerStyle = { fontSize: '28px' }
-    this.add.text(spawnX + 4, spawnY + 4, '▶', markerStyle).setDepth(2)
-    this.add.text(exitX + 4,  exitY + 4,  '🏁', markerStyle).setDepth(2)
+    const spawnY = this.mapData.spawnRow * TILE_SIZE + 4
+    const exitY  = this.mapData.exitRow  * TILE_SIZE + 4
+    this.add.text(4, spawnY, '▶', { fontSize: '26px' }).setDepth(2)
+    this.add.text(MAP_COLS * TILE_SIZE - 38, exitY, '🏁', { fontSize: '26px' }).setDepth(2)
   }
 
   // ── Wave system ────────────────────────────────────────────────────
@@ -773,7 +774,7 @@ export default class GameScene extends Phaser.Scene {
     if (!this.selectedTower) return
     const col = Math.floor(ptr.x / TILE_SIZE)
     const row = Math.floor(ptr.y / TILE_SIZE)
-    if (row >= MAP_ROWS) return
+    if (ptr.x >= MAP_COLS * TILE_SIZE || row >= MAP_ROWS) return
     const cx = col * TILE_SIZE + TILE_SIZE / 2
     const cy = row * TILE_SIZE + TILE_SIZE / 2
     this.ghost.setPosition(cx, cy)
@@ -787,8 +788,8 @@ export default class GameScene extends Phaser.Scene {
   }
 
   _onMapClick(ptr) {
-    // Don't handle clicks in HUD
-    if (ptr.y > MAP_ROWS * TILE_SIZE) return
+    // Don't handle clicks in side panel
+    if (ptr.x >= MAP_COLS * TILE_SIZE) return
 
     const col = Math.floor(ptr.x / TILE_SIZE)
     const row = Math.floor(ptr.y / TILE_SIZE)

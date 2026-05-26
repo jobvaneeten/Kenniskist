@@ -3,10 +3,10 @@ import BootScene  from './scenes/BootScene.js'
 import MenuScene  from './scenes/MenuScene.js'
 import GameScene  from './scenes/GameScene.js'
 import UIScene    from './scenes/UIScene.js'
-import { MAP_ROWS, MAP_COLS, TILE_SIZE, HUD_HEIGHT } from './data/MapData.js'
+import { MAP_ROWS, MAP_COLS, TILE_SIZE, PANEL_WIDTH } from './data/MapData.js'
 
-const W = MAP_COLS * TILE_SIZE   // 1280
-const H = MAP_ROWS * TILE_SIZE + HUD_HEIGHT  // 720
+const W = MAP_COLS * TILE_SIZE + PANEL_WIDTH  // 1024 + 256 = 1280
+const H = MAP_ROWS * TILE_SIZE                // 640
 
 export function createGame(parent, { onBack }) {
   const config = {
