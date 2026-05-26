@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import FootballGame from './games/FootballGame'
 import TowerDefenseGame from './games/TowerDefenseGame'
+import MiniGolfGame from './games/minigolf/MiniGolfGame'
 import './game.css'
 
 const YEARS = [
@@ -26,6 +27,7 @@ const GAMES = {
 const FREE_GAMES = [
   { key: 'football',       emoji: '⚽', name: 'WK Voetbal',    desc: 'Alle groepen' },
   { key: 'towerdefense',   emoji: '🏰', name: 'Tower Defense', desc: 'Alle groepen' },
+  { key: 'minigolf',       emoji: '⛳', name: 'Mini Golf',      desc: '2 spelers of vs AI' },
 ]
 
 export default function GameMenu({ onBack, addCuruntie }) {
@@ -37,6 +39,11 @@ export default function GameMenu({ onBack, addCuruntie }) {
   // Tower defense (no mode selection needed)
   if (directGame === 'towerdefense') {
     return <TowerDefenseGame onBack={() => setDirectGame(null)} />
+  }
+
+  // Mini golf (mode selection handled inside the component)
+  if (directGame === 'minigolf') {
+    return <MiniGolfGame onBack={() => setDirectGame(null)} />
   }
 
   // Direct game (no quiz)

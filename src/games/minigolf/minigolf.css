@@ -1,0 +1,297 @@
+/* ── Wrapper & Canvas ─────────────────────────────────────────────── */
+.mg-wrapper {
+  position: fixed;
+  inset: 0;
+  background: #1a3a22;
+  display: flex;
+  flex-direction: column;
+}
+
+.mg-canvas {
+  flex: 1;
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  outline: none;
+}
+
+/* ── HUD ─────────────────────────────────────────────────────────── */
+.mg-hud {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 18px;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.72) 0%, transparent 100%);
+  pointer-events: none;
+  font-family: 'Segoe UI', sans-serif;
+  color: #fff;
+  user-select: none;
+}
+
+.mg-hud-hole { display: flex; flex-direction: column; align-items: center; min-width: 60px; }
+.mg-hud-par  { display: flex; flex-direction: column; align-items: center; min-width: 40px; }
+.mg-hud-label { font-size: 10px; text-transform: uppercase; opacity: 0.7; letter-spacing: 1px; }
+.mg-hud-value { font-size: 22px; font-weight: 800; line-height: 1; }
+.mg-hud-name  { font-size: 11px; opacity: 0.8; margin-top: 2px; }
+
+.mg-hud-player {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.08);
+  transition: background 0.2s, transform 0.2s;
+  margin-left: auto;
+}
+.mg-hud-player.mg-active {
+  background: rgba(255,255,255,0.22);
+  transform: scale(1.05);
+  box-shadow: 0 0 12px rgba(255,255,255,0.3);
+}
+.mg-hud-pname  { font-size: 13px; font-weight: 600; }
+.mg-hud-shots  { font-size: 12px; opacity: 0.8; }
+
+.mg-ball-dot {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.6);
+  flex-shrink: 0;
+}
+.mg-ball-red   { background: #ef4444; }
+.mg-ball-blue  { background: #3b82f6; }
+.mg-ball-green { background: #22c55e; }
+
+/* ── Power bar ───────────────────────────────────────────────────── */
+.mg-power-wrap {
+  position: absolute;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  pointer-events: none;
+}
+.mg-power-label {
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #fff;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+}
+.mg-power-track {
+  width: 200px; height: 14px;
+  background: rgba(0,0,0,0.5);
+  border-radius: 7px;
+  border: 2px solid rgba(255,255,255,0.3);
+  overflow: hidden;
+}
+.mg-power-fill {
+  height: 100%;
+  border-radius: 7px;
+  transition: width 0.05s linear, background 0.1s;
+  box-shadow: 0 0 8px currentColor;
+}
+.mg-power-pct {
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+}
+
+/* ── Dir line ────────────────────────────────────────────────────── */
+.mg-dir-line {
+  position: absolute;
+  bottom: 50%;
+  left: 50%;
+  height: 3px;
+  background: repeating-linear-gradient(90deg, #fff 0px, #fff 8px, transparent 8px, transparent 14px);
+  transform-origin: left center;
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+/* ── Hint bar ────────────────────────────────────────────────────── */
+.mg-hint {
+  position: absolute;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 14px;
+  padding: 7px 20px;
+  border-radius: 20px;
+  pointer-events: none;
+  white-space: nowrap;
+  backdrop-filter: blur(4px);
+}
+
+/* ── Overlay base ────────────────────────────────────────────────── */
+.mg-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(6px);
+  animation: mg-fade-in 0.3s ease;
+}
+@keyframes mg-fade-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1);    }
+}
+
+.mg-overlay-card {
+  background: linear-gradient(135deg, #1e4a2a 0%, #2d6b3a 100%);
+  border: 2px solid rgba(255,255,255,0.15);
+  border-radius: 20px;
+  padding: 32px 40px;
+  min-width: 340px;
+  max-width: 480px;
+  text-align: center;
+  color: #fff;
+  font-family: 'Segoe UI', sans-serif;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+
+/* ── Hole complete ───────────────────────────────────────────────── */
+.mg-oc-title {
+  font-size: 26px;
+  font-weight: 800;
+  margin-bottom: 20px;
+  color: #86efac;
+}
+.mg-oc-scores { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+.mg-oc-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255,255,255,0.07);
+  border-radius: 10px;
+  padding: 10px 14px;
+}
+.mg-oc-pname  { font-weight: 700; flex: 1; text-align: left; }
+.mg-oc-shots  { opacity: 0.8; font-size: 14px; }
+.mg-oc-badge  {
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 800;
+  background: rgba(255,255,255,0.15);
+}
+.mg-badge-holeinone { background: #fbbf24; color: #000; }
+.mg-badge-eagle     { background: #a78bfa; color: #fff; }
+.mg-badge-birdie    { background: #34d399; color: #000; }
+.mg-badge-par       { background: #60a5fa; color: #fff; }
+.mg-badge-bogey     { background: #fb923c; color: #fff; }
+
+/* ── End screen ──────────────────────────────────────────────────── */
+.mg-end-card { max-width: 420px; }
+.mg-end-trophy { font-size: 60px; margin-bottom: 8px; animation: mg-bounce 1s ease infinite alternate; }
+@keyframes mg-bounce { from { transform: translateY(0); } to { transform: translateY(-8px); } }
+.mg-end-title  { font-size: 30px; font-weight: 800; color: #fbbf24; margin-bottom: 20px; }
+.mg-end-scores { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+.mg-end-row    {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255,255,255,0.07);
+  border-radius: 10px;
+  padding: 10px 14px;
+}
+.mg-end-rank   { font-size: 18px; font-weight: 800; width: 28px; }
+.mg-end-pname  { flex: 1; font-weight: 700; }
+.mg-end-total  { opacity: 0.85; font-size: 14px; }
+.mg-end-stars  { font-size: 16px; }
+.mg-end-par    { opacity: 0.6; font-size: 13px; margin-bottom: 20px; }
+
+/* ── Buttons ─────────────────────────────────────────────────────── */
+.mg-btn {
+  border: none;
+  border-radius: 12px;
+  padding: 12px 28px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  font-family: 'Segoe UI', sans-serif;
+}
+.mg-btn:hover  { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.35); }
+.mg-btn:active { transform: translateY(0);    box-shadow: none; }
+
+.mg-btn-green {
+  background: linear-gradient(135deg, #16a34a, #22c55e);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(34,197,94,0.4);
+}
+
+/* ── Mode select / menu ──────────────────────────────────────────── */
+.mg-menu {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background: radial-gradient(ellipse at 50% 30%, #1a5c2a 0%, #0d2b12 100%);
+  font-family: 'Segoe UI', sans-serif;
+  color: #fff;
+}
+
+.mg-back-btn {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  background: rgba(255,255,255,0.12);
+  border: none;
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.mg-back-btn:hover { background: rgba(255,255,255,0.22); }
+
+.mg-menu-logo  { font-size: 72px; line-height: 1; }
+.mg-menu-title { font-size: 42px; font-weight: 900; margin: 0; color: #86efac; letter-spacing: -1px; }
+.mg-menu-sub   { opacity: 0.7; font-size: 15px; margin: 0 0 8px; }
+
+.mg-mode-grid {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.mg-mode-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,255,255,0.08);
+  border: 2px solid rgba(255,255,255,0.15);
+  border-radius: 18px;
+  padding: 28px 32px;
+  min-width: 180px;
+  cursor: pointer;
+  color: #fff;
+  transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+.mg-mode-card:hover {
+  background: rgba(255,255,255,0.18);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+}
+.mg-mode-icon { font-size: 40px; }
+.mg-mode-name { font-size: 17px; font-weight: 800; }
+.mg-mode-desc { font-size: 12px; opacity: 0.7; }
