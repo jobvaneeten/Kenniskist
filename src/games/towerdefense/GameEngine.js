@@ -25,6 +25,11 @@ export function createGame(parent, { onBack }) {
     powerPreference: 'high-performance',
     antialias: true,
     fps: { target: 60, forceSetTimeOut: false },
+    disableContextMenu: true,
+    input: {
+      mouse:    { preventDefaultWheel: false },
+      touch:    { capture: false },
+    },
   }
 
   const game = new Phaser.Game(config)

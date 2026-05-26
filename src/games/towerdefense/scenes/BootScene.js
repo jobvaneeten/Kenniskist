@@ -1,6 +1,6 @@
 import Phaser from 'phaser'
 
-const TD = '/towerdefence/'
+const TD = '/Towerdefence/'
 
 export default class BootScene extends Phaser.Scene {
   constructor() { super('Boot') }
@@ -50,10 +50,10 @@ export default class BootScene extends Phaser.Scene {
     particles.forEach(p => this.load.image(p, `${TD}Particals/${p}.png`))
 
     // ── UI assets ─────────────────────────────────────────────────
-    this.load.image('btn_green',  `${TD}UI/Green/Default/button_rectangle_depth_flat.png`)
-    this.load.image('btn_red',    `${TD}UI/Red/Default/button_rectangle_depth_flat.png`)
-    this.load.image('btn_yellow', `${TD}UI/Yellow/Default/button_rectangle_depth_flat.png`)
-    this.load.image('btn_grey',   `${TD}UI/Grey/Default/button_rectangle_depth_flat.png`)
+    this.load.image('btn_green',  `${TD}Ui/Green/Default/button_rectangle_depth_flat.png`)
+    this.load.image('btn_red',    `${TD}Ui/Red/Default/button_rectangle_depth_flat.png`)
+    this.load.image('btn_yellow', `${TD}Ui/Yellow/Default/button_rectangle_depth_flat.png`)
+    this.load.image('btn_grey',   `${TD}Ui/Grey/Default/button_rectangle_depth_flat.png`)
   }
 
   create() {

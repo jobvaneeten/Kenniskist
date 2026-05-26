@@ -75,6 +75,7 @@ export default class UIScene extends Phaser.Scene {
 
       // Animal image
       const img = this.add.image(bx, shopY - 8, key).setDisplaySize(36, 36)
+      const baseScale = img.scaleX
 
       // Cost text
       const costTxt = this.add.text(bx, shopY + 22, `🪙${td.cost}`, {
@@ -101,11 +102,11 @@ export default class UIScene extends Phaser.Scene {
 
       zone.on('pointerover', () => {
         tooltip.setVisible(true)
-        this.tweens.add({ targets: img, scale: 1.2, duration: 100 })
+        this.tweens.add({ targets: img, scaleX: baseScale * 1.2, scaleY: baseScale * 1.2, duration: 100 })
       })
       zone.on('pointerout', () => {
         tooltip.setVisible(false)
-        this.tweens.add({ targets: img, scale: 1, duration: 100 })
+        this.tweens.add({ targets: img, scaleX: baseScale, scaleY: baseScale, duration: 100 })
       })
       zone.on('pointerdown', () => {
         if (this._gold < td.cost) {

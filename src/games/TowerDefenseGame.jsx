@@ -7,6 +7,12 @@ export default function TowerDefenseGame({ onBack }) {
   const gameRef      = useRef(null)
 
   useEffect(() => {
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = prev }
+  }, [])
+
+  useEffect(() => {
     if (!containerRef.current || gameRef.current) return
     gameRef.current = createGame(containerRef.current, { onBack })
     return () => {
