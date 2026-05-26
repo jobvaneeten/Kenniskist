@@ -776,6 +776,7 @@ export default class GameScene extends Phaser.Scene {
     this.selectedTower = null
     this.ghost.setVisible(false)
     this.ghostRange.setVisible(false)
+    if (this.ghostImg) { this.ghostImg.destroy(); this.ghostImg = null }
     this._deselectBuilt()
   }
 
