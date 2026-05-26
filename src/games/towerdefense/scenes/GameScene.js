@@ -1,5 +1,5 @@
 import Phaser from 'phaser'
-import { MAPS, TILE_SIZE, MAP_COLS, MAP_ROWS, HUD_HEIGHT, isBuildable } from '../data/MapData.js'
+import { MAPS, TILE_SIZE, MAP_COLS, MAP_ROWS, isBuildable } from '../data/MapData.js'
 import { TOWERS, TOWER_ORDER } from '../data/TowerData.js'
 import { ENEMIES } from '../data/EnemyData.js'
 import { WAVES } from '../data/WaveData.js'
@@ -602,21 +602,61 @@ export default class GameScene extends Phaser.Scene {
   _buildMap() {
     const grid = this.mapData.grid
 
+    const isPath = (c, r) => {
+      if (r < 0 || r >= MAP_ROWS || c < 0 || c >= MAP_COLS) return false
+      return grid[r][c] === 1
+    }
+
     for (let row = 0; row < MAP_ROWS; row++) {
       for (let col = 0; col < MAP_COLS; col++) {
         const cell = grid[row][col]
         const cx = col * TILE_SIZE + TILE_SIZE / 2
         const cy = row * TILE_SIZE + TILE_SIZE / 2
-        const key = cell === 1 ? 'tile050' : 'tile076'
-        this.add.image(cx, cy, key).setDisplaySize(TILE_SIZE, TILE_SIZE).setDepth(0)
-        if (cell === 2) {
-          this.add.image(cx, cy, 'tile130').setDisplaySize(TILE_SIZE - 10, TILE_SIZE - 10).setDepth(1)
+
+        if (cell === 1) {
+          // PATH: plain sand base
+          this.add.image(cx, cy, 'tile050').setDisplaySize(TILE_SIZE, TILE_SIZE).setDepth(0)
+        } else {
+          // GRASS: green base
+          this.add.image(cx, cy, 'tile076').setDisplaySize(TILE_SIZE, TILE_SIZE).setDepth(0)
+
+          // Auto-tile: overlay edge/corner tile where grass meets path
+          const N = isPath(col, row - 1)
+          const S = isPath(col, row + 1)
+          const E = isPath(col + 1, row)
+          const W = isPath(col - 1, row)
+
+          let key = null, fx = false, fy = false
+
+          if      (N && E && !S && !W) { key = 'tile077'                   } // NE corner
+          else if (N && W && !S && !E) { key = 'tile078'                   } // NW corner
+          else if (S && E && !N && !W) { key = 'tile077'; fy = true        } // SE corner
+          else if (S && W && !N && !E) { key = 'tile078'; fy = true        } // SW corner
+          else if (N            )      { key = 'tile001'                   } // N edge
+          else if (S            )      { key = 'tile001'; fy = true        } // S edge
+          else if (E            )      { key = 'tile094'                   } // E edge
+          else if (W            )      { key = 'tile099'                   } // W edge
+
+          if (key) {
+            this.add.image(cx, cy, key)
+              .setDisplaySize(TILE_SIZE, TILE_SIZE)
+              .setDepth(1)
+              .setFlipX(fx)
+              .setFlipY(fy)
+          }
+
+          // Bush decoration
+          if (cell === 2) {
+            this.add.image(cx, cy, 'tile130')
+              .setDisplaySize(TILE_SIZE - 10, TILE_SIZE - 10)
+              .setDepth(2)
+          }
         }
       }
     }
 
-    // Subtle grid overlay on buildable cells
-    const overlay = this.add.graphics().setDepth(1).setAlpha(0.12)
+    // Subtle grid overlay on buildable cells only
+    const overlay = this.add.graphics().setDepth(1).setAlpha(0.10)
     for (let row = 0; row < MAP_ROWS; row++) {
       for (let col = 0; col < MAP_COLS; col++) {
         if (grid[row][col] === 0) {

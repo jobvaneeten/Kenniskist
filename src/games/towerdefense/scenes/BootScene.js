@@ -18,18 +18,25 @@ export default class BootScene extends Phaser.Scene {
     this.load.on('progress', v => { bar.width = 400 * v })
     this.load.on('complete', () => { barBg.destroy(); bar.destroy() })
 
-    // ── Map tiles (only the ones we actually use) ──────────────────
-    const usedTiles = [50, 76, 130, 059, 062, 063, 064, 110, 162]
-    usedTiles.forEach(n => {
+    // ── Map tiles ─────────────────────────────────────────────────
+    // Base terrain
+    const mapTiles = [
+      50,   // pure sand (path center)
+      76,   // pure grass (buildable)
+      // Grass↔Sand transition tiles (used for auto-tiling path edges)
+      1,    // grass cell, path to N  (sand top, grass bottom)
+      77,   // grass cell, path N+E corner (sand top-right)
+      78,   // grass cell, path N+W corner (sand top-left)
+      94,   // grass cell, path to E  (grass left, sand right)
+      99,   // grass cell, path to W  (sand left, grass right)
+      // Decorations
+      130,  // bush
+      54,   // stone circle (path detail)
+    ]
+    mapTiles.forEach(n => {
       const id = String(n).padStart(3, '0')
       this.load.image(`tile${id}`, `${TD}Map/towerDefense_tile${id}.png`)
     })
-    // Additional decorative tiles
-    for (const n of [001,002,003,054,055,056,057,058,059,060,061,062,063,064,065,066,
-                     120,121,122,123,124,125,126,127,128,129,130,131,132,133]) {
-      const id = String(n).padStart(3, '0')
-      this.load.image(`tile${id}`, `${TD}Map/towerDefense_tile${id}.png`)
-    }
 
     // ── Animal towers ─────────────────────────────────────────────
     const animals = ['elephant','giraffe','hippo','monkey','panda','parrot','penguin','pig','rabbit','snake']
