@@ -30,8 +30,8 @@ const GOLF_PATH = '/golf/'
 const MAX_SHOTS  = 10
 const MAX_POWER  = 8
 const DRAG_SCALE = 0.09
-const HOLE_R     = 0.30   // XZ detection radius for "ball in hole"
-const BALL_R     = 0.15   // physics + visual sphere radius
+const HOLE_R     = 0.18   // XZ detection radius for "ball in hole"
+const BALL_R     = 0.065  // physics + visual sphere radius (small golf ball)
 
 // Tile geometry (from GLB accessor min/max)
 const CHAN_HW  = 0.50   // channel half-width  (mesh X: -0.5 → +0.5)
@@ -124,8 +124,8 @@ export async function createMiniGolf(canvas, opts = {}) {
   camera.upperBetaLimit   = Math.PI / 2.08
   camera.lowerRadiusLimit = 4
   camera.upperRadiusLimit = 55
-  camera.inputs.remove(camera.inputs.attached.mousewheel)
-  camera.attachControl(canvas, true)
+  // No attachControl – camera is fully automatic.
+  // Only scroll-wheel zoom is allowed by the user.
   canvas.addEventListener('wheel', e => {
     camera.radius = Math.max(camera.lowerRadiusLimit,
       Math.min(camera.upperRadiusLimit, camera.radius + e.deltaY * 0.04))
@@ -388,8 +388,27 @@ export async function createMiniGolf(canvas, opts = {}) {
       if (p.shots >= MAX_SHOTS) markDone(p)
     }
 
+    // Camera: smoothly follow active ball and auto-rotate to look from behind toward hole
     const ab = balls[currentPlayer]
-    if (ab?.mesh) Vector3.LerpToRef(camera.target, ab.mesh.position, 0.07, camera.target)
+    if (ab?.mesh) {
+      Vector3.LerpToRef(camera.target, ab.mesh.position, 0.07, camera.target)
+
+      const holePos = HOLES[currentHole]?.hole
+      if (holePos) {
+        const dx2 = holePos.x - ab.mesh.position.x
+        const dz2 = holePos.z - ab.mesh.position.z
+        const dist2 = Math.sqrt(dx2 * dx2 + dz2 * dz2)
+        if (dist2 > 0.5) {
+          // Desired alpha: camera sits BEHIND the ball (opposite of hole direction)
+          const desiredAlpha = Math.atan2(-(dz2 / dist2), -(dx2 / dist2))
+          let diff = desiredAlpha - camera.alpha
+          // Normalise to [-π, π] to avoid spinning the long way round
+          while (diff >  Math.PI) diff -= 2 * Math.PI
+          while (diff < -Math.PI) diff += 2 * Math.PI
+          camera.alpha += diff * 0.05
+        }
+      }
+    }
   })
 
   // ── Helpers ───────────────────────────────────────────────────────
@@ -452,10 +471,18 @@ export async function createMiniGolf(canvas, opts = {}) {
       if (dist < 4) return
       const power = Math.min(MAX_POWER, dist * DRAG_SCALE)
       onPowerChange?.(power / MAX_POWER)
-      const a = camera.alpha
-      const nx = -(dx * Math.cos(a) - dy * Math.sin(a)) / dist
-      const nz = -(dx * Math.sin(a) + dy * Math.cos(a)) / dist
-      onDirLineChange?.({ power: power / MAX_POWER, dirX: nx, dirZ: nz })
+      // Correct mapping: screen-right → camera-right, screen-down → camera-back
+      // Shot = opposite of drag (slingshot). With camera.alpha:
+      //   camera right = (-sin α, 0,  cos α)
+      //   camera back  = ( cos α, 0,  sin α)   (opposite of camera forward)
+      // nx = (dx·sin α - dy·cos α) / dist   (negated drag mapped to world X)
+      // nz = -(dx·cos α + dy·sin α) / dist  (negated drag mapped to world Z)
+      const a  = camera.alpha
+      const nx = ( dx * Math.sin(a) - dy * Math.cos(a)) / dist
+      const nz = -(dx * Math.cos(a) + dy * Math.sin(a)) / dist
+      // Screen angle for 2-D aim overlay (opposite of drag direction)
+      const angle = Math.atan2(-dy, -dx) * (180 / Math.PI)
+      onDirLineChange?.({ power: power / MAX_POWER, angle })
     }
     if (evt.type === PointerEventTypes.POINTERUP && drag) {
       const dx = evt.event.clientX - drag.x
@@ -465,8 +492,8 @@ export async function createMiniGolf(canvas, opts = {}) {
       if (dist < 8) return
       const power = Math.min(MAX_POWER, dist * DRAG_SCALE)
       const a  = camera.alpha
-      const nx = -(dx * Math.cos(a) - dy * Math.sin(a)) / dist
-      const nz = -(dx * Math.sin(a) + dy * Math.cos(a)) / dist
+      const nx = ( dx * Math.sin(a) - dy * Math.cos(a)) / dist
+      const nz = -(dx * Math.cos(a) + dy * Math.sin(a)) / dist
       shoot(currentPlayer, nx, nz, power)
     }
   })

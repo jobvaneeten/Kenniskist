@@ -3,14 +3,16 @@ import { createMiniGolf, scoreName } from './GameEngine.js'
 import { HOLES } from './data/CourseData.js'
 import './minigolf.css'
 
-// ── Dot-line direction overlay (Canvas 2D on top of Babylon) ─────────
+// ── Direction aim line ───────────────────────────────────────────────
 function DirLine({ data }) {
   if (!data) return null
-  const { power } = data
-  const len = 120 * power
+  const { power, angle = -90 } = data   // angle: screen degrees, -90 = up (toward hole)
+  const len = 160 * power
   return (
     <div className="mg-dir-line" style={{
-      width: len, opacity: 0.8 + power * 0.2,
+      width: len,
+      transform: `rotate(${angle}deg)`,
+      opacity: 0.75 + power * 0.25,
     }} />
   )
 }
