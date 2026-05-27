@@ -321,8 +321,8 @@ function updatePowerupTick() {
 
   // Raket physics
   if (rocketActive) {
-    if (player.isThrusting) rocketVy = Math.max(rocketVy - 0.5, -7);
-    else                     rocketVy = Math.min(rocketVy + 0.4,  7);
+    if (player.isThrusting) rocketVy = Math.max(rocketVy - 0.25, -3.5);
+    else                     rocketVy = Math.min(rocketVy + 0.20,  3.5);
     rocketY  = Math.max(CEIL_Y+20, Math.min(rocketY + rocketVy, FLOOR_Y()-40));
     player.y = rocketY - player.height/2;
     player.vy = 0;
