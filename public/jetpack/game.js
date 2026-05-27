@@ -295,7 +295,8 @@ function activatePowerup(type) {
     rocketActive = true;
     rocketY  = player.y + player.height/2;
     rocketVy = 0;
-    gameSpeed = baseSpeed * 5.0;  // raket gaat veel sneller vooruit
+    gameSpeed = baseSpeed * 5.0;
+    triggerRocketTransform(player.x + player.width/2, player.y + player.height/2);
   } else {
     activePowerups[type] = p.duration;
   }
@@ -1890,6 +1891,107 @@ function updatePlayer() {
   if (!player.isThrusting && !player.onGround && shootTimer===0) player.currentAnim='run';
 }
 
+// ===== RAKET TRANSFORM EFFECT =====
+let rocketFX = { active:false, timer:0, cx:0, cy:0, particles:[], textScale:0 };
+
+function triggerRocketTransform(cx, cy) {
+  rocketFX.active = true;
+  rocketFX.timer  = 55;
+  rocketFX.cx     = cx;
+  rocketFX.cy     = cy;
+  rocketFX.textScale = 0;
+  rocketFX.particles = [];
+  // Grote burst van vuurdeeltjes
+  for (let i = 0; i < 60; i++) {
+    const angle = (Math.PI * 2 / 60) * i + Math.random() * 0.3;
+    const spd   = 4 + Math.random() * 14;
+    rocketFX.particles.push({
+      x: cx, y: cy,
+      vx: Math.cos(angle) * spd,
+      vy: Math.sin(angle) * spd,
+      life: 1, size: 6 + Math.random() * 14,
+      hue: Math.random() > 0.5 ? 30 + Math.random()*20 : 50 + Math.random()*20,
+      type: Math.random() > 0.35 ? 'fire' : 'spark',
+    });
+  }
+  // Extra ring shockwave
+  rocketFX.shockR  = 10;
+  rocketFX.shockMax = canvas.width * 0.65;
+  shakeTimer = 25; shakeIntensity = 18;
+}
+
+function updateRocketFX() {
+  if (!rocketFX.active) return;
+  rocketFX.timer--;
+  if (rocketFX.timer <= 0) { rocketFX.active = false; return; }
+  rocketFX.shockR  = Math.min(rocketFX.shockR + 28, rocketFX.shockMax);
+  rocketFX.textScale = Math.min(rocketFX.textScale + 0.18, 1.4);
+  rocketFX.particles.forEach(p => {
+    p.x += p.vx * slowMoFactor; p.y += p.vy * slowMoFactor;
+    p.vx *= 0.92; p.vy *= 0.92;
+    p.life -= 0.025 * slowMoFactor;
+    p.size *= 0.97;
+  });
+  rocketFX.particles = rocketFX.particles.filter(p => p.life > 0);
+}
+
+function drawRocketFX() {
+  if (!rocketFX.active) return;
+  const t = rocketFX.timer / 55;  // 1→0
+
+  // Shockwave ring
+  if (rocketFX.shockR < rocketFX.shockMax) {
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, t * 0.7);
+    ctx.strokeStyle = '#ffe066';
+    ctx.lineWidth   = 5 * t;
+    ctx.shadowColor = '#ff9900'; ctx.shadowBlur = 20;
+    ctx.beginPath(); ctx.arc(rocketFX.cx, rocketFX.cy, rocketFX.shockR, 0, Math.PI*2); ctx.stroke();
+    ctx.restore();
+  }
+
+  // Burst particles
+  rocketFX.particles.forEach(p => {
+    ctx.save();
+    ctx.globalAlpha = p.life * 0.9;
+    if (p.type === 'fire') {
+      ctx.fillStyle = `hsl(${p.hue},100%,${50 + p.life*20}%)`;
+      ctx.shadowColor = `hsl(${p.hue},100%,60%)`; ctx.shadowBlur = 12;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI*2); ctx.fill();
+    } else {
+      ctx.fillStyle = '#fff';
+      ctx.shadowColor = '#ffe066'; ctx.shadowBlur = 8;
+      ctx.fillRect(p.x - 1.5, p.y - p.size*p.life, 3, p.size*p.life*2);
+    }
+    ctx.restore();
+  });
+
+  // Schermflash bij begin
+  if (t > 0.75) {
+    ctx.save();
+    ctx.globalAlpha = (t - 0.75) / 0.25 * 0.55;
+    ctx.fillStyle = '#ff8800';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.restore();
+  }
+
+  // 🚀 RAKET! tekst
+  if (rocketFX.textScale > 0.1) {
+    const scale = Math.min(rocketFX.textScale, 1.2);
+    ctx.save();
+    ctx.translate(canvas.width/2, canvas.height/2 - 40);
+    ctx.scale(scale, scale);
+    ctx.globalAlpha = Math.min(1, rocketFX.textScale * 0.85);
+    ctx.font        = 'bold 54px Arial';
+    ctx.textAlign   = 'center';
+    ctx.shadowColor = '#ff6600'; ctx.shadowBlur = 30;
+    ctx.fillStyle   = '#ffe066';
+    ctx.fillText('🚀 RAKET MODUS!', 0, 0);
+    ctx.shadowBlur  = 0;
+    ctx.restore();
+  }
+}
+
 // ===== SCHIETEN =====
 function handleShoot() {
   if (gameState !== 'playing' || !player.alive || bulletsLeft <= 0 || rocketActive) return;
@@ -1979,6 +2081,7 @@ function gameLoop() {
   drawBullet();          // 💥 Kogel
   drawShield();
   drawShootButton();     // 🔫 Schietknop linksonder
+  drawRocketFX();        // 🚀 Raket transformatie effect
   drawSlowMoOverlay();
   drawPowerupHUD();
   drawJobHUD();
@@ -1997,6 +2100,7 @@ function gameLoop() {
   updateFireParticles();
   updateTrail();
   updateBullet();
+  updateRocketFX();      // 🚀 Raket transformatie effect
   updateRocketParticles();
   updatePowerupObjects();
   updateLetters();
