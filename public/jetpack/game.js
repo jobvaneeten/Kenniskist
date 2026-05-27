@@ -1277,13 +1277,6 @@ function drawRocket() {
   ctx.restore();
 }
 
-// ===== SPELER ZICHTBAARHEID =====
-// Speler verborgen in raket
-function drawPlayer() {
-  if (rocketActive) return; // Verberg speler als raket actief is
-  drawSprite(player.currentAnim, player.currentFrame, player.x, player.y);
-}
-
 // ===== SCHILD =====
 function drawShield() {
   if (!activePowerups.shield && !shieldHit) return;
@@ -1340,36 +1333,10 @@ function drawSprite(anim, frame, x, y) {
   }
   const col = frame % s.cols;
   const row = Math.floor(frame / s.cols);
-
-  // Teken sprite op offscreen canvas zodat we pixels kunnen wissen
-  if (anim === 'fly' || anim === 'die') {
-    // Gebruik offscreen canvas om vlam weg te halen
-    const oc = document.createElement('canvas');
-    oc.width  = player.width;
-    oc.height = player.height;
-    const oc_ctx = oc.getContext('2d');
-
-    // Teken sprite op offscreen canvas
-    oc_ctx.drawImage(s.img,
-      col*FRAME_W, row*FRAME_H, FRAME_W, FRAME_H,
-      0, 0, player.width, player.height
-    );
-
-    // Wis de vlam pixels
-    const fx1 = player.width  * FLAME_COVER.x1;
-    const fy1 = player.height * FLAME_COVER.y1;
-    const fw  = player.width  * (FLAME_COVER.x2 - FLAME_COVER.x1);
-    const fh  = player.height * (FLAME_COVER.y2 - FLAME_COVER.y1);
-    oc_ctx.clearRect(fx1, fy1, fw, fh);
-
-    // Teken het resultaat op het echte canvas
-    ctx.drawImage(oc, x, y);
-  } else {
-    ctx.drawImage(s.img,
-      col*FRAME_W, row*FRAME_H, FRAME_W, FRAME_H,
-      x, y, player.width, player.height
-    );
-  }
+  ctx.drawImage(s.img,
+    col*FRAME_W, row*FRAME_H, FRAME_W, FRAME_H,
+    x, y, player.width, player.height
+  );
 }
 
 function drawPlayer() {
@@ -1875,13 +1842,13 @@ function gameLoop() {
   drawFloorCeil();
   drawForegroundTrees();
   drawTrail();           // ✨ Trail achter speler
-  drawFireParticles();   // 🔥 Vuur achter speler
   drawPowerupCapsules();
   drawLetters();
   drawZappers();
   drawCoins();
   drawRocket();
-  drawPlayer();          // DAN pas speler eroverheen
+  drawPlayer();          // Speler
+  drawFireParticles();   // 🔥 Vlam op de PNG-vlam positie
   drawShield();
   drawSlowMoOverlay();
   drawPowerupHUD();
