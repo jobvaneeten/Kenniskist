@@ -31,7 +31,7 @@ const MAX_SHOTS  = 10
 const MAX_POWER  = 8
 const DRAG_SCALE = 0.09
 const HOLE_R     = 0.18   // XZ detection radius for "ball in hole"
-const BALL_R     = 0.065  // physics + visual sphere radius (small golf ball)
+const BALL_R     = 0.16   // physics sphere radius (fits in 1-unit channel)
 
 // Tile geometry (from GLB accessor min/max)
 const CHAN_HW  = 0.50   // channel half-width  (mesh X: -0.5 → +0.5)
@@ -74,6 +74,9 @@ function cloneGlb(src, id) {
   wake(node)
   return node
 }
+
+// Sync cache lookup (use only after loadGlb was awaited)
+function getGlbSync(name) { return _cache[name] || null }
 
 // ════════════════════════════════════════════════════════════════════
 export async function createMiniGolf(canvas, opts = {}) {
@@ -178,36 +181,45 @@ export async function createMiniGolf(canvas, opts = {}) {
   }
 
   // ── Per-tile colliders ────────────────────────────────────────────
-  function addTileColliders(tx, tz, tileType) {
-    // Side walls: placed outside the channel edges (X = ±CHAN_HW)
-    // They're tall enough to contain the ball even at the hill peaks
-    const wallCX = CHAN_HW + WALL_TH / 2   // = 0.54
-    const wallCY = WALL_H / 2              // = 1.30  (covers Y 0 → 2.6)
-    const wallCZ = tz + 2.1
-    const wallD  = 4.4                      // slightly wider than tile depth
-    phyBox(tx - wallCX, wallCY, wallCZ, WALL_TH, WALL_H, wallD, 0, { restitution: 0.35, friction: 0.3 })
-    phyBox(tx + wallCX, wallCY, wallCZ, WALL_TH, WALL_H, wallD, 0, { restitution: 0.35, friction: 0.3 })
+  function addTileColliders(tx, tz, tileType, rotY = 0) {
+    const isX   = rotY === 90 || rotY === 270  // tile channel runs along X axis
+    const wallCX = CHAN_HW + WALL_TH / 2       // 0.54 — offset to wall centre
+    const wallCY = WALL_H / 2                  // 1.30
+    const wallD  = 4.4
+
+    // Side walls — perpendicular to travel direction
+    if (!isX) {
+      phyBox(tx - wallCX, wallCY, tz + 2.1, WALL_TH, WALL_H, wallD, 0, { restitution: 0.35, friction: 0.3 })
+      phyBox(tx + wallCX, wallCY, tz + 2.1, WALL_TH, WALL_H, wallD, 0, { restitution: 0.35, friction: 0.3 })
+    } else {
+      phyBox(tx + 2.1, wallCY, tz - wallCX, wallD, WALL_H, WALL_TH, 0, { restitution: 0.35, friction: 0.3 })
+      phyBox(tx + 2.1, wallCY, tz + wallCX, wallD, WALL_H, WALL_TH, 0, { restitution: 0.35, friction: 0.3 })
+    }
 
     // Floor (type-specific)
     switch (tileType) {
       case 'spline-default-straight':
-        flatFloor(tx, 0, tz)
+      case 'tunnel-narrow':
+      case 'tunnel-wide':
+      case 'tunnel-double':
+        if (!isX) flatFloor(tx, 0, tz)
+        else      phyBox(tx + 2.1, -0.06, tz, 4.2, 0.12, CHAN_HW * 2)
         break
+      // Hills/bumps only appear in Z-direction sections
       case 'spline-default-straight-hill-beginning':
-        rampFloor(tx, tz, 0, HILL_H)
-        break
+        rampFloor(tx, tz, 0, HILL_H); break
       case 'spline-default-straight-hill-complete':
-        flatFloor(tx, HILL_H, tz)
-        break
+        flatFloor(tx, HILL_H, tz); break
       case 'spline-default-straight-hill-end':
-        rampFloor(tx, tz, HILL_H, 0)
-        break
+        rampFloor(tx, tz, HILL_H, 0); break
       case 'spline-default-straight-bump-up':
-        rampPair(tx, tz, 0, BUMP_H, 0)
-        break
+        rampPair(tx, tz, 0, BUMP_H, 0); break
       case 'spline-default-straight-bump-down':
-        rampPair(tx, tz, 0, BUMP_LO, 0)
-        break
+        rampPair(tx, tz, 0, BUMP_LO, 0); break
+      // Corner: wide flat floor covering full 4×4 footprint
+      case 'spline-default-corner-small':
+      case 'spline-default-corner-large':
+        phyBox(tx + 2, -0.06, tz + 2, 4.2, 0.12, 4.2); break
     }
   }
 
@@ -224,7 +236,7 @@ export async function createMiniGolf(canvas, opts = {}) {
       shadow.addShadowCaster(m)
     })
     disposables.push(node)
-    addTileColliders(x, z, model)
+    addTileColliders(x, z, model, tileDef.rotY ?? 0)
   }
 
   // ── Balls ─────────────────────────────────────────────────────────
@@ -233,18 +245,33 @@ export async function createMiniGolf(canvas, opts = {}) {
     b.agg?.dispose();  b.agg  = null
     b.mesh?.dispose(); b.mesh = null
 
-    const mesh = MeshBuilder.CreateSphere(`ball_${pid}`, { diameter: BALL_R * 2, segments: 12 }, scene)
-    mesh.position.set(x, y, z)
-    mesh.material = MATS[pid]
-    shadow.addShadowCaster(mesh)
+    // Invisible physics sphere
+    const sphere = MeshBuilder.CreateSphere(`ball_${pid}`, { diameter: BALL_R * 2, segments: 8 }, scene)
+    sphere.position.set(x, y, z)
+    sphere.isVisible = false
 
-    const agg = new PhysicsAggregate(mesh, PhysicsShapeType.SPHERE,
+    // Try GLB visual parented to sphere so it moves with physics
+    const src = getGlbSync(players[pid].ballKey)
+    if (src) {
+      const vis = cloneGlb(src, `ballvis_${pid}_${Date.now()}`)
+      vis.parent   = sphere
+      vis.position = Vector3.Zero()
+      vis.scaling.setAll(0.16)
+      vis.getChildMeshes(false).forEach(m => shadow.addShadowCaster(m))
+    } else {
+      // Fallback: visible colored sphere
+      sphere.isVisible = true
+      sphere.material  = MATS[pid]
+      shadow.addShadowCaster(sphere)
+    }
+
+    const agg = new PhysicsAggregate(sphere, PhysicsShapeType.SPHERE,
       { mass: 0.046, radius: BALL_R, restitution: 0.35, friction: 0.55 }, scene)
     agg.body.setLinearDamping(0.42)
     agg.body.setAngularDamping(0.58)
 
-    b.mesh = mesh; b.agg = agg
-    disposables.push(mesh)
+    b.mesh = sphere; b.agg = agg
+    disposables.push(sphere)
   }
 
   function teleportBall(pid, x, y, z) { makeBall(pid, x, y, z) }
@@ -267,14 +294,11 @@ export async function createMiniGolf(canvas, opts = {}) {
     const hole = HOLES[idx]
     const n    = hole.tiles.length
 
-    // Safety net
+    // Safety net (large flat box at Y=-8 to catch fallen balls)
     phyBox(0, -8, n * 2, 400, 0.5, 400)
 
-    // Back wall (behind tee, Z < 0)
-    phyBox(0, 1.2, -0.2, CHAN_HW * 2 + 0.2, 2.4, 0.1, 0, { restitution: 0.2 })
-
-    // End wall (after last tile)
-    phyBox(0, 1.2, n * 4 + 0.2, CHAN_HW * 2 + 0.2, 2.4, 0.1, 0, { restitution: 0.2 })
+    // Back wall behind tee
+    phyBox(hole.tee.x, 1.2, hole.tee.z - 2.2, CHAN_HW * 2 + 0.2, 2.4, 0.1, 0, { restitution: 0.2 })
 
     // Tile visuals + colliders
     for (const t of hole.tiles) await spawnTile(t)
@@ -313,11 +337,14 @@ export async function createMiniGolf(canvas, opts = {}) {
     makeBall(0, tee.x - 0.12, tee.y, tee.z)
     makeBall(1, tee.x + 0.12, tee.y, tee.z)
 
-    // Camera: look down the hole
-    const hlen = hole.hole.z - tee.z
+    // Camera: look from behind tee toward hole
+    const tdx  = hole.hole.x - tee.x
+    const tdz  = hole.hole.z - tee.z
+    const hlen = Math.sqrt(tdx * tdx + tdz * tdz)
     camera.target.set((tee.x + hole.hole.x) / 2, 0.5, (tee.z + hole.hole.z) / 2)
-    camera.radius = Math.min(52, Math.max(10, hlen * 0.70))
-    camera.alpha  = -Math.PI / 2
+    camera.radius = Math.min(52, Math.max(10, hlen * 0.90))
+    // Alpha: camera sits BEHIND tee (opposite of hole direction)
+    camera.alpha  = Math.atan2(-tdz, -tdx)
     camera.beta   = 0.86
 
     turnQueue     = [0, 1]
@@ -501,6 +528,12 @@ export async function createMiniGolf(canvas, opts = {}) {
   // ── Render loop ───────────────────────────────────────────────────
   engine.runRenderLoop(() => scene.render())
   window.addEventListener('resize', () => engine.resize())
+
+  // Preload ball GLBs so makeBall can use them synchronously via getGlbSync
+  await Promise.allSettled([
+    loadGlb('ball-red',  scene),
+    loadGlb('ball-blue', scene),
+  ])
 
   await loadHole(0)
 
