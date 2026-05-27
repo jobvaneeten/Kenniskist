@@ -40,11 +40,14 @@ export default class BootScene extends Phaser.Scene {
       'smoke_01','smoke_02','smoke_03','smoke_04','smoke_05',
       'star_01','star_02','star_03','star_04','star_05',
       'spark_01','spark_02','spark_03','spark_04',
-      'magic_01','magic_02','magic_03',
-      'circle_01','circle_02','circle_03',
-      'light_01','light_02',
-      'slash_01','slash_02',
-      'twirl_01','twirl_02',
+      'magic_01','magic_02','magic_03','magic_04','magic_05',
+      'circle_01','circle_02','circle_03','circle_04','circle_05',
+      'light_01','light_02','light_03',
+      'slash_01','slash_02','slash_03','slash_04',
+      'twirl_01','twirl_02','twirl_03',
+      'dirt_01','dirt_02','dirt_03',
+      'fire_01','fire_02','flare_01',
+      'trace_01','trace_02','trace_03',
     ]
     particles.forEach(p => this.load.image(p, `${TD}Particals/${p}.png`))
 

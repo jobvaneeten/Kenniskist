@@ -1,7 +1,7 @@
 import Phaser from 'phaser'
 import { MAPS, TILE_SIZE, MAP_COLS, MAP_ROWS, isBuildable } from '../data/MapData.js'
 import { TOWERS, TOWER_ORDER } from '../data/TowerData.js'
-import { ENEMIES } from '../data/EnemyData.js'
+import { ENEMIES, LAYERS } from '../data/EnemyData.js'
 import { WAVES } from '../data/WaveData.js'
 
 const SAVE_KEY = 'td_progress'
@@ -9,87 +9,170 @@ const TOTAL_WAVES = 15
 const STARTING_GOLD = 200
 const STARTING_LIVES = 20
 
-// ── Enemy ────────────────────────────────────────────────────────────
+// ── Enemy ─────────────────────────────────────────────────────────────
+// BTD6-stijl: elke vijand heeft een stapel lagen. Beschadiging sloopt
+// de buitenste laag. Elke laag kan immuun zijn voor bepaalde schadetypen.
 class Enemy {
   constructor(scene, type, waypoints, flyStart, flyEnd) {
-    this.scene   = scene
-    this.data    = ENEMIES[type]
-    this.hp      = this.data.hp
-    this.maxHp   = this.data.hp
-    this.speed   = this.data.speed
-    this.dead    = false
-    this.reached = false
-    this.flies   = !!this.data.flies
-    this.wpIndex = 1
+    this.scene    = scene
+    this.data     = ENEMIES[type]
+    this.dead     = false
+    this.reached  = false
+    this.flies    = !!this.data.flies
+    this.wpIndex  = 1
     this.waypoints = this.flies ? [flyStart, flyEnd] : waypoints
 
-    // Status effects
+    // Lagen (diepste laag = index 0 na poppens)
+    this._layers    = [...this.data.layers]   // buitenste laag eerst
+    this._layerIdx  = 0
+    this._layerDef  = LAYERS[this._layers[0]]
+    this._layerHp   = this._layerDef.hp
+    this._maxLayerHp= this._layerDef.hp
+    this.speed      = this._layerDef.speed
+
+    // Status-effecten
     this.slowed = 0; this.slowFactor = 1
     this.frozen = 0
-    this.poisoned = 0; this.poisonDps = 0
-    this.poisonTick = 0
+    this.poisoned = 0; this.poisonDps = 0; this.poisonTick = 0
 
-    // Build visuals
+    // Container
     const x = this.waypoints[0].x, y = this.waypoints[0].y
-    this.container = scene.add.container(x, y)
-    this.container.setDepth(5)
+    this.container = scene.add.container(x, y).setDepth(5)
 
-    const r = this.data.size
-    const body = scene.add.circle(0, 0, r, this.data.color)
-    const border = scene.add.circle(0, 0, r + 2).setStrokeStyle(2, this.data.borderColor, 1).setFillStyle()
-    const label = scene.add.text(0, 0, this.data.label, {
-      fontSize: `${Math.max(10, r)}px`,
+    // Visuele elementen (worden bijgewerkt door _rebuildVisuals)
+    this._gfx = scene.add.graphics()
+    this._hpBg  = scene.add.rectangle(0, 0, 36, 5, 0x220000).setOrigin(0.5)
+    this._hpBar = scene.add.rectangle(0, 0, 36, 5, 0x22dd22).setOrigin(0.5)
+    this._layerLabel = scene.add.text(0, 0, '', {
+      fontSize: '10px', fontFamily: 'Arial Black', color: '#ffffff',
     }).setOrigin(0.5)
+    this.container.add([this._gfx, this._hpBg, this._hpBar, this._layerLabel])
 
-    // HP bar bg
-    this.hpBg  = scene.add.rectangle(0, -r - 8, 34, 5, 0x440000).setOrigin(0.5)
-    this.hpBar = scene.add.rectangle(-17, -r - 8, 34, 5, 0x22dd22).setOrigin(0, 0.5)
+    this._rebuildVisuals()
 
-    this.container.add([body, border, label, this.hpBg, this.hpBar])
-
+    // Vlieger: heen-en-weer wiebelen
     if (this.flies) {
-      // Wing pulsing tween
       scene.tweens.add({
         targets: this.container,
-        scaleY: { from: 0.92, to: 1.08 },
-        duration: 300, yoyo: true, repeat: -1,
+        y: { from: this.container.y - 4, to: this.container.y + 4 },
+        duration: 400, yoyo: true, repeat: -1, ease: 'Sine.InOut',
       })
+    }
+
+    // Spawn-pop
+    scene.tweens.add({
+      targets: this.container,
+      scale: { from: 0, to: 1 },
+      duration: 180, ease: 'Back.Out',
+    })
+  }
+
+  // ── Visuelen opbouwen op basis van huidige laag ───────────────────
+  _rebuildVisuals() {
+    this._gfx.clear()
+    const r    = this.data.size
+    const def  = this._layerDef
+    const remaining = this._layers.length - this._layerIdx
+
+    // Onderste lagen als vage ringen zichtbaar
+    for (let i = Math.min(remaining - 1, 3); i > 0; i--) {
+      const outerDef = LAYERS[this._layers[this._layerIdx + i]] || def
+      this._gfx.lineStyle(2, outerDef.color, 0.25 + i * 0.05)
+      this._gfx.strokeCircle(0, 0, r + i * 3)
+    }
+
+    // Gloed (grote zachte aura)
+    this._gfx.fillStyle(def.glow || def.color, 0.18)
+    this._gfx.fillCircle(0, 0, r + 5)
+
+    // Hoofd-lichaam
+    this._gfx.fillStyle(def.color, 1)
+    this._gfx.fillCircle(0, 0, r)
+
+    // Rand
+    this._gfx.lineStyle(2.5, def.border, 1)
+    this._gfx.strokeCircle(0, 0, r)
+
+    // Ballon-highlight (wit vlekje linksboven)
+    this._gfx.fillStyle(0xffffff, 0.35)
+    this._gfx.fillCircle(-r * 0.38, -r * 0.38, r * 0.28)
+
+    // Immuun-icoontje
+    const immune = def.immune || []
+    const icons  = { explosion:'💥', ice:'❄️', poison:'☠️', pierce:'🗡️', lightning:'⚡' }
+    const txt    = immune.map(i => icons[i] || '').join('')
+    this._layerLabel.setText(txt)
+    this._layerLabel.setY(r + 10)
+
+    // HP-balk positie
+    const barY = -r - 9
+    this._hpBg.setPosition(0, barY)
+    this._hpBar.setPosition(0, barY)
+    this._updateHpBar()
+
+    // MOAB: extra schildring
+    if (this._layerDef === LAYERS.moab) {
+      this._gfx.lineStyle(4, 0x4466FF, 0.7)
+      this._gfx.strokeCircle(0, 0, r + 8)
+      this._gfx.lineStyle(2, 0xAABBFF, 0.4)
+      this._gfx.strokeCircle(0, 0, r + 14)
     }
   }
 
+  _updateHpBar() {
+    const pct = Math.max(0, this._layerHp / this._maxLayerHp)
+    this._hpBar.width = 36 * pct
+    this._hpBar.fillColor = pct > 0.6 ? 0x22dd22 : pct > 0.3 ? 0xffaa00 : 0xff2222
+    // HP-balk alleen tonen als laag meerdere HP heeft
+    const show = this._maxLayerHp > 1
+    this._hpBg.setVisible(show)
+    this._hpBar.setVisible(show)
+  }
+
+  // ── Update elke frame ─────────────────────────────────────────────
   update(delta) {
     if (this.dead || this.reached) return
 
-    // Frozen stasis
+    // Bevroren
     if (this.frozen > 0) {
       this.frozen -= delta
-      if (!this.frozenVfx) {
-        this.frozenVfx = this.scene.add.circle(
-          this.container.x, this.container.y, this.data.size + 4, 0xADD8E6, 0.5
-        ).setDepth(4)
+      this._gfx.setTint?.(0xADD8E6)
+      this.container.setAlpha(0.8)
+      if (!this._frozenOverlay) {
+        this._frozenOverlay = this.scene.add.graphics().setDepth(6)
       }
-      this.frozenVfx.setPosition(this.container.x, this.container.y)
+      const r = this.data.size
+      this._frozenOverlay.clear()
+      this._frozenOverlay.lineStyle(3, 0x88CCFF, 0.7)
+      this._frozenOverlay.strokeCircle(this.container.x, this.container.y, r + 6)
+      this._frozenOverlay.fillStyle(0xADD8E6, 0.2)
+      this._frozenOverlay.fillCircle(this.container.x, this.container.y, r + 6)
       return
     }
-    if (this.frozenVfx) { this.frozenVfx.destroy(); this.frozenVfx = null }
+    if (this._frozenOverlay) { this._frozenOverlay.destroy(); this._frozenOverlay = null }
+    this.container.setAlpha(1)
 
-    // Poison tick
+    // Gif-tick
     if (this.poisoned > 0) {
-      this.poisoned  -= delta
+      this.poisoned   -= delta
       this.poisonTick -= delta
       if (this.poisonTick <= 0) {
         this.poisonTick = 500
-        this.takeDamage(this.poisonDps * 0.5, 'dot')
+        this.takeDamage(this.poisonDps * 0.5, 'poison')
       }
+      // Groene waas
+      this._gfx.setAlpha(0.85)
+    } else {
+      this._gfx.setAlpha(1)
     }
 
-    // Slow decay
+    // Vertraging
     if (this.slowed > 0) { this.slowed -= delta }
     else { this.slowFactor = 1 }
 
     const curSpeed = this.speed * this.slowFactor
 
-    // Move towards current waypoint
+    // Bewegen naar waypoint
     const target = this.waypoints[this.wpIndex]
     const dx = target.x - this.container.x
     const dy = target.y - this.container.y
@@ -109,38 +192,87 @@ class Enemy {
       this.container.y += (dy / dist) * step
     }
 
-    // Wobble when slowed
-    if (this.slowed > 0 && !this.scene.tweens.isTweening(this.container)) {
-      this.container.setAlpha(0.75)
+    if (this.slowed > 0) this.container.setAlpha(0.75)
+  }
+
+  // ── Schade ontvangen ─────────────────────────────────────────────
+  takeDamage(amount, damageType) {
+    if (this.dead) return
+
+    // Immuniteitscheck
+    const immune = this._layerDef.immune || []
+    if (damageType && damageType !== 'bamboo' && immune.includes(damageType)) {
+      this._showImmune(damageType)
+      return
+    }
+
+    this._layerHp -= amount
+    this._updateHpBar()
+
+    if (this._layerHp <= 0) {
+      this._popLayer()
     } else {
-      this.container.setAlpha(1)
+      // Trefferflits
+      this.scene.tweens.add({
+        targets: this.container,
+        alpha: { from: 0.35, to: 1 },
+        duration: 70,
+      })
     }
   }
 
-  takeDamage(amount, type) {
-    if (this.dead) return
-    let dmg = amount
-    if (type !== 'dot' && this.data.armor > 0) dmg *= (1 - this.data.armor)
-    this.hp -= dmg
-    this.updateHpBar()
+  _popLayer() {
+    const popX = this.container.x
+    const popY = this.container.y
 
-    // Damage flash
+    // Pop-particles in de kleur van de gepofte laag
+    this.scene.spawnParticles(popX, popY, 'pop', this._layerDef.color)
+
+    this._layerIdx++
+    if (this._layerIdx >= this._layers.length) {
+      this.kill()
+      return
+    }
+
+    // Volgende laag activeren
+    this._layerDef    = LAYERS[this._layers[this._layerIdx]]
+    this._layerHp     = this._layerDef.hp
+    this._maxLayerHp  = this._layerDef.hp
+    this.speed        = this._layerDef.speed * (this.slowFactor < 1 ? this.slowFactor : 1)
+
+    // Snelheid gaat omhoog bij poppen (net als BTD6)
+    this._rebuildVisuals()
+
+    // Pop-flash: even groot worden
     this.scene.tweens.add({
       targets: this.container,
-      alpha: { from: 0.3, to: 1 },
-      duration: 80,
+      scale: { from: 1.4, to: 1 },
+      duration: 150, ease: 'Back.Out',
     })
-
-    if (this.hp <= 0) this.kill()
   }
 
-  updateHpBar() {
-    const pct = Math.max(0, this.hp / this.maxHp)
-    this.hpBar.width = 34 * pct
-    this.hpBar.fillColor = pct > 0.5 ? 0x22dd22 : pct > 0.25 ? 0xffaa00 : 0xff2222
+  _showImmune(type) {
+    const labels = { explosion:'💥IMMUUN', ice:'❄️IMMUUN', poison:'☠️IMMUUN', pierce:'🗡️IMMUUN', lightning:'⚡IMMUUN' }
+    const txt = this.scene.add.text(this.container.x, this.container.y - 20,
+      labels[type] || 'IMMUUN', {
+        fontSize: '11px', fontFamily: 'Arial Black',
+        color: '#ffffff', stroke: '#000000', strokeThickness: 3,
+      }
+    ).setDepth(15).setOrigin(0.5)
+
+    this.scene.tweens.add({
+      targets: txt,
+      y: txt.y - 22,
+      alpha: { from: 1, to: 0 },
+      duration: 900,
+      onComplete: () => txt.destroy(),
+    })
   }
 
+  // ── Status-effecten ───────────────────────────────────────────────
   applyFreeze(duration) {
+    const immune = this._layerDef.immune || []
+    if (immune.includes('ice')) { this._showImmune('ice'); return }
     this.frozen = duration
     this.slowed = duration + 3000
     this.slowFactor = 0.3
@@ -153,11 +285,14 @@ class Enemy {
   }
 
   applyPoison(dps, duration) {
+    const immune = this._layerDef.immune || []
+    if (immune.includes('poison')) { this._showImmune('poison'); return }
     this.poisoned  = Math.max(this.poisoned, duration)
     this.poisonDps = Math.max(this.poisonDps, dps)
     this.poisonTick = 0
   }
 
+  // ── Dood ──────────────────────────────────────────────────────────
   kill() {
     if (this.dead) return
     this.dead = true
@@ -165,10 +300,9 @@ class Enemy {
     this.scene.events.emit('gold_changed', this.scene.gold)
     this.scene.events.emit('enemy_killed', this)
 
-    // Death burst
-    this.scene.spawnParticles(this.container.x, this.container.y, 'death', this.data.color)
+    this.scene.spawnParticles(this.container.x, this.container.y, 'death', this._layerDef.color)
 
-    // Spread venom on death
+    // Gif verspreidt bij dood
     if (this.poisoned > 0) {
       this.scene.enemies.forEach(e => {
         if (e === this || e.dead) return
@@ -182,7 +316,7 @@ class Enemy {
   }
 
   destroy() {
-    if (this.frozenVfx) { this.frozenVfx.destroy(); this.frozenVfx = null }
+    if (this._frozenOverlay) { this._frozenOverlay.destroy(); this._frozenOverlay = null }
     this.container.destroy()
     const i = this.scene.enemies.indexOf(this)
     if (i >= 0) this.scene.enemies.splice(i, 1)
@@ -312,10 +446,18 @@ class Projectile {
     let dmg = this.damage
     const sp = this.special
 
-    // Panda double vs debuffed
+    // Schadetypen mapped naar immunity-systeem
+    // triple/bamboo/pierce/stomp/chomp/mud/ice/venom/chain
+    const dmgType = sp === 'venom'  ? 'poison'
+                  : sp === 'chain'  ? 'lightning'
+                  : sp === 'pierce' ? 'pierce'
+                  : (sp === 'stomp' || sp === 'chomp' || sp === 'mud') ? 'explosion'
+                  : sp
+
+    // Panda dubbele schade vs vertraagd/vergiftigd
     if (sp === 'bamboo' && (enemy.poisoned > 0 || enemy.slowed > 0)) dmg *= 2
 
-    enemy.takeDamage(dmg, sp)
+    enemy.takeDamage(dmg, dmgType)
     this.scene.spawnParticles(enemy.container.x, enemy.container.y, 'hit', this.tower.data.projectileColor)
 
     switch (sp) {
@@ -333,7 +475,7 @@ class Projectile {
         break
       case 'stomp':
         this.scene.aoeEffect(this.x, this.y, this.tower.data.stompRadius, (e) => {
-          e.takeDamage(this.damage * 0.6, 'aoe')
+          e.takeDamage(this.damage * 0.6, 'explosion')
           e.applySlow(2500, 0.5)
         })
         this.scene.spawnParticles(this.x, this.y, 'explosion', 0xFF4500)
@@ -341,6 +483,7 @@ class Projectile {
         break
       case 'venom':
         enemy.applyPoison(this.tower.data.venomDps, this.tower.data.venomDuration)
+        this.scene.spawnParticles(enemy.container.x, enemy.container.y, 'poison', 0x00FF44)
         break
       case 'chain': {
         let last = enemy
@@ -356,9 +499,8 @@ class Projectile {
             }, null)
           if (!next) break
           this.pierced.add(next.e)
-          next.e.takeDamage(this.damage * 0.7, 'chain')
-          this.scene.spawnParticles(next.e.container.x, next.e.container.y, 'spark', 0x00FFFF)
-          // Chain lightning line
+          next.e.takeDamage(this.damage * 0.7, 'lightning')
+          this.scene.spawnParticles(next.e.container.x, next.e.container.y, 'lightning', 0x00FFFF)
           const line = this.scene.add.graphics().setDepth(8)
           line.lineStyle(2, 0x00FFFF, 0.9)
           line.lineBetween(last.container.x, last.container.y, next.e.container.x, next.e.container.y)
@@ -928,14 +1070,17 @@ export default class GameScene extends Phaser.Scene {
 
   spawnParticles(x, y, type, tint) {
     const configs = {
-      death:     { tex: 'flame_01',  count: 12, speedMin: 80,  speedMax: 200, scale: 0.08, life: 600  },
+      death:     { tex: 'flame_02',  count: 16, speedMin: 90,  speedMax: 220, scale: 0.10, life: 700  },
+      pop:       { tex: 'circle_02', count: 10, speedMin: 80,  speedMax: 200, scale: 0.09, life: 500  },
       hit:       { tex: 'spark_01',  count: 5,  speedMin: 60,  speedMax: 130, scale: 0.06, life: 350  },
-      explosion: { tex: 'flame_02',  count: 18, speedMin: 100, speedMax: 260, scale: 0.12, life: 800  },
-      mud:       { tex: 'smoke_01',  count: 8,  speedMin: 40,  speedMax: 100, scale: 0.10, life: 700  },
-      ice:       { tex: 'circle_01', count: 10, speedMin: 60,  speedMax: 150, scale: 0.07, life: 600  },
+      explosion: { tex: 'flame_02',  count: 22, speedMin: 120, speedMax: 300, scale: 0.14, life: 900  },
+      mud:       { tex: 'smoke_02',  count: 10, speedMin: 40,  speedMax: 110, scale: 0.12, life: 800  },
+      ice:       { tex: 'circle_01', count: 12, speedMin: 60,  speedMax: 160, scale: 0.08, life: 700  },
+      poison:    { tex: 'magic_03',  count: 8,  speedMin: 30,  speedMax: 90,  scale: 0.08, life: 600  },
+      lightning: { tex: 'spark_04',  count: 8,  speedMin: 100, speedMax: 240, scale: 0.08, life: 450  },
       spark:     { tex: 'spark_02',  count: 6,  speedMin: 80,  speedMax: 180, scale: 0.07, life: 400  },
-      levelup:   { tex: 'star_01',   count: 14, speedMin: 60,  speedMax: 160, scale: 0.08, life: 800  },
-      firework:  { tex: 'star_03',   count: 30, speedMin: 100, speedMax: 320, scale: 0.12, life: 1200 },
+      levelup:   { tex: 'star_01',   count: 16, speedMin: 70,  speedMax: 180, scale: 0.09, life: 900  },
+      firework:  { tex: 'star_03',   count: 35, speedMin: 120, speedMax: 340, scale: 0.13, life: 1300 },
       aura:      { tex: 'magic_01',  count: 8,  speedMin: 20,  speedMax: 80,  scale: 0.07, life: 700  },
     }
     const cfg = configs[type] || configs.hit
