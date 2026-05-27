@@ -295,7 +295,7 @@ function activatePowerup(type) {
     rocketActive = true;
     rocketY  = player.y + player.height/2;
     rocketVy = 0;
-    gameSpeed = baseSpeed * 2.8;  // raket gaat veel sneller vooruit
+    gameSpeed = baseSpeed * 5.0;  // raket gaat veel sneller vooruit
   } else {
     activePowerups[type] = p.duration;
   }
@@ -320,8 +320,8 @@ function updatePowerupTick() {
 
   // Raket physics
   if (rocketActive) {
-    if (player.isThrusting) rocketVy = Math.max(rocketVy - 0.25, -3.5);
-    else                     rocketVy = Math.min(rocketVy + 0.20,  3.5);
+    if (player.isThrusting) rocketVy = Math.max(rocketVy - 0.12, -1.8);
+    else                     rocketVy = Math.min(rocketVy + 0.10,  1.8);
     rocketY  = Math.max(CEIL_Y+20, Math.min(rocketY + rocketVy, FLOOR_Y()-40));
     player.y = rocketY - player.height/2;
     player.vy = 0;
