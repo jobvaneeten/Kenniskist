@@ -11,9 +11,12 @@ ctx.imageSmoothingEnabled = false;
 // ===== SPRITES =====
 const FRAME_W = 881, FRAME_H = 639, SCALE = 0.15;
 const SPRITES = {
-  run: { img: new Image(), src: '__jet_pack_man_with_weapon_red_helmet_standing_run.png', cols:5, rows:3, total:15 },
-  fly: { img: new Image(), src: 'vlieg.png',      cols:5, rows:2, total:10 },
-  die: { img: new Image(), src: 'vliegdood.png',  cols:5, rows:1, total:5  }
+  run:        { img: new Image(), src: '__jet_pack_man_with_weapon_red_helmet_standing_run.png', cols:5, rows:3, total:15 },
+  fly:        { img: new Image(), src: 'vlieg.png',           cols:5, rows:2, total:10 },
+  die:        { img: new Image(), src: 'vliegdood.png',       cols:5, rows:1, total:5  },
+  takeoff:    { img: new Image(), src: 'opstijgen.png',       cols:5, rows:2, total:10 },
+  shootstand: { img: new Image(), src: 'staandschieten.png',  cols:5, rows:1, total:5  },
+  shootfly:   { img: new Image(), src: 'vliegendschieten.png',cols:5, rows:2, total:10 },
 };
 Object.values(SPRITES).forEach(s => { s.img.src = s.src; });
 
@@ -42,6 +45,12 @@ let totalCoins   = parseInt(localStorage.getItem('jj_totalcoins') || '0'); // ge
 let frameCount   = 0;
 let gameSpeed    = 0.35;
 let baseSpeed    = 0.35;
+
+// ===== KOGEL =====
+let bulletFired  = false;   // slechts 1 per leven
+let bullet       = { active:false, x:0, y:0, vx:14, r:5 };
+let shootTimer   = 0;       // frames dat schietanimatie loopt
+const SHOOT_ANIM_FRAMES = 8; // frames voor schietanimatie
 let distance     = 0;
 
 // ===== SLOMO & SHAKE =====
@@ -707,8 +716,18 @@ function drawZappers() {
 
 function updateZappers() {
   if (frameCount%320===0) spawnZapper();
-  zappers.forEach(z => {
+  zappers = zappers.filter(z => {
     z.x -= gameSpeed*slowMoFactor;
+    // Kogel raakt laser → laser kapot
+    if (bullet.active) {
+      const hit = (z.type==='vertical'   && Math.abs(bullet.x - z.x) < 28) ||
+                  (z.type==='horizontal' && Math.abs(bullet.y - z.y) < 22 && bullet.x >= z.x-z.length/2 && bullet.x <= z.x+z.length/2) ||
+                  (z.type==='diagonal'   && Math.hypot(bullet.x - z.x, bullet.y - z.y) < 80);
+      if (hit) { bullet.active = false; return false; } // verwijder zapper
+    }
+    return true;
+  });
+  zappers.forEach(z => {
     if (!player.alive || player.invincible || rocketActive) return;
     const px=player.x+28, py=player.y+15, pw=player.width-56, ph=player.height-FOOT_OFF()-20;
     if (z.type==='vertical') {
@@ -1701,10 +1720,21 @@ loadUpgrades();
 // ===== INPUT =====
 document.addEventListener('keydown',e=>{ if(e.code==='Space'){e.preventDefault();handlePress();} });
 document.addEventListener('keyup',  e=>{ if(e.code==='Space') handleRelease(); });
-canvas.addEventListener('mousedown', handlePress);
+function isShootBtnArea(cx, cy) {
+  const rect = canvas.getBoundingClientRect();
+  const x = (cx - rect.left) * (canvas.width  / rect.width);
+  const y = (cy - rect.top)  * (canvas.height / rect.height);
+  return x < 115 && y > canvas.height - 95;
+}
+canvas.addEventListener('mousedown', e=>{ if(isShootBtnArea(e.clientX,e.clientY)) handleShoot(); else handlePress(); });
 canvas.addEventListener('mouseup',   handleRelease);
-canvas.addEventListener('touchstart',e=>{e.preventDefault();handlePress();},{passive:false});
+canvas.addEventListener('touchstart',e=>{
+  e.preventDefault();
+  const t=e.touches[0];
+  if(isShootBtnArea(t.clientX,t.clientY)) handleShoot(); else handlePress();
+},{passive:false});
 canvas.addEventListener('touchend',  handleRelease);
+document.addEventListener('keydown',e=>{ if(e.code==='KeyF'||e.code==='KeyX') handleShoot(); });
 function handlePress()   { if(gameState==='playing'&&player.alive) player.isThrusting=true; }
 function handleRelease() { player.isThrusting=false; }
 
@@ -1716,7 +1746,8 @@ document.getElementById('shopBtnGO').addEventListener('click',   () => openShop(
 
 function startGame() {
   gameState='playing'; coins=0; distance=0; frameCount=0;
-  gameSpeed=4; baseSpeed=4;
+  gameSpeed=0.35; baseSpeed=0.35;
+  bulletFired=false; bullet.active=false; shootTimer=0;
   zappers=[]; coinObjects=[]; fireParticles=[]; powerupObjects=[];
   trailParticles=[];
   activePowerups={}; rocketActive=false; rocketY=0; rocketVy=0;
@@ -1790,38 +1821,117 @@ function showGameOver() {
 
 // ===== PLAYER UPDATE =====
 function updatePlayer() {
-  // Animatie
-  const rate=player.currentAnim==='die'?player.frameRate:Math.max(2,Math.floor(player.frameRate/slowMoFactor));
-  player.frameTimer++;
-  if (player.frameTimer>=rate) {
-    player.frameTimer=0;
-    const anim=SPRITES[player.currentAnim];
-    if (player.currentAnim==='die') {
-      if (player.currentFrame<anim.total-1) player.currentFrame++;
-      else if (!player.dieFrameDone) { player.dieFrameDone=true; setTimeout(showGameOver,600); }
-    } else {
-      player.currentFrame=(player.currentFrame+1)%anim.total;
+  const prevOnGround = player.onGround;
+
+  // Schietanimatie-timer
+  if (shootTimer > 0) {
+    shootTimer--;
+    if (shootTimer === 0) {
+      // Terug naar normale animatie
+      player.currentFrame = 0;
+      player.currentAnim  = player.onGround ? 'run' : 'fly';
     }
   }
+
+  // Frame-animatie
+  const rate = player.currentAnim==='die' ? player.frameRate : Math.max(2,Math.floor(player.frameRate/slowMoFactor));
+  player.frameTimer++;
+  if (player.frameTimer >= rate) {
+    player.frameTimer = 0;
+    const anim = SPRITES[player.currentAnim];
+    if (player.currentAnim === 'die') {
+      if (player.currentFrame < anim.total-1) player.currentFrame++;
+      else if (!player.dieFrameDone) { player.dieFrameDone=true; setTimeout(showGameOver,600); }
+    } else if (player.currentAnim === 'takeoff') {
+      // Eenmalig afspelen, daarna naar 'fly'
+      if (player.currentFrame < anim.total-1) player.currentFrame++;
+      else { player.currentAnim='fly'; player.currentFrame=0; }
+    } else {
+      player.currentFrame = (player.currentFrame+1) % anim.total;
+    }
+  }
+
   if (!player.alive) {
-    player.vy=Math.min(player.vy+player.gravity*slowMoFactor,12);
-    player.y=Math.min(player.y+player.vy*slowMoFactor,FLOOR_Y()-player.height+FOOT_OFF());
+    player.vy = Math.min(player.vy+player.gravity*slowMoFactor, 12);
+    player.y  = Math.min(player.y+player.vy*slowMoFactor, FLOOR_Y()-player.height+FOOT_OFF());
     return;
   }
-  if (rocketActive) return; // raket stuurt de speler
+  if (rocketActive) return;
+
   if (player.isThrusting) {
-    player.vy=Math.max(player.vy-player.thrustPower,player.maxUp);
-    player.currentAnim='fly'; spawnFireParticles();
+    player.vy = Math.max(player.vy-player.thrustPower, player.maxUp);
+    spawnFireParticles();
+    // Opstijgen-animatie alleen als we net van de grond komen
+    if (prevOnGround && shootTimer === 0) {
+      player.currentAnim = 'takeoff'; player.currentFrame = 0;
+    } else if (!prevOnGround && shootTimer === 0 && player.currentAnim !== 'takeoff') {
+      player.currentAnim = 'fly';
+    }
   } else {
-    player.vy=Math.min(player.vy+player.gravity,player.maxDown);
+    player.vy = Math.min(player.vy+player.gravity, player.maxDown);
   }
-  player.y+=player.vy*slowMoFactor;
-  if (player.y+player.height-FOOT_OFF()>=FLOOR_Y()) {
+
+  player.y += player.vy * slowMoFactor;
+  if (player.y+player.height-FOOT_OFF() >= FLOOR_Y()) {
     player.y=FLOOR_Y()-player.height+FOOT_OFF(); player.vy=0; player.onGround=true;
-    if (!player.isThrusting) player.currentAnim='run';
+    if (!player.isThrusting && shootTimer===0) player.currentAnim='run';
   } else { player.onGround=false; }
-  if (player.y<=CEIL_Y) { player.y=CEIL_Y; player.vy=3; }
-  if (!player.isThrusting&&!player.onGround) player.currentAnim='run';
+  if (player.y <= CEIL_Y) { player.y=CEIL_Y; player.vy=3; }
+  if (!player.isThrusting && !player.onGround && shootTimer===0) player.currentAnim='run';
+}
+
+// ===== SCHIETEN =====
+function handleShoot() {
+  if (gameState !== 'playing' || !player.alive || bulletFired || rocketActive) return;
+  bulletFired = true;
+  // Kogel positie: pistoolloop rechtsboven op het karakter
+  bullet.x = player.x + player.width  * 0.82;
+  bullet.y = player.y + player.height * 0.40;
+  bullet.active = true;
+  // Schietanimatie
+  shootTimer = SHOOT_ANIM_FRAMES;
+  player.currentAnim  = player.onGround ? 'shootstand' : 'shootfly';
+  player.currentFrame = 0;
+}
+
+function updateBullet() {
+  if (!bullet.active) return;
+  bullet.x += bullet.vx * slowMoFactor;
+  if (bullet.x > canvas.width + 40) bullet.active = false;
+}
+
+function drawBullet() {
+  if (!bullet.active) return;
+  ctx.save();
+  // Gloed
+  ctx.shadowColor = '#ffe066'; ctx.shadowBlur = 14;
+  ctx.fillStyle   = '#fff8aa';
+  ctx.beginPath(); ctx.ellipse(bullet.x, bullet.y, bullet.r*2, bullet.r*0.8, 0, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.beginPath(); ctx.arc(bullet.x, bullet.y, bullet.r*0.55, 0, Math.PI*2); ctx.fill();
+  ctx.restore();
+}
+
+function drawShootButton() {
+  if (gameState !== 'playing' || !player.alive) return;
+  const bx=18, by=canvas.height-85, bw=90, bh=58;
+  ctx.save();
+  ctx.globalAlpha = bulletFired ? 0.35 : 0.85;
+  ctx.fillStyle   = bulletFired ? '#444' : '#c0392b';
+  if (ctx.roundRect) { ctx.beginPath(); ctx.roundRect(bx,by,bw,bh,12); ctx.fill(); }
+  else ctx.fillRect(bx,by,bw,bh);
+  if (!bulletFired) {
+    ctx.shadowColor='#e74c3c'; ctx.shadowBlur=10;
+    ctx.strokeStyle='#ff6b6b'; ctx.lineWidth=2;
+    if (ctx.roundRect) { ctx.beginPath(); ctx.roundRect(bx,by,bw,bh,12); ctx.stroke(); }
+  }
+  ctx.globalAlpha = bulletFired ? 0.4 : 1;
+  ctx.font = '22px Arial'; ctx.textAlign = 'center';
+  ctx.fillStyle = '#fff';
+  ctx.fillText('🔫', bx+bw/2, by+28);
+  ctx.font = 'bold 11px Arial';
+  ctx.fillText(bulletFired ? 'LEEG' : 'SCHIETEN', bx+bw/2, by+48);
+  ctx.restore();
 }
 
 // ===== GAME LOOP =====
@@ -1830,7 +1940,7 @@ function gameLoop() {
   frameCount++;
   if (player.alive) {
     distance=Math.floor(frameCount*gameSpeed/60);
-    if (frameCount%300===0) { baseSpeed=Math.min(baseSpeed+0.3,10); if (!activePowerups.speed) gameSpeed=baseSpeed; }
+    if (frameCount%900===0) { baseSpeed=Math.min(baseSpeed+0.06,1.4); if (!activePowerups.speed) gameSpeed=baseSpeed; }
   }
   updateSlowMoShake();
   updatePowerupTick();
@@ -1849,7 +1959,9 @@ function gameLoop() {
   drawRocket();
   drawPlayer();          // Speler
   drawFireParticles();   // 🔥 Vlam op de PNG-vlam positie
+  drawBullet();          // 💥 Kogel
   drawShield();
+  drawShootButton();     // 🔫 Schietknop linksonder
   drawSlowMoOverlay();
   drawPowerupHUD();
   drawJobHUD();
@@ -1867,6 +1979,7 @@ function gameLoop() {
   updateCoins();
   updateFireParticles();
   updateTrail();
+  updateBullet();
   updateRocketParticles();
   updatePowerupObjects();
   updateLetters();
