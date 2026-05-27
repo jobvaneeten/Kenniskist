@@ -51,7 +51,7 @@ let zapperTimer = 0;
 let coinTimer   = 0;
 
 // ===== KOGEL =====
-let bulletFired  = false;   // slechts 1 per leven
+let bulletsLeft  = 1;       // aantal kogels over
 let bullet       = { active:false, x:0, y:0, vx:14, r:5 };
 let shootTimer   = 0;       // frames dat schietanimatie loopt
 const SHOOT_ANIM_FRAMES = 8; // frames voor schietanimatie
@@ -98,7 +98,7 @@ const POWERUP_TYPES = {
   magnet: { emoji:'🧲', color:'#ff4488', label:'Magneet',  duration:480 },
   shield: { emoji:'🛡️', color:'#44aaff', label:'Schild',   duration:0   },
   slowmo: { emoji:'🐢', color:'#aaffaa', label:'Slow-mo',  duration:360 },
-  speed:  { emoji:'⚡', color:'#ffdd00', label:'Snelheid', duration:300 },
+  extrabullet: { emoji:'🔫', color:'#e74c3c', label:'+1 Kogel', duration:0 },
   rocket: { emoji:'🚀', color:'#ff6600', label:'Raket',    duration:900 }, // langer: 900 frames (~15 sec)
 };
 let activePowerups = {};
@@ -288,9 +288,8 @@ function activatePowerup(type) {
     activePowerups.shield = 1;
   } else if (type === 'slowmo') {
     activePowerups.slowmo = p.duration;
-  } else if (type === 'speed') {
-    activePowerups.speed = p.duration;
-    gameSpeed = baseSpeed * (window._speedMult || 1.8);
+  } else if (type === 'extrabullet') {
+    bulletsLeft++;  // +1 kogel, geen timer nodig
   } else if (type === 'rocket') {
     activePowerups.rocket = p.duration;
     rocketActive = true;
@@ -305,7 +304,6 @@ function activatePowerup(type) {
 function deactivatePowerup(type) {
   delete activePowerups[type];
   if (type === 'rocket') { rocketActive = false; player.vy = rocketVy; gameSpeed = baseSpeed; }
-  if (type === 'speed')  { gameSpeed = baseSpeed; }
   if (type === 'slowmo') { slowMoFactor = 1.0; }
 }
 
@@ -1437,14 +1435,14 @@ const SHOP_ITEMS = {
       ]
     },
     {
-      id: 'speed',
-      name: 'Snelheid Boost',
-      icon: '⚡',
+      id: 'extrabullets',
+      name: 'Extra Kogels',
+      icon: '🔫',
       levels: [
-        { level:1, desc:'Snelheid powerup duurt 3 sec langer.',   price:150,  effect:{ speedDuration:480  } },
-        { level:2, desc:'Snelheid powerup 1.5x sterker.',         price:300,  effect:{ speedDuration:480, speedMult:2.2 } },
-        { level:3, desc:'Snelheid duurt 5 sec langer + 2x sneller.', price:500, effect:{ speedDuration:600, speedMult:2.5 } },
-        { level:4, desc:'Max snelheid — razendfast!',             price:800,  effect:{ speedDuration:720, speedMult:3.0 } },
+        { level:1, desc:'Begin elk potje met 2 kogels.',          price:150,  effect:{ startBullets:2 } },
+        { level:2, desc:'Begin elk potje met 3 kogels.',          price:300,  effect:{ startBullets:3 } },
+        { level:3, desc:'Begin elk potje met 4 kogels.',          price:500,  effect:{ startBullets:4 } },
+        { level:4, desc:'Begin elk potje met 5 kogels.',          price:800,  effect:{ startBullets:5 } },
       ]
     },
   ],
@@ -1679,8 +1677,7 @@ function applyUpgradeLevel(upgId, level) {
   if (effect.shieldRegen)   window._shieldRegen    = effect.shieldRegen;
   if (effect.slowmoDuration) POWERUP_TYPES.slowmo.duration = effect.slowmoDuration;
   if (effect.coinMulti)     window._coinMulti      = effect.coinMulti;
-  if (effect.speedDuration) POWERUP_TYPES.speed.duration   = effect.speedDuration;
-  if (effect.speedMult)     window._speedMult      = effect.speedMult;
+  if (effect.startBullets)  window._startBullets   = effect.startBullets;
 }
 
 function applyUpgrade(value) {} // legacy stub
@@ -1759,7 +1756,7 @@ document.getElementById('shopBtnGO').addEventListener('click',   () => openShop(
 function startGame() {
   gameState='playing'; coins=0; distance=0; frameCount=0;
   gameSpeed=2.0; baseSpeed=2.0;
-  bulletFired=false; bullet.active=false; shootTimer=0;
+  bulletsLeft = window._startBullets || 1; bullet.active=false; shootTimer=0;
   zapperTimer=0; coinTimer=0;
   zappers=[]; coinObjects=[]; fireParticles=[]; powerupObjects=[];
   trailParticles=[];
@@ -1895,8 +1892,8 @@ function updatePlayer() {
 
 // ===== SCHIETEN =====
 function handleShoot() {
-  if (gameState !== 'playing' || !player.alive || bulletFired || rocketActive) return;
-  bulletFired = true;
+  if (gameState !== 'playing' || !player.alive || bulletsLeft <= 0 || rocketActive) return;
+  bulletsLeft--;
   // Kogel positie: pistoolloop rechtsboven op het karakter
   bullet.x = player.x + player.width  * 0.82;
   bullet.y = player.y + player.height * 0.40;
@@ -1927,23 +1924,30 @@ function drawBullet() {
 
 function drawShootButton() {
   if (gameState !== 'playing' || !player.alive) return;
-  const bx=18, by=canvas.height-85, bw=90, bh=58;
+  const empty = bulletsLeft <= 0;
+  const bx=18, by=canvas.height-90, bw=96, bh=68;
   ctx.save();
-  ctx.globalAlpha = bulletFired ? 0.35 : 0.85;
-  ctx.fillStyle   = bulletFired ? '#444' : '#c0392b';
-  if (ctx.roundRect) { ctx.beginPath(); ctx.roundRect(bx,by,bw,bh,12); ctx.fill(); }
+  ctx.globalAlpha = empty ? 0.35 : 0.90;
+  ctx.fillStyle   = empty ? '#333' : '#c0392b';
+  if (ctx.roundRect) { ctx.beginPath(); ctx.roundRect(bx,by,bw,bh,14); ctx.fill(); }
   else ctx.fillRect(bx,by,bw,bh);
-  if (!bulletFired) {
-    ctx.shadowColor='#e74c3c'; ctx.shadowBlur=10;
+  if (!empty) {
+    ctx.shadowColor='#e74c3c'; ctx.shadowBlur=12;
     ctx.strokeStyle='#ff6b6b'; ctx.lineWidth=2;
-    if (ctx.roundRect) { ctx.beginPath(); ctx.roundRect(bx,by,bw,bh,12); ctx.stroke(); }
+    if (ctx.roundRect) { ctx.beginPath(); ctx.roundRect(bx,by,bw,bh,14); ctx.stroke(); }
   }
-  ctx.globalAlpha = bulletFired ? 0.4 : 1;
-  ctx.font = '22px Arial'; ctx.textAlign = 'center';
-  ctx.fillStyle = '#fff';
-  ctx.fillText('🔫', bx+bw/2, by+28);
-  ctx.font = 'bold 11px Arial';
-  ctx.fillText(bulletFired ? 'LEEG' : 'SCHIETEN', bx+bw/2, by+48);
+  ctx.globalAlpha = empty ? 0.4 : 1;
+  ctx.shadowBlur = 0;
+  // Kogels als bolletjes tonen
+  ctx.font = '20px Arial'; ctx.textAlign = 'center'; ctx.fillStyle = '#fff';
+  ctx.fillText('🔫', bx+bw/2, by+26);
+  // Aantal kogels
+  ctx.font = 'bold 13px Arial';
+  ctx.fillStyle = empty ? '#aaa' : '#ffe066';
+  const bullets = '●'.repeat(Math.min(bulletsLeft, 5)) + (bulletsLeft > 5 ? `+${bulletsLeft-5}` : '');
+  ctx.fillText(empty ? 'LEEG' : bullets, bx+bw/2, by+44);
+  ctx.font = '10px Arial'; ctx.fillStyle = '#fff';
+  ctx.fillText('SCHIETEN', bx+bw/2, by+59);
   ctx.restore();
 }
 
