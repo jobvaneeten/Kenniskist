@@ -27,7 +27,7 @@ const ROCKET_H = 122 * 0.35; // schaal naar ~43px hoog
 // Exacte jetpack vlam positie gemeten via pixel analyse van vlieg.png
 // Onderkant vlam: X=37.3% van links, Y=72.9% van boven
 const JETPACK_X = 0.373;
-const JETPACK_Y = 0.729;
+const JETPACK_Y = 0.62;
 
 // ===== CONSTANTEN =====
 const FLOOR_Y  = () => canvas.height - 80;
@@ -40,8 +40,8 @@ let coins        = 0;
 let highScore    = parseInt(localStorage.getItem('jj_highscore') || '0');
 let totalCoins   = parseInt(localStorage.getItem('jj_totalcoins') || '0'); // gespaarde munten voor shop
 let frameCount   = 0;
-let gameSpeed    = 4;
-let baseSpeed    = 4;
+let gameSpeed    = 2.5;
+let baseSpeed    = 2.5;
 let distance     = 0;
 
 // ===== SLOMO & SHAKE =====
