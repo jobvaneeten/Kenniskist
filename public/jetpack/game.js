@@ -434,7 +434,7 @@ function drawBackground() {
   });
 
   // Bergen
-  bgOffsets.mount += gameSpeed*0.2*slowMoFactor;
+  bgOffsets.mount += gameSpeed*0.08*slowMoFactor;
   bgMountains.forEach(m => {
     const dx = ((m.x - bgOffsets.mount) % (w+400) + w+400) % (w+400) - 200;
     ctx.fillStyle=m.color; ctx.beginPath();
@@ -442,11 +442,11 @@ function drawBackground() {
   });
 
   // Bomen ver
-  bgOffsets.far += gameSpeed*0.5*slowMoFactor;
+  bgOffsets.far += gameSpeed*0.2*slowMoFactor;
   drawTreeSet(bgTreesFar, bgOffsets.far, 0.55, w);
 
   // Bomen midden
-  bgOffsets.mid += gameSpeed*0.85*slowMoFactor;
+  bgOffsets.mid += gameSpeed*0.35*slowMoFactor;
   drawTreeSet(bgTreesMid, bgOffsets.mid, 0.78, w);
 }
 
@@ -466,7 +466,7 @@ function drawTreeSet(trees, offset, alpha, w) {
 }
 
 function drawForegroundTrees() {
-  bgOffsets.near += gameSpeed*1.4*slowMoFactor;
+  bgOffsets.near += gameSpeed*0.6*slowMoFactor;
   const w = canvas.width, floorY = FLOOR_Y();
   bgTreesNear.forEach(t => {
     const dx = ((t.x - bgOffsets.near) % (w+800) + w+800) % (w+800) - 400;
