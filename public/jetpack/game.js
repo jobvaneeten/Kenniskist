@@ -296,6 +296,7 @@ function activatePowerup(type) {
     rocketActive = true;
     rocketY  = player.y + player.height/2;
     rocketVy = 0;
+    gameSpeed = baseSpeed * 2.8;  // raket gaat veel sneller vooruit
   } else {
     activePowerups[type] = p.duration;
   }
@@ -303,7 +304,7 @@ function activatePowerup(type) {
 
 function deactivatePowerup(type) {
   delete activePowerups[type];
-  if (type === 'rocket') { rocketActive = false; player.vy = rocketVy; }
+  if (type === 'rocket') { rocketActive = false; player.vy = rocketVy; gameSpeed = baseSpeed; }
   if (type === 'speed')  { gameSpeed = baseSpeed; }
   if (type === 'slowmo') { slowMoFactor = 1.0; }
 }
