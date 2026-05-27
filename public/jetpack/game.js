@@ -43,8 +43,8 @@ let coins        = 0;
 let highScore    = parseInt(localStorage.getItem('jj_highscore') || '0');
 let totalCoins   = parseInt(localStorage.getItem('jj_totalcoins') || '0'); // gespaarde munten voor shop
 let frameCount   = 0;
-let gameSpeed    = 0.35;
-let baseSpeed    = 0.35;
+let gameSpeed    = 2.0;
+let baseSpeed    = 2.0;
 
 // ===== KOGEL =====
 let bulletFired  = false;   // slechts 1 per leven
@@ -715,7 +715,7 @@ function drawZappers() {
 }
 
 function updateZappers() {
-  if (frameCount%320===0) spawnZapper();
+  if (frameCount%480===0) spawnZapper();
   zappers = zappers.filter(z => {
     z.x -= gameSpeed*slowMoFactor;
     // Kogel raakt laser → laser kapot
@@ -839,7 +839,7 @@ function drawCoins() {
 }
 
 function updateCoins() {
-  if (frameCount % 90 === 0) spawnCoinRow();
+  if (frameCount % 180 === 0) spawnCoinRow();
   coinObjects.forEach(c => {
     c.x -= gameSpeed * slowMoFactor;
     // Verwijder munt als hij in een laser zit
@@ -1746,7 +1746,7 @@ document.getElementById('shopBtnGO').addEventListener('click',   () => openShop(
 
 function startGame() {
   gameState='playing'; coins=0; distance=0; frameCount=0;
-  gameSpeed=0.35; baseSpeed=0.35;
+  gameSpeed=2.0; baseSpeed=2.0;
   bulletFired=false; bullet.active=false; shootTimer=0;
   zappers=[]; coinObjects=[]; fireParticles=[]; powerupObjects=[];
   trailParticles=[];
@@ -1940,7 +1940,7 @@ function gameLoop() {
   frameCount++;
   if (player.alive) {
     distance=Math.floor(frameCount*gameSpeed/60);
-    if (frameCount%900===0) { baseSpeed=Math.min(baseSpeed+0.06,1.4); if (!activePowerups.speed) gameSpeed=baseSpeed; }
+    if (frameCount%700===0) { baseSpeed=Math.min(baseSpeed+0.15,5); if (!activePowerups.speed) gameSpeed=baseSpeed; }
   }
   updateSlowMoShake();
   updatePowerupTick();
