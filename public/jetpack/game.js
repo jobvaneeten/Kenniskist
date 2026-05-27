@@ -506,10 +506,10 @@ let zappers = [];
 function spawnZapper() {
   const floorY=FLOOR_Y(), roll=Math.random();
   if (roll < 0.4) {
-    const gs=190+Math.random()*70, gy=CEIL_Y+40+Math.random()*(floorY-CEIL_Y-80-gs);
+    const gs=280+Math.random()*80, gy=CEIL_Y+40+Math.random()*(floorY-CEIL_Y-80-gs);
     zappers.push({ type:'vertical', x:canvas.width+50, gapY:gy, gapSize:gs, width:20, glowPhase:Math.random()*Math.PI*2 });
   } else if (roll < 0.7) {
-    const gs  = 180 + Math.random() * 60;
+    const gs  = 270 + Math.random() * 80;
     const len = 220 + Math.random() * 120;
     // y is het midden van de laser, gewoon een vaste hoogte in het speelveld
     const y = CEIL_Y + 100 + Math.random() * (floorY - CEIL_Y - 200);
@@ -706,7 +706,7 @@ function drawZappers() {
 }
 
 function updateZappers() {
-  if (frameCount%140===0) spawnZapper();
+  if (frameCount%320===0) spawnZapper();
   zappers.forEach(z => {
     z.x -= gameSpeed*slowMoFactor;
     if (!player.alive || player.invincible || rocketActive) return;
