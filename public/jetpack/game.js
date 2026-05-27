@@ -321,6 +321,7 @@ function updatePowerupTick() {
 
   // Raket physics
   if (rocketActive) {
+    gameSpeed = baseSpeed * 5.0; // continu afdwingen — niets kan dit resetten
     if (player.isThrusting) rocketVy = Math.max(rocketVy - 0.12, -1.8);
     else                     rocketVy = Math.min(rocketVy + 0.10,  1.8);
     rocketY  = Math.max(CEIL_Y+20, Math.min(rocketY + rocketVy, FLOOR_Y()-40));
@@ -2059,7 +2060,7 @@ function gameLoop() {
   frameCount++;
   if (player.alive) {
     distance=Math.floor(frameCount*gameSpeed/60);
-    if (frameCount%700===0) { baseSpeed=Math.min(baseSpeed+0.15,5); if (!activePowerups.speed) gameSpeed=baseSpeed; }
+    if (frameCount%700===0) { baseSpeed=Math.min(baseSpeed+0.15,5); if (!rocketActive) gameSpeed=baseSpeed; }
   }
   updateSlowMoShake();
   updatePowerupTick();
