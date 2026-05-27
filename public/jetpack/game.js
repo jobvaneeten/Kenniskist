@@ -40,8 +40,8 @@ let coins        = 0;
 let highScore    = parseInt(localStorage.getItem('jj_highscore') || '0');
 let totalCoins   = parseInt(localStorage.getItem('jj_totalcoins') || '0'); // gespaarde munten voor shop
 let frameCount   = 0;
-let gameSpeed    = 1.5;
-let baseSpeed    = 1.5;
+let gameSpeed    = 1.0;
+let baseSpeed    = 1.0;
 let distance     = 0;
 
 // ===== SLOMO & SHAKE =====
@@ -73,7 +73,7 @@ function updateSlowMoShake() {
 // ===== PLAYER =====
 const player = {
   x:150, y:300, vy:0,
-  gravity:0.35, thrustPower:0.45, maxUp:-6, maxDown:7,
+  gravity:0.20, thrustPower:0.28, maxUp:-4, maxDown:5,
   isThrusting:false, invincible:false,
   width: FRAME_W*SCALE, height: FRAME_H*SCALE,
   currentAnim:'run', currentFrame:0, frameTimer:0, frameRate:3,
