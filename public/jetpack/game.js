@@ -40,8 +40,8 @@ let coins        = 0;
 let highScore    = parseInt(localStorage.getItem('jj_highscore') || '0');
 let totalCoins   = parseInt(localStorage.getItem('jj_totalcoins') || '0'); // gespaarde munten voor shop
 let frameCount   = 0;
-let gameSpeed    = 2.5;
-let baseSpeed    = 2.5;
+let gameSpeed    = 1.5;
+let baseSpeed    = 1.5;
 let distance     = 0;
 
 // ===== SLOMO & SHAKE =====
