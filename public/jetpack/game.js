@@ -46,6 +46,10 @@ let frameCount   = 0;
 let gameSpeed    = 2.0;
 let baseSpeed    = 2.0;
 
+// ===== SPAWN TIMERS =====
+let zapperTimer = 0;
+let coinTimer   = 0;
+
 // ===== KOGEL =====
 let bulletFired  = false;   // slechts 1 per leven
 let bullet       = { active:false, x:0, y:0, vx:14, r:5 };
@@ -715,7 +719,9 @@ function drawZappers() {
 }
 
 function updateZappers() {
-  if (frameCount%480===0) spawnZapper();
+  zapperTimer++;
+  const zInterval = Math.max(200, Math.floor(480 - frameCount / 80));
+  if (zapperTimer >= zInterval) { spawnZapper(); zapperTimer = 0; }
   zappers = zappers.filter(z => {
     z.x -= gameSpeed*slowMoFactor;
     // Kogel raakt laser → laser kapot
@@ -839,7 +845,9 @@ function drawCoins() {
 }
 
 function updateCoins() {
-  if (frameCount % 180 === 0) spawnCoinRow();
+  coinTimer++;
+  const cInterval = Math.max(60, Math.floor(180 - frameCount / 150));
+  if (coinTimer >= cInterval) { spawnCoinRow(); coinTimer = 0; }
   coinObjects.forEach(c => {
     c.x -= gameSpeed * slowMoFactor;
     // Verwijder munt als hij in een laser zit
@@ -1748,6 +1756,7 @@ function startGame() {
   gameState='playing'; coins=0; distance=0; frameCount=0;
   gameSpeed=2.0; baseSpeed=2.0;
   bulletFired=false; bullet.active=false; shootTimer=0;
+  zapperTimer=0; coinTimer=0;
   zappers=[]; coinObjects=[]; fireParticles=[]; powerupObjects=[];
   trailParticles=[];
   activePowerups={}; rocketActive=false; rocketY=0; rocketVy=0;
