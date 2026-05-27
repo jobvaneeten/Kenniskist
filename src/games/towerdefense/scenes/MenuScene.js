@@ -42,7 +42,9 @@ export default class MenuScene extends Phaser.Scene {
     const cardY   = H/2 + 20
 
     MAPS.forEach((map, i) => {
-      const unlocked = map.unlocked || !!this.progress[`map${map.id}_complete`]
+      const unlocked = map.unlocked
+        || !!this.progress[`map${map.id}_unlocked`]
+        || !!this.progress[`map${map.id}_complete`]
       const best     = this.progress[`map${map.id}_best`] || null
       const cx = startX + i * (cardW + 30)
 
