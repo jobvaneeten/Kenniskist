@@ -1505,31 +1505,49 @@ function renderShopTab(tab) {
   }
 
   SHOP_ITEMS[tab].forEach(item => {
-    const owned     = shopOwned.includes(item.id) && !item.repeatable;
+    // Starters: "owned" = ooit gekocht (eenmalig)
+    const isStarter = !!item.repeatable;
+    const owned     = shopOwned.includes(item.id);
     const equipped  = shopEquipped[item.type] === item.value;
     const canAfford = totalCoins >= item.price;
 
     const card = document.createElement('div');
-    card.className = 'shop-item' +
-      (owned ? ' owned' : '') +
-      (equipped ? ' equipped' : '') +
-      (!canAfford && !owned ? ' cant-afford' : '');
+    if (isStarter) {
+      const isActive = activeStarters.includes(item.id);
+      card.className = 'shop-item' +
+        (owned ? (isActive ? ' equipped' : ' owned') : (!canAfford ? ' cant-afford' : ''));
+    } else {
+      card.className = 'shop-item' +
+        (owned ? ' owned' : '') +
+        (equipped ? ' equipped' : '') +
+        (!canAfford && !owned ? ' cant-afford' : '');
+    }
 
-    let badge = equipped ? `<div class="item-badge badge-on">AAN</div>`
-              : owned    ? `<div class="item-badge badge-owned">✓ GEKOCHT</div>` : '';
+    let badge = equipped && !isStarter ? `<div class="item-badge badge-on">AAN</div>`
+              : (isStarter && activeStarters.includes(item.id)) ? `<div class="item-badge badge-on">ACTIEF</div>`
+              : owned ? `<div class="item-badge badge-owned">✓ GEKOCHT</div>` : '';
 
     let priceHtml = '', btnHtml = '';
-    if (item.repeatable) {
+    if (isStarter) {
+      // Eenmalig kopen, dan gratis toggling
       const isActive = activeStarters.includes(item.id);
-      priceHtml = isActive ? `<span class="item-price free">ACTIEF</span>` : `<span class="item-price">🪙 ${item.price}</span>`;
-      btnHtml   = isActive ? `<button class="item-btn btn-equipped" disabled>✓ Actief</button>`
-                           : `<button class="item-btn" onclick="buyStarter('${item.id}','${tab}')" ${!canAfford?'disabled':''}>Koop</button>`;
+      if (owned) {
+        priceHtml = isActive
+          ? `<span class="item-price free">ACTIEF</span>`
+          : `<span class="item-price owned-txt">AL GEKOCHT</span>`;
+        btnHtml = isActive
+          ? `<button class="item-btn btn-unequip" onclick="toggleStarter('${item.id}','${tab}')">✕ Uitzetten</button>`
+          : `<button class="item-btn btn-equip"   onclick="toggleStarter('${item.id}','${tab}')">▶ Aanzetten</button>`;
+      } else {
+        priceHtml = `<span class="item-price">🪙 ${item.price}</span>`;
+        btnHtml   = `<button class="item-btn" onclick="buyStarter('${item.id}','${tab}')" ${!canAfford?'disabled':''}>Koop</button>`;
+      }
     } else if (owned) {
       priceHtml = `<span class="item-price owned-txt">AL GEKOCHT</span>`;
       if (item.type !== 'upgrade') {
         btnHtml = equipped
-          ? `<button class="item-btn btn-equipped" disabled>✓ Aan</button>`
-          : `<button class="item-btn btn-equip" onclick="equipItem('${item.id}','${item.type}','${item.value}','${tab}')">Aandoen</button>`;
+          ? `<button class="item-btn btn-unequip" onclick="unequipItem('${item.type}','${tab}')">✕ Uitzetten</button>`
+          : `<button class="item-btn btn-equip"   onclick="equipItem('${item.id}','${item.type}','${item.value}','${tab}')">▶ Aanzetten</button>`;
       }
     } else {
       priceHtml = `<span class="item-price">🪙 ${item.price}</span>`;
@@ -1695,10 +1713,32 @@ function buyStarter(id, tab) {
   const item = Object.values(SHOP_ITEMS).flat().find(i => i.id === id);
   if (!item || totalCoins < item.price) return;
   totalCoins -= item.price;
-  if (!activeStarters.includes(id)) activeStarters.push(id);
+  if (!shopOwned.includes(id))    shopOwned.push(id);        // eenmalig kopen
+  if (!activeStarters.includes(id)) activeStarters.push(id); // direct actief
   saveShop();
   document.getElementById('shopCoins').textContent = totalCoins;
-  showShopFeedback(`🚀 ${item.name} actief voor de volgende run!`);
+  showShopFeedback(`🚀 ${item.name} gekocht en actief!`);
+  renderShopTab(tab);
+}
+
+function toggleStarter(id, tab) {
+  if (activeStarters.includes(id)) {
+    activeStarters = activeStarters.filter(s => s !== id);
+    const item = Object.values(SHOP_ITEMS).flat().find(i => i.id === id);
+    showShopFeedback(`⏸️ ${item ? item.name : id} uitgezet`);
+  } else {
+    activeStarters.push(id);
+    const item = Object.values(SHOP_ITEMS).flat().find(i => i.id === id);
+    showShopFeedback(`▶️ ${item ? item.name : id} aangezet!`);
+  }
+  saveShop();
+  renderShopTab(tab);
+}
+
+function unequipItem(type, tab) {
+  delete shopEquipped[type];
+  saveShop();
+  showShopFeedback(`⏸️ Uitgezet`);
   renderShopTab(tab);
 }
 
@@ -1727,6 +1767,17 @@ function loadUpgrades() {
   });
 }
 loadUpgrades();
+
+// Expose shop-functies als globals (nodig voor inline onclick handlers in dynamische HTML)
+window.buyItem         = buyItem;
+window.equipItem       = equipItem;
+window.unequipItem     = unequipItem;
+window.buyStarter      = buyStarter;
+window.toggleStarter   = toggleStarter;
+window.buyUpgradeLevel = buyUpgradeLevel;
+window.toggleUpgrade   = toggleUpgrade;
+window.openShop        = openShop;
+window.closeShop       = closeShop;
 
 // ===== INPUT =====
 document.addEventListener('keydown',e=>{ if(e.code==='Space'){e.preventDefault();handlePress();} });

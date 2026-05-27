@@ -561,7 +561,8 @@ body {
   gap: 14px;
   padding: 20px 28px;
   overflow-y: auto;
-  max-height: calc(88vh - 200px);
+  flex: 1;
+  min-height: 0; /* cruciaal: laat flex child scrollen */
 }
 .shop-items::-webkit-scrollbar { width: 6px; }
 .shop-items::-webkit-scrollbar-track { background: rgba(255,255,255,0.03); }
@@ -660,6 +661,10 @@ body {
 .item-btn.btn-equipped {
   background: linear-gradient(135deg, #aa8800, #886600);
   cursor: default;
+}
+.item-btn.btn-unequip {
+  background: linear-gradient(135deg, #aa2200, #7a1500);
+  border: 1px solid rgba(255,100,100,0.3);
 }
 .item-btn:disabled { opacity:0.4; cursor:not-allowed; }
 
