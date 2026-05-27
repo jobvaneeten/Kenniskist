@@ -1374,19 +1374,22 @@ function drawPlayer() {
 
 // ===== SHOP SYSTEEM =====
 const SHOP_ITEMS = {
-  cosmetic: [
-    { id:'fire_blue',    name:'Blauw Vuur',     icon:'🔵', desc:'Verander de jetpack vlam naar ijskoud blauw.', price:80,  type:'fire_color',  value:'blue' },
-    { id:'fire_green',   name:'Groen Vuur',     icon:'💚', desc:'Neon groene vlammen uit je jetpack!',          price:100, type:'fire_color',  value:'green' },
-    { id:'fire_rainbow', name:'Regenboog Vuur', icon:'🌈', desc:'Alle kleuren tegelijk — maximale stijl.',      price:250, type:'fire_color',  value:'rainbow' },
+  fire: [
+    { id:'fire_blue',    name:'Blauw Vuur',     icon:'🔵', desc:'Verander de jetpack vlam naar ijskoud blauw.', price:80,  type:'fire_color', value:'blue' },
+    { id:'fire_green',   name:'Groen Vuur',     icon:'💚', desc:'Neon groene vlammen uit je jetpack!',          price:100, type:'fire_color', value:'green' },
+    { id:'fire_rainbow', name:'Regenboog Vuur', icon:'🌈', desc:'Alle kleuren tegelijk — maximale stijl.',      price:250, type:'fire_color', value:'rainbow' },
+  ],
+  trail: [
+    { id:'trail_stars',   name:'Sterren Trail',   icon:'✨', desc:'Glinsterende sterretjes achter je aan.',   price:120, type:'trail', value:'stars' },
+    { id:'trail_smoke',   name:'Rook Trail',      icon:'💨', desc:'Mysterieuze rookwolken achter je.',        price:80,  type:'trail', value:'smoke' },
+    { id:'trail_fire',    name:'Vuur Trail',      icon:'🔥', desc:'Komeet-effect — jij bent het vuur!',      price:150, type:'trail', value:'fire'  },
+    { id:'trail_rainbow', name:'Regenboog Trail', icon:'🌈', desc:'Kleurexplosie achter elke beweging.',     price:200, type:'trail', value:'rainbow' },
+    { id:'trail_energy',  name:'Energie Trail',   icon:'⚡', desc:'Elektrische energie bollen achter je.',   price:180, type:'trail', value:'energy' },
+  ],
+  coins: [
     { id:'coin_diamond', name:'Diamant Munten', icon:'💎', desc:'Verander gewone munten in glinsterende diamanten.', price:150, type:'coin_skin', value:'diamond' },
-    { id:'coin_star',    name:'Ster Munten',    icon:'⭐', desc:'Gouden sterren in plaats van munten.',         price:120, type:'coin_skin',  value:'star' },
-    { id:'coin_heart',   name:'Hart Munten',    icon:'❤️', desc:'Schattige harten — voor de romanticus.',       price:100, type:'coin_skin',  value:'heart' },
-    // Trails
-    { id:'trail_stars',   name:'Sterren Trail',    icon:'✨', desc:'Glinsterende sterretjes achter je aan.',      price:120, type:'trail', value:'stars' },
-    { id:'trail_smoke',   name:'Rook Trail',       icon:'💨', desc:'Mysterieuze rookwolken achter je.',           price:80,  type:'trail', value:'smoke' },
-    { id:'trail_fire',    name:'Vuur Trail',       icon:'🔥', desc:'Komeet-effect — jij bent het vuur!',         price:150, type:'trail', value:'fire'  },
-    { id:'trail_rainbow', name:'Regenboog Trail',  icon:'🌈', desc:'Kleurexplosie achter elke beweging.',        price:200, type:'trail', value:'rainbow' },
-    { id:'trail_energy',  name:'Energie Trail',    icon:'⚡', desc:'Elektrische energie bollen achter je.',      price:180, type:'trail', value:'energy' },
+    { id:'coin_star',    name:'Ster Munten',    icon:'⭐', desc:'Gouden sterren in plaats van munten.',              price:120, type:'coin_skin', value:'star' },
+    { id:'coin_heart',   name:'Hart Munten',    icon:'❤️', desc:'Schattige harten — voor de romanticus.',            price:100, type:'coin_skin', value:'heart' },
   ],
   upgrades: [
     {
@@ -1471,7 +1474,7 @@ function saveShop() {
 
 function openShop(fromScreen) {
   document.getElementById('shopCoins').textContent = totalCoins;
-  renderShopTab('cosmetic');
+  renderShopTab('fire');
   document.getElementById('shopScreen').classList.add('active');
   document.getElementById('shopScreen').dataset.from = fromScreen || 'menu';
 
