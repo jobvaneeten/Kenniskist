@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jetpack Joyride</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- START MENU -->
+  <div id="startMenu" class="screen active">
+    <div class="menu-particles" id="menuParticles"></div>
+
+    <div class="menu-content">
+      <!-- Logo -->
+      <div class="logo-wrap">
+        <div class="logo-rocket">🚀</div>
+        <h1 class="game-title">
+          <span class="title-line1">JETPACK</span>
+          <span class="title-line2">JOYRIDE</span>
+        </h1>
+      </div>
+
+      <p class="subtitle">✈ Vlieg zo ver mogelijk!</p>
+
+      <!-- Controls -->
+      <div class="controls-grid">
+        <div class="control-card">
+          <span class="ctrl-icon">🖱️</span>
+          <span class="ctrl-text">Klik / Spatie<br><small>Omhoog vliegen</small></span>
+        </div>
+        <div class="control-card">
+          <span class="ctrl-icon">⚡</span>
+          <span class="ctrl-text">Vermijd lasers<br><small>Raak ze niet!</small></span>
+        </div>
+        <div class="control-card">
+          <span class="ctrl-icon">🪙</span>
+          <span class="ctrl-text">Verzamel munten<br><small>Scoor hoog</small></span>
+        </div>
+        <div class="control-card">
+          <span class="ctrl-icon">🚀</span>
+          <span class="ctrl-text">Pak J O B<br><small>Krijg de raket!</small></span>
+        </div>
+      </div>
+
+      <!-- Powerup preview -->
+      <div class="powerup-preview">
+        <span class="preview-label">POWERUPS</span>
+        <div class="preview-icons">
+          <div class="preview-icon" title="Magneet">🧲</div>
+          <div class="preview-icon" title="Schild">🛡️</div>
+          <div class="preview-icon" title="Slow-mo">🐢</div>
+          <div class="preview-icon" title="Snelheid">⚡</div>
+          <div class="preview-icon" title="Raket (JOB)">🚀</div>
+        </div>
+      </div>
+
+      <div class="menu-buttons">
+        <button id="startBtn" class="btn-start">
+          <span class="btn-icon">▶</span>
+          <span>SPELEN</span>
+        </button>
+        <button id="shopBtnMenu" class="btn-shop">
+          <span>🛒</span>
+          <span>SHOP</span>
+        </button>
+      </div>
+
+      <p class="highscore-hint">🏆 Highscore: <span id="menuHighScore">0m</span></p>
+    </div>
+  </div>
+
+  <!-- GAME OVER SCREEN -->
+  <div id="gameOverScreen" class="screen">
+    <div class="gameover-bg"></div>
+
+    <div class="gameover-content">
+      <!-- Titel met animatie -->
+      <div class="go-title-wrap">
+        <div class="go-crash-icon">💥</div>
+        <h2 class="gameover-title">GAME OVER</h2>
+      </div>
+
+      <!-- Nieuw record badge (verborgen tenzij highscore) -->
+      <div class="new-record" id="newRecord">🏆 NIEUW RECORD!</div>
+
+      <!-- Scores -->
+      <div class="score-display">
+        <div class="score-item" id="scoreDistance">
+          <span class="score-emoji">📏</span>
+          <span class="score-label">Afstand</span>
+          <span class="score-value" id="finalDistance">0m</span>
+        </div>
+        <div class="score-item" id="scoreCoins">
+          <span class="score-emoji">🪙</span>
+          <span class="score-label">Munten</span>
+          <span class="score-value" id="finalCoins">0</span>
+        </div>
+        <div class="score-item" id="scoreHigh">
+          <span class="score-emoji">🏆</span>
+          <span class="score-label">Highscore</span>
+          <span class="score-value" id="highScore">0m</span>
+        </div>
+      </div>
+
+      <!-- Rating sterren -->
+      <div class="rating" id="ratingStars"></div>
+
+      <!-- Knoppen -->
+      <div class="go-buttons">
+        <button id="restartBtn" class="btn-start">
+          <span class="btn-icon">↺</span>
+          <span>OPNIEUW</span>
+        </button>
+        <button id="shopBtnGO" class="btn-shop">
+          <span>🛒</span>
+          <span>SHOP</span>
+        </button>
+      </div>
+
+      <p class="go-tip" id="goTip"></p>
+    </div>
+  </div>
+
+  <!-- HUD -->
+  <div id="hud" class="hud hidden">
+    <div class="hud-left">
+      <div class="hud-item">
+        <span class="hud-icon">📏</span>
+        <span id="distanceDisplay">0m</span>
+      </div>
+    </div>
+    <div class="hud-right">
+      <div class="hud-item">
+        <span class="hud-icon">🪙</span>
+        <span id="coinDisplay">0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CANVAS -->
+  <canvas id="gameCanvas"></canvas>
+
+  <!-- SHOP SCREEN -->
+  <div id="shopScreen" class="screen">
+    <div class="shop-bg"></div>
+    <div class="shop-container">
+
+      <!-- Header -->
+      <div class="shop-header">
+        <h2 class="shop-title">🛒 SHOP</h2>
+        <div class="shop-wallet">
+          <span>🪙</span>
+          <span id="shopCoins">0</span>
+        </div>
+        <button id="shopClose" class="shop-close">✕</button>
+      </div>
+
+      <!-- Tabs -->
+      <div class="shop-tabs">
+        <button class="shop-tab active" data-tab="cosmetic">🎨 Uiterlijk</button>
+        <button class="shop-tab" data-tab="upgrades">⚡ Upgrades</button>
+        <button class="shop-tab" data-tab="starters">🚀 Starters</button>
+      </div>
+
+      <!-- Items -->
+      <div class="shop-items" id="shopItems"></div>
+
+      <!-- Feedback -->
+      <div class="shop-feedback" id="shopFeedback"></div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+  <script>
+    // Vul highscore in menu
+    document.getElementById('menuHighScore').textContent =
+      (localStorage.getItem('jj_highscore') || '0') + 'm';
+
+    // Genereer menu particles
+    const container = document.getElementById('menuParticles');
+    const emojis = ['🪙','⚡','🌿','✨','🚀','💨'];
+    for (let i = 0; i < 18; i++) {
+      const el = document.createElement('div');
+      el.className = 'menu-particle';
+      el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+      el.style.left     = Math.random() * 100 + 'vw';
+      el.style.top      = Math.random() * 100 + 'vh';
+      el.style.fontSize = (12 + Math.random() * 20) + 'px';
+      el.style.animationDelay    = (Math.random() * 4) + 's';
+      el.style.animationDuration = (4 + Math.random() * 6) + 's';
+      container.appendChild(el);
+    }
+
+    // Tips voor game over scherm
+    const tips = [
+      '💡 Pak J, O en B voor de raket!',
+      '💡 Het schild absorbeert één laser!',
+      '💡 Slow-mo geeft je meer tijd om te reageren!',
+      '💡 Met de magneet vloeien munten naar je toe!',
+      '💡 De snelheidsboost geeft extra punten!',
+      '💡 Diagonale lasers zijn het lastigst — let op!',
+    ];
+    window._tips = tips;
+  </script>
+</body>
+</html>
