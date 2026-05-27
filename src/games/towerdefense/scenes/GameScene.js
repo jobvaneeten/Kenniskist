@@ -766,6 +766,7 @@ export default class GameScene extends Phaser.Scene {
   // ── Map building ──────────────────────────────────────────────────
   _buildMap() {
     const grid = this.mapData.grid
+    const ts   = this.mapData.tileset   // undefined for maps 1-2
 
     for (let row = 0; row < MAP_ROWS; row++) {
       for (let col = 0; col < MAP_COLS; col++) {
@@ -773,38 +774,62 @@ export default class GameScene extends Phaser.Scene {
         const cx = col * TILE_SIZE + TILE_SIZE / 2
         const cy = row * TILE_SIZE + TILE_SIZE / 2
 
-        if (cell === 1) {
-          // PATH: plain brown sand
-          this.add.image(cx, cy, 'tile050').setDisplaySize(TILE_SIZE, TILE_SIZE).setDepth(0)
-        } else {
-          // GRASS: plain green
-          this.add.image(cx, cy, 'tile024').setDisplaySize(TILE_SIZE, TILE_SIZE).setDepth(0)
-          // Bush decoration on deco cells
-          if (cell === 2) {
-            this.add.image(cx, cy, 'tile130')
-              .setDisplaySize(TILE_SIZE - 10, TILE_SIZE - 10)
+        if (ts) {
+          // ── Nieuw tileset-systeem (map 3 Woestijn) ─────────────
+          // Altijd achtergrond-zand leggen
+          this.add.image(cx, cy, ts[0]).setDisplaySize(TILE_SIZE, TILE_SIZE).setDepth(0)
+
+          if (cell >= 11 && ts[cell]) {
+            // Pad-tegel (boven/onder/links/rechts/hoek)
+            this.add.image(cx, cy, ts[cell]).setDisplaySize(TILE_SIZE, TILE_SIZE).setDepth(1)
+          } else if (cell === 2 && ts.deco && ts.deco.length > 0) {
+            // Willekeurige deco-tegel
+            const key = ts.deco[Math.floor(Math.random() * ts.deco.length)]
+            this.add.image(cx, cy, key)
+              .setDisplaySize(TILE_SIZE - 8, TILE_SIZE - 8)
               .setDepth(1)
+          }
+        } else {
+          // ── Oud systeem (maps 1-2) ─────────────────────────────
+          if (cell === 1) {
+            this.add.image(cx, cy, 'tile050').setDisplaySize(TILE_SIZE, TILE_SIZE).setDepth(0)
+          } else {
+            this.add.image(cx, cy, 'tile024').setDisplaySize(TILE_SIZE, TILE_SIZE).setDepth(0)
+            if (cell === 2) {
+              this.add.image(cx, cy, 'tile130')
+                .setDisplaySize(TILE_SIZE - 10, TILE_SIZE - 10)
+                .setDepth(1)
+            }
           }
         }
       }
     }
 
-    // Subtle grid overlay on buildable cells only
-    const overlay = this.add.graphics().setDepth(1).setAlpha(0.10)
+    // ── Grid-overlay op bouwbare cellen ───────────────────────────
+    const gridColor = ts ? 0xffee88 : 0x88ff88
+    const overlay = this.add.graphics().setDepth(2).setAlpha(0.10)
     for (let row = 0; row < MAP_ROWS; row++) {
       for (let col = 0; col < MAP_COLS; col++) {
         if (grid[row][col] === 0) {
-          overlay.lineStyle(1, 0x88ff88, 1)
+          overlay.lineStyle(1, gridColor, 1)
           overlay.strokeRect(col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE)
         }
       }
     }
 
-    // Spawn & exit markers — centered in the 2-wide entry/exit rows
-    const spawnY = this.mapData.spawnRow * TILE_SIZE + TILE_SIZE / 2 - 13
-    const exitY  = this.mapData.exitRow  * TILE_SIZE + TILE_SIZE / 2 - 13
-    this.add.text(4, spawnY, '▶', { fontSize: '26px' }).setDepth(2)
-    this.add.text(MAP_COLS * TILE_SIZE - 38, exitY, '🏁', { fontSize: '26px' }).setDepth(2)
+    // ── Spawn- & exit-markeringen ──────────────────────────────────
+    let spawnY, exitY
+    if (ts) {
+      // Midden van het 2-brede pad: gebruik eerste/laatste waypoint
+      const wp = this.mapData.waypoints
+      spawnY = wp[0].y - 13
+      exitY  = wp[wp.length - 1].y - 13
+    } else {
+      spawnY = this.mapData.spawnRow * TILE_SIZE + TILE_SIZE / 2 - 13
+      exitY  = this.mapData.exitRow  * TILE_SIZE + TILE_SIZE / 2 - 13
+    }
+    this.add.text(4, spawnY, '▶', { fontSize: '26px' }).setDepth(3)
+    this.add.text(MAP_COLS * TILE_SIZE - 38, exitY, '🏁', { fontSize: '26px' }).setDepth(3)
   }
 
   // ── Wave system ────────────────────────────────────────────────────

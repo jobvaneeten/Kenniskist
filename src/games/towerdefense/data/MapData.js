@@ -62,27 +62,38 @@ export const MAPS = [
   {
     id: 3, name: 'Woestijn', emoji: '🏜️',
     description: 'Lang zigzag door de brandende woestijn',
-    difficulty: 3, unlocked: false,
-    // Path: row 1 cols 0-13 → col 13 rows 1-4 → row 4 cols 2-13 → col 2 rows 4-7 → row 7 cols 2-15
+    difficulty: 3, unlocked: true,
+    // Cel-codes: 0=bouwbaar zand, 2=deco, 11=pad-boven, 12=pad-onder,
+    //            13=pad-links, 14=pad-rechts, 19=volledigpad (hoek)
+    tileset: {
+      0:    'sand_ground',   // volledigzand.png – achtergrond
+      11:   'sand_h_top',    // padzandboven.png
+      12:   'sand_h_bot',    // padzandonder.png
+      13:   'sand_v_left',   // padzandlinks.png
+      14:   'sand_v_right',  // padzandrechts.png
+      19:   'sand_full',     // volledigpad.png  – hoeken
+      deco: ['sand_deco1','sand_deco2','sand_deco3','sand_deco4'],
+    },
+    // Pad: links in → rechts (rij 1-2) → bocht → links (rij 4-5) → bocht → rechts uit (rij 7-8)
     grid: [
-      [0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0],
-      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0],
-      [0,0,2,0,0,0,0,0,0,0,0,0,0,1,0,2],
-      [0,2,0,0,0,2,0,0,0,0,0,0,0,1,0,0],
-      [0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0],
-      [0,0,1,0,0,0,0,0,0,0,0,0,0,0,2,0],
-      [0,2,1,0,0,0,0,0,0,2,0,0,0,0,0,0],
-      [0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-      [0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-      [0,0,2,0,0,0,0,0,0,0,0,0,0,2,0,0],
+      [ 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0],
+      [11,11,11,11,11,11,11,11,11,11,11,11,19,19, 0, 0],
+      [12,12,12,12,12,12,12,12,12,12,12,12,19,19, 0, 0],
+      [ 0, 0, 0, 2, 0, 0, 2, 0, 0, 2, 0, 0,13,14, 0, 2],
+      [ 0, 0,19,19,11,11,11,11,11,11,11,11,19,19, 0, 0],
+      [ 0, 2,19,19,12,12,12,12,12,12,12,12,19,19, 2, 0],
+      [ 0, 0,13,14, 0, 2, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0],
+      [ 0, 2,19,19,11,11,11,11,11,11,11,11,11,11,11,11],
+      [ 0, 0,19,19,12,12,12,12,12,12,12,12,12,12,12,12],
+      [ 2, 0, 0, 2, 0, 2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0],
     ],
     waypoints: [
-      { x: -32, y:  96 },
-      { x: 864, y:  96 },
-      { x: 864, y: 288 },
-      { x: 160, y: 288 },
-      { x: 160, y: 480 },
-      { x: 1056, y: 480 },
+      { x:  -32, y: 128 },   // ingang links (midden rij 1-2)
+      { x:  832, y: 128 },   // bocht rechts (midden col 12-13)
+      { x:  832, y: 320 },   // bocht onder  (midden rij 4-5)
+      { x:  192, y: 320 },   // bocht links  (midden col 2-3)
+      { x:  192, y: 512 },   // bocht onder  (midden rij 7-8)
+      { x: 1056, y: 512 },   // uitgang rechts
     ],
     spawnRow: 1, exitRow: 7,
   },

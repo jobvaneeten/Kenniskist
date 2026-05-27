@@ -51,6 +51,18 @@ export default class BootScene extends Phaser.Scene {
     ]
     particles.forEach(p => this.load.image(p, `${TD}Particals/${p}.png`))
 
+    // ── Woestijn (map 3) tiles ────────────────────────────────────
+    this.load.image('sand_ground',  `${TD}Map/zand/volledigzand.png`)
+    this.load.image('sand_h_top',   `${TD}Map/zand/padzandboven.png`)
+    this.load.image('sand_h_bot',   `${TD}Map/zand/padzandonder.png`)
+    this.load.image('sand_v_left',  `${TD}Map/zand/padzandlinks.png`)
+    this.load.image('sand_v_right', `${TD}Map/zand/padzandrechts.png`)
+    this.load.image('sand_full',    `${TD}Map/zand/volledigpad.png`)
+    this.load.image('sand_deco1',   `${TD}Map/zand/towerDefense_tile031.png`)
+    this.load.image('sand_deco2',   `${TD}Map/zand/towerDefense_tile032.png`)
+    this.load.image('sand_deco3',   `${TD}Map/zand/towerDefense_tile051.png`)
+    this.load.image('sand_deco4',   `${TD}Map/zand/towerDefense_tile053.png`)
+
     // ── UI assets ─────────────────────────────────────────────────
     this.load.image('btn_green',  `${TD}Ui/Green/Default/button_rectangle_depth_flat.png`)
     this.load.image('btn_red',    `${TD}Ui/Red/Default/button_rectangle_depth_flat.png`)
