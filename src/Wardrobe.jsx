@@ -392,6 +392,10 @@ export default function Wardrobe({ onBack, onPlay3D, unlockedColors = {} }) {
                 // Rotation tracks: only keep retargeted bones
                 if (!RETARGET_BONES.has(name)) { tas.splice(i, 1); continue }
 
+                // Strip Root rotation for rust – the raw Z-up in rust.glb would
+                // lay the character flat; keeping it out lets Hips drive the pose.
+                if (key === 'rust' && name === 'Root') { tas.splice(i, 1); continue }
+
                 // Apply rest-pose correction for emote animations only, not the base rust animation
                 if (key !== 'rust') {
                   const srcRest = srcRestRots[name] ?? Quaternion.Identity()
