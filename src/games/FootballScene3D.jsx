@@ -167,20 +167,8 @@ class CharacterController {
   _playRest() {
     this._stopAll()
     this._resetRest()
-    const rp = this._anims.restpose
-    if (rp) {
-      // Single-frame pose — apply the first keyframe directly to each bone node.
-      // Skip Root: charRoot mesh controls global orientation; Root keyframe causes lay-flat.
-      rp.targetedAnimations.forEach(ta => {
-        if (ta.animation.targetProperty !== 'rotationQuaternion') return
-        if (ta.target.name === 'Root') return
-        const keys = ta.animation.getKeys()
-        if (!keys.length) return
-        const node = ta.target
-        if (!node.rotationQuaternion) node.rotationQuaternion = Quaternion.Identity()
-        node.rotationQuaternion.copyFrom(keys[0].value)
-      })
-    }
+    const rg = this._anims.rust
+    if (rg) rg.play(true)   // loop rust.glb
     this._state = 'idle'
   }
 
@@ -794,7 +782,7 @@ function initScene(canvas, {
     scene.meshes.forEach(m => { if (!nodeMap[m.name]) nodeMap[m.name] = m })
 
     const ANIMS = [
-      { key: 'restpose',   file: 'Restpose.glb',          stripRoot: true  },
+      { key: 'rust',       file: 'rust.glb',              stripRoot: true  },
       { key: 'lopen',      file: 'emote_lopen.glb',       stripRoot: true  },
       { key: 'hip_hop',    file: 'hip_hop_dancing.glb',   stripRoot: false },
       { key: 'breakdance', file: 'emote_breakdance.glb',  stripRoot: false },
@@ -837,9 +825,8 @@ function initScene(canvas, {
             continue
           }
           if (!RETARGET_BONES.has(name)) { tas.splice(i, 1); continue }
-          // Skip rest-pose correction for the static pose file — applying correction
-          // when srcRest ≈ pose (non-T-pose bind) doubles the rotation and collapses the mesh
-          if (key !== 'restpose') {
+          // Apply rest-pose correction for all animation files
+          if (true) {
             const src  = srcRests[name] ?? Quaternion.Identity()
             const dst  = dstRests[name] ?? Quaternion.Identity()
             const corr = Quaternion.Inverse(dst).multiply(src)

@@ -43,7 +43,7 @@ const RETARGET_BONES = new Set([
 
 // Each file has one animation; we store it under a stable key (not the internal name).
 const ANIM_FILES = [
-  { key: 'restpose',   file: 'Restpose.glb'          },
+  { key: 'rust',       file: 'rust.glb'              },
   { key: 'hip_hop',    file: 'hip_hop_dancing.glb'   },
   { key: 'breakdance', file: 'emote_breakdance.glb'  },
   { key: 'lopen',      file: 'emote_lopen.glb'       },
@@ -201,32 +201,26 @@ export default function Wardrobe({ onBack, onPlay3D, unlockedColors = {} }) {
     })
   }
 
-  const applyRestPose = (groups) => {
-    const rp = (groups ?? animGroupsRef.current)['restpose']
-    if (!rp) return
-    resetToTPose()
-    // Single-frame pose — apply first keyframe directly to each bone.
-    // Skip Root: the mesh root controls global orientation; Root keyframe causes lay-flat.
-    rp.targetedAnimations.forEach(ta => {
-      if (ta.animation.targetProperty !== 'rotationQuaternion') return
-      if (ta.target.name === 'Root') return
-      const keys = ta.animation.getKeys()
-      if (!keys.length) return
-      const node = ta.target
-      if (!node.rotationQuaternion) node.rotationQuaternion = Quaternion.Identity()
-      node.rotationQuaternion.copyFrom(keys[0].value)
-    })
+  const playRust = (groups) => {
+    const all = groups ?? animGroupsRef.current
+    // Stop any running animation
+    Object.values(all).forEach(g => { try { g?.stop() } catch {} })
+    const rg = all['rust']
+    if (rg) {
+      rg.play(true)  // loop=true
+    }
+    setActiveAnim('rust')
   }
 
   const pickEmote = (name) => {
     const groups = animGroupsRef.current
     if (activeAnim === name) {
+      // Toggle off → go back to rust
       groups[name]?.stop()
-      setActiveAnim(null)
-      resetToTPose()
+      playRust()
     } else {
-      if (activeAnim) groups[activeAnim]?.stop()
-      resetToTPose()
+      if (activeAnim && activeAnim !== 'rust') groups[activeAnim]?.stop()
+      groups['rust']?.stop()
       groups[name]?.play(true)
       setActiveAnim(name)
     }
@@ -352,8 +346,7 @@ export default function Wardrobe({ onBack, onPlay3D, unlockedColors = {} }) {
         if (pending === 0) {
           animGroupsRef.current = groups
           setAnimsReady(true)
-          applyRestPose(groups)
-          setActiveAnim('restpose')
+          playRust(groups)
         }
       }
 
@@ -399,9 +392,8 @@ export default function Wardrobe({ onBack, onPlay3D, unlockedColors = {} }) {
                 // Rotation tracks: only keep retargeted bones
                 if (!RETARGET_BONES.has(name)) { tas.splice(i, 1); continue }
 
-                // Skip rest-pose correction for the static pose file — correction doubles
-                // the rotation when the source bind pose is the pose itself, collapsing the mesh
-                if (key !== 'restpose') {
+                // Apply rest-pose correction for all animation files
+                if (true) {
                   const srcRest = srcRestRots[name] ?? Quaternion.Identity()
                   const dstRest = dstRestRots[name] ?? Quaternion.Identity()
                   const correction = Quaternion.Inverse(dstRest).multiply(srcRest)
@@ -534,19 +526,16 @@ export default function Wardrobe({ onBack, onPlay3D, unlockedColors = {} }) {
         <h2 className="panel-title">Emotes</h2>
         <p className="panel-sub">Klik om te bewegen</p>
         <div className="emote-list">
-          {/* Rest button — plays rest pose */}
+          {/* Rust button — speelt rust.glb in lus */}
           <button
-            className={`emote-btn ${activeAnim === 'restpose' ? 'emote-on' : ''}`}
-            onClick={() => {
-              if (activeAnim && activeAnim !== 'restpose') animGroupsRef.current[activeAnim]?.stop()
-              applyRestPose()
-              setActiveAnim('restpose')
-            }}
+            className={`emote-btn ${activeAnim === 'rust' ? 'emote-on' : ''}`}
+            onClick={() => playRust()}
             disabled={!animsReady}
             title={!animsReady ? 'Laden…' : ''}
           >
             <span className="emote-emoji">🧍</span>
             <span className="emote-label">Rust</span>
+            {activeAnim === 'rust' && <span className="emote-play">▶</span>}
           </button>
 
           {Object.entries(EMOTE_META).map(([name, meta]) => (

@@ -698,6 +698,7 @@ export default class GameScene extends Phaser.Scene {
     this.gold     = STARTING_GOLD
     this.lives    = STARTING_LIVES
     this.waveNum  = 0
+    this._speed   = 1
     this.waveActive   = false
     this.spawnQueue   = []
     this.spawnTimers  = []
@@ -740,6 +741,7 @@ export default class GameScene extends Phaser.Scene {
     uiScene.events.on('tower_selected', key => this._selectTower(key))
     uiScene.events.on('next_wave',      () => this._startNextWave())
     uiScene.events.on('pause_toggle',   () => this._togglePause())
+    uiScene.events.on('set_speed',      n  => this.setSpeed(n))
     uiScene.events.on('sell_tower',     () => this._sellTower())
     uiScene.events.on('upgrade_tower',  () => this._upgradeTower())
     uiScene.events.on('close_panel',    () => this._deselectBuilt())
@@ -759,14 +761,17 @@ export default class GameScene extends Phaser.Scene {
     this.events.emit('lives_changed', this.lives)
     this.events.emit('wave_changed',  this.waveNum)
 
-    // Start wave 1 auto after short delay
-    this.time.delayedCall(1500, () => this._startNextWave())
+    // Mobile: prevent text selection on canvas tap
+    const canvas = this.game.canvas
+    canvas.style.userSelect       = 'none'
+    canvas.style.webkitUserSelect = 'none'
+    canvas.style.touchAction      = 'none'
   }
 
   // ── Map building ──────────────────────────────────────────────────
   _buildMap() {
     const grid = this.mapData.grid
-    const ts   = this.mapData.tileset   // undefined for maps 1-2
+    const ts   = this.mapData.tileset
 
     for (let row = 0; row < MAP_ROWS; row++) {
       for (let col = 0; col < MAP_COLS; col++) {
@@ -774,33 +779,18 @@ export default class GameScene extends Phaser.Scene {
         const cx = col * TILE_SIZE + TILE_SIZE / 2
         const cy = row * TILE_SIZE + TILE_SIZE / 2
 
-        if (ts) {
-          // ── Nieuw tileset-systeem (map 3 Woestijn) ─────────────
-          // Altijd achtergrond-zand leggen
-          this.add.image(cx, cy, ts[0]).setDisplaySize(TILE_SIZE, TILE_SIZE).setDepth(0)
+        // Altijd achtergrond-tegel leggen
+        this.add.image(cx, cy, ts[0]).setDisplaySize(TILE_SIZE, TILE_SIZE).setDepth(0)
 
-          if (cell >= 11 && ts[cell]) {
-            // Pad-tegel (boven/onder/links/rechts/hoek)
-            this.add.image(cx, cy, ts[cell]).setDisplaySize(TILE_SIZE, TILE_SIZE).setDepth(1)
-          } else if (cell === 2 && ts.deco && ts.deco.length > 0) {
-            // Willekeurige deco-tegel
-            const key = ts.deco[Math.floor(Math.random() * ts.deco.length)]
-            this.add.image(cx, cy, key)
-              .setDisplaySize(TILE_SIZE - 8, TILE_SIZE - 8)
-              .setDepth(1)
-          }
-        } else {
-          // ── Oud systeem (maps 1-2) ─────────────────────────────
-          if (cell === 1) {
-            this.add.image(cx, cy, 'tile050').setDisplaySize(TILE_SIZE, TILE_SIZE).setDepth(0)
-          } else {
-            this.add.image(cx, cy, 'tile024').setDisplaySize(TILE_SIZE, TILE_SIZE).setDepth(0)
-            if (cell === 2) {
-              this.add.image(cx, cy, 'tile130')
-                .setDisplaySize(TILE_SIZE - 10, TILE_SIZE - 10)
-                .setDepth(1)
-            }
-          }
+        if (cell >= 11 && ts[cell]) {
+          // Pad-tegel (randen/hoeken)
+          this.add.image(cx, cy, ts[cell]).setDisplaySize(TILE_SIZE, TILE_SIZE).setDepth(1)
+        } else if (cell === 2 && ts.deco && ts.deco.length > 0) {
+          // Willekeurige deco-tegel
+          const key = ts.deco[Math.floor(Math.random() * ts.deco.length)]
+          this.add.image(cx, cy, key)
+            .setDisplaySize(TILE_SIZE - 8, TILE_SIZE - 8)
+            .setDepth(1)
         }
       }
     }
@@ -1054,15 +1044,23 @@ export default class GameScene extends Phaser.Scene {
     this.scene.get('UI')?.events.emit('tower_panel_hide')
   }
 
+  setSpeed(n) {
+    this._speed = n
+    if (!this.paused) {
+      this.time.timeScale   = n
+      this.tweens.timeScale = n
+    }
+    this.scene.get('UI')?.events.emit('speed_changed', n)
+  }
+
   _togglePause() {
     this.paused = !this.paused
-    this.physics.world?.pause?.()
     if (this.paused) {
-      this.time.timeScale = 0
+      this.time.timeScale   = 0
       this.tweens.timeScale = 0
     } else {
-      this.time.timeScale = 1
-      this.tweens.timeScale = 1
+      this.time.timeScale   = this._speed
+      this.tweens.timeScale = this._speed
     }
   }
 

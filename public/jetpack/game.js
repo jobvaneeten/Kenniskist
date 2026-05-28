@@ -724,13 +724,27 @@ function updateZappers() {
   const zInterval = Math.max(200, Math.floor(480 - frameCount / 80));
   if (zapperTimer >= zInterval) { spawnZapper(); zapperTimer = 0; }
   zappers = zappers.filter(z => {
+    const prevZx = z.x; // positie voor beweging (sweep test)
     z.x -= gameSpeed*slowMoFactor;
-    // Kogel raakt laser → laser kapot
+    // Kogel raakt laser → laser kapot (sweep-gebaseerde detectie)
     if (bullet.active) {
-      const hit = (z.type==='vertical'   && Math.abs(bullet.x - z.x) < 28) ||
-                  (z.type==='horizontal' && Math.abs(bullet.y - z.y) < 22 && bullet.x >= z.x-z.length/2 && bullet.x <= z.x+z.length/2) ||
-                  (z.type==='diagonal'   && Math.hypot(bullet.x - z.x, bullet.y - z.y) < 80);
-      if (hit) { bullet.active = false; return false; } // verwijder zapper
+      const prevBx = bullet.x - bullet.vx * slowMoFactor; // vorige kogelpositie
+      let hit = false;
+      if (z.type === 'vertical') {
+        // Sweep: heeft kogel de laser-x overgestoken deze frame?
+        const crossed = (prevBx <= prevZx && bullet.x >= z.x) ||
+                        (prevBx >= prevZx && bullet.x <= z.x) ||
+                        Math.abs(bullet.x - z.x) < 28;
+        // Y-bereik check: kogel moet binnen de laser-opening vallen
+        const inBeam = bullet.y < z.gapY || bullet.y > z.gapY + z.gapSize;
+        hit = crossed && inBeam;
+      } else if (z.type === 'horizontal') {
+        hit = Math.abs(bullet.y - z.y) < 22 &&
+              bullet.x >= z.x - z.length/2 && bullet.x <= z.x + z.length/2;
+      } else if (z.type === 'diagonal') {
+        hit = Math.hypot(bullet.x - z.x, bullet.y - z.y) < 90;
+      }
+      if (hit) { bullet.active = false; return false; }
     }
     return true;
   });

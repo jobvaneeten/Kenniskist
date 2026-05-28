@@ -52,7 +52,7 @@ export default class BootScene extends Phaser.Scene {
     particles.forEach(p => this.load.image(p, `${TD}Particals/${p}.png`))
 
     // ── Savanne / Gras (map 1) tiles ─────────────────────────────
-    this.load.image('gras_ground',  `${TD}Map/gras/towerDefense_tile024.png`)
+    this.load.image('gras_vol',     `${TD}Map/gras/grasvol.png`)
     this.load.image('gras_h_top',   `${TD}Map/gras/towerDefense_tile047.png`)
     this.load.image('gras_h_bot',   `${TD}Map/gras/towerDefense_tile001.png`)
     this.load.image('gras_v_left',  `${TD}Map/gras/towerDefense_tile025.png`)
@@ -62,7 +62,7 @@ export default class BootScene extends Phaser.Scene {
     this.load.image('gras_deco2',   `${TD}Map/gras/towerDefense_tile071.png`)
 
     // ── Jungle / Steen (map 2) tiles ──────────────────────────────
-    this.load.image('steen_ground',  `${TD}Map/steen/towerDefense_tile034.png`)
+    this.load.image('steen_vol',     `${TD}Map/steen/steenvol.png`)
     this.load.image('steen_h_top',   `${TD}Map/steen/towerDefense_tile057.png`)
     this.load.image('steen_h_bot',   `${TD}Map/steen/towerDefense_tile011.png`)
     this.load.image('steen_v_left',  `${TD}Map/steen/towerDefense_tile033.png`)
@@ -71,7 +71,7 @@ export default class BootScene extends Phaser.Scene {
     this.load.image('steen_deco1',   `${TD}Map/steen/towerDefense_tile059.png`)
 
     // ── Woestijn / Zand (map 3) tiles ─────────────────────────────
-    this.load.image('sand_ground',  `${TD}Map/zand/volledigzand.png`)
+    this.load.image('sand_vol',     `${TD}Map/zand/zandvol.png`)
     this.load.image('sand_h_top',   `${TD}Map/zand/padzandboven.png`)
     this.load.image('sand_h_bot',   `${TD}Map/zand/padzandonder.png`)
     this.load.image('sand_v_left',  `${TD}Map/zand/padzandlinks.png`)
