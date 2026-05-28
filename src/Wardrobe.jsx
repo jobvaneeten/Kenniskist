@@ -392,8 +392,8 @@ export default function Wardrobe({ onBack, onPlay3D, unlockedColors = {} }) {
                 // Rotation tracks: only keep retargeted bones
                 if (!RETARGET_BONES.has(name)) { tas.splice(i, 1); continue }
 
-                // Apply rest-pose correction for all animation files
-                if (true) {
+                // Apply rest-pose correction for emote animations only, not the base rust animation
+                if (key !== 'rust') {
                   const srcRest = srcRestRots[name] ?? Quaternion.Identity()
                   const dstRest = dstRestRots[name] ?? Quaternion.Identity()
                   const correction = Quaternion.Inverse(dstRest).multiply(srcRest)

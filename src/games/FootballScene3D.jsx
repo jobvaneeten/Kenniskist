@@ -825,8 +825,8 @@ function initScene(canvas, {
             continue
           }
           if (!RETARGET_BONES.has(name)) { tas.splice(i, 1); continue }
-          // Apply rest-pose correction for all animation files
-          if (true) {
+          // Apply rest-pose correction for emote animations only, not the base rust animation
+          if (key !== 'rust') {
             const src  = srcRests[name] ?? Quaternion.Identity()
             const dst  = dstRests[name] ?? Quaternion.Identity()
             const corr = Quaternion.Inverse(dst).multiply(src)
