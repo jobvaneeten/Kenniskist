@@ -22,7 +22,7 @@ export const MAPS = [
       13:   'gras_v_left',
       14:   'gras_v_right',
       19:   'gras_full',
-      deco: ['gras_deco1','gras_deco2'],
+      deco: ['boom1','boom2','boom3'],
     },
     // Entry left rows 1-2 → right to cols 28-29
     // Down to rows 7-8 → left to cols 2-3
@@ -66,7 +66,7 @@ export const MAPS = [
   {
     id: 2, name: 'Jungle', emoji: '🌴',
     description: 'Zes bochten door het oerwoud',
-    difficulty: 2, unlocked: false,
+    difficulty: 2, unlocked: true,
     tileset: {
       0:    'steen_vol',
       11:   'steen_h_top',
@@ -74,7 +74,7 @@ export const MAPS = [
       13:   'steen_v_left',
       14:   'steen_v_right',
       19:   'steen_full',
-      deco: ['steen_deco1'],
+      deco: ['steen1','steen2','steen3'],
     },
     // Entry left rows 1-2 → right cols 26-27
     // Down to rows 7-8 → left cols 2-3
@@ -127,7 +127,7 @@ export const MAPS = [
       13:   'sand_v_left',
       14:   'sand_v_right',
       19:   'sand_full',
-      deco: ['sand_deco1','sand_deco2','sand_deco3','sand_deco4'],
+      deco: ['cactus1','cactus2'],
     },
     // 8 bochten: rijen 1-2 → 5-6 → 9-10 → 13-14 → 17-18 zigzag
     grid: [

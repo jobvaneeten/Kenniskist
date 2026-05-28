@@ -789,7 +789,7 @@ export default class GameScene extends Phaser.Scene {
           // Willekeurige deco-tegel
           const key = ts.deco[Math.floor(Math.random() * ts.deco.length)]
           this.add.image(cx, cy, key)
-            .setDisplaySize(TILE_SIZE - 8, TILE_SIZE - 8)
+            .setDisplaySize(TILE_SIZE, TILE_SIZE)
             .setDepth(1)
         }
       }

@@ -58,8 +58,9 @@ export default class BootScene extends Phaser.Scene {
     this.load.image('gras_v_left',  `${TD}Map/gras/towerDefense_tile025.png`)
     this.load.image('gras_v_right', `${TD}Map/gras/towerDefense_tile023.png`)
     this.load.image('gras_full',    `${TD}Map/gras/towerDefense_tile050.png`)
-    this.load.image('gras_deco1',   `${TD}Map/gras/towerDefense_tile069.png`)
-    this.load.image('gras_deco2',   `${TD}Map/gras/towerDefense_tile071.png`)
+    this.load.image('boom1',        `${TD}Map/gras/boom1.png`)
+    this.load.image('boom2',        `${TD}Map/gras/boom2.png`)
+    this.load.image('boom3',        `${TD}Map/gras/boom3.png`)
 
     // ── Jungle / Steen (map 2) tiles ──────────────────────────────
     this.load.image('steen_vol',     `${TD}Map/steen/steenvol.png`)
@@ -68,7 +69,9 @@ export default class BootScene extends Phaser.Scene {
     this.load.image('steen_v_left',  `${TD}Map/steen/towerDefense_tile033.png`)
     this.load.image('steen_v_right', `${TD}Map/steen/towerDefense_tile035.png`)
     this.load.image('steen_full',    `${TD}Map/steen/towerDefense_tile010.png`)
-    this.load.image('steen_deco1',   `${TD}Map/steen/towerDefense_tile059.png`)
+    this.load.image('steen1',        `${TD}Map/steen/steen1.png`)
+    this.load.image('steen2',        `${TD}Map/steen/steen2.png`)
+    this.load.image('steen3',        `${TD}Map/steen/steen3.png`)
 
     // ── Woestijn / Zand (map 3) tiles ─────────────────────────────
     this.load.image('sand_vol',     `${TD}Map/zand/zandvol.png`)
@@ -77,10 +80,8 @@ export default class BootScene extends Phaser.Scene {
     this.load.image('sand_v_left',  `${TD}Map/zand/padzandlinks.png`)
     this.load.image('sand_v_right', `${TD}Map/zand/padzandrechts.png`)
     this.load.image('sand_full',    `${TD}Map/zand/volledigpad.png`)
-    this.load.image('sand_deco1',   `${TD}Map/zand/towerDefense_tile031.png`)
-    this.load.image('sand_deco2',   `${TD}Map/zand/towerDefense_tile032.png`)
-    this.load.image('sand_deco3',   `${TD}Map/zand/towerDefense_tile051.png`)
-    this.load.image('sand_deco4',   `${TD}Map/zand/towerDefense_tile053.png`)
+    this.load.image('cactus1',      `${TD}Map/zand/cactus1.png`)
+    this.load.image('cactus2',      `${TD}Map/zand/cactus2.png`)
 
     // ── UI assets ─────────────────────────────────────────────────
     this.load.image('btn_green',  `${TD}Ui/Green/Default/button_rectangle_depth_flat.png`)
