@@ -290,12 +290,16 @@ export default function Wardrobe({ onBack, onPlay3D, unlockedColors = {} }) {
         const modelItem = SHIRT_MODELS.find(t => t.key === shirtColor)
         const m = meshesRef.current.shirt
         if (modelItem) {
-          SceneLoader.ImportMesh('', '/', modelItem.file.replace(/^\//, ''), scene, ms => {
-            if (skeletonRef.current) {
-              ms.forEach(em => { if (em.skeleton) em.skeleton = skeletonRef.current })
-            }
-            extraMeshesRef.current = ms
-          })
+          // Apply shirt texture to the existing Poppetje Shirt mesh
+          // (loading a separate GLB hides the body — texture is the correct approach)
+          if (m) {
+            const mat = new StandardMaterial(modelItem.key + '_shirt', scene)
+            const tex = new Texture(`/shirt_${modelItem.key}.png`, scene)
+            mat.diffuseTexture = tex
+            mat.specularColor = Color3.Black()
+            m.material = mat
+            m.setEnabled(true)
+          }
         } else if (colorItem && m) {
           applyColor(m, colorItem.hex)
           m.setEnabled(true)

@@ -46,9 +46,18 @@ let frameCount   = 0;
 let gameSpeed    = 2.0;
 let baseSpeed    = 2.0;
 
+// ===== DELTA-TIME =====
+// S is the time-scale factor normalised to 144 fps.
+// At 144 fps S≈1, at 60 fps S≈2.4 — multiply every per-frame value by S.
+let lastTime     = 0;
+let S            = 1;
+
 // ===== SPAWN TIMERS =====
-let zapperTimer = 0;
-let coinTimer   = 0;
+let zapperTimer  = 0;
+let coinTimer    = 0;
+let speedUpTimer = 700;  // frames until next speed increase
+let letterTimer  = 360;  // frames until first letter spawn
+let powerupTimer = 450;  // frames until first powerup spawn
 
 // ===== KOGEL =====
 let bulletsLeft  = 1;       // aantal kogels over
@@ -72,12 +81,12 @@ function triggerDeathEffects() {
 }
 function updateSlowMoShake() {
   if (slowMoTimer > 0) {
-    slowMoTimer--;
+    slowMoTimer -= S;
     if (slowMoTimer < 40) slowMoFactor = 0.25 + 0.75 * (1 - slowMoTimer / 40);
     if (slowMoTimer <= 0) { slowMo = false; slowMoFactor = 1.0; }
   }
   if (shakeTimer > 0) {
-    shakeTimer--;
+    shakeTimer -= S;
     const i = shakeIntensity * (shakeTimer / 80);
     shakeX = (Math.random()-0.5)*i*2; shakeY = (Math.random()-0.5)*i*2;
   } else { shakeX = 0; shakeY = 0; }
@@ -130,7 +139,7 @@ function spawnLetter() {
 function drawLetters() {
   letterObjects.forEach(l => {
     if (l.collected) return;
-    l.phase += 0.05 * slowMoFactor;
+    l.phase += 0.05 * slowMoFactor * S;
     const by = l.y + Math.sin(l.phase) * 6;
 
     ctx.save();
@@ -181,11 +190,12 @@ function drawLetters() {
 }
 
 function updateLetters() {
-  // Spawn letter elke ~12 seconden
-  if (frameCount % 720 === 360) spawnLetter();
+  // Spawn letter elke ~12 seconden (720 frames @ 144fps ≈ 5s)
+  letterTimer -= S;
+  if (letterTimer <= 0) { spawnLetter(); letterTimer = 720; }
 
   letterObjects.forEach(l => {
-    l.x -= gameSpeed * slowMoFactor;
+    l.x -= gameSpeed * slowMoFactor * S;
     if (l.collected || !player.alive) return;
     const dx = l.x - (player.x + player.width/2);
     const dy = l.y - (player.y + player.height/2);
@@ -311,7 +321,7 @@ function deactivatePowerup(type) {
 function updatePowerupTick() {
   Object.keys(activePowerups).forEach(type => {
     if (type === 'shield') return;
-    activePowerups[type]--;
+    activePowerups[type] -= S;
     if (activePowerups[type] <= 0) deactivatePowerup(type);
   });
 
@@ -322,9 +332,9 @@ function updatePowerupTick() {
   // Raket physics
   if (rocketActive) {
     gameSpeed = baseSpeed * 5.0; // continu afdwingen — niets kan dit resetten
-    if (player.isThrusting) rocketVy = Math.max(rocketVy - 0.12, -1.8);
-    else                     rocketVy = Math.min(rocketVy + 0.10,  1.8);
-    rocketY  = Math.max(CEIL_Y+20, Math.min(rocketY + rocketVy, FLOOR_Y()-40));
+    if (player.isThrusting) rocketVy = Math.max(rocketVy - 0.12*S, -1.8);
+    else                     rocketVy = Math.min(rocketVy + 0.10*S,  1.8);
+    rocketY  = Math.max(CEIL_Y+20, Math.min(rocketY + rocketVy*S, FLOOR_Y()-40));
     player.y = rocketY - player.height/2;
     player.vy = 0;
   }
@@ -336,7 +346,7 @@ function updatePowerupTick() {
       if (c.collected) return;
       const dx = (player.x+player.width/2)  - c.x;
       const dy = (player.y+player.height/2) - c.y;
-      if (Math.sqrt(dx*dx+dy*dy) < magnetRange) { c.x += dx*0.08; c.y += dy*0.08; }
+      if (Math.sqrt(dx*dx+dy*dy) < magnetRange) { c.x += dx*0.08*S; c.y += dy*0.08*S; }
     });
   }
 }
@@ -448,7 +458,7 @@ function drawBackground() {
   });
 
   // Bergen
-  bgOffsets.mount += gameSpeed*0.08*slowMoFactor;
+  bgOffsets.mount += gameSpeed*0.08*slowMoFactor*S;
   bgMountains.forEach(m => {
     const dx = ((m.x - bgOffsets.mount) % (w+400) + w+400) % (w+400) - 200;
     ctx.fillStyle=m.color; ctx.beginPath();
@@ -456,11 +466,11 @@ function drawBackground() {
   });
 
   // Bomen ver
-  bgOffsets.far += gameSpeed*0.2*slowMoFactor;
+  bgOffsets.far += gameSpeed*0.2*slowMoFactor*S;
   drawTreeSet(bgTreesFar, bgOffsets.far, 0.55, w);
 
   // Bomen midden
-  bgOffsets.mid += gameSpeed*0.35*slowMoFactor;
+  bgOffsets.mid += gameSpeed*0.35*slowMoFactor*S;
   drawTreeSet(bgTreesMid, bgOffsets.mid, 0.78, w);
 }
 
@@ -480,7 +490,7 @@ function drawTreeSet(trees, offset, alpha, w) {
 }
 
 function drawForegroundTrees() {
-  bgOffsets.near += gameSpeed*0.6*slowMoFactor;
+  bgOffsets.near += gameSpeed*0.6*slowMoFactor*S;
   const w = canvas.width, floorY = FLOOR_Y();
   bgTreesNear.forEach(t => {
     const dx = ((t.x - bgOffsets.near) % (w+800) + w+800) % (w+800) - 400;
@@ -720,15 +730,17 @@ function drawZappers() {
 }
 
 function updateZappers() {
-  zapperTimer++;
-  const zInterval = Math.max(200, Math.floor(480 - frameCount / 80));
+  zapperTimer += S;
+  // Spawn rate scales up with rocket speed so obstacles still feel challenging
+  const speedMult = rocketActive ? gameSpeed / baseSpeed : 1;
+  const zInterval = Math.max(60, Math.floor((480 - frameCount / 80) / speedMult));
   if (zapperTimer >= zInterval) { spawnZapper(); zapperTimer = 0; }
   zappers = zappers.filter(z => {
     const prevZx = z.x; // positie voor beweging (sweep test)
-    z.x -= gameSpeed*slowMoFactor;
+    z.x -= gameSpeed*slowMoFactor*S;
     // Kogel raakt laser → laser kapot (sweep-gebaseerde detectie)
     if (bullet.active) {
-      const prevBx = bullet.x - bullet.vx * slowMoFactor; // vorige kogelpositie
+      const prevBx = bullet.x - bullet.vx * slowMoFactor * S; // vorige kogelpositie
       let hit = false;
       if (z.type === 'vertical') {
         // Sweep: heeft kogel de laser-x overgestoken deze frame?
@@ -817,7 +829,7 @@ function drawCoins() {
   const skin = shopEquipped['coin_skin'] || 'default';
   coinObjects.forEach(c => {
     if (c.collected) return;
-    c.phase += 0.05 * slowMoFactor;
+    c.phase += 0.05 * slowMoFactor * S;
     const by = c.y + Math.sin(c.phase) * 5;
     ctx.save();
 
@@ -860,11 +872,11 @@ function drawCoins() {
 }
 
 function updateCoins() {
-  coinTimer++;
+  coinTimer += S;
   const cInterval = Math.max(60, Math.floor(180 - frameCount / 150));
   if (coinTimer >= cInterval) { spawnCoinRow(); coinTimer = 0; }
   coinObjects.forEach(c => {
-    c.x -= gameSpeed * slowMoFactor;
+    c.x -= gameSpeed * slowMoFactor * S;
     // Verwijder munt als hij in een laser zit
     if (isCoinInLaser(c.x, c.y)) { c.collected = true; return; }
     if (!c.collected && player.alive) {
@@ -1110,10 +1122,10 @@ function drawStar(ctx, cx, cy, spikes, outerR, innerR) {
 function updateTrail() {
   if (player.alive) spawnTrail();
   trailParticles.forEach(p => {
-    p.x    += p.vx * slowMoFactor;
-    p.y    += p.vy * slowMoFactor;
-    p.life -= 0.017 * slowMoFactor;  // ~1 sec bij 60fps
-    if (p.rot !== undefined) p.rot += (p.rotSpeed||0) * slowMoFactor;
+    p.x    += p.vx * slowMoFactor * S;
+    p.y    += p.vy * slowMoFactor * S;
+    p.life -= 0.017 * slowMoFactor * S;  // ~0.41s @ 144fps
+    if (p.rot !== undefined) p.rot += (p.rotSpeed||0) * slowMoFactor * S;
   });
   trailParticles = trailParticles.filter(p => p.life > 0);
 }
@@ -1164,10 +1176,10 @@ function drawFireParticles() {
 
 function updateFireParticles() {
   fireParticles.forEach(p => {
-    p.x    += p.vx * slowMoFactor;
-    p.y    += p.vy * slowMoFactor;
-    p.life -= 0.035 * slowMoFactor;  // langzamer uitdoven = langere streep omlaag
-    p.size *= 0.97;
+    p.x    += p.vx * slowMoFactor * S;
+    p.y    += p.vy * slowMoFactor * S;
+    p.life -= 0.035 * slowMoFactor * S;
+    p.size *= Math.pow(0.97, S);
   });
   fireParticles = fireParticles.filter(p => p.life > 0);
 }
@@ -1175,7 +1187,7 @@ function updateFireParticles() {
 // ===== POWERUP CAPSULES =====
 function drawPowerupCapsules() {
   powerupObjects.forEach(p => {
-    p.phase += 0.04 * slowMoFactor;
+    p.phase += 0.04 * slowMoFactor * S;
     const by   = p.y + Math.sin(p.phase) * 7;
     const info = POWERUP_TYPES[p.type];
     const col  = info.color;
@@ -1232,9 +1244,10 @@ function drawPowerupCapsules() {
   });
 }
 function updatePowerupObjects() {
-  if (frameCount%900===450) spawnPowerupCapsule();
+  powerupTimer -= S;
+  if (powerupTimer <= 0) { spawnPowerupCapsule(); powerupTimer = 900; }
   powerupObjects.forEach(p => {
-    p.x -= gameSpeed*slowMoFactor;
+    p.x -= gameSpeed*slowMoFactor*S;
     if (!player.alive||player.invincible) return;
     const dx=p.x-(player.x+player.width/2), dy=p.y-(player.y+player.height/2);
     if (Math.sqrt(dx*dx+dy*dy)<p.r+30) { activatePowerup(p.type); p.collected=true; }
@@ -1270,9 +1283,9 @@ function spawnRocketParticles() {
 }
 function updateRocketParticles() {
   rocketParticles.forEach(p => {
-    p.x += p.vx * slowMoFactor; p.y += p.vy * slowMoFactor;
-    p.life -= (p.type==='flame' ? 0.08 : 0.04) * slowMoFactor;
-    p.size *= 0.97;
+    p.x += p.vx * slowMoFactor * S; p.y += p.vy * slowMoFactor * S;
+    p.life -= (p.type==='flame' ? 0.08 : 0.04) * slowMoFactor * S;
+    p.size *= Math.pow(0.97, S);
   });
   rocketParticles = rocketParticles.filter(p => p.life > 0);
 }
@@ -1823,8 +1836,9 @@ document.getElementById('shopBtnGO').addEventListener('click',   () => openShop(
 function startGame() {
   gameState='playing'; coins=0; distance=0; frameCount=0;
   gameSpeed=2.0; baseSpeed=2.0;
+  lastTime=0; S=1;
   bulletsLeft = window._startBullets || 1; bullet.active=false; shootTimer=0;
-  zapperTimer=0; coinTimer=0;
+  zapperTimer=0; coinTimer=0; speedUpTimer=700; letterTimer=360; powerupTimer=450;
   zappers=[]; coinObjects=[]; fireParticles=[]; powerupObjects=[];
   trailParticles=[];
   activePowerups={}; rocketActive=false; rocketY=0; rocketVy=0;
@@ -1902,8 +1916,8 @@ function updatePlayer() {
 
   // Schietanimatie-timer
   if (shootTimer > 0) {
-    shootTimer--;
-    if (shootTimer === 0) {
+    shootTimer -= S;
+    if (shootTimer <= 0) {
       // Terug naar normale animatie
       player.currentFrame = 0;
       player.currentAnim  = player.onGround ? 'run' : 'fly';
@@ -1912,7 +1926,7 @@ function updatePlayer() {
 
   // Frame-animatie
   const rate = player.currentAnim==='die' ? player.frameRate : Math.max(2,Math.floor(player.frameRate/slowMoFactor));
-  player.frameTimer++;
+  player.frameTimer += S;
   if (player.frameTimer >= rate) {
     player.frameTimer = 0;
     const anim = SPRITES[player.currentAnim];
@@ -1929,32 +1943,32 @@ function updatePlayer() {
   }
 
   if (!player.alive) {
-    player.vy = Math.min(player.vy+player.gravity*slowMoFactor, 12);
-    player.y  = Math.min(player.y+player.vy*slowMoFactor, FLOOR_Y()-player.height+FOOT_OFF());
+    player.vy = Math.min(player.vy + player.gravity*slowMoFactor*S, 12);
+    player.y  = Math.min(player.y  + player.vy*slowMoFactor*S, FLOOR_Y()-player.height+FOOT_OFF());
     return;
   }
   if (rocketActive) return;
 
   if (player.isThrusting) {
-    player.vy = Math.max(player.vy-player.thrustPower, player.maxUp);
+    player.vy = Math.max(player.vy - player.thrustPower*S, player.maxUp);
     spawnFireParticles();
     // Opstijgen-animatie alleen als we net van de grond komen
-    if (prevOnGround && shootTimer === 0) {
+    if (prevOnGround && shootTimer <= 0) {
       player.currentAnim = 'takeoff'; player.currentFrame = 0;
-    } else if (!prevOnGround && shootTimer === 0 && player.currentAnim !== 'takeoff') {
+    } else if (!prevOnGround && shootTimer <= 0 && player.currentAnim !== 'takeoff') {
       player.currentAnim = 'fly';
     }
   } else {
-    player.vy = Math.min(player.vy+player.gravity, player.maxDown);
+    player.vy = Math.min(player.vy + player.gravity*S, player.maxDown);
   }
 
-  player.y += player.vy * slowMoFactor;
+  player.y += player.vy * slowMoFactor * S;
   if (player.y+player.height-FOOT_OFF() >= FLOOR_Y()) {
     player.y=FLOOR_Y()-player.height+FOOT_OFF(); player.vy=0; player.onGround=true;
-    if (!player.isThrusting && shootTimer===0) player.currentAnim='run';
+    if (!player.isThrusting && shootTimer<=0) player.currentAnim='run';
   } else { player.onGround=false; }
   if (player.y <= CEIL_Y) { player.y=CEIL_Y; player.vy=3; }
-  if (!player.isThrusting && !player.onGround && shootTimer===0) player.currentAnim='run';
+  if (!player.isThrusting && !player.onGround && shootTimer<=0) player.currentAnim='run';
 }
 
 // ===== RAKET TRANSFORM EFFECT =====
@@ -1988,15 +2002,15 @@ function triggerRocketTransform(cx, cy) {
 
 function updateRocketFX() {
   if (!rocketFX.active) return;
-  rocketFX.timer--;
+  rocketFX.timer -= S;
   if (rocketFX.timer <= 0) { rocketFX.active = false; return; }
-  rocketFX.shockR  = Math.min(rocketFX.shockR + 28, rocketFX.shockMax);
-  rocketFX.textScale = Math.min(rocketFX.textScale + 0.18, 1.4);
+  rocketFX.shockR    = Math.min(rocketFX.shockR + 28*S, rocketFX.shockMax);
+  rocketFX.textScale = Math.min(rocketFX.textScale + 0.18*S, 1.4);
   rocketFX.particles.forEach(p => {
-    p.x += p.vx * slowMoFactor; p.y += p.vy * slowMoFactor;
-    p.vx *= 0.92; p.vy *= 0.92;
-    p.life -= 0.025 * slowMoFactor;
-    p.size *= 0.97;
+    p.x += p.vx * slowMoFactor * S; p.y += p.vy * slowMoFactor * S;
+    p.vx *= Math.pow(0.92, S); p.vy *= Math.pow(0.92, S);
+    p.life -= 0.025 * slowMoFactor * S;
+    p.size *= Math.pow(0.97, S);
   });
   rocketFX.particles = rocketFX.particles.filter(p => p.life > 0);
 }
@@ -2074,7 +2088,7 @@ function handleShoot() {
 
 function updateBullet() {
   if (!bullet.active) return;
-  bullet.x += bullet.vx * slowMoFactor;
+  bullet.x += bullet.vx * slowMoFactor * S;
   if (bullet.x > canvas.width + 40) bullet.active = false;
 }
 
@@ -2120,12 +2134,19 @@ function drawShootButton() {
 }
 
 // ===== GAME LOOP =====
-function gameLoop() {
+function gameLoop(now) {
   if (gameState!=='playing') return;
-  frameCount++;
+  // ── Delta-time: normalise to 144 fps so speed is identical on all screens ──
+  if (!lastTime) lastTime = now;
+  const dt = Math.min((now - lastTime) / 1000, 0.05); // cap at 50ms to avoid spiral of death
+  lastTime = now;
+  S = dt * 144;
+
+  frameCount += S;
   if (player.alive) {
-    distance=Math.floor(frameCount*gameSpeed/60);
-    if (frameCount%700===0) { baseSpeed=Math.min(baseSpeed+0.15,5); if (!rocketActive) gameSpeed=baseSpeed; }
+    distance = Math.floor(frameCount * gameSpeed / 60);
+    speedUpTimer -= S;
+    if (speedUpTimer <= 0) { baseSpeed=Math.min(baseSpeed+0.15,5); if (!rocketActive) gameSpeed=baseSpeed; speedUpTimer=700; }
   }
   updateSlowMoShake();
   updatePowerupTick();

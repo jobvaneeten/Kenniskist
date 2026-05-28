@@ -3,7 +3,7 @@ import {
   Engine, Scene, FreeCamera,
   Color3, Color4, Vector3, Quaternion,
   HemisphericLight, DirectionalLight, ShadowGenerator,
-  MeshBuilder, StandardMaterial, DynamicTexture,
+  MeshBuilder, StandardMaterial, DynamicTexture, Texture,
   DefaultRenderingPipeline,
   Mesh,
 } from '@babylonjs/core'
@@ -714,11 +714,9 @@ function initScene(canvas, {
   const restPose   = {}
   const animGroups = {}
 
-  let modelFile = 'Poppetje.glb'
-  if (shirtKey === 'ajax') modelFile = 'poppetjemetajaxshirt.glb'
-  if (shirtKey === 'psv')  modelFile = 'poppetjemetpsvshirt.glb'
+  const SHIRT_TEXTURE_KEYS = new Set(['ajax', 'psv'])
 
-  SceneLoader.ImportMesh('', '/', modelFile, scene, (meshes) => {
+  SceneLoader.ImportMesh('', '/', 'Poppetje.glb', scene, (meshes) => {
     const charRoot = meshes[0]
     charRoot.position.set(0, 0, 5)
     charRoot.rotationQuaternion = Quaternion.RotationYawPitchRoll(0, 0, 0)
@@ -726,12 +724,23 @@ function initScene(canvas, {
     meshes.forEach(m => { shadowGen.addShadowCaster(m); m.receiveShadows = true })
 
     // Apply clothing colors (wardrobe)
-    if (modelFile === 'Poppetje.glb') {
+    {
       meshes.forEach(m => {
         if (!CLOTHING_NAMES.has(m.name)) return
         const itemKey  = m.name.toLowerCase()
         const colorKey = itemKey === 'shirt' ? shirtKey : wearing?.[itemKey]
         if (!colorKey) { m.setEnabled(false); return }
+
+        // Ajax / PSV — apply shirt texture instead of color
+        if (itemKey === 'shirt' && SHIRT_TEXTURE_KEYS.has(colorKey)) {
+          const mat = new StandardMaterial(colorKey + '_shirt', scene)
+          mat.diffuseTexture = new Texture(`/shirt_${colorKey}.png`, scene)
+          mat.specularColor = Color3.Black()
+          m.material = mat
+          m.setEnabled(true)
+          return
+        }
+
         const col = SHIRT_COLORS.find(c => c.key === colorKey)
         if (col) {
           m.setEnabled(true)
