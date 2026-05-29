@@ -3,6 +3,7 @@ import FootballGame from './games/FootballGame'
 import TowerDefenseGame from './games/TowerDefenseGame'
 import MiniGolfGame from './games/minigolf/MiniGolfGame'
 import JetpackGame from './games/JetpackGame'
+import IepOefenen from './games/IepOefenen'
 import './game.css'
 
 const YEARS = [
@@ -22,7 +23,7 @@ const SUBJECTS = [
 
 // Which (year, subject) combos have a real game — rest shows placeholder
 const GAMES = {
-  '7-rekenen': 'football',
+  '7-rekenen': 'iep',
 }
 
 const FREE_GAMES = [
@@ -93,6 +94,10 @@ export default function GameMenu({ onBack, addCuruntie }) {
   if (year !== null && subject !== null) {
     const gameId = `${year}-${subject}`
 
+    if (GAMES[gameId] === 'iep') {
+      return <IepOefenen onBack={() => setSubject(null)} />
+    }
+
     if (GAMES[gameId] === 'football') {
       return (
         <FootballGame
@@ -146,7 +151,11 @@ export default function GameMenu({ onBack, addCuruntie }) {
                 <span className="subject-emoji">{s.emoji}</span>
                 <span className="subject-label">{s.label}</span>
                 <span className="subject-tag">
-                  {hasGame ? '▶ Spelen' : 'Groep ' + year}
+                  {GAMES[`${year}-${s.key}`] === 'iep'
+                    ? '🚀 IEP Oefenen'
+                    : hasGame
+                    ? '▶ Spelen'
+                    : 'Groep ' + year}
                 </span>
               </button>
             )

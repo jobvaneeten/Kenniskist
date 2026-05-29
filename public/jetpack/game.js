@@ -1883,6 +1883,7 @@ function endGame() {
 
 function showGameOver() {
   gameState = 'gameover';
+  try { window.parent.postMessage({ type: 'jetpack-gameover', distance: distance }, '*'); } catch(e) {}
 
   // Sla munten op met multiplier
   const multi  = window._coinMulti || (window._coinDouble ? 2 : 1);

@@ -1,0 +1,450 @@
+/* ===== IEP Oefenen – Ruimte Thema ===== */
+
+.iep-wrap {
+  min-height: 100vh;
+  background: radial-gradient(ellipse at 60% 40%, #1a1050 0%, #0b0730 55%, #000 100%);
+  color: #fff;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ---- Stars background ---- */
+.iep-stars {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+.iep-star {
+  position: absolute;
+  border-radius: 50%;
+  background: #fff;
+  opacity: 0;
+  animation: iep-twinkle var(--dur, 3s) var(--delay, 0s) infinite ease-in-out;
+}
+@keyframes iep-twinkle {
+  0%, 100% { opacity: 0; }
+  50%       { opacity: var(--op, 0.8); }
+}
+
+/* ---- Back button ---- */
+.iep-back {
+  position: fixed;
+  top: 14px;
+  left: 14px;
+  z-index: 200;
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 10px;
+  padding: 7px 16px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  transition: background 0.18s;
+}
+.iep-back:hover { background: rgba(255,255,255,0.22); }
+
+/* ---- Level select screen ---- */
+.iep-level-screen {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  gap: 24px;
+  padding: 32px 16px;
+  text-align: center;
+}
+.iep-level-screen h1 {
+  font-size: clamp(2rem, 6vw, 3.2rem);
+  font-weight: 900;
+  background: linear-gradient(135deg, #a78bfa, #60a5fa, #34d399);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0;
+}
+.iep-level-screen .iep-rocket-icon {
+  font-size: 5rem;
+  filter: drop-shadow(0 0 24px #a78bfa88);
+  animation: iep-float 3s ease-in-out infinite;
+}
+@keyframes iep-float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-14px); }
+}
+.iep-level-screen p {
+  color: #c4b5fd;
+  font-size: 1.1rem;
+  margin: 0;
+}
+.iep-level-cards {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 8px;
+}
+.iep-level-card {
+  background: linear-gradient(135deg, rgba(167,139,250,0.18), rgba(96,165,250,0.14));
+  border: 2px solid rgba(167,139,250,0.4);
+  border-radius: 20px;
+  padding: 28px 36px;
+  cursor: pointer;
+  transition: transform 0.2s, border-color 0.2s, background 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  min-width: 140px;
+}
+.iep-level-card:hover {
+  transform: translateY(-6px) scale(1.04);
+  border-color: #a78bfa;
+  background: linear-gradient(135deg, rgba(167,139,250,0.32), rgba(96,165,250,0.24));
+}
+.iep-level-card .iep-lc-emoji { font-size: 2.4rem; }
+.iep-level-card .iep-lc-title { font-size: 1.2rem; font-weight: 800; color: #e9d5ff; }
+.iep-level-card .iep-lc-desc  { font-size: 0.85rem; color: #a78bfa; }
+
+/* ---- Question screen ---- */
+.iep-question-screen {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 760px;
+  padding: 90px 20px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Progress bar */
+.iep-progress-bar-wrap {
+  background: rgba(255,255,255,0.1);
+  border-radius: 99px;
+  height: 8px;
+  overflow: hidden;
+}
+.iep-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #a78bfa, #60a5fa);
+  border-radius: 99px;
+  transition: width 0.4s ease;
+}
+.iep-progress-label {
+  font-size: 0.8rem;
+  color: #a78bfa;
+  text-align: right;
+  margin-top: 4px;
+}
+
+/* Streak badge */
+.iep-streak {
+  text-align: center;
+  font-size: 1rem;
+  color: #fbbf24;
+  font-weight: 700;
+  min-height: 24px;
+}
+
+/* Card */
+.iep-card {
+  background: rgba(255,255,255,0.06);
+  border: 1.5px solid rgba(167,139,250,0.25);
+  border-radius: 20px;
+  padding: 28px 28px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.iep-context {
+  background: rgba(96,165,250,0.1);
+  border-left: 3px solid #60a5fa;
+  border-radius: 0 10px 10px 0;
+  padding: 14px 16px;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #bfdbfe;
+}
+.iep-context img {
+  max-width: 100%;
+  border-radius: 10px;
+  margin-top: 10px;
+  display: block;
+}
+
+.iep-question-text {
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1.5;
+  color: #f0e6ff;
+}
+
+/* MC options */
+.iep-mc-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+.iep-mc-btn {
+  background: rgba(167,139,250,0.14);
+  border: 2px solid rgba(167,139,250,0.3);
+  border-radius: 12px;
+  color: #e9d5ff;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 14px 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+}
+.iep-mc-btn:hover:not(:disabled) {
+  background: rgba(167,139,250,0.28);
+  border-color: #a78bfa;
+  transform: translateY(-2px);
+}
+.iep-mc-btn.correct {
+  background: rgba(52,211,153,0.25);
+  border-color: #34d399;
+  color: #6ee7b7;
+}
+.iep-mc-btn.wrong {
+  background: rgba(248,113,113,0.2);
+  border-color: #f87171;
+  color: #fca5a5;
+}
+
+/* Open answer */
+.iep-open-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.iep-open-input {
+  flex: 1;
+  min-width: 140px;
+  background: rgba(255,255,255,0.08);
+  border: 2px solid rgba(167,139,250,0.35);
+  border-radius: 12px;
+  color: #fff;
+  font-size: 1.1rem;
+  padding: 12px 16px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.iep-open-input:focus {
+  border-color: #a78bfa;
+  background: rgba(167,139,250,0.12);
+}
+.iep-check-btn {
+  background: linear-gradient(135deg, #7c3aed, #4f46e5);
+  border: none;
+  border-radius: 12px;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  padding: 12px 22px;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.15s;
+}
+.iep-check-btn:hover { opacity: 0.88; transform: translateY(-2px); }
+
+/* Feedback */
+.iep-feedback {
+  border-radius: 14px;
+  padding: 14px 18px;
+  font-size: 1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: iep-pop 0.2s ease;
+}
+@keyframes iep-pop {
+  from { transform: scale(0.94); opacity: 0; }
+  to   { transform: scale(1);    opacity: 1; }
+}
+.iep-feedback.good {
+  background: rgba(52,211,153,0.18);
+  border: 1.5px solid #34d399;
+  color: #6ee7b7;
+}
+.iep-feedback.bad {
+  background: rgba(248,113,113,0.15);
+  border: 1.5px solid #f87171;
+  color: #fca5a5;
+}
+.iep-feedback .iep-next-btn {
+  margin-left: auto;
+  background: rgba(52,211,153,0.25);
+  border: 1.5px solid #34d399;
+  color: #6ee7b7;
+  border-radius: 10px;
+  padding: 8px 16px;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.15s;
+}
+.iep-feedback .iep-next-btn:hover { background: rgba(52,211,153,0.38); }
+
+/* ---- Reward screen (Jetpack verdienen) ---- */
+.iep-reward-screen {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  gap: 20px;
+  text-align: center;
+  padding: 32px 20px;
+}
+.iep-reward-screen .iep-reward-icon {
+  font-size: 7rem;
+  animation: iep-rocket-launch 1.2s ease-in-out infinite alternate;
+  filter: drop-shadow(0 0 30px #fbbf24aa);
+}
+@keyframes iep-rocket-launch {
+  from { transform: translateY(8px) scale(0.97); }
+  to   { transform: translateY(-16px) scale(1.05); }
+}
+.iep-reward-screen h2 {
+  font-size: 2.2rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, #fbbf24, #f97316);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0;
+}
+.iep-reward-screen p { color: #c4b5fd; font-size: 1.1rem; margin: 0; }
+.iep-launch-btn {
+  background: linear-gradient(135deg, #f59e0b, #ef4444);
+  border: none;
+  border-radius: 16px;
+  color: #fff;
+  font-size: 1.2rem;
+  font-weight: 800;
+  padding: 16px 36px;
+  cursor: pointer;
+  transition: transform 0.15s, opacity 0.15s;
+  box-shadow: 0 0 28px #f59e0b66;
+  animation: iep-pulse-btn 2s ease-in-out infinite;
+}
+@keyframes iep-pulse-btn {
+  0%, 100% { box-shadow: 0 0 28px #f59e0b66; }
+  50%       { box-shadow: 0 0 48px #f59e0baa; }
+}
+.iep-launch-btn:hover { opacity: 0.9; transform: scale(1.04); }
+
+/* ---- Jetpack embed ---- */
+.iep-jetpack-wrap {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: #000;
+  display: flex;
+  flex-direction: column;
+}
+.iep-jetpack-wrap iframe {
+  flex: 1;
+  width: 100%;
+  border: none;
+}
+.iep-jetpack-hint {
+  text-align: center;
+  color: rgba(255,255,255,0.4);
+  font-size: 0.8rem;
+  padding: 6px;
+  background: #000;
+}
+
+/* ---- Done screen ---- */
+.iep-done-screen {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  gap: 20px;
+  text-align: center;
+  padding: 32px 20px;
+}
+.iep-done-screen h2 {
+  font-size: 2.5rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, #34d399, #60a5fa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0;
+}
+.iep-done-screen p { color: #a78bfa; font-size: 1.1rem; }
+.iep-restart-btn, .iep-menu-btn {
+  background: linear-gradient(135deg, #7c3aed, #4f46e5);
+  border: none;
+  border-radius: 14px;
+  color: #fff;
+  font-size: 1.05rem;
+  font-weight: 700;
+  padding: 14px 30px;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.15s;
+}
+.iep-restart-btn:hover, .iep-menu-btn:hover { opacity: 0.88; transform: translateY(-2px); }
+.iep-menu-btn { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25); }
+
+/* Honor check panel for open questions */
+.iep-honor-check {
+  background: rgba(251,191,36,0.1);
+  border: 1.5px solid #fbbf24;
+  border-radius: 16px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.iep-honor-check p {
+  margin: 0;
+  color: #fde68a;
+  font-size: 1rem;
+}
+.iep-honor-check strong { color: #fbbf24; }
+.iep-honor-row {
+  display: flex;
+  gap: 10px;
+}
+.iep-honor-yes, .iep-honor-no {
+  flex: 1;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  padding: 12px;
+  cursor: pointer;
+  transition: transform 0.15s, opacity 0.15s;
+}
+.iep-honor-yes {
+  background: linear-gradient(135deg, #34d399, #059669);
+  color: #fff;
+}
+.iep-honor-no {
+  background: linear-gradient(135deg, #f87171, #dc2626);
+  color: #fff;
+}
+.iep-honor-yes:hover, .iep-honor-no:hover { opacity: 0.88; transform: scale(1.03); }
