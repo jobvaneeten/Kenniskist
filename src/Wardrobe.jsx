@@ -12,8 +12,8 @@ import './wardrobe.css'
 
 const SHIRT_TEXTURES = []
 const SHIRT_MODELS = [
-  { key: 'ajax', label: 'Ajax', file: '/poppetjemetajaxshirt.glb', preview: '/logo_ajax.svg' },
-  { key: 'psv',  label: 'PSV',  file: '/poppetjemetpsvshirt.glb',  preview: '/logo_psv.svg' },
+  { key: 'ajax', label: 'Ajax', file: '/ajaxshirt.glb', preview: '/logo_ajax.svg' },
+  { key: 'psv',  label: 'PSV',  file: '/psvshirt.glb',  preview: '/logo_psv.svg' },
 ]
 const CLOTHING_MESHES = ['Shirt', 'Broek', 'Sokken', 'Schoenen']
 const FACE_MESH_NAMES = new Set([
