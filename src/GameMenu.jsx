@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import FootballGame from './games/FootballGame'
 import TowerDefenseGame from './games/TowerDefenseGame'
-import MiniGolfGame from './games/minigolf/MiniGolfGame'
+
 import JetpackGame from './games/JetpackGame'
 import IepOefenen from './games/IepOefenen'
 import './game.css'
@@ -29,7 +29,6 @@ const GAMES = {
 const FREE_GAMES = [
   { key: 'football',       emoji: '⚽', name: 'WK Voetbal',    desc: 'Alle groepen' },
   { key: 'towerdefense',   emoji: '🏰', name: 'Tower Defense', desc: 'Alle groepen' },
-  { key: 'minigolf',       emoji: '⛳', name: 'Mini Golf',      desc: '2 spelers of vs AI' },
   { key: 'jetpack',        emoji: '🚀', name: 'Jetpack',        desc: 'Vlieg zo ver mogelijk!' },
 ]
 
@@ -44,12 +43,7 @@ export default function GameMenu({ onBack, addCuruntie }) {
     return <TowerDefenseGame onBack={onBack} />
   }
 
-  // Mini golf (mode selection handled inside the component)
-  if (directGame === 'minigolf') {
-    return <MiniGolfGame onBack={onBack} />
-  }
-
-  if (directGame === 'jetpack') {
+if (directGame === 'jetpack') {
     return <JetpackGame onBack={onBack} />
   }
 
