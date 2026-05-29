@@ -300,12 +300,15 @@ export default function IepOefenen({ onBack }) {
   const handleJetpackDone = useCallback(() => {
     const nextIndex = qIndex + 1
     if (nextIndex >= order.length) {
-      setScreen('done')
+      // Reshuffle and loop infinitely
+      setOrder(shuffleArray(questions.map((_, i) => i)))
+      setQIndex(0)
+      setScreen('questions')
     } else {
       setQIndex(nextIndex)
       setScreen('questions')
     }
-  }, [qIndex, order.length])
+  }, [qIndex, order.length, questions])
 
   function handleRestart() {
     if (level) startLevel(level)
