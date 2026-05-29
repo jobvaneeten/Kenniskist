@@ -146,13 +146,17 @@ export default function Wardrobe({ onBack, onPlay3D, unlockedColors = {} }) {
     const modelItem   = SHIRT_MODELS.find(t => t.key === next)
 
     if (modelItem && sceneRef.current) {
-      m.setEnabled(false)
-      SceneLoader.ImportMesh('', '/', modelItem.file.replace(/^\//, ''), sceneRef.current, (meshes) => {
-        // Reassign skeleton so the shirt deforms with Poppetje's animations
-        if (skeletonRef.current) {
-          meshes.forEach(em => { if (em.skeleton) em.skeleton = skeletonRef.current })
+      // Material-transplant: load the GLB, steal the Shirt material, then dispose the GLB.
+      // This keeps Poppetje's full body intact and avoids duplicate meshes.
+      SceneLoader.ImportMesh('', '/', modelItem.file.replace(/^\//, ''), sceneRef.current, (loadedMeshes) => {
+        const donorShirt = loadedMeshes.find(lm => lm.name === 'Shirt')
+        if (donorShirt && m) {
+          m.material = donorShirt.material   // borrow the Ajax/PSV shirt material
+          m.setEnabled(true)
         }
-        extraMeshesRef.current = meshes
+        // Dispose the imported GLB – mesh.dispose() keeps the material alive
+        loadedMeshes.forEach(lm => lm.dispose())
+        extraMeshesRef.current = []
       })
     } else if (textureItem && sceneRef.current) {
       const scene = sceneRef.current
@@ -290,16 +294,15 @@ export default function Wardrobe({ onBack, onPlay3D, unlockedColors = {} }) {
         const modelItem = SHIRT_MODELS.find(t => t.key === shirtColor)
         const m = meshesRef.current.shirt
         if (modelItem) {
-          // Apply shirt texture to the existing Poppetje Shirt mesh
-          // (loading a separate GLB hides the body — texture is the correct approach)
-          if (m) {
-            const mat = new StandardMaterial(modelItem.key + '_shirt', scene)
-            const tex = new Texture(`/shirt_${modelItem.key}.png`, scene)
-            mat.diffuseTexture = tex
-            mat.specularColor = Color3.Black()
-            m.material = mat
-            m.setEnabled(true)
-          }
+          // Material-transplant: load the GLB, steal the Shirt material, dispose the GLB.
+          SceneLoader.ImportMesh('', '/', modelItem.file.replace(/^\//, ''), scene, (loadedMeshes) => {
+            const donorShirt = loadedMeshes.find(lm => lm.name === 'Shirt')
+            if (donorShirt && m) {
+              m.material = donorShirt.material
+              m.setEnabled(true)
+            }
+            loadedMeshes.forEach(lm => lm.dispose())
+          })
         } else if (colorItem && m) {
           applyColor(m, colorItem.hex)
           m.setEnabled(true)
