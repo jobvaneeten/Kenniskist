@@ -1074,7 +1074,7 @@ function GameOver({ scoreA, scoreB, onRestart, onBack }) {
             ⚽ Opnieuw spelen
           </button>
           <button className="fb3d-gameover-btn fb3d-gameover-back" onClick={onBack}>
-            ← Kledingkast
+            ← Menu
           </button>
         </div>
       </div>
@@ -1139,7 +1139,7 @@ export default function FootballScene3D({ onBack, onPlay3v3 }) {
 
   if (!team) return (
     <div className="fb3d-outer">
-      <button className="fb3d-back" onClick={onBack}>← Kledingkast</button>
+      <button className="fb3d-back" onClick={onBack}>← Menu</button>
       {onPlay3v3 && (
         <button className="fb3d-3v3-btn fb3d-3v3-intro" onClick={onPlay3v3}>
           👥 3 vs 3 Spelen
@@ -1163,7 +1163,7 @@ export default function FootballScene3D({ onBack, onPlay3v3 }) {
     <div className="fb3d-outer">
       <canvas ref={canvasRef} className="fb3d-canvas" />
 
-      <button className="fb3d-back" onClick={onBack}>← Kledingkast</button>
+      <button className="fb3d-back" onClick={onBack}>← Menu</button>
 
       {/* Score + timer bar */}
       <div className="fb3d-score">

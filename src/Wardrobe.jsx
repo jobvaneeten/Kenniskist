@@ -442,7 +442,7 @@ export default function Wardrobe({ onBack, onPlay3D, unlockedColors = {} }) {
 
   return (
     <div className="wardrobe-screen">
-      <button className="back-btn" onClick={onBack}>← Terug</button>
+      <button className="back-btn" onClick={onBack}>← Menu</button>
 
       {/* ── Left: clothing ── */}
       <aside className="clothing-panel">

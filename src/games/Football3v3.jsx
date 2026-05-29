@@ -650,7 +650,7 @@ export default function Football3v3({ onBack }) {
   // ── Intro screen ────────────────────────────────────────────────────────
   if (phase === 'intro') return (
     <div className="v3-outer v3-intro">
-      <button className="v3-back" onClick={onBack}>← Terug</button>
+      <button className="v3-back" onClick={onBack}>← Menu</button>
       <div className="v3-intro-box">
         <div className="v3-intro-title">⚽ 3 vs 3 Voetbal</div>
         <div className="v3-intro-sub">Rocket League stijl</div>
@@ -682,7 +682,7 @@ export default function Football3v3({ onBack }) {
           <button className="v3-start-btn" onClick={() => { setLoading(true); setScoreBlue(0); setScoreRed(0); setGoalTeam(null); setWinner(null); setPhase('playing') }}>
             🔄 Opnieuw
           </button>
-          <button className="v3-back-btn" onClick={onBack}>← Terug</button>
+          <button className="v3-back-btn" onClick={onBack}>← Menu</button>
         </div>
       </div>
     </div>
@@ -723,7 +723,7 @@ export default function Football3v3({ onBack }) {
         </div>
       )}
 
-      <button className="v3-back" onClick={onBack}>← Terug</button>
+      <button className="v3-back" onClick={onBack}>← Menu</button>
 
       {loading && (
         <div className="v3-loading">

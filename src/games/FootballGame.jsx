@@ -886,7 +886,7 @@ export default function FootballGame({ year, onBack, addCuruntie, noQuiz = false
 
   if (phase === 'country_select') return (
     <div className="fb-screen">
-      <button className="back-btn" onClick={onBack}>← Terug</button>
+      <button className="back-btn" onClick={onBack}>← Menu</button>
       <div className="wk-header">
         <span className="wk-trophy">{twoPlayer ? '🎮' : '🏆'}</span>
         <h1 className="wk-title">{twoPlayer ? '2 Spelers' : 'WK 2026'}</h1>
@@ -1015,7 +1015,7 @@ export default function FootballGame({ year, onBack, addCuruntie, noQuiz = false
     }
     return (
       <div className="fb-screen" style={{ gap: 0, paddingTop: 56 }}>
-        <button className="back-btn" style={{ position:'absolute', top:14, left:14, zIndex:50 }} onClick={leaveGame}>← Terug</button>
+        <button className="back-btn" style={{ position:'absolute', top:14, left:14, zIndex:50 }} onClick={onBack}>← Menu</button>
         <div className="fb-hud">
           <div style={{ display:'flex', alignItems:'center', gap:10, background:`${pl.c1}1a`, padding:'7px 16px', borderRadius:14, border:`1.5px solid ${pl.c1}50` }}>
             <span style={{ fontSize:'1.4rem', lineHeight:1 }}>{pl.flag}</span>

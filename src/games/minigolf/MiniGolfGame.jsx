@@ -124,7 +124,7 @@ function EndScreen({ players, onBack }) {
 function ModeSelect({ onSelect, onBack }) {
   return (
     <div className="mg-menu">
-      <button className="mg-back-btn" onClick={onBack}>← Terug</button>
+      <button className="mg-back-btn" onClick={onBack}>← Menu</button>
       <div className="mg-menu-logo">⛳</div>
       <h1 className="mg-menu-title">Mini Golf</h1>
       <p className="mg-menu-sub">9 holes • Golf Battle stijl</p>
@@ -236,6 +236,7 @@ export default function MiniGolfGame({ onBack }) {
   return (
     <div className="mg-wrapper">
       <canvas ref={canvasRef} className="mg-canvas" />
+      <button className="mg-back-btn" onClick={handleBack}>← Menu</button>
 
       {hud.players.length > 0 && (
         <HUD

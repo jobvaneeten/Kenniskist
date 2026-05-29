@@ -117,11 +117,11 @@ export default function App() {
   )
 
   if (screen === 'football3d') return (
-    <FootballScene3D onBack={() => setScreen('wardrobe')} onPlay3v3={() => setScreen('football3v3')} />
+    <FootballScene3D onBack={() => setScreen('menu')} onPlay3v3={() => setScreen('football3v3')} />
   )
 
   if (screen === 'football3v3') return (
-    <Football3v3 onBack={() => setScreen('football3d')} />
+    <Football3v3 onBack={() => setScreen('menu')} />
   )
 
   if (screen === 'shop') return (

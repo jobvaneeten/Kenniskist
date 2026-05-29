@@ -11,7 +11,7 @@ export default function JetpackGame({ onBack }) {
           fontSize: 14, fontFamily: 'inherit'
         }}
       >
-        ← Terug
+        ← Menu
       </button>
       <iframe
         src="/jetpack/"

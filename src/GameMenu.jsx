@@ -40,16 +40,16 @@ export default function GameMenu({ onBack, addCuruntie }) {
 
   // Tower defense (no mode selection needed)
   if (directGame === 'towerdefense') {
-    return <TowerDefenseGame onBack={() => setDirectGame(null)} />
+    return <TowerDefenseGame onBack={onBack} />
   }
 
   // Mini golf (mode selection handled inside the component)
   if (directGame === 'minigolf') {
-    return <MiniGolfGame onBack={() => setDirectGame(null)} />
+    return <MiniGolfGame onBack={onBack} />
   }
 
   if (directGame === 'jetpack') {
-    return <JetpackGame onBack={() => setDirectGame(null)} />
+    return <JetpackGame onBack={onBack} />
   }
 
   // Direct game (no quiz)
@@ -58,7 +58,7 @@ export default function GameMenu({ onBack, addCuruntie }) {
       <FootballGame
         noQuiz
         twoPlayer={gameMode === '2player'}
-        onBack={() => { setGameMode(null); setDirectGame(null) }}
+        onBack={onBack}
         addCuruntie={addCuruntie}
       />
     )
@@ -67,7 +67,7 @@ export default function GameMenu({ onBack, addCuruntie }) {
   if (directGame === 'football') {
     return (
       <div className="game-screen game-screen-center">
-        <button className="back-btn" onClick={() => setDirectGame(null)}>← Terug</button>
+        <button className="back-btn" onClick={() => setDirectGame(null)}>← Menu</button>
         <div className="game-header">
           <span className="game-header-icon">⚽</span>
           <h1 className="game-header-title">WK Voetbal</h1>
@@ -97,7 +97,7 @@ export default function GameMenu({ onBack, addCuruntie }) {
       return (
         <FootballGame
           year={year}
-          onBack={() => setSubject(null)}
+          onBack={onBack}
           addCuruntie={addCuruntie}
         />
       )
@@ -107,7 +107,7 @@ export default function GameMenu({ onBack, addCuruntie }) {
     const s = SUBJECTS.find(s => s.key === subject)
     return (
       <div className="game-screen game-screen-center">
-        <button className="back-btn" onClick={() => setSubject(null)}>← Terug</button>
+        <button className="back-btn" onClick={() => setSubject(null)}>← Menu</button>
         <div className="game-placeholder">
           <span className="gp-emoji">{s.emoji}</span>
           <h2 className="gp-title" style={{ color: s.color }}>{s.label}</h2>
@@ -127,7 +127,7 @@ export default function GameMenu({ onBack, addCuruntie }) {
     const y = YEARS.find(y => y.num === year)
     return (
       <div className="game-screen">
-        <button className="back-btn" onClick={() => setYear(null)}>← Terug</button>
+        <button className="back-btn" onClick={() => setYear(null)}>← Menu</button>
         <div className="game-header">
           <span className="game-header-icon" style={{ color: y.color }}>📚</span>
           <h1 className="game-header-title">Groep {year}</h1>
@@ -159,7 +159,7 @@ export default function GameMenu({ onBack, addCuruntie }) {
   // Year selection
   return (
     <div className="game-screen">
-      <button className="back-btn" onClick={onBack}>← Terug</button>
+      <button className="back-btn" onClick={onBack}>← Menu</button>
       <div className="game-header">
         <span className="game-header-icon">🎮</span>
         <h1 className="game-header-title">Games</h1>
