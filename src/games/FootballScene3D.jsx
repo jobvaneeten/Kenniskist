@@ -12,6 +12,27 @@ import '@babylonjs/loaders/glTF'
 import { SHIRT_COLORS } from '../data'
 import './football3d.css'
 
+// ── Remap shirt bone indices so they match Poppetje's skeleton ──────
+// GLB skeletons share bone names but can have different bone order.
+// Simply swapping mesh.skeleton leaves stale indices → broken deform.
+// This function rewrites the matricesIndices vertex buffer then attaches.
+function remapAndAttach(mesh, srcSkel, dstSkel) {
+  const dstMap = {}
+  dstSkel.bones.forEach((b, i) => { dstMap[b.name] = i })
+  const remap = srcSkel.bones.map(b => dstMap[b.name] ?? 0)
+  ;['matricesIndices', 'matricesIndicesExtra'].forEach(kind => {
+    const data = mesh.getVerticesData(kind)
+    if (!data) return
+    const out = new Float32Array(data.length)
+    for (let i = 0; i < data.length; i++) {
+      const idx = Math.round(data[i])
+      out[i] = (idx >= 0 && idx < remap.length) ? remap[idx] : 0
+    }
+    mesh.updateVerticesData(kind, out)
+  })
+  mesh.skeleton = dstSkel
+}
+
 // ── Shared bone list ───────────────────────────────────────────────
 const RETARGET_BONES = new Set([
   'Root','Hips','Spine','Spine1','Neck','Head',
@@ -763,9 +784,12 @@ function initScene(canvas, {
             pendingShirtGLB = true
             const glbFile = colorKey === 'ajax' ? 'ajaxshirt.glb' : 'psvshirt.glb'
             const playerSkel = scene.skeletons[0] ?? null
-            SceneLoader.ImportMesh('', '/', glbFile, scene, (shirtMeshes) => {
-              if (playerSkel) shirtMeshes.forEach(sm => { if (sm.skeleton) sm.skeleton = playerSkel })
-              // Keep ALL meshes — mesh is named 'body_1.058', not 'Shirt'
+            SceneLoader.ImportMesh('', '/', glbFile, scene, (shirtMeshes, _ps, srcSkels) => {
+              const srcSkel = srcSkels?.[0]
+              if (srcSkel && playerSkel) {
+                shirtMeshes.forEach(sm => { if (sm.skeleton) remapAndAttach(sm, srcSkel, playerSkel) })
+                srcSkel.dispose()
+              }
             })
           }
           return

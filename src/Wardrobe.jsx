@@ -57,6 +57,24 @@ const EMOTE_META = {
   verloren:   { emoji: '😢', label: 'Verloren'   },
 }
 
+// ── Remap shirt bone indices to match Poppetje's skeleton ─────────
+function remapAndAttach(mesh, srcSkel, dstSkel) {
+  const dstMap = {}
+  dstSkel.bones.forEach((b, i) => { dstMap[b.name] = i })
+  const remap = srcSkel.bones.map(b => dstMap[b.name] ?? 0)
+  ;['matricesIndices', 'matricesIndicesExtra'].forEach(kind => {
+    const data = mesh.getVerticesData(kind)
+    if (!data) return
+    const out = new Float32Array(data.length)
+    for (let i = 0; i < data.length; i++) {
+      const idx = Math.round(data[i])
+      out[i] = (idx >= 0 && idx < remap.length) ? remap[idx] : 0
+    }
+    mesh.updateVerticesData(kind, out)
+  })
+  mesh.skeleton = dstSkel
+}
+
 // ── Material helpers ──────────────────────────────────────────────
 function walkMeshes(node, fn) {
   fn(node)
@@ -147,11 +165,13 @@ export default function Wardrobe({ onBack, onPlay3D, unlockedColors = {} }) {
 
     if (modelItem && sceneRef.current) {
       m.setEnabled(false)  // hide Poppetje's shirt slot to avoid z-fighting
-      SceneLoader.ImportMesh('', '/', modelItem.file.replace(/^\//, ''), sceneRef.current, (loadedMeshes) => {
-        const skel = skeletonRef.current
-        // Re-assign skeleton so the GLB shirt deforms with Poppetje's animations
-        if (skel) loadedMeshes.forEach(em => { if (em.skeleton) em.skeleton = skel })
-        // Keep ALL meshes — the GLB is the shirt itself, nothing to filter out
+      SceneLoader.ImportMesh('', '/', modelItem.file.replace(/^\//, ''), sceneRef.current, (loadedMeshes, _ps, srcSkels) => {
+        const srcSkel = srcSkels?.[0]
+        const dstSkel = skeletonRef.current
+        if (srcSkel && dstSkel) {
+          loadedMeshes.forEach(em => { if (em.skeleton) remapAndAttach(em, srcSkel, dstSkel) })
+          srcSkel.dispose()
+        }
         extraMeshesRef.current = loadedMeshes
       })
     } else if (textureItem && sceneRef.current) {
@@ -291,9 +311,13 @@ export default function Wardrobe({ onBack, onPlay3D, unlockedColors = {} }) {
         const m = meshesRef.current.shirt
         if (modelItem) {
           if (m) m.setEnabled(false)  // hide Poppetje's shirt slot
-          SceneLoader.ImportMesh('', '/', modelItem.file.replace(/^\//, ''), scene, (loadedMeshes) => {
-            const skel = skeletonRef.current
-            if (skel) loadedMeshes.forEach(em => { if (em.skeleton) em.skeleton = skel })
+          SceneLoader.ImportMesh('', '/', modelItem.file.replace(/^\//, ''), scene, (loadedMeshes, _ps, srcSkels) => {
+            const srcSkel = srcSkels?.[0]
+            const dstSkel = skeletonRef.current
+            if (srcSkel && dstSkel) {
+              loadedMeshes.forEach(em => { if (em.skeleton) remapAndAttach(em, srcSkel, dstSkel) })
+              srcSkel.dispose()
+            }
             extraMeshesRef.current = loadedMeshes
           })
         } else if (colorItem && m) {
