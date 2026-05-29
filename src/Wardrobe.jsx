@@ -146,20 +146,13 @@ export default function Wardrobe({ onBack, onPlay3D, unlockedColors = {} }) {
     const modelItem   = SHIRT_MODELS.find(t => t.key === next)
 
     if (modelItem && sceneRef.current) {
-      // Load the GLB just to grab the shirt material, then apply it to
-      // Poppetje's own Shirt mesh (correct skin weights, no skeleton issues).
-      // Dispose all GLB meshes afterwards — we only needed the material.
-      const targetMesh = m
+      m.setEnabled(false)  // hide Poppetje's shirt slot to avoid z-fighting
       SceneLoader.ImportMesh('', '/', modelItem.file.replace(/^\//, ''), sceneRef.current, (loadedMeshes) => {
-        const glbShirt = loadedMeshes.find(lm => lm.name === 'Shirt')
-          ?? loadedMeshes.find(lm => lm.name?.toLowerCase().includes('shirt'))
-          ?? loadedMeshes.find(lm => lm.material)
-        if (glbShirt?.material && targetMesh) {
-          targetMesh.material = glbShirt.material   // baked Ajax/PSV material
-          targetMesh.setEnabled(true)
-        }
-        // Dispose all GLB meshes (materials survive mesh disposal in Babylon)
-        loadedMeshes.forEach(lm => { try { lm.dispose() } catch {} })
+        const skel = skeletonRef.current
+        // Re-assign skeleton so the GLB shirt deforms with Poppetje's animations
+        if (skel) loadedMeshes.forEach(em => { if (em.skeleton) em.skeleton = skel })
+        // Keep ALL meshes — the GLB is the shirt itself, nothing to filter out
+        extraMeshesRef.current = loadedMeshes
       })
     } else if (textureItem && sceneRef.current) {
       const scene = sceneRef.current
@@ -297,18 +290,11 @@ export default function Wardrobe({ onBack, onPlay3D, unlockedColors = {} }) {
         const modelItem = SHIRT_MODELS.find(t => t.key === shirtColor)
         const m = meshesRef.current.shirt
         if (modelItem) {
-          // Load GLB just to grab the baked shirt material, apply it to
-          // Poppetje's own Shirt mesh, then dispose the GLB meshes.
-          const targetMesh = m
+          if (m) m.setEnabled(false)  // hide Poppetje's shirt slot
           SceneLoader.ImportMesh('', '/', modelItem.file.replace(/^\//, ''), scene, (loadedMeshes) => {
-            const glbShirt = loadedMeshes.find(lm => lm.name === 'Shirt')
-              ?? loadedMeshes.find(lm => lm.name?.toLowerCase().includes('shirt'))
-              ?? loadedMeshes.find(lm => lm.material)
-            if (glbShirt?.material && targetMesh) {
-              targetMesh.material = glbShirt.material
-              targetMesh.setEnabled(true)
-            }
-            loadedMeshes.forEach(lm => { try { lm.dispose() } catch {} })
+            const skel = skeletonRef.current
+            if (skel) loadedMeshes.forEach(em => { if (em.skeleton) em.skeleton = skel })
+            extraMeshesRef.current = loadedMeshes
           })
         } else if (colorItem && m) {
           applyColor(m, colorItem.hex)
