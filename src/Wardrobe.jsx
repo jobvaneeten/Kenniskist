@@ -106,6 +106,7 @@ export default function Wardrobe({ onBack, onPlay3D, unlockedColors = {} }) {
   const skeletonRef    = useRef(null)
   const meshesRef      = useRef({})
   const extraMeshesRef = useRef([])
+  const bodyMeshesRef  = useRef([])
   const animGroupsRef  = useRef({})
   const restPoseRef    = useRef({})   // bone name → { node, rot, pos } captured at T-pose
 
@@ -129,8 +130,10 @@ export default function Wardrobe({ onBack, onPlay3D, unlockedColors = {} }) {
   }, [wearing])
 
   const clearExtraMeshes = () => {
-    extraMeshesRef.current.forEach(m => m.dispose())
+    extraMeshesRef.current.forEach(m => { try { m.dispose() } catch {} })
     extraMeshesRef.current = []
+    // Restore Poppetje's body that was hidden to avoid z-fighting with a GLB shirt
+    bodyMeshesRef.current.forEach(m => { try { m.setEnabled(true) } catch {} })
   }
 
   const pickShirt = (key) => {
@@ -146,17 +149,21 @@ export default function Wardrobe({ onBack, onPlay3D, unlockedColors = {} }) {
     const modelItem   = SHIRT_MODELS.find(t => t.key === next)
 
     if (modelItem && sceneRef.current) {
-      // Material-transplant: load the GLB, steal the Shirt material, then dispose the GLB.
-      // This keeps Poppetje's full body intact and avoids duplicate meshes.
+      // Load the GLB directly. Its material is already baked in.
+      // Hide Poppetje's body meshes so the two bodies don't z-fight.
+      bodyMeshesRef.current.forEach(bm => bm.setEnabled(false))
       SceneLoader.ImportMesh('', '/', modelItem.file.replace(/^\//, ''), sceneRef.current, (loadedMeshes) => {
-        const donorShirt = loadedMeshes.find(lm => lm.name === 'Shirt')
-        if (donorShirt && m) {
-          m.material = donorShirt.material   // borrow the Ajax/PSV shirt material
-          m.setEnabled(true)
+        if (skeletonRef.current) {
+          loadedMeshes.forEach(em => { if (em.skeleton) em.skeleton = skeletonRef.current })
         }
-        // Dispose the imported GLB – mesh.dispose() keeps the material alive
-        loadedMeshes.forEach(lm => lm.dispose())
-        extraMeshesRef.current = []
+        // Dispose face duplicates (Poppetje's face stays) and plain clothing meshes
+        const toDispose = loadedMeshes.filter(lm =>
+          FACE_MESH_NAMES.has(lm.name) || ['Broek', 'Sokken', 'Schoenen'].includes(lm.name)
+        )
+        toDispose.forEach(lm => lm.dispose())
+        extraMeshesRef.current = loadedMeshes.filter(lm =>
+          !FACE_MESH_NAMES.has(lm.name) && !['Broek', 'Sokken', 'Schoenen'].includes(lm.name)
+        )
       })
     } else if (textureItem && sceneRef.current) {
       const scene = sceneRef.current
@@ -253,13 +260,15 @@ export default function Wardrobe({ onBack, onPlay3D, unlockedColors = {} }) {
       // Store Poppetje's skeleton so extra meshes (Ajax shirt) can share it
       skeletonRef.current = scene.skeletons[0] ?? null
 
-      // Store clothing mesh refs
+      // Store clothing mesh refs + track body meshes for GLB-shirt z-fight prevention
       meshes.forEach(mesh => {
         const name = mesh.name
         const key  = name.toLowerCase()
         if (CLOTHING_MESHES.includes(name)) {
           mesh.setEnabled(false)
           meshesRef.current[key] = mesh
+        } else if (!FACE_MESH_NAMES.has(name) && mesh.getTotalVertices && mesh.getTotalVertices() > 0) {
+          bodyMeshesRef.current.push(mesh)
         }
       })
 
@@ -294,14 +303,21 @@ export default function Wardrobe({ onBack, onPlay3D, unlockedColors = {} }) {
         const modelItem = SHIRT_MODELS.find(t => t.key === shirtColor)
         const m = meshesRef.current.shirt
         if (modelItem) {
-          // Material-transplant: load the GLB, steal the Shirt material, dispose the GLB.
+          // Load the GLB directly on top of Poppetje using its built-in material.
+          // Hide Poppetje's body so the two bodies don't z-fight.
+          bodyMeshesRef.current.forEach(bm => bm.setEnabled(false))
           SceneLoader.ImportMesh('', '/', modelItem.file.replace(/^\//, ''), scene, (loadedMeshes) => {
-            const donorShirt = loadedMeshes.find(lm => lm.name === 'Shirt')
-            if (donorShirt && m) {
-              m.material = donorShirt.material
-              m.setEnabled(true)
+            if (skeletonRef.current) {
+              loadedMeshes.forEach(em => { if (em.skeleton) em.skeleton = skeletonRef.current })
             }
-            loadedMeshes.forEach(lm => lm.dispose())
+            // Dispose face duplicates (Poppetje's face stays) and plain clothing meshes
+            const toDispose = loadedMeshes.filter(lm =>
+              FACE_MESH_NAMES.has(lm.name) || ['Broek', 'Sokken', 'Schoenen'].includes(lm.name)
+            )
+            toDispose.forEach(lm => lm.dispose())
+            extraMeshesRef.current = loadedMeshes.filter(lm =>
+              !FACE_MESH_NAMES.has(lm.name) && !['Broek', 'Sokken', 'Schoenen'].includes(lm.name)
+            )
           })
         } else if (colorItem && m) {
           applyColor(m, colorItem.hex)
