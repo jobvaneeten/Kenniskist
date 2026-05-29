@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import './App.css'
-import Wardrobe       from './Wardrobe'
-import Shop           from './Shop'
-import GameMenu       from './GameMenu'
+import Wardrobe        from './Wardrobe'
+import Shop            from './Shop'
+import GameMenu        from './GameMenu'
 import FootballScene3D from './games/FootballScene3D'
+import Football3v3     from './games/Football3v3'
 
 const CODES = { pabo: 100000 }
 
@@ -116,7 +117,11 @@ export default function App() {
   )
 
   if (screen === 'football3d') return (
-    <FootballScene3D onBack={() => setScreen('wardrobe')} />
+    <FootballScene3D onBack={() => setScreen('wardrobe')} onPlay3v3={() => setScreen('football3v3')} />
+  )
+
+  if (screen === 'football3v3') return (
+    <Football3v3 onBack={() => setScreen('football3d')} />
   )
 
   if (screen === 'shop') return (

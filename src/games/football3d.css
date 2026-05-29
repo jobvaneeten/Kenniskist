@@ -233,6 +233,27 @@
 }
 .fb3d-cam-btn:hover { background: rgba(0,0,0,0.78); }
 
+/* ── 3v3 button ───────────────── */
+.fb3d-3v3-btn {
+  position: absolute;
+  top: 60px;
+  right: 16px;
+  z-index: 10;
+  background: linear-gradient(135deg, #1a72e8, #0e4fa0);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 12px rgba(26,114,232,0.45);
+  transition: transform 0.12s, box-shadow 0.12s;
+  white-space: nowrap;
+}
+.fb3d-3v3-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(26,114,232,0.6); }
+.fb3d-3v3-intro { position: static; margin: 10px auto 0; display: block; padding: 12px 28px; font-size: 1rem; }
+
 /* ── GOAL flash ───────────────── */
 .fb3d-goal-flash {
   position: absolute;

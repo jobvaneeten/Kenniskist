@@ -487,27 +487,28 @@ class Goal {
 // ── SceneBuilder ───────────────────────────────────────────────────
 class SceneBuilder {
   static buildWorld(scene, shadowGen) {
-    scene.clearColor = new Color4(0.04, 0.06, 0.14, 1)
+    // Bright stadium afternoon sky
+    scene.clearColor = new Color4(0.42, 0.65, 0.92, 1)
     scene.fogMode    = Scene.FOGMODE_EXP2
-    scene.fogColor   = new Color3(0.04, 0.06, 0.14)
-    scene.fogDensity = 0.006
+    scene.fogColor   = new Color3(0.42, 0.65, 0.92)
+    scene.fogDensity = 0.004
 
     const ambient = new HemisphericLight('hemi', new Vector3(0, 1, 0), scene)
-    ambient.intensity   = 0.25
-    ambient.groundColor = new Color3(0.02, 0.06, 0.02)
-    ambient.diffuse     = new Color3(0.5, 0.6, 0.8)
+    ambient.intensity   = 0.55
+    ambient.groundColor = new Color3(0.12, 0.20, 0.08)
+    ambient.diffuse     = new Color3(0.75, 0.82, 1.0)
 
     const lightPositions = [
-      new Vector3(-FIELD_HALF - 8,  28,  FIELD_HALF + 8),
-      new Vector3( FIELD_HALF + 8,  28,  FIELD_HALF + 8),
-      new Vector3(-FIELD_HALF - 8,  28, -FIELD_HALF - 8),
-      new Vector3( FIELD_HALF + 8,  28, -FIELD_HALF - 8),
+      new Vector3(-FIELD_HALF - 8,  32,  FIELD_HALF + 8),
+      new Vector3( FIELD_HALF + 8,  32,  FIELD_HALF + 8),
+      new Vector3(-FIELD_HALF - 8,  32, -FIELD_HALF - 8),
+      new Vector3( FIELD_HALF + 8,  32, -FIELD_HALF - 8),
     ]
     const lights = lightPositions.map((pos, i) => {
       const l = new DirectionalLight('fl' + i, new Vector3(0, 0, 0).subtract(pos).normalize(), scene)
       l.position  = pos
-      l.intensity = 1.8
-      l.diffuse   = new Color3(1.0, 0.97, 0.88)
+      l.intensity = 2.2
+      l.diffuse   = new Color3(1.0, 0.98, 0.90)
       return l
     })
 
@@ -536,11 +537,22 @@ class SceneBuilder {
     const tex = new DynamicTexture('gt', { width: W, height: H }, scene)
     const ctx = tex.getContext()
 
-    const stripes = 12
+    const stripes = 14
     for (let i = 0; i < stripes; i++) {
-      ctx.fillStyle = i % 2 === 0 ? '#3ecf3e' : '#33bb33'
+      ctx.fillStyle = i % 2 === 0 ? '#28c428' : '#22b022'
       ctx.fillRect(0, i * (H / stripes), W, H / stripes)
     }
+    // Add a slight noise/texture overlay for a real grass feel
+    ctx.globalAlpha = 0.06
+    for (let y2 = 0; y2 < H; y2 += 4) {
+      for (let x2 = 0; x2 < W; x2 += 4) {
+        if (Math.random() > 0.5) {
+          ctx.fillStyle = '#000000'
+          ctx.fillRect(x2, y2, 2, 2)
+        }
+      }
+    }
+    ctx.globalAlpha = 1.0
 
     ctx.strokeStyle = '#ffffff'
     ctx.lineWidth   = 9
@@ -576,15 +588,27 @@ class SceneBuilder {
 
   static _buildStands(scene, sg) {
     const concreteMat = new StandardMaterial('conc', scene)
-    concreteMat.diffuseColor  = new Color3(0.18, 0.18, 0.22)
+    concreteMat.diffuseColor  = new Color3(0.24, 0.24, 0.28)
     concreteMat.specularColor = Color3.Black()
 
-    const seatMat = new StandardMaterial('seat', scene)
-    seatMat.diffuseColor  = new Color3(0.08, 0.12, 0.28)
-    seatMat.emissiveColor = new Color3(0.02, 0.04, 0.12)
-    seatMat.specularColor = Color3.Black()
+    // Crowd colours — vivid mix to simulate filled stadium
+    const CROWD_COLS = [
+      new Color3(0.85, 0.10, 0.10),  // red
+      new Color3(0.95, 0.55, 0.05),  // orange
+      new Color3(0.10, 0.30, 0.85),  // blue
+      new Color3(0.95, 0.92, 0.20),  // yellow
+      new Color3(0.20, 0.70, 0.25),  // green
+      new Color3(0.92, 0.92, 0.92),  // white
+    ]
+    const getCrowdMat = (r, offset = 0) => {
+      const mat = new StandardMaterial('crowd_' + Math.random(), scene)
+      mat.diffuseColor  = CROWD_COLS[(r * 3 + offset) % CROWD_COLS.length]
+      mat.emissiveColor = mat.diffuseColor.scale(0.18)
+      mat.specularColor = Color3.Black()
+      return mat
+    }
 
-    const ROWS = 8, ROW_H = 1.4, ROW_D = 1.8, GAP = 4
+    const ROWS = 10, ROW_H = 1.4, ROW_D = 1.8, GAP = 4
 
     const buildSide = (offsetZ, rotY, len) => {
       for (let r = 0; r < ROWS; r++) {
@@ -594,9 +618,9 @@ class SceneBuilder {
         const d = GAP + r * ROW_D + ROW_D / 2
         step.position.set(0, y, offsetZ > 0 ? offsetZ + d : offsetZ - d)
         step.rotation.y = rotY
-        const seat = MeshBuilder.CreateBox('seat', { width: len, height: 0.18, depth: ROW_D * 0.7 }, scene)
-        seat.isPickable = false; seat.material = seatMat
-        seat.position.set(0, y + ROW_H / 2 + 0.09, offsetZ > 0 ? offsetZ + d : offsetZ - d)
+        const seat = MeshBuilder.CreateBox('seat', { width: len, height: 0.22, depth: ROW_D * 0.7 }, scene)
+        seat.isPickable = false; seat.material = getCrowdMat(r, offsetZ > 0 ? 0 : 1)
+        seat.position.set(0, y + ROW_H / 2 + 0.11, offsetZ > 0 ? offsetZ + d : offsetZ - d)
         seat.rotation.y = rotY
       }
     }
@@ -605,15 +629,15 @@ class SceneBuilder {
     buildSide(-FIELD_HALF, 0, FIELD_HALF * 2 + 4)
 
     for (let r = 0; r < ROWS; r++) {
-      for (const sx of [1, -1]) {
+      for (const [sx, offset] of [[1, 2], [-1, 4]]) {
         const step = MeshBuilder.CreateBox('stX', { width: ROW_D, height: ROW_H, depth: FIELD_HALF * 2 + 4 }, scene)
         step.isPickable = false; step.material = concreteMat
         const y = r * ROW_H + ROW_H / 2
         const d = GAP + r * ROW_D + ROW_D / 2
         step.position.set(sx * (FIELD_HALF + d), y, 0)
-        const seat = MeshBuilder.CreateBox('seatX', { width: ROW_D * 0.7, height: 0.18, depth: FIELD_HALF * 2 + 4 }, scene)
-        seat.isPickable = false; seat.material = seatMat
-        seat.position.set(sx * (FIELD_HALF + d), y + ROW_H / 2 + 0.09, 0)
+        const seat = MeshBuilder.CreateBox('seatX', { width: ROW_D * 0.7, height: 0.22, depth: FIELD_HALF * 2 + 4 }, scene)
+        seat.isPickable = false; seat.material = getCrowdMat(r, offset)
+        seat.position.set(sx * (FIELD_HALF + d), y + ROW_H / 2 + 0.11, 0)
       }
     }
   }
@@ -696,13 +720,13 @@ function initScene(canvas, {
 
   try {
     const pipe = new DefaultRenderingPipeline('pipe', true, scene, [camera])
-    pipe.bloomEnabled = true; pipe.bloomThreshold = 0.82; pipe.bloomWeight = 0.22
-    pipe.bloomKernel  = 64;   pipe.bloomScale     = 0.5
-    pipe.vignetteEnabled = true; pipe.vignetteWeight = 1.6
+    pipe.bloomEnabled = true; pipe.bloomThreshold = 0.75; pipe.bloomWeight = 0.35
+    pipe.bloomKernel  = 96;   pipe.bloomScale     = 0.6
+    pipe.vignetteEnabled = true; pipe.vignetteWeight = 1.2
     pipe.imageProcessingEnabled = true
-    pipe.imageProcessing.contrast = 1.08
-    pipe.imageProcessing.exposure = 1.10
-    pipe.sharpenEnabled = true; pipe.sharpen.edgeAmount = 0.2
+    pipe.imageProcessing.contrast = 1.14
+    pipe.imageProcessing.exposure = 1.18
+    pipe.sharpenEnabled = true; pipe.sharpen.edgeAmount = 0.28
   } catch {}
 
   const camPos    = new Vector3(0, 5, 20)
@@ -725,19 +749,26 @@ function initScene(canvas, {
 
     // Apply clothing colors (wardrobe)
     {
+      let pendingShirtGLB = false
       meshes.forEach(m => {
         if (!CLOTHING_NAMES.has(m.name)) return
         const itemKey  = m.name.toLowerCase()
         const colorKey = itemKey === 'shirt' ? shirtKey : wearing?.[itemKey]
         if (!colorKey) { m.setEnabled(false); return }
 
-        // Ajax / PSV — apply shirt texture instead of color
+        // Ajax / PSV — load GLB shirt directly (material is baked in)
         if (itemKey === 'shirt' && SHIRT_TEXTURE_KEYS.has(colorKey)) {
-          const mat = new StandardMaterial(colorKey + '_shirt', scene)
-          mat.diffuseTexture = new Texture(`/shirt_${colorKey}.png`, scene)
-          mat.specularColor = Color3.Black()
-          m.material = mat
-          m.setEnabled(true)
+          m.setEnabled(false)   // hide Poppetje's plain Shirt
+          if (!pendingShirtGLB) {
+            pendingShirtGLB = true
+            const glbFile = colorKey === 'ajax' ? 'poppetjemetajaxshirt.glb' : 'poppetjemetpsvshirt.glb'
+            const playerSkel = scene.skeletons[0] ?? null
+            SceneLoader.ImportMesh('', '/', glbFile, scene, (shirtMeshes) => {
+              if (playerSkel) shirtMeshes.forEach(sm => { if (sm.skeleton) sm.skeleton = playerSkel })
+              const shirtMesh = shirtMeshes.find(sm => sm.name === 'Shirt')
+              shirtMeshes.forEach(sm => { if (sm !== shirtMesh) { try { sm.dispose() } catch {} } })
+            })
+          }
           return
         }
 
@@ -1052,7 +1083,7 @@ function GameOver({ scoreA, scoreB, onRestart, onBack }) {
 }
 
 // ── Main component ──────────────────────────────────────────────────
-export default function FootballScene3D({ onBack }) {
+export default function FootballScene3D({ onBack, onPlay3v3 }) {
   const canvasRef     = useRef(null)
   const joyRef        = useRef({ x: 0, z: 0 })
   const followBallRef = useRef(false)
@@ -1109,6 +1140,11 @@ export default function FootballScene3D({ onBack }) {
   if (!team) return (
     <div className="fb3d-outer">
       <button className="fb3d-back" onClick={onBack}>← Kledingkast</button>
+      {onPlay3v3 && (
+        <button className="fb3d-3v3-btn fb3d-3v3-intro" onClick={onPlay3v3}>
+          👥 3 vs 3 Spelen
+        </button>
+      )}
       <TeamSelect onSelect={t => { setTeam(t); setScoreA(0); setScoreB(0); setGameOver(false); setLoading(true) }} />
     </div>
   )
@@ -1142,6 +1178,13 @@ export default function FootballScene3D({ onBack }) {
       <button className="fb3d-cam-btn" onClick={toggleCamera}>
         {followBall ? '📷 Bal' : '📷 Speler'}
       </button>
+
+      {/* 3v3 game entry */}
+      {onPlay3v3 && (
+        <button className="fb3d-3v3-btn" onClick={onPlay3v3}>
+          👥 3 vs 3 Spelen
+        </button>
+      )}
 
       {/* GOAL! flash */}
       {goalFlash && <div className="fb3d-goal-flash">GOAL! 🎉</div>}

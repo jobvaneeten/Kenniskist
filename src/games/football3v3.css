@@ -1,0 +1,222 @@
+/* ── Football 3v3 ─────────────────────────────────── */
+.v3-outer {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0a1a3a;
+  overflow: hidden;
+}
+
+.v3-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+  touch-action: none;
+}
+
+/* ── HUD ─────────────────────────────────────────── */
+.v3-back {
+  position: absolute;
+  top: 12px; left: 14px;
+  z-index: 20;
+  background: rgba(0,0,0,0.55);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 8px;
+  padding: 6px 14px;
+  cursor: pointer;
+  font-size: 0.88rem;
+  transition: background 0.15s;
+}
+.v3-back:hover { background: rgba(0,0,0,0.80); }
+
+.v3-score {
+  position: absolute;
+  top: 12px; left: 50%; transform: translateX(-50%);
+  z-index: 20;
+  background: rgba(0,0,0,0.65);
+  border-radius: 12px;
+  padding: 8px 28px;
+  font-size: 2rem; font-weight: 900;
+  letter-spacing: 0.04em;
+  display: flex; align-items: center; gap: 8px;
+  border: 1px solid rgba(255,255,255,0.18);
+}
+.v3-score-num { font-variant-numeric: tabular-nums; }
+.v3-score-sep { color: rgba(255,255,255,0.45); font-weight: 400; }
+.v3-blue  { color: #4d9dff; }
+.v3-red   { color: #ff5555; }
+
+.v3-score-labels {
+  position: absolute;
+  top: 68px; left: 50%; transform: translateX(-50%);
+  z-index: 20;
+  display: flex; gap: 24px;
+  font-size: 0.78rem; opacity: 0.85;
+}
+.v3-score-goal { color: rgba(255,255,255,0.55); }
+
+/* ── Boost bar ───────────────────────────────────── */
+.v3-boost-bar-wrap {
+  position: absolute;
+  bottom: 28px; left: 50%; transform: translateX(-50%);
+  z-index: 20;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+}
+.v3-boost-label {
+  font-size: 0.78rem; color: rgba(255,255,255,0.75);
+  letter-spacing: 0.08em;
+}
+.v3-boost-track {
+  width: 220px; height: 14px;
+  background: rgba(255,255,255,0.12);
+  border-radius: 8px; overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.2);
+}
+.v3-boost-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ffe033, #ff9900);
+  border-radius: 8px;
+  transition: width 0.08s, background 0.3s;
+}
+.v3-boost-fill.v3-boost-low {
+  background: linear-gradient(90deg, #ff3333, #ff6600);
+  animation: v3-pulse 0.4s ease-in-out infinite alternate;
+}
+@keyframes v3-pulse { to { opacity: 0.55; } }
+
+/* ── Goal flash ──────────────────────────────────── */
+.v3-goal-flash {
+  position: absolute;
+  top: 50%; left: 50%; transform: translate(-50%, -50%);
+  z-index: 30;
+  font-size: 3.5rem; font-weight: 900;
+  letter-spacing: 0.06em;
+  padding: 18px 48px;
+  border-radius: 20px;
+  animation: v3-goalIn 0.25s cubic-bezier(0.34,1.56,0.64,1) forwards;
+  text-shadow: 0 0 30px rgba(255,255,255,0.8);
+}
+.v3-goal-blue { background: rgba(20, 80, 220, 0.88); color: #fff; border: 3px solid #88ccff; }
+.v3-goal-red  { background: rgba(200, 20, 20, 0.88); color: #fff; border: 3px solid #ff9988; }
+@keyframes v3-goalIn { from { transform: translate(-50%,-50%) scale(0.4); opacity: 0 } to { transform: translate(-50%,-50%) scale(1); opacity: 1 } }
+
+/* ── Hint ─────────────────────────────────────────── */
+.v3-hint {
+  position: absolute;
+  bottom: 60px; left: 50%; transform: translateX(-50%);
+  z-index: 20;
+  display: flex; gap: 18px;
+  font-size: 0.75rem; color: rgba(255,255,255,0.6);
+  pointer-events: none;
+}
+.v3-hint kbd {
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 4px; padding: 1px 5px;
+  font-family: monospace; font-size: 0.72rem;
+}
+
+/* ── Loading ─────────────────────────────────────── */
+.v3-loading {
+  position: absolute; inset: 0; z-index: 40;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: rgba(8,16,40,0.88);
+  gap: 14px; color: #fff; font-size: 1rem;
+}
+.v3-spinner {
+  width: 40px; height: 40px;
+  border: 4px solid rgba(255,255,255,0.15);
+  border-top-color: #4d9dff;
+  border-radius: 50%;
+  animation: v3-spin 0.8s linear infinite;
+}
+@keyframes v3-spin { to { transform: rotate(360deg); } }
+
+/* ── Intro screen ────────────────────────────────── */
+.v3-intro {
+  background: linear-gradient(160deg, #0a1a3a, #142850 60%, #0d2010);
+  flex-direction: column;
+}
+.v3-intro-box {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 24px;
+  padding: 44px 56px;
+  text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 20px;
+  max-width: 460px;
+}
+.v3-intro-title {
+  font-size: 2.4rem; font-weight: 900; color: #fff;
+  text-shadow: 0 0 24px rgba(77,157,255,0.6);
+}
+.v3-intro-sub {
+  font-size: 1.1rem; color: rgba(255,255,255,0.55); margin-top: -10px;
+}
+.v3-rules {
+  display: flex; flex-direction: column; gap: 10px;
+  text-align: left; width: 100%;
+  color: rgba(255,255,255,0.82);
+}
+.v3-rule {
+  background: rgba(255,255,255,0.06);
+  border-radius: 8px; padding: 8px 14px;
+  font-size: 0.92rem;
+}
+.v3-rule kbd {
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 5px; padding: 2px 7px;
+  font-family: monospace;
+}
+.v3-start-btn {
+  background: linear-gradient(135deg, #1a72e8, #0e4fa0);
+  color: #fff; border: none; border-radius: 12px;
+  padding: 14px 40px; font-size: 1.15rem; font-weight: 700;
+  cursor: pointer; letter-spacing: 0.04em;
+  box-shadow: 0 4px 20px rgba(26,114,232,0.45);
+  transition: transform 0.12s, box-shadow 0.12s;
+}
+.v3-start-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 28px rgba(26,114,232,0.6);
+}
+
+/* ── Win screen ──────────────────────────────────── */
+.v3-win {
+  background: linear-gradient(160deg, #0a1a3a, #1a3a10 80%);
+}
+.v3-win-box {
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 24px;
+  padding: 52px 68px;
+  text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 20px;
+}
+.v3-win-title {
+  font-size: 2.8rem; font-weight: 900; color: #fff;
+  text-shadow: 0 0 30px rgba(255,220,50,0.5);
+}
+.v3-win-score {
+  font-size: 3.5rem; font-weight: 900;
+  display: flex; align-items: center; gap: 12px;
+}
+.v3-dash { color: rgba(255,255,255,0.4); font-weight: 300; }
+.v3-win-sub { color: rgba(255,255,255,0.7); font-size: 1.05rem; }
+.v3-win-btns {
+  display: flex; gap: 14px; flex-wrap: wrap; justify-content: center;
+}
+.v3-back-btn {
+  background: rgba(255,255,255,0.12);
+  color: #fff; border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 10px; padding: 12px 28px;
+  font-size: 1rem; cursor: pointer;
+  transition: background 0.15s;
+}
+.v3-back-btn:hover { background: rgba(255,255,255,0.22); }
