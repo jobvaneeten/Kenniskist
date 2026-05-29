@@ -146,15 +146,20 @@ export default function Wardrobe({ onBack, onPlay3D, unlockedColors = {} }) {
     const modelItem   = SHIRT_MODELS.find(t => t.key === next)
 
     if (modelItem && sceneRef.current) {
-      // Load the GLB, extract ONLY the Shirt mesh (which carries the club material baked in),
-      // reassign its skeleton to Poppetje's, and dispose everything else.
-      // Poppetje's body stays visible — no z-fighting because only the Shirt mesh is kept.
+      // Load the GLB just to grab the shirt material, then apply it to
+      // Poppetje's own Shirt mesh (correct skin weights, no skeleton issues).
+      // Dispose all GLB meshes afterwards — we only needed the material.
+      const targetMesh = m
       SceneLoader.ImportMesh('', '/', modelItem.file.replace(/^\//, ''), sceneRef.current, (loadedMeshes) => {
-        const skel = skeletonRef.current
-        if (skel) loadedMeshes.forEach(em => { if (em.skeleton) em.skeleton = skel })
-        const shirt = loadedMeshes.find(lm => lm.name === 'Shirt')
-        loadedMeshes.forEach(lm => { if (lm !== shirt) { try { lm.dispose() } catch {} } })
-        extraMeshesRef.current = shirt ? [shirt] : []
+        const glbShirt = loadedMeshes.find(lm => lm.name === 'Shirt')
+          ?? loadedMeshes.find(lm => lm.name?.toLowerCase().includes('shirt'))
+          ?? loadedMeshes.find(lm => lm.material)
+        if (glbShirt?.material && targetMesh) {
+          targetMesh.material = glbShirt.material   // baked Ajax/PSV material
+          targetMesh.setEnabled(true)
+        }
+        // Dispose all GLB meshes (materials survive mesh disposal in Babylon)
+        loadedMeshes.forEach(lm => { try { lm.dispose() } catch {} })
       })
     } else if (textureItem && sceneRef.current) {
       const scene = sceneRef.current
@@ -292,14 +297,18 @@ export default function Wardrobe({ onBack, onPlay3D, unlockedColors = {} }) {
         const modelItem = SHIRT_MODELS.find(t => t.key === shirtColor)
         const m = meshesRef.current.shirt
         if (modelItem) {
-          // Load GLB, keep ONLY the Shirt mesh (with its baked-in club material),
-          // reassign skeleton so it animates with Poppetje, dispose everything else.
+          // Load GLB just to grab the baked shirt material, apply it to
+          // Poppetje's own Shirt mesh, then dispose the GLB meshes.
+          const targetMesh = m
           SceneLoader.ImportMesh('', '/', modelItem.file.replace(/^\//, ''), scene, (loadedMeshes) => {
-            const skel = skeletonRef.current
-            if (skel) loadedMeshes.forEach(em => { if (em.skeleton) em.skeleton = skel })
-            const shirt = loadedMeshes.find(lm => lm.name === 'Shirt')
-            loadedMeshes.forEach(lm => { if (lm !== shirt) { try { lm.dispose() } catch {} } })
-            extraMeshesRef.current = shirt ? [shirt] : []
+            const glbShirt = loadedMeshes.find(lm => lm.name === 'Shirt')
+              ?? loadedMeshes.find(lm => lm.name?.toLowerCase().includes('shirt'))
+              ?? loadedMeshes.find(lm => lm.material)
+            if (glbShirt?.material && targetMesh) {
+              targetMesh.material = glbShirt.material
+              targetMesh.setEnabled(true)
+            }
+            loadedMeshes.forEach(lm => { try { lm.dispose() } catch {} })
           })
         } else if (colorItem && m) {
           applyColor(m, colorItem.hex)
