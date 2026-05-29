@@ -761,12 +761,11 @@ function initScene(canvas, {
           m.setEnabled(false)   // hide Poppetje's plain Shirt
           if (!pendingShirtGLB) {
             pendingShirtGLB = true
-            const glbFile = colorKey === 'ajax' ? 'poppetjemetajaxshirt.glb' : 'poppetjemetpsvshirt.glb'
+            const glbFile = colorKey === 'ajax' ? 'ajaxshirt.glb' : 'psvshirt.glb'
             const playerSkel = scene.skeletons[0] ?? null
             SceneLoader.ImportMesh('', '/', glbFile, scene, (shirtMeshes) => {
               if (playerSkel) shirtMeshes.forEach(sm => { if (sm.skeleton) sm.skeleton = playerSkel })
-              const shirtMesh = shirtMeshes.find(sm => sm.name === 'Shirt')
-              shirtMeshes.forEach(sm => { if (sm !== shirtMesh) { try { sm.dispose() } catch {} } })
+              // Keep ALL meshes — mesh is named 'body_1.058', not 'Shirt'
             })
           }
           return
