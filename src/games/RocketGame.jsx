@@ -626,7 +626,7 @@ function fmtTime(s) {
 }
 
 // ── Main 3D scene init ─────────────────────────────────────────────────
-function initScene(canvas, { localSessionId, getRoomState, sendInput, timerDomRef, staminaDomRef, followBallRef }) {
+function initScene(canvas, { localSessionId, getRoomState, sendInput, sendEmote, timerDomRef, staminaDomRef, followBallRef }) {
   const engine = new Engine(canvas, true, { adaptToDeviceRatio: true, stencil: true })
   const scene  = new Scene(engine)
 
@@ -650,15 +650,13 @@ function initScene(canvas, { localSessionId, getRoomState, sendInput, timerDomRe
   const playerInstances = new Map()   // sessionId → PlayerInstance
   const joyRef = { current: { x: 0, z: 0 } }
   const keys   = {}
+  const lastEmoteSeq = new Map()   // sessionId → last emoteSeq we played
   const onKD   = e => {
     keys[e.code] = true
-    // Emotes for local player
-    const local = playerInstances.get(localSessionId)
-    if (local) {
-      const map = { Digit1:'hip_hop', Digit2:'breakdance', Digit3:'verloren',
-                    Numpad1:'hip_hop', Numpad2:'breakdance', Numpad3:'verloren' }
-      if (map[e.code]) local.playEmote(map[e.code])
-    }
+    // Emotes: tell the server so EVERYONE sees them (incl. yourself)
+    const map = { Digit1:'hip_hop', Digit2:'breakdance', Digit3:'verloren',
+                  Numpad1:'hip_hop', Numpad2:'breakdance', Numpad3:'verloren' }
+    if (map[e.code]) sendEmote?.(map[e.code])
   }
   const onKU = e => { keys[e.code] = false }
   window.addEventListener('keydown', onKD)
@@ -768,6 +766,12 @@ function initScene(canvas, { localSessionId, getRoomState, sendInput, timerDomRe
       } else {
         inst.setTarget(p.x, p.z, p.rotY, p.vx, p.vz, p.boosting)
         inst.tick(dt, 13)
+      }
+
+      // Emotes — play when the server's emoteSeq changes (all players)
+      if (p.emoteSeq && lastEmoteSeq.get(sid) !== p.emoteSeq) {
+        lastEmoteSeq.set(sid, p.emoteSeq)
+        inst.playEmote(p.emote)
       }
     })
     playerInstances.forEach((inst, sid) => {
@@ -990,6 +994,7 @@ export default function RocketGame({ onBack }) {
       localSessionId: room.sessionId,
       getRoomState:   () => roomStateRef.current,
       sendInput:      inp => roomRef.current?.send('input', inp),
+      sendEmote:      name => roomRef.current?.send('emote', name),
       timerDomRef,
       staminaDomRef,
       followBallRef,
