@@ -861,15 +861,17 @@ function Lobby({ onBack, onJoined }) {
   const connect = async (create) => {
     setLoading(true); setError(null)
     try {
-      const shirt   = localStorage.getItem('kk_shirt') || ''
-      const wearing = localStorage.getItem('kk_wearing') || '{}'
-      const client  = new Colyseus.Client(SERVER_URL)
-      const opts    = { shirt, wearing, name: name || 'Speler' }
-      const room   = create
+      const shirt    = localStorage.getItem('kk_shirt') || ''
+      const wearing  = localStorage.getItem('kk_wearing') || '{}'
+      const client   = new Colyseus.Client(SERVER_URL)
+      // Numeric 5-digit lobby code (host generates one, joiner types it)
+      const joinCode = create ? String(Math.floor(10000 + Math.random() * 90000)) : code.trim()
+      const opts     = { joinCode, shirt, wearing, name: name || 'Speler' }
+      const room     = create
         ? await client.create('rocket', opts)
-        : await client.joinById(code.trim(), opts)
+        : await client.join('rocket', opts)   // joins only an existing matching room
       if (name) localStorage.setItem('kk_playername', name)
-      onJoined(room)
+      onJoined(room, joinCode)
     } catch {
       setError(create ? 'Kan geen lobby aanmaken.' : 'Lobby niet gevonden.')
       setLoading(false)
@@ -898,8 +900,9 @@ function Lobby({ onBack, onJoined }) {
 
         <div className="rg-lobby-field">
           <label>Lobby-code</label>
-          <input className="rg-input rg-input-code" placeholder="lHQYj-vF1"
-            value={code} maxLength={12} onChange={e => setCode(e.target.value)}
+          <input className="rg-input rg-input-code" placeholder="12345"
+            value={code} maxLength={5} inputMode="numeric"
+            onChange={e => setCode(e.target.value.replace(/\D/g, ''))}
             onKeyDown={e => e.key === 'Enter' && connect(false)} />
         </div>
 
@@ -914,13 +917,13 @@ function Lobby({ onBack, onJoined }) {
 }
 
 // ── Waiting room ───────────────────────────────────────────────────────
-function WaitingRoom({ room, players, onBack }) {
+function WaitingRoom({ code, players, room, onBack }) {
   return (
     <div className="rg-waiting">
       <button className="rg-back" onClick={onBack}>← Menu</button>
       <div className="rg-waiting-box">
         <p className="rg-waiting-label">Lobby-code</p>
-        <div className="rg-waiting-code">{room?.roomId ?? '????'}</div>
+        <div className="rg-waiting-code">{code ?? '?????'}</div>
         <p className="rg-waiting-hint">Deel deze code met vrienden</p>
         <div className="rg-waiting-players">
           {players.map((p, i) => (
@@ -948,6 +951,7 @@ export default function RocketGame({ onBack }) {
   const [followBall, setFollowBall] = useState(true)
   const [loading,    setLoading]    = useState(true)
   const [showHint,   setShowHint]   = useState(true)
+  const [lobbyCode,  setLobbyCode]  = useState('')
 
   const canvasRef      = useRef(null)
   const sceneRef       = useRef(null)
@@ -960,8 +964,9 @@ export default function RocketGame({ onBack }) {
   useEffect(() => { roomStateRef.current = roomState }, [roomState])
   useEffect(() => { roomRef.current = room }, [room])
 
-  const handleJoined = useCallback((r) => {
+  const handleJoined = useCallback((r, code) => {
     setRoom(r); roomRef.current = r
+    setLobbyCode(code || '')
 
     r.onStateChange(state => {
       setRoomState(state); roomStateRef.current = state
@@ -1004,7 +1009,7 @@ export default function RocketGame({ onBack }) {
 
   if (screen === 'lobby')   return <Lobby onBack={onBack} onJoined={handleJoined} />
   if (screen === 'waiting') return (
-    <WaitingRoom room={room} players={players}
+    <WaitingRoom code={lobbyCode} room={room} players={players}
       onBack={() => { room?.leave(); setScreen('lobby') }} />
   )
 
