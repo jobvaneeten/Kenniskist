@@ -431,7 +431,7 @@ function Lobby({ onBack, onJoined }) {
       const options = { shirt, name: name || 'Speler' }
       const room    = create
         ? await client.create('rocket', options)
-        : await client.joinById(code.trim().toUpperCase(), options)
+        : await client.joinById(code.trim(), options)
       if (name) localStorage.setItem('kk_playername', name)
       onJoined(room)
     } catch (e) {
@@ -473,10 +473,10 @@ function Lobby({ onBack, onJoined }) {
           <label>Lobby-code</label>
           <input
             className="rg-input rg-input-code"
-            placeholder="ABCD"
+            placeholder="lHQYj-vF1"
             value={code}
-            maxLength={8}
-            onChange={e => setCode(e.target.value.toUpperCase())}
+            maxLength={12}
+            onChange={e => setCode(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && connect(false)}
           />
         </div>
