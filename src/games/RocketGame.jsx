@@ -9,7 +9,8 @@ import {
 } from '@babylonjs/core'
 import { SceneLoader } from '@babylonjs/core/Loading/sceneLoader'
 import '@babylonjs/loaders/glTF'
-import { SHIRT_COLORS } from '../data'
+import { findItem } from '../itemsCatalog'
+import { applyItemToMesh, loadShirtDonor } from '../applyClothing'
 import './rocket-game.css'
 
 const SERVER_URL = 'wss://kenniskist-server.onrender.com'
@@ -196,30 +197,21 @@ class PlayerInstance {
         }
       })
 
-      // Apply wardrobe
+      // Apply wardrobe (same catalog/logic as the dressing room)
       meshes.forEach(m => {
         if (!CLOTHING_NAMES.has(m.name)) return
         const key      = m.name.toLowerCase()
         const colorKey = key === 'shirt' ? this.opts.shirt : this.opts.wearing?.[key]
         if (!colorKey) { m.setEnabled(false); return }
-        if (key === 'shirt' && SHIRT_GLB_KEYS.has(colorKey)) {
+        const item = findItem(key, colorKey)
+        if (!item) { m.setEnabled(false); return }
+        if (key === 'shirt' && (item.kind === 'model' || item.kind === 'print')) {
           m.setEnabled(false)
-          const glbFile = colorKey === 'ajax' ? 'ajaxshirt.glb' : 'psvshirt.glb'
-          applyShirtGLB(this.scene, glbFile, m, this._skeleton)
+          loadShirtDonor(this.scene, m, this._skeleton, item, (g) => { this._shirtGLB = g })
           return
         }
-        const col = SHIRT_COLORS.find(c => c.key === colorKey)
-        if (col) {
-          const c3 = Color3.FromHexString(col.hex)
-          const apply = mesh => {
-            if (!mesh?.material) return
-            const mat = mesh.material.clone(mesh.material.name + '_c')
-            mesh.material = mat
-            if (mat.albedoColor !== undefined) { mat.albedoTexture = null; mat.albedoColor = c3 }
-            else if (mat.diffuseColor !== undefined) { mat.diffuseTexture = null; mat.diffuseColor = c3 }
-          }
-          apply(m); m.getChildMeshes?.(false)?.forEach(apply); m.setEnabled(true)
-        } else m.setEnabled(false)
+        applyItemToMesh(this.scene, m, item)
+        m.setEnabled(true)
       })
 
       // Team skin color

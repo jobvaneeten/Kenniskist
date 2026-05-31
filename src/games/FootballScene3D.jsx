@@ -9,7 +9,8 @@ import {
 } from '@babylonjs/core'
 import { SceneLoader } from '@babylonjs/core/Loading/sceneLoader'
 import '@babylonjs/loaders/glTF'
-import { SHIRT_COLORS } from '../data'
+import { findItem } from '../itemsCatalog'
+import { applyItemToMesh, loadShirtDonor } from '../applyClothing'
 import './football3d.css'
 
 // ── Remap shirt bone indices so they match Poppetje's skeleton ──────
@@ -777,47 +778,22 @@ function initScene(canvas, {
         const colorKey = itemKey === 'shirt' ? shirtKey : wearing?.[itemKey]
         if (!colorKey) { m.setEnabled(false); return }
 
-        // Ajax / PSV — load shirt GLB, use its mesh directly (correct UVs + baked
-        // texture), attach Poppetje's skeleton and parent to charRoot so it
-        // follows the character at z=5.
-        if (itemKey === 'shirt' && SHIRT_TEXTURE_KEYS.has(colorKey)) {
-          m.setEnabled(false)   // hide Poppetje's plain shirt slot
+        const item = findItem(itemKey, colorKey)
+        if (!item) { m.setEnabled(false); return }
+
+        // Shirt model (Ajax/PSV) or print → donor shirt GLB with real UV
+        if (itemKey === 'shirt' && (item.kind === 'model' || item.kind === 'print')) {
+          m.setEnabled(false)
           if (!pendingShirtGLB) {
             pendingShirtGLB = true
-            const glbFile = colorKey === 'ajax' ? 'ajaxshirt.glb' : 'psvshirt.glb'
-            const poppetjeShirtMesh = m
-            SceneLoader.ImportMesh('', '/', glbFile, scene, (loadedMeshes, _ps, srcSkels) => {
-              const glbShirt   = loadedMeshes.find(lm => (lm.getTotalVertices?.() ?? 0) > 0)
-              const playerSkel = scene.skeletons[0] ?? null
-              if (glbShirt && playerSkel) {
-                // Same parent as Poppetje's own Shirt mesh — same coord system
-                glbShirt.parent             = poppetjeShirtMesh.parent
-                glbShirt.position           = new Vector3(0, 0, 0)
-                glbShirt.rotationQuaternion = null
-                glbShirt.scaling            = new Vector3(1, 1, 1)
-                glbShirt.skeleton           = playerSkel
-                glbShirt.setEnabled(true)
-              }
-              loadedMeshes.forEach(lm => { if (lm !== glbShirt) { try { lm.dispose() } catch {} } })
-              srcSkels?.[0]?.dispose()
-            })
+            loadShirtDonor(scene, m, scene.skeletons[0] ?? null, item)
           }
           return
         }
 
-        const col = SHIRT_COLORS.find(c => c.key === colorKey)
-        if (col) {
-          m.setEnabled(true)
-          const c3 = Color3.FromHexString(col.hex)
-          const applyCol = mesh => {
-            if (!mesh.material) return
-            const mat = mesh.material.clone(mesh.material.name + '_c')
-            mesh.material = mat
-            if (mat.albedoColor !== undefined) { mat.albedoTexture = null; mat.albedoColor = c3 }
-            else if (mat.diffuseColor !== undefined) { mat.diffuseTexture = null; mat.diffuseColor = c3 }
-          }
-          applyCol(m); m.getChildMeshes?.(false)?.forEach(applyCol)
-        } else { m.setEnabled(false) }
+        // Colour / pattern (and legs/feet items) → straight onto the mesh
+        applyItemToMesh(scene, m, item)
+        m.setEnabled(true)
       })
 
       // Apply team skin color — skip clothing AND face features
