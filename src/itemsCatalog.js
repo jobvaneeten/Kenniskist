@@ -139,13 +139,9 @@ export function buildShirtPrintTexture(item) {
   ctx.fillStyle = g; ctx.fillRect(0, 0, S, S)
 
   const emoji = item.emoji || '⭐'
-  const stamp = (u, v, size) => {
-    ctx.font = `${Math.floor(size)}px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif`
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
-    ctx.fillText(emoji, u * S, v * S)
-  }
-  stamp(0.342, 0.526, S * 0.28)   // front chest (big)
-  stamp(0.668, 0.731, S * 0.20)   // back (smaller)
+  ctx.font = `${Math.floor(S * 0.42)}px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif`
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
+  ctx.fillText(emoji, 0.34 * S, 0.64 * S)   // one big emoji on the belly (front only)
   return cv
 }
 
