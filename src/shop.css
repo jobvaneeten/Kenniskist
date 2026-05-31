@@ -269,6 +269,26 @@
 .lb-odds-name { letter-spacing: 0.02em; }
 .lb-odds-chip b { font-weight: 900; }
 
+/* ── Generic item swatch (colour / pattern / print) ───── */
+.item-swatch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.item-swatch-emoji { font-size: 0.7em; line-height: 1; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.4)); }
+.lb-dot2 { width: 16px; height: 16px; box-shadow: 0 0 0 1px rgba(255,255,255,0.15); }
+.lb-dot2 .item-swatch-emoji { font-size: 9px; }
+.lb-preview-item { width: 20px; height: 20px; box-shadow: 0 0 0 1px rgba(255,255,255,0.15); }
+.lb-preview-item .item-swatch-emoji { font-size: 11px; }
+.lb-rc-swatch .item-swatch-emoji { font-size: 32px; }
+.lb-wc-swatch .item-swatch-emoji { font-size: 64px; }
+.item-swatch.lb-locked { opacity: 0.32; filter: grayscale(0.9); }
+
 /* ── "Wat kan ik winnen?" preview ─────────────────────── */
 .lb-preview-toggle {
   background: rgba(255,255,255,0.07);

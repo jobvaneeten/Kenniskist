@@ -7,14 +7,9 @@ import {
 } from '@babylonjs/core'
 import { SceneLoader } from '@babylonjs/core/Loading/sceneLoader'
 import '@babylonjs/loaders/glTF'
-import { SHIRT_COLORS } from './data'
+import { getCatalog, findItem, buildTextureCanvas, swatchStyle, swatchEmoji } from './itemsCatalog'
 import './wardrobe.css'
 
-const SHIRT_TEXTURES = []
-const SHIRT_MODELS = [
-  { key: 'ajax', label: 'Ajax', file: '/ajaxshirt.glb', preview: '/logo_ajax.svg' },
-  { key: 'psv',  label: 'PSV',  file: '/psvshirt.glb',  preview: '/logo_psv.svg' },
-]
 const CLOTHING_MESHES = ['Shirt', 'Broek', 'Sokken', 'Schoenen']
 const FACE_MESH_NAMES = new Set([
   'Gezicht', 'Face',
@@ -117,6 +112,18 @@ function applyTexture(mesh, texture) {
   })
 }
 
+// Apply any catalog item (colour / pattern / print) onto a clothing mesh.
+// 'model' items (Ajax/PSV GLB) are handled separately in pickShirt.
+function applyItem(mesh, item, scene) {
+  if (!mesh || !item) return
+  if (item.kind === 'color') { applyColor(mesh, item.hex); return }
+  if (item.kind === 'pattern' || item.kind === 'print') {
+    const url = buildTextureCanvas(item).toDataURL()
+    const tex = new Texture(url, scene, false, false)
+    applyTexture(mesh, tex)   // applies now; Babylon updates it once the image is ready
+  }
+}
+
 // ── Component ─────────────────────────────────────────────────────
 export default function Wardrobe({ onBack, onPlay3D, onPlayRocket, unlockedColors = {} }) {
   const canvasRef      = useRef(null)
@@ -159,16 +166,15 @@ export default function Wardrobe({ onBack, onPlay3D, onPlayRocket, unlockedColor
     if (!m) return
     if (!next) { m.setEnabled(false); return }
 
-    const colorItem   = SHIRT_COLORS.find(c => c.key === next)
-    const textureItem = SHIRT_TEXTURES.find(t => t.key === next)
-    const modelItem   = SHIRT_MODELS.find(t => t.key === next)
+    const item = findItem('shirt', next)
+    if (!item) return
 
-    if (modelItem && sceneRef.current) {
+    if (item.kind === 'model' && sceneRef.current) {
       // The shirt GLBs share the SAME skeleton as Poppetje (identical bone order).
       // Use the shirt mesh FROM the GLB directly (correct UVs + baked texture),
       // attach Poppetje's skeleton so it deforms with the character.
       m.setEnabled(false)   // hide Poppetje's plain shirt slot
-      SceneLoader.ImportMesh('', '/', modelItem.file.replace(/^\//, ''), sceneRef.current, (loadedMeshes, _ps, srcSkels) => {
+      SceneLoader.ImportMesh('', '/', item.file.replace(/^\//, ''), sceneRef.current, (loadedMeshes, _ps, srcSkels) => {
         // Find the mesh that has actual geometry (getTotalVertices > 0)
         const glbShirt = loadedMeshes.find(lm => (lm.getTotalVertices?.() ?? 0) > 0)
         const poppetjeShirt = meshesRef.current.shirt
@@ -186,24 +192,8 @@ export default function Wardrobe({ onBack, onPlay3D, onPlayRocket, unlockedColor
         loadedMeshes.forEach(lm => { if (lm !== glbShirt) { try { lm.dispose() } catch {} } })
         srcSkels?.[0]?.dispose()
       })
-    } else if (textureItem && sceneRef.current) {
-      const scene = sceneRef.current
-      const img = new Image()
-      img.onload = () => {
-        const canvas = document.createElement('canvas')
-        canvas.width  = img.naturalWidth
-        canvas.height = img.naturalHeight
-        const ctx = canvas.getContext('2d')
-        ctx.fillStyle = '#ffffff'
-        ctx.fillRect(0, 0, canvas.width, canvas.height)
-        ctx.drawImage(img, 0, 0)
-        const tex = new Texture(canvas.toDataURL(), scene, false, false)
-        tex.onLoadObservable.addOnce(() => applyTexture(m, tex))
-      }
-      img.src = textureItem.file
-      m.setEnabled(true)
-    } else if (colorItem) {
-      applyColor(m, colorItem.hex)
+    } else {
+      applyItem(m, item, sceneRef.current)
       m.setEnabled(true)
     }
   }
@@ -216,8 +206,7 @@ export default function Wardrobe({ onBack, onPlay3D, onPlayRocket, unlockedColor
         if (!next) {
           mesh.setEnabled(false)
         } else {
-          const colorItem = SHIRT_COLORS.find(c => c.key === colorKey)
-          if (colorItem) applyColor(mesh, colorItem.hex)
+          applyItem(mesh, findItem(itemKey, colorKey), sceneRef.current)
           mesh.setEnabled(true)
         }
       }
@@ -318,11 +307,10 @@ export default function Wardrobe({ onBack, onPlay3D, onPlayRocket, unlockedColor
 
       // Restore saved clothing
       if (shirtColor) {
-        const colorItem = SHIRT_COLORS.find(c => c.key === shirtColor)
-        const modelItem = SHIRT_MODELS.find(t => t.key === shirtColor)
+        const item = findItem('shirt', shirtColor)
         const m = meshesRef.current.shirt
-        if (modelItem) {
-          SceneLoader.ImportMesh('', '/', modelItem.file.replace(/^\//, ''), scene, (loadedMeshes, _ps, srcSkels) => {
+        if (item?.kind === 'model') {
+          SceneLoader.ImportMesh('', '/', item.file.replace(/^\//, ''), scene, (loadedMeshes, _ps, srcSkels) => {
             const glbShirt = loadedMeshes.find(lm => (lm.getTotalVertices?.() ?? 0) > 0)
             const poppetjeShirt = meshesRef.current.shirt
             if (glbShirt && skeletonRef.current && poppetjeShirt) {
@@ -337,16 +325,16 @@ export default function Wardrobe({ onBack, onPlay3D, onPlayRocket, unlockedColor
             loadedMeshes.forEach(lm => { if (lm !== glbShirt) { try { lm.dispose() } catch {} } })
             srcSkels?.[0]?.dispose()
           })
-        } else if (colorItem && m) {
-          applyColor(m, colorItem.hex)
+        } else if (item && m) {
+          applyItem(m, item, scene)
           m.setEnabled(true)
         }
       }
       Object.entries(wearing).forEach(([key, colorKey]) => {
         if (!colorKey) return
         const mesh = meshesRef.current[key]
-        const colorItem = SHIRT_COLORS.find(c => c.key === colorKey)
-        if (mesh && colorItem) { applyColor(mesh, colorItem.hex); mesh.setEnabled(true) }
+        const item = findItem(key, colorKey)
+        if (mesh && item) { applyItem(mesh, item, scene); mesh.setEnabled(true) }
       })
 
       // Face features always black
@@ -493,37 +481,19 @@ export default function Wardrobe({ onBack, onPlay3D, onPlayRocket, unlockedColor
               {shirtColor && <span className="clothing-check">✓</span>}
             </div>
             <div className="color-swatches">
-              {SHIRT_COLORS.map(c => {
+              {getCatalog('shirt').map(c => {
                 const locked = !(unlockedColors.shirt || []).includes(c.key)
+                const emoji  = swatchEmoji(c)
                 return (
                   <button
                     key={c.key}
                     className={`color-swatch ${shirtColor === c.key ? 'swatch-active' : ''} ${locked ? 'swatch-locked' : ''}`}
-                    style={{ background: c.hex }}
+                    style={swatchStyle(c)}
                     title={locked ? '🔒 Win via lootbox' : c.label}
                     onClick={() => !locked && pickShirt(c.key)}
-                  />
-                )
-              })}
-              {SHIRT_TEXTURES.map(t => (
-                <button
-                  key={t.key}
-                  className={`color-swatch texture-swatch ${shirtColor === t.key ? 'swatch-active' : ''}`}
-                  style={{ backgroundImage: `url('${t.file}')`, backgroundSize: 'cover' }}
-                  title={t.label}
-                  onClick={() => pickShirt(t.key)}
-                />
-              ))}
-              {SHIRT_MODELS.map(t => {
-                const locked = !(unlockedColors.shirt || []).includes(t.key)
-                return (
-                  <button
-                    key={t.key}
-                    className={`color-swatch texture-swatch ${shirtColor === t.key ? 'swatch-active' : ''} ${locked ? 'swatch-locked' : ''}`}
-                    style={{ backgroundImage: `url('${t.preview}')`, backgroundSize: 'cover' }}
-                    title={locked ? '🔒 Win via lootbox' : t.label}
-                    onClick={() => !locked && pickShirt(t.key)}
-                  />
+                  >
+                    {emoji && <span className="swatch-emoji">{emoji}</span>}
+                  </button>
                 )
               })}
             </div>
@@ -537,16 +507,19 @@ export default function Wardrobe({ onBack, onPlay3D, onPlayRocket, unlockedColor
                 {wearing[item.key] && <span className="clothing-check">✓</span>}
               </div>
               <div className="color-swatches">
-                {SHIRT_COLORS.map(c => {
+                {getCatalog(item.key).map(c => {
                   const locked = !(unlockedColors[item.key] || []).includes(c.key)
+                  const emoji  = swatchEmoji(c)
                   return (
                     <button
                       key={c.key}
                       className={`color-swatch ${wearing[item.key] === c.key ? 'swatch-active' : ''} ${locked ? 'swatch-locked' : ''}`}
-                      style={{ background: c.hex }}
+                      style={swatchStyle(c)}
                       title={locked ? '🔒 Win via lootbox' : c.label}
                       onClick={() => !locked && pickClothing(item.key, c.key)}
-                    />
+                    >
+                      {emoji && <span className="swatch-emoji">{emoji}</span>}
+                    </button>
                   )
                 })}
               </div>

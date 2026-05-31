@@ -1,6 +1,17 @@
 import { useState, useRef, useEffect } from 'react'
-import { SHIRT_COLORS, SHIRT_SPECIALS, CLOTHING_ITEMS, LOOTBOX_COST, RARITIES } from './data'
+import { CLOTHING_ITEMS, LOOTBOX_COST, RARITIES } from './data'
+import { getCatalog, swatchStyle, swatchEmoji } from './itemsCatalog'
 import './shop.css'
+
+// Generic visual for any item (colour / pattern / print / model)
+function ItemSwatch({ item, className = '', style, title }) {
+  const emoji = swatchEmoji(item)
+  return (
+    <div className={`item-swatch ${className}`} title={title} style={{ ...swatchStyle(item), ...style }}>
+      {emoji && <span className="item-swatch-emoji">{emoji}</span>}
+    </div>
+  )
+}
 
 const CARD_W  = 90
 const CARD_GAP = 8
@@ -11,7 +22,9 @@ const WIN_W   = VISIBLE * CARD_W + (VISIBLE - 1) * CARD_GAP
 const SPIN_MS = 5600
 const quintic = t => 1 - Math.pow(1 - t, 5)
 
-const RARITY_WEIGHTS = { common: 60, rare: 25, epic: 12, legendary: 3, ultra_legendary: 1 }
+// Higher legendary/ultra chance. Effective odds also depend on how many
+// items each rarity has (see rarityOdds, computed from the real pool).
+const RARITY_WEIGHTS = { common: 12, rare: 10, epic: 9, legendary: 8, ultra_legendary: 5 }
 
 function buildReel(winner, pool) {
   const reel = []
@@ -30,44 +43,38 @@ function fmt(n) { return n.toLocaleString('nl-NL') }
 
 // ── Reel card icon: color swatch or team logo ─────────────────────
 function ReelIcon({ item }) {
-  if (item.logo) {
-    return <img src={item.logo} className="lb-rc-logo" alt={item.label} />
-  }
-  return <div className="lb-rc-swatch" style={{ background: item.hex }} />
+  return <ItemSwatch item={item} className="lb-rc-swatch" />
 }
 
-// ── Win card icon: big color swatch or big team logo ──────────────
+// ── Win card icon: big swatch (colour / pattern / print / logo) ────
 function WinIcon({ item, rarity }) {
-  if (item.logo) {
+  if (item.kind === 'model') {
     return (
       <div className={`lb-wc-logo-wrap lb-wl-${rarity}`}>
-        <img src={item.logo} className="lb-wc-logo" alt={item.label} />
+        <img src={item.preview} className="lb-wc-logo" alt={item.label} />
       </div>
     )
   }
-  return (
-    <div
-      className="lb-wc-swatch"
-      style={{ background: item.hex, boxShadow: `0 0 22px ${item.hex}` }}
-    />
-  )
+  return <ItemSwatch item={item} className="lb-wc-swatch" />
 }
 
-// ── Drop chances per rarity (from the real weights) ───────────────
-function rarityOdds(isShirt) {
-  const keys  = isShirt
-    ? ['common','rare','epic','legendary','ultra_legendary']
-    : ['common','rare','epic','legendary']
-  const total = keys.reduce((s, k) => s + RARITY_WEIGHTS[k], 0)
-  return keys.map(k => ({ key: k, pct: (RARITY_WEIGHTS[k] / total) * 100 }))
+// ── Real drop chances per rarity, computed from the actual pool ───
+const RARITY_ORDER = ['common','rare','epic','legendary','ultra_legendary']
+function rarityOdds(pool) {
+  const weightByRarity = {}
+  pool.forEach(c => { weightByRarity[c.rarity] = (weightByRarity[c.rarity] || 0) + (RARITY_WEIGHTS[c.rarity] || 0) })
+  const total = Object.values(weightByRarity).reduce((s, w) => s + w, 0) || 1
+  return RARITY_ORDER
+    .filter(k => weightByRarity[k])
+    .map(k => ({ key: k, pct: (weightByRarity[k] / total) * 100 }))
 }
 function fmtPct(p) {
   return p < 1 ? p.toFixed(1).replace('.', ',') : String(Math.round(p))
 }
 
 // ── Lootbox card: drop chances as a stacked bar + labelled chips ──
-function RarityOdds({ isShirt }) {
-  const odds = rarityOdds(isShirt)
+function RarityOdds({ pool }) {
+  const odds = rarityOdds(pool)
   return (
     <div className="lb-odds">
       <div className="lb-odds-bar">
@@ -172,10 +179,7 @@ export default function Shop({ curuntie, briefgeld, addBriefgeld, onExchange, un
     }
   }, [overlay?.phase])
 
-  const getPool = (itemKey) =>
-    itemKey === 'shirt'
-      ? [...SHIRT_COLORS, ...SHIRT_SPECIALS]
-      : SHIRT_COLORS
+  const getPool = (itemKey) => getCatalog(itemKey)
 
   const openLootbox = (item) => {
     if (briefgeld < LOOTBOX_COST) return
@@ -309,7 +313,7 @@ export default function Shop({ curuntie, briefgeld, addBriefgeld, onExchange, un
               <div className="lb-card-emoji lb-card-emoji-float">{item.emoji}</div>
               <div className="lb-card-name">{item.label}</div>
 
-              <RarityOdds isShirt={item.key === 'shirt'} />
+              <RarityOdds pool={pool} />
 
               <button
                 className="lb-preview-toggle"
@@ -320,7 +324,7 @@ export default function Shop({ curuntie, briefgeld, addBriefgeld, onExchange, un
 
               {preview === item.key && (
                 <div className="lb-preview">
-                  {rarityOdds(item.key === 'shirt').map(o => {
+                  {rarityOdds(pool).map(o => {
                     const rewards = pool.filter(c => c.rarity === o.key)
                     if (!rewards.length) return null
                     return (
@@ -331,13 +335,9 @@ export default function Shop({ curuntie, briefgeld, addBriefgeld, onExchange, un
                         <div className="lb-preview-items">
                           {rewards.map(c => {
                             const owned = (unlockedColors[item.key] || []).includes(c.key)
-                            return c.logo ? (
-                              <img key={c.key} src={c.logo} alt={c.label} title={c.label}
-                                className={`lb-preview-logo ${owned ? '' : 'lb-locked'}`} />
-                            ) : (
-                              <span key={c.key} title={c.label}
-                                className={`lb-preview-sw ${owned ? '' : 'lb-locked'}`}
-                                style={{ background: c.hex }} />
+                            return (
+                              <ItemSwatch key={c.key} item={c} title={c.label}
+                                className={`lb-preview-item ${owned ? '' : 'lb-locked'}`} />
                             )
                           })}
                         </div>
@@ -348,25 +348,13 @@ export default function Shop({ curuntie, briefgeld, addBriefgeld, onExchange, un
               )}
 
               <div className="lb-dots">
-                {SHIRT_COLORS.map(c => (
-                  <span
-                    key={c.key}
-                    className="lb-dot"
-                    title={c.label}
-                    style={(unlockedColors[item.key] || []).includes(c.key)
-                      ? { background: c.hex, boxShadow: `0 0 6px ${c.hex}` }
-                      : { background: '#333', opacity: 0.35 }}
-                  />
-                ))}
-                {item.key === 'shirt' && SHIRT_SPECIALS.map(s => (
-                  <img
-                    key={s.key}
-                    src={s.logo}
-                    className={`lb-dot-logo ${(unlockedColors[item.key] || []).includes(s.key) ? 'lb-dot-logo-on' : 'lb-dot-logo-off'}`}
-                    title={s.label}
-                    alt={s.label}
-                  />
-                ))}
+                {pool.map(c => {
+                  const owned = (unlockedColors[item.key] || []).includes(c.key)
+                  return (
+                    <ItemSwatch key={c.key} item={c} title={c.label}
+                      className={`lb-dot2 ${owned ? '' : 'lb-locked'}`} />
+                  )
+                })}
               </div>
 
               <div className="lb-progress">{unlocked}/{total} gewonnen</div>
