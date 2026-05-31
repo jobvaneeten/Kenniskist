@@ -185,12 +185,18 @@ body::before {
 }
 .menu-btn:hover .btn-arrow { transform: translateX(4px); opacity: 1; }
 
-/* ── Curuntie badge ──────────────────────── */
-.curuntie-badge {
+/* ── Currency badges ─────────────────────── */
+.currency-badges {
   position: fixed;
   top: 18px;
   right: 18px;
   z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+.curuntie-badge {
   display: flex;
   align-items: center;
   gap: 7px;
@@ -201,6 +207,11 @@ body::before {
   backdrop-filter: blur(12px);
   box-shadow: 0 4px 16px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,210,63,0.1);
 }
+.briefgeld-badge {
+  border-color: rgba(80,210,140,0.4);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3), 0 0 0 1px rgba(80,210,140,0.12);
+}
+.briefgeld-amount { color: #4fe0a0 !important; }
 .curuntie-icon   { font-size: 1.25rem; line-height: 1; }
 .curuntie-amount {
   font-size: 0.95rem;

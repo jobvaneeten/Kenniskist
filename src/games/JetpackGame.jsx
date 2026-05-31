@@ -1,4 +1,19 @@
-export default function JetpackGame({ onBack }) {
+import { useEffect } from 'react'
+
+export default function JetpackGame({ onBack, addCuruntie }) {
+  // Award munten based on distance flown (posted by the jetpack iframe)
+  useEffect(() => {
+    const onMsg = (e) => {
+      const d = e?.data
+      if (d && d.type === 'jetpack-gameover' && typeof d.distance === 'number') {
+        const coins = Math.max(0, Math.floor(d.distance))
+        if (coins > 0) addCuruntie?.(coins)
+      }
+    }
+    window.addEventListener('message', onMsg)
+    return () => window.removeEventListener('message', onMsg)
+  }, [addCuruntie])
+
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: '#000' }}>
       <button

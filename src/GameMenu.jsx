@@ -43,7 +43,7 @@ export default function GameMenu({ onBack, addCuruntie }) {
   }
 
   if (directGame === 'jetpack') {
-    return <JetpackGame onBack={onBack} />
+    return <JetpackGame onBack={onBack} addCuruntie={addCuruntie} />
   }
 
 

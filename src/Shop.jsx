@@ -69,7 +69,7 @@ function RarityRow({ isShirt }) {
   )
 }
 
-export default function Shop({ curuntie, addCuruntie, unlockedColors, onUnlock, onBack }) {
+export default function Shop({ curuntie, briefgeld, addBriefgeld, onExchange, unlockedColors, onUnlock, onBack }) {
   const [overlay,   setOverlay]   = useState(null)
   const [boxState,  setBoxState]  = useState('idle')
   const [particles, setParticles] = useState([])
@@ -153,7 +153,7 @@ export default function Shop({ curuntie, addCuruntie, unlockedColors, onUnlock, 
       : SHIRT_COLORS
 
   const openLootbox = (item) => {
-    if (curuntie < LOOTBOX_COST) return
+    if (briefgeld < LOOTBOX_COST) return
 
     const pool    = getPool(item.key)
     const already = unlockedColors[item.key] || []
@@ -169,9 +169,9 @@ export default function Shop({ curuntie, addCuruntie, unlockedColors, onUnlock, 
     const won = bag[Math.floor(Math.random() * bag.length)]
 
     if (isDuplicate) {
-      addCuruntie(-LOOTBOX_COST + 50)
+      addBriefgeld(-LOOTBOX_COST + 50)
     } else {
-      addCuruntie(-LOOTBOX_COST)
+      addBriefgeld(-LOOTBOX_COST)
       onUnlock(item.key, won.key)
     }
 
@@ -244,12 +244,34 @@ export default function Shop({ curuntie, addCuruntie, unlockedColors, onUnlock, 
       <p className="shop-sub">Open een lootbox en win een kleur — of iets legendarisch!</p>
 
       <div className="lootbox-grid">
+        <div className="exchange-box">
+          <div className="exchange-head">💱 Munten inwisselen voor briefgeld</div>
+          <div className="exchange-body">
+            <div className="exchange-col">
+              <span className="exchange-col-label">Kost</span>
+              <span className="exchange-col-val">🪙 1.000</span>
+            </div>
+            <span className="exchange-arrow">→</span>
+            <div className="exchange-col">
+              <span className="exchange-col-label">Krijg</span>
+              <span className="exchange-col-val exchange-get">💵 100</span>
+            </div>
+            <button
+              className="exchange-btn"
+              onClick={onExchange}
+              disabled={curuntie < 1000}
+            >
+              {curuntie < 1000 ? 'Te weinig 🪙' : 'Wisselen'}
+            </button>
+          </div>
+        </div>
+
         {CLOTHING_ITEMS.map(item => {
           const pool      = getPool(item.key)
           const unlocked  = (unlockedColors[item.key] || []).length
           const total     = pool.length
           const allDone   = unlocked >= total
-          const canAfford = curuntie >= LOOTBOX_COST
+          const canAfford = briefgeld >= LOOTBOX_COST
 
           return (
             <div
@@ -293,7 +315,7 @@ export default function Shop({ curuntie, addCuruntie, unlockedColors, onUnlock, 
                 onClick={() => openLootbox(item)}
                 disabled={allDone || !canAfford}
               >
-                {allDone ? '✓ Compleet!' : !canAfford ? 'Te weinig 🪙' : `🪙 ${fmt(LOOTBOX_COST)} Openen`}
+                {allDone ? '✓ Compleet!' : !canAfford ? 'Te weinig 💵' : `💵 ${fmt(LOOTBOX_COST)} Openen`}
               </button>
             </div>
           )
@@ -425,7 +447,7 @@ export default function Shop({ curuntie, addCuruntie, unlockedColors, onUnlock, 
                           {RARITIES[overlay.wonItem.rarity].label}
                         </div>
                         <div className={`lb-wc-message ${isUltra ? 'lb-msg-ultra' : ''}`}>
-                          {overlay.isDuplicate ? '🔄 Al gewonnen! +50 🪙' : isUltra ? '🎆 GEWELDIG! JE HEBT HET! 🎆' : '🎉 NIEUW GEWONNEN!'}
+                          {overlay.isDuplicate ? '🔄 Al gewonnen! +50 💵' : isUltra ? '🎆 GEWELDIG! JE HEBT HET! 🎆' : '🎉 NIEUW GEWONNEN!'}
                         </div>
                       </>
                     )}

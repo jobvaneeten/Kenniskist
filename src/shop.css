@@ -33,6 +33,84 @@
 .shop-title { font-size: 2.2rem; font-weight: 900; }
 .shop-sub   { font-size: 0.9rem; color: rgba(255,255,255,0.45); font-weight: 600; margin-bottom: 16px; }
 
+/* ── Exchange box ─────────────────────── */
+.exchange-box {
+  grid-column: 1 / -1;
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  margin: 0 0 6px;
+  background: #1e2a44;
+  border: 2px solid rgba(80,210,140,0.55);
+  border-radius: 20px;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.4), 0 0 0 1px rgba(80,210,140,0.15);
+  overflow: hidden;
+}
+.exchange-head {
+  background: linear-gradient(135deg, #059669, #0891b2);
+  color: #fff;
+  font-size: 0.92rem;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  padding: 10px 16px;
+  text-align: center;
+}
+.exchange-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 16px 18px;
+}
+.exchange-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+.exchange-col-label {
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255,255,255,0.5);
+}
+.exchange-col-val {
+  font-size: 1.3rem;
+  font-weight: 900;
+  color: #FFD23F;
+  white-space: nowrap;
+}
+.exchange-col-val.exchange-get { color: #4fe0a0; }
+.exchange-arrow {
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: rgba(255,255,255,0.6);
+}
+.exchange-btn {
+  margin-left: 6px;
+  flex-shrink: 0;
+  padding: 12px 24px;
+  border: none; border-radius: 14px;
+  background: linear-gradient(135deg, #FFD23F, #f0a020);
+  color: #1a1a2e; font-family: inherit; font-size: 1rem; font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(255,210,63,0.3);
+  transition: transform 0.12s, filter 0.12s;
+}
+.exchange-btn:not(:disabled):hover { transform: translateY(-2px); filter: brightness(1.06); }
+.exchange-btn:disabled {
+  background: rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.5);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+@media (max-width: 600px) {
+  .exchange-body { flex-wrap: wrap; gap: 12px; }
+  .exchange-btn  { width: 100%; margin-left: 0; }
+}
+
 /* ── Lootbox grid ─────────────────────── */
 .lootbox-grid {
   display: grid;

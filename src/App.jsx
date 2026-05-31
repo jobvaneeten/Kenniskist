@@ -11,11 +11,17 @@ const CODES = { pabo: 100000 }
 
 function fmt(n) { return n.toLocaleString('nl-NL') }
 
-function CuruntieBadge({ amount }) {
+function CurrencyBadge({ munten, briefgeld }) {
   return (
-    <div className="curuntie-badge">
-      <span className="curuntie-icon">🪙</span>
-      <span className="curuntie-amount">{fmt(amount)}</span>
+    <div className="currency-badges">
+      <div className="curuntie-badge">
+        <span className="curuntie-icon">🪙</span>
+        <span className="curuntie-amount">{fmt(munten)}</span>
+      </div>
+      <div className="curuntie-badge briefgeld-badge">
+        <span className="curuntie-icon">💵</span>
+        <span className="curuntie-amount briefgeld-amount">{fmt(briefgeld)}</span>
+      </div>
     </div>
   )
 }
@@ -65,6 +71,9 @@ export default function App() {
   const [curuntie, setCuruntie] = useState(() => {
     try { return parseInt(localStorage.getItem('kk_curuntie') || '0', 10) } catch { return 0 }
   })
+  const [briefgeld, setBriefgeld] = useState(() => {
+    try { return parseInt(localStorage.getItem('kk_briefgeld') || '0', 10) } catch { return 0 }
+  })
   const [usedCodes, setUsedCodes] = useState(() => {
     try { return JSON.parse(localStorage.getItem('kk_used_codes') || '[]') } catch { return [] }
   })
@@ -77,6 +86,25 @@ export default function App() {
     setCuruntie(prev => {
       const next = prev + amount
       localStorage.setItem('kk_curuntie', String(next))
+      return next
+    })
+  }
+
+  const addBriefgeld = (amount) => {
+    setBriefgeld(prev => {
+      const next = prev + amount
+      localStorage.setItem('kk_briefgeld', String(next))
+      return next
+    })
+  }
+
+  // Exchange in the shop: 1000 munten → 100 briefgeld
+  const exchangeCoins = () => {
+    setCuruntie(prev => {
+      if (prev < 1000) return prev
+      const next = prev - 1000
+      localStorage.setItem('kk_curuntie', String(next))
+      addBriefgeld(100)
       return next
     })
   }
@@ -101,14 +129,14 @@ export default function App() {
 
   if (screen === 'game') return (
     <>
-      <CuruntieBadge amount={curuntie} />
+      <CurrencyBadge munten={curuntie} briefgeld={briefgeld} />
       <GameMenu onBack={() => setScreen('menu')} addCuruntie={addCuruntie} />
     </>
   )
 
   if (screen === 'wardrobe') return (
     <>
-      <CuruntieBadge amount={curuntie} />
+      <CurrencyBadge munten={curuntie} briefgeld={briefgeld} />
       <Wardrobe
         onBack={() => setScreen('menu')}
         onPlay3D={() => setScreen('football3d')}
@@ -132,10 +160,12 @@ export default function App() {
 
   if (screen === 'shop') return (
     <>
-      <CuruntieBadge amount={curuntie} />
+      <CurrencyBadge munten={curuntie} briefgeld={briefgeld} />
       <Shop
         curuntie={curuntie}
-        addCuruntie={addCuruntie}
+        briefgeld={briefgeld}
+        addBriefgeld={addBriefgeld}
+        onExchange={exchangeCoins}
         unlockedColors={unlockedColors}
         onUnlock={unlockColor}
         onBack={() => setScreen('menu')}
@@ -145,7 +175,7 @@ export default function App() {
 
   return (
     <div className="screen">
-      <CuruntieBadge amount={curuntie} />
+      <CurrencyBadge munten={curuntie} briefgeld={briefgeld} />
 
       <div className="hero">
         <div className="logo-wrap">
