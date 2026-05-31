@@ -300,16 +300,19 @@ class PlayerInstance {
       node.position.copyFrom(pos)
     })
   }
-  _playRest() { this._stopAll(); this._resetRest(); this._anims.rust?.play(true); this._state = 'idle' }
+  // NOTE: no _resetRest() on these transitions — resetting to the bind pose
+  // causes a one-frame T-pose flash before the next clip is evaluated.
+  // Stopping leaves the bones at the last pose, which blends seamlessly.
+  _playRest() { this._stopAll(); this._anims.rust?.play(true); this._state = 'idle' }
   _playWalk(speed) {
     if (this._state !== 'walk') {
-      this._stopAll(); this._resetRest(); this._anims.lopen?.play(true); this._state = 'walk'
+      this._stopAll(); this._anims.lopen?.play(true); this._state = 'walk'
     }
     if (this._anims.lopen) this._anims.lopen.speedRatio = Math.max(0.3, (speed / 4.8) * 1.6)
   }
   _playSprint() {
     if (this._state !== 'sprint') {
-      this._stopAll(); this._resetRest()
+      this._stopAll()
       // fall back to walk anim if the sprint glb is missing
       ;(this._anims.sprinten ?? this._anims.lopen)?.play(true)
       this._state = 'sprint'
@@ -329,7 +332,7 @@ class PlayerInstance {
     if (!this._anims[name] || this._state === 'emote') return
     this._stopAll(); this._state = 'emote'
     this._anims[name].play(false)
-    this._anims[name].onAnimationGroupEndObservable.addOnce(() => { this._resetRest(); this._playRest() })
+    this._anims[name].onAnimationGroupEndObservable.addOnce(() => { this._playRest() })
   }
 
   // ── Interpolated pose ──
