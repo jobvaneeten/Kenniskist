@@ -101,6 +101,15 @@ export function swatchStyle(item) {
 }
 export function swatchEmoji(item) { return item && item.kind === 'print' ? item.emoji : null }
 
+// Lighten a #rrggbb colour by amount (0..1)
+function lighten(hex, amt) {
+  const h = hex.replace('#', '')
+  const n = h.length === 3 ? h.split('').map(x => x + x).join('') : h
+  const r = parseInt(n.slice(0, 2), 16), g = parseInt(n.slice(2, 4), 16), b = parseInt(n.slice(4, 6), 16)
+  const mix = (v) => Math.round(v + (255 - v) * amt)
+  return `rgb(${mix(r)},${mix(g)},${mix(b)})`
+}
+
 function cssPattern({ pattern, c1, c2 }) {
   switch (pattern) {
     case 'stripes':  return `repeating-linear-gradient(45deg, ${c1} 0 6px, ${c2} 6px 12px)`
@@ -114,22 +123,31 @@ function cssPattern({ pattern, c1, c2 }) {
 
 // ── Procedural texture canvas (for the 3D meshes) ────────────────────
 export function buildTextureCanvas(item) {
-  const S = 512
+  const S = 1024
   const cv = document.createElement('canvas')
   cv.width = S; cv.height = S
   const ctx = cv.getContext('2d')
 
   if (item.kind === 'print') {
-    ctx.fillStyle = item.bg; ctx.fillRect(0, 0, S, S)
-    const n = 4, cell = S / n
-    ctx.font = `${Math.floor(cell * 0.62)}px serif`
+    // Soft vertical gradient background so the print has depth (not flat)
+    const g = ctx.createLinearGradient(0, 0, 0, S)
+    g.addColorStop(0, lighten(item.bg, 0.14))
+    g.addColorStop(1, item.bg)
+    ctx.fillStyle = g; ctx.fillRect(0, 0, S, S)
+
+    // Neat brick-tiled emoji print, crisp and evenly spaced
+    const cols = 5
+    const cw = S / cols, ch = cw            // square cells
+    const rows = Math.ceil(S / ch) + 1
+    ctx.font = `${Math.floor(cw * 0.66)}px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif`
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
-    for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) {
-      ctx.save()
-      const x = c * cell + cell / 2, y = r * cell + cell / 2
-      ctx.translate(x, y); ctx.rotate((((r + c) % 2) ? 0.18 : -0.18))
-      ctx.fillText(item.emoji, 0, 0)
-      ctx.restore()
+    for (let r = 0; r < rows; r++) {
+      const offset = (r % 2) ? cw / 2 : 0
+      for (let c = -1; c <= cols; c++) {
+        const x = c * cw + cw / 2 + offset
+        const y = r * ch + ch / 2
+        ctx.fillText(item.emoji, x, y)
+      }
     }
     return cv
   }
