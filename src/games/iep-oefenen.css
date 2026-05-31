@@ -281,10 +281,35 @@
   color: #6ee7b7;
 }
 .iep-feedback.bad {
-  background: rgba(248,113,113,0.15);
+  background: rgba(248,113,113,0.12);
   border: 1.5px solid #f87171;
   color: #fca5a5;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
 }
+.iep-wrong-line   { color: #fca5a5; font-weight: 700; }
+.iep-wrong-line strong { color: #fecaca; }
+.iep-correct-answer {
+  color: #6ee7b7; font-weight: 700;
+}
+.iep-correct-answer strong { color: #a7f3d0; font-size: 1.05em; }
+.iep-explanation {
+  background: rgba(255,255,255,0.06);
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: #e2e8f0;
+  font-weight: 500;
+  line-height: 1.5;
+  font-size: 0.95rem;
+}
+.iep-feedback.bad .iep-next-btn {
+  margin-left: auto;
+  background: rgba(248,113,113,0.22);
+  border-color: #f87171;
+  color: #fecaca;
+}
+.iep-feedback.bad .iep-next-btn:hover { background: rgba(248,113,113,0.36); }
 .iep-feedback .iep-next-btn {
   margin-left: auto;
   background: rgba(52,211,153,0.25);

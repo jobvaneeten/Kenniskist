@@ -5,7 +5,9 @@
     "contextImage": null,
     "questionText": "Hoeveel spelers zijn er in totaal?",
     "type": "open",
-    "options": null
+    "options": null,
+    "answer": "99",
+    "explanation": "9 teams × 11 spelers = 99 spelers."
   },
   {
     "id": 2,
@@ -13,7 +15,9 @@
     "contextImage": null,
     "questionText": "Hoeveel blikjes staan er in elk vak?",
     "type": "open",
-    "options": null
+    "options": null,
+    "answer": "54",
+    "explanation": "432 ÷ 8 = 54 blikjes per vak."
   },
   {
     "id": 3,
@@ -21,7 +25,9 @@
     "contextImage": null,
     "questionText": "Hoeveel euro verdient hij op een dag met brood?",
     "type": "open",
-    "options": null
+    "options": null,
+    "answer": "165",
+    "explanation": "60 broden × €2,75 = €165."
   },
   {
     "id": 4,
@@ -29,7 +35,9 @@
     "contextImage": null,
     "questionText": "Hoeveel betalen ze in totaal?",
     "type": "open",
-    "options": null
+    "options": null,
+    "answer": "432",
+    "explanation": "24 mensen × €18 = €432."
   },
   {
     "id": 5,
@@ -37,7 +45,9 @@
     "contextImage": null,
     "questionText": "Hoeveel meter zwemt Sanne in totaal?",
     "type": "open",
-    "options": null
+    "options": null,
+    "answer": "840",
+    "explanation": "Eén baan is 840 ÷ 7 = 120 meter. 7 banen = 7 × 120 = 840 meter."
   },
   {
     "id": 6,
@@ -45,7 +55,9 @@
     "contextImage": null,
     "questionText": "Hoeveel euro korting krijg je?",
     "type": "open",
-    "options": null
+    "options": null,
+    "answer": "90",
+    "explanation": "25% van €360 = 360 ÷ 4 = €90 korting."
   },
   {
     "id": 7,
@@ -53,7 +65,9 @@
     "contextImage": null,
     "questionText": "Hoeveel broden bakt de bakker elke dag in totaal?",
     "type": "open",
-    "options": null
+    "options": null,
+    "answer": "360",
+    "explanation": "15 soorten × 24 stuks = 360 broden."
   },
   {
     "id": 8,
@@ -61,7 +75,9 @@
     "contextImage": null,
     "questionText": "Hoeveel kilometer moet hij nog lopen? Rond af op hele kilometers.",
     "type": "open",
-    "options": null
+    "options": null,
+    "answer": "24",
+    "explanation": "Afgerond is de marathon 42 km. 42 − 18 = 24 km nog te gaan."
   },
   {
     "id": 9,
@@ -69,7 +85,9 @@
     "contextImage": null,
     "questionText": "Voor hoeveel porties is de zak genoeg?",
     "type": "open",
-    "options": null
+    "options": null,
+    "answer": "4",
+    "explanation": "500 ÷ 125 = 4 porties."
   },
   {
     "id": 10,
@@ -77,7 +95,9 @@
     "contextImage": null,
     "questionText": "Hoeveel procent korting is dat?",
     "type": "open",
-    "options": null
+    "options": null,
+    "answer": "25%",
+    "explanation": "Korting = 60 − 45 = €15. 15 ÷ 60 = 0,25 = 25%."
   },
   {
     "id": 11,
@@ -85,7 +105,9 @@
     "contextImage": null,
     "questionText": "Hoeveel liter drinkt Lena per dag?",
     "type": "open",
-    "options": null
+    "options": null,
+    "answer": "2,25",
+    "explanation": "3 flessen × 0,75 liter = 2,25 liter."
   },
   {
     "id": 12,
@@ -93,7 +115,9 @@
     "contextImage": null,
     "questionText": "Welk deel van de school gaat naar de bibliotheek? Schrijf als breuk.",
     "type": "open",
-    "options": null
+    "options": null,
+    "answer": "1/8",
+    "explanation": "45 ÷ 360 = 1/8 (deel beide door 45)."
   },
   {
     "id": 13,
@@ -101,7 +125,9 @@
     "contextImage": null,
     "questionText": "Hoe lang duurt de treinreis?",
     "type": "open",
-    "options": null
+    "options": null,
+    "answer": "3 uur",
+    "explanation": "216 ÷ 72 = 3 uur."
   },
   {
     "id": 14,
@@ -109,7 +135,9 @@
     "contextImage": null,
     "questionText": "Hoe groot is de oppervlakte van het veld in vierkante meter?",
     "type": "open",
-    "options": null
+    "options": null,
+    "answer": "7140",
+    "explanation": "Oppervlakte = 105 × 68 = 7.140 m²."
   },
   {
     "id": 15,
@@ -117,7 +145,9 @@
     "contextImage": null,
     "questionText": "Hoeveel bezoekers zijn volwassene?",
     "type": "open",
-    "options": null
+    "options": null,
+    "answer": "720",
+    "explanation": "60% van 1.200 = 1.200 × 0,6 = 720 bezoekers."
   },
   {
     "id": 16,
@@ -125,7 +155,9 @@
     "contextImage": null,
     "questionText": "Hoeveel euro betaal je als aanbetaling?",
     "type": "open",
-    "options": null
+    "options": null,
+    "answer": "96",
+    "explanation": "20% van €480 = 480 ÷ 5 = €96 aanbetaling."
   },
   {
     "id": 17,
@@ -133,7 +165,9 @@
     "contextImage": null,
     "questionText": "Hoeveel milliliter melk heeft Bram nodig?",
     "type": "open",
-    "options": null
+    "options": null,
+    "answer": "600",
+    "explanation": "Per persoon: 900 ÷ 6 = 150 ml. 4 × 150 = 600 ml."
   },
   {
     "id": 18,
@@ -141,7 +175,9 @@
     "contextImage": null,
     "questionText": "Hoeveel kilogram weegt het water?",
     "type": "open",
-    "options": null
+    "options": null,
+    "answer": "8,5",
+    "explanation": "9,7 − 1,2 = 8,5 kg water."
   },
   {
     "id": 19,
@@ -149,7 +185,9 @@
     "contextImage": null,
     "questionText": "Hoeveel leerlingen hebben een fiets?",
     "type": "open",
-    "options": null
+    "options": null,
+    "answer": "9",
+    "explanation": "3/8 van 24 = 24 ÷ 8 × 3 = 9 leerlingen."
   },
   {
     "id": 20,
@@ -157,7 +195,9 @@
     "contextImage": null,
     "questionText": "Hoeveel producten worden er per week gemaakt?",
     "type": "open",
-    "options": null
+    "options": null,
+    "answer": "12000",
+    "explanation": "2.400 × 5 dagen = 12.000 producten."
   },
   {
     "id": 21,
@@ -165,7 +205,9 @@
     "contextImage": null,
     "questionText": "Hoeveel meter is dat?",
     "type": "open",
-    "options": null
+    "options": null,
+    "answer": "3600",
+    "explanation": "1 km = 1.000 m, dus 3,6 × 1.000 = 3.600 m."
   },
   {
     "id": 22,
@@ -173,7 +215,9 @@
     "contextImage": null,
     "questionText": "Hoeveel kilogram is dat?",
     "type": "open",
-    "options": null
+    "options": null,
+    "answer": "2,5",
+    "explanation": "1.000 g = 1 kg, dus 2.500 ÷ 1.000 = 2,5 kg."
   },
   {
     "id": 23,
@@ -181,7 +225,9 @@
     "contextImage": null,
     "questionText": "Hoeveel meter moet hij nog klimmen?",
     "type": "open",
-    "options": null
+    "options": null,
+    "answer": "1225",
+    "explanation": "3.400 − 2.175 = 1.225 meter."
   },
   {
     "id": 24,
@@ -189,7 +235,9 @@
     "contextImage": null,
     "questionText": "Hoeveel appels zitten er in de zak?",
     "type": "open",
-    "options": null
+    "options": null,
+    "answer": "20",
+    "explanation": "3 kg = 3.000 g. 3.000 ÷ 150 = 20 appels."
   },
   {
     "id": 25,
@@ -197,7 +245,9 @@
     "contextImage": null,
     "questionText": "Hoeveel euro verdient het café per dag aan koffie?",
     "type": "open",
-    "options": null
+    "options": null,
+    "answer": "450",
+    "explanation": "180 koppen × €2,50 = €450."
   },
   {
     "id": 26,
@@ -205,7 +255,9 @@
     "contextImage": null,
     "questionText": "Hoeveel tegels zijn er nodig voor de vloer?",
     "type": "open",
-    "options": null
+    "options": null,
+    "answer": "100",
+    "explanation": "Vloer 3 m = 300 cm. 300 ÷ 30 = 10 tegels per rij. 10 × 10 = 100 tegels."
   },
   {
     "id": 27,
@@ -213,7 +265,9 @@
     "contextImage": null,
     "questionText": "Hoeveel kilometer rijdt de auto op 1 liter?",
     "type": "open",
-    "options": null
+    "options": null,
+    "answer": "13",
+    "explanation": "520 ÷ 40 = 13 km per liter."
   },
   {
     "id": 28,
@@ -221,7 +275,9 @@
     "contextImage": null,
     "questionText": "Hoeveel bouwsets worden er verkocht?",
     "type": "open",
-    "options": null
+    "options": null,
+    "answer": "150",
+    "explanation": "5/8 van 240 = 240 ÷ 8 × 5 = 150 bouwsets."
   },
   {
     "id": 29,
@@ -229,7 +285,9 @@
     "contextImage": null,
     "questionText": "Hoeveel centimeter raamoppervlakte is er per lokaal?",
     "type": "open",
-    "options": null
+    "options": null,
+    "answer": "540",
+    "explanation": "6 ramen × 90 cm = 540 cm."
   },
   {
     "id": 30,
@@ -237,7 +295,9 @@
     "contextImage": null,
     "questionText": "Hoeveel euro verdient ze?",
     "type": "open",
-    "options": null
+    "options": null,
+    "answer": "78",
+    "explanation": "12 × 6,5 = €78."
   },
   {
     "id": 31,
@@ -245,7 +305,9 @@
     "contextImage": null,
     "questionText": "Na hoeveel dagen is de tank leeg?",
     "type": "open",
-    "options": null
+    "options": null,
+    "answer": "16",
+    "explanation": "1.200 ÷ 75 = 16 dagen."
   },
   {
     "id": 32,
@@ -253,7 +315,9 @@
     "contextImage": null,
     "questionText": "Hoeveel bedraagt de btw op het T-shirt?",
     "type": "open",
-    "options": null
+    "options": null,
+    "answer": "2,70",
+    "explanation": "15% van €18 = 18 × 0,15 = €2,70."
   },
   {
     "id": 33,
@@ -261,7 +325,9 @@
     "contextImage": null,
     "questionText": "Hoe lang duurt de treinreis?",
     "type": "open",
-    "options": null
+    "options": null,
+    "answer": "2 uur 35 minuten",
+    "explanation": "Van 14:45 tot 17:20 is 2 uur en 35 minuten."
   },
   {
     "id": 34,
@@ -269,7 +335,9 @@
     "contextImage": null,
     "questionText": "Hoeveel procent winst maakt de winkel per doos?",
     "type": "open",
-    "options": null
+    "options": null,
+    "answer": "50%",
+    "explanation": "Winst = 9 − 6 = €3. 3 ÷ 6 = 0,5 = 50%."
   },
   {
     "id": 35,
@@ -277,7 +345,9 @@
     "contextImage": null,
     "questionText": "Hoeveel leerlingen hebben een huisdier?",
     "type": "open",
-    "options": null
+    "options": null,
+    "answer": "21",
+    "explanation": "3/4 van 28 = 28 ÷ 4 × 3 = 21 leerlingen."
   },
   {
     "id": 36,
@@ -285,7 +355,9 @@
     "contextImage": null,
     "questionText": "Hoeveel kilometer loopt hij gemiddeld per uur?",
     "type": "open",
-    "options": null
+    "options": null,
+    "answer": "12",
+    "explanation": "42 ÷ 3,5 = 12 km per uur."
   },
   {
     "id": 37,
@@ -293,7 +365,9 @@
     "contextImage": null,
     "questionText": "Hoeveel schroeven maakt de machine per dag?",
     "type": "open",
-    "options": null
+    "options": null,
+    "answer": "72000",
+    "explanation": "8 uur = 480 minuten. 150 × 480 = 72.000 schroeven."
   },
   {
     "id": 38,
@@ -301,7 +375,9 @@
     "contextImage": null,
     "questionText": "Hoeveel liter is dat?",
     "type": "open",
-    "options": null
+    "options": null,
+    "answer": "4,2",
+    "explanation": "1.000 ml = 1 liter, dus 4.200 ÷ 1.000 = 4,2 liter."
   },
   {
     "id": 39,
@@ -309,7 +385,9 @@
     "contextImage": null,
     "questionText": "Hoeveel euro verdient ze per week?",
     "type": "open",
-    "options": null
+    "options": null,
+    "answer": "464",
+    "explanation": "14,50 × 32 = €464."
   },
   {
     "id": 40,
@@ -317,7 +395,9 @@
     "contextImage": null,
     "questionText": "Hoeveel klanten komen er op een dag in het weekend?",
     "type": "open",
-    "options": null
+    "options": null,
+    "answer": "728",
+    "explanation": "30% meer: 560 × 1,3 = 728 klanten."
   },
   {
     "id": 41,
@@ -325,7 +405,9 @@
     "contextImage": null,
     "questionText": "Hoe lang is de omtrek van de lijst in centimeter?",
     "type": "open",
-    "options": null
+    "options": null,
+    "answer": "400",
+    "explanation": "Omtrek = 2 × (120 + 80) = 400 cm."
   },
   {
     "id": 42,
@@ -333,7 +415,9 @@
     "contextImage": null,
     "questionText": "Hoe laat komt de bus aan?",
     "type": "open",
-    "options": null
+    "options": null,
+    "answer": "8:57",
+    "explanation": "8:12 + 45 minuten = 8:57."
   },
   {
     "id": 43,
@@ -341,7 +425,9 @@
     "contextImage": null,
     "questionText": "Hoeveel plakken krijg je?",
     "type": "open",
-    "options": null
+    "options": null,
+    "answer": "16",
+    "explanation": "800 ÷ 50 = 16 plakken."
   },
   {
     "id": 44,
@@ -349,7 +435,9 @@
     "contextImage": null,
     "questionText": "Hoe hoog was de boom 3 jaar geleden?",
     "type": "open",
-    "options": null
+    "options": null,
+    "answer": "105",
+    "explanation": "In 3 jaar groeit hij 3 × 35 = 105 cm. 210 − 105 = 105 cm."
   },
   {
     "id": 45,
@@ -357,7 +445,9 @@
     "contextImage": null,
     "questionText": "Hoeveel spelers kunnen er tegelijk trainen?",
     "type": "open",
-    "options": null
+    "options": null,
+    "answer": "96",
+    "explanation": "8 teams × 12 spelers = 96 spelers."
   },
   {
     "id": 46,
@@ -365,7 +455,9 @@
     "contextImage": null,
     "questionText": "Hoeveel liter is er nog in het vat?",
     "type": "open",
-    "options": null
+    "options": null,
+    "answer": "12",
+    "explanation": "1/3 van 18 = 6 verkocht. 18 − 6 = 12 liter over."
   },
   {
     "id": 47,
@@ -373,7 +465,9 @@
     "contextImage": null,
     "questionText": "Wat is de prijs met korting?",
     "type": "open",
-    "options": null
+    "options": null,
+    "answer": "63",
+    "explanation": "30% korting: 90 × 0,7 = €63."
   },
   {
     "id": 48,
@@ -381,7 +475,9 @@
     "contextImage": null,
     "questionText": "Hoeveel procent stemt op nummer 1?",
     "type": "open",
-    "options": null
+    "options": null,
+    "answer": "60%",
+    "explanation": "18 ÷ 30 = 0,6 = 60%."
   },
   {
     "id": 49,
@@ -389,7 +485,9 @@
     "contextImage": null,
     "questionText": "Welk deel van de taart heeft Kai gegeten? Schrijf als breuk.",
     "type": "open",
-    "options": null
+    "options": null,
+    "answer": "3/8",
+    "explanation": "Kai eet 3 van de 8 stukken = 3/8."
   },
   {
     "id": 50,
@@ -397,6 +495,8 @@
     "contextImage": null,
     "questionText": "Hoe laat is het concert afgelopen?",
     "type": "open",
-    "options": null
+    "options": null,
+    "answer": "22:45",
+    "explanation": "20:00 + 2 uur 45 minuten = 22:45."
   }
 ]

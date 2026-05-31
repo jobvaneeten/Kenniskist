@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { answersMatch } from './iepQuestions'
 import './iep-oefenen.css'
 
 // ========== Stars ==========
@@ -44,6 +45,7 @@ const DOEL_DEFS = [
 ]
 
 function categorizeDoel(q) {
+  if (q.doel) return q.doel
   const text = ((q.contextText || '') + ' ' + (q.questionText || '')).toLowerCase()
   for (const d of DOEL_DEFS) {
     if (d.pattern && d.pattern.test(text)) return d.key
@@ -86,10 +88,10 @@ function LevelSelect({ onSelect }) {
   )
 }
 
-// ========== Question card ==========
+// ========== Question card (auto-checks the answer) ==========
 function QuestionCard({ q, onCorrect, onWrong }) {
   const [input, setInput]               = useState('')
-  const [phase, setPhase]               = useState('answering')
+  const [phase, setPhase]               = useState('answering')   // answering | good | bad
   const [chosenOption, setChosenOption] = useState(null)
   const inputRef = useRef(null)
 
@@ -100,17 +102,11 @@ function QuestionCard({ q, onCorrect, onWrong }) {
     if (inputRef.current) inputRef.current.focus()
   }, [q.id])
 
-  function handleMC(opt) { setChosenOption(opt); setPhase('honor') }
-  function handleCheck() { if (input.trim()) setPhase('honor') }
-  function handleHonor(correct) { setPhase(correct ? 'feedback-good' : 'feedback-bad') }
-
-  // Reset card internally AND notify parent
-  function handleRetry() {
-    setPhase('answering')
-    setInput('')
-    setChosenOption(null)
-    onWrong()
+  function check(answer) {
+    setPhase(answersMatch(answer, q.answer) ? 'good' : 'bad')
   }
+  function handleMC(opt)  { setChosenOption(opt); check(opt) }
+  function handleCheck()  { if (input.trim()) check(input) }
 
   return (
     <div className="iep-card">
@@ -136,6 +132,7 @@ function QuestionCard({ q, onCorrect, onWrong }) {
               ref={inputRef}
               className="iep-open-input"
               type="text"
+              inputMode="decimal"
               placeholder="Jouw antwoord…"
               value={input}
               onChange={e => setInput(e.target.value)}
@@ -146,31 +143,21 @@ function QuestionCard({ q, onCorrect, onWrong }) {
         )
       )}
 
-      {phase === 'honor' && (
-        <div className="iep-honor-check">
-          <p>{q.type === 'mc'
-            ? <>Jij koos: <strong>{chosenOption}</strong></>
-            : <>Jouw antwoord: <strong>{input}</strong></>}
-          </p>
-          <p>Klopt jouw antwoord?</p>
-          <div className="iep-honor-row">
-            <button className="iep-honor-yes" onClick={() => handleHonor(true)}>✅ Ja, goed!</button>
-            <button className="iep-honor-no"  onClick={() => handleHonor(false)}>❌ Nee, fout</button>
-          </div>
-        </div>
-      )}
-
-      {phase === 'feedback-good' && (
+      {phase === 'good' && (
         <div className="iep-feedback good">
-          <span>🎉 Super goed!</span>
+          <span>🎉 Goed gedaan! Het antwoord is {q.answer}.</span>
           <button className="iep-next-btn" onClick={onCorrect}>Verder →</button>
         </div>
       )}
 
-      {phase === 'feedback-bad' && (
+      {phase === 'bad' && (
         <div className="iep-feedback bad">
-          <span>😅 Niet helemaal — probeer het nog eens!</span>
-          <button className="iep-next-btn" onClick={handleRetry}>↩ Opnieuw</button>
+          <span className="iep-wrong-line">
+            ❌ Niet goed{q.type === 'mc' ? <> — jij koos <strong>{chosenOption}</strong></> : <> — jij had <strong>{input || '—'}</strong></>}.
+          </span>
+          <span className="iep-correct-answer">✅ Het juiste antwoord is <strong>{q.answer}</strong></span>
+          <span className="iep-explanation">💡 {q.explanation}</span>
+          <button className="iep-next-btn" onClick={onWrong}>Volgende →</button>
         </div>
       )}
     </div>
@@ -306,7 +293,7 @@ export default function IepOefenen({ onBack }) {
 
   const currentQ = questions.length > 0 && order.length > 0 ? questions[order[qIndex]] : null
 
-  // ---- Load level ----
+  // ---- Load level from JSON (your IEP questions, now with answers) ----
   async function startLevel(lvl) {
     setLevel(lvl)
     setLoading(true)
@@ -332,6 +319,12 @@ export default function IepOefenen({ onBack }) {
     }
   }
 
+  // ---- Reshuffle the same questions when the order loops ----
+  function loopBatch() {
+    setOrder(shuffleArray(questions.map((_, i) => i)))
+    setQIndex(0)
+  }
+
   // ---- Update per-question stats ----
   function bumpStats(qId, doel, isCorrect) {
     setQuestionStats(prev => {
@@ -344,12 +337,11 @@ export default function IepOefenen({ onBack }) {
     })
   }
 
-  // ---- Advance to next question (or loop) ----
+  // ---- Advance to next question (regenerate a batch when looping) ----
   function doAdvance() {
     const next = qIndex + 1
     if (next >= order.length) {
-      setOrder(shuffleArray(questions.map((_, i) => i)))
-      setQIndex(0)
+      loopBatch()
     } else {
       setQIndex(next)
     }
@@ -381,8 +373,7 @@ export default function IepOefenen({ onBack }) {
     }
   }
 
-  // ---- Wrong answer ----
-  // Called from QuestionCard after card resets itself
+  // ---- Wrong answer → move on to the next question ----
   function handleWrong() {
     if (!currentQ) return
     const newTA = totalAnswered + 1
@@ -392,10 +383,11 @@ export default function IepOefenen({ onBack }) {
     bumpStats(currentQ.id, categorizeDoel(currentQ), false)
 
     if (newTA % 10 === 0) {
-      setPostOverviewAction('stay')
+      setPostOverviewAction('advance')
       setScreen('overview')
+    } else {
+      doAdvance()
     }
-    // else: card is already reset internally — same question stays
   }
 
   // ---- After overview ----
