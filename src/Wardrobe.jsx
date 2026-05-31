@@ -3,7 +3,7 @@ import {
   Engine, Scene, ArcRotateCamera,
   HemisphericLight, DirectionalLight,
   Vector3, Color3, Color4, Texture,
-  MeshBuilder, StandardMaterial, Quaternion,
+  MeshBuilder, StandardMaterial, Quaternion, Mesh,
 } from '@babylonjs/core'
 import { SceneLoader } from '@babylonjs/core/Loading/sceneLoader'
 import '@babylonjs/loaders/glTF'
@@ -158,16 +158,53 @@ export default function Wardrobe({ onBack, onPlay3D, onPlayRocket, unlockedColor
     extraMeshesRef.current = []
   }
 
+  // Chest graphic for 'print' shirts: a billboard plane attached to the
+  // chest bone, so a real emoji shows on the shirt (the mesh UV can't).
+  const emojiRef = useRef(null)
+  const setShirtEmoji = (item) => {
+    if (emojiRef.current) { try { emojiRef.current.dispose() } catch {} ; emojiRef.current = null }
+    if (!item || item.kind !== 'print' || !sceneRef.current) return
+    const scene = sceneRef.current
+    const shirt = meshesRef.current.shirt
+    const skel  = skeletonRef.current
+    if (!shirt || !skel) return
+
+    const cv = document.createElement('canvas'); cv.width = 256; cv.height = 256
+    const ctx = cv.getContext('2d')
+    ctx.font = '210px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif'
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
+    ctx.fillText(item.emoji, 128, 140)
+    const tex = new Texture(cv.toDataURL(), scene, false, false)
+    tex.hasAlpha = true
+    const mat = new StandardMaterial('emojiMat', scene)
+    mat.diffuseTexture = tex
+    mat.useAlphaFromDiffuseTexture = true
+    mat.emissiveColor = new Color3(1, 1, 1)
+    mat.disableLighting = true
+    mat.backFaceCulling = false
+
+    const plane = MeshBuilder.CreatePlane('chestEmoji', { size: 0.34 }, scene)
+    plane.material = mat
+    plane.billboardMode = Mesh.BILLBOARDMODE_ALL
+    const bone = skel.bones.find(b => b.name === 'Spine1') || skel.bones.find(b => b.name === 'Spine')
+    if (bone) {
+      plane.attachToBone(bone, shirt)
+      plane.position = new Vector3(0, 0.09, 0.14)   // chest, slightly forward
+    }
+    emojiRef.current = plane
+  }
+
   const pickShirt = (key) => {
     const next = shirtColor === key ? null : key
     setShirtColor(next)
     clearExtraMeshes()
     const m = meshesRef.current.shirt
     if (!m) return
-    if (!next) { m.setEnabled(false); return }
+    if (!next) { m.setEnabled(false); setShirtEmoji(null); return }
 
     const item = findItem('shirt', next)
     if (!item) return
+    setShirtEmoji(item)   // adds a chest emoji for prints, clears it otherwise
 
     if (item.kind === 'model' && sceneRef.current) {
       // The shirt GLBs share the SAME skeleton as Poppetje (identical bone order).
@@ -327,6 +364,7 @@ export default function Wardrobe({ onBack, onPlay3D, onPlayRocket, unlockedColor
           })
         } else if (item && m) {
           applyItem(m, item, scene)
+          setShirtEmoji(item)
           m.setEnabled(true)
         }
       }
