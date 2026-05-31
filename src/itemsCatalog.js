@@ -121,6 +121,34 @@ function cssPattern({ pattern, c1, c2 }) {
   }
 }
 
+// ── Shirt print baked onto the Ajax/PSV shirt UV layout ──────────────
+// The donor shirt mesh has a real UV: front-chest ≈ (0.342, 0.526),
+// back ≈ (0.668, 0.731). We fill the shirt colour and stamp the emoji on
+// the front (big) and back (smaller). Texture is used with invertY=false,
+// so canvas (u*S, v*S) maps straight to the UV.
+export function buildShirtPrintTexture(item) {
+  const S = 1024
+  const cv = document.createElement('canvas')
+  cv.width = S; cv.height = S
+  const ctx = cv.getContext('2d')
+
+  const bg = item.kind === 'print' ? item.bg : (item.c1 || '#333')
+  const g = ctx.createLinearGradient(0, 0, 0, S)
+  g.addColorStop(0, lighten(bg, 0.12))
+  g.addColorStop(1, bg)
+  ctx.fillStyle = g; ctx.fillRect(0, 0, S, S)
+
+  const emoji = item.emoji || '⭐'
+  const stamp = (u, v, size) => {
+    ctx.font = `${Math.floor(size)}px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif`
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
+    ctx.fillText(emoji, u * S, v * S)
+  }
+  stamp(0.342, 0.526, S * 0.28)   // front chest (big)
+  stamp(0.668, 0.731, S * 0.20)   // back (smaller)
+  return cv
+}
+
 // ── Procedural texture canvas (for the 3D meshes) ────────────────────
 export function buildTextureCanvas(item) {
   const S = 1024

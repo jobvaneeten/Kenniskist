@@ -7,7 +7,7 @@ import {
 } from '@babylonjs/core'
 import { SceneLoader } from '@babylonjs/core/Loading/sceneLoader'
 import '@babylonjs/loaders/glTF'
-import { getCatalog, findItem, buildTextureCanvas, swatchStyle, swatchEmoji } from './itemsCatalog'
+import { getCatalog, findItem, buildTextureCanvas, buildShirtPrintTexture, swatchStyle, swatchEmoji } from './itemsCatalog'
 import './wardrobe.css'
 
 const CLOTHING_MESHES = ['Shirt', 'Broek', 'Sokken', 'Schoenen']
@@ -158,40 +158,37 @@ export default function Wardrobe({ onBack, onPlay3D, onPlayRocket, unlockedColor
     extraMeshesRef.current = []
   }
 
-  // Chest graphic for 'print' shirts: a billboard plane attached to the
-  // chest bone, so a real emoji shows on the shirt (the mesh UV can't).
-  const emojiRef = useRef(null)
-  const setShirtEmoji = (item) => {
-    if (emojiRef.current) { try { emojiRef.current.dispose() } catch {} ; emojiRef.current = null }
-    if (!item || item.kind !== 'print' || !sceneRef.current) return
+  // Load the donor shirt GLB (good UV that separates front/back) and attach
+  // it to Poppetje's skeleton. If `printItem` is given, bake our own texture
+  // (shirt colour + emoji on the front) over it instead of the Ajax design.
+  const loadDonorShirt = (file, printItem) => {
     const scene = sceneRef.current
-    const shirt = meshesRef.current.shirt
-    const skel  = skeletonRef.current
-    if (!shirt || !skel) return
-
-    const cv = document.createElement('canvas'); cv.width = 256; cv.height = 256
-    const ctx = cv.getContext('2d')
-    ctx.font = '210px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif'
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
-    ctx.fillText(item.emoji, 128, 140)
-    const tex = new Texture(cv.toDataURL(), scene, false, false)
-    tex.hasAlpha = true
-    const mat = new StandardMaterial('emojiMat', scene)
-    mat.diffuseTexture = tex
-    mat.useAlphaFromDiffuseTexture = true
-    mat.emissiveColor = new Color3(1, 1, 1)
-    mat.disableLighting = true
-    mat.backFaceCulling = false
-
-    const plane = MeshBuilder.CreatePlane('chestEmoji', { size: 0.34 }, scene)
-    plane.material = mat
-    plane.billboardMode = Mesh.BILLBOARDMODE_ALL
-    const bone = skel.bones.find(b => b.name === 'Spine1') || skel.bones.find(b => b.name === 'Spine')
-    if (bone) {
-      plane.attachToBone(bone, shirt)
-      plane.position = new Vector3(0, 0.09, 0.14)   // chest, slightly forward
-    }
-    emojiRef.current = plane
+    const m = meshesRef.current.shirt
+    if (!scene || !m) return
+    m.setEnabled(false)   // hide Poppetje's plain shirt slot
+    SceneLoader.ImportMesh('', '/', file.replace(/^\//, ''), scene, (loadedMeshes, _ps, srcSkels) => {
+      const glbShirt = loadedMeshes.find(lm => (lm.getTotalVertices?.() ?? 0) > 0)
+      const poppetjeShirt = meshesRef.current.shirt
+      if (glbShirt && skeletonRef.current && poppetjeShirt) {
+        glbShirt.parent   = poppetjeShirt.parent
+        glbShirt.position = new Vector3(0, 0, 0)
+        glbShirt.rotationQuaternion = null
+        glbShirt.scaling  = new Vector3(1, 1, 1)
+        glbShirt.skeleton = skeletonRef.current
+        if (printItem) {
+          const tex = new Texture(buildShirtPrintTexture(printItem).toDataURL(), scene, false, false)
+          const mat = glbShirt.material
+          if (mat) {
+            if (mat.albedoColor !== undefined) { mat.albedoTexture = tex; mat.albedoColor = Color3.White() }
+            else if (mat.diffuseColor !== undefined) { mat.diffuseTexture = tex; mat.diffuseColor = Color3.White() }
+          }
+        }
+        glbShirt.setEnabled(true)
+        extraMeshesRef.current = [glbShirt]
+      }
+      loadedMeshes.forEach(lm => { if (lm !== glbShirt) { try { lm.dispose() } catch {} } })
+      srcSkels?.[0]?.dispose()
+    })
   }
 
   const pickShirt = (key) => {
@@ -200,37 +197,17 @@ export default function Wardrobe({ onBack, onPlay3D, onPlayRocket, unlockedColor
     clearExtraMeshes()
     const m = meshesRef.current.shirt
     if (!m) return
-    if (!next) { m.setEnabled(false); setShirtEmoji(null); return }
+    if (!next) { m.setEnabled(false); return }
 
     const item = findItem('shirt', next)
     if (!item) return
-    setShirtEmoji(item)   // adds a chest emoji for prints, clears it otherwise
 
-    if (item.kind === 'model' && sceneRef.current) {
-      // The shirt GLBs share the SAME skeleton as Poppetje (identical bone order).
-      // Use the shirt mesh FROM the GLB directly (correct UVs + baked texture),
-      // attach Poppetje's skeleton so it deforms with the character.
-      m.setEnabled(false)   // hide Poppetje's plain shirt slot
-      SceneLoader.ImportMesh('', '/', item.file.replace(/^\//, ''), sceneRef.current, (loadedMeshes, _ps, srcSkels) => {
-        // Find the mesh that has actual geometry (getTotalVertices > 0)
-        const glbShirt = loadedMeshes.find(lm => (lm.getTotalVertices?.() ?? 0) > 0)
-        const poppetjeShirt = meshesRef.current.shirt
-        if (glbShirt && skeletonRef.current && poppetjeShirt) {
-          // Re-parent to Poppetje's __root__ (same coord system) before
-          // disposing the GLB's own __root__ — avoids recursive dispose
-          glbShirt.parent   = poppetjeShirt.parent
-          glbShirt.position = new Vector3(0, 0, 0)
-          glbShirt.rotationQuaternion = null
-          glbShirt.scaling  = new Vector3(1, 1, 1)
-          glbShirt.skeleton = skeletonRef.current
-          glbShirt.setEnabled(true)
-          extraMeshesRef.current = [glbShirt]
-        }
-        loadedMeshes.forEach(lm => { if (lm !== glbShirt) { try { lm.dispose() } catch {} } })
-        srcSkels?.[0]?.dispose()
-      })
+    if (item.kind === 'model') {
+      loadDonorShirt(item.file, null)              // Ajax/PSV baked design
+    } else if (item.kind === 'print') {
+      loadDonorShirt('/ajaxshirt.glb', item)       // donor geometry + our front print
     } else {
-      applyItem(m, item, sceneRef.current)
+      applyItem(m, item, sceneRef.current)         // colour / pattern on own mesh
       m.setEnabled(true)
     }
   }
@@ -347,24 +324,11 @@ export default function Wardrobe({ onBack, onPlay3D, onPlayRocket, unlockedColor
         const item = findItem('shirt', shirtColor)
         const m = meshesRef.current.shirt
         if (item?.kind === 'model') {
-          SceneLoader.ImportMesh('', '/', item.file.replace(/^\//, ''), scene, (loadedMeshes, _ps, srcSkels) => {
-            const glbShirt = loadedMeshes.find(lm => (lm.getTotalVertices?.() ?? 0) > 0)
-            const poppetjeShirt = meshesRef.current.shirt
-            if (glbShirt && skeletonRef.current && poppetjeShirt) {
-              glbShirt.parent   = poppetjeShirt.parent
-              glbShirt.position = new Vector3(0, 0, 0)
-              glbShirt.rotationQuaternion = null
-              glbShirt.scaling  = new Vector3(1, 1, 1)
-              glbShirt.skeleton = skeletonRef.current
-              glbShirt.setEnabled(true)
-              extraMeshesRef.current = [glbShirt]
-            }
-            loadedMeshes.forEach(lm => { if (lm !== glbShirt) { try { lm.dispose() } catch {} } })
-            srcSkels?.[0]?.dispose()
-          })
+          loadDonorShirt(item.file, null)
+        } else if (item?.kind === 'print') {
+          loadDonorShirt('/ajaxshirt.glb', item)
         } else if (item && m) {
           applyItem(m, item, scene)
-          setShirtEmoji(item)
           m.setEnabled(true)
         }
       }
