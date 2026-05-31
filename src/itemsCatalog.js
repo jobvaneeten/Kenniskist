@@ -138,10 +138,19 @@ export function buildShirtPrintTexture(item) {
   g.addColorStop(1, bg)
   ctx.fillStyle = g; ctx.fillRect(0, 0, S, S)
 
+  // All-over print: small emoji tiled across the whole shirt (brick layout)
   const emoji = item.emoji || '⭐'
-  ctx.font = `${Math.floor(S * 0.42)}px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif`
+  const cols = 9
+  const cw = S / cols, ch = cw
+  const rows = Math.ceil(S / ch) + 1
+  ctx.font = `${Math.floor(cw * 0.7)}px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif`
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
-  ctx.fillText(emoji, 0.34 * S, 0.64 * S)   // one big emoji on the belly (front only)
+  for (let r = 0; r < rows; r++) {
+    const offset = (r % 2) ? cw / 2 : 0
+    for (let c = -1; c <= cols; c++) {
+      ctx.fillText(emoji, c * cw + cw / 2 + offset, r * ch + ch / 2)
+    }
+  }
   return cv
 }
 
