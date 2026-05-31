@@ -258,6 +258,15 @@
 }
 .play3d-btn:active { transform: translateX(-50%) translateY(0); }
 
+.play-rocket-btn {
+  bottom: 72px;
+  background: linear-gradient(135deg, #7c3aed, #c026d3);
+  box-shadow: 0 4px 18px rgba(124,58,237,0.45);
+}
+.play-rocket-btn:hover {
+  box-shadow: 0 7px 22px rgba(124,58,237,0.6);
+}
+
 /* ── 3D viewer loading ──────────────────────── */
 .viewer-loading {
   position: absolute;

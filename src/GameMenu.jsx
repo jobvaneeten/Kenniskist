@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import FootballGame from './games/FootballGame'
 import TowerDefenseGame from './games/TowerDefenseGame'
-
 import JetpackGame from './games/JetpackGame'
 import IepOefenen from './games/IepOefenen'
 import './game.css'
@@ -27,9 +26,9 @@ const GAMES = {
 }
 
 const FREE_GAMES = [
-  { key: 'football',       emoji: '⚽', name: 'WK Voetbal',    desc: 'Alle groepen' },
-  { key: 'towerdefense',   emoji: '🏰', name: 'Tower Defense', desc: 'Alle groepen' },
-  { key: 'jetpack',        emoji: '🚀', name: 'Jetpack',        desc: 'Vlieg zo ver mogelijk!' },
+  { key: 'football',     emoji: '⚽', name: 'WK Voetbal',    desc: 'Alle groepen' },
+  { key: 'towerdefense', emoji: '🏰', name: 'Tower Defense', desc: 'Alle groepen' },
+  { key: 'jetpack',      emoji: '🚀', name: 'Jetpack',        desc: 'Vlieg zo ver mogelijk!' },
 ]
 
 export default function GameMenu({ onBack, addCuruntie }) {
@@ -43,9 +42,10 @@ export default function GameMenu({ onBack, addCuruntie }) {
     return <TowerDefenseGame onBack={onBack} />
   }
 
-if (directGame === 'jetpack') {
+  if (directGame === 'jetpack') {
     return <JetpackGame onBack={onBack} />
   }
+
 
   // Direct game (no quiz)
   if (directGame === 'football' && gameMode) {
@@ -146,7 +146,7 @@ if (directGame === 'jetpack') {
                 <span className="subject-label">{s.label}</span>
                 <span className="subject-tag">
                   {GAMES[`${year}-${s.key}`] === 'iep'
-                    ? '🚀 IEP Oefenen'
+                    ? '🚀 Verhaaltjessommen'
                     : hasGame
                     ? '▶ Spelen'
                     : 'Groep ' + year}

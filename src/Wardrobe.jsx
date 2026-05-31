@@ -118,7 +118,7 @@ function applyTexture(mesh, texture) {
 }
 
 // ── Component ─────────────────────────────────────────────────────
-export default function Wardrobe({ onBack, onPlay3D, unlockedColors = {} }) {
+export default function Wardrobe({ onBack, onPlay3D, onPlayRocket, unlockedColors = {} }) {
   const canvasRef      = useRef(null)
   const sceneRef       = useRef(null)
   const skeletonRef    = useRef(null)
@@ -164,15 +164,27 @@ export default function Wardrobe({ onBack, onPlay3D, unlockedColors = {} }) {
     const modelItem   = SHIRT_MODELS.find(t => t.key === next)
 
     if (modelItem && sceneRef.current) {
-      m.setEnabled(false)  // hide Poppetje's shirt slot to avoid z-fighting
+      // The shirt GLBs share the SAME skeleton as Poppetje (identical bone order).
+      // Use the shirt mesh FROM the GLB directly (correct UVs + baked texture),
+      // attach Poppetje's skeleton so it deforms with the character.
+      m.setEnabled(false)   // hide Poppetje's plain shirt slot
       SceneLoader.ImportMesh('', '/', modelItem.file.replace(/^\//, ''), sceneRef.current, (loadedMeshes, _ps, srcSkels) => {
-        const srcSkel = srcSkels?.[0]
-        const dstSkel = skeletonRef.current
-        if (srcSkel && dstSkel) {
-          loadedMeshes.forEach(em => { if (em.skeleton) remapAndAttach(em, srcSkel, dstSkel) })
-          srcSkel.dispose()
+        // Find the mesh that has actual geometry (getTotalVertices > 0)
+        const glbShirt = loadedMeshes.find(lm => (lm.getTotalVertices?.() ?? 0) > 0)
+        const poppetjeShirt = meshesRef.current.shirt
+        if (glbShirt && skeletonRef.current && poppetjeShirt) {
+          // Re-parent to Poppetje's __root__ (same coord system) before
+          // disposing the GLB's own __root__ — avoids recursive dispose
+          glbShirt.parent   = poppetjeShirt.parent
+          glbShirt.position = new Vector3(0, 0, 0)
+          glbShirt.rotationQuaternion = null
+          glbShirt.scaling  = new Vector3(1, 1, 1)
+          glbShirt.skeleton = skeletonRef.current
+          glbShirt.setEnabled(true)
+          extraMeshesRef.current = [glbShirt]
         }
-        extraMeshesRef.current = loadedMeshes
+        loadedMeshes.forEach(lm => { if (lm !== glbShirt) { try { lm.dispose() } catch {} } })
+        srcSkels?.[0]?.dispose()
       })
     } else if (textureItem && sceneRef.current) {
       const scene = sceneRef.current
@@ -310,15 +322,20 @@ export default function Wardrobe({ onBack, onPlay3D, unlockedColors = {} }) {
         const modelItem = SHIRT_MODELS.find(t => t.key === shirtColor)
         const m = meshesRef.current.shirt
         if (modelItem) {
-          if (m) m.setEnabled(false)  // hide Poppetje's shirt slot
           SceneLoader.ImportMesh('', '/', modelItem.file.replace(/^\//, ''), scene, (loadedMeshes, _ps, srcSkels) => {
-            const srcSkel = srcSkels?.[0]
-            const dstSkel = skeletonRef.current
-            if (srcSkel && dstSkel) {
-              loadedMeshes.forEach(em => { if (em.skeleton) remapAndAttach(em, srcSkel, dstSkel) })
-              srcSkel.dispose()
+            const glbShirt = loadedMeshes.find(lm => (lm.getTotalVertices?.() ?? 0) > 0)
+            const poppetjeShirt = meshesRef.current.shirt
+            if (glbShirt && skeletonRef.current && poppetjeShirt) {
+              glbShirt.parent   = poppetjeShirt.parent
+              glbShirt.position = new Vector3(0, 0, 0)
+              glbShirt.rotationQuaternion = null
+              glbShirt.scaling  = new Vector3(1, 1, 1)
+              glbShirt.skeleton = skeletonRef.current
+              glbShirt.setEnabled(true)
+              extraMeshesRef.current = [glbShirt]
             }
-            extraMeshesRef.current = loadedMeshes
+            loadedMeshes.forEach(lm => { if (lm !== glbShirt) { try { lm.dispose() } catch {} } })
+            srcSkels?.[0]?.dispose()
           })
         } else if (colorItem && m) {
           applyColor(m, colorItem.hex)
@@ -545,6 +562,11 @@ export default function Wardrobe({ onBack, onPlay3D, unlockedColors = {} }) {
         {!loading && onPlay3D && (
           <button className="play3d-btn" onClick={onPlay3D}>
             ⚽ Speel in 3D
+          </button>
+        )}
+        {!loading && onPlayRocket && (
+          <button className="play3d-btn play-rocket-btn" onClick={onPlayRocket}>
+            ⚽ Potje voetballen
           </button>
         )}
       </div>

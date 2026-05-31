@@ -777,19 +777,29 @@ function initScene(canvas, {
         const colorKey = itemKey === 'shirt' ? shirtKey : wearing?.[itemKey]
         if (!colorKey) { m.setEnabled(false); return }
 
-        // Ajax / PSV — load GLB shirt directly (material is baked in)
+        // Ajax / PSV — load shirt GLB, use its mesh directly (correct UVs + baked
+        // texture), attach Poppetje's skeleton and parent to charRoot so it
+        // follows the character at z=5.
         if (itemKey === 'shirt' && SHIRT_TEXTURE_KEYS.has(colorKey)) {
-          m.setEnabled(false)   // hide Poppetje's plain Shirt
+          m.setEnabled(false)   // hide Poppetje's plain shirt slot
           if (!pendingShirtGLB) {
             pendingShirtGLB = true
             const glbFile = colorKey === 'ajax' ? 'ajaxshirt.glb' : 'psvshirt.glb'
-            const playerSkel = scene.skeletons[0] ?? null
-            SceneLoader.ImportMesh('', '/', glbFile, scene, (shirtMeshes, _ps, srcSkels) => {
-              const srcSkel = srcSkels?.[0]
-              if (srcSkel && playerSkel) {
-                shirtMeshes.forEach(sm => { if (sm.skeleton) remapAndAttach(sm, srcSkel, playerSkel) })
-                srcSkel.dispose()
+            const poppetjeShirtMesh = m
+            SceneLoader.ImportMesh('', '/', glbFile, scene, (loadedMeshes, _ps, srcSkels) => {
+              const glbShirt   = loadedMeshes.find(lm => (lm.getTotalVertices?.() ?? 0) > 0)
+              const playerSkel = scene.skeletons[0] ?? null
+              if (glbShirt && playerSkel) {
+                // Same parent as Poppetje's own Shirt mesh — same coord system
+                glbShirt.parent             = poppetjeShirtMesh.parent
+                glbShirt.position           = new Vector3(0, 0, 0)
+                glbShirt.rotationQuaternion = null
+                glbShirt.scaling            = new Vector3(1, 1, 1)
+                glbShirt.skeleton           = playerSkel
+                glbShirt.setEnabled(true)
               }
+              loadedMeshes.forEach(lm => { if (lm !== glbShirt) { try { lm.dispose() } catch {} } })
+              srcSkels?.[0]?.dispose()
             })
           }
           return

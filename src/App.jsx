@@ -5,6 +5,7 @@ import Shop            from './Shop'
 import GameMenu        from './GameMenu'
 import FootballScene3D from './games/FootballScene3D'
 import Football3v3     from './games/Football3v3'
+import RocketGame      from './games/RocketGame'
 
 const CODES = { pabo: 100000 }
 
@@ -111,6 +112,7 @@ export default function App() {
       <Wardrobe
         onBack={() => setScreen('menu')}
         onPlay3D={() => setScreen('football3d')}
+        onPlayRocket={() => setScreen('rocket')}
         unlockedColors={unlockedColors}
       />
     </>
@@ -122,6 +124,10 @@ export default function App() {
 
   if (screen === 'football3v3') return (
     <Football3v3 onBack={() => setScreen('menu')} />
+  )
+
+  if (screen === 'rocket') return (
+    <RocketGame onBack={() => setScreen('wardrobe')} />
   )
 
   if (screen === 'shop') return (
@@ -141,25 +147,40 @@ export default function App() {
     <div className="screen">
       <CuruntieBadge amount={curuntie} />
 
-      <div className="logo-wrap">
-        <span className="logo-icon">🗃️</span>
-        <h1 className="logo-title">Kennis<span className="accent">kist</span></h1>
+      <div className="hero">
+        <div className="logo-wrap">
+          <span className="logo-icon">🗃️</span>
+          <h1 className="logo-title">Kennis<span className="accent">kist</span></h1>
+        </div>
+        <p className="hero-sub">Leren terwijl je speelt 🚀</p>
       </div>
 
       <div className="menu">
         <button className="menu-btn btn-game" onClick={() => setScreen('game')}>
           <span className="btn-icon">🎮</span>
-          <span className="btn-label">Speel Game</span>
+          <div className="btn-text">
+            <span className="btn-label">Speel Game</span>
+            <span className="btn-desc">Oefen rekenen en taal</span>
+          </div>
+          <span className="btn-arrow">→</span>
         </button>
 
         <button className="menu-btn btn-wardrobe" onClick={() => setScreen('wardrobe')}>
           <span className="btn-icon">👗</span>
-          <span className="btn-label">Kledingkast</span>
+          <div className="btn-text">
+            <span className="btn-label">Kledingkast</span>
+            <span className="btn-desc">Pas je poppetje aan</span>
+          </div>
+          <span className="btn-arrow">→</span>
         </button>
 
         <button className="menu-btn btn-shop" onClick={() => setScreen('shop')}>
           <span className="btn-icon">🛒</span>
-          <span className="btn-label">Winkel</span>
+          <div className="btn-text">
+            <span className="btn-label">Winkel</span>
+            <span className="btn-desc">Koop nieuwe kleding</span>
+          </div>
+          <span className="btn-arrow">→</span>
         </button>
       </div>
 

@@ -63,23 +63,22 @@ function shuffleArray(arr) {
 
 // ========== Level selector ==========
 const LEVELS = [
-  { num: 1, emoji: '🌙', label: 'Niveau 1', desc: 'Minder dan 1F',    file: '/iep_niveau1.json' },
-  { num: 2, emoji: '⭐', label: 'Niveau 2', desc: '1F + 1S basis',    file: '/iep_niveau2.json' },
-  { num: 3, emoji: '🚀', label: 'Niveau 3', desc: '1F + 1S gevorderd', file: '/iep_niveau3.json' },
+  { num: 1, emoji: '🌙', label: 'Niveau 1', file: '/iep_niveau1.json' },
+  { num: 2, emoji: '⭐', label: 'Niveau 2', file: '/iep_niveau2.json' },
+  { num: 3, emoji: '🚀', label: 'Niveau 3', file: '/iep_niveau3.json' },
 ]
 
 function LevelSelect({ onSelect }) {
   return (
     <div className="iep-level-screen">
       <div className="iep-rocket-icon">🚀</div>
-      <h1>IEP Oefenen</h1>
+      <h1>Verhaaltjessommen Oefenen</h1>
       <p>Beantwoord rekenvragen en verdien Jetpack-tijd!</p>
       <div className="iep-level-cards">
         {LEVELS.map(l => (
           <button key={l.num} className="iep-level-card" onClick={() => onSelect(l)}>
             <span className="iep-lc-emoji">{l.emoji}</span>
             <span className="iep-lc-title">{l.label}</span>
-            <span className="iep-lc-desc">{l.desc}</span>
           </button>
         ))}
       </div>

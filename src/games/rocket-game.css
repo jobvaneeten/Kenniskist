@@ -1,0 +1,230 @@
+.rg-outer, .rg-lobby, .rg-waiting, .rg-gameover {
+  position: relative;
+  width: 100vw;
+  min-height: 100vh;
+  background: #0d0d1a;
+  font-family: 'Nunito', sans-serif;
+  color: #fff;
+}
+
+.rg-canvas {
+  display: block;
+  width: 100vw;
+  height: 100vh;
+}
+
+/* ── Back button ── */
+.rg-back {
+  position: fixed;
+  top: 14px; left: 14px;
+  z-index: 100;
+  padding: 9px 18px;
+  border-radius: 14px;
+  border: 1.5px solid rgba(255,255,255,0.12);
+  background: rgba(10,10,30,0.75);
+  color: rgba(255,255,255,0.85);
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 800;
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+}
+.rg-back:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+/* ── Score bar ── */
+.rg-score {
+  position: fixed;
+  top: 14px; left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: rgba(10,10,30,0.8);
+  border: 1.5px solid rgba(255,255,255,0.12);
+  border-radius: 999px;
+  padding: 8px 24px;
+  backdrop-filter: blur(12px);
+  font-weight: 900;
+  font-size: 1.1rem;
+}
+.rg-score-a     { color: #ff5555; }
+.rg-score-b     { color: #5599ff; }
+.rg-score-timer { color: #FFD23F; font-size: 0.95rem; }
+
+/* ── Countdown ── */
+.rg-countdown {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 8rem;
+  font-weight: 900;
+  color: #FFD23F;
+  text-shadow: 0 0 60px rgba(255,210,63,0.6);
+  z-index: 200;
+  animation: pop 0.3s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes pop { from { transform: translate(-50%,-50%) scale(0.4); opacity:0; } to { transform: translate(-50%,-50%) scale(1); opacity:1; } }
+
+/* ── Goal flash ── */
+.rg-goal-flash {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 3.5rem;
+  font-weight: 900;
+  color: #FFD23F;
+  text-shadow: 0 0 40px rgba(255,210,63,0.7);
+  z-index: 200;
+  animation: pop 0.35s cubic-bezier(.34,1.56,.64,1);
+}
+
+/* ── Joystick ── */
+.rg-joy-base {
+  position: fixed;
+  bottom: 36px; left: 36px;
+  width: 110px; height: 110px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.08);
+  border: 2px solid rgba(255,255,255,0.18);
+  display: flex; align-items: center; justify-content: center;
+  touch-action: none;
+  cursor: pointer;
+  z-index: 100;
+}
+.rg-joy-knob {
+  width: 46px; height: 46px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.35);
+  border: 2px solid rgba(255,255,255,0.5);
+  pointer-events: none;
+  transition: transform 0.05s;
+}
+
+/* ── Hint ── */
+.rg-hint {
+  position: fixed;
+  bottom: 14px; right: 14px;
+  display: flex; flex-direction: column; gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.3);
+  text-align: right;
+  z-index: 100;
+}
+
+/* ── Loading ── */
+.rg-loading {
+  position: fixed; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 16px;
+  background: rgba(13,13,26,0.85);
+  font-size: 1rem; font-weight: 800;
+  color: rgba(255,255,255,0.7);
+  z-index: 300;
+}
+.rg-spinner {
+  width: 44px; height: 44px;
+  border: 4px solid rgba(255,255,255,0.12);
+  border-top-color: #FFD23F;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Lobby ── */
+.rg-lobby {
+  display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(ellipse 80% 60% at 20% 10%, rgba(99,58,220,0.22) 0%, transparent 60%),
+              radial-gradient(ellipse 60% 50% at 80% 80%, rgba(6,214,160,0.14) 0%, transparent 55%),
+              #0d0d1a;
+}
+.rg-lobby-box {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 14px;
+  background: rgba(255,255,255,0.04);
+  border: 1.5px solid rgba(255,255,255,0.1);
+  border-radius: 28px;
+  padding: 44px 36px;
+  width: 100%; max-width: 400px;
+  margin: 80px 20px;
+  box-shadow: 0 32px 80px rgba(0,0,0,0.5);
+}
+.rg-lobby-icon { font-size: 3rem; }
+.rg-lobby-title {
+  font-size: 2.2rem; font-weight: 900; letter-spacing: -1px;
+  margin: 0;
+}
+.rg-lobby-title span { color: #FFD23F; }
+.rg-lobby-sub { font-size: 0.85rem; color: rgba(255,255,255,0.4); font-weight: 600; margin: 0; }
+.rg-lobby-field {
+  width: 100%;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.rg-lobby-field label { font-size: 0.78rem; font-weight: 800; color: rgba(255,255,255,0.45); letter-spacing: 0.08em; text-transform: uppercase; }
+.rg-input {
+  width: 100%; padding: 12px 16px;
+  background: rgba(255,255,255,0.06);
+  border: 1.5px solid rgba(255,255,255,0.12);
+  border-radius: 14px;
+  color: #fff; font-family: inherit; font-size: 1rem; font-weight: 700;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.rg-input:focus { border-color: #FFD23F; }
+.rg-input-code { letter-spacing: 0.2em; text-align: center; font-size: 1.3rem; }
+.rg-lobby-btn {
+  width: 100%; padding: 14px;
+  border-radius: 16px; border: none;
+  font-family: inherit; font-size: 1rem; font-weight: 900;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.rg-lobby-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.rg-lobby-btn:not(:disabled):hover { transform: translateY(-2px); }
+.rg-lobby-create { background: linear-gradient(135deg, #7c3aed, #c026d3); color: #fff; box-shadow: 0 8px 24px rgba(124,58,237,0.4); }
+.rg-lobby-join   { background: linear-gradient(135deg, #059669, #0891b2); color: #fff; box-shadow: 0 8px 24px rgba(5,150,105,0.4); }
+.rg-lobby-divider { font-size: 0.8rem; color: rgba(255,255,255,0.25); font-weight: 700; }
+.rg-lobby-error { font-size: 0.85rem; font-weight: 700; color: #f87171; margin: 0; }
+
+/* ── Waiting room ── */
+.rg-waiting {
+  display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(ellipse 80% 60% at 20% 10%, rgba(99,58,220,0.22) 0%, transparent 60%), #0d0d1a;
+}
+.rg-waiting-box {
+  display: flex; flex-direction: column; align-items: center; gap: 16px;
+  background: rgba(255,255,255,0.04);
+  border: 1.5px solid rgba(255,255,255,0.1);
+  border-radius: 28px;
+  padding: 44px 36px;
+  width: 100%; max-width: 400px;
+  margin: 80px 20px;
+}
+.rg-waiting-label { font-size: 0.78rem; font-weight: 800; color: rgba(255,255,255,0.4); letter-spacing: 0.1em; text-transform: uppercase; margin: 0; }
+.rg-waiting-code  { font-size: 3rem; font-weight: 900; letter-spacing: 0.3em; color: #FFD23F; text-shadow: 0 0 24px rgba(255,210,63,0.4); }
+.rg-waiting-hint  { font-size: 0.8rem; color: rgba(255,255,255,0.3); font-weight: 600; margin: 0; }
+.rg-waiting-players { width: 100%; display: flex; flex-direction: column; gap: 8px; }
+.rg-waiting-player  { display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.04); border-radius: 12px; padding: 10px 16px; font-weight: 700; }
+.rg-team-dot  { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.rg-team-0    { background: #ff5555; }
+.rg-team-1    { background: #5599ff; }
+
+/* ── Game over ── */
+.rg-gameover {
+  display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(ellipse 80% 60% at 20% 10%, rgba(99,58,220,0.22) 0%, transparent 60%), #0d0d1a;
+}
+.rg-gameover-box {
+  display: flex; flex-direction: column; align-items: center; gap: 16px;
+  background: rgba(255,255,255,0.04);
+  border: 1.5px solid rgba(255,255,255,0.1);
+  border-radius: 28px;
+  padding: 44px 36px;
+  width: 100%; max-width: 400px;
+  margin: 20px;
+}
+.rg-go-title  { font-size: 1.5rem; font-weight: 900; }
+.rg-go-score  { font-size: 4rem; font-weight: 900; letter-spacing: -2px; }
+.rg-go-winner { font-size: 1.2rem; font-weight: 800; color: #FFD23F; }
