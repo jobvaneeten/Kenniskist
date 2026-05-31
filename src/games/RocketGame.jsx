@@ -699,7 +699,7 @@ function initScene(canvas, { localSessionId, getRoomState, sendInput, timerDomRe
     const b = rs.ball
     if (b) {
       if (!ballDisp.init) { ballDisp.x=b.x; ballDisp.y=b.y; ballDisp.z=b.z; ballDisp.init=true }
-      const Lb = 1 - Math.exp(-dt * 18)
+      const Lb = 1 - Math.exp(-dt * 26)
       ballDisp.x += (b.x - ballDisp.x) * Lb
       ballDisp.y += (b.y - ballDisp.y) * Lb
       ballDisp.z += (b.z - ballDisp.z) * Lb
