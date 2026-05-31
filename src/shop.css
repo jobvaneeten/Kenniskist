@@ -234,6 +234,74 @@
   50%      { filter: brightness(1.3); }
 }
 
+/* ── Drop-chance odds (stacked bar + chips) ───────────── */
+.lb-odds {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.lb-odds-bar {
+  display: flex;
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12);
+}
+.lb-odds-seg { height: 100%; transition: width 0.3s; }
+.lb-odds-seg:not(:last-child) { box-shadow: 1px 0 0 rgba(0,0,0,0.3); }
+.lb-odds-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  justify-content: center;
+}
+.lb-odds-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.6);
+}
+.lb-odds-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.lb-odds-name { letter-spacing: 0.02em; }
+.lb-odds-chip b { font-weight: 900; }
+
+/* ── "Wat kan ik winnen?" preview ─────────────────────── */
+.lb-preview-toggle {
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.14);
+  color: rgba(255,255,255,0.75);
+  font-family: inherit;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.lb-preview-toggle:hover { background: rgba(255,255,255,0.14); color: #fff; }
+.lb-preview {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: rgba(0,0,0,0.25);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 14px;
+  padding: 10px 12px;
+  animation: lbPreviewIn 0.18s ease;
+}
+@keyframes lbPreviewIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+.lb-preview-group { display: flex; flex-direction: column; gap: 5px; }
+.lb-preview-head { font-size: 0.62rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.04em; }
+.lb-preview-items { display: flex; flex-wrap: wrap; gap: 6px; }
+.lb-preview-sw { width: 18px; height: 18px; border-radius: 50%; box-shadow: 0 0 0 1px rgba(255,255,255,0.15); }
+.lb-preview-logo { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; }
+.lb-preview .lb-locked { opacity: 0.3; filter: grayscale(1); }
+
 /* ── Dots / logo dots ─────────────────── */
 .lb-dots {
   display: flex;

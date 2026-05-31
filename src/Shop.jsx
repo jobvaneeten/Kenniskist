@@ -53,18 +53,42 @@ function WinIcon({ item, rarity }) {
   )
 }
 
-// ── Lootbox card: what rarities are possible ──────────────────────
-function RarityRow({ isShirt }) {
-  const rarities = isShirt
+// ── Drop chances per rarity (from the real weights) ───────────────
+function rarityOdds(isShirt) {
+  const keys  = isShirt
     ? ['common','rare','epic','legendary','ultra_legendary']
     : ['common','rare','epic','legendary']
+  const total = keys.reduce((s, k) => s + RARITY_WEIGHTS[k], 0)
+  return keys.map(k => ({ key: k, pct: (RARITY_WEIGHTS[k] / total) * 100 }))
+}
+function fmtPct(p) {
+  return p < 1 ? p.toFixed(1).replace('.', ',') : String(Math.round(p))
+}
+
+// ── Lootbox card: drop chances as a stacked bar + labelled chips ──
+function RarityOdds({ isShirt }) {
+  const odds = rarityOdds(isShirt)
   return (
-    <div className="lb-rarity-row">
-      {rarities.map(r => (
-        <span key={r} className={`lb-rarity-chip lb-rc-chip-${r}`}>
-          {RARITIES[r].label.split(' ')[0]}
-        </span>
-      ))}
+    <div className="lb-odds">
+      <div className="lb-odds-bar">
+        {odds.map(o => (
+          <div
+            key={o.key}
+            className="lb-odds-seg"
+            style={{ width: `${o.pct}%`, background: RARITIES[o.key].color }}
+            title={`${RARITIES[o.key].label}: ${fmtPct(o.pct)}%`}
+          />
+        ))}
+      </div>
+      <div className="lb-odds-chips">
+        {odds.map(o => (
+          <span key={o.key} className="lb-odds-chip">
+            <span className="lb-odds-dot" style={{ background: RARITIES[o.key].color }} />
+            <span className="lb-odds-name">{RARITIES[o.key].label.split(' ')[0]}</span>
+            <b style={{ color: RARITIES[o.key].color }}>{fmtPct(o.pct)}%</b>
+          </span>
+        ))}
+      </div>
     </div>
   )
 }
@@ -79,6 +103,7 @@ export default function Shop({ curuntie, briefgeld, addBriefgeld, onExchange, un
   const [confetti,  setConfetti]  = useState([])
   const [fireworks, setFireworks] = useState([])
   const [showEnd,   setShowEnd]   = useState(false)
+  const [preview,   setPreview]   = useState(null)   // item key whose reward list is open
 
   const rafRef    = useRef(null)
   const startRef  = useRef(null)
@@ -284,7 +309,43 @@ export default function Shop({ curuntie, briefgeld, addBriefgeld, onExchange, un
               <div className="lb-card-emoji lb-card-emoji-float">{item.emoji}</div>
               <div className="lb-card-name">{item.label}</div>
 
-              <RarityRow isShirt={item.key === 'shirt'} />
+              <RarityOdds isShirt={item.key === 'shirt'} />
+
+              <button
+                className="lb-preview-toggle"
+                onClick={() => setPreview(preview === item.key ? null : item.key)}
+              >
+                {preview === item.key ? '▲ Verberg prijzen' : '🔎 Wat kan ik winnen?'}
+              </button>
+
+              {preview === item.key && (
+                <div className="lb-preview">
+                  {rarityOdds(item.key === 'shirt').map(o => {
+                    const rewards = pool.filter(c => c.rarity === o.key)
+                    if (!rewards.length) return null
+                    return (
+                      <div key={o.key} className="lb-preview-group">
+                        <div className="lb-preview-head" style={{ color: RARITIES[o.key].color }}>
+                          {RARITIES[o.key].label} · {fmtPct(o.pct)}%
+                        </div>
+                        <div className="lb-preview-items">
+                          {rewards.map(c => {
+                            const owned = (unlockedColors[item.key] || []).includes(c.key)
+                            return c.logo ? (
+                              <img key={c.key} src={c.logo} alt={c.label} title={c.label}
+                                className={`lb-preview-logo ${owned ? '' : 'lb-locked'}`} />
+                            ) : (
+                              <span key={c.key} title={c.label}
+                                className={`lb-preview-sw ${owned ? '' : 'lb-locked'}`}
+                                style={{ background: c.hex }} />
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
 
               <div className="lb-dots">
                 {SHIRT_COLORS.map(c => (
