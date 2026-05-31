@@ -245,7 +245,8 @@ class PlayerInstance {
       // Load animations — same ANIMS list as FootballScene3D
       const ANIMS = [
         { key: 'rust',       file: 'rust.glb',              stripRoot: true  },
-        { key: 'lopen',      file: 'emote_lopen.glb',       stripRoot: true  },
+        { key: 'lopen',      file: 'emotelopen.glb',        stripRoot: true  },
+        { key: 'sprinten',   file: 'emotesprinten.glb',     stripRoot: true  },
         { key: 'hip_hop',    file: 'hip_hop_dancing.glb',   stripRoot: false },
         { key: 'breakdance', file: 'emote_breakdance.glb',  stripRoot: false },
         { key: 'verloren',   file: 'emote_verloren.glb',    stripRoot: false },
@@ -306,6 +307,24 @@ class PlayerInstance {
     }
     if (this._anims.lopen) this._anims.lopen.speedRatio = Math.max(0.3, (speed / 4.8) * 1.6)
   }
+  _playSprint() {
+    if (this._state !== 'sprint') {
+      this._stopAll(); this._resetRest()
+      // fall back to walk anim if the sprint glb is missing
+      ;(this._anims.sprinten ?? this._anims.lopen)?.play(true)
+      this._state = 'sprint'
+    }
+  }
+  // Choose locomotion anim from speed + sprint flag
+  _locomotion(spd, sprinting) {
+    if (this._state === 'emote') return
+    if (spd > 0.3) {
+      if (sprinting) this._playSprint()
+      else           this._playWalk(spd)
+    } else if (this._state === 'walk' || this._state === 'sprint') {
+      this._playRest()
+    }
+  }
   playEmote(name) {
     if (!this._anims[name] || this._state === 'emote') return
     this._stopAll(); this._state = 'emote'
@@ -314,9 +333,9 @@ class PlayerInstance {
   }
 
   // ── Interpolated pose ──
-  setTarget(x, z, rotY, vx, vz) {
+  setTarget(x, z, rotY, vx, vz, boosting) {
     this._tx = x; this._tz = z; this._trotY = rotY
-    this._tvx = vx; this._tvz = vz
+    this._tvx = vx; this._tvz = vz; this._tboost = !!boosting
     if (this._dx === undefined) { this._dx = x; this._dz = z; this._drotY = rotY }
   }
 
@@ -335,20 +354,16 @@ class PlayerInstance {
     this.root.position.set(this._dx, 0, this._dz)
     this.root.rotationQuaternion = Quaternion.RotationYawPitchRoll(this._drotY + Math.PI, 0, 0)
 
-    const spd = Math.hypot(this._tvx, this._tvz)
-    if (spd > 0.3 && this._state !== 'emote') this._playWalk(spd)
-    else if (spd <= 0.3 && this._state === 'walk') this._playRest()
+    this._locomotion(Math.hypot(this._tvx, this._tvz), this._tboost)
   }
 
   // direct pose (for locally-predicted player — no interp lag)
-  setPose(x, z, rotY, vx, vz) {
+  setPose(x, z, rotY, vx, vz, boosting) {
     if (!this.root) return
     this._dx = x; this._dz = z; this._drotY = rotY
     this.root.position.set(x, 0, z)
     this.root.rotationQuaternion = Quaternion.RotationYawPitchRoll(rotY + Math.PI, 0, 0)
-    const spd = Math.hypot(vx, vz)
-    if (spd > 0.3 && this._state !== 'emote') this._playWalk(spd)
-    else if (spd <= 0.3 && this._state === 'walk') this._playRest()
+    this._locomotion(Math.hypot(vx, vz), !!boosting)
   }
 
   onReady(cb) { if (this._ready) cb(); else this._onReady = cb }
@@ -720,7 +735,7 @@ function initScene(canvas, { localSessionId, getRoomState, sendInput, timerDomRe
         const teamColor = p.team === 0 ? '#cc2222' : '#1a55cc'
         const inst = new PlayerInstance(scene, sg, { shirt: p.shirt, wearing, teamColor, name: p.name })
         playerInstances.set(sid, inst)
-        if (isLocal) { pred.x = p.x; pred.z = p.z; pred.rotY = p.rotY; pred.init = true }
+        if (sid === localSessionId) { pred.x = p.x; pred.z = p.z; pred.rotY = p.rotY; pred.init = true }
       }
       const inst = playerInstances.get(sid)
 
@@ -746,9 +761,9 @@ function initScene(canvas, { localSessionId, getRoomState, sendInput, timerDomRe
         const Lr = 1 - Math.exp(-dt * 3)
         pred.x += (p.x - pred.x) * Lr
         pred.z += (p.z - pred.z) * Lr
-        inst.setPose(pred.x, pred.z, pred.rotY, vx, vz)
+        inst.setPose(pred.x, pred.z, pred.rotY, vx, vz, canBoost)
       } else {
-        inst.setTarget(p.x, p.z, p.rotY, p.vx, p.vz)
+        inst.setTarget(p.x, p.z, p.rotY, p.vx, p.vz, p.boosting)
         inst.tick(dt, 13)
       }
     })
