@@ -7,7 +7,8 @@ import {
 } from '@babylonjs/core'
 import { SceneLoader } from '@babylonjs/core/Loading/sceneLoader'
 import '@babylonjs/loaders/glTF'
-import { getCatalog, findItem, buildTextureCanvas, buildShirtPrintTexture, swatchStyle, swatchEmoji } from './itemsCatalog'
+import { getCatalog, findItem, swatchStyle, swatchEmoji } from './itemsCatalog'
+import { applyItemToMesh, loadClothingDonor } from './applyClothing'
 import './wardrobe.css'
 
 const CLOTHING_MESHES = ['Shirt', 'Broek', 'Sokken', 'Schoenen']
@@ -130,7 +131,7 @@ export default function Wardrobe({ onBack, onPlay3D, onPlayRocket, unlockedColor
   const sceneRef       = useRef(null)
   const skeletonRef    = useRef(null)
   const meshesRef      = useRef({})
-  const extraMeshesRef = useRef([])
+  const donorsRef      = useRef({})   // slot -> donor mesh
   const animGroupsRef  = useRef({})
   const restPoseRef    = useRef({})   // bone name → { node, rot, pos } captured at T-pose
 
@@ -153,77 +154,43 @@ export default function Wardrobe({ onBack, onPlay3D, onPlayRocket, unlockedColor
     localStorage.setItem('kk_wearing', JSON.stringify(wearing))
   }, [wearing])
 
+  const disposeDonor = (slot) => {
+    const d = donorsRef.current[slot]
+    if (d) { try { d.dispose() } catch {} ; donorsRef.current[slot] = null }
+  }
   const clearExtraMeshes = () => {
-    extraMeshesRef.current.forEach(m => { try { m.dispose() } catch {} })
-    extraMeshesRef.current = []
+    Object.keys(donorsRef.current).forEach(disposeDonor)
   }
 
-  // Load the donor shirt GLB (good UV that separates front/back) and attach
-  // it to Poppetje's skeleton. If `printItem` is given, bake our own texture
-  // (shirt colour + emoji on the front) over it instead of the Ajax design.
-  const loadDonorShirt = (file, printItem) => {
+  // Apply an item to a clothing slot (shirt/broek/sokken/schoenen):
+  // colours go straight onto Poppetje's mesh; prints/patterns/models load a
+  // donor mesh with a real UV and bake the generated texture onto it.
+  const applySlot = (slot, key) => {
     const scene = sceneRef.current
-    const m = meshesRef.current.shirt
-    if (!scene || !m) return
-    m.setEnabled(false)   // hide Poppetje's plain shirt slot
-    SceneLoader.ImportMesh('', '/', file.replace(/^\//, ''), scene, (loadedMeshes, _ps, srcSkels) => {
-      const glbShirt = loadedMeshes.find(lm => (lm.getTotalVertices?.() ?? 0) > 0)
-      const poppetjeShirt = meshesRef.current.shirt
-      if (glbShirt && skeletonRef.current && poppetjeShirt) {
-        glbShirt.parent   = poppetjeShirt.parent
-        glbShirt.position = new Vector3(0, 0, 0)
-        glbShirt.rotationQuaternion = null
-        glbShirt.scaling  = new Vector3(1, 1, 1)
-        glbShirt.skeleton = skeletonRef.current
-        if (printItem) {
-          const tex = new Texture(buildShirtPrintTexture(printItem).toDataURL(), scene, false, false)
-          const mat = glbShirt.material
-          if (mat) {
-            if (mat.albedoColor !== undefined) { mat.albedoTexture = tex; mat.albedoColor = Color3.White() }
-            else if (mat.diffuseColor !== undefined) { mat.diffuseTexture = tex; mat.diffuseColor = Color3.White() }
-          }
-        }
-        glbShirt.setEnabled(true)
-        extraMeshesRef.current = [glbShirt]
-      }
-      loadedMeshes.forEach(lm => { if (lm !== glbShirt) { try { lm.dispose() } catch {} } })
-      srcSkels?.[0]?.dispose()
-    })
+    const mesh  = meshesRef.current[slot]
+    if (!scene || !mesh) return
+    disposeDonor(slot)
+    if (!key) { mesh.setEnabled(false); return }
+    const item = findItem(slot, key)
+    if (!item) { mesh.setEnabled(false); return }
+    if (item.kind === 'color') {
+      applyItemToMesh(scene, mesh, item)
+      mesh.setEnabled(true)
+    } else {
+      loadClothingDonor(scene, mesh, skeletonRef.current, slot, item, (g) => { donorsRef.current[slot] = g })
+    }
   }
 
   const pickShirt = (key) => {
     const next = shirtColor === key ? null : key
     setShirtColor(next)
-    clearExtraMeshes()
-    const m = meshesRef.current.shirt
-    if (!m) return
-    if (!next) { m.setEnabled(false); return }
-
-    const item = findItem('shirt', next)
-    if (!item) return
-
-    if (item.kind === 'model') {
-      loadDonorShirt(item.file, null)              // Ajax/PSV baked design
-    } else if (item.kind === 'print') {
-      loadDonorShirt('/ajaxshirt.glb', item)       // donor geometry + our front print
-    } else {
-      applyItem(m, item, sceneRef.current)         // colour / pattern on own mesh
-      m.setEnabled(true)
-    }
+    applySlot('shirt', next)
   }
 
   const pickClothing = (itemKey, colorKey) => {
     setWearing(prev => {
       const next = prev[itemKey] === colorKey ? null : colorKey
-      const mesh = meshesRef.current[itemKey]
-      if (mesh) {
-        if (!next) {
-          mesh.setEnabled(false)
-        } else {
-          applyItem(mesh, findItem(itemKey, colorKey), sceneRef.current)
-          mesh.setEnabled(true)
-        }
-      }
+      applySlot(itemKey, next)
       return { ...prev, [itemKey]: next }
     })
   }
@@ -320,24 +287,8 @@ export default function Wardrobe({ onBack, onPlay3D, onPlayRocket, unlockedColor
       ground.material = groundMat
 
       // Restore saved clothing
-      if (shirtColor) {
-        const item = findItem('shirt', shirtColor)
-        const m = meshesRef.current.shirt
-        if (item?.kind === 'model') {
-          loadDonorShirt(item.file, null)
-        } else if (item?.kind === 'print') {
-          loadDonorShirt('/ajaxshirt.glb', item)
-        } else if (item && m) {
-          applyItem(m, item, scene)
-          m.setEnabled(true)
-        }
-      }
-      Object.entries(wearing).forEach(([key, colorKey]) => {
-        if (!colorKey) return
-        const mesh = meshesRef.current[key]
-        const item = findItem(key, colorKey)
-        if (mesh && item) { applyItem(mesh, item, scene); mesh.setEnabled(true) }
-      })
+      if (shirtColor) applySlot('shirt', shirtColor)
+      Object.entries(wearing).forEach(([slot, key]) => { if (key) applySlot(slot, key) })
 
       // Face features always black
       meshes.forEach(m => {

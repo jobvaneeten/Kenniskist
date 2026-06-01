@@ -43,32 +43,49 @@ export function applyItemToMesh(scene, mesh, item) {
   }
 }
 
-// Shirt 'model' (Ajax/PSV) or 'print' → load the donor shirt GLB (real UV),
-// attach the character's skeleton, parent it like the plain shirt slot, and
-// for prints bake our all-over emoji texture over it.
-export function loadShirtDonor(scene, shirtMesh, skeleton, item, onReady) {
-  const file = item.kind === 'model' ? item.file : '/ajaxshirt.glb'
-  shirtMesh.setEnabled(false)
+// Donor GLBs with a proper UV unwrap, used to show prints/patterns on the
+// clothing meshes (Poppetje's own clothing UV is collapsed to a point).
+const DONOR = {
+  broek:    '/broek.glb',
+  sokken:   '/sokken.glb',
+  schoenen: '/schoenen.glb',
+}
+
+// For a print/pattern/model item: load the matching donor mesh (real UV),
+// attach the character's skeleton, parent it like the plain slot, and bake the
+// generated texture (emoji print / pattern) onto it. `type` = shirt|broek|…
+export function loadClothingDonor(scene, mesh, skeleton, type, item, onReady) {
+  const file = item.kind === 'model'
+    ? item.file
+    : (type === 'shirt' ? '/ajaxshirt.glb' : (DONOR[type] || '/ajaxshirt.glb'))
+  mesh.setEnabled(false)
   SceneLoader.ImportMesh('', '/', file.replace(/^\//, ''), scene, (loaded, _ps, srcSkels) => {
-    const glbShirt = loaded.find(lm => (lm.getTotalVertices?.() ?? 0) > 0)
-    if (glbShirt && skeleton) {
-      glbShirt.parent             = shirtMesh.parent
-      glbShirt.position           = new Vector3(0, 0, 0)
-      glbShirt.rotationQuaternion = null
-      glbShirt.scaling            = new Vector3(1, 1, 1)
-      glbShirt.skeleton           = skeleton
-      if (item.kind === 'print') {
-        const tex = new Texture(buildShirtPrintTexture(item).toDataURL(), scene, false, false)
-        const mat = glbShirt.material
+    const g = loaded.find(lm => (lm.getTotalVertices?.() ?? 0) > 0)
+    if (g && skeleton) {
+      g.parent             = mesh.parent
+      g.position           = new Vector3(0, 0, 0)
+      g.rotationQuaternion = null
+      g.scaling            = new Vector3(1, 1, 1)
+      g.skeleton           = skeleton
+      if (item.kind !== 'model') {
+        // shirt uses its own donor stamp; others tile across the full UV
+        const canvas = type === 'shirt' ? buildShirtPrintTexture(item) : buildTextureCanvas(item)
+        const tex = new Texture(canvas.toDataURL(), scene, false, false)
+        const mat = g.material
         if (mat) {
           if (mat.albedoColor !== undefined) { mat.albedoTexture = tex; mat.albedoColor = Color3.White() }
           else if (mat.diffuseColor !== undefined) { mat.diffuseTexture = tex; mat.diffuseColor = Color3.White() }
         }
       }
-      glbShirt.setEnabled(true)
-      onReady?.(glbShirt)
+      g.setEnabled(true)
+      onReady?.(g)
     }
-    loaded.forEach(lm => { if (lm !== glbShirt) { try { lm.dispose() } catch {} } })
+    loaded.forEach(lm => { if (lm !== g) { try { lm.dispose() } catch {} } })
     srcSkels?.[0]?.dispose()
   })
+}
+
+// Back-compat wrapper (shirt only)
+export function loadShirtDonor(scene, shirtMesh, skeleton, item, onReady) {
+  return loadClothingDonor(scene, shirtMesh, skeleton, 'shirt', item, onReady)
 }

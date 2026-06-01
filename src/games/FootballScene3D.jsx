@@ -10,7 +10,7 @@ import {
 import { SceneLoader } from '@babylonjs/core/Loading/sceneLoader'
 import '@babylonjs/loaders/glTF'
 import { findItem } from '../itemsCatalog'
-import { applyItemToMesh, loadShirtDonor } from '../applyClothing'
+import { applyItemToMesh, loadClothingDonor } from '../applyClothing'
 import './football3d.css'
 
 // ── Remap shirt bone indices so they match Poppetje's skeleton ──────
@@ -771,7 +771,6 @@ function initScene(canvas, {
 
     // Apply clothing colors (wardrobe)
     {
-      let pendingShirtGLB = false
       meshes.forEach(m => {
         if (!CLOTHING_NAMES.has(m.name)) return
         const itemKey  = m.name.toLowerCase()
@@ -781,19 +780,13 @@ function initScene(canvas, {
         const item = findItem(itemKey, colorKey)
         if (!item) { m.setEnabled(false); return }
 
-        // Shirt model (Ajax/PSV) or print → donor shirt GLB with real UV
-        if (itemKey === 'shirt' && (item.kind === 'model' || item.kind === 'print')) {
-          m.setEnabled(false)
-          if (!pendingShirtGLB) {
-            pendingShirtGLB = true
-            loadShirtDonor(scene, m, scene.skeletons[0] ?? null, item)
-          }
-          return
+        if (item.kind === 'color') {
+          applyItemToMesh(scene, m, item)
+          m.setEnabled(true)
+        } else {
+          // model / print / pattern → donor mesh with a real UV
+          loadClothingDonor(scene, m, scene.skeletons[0] ?? null, itemKey, item)
         }
-
-        // Colour / pattern (and legs/feet items) → straight onto the mesh
-        applyItemToMesh(scene, m, item)
-        m.setEnabled(true)
       })
 
       // Apply team skin color — skip clothing AND face features

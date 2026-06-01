@@ -10,7 +10,7 @@ import {
 import { SceneLoader } from '@babylonjs/core/Loading/sceneLoader'
 import '@babylonjs/loaders/glTF'
 import { findItem } from '../itemsCatalog'
-import { applyItemToMesh, loadShirtDonor } from '../applyClothing'
+import { applyItemToMesh, loadClothingDonor } from '../applyClothing'
 import './rocket-game.css'
 
 const SERVER_URL = 'wss://kenniskist-server.onrender.com'
@@ -171,7 +171,7 @@ class PlayerInstance {
     this._state     = 'idle'
     this._ready     = false
     this._onReady   = null
-    this._shirtGLB  = null
+    this._donors    = []
     this._load()
   }
 
@@ -205,13 +205,13 @@ class PlayerInstance {
         if (!colorKey) { m.setEnabled(false); return }
         const item = findItem(key, colorKey)
         if (!item) { m.setEnabled(false); return }
-        if (key === 'shirt' && (item.kind === 'model' || item.kind === 'print')) {
-          m.setEnabled(false)
-          loadShirtDonor(this.scene, m, this._skeleton, item, (g) => { this._shirtGLB = g })
-          return
+        if (item.kind === 'color') {
+          applyItemToMesh(this.scene, m, item)
+          m.setEnabled(true)
+        } else {
+          // model / print / pattern → donor mesh with a real UV
+          loadClothingDonor(this.scene, m, this._skeleton, key, item, (g) => { this._donors.push(g) })
         }
-        applyItemToMesh(this.scene, m, item)
-        m.setEnabled(true)
       })
 
       // Team skin color
@@ -366,7 +366,7 @@ class PlayerInstance {
   dispose() {
     this._stopAll()
     Object.values(this._anims).forEach(g => { try { g.dispose() } catch {} })
-    this._shirtGLB?.dispose?.()
+    this._donors.forEach(g => { try { g.dispose() } catch {} })
     this.root?.dispose?.()
   }
 }
