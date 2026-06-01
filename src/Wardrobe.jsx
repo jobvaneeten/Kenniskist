@@ -279,7 +279,9 @@ export default function Wardrobe({ onBack, onPlay3D, onPlayRocket, unlockedColor
 
       // Floor plane at the character's feet
       const ground = MeshBuilder.CreateGround('ground', { width: maxDim * 3, height: maxDim * 3 }, scene)
-      ground.position.y = min.y
+      // Drop the floor a touch: the rust/idle pose sits lower than the T-pose
+      // bounds, so at min.y the feet clip through. Small offset keeps him on it.
+      ground.position.y = min.y - maxDim * 0.035
       const groundMat = new StandardMaterial('groundMat', scene)
       groundMat.emissiveColor = new Color3(0.10, 0.11, 0.20)
       groundMat.diffuseColor  = Color3.Black()

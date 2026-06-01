@@ -28,6 +28,7 @@ const GOAL_DEPTH    = 1.6
 const BOUND         = GOAL_Z          // walls on the white line (±36)
 const CORNER_R      = 8               // rounded-corner radius
 const GOAL_BACK     = BOUND + GOAL_DEPTH
+const GAME_DURATION = 120             // seconds (matches server)
 
 // Rounded arena boundary + open goal mouths (mirrors the server)
 function resolveBoundary(x, z, rad) {
@@ -852,6 +853,180 @@ function initScene(canvas, { localSessionId, getRoomState, sendInput, sendEmote,
   }
 }
 
+// ── Solo offline room ──────────────────────────────────────────────────
+// Mirrors the Colyseus RocketRoom physics in-browser for a single player,
+// so "Speel in 3D" gives the same world as Potje Voetballen but alone.
+// Exposes the same minimal API the component/scene use: sessionId, send,
+// onStateChange, onLeave, leave — and a live, in-place mutated state object.
+class LocalRoom {
+  constructor({ shirt, wearing, name }) {
+    this.sessionId = 'solo'
+    this._inp = { x: 0, z: 0, boost: false, pass: false }
+    this._cb = null
+    this._cbLeave = null
+    this._prev = { x: 0, z: 12 }
+    this._stopped = false
+    this._cdAcc = 0
+    this._goalPause = 0
+    this._last = performance.now()
+    const p = {
+      x: 0, z: 12, y: 0, rotY: Math.PI, vx: 0, vz: 0,
+      team: 0, stamina: 1, boosting: false,
+      shirt: shirt || '', wearing: wearing || '{}', name: name || 'Speler',
+      emote: '', emoteSeq: 0,
+    }
+    this.state = {
+      phase: 'countdown', countdown: 3, timeLeft: GAME_DURATION,
+      scoreA: 0, scoreB: 0,
+      ball: { x: 0, y: BALL_RADIUS, z: 0, vx: 0, vz: 0 },
+      players: new Map([['solo', p]]),
+    }
+    this._iv = setInterval(() => this._tick(), 1000 / 60)
+  }
+  onStateChange(cb) { this._cb = cb; cb(this.state) }
+  onLeave(cb) { this._cbLeave = cb }
+  send(type, msg) {
+    if (type === 'input') {
+      this._inp = {
+        x: Math.max(-1, Math.min(1, msg.x || 0)),
+        z: Math.max(-1, Math.min(1, msg.z || 0)),
+        boost: !!msg.boost, pass: !!msg.pass,
+      }
+    } else if (type === 'emote') {
+      const p = this.state.players.get('solo')
+      if (p) { p.emote = msg; p.emoteSeq++ }
+    }
+  }
+  leave() { this._stopped = true; clearInterval(this._iv); this._cbLeave?.() }
+  _emit() { this._cb?.(this.state) }
+  _reset() {
+    const s = this.state, b = s.ball
+    b.x = 0; b.y = BALL_RADIUS; b.z = 0; b.vx = 0; b.vz = 0
+    const p = s.players.get('solo')
+    p.x = 0; p.z = 12; p.rotY = Math.PI; p.vx = 0; p.vz = 0
+  }
+  _goalScored(team) {
+    const s = this.state
+    s.phase = 'goal'
+    if (team === 'A') s.scoreA++; else s.scoreB++
+    this._goalPause = 2.5
+    this._emit()
+  }
+  _tick() {
+    if (this._stopped) return
+    const now = performance.now()
+    const dt = Math.min((now - this._last) / 1000, 0.05)
+    this._last = now
+    const s = this.state
+
+    if (s.phase === 'countdown') {
+      this._cdAcc += dt
+      if (this._cdAcc >= 1) {
+        this._cdAcc -= 1; s.countdown--
+        if (s.countdown <= 0) s.phase = 'playing'
+        this._emit()
+      }
+      return
+    }
+    if (s.phase === 'goal') {
+      this._goalPause -= dt
+      if (this._goalPause <= 0) {
+        this._reset(); s.phase = 'countdown'; s.countdown = 3; this._cdAcc = 0
+        this._emit()
+      }
+      return
+    }
+    if (s.phase !== 'playing') return
+
+    s.timeLeft -= dt
+    if (s.timeLeft <= 0) { s.timeLeft = 0; s.phase = 'gameover'; this._emit(); return }
+
+    // ── Player ──
+    const p = s.players.get('solo')
+    this._prev.x = p.x; this._prev.z = p.z
+    const inp = this._inp
+    const wantBoost = inp.boost && p.stamina > 0
+    if (wantBoost) p.stamina = Math.max(0, p.stamina - dt * 0.5)
+    else           p.stamina = Math.min(1, p.stamina + dt * 0.1)
+    const spd = wantBoost ? BOOST_SPEED : PLAYER_SPEED
+    p.boosting = wantBoost
+    const vx = inp.x * spd, vz = inp.z * spd
+    const pres = resolveBoundary(p.x + vx * dt, p.z + vz * dt, PLAYER_RADIUS)
+    p.x = pres.x; p.z = pres.z; p.y = 0
+    const speed = Math.hypot(vx, vz)
+    if (speed > 0.05) {
+      const tr = Math.atan2(vx, vz)
+      let d = tr - p.rotY
+      while (d >  Math.PI) d -= Math.PI * 2
+      while (d < -Math.PI) d += Math.PI * 2
+      p.rotY += d * Math.min(1, 14 * dt)
+    }
+    p.vx = vx; p.vz = vz
+
+    // ── Ball ──
+    const ball = s.ball, prevZ = ball.z, prevX = ball.x
+    ball.x += ball.vx * dt; ball.z += ball.vz * dt; ball.y = BALL_RADIUS
+    const fr = Math.pow(0.91, dt * 60); ball.vx *= fr; ball.vz *= fr
+    const bres = resolveBoundary(ball.x, ball.z, BALL_RADIUS)
+    ball.x = bres.x; ball.z = bres.z
+    if (bres.nx || bres.nz) {
+      const dot = ball.vx * bres.nx + ball.vz * bres.nz
+      if (dot < 0) { ball.vx -= 1.5 * dot * bres.nx; ball.vz -= 1.5 * dot * bres.nz }
+    }
+
+    // ── Ball ↔ player swept collision ──
+    const R = PLAYER_RADIUS + BALL_RADIUS
+    const pp = this._prev
+    const ax = prevX - pp.x, az = prevZ - pp.z
+    const bx = ball.x - p.x, bz = ball.z - p.z
+    const ex = bx - ax, ez = bz - az
+    const a = ex * ex + ez * ez
+    const bq = 2 * (ax * ex + az * ez)
+    const c = ax * ax + az * az - R * R
+    let hit = false, tHit = 0
+    if (c < 0) { hit = true; tHit = 0 }
+    else if (a > 1e-9) {
+      const disc = bq * bq - 4 * a * c
+      if (disc >= 0) {
+        const t1 = (-bq - Math.sqrt(disc)) / (2 * a)
+        if (t1 >= 0 && t1 <= 1) { hit = true; tHit = t1 }
+      }
+    }
+    if (hit) {
+      let nx = ax + ex * tHit, nz = az + ez * tHit
+      let nl = Math.hypot(nx, nz)
+      if (nl < 1e-4) { nx = bx; nz = bz; nl = Math.hypot(nx, nz) || 1 }
+      nx /= nl; nz /= nl
+      ball.x = p.x + nx * R; ball.z = p.z + nz * R
+      const passMult = inp.pass ? 2.7 : 1
+      const pspd = Math.hypot(p.vx, p.vz)
+      const fwdX = Math.sin(p.rotY), fwdZ = Math.cos(p.rotY)
+      const L = (u, v, t) => u + (v - u) * t
+      const dx = L(fwdX, nx, 0.3), dz = L(fwdZ, nz, 0.3)
+      const dl = Math.hypot(dx, dz) || 1
+      const force = Math.max(pspd * 3 + 10, 14) * passMult
+      ball.vx = (dx / dl) * force; ball.vz = (dz / dl) * force
+      ball.x = p.x + nx * (R + 0.15); ball.z = p.z + nz * (R + 0.15)
+    }
+
+    // Safety clamp
+    const cl = resolveBoundary(ball.x, ball.z, BALL_RADIUS)
+    ball.x = cl.x; ball.z = cl.z
+    if (cl.nx || cl.nz) {
+      const dot = ball.vx * cl.nx + ball.vz * cl.nz
+      if (dot < 0) { ball.vx -= 1.5 * dot * cl.nx; ball.vz -= 1.5 * dot * cl.nz }
+    }
+
+    // ── Goal detection ──
+    const inX = Math.abs(ball.x) < GOAL_HALF_W - 0.05
+    const inY = ball.y > 0.05 && ball.y < GOAL_H + 0.1
+    if (inX && inY) {
+      if (prevZ > -GOAL_Z && ball.z <= -GOAL_Z) { this._goalScored('A'); return }
+      if (prevZ <  GOAL_Z && ball.z >=  GOAL_Z) { this._goalScored('B'); return }
+    }
+  }
+}
+
 // ── Lobby ──────────────────────────────────────────────────────────────
 function Lobby({ onBack, onJoined }) {
   const [code,    setCode]    = useState('')
@@ -943,8 +1118,8 @@ function WaitingRoom({ code, players, room, onBack }) {
 }
 
 // ── Main component ─────────────────────────────────────────────────────
-export default function RocketGame({ onBack }) {
-  const [screen,     setScreen]     = useState('lobby')
+export default function RocketGame({ onBack, solo = false }) {
+  const [screen,     setScreen]     = useState(solo ? 'playing' : 'lobby')
   const [room,       setRoom]       = useState(null)
   const [roomState,  setRoomState]  = useState(null)
   const [players,    setPlayers]    = useState([])
@@ -966,7 +1141,7 @@ export default function RocketGame({ onBack }) {
   useEffect(() => { roomStateRef.current = roomState }, [roomState])
   useEffect(() => { roomRef.current = room }, [room])
 
-  const handleJoined = useCallback((r, code) => {
+  const handleJoined = useCallback((r, code, isSolo = false) => {
     setRoom(r); roomRef.current = r
     setLobbyCode(code || '')
 
@@ -981,9 +1156,20 @@ export default function RocketGame({ onBack }) {
         setGoalFlash(true); setTimeout(() => setGoalFlash(false), 2200)
       }
     })
-    r.onLeave(() => { setScreen('lobby'); setRoom(null) })
-    setScreen('waiting')
+    r.onLeave(() => { setScreen(isSolo ? 'gameover' : 'lobby'); setRoom(null) })
+    setScreen(isSolo ? 'playing' : 'waiting')
   }, [])
+
+  // Solo (offline) mode: spawn a local simulator and jump straight into play.
+  useEffect(() => {
+    if (!solo) return
+    const shirt   = localStorage.getItem('kk_shirt')   || ''
+    const wearing = localStorage.getItem('kk_wearing') || '{}'
+    const name    = localStorage.getItem('kk_playername') || 'Speler'
+    const r = new LocalRoom({ shirt, wearing, name })
+    handleJoined(r, '', true)
+    return () => { r.leave() }
+  }, [solo, handleJoined])
 
   useEffect(() => {
     if (screen !== 'playing' || !canvasRef.current || !room) return

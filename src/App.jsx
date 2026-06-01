@@ -3,8 +3,6 @@ import './App.css'
 import Wardrobe        from './Wardrobe'
 import Shop            from './Shop'
 import GameMenu        from './GameMenu'
-import FootballScene3D from './games/FootballScene3D'
-import Football3v3     from './games/Football3v3'
 import RocketGame      from './games/RocketGame'
 import { allUnlockedMap } from './itemsCatalog'
 
@@ -186,11 +184,7 @@ export default function App() {
   )
 
   if (screen === 'football3d') return (
-    <FootballScene3D onBack={goMenu} onPlay3v3={() => setScreen('football3v3')} />
-  )
-
-  if (screen === 'football3v3') return (
-    <Football3v3 onBack={goMenu} />
+    <RocketGame solo onBack={() => setScreen('wardrobe')} />
   )
 
   if (screen === 'rocket') return (
