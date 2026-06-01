@@ -77,6 +77,14 @@ const DONOR = {
   schoenen: '/schoenen.glb',
 }
 
+// Types whose own Poppetje mesh glitches → always use the donor (even colours).
+const ALWAYS_DONOR = new Set(['broek'])
+
+// Should this item render via a donor mesh (true) or straight on Poppetje (false)?
+export function usesDonor(type, item) {
+  return item.kind !== 'color' || ALWAYS_DONOR.has(type)
+}
+
 // For a print/pattern/model item: load the matching donor mesh (real UV),
 // attach the character's skeleton, parent it like the plain slot, and bake the
 // generated texture (emoji print / pattern) onto it. `type` = shirt|broek|…
@@ -100,6 +108,14 @@ export function loadClothingDonor(scene, mesh, skeleton, type, item, onReady) {
         if (mat) {
           if (mat.albedoColor !== undefined) { mat.albedoTexture = tex; mat.albedoColor = Color3.White() }
           else if (mat.diffuseColor !== undefined) { mat.diffuseTexture = tex; mat.diffuseColor = Color3.White() }
+        }
+      } else if (item.kind === 'color') {
+        // solid colour on the donor mesh
+        const col = Color3.FromHexString(item.hex)
+        const mat = g.material
+        if (mat) {
+          if (mat.albedoColor !== undefined) { mat.albedoTexture = null; mat.albedoColor = col }
+          else if (mat.diffuseColor !== undefined) { mat.diffuseTexture = null; mat.diffuseColor = col }
         }
       } else if (item.kind !== 'model') {
         applyGeneratedTexture(scene, g, type, item)

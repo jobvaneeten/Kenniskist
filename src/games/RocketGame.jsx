@@ -10,7 +10,7 @@ import {
 import { SceneLoader } from '@babylonjs/core/Loading/sceneLoader'
 import '@babylonjs/loaders/glTF'
 import { findItem } from '../itemsCatalog'
-import { applyItemToMesh, loadClothingDonor } from '../applyClothing'
+import { applyItemToMesh, loadClothingDonor, usesDonor } from '../applyClothing'
 import './rocket-game.css'
 
 const SERVER_URL = 'wss://kenniskist-server.onrender.com'
@@ -205,12 +205,11 @@ class PlayerInstance {
         if (!colorKey) { m.setEnabled(false); return }
         const item = findItem(key, colorKey)
         if (!item) { m.setEnabled(false); return }
-        if (item.kind === 'color') {
+        if (usesDonor(key, item)) {
+          loadClothingDonor(this.scene, m, this._skeleton, key, item, (g) => { this._donors.push(g) })
+        } else {
           applyItemToMesh(this.scene, m, item)
           m.setEnabled(true)
-        } else {
-          // model / print / pattern → donor mesh with a real UV
-          loadClothingDonor(this.scene, m, this._skeleton, key, item, (g) => { this._donors.push(g) })
         }
       })
 

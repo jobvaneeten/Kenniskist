@@ -10,7 +10,7 @@ import {
 import { SceneLoader } from '@babylonjs/core/Loading/sceneLoader'
 import '@babylonjs/loaders/glTF'
 import { findItem } from '../itemsCatalog'
-import { applyItemToMesh, loadClothingDonor } from '../applyClothing'
+import { applyItemToMesh, loadClothingDonor, usesDonor } from '../applyClothing'
 import './football3d.css'
 
 // ── Remap shirt bone indices so they match Poppetje's skeleton ──────
@@ -780,12 +780,11 @@ function initScene(canvas, {
         const item = findItem(itemKey, colorKey)
         if (!item) { m.setEnabled(false); return }
 
-        if (item.kind === 'color') {
+        if (usesDonor(itemKey, item)) {
+          loadClothingDonor(scene, m, scene.skeletons[0] ?? null, itemKey, item)
+        } else {
           applyItemToMesh(scene, m, item)
           m.setEnabled(true)
-        } else {
-          // model / print / pattern → donor mesh with a real UV
-          loadClothingDonor(scene, m, scene.skeletons[0] ?? null, itemKey, item)
         }
       })
 

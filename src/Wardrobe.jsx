@@ -8,7 +8,7 @@ import {
 import { SceneLoader } from '@babylonjs/core/Loading/sceneLoader'
 import '@babylonjs/loaders/glTF'
 import { getCatalog, findItem, swatchStyle, swatchEmoji } from './itemsCatalog'
-import { applyItemToMesh, loadClothingDonor } from './applyClothing'
+import { applyItemToMesh, loadClothingDonor, usesDonor } from './applyClothing'
 import './wardrobe.css'
 
 const CLOTHING_MESHES = ['Shirt', 'Broek', 'Sokken', 'Schoenen']
@@ -173,11 +173,11 @@ export default function Wardrobe({ onBack, onPlay3D, onPlayRocket, unlockedColor
     if (!key) { mesh.setEnabled(false); return }
     const item = findItem(slot, key)
     if (!item) { mesh.setEnabled(false); return }
-    if (item.kind === 'color') {
+    if (usesDonor(slot, item)) {
+      loadClothingDonor(scene, mesh, skeletonRef.current, slot, item, (g) => { donorsRef.current[slot] = g })
+    } else {
       applyItemToMesh(scene, mesh, item)
       mesh.setEnabled(true)
-    } else {
-      loadClothingDonor(scene, mesh, skeletonRef.current, slot, item, (g) => { donorsRef.current[slot] = g })
     }
   }
 
