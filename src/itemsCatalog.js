@@ -172,6 +172,10 @@ function tileEmoji(ctx, S, cols, item, img) {
 // the front (big) and back (smaller). Texture is used with invertY=false,
 // so canvas (u*S, v*S) maps straight to the UV.
 export function buildShirtPrintTexture(item, emojiImg = null) {
+  // Patterns (dots/checker/stripes/…) are not emoji — draw the real pattern,
+  // otherwise tileEmoji falls back to ⭐ and every pattern shirt shows stars.
+  if (item.kind === 'pattern') return buildTextureCanvas(item, emojiImg)
+
   const S = 1024
   const cv = document.createElement('canvas')
   cv.width = S; cv.height = S
