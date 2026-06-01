@@ -48,16 +48,18 @@ export default class MenuScene extends Phaser.Scene {
       const best     = this.progress[`map${map.id}_best`] || null
       const cx = startX + i * (cardW + 30)
 
-      // Card background
+      // Card background (shadow + gradient + top highlight)
       const card = this.add.graphics()
-      if (unlocked) {
-        card.fillGradientStyle(0x1a5c0a, 0x1a5c0a, 0x0d3305, 0x0d3305, 1)
-      } else {
-        card.fillStyle(0x1a1a1a, 0.8)
-      }
-      card.fillRoundedRect(cx - cardW/2, cardY - cardH/2, cardW, cardH, 18)
-      card.lineStyle(3, unlocked ? 0x44ff44 : 0x444444, 1)
-      card.strokeRoundedRect(cx - cardW/2, cardY - cardH/2, cardW, cardH, 18)
+      const rx = cx - cardW/2, ry = cardY - cardH/2
+      card.fillStyle(0x000000, 0.4); card.fillRoundedRect(rx, ry + 8, cardW, cardH, 18)
+      if (unlocked) card.fillGradientStyle(0x216a10, 0x216a10, 0x0c2e06, 0x0c2e06, 1)
+      else          card.fillGradientStyle(0x222222, 0x222222, 0x141414, 0x141414, 0.9)
+      card.fillRoundedRect(rx, ry, cardW, cardH, 18)
+      card.fillStyle(0xffffff, unlocked ? 0.08 : 0.03)
+      card.fillRoundedRect(rx + 3, ry + 3, cardW - 6, cardH * 0.3, 15)
+      card.lineStyle(3, unlocked ? 0x55dd55 : 0x444444, 1)
+      card.strokeRoundedRect(rx, ry, cardW, cardH, 18)
+      if (unlocked) { card.lineStyle(1, 0x88ff88, 0.25); card.strokeRoundedRect(rx - 2, ry - 2, cardW + 4, cardH + 4, 20) }
 
       // Map emoji
       this.add.text(cx, cardY - 120, map.emoji, {
@@ -121,20 +123,22 @@ export default class MenuScene extends Phaser.Scene {
     const btn = this.add.graphics()
     const draw = (col) => {
       btn.clear()
-      btn.fillStyle(col, 1)
-      btn.fillRoundedRect(x - w/2, y - h/2, w, h, 10)
-      btn.lineStyle(2, 0xffffff, 0.4)
-      btn.strokeRoundedRect(x - w/2, y - h/2, w, h, 10)
+      const top = Phaser.Display.Color.ValueToColor(col).clone().brighten(20).color
+      const bot = Phaser.Display.Color.ValueToColor(col).clone().darken(14).color
+      btn.fillStyle(0x000000, 0.35); btn.fillRoundedRect(x - w/2, y - h/2 + 3, w, h, 12)
+      btn.fillGradientStyle(top, top, bot, bot, 1); btn.fillRoundedRect(x - w/2, y - h/2, w, h, 12)
+      btn.fillStyle(0xffffff, 0.12); btn.fillRoundedRect(x - w/2 + 2, y - h/2 + 2, w - 4, h * 0.42, 10)
+      btn.lineStyle(2, 0xffffff, 0.4); btn.strokeRoundedRect(x - w/2, y - h/2, w, h, 12)
     }
     draw(color)
 
     const txt = this.add.text(x, y, label, {
       fontSize: '18px', fontFamily: 'Arial Black, Arial',
       color: '#ffffff',
-    }).setOrigin(0.5)
+    }).setOrigin(0.5).setShadow(0, 1, '#000', 2)
 
     const zone = this.add.zone(x, y, w, h).setInteractive({ useHandCursor: true })
-    zone.on('pointerover',  () => { draw(hoverColor); txt.setScale(1.05) })
+    zone.on('pointerover',  () => { draw(hoverColor); txt.setScale(1.06) })
     zone.on('pointerout',   () => { draw(color);      txt.setScale(1) })
     zone.on('pointerdown',  () => { this.tweens.add({ targets: [btn, txt], scaleY: 0.93, duration: 80, yoyo: true }) })
     zone.on('pointerup',    callback)
