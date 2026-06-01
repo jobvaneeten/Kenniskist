@@ -9,6 +9,7 @@ import RocketGame      from './games/RocketGame'
 import { allUnlockedMap } from './itemsCatalog'
 
 const CODES = { pabo: 100000 }
+const BRIEF_CODES = { start: 800 }   // eenmalige briefgeld-codes
 const UNLOCK_ALL_CODE = 'joop'
 
 function fmt(n) { return n.toLocaleString('nl-NL') }
@@ -28,7 +29,7 @@ function CurrencyBadge({ munten, briefgeld }) {
   )
 }
 
-function CodeModal({ onClose, onRedeem, onUnlockAll }) {
+function CodeModal({ onClose, onRedeem, onRedeemBrief, onUnlockAll, usedCodes }) {
   const [code, setCode] = useState('')
   const [msg,  setMsg]  = useState(null)
   const [ok,   setOk]   = useState(false)
@@ -39,6 +40,15 @@ function CodeModal({ onClose, onRedeem, onUnlockAll }) {
       onUnlockAll()
       setMsg('🎉 Alle kleding ontgrendeld!')
       setOk(true)
+    } else if (BRIEF_CODES[key] !== undefined) {
+      if (usedCodes.includes(key)) {
+        setMsg('Deze code is al gebruikt.')
+        setOk(false)
+      } else {
+        onRedeemBrief(key, BRIEF_CODES[key])
+        setMsg(`+${fmt(BRIEF_CODES[key])} briefgeld! 💵`)
+        setOk(true)
+      }
     } else if (CODES[key] !== undefined) {
       onRedeem(key, CODES[key])
       setMsg(`+${fmt(CODES[key])} munten!`)
@@ -118,6 +128,14 @@ export default function App() {
   const redeemCode = (key, amount) => {
     if (usedCodes.includes(key)) return
     addCuruntie(amount)
+    const next = [...usedCodes, key]
+    setUsedCodes(next)
+    localStorage.setItem('kk_used_codes', JSON.stringify(next))
+  }
+
+  const redeemBriefCode = (key, amount) => {
+    if (usedCodes.includes(key)) return
+    addBriefgeld(amount)
     const next = [...usedCodes, key]
     setUsedCodes(next)
     localStorage.setItem('kk_used_codes', JSON.stringify(next))
@@ -243,7 +261,9 @@ export default function App() {
         <CodeModal
           onClose={() => setShowCode(false)}
           onRedeem={(key, amount) => redeemCode(key, amount)}
+          onRedeemBrief={(key, amount) => redeemBriefCode(key, amount)}
           onUnlockAll={unlockAll}
+          usedCodes={usedCodes}
         />
       )}
     </div>
