@@ -72,7 +72,7 @@ export function applyItemToMesh(scene, mesh, item) {
 // Donor GLBs with a proper UV unwrap, used to show prints/patterns on the
 // clothing meshes (Poppetje's own clothing UV is collapsed to a point).
 const DONOR = {
-  broek:    '/broek.glb',
+  broek:    '/test/nieuwebroektest.glb',   // Meshy broek with a clean 0–1 UV
   sokken:   '/sokken.glb',
   schoenen: '/schoenen.glb',
 }
