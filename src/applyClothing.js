@@ -81,7 +81,7 @@ const DONOR = {
 // attach the character's skeleton, parent it like the plain slot, and bake the
 // generated texture (emoji print / pattern) onto it. `type` = shirt|broek|…
 export function loadClothingDonor(scene, mesh, skeleton, type, item, onReady) {
-  const file = item.kind === 'model'
+  const file = (item.kind === 'model' || item.kind === 'texmodel')
     ? item.file
     : (type === 'shirt' ? '/ajaxshirt.glb' : (DONOR[type] || '/ajaxshirt.glb'))
   mesh.setEnabled(false)
@@ -93,7 +93,17 @@ export function loadClothingDonor(scene, mesh, skeleton, type, item, onReady) {
       g.rotationQuaternion = null
       g.scaling            = new Vector3(1, 1, 1)
       g.skeleton           = skeleton
-      if (item.kind !== 'model') applyGeneratedTexture(scene, g, type, item)
+      if (item.kind === 'texmodel') {
+        // donor mesh + a custom designed texture image (its UV matches the file)
+        const tex = new Texture(item.texture, scene, false, false)
+        const mat = g.material
+        if (mat) {
+          if (mat.albedoColor !== undefined) { mat.albedoTexture = tex; mat.albedoColor = Color3.White() }
+          else if (mat.diffuseColor !== undefined) { mat.diffuseTexture = tex; mat.diffuseColor = Color3.White() }
+        }
+      } else if (item.kind !== 'model') {
+        applyGeneratedTexture(scene, g, type, item)
+      }
       g.setEnabled(true)
       onReady?.(g)
     }

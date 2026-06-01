@@ -9,6 +9,8 @@ const color   = (key, label, rarity, hex)               => ({ key, label, rarity
 const pat     = (key, label, rarity, pattern, c1, c2)   => ({ key, label, rarity, kind: 'pattern', pattern, c1, c2 })
 const print   = (key, label, rarity, emoji, bg)         => ({ key, label, rarity, kind: 'print', emoji, bg })
 const model   = (key, label, file, preview)             => ({ key, label, rarity: 'ultra_legendary', kind: 'model', file, preview })
+// Donor GLB with a custom baked texture image (a designed clothing skin)
+const texmodel = (key, label, file, texture, preview)  => ({ key, label, rarity: 'ultra_legendary', kind: 'texmodel', file, texture, preview })
 
 // Base colours shared by every clothing type (keeps existing saved unlocks)
 const BASE = () => [
@@ -52,6 +54,8 @@ export const CATALOG = {
     print('diamant',    'Diamant',              'legendary', '💎',   '#06243a'),
     print('eenhoorn',   'Eenhoorn',             'ultra_legendary', '🦄', '#2a0a3a'),
     print('regenboog_b','Regenboog',            'ultra_legendary', '🌈', '#101030'),
+    texmodel('ajaxbroek', 'Ajax Broek', '/test/nieuwebroektest.glb', '/test/uvmapajaxbroek.png', '/logo_ajax.svg'),
+    texmodel('psvbroek',  'PSV Broek',  '/test/nieuwebroektest.glb', '/test/uvmappsvbroek.png',  '/logo_psv.svg'),
   ],
   sokken: [
     ...BASE(),
@@ -100,7 +104,8 @@ export function swatchStyle(item) {
   if (!item) return { background: '#333' }
   switch (item.kind) {
     case 'color':  return { background: item.hex }
-    case 'model':  return { backgroundImage: `url('${item.preview}')`, backgroundSize: 'cover', backgroundColor: '#fff' }
+    case 'model':
+    case 'texmodel': return { backgroundImage: `url('${item.preview}')`, backgroundSize: 'cover', backgroundColor: '#fff' }
     case 'print':  return { background: item.bg }
     case 'pattern': return { background: cssPattern(item) }
     default:       return { background: '#333' }
