@@ -164,7 +164,8 @@
   box-shadow: 0 6px 20px rgba(0,0,0,0.4);
   transition: transform 0.08s;
 }
-.rg-pass-btn  { background: radial-gradient(circle at 50% 35%, #3aa0ff, #1d6fd0); }
+.rg-pass-btn  { background: radial-gradient(circle at 50% 35%, #6a7180, #444b58); opacity: 0.85; }
+.rg-pass-btn.rg-pass-on { background: radial-gradient(circle at 50% 35%, #4dff7a, #16a34a); opacity: 1; box-shadow: 0 0 14px rgba(74,255,122,0.7); }
 .rg-boost-btn { background: radial-gradient(circle at 50% 35%, #ffd23f, #f0901a); color:#3a2400; }
 .rg-pass-btn span, .rg-boost-btn span { font-size: 0.62rem; font-weight: 800; letter-spacing: 0.04em; }
 .rg-pass-btn:active, .rg-boost-btn:active { transform: scale(0.92); }

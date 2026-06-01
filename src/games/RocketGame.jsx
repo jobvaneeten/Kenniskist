@@ -643,6 +643,7 @@ function initScene(canvas, { localSessionId, getRoomState, sendInput, sendEmote,
   const playerInstances = new Map()   // sessionId → PlayerInstance
   const joyRef   = { current: { x: 0, z: 0 } }
   const boostRef = { current: false }   // on-screen boost button
+  const passRef  = { current: false }   // pass-mode toggle (harder kick on contact)
   const keys     = {}
   const lastEmoteSeq = new Map()   // sessionId → last emoteSeq we played
   const onKD   = e => {
@@ -720,7 +721,7 @@ function initScene(canvas, { localSessionId, getRoomState, sendInput, sendEmote,
     const wlen = Math.hypot(wx, wz)
     if (wlen > 1) { wx /= wlen; wz /= wlen }
 
-    const inp = { x: wx, z: wz, boost: !!keys['Space'] || boostRef.current }
+    const inp = { x: wx, z: wz, boost: !!keys['Space'] || boostRef.current, pass: passRef.current }
     sendInput(inp)
 
     // ── Players ──
@@ -838,6 +839,7 @@ function initScene(canvas, { localSessionId, getRoomState, sendInput, sendEmote,
   return {
     joyRef,
     boostRef,
+    passRef,
     dispose: () => {
       window.removeEventListener('keydown', onKD)
       window.removeEventListener('keyup',   onKU)
@@ -951,6 +953,7 @@ export default function RocketGame({ onBack }) {
   const [loading,    setLoading]    = useState(true)
   const [showHint,   setShowHint]   = useState(true)
   const [lobbyCode,  setLobbyCode]  = useState('')
+  const [passMode,   setPassMode]   = useState(false)
 
   const canvasRef      = useRef(null)
   const sceneRef       = useRef(null)
@@ -1078,9 +1081,14 @@ export default function RocketGame({ onBack }) {
       {/* Touch action buttons: Pass + Boost (right side) */}
       <div className="rg-actions">
         <button
-          className="rg-pass-btn"
-          onPointerDown={e => { e.preventDefault(); roomRef.current?.send('pass') }}
-        >⚽<span>Pass</span></button>
+          className={'rg-pass-btn' + (passMode ? ' rg-pass-on' : '')}
+          onPointerDown={e => {
+            e.preventDefault()
+            const next = !passMode
+            setPassMode(next)
+            if (sceneRef.current) sceneRef.current.passRef.current = next
+          }}
+        >⚽<span>Potje voetbal{passMode ? ' AAN' : ' UIT'}</span></button>
         <button
           className="rg-boost-btn"
           onPointerDown={e => { e.preventDefault(); if (sceneRef.current) sceneRef.current.boostRef.current = true }}
