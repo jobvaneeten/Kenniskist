@@ -1127,22 +1127,29 @@ export default class GameScene extends Phaser.Scene {
   update(time, delta) {
     if (this.paused || this.gameOver || this.victory) return
 
+    // Apply the speed multiplier to the WHOLE simulation. Movement runs on
+    // delta and towers fire on an absolute clock, so we scale delta and keep
+    // our own scaled game-clock (real `time`/`delta` ignore time.timeScale).
+    const mult = this._speed || 1
+    const d = delta * mult
+    this._gameTime = (this._gameTime || 0) + d
+
     // Update enemies
     for (let i = this.enemies.length - 1; i >= 0; i--) {
       const e = this.enemies[i]
-      e.update(delta)
+      e.update(d)
       if (e.reached) {
         this._loseLife()
         if (this.enemies[i] === e) this.enemies.splice(i, 1)
       }
     }
 
-    // Update towers
-    this.towers.forEach(t => t.update(time, delta))
+    // Update towers (scaled clock so fire-rate cooldowns speed up too)
+    this.towers.forEach(t => t.update(this._gameTime, d))
 
     // Update projectiles
     for (let i = this.projectiles.length - 1; i >= 0; i--) {
-      this.projectiles[i].update(delta)
+      this.projectiles[i].update(d)
     }
 
     // Check wave end condition (all spawned + all dead/reached)

@@ -60,10 +60,11 @@ export default class UIScene extends Phaser.Scene {
     this.add.text(PX + 12, 56, 'SNELHEID', {
       fontSize: '10px', fontFamily: 'Arial Black', color: '#5fae5f',
     }).setShadow(0, 1, '#000', 1)
-    const sW = 58, sH = 26, sY = 76
-    this._speed1Btn = this._btn(PX + 50,  sY, sW, sH, '1×', 0x1a3220, () => this._setSpeed(1))
-    this._speed2Btn = this._btn(PX + 128, sY, sW, sH, '2×', 0x1a3220, () => this._setSpeed(2))
-    this._speed3Btn = this._btn(PX + 206, sY, sW, sH, '3×', 0x1a3220, () => this._setSpeed(3))
+    const sW = 52, sH = 26, sY = 76
+    this._speed1Btn = this._btn(PX + 40,  sY, sW, sH, '1×', 0x1a3220, () => this._setSpeed(1))
+    this._speed2Btn = this._btn(PX + 98,  sY, sW, sH, '2×', 0x1a3220, () => this._setSpeed(2))
+    this._speed3Btn = this._btn(PX + 156, sY, sW, sH, '3×', 0x1a3220, () => this._setSpeed(3))
+    this._speed5Btn = this._btn(PX + 214, sY, sW, sH, '5×', 0x1a3220, () => this._setSpeed(5))
     this._refreshSpeedBtns()
 
     // ── Stat chips: Gold + Lives ─────────────────────────────────
@@ -239,6 +240,7 @@ export default class UIScene extends Phaser.Scene {
       { btn: this._speed1Btn, speed: 1 },
       { btn: this._speed2Btn, speed: 2 },
       { btn: this._speed3Btn, speed: 3 },
+      { btn: this._speed5Btn, speed: 5 },
     ]
     list.forEach(({ btn, speed }) => {
       if (!btn) return
@@ -279,6 +281,10 @@ export default class UIScene extends Phaser.Scene {
     })
     this._sellBtn     = this._btn(PX + PW / 2, y + 118, PW - 24, 34, 'Verkopen', 0x6a2222, () => {
       this.events.emit('sell_tower')
+    })
+    // Keep the upgrade/sell buttons ABOVE the tower-panel background (depth 4)
+    ;[this._upgradeBtn, this._sellBtn].forEach(b => {
+      b.gfx.setDepth(6); b.txt.setDepth(7); b.zone.setDepth(7)
     })
     this._hideTowerPanel()
   }
