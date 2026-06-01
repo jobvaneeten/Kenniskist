@@ -3,7 +3,33 @@
 // way everywhere as in the wardrobe.
 import { Texture, Color3, Vector3 } from '@babylonjs/core'
 import { SceneLoader } from '@babylonjs/core/Loading/sceneLoader'
-import { buildTextureCanvas, buildShirtPrintTexture } from './itemsCatalog'
+import { buildTextureCanvas, buildShirtPrintTexture, emojiUrl } from './itemsCatalog'
+
+function applyCanvasTex(scene, mesh, canvas) {
+  const tex = new Texture(canvas.toDataURL(), scene, false, false)
+  const mat = mesh.material
+  if (mat) {
+    if (mat.albedoColor !== undefined) { mat.albedoTexture = tex; mat.albedoColor = Color3.White() }
+    else if (mat.diffuseColor !== undefined) { mat.diffuseTexture = tex; mat.diffuseColor = Color3.White() }
+  }
+}
+
+// Build + apply the generated texture. Prints load the Twemoji image first so
+// they render identically on every device (iOS can't draw emoji to a texture).
+function applyGeneratedTexture(scene, mesh, type, item) {
+  const build = (img) => type === 'shirt'
+    ? buildShirtPrintTexture(item, img)
+    : buildTextureCanvas(item, img)
+  if (item.kind === 'print') {
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    img.onload  = () => applyCanvasTex(scene, mesh, build(img))
+    img.onerror = () => applyCanvasTex(scene, mesh, build(null))
+    img.src = emojiUrl(item.emoji)
+  } else {
+    applyCanvasTex(scene, mesh, build(null))   // pattern
+  }
+}
 
 function walk(node, fn) {
   fn(node)
@@ -67,16 +93,7 @@ export function loadClothingDonor(scene, mesh, skeleton, type, item, onReady) {
       g.rotationQuaternion = null
       g.scaling            = new Vector3(1, 1, 1)
       g.skeleton           = skeleton
-      if (item.kind !== 'model') {
-        // shirt uses its own donor stamp; others tile across the full UV
-        const canvas = type === 'shirt' ? buildShirtPrintTexture(item) : buildTextureCanvas(item)
-        const tex = new Texture(canvas.toDataURL(), scene, false, false)
-        const mat = g.material
-        if (mat) {
-          if (mat.albedoColor !== undefined) { mat.albedoTexture = tex; mat.albedoColor = Color3.White() }
-          else if (mat.diffuseColor !== undefined) { mat.diffuseTexture = tex; mat.diffuseColor = Color3.White() }
-        }
-      }
+      if (item.kind !== 'model') applyGeneratedTexture(scene, g, type, item)
       g.setEnabled(true)
       onReady?.(g)
     }

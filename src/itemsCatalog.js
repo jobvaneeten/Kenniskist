@@ -128,12 +128,45 @@ function cssPattern({ pattern, c1, c2 }) {
   }
 }
 
+// ── Emoji → Twemoji image (works identically on every device incl. iOS) ──
+export function emojiCode(e) {
+  const cps = [...e].map(c => c.codePointAt(0))
+  const out = cps.filter(cp => cp !== 0xFE0F || cps.includes(0x20E3))
+  return out.map(c => c.toString(16)).join('-')
+}
+export function emojiUrl(e) { return `/twemoji/${emojiCode(e)}.png` }
+
+// Tile an emoji across the canvas. Prefer the Twemoji image (img) — the system
+// emoji font isn't reliably drawn to a WebGL texture on iOS/iPad. Falls back to
+// fillText only if the image failed to load.
+function tileEmoji(ctx, S, cols, item, img) {
+  const cw = S / cols, ch = cw
+  const rows = Math.ceil(S / ch) + 1
+  if (img && img.width) {
+    const sz = cw * 0.8
+    for (let r = 0; r < rows; r++) {
+      const off = (r % 2) ? cw / 2 : 0
+      for (let c = -1; c <= cols; c++) {
+        ctx.drawImage(img, c * cw + cw / 2 + off - sz / 2, r * ch + ch / 2 - sz / 2, sz, sz)
+      }
+    }
+  } else {
+    ctx.font = `${Math.floor(cw * 0.7)}px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif`
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
+    const e = item.emoji || '⭐'
+    for (let r = 0; r < rows; r++) {
+      const off = (r % 2) ? cw / 2 : 0
+      for (let c = -1; c <= cols; c++) ctx.fillText(e, c * cw + cw / 2 + off, r * ch + ch / 2)
+    }
+  }
+}
+
 // ── Shirt print baked onto the Ajax/PSV shirt UV layout ──────────────
 // The donor shirt mesh has a real UV: front-chest ≈ (0.342, 0.526),
 // back ≈ (0.668, 0.731). We fill the shirt colour and stamp the emoji on
 // the front (big) and back (smaller). Texture is used with invertY=false,
 // so canvas (u*S, v*S) maps straight to the UV.
-export function buildShirtPrintTexture(item) {
+export function buildShirtPrintTexture(item, emojiImg = null) {
   const S = 1024
   const cv = document.createElement('canvas')
   cv.width = S; cv.height = S
@@ -145,24 +178,12 @@ export function buildShirtPrintTexture(item) {
   g.addColorStop(1, bg)
   ctx.fillStyle = g; ctx.fillRect(0, 0, S, S)
 
-  // All-over print: small emoji tiled across the whole shirt (brick layout)
-  const emoji = item.emoji || '⭐'
-  const cols = 9
-  const cw = S / cols, ch = cw
-  const rows = Math.ceil(S / ch) + 1
-  ctx.font = `${Math.floor(cw * 0.7)}px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif`
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
-  for (let r = 0; r < rows; r++) {
-    const offset = (r % 2) ? cw / 2 : 0
-    for (let c = -1; c <= cols; c++) {
-      ctx.fillText(emoji, c * cw + cw / 2 + offset, r * ch + ch / 2)
-    }
-  }
+  tileEmoji(ctx, S, 9, item, emojiImg)   // all-over small emoji print
   return cv
 }
 
 // ── Procedural texture canvas (for the 3D meshes) ────────────────────
-export function buildTextureCanvas(item) {
+export function buildTextureCanvas(item, emojiImg = null) {
   const S = 1024
   const cv = document.createElement('canvas')
   cv.width = S; cv.height = S
@@ -174,21 +195,7 @@ export function buildTextureCanvas(item) {
     g.addColorStop(0, lighten(item.bg, 0.14))
     g.addColorStop(1, item.bg)
     ctx.fillStyle = g; ctx.fillRect(0, 0, S, S)
-
-    // Neat brick-tiled emoji print, crisp and evenly spaced
-    const cols = 5
-    const cw = S / cols, ch = cw            // square cells
-    const rows = Math.ceil(S / ch) + 1
-    ctx.font = `${Math.floor(cw * 0.66)}px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif`
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
-    for (let r = 0; r < rows; r++) {
-      const offset = (r % 2) ? cw / 2 : 0
-      for (let c = -1; c <= cols; c++) {
-        const x = c * cw + cw / 2 + offset
-        const y = r * ch + ch / 2
-        ctx.fillText(item.emoji, x, y)
-      }
-    }
+    tileEmoji(ctx, S, 6, item, emojiImg)
     return cv
   }
 
