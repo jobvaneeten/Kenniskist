@@ -128,6 +128,47 @@
   transition: width 0.08s linear;
 }
 
+/* ── Fullscreen button ── */
+.rg-fs-btn {
+  position: fixed;
+  top: 14px; right: 120px;
+  z-index: 100;
+  width: 40px; height: 40px;
+  border-radius: 12px;
+  border: 1.5px solid rgba(255,255,255,0.12);
+  background: rgba(10,10,30,0.75);
+  color: rgba(255,255,255,0.85);
+  font-size: 1.1rem; cursor: pointer;
+  backdrop-filter: blur(12px);
+}
+.rg-fs-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+/* ── Touch action buttons (pass + boost) ── */
+.rg-actions {
+  position: fixed;
+  right: 30px; bottom: 36px;
+  z-index: 100;
+  display: flex; flex-direction: column; gap: 14px; align-items: center;
+}
+.rg-pass-btn, .rg-boost-btn {
+  width: 84px; height: 84px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.25);
+  color: #fff;
+  font-size: 1.7rem; font-weight: 900;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 1px;
+  touch-action: none; user-select: none;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+  transition: transform 0.08s;
+}
+.rg-pass-btn  { background: radial-gradient(circle at 50% 35%, #3aa0ff, #1d6fd0); }
+.rg-boost-btn { background: radial-gradient(circle at 50% 35%, #ffd23f, #f0901a); color:#3a2400; }
+.rg-pass-btn span, .rg-boost-btn span { font-size: 0.62rem; font-weight: 800; letter-spacing: 0.04em; }
+.rg-pass-btn:active, .rg-boost-btn:active { transform: scale(0.92); }
+
 /* ── Camera toggle ── */
 .rg-cam-btn {
   position: fixed;

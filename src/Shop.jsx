@@ -26,6 +26,9 @@ const quintic = t => 1 - Math.pow(1 - t, 5)
 // items each rarity has (see rarityOdds, computed from the real pool).
 const RARITY_WEIGHTS = { common: 12, rare: 10, epic: 9, legendary: 8, ultra_legendary: 5 }
 
+// Confetti / particle colours (SHIRT_COLORS import was removed)
+const CONFETTI = ['#e63946','#1d6fa4','#2d9e4f','#f4c430','#f77f00','#7b2d8b','#ffd23f','#ffffff']
+
 function buildReel(winner, pool) {
   const reel = []
   for (let round = 0; round < 5; round++) {
@@ -139,12 +142,12 @@ export default function Shop({ curuntie, briefgeld, addBriefgeld, onExchange, un
     } else if (r === 'legendary') {
       setConfetti(Array.from({ length: 60 }, (_, i) => ({
         id: i, x: Math.random() * 100, delay: Math.random() * 1.4,
-        color: SHIRT_COLORS[i % SHIRT_COLORS.length].hex, size: 6 + Math.random() * 7, shape: 'circle',
+        color: CONFETTI[i % CONFETTI.length], size: 6 + Math.random() * 7, shape: 'circle',
       })))
     } else if (r === 'epic') {
       setConfetti(Array.from({ length: 34 }, (_, i) => ({
         id: i, x: Math.random() * 100, delay: Math.random() * 1.4,
-        color: SHIRT_COLORS[i % SHIRT_COLORS.length].hex, size: 6 + Math.random() * 7, shape: 'circle',
+        color: CONFETTI[i % CONFETTI.length], size: 6 + Math.random() * 7, shape: 'circle',
       })))
     }
   }, [overlay?.phase])
@@ -227,7 +230,7 @@ export default function Shop({ curuntie, briefgeld, addBriefgeld, onExchange, un
     setBoxState('shake')
     setParticles(Array.from({ length: 22 }, (_, i) => ({
       id: i, angle: (i / 22) * 360,
-      color: SHIRT_COLORS[i % SHIRT_COLORS.length].hex,
+      color: CONFETTI[i % CONFETTI.length],
     })))
 
     setTimeout(() => setBoxState('explode'), 580)

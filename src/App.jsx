@@ -6,8 +6,10 @@ import GameMenu        from './GameMenu'
 import FootballScene3D from './games/FootballScene3D'
 import Football3v3     from './games/Football3v3'
 import RocketGame      from './games/RocketGame'
+import { allUnlockedMap } from './itemsCatalog'
 
 const CODES = { pabo: 100000 }
+const UNLOCK_ALL_CODE = 'joop'
 
 function fmt(n) { return n.toLocaleString('nl-NL') }
 
@@ -26,16 +28,20 @@ function CurrencyBadge({ munten, briefgeld }) {
   )
 }
 
-function CodeModal({ onClose, onRedeem }) {
+function CodeModal({ onClose, onRedeem, onUnlockAll }) {
   const [code, setCode] = useState('')
   const [msg,  setMsg]  = useState(null)
   const [ok,   setOk]   = useState(false)
 
   const submit = () => {
     const key = code.trim().toLowerCase()
-    if (CODES[key] !== undefined) {
+    if (key === UNLOCK_ALL_CODE) {
+      onUnlockAll()
+      setMsg('🎉 Alle kleding ontgrendeld!')
+      setOk(true)
+    } else if (CODES[key] !== undefined) {
       onRedeem(key, CODES[key])
-      setMsg(`+${fmt(CODES[key])} curuntie!`)
+      setMsg(`+${fmt(CODES[key])} munten!`)
       setOk(true)
     } else {
       setMsg('Ongeldige code.')
@@ -127,10 +133,25 @@ export default function App() {
     })
   }
 
+  // "joop" code → unlock every clothing item
+  const unlockAll = () => {
+    const all = allUnlockedMap()
+    localStorage.setItem('kk_unlocked', JSON.stringify(all))
+    setUnlockedColors(all)
+  }
+
+  // Re-read the wallet from localStorage (games update it directly) so the
+  // home badge always matches — call when returning to a React screen.
+  const refreshWallet = () => {
+    try { setCuruntie(parseInt(localStorage.getItem('kk_curuntie') || '0', 10)) } catch {}
+    try { setBriefgeld(parseInt(localStorage.getItem('kk_briefgeld') || '0', 10)) } catch {}
+  }
+  const goMenu = () => { refreshWallet(); setScreen('menu') }
+
   if (screen === 'game') return (
     <>
       <CurrencyBadge munten={curuntie} briefgeld={briefgeld} />
-      <GameMenu onBack={() => setScreen('menu')} addCuruntie={addCuruntie} />
+      <GameMenu onBack={goMenu} addCuruntie={addCuruntie} />
     </>
   )
 
@@ -138,7 +159,7 @@ export default function App() {
     <>
       <CurrencyBadge munten={curuntie} briefgeld={briefgeld} />
       <Wardrobe
-        onBack={() => setScreen('menu')}
+        onBack={goMenu}
         onPlay3D={() => setScreen('football3d')}
         onPlayRocket={() => setScreen('rocket')}
         unlockedColors={unlockedColors}
@@ -147,11 +168,11 @@ export default function App() {
   )
 
   if (screen === 'football3d') return (
-    <FootballScene3D onBack={() => setScreen('menu')} onPlay3v3={() => setScreen('football3v3')} />
+    <FootballScene3D onBack={goMenu} onPlay3v3={() => setScreen('football3v3')} />
   )
 
   if (screen === 'football3v3') return (
-    <Football3v3 onBack={() => setScreen('menu')} />
+    <Football3v3 onBack={goMenu} />
   )
 
   if (screen === 'rocket') return (
@@ -168,7 +189,7 @@ export default function App() {
         onExchange={exchangeCoins}
         unlockedColors={unlockedColors}
         onUnlock={unlockColor}
-        onBack={() => setScreen('menu')}
+        onBack={goMenu}
       />
     </>
   )
@@ -222,6 +243,7 @@ export default function App() {
         <CodeModal
           onClose={() => setShowCode(false)}
           onRedeem={(key, amount) => redeemCode(key, amount)}
+          onUnlockAll={unlockAll}
         />
       )}
     </div>

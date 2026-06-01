@@ -41,7 +41,7 @@ const FOOT_OFF = () => player.height * 0.18;
 let gameState    = 'menu';
 let coins        = 0;
 let highScore    = parseInt(localStorage.getItem('jj_highscore') || '0');
-let totalCoins   = parseInt(localStorage.getItem('jj_totalcoins') || '0'); // gespaarde munten voor shop
+let totalCoins   = parseInt(localStorage.getItem('kk_curuntie') || '0'); // gespaarde munten voor shop
 let frameCount   = 0;
 let gameSpeed    = 2.0;
 let baseSpeed    = 2.0;
@@ -1496,7 +1496,7 @@ function saveShop() {
   localStorage.setItem('jj_starters',      JSON.stringify(activeStarters));
   localStorage.setItem('jj_upgradelevels', JSON.stringify(upgradeLevels));
   localStorage.setItem('jj_disabled',      JSON.stringify(disabledUpgrades));
-  localStorage.setItem('jj_totalcoins',    totalCoins);
+  localStorage.setItem('kk_curuntie',    totalCoins);
 }
 
 function openShop(fromScreen) {
@@ -1889,7 +1889,7 @@ function showGameOver() {
   const multi  = window._coinMulti || (window._coinDouble ? 2 : 1);
   const earned = Math.floor(coins * multi);
   totalCoins  += earned;
-  localStorage.setItem('jj_totalcoins', totalCoins);
+  localStorage.setItem('kk_curuntie', totalCoins);
 
   document.getElementById('hud').classList.add('hidden');
   document.getElementById('finalDistance').textContent = distance + 'm';

@@ -88,6 +88,13 @@ export const CATALOG = {
 export function getCatalog(type) { return CATALOG[type] || CATALOG.shirt }
 export function findItem(type, key) { return getCatalog(type).find(i => i.key === key) || null }
 
+// Every item key per clothing type — used by the "joop" unlock-all code.
+export function allUnlockedMap() {
+  const out = {}
+  Object.keys(CATALOG).forEach(type => { out[type] = CATALOG[type].map(i => i.key) })
+  return out
+}
+
 // ── CSS swatch background (for shop/wardrobe UI previews) ─────────────
 export function swatchStyle(item) {
   if (!item) return { background: '#333' }

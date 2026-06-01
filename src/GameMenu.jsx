@@ -89,7 +89,7 @@ export default function GameMenu({ onBack, addCuruntie }) {
     const gameId = `${year}-${subject}`
 
     if (GAMES[gameId] === 'iep') {
-      return <IepOefenen onBack={() => setSubject(null)} />
+      return <IepOefenen onBack={() => setSubject(null)} addCuruntie={addCuruntie} />
     }
 
     if (GAMES[gameId] === 'football') {

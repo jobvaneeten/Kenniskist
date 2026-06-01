@@ -394,7 +394,7 @@ function buildWorld(scene) {
     l.position = pos; l.intensity = 2.2; l.diffuse = new Color3(1.0, 0.98, 0.90)
     return l
   })
-  const sg = new ShadowGenerator(2048, lights[0])
+  const sg = new ShadowGenerator(1024, lights[0])   // 1024 = much cheaper than 2048
   sg.usePoissonSampling = true; sg.bias = 0.0003
 
   // Field texture
@@ -619,7 +619,9 @@ function fmtTime(s) {
 
 // ── Main 3D scene init ─────────────────────────────────────────────────
 function initScene(canvas, { localSessionId, getRoomState, sendInput, sendEmote, timerDomRef, staminaDomRef, followBallRef }) {
-  const engine = new Engine(canvas, true, { adaptToDeviceRatio: true, stencil: true })
+  const engine = new Engine(canvas, true, { adaptToDeviceRatio: true, stencil: true, powerPreference: 'high-performance' })
+  // Cap render resolution on very high-DPI screens (phones) to save GPU.
+  if (window.devicePixelRatio > 1.5) engine.setHardwareScalingLevel(window.devicePixelRatio / 1.5)
   const scene  = new Scene(engine)
 
   const camera = new FreeCamera('cam', new Vector3(0,5,20), scene)
@@ -630,18 +632,19 @@ function initScene(canvas, { localSessionId, getRoomState, sendInput, sendEmote,
   const particles  = new ParticlePool(scene, 50)
 
   try {
-    const pipe = new DefaultRenderingPipeline('pipe', true, scene, [camera])
-    pipe.bloomEnabled = true; pipe.bloomThreshold = 0.75; pipe.bloomWeight = 0.35
-    pipe.bloomKernel  = 96;   pipe.bloomScale = 0.6
-    pipe.vignetteEnabled = true; pipe.vignetteWeight = 1.2
+    const pipe = new DefaultRenderingPipeline('pipe', false, scene, [camera])   // no MSAA
+    pipe.bloomEnabled = true; pipe.bloomThreshold = 0.8; pipe.bloomWeight = 0.3
+    pipe.bloomKernel  = 32;   pipe.bloomScale = 0.5    // lighter bloom
+    pipe.vignetteEnabled = true; pipe.vignetteWeight = 1.0
     pipe.imageProcessingEnabled = true
-    pipe.imageProcessing.contrast = 1.14; pipe.imageProcessing.exposure = 1.18
-    pipe.sharpenEnabled = true; pipe.sharpen.edgeAmount = 0.28
+    pipe.imageProcessing.contrast = 1.12; pipe.imageProcessing.exposure = 1.15
+    pipe.sharpenEnabled = false   // sharpen is costly, drop it
   } catch {}
 
   const playerInstances = new Map()   // sessionId → PlayerInstance
-  const joyRef = { current: { x: 0, z: 0 } }
-  const keys   = {}
+  const joyRef   = { current: { x: 0, z: 0 } }
+  const boostRef = { current: false }   // on-screen boost button
+  const keys     = {}
   const lastEmoteSeq = new Map()   // sessionId → last emoteSeq we played
   const onKD   = e => {
     keys[e.code] = true
@@ -718,7 +721,7 @@ function initScene(canvas, { localSessionId, getRoomState, sendInput, sendEmote,
     const wlen = Math.hypot(wx, wz)
     if (wlen > 1) { wx /= wlen; wz /= wlen }
 
-    const inp = { x: wx, z: wz, boost: !!keys['Space'] }
+    const inp = { x: wx, z: wz, boost: !!keys['Space'] || boostRef.current }
     sendInput(inp)
 
     // ── Players ──
@@ -835,6 +838,7 @@ function initScene(canvas, { localSessionId, getRoomState, sendInput, sendEmote,
 
   return {
     joyRef,
+    boostRef,
     dispose: () => {
       window.removeEventListener('keydown', onKD)
       window.removeEventListener('keyup',   onKU)
@@ -1004,6 +1008,15 @@ export default function RocketGame({ onBack }) {
     followBallRef.current = next; setFollowBall(next)
   }
 
+  const toggleFullscreen = () => {
+    const el = document.documentElement
+    if (!document.fullscreenElement) {
+      ;(el.requestFullscreen || el.webkitRequestFullscreen)?.call(el)
+    } else {
+      ;(document.exitFullscreen || document.webkitExitFullscreen)?.call(document)
+    }
+  }
+
   if (screen === 'lobby')   return <Lobby onBack={onBack} onJoined={handleJoined} />
   if (screen === 'waiting') return (
     <WaitingRoom code={lobbyCode} room={room} players={players}
@@ -1046,6 +1059,8 @@ export default function RocketGame({ onBack }) {
         {followBall ? '📷 Bal' : '📷 Speler'}
       </button>
 
+      <button className="rg-fs-btn" onClick={toggleFullscreen} title="Volledig scherm">⛶</button>
+
       {rs?.phase === 'countdown' && (
         <div className="rg-countdown">{rs.countdown}</div>
       )}
@@ -1060,6 +1075,21 @@ export default function RocketGame({ onBack }) {
       </div>
 
       {sceneRef.current && <VirtualJoystick joyRef={sceneRef.current.joyRef} />}
+
+      {/* Touch action buttons: Pass + Boost (right side) */}
+      <div className="rg-actions">
+        <button
+          className="rg-pass-btn"
+          onPointerDown={e => { e.preventDefault(); roomRef.current?.send('pass') }}
+        >⚽<span>Pass</span></button>
+        <button
+          className="rg-boost-btn"
+          onPointerDown={e => { e.preventDefault(); if (sceneRef.current) sceneRef.current.boostRef.current = true }}
+          onPointerUp={()   => { if (sceneRef.current) sceneRef.current.boostRef.current = false }}
+          onPointerLeave={() => { if (sceneRef.current) sceneRef.current.boostRef.current = false }}
+          onPointerCancel={() => { if (sceneRef.current) sceneRef.current.boostRef.current = false }}
+        >⚡<span>Boost</span></button>
+      </div>
 
       <div className={`rg-hint ${showHint ? 'rg-hint-show' : ''}`}>
         <div className="rg-hint-row"><kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> Bewegen</div>

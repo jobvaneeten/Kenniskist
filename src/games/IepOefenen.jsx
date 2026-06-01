@@ -272,7 +272,7 @@ function JetpackEmbed({ onDone }) {
 }
 
 // ========== Main component ==========
-export default function IepOefenen({ onBack }) {
+export default function IepOefenen({ onBack, addCuruntie }) {
   const [screen,               setScreen]               = useState('levels')
   const [level,                setLevel]                = useState(null)
   const [questions,            setQuestions]            = useState([])
@@ -356,6 +356,7 @@ export default function IepOefenen({ onBack }) {
     setCorrectSinceLastPlay(newCS)
     setTotalAnswered(newTA)
     setStreak(s => s + 1)
+    addCuruntie?.(10)   // earn 10 munten per correct answer (same wallet)
     bumpStats(currentQ.id, categorizeDoel(currentQ), true)
 
     if (newTA % 10 === 0) {
