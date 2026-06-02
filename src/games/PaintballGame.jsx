@@ -205,7 +205,7 @@ class PlayerInstance {
   _playIdle()  { if (this._dead || this._state === 'idle') return; this._stopAll(); this._anims.mikken?.play(true); this._state = 'idle' }
   _playMove()  { if (this._dead || this._state === 'move') return; this._stopAll(); this._anims.rennen?.play(true); this._state = 'move' }
   _locomotion(moving) {
-    if (this._dead || this._state === 'shoot') return
+    if (this._dead || this._state === 'shoot' || this._state === 'reload') return
     if (moving) this._playMove(); else this._playIdle()
   }
   playShoot() {
