@@ -441,7 +441,7 @@ function VirtualJoystick({ joyRef }) {
 function fmtTime(s) { const m = Math.floor(s / 60); const sec = Math.floor(s) % 60; return `${m}:${String(sec).padStart(2, '0')}` }
 
 // ── Scene init ─────────────────────────────────────────────────────────
-function initScene(canvas, { localSessionId, getRoomState, sendInput, sendShoot, sendReload, sendJump, hpDomRef, timerDomRef, ammoDomRef }) {
+function initScene(canvas, { localSessionId, getRoomState, sendInput, sendShoot, sendReload, sendJump, onCrouchToggle, hpDomRef, timerDomRef, ammoDomRef }) {
   const engine = new Engine(canvas, true, { adaptToDeviceRatio: true, stencil: true, powerPreference: 'high-performance' })
   if (window.devicePixelRatio > 1.5) engine.setHardwareScalingLevel(window.devicePixelRatio / 1.5)
   canvas.style.cursor = 'none'   // only the crosshair shows
@@ -465,7 +465,14 @@ function initScene(canvas, { localSessionId, getRoomState, sendInput, sendShoot,
   const look = { yaw: 0, pitch: 0 }
   const keys = {}
 
-  const onKD = e => { keys[e.code] = true; if (e.code === 'KeyR') sendReload?.(); if (e.code === 'Space') { e.preventDefault(); if (!e.repeat) sendJump?.() } }
+  const onKD = e => {
+    keys[e.code] = true
+    if (e.code === 'KeyR') sendReload?.()
+    if (e.code === 'Space') { e.preventDefault(); if (!e.repeat) sendJump?.() }
+    if ((e.code === 'ControlLeft' || e.code === 'ControlRight') && !e.repeat) {
+      crouchRef.current = !crouchRef.current; onCrouchToggle?.(crouchRef.current)   // toggle hurken
+    }
+  }
   const onKU = e => { keys[e.code] = false }
   window.addEventListener('keydown', onKD); window.addEventListener('keyup', onKU)
 
@@ -545,7 +552,7 @@ function initScene(canvas, { localSessionId, getRoomState, sendInput, sendShoot,
     const rgtX = Math.cos(look.yaw), rgtZ = -Math.sin(look.yaw)
     let wx = rgtX * r + fwdX * f, wz = rgtZ * r + fwdZ * f
     const wl = Math.hypot(wx, wz); if (wl > 1) { wx /= wl; wz /= wl }
-    const crouch = crouchRef.current || !!keys['ControlLeft'] || !!keys['ControlRight']
+    const crouch = crouchRef.current
     sendInput({ x: wx, z: wz, rotY: look.yaw, crouch })
 
     // ── Fire (auto while held, server enforces cooldown) ──
@@ -782,6 +789,7 @@ export default function PaintballGame({ onBack }) {
       sendShoot: dir => roomRef.current?.send('shoot', dir),
       sendReload: () => roomRef.current?.send('reload'),
       sendJump: () => roomRef.current?.send('jump'),
+      onCrouchToggle: v => setCrouchOn(v),
       timerDomRef, hpDomRef, ammoDomRef,
     })
     sceneRef.current = sc
