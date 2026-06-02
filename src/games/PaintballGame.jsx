@@ -212,31 +212,34 @@ class PlayerInstance {
     if (this._dead || this._state === 'shoot' || this._state === 'reload' || this._state === 'jump') return
     if (moving) this._playMove(); else this._playIdle()
   }
-  playJump() {
-    if (this._dead || !this._anims.springen) return
-    this._stopAll(); this._state = 'jump'; this._anims.springen.play(false)
-    this._anims.springen.onAnimationGroupEndObservable.addOnce(() => { this._state = 'idle'; this._playIdle() })
-  }
-  playShoot() {
-    if (this._dead || !this._anims.schieten || this._state === 'move' || this._state === 'reload') return
-    this._stopAll(); this._state = 'shoot'; this._anims.schieten.play(false)
-    this._anims.schieten.onAnimationGroupEndObservable.addOnce(() => { this._state = 'idle'; this._playIdle() })
-  }
-  playReload() {
-    if (this._dead) return
-    const g = this._anims.herladen
-    if (!g) return
-    this._stopAll(); this._state = 'reload'
+  playJump() { if (!this._dead) this._playOnce('springen', 'jump', 0.85) }
+  // Play a one-shot clip scaled to `durationSec` and reliably return to idle
+  // after that time (the group end-observable is not dependable on clones).
+  _playOnce(key, state, durationSec) {
+    const g = this._anims[key]
+    if (!g) { return }
+    this._stopAll(); this._state = state
     const a0 = g.targetedAnimations[0]?.animation
     const fps = a0?.framePerSecond || 30
-    const dur = Math.max(0.1, ((g.to ?? 0) - (g.from ?? 0)) / fps)
-    g.speedRatio = dur / 1.0   // scale the clip to exactly 1 second
+    const keys = a0?.getKeys?.()
+    const lastFrame = (keys && keys.length) ? keys[keys.length - 1].frame : fps
+    const len = Math.max(0.05, lastFrame / fps)
+    g.speedRatio = len / durationSec
     g.play(false)
-    g.onAnimationGroupEndObservable.addOnce(() => { this._state = 'idle'; this._playIdle() })
+    clearTimeout(this._stateTimer)
+    this._stateTimer = setTimeout(() => {
+      if (this._state === state) { this._state = 'idle'; this._playIdle() }
+    }, durationSec * 1000)
   }
+  playShoot() {
+    if (this._dead || this._state === 'move' || this._state === 'reload' || this._state === 'jump') return
+    this._playOnce('schieten', 'shoot', 0.5)
+  }
+  playReload() { if (!this._dead) this._playOnce('herladen', 'reload', 1.0) }
   setDead(dead) {
     if (dead === this._dead) return
     this._dead = dead
+    clearTimeout(this._stateTimer)
     if (dead) { this._stopAll(); this._state = 'dead'; this._anims.geraakt?.play(false) }
     else { this._state = 'idle'; this._playIdle() }
   }
@@ -303,6 +306,7 @@ class PlayerInstance {
   }
   onReady(cb) { if (this._ready) cb(); else this._onReady = cb }
   dispose() {
+    clearTimeout(this._stateTimer)
     this._stopAll()
     Object.values(this._anims).forEach(g => { try { g.dispose() } catch {} })
     this._donors.forEach(g => { try { g.dispose() } catch {} })
@@ -451,7 +455,7 @@ function initScene(canvas, { localSessionId, getRoomState, sendInput, sendShoot,
   const look = { yaw: 0, pitch: 0 }
   const keys = {}
 
-  const onKD = e => { keys[e.code] = true; if (e.code === 'KeyR') sendReload?.(); if (e.code === 'Space' && !e.repeat) sendJump?.() }
+  const onKD = e => { keys[e.code] = true; if (e.code === 'KeyR') sendReload?.(); if (e.code === 'Space') { e.preventDefault(); if (!e.repeat) sendJump?.() } }
   const onKU = e => { keys[e.code] = false }
   window.addEventListener('keydown', onKD); window.addEventListener('keyup', onKU)
 
