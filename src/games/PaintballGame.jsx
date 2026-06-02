@@ -424,7 +424,7 @@ function VirtualJoystick({ joyRef }) {
 function fmtTime(s) { const m = Math.floor(s / 60); const sec = Math.floor(s) % 60; return `${m}:${String(sec).padStart(2, '0')}` }
 
 // ── Scene init ─────────────────────────────────────────────────────────
-function initScene(canvas, { localSessionId, getRoomState, sendInput, sendShoot, hpDomRef, timerDomRef, ammoDomRef }) {
+function initScene(canvas, { localSessionId, getRoomState, sendInput, sendShoot, sendReload, hpDomRef, timerDomRef, ammoDomRef }) {
   const engine = new Engine(canvas, true, { adaptToDeviceRatio: true, stencil: true, powerPreference: 'high-performance' })
   if (window.devicePixelRatio > 1.5) engine.setHardwareScalingLevel(window.devicePixelRatio / 1.5)
   canvas.style.cursor = 'none'   // only the crosshair shows
@@ -448,7 +448,7 @@ function initScene(canvas, { localSessionId, getRoomState, sendInput, sendShoot,
   const look = { yaw: 0, pitch: 0 }
   const keys = {}
 
-  const onKD = e => { keys[e.code] = true; if (e.code === 'Space') fireRef.current = true }
+  const onKD = e => { keys[e.code] = true; if (e.code === 'Space') fireRef.current = true; if (e.code === 'KeyR') sendReload?.() }
   const onKU = e => { keys[e.code] = false; if (e.code === 'Space') fireRef.current = false }
   window.addEventListener('keydown', onKD); window.addEventListener('keyup', onKU)
 
@@ -549,12 +549,13 @@ function initScene(canvas, { localSessionId, getRoomState, sendInput, sendShoot,
       if (sid === localSessionId) {
         if (!pred.init) { pred.x = p.x; pred.z = p.z; pred.init = true }
         if (p.alive) {
+          const mvx = p.reloading ? 0 : wx, mvz = p.reloading ? 0 : wz   // stilstaan tijdens reload
           const spd = sprint ? SPRINT_SPEED : PLAYER_SPEED
-          const pr = resolvePos(pred.x + wx * spd * dt, pred.z + wz * spd * dt, PLAYER_RADIUS)
+          const pr = resolvePos(pred.x + mvx * spd * dt, pred.z + mvz * spd * dt, PLAYER_RADIUS)
           pred.x = pr.x; pred.z = pr.z
           // soft reconcile toward server
           pred.x += (p.x - pred.x) * 0.08; pred.z += (p.z - pred.z) * 0.08
-          inst.setPose(pred.x, pred.z, look.yaw, (Math.abs(wx) + Math.abs(wz)) > 0.05, look.pitch)
+          inst.setPose(pred.x, pred.z, look.yaw, !p.reloading && (Math.abs(wx) + Math.abs(wz)) > 0.05, look.pitch)
         } else {
           pred.x = p.x; pred.z = p.z
           inst.setPose(p.x, p.z, p.rotY, false, 0)   // frozen corpse pose
@@ -737,6 +738,7 @@ export default function PaintballGame({ onBack }) {
       getRoomState: () => roomStateRef.current,
       sendInput: inp => roomRef.current?.send('input', inp),
       sendShoot: dir => roomRef.current?.send('shoot', dir),
+      sendReload: () => roomRef.current?.send('reload'),
       timerDomRef, hpDomRef, ammoDomRef,
     })
     sceneRef.current = sc
@@ -797,7 +799,8 @@ export default function PaintballGame({ onBack }) {
 
       {/* HP bar + ammo */}
       <div className="pb-hp"><span className="pb-hp-icon">❤️</span><div className="pb-hp-track"><div ref={hpDomRef} className="pb-hp-fill" /></div></div>
-      <div ref={ammoDomRef} className="pb-ammo">🔫 10/10</div>
+      <div ref={ammoDomRef} className="pb-ammo" title="Herladen (R)"
+        onPointerDown={e => { e.preventDefault(); room?.send('reload') }}>🔫 10/10</div>
 
       {me && !me.alive && (
         <>
