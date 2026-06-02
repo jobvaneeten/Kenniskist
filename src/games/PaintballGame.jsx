@@ -110,6 +110,7 @@ class PlayerInstance {
       this._skeleton = skels[0] ?? null
       this._meshes = meshes
       meshes.forEach(m => { this.sg?.addShadowCaster(m); m.receiveShadows = true })
+      this.setBodyVisible(false)   // stay hidden until the idle pose is ready (no T-pose flash)
 
       this.scene.transformNodes.forEach(n => { this._nodeMap[n.name] = n })
       this.scene.meshes.forEach(m => { if (!this._nodeMap[m.name]) this._nodeMap[m.name] = m })
@@ -132,7 +133,10 @@ class PlayerInstance {
         if (!colorKey) { m.setEnabled(false); return }
         const item = findItem(key, colorKey)
         if (!item) { m.setEnabled(false); return }
-        if (usesDonor(key, item)) loadClothingDonor(this.scene, m, this._skeleton, key, item, g => this._donors.push(g))
+        if (usesDonor(key, item)) loadClothingDonor(this.scene, m, this._skeleton, key, item, g => {
+          this._donors.push(g)
+          if (!this._bodyVisible) { g.isVisible = false; g.getChildMeshes?.(false).forEach(c => c.isVisible = false) }
+        })
         else { applyItemToMesh(this.scene, m, item); m.setEnabled(true) }
       })
 
@@ -154,6 +158,7 @@ class PlayerInstance {
 
       // Gun (positioned each frame in tick, not parented)
       this.gun = makeGun(this.scene, TEAM_HEX[this.opts.team ?? 0])
+      this.gun.setEnabled(false)
       this.sg?.addShadowCaster(this.gun)
 
       const ANIMS = [
@@ -161,11 +166,12 @@ class PlayerInstance {
         { key: 'rennen',   file: 'emoterennen.glb',   stripRoot: true },
         { key: 'schieten', file: 'emoteschieten.glb', stripRoot: true },
         { key: 'geraakt',  file: 'emotegeraakt.glb',  stripRoot: true },
+        { key: 'herladen', file: 'emoteherladen.glb', stripRoot: true },
       ]
       let pending = ANIMS.length
       const done = () => {
         if (--pending > 0) return
-        this._playIdle(); this._ready = true; this._onReady?.()
+        this._ready = true; this._playIdle(); this.setBodyVisible(true); this._onReady?.()
       }
       ANIMS.forEach(({ key, file }) => {
         SceneLoader.ImportMesh('', '/', file, this.scene, (aM, _p, _s, aG) => {
@@ -203,9 +209,21 @@ class PlayerInstance {
     if (moving) this._playMove(); else this._playIdle()
   }
   playShoot() {
-    if (this._dead || !this._anims.schieten || this._state === 'move') return
+    if (this._dead || !this._anims.schieten || this._state === 'move' || this._state === 'reload') return
     this._stopAll(); this._state = 'shoot'; this._anims.schieten.play(false)
     this._anims.schieten.onAnimationGroupEndObservable.addOnce(() => { this._state = 'idle'; this._playIdle() })
+  }
+  playReload() {
+    if (this._dead) return
+    const g = this._anims.herladen
+    if (!g) return
+    this._stopAll(); this._state = 'reload'
+    const a0 = g.targetedAnimations[0]?.animation
+    const fps = a0?.framePerSecond || 30
+    const dur = Math.max(0.1, ((g.to ?? 0) - (g.from ?? 0)) / fps)
+    g.speedRatio = dur / 1.0   // scale the clip to exactly 1 second
+    g.play(false)
+    g.onAnimationGroupEndObservable.addOnce(() => { this._state = 'idle'; this._playIdle() })
   }
   setDead(dead) {
     if (dead === this._dead) return
@@ -254,7 +272,7 @@ class PlayerInstance {
       const fx = Math.sin(rotY), fz = Math.cos(rotY)
       this.gun.position.set(hx + fx * 0.12, hy, hz + fz * 0.12)
       this.gun.rotationQuaternion = Quaternion.RotationYawPitchRoll(rotY, pitch, 0)
-      this.gun.setEnabled(!this._dead)
+      this.gun.setEnabled(this._ready && !this._dead)
     }
   }
   tick(dt, rate = 13) {
@@ -406,7 +424,7 @@ function VirtualJoystick({ joyRef }) {
 function fmtTime(s) { const m = Math.floor(s / 60); const sec = Math.floor(s) % 60; return `${m}:${String(sec).padStart(2, '0')}` }
 
 // ── Scene init ─────────────────────────────────────────────────────────
-function initScene(canvas, { localSessionId, getRoomState, sendInput, sendShoot, hpDomRef, timerDomRef }) {
+function initScene(canvas, { localSessionId, getRoomState, sendInput, sendShoot, hpDomRef, timerDomRef, ammoDomRef }) {
   const engine = new Engine(canvas, true, { adaptToDeviceRatio: true, stencil: true, powerPreference: 'high-performance' })
   if (window.devicePixelRatio > 1.5) engine.setHardwareScalingLevel(window.devicePixelRatio / 1.5)
   canvas.style.cursor = 'none'   // only the crosshair shows
@@ -454,16 +472,26 @@ function initScene(canvas, { localSessionId, getRoomState, sendInput, sendShoot,
   let lastFire = 0
   const pred = { x: 0, z: 0, init: false }
   let prevShootSeq = {}
+  let prevReloadSeq = {}
 
   // Paint splat
-  const splatMat0 = new StandardMaterial('sp0', scene); splatMat0.disableLighting = true; splatMat0.diffuseColor = Color3.FromHexString(TEAM_HEX[0]); splatMat0.emissiveColor = Color3.FromHexString(TEAM_HEX[0])
-  const splatMat1 = new StandardMaterial('sp1', scene); splatMat1.disableLighting = true; splatMat1.diffuseColor = Color3.FromHexString(TEAM_HEX[1]); splatMat1.emissiveColor = Color3.FromHexString(TEAM_HEX[1])
-  const addSplat = (x, y, z, team) => {
-    const b = MeshBuilder.CreateSphere('splat', { diameter: 0.42, segments: 6 }, scene)
-    b.scaling.y = 0.32; b.position.set(x, Math.max(0.05, y), z); b.isPickable = false
-    b.material = (team === 0 ? splatMat0 : splatMat1).clone('spm')
-    splats.push({ mesh: b, life: 3 })
-    if (splats.length > 60) { const s = splats.shift(); s.mesh.dispose() }
+  const mkSplatMat = (hex) => { const m = new StandardMaterial('sp', scene); m.disableLighting = true; m.backFaceCulling = false; const c = Color3.FromHexString(hex); m.diffuseColor = c; m.emissiveColor = c; return m }
+  const splatMat0 = mkSplatMat(TEAM_HEX[0]), splatMat1 = mkSplatMat(TEAM_HEX[1])
+  // Server-driven splat: flat disc oriented to the surface normal at the impact.
+  const addSplat = (x, y, z, nx, ny, nz, team) => {
+    const b = MeshBuilder.CreateDisc('splat', { radius: 0.3, tessellation: 14 }, scene)
+    b.isPickable = false; b.material = (team === 0 ? splatMat0 : splatMat1).clone('spm')
+    const n = new Vector3(nx, ny, nz)
+    if (n.lengthSquared() < 1e-6) n.set(0, 1, 0)
+    n.normalize()
+    const up = Math.abs(n.y) > 0.9 ? new Vector3(1, 0, 0) : new Vector3(0, 1, 0)
+    const right = Vector3.Cross(up, n); right.normalize()
+    const up2 = Vector3.Cross(n, right); up2.normalize()
+    b.rotationQuaternion = Quaternion.RotationQuaternionFromAxis(right, up2, n)   // disc face (+Z) → normal
+    b.position.set(x + n.x * 0.03, y + n.y * 0.03, z + n.z * 0.03)
+    b.scaling.x = 0.7 + Math.random() * 0.6; b.scaling.y = 0.7 + Math.random() * 0.6
+    splats.push({ mesh: b, life: 4 })
+    if (splats.length > 80) { const s = splats.shift(); s.mesh.dispose() }
   }
 
   scene.registerBeforeRender(() => {
@@ -501,18 +529,22 @@ function initScene(canvas, { localSessionId, getRoomState, sendInput, sendShoot,
 
     // HP bar
     if (hpDomRef?.current) hpDomRef.current.style.width = Math.max(0, Math.min(100, lp?.hp ?? 0)) + '%'
+    if (ammoDomRef?.current) ammoDomRef.current.textContent = lp ? (lp.reloading ? '⟳ Herladen…' : `🔫 ${lp.ammo}/10`) : ''
 
     // ── Players ──
     rs.players.forEach((p, sid) => {
       if (!players.has(sid)) {
         const wearing = (() => { try { return JSON.parse(p.wearing || '{}') } catch { return {} } })()
         players.set(sid, new PlayerInstance(scene, sg, { shirt: p.shirt, wearing, team: p.team, teamColor: TEAM_HEX[p.team], name: p.name }))
-        prevShootSeq[sid] = p.shootSeq
+        prevShootSeq[sid] = p.shootSeq; prevReloadSeq[sid] = p.reloadSeq
       }
       const inst = players.get(sid)
       inst.setDead(!p.alive)
-      // shoot feedback
-      if (p.shootSeq !== prevShootSeq[sid]) { prevShootSeq[sid] = p.shootSeq; inst.playShoot() }
+      const shotChanged = p.shootSeq !== prevShootSeq[sid]
+      const reloadChanged = p.reloadSeq !== prevReloadSeq[sid]
+      prevShootSeq[sid] = p.shootSeq; prevReloadSeq[sid] = p.reloadSeq
+      if (reloadChanged) inst.playReload()        // reload takes priority over the emptying shot
+      else if (shotChanged) inst.playShoot()
 
       if (sid === localSessionId) {
         if (!pred.init) { pred.x = p.x; pred.z = p.z; pred.init = true }
@@ -554,11 +586,7 @@ function initScene(canvas, { localSessionId, getRoomState, sendInput, sendShoot,
       m.mesh.position.set(s.x, s.y, s.z)
     })
     for (const id of [...shotMeshes.keys()]) {
-      if (!live.has(id)) {
-        const m = shotMeshes.get(id)
-        addSplat(m.x, m.y, m.z, m.team)
-        m.mesh.dispose(); shotMeshes.delete(id)
-      }
+      if (!live.has(id)) { shotMeshes.get(id).mesh.dispose(); shotMeshes.delete(id) }
     }
 
     // ── Splats fade ──
@@ -598,6 +626,7 @@ function initScene(canvas, { localSessionId, getRoomState, sendInput, sendShoot,
 
   return {
     joyRef, fireRef, sprintRef, camModeRef,
+    pushSplat: (d) => addSplat(d.x, d.y, d.z, d.nx, d.ny, d.nz, d.team),
     dispose: () => {
       window.removeEventListener('keydown', onKD); window.removeEventListener('keyup', onKU)
       window.removeEventListener('pointerup', onPU); window.removeEventListener('resize', onResize)
@@ -682,6 +711,7 @@ export default function PaintballGame({ onBack }) {
   const roomRef = useRef(null)
   const timerDomRef = useRef(null)
   const hpDomRef = useRef(null)
+  const ammoDomRef = useRef(null)
 
   useEffect(() => { roomStateRef.current = roomState }, [roomState])
   useEffect(() => { roomRef.current = room }, [room])
@@ -695,6 +725,7 @@ export default function PaintballGame({ onBack }) {
       if (state.phase === 'playing' || state.phase === 'countdown') setScreen('playing')
       if (state.phase === 'gameover') setScreen('gameover')
     })
+    r.onMessage('splat', d => sceneRef.current?.pushSplat?.(d))
     r.onLeave(() => { setScreen('lobby'); setRoom(null) })
     setScreen('waiting')
   }, [])
@@ -706,7 +737,7 @@ export default function PaintballGame({ onBack }) {
       getRoomState: () => roomStateRef.current,
       sendInput: inp => roomRef.current?.send('input', inp),
       sendShoot: dir => roomRef.current?.send('shoot', dir),
-      timerDomRef, hpDomRef,
+      timerDomRef, hpDomRef, ammoDomRef,
     })
     sceneRef.current = sc
     sc.camModeRef.current = camMode
@@ -764,8 +795,9 @@ export default function PaintballGame({ onBack }) {
 
       <div className="pb-crosshair">+</div>
 
-      {/* HP bar */}
+      {/* HP bar + ammo */}
       <div className="pb-hp"><span className="pb-hp-icon">❤️</span><div className="pb-hp-track"><div ref={hpDomRef} className="pb-hp-fill" /></div></div>
+      <div ref={ammoDomRef} className="pb-ammo">🔫 10/10</div>
 
       {me && !me.alive && (
         <>
