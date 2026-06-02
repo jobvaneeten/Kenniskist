@@ -168,7 +168,7 @@ export default function App() {
   if (screen === 'game') return (
     <>
       <CurrencyBadge munten={curuntie} briefgeld={briefgeld} />
-      <GameMenu onBack={goMenu} addCuruntie={addCuruntie} />
+      <GameMenu onBack={goMenu} addCuruntie={addCuruntie} addBriefgeld={addBriefgeld} />
     </>
   )
 

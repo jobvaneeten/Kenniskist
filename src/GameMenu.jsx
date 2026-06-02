@@ -3,6 +3,7 @@ import FootballGame from './games/FootballGame'
 import TowerDefenseGame from './games/TowerDefenseGame'
 import JetpackGame from './games/JetpackGame'
 import IepOefenen from './games/IepOefenen'
+import BlokOefenen from './games/BlokOefenen'
 import './game.css'
 
 const YEARS = [
@@ -31,11 +32,12 @@ const FREE_GAMES = [
   { key: 'jetpack',      emoji: '🚀', name: 'Jetpack',        desc: 'Vlieg zo ver mogelijk!' },
 ]
 
-export default function GameMenu({ onBack, addCuruntie }) {
+export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
   const [year,       setYear]       = useState(null)
   const [subject,    setSubject]    = useState(null)
   const [directGame, setDirectGame] = useState(null)
   const [gameMode,   setGameMode]   = useState(null)
+  const [rekenKeuze, setRekenKeuze] = useState(null)   // null | 'verhaal' | 'blok9'
 
   // Tower defense (no mode selection needed)
   if (directGame === 'towerdefense') {
@@ -89,7 +91,35 @@ export default function GameMenu({ onBack, addCuruntie }) {
     const gameId = `${year}-${subject}`
 
     if (GAMES[gameId] === 'iep') {
-      return <IepOefenen onBack={() => setSubject(null)} addCuruntie={addCuruntie} />
+      if (rekenKeuze === 'verhaal') {
+        return <IepOefenen onBack={() => setRekenKeuze(null)} addCuruntie={addCuruntie} />
+      }
+      if (rekenKeuze === 'blok9') {
+        return <BlokOefenen onBack={() => setRekenKeuze(null)} addBriefgeld={addBriefgeld} />
+      }
+      // keuzescherm: verhaaltjessommen of oefenen blok 9
+      return (
+        <div className="game-screen game-screen-center">
+          <button className="back-btn" onClick={() => setSubject(null)}>← Menu</button>
+          <div className="game-header">
+            <span className="game-header-icon" style={{ color: '#FFD23F' }}>🔢</span>
+            <h1 className="game-header-title">Rekenen — Groep {year}</h1>
+            <p className="game-header-sub">Wat wil je oefenen?</p>
+          </div>
+          <div className="mode-grid">
+            <button className="mode-card" onClick={() => setRekenKeuze('verhaal')}>
+              <span className="mode-emoji">🚀</span>
+              <span className="mode-name">Verhaaltjessommen</span>
+              <span className="mode-desc">Oefenen met verhaalsommen</span>
+            </button>
+            <button className="mode-card" onClick={() => setRekenKeuze('blok9')}>
+              <span className="mode-emoji">📘</span>
+              <span className="mode-name">Oefenen blok 9</span>
+              <span className="mode-desc">FS en S+ werkbladen</span>
+            </button>
+          </div>
+        </div>
+      )
     }
 
     if (GAMES[gameId] === 'football') {
