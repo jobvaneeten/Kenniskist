@@ -241,10 +241,14 @@ class PlayerInstance {
     this._stateTimer = setTimeout(() => { if (this._state === state) this._resumeLoco() }, durationSec * 1000)
   }
   playShoot() {
-    if (this._dead || this._state === 'move' || this._state === 'crouchmove' || this._state === 'reload' || this._state === 'jump') return
+    // Gehurkt: blijf in de hurk-houding (geen sta-schietclip → je komt niet omhoog).
+    if (this._dead || this._lastCrouch || this._state === 'move' || this._state === 'crouchmove' || this._state === 'reload' || this._state === 'jump') return
     this._playOnce('schieten', 'shoot', 0.5)
   }
-  playReload() { if (!this._dead) this._playOnce('herladen', 'reload', 1.0) }
+  playReload() {
+    if (this._dead || this._lastCrouch) return   // gehurkt reloaden: blijf zitten, geen sta-animatie
+    this._playOnce('herladen', 'reload', 1.0)
+  }
   setDead(dead) {
     if (dead === this._dead) return
     this._dead = dead
