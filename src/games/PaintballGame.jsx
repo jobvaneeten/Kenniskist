@@ -171,8 +171,9 @@ class PlayerInstance {
         { key: 'geraakt',  file: 'emotegeraakt.glb',  stripRoot: true },
         { key: 'herladen', file: 'emoteherladen.glb', stripRoot: true },
         { key: 'springen', file: 'emotespringen.glb', stripRoot: true },
-        { key: 'hurken',      file: 'emotehurken.glb',      stripRoot: true },
-        { key: 'hurkenlopen', file: 'emotehurkenlopen.glb', stripRoot: true },
+        { key: 'hurken',       file: 'emotehurken.glb',       stripRoot: true },
+        { key: 'hurkenlopen',  file: 'emotehurkenlopen.glb',  stripRoot: true },
+        { key: 'hurkenreload', file: 'emotehurkenreload.glb', stripRoot: true },
       ]
       let pending = ANIMS.length
       const done = () => {
@@ -246,8 +247,8 @@ class PlayerInstance {
     this._playOnce('schieten', 'shoot', 0.5)
   }
   playReload() {
-    if (this._dead || this._lastCrouch) return   // gehurkt reloaden: blijf zitten, geen sta-animatie
-    this._playOnce('herladen', 'reload', 1.0)
+    if (this._dead) return
+    this._playOnce(this._lastCrouch ? 'hurkenreload' : 'herladen', 'reload', 1.0)
   }
   setDead(dead) {
     if (dead === this._dead) return
