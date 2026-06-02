@@ -32,14 +32,28 @@
 
 .pb-ammo {
   position: fixed;
-  right: 16px; bottom: 120px;
-  z-index: 60; cursor: pointer;
-  color: #fff; font-weight: 800; font-size: 1rem;
-  background: rgba(0, 0, 0, 0.4);
-  border: 1.5px solid rgba(255, 255, 255, 0.25);
-  border-radius: 10px; padding: 5px 10px;
+  left: 50%; top: 58px;
+  transform: translateX(-50%);
+  z-index: 90; cursor: pointer;
+  color: #fff; font-weight: 900; font-size: 1.15rem;
+  background: rgba(0, 0, 0, 0.5);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 12px; padding: 6px 16px;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
 }
+
+.pb-jump-btn {
+  width: 84px; height: 84px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  color: #fff; font-size: 1.7rem; font-weight: 900;
+  font-family: inherit; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: radial-gradient(circle at 50% 35%, #4dd0ff, #1f86d6);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+}
+.pb-jump-btn span { font-size: 0.62rem; font-weight: 800; letter-spacing: 0.04em; }
+.pb-jump-btn:active { transform: scale(0.92); }
 
 .pb-dead-overlay {
   position: fixed; inset: 0;
