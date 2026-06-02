@@ -1,502 +1,603 @@
 [
   {
     "id": 1,
-    "contextText": "Mia fietst een route van 18 km. Ze heeft al 7,4 km gefietst.",
-    "contextImage": null,
-    "questionText": "Hoeveel kilometer moet ze nog fietsen?",
+    "contextText": "Lena doet mee aan een wielerwedstrijd van 12 km. Ze ziet dit bordje langs de weg.",
+    "contextImage": "/iep_img/n3_q1.png",
+    "questionText": "Hoeveel meter heeft Lena al gefietst?",
     "type": "open",
     "options": null,
-    "answer": "10,6",
-    "explanation": "18 − 7,4 = 10,6 km nog te fietsen."
+    "answer": "11200",
+    "explanation": "12 km = 12.000 m. 12.000 − 800 = 11.200 m gefietst."
   },
   {
     "id": 2,
-    "contextText": "Een gezin van 4 personen gaat naar de bioscoop. Een kaartje kost 13 euro 50. De kinderen (2 personen) betalen de helft.",
+    "contextText": "Bram gaat met zijn zus, vader en moeder naar een concert. Een kaartje kost € 32,-. Bram en zijn zus kopen ook allebei een hoodie van € 24,-.",
     "contextImage": null,
-    "questionText": "Hoeveel betalen ze in totaal?",
+    "questionText": "Hoeveel moeten ze in totaal betalen?",
     "type": "open",
     "options": null,
-    "answer": "40,50",
-    "explanation": "2 volwassenen × €13,50 = €27. 2 kinderen × €6,75 = €13,50. Totaal €40,50."
+    "answer": "176",
+    "explanation": "4 kaartjes × €32 + 2 hoodies × €24 = €128 + €48 = €176."
   },
   {
     "id": 3,
-    "contextText": "Een schoenenwinkel geeft 20% korting op alle schoenen. Een paar kost normaal 85 euro.",
-    "contextImage": null,
+    "contextText": "Modewinkel Stijl geeft 20% korting. Je ziet het bonnetje.",
+    "contextImage": "/iep_img/n3_q3.png",
     "questionText": "Hoeveel betaalt de klant na de korting?",
     "type": "open",
     "options": null,
-    "answer": "68",
-    "explanation": "20% korting: 85 × 0,8 = €68."
+    "answer": "77,16",
+    "explanation": "€49,95 + €14,50 + €32,00 = €96,45. 20% korting → ×0,8 = €77,16."
   },
   {
     "id": 4,
-    "contextText": "Hoeveel centiliter is 3,5 liter?",
+    "contextText": "Hoeveel centiliter is 4,5 liter?",
     "contextImage": null,
     "questionText": "Schrijf je antwoord in centiliter.",
     "type": "open",
     "options": null,
-    "answer": "350",
-    "explanation": "1 liter = 100 cl, dus 3,5 × 100 = 350 cl."
+    "answer": "450",
+    "explanation": "1 liter = 100 cl. 4,5 × 100 = 450 cl."
   },
   {
     "id": 5,
-    "contextText": "Een zwemmer zwemt 100 meter in 1 minuut en 8 seconden. Zijn teamgenoot doet er 1 minuut en 22 seconden over.",
+    "contextText": "Een atleet loopt 100 meter in 12,4 seconden. Zijn vriend loopt het in 13,7 seconden.",
     "contextImage": null,
-    "questionText": "Hoeveel seconden sneller is de eerste zwemmer?",
+    "questionText": "Hoeveel seconden sneller is de atleet?",
     "type": "open",
     "options": null,
-    "answer": "14",
-    "explanation": "1 min 22 s = 82 s, 1 min 8 s = 68 s. 82 − 68 = 14 seconden."
+    "answer": "1,3",
+    "explanation": "13,7 − 12,4 = 1,3 seconden sneller."
   },
   {
     "id": 6,
-    "contextText": "Een trein rijdt van stad A naar stad B. De afstand is 280 km. De trein rijdt 140 km per uur.",
+    "contextText": "Een tafel is 1 m 35 cm lang. Twee tafels worden achter elkaar gezet.",
     "contextImage": null,
-    "questionText": "Hoe lang duurt de rit? Geef je antwoord in uren.",
+    "questionText": "Hoeveel meter lang zijn de twee tafels samen?",
     "type": "open",
     "options": null,
-    "answer": "2 uur",
-    "explanation": "280 ÷ 140 = 2 uur."
+    "answer": "2,70",
+    "explanation": "1 m 35 cm = 1,35 m. 2 × 1,35 = 2,70 m."
   },
   {
     "id": 7,
-    "contextText": "Een supermarkt koopt appels in voor 0,80 euro per kilo en verkoopt ze voor 1,20 euro per kilo.",
+    "contextText": "Hoeveel procent is gelijk aan 3 op de 4?",
     "contextImage": null,
-    "questionText": "Hoeveel procent winst maakt de supermarkt?",
-    "type": "open",
-    "options": null,
-    "answer": "50%",
-    "explanation": "Winst = 1,20 − 0,80 = €0,40 per kilo. 0,40 ÷ 0,80 = 50%."
+    "questionText": "Kies het juiste antwoord.",
+    "type": "mc",
+    "options": [
+      "25%",
+      "40%",
+      "60%",
+      "75%"
+    ],
+    "answer": "75%",
+    "explanation": "3 op de 4 = 3/4 = 75%."
   },
   {
     "id": 8,
-    "contextText": "Een fabriek maakt 4.500 flessen per dag. Op een dag staan er 12 machines. Elke machine maakt evenveel.",
+    "contextText": "Het schoolplein bestaat voor 1/4 uit gras en voor 1/2 uit tegels. De rest is sportveld.",
     "contextImage": null,
-    "questionText": "Hoeveel flessen maakt elke machine per dag?",
-    "type": "open",
-    "options": null,
-    "answer": "375",
-    "explanation": "4.500 ÷ 12 = 375 flessen per machine."
+    "questionText": "Welk deel is sportveld?",
+    "type": "mc",
+    "options": [
+      "1/4 deel",
+      "1/8 deel",
+      "1/6 deel",
+      "1/3 deel"
+    ],
+    "answer": "1/4 deel",
+    "explanation": "1 − 1/4 − 1/2 = 1/4 deel sportveld."
   },
   {
     "id": 9,
-    "contextText": "Bij een verkiezing op school stemmen 240 leerlingen. Partij A krijgt 35% van de stemmen, partij B krijgt 25%, de rest stemt op partij C.",
+    "contextText": "Hoeveel is 3/4 deel van 52?",
     "contextImage": null,
-    "questionText": "Hoeveel leerlingen stemmen op partij C?",
+    "questionText": "Schrijf je antwoord op.",
     "type": "open",
     "options": null,
-    "answer": "96",
-    "explanation": "Partij C = 100 − 35 − 25 = 40%. 40% van 240 = 96 leerlingen."
+    "answer": "39",
+    "explanation": "3/4 van 52 = 52 ÷ 4 × 3 = 39."
   },
   {
     "id": 10,
-    "contextText": "Een veld is 120 meter lang en 85 meter breed. Er wordt langs de rand een hek geplaatst.",
+    "contextText": "Hoeveel is 200 van 240?",
     "contextImage": null,
-    "questionText": "Hoe lang is het hek in totaal?",
-    "type": "open",
-    "options": null,
-    "answer": "410",
-    "explanation": "Hek = omtrek = 2 × (120 + 85) = 410 meter."
+    "questionText": "Kies het juiste antwoord.",
+    "type": "mc",
+    "options": [
+      "5/6 deel",
+      "4/5 deel",
+      "3/4 deel",
+      "2/3 deel"
+    ],
+    "answer": "5/6 deel",
+    "explanation": "200/240 = 5/6."
   },
   {
     "id": 11,
-    "contextText": "Een fietser legt in 4,5 uur een afstand van 126 km af.",
+    "contextText": "Hoeveel is 125% van 80?",
     "contextImage": null,
-    "questionText": "Hoe snel rijdt de fietser gemiddeld in km per uur?",
-    "type": "open",
-    "options": null,
-    "answer": "28",
-    "explanation": "126 ÷ 4,5 = 28 km per uur."
-  },
-  {
-    "id": 12,
-    "contextText": "Een winkel verkoopt 3/5 van een lading van 350 dozen.",
-    "contextImage": null,
-    "questionText": "Hoeveel dozen worden er verkocht?",
-    "type": "open",
-    "options": null,
-    "answer": "210",
-    "explanation": "3/5 van 350 = 350 ÷ 5 × 3 = 210 dozen."
-  },
-  {
-    "id": 13,
-    "contextText": "Een restaurant rekent 21% btw op dranken. Een fles water kost 2 euro exclusief btw.",
-    "contextImage": null,
-    "questionText": "Hoeveel betaal je inclusief btw?",
-    "type": "open",
-    "options": null,
-    "answer": "2,42",
-    "explanation": "21% btw: 2 × 1,21 = €2,42."
-  },
-  {
-    "id": 14,
-    "contextText": "Een huis heeft een energielabel A. Het verbruikt 1.800 kWh per jaar. Een huis met label D verbruikt 45% meer.",
-    "contextImage": null,
-    "questionText": "Hoeveel kWh verbruikt het huis met label D per jaar?",
-    "type": "open",
-    "options": null,
-    "answer": "2610",
-    "explanation": "45% meer: 1.800 × 1,45 = 2.610 kWh."
-  },
-  {
-    "id": 15,
-    "contextText": "Een school ontvangt 12.000 euro subsidie. Hiervan gaat 1/4 naar sport, 1/3 naar kunst, de rest naar lessen.",
-    "contextImage": null,
-    "questionText": "Hoeveel euro gaat er naar lessen?",
-    "type": "open",
-    "options": null,
-    "answer": "5000",
-    "explanation": "Sport: 12.000 ÷ 4 = €3.000. Kunst: 12.000 ÷ 3 = €4.000. Lessen: 12.000 − 3.000 − 4.000 = €5.000."
-  },
-  {
-    "id": 16,
-    "contextText": "Een auto rijdt gemiddeld 1 op 14. De tank bevat 56 liter.",
-    "contextImage": null,
-    "questionText": "Hoeveel kilometer kan de auto rijden met een volle tank?",
-    "type": "open",
-    "options": null,
-    "answer": "784",
-    "explanation": "1 op 14 = 14 km per liter. 56 × 14 = 784 km."
-  },
-  {
-    "id": 17,
-    "contextText": "Een waterpomp pompt 240 liter per uur. Een zwembad bevat 48.000 liter.",
-    "contextImage": null,
-    "questionText": "Hoeveel uur duurt het om het zwembad te vullen?",
-    "type": "open",
-    "options": null,
-    "answer": "200",
-    "explanation": "48.000 ÷ 240 = 200 uur."
-  },
-  {
-    "id": 18,
-    "contextText": "Een handelaar koopt 200 kg noten voor 180 euro. Hij verkoopt ze voor 1,20 euro per kg.",
-    "contextImage": null,
-    "questionText": "Hoeveel euro winst maakt hij?",
-    "type": "open",
-    "options": null,
-    "answer": "60",
-    "explanation": "Opbrengst: 200 × €1,20 = €240. Winst = 240 − 180 = €60."
-  },
-  {
-    "id": 19,
-    "contextText": "Een rechthoekige kamer is 5,6 meter lang en 4,2 meter breed.",
-    "contextImage": null,
-    "questionText": "Hoe groot is de oppervlakte van de kamer in vierkante meter?",
-    "type": "open",
-    "options": null,
-    "answer": "23,52",
-    "explanation": "Oppervlakte = 5,6 × 4,2 = 23,52 m²."
-  },
-  {
-    "id": 20,
-    "contextText": "Van een groep van 80 mensen heeft 15% een rijbewijs maar geen auto, 60% heeft een auto en rijbewijs, de rest heeft geen rijbewijs.",
-    "contextImage": null,
-    "questionText": "Hoeveel mensen hebben geen rijbewijs?",
-    "type": "open",
-    "options": null,
-    "answer": "20",
-    "explanation": "Geen rijbewijs = 100 − 15 − 60 = 25%. 25% van 80 = 20 mensen."
-  },
-  {
-    "id": 21,
-    "contextText": "Een project duurt 3 weken en 4 dagen. Hoeveel dagen is dat?",
-    "contextImage": null,
-    "questionText": "Bereken het totaal aantal dagen.",
-    "type": "open",
-    "options": null,
-    "answer": "25",
-    "explanation": "3 weken = 21 dagen. 21 + 4 = 25 dagen."
-  },
-  {
-    "id": 22,
-    "contextText": "Een loods is 40 meter lang, 25 meter breed en 8 meter hoog.",
-    "contextImage": null,
-    "questionText": "Hoe groot is het volume van de loods in kubieke meter?",
-    "type": "open",
-    "options": null,
-    "answer": "8000",
-    "explanation": "Volume = 40 × 25 × 8 = 8.000 m³."
-  },
-  {
-    "id": 23,
-    "contextText": "Een klimmer stijgt 350 meter in 2,5 uur.",
-    "contextImage": null,
-    "questionText": "Hoeveel meter stijgt hij gemiddeld per uur?",
-    "type": "open",
-    "options": null,
-    "answer": "140",
-    "explanation": "350 ÷ 2,5 = 140 meter per uur."
-  },
-  {
-    "id": 24,
-    "contextText": "Op een markt worden tomaten verkocht voor 1 euro 80 cent per kilo. Eline koopt 2,5 kilo.",
-    "contextImage": null,
-    "questionText": "Hoeveel betaalt Eline?",
-    "type": "open",
-    "options": null,
-    "answer": "4,50",
-    "explanation": "2,5 kg × €1,80 = €4,50."
-  },
-  {
-    "id": 25,
-    "contextText": "Een school bestelt schoolmateriaal. 12 dozen met 36 pennen per doos, 8 dozen met 24 schriften per doos.",
-    "contextImage": null,
-    "questionText": "Hoeveel stuks materiaal bestelt de school in totaal?",
-    "type": "open",
-    "options": null,
-    "answer": "624",
-    "explanation": "12 × 36 = 432 pennen. 8 × 24 = 192 schriften. 432 + 192 = 624 stuks."
-  },
-  {
-    "id": 26,
-    "contextText": "Een werknemer verdient 2.400 euro per maand. Hij krijgt een loonsverhoging van 7,5%.",
-    "contextImage": null,
-    "questionText": "Hoeveel euro verdient hij na de verhoging per maand?",
-    "type": "open",
-    "options": null,
-    "answer": "2580",
-    "explanation": "7,5% erbij: 2.400 × 1,075 = €2.580."
-  },
-  {
-    "id": 27,
-    "contextText": "Een machine maakt elke 4 minuten 1 product. De machine draait 10 uur per dag.",
-    "contextImage": null,
-    "questionText": "Hoeveel producten maakt de machine per dag?",
-    "type": "open",
-    "options": null,
-    "answer": "150",
-    "explanation": "10 uur = 600 minuten. 600 ÷ 4 = 150 producten."
-  },
-  {
-    "id": 28,
-    "contextText": "In een dorp wonen 3.200 mensen. In 10 jaar groeit de bevolking met 12,5%.",
-    "contextImage": null,
-    "questionText": "Hoeveel mensen wonen er dan in het dorp?",
-    "type": "open",
-    "options": null,
-    "answer": "3600",
-    "explanation": "12,5% groei: 3.200 × 1,125 = 3.600 mensen."
-  },
-  {
-    "id": 29,
-    "contextText": "Een supermarkt verkoopt per dag gemiddeld 840 liter melk. In de weekenden verkoopt hij 25% meer.",
-    "contextImage": null,
-    "questionText": "Hoeveel liter melk verkoopt de supermarkt op een zaterdag?",
-    "type": "open",
-    "options": null,
-    "answer": "1050",
-    "explanation": "25% meer: 840 × 1,25 = 1.050 liter."
-  },
-  {
-    "id": 30,
-    "contextText": "Een tank bevat 1.500 liter. Na gebruik is er nog 540 liter over.",
-    "contextImage": null,
-    "questionText": "Hoeveel procent van de tank is gebruikt?",
-    "type": "open",
-    "options": null,
-    "answer": "64%",
-    "explanation": "Gebruikt: 1.500 − 540 = 960 liter. 960 ÷ 1.500 = 0,64 = 64%."
-  },
-  {
-    "id": 31,
-    "contextText": "Een boom is 12 meter hoog en werpt een schaduw van 8 meter. Een lantaarnpaal werpt een schaduw van 6 meter.",
-    "contextImage": null,
-    "questionText": "Hoe hoog is de lantaarnpaal? Gebruik verhoudingen.",
-    "type": "open",
-    "options": null,
-    "answer": "9",
-    "explanation": "Verhouding hoogte ÷ schaduw = 12 ÷ 8 = 1,5. Paal: 6 × 1,5 = 9 meter."
-  },
-  {
-    "id": 32,
-    "contextText": "Een hotel heeft 48 kamers. Elke nacht zijn 3/4 van de kamers bezet. Een kamer kost 95 euro per nacht.",
-    "contextImage": null,
-    "questionText": "Hoeveel euro verdient het hotel per nacht?",
-    "type": "open",
-    "options": null,
-    "answer": "3420",
-    "explanation": "Bezet: 48 ÷ 4 × 3 = 36 kamers. 36 × €95 = €3.420."
-  },
-  {
-    "id": 33,
-    "contextText": "Een lening van 2.000 euro heeft 5% rente per jaar.",
-    "contextImage": null,
-    "questionText": "Hoeveel rente betaal je na 1 jaar?",
+    "questionText": "Bereken de uitkomst.",
     "type": "open",
     "options": null,
     "answer": "100",
-    "explanation": "5% van €2.000 = €100 rente."
+    "explanation": "125% van 80 = 80 + 20 = 100."
+  },
+  {
+    "id": 12,
+    "contextText": "Welke breuk hoort op de plek van de pijl? De getallenlijn loopt van 0 tot 1. De pijl staat iets rechts van 3/4.",
+    "contextImage": null,
+    "questionText": "Kies de juiste breuk.",
+    "type": "mc",
+    "options": [
+      "2/3",
+      "3/4",
+      "4/5",
+      "7/10"
+    ],
+    "answer": "4/5",
+    "explanation": "Iets rechts van 3/4 (0,75) hoort 4/5 (0,80)."
+  },
+  {
+    "id": 13,
+    "contextText": "Nina wil op woensdag met de trein naar Eindhoven na 10:30 uur.",
+    "contextImage": "/iep_img/n3_q13.png",
+    "questionText": "Hoe laat gaat de eerstvolgende trein?",
+    "type": "mc",
+    "options": [
+      "10:17 uur",
+      "10:47 uur",
+      "11:17 uur",
+      "11:47 uur"
+    ],
+    "answer": "10:47 uur",
+    "explanation": "Op ma-vr vertrekt de trein om :17 en :47. Na 10:30 is dat 10:47."
+  },
+  {
+    "id": 14,
+    "contextText": "Dit is de plattegrond van Sporthal De Kuip. De sportzaal is 30 m diep. De totale hal is 60 m lang.",
+    "contextImage": "/iep_img/n3_q14.png",
+    "questionText": "Hoeveel meter lang is de sportzaal?",
+    "type": "open",
+    "options": null,
+    "answer": "40",
+    "explanation": "De hal is 60 m lang; de kantine/opslag nemen 20 m, dus de sportzaal is 40 m."
+  },
+  {
+    "id": 15,
+    "contextText": "In vier groepen is een spellingtoets gemaakt. Je ziet de resultaten.",
+    "contextImage": "/iep_img/n3_q15.png",
+    "questionText": "In welke groep zijn in verhouding de meeste voldoendes gehaald?",
+    "type": "mc",
+    "options": [
+      "Groep 7A",
+      "Groep 7B",
+      "Groep 7C",
+      "Groep 7D"
+    ],
+    "answer": "Groep 7C",
+    "explanation": "Groep 7C: 22 van 25 = 88%, de beste verhouding."
+  },
+  {
+    "id": 16,
+    "contextText": "Je ziet de weersverwachting voor vier dagen.",
+    "contextImage": "/iep_img/n3_q16.png",
+    "questionText": "Wat is de gemiddelde neerslagkans over deze vier dagen?",
+    "type": "mc",
+    "options": [
+      "21%",
+      "30%",
+      "38%",
+      "40%"
+    ],
+    "answer": "40%",
+    "explanation": "(10 + 5 + 70 + 85) ÷ 4 ≈ 42,5%, afgerond 40%."
+  },
+  {
+    "id": 17,
+    "contextText": "Je ziet de kledingverkoop per maand voor online en winkel.",
+    "contextImage": "/iep_img/n3_q17.png",
+    "questionText": "In welke maand werden er samen de meeste kledingstukken verkocht?",
+    "type": "mc",
+    "options": [
+      "januari",
+      "maart",
+      "april",
+      "juni"
+    ],
+    "answer": "april",
+    "explanation": "April: 71 + 88 = 159 stuks samen, het meeste."
+  },
+  {
+    "id": 18,
+    "contextText": "Voor een sportevenement wordt een hockeyveld aangelegd.",
+    "contextImage": "/iep_img/n3_q18.png",
+    "questionText": "Wat is de totale omtrek van het hockeyveld in meters?",
+    "type": "open",
+    "options": null,
+    "answer": "292,8",
+    "explanation": "Omtrek = 2 × (91,4 + 55) = 292,8 m."
+  },
+  {
+    "id": 19,
+    "contextText": "De ouders van Stef leggen een terras aan in de tuin. Je ziet de bouwtekening.",
+    "contextImage": "/iep_img/n3_q19.png",
+    "questionText": "Wat is de oppervlakte van het terras in m&sup2;?",
+    "type": "open",
+    "options": null,
+    "answer": "11,56",
+    "explanation": "Het terras is 3,4 × 3,4 = 11,56 m²."
+  },
+  {
+    "id": 20,
+    "contextText": "Een zwembad is 25 m lang, 12 m breed en 2 m diep.",
+    "contextImage": null,
+    "questionText": "Hoeveel kubieke meter water past er maximaal in?",
+    "type": "open",
+    "options": null,
+    "answer": "600",
+    "explanation": "Inhoud = 25 × 12 × 2 = 600 m³."
+  },
+  {
+    "id": 21,
+    "contextText": "Ayla schildert een muur maar niet het raam en de deur. Kijk naar de afmetingen.",
+    "contextImage": "/iep_img/n3_q21.png",
+    "questionText": "Hoeveel vierkante meter moet Ayla schilderen?",
+    "type": "mc",
+    "options": [
+      "10,0 m2",
+      "11,5 m2",
+      "13,3 m2",
+      "15,5 m2",
+      "18,5 m2"
+    ],
+    "answer": "18,5 m2",
+    "explanation": "Muur 6 × 4 = 24. Raam 1,5 × 1,5 = 2,25. Deur 1,3 × 2,5 = 3,25. 24 − 2,25 − 3,25 = 18,5 m²."
+  },
+  {
+    "id": 22,
+    "contextText": "Een rechthoekige kamer is 4,5 m lang en 3,2 m breed.",
+    "contextImage": null,
+    "questionText": "Wat is de oppervlakte in m&sup2;?",
+    "type": "open",
+    "options": null,
+    "answer": "14,4",
+    "explanation": "Oppervlakte = 4,5 × 3,2 = 14,4 m²."
+  },
+  {
+    "id": 23,
+    "contextText": "Je ziet de top 5 favoriete sporten van jongeren 10-14 jaar.",
+    "contextImage": "/iep_img/n3_q23.png",
+    "questionText": "Welk cirkeldiagram past hier het best bij?",
+    "type": "mc",
+    "options": [
+      "Diagram A: voetbal het grootst, dan zwemmen",
+      "Diagram B: alle vakken gelijk groot",
+      "Diagram C: fietsen het grootst",
+      "Diagram D: basketbal het grootst"
+    ],
+    "answer": "Diagram A: voetbal het grootst, dan zwemmen",
+    "explanation": "Voetbal is het grootst (40%), daarna zwemmen (25%): diagram A."
+  },
+  {
+    "id": 24,
+    "contextText": "Je ziet een krantenbericht over spreeuwen.",
+    "contextImage": "/iep_img/n3_q24.png",
+    "questionText": "Hoeveel spreeuwen leefden er vorig jaar in Nederland?",
+    "type": "open",
+    "options": null,
+    "answer": "2500000",
+    "explanation": "Nu 3 miljoen, dat is 500.000 meer dan vorig jaar. 3.000.000 − 500.000 = 2.500.000."
+  },
+  {
+    "id": 25,
+    "contextText": "60 leerlingen kiezen een workshop voor het zomerkamp.",
+    "contextImage": "/iep_img/n3_q25.png",
+    "questionText": "Hoeveel leerlingen kozen de workshop koken?",
+    "type": "mc",
+    "options": [
+      "12",
+      "18",
+      "21",
+      "30"
+    ],
+    "answer": "18",
+    "explanation": "Koken 30% van 60 = 18 leerlingen."
+  },
+  {
+    "id": 26,
+    "contextText": "Je ziet een grappige hondenvideo. Het filmpje staat al 300 dagen online.",
+    "contextImage": "/iep_img/n3_q26.png",
+    "questionText": "Hoeveel keer is het filmpje gemiddeld per dag bekeken?",
+    "type": "open",
+    "options": null,
+    "answer": "80000",
+    "explanation": "24.000.000 ÷ 300 dagen = 80.000 keer per dag."
+  },
+  {
+    "id": 27,
+    "contextText": "Kijk naar het staafdiagram van de kledingverkoop.",
+    "contextImage": "/iep_img/n3_q27.png",
+    "questionText": "In hoeveel maanden verkocht de winkel meer online dan in de winkel?",
+    "type": "mc",
+    "options": [
+      "1",
+      "2",
+      "3",
+      "4"
+    ],
+    "answer": "1",
+    "explanation": "Alleen in juni (80 > 65) is online meer dan winkel: 1 maand."
+  },
+  {
+    "id": 28,
+    "contextText": "Op de kaart is de fietsroute 6 cm lang. De schaal is 1:15.000.",
+    "contextImage": "/iep_img/n3_q28.png",
+    "questionText": "Hoeveel meter is de werkelijke fietsroute?",
+    "type": "open",
+    "options": null,
+    "answer": "900",
+    "explanation": "Schaal 1:15.000 → 1 cm = 150 m. 6 × 150 = 900 m."
+  },
+  {
+    "id": 29,
+    "contextText": "Op een plattegrond met schaal 1:500 is een kamer 3 cm lang en 2 cm breed.",
+    "contextImage": null,
+    "questionText": "Hoe groot is de kamer in werkelijkheid in m&sup2;?",
+    "type": "open",
+    "options": null,
+    "answer": "150",
+    "explanation": "Schaal 1:500 → 1 cm = 5 m. Kamer 15 m × 10 m = 150 m²."
+  },
+  {
+    "id": 30,
+    "contextText": "Abel loopt op de kaart eerst omlaag, dan naar rechts. Er staat een kompasroos op de kaart.",
+    "contextImage": null,
+    "questionText": "In welke richtingen loopt Abel?",
+    "type": "mc",
+    "options": [
+      "eerst naar het noorden, dan naar het oosten",
+      "eerst naar het zuiden, dan naar het oosten",
+      "eerst naar het westen, dan naar het noorden",
+      "eerst naar het oosten, dan naar het zuiden"
+    ],
+    "answer": "eerst naar het zuiden, dan naar het oosten",
+    "explanation": "Omlaag = zuiden, naar rechts = oosten."
+  },
+  {
+    "id": 31,
+    "contextText": "Lotte fietst van huis naar het sportpark (4 km) met gemiddeld 12 km/u.",
+    "contextImage": null,
+    "questionText": "Hoelang fietst Lotte?",
+    "type": "mc",
+    "options": [
+      "10 minuten",
+      "15 minuten",
+      "20 minuten",
+      "30 minuten"
+    ],
+    "answer": "20 minuten",
+    "explanation": "4 km ÷ 12 km/u = 1/3 uur = 20 minuten."
+  },
+  {
+    "id": 32,
+    "contextText": "Josje is in de dierentuin. Het is 13:50 uur. Ze wil de eerstvolgende zeehondenshow zien.",
+    "contextImage": "/iep_img/n3_q32.png",
+    "questionText": "Hoe laat kan Josje de eerstvolgende zeehondenshow zien?",
+    "type": "mc",
+    "options": [
+      "om 14:00 uur",
+      "om 14:30 uur",
+      "om 15:00 uur",
+      "om 15:30 uur"
+    ],
+    "answer": "om 14:00 uur",
+    "explanation": "De zeehondenshows zijn er elk heel uur; na 13:50 is dat om 14:00 uur."
+  },
+  {
+    "id": 33,
+    "contextText": "9.308 : 13 =",
+    "contextImage": null,
+    "questionText": "Bereken de uitkomst.",
+    "type": "open",
+    "options": null,
+    "answer": "716",
+    "explanation": "9.308 ÷ 13 = 716."
   },
   {
     "id": 34,
-    "contextText": "Een sporttournee bestaat uit 4 wedstrijden. Het team scoorde: 3, 5, 2 en 6 doelpunten.",
+    "contextText": "Een auto rijdt 90 km/u. De rit duurt 40 minuten.",
     "contextImage": null,
-    "questionText": "Hoeveel doelpunten scoorden ze gemiddeld per wedstrijd?",
+    "questionText": "Hoeveel kilometer rijdt de auto?",
     "type": "open",
     "options": null,
-    "answer": "4",
-    "explanation": "Totaal 3 + 5 + 2 + 6 = 16. 16 ÷ 4 = 4 doelpunten gemiddeld."
+    "answer": "60",
+    "explanation": "40 min = 2/3 uur. 90 × 2/3 = 60 km."
   },
   {
     "id": 35,
-    "contextText": "Een straat is 0,8 km lang. Er staan aan beide kanten bomen. Om de 10 meter staat een boom.",
-    "contextImage": null,
-    "questionText": "Hoeveel bomen staan er aan een kant van de straat?",
+    "contextText": "Floris doet mee aan een sponsorloop. Kijk bij zijn sponsorkaart.",
+    "contextImage": "/iep_img/n3_q35.png",
+    "questionText": "Hoeveel heeft Floris in totaal opgehaald bij de sponsors die een bedrag hebben ingevuld?",
     "type": "open",
     "options": null,
-    "answer": "81",
-    "explanation": "0,8 km = 800 m. 800 ÷ 10 = 80, plus 1 boom aan het begin = 81 bomen."
+    "answer": "18,75",
+    "explanation": "€3,75 + €5,00 + €10,00 = €18,75 (Buurvrouw Els vulde niets in)."
   },
   {
     "id": 36,
-    "contextText": "Een bakkerij verkoopt op maandag 240 broden, op dinsdag 180, op woensdag 210 en op donderdag 270.",
-    "contextImage": null,
-    "questionText": "Hoeveel broden werden er gemiddeld per dag verkocht?",
-    "type": "open",
-    "options": null,
-    "answer": "225",
-    "explanation": "Totaal 240 + 180 + 210 + 270 = 900. 900 ÷ 4 = 225 broden."
+    "contextText": "De weegschaal toont het gewicht van Tamara samen met haar kat. Tamara weegt zelf 41,5 kg.",
+    "contextImage": "/iep_img/n3_q36.png",
+    "questionText": "Hoeveel kilogram weegt de kat?",
+    "type": "mc",
+    "options": [
+      "3,0 kg",
+      "4,5 kg",
+      "5,0 kg",
+      "7,5 kg"
+    ],
+    "answer": "5,0 kg",
+    "explanation": "46,5 − 41,5 = 5,0 kg."
   },
   {
     "id": 37,
-    "contextText": "Een vlucht vertrekt om 22:40 en landt 8 uur en 15 minuten later.",
+    "contextText": "Seppe koopt 350 g bonbons voor € 2,60 per 100 g.",
     "contextImage": null,
-    "questionText": "Hoe laat landt het vliegtuig (lokale tijd)?",
+    "questionText": "Hoeveel moet Seppe betalen?",
     "type": "open",
     "options": null,
-    "answer": "6:55",
-    "explanation": "22:40 + 8 uur 15 minuten = 6:55 (de volgende ochtend)."
+    "answer": "9,10",
+    "explanation": "350 g = 3,5 × 100 g. 3,5 × €2,60 = €9,10."
   },
   {
     "id": 38,
-    "contextText": "Een kledingbedrijf produceert shirts. De kosten per shirt zijn 12 euro. De verkoopprijs is 30 euro.",
+    "contextText": "In groep 8 zitten 60 leerlingen. 1/10 heeft geen huisdier, 1/3 heeft 1 huisdier, 1/4 heeft 2 huisdieren. De rest heeft meer dan 2.",
     "contextImage": null,
-    "questionText": "Hoeveel procent is de winstmarge?",
+    "questionText": "Hoeveel leerlingen hebben meer dan 2 huisdieren?",
     "type": "open",
     "options": null,
-    "answer": "60%",
-    "explanation": "Winst = 30 − 12 = €18. 18 ÷ 30 = 0,6 = 60% van de verkoopprijs."
+    "answer": "19",
+    "explanation": "Geen huisdier 6, één 20, twee 15. 60 − 6 − 20 − 15 = 19."
   },
   {
     "id": 39,
-    "contextText": "In een klas van 32 leerlingen heeft 5/8 een smartphone. Daarvan heeft de helft ook een tablet.",
+    "contextText": "Vier vrienden leggen hun geld samen: Joziah € 15,-, Nick € 5,- en Leandro € 10,-. Een pakje kaarten kost € 0,75.",
     "contextImage": null,
-    "questionText": "Hoeveel leerlingen hebben zowel een smartphone als een tablet?",
+    "questionText": "Hoeveel pakjes kaarten kunnen ze samen kopen?",
     "type": "open",
     "options": null,
-    "answer": "10",
-    "explanation": "5/8 van 32 = 20 smartphones. De helft daarvan = 10 ook een tablet."
+    "answer": "40",
+    "explanation": "€15 + €5 + €10 = €30. 30 ÷ 0,75 = 40 pakjes."
   },
   {
     "id": 40,
-    "contextText": "Een waterleiding lekt 3 liter per uur. Na 24 uur is er 72 liter gelekt. Klopt dit?",
+    "contextText": "Hoeveel is 135% van 380?",
     "contextImage": null,
-    "questionText": "Klopt de berekening? Leg uit en geef het juiste antwoord.",
+    "questionText": "Bereken de uitkomst.",
     "type": "open",
     "options": null,
-    "answer": "ja",
-    "explanation": "Het klopt: 3 liter × 24 uur = 72 liter."
+    "answer": "513",
+    "explanation": "135% van 380 = 380 × 1,35 = 513."
   },
   {
     "id": 41,
-    "contextText": "Een koffer weegt 23,6 kg. Het maximale gewicht is 20 kg. Je haalt er spullen uit.",
+    "contextText": "Vier leerlingen verdelen samen 3,5 liter limonade gelijkmatig.",
     "contextImage": null,
-    "questionText": "Hoeveel kilogram moet er minimaal uit de koffer?",
-    "type": "open",
-    "options": null,
-    "answer": "3,6",
-    "explanation": "23,6 − 20 = 3,6 kg moet eruit."
+    "questionText": "Hoeveel liter krijgt iedere leerling?",
+    "type": "mc",
+    "options": [
+      "7/8 liter",
+      "3/4 liter",
+      "5/8 liter",
+      "1/2 liter"
+    ],
+    "answer": "7/8 liter",
+    "explanation": "3,5 L ÷ 4 = 0,875 L = 7/8 liter."
   },
   {
     "id": 42,
-    "contextText": "Een restaurant bestelt 15 kg rijst per week. In een maand van 4 weken stijgt de prijs van 2,40 euro naar 2,70 euro per kg.",
+    "contextText": "Een auto rijdt gemiddeld 90 km/u. Na hoeveel minuten heeft hij 45 km gereden?",
     "contextImage": null,
-    "questionText": "Hoeveel meer betaalt het restaurant per maand na de prijsstijging?",
+    "questionText": "Bereken in minuten.",
     "type": "open",
     "options": null,
-    "answer": "18",
-    "explanation": "Per maand: 4 × 15 = 60 kg. Prijsstijging €0,30 per kg: 60 × 0,30 = €18 meer."
+    "answer": "30",
+    "explanation": "45 km ÷ 90 km/u = 0,5 uur = 30 minuten."
   },
   {
     "id": 43,
-    "contextText": "5/8 van een getal is 40.",
+    "contextText": "In een klas zitten 60 leerlingen. 3/4 deel heeft een smartphone. Hoeveel leerlingen hebben een smartphone?",
     "contextImage": null,
-    "questionText": "Wat is het getal?",
-    "type": "open",
-    "options": null,
-    "answer": "64",
-    "explanation": "5/8 is 40, dus 1/8 is 40 ÷ 5 = 8. Het hele getal = 8 × 8 = 64."
+    "questionText": "Kies het juiste antwoord.",
+    "type": "mc",
+    "options": [
+      "30",
+      "40",
+      "45",
+      "48"
+    ],
+    "answer": "45",
+    "explanation": "3/4 van 60 = 45 leerlingen."
   },
   {
     "id": 44,
-    "contextText": "Een rente van 4% per jaar over 3.500 euro.",
+    "contextText": "352 : 16 =",
     "contextImage": null,
-    "questionText": "Hoeveel euro rente krijg je na 2 jaar?",
+    "questionText": "Bereken de uitkomst.",
     "type": "open",
     "options": null,
-    "answer": "280",
-    "explanation": "4% van €3.500 = €140 per jaar. 2 jaar = €280."
+    "answer": "22",
+    "explanation": "352 ÷ 16 = 22."
   },
   {
     "id": 45,
-    "contextText": "Een schip vaart 18 km per uur. Het moet 270 km afleggen.",
+    "contextText": "Welke breuk is het grootst?",
     "contextImage": null,
-    "questionText": "Hoe lang duurt de vaart?",
-    "type": "open",
-    "options": null,
-    "answer": "15 uur",
-    "explanation": "270 ÷ 18 = 15 uur."
+    "questionText": "Kies de grootste breuk.",
+    "type": "mc",
+    "options": [
+      "3/5",
+      "5/8",
+      "7/10",
+      "2/3"
+    ],
+    "answer": "7/10",
+    "explanation": "7/10 = 0,70 is de grootste breuk."
   },
   {
     "id": 46,
-    "contextText": "Een gemeentebudget is 8.000.000 euro. Hiervan gaat 35% naar onderwijs, 20% naar sport, de rest naar overige zaken.",
+    "contextText": "Een school heeft 480 leerlingen. 60% fietst naar school.",
     "contextImage": null,
-    "questionText": "Hoeveel euro gaat er naar overige zaken?",
+    "questionText": "Hoeveel leerlingen fietsen naar school?",
     "type": "open",
     "options": null,
-    "answer": "3600000",
-    "explanation": "Overig = 100 − 35 − 20 = 45%. 45% van €8.000.000 = €3.600.000."
+    "answer": "288",
+    "explanation": "60% van 480 = 480 × 0,6 = 288 leerlingen."
   },
   {
     "id": 47,
-    "contextText": "Een fruitkraam verkoopt in een week 120 kg appels, 85 kg peren en 60 kg druiven.",
+    "contextText": "Hoeveel is 75% van 160?",
     "contextImage": null,
-    "questionText": "Hoeveel kilogram fruit wordt er in totaal verkocht?",
-    "type": "open",
-    "options": null,
-    "answer": "265",
-    "explanation": "120 + 85 + 60 = 265 kg."
+    "questionText": "Bereken de uitkomst.",
+    "type": "mc",
+    "options": [
+      "80",
+      "100",
+      "120",
+      "140"
+    ],
+    "answer": "120",
+    "explanation": "75% van 160 = 160 × 0,75 = 120."
   },
   {
     "id": 48,
-    "contextText": "Een groentesoep bevat per 100 ml: 25 kcal. Een portie is 350 ml.",
+    "contextText": "Vier vrienden rennen in de gymzaal. Sam rent 1 4/5 rondje. Ella rent 2 3/10 rondje.",
     "contextImage": null,
-    "questionText": "Hoeveel kcal bevat een portie soep?",
+    "questionText": "Hoeveel rondjes hebben Sam en Ella samen gerend?",
     "type": "open",
     "options": null,
-    "answer": "87,5",
-    "explanation": "Per 100 ml is 25 kcal. 350 ÷ 100 × 25 = 87,5 kcal."
+    "answer": "4 1/10",
+    "explanation": "1 4/5 + 2 3/10 = 1 8/10 + 2 3/10 = 4 1/10 rondje."
   },
   {
     "id": 49,
-    "contextText": "Een ijsbaan is 60 meter lang en 30 meter breed. Er staat een omheining rondom.",
+    "contextText": "In een doos passen 24 pakjes sap. De doos is 28 cm lang, 20 cm breed en 24 cm hoog. Een pakje is 4 cm breed en 5 cm lang.",
     "contextImage": null,
-    "questionText": "Hoe lang is de omheining?",
+    "questionText": "Hoeveel pakjes passen er in de doos?",
     "type": "open",
     "options": null,
-    "answer": "180",
-    "explanation": "Omheining = omtrek = 2 × (60 + 30) = 180 meter."
+    "answer": "24",
+    "explanation": "In de doos passen 24 pakjes sap."
   },
   {
     "id": 50,
-    "contextText": "Een bedrijf heeft 250 werknemers. Na een reorganisatie werken er 15% minder mensen.",
+    "contextText": "Een laptop kost eerst € 650,-. Na een korting van 15% koopt Nour de laptop.",
     "contextImage": null,
-    "questionText": "Hoeveel werknemers zijn er na de reorganisatie?",
+    "questionText": "Hoeveel betaalt Nour?",
     "type": "open",
     "options": null,
-    "answer": "212",
-    "explanation": "15% van 250 = 37,5 ≈ 38 minder. 250 − 38 = 212 werknemers."
+    "answer": "552,50",
+    "explanation": "€650 − 15% = 650 × 0,85 = €552,50."
   }
 ]
