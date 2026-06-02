@@ -459,20 +459,37 @@ function initScene(canvas, { localSessionId, getRoomState, sendInput, sendShoot,
   const onKU = e => { keys[e.code] = false }
   window.addEventListener('keydown', onKD); window.addEventListener('keyup', onKU)
 
-  // Look-drag on the canvas (touch + mouse)
+  // Look + fire. Desktop: click locks the mouse, then moving = look and
+  // left-click = fire (so bewegen-om-te-kijken schiet niet). Touch: sleep = look.
   let looking = false, lastX = 0, lastY = 0
-  const onPD = e => { looking = true; lastX = e.clientX; lastY = e.clientY; if (e.pointerType === 'mouse' && e.button === 0) fireRef.current = true }
-  const onPM = e => {
-    if (!looking) return
-    look.yaw   += (e.clientX - lastX) * 0.005
-    look.pitch -= (e.clientY - lastY) * 0.005
-    look.pitch = Math.max(-1.1, Math.min(1.1, look.pitch))
-    lastX = e.clientX; lastY = e.clientY
+  const isLocked = () => document.pointerLockElement === canvas
+  const clampPitch = () => { look.pitch = Math.max(-1.1, Math.min(1.1, look.pitch)) }
+  const onPD = e => {
+    if (e.pointerType === 'mouse') {
+      if (isLocked()) { if (e.button === 0) fireRef.current = true }
+      else { try { canvas.requestPointerLock() } catch {} }   // eerste klik pakt de muis, geen schot
+    } else {
+      looking = true; lastX = e.clientX; lastY = e.clientY
+    }
   }
-  const onPU = () => { looking = false; fireRef.current = false }
+  const onPM = e => {
+    if (e.pointerType === 'mouse') {
+      if (!isLocked()) return
+      look.yaw   += (e.movementX || 0) * 0.0026
+      look.pitch -= (e.movementY || 0) * 0.0026
+      clampPitch()
+    } else if (looking) {
+      look.yaw   += (e.clientX - lastX) * 0.005
+      look.pitch -= (e.clientY - lastY) * 0.005
+      clampPitch(); lastX = e.clientX; lastY = e.clientY
+    }
+  }
+  const onPU = e => { if (e.pointerType === 'mouse') fireRef.current = false; else looking = false }
+  const onLock = () => { if (!isLocked()) fireRef.current = false }
   canvas.addEventListener('pointerdown', onPD)
-  canvas.addEventListener('pointermove', onPM)
+  window.addEventListener('pointermove', onPM)
   window.addEventListener('pointerup', onPU)
+  document.addEventListener('pointerlockchange', onLock)
 
   const camPos = new Vector3(0, 5, -12)
   const camTgt = new Vector3(0, 1.5, 0)
@@ -611,7 +628,7 @@ function initScene(canvas, { localSessionId, getRoomState, sendInput, sendShoot,
     const me = players.get(localSessionId)
     const deadView = !!(lp && !lp.alive)
     const fpView = camModeRef.current === 'first' && !deadView   // dead → watch your corpse in 3rd person
-    if (me) me.setBodyVisible(!fpView)
+    if (me && me._ready) me.setBodyVisible(!fpView)   // stay hidden until the idle pose is ready (geen T-pose)
     const px = (me && me._dx !== undefined) ? me._dx : (lp?.x ?? 0)
     const pz = (me && me._dz !== undefined) ? me._dz : (lp?.z ?? 0)
     const fX = Math.sin(look.yaw) * Math.cos(look.pitch)
@@ -642,7 +659,8 @@ function initScene(canvas, { localSessionId, getRoomState, sendInput, sendShoot,
     dispose: () => {
       window.removeEventListener('keydown', onKD); window.removeEventListener('keyup', onKU)
       window.removeEventListener('pointerup', onPU); window.removeEventListener('resize', onResize)
-      canvas.removeEventListener('pointerdown', onPD); canvas.removeEventListener('pointermove', onPM)
+      window.removeEventListener('pointermove', onPM); document.removeEventListener('pointerlockchange', onLock)
+      canvas.removeEventListener('pointerdown', onPD)
       players.forEach(p => p.dispose()); shotMeshes.forEach(m => m.mesh.dispose()); splats.forEach(s => s.mesh.dispose())
       engine.stopRenderLoop(); scene.dispose(); engine.dispose()
     },
