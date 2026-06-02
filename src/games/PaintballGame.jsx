@@ -17,7 +17,7 @@ import './paintball.css'
 const SERVER_URL = 'wss://kenniskist-server.onrender.com'
 
 // ── Arena constants (mirror the server exactly) ────────────────────────
-const ARENA_HALF    = 24
+const ARENA_HALF    = 38
 const PLAYER_RADIUS  = 0.6
 const PLAYER_SPEED   = 5.2
 const SPRINT_SPEED   = 8.2
@@ -25,14 +25,22 @@ const PROJ_RADIUS    = 0.18
 const MATCH_TIME     = 120
 const OBSTACLES = [
   { x:   0, z:   0, hw: 2.0, hd: 2.0 },
-  { x:  11, z:   8, hw: 1.5, hd: 1.5 },
-  { x: -11, z:   8, hw: 1.5, hd: 1.5 },
-  { x:  11, z:  -8, hw: 1.5, hd: 1.5 },
-  { x: -11, z:  -8, hw: 1.5, hd: 1.5 },
-  { x:   0, z:  15, hw: 3.0, hd: 1.0 },
-  { x:   0, z: -15, hw: 3.0, hd: 1.0 },
-  { x:  17, z:   0, hw: 1.0, hd: 3.0 },
-  { x: -17, z:   0, hw: 1.0, hd: 3.0 },
+  { x:  14, z:  10, hw: 1.8, hd: 1.8 },
+  { x: -14, z:  10, hw: 1.8, hd: 1.8 },
+  { x:  14, z: -10, hw: 1.8, hd: 1.8 },
+  { x: -14, z: -10, hw: 1.8, hd: 1.8 },
+  { x:   0, z:  19, hw: 3.0, hd: 1.2 },
+  { x:   0, z: -19, hw: 3.0, hd: 1.2 },
+  { x:  25, z:   0, hw: 1.2, hd: 3.0 },
+  { x: -25, z:   0, hw: 1.2, hd: 3.0 },
+  { x:  11, z:  25, hw: 1.6, hd: 1.6 },
+  { x: -11, z:  25, hw: 1.6, hd: 1.6 },
+  { x:  11, z: -25, hw: 1.6, hd: 1.6 },
+  { x: -11, z: -25, hw: 1.6, hd: 1.6 },
+  { x:  26, z:  22, hw: 1.5, hd: 1.5 },
+  { x: -26, z:  22, hw: 1.5, hd: 1.5 },
+  { x:  26, z: -22, hw: 1.5, hd: 1.5 },
+  { x: -26, z: -22, hw: 1.5, hd: 1.5 },
 ]
 const TEAM_HEX = ['#e63946', '#1d6fd0']   // 0 rood, 1 blauw
 
@@ -401,6 +409,7 @@ function fmtTime(s) { const m = Math.floor(s / 60); const sec = Math.floor(s) % 
 function initScene(canvas, { localSessionId, getRoomState, sendInput, sendShoot, hpDomRef, timerDomRef }) {
   const engine = new Engine(canvas, true, { adaptToDeviceRatio: true, stencil: true, powerPreference: 'high-performance' })
   if (window.devicePixelRatio > 1.5) engine.setHardwareScalingLevel(window.devicePixelRatio / 1.5)
+  canvas.style.cursor = 'none'   // only the crosshair shows
   const scene = new Scene(engine)
   const camera = new FreeCamera('cam', new Vector3(0, 5, -12), scene)
   camera.inputs.clear(); camera.minZ = 0.1; camera.maxZ = 300
@@ -479,10 +488,15 @@ function initScene(canvas, { localSessionId, getRoomState, sendInput, sendShoot,
     const now = performance.now() / 1000
     if (fireRef.current && lp && lp.alive && now - lastFire > 0.13) {
       lastFire = now
-      const dx = Math.sin(look.yaw) * Math.cos(look.pitch)
-      const dy = Math.sin(look.pitch)
-      const dz = Math.cos(look.yaw) * Math.cos(look.pitch)
-      sendShoot({ dx, dy, dz })
+      // Aim toward the point under the crosshair (camera forward), corrected
+      // for the 3rd-person offset so shots land where the + is.
+      const fx2 = camTgt.x - camPos.x, fy2 = camTgt.y - camPos.y, fz2 = camTgt.z - camPos.z
+      const fl = Math.hypot(fx2, fy2, fz2) || 1
+      const aimX = camPos.x + fx2 / fl * 50, aimY = camPos.y + fy2 / fl * 50, aimZ = camPos.z + fz2 / fl * 50
+      const ex = pred.init ? pred.x : lp.x, ez = pred.init ? pred.z : lp.z
+      let dx = aimX - ex, dy = aimY - 1.45, dz = aimZ - ez
+      const dl = Math.hypot(dx, dy, dz) || 1
+      sendShoot({ dx: dx / dl, dy: dy / dl, dz: dz / dl })
     }
 
     // HP bar
@@ -508,8 +522,11 @@ function initScene(canvas, { localSessionId, getRoomState, sendInput, sendShoot,
           pred.x = pr.x; pred.z = pr.z
           // soft reconcile toward server
           pred.x += (p.x - pred.x) * 0.08; pred.z += (p.z - pred.z) * 0.08
-        } else { pred.x = p.x; pred.z = p.z }
-        inst.setPose(pred.x, pred.z, look.yaw, p.alive && (Math.abs(wx) + Math.abs(wz)) > 0.05, look.pitch)
+          inst.setPose(pred.x, pred.z, look.yaw, (Math.abs(wx) + Math.abs(wz)) > 0.05, look.pitch)
+        } else {
+          pred.x = p.x; pred.z = p.z
+          inst.setPose(p.x, p.z, p.rotY, false, 0)   // frozen corpse pose
+        }
       } else {
         inst.setTarget(p.x, p.z, p.rotY, p.moving)
         inst.tick(dt)
@@ -526,7 +543,7 @@ function initScene(canvas, { localSessionId, getRoomState, sendInput, sendShoot,
       live.add(id)
       let m = shotMeshes.get(id)
       if (!m) {
-        m = MeshBuilder.CreateSphere('shot', { diameter: 0.16, segments: 6 }, scene)
+        m = MeshBuilder.CreateSphere('shot', { diameter: 0.11, segments: 6 }, scene)
         const mat = new StandardMaterial('shotm', scene); mat.disableLighting = true
         const c = Color3.FromHexString(TEAM_HEX[s.team]); mat.emissiveColor = c; mat.diffuseColor = c
         m.material = mat; m.isPickable = false
@@ -553,21 +570,23 @@ function initScene(canvas, { localSessionId, getRoomState, sendInput, sendShoot,
 
     // ── Camera ──
     const me = players.get(localSessionId)
-    if (me) me.setBodyVisible(camModeRef.current !== 'first')   // hide own body in 1st person
+    const deadView = !!(lp && !lp.alive)
+    const fpView = camModeRef.current === 'first' && !deadView   // dead → watch your corpse in 3rd person
+    if (me) me.setBodyVisible(!fpView)
     const px = (me && me._dx !== undefined) ? me._dx : (lp?.x ?? 0)
     const pz = (me && me._dz !== undefined) ? me._dz : (lp?.z ?? 0)
     const fX = Math.sin(look.yaw) * Math.cos(look.pitch)
     const fY = Math.sin(look.pitch)
     const fZ = Math.cos(look.yaw) * Math.cos(look.pitch)
     let wantPos, wantTgt
-    if (camModeRef.current === 'first') {
+    if (fpView) {
       wantPos = new Vector3(px + Math.sin(look.yaw) * 0.1, 1.55, pz + Math.cos(look.yaw) * 0.1)
       wantTgt = new Vector3(px + fX * 6, 1.55 + fY * 6, pz + fZ * 6)
     } else {
       wantPos = new Vector3(px - Math.sin(look.yaw) * 5 - fX * 1.5, 3.2 - fY * 2.5, pz - Math.cos(look.yaw) * 5 - fZ * 1.5)
       wantTgt = new Vector3(px + fX * 5, 1.4 + fY * 5, pz + fZ * 5)
     }
-    const cl = 1 - Math.exp(-dt * (camModeRef.current === 'first' ? 45 : 18))
+    const cl = 1 - Math.exp(-dt * (fpView ? 45 : 18))
     camPos.addInPlace(wantPos.subtract(camPos).scale(cl))
     camTgt.addInPlace(wantTgt.subtract(camTgt).scale(cl))
     camera.position.copyFrom(camPos); camera.setTarget(camTgt)
@@ -749,7 +768,10 @@ export default function PaintballGame({ onBack }) {
       <div className="pb-hp"><span className="pb-hp-icon">❤️</span><div className="pb-hp-track"><div ref={hpDomRef} className="pb-hp-fill" /></div></div>
 
       {me && !me.alive && (
-        <div className="pb-respawn">Uitgeschakeld!<br /><span>Respawn in {Math.ceil(me.respawnIn)}…</span></div>
+        <>
+          <div className="pb-dead-overlay" />
+          <div className="pb-respawn">Uitgeschakeld! 💥<br /><span>Respawn in {Math.ceil(me.respawnIn)}…</span></div>
+        </>
       )}
 
       {sceneRef.current && <VirtualJoystick joyRef={sceneRef.current.joyRef} />}

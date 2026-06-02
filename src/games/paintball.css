@@ -30,6 +30,14 @@
   transition: width 0.12s linear;
 }
 
+.pb-dead-overlay {
+  position: fixed; inset: 0;
+  background: rgba(210, 210, 215, 0.42);
+  backdrop-filter: grayscale(0.85) brightness(1.05);
+  -webkit-backdrop-filter: grayscale(0.85) brightness(1.05);
+  z-index: 65; pointer-events: none;
+}
+
 .pb-respawn {
   position: fixed;
   left: 50%; top: 42%;
