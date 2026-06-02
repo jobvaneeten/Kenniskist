@@ -100,10 +100,12 @@ class PlayerInstance {
     SceneLoader.ImportMesh('', '/', 'Poppetje.glb', this.scene, (meshes, _ps, skels) => {
       this.root = meshes[0]
       this._skeleton = skels[0] ?? null
+      this._meshes = meshes
       meshes.forEach(m => { this.sg?.addShadowCaster(m); m.receiveShadows = true })
 
       this.scene.transformNodes.forEach(n => { this._nodeMap[n.name] = n })
       this.scene.meshes.forEach(m => { if (!this._nodeMap[m.name]) this._nodeMap[m.name] = m })
+      this._handNode = this._nodeMap['RightHand'] || null
 
       this.scene.transformNodes.forEach(n => {
         if (!RETARGET_BONES.has(n.name)) return
@@ -208,19 +210,42 @@ class PlayerInstance {
     this._tx = x; this._tz = z; this._trotY = rotY; this._tmoving = !!moving
     if (this._dx === undefined) { this._dx = x; this._dz = z; this._drotY = rotY }
   }
-  setPose(x, z, rotY, moving) {
+  setPose(x, z, rotY, moving, pitch = 0) {
     if (!this.root) return
     this._dx = x; this._dz = z; this._drotY = rotY
-    this._apply(x, z, rotY); this._locomotion(moving)
+    this._apply(x, z, rotY, pitch); this._locomotion(moving)
   }
-  _apply(x, z, rotY) {
-    this.root.position.set(x, 0, z)
+  setBodyVisible(v) {
+    if (this._bodyVisible === v) return
+    this._bodyVisible = v
+    this._meshes?.forEach(m => { if (m !== this.gun) m.isVisible = v })
+    this._donors?.forEach(g => { g.isVisible = v; g.getChildMeshes?.(false).forEach(c => c.isVisible = v) })
+  }
+  _apply(x, z, rotY, pitch = 0) {
+    const y = this._yOff || 0
+    this.root.position.set(x, y, z)
     this.root.rotationQuaternion = Quaternion.RotationYawPitchRoll(rotY + Math.PI, 0, 0)
+    // Dynamic foot-grounding: keep the lowest foot on the floor (the rifle
+    // clips otherwise leave the character hovering above the ground).
+    if (this._ready) {
+      const fA = this._nodeMap['LeftToeBase'] || this._nodeMap['LeftFoot']
+      const fB = this._nodeMap['RightToeBase'] || this._nodeMap['RightFoot']
+      let lowest = null
+      if (fA) lowest = fA.getAbsolutePosition().y
+      if (fB) { const yb = fB.getAbsolutePosition().y; lowest = (lowest === null) ? yb : Math.min(lowest, yb) }
+      if (lowest !== null) {
+        const target = y - lowest
+        this._yOff = (this._yOff === undefined) ? target : y + (target - y) * 0.25
+      }
+    }
     if (this.gun) {
+      // Follow the right-hand bone's position (so the gun bobs with the
+      // mik/schiet animation) but keep the barrel pointing where you aim.
+      let hx = x + Math.sin(rotY) * 0.3, hy = 1.2 + y, hz = z + Math.cos(rotY) * 0.3
+      if (this._handNode) { const p = this._handNode.getAbsolutePosition(); hx = p.x; hy = p.y; hz = p.z }
       const fx = Math.sin(rotY), fz = Math.cos(rotY)
-      const rx = Math.cos(rotY), rz = -Math.sin(rotY)
-      this.gun.position.set(x + fx * 0.35 + rx * 0.22, 1.25, z + fz * 0.35 + rz * 0.22)
-      this.gun.rotationQuaternion = Quaternion.RotationYawPitchRoll(rotY, 0, 0)
+      this.gun.position.set(hx + fx * 0.12, hy, hz + fz * 0.12)
+      this.gun.rotationQuaternion = Quaternion.RotationYawPitchRoll(rotY, pitch, 0)
       this.gun.setEnabled(!this._dead)
     }
   }
@@ -245,56 +270,99 @@ class PlayerInstance {
   }
 }
 
-// ── Arena world ────────────────────────────────────────────────────────
+// ── Arena world (paintball field + inflatable bunkers) ─────────────────
 function buildWorld(scene) {
-  scene.clearColor = new Color4(0.46, 0.67, 0.93, 1)
+  scene.clearColor = new Color4(0.55, 0.75, 0.96, 1)
   scene.fogMode = Scene.FOGMODE_EXP2
-  scene.fogColor = new Color3(0.46, 0.67, 0.93)
-  scene.fogDensity = 0.006
+  scene.fogColor = new Color3(0.7, 0.82, 0.96)
+  scene.fogDensity = 0.005
 
   const ambient = new HemisphericLight('hemi', new Vector3(0, 1, 0), scene)
-  ambient.intensity = 0.7; ambient.groundColor = new Color3(0.18, 0.18, 0.2)
+  ambient.intensity = 0.8; ambient.groundColor = new Color3(0.22, 0.26, 0.2)
+  ambient.diffuse = new Color3(0.95, 0.97, 1.0)
 
-  const sun = new DirectionalLight('sun', new Vector3(-0.5, -1, -0.3), scene)
-  sun.position = new Vector3(20, 40, 20); sun.intensity = 1.7
+  const sun = new DirectionalLight('sun', new Vector3(-0.5, -1.1, -0.35), scene)
+  sun.position = new Vector3(22, 44, 22); sun.intensity = 1.8; sun.diffuse = new Color3(1, 0.98, 0.92)
   const sg = new ShadowGenerator(1024, sun)
   sg.usePoissonSampling = true; sg.bias = 0.0004
 
-  // Ground
+  // Sky dome (vertical gradient, follows the camera)
+  const sky = MeshBuilder.CreateSphere('sky', { diameter: 280, segments: 16 }, scene)
+  sky.infiniteDistance = true; sky.isPickable = false
+  const skyMat = new StandardMaterial('skyMat', scene)
+  skyMat.backFaceCulling = false; skyMat.disableLighting = true; skyMat.diffuseColor = Color3.Black()
+  const skyTex = new DynamicTexture('skyTex', { width: 8, height: 256 }, scene)
+  const skc = skyTex.getContext()
+  const sgrad = skc.createLinearGradient(0, 0, 0, 256)
+  sgrad.addColorStop(0, '#2f6fd0'); sgrad.addColorStop(0.55, '#7db1ee'); sgrad.addColorStop(1, '#cfe6ff')
+  skc.fillStyle = sgrad; skc.fillRect(0, 0, 8, 256); skyTex.update()
+  skyMat.emissiveTexture = skyTex; sky.material = skyMat
+
+  // Field with markings + team base zones
   const ground = MeshBuilder.CreateGround('ground', { width: ARENA_HALF * 2, height: ARENA_HALF * 2 }, scene)
   ground.receiveShadows = true; ground.isPickable = false
-  const gtex = new DynamicTexture('gt', { width: 512, height: 512 }, scene)
+  const G = 1024, gtex = new DynamicTexture('gt', { width: G, height: G }, scene)
   const gc = gtex.getContext()
-  gc.fillStyle = '#3a4a3a'; gc.fillRect(0, 0, 512, 512)
-  gc.strokeStyle = 'rgba(255,255,255,0.08)'; gc.lineWidth = 2
-  for (let i = 0; i <= 512; i += 32) { gc.beginPath(); gc.moveTo(i, 0); gc.lineTo(i, 512); gc.stroke(); gc.beginPath(); gc.moveTo(0, i); gc.lineTo(512, i); gc.stroke() }
+  gc.fillStyle = '#3f7a3a'; gc.fillRect(0, 0, G, G)
+  for (let i = 0; i < G; i += 64) { gc.fillStyle = (i / 64) % 2 ? 'rgba(255,255,255,0.035)' : 'rgba(0,0,0,0.04)'; gc.fillRect(0, i, G, 64) }
+  // base zones: rood boven (+z), blauw onder (−z). Texture v grows toward −z.
+  gc.globalAlpha = 0.22
+  gc.fillStyle = '#e63946'; gc.fillRect(0, 0, G, G * 0.16)
+  gc.fillStyle = '#1d6fd0'; gc.fillRect(0, G - G * 0.16, G, G * 0.16)
+  gc.globalAlpha = 1
+  gc.strokeStyle = 'rgba(255,255,255,0.85)'; gc.lineWidth = 8
+  gc.strokeRect(18, 18, G - 36, G - 36)
+  gc.beginPath(); gc.moveTo(18, G / 2); gc.lineTo(G - 18, G / 2); gc.stroke()
+  gc.beginPath(); gc.arc(G / 2, G / 2, 90, 0, Math.PI * 2); gc.stroke()
   gtex.update()
   const gmat = new StandardMaterial('gmat', scene)
   gmat.diffuseTexture = gtex; gmat.specularColor = Color3.Black(); ground.material = gmat
 
-  // Perimeter walls
-  const wallMat = new StandardMaterial('wallMat', scene)
-  wallMat.diffuseColor = new Color3(0.35, 0.37, 0.42); wallMat.specularColor = Color3.Black()
-  const WALL_H = 2.4
-  const mkWall = (w, d, x, z) => {
-    const wall = MeshBuilder.CreateBox('wall', { width: w, height: WALL_H, depth: d }, scene)
-    wall.position.set(x, WALL_H / 2, z); wall.material = wallMat; wall.receiveShadows = true
+  // Perimeter netting (semi-transparent)
+  const netTex = new DynamicTexture('netTex', { width: 256, height: 128 }, scene)
+  netTex.hasAlpha = true
+  const nc = netTex.getContext(); nc.clearRect(0, 0, 256, 128)
+  nc.strokeStyle = 'rgba(255,255,255,0.5)'; nc.lineWidth = 2
+  for (let x = 0; x <= 256; x += 16) { nc.beginPath(); nc.moveTo(x, 0); nc.lineTo(x, 128); nc.stroke() }
+  for (let y = 0; y <= 128; y += 16) { nc.beginPath(); nc.moveTo(0, y); nc.lineTo(256, y); nc.stroke() }
+  netTex.update()
+  const WALL_H = 2.6, S = ARENA_HALF
+  const mkWall = (w, x, z, ry) => {
+    const wall = MeshBuilder.CreatePlane('wall', { width: w, height: WALL_H }, scene)
+    wall.position.set(x, WALL_H / 2, z); wall.rotation.y = ry; wall.isPickable = false
+    const nm = new StandardMaterial('nm' + Math.random(), scene)
+    nm.diffuseTexture = netTex; nm.diffuseTexture.hasAlpha = true; nm.useAlphaFromDiffuseTexture = true
+    nm.backFaceCulling = false; nm.specularColor = Color3.Black(); nm.emissiveColor = new Color3(0.2, 0.2, 0.24)
+    nm.diffuseColor = new Color3(0.2, 0.22, 0.26)
+    const scaled = nm.diffuseTexture.clone(); scaled.uScale = w / 4; scaled.vScale = WALL_H / 4
+    nm.diffuseTexture = scaled; wall.material = nm
   }
-  const S = ARENA_HALF
-  mkWall(S * 2 + 1, 0.5, 0,  S); mkWall(S * 2 + 1, 0.5, 0, -S)
-  mkWall(0.5, S * 2 + 1,  S, 0); mkWall(0.5, S * 2 + 1, -S, 0)
+  mkWall(S * 2, 0,  S, 0); mkWall(S * 2, 0, -S, 0)
+  mkWall(S * 2,  S, 0, Math.PI / 2); mkWall(S * 2, -S, 0, Math.PI / 2)
 
-  // Cover crates
-  const crateMat = new StandardMaterial('crate', scene)
-  const ctex = new DynamicTexture('ct', { width: 128, height: 128 }, scene)
-  const cc = ctex.getContext()
-  cc.fillStyle = '#8a5a2b'; cc.fillRect(0, 0, 128, 128)
-  cc.strokeStyle = '#5e3c1c'; cc.lineWidth = 6; cc.strokeRect(4, 4, 120, 120)
-  cc.beginPath(); cc.moveTo(0, 0); cc.lineTo(128, 128); cc.moveTo(128, 0); cc.lineTo(0, 128); cc.stroke()
-  ctex.update(); crateMat.diffuseTexture = ctex; crateMat.specularColor = Color3.Black()
-  OBSTACLES.forEach(o => {
-    const c = MeshBuilder.CreateBox('crate', { width: o.hw * 2, height: 1.4, depth: o.hd * 2 }, scene)
-    c.position.set(o.x, 0.7, o.z); c.material = crateMat; c.receiveShadows = true; sg.addShadowCaster(c)
+  // Inflatable bunkers at the cover positions (mirror the server obstacles)
+  const BUNK = ['#e63946', '#1d6fd0', '#f4c430', '#16a34a']
+  const H = 1.4
+  OBSTACLES.forEach((o, i) => {
+    const col = Color3.FromHexString(BUNK[i % BUNK.length])
+    const mat = new StandardMaterial('bunk' + i, scene)
+    mat.diffuseColor = col; mat.emissiveColor = col.scale(0.16)
+    mat.specularColor = new Color3(0.35, 0.35, 0.35); mat.specularPower = 32
+    let body
+    if (Math.abs(o.hw - o.hd) < 0.7) {
+      // squarish → fat inflatable pillar with a rounded cap
+      const dia = Math.max(o.hw, o.hd) * 2
+      body = MeshBuilder.CreateCylinder('bunk', { height: H, diameter: dia, tessellation: 18 }, scene)
+      body.position.set(o.x, H / 2, o.z)
+      const cap = MeshBuilder.CreateSphere('cap', { diameter: dia, segments: 12 }, scene)
+      cap.scaling.y = 0.4; cap.position.set(o.x, H, o.z); cap.material = mat
+      cap.receiveShadows = true; sg.addShadowCaster(cap)
+    } else {
+      // elongated → rounded inflatable bar
+      body = MeshBuilder.CreateBox('bunk', { width: o.hw * 2, height: H, depth: o.hd * 2 }, scene)
+      body.position.set(o.x, H / 2, o.z)
+    }
+    body.material = mat; body.receiveShadows = true; sg.addShadowCaster(body)
   })
 
   return sg
@@ -382,8 +450,8 @@ function initScene(canvas, { localSessionId, getRoomState, sendInput, sendShoot,
   const splatMat0 = new StandardMaterial('sp0', scene); splatMat0.disableLighting = true; splatMat0.diffuseColor = Color3.FromHexString(TEAM_HEX[0]); splatMat0.emissiveColor = Color3.FromHexString(TEAM_HEX[0])
   const splatMat1 = new StandardMaterial('sp1', scene); splatMat1.disableLighting = true; splatMat1.diffuseColor = Color3.FromHexString(TEAM_HEX[1]); splatMat1.emissiveColor = Color3.FromHexString(TEAM_HEX[1])
   const addSplat = (x, y, z, team) => {
-    const b = MeshBuilder.CreateSphere('splat', { diameter: 0.6, segments: 6 }, scene)
-    b.scaling.y = 0.35; b.position.set(x, Math.max(0.05, y), z); b.isPickable = false
+    const b = MeshBuilder.CreateSphere('splat', { diameter: 0.42, segments: 6 }, scene)
+    b.scaling.y = 0.32; b.position.set(x, Math.max(0.05, y), z); b.isPickable = false
     b.material = (team === 0 ? splatMat0 : splatMat1).clone('spm')
     splats.push({ mesh: b, life: 3 })
     if (splats.length > 60) { const s = splats.shift(); s.mesh.dispose() }
@@ -441,7 +509,7 @@ function initScene(canvas, { localSessionId, getRoomState, sendInput, sendShoot,
           // soft reconcile toward server
           pred.x += (p.x - pred.x) * 0.08; pred.z += (p.z - pred.z) * 0.08
         } else { pred.x = p.x; pred.z = p.z }
-        inst.setPose(pred.x, pred.z, look.yaw, p.alive && (Math.abs(wx) + Math.abs(wz)) > 0.05)
+        inst.setPose(pred.x, pred.z, look.yaw, p.alive && (Math.abs(wx) + Math.abs(wz)) > 0.05, look.pitch)
       } else {
         inst.setTarget(p.x, p.z, p.rotY, p.moving)
         inst.tick(dt)
@@ -458,7 +526,7 @@ function initScene(canvas, { localSessionId, getRoomState, sendInput, sendShoot,
       live.add(id)
       let m = shotMeshes.get(id)
       if (!m) {
-        m = MeshBuilder.CreateSphere('shot', { diameter: PROJ_RADIUS * 2, segments: 6 }, scene)
+        m = MeshBuilder.CreateSphere('shot', { diameter: 0.16, segments: 6 }, scene)
         const mat = new StandardMaterial('shotm', scene); mat.disableLighting = true
         const c = Color3.FromHexString(TEAM_HEX[s.team]); mat.emissiveColor = c; mat.diffuseColor = c
         m.material = mat; m.isPickable = false
@@ -485,6 +553,7 @@ function initScene(canvas, { localSessionId, getRoomState, sendInput, sendShoot,
 
     // ── Camera ──
     const me = players.get(localSessionId)
+    if (me) me.setBodyVisible(camModeRef.current !== 'first')   // hide own body in 1st person
     const px = (me && me._dx !== undefined) ? me._dx : (lp?.x ?? 0)
     const pz = (me && me._dz !== undefined) ? me._dz : (lp?.z ?? 0)
     const fX = Math.sin(look.yaw) * Math.cos(look.pitch)
@@ -498,7 +567,7 @@ function initScene(canvas, { localSessionId, getRoomState, sendInput, sendShoot,
       wantPos = new Vector3(px - Math.sin(look.yaw) * 5 - fX * 1.5, 3.2 - fY * 2.5, pz - Math.cos(look.yaw) * 5 - fZ * 1.5)
       wantTgt = new Vector3(px + fX * 5, 1.4 + fY * 5, pz + fZ * 5)
     }
-    const cl = 1 - Math.exp(-dt * 18)
+    const cl = 1 - Math.exp(-dt * (camModeRef.current === 'first' ? 45 : 18))
     camPos.addInPlace(wantPos.subtract(camPos).scale(cl))
     camTgt.addInPlace(wantTgt.subtract(camTgt).scale(cl))
     camera.position.copyFrom(camPos); camera.setTarget(camTgt)
