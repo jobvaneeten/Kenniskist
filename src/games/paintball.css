@@ -42,6 +42,26 @@
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
 }
 
+.pb-crouch-btn {
+  position: fixed;
+  left: 26px; bottom: 168px;
+  z-index: 100;
+  width: 74px; height: 74px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  color: #fff; font-size: 1.5rem; font-weight: 900;
+  font-family: inherit; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: radial-gradient(circle at 50% 35%, #6a7180, #444b58);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+}
+.pb-crouch-btn span { font-size: 0.58rem; font-weight: 800; letter-spacing: 0.03em; }
+.pb-crouch-btn:active { transform: scale(0.92); }
+.pb-crouch-btn.pb-crouch-on {
+  background: radial-gradient(circle at 50% 35%, #4dff7a, #16a34a);
+  box-shadow: 0 0 14px rgba(74, 255, 122, 0.7);
+}
+
 .pb-jump-btn {
   width: 84px; height: 84px;
   border-radius: 50%;

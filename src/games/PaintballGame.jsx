@@ -171,6 +171,8 @@ class PlayerInstance {
         { key: 'geraakt',  file: 'emotegeraakt.glb',  stripRoot: true },
         { key: 'herladen', file: 'emoteherladen.glb', stripRoot: true },
         { key: 'springen', file: 'emotespringen.glb', stripRoot: true },
+        { key: 'hurken',      file: 'emotehurken.glb',      stripRoot: true },
+        { key: 'hurkenlopen', file: 'emotehurkenlopen.glb', stripRoot: true },
       ]
       let pending = ANIMS.length
       const done = () => {
@@ -206,14 +208,23 @@ class PlayerInstance {
   }
 
   _stopAll() { Object.values(this._anims).forEach(g => g?.stop()) }
-  _playIdle()  { if (this._dead || this._state === 'idle') return; this._stopAll(); this._anims.mikken?.play(true); this._state = 'idle' }
-  _playMove()  { if (this._dead || this._state === 'move') return; this._stopAll(); this._anims.rennen?.play(true); this._state = 'move' }
-  _locomotion(moving) {
-    if (this._dead || this._state === 'shoot' || this._state === 'reload' || this._state === 'jump') return
-    if (moving) this._playMove(); else this._playIdle()
+  _setLoop(key, state) {
+    if (this._dead || this._state === state) return
+    this._stopAll(); this._anims[key]?.play(true); this._state = state
   }
+  _playIdle()       { this._setLoop('mikken', 'idle') }
+  _playMove()       { this._setLoop('rennen', 'move') }
+  _playCrouchIdle() { this._setLoop('hurken', 'crouchidle') }
+  _playCrouchMove() { this._setLoop('hurkenlopen', 'crouchmove') }
+  _locomotion(moving, crouch) {
+    this._lastMoving = !!moving; this._lastCrouch = !!crouch
+    if (this._dead || this._state === 'shoot' || this._state === 'reload' || this._state === 'jump') return
+    if (crouch) { if (moving) this._playCrouchMove(); else this._playCrouchIdle() }
+    else        { if (moving) this._playMove(); else this._playIdle() }
+  }
+  _resumeLoco() { this._state = ''; this._locomotion(this._lastMoving, this._lastCrouch) }
   playJump() { if (!this._dead) this._playOnce('springen', 'jump', 0.85) }
-  // Play a one-shot clip scaled to `durationSec` and reliably return to idle
+  // Play a one-shot clip scaled to `durationSec` and reliably resume locomotion
   // after that time (the group end-observable is not dependable on clones).
   _playOnce(key, state, durationSec) {
     const g = this._anims[key]
@@ -227,12 +238,10 @@ class PlayerInstance {
     g.speedRatio = len / durationSec
     g.play(false)
     clearTimeout(this._stateTimer)
-    this._stateTimer = setTimeout(() => {
-      if (this._state === state) { this._state = 'idle'; this._playIdle() }
-    }, durationSec * 1000)
+    this._stateTimer = setTimeout(() => { if (this._state === state) this._resumeLoco() }, durationSec * 1000)
   }
   playShoot() {
-    if (this._dead || this._state === 'move' || this._state === 'reload' || this._state === 'jump') return
+    if (this._dead || this._state === 'move' || this._state === 'crouchmove' || this._state === 'reload' || this._state === 'jump') return
     this._playOnce('schieten', 'shoot', 0.5)
   }
   playReload() { if (!this._dead) this._playOnce('herladen', 'reload', 1.0) }
@@ -241,17 +250,17 @@ class PlayerInstance {
     this._dead = dead
     clearTimeout(this._stateTimer)
     if (dead) { this._stopAll(); this._state = 'dead'; this._anims.geraakt?.play(false) }
-    else { this._state = 'idle'; this._playIdle() }
+    else { this._resumeLoco() }
   }
 
-  setTarget(x, z, rotY, moving, y = 0) {
-    this._tx = x; this._tz = z; this._trotY = rotY; this._tmoving = !!moving; this._ty = y
+  setTarget(x, z, rotY, moving, y = 0, crouch = false) {
+    this._tx = x; this._tz = z; this._trotY = rotY; this._tmoving = !!moving; this._ty = y; this._tcrouch = !!crouch
     if (this._dx === undefined) { this._dx = x; this._dz = z; this._drotY = rotY; this._dy = y }
   }
-  setPose(x, z, rotY, moving, pitch = 0, baseY = 0) {
+  setPose(x, z, rotY, moving, pitch = 0, baseY = 0, crouch = false) {
     if (!this.root) return
     this._dx = x; this._dz = z; this._drotY = rotY; this._dy = baseY
-    this._apply(x, z, rotY, pitch, baseY); this._locomotion(moving)
+    this._apply(x, z, rotY, pitch, baseY); this._locomotion(moving, crouch)
   }
   setBodyVisible(v) {
     if (this._bodyVisible === v) return
@@ -302,7 +311,7 @@ class PlayerInstance {
     while (diff < -Math.PI) diff += Math.PI * 2
     this._drotY += diff * L
     this._apply(this._dx, this._dz, this._drotY, 0, this._dy)
-    this._locomotion(this._tmoving)
+    this._locomotion(this._tmoving, this._tcrouch)
   }
   onReady(cb) { if (this._ready) cb(); else this._onReady = cb }
   dispose() {
@@ -451,6 +460,7 @@ function initScene(canvas, { localSessionId, getRoomState, sendInput, sendShoot,
   const splats = []
   const joyRef = { current: { x: 0, z: 0 } }
   const fireRef = { current: false }
+  const crouchRef = { current: false }      // on-screen crouch toggle
   const camModeRef = { current: 'third' }   // 'third' | 'first'
   const look = { yaw: 0, pitch: 0 }
   const keys = {}
@@ -535,7 +545,8 @@ function initScene(canvas, { localSessionId, getRoomState, sendInput, sendShoot,
     const rgtX = Math.cos(look.yaw), rgtZ = -Math.sin(look.yaw)
     let wx = rgtX * r + fwdX * f, wz = rgtZ * r + fwdZ * f
     const wl = Math.hypot(wx, wz); if (wl > 1) { wx /= wl; wz /= wl }
-    sendInput({ x: wx, z: wz, rotY: look.yaw })
+    const crouch = crouchRef.current || !!keys['ControlLeft'] || !!keys['ControlRight']
+    sendInput({ x: wx, z: wz, rotY: look.yaw, crouch })
 
     // ── Fire (auto while held, server enforces cooldown) ──
     const now = performance.now() / 1000
@@ -578,17 +589,18 @@ function initScene(canvas, { localSessionId, getRoomState, sendInput, sendShoot,
         localY += (p.y - localY) * (1 - Math.exp(-dt * 20))   // smoothed vertical (server-authoritative)
         if (p.alive) {
           const mvx = p.reloading ? 0 : wx, mvz = p.reloading ? 0 : wz   // stilstaan tijdens reload
-          const pr = resolvePos(pred.x + mvx * PLAYER_SPEED * dt, pred.z + mvz * PLAYER_SPEED * dt, PLAYER_RADIUS, p.y)
+          const spd = crouch ? PLAYER_SPEED * 0.4 : PLAYER_SPEED          // 2,5x trager bij hurken
+          const pr = resolvePos(pred.x + mvx * spd * dt, pred.z + mvz * spd * dt, PLAYER_RADIUS, p.y)
           pred.x = pr.x; pred.z = pr.z
           // soft reconcile toward server
           pred.x += (p.x - pred.x) * 0.08; pred.z += (p.z - pred.z) * 0.08
-          inst.setPose(pred.x, pred.z, look.yaw, !p.reloading && (Math.abs(wx) + Math.abs(wz)) > 0.05, look.pitch, localY)
+          inst.setPose(pred.x, pred.z, look.yaw, !p.reloading && (Math.abs(wx) + Math.abs(wz)) > 0.05, look.pitch, localY, crouch)
         } else {
           pred.x = p.x; pred.z = p.z
           inst.setPose(p.x, p.z, p.rotY, false, 0, p.y)   // frozen corpse pose
         }
       } else {
-        inst.setTarget(p.x, p.z, p.rotY, p.moving, p.y)
+        inst.setTarget(p.x, p.z, p.rotY, p.moving, p.y, p.crouching)
         inst.tick(dt)
       }
     })
@@ -654,7 +666,7 @@ function initScene(canvas, { localSessionId, getRoomState, sendInput, sendShoot,
   window.addEventListener('resize', onResize)
 
   return {
-    joyRef, fireRef, camModeRef,
+    joyRef, fireRef, crouchRef, camModeRef,
     pushSplat: (d) => addSplat(d.x, d.y, d.z, d.nx, d.ny, d.nz, d.team),
     dispose: () => {
       window.removeEventListener('keydown', onKD); window.removeEventListener('keyup', onKU)
@@ -734,6 +746,7 @@ export default function PaintballGame({ onBack }) {
   const [players, setPlayers] = useState([])
   const [lobbyCode, setLobbyCode] = useState('')
   const [camMode, setCamMode] = useState('third')
+  const [crouchOn, setCrouchOn] = useState(false)
 
   const canvasRef = useRef(null)
   const sceneRef = useRef(null)
@@ -840,6 +853,10 @@ export default function PaintballGame({ onBack }) {
       )}
 
       {sceneRef.current && <VirtualJoystick joyRef={sceneRef.current.joyRef} />}
+
+      <button className={'pb-crouch-btn' + (crouchOn ? ' pb-crouch-on' : '')}
+        onPointerDown={e => { e.preventDefault(); const n = !crouchOn; setCrouchOn(n); if (sceneRef.current) sceneRef.current.crouchRef.current = n }}
+      >🦆<span>Hurk{crouchOn ? ' AAN' : ''}</span></button>
 
       <div className="rg-actions">
         <button className="pb-fire-btn"
