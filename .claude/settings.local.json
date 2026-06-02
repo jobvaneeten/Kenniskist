@@ -82,7 +82,8 @@
       "Bash(node -e 'const fs=require\\(\"fs\"\\);[\"emotehurken.glb\",\"emotehurkenlopen.glb\"].forEach\\(f=>{const b=fs.readFileSync\\(\"public/\"+f\\);const j=JSON.parse\\(b.toString\\(\"utf8\",20,20+b.readUInt32LE\\(12\\)\\)\\);console.log\\(f,\"anims:\"+\\(j.animations||[]\\).length,\"joints:\"+\\(j.skins?j.skins[0].joints.length:0\\)\\)}\\)')",
       "Bash(mv \"public/Crouch Idle.fbx\" \"public/Crouch Walking.fbx\" animatie_bronnen/schietanimaties/)",
       "Bash(\"/c/Program Files/Blender Foundation/Blender 5.0/blender.exe\" --background --python convert_crouchreload.py)",
-      "Bash(node -e 'const fs=require\\(\"fs\"\\);const b=fs.readFileSync\\(\"public/emotehurkenreload.glb\"\\);const j=JSON.parse\\(b.toString\\(\"utf8\",20,20+b.readUInt32LE\\(12\\)\\)\\);console.log\\(\"anims:\"+\\(j.animations||[]\\).length,\"joints:\"+\\(j.skins?j.skins[0].joints.length:0\\)\\)')"
+      "Bash(node -e 'const fs=require\\(\"fs\"\\);const b=fs.readFileSync\\(\"public/emotehurkenreload.glb\"\\);const j=JSON.parse\\(b.toString\\(\"utf8\",20,20+b.readUInt32LE\\(12\\)\\)\\);console.log\\(\"anims:\"+\\(j.animations||[]\\).length,\"joints:\"+\\(j.skins?j.skins[0].joints.length:0\\)\\)')",
+      "Bash(ls -la map.glb)"
     ]
   }
 }

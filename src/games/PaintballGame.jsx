@@ -17,45 +17,47 @@ import './paintball.css'
 const SERVER_URL = 'wss://kenniskist-server.onrender.com'
 
 // ── Arena constants (mirror the server exactly) ────────────────────────
-const ARENA_HALF    = 30
+const ARENA_X        = 25
+const ARENA_Z        = 50
 const PLAYER_RADIUS  = 0.6
 const PLAYER_SPEED   = 5.2
 const PROJ_RADIUS    = 0.18
 const MATCH_TIME     = 120
 const STEP_UP = 0.3
-// Urban compound — MUST stay identical to the server OBSTACLES list.
+// Collision boxes from public/map.glb — MUST match the server OBSTACLES list.
 const OBSTACLES = [
-  { x:   0, z:  28, hw: 28,  hd: 0.5, top: 3.2, kind: 'g' },
-  { x:   0, z: -28, hw: 28,  hd: 0.5, top: 3.2, kind: 'g' },
-  { x:  28, z:   0, hw: 0.5, hd: 28,  top: 3.2, kind: 'g' },
-  { x: -28, z:   0, hw: 0.5, hd: 28,  top: 3.2, kind: 'g' },
-  { x:   0, z:  23, hw: 4.0, hd: 0.4, top: 2.4, kind: 'b' },
-  { x:  -4, z:  20, hw: 0.4, hd: 3.0, top: 2.4, kind: 'b' },
-  { x:   4, z:  20, hw: 0.4, hd: 3.0, top: 2.4, kind: 'b' },
-  { x:-2.75, z: 17, hw: 1.25, hd: 0.4, top: 2.4, kind: 'b' },
-  { x: 2.75, z: 17, hw: 1.25, hd: 0.4, top: 2.4, kind: 'b' },
-  { x: -13, z:   3, hw: 3.0, hd: 3.0, top: 2.6, kind: 'r' },
-  { x: -13, z:   8, hw: 1.6, hd: 1.3, top: 1.3, kind: 's' },
-  { x:  13, z:   3, hw: 3.0, hd: 3.0, top: 2.6, kind: 'r' },
-  { x:  13, z:   8, hw: 1.6, hd: 1.3, top: 1.3, kind: 's' },
-  { x: -20, z:  -8, hw: 2.5, hd: 4.0, top: 2.4, kind: 'b' },
-  { x:  20, z:  -8, hw: 2.5, hd: 4.0, top: 2.4, kind: 'b' },
-  { x: -20, z:  12, hw: 2.5, hd: 4.0, top: 2.4, kind: 'b' },
-  { x:  20, z:  12, hw: 2.5, hd: 4.0, top: 2.4, kind: 'b' },
-  { x:   0, z:   3, hw: 2.5, hd: 2.5, top: 1.5, kind: 'c' },
-  { x:  -7, z:  -5, hw: 1.3, hd: 1.3, top: 1.4, kind: 'c' },
-  { x:   7, z:  -5, hw: 1.3, hd: 1.3, top: 1.4, kind: 'c' },
-  { x:   0, z:  11, hw: 1.8, hd: 1.8, top: 1.4, kind: 'c' },
-  { x:   0, z: -22, hw: 5.0, hd: 0.5, top: 1.4, kind: 'c' },
-  { x:  -9, z: -21, hw: 1.5, hd: 1.5, top: 1.4, kind: 'c' },
-  { x:   9, z: -21, hw: 1.5, hd: 1.5, top: 1.4, kind: 'c' },
+  { x: 0, z: -42.6, hw: 4.1, hd: 2.7, top: 3 },
+  { x: -9.1, z: 37.7, hw: 1.3, hd: 1.3, top: 2.8 },
+  { x: 13.6, z: -33.3, hw: 7.9, hd: 5.2, top: 6.4 },
+  { x: 0, z: 24.4, hw: 1.7, hd: 1.7, top: 3.5 },
+  { x: -18.6, z: 24.4, hw: 1.7, hd: 2.7, top: 3.6 },
+  { x: 18.6, z: -24.4, hw: 1.7, hd: 2.7, top: 3.6 },
+  { x: 18.6, z: 0, hw: 0.8, hd: 18.9, top: 3.7 },
+  { x: -5.8, z: -30, hw: 3.2, hd: 0.8, top: 2.8 },
+  { x: -4.1, z: 30, hw: 2.4, hd: 0.8, top: 2.8 },
+  { x: 7, z: 30, hw: 3.2, hd: 0.8, top: 2.8 },
+  { x: 4.1, z: -30, hw: 2.4, hd: 0.8, top: 2.8 },
+  { x: 20.6, z: -16.3, hw: 1.3, hd: 1.3, top: 2.8 },
+  { x: -20.6, z: 16.3, hw: 1.3, hd: 1.3, top: 2.8 },
+  { x: -23.6, z: -16.3, hw: 1.3, hd: 1.3, top: 2.8 },
+  { x: 23.6, z: 16.3, hw: 1.3, hd: 1.3, top: 2.8 },
+  { x: 0, z: 0, hw: 13.6, hd: 8.1, top: 5.2 },
+  { x: -6.3, z: -4.3, hw: 1, hd: 1, top: 2.7 },
+  { x: 0, z: 42.6, hw: 4.1, hd: 2.7, top: 3 },
+  { x: 0, z: -24.4, hw: 1.7, hd: 1.7, top: 3.5 },
+  { x: 6.3, z: 4.3, hw: 1, hd: 1, top: 2.7 },
+  { x: 9.1, z: -37.7, hw: 1.3, hd: 1.3, top: 2.8 },
+  { x: -13.6, z: 33.3, hw: 7.9, hd: 5.2, top: 6.4 },
+  { x: -14, z: -30, hw: 5, hd: 2, top: 4.5 },
+  { x: 14.5, z: 30, hw: 5, hd: 2, top: 4.5 },
+  { x: -18.6, z: 0, hw: 0.8, hd: 18.9, top: 3.7 },
 ]
 const TEAM_HEX = ['#e63946', '#1d6fd0']   // 0 rood, 1 blauw
 
 function resolvePos(cx, cz, rad, feetY = 0) {
-  const lim = ARENA_HALF - rad
-  let x = Math.max(-lim, Math.min(lim, cx))
-  let z = Math.max(-lim, Math.min(lim, cz))
+  const lx = ARENA_X - rad, lz = ARENA_Z - rad
+  let x = Math.max(-lx, Math.min(lx, cx))
+  let z = Math.max(-lz, Math.min(lz, cz))
   for (const o of OBSTACLES) {
     if (o.top <= feetY + 0.15) continue   // standing on/above it → no wall
     const minx = o.x - o.hw - rad, maxx = o.x + o.hw + rad
@@ -362,48 +364,17 @@ function buildWorld(scene) {
   skc.fillStyle = sgrad; skc.fillRect(0, 0, 8, 256); skyTex.update()
   skyMat.emissiveTexture = skyTex; sky.material = skyMat
 
-  // Sandy ground with team base zones (rood = +z, blauw = −z)
-  const ground = MeshBuilder.CreateGround('ground', { width: ARENA_HALF * 2, height: ARENA_HALF * 2 }, scene)
-  ground.receiveShadows = true; ground.isPickable = false
-  const G = 1024, gtex = new DynamicTexture('gt', { width: G, height: G }, scene)
-  const gc = gtex.getContext()
-  gc.fillStyle = '#c2a878'; gc.fillRect(0, 0, G, G)
-  for (let i = 0; i < 9000; i++) {
-    gc.fillStyle = Math.random() > 0.5 ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)'
-    gc.fillRect(Math.random() * G, Math.random() * G, 3, 3)
-  }
-  gc.globalAlpha = 0.3
-  gc.fillStyle = '#c23a30'; gc.fillRect(0, 0, G, G * 0.13)
-  gc.fillStyle = '#2a64c8'; gc.fillRect(0, G - G * 0.13, G, G * 0.13)
-  gc.globalAlpha = 1
-  gtex.update()
-  const gmat = new StandardMaterial('gmat', scene)
-  gmat.diffuseTexture = gtex; gmat.specularColor = Color3.Black(); ground.material = gmat
-
-  // Compound structures (mirror the server obstacles). Sand buildings, grey
-  // ring wall; climbable surfaces get a brighter lid so the top reads clearly.
-  const matCache = {}
-  const getMat = (hex, bright) => {
-    const key = hex + (bright ? 'b' : '')
-    if (matCache[key]) return matCache[key]
-    const m = new StandardMaterial('m' + key, scene)
-    const c = Color3.FromHexString(hex)
-    m.diffuseColor = bright ? c.scale(1.22) : c
-    m.specularColor = new Color3(0.1, 0.1, 0.1)
-    if (bright) m.emissiveColor = c.scale(0.16)
-    matCache[key] = m; return m
-  }
-  const COLOR = { g: '#8d8a82', b: '#cdb185', r: '#c7a974', s: '#d8c08a', c: '#bda474' }
-  OBSTACLES.forEach((o) => {
-    const hex = COLOR[o.kind] || '#bda474'
-    const box = MeshBuilder.CreateBox('cover', { width: o.hw * 2, height: o.top, depth: o.hd * 2 }, scene)
-    box.position.set(o.x, o.top / 2, o.z); box.material = getMat(hex, false)
-    box.receiveShadows = true; sg.addShadowCaster(box)
-    if (o.kind === 'r' || o.kind === 's' || o.kind === 'c') {
-      const lid = MeshBuilder.CreateBox('coverTop', { width: o.hw * 2, height: 0.14, depth: o.hd * 2 }, scene)
-      lid.position.set(o.x, o.top - 0.07, o.z); lid.material = getMat(hex, true); lid.receiveShadows = true
-    }
-  })
+  // The actual map geometry (public/map.glb). Visual only; collision uses the
+  // OBSTACLES boxes derived from it. Floor sits at y≈0.
+  SceneLoader.ImportMesh('', '/', 'map.glb', scene, (meshes) => {
+    meshes.forEach(m => {
+      m.isPickable = false
+      if (m.getTotalVertices && m.getTotalVertices() > 0) {
+        m.receiveShadows = true
+        try { sg.getShadowMap()?.renderList?.push(m) } catch {}
+      }
+    })
+  }, null, (_s, msg, err) => console.error('map.glb load error:', msg, err))
 
   return sg
 }
