@@ -60,7 +60,19 @@
       "mcp__blender__execute_blender_code",
       "mcp__blender__get_viewport_screenshot",
       "Bash(mkdir -p public/twemoji)",
-      "Bash(git rm *)"
+      "Bash(git rm *)",
+      "Bash(awk '{print $9, $5}')",
+      "Bash(node build_iep.cjs)",
+      "Bash(xargs echo \"imgs in dist:\")",
+      "Bash(xargs echo \"json in dist:\")",
+      "Bash(where blender *)",
+      "Read(//c/Program Files/Blender Foundation//**)",
+      "Bash(where FBX2glTF)",
+      "Bash(npm ls *)",
+      "Bash(\"/c/Program Files/Blender Foundation/Blender 5.0/blender.exe\" --background --python convert.py)",
+      "Bash(\"/c/Program Files/Blender Foundation/Blender 5.0/blender.exe\" --background --python convert_one.py)",
+      "Bash(mv \"public/Falling Back Death.fbx\" animatie_bronnen/schietanimaties/)",
+      "Bash(xargs echo \"anim glbs in dist:\")"
     ]
   }
 }

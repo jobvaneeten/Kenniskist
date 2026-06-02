@@ -126,7 +126,7 @@ function applyItem(mesh, item, scene) {
 }
 
 // ── Component ─────────────────────────────────────────────────────
-export default function Wardrobe({ onBack, onPlay3D, onPlayRocket, unlockedColors = {} }) {
+export default function Wardrobe({ onBack, onPlay3D, onPlayRocket, onPlayPaintball, unlockedColors = {} }) {
   const canvasRef      = useRef(null)
   const sceneRef       = useRef(null)
   const skeletonRef    = useRef(null)
@@ -495,6 +495,11 @@ export default function Wardrobe({ onBack, onPlay3D, onPlayRocket, unlockedColor
         {!loading && onPlayRocket && (
           <button className="play3d-btn play-rocket-btn" onClick={onPlayRocket}>
             ⚽ Potje voetballen
+          </button>
+        )}
+        {!loading && onPlayPaintball && (
+          <button className="play3d-btn play-paintball-btn" onClick={onPlayPaintball}>
+            🎯 Paintball
           </button>
         )}
       </div>

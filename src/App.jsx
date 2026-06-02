@@ -4,6 +4,7 @@ import Wardrobe        from './Wardrobe'
 import Shop            from './Shop'
 import GameMenu        from './GameMenu'
 import RocketGame      from './games/RocketGame'
+import PaintballGame   from './games/PaintballGame'
 import { allUnlockedMap } from './itemsCatalog'
 
 const CODES = { pabo: 100000 }
@@ -178,6 +179,7 @@ export default function App() {
         onBack={goMenu}
         onPlay3D={() => setScreen('football3d')}
         onPlayRocket={() => setScreen('rocket')}
+        onPlayPaintball={() => setScreen('paintball')}
         unlockedColors={unlockedColors}
       />
     </>
@@ -189,6 +191,10 @@ export default function App() {
 
   if (screen === 'rocket') return (
     <RocketGame onBack={() => setScreen('wardrobe')} />
+  )
+
+  if (screen === 'paintball') return (
+    <PaintballGame onBack={() => setScreen('wardrobe')} />
   )
 
   if (screen === 'shop') return (
