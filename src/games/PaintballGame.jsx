@@ -17,32 +17,38 @@ import './paintball.css'
 const SERVER_URL = 'wss://kenniskist-server.onrender.com'
 
 // ── Arena constants (mirror the server exactly) ────────────────────────
-const ARENA_HALF    = 38
+const ARENA_HALF    = 30
 const PLAYER_RADIUS  = 0.6
 const PLAYER_SPEED   = 5.2
 const PROJ_RADIUS    = 0.18
 const MATCH_TIME     = 120
 const STEP_UP = 0.3
+// Urban compound — MUST stay identical to the server OBSTACLES list.
 const OBSTACLES = [
-  { x:   0, z:   0, hw: 3.0, hd: 3.0, top: 1.2 },
-  { x:   0, z:   0, hw: 2.0, hd: 2.0, top: 2.4 },
-  { x:   0, z:   0, hw: 1.0, hd: 1.0, top: 3.6 },
-  { x:  14, z:  10, hw: 1.8, hd: 1.8, top: 1.4 },
-  { x: -14, z:  10, hw: 1.8, hd: 1.8, top: 1.4 },
-  { x:  14, z: -10, hw: 1.8, hd: 1.8, top: 1.4 },
-  { x: -14, z: -10, hw: 1.8, hd: 1.8, top: 1.4 },
-  { x:   0, z:  19, hw: 3.0, hd: 1.2, top: 1.4 },
-  { x:   0, z: -19, hw: 3.0, hd: 1.2, top: 1.4 },
-  { x:  25, z:   0, hw: 1.2, hd: 3.0, top: 1.4 },
-  { x: -25, z:   0, hw: 1.2, hd: 3.0, top: 1.4 },
-  { x:  11, z:  25, hw: 1.6, hd: 1.6, top: 1.4 },
-  { x: -11, z:  25, hw: 1.6, hd: 1.6, top: 1.4 },
-  { x:  11, z: -25, hw: 1.6, hd: 1.6, top: 1.4 },
-  { x: -11, z: -25, hw: 1.6, hd: 1.6, top: 1.4 },
-  { x:  19, z:  14, hw: 2.5, hd: 2.5, top: 2.6 },
-  { x: -19, z:  14, hw: 2.5, hd: 2.5, top: 2.6 },
-  { x:  19, z: -14, hw: 2.5, hd: 2.5, top: 2.6 },
-  { x: -19, z: -14, hw: 2.5, hd: 2.5, top: 2.6 },
+  { x:   0, z:  28, hw: 28,  hd: 0.5, top: 3.2, kind: 'g' },
+  { x:   0, z: -28, hw: 28,  hd: 0.5, top: 3.2, kind: 'g' },
+  { x:  28, z:   0, hw: 0.5, hd: 28,  top: 3.2, kind: 'g' },
+  { x: -28, z:   0, hw: 0.5, hd: 28,  top: 3.2, kind: 'g' },
+  { x:   0, z:  23, hw: 4.0, hd: 0.4, top: 2.4, kind: 'b' },
+  { x:  -4, z:  20, hw: 0.4, hd: 3.0, top: 2.4, kind: 'b' },
+  { x:   4, z:  20, hw: 0.4, hd: 3.0, top: 2.4, kind: 'b' },
+  { x:-2.75, z: 17, hw: 1.25, hd: 0.4, top: 2.4, kind: 'b' },
+  { x: 2.75, z: 17, hw: 1.25, hd: 0.4, top: 2.4, kind: 'b' },
+  { x: -13, z:   3, hw: 3.0, hd: 3.0, top: 2.6, kind: 'r' },
+  { x: -13, z:   8, hw: 1.6, hd: 1.3, top: 1.3, kind: 's' },
+  { x:  13, z:   3, hw: 3.0, hd: 3.0, top: 2.6, kind: 'r' },
+  { x:  13, z:   8, hw: 1.6, hd: 1.3, top: 1.3, kind: 's' },
+  { x: -20, z:  -8, hw: 2.5, hd: 4.0, top: 2.4, kind: 'b' },
+  { x:  20, z:  -8, hw: 2.5, hd: 4.0, top: 2.4, kind: 'b' },
+  { x: -20, z:  12, hw: 2.5, hd: 4.0, top: 2.4, kind: 'b' },
+  { x:  20, z:  12, hw: 2.5, hd: 4.0, top: 2.4, kind: 'b' },
+  { x:   0, z:   3, hw: 2.5, hd: 2.5, top: 1.5, kind: 'c' },
+  { x:  -7, z:  -5, hw: 1.3, hd: 1.3, top: 1.4, kind: 'c' },
+  { x:   7, z:  -5, hw: 1.3, hd: 1.3, top: 1.4, kind: 'c' },
+  { x:   0, z:  11, hw: 1.8, hd: 1.8, top: 1.4, kind: 'c' },
+  { x:   0, z: -22, hw: 5.0, hd: 0.5, top: 1.4, kind: 'c' },
+  { x:  -9, z: -21, hw: 1.5, hd: 1.5, top: 1.4, kind: 'c' },
+  { x:   9, z: -21, hw: 1.5, hd: 1.5, top: 1.4, kind: 'c' },
 ]
 const TEAM_HEX = ['#e63946', '#1d6fd0']   // 0 rood, 1 blauw
 
@@ -352,65 +358,51 @@ function buildWorld(scene) {
   const skyTex = new DynamicTexture('skyTex', { width: 8, height: 256 }, scene)
   const skc = skyTex.getContext()
   const sgrad = skc.createLinearGradient(0, 0, 0, 256)
-  sgrad.addColorStop(0, '#2f6fd0'); sgrad.addColorStop(0.55, '#7db1ee'); sgrad.addColorStop(1, '#cfe6ff')
+  sgrad.addColorStop(0, '#4a86c8'); sgrad.addColorStop(0.6, '#bcd0e0'); sgrad.addColorStop(1, '#e6d9b8')
   skc.fillStyle = sgrad; skc.fillRect(0, 0, 8, 256); skyTex.update()
   skyMat.emissiveTexture = skyTex; sky.material = skyMat
 
-  // Field with markings + team base zones
+  // Sandy ground with team base zones (rood = +z, blauw = −z)
   const ground = MeshBuilder.CreateGround('ground', { width: ARENA_HALF * 2, height: ARENA_HALF * 2 }, scene)
   ground.receiveShadows = true; ground.isPickable = false
   const G = 1024, gtex = new DynamicTexture('gt', { width: G, height: G }, scene)
   const gc = gtex.getContext()
-  gc.fillStyle = '#3f7a3a'; gc.fillRect(0, 0, G, G)
-  for (let i = 0; i < G; i += 64) { gc.fillStyle = (i / 64) % 2 ? 'rgba(255,255,255,0.035)' : 'rgba(0,0,0,0.04)'; gc.fillRect(0, i, G, 64) }
-  // base zones: rood boven (+z), blauw onder (−z). Texture v grows toward −z.
-  gc.globalAlpha = 0.22
-  gc.fillStyle = '#e63946'; gc.fillRect(0, 0, G, G * 0.16)
-  gc.fillStyle = '#1d6fd0'; gc.fillRect(0, G - G * 0.16, G, G * 0.16)
+  gc.fillStyle = '#c2a878'; gc.fillRect(0, 0, G, G)
+  for (let i = 0; i < 9000; i++) {
+    gc.fillStyle = Math.random() > 0.5 ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)'
+    gc.fillRect(Math.random() * G, Math.random() * G, 3, 3)
+  }
+  gc.globalAlpha = 0.3
+  gc.fillStyle = '#c23a30'; gc.fillRect(0, 0, G, G * 0.13)
+  gc.fillStyle = '#2a64c8'; gc.fillRect(0, G - G * 0.13, G, G * 0.13)
   gc.globalAlpha = 1
-  gc.strokeStyle = 'rgba(255,255,255,0.85)'; gc.lineWidth = 8
-  gc.strokeRect(18, 18, G - 36, G - 36)
-  gc.beginPath(); gc.moveTo(18, G / 2); gc.lineTo(G - 18, G / 2); gc.stroke()
-  gc.beginPath(); gc.arc(G / 2, G / 2, 90, 0, Math.PI * 2); gc.stroke()
   gtex.update()
   const gmat = new StandardMaterial('gmat', scene)
   gmat.diffuseTexture = gtex; gmat.specularColor = Color3.Black(); ground.material = gmat
 
-  // Perimeter netting (semi-transparent)
-  const netTex = new DynamicTexture('netTex', { width: 256, height: 128 }, scene)
-  netTex.hasAlpha = true
-  const nc = netTex.getContext(); nc.clearRect(0, 0, 256, 128)
-  nc.strokeStyle = 'rgba(255,255,255,0.5)'; nc.lineWidth = 2
-  for (let x = 0; x <= 256; x += 16) { nc.beginPath(); nc.moveTo(x, 0); nc.lineTo(x, 128); nc.stroke() }
-  for (let y = 0; y <= 128; y += 16) { nc.beginPath(); nc.moveTo(0, y); nc.lineTo(256, y); nc.stroke() }
-  netTex.update()
-  const WALL_H = 2.6, S = ARENA_HALF
-  const mkWall = (w, x, z, ry) => {
-    const wall = MeshBuilder.CreatePlane('wall', { width: w, height: WALL_H }, scene)
-    wall.position.set(x, WALL_H / 2, z); wall.rotation.y = ry; wall.isPickable = false
-    const nm = new StandardMaterial('nm' + Math.random(), scene)
-    nm.diffuseTexture = netTex; nm.diffuseTexture.hasAlpha = true; nm.useAlphaFromDiffuseTexture = true
-    nm.backFaceCulling = false; nm.specularColor = Color3.Black(); nm.emissiveColor = new Color3(0.2, 0.2, 0.24)
-    nm.diffuseColor = new Color3(0.2, 0.22, 0.26)
-    const scaled = nm.diffuseTexture.clone(); scaled.uScale = w / 4; scaled.vScale = WALL_H / 4
-    nm.diffuseTexture = scaled; wall.material = nm
+  // Compound structures (mirror the server obstacles). Sand buildings, grey
+  // ring wall; climbable surfaces get a brighter lid so the top reads clearly.
+  const matCache = {}
+  const getMat = (hex, bright) => {
+    const key = hex + (bright ? 'b' : '')
+    if (matCache[key]) return matCache[key]
+    const m = new StandardMaterial('m' + key, scene)
+    const c = Color3.FromHexString(hex)
+    m.diffuseColor = bright ? c.scale(1.22) : c
+    m.specularColor = new Color3(0.1, 0.1, 0.1)
+    if (bright) m.emissiveColor = c.scale(0.16)
+    matCache[key] = m; return m
   }
-  mkWall(S * 2, 0,  S, 0); mkWall(S * 2, 0, -S, 0)
-  mkWall(S * 2,  S, 0, Math.PI / 2); mkWall(S * 2, -S, 0, Math.PI / 2)
-
-  // Cover/platform boxes (mirror the server obstacles). Height = top; bright
-  // lid so the standable surface is clearly visible to jump onto.
-  const BUNK = ['#c8503a', '#3a6fc8', '#caa53a', '#3aa84e']
-  OBSTACLES.forEach((o, i) => {
-    const col = Color3.FromHexString(BUNK[i % BUNK.length])
-    const mat = new StandardMaterial('bunk' + i, scene)
-    mat.diffuseColor = col; mat.specularColor = new Color3(0.18, 0.18, 0.18)
+  const COLOR = { g: '#8d8a82', b: '#cdb185', r: '#c7a974', s: '#d8c08a', c: '#bda474' }
+  OBSTACLES.forEach((o) => {
+    const hex = COLOR[o.kind] || '#bda474'
     const box = MeshBuilder.CreateBox('cover', { width: o.hw * 2, height: o.top, depth: o.hd * 2 }, scene)
-    box.position.set(o.x, o.top / 2, o.z); box.material = mat; box.receiveShadows = true; sg.addShadowCaster(box)
-    const topMat = new StandardMaterial('bunktop' + i, scene)
-    topMat.diffuseColor = col.scale(1.4); topMat.emissiveColor = col.scale(0.25); topMat.specularColor = Color3.Black()
-    const lid = MeshBuilder.CreateBox('coverTop', { width: o.hw * 2, height: 0.14, depth: o.hd * 2 }, scene)
-    lid.position.set(o.x, o.top - 0.07, o.z); lid.material = topMat; lid.receiveShadows = true
+    box.position.set(o.x, o.top / 2, o.z); box.material = getMat(hex, false)
+    box.receiveShadows = true; sg.addShadowCaster(box)
+    if (o.kind === 'r' || o.kind === 's' || o.kind === 'c') {
+      const lid = MeshBuilder.CreateBox('coverTop', { width: o.hw * 2, height: 0.14, depth: o.hd * 2 }, scene)
+      lid.position.set(o.x, o.top - 0.07, o.z); lid.material = getMat(hex, true); lid.receiveShadows = true
+    }
   })
 
   return sg
