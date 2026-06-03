@@ -4,7 +4,7 @@ import {
   Engine, Scene, FreeCamera,
   Color3, Color4, Vector3, Quaternion, Ray,
   HemisphericLight, DirectionalLight, ShadowGenerator,
-  MeshBuilder, StandardMaterial, DynamicTexture,
+  MeshBuilder, StandardMaterial, DynamicTexture, Texture,
   DefaultRenderingPipeline,
 } from '@babylonjs/core'
 import { SceneLoader } from '@babylonjs/core/Loading/sceneLoader'
@@ -22,7 +22,8 @@ let ARENA_Z = 24
 const MAPS = {
   dorp: { label: 'Dorp', glb: 'map.glb', ax: 24, az: 24,
     clear: [0.55, 0.75, 0.96], fog: [0.70, 0.82, 0.96], fogD: 0.006, ground: '#c2a878',
-    sky: ['#4a86c8', '#bcd0e0', '#e6d9b8'] },
+    sky: ['#4a86c8', '#bcd0e0', '#e6d9b8'],
+    tex: { ground: '/zand.png', stone: '/zandsteen.png' } },
   bos:  { label: 'Bos', glb: 'bos.glb', ax: 40, az: 40,
     clear: [0.58, 0.74, 0.62], fog: [0.72, 0.82, 0.70], fogD: 0.0045, ground: '#3a5a28',
     sky: ['#6a93c4', '#bcd8c4', '#dcebd2'] },
@@ -376,6 +377,18 @@ function buildWorld(scene, mapCfg) {
   skc.fillStyle = sgrad; skc.fillRect(0, 0, 8, 256); skyTex.update()
   skyMat.emissiveTexture = skyTex; sky.material = skyMat
 
+  // Optionele texturen voor deze map (bv. zand op de grond, zandsteen op huizen).
+  let sandTex = null, stoneTex = null
+  if (mapCfg.tex) {
+    sandTex = new Texture(mapCfg.tex.ground, scene); sandTex.uScale = 9; sandTex.vScale = 9; sandTex.hasAlpha = false
+    stoneTex = new Texture(mapCfg.tex.stone, scene); stoneTex.uScale = 1.5; stoneTex.vScale = 1.5; stoneTex.hasAlpha = false
+  }
+  const applyTex = (matr, tex) => {
+    if (!matr || !tex) return
+    if (matr.albedoTexture !== undefined) { matr.albedoTexture = tex; matr.albedoColor = Color3.White() }
+    else if (matr.diffuseTexture !== undefined) { matr.diffuseTexture = tex; matr.diffuseColor = Color3.White() }
+  }
+
   // The chosen GLB map. Real mesh collision drives walking + the shoot-raycast.
   SceneLoader.ImportMesh('', '/', mapCfg.glb, scene, (meshes) => {
     meshes.forEach(m => {
@@ -383,6 +396,9 @@ function buildWorld(scene, mapCfg) {
         m.receiveShadows = true
         m.checkCollisions = true   // blocks the player collider
         m.isPickable = true        // so the shoot-raycast + grounded-ray hit real walls/floor
+        const mn = (m.material?.name || '').toLowerCase()
+        if (mn.includes('ground')) applyTex(m.material, sandTex)
+        else if (mn.includes('sand') || mn.includes('wall') || mn.includes('roof')) applyTex(m.material, stoneTex)
         try { m.freezeWorldMatrix() } catch {}
         try { sg.getShadowMap()?.renderList?.push(m) } catch {}
       } else { m.isPickable = false }
