@@ -369,12 +369,12 @@ function buildWorld(scene) {
   // walking and the shoot-raycast. Floor sits at y≈0.
   SceneLoader.ImportMesh('', '/', 'map.glb', scene, (meshes) => {
     meshes.forEach(m => {
-      m.isPickable = false
       if (m.getTotalVertices && m.getTotalVertices() > 0) {
         m.receiveShadows = true
-        m.checkCollisions = true   // walls/floor block the player + stop paintballs
+        m.checkCollisions = true   // blocks the player collider
+        m.isPickable = true        // so the shoot-raycast + grounded-ray hit real walls/floor
         try { sg.getShadowMap()?.renderList?.push(m) } catch {}
-      }
+      } else { m.isPickable = false }
     })
   }, null, (_s, msg, err) => console.error('map.glb load error:', msg, err))
 
@@ -585,10 +585,13 @@ function initScene(canvas, { localSessionId, getRoomState, sendState, sendShoot,
       // Split horizontal + vertical so the collider slides along edges instead
       // of wedging on them (no more getting stuck on a roof).
       collider.moveWithCollisions(new Vector3(dx * spd * dt, 0, dz * spd * dt))
-      const yBefore = collider.position.y
       collider.moveWithCollisions(new Vector3(0, vy * dt, 0))
-      const dyActual = collider.position.y - yBefore
-      if (vy <= 0 && dyActual > vy * dt + 0.0008) { grounded = true; vy = 0 } else if (vy > 0) grounded = false
+      // Grounded via a short downward ray — robust, no mid-air floating.
+      const gp = scene.pickWithRay(
+        new Ray(new Vector3(collider.position.x, collider.position.y + 0.3, collider.position.z), new Vector3(0, -1, 0), 0.6),
+        m => m.checkCollisions && m !== collider)
+      grounded = !!(gp && gp.hit)
+      if (grounded && vy < 0) vy = 0
       collider.position.x = Math.max(-ARENA_X, Math.min(ARENA_X, collider.position.x))
       collider.position.z = Math.max(-ARENA_Z, Math.min(ARENA_Z, collider.position.z))
       if (collider.position.y < -5 && lp) { collider.position.set(lp.x, lp.y ?? 0, lp.z); vy = 0 }
