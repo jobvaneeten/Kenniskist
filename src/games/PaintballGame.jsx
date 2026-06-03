@@ -21,15 +21,17 @@ let ARENA_X = 24    // wordt per map gezet
 let ARENA_Z = 24
 const MAPS = {
   dorp: { label: 'Dorp', glb: 'map.glb', ax: 24, az: 24,
-    clear: [0.55, 0.75, 0.96], fog: [0.70, 0.82, 0.96], fogD: 0.006, ground: '#c2a878',
+    clear: [0.55, 0.75, 0.96], fog: [0.70, 0.82, 0.96], fogD: 0.006,
     sky: ['#4a86c8', '#bcd0e0', '#e6d9b8'],
-    tex: { ground: '/zand.png', stone: '/zandsteen.png' } },
+    tex: { ground: '/zand.png', stone: '/zandsteen.png', scale: 9 } },
   bos:  { label: 'Bos', glb: 'bos.glb', ax: 40, az: 40,
-    clear: [0.58, 0.74, 0.62], fog: [0.72, 0.82, 0.70], fogD: 0.0045, ground: '#3a5a28',
-    sky: ['#6a93c4', '#bcd8c4', '#dcebd2'] },
+    clear: [0.58, 0.74, 0.62], fog: [0.72, 0.82, 0.70], fogD: 0.0045,
+    sky: ['#6a93c4', '#bcd8c4', '#dcebd2'],
+    tex: { ground: '/gras.png', stone: '/plankenhuis.png', scale: 22 } },
   stad: { label: 'Stad', glb: 'stad.glb', ax: 25, az: 50,
-    clear: [0.55, 0.75, 0.96], fog: [0.70, 0.82, 0.96], fogD: 0.004, ground: '#c2a878',
-    sky: ['#4a86c8', '#bcd0e0', '#e6d9b8'] },
+    clear: [0.55, 0.75, 0.96], fog: [0.70, 0.82, 0.96], fogD: 0.004,
+    sky: ['#4a86c8', '#bcd0e0', '#e6d9b8'],
+    tex: { ground: '/stenen.jpg', stone: '/stenenhuis.jpg', scale: 12 } },
 }
 const PLAYER_RADIUS  = 0.6
 const PLAYER_SPEED   = 5.2
@@ -377,10 +379,11 @@ function buildWorld(scene, mapCfg) {
   skc.fillStyle = sgrad; skc.fillRect(0, 0, 8, 256); skyTex.update()
   skyMat.emissiveTexture = skyTex; sky.material = skyMat
 
-  // Optionele texturen voor deze map (bv. zand op de grond, zandsteen op huizen).
-  let sandTex = null, stoneTex = null
+  // Optionele texturen voor deze map: grond + gebouwen.
+  let groundTex = null, stoneTex = null
   if (mapCfg.tex) {
-    sandTex = new Texture(mapCfg.tex.ground, scene); sandTex.uScale = 9; sandTex.vScale = 9; sandTex.hasAlpha = false
+    const s = mapCfg.tex.scale || 9
+    groundTex = new Texture(mapCfg.tex.ground, scene); groundTex.uScale = s; groundTex.vScale = s; groundTex.hasAlpha = false
     stoneTex = new Texture(mapCfg.tex.stone, scene); stoneTex.uScale = 1.5; stoneTex.vScale = 1.5; stoneTex.hasAlpha = false
   }
   const applyTex = (matr, tex) => {
@@ -396,9 +399,17 @@ function buildWorld(scene, mapCfg) {
         m.receiveShadows = true
         m.checkCollisions = true   // blocks the player collider
         m.isPickable = true        // so the shoot-raycast + grounded-ray hit real walls/floor
-        const mn = (m.material?.name || '').toLowerCase()
-        if (mn.includes('ground')) applyTex(m.material, sandTex)
-        else if (mn.includes('sand') || mn.includes('wall') || mn.includes('roof')) applyTex(m.material, stoneTex)
+        if (mapCfg.tex) {
+          const mn = (m.name || '').toLowerCase()
+          const matn = (m.material?.name || '').toLowerCase()
+          const isGround = matn.includes('ground') || matn.includes('grass') || mn === 'floor' || mn.includes('floor')
+          if (isGround) applyTex(m.material, groundTex)
+          else if (matn.includes('sand') || matn.includes('wall') || matn.includes('roof') || matn.includes('wood') ||
+                   mn.includes('house') || mn.includes('cover') || mn.includes('big') || mn.includes('cube') ||
+                   mn.includes('cylinder') || mn.includes('object') || mn.includes('jump')) {
+            applyTex(m.material, stoneTex)
+          }
+        }
         try { m.freezeWorldMatrix() } catch {}
         try { sg.getShadowMap()?.renderList?.push(m) } catch {}
       } else { m.isPickable = false }
