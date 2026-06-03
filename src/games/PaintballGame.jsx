@@ -110,7 +110,7 @@ class PlayerInstance {
     this.root = null; this.gun = null
     this._skeleton = null
     this._nodeMap = {}; this._dstRests = {}; this._restPose = {}
-    this._anims = {}; this._state = 'idle'; this._dead = false
+    this._anims = {}; this._state = ''; this._dead = false   // '' zodat de eerste _playIdle de mik-animatie echt start (geen T-pose)
     this._ready = false; this._onReady = null; this._donors = []
     this._load()
   }
@@ -524,7 +524,7 @@ function initScene(canvas, { localSessionId, getRoomState, sendState, sendShoot,
   const G = 18, JUMP_VEL = 7.5
   const collider = MeshBuilder.CreateBox('pcol', { width: 1, height: 1.8, depth: 1 }, scene)
   collider.isVisible = false; collider.checkCollisions = true
-  collider.ellipsoid = new Vector3(0.5, 0.9, 0.5)
+  collider.ellipsoid = new Vector3(0.4, 0.9, 0.4)
   collider.ellipsoidOffset = new Vector3(0, 0.9, 0)
   let vy = 0, grounded = false, jumpCount = 0, spawnedOnce = false, wasDead = false
   let prevShootSeq = {}
@@ -582,8 +582,11 @@ function initScene(canvas, { localSessionId, getRoomState, sendState, sendShoot,
       const spd = crouch ? PLAYER_SPEED * 0.4 : PLAYER_SPEED   // 2,5x trager bij hurken
       if (jumpRef.current) { jumpRef.current = false; if (grounded) { vy = JUMP_VEL; grounded = false; jumpCount++ } }
       vy -= G * dt; if (vy < -30) vy = -30
+      // Split horizontal + vertical so the collider slides along edges instead
+      // of wedging on them (no more getting stuck on a roof).
+      collider.moveWithCollisions(new Vector3(dx * spd * dt, 0, dz * spd * dt))
       const yBefore = collider.position.y
-      collider.moveWithCollisions(new Vector3(dx * spd * dt, vy * dt, dz * spd * dt))
+      collider.moveWithCollisions(new Vector3(0, vy * dt, 0))
       const dyActual = collider.position.y - yBefore
       if (vy <= 0 && dyActual > vy * dt + 0.0008) { grounded = true; vy = 0 } else if (vy > 0) grounded = false
       collider.position.x = Math.max(-ARENA_X, Math.min(ARENA_X, collider.position.x))
