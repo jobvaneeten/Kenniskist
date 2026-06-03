@@ -342,6 +342,7 @@ function buildWorld(scene) {
   scene.fogMode = Scene.FOGMODE_EXP2
   scene.fogColor = new Color3(0.7, 0.82, 0.96)
   scene.fogDensity = 0.005
+  scene.collisionsEnabled = true   // real mesh collision against map.glb
 
   const ambient = new HemisphericLight('hemi', new Vector3(0, 1, 0), scene)
   ambient.intensity = 0.8; ambient.groundColor = new Color3(0.22, 0.26, 0.2)
@@ -371,6 +372,7 @@ function buildWorld(scene) {
       m.isPickable = false
       if (m.getTotalVertices && m.getTotalVertices() > 0) {
         m.receiveShadows = true
+        m.checkCollisions = true   // walls/floor block the player collider
         try { sg.getShadowMap()?.renderList?.push(m) } catch {}
       }
     })
@@ -409,7 +411,7 @@ function VirtualJoystick({ joyRef }) {
 function fmtTime(s) { const m = Math.floor(s / 60); const sec = Math.floor(s) % 60; return `${m}:${String(sec).padStart(2, '0')}` }
 
 // ── Scene init ─────────────────────────────────────────────────────────
-function initScene(canvas, { localSessionId, getRoomState, sendInput, sendShoot, sendReload, sendJump, onCrouchToggle, hpDomRef, timerDomRef, ammoDomRef }) {
+function initScene(canvas, { localSessionId, getRoomState, sendState, sendShoot, sendReload, onCrouchToggle, hpDomRef, timerDomRef, ammoDomRef }) {
   const engine = new Engine(canvas, true, { adaptToDeviceRatio: true, stencil: true, powerPreference: 'high-performance' })
   if (window.devicePixelRatio > 1.5) engine.setHardwareScalingLevel(window.devicePixelRatio / 1.5)
   canvas.style.cursor = 'none'   // only the crosshair shows
@@ -428,6 +430,7 @@ function initScene(canvas, { localSessionId, getRoomState, sendInput, sendShoot,
   const splats = []
   const joyRef = { current: { x: 0, z: 0 } }
   const fireRef = { current: false }
+  const jumpRef = { current: false }        // jump request (consumed by the movement loop)
   const crouchRef = { current: false }      // on-screen crouch toggle
   const camModeRef = { current: 'third' }   // 'third' | 'first'
   const look = { yaw: 0, pitch: 0 }
@@ -436,7 +439,7 @@ function initScene(canvas, { localSessionId, getRoomState, sendInput, sendShoot,
   const onKD = e => {
     keys[e.code] = true
     if (e.code === 'KeyR') sendReload?.()
-    if (e.code === 'Space') { e.preventDefault(); if (!e.repeat) sendJump?.() }
+    if (e.code === 'Space') { e.preventDefault(); if (!e.repeat) jumpRef.current = true }
     if ((e.code === 'ControlLeft' || e.code === 'ControlRight') && !e.repeat) {
       crouchRef.current = !crouchRef.current; onCrouchToggle?.(crouchRef.current)   // toggle hurken
     }
@@ -479,8 +482,14 @@ function initScene(canvas, { localSessionId, getRoomState, sendInput, sendShoot,
   const camPos = new Vector3(0, 5, -12)
   const camTgt = new Vector3(0, 1.5, 0)
   let lastFire = 0
-  const pred = { x: 0, z: 0, init: false }
-  let localY = 0
+  // Local player collider — real mesh collision against the map (walk anywhere
+  // that's open, into houses, blocked only by actual walls).
+  const G = 18, JUMP_VEL = 7.5
+  const collider = MeshBuilder.CreateBox('pcol', { width: 1, height: 1.8, depth: 1 }, scene)
+  collider.isVisible = false; collider.checkCollisions = true
+  collider.ellipsoid = new Vector3(0.5, 0.9, 0.5)
+  collider.ellipsoidOffset = new Vector3(0, 0.9, 0)
+  let vy = 0, grounded = false, jumpCount = 0, spawnedOnce = false, wasDead = false
   let prevShootSeq = {}
   let prevReloadSeq = {}
   let prevJumpSeq = {}
@@ -512,28 +521,51 @@ function initScene(canvas, { localSessionId, getRoomState, sendInput, sendShoot,
 
     if (timerDomRef?.current) timerDomRef.current.textContent = fmtTime(Math.max(0, rs.timeLeft ?? 0))
 
-    // ── Input (camera-relative) ──
     const lp = rs.players.get(localSessionId)
-    const f = (keys['KeyW'] ? 1 : 0) - (keys['KeyS'] ? 1 : 0) - joyRef.current.z
-    const r = (keys['KeyD'] ? 1 : 0) - (keys['KeyA'] ? 1 : 0) + joyRef.current.x
-    const fwdX = Math.sin(look.yaw), fwdZ = Math.cos(look.yaw)
-    const rgtX = Math.cos(look.yaw), rgtZ = -Math.sin(look.yaw)
-    let wx = rgtX * r + fwdX * f, wz = rgtZ * r + fwdZ * f
-    const wl = Math.hypot(wx, wz); if (wl > 1) { wx /= wl; wz /= wl }
     const crouch = crouchRef.current
-    sendInput({ x: wx, z: wz, rotY: look.yaw, crouch })
+
+    // ── Local movement (client-side mesh collision) ──
+    if (lp) {
+      // Snap the collider to the server spawn on first appearance and on respawn.
+      if (!spawnedOnce || (lp.alive && wasDead)) {
+        collider.position.set(lp.x, (lp.y ?? 0), lp.z); vy = 0; spawnedOnce = true
+      }
+      wasDead = !lp.alive
+    }
+    const canMove = lp && lp.alive && rs.phase === 'playing' && !lp.reloading
+    let moving = false
+    if (canMove) {
+      const f = (keys['KeyW'] ? 1 : 0) - (keys['KeyS'] ? 1 : 0) - joyRef.current.z
+      const r = (keys['KeyD'] ? 1 : 0) - (keys['KeyA'] ? 1 : 0) + joyRef.current.x
+      const fwdX = Math.sin(look.yaw), fwdZ = Math.cos(look.yaw)
+      const rgtX = Math.cos(look.yaw), rgtZ = -Math.sin(look.yaw)
+      let dx = rgtX * r + fwdX * f, dz = rgtZ * r + fwdZ * f
+      const dl = Math.hypot(dx, dz); if (dl > 1) { dx /= dl; dz /= dl }
+      moving = dl > 0.05
+      const spd = crouch ? PLAYER_SPEED * 0.4 : PLAYER_SPEED   // 2,5x trager bij hurken
+      if (jumpRef.current) { jumpRef.current = false; if (grounded) { vy = JUMP_VEL; grounded = false; jumpCount++ } }
+      vy -= G * dt; if (vy < -30) vy = -30
+      const yBefore = collider.position.y
+      collider.moveWithCollisions(new Vector3(dx * spd * dt, vy * dt, dz * spd * dt))
+      const dyActual = collider.position.y - yBefore
+      if (vy <= 0 && dyActual > vy * dt + 0.0008) { grounded = true; vy = 0 } else if (vy > 0) grounded = false
+      collider.position.x = Math.max(-ARENA_X, Math.min(ARENA_X, collider.position.x))
+      collider.position.z = Math.max(-ARENA_Z, Math.min(ARENA_Z, collider.position.z))
+      if (collider.position.y < -5 && lp) { collider.position.set(lp.x, lp.y ?? 0, lp.z); vy = 0 }
+    } else { vy = 0; jumpRef.current = false }
+
+    // Report our authoritative position to the server (relay).
+    sendState({ x: collider.position.x, y: Math.max(0, collider.position.y), z: collider.position.z, rotY: look.yaw, moving, crouch, jumpSeq: jumpCount })
 
     // ── Fire (auto while held, server enforces cooldown) ──
     const now = performance.now() / 1000
     if (fireRef.current && lp && lp.alive && now - lastFire > 0.13) {
       lastFire = now
-      // Aim toward the point under the crosshair (camera forward), corrected
-      // for the 3rd-person offset so shots land where the + is.
       const fx2 = camTgt.x - camPos.x, fy2 = camTgt.y - camPos.y, fz2 = camTgt.z - camPos.z
       const fl = Math.hypot(fx2, fy2, fz2) || 1
       const aimX = camPos.x + fx2 / fl * 50, aimY = camPos.y + fy2 / fl * 50, aimZ = camPos.z + fz2 / fl * 50
-      const ex = pred.init ? pred.x : lp.x, ez = pred.init ? pred.z : lp.z
-      let dx = aimX - ex, dy = aimY - 1.45, dz = aimZ - ez
+      const ex = collider.position.x, ez = collider.position.z
+      let dx = aimX - ex, dy = aimY - (collider.position.y + 1.45), dz = aimZ - ez
       const dl = Math.hypot(dx, dy, dz) || 1
       sendShoot({ dx: dx / dl, dy: dy / dl, dz: dz / dl })
     }
@@ -560,20 +592,10 @@ function initScene(canvas, { localSessionId, getRoomState, sendInput, sendShoot,
       else if (shotChanged) inst.playShoot()
 
       if (sid === localSessionId) {
-        if (!pred.init) { pred.x = p.x; pred.z = p.z; pred.init = true }
-        localY += (p.y - localY) * (1 - Math.exp(-dt * 20))   // smoothed vertical (server-authoritative)
-        if (p.alive) {
-          const mvx = p.reloading ? 0 : wx, mvz = p.reloading ? 0 : wz   // stilstaan tijdens reload
-          const spd = crouch ? PLAYER_SPEED * 0.4 : PLAYER_SPEED          // 2,5x trager bij hurken
-          const pr = resolvePos(pred.x + mvx * spd * dt, pred.z + mvz * spd * dt, PLAYER_RADIUS, p.y)
-          pred.x = pr.x; pred.z = pr.z
-          // soft reconcile toward server
-          pred.x += (p.x - pred.x) * 0.08; pred.z += (p.z - pred.z) * 0.08
-          inst.setPose(pred.x, pred.z, look.yaw, !p.reloading && (Math.abs(wx) + Math.abs(wz)) > 0.05, look.pitch, localY, crouch)
-        } else {
-          pred.x = p.x; pred.z = p.z
-          inst.setPose(p.x, p.z, p.rotY, false, 0, p.y)   // frozen corpse pose
-        }
+        // Render the local player at its own collider position (client-authoritative).
+        inst.setPose(collider.position.x, collider.position.z,
+          p.alive ? look.yaw : p.rotY, p.alive && moving, look.pitch,
+          collider.position.y, crouch)
       } else {
         inst.setTarget(p.x, p.z, p.rotY, p.moving, p.y, p.crouching)
         inst.tick(dt)
@@ -621,7 +643,7 @@ function initScene(canvas, { localSessionId, getRoomState, sendInput, sendShoot,
     const fX = Math.sin(look.yaw) * Math.cos(look.pitch)
     const fY = Math.sin(look.pitch)
     const fZ = Math.cos(look.yaw) * Math.cos(look.pitch)
-    const pyY = (lp && !lp.alive) ? (lp.y ?? 0) : localY   // player height (platforms/jump)
+    const pyY = (me && me._dy !== undefined) ? me._dy : (lp?.y ?? 0)   // player height (jump/floors)
     let wantPos, wantTgt
     if (fpView) {
       wantPos = new Vector3(px + Math.sin(look.yaw) * 0.1, pyY + 1.55, pz + Math.cos(look.yaw) * 0.1)
@@ -641,7 +663,7 @@ function initScene(canvas, { localSessionId, getRoomState, sendInput, sendShoot,
   window.addEventListener('resize', onResize)
 
   return {
-    joyRef, fireRef, crouchRef, camModeRef,
+    joyRef, fireRef, jumpRef, crouchRef, camModeRef,
     pushSplat: (d) => addSplat(d.x, d.y, d.z, d.nx, d.ny, d.nz, d.team),
     dispose: () => {
       window.removeEventListener('keydown', onKD); window.removeEventListener('keyup', onKU)
@@ -754,9 +776,9 @@ export default function PaintballGame({ onBack }) {
       localSessionId: room.sessionId,
       getRoomState: () => roomStateRef.current,
       sendInput: inp => roomRef.current?.send('input', inp),
+      sendState: s => roomRef.current?.send('state', s),
       sendShoot: dir => roomRef.current?.send('shoot', dir),
       sendReload: () => roomRef.current?.send('reload'),
-      sendJump: () => roomRef.current?.send('jump'),
       onCrouchToggle: v => setCrouchOn(v),
       timerDomRef, hpDomRef, ammoDomRef,
     })
@@ -841,7 +863,7 @@ export default function PaintballGame({ onBack }) {
           onPointerLeave={() => { if (sceneRef.current) sceneRef.current.fireRef.current = false }}
         >🎯<span>Schiet</span></button>
         <button className="pb-jump-btn"
-          onPointerDown={e => { e.preventDefault(); room?.send('jump') }}
+          onPointerDown={e => { e.preventDefault(); if (sceneRef.current) sceneRef.current.jumpRef.current = true }}
         >⬆️<span>Spring</span></button>
       </div>
     </div>
