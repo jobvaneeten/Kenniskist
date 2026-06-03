@@ -607,12 +607,13 @@ function initScene(canvas, { localSessionId, getRoomState, sendState, sendShoot,
       let dx = aimX - ex, dy = aimY - ey, dz = aimZ - ez
       const dl = Math.hypot(dx, dy, dz) || 1
       dx /= dl; dy /= dl; dz /= dl
-      // Raycast to the first real wall so balls fly through doorways but stop at
-      // solid walls (the server doesn't have the mesh).
-      let range = 60, nx = 0, ny = 1, nz = 0
-      const pick = scene.pickWithRay(new Ray(new Vector3(ex, ey, ez), new Vector3(dx, dy, dz), 60), m => m.checkCollisions && m !== collider)
+      // Raycast to the first real wall so balls fly through doorways but splat on
+      // solid walls. range = 999 → no wall, ball just flies (server doesn't have the mesh).
+      let range = 999, nx = 0, ny = 1, nz = 0
+      const ro = new Vector3(ex + dx * 0.6, ey + dy * 0.6, ez + dz * 0.6)   // start just ahead of the gun
+      const pick = scene.pickWithRay(new Ray(ro, new Vector3(dx, dy, dz), 70), m => m.checkCollisions && m !== collider)
       if (pick && pick.hit) {
-        range = pick.distance
+        range = Math.max(3, pick.distance + 0.6)   // altijd minstens 3 m vliegen (zichtbaar)
         const n = pick.getNormal(true); if (n) { nx = n.x; ny = n.y; nz = n.z }
       }
       sendShoot({ dx, dy, dz, range, nx, ny, nz })
@@ -660,7 +661,7 @@ function initScene(canvas, { localSessionId, getRoomState, sendState, sendShoot,
       live.add(id)
       let m = shotMeshes.get(id)
       if (!m) {
-        m = MeshBuilder.CreateSphere('shot', { diameter: 0.11, segments: 6 }, scene)
+        m = MeshBuilder.CreateSphere('shot', { diameter: 0.2, segments: 8 }, scene)
         const mat = new StandardMaterial('shotm', scene); mat.disableLighting = true
         const c = Color3.FromHexString(TEAM_HEX[s.team]); mat.emissiveColor = c; mat.diffuseColor = c
         m.material = mat; m.isPickable = false
