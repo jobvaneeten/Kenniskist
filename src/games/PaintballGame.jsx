@@ -26,6 +26,9 @@ const MAPS = {
   bos:  { label: 'Bos', glb: 'bos.glb', ax: 40, az: 40,
     clear: [0.58, 0.74, 0.62], fog: [0.72, 0.82, 0.70], fogD: 0.0045, ground: '#3a5a28',
     sky: ['#6a93c4', '#bcd8c4', '#dcebd2'] },
+  stad: { label: 'Stad', glb: 'stad.glb', ax: 25, az: 50,
+    clear: [0.55, 0.75, 0.96], fog: [0.70, 0.82, 0.96], fogD: 0.004, ground: '#c2a878',
+    sky: ['#4a86c8', '#bcd0e0', '#e6d9b8'] },
 }
 const PLAYER_RADIUS  = 0.6
 const PLAYER_SPEED   = 5.2
@@ -754,8 +757,12 @@ function Lobby({ onBack, onJoined }) {
           <input className="rg-input" placeholder="Speler" value={name} maxLength={12} onChange={e => setName(e.target.value)} /></div>
         <div className="rg-lobby-field"><label>Kies een map</label>
           <div className="pb-map-pick">
-            <button type="button" className={'pb-map-btn' + (mapKey === 'dorp' ? ' on' : '')} onClick={() => setMapKey('dorp')}>🏜️ Dorp</button>
-            <button type="button" className={'pb-map-btn' + (mapKey === 'bos' ? ' on' : '')} onClick={() => setMapKey('bos')}>🌲 Bos</button>
+            {[['dorp', 'Dorp', '/mapshot_dorp.png'], ['bos', 'Bos', '/mapshot_bos.png'], ['stad', 'Stad', '/mapshot_stad.png']].map(([k, lbl, img]) => (
+              <button key={k} type="button" className={'pb-map-card' + (mapKey === k ? ' on' : '')} onClick={() => setMapKey(k)}>
+                <img src={img} alt={lbl} />
+                <span>{lbl}</span>
+              </button>
+            ))}
           </div></div>
         <button className="rg-lobby-btn rg-lobby-create" disabled={loading} onClick={() => connect(true)}>{loading ? '…' : '＋ Lobby aanmaken'}</button>
         <div className="rg-lobby-divider">of</div>
