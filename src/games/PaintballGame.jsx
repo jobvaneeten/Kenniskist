@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import * as Colyseus from '@colyseus/sdk'
 import {
   Engine, Scene, FreeCamera,
-  Color3, Color4, Vector3, Quaternion,
+  Color3, Color4, Vector3, Quaternion, Ray,
   HemisphericLight, DirectionalLight, ShadowGenerator,
   MeshBuilder, StandardMaterial, DynamicTexture,
   DefaultRenderingPipeline,
@@ -365,18 +365,47 @@ function buildWorld(scene) {
   skc.fillStyle = sgrad; skc.fillRect(0, 0, 8, 256); skyTex.update()
   skyMat.emissiveTexture = skyTex; sky.material = skyMat
 
-  // The actual map geometry (public/map.glb). Visual only; collision uses the
-  // OBSTACLES boxes derived from it. Floor sits at y≈0.
+  // The actual map geometry (public/map.glb). Real mesh collision drives both
+  // walking and the shoot-raycast. Floor sits at y≈0.
   SceneLoader.ImportMesh('', '/', 'map.glb', scene, (meshes) => {
     meshes.forEach(m => {
       m.isPickable = false
       if (m.getTotalVertices && m.getTotalVertices() > 0) {
         m.receiveShadows = true
-        m.checkCollisions = true   // walls/floor block the player collider
+        m.checkCollisions = true   // walls/floor block the player + stop paintballs
         try { sg.getShadowMap()?.renderList?.push(m) } catch {}
       }
     })
   }, null, (_s, msg, err) => console.error('map.glb load error:', msg, err))
+
+  // Invisible boundary walls so you can't glitch off the map.
+  const BH = 10
+  const mkBound = (w, d, x, z) => {
+    const b = MeshBuilder.CreateBox('bound', { width: w, height: BH, depth: d }, scene)
+    b.position.set(x, BH / 2, z); b.checkCollisions = true; b.isVisible = false; b.isPickable = false
+  }
+  mkBound(1, ARENA_Z * 2 + 2,  ARENA_X + 0.5, 0)
+  mkBound(1, ARENA_Z * 2 + 2, -ARENA_X - 0.5, 0)
+  mkBound(ARENA_X * 2 + 2, 1, 0,  ARENA_Z + 0.5)
+  mkBound(ARENA_X * 2 + 2, 1, 0, -ARENA_Z - 0.5)
+
+  // Stand-on crates (collision + jumpable). Brighter top so you see you can stand.
+  const crateMat = new StandardMaterial('crateMat', scene)
+  crateMat.diffuseColor = Color3.FromHexString('#9b6b3a'); crateMat.specularColor = new Color3(0.1, 0.1, 0.1)
+  const lidMat = new StandardMaterial('crateLid', scene)
+  lidMat.diffuseColor = Color3.FromHexString('#c08a4a'); lidMat.emissiveColor = new Color3(0.12, 0.08, 0.03); lidMat.specularColor = Color3.Black()
+  const crate = (x, z, size, top) => {
+    const b = MeshBuilder.CreateBox('crate', { width: size, height: top, depth: size }, scene)
+    b.position.set(x, top / 2, z); b.material = crateMat; b.checkCollisions = true; b.receiveShadows = true; sg.addShadowCaster(b)
+    const lid = MeshBuilder.CreateBox('crateLid', { width: size, height: 0.12, depth: size }, scene)
+    lid.position.set(x, top - 0.06, z); lid.material = lidMat; lid.isPickable = false
+  }
+  // bases (met een trapje omhoog) + midden + lanes
+  crate(0, 40, 2.2, 1.2); crate(2.6, 40, 1.6, 2.4)
+  crate(0, -40, 2.2, 1.2); crate(-2.6, -40, 1.6, 2.4)
+  crate(11, 0, 1.8, 1.2); crate(-11, 0, 1.8, 1.2)
+  crate(11, 22, 1.8, 1.2); crate(-11, -22, 1.8, 1.2)
+  crate(0, 16, 2, 1.3); crate(0, -16, 2, 1.3)
 
   return sg
 }
@@ -450,6 +479,7 @@ function initScene(canvas, { localSessionId, getRoomState, sendState, sendShoot,
   // Look + fire. Desktop: click locks the mouse, then moving = look and
   // left-click = fire (so bewegen-om-te-kijken schiet niet). Touch: sleep = look.
   let looking = false, lastX = 0, lastY = 0
+  let tapShoot = false, touchT = 0, touchSX = 0, touchSY = 0, touchMoved = false
   const isLocked = () => document.pointerLockElement === canvas
   const clampPitch = () => { look.pitch = Math.max(-1.1, Math.min(1.1, look.pitch)) }
   const onPD = e => {
@@ -458,6 +488,7 @@ function initScene(canvas, { localSessionId, getRoomState, sendState, sendShoot,
       else { try { canvas.requestPointerLock() } catch {} }   // eerste klik pakt de muis, geen schot
     } else {
       looking = true; lastX = e.clientX; lastY = e.clientY
+      touchT = performance.now(); touchSX = e.clientX; touchSY = e.clientY; touchMoved = false
     }
   }
   const onPM = e => {
@@ -470,9 +501,15 @@ function initScene(canvas, { localSessionId, getRoomState, sendState, sendShoot,
       look.yaw   += (e.clientX - lastX) * 0.005
       look.pitch -= (e.clientY - lastY) * 0.005
       clampPitch(); lastX = e.clientX; lastY = e.clientY
+      if (Math.hypot(e.clientX - touchSX, e.clientY - touchSY) > 12) touchMoved = true
     }
   }
-  const onPU = e => { if (e.pointerType === 'mouse') fireRef.current = false; else looking = false }
+  const onPU = e => {
+    if (e.pointerType === 'mouse') { fireRef.current = false; return }
+    looking = false
+    // korte tik (niet gesleept, kort vastgehouden) = één schot
+    if (!touchMoved && performance.now() - touchT < 260) tapShoot = true
+  }
   const onLock = () => { if (!isLocked()) fireRef.current = false }
   canvas.addEventListener('pointerdown', onPD)
   window.addEventListener('pointermove', onPM)
@@ -557,17 +594,28 @@ function initScene(canvas, { localSessionId, getRoomState, sendState, sendShoot,
     // Report our authoritative position to the server (relay).
     sendState({ x: collider.position.x, y: Math.max(0, collider.position.y), z: collider.position.z, rotY: look.yaw, moving, crouch, jumpSeq: jumpCount })
 
-    // ── Fire (auto while held, server enforces cooldown) ──
+    // ── Fire (hold of korte tik; server bewaakt de cooldown) ──
     const now = performance.now() / 1000
-    if (fireRef.current && lp && lp.alive && now - lastFire > 0.13) {
+    const wantFire = fireRef.current || tapShoot
+    tapShoot = false
+    if (wantFire && lp && lp.alive && now - lastFire > 0.13) {
       lastFire = now
       const fx2 = camTgt.x - camPos.x, fy2 = camTgt.y - camPos.y, fz2 = camTgt.z - camPos.z
       const fl = Math.hypot(fx2, fy2, fz2) || 1
       const aimX = camPos.x + fx2 / fl * 50, aimY = camPos.y + fy2 / fl * 50, aimZ = camPos.z + fz2 / fl * 50
-      const ex = collider.position.x, ez = collider.position.z
-      let dx = aimX - ex, dy = aimY - (collider.position.y + 1.45), dz = aimZ - ez
+      const ex = collider.position.x, ey = collider.position.y + 1.45, ez = collider.position.z
+      let dx = aimX - ex, dy = aimY - ey, dz = aimZ - ez
       const dl = Math.hypot(dx, dy, dz) || 1
-      sendShoot({ dx: dx / dl, dy: dy / dl, dz: dz / dl })
+      dx /= dl; dy /= dl; dz /= dl
+      // Raycast to the first real wall so balls fly through doorways but stop at
+      // solid walls (the server doesn't have the mesh).
+      let range = 60, nx = 0, ny = 1, nz = 0
+      const pick = scene.pickWithRay(new Ray(new Vector3(ex, ey, ez), new Vector3(dx, dy, dz), 60), m => m.checkCollisions && m !== collider)
+      if (pick && pick.hit) {
+        range = pick.distance
+        const n = pick.getNormal(true); if (n) { nx = n.x; ny = n.y; nz = n.z }
+      }
+      sendShoot({ dx, dy, dz, range, nx, ny, nz })
     }
 
     // HP bar
