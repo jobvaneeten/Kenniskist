@@ -620,7 +620,8 @@ function initScene(canvas, { localSessionId, getRoomState, sendState, sendShoot,
       const fx2 = camTgt.x - camPos.x, fy2 = camTgt.y - camPos.y, fz2 = camTgt.z - camPos.z
       const fl = Math.hypot(fx2, fy2, fz2) || 1
       const aimX = camPos.x + fx2 / fl * 50, aimY = camPos.y + fy2 / fl * 50, aimZ = camPos.z + fz2 / fl * 50
-      const ex = collider.position.x, ey = collider.position.y + 1.45, ez = collider.position.z
+      const eyeOff = crouch ? 1.05 : 1.45   // lager mikpunt als je bukt
+      const ex = collider.position.x, ey = collider.position.y + eyeOff, ez = collider.position.z
       let dx = aimX - ex, dy = aimY - ey, dz = aimZ - ez
       const dl = Math.hypot(dx, dy, dz) || 1
       dx /= dl; dy /= dl; dz /= dl
@@ -633,7 +634,7 @@ function initScene(canvas, { localSessionId, getRoomState, sendState, sendShoot,
         range = Math.max(3, pick.distance + 0.6)   // altijd minstens 3 m vliegen (zichtbaar)
         const n = pick.getNormal(true); if (n) { nx = n.x; ny = n.y; nz = n.z }
       }
-      sendShoot({ dx, dy, dz, range, nx, ny, nz })
+      sendShoot({ dx, dy, dz, range, nx, ny, nz, oy: ey })
     }
 
     // HP bar
@@ -710,10 +711,11 @@ function initScene(canvas, { localSessionId, getRoomState, sendState, sendShoot,
     const fY = Math.sin(look.pitch)
     const fZ = Math.cos(look.yaw) * Math.cos(look.pitch)
     const pyY = (me && me._dy !== undefined) ? me._dy : (lp?.y ?? 0)   // player height (jump/floors)
+    const eyeH = crouchRef.current ? 1.05 : 1.55   // hoofd zakt bij bukken; pyY volgt de sprong
     let wantPos, wantTgt
     if (fpView) {
-      wantPos = new Vector3(px + Math.sin(look.yaw) * 0.1, pyY + 1.55, pz + Math.cos(look.yaw) * 0.1)
-      wantTgt = new Vector3(px + fX * 6, pyY + 1.55 + fY * 6, pz + fZ * 6)
+      wantPos = new Vector3(px + Math.sin(look.yaw) * 0.1, pyY + eyeH, pz + Math.cos(look.yaw) * 0.1)
+      wantTgt = new Vector3(px + fX * 6, pyY + eyeH + fY * 6, pz + fZ * 6)
     } else {
       wantPos = new Vector3(px - Math.sin(look.yaw) * 5 - fX * 1.5, pyY + 3.2 - fY * 2.5, pz - Math.cos(look.yaw) * 5 - fZ * 1.5)
       wantTgt = new Vector3(px + fX * 5, pyY + 1.4 + fY * 5, pz + fZ * 5)
