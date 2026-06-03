@@ -17,8 +17,8 @@ import './paintball.css'
 const SERVER_URL = 'wss://kenniskist-server.onrender.com'
 
 // ── Arena constants (mirror the server exactly) ────────────────────────
-const ARENA_X        = 25
-const ARENA_Z        = 50
+const ARENA_X        = 24
+const ARENA_Z        = 24
 const PLAYER_RADIUS  = 0.6
 const PLAYER_SPEED   = 5.2
 const PROJ_RADIUS    = 0.18
@@ -389,23 +389,7 @@ function buildWorld(scene) {
   mkBound(ARENA_X * 2 + 2, 1, 0,  ARENA_Z + 0.5)
   mkBound(ARENA_X * 2 + 2, 1, 0, -ARENA_Z - 0.5)
 
-  // Stand-on crates (collision + jumpable). Brighter top so you see you can stand.
-  const crateMat = new StandardMaterial('crateMat', scene)
-  crateMat.diffuseColor = Color3.FromHexString('#9b6b3a'); crateMat.specularColor = new Color3(0.1, 0.1, 0.1)
-  const lidMat = new StandardMaterial('crateLid', scene)
-  lidMat.diffuseColor = Color3.FromHexString('#c08a4a'); lidMat.emissiveColor = new Color3(0.12, 0.08, 0.03); lidMat.specularColor = Color3.Black()
-  const crate = (x, z, size, top) => {
-    const b = MeshBuilder.CreateBox('crate', { width: size, height: top, depth: size }, scene)
-    b.position.set(x, top / 2, z); b.material = crateMat; b.checkCollisions = true; b.receiveShadows = true; sg.addShadowCaster(b)
-    const lid = MeshBuilder.CreateBox('crateLid', { width: size, height: 0.12, depth: size }, scene)
-    lid.position.set(x, top - 0.06, z); lid.material = lidMat; lid.isPickable = false
-  }
-  // bases (met een trapje omhoog) + midden + lanes
-  crate(0, 40, 2.2, 1.2); crate(2.6, 40, 1.6, 2.4)
-  crate(0, -40, 2.2, 1.2); crate(-2.6, -40, 1.6, 2.4)
-  crate(11, 0, 1.8, 1.2); crate(-11, 0, 1.8, 1.2)
-  crate(11, 22, 1.8, 1.2); crate(-11, -22, 1.8, 1.2)
-  crate(0, 16, 2, 1.3); crate(0, -16, 2, 1.3)
+  // (Huizen, daken, trapjes en dekking komen uit map.glb — geen losse kratten hier.)
 
   return sg
 }
