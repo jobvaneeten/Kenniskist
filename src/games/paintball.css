@@ -106,3 +106,13 @@
 }
 .pb-fire-btn span { font-size: 0.62rem; font-weight: 800; letter-spacing: 0.04em; }
 .pb-fire-btn:active { transform: scale(0.92); }
+
+/* Map-keuze in de lobby */
+.pb-map-pick { display: flex; gap: 10px; }
+.pb-map-btn {
+  flex: 1; padding: 12px; border-radius: 12px;
+  border: 2px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.06); color: #fff;
+  font-family: inherit; font-weight: 800; font-size: 1rem; cursor: pointer;
+}
+.pb-map-btn.on { border-color: #4dff7a; background: rgba(74,255,122,0.16); box-shadow: 0 0 12px rgba(74,255,122,0.4); }

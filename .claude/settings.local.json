@@ -89,7 +89,12 @@
       "Bash(pdftotext \"Oefenen FS.pdf\" -)",
       "Bash(pdftotext -layout \"oefenen s+.pdf\" -)",
       "Bash(pdftotext -layout -f 1 -l 6 \"oefenen s+.pdf\" -)",
-      "Bash(grep -nA4 \"function spawnPoint\" ../kenniskist-server/src/rooms/PaintballRoom.ts)"
+      "Bash(grep -nA4 \"function spawnPoint\" ../kenniskist-server/src/rooms/PaintballRoom.ts)",
+      "Bash(\"/c/Program Files/Blender Foundation/Blender 5.0/blender.exe\" --background --python build_bos.py)",
+      "Bash(node -e 'const fs=require\\(\"fs\"\\);const b=fs.readFileSync\\(\"public/bos.glb\"\\);const j=JSON.parse\\(b.toString\\(\"utf8\",20,20+b.readUInt32LE\\(12\\)\\)\\);console.log\\(\"bos meshes:\"+\\(j.meshes||[]\\).length,\"nodes:\"+\\(j.nodes||[]\\).length,\"size:\"+\\(b.length/1024|0\\)+\"KB\"\\)')",
+      "Bash(\"/c/Program Files/Blender Foundation/Blender 5.0/blender.exe\" --background --python build_map.py)",
+      "Bash(node -e 'const fs=require\\(\"fs\"\\);[\"map.glb\",\"bos.glb\"].forEach\\(f=>{const b=fs.readFileSync\\(\"public/\"+f\\);const j=JSON.parse\\(b.toString\\(\"utf8\",20,20+b.readUInt32LE\\(12\\)\\)\\);console.log\\(f, \"meshes:\"+\\(j.meshes||[]\\).length\\)}\\)')",
+      "Bash(perl -0pi -e 's/spawnPoint\\\\\\(team, Math\\\\.floor\\\\\\(this\\\\.state\\\\.players\\\\.size \\\\/ 2\\\\\\)\\\\\\)/spawnPoint\\(team, Math.floor\\(this.state.players.size \\\\/ 2\\), this._spawnZ\\)/; s/spawnPoint\\\\\\(p\\\\.team, i\\\\\\)/spawnPoint\\(p.team, i, this._spawnZ\\)/' src/rooms/PaintballRoom.ts)"
     ]
   }
 }

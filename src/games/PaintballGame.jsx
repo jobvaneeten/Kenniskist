@@ -17,8 +17,16 @@ import './paintball.css'
 const SERVER_URL = 'wss://kenniskist-server.onrender.com'
 
 // ── Arena constants (mirror the server exactly) ────────────────────────
-const ARENA_X        = 24
-const ARENA_Z        = 24
+let ARENA_X = 24    // wordt per map gezet
+let ARENA_Z = 24
+const MAPS = {
+  dorp: { label: 'Dorp', glb: 'map.glb', ax: 24, az: 24,
+    clear: [0.55, 0.75, 0.96], fog: [0.70, 0.82, 0.96], fogD: 0.006, ground: '#c2a878',
+    sky: ['#4a86c8', '#bcd0e0', '#e6d9b8'] },
+  bos:  { label: 'Bos', glb: 'bos.glb', ax: 40, az: 40,
+    clear: [0.58, 0.74, 0.62], fog: [0.72, 0.82, 0.70], fogD: 0.0045, ground: '#3a5a28',
+    sky: ['#6a93c4', '#bcd8c4', '#dcebd2'] },
+}
 const PLAYER_RADIUS  = 0.6
 const PLAYER_SPEED   = 5.2
 const PROJ_RADIUS    = 0.18
@@ -336,13 +344,13 @@ class PlayerInstance {
   }
 }
 
-// ── Arena world (paintball field + inflatable bunkers) ─────────────────
-function buildWorld(scene) {
-  scene.clearColor = new Color4(0.55, 0.75, 0.96, 1)
+// ── Arena world (loads the chosen GLB map) ─────────────────────────────
+function buildWorld(scene, mapCfg) {
+  scene.clearColor = new Color4(mapCfg.clear[0], mapCfg.clear[1], mapCfg.clear[2], 1)
   scene.fogMode = Scene.FOGMODE_EXP2
-  scene.fogColor = new Color3(0.7, 0.82, 0.96)
-  scene.fogDensity = 0.005
-  scene.collisionsEnabled = true   // real mesh collision against map.glb
+  scene.fogColor = new Color3(mapCfg.fog[0], mapCfg.fog[1], mapCfg.fog[2])
+  scene.fogDensity = mapCfg.fogD
+  scene.collisionsEnabled = true   // real mesh collision against the GLB map
 
   const ambient = new HemisphericLight('hemi', new Vector3(0, 1, 0), scene)
   ambient.intensity = 0.8; ambient.groundColor = new Color3(0.22, 0.26, 0.2)
@@ -361,22 +369,22 @@ function buildWorld(scene) {
   const skyTex = new DynamicTexture('skyTex', { width: 8, height: 256 }, scene)
   const skc = skyTex.getContext()
   const sgrad = skc.createLinearGradient(0, 0, 0, 256)
-  sgrad.addColorStop(0, '#4a86c8'); sgrad.addColorStop(0.6, '#bcd0e0'); sgrad.addColorStop(1, '#e6d9b8')
+  sgrad.addColorStop(0, mapCfg.sky[0]); sgrad.addColorStop(0.6, mapCfg.sky[1]); sgrad.addColorStop(1, mapCfg.sky[2])
   skc.fillStyle = sgrad; skc.fillRect(0, 0, 8, 256); skyTex.update()
   skyMat.emissiveTexture = skyTex; sky.material = skyMat
 
-  // The actual map geometry (public/map.glb). Real mesh collision drives both
-  // walking and the shoot-raycast. Floor sits at y≈0.
-  SceneLoader.ImportMesh('', '/', 'map.glb', scene, (meshes) => {
+  // The chosen GLB map. Real mesh collision drives walking + the shoot-raycast.
+  SceneLoader.ImportMesh('', '/', mapCfg.glb, scene, (meshes) => {
     meshes.forEach(m => {
       if (m.getTotalVertices && m.getTotalVertices() > 0) {
         m.receiveShadows = true
         m.checkCollisions = true   // blocks the player collider
         m.isPickable = true        // so the shoot-raycast + grounded-ray hit real walls/floor
+        try { m.freezeWorldMatrix() } catch {}
         try { sg.getShadowMap()?.renderList?.push(m) } catch {}
       } else { m.isPickable = false }
     })
-  }, null, (_s, msg, err) => console.error('map.glb load error:', msg, err))
+  }, null, (_s, msg, err) => console.error('map load error:', msg, err))
 
   // Invisible boundary walls so you can't glitch off the map.
   const BH = 10
@@ -424,7 +432,7 @@ function VirtualJoystick({ joyRef }) {
 function fmtTime(s) { const m = Math.floor(s / 60); const sec = Math.floor(s) % 60; return `${m}:${String(sec).padStart(2, '0')}` }
 
 // ── Scene init ─────────────────────────────────────────────────────────
-function initScene(canvas, { localSessionId, getRoomState, sendState, sendShoot, sendReload, onCrouchToggle, hpDomRef, timerDomRef, ammoDomRef }) {
+function initScene(canvas, { localSessionId, getRoomState, sendState, sendShoot, sendReload, onCrouchToggle, mapCfg, hpDomRef, timerDomRef, ammoDomRef }) {
   const engine = new Engine(canvas, true, { adaptToDeviceRatio: true, stencil: true, powerPreference: 'high-performance' })
   if (window.devicePixelRatio > 1.5) engine.setHardwareScalingLevel(window.devicePixelRatio / 1.5)
   canvas.style.cursor = 'none'   // only the crosshair shows
@@ -432,7 +440,7 @@ function initScene(canvas, { localSessionId, getRoomState, sendState, sendShoot,
   const camera = new FreeCamera('cam', new Vector3(0, 5, -12), scene)
   camera.inputs.clear(); camera.minZ = 0.1; camera.maxZ = 300
 
-  const sg = buildWorld(scene)
+  const sg = buildWorld(scene, mapCfg)
   try {
     const pipe = new DefaultRenderingPipeline('pipe', false, scene, [camera])
     pipe.imageProcessingEnabled = true; pipe.imageProcessing.contrast = 1.1; pipe.imageProcessing.exposure = 1.1
@@ -719,6 +727,7 @@ function initScene(canvas, { localSessionId, getRoomState, sendState, sendShoot,
 function Lobby({ onBack, onJoined }) {
   const [code, setCode] = useState('')
   const [name, setName] = useState(() => localStorage.getItem('kk_playername') || '')
+  const [mapKey, setMapKey] = useState('dorp')
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
   const connect = async (create) => {
@@ -728,7 +737,7 @@ function Lobby({ onBack, onJoined }) {
       const wearing = localStorage.getItem('kk_wearing') || '{}'
       const client = new Colyseus.Client(SERVER_URL)
       const joinCode = create ? String(Math.floor(10000 + Math.random() * 90000)) : code.trim()
-      const opts = { joinCode, shirt, wearing, name: name || 'Speler' }
+      const opts = { joinCode, shirt, wearing, name: name || 'Speler', map: mapKey }
       const room = create ? await client.create('paintball', opts) : await client.join('paintball', opts)
       if (name) localStorage.setItem('kk_playername', name)
       onJoined(room, joinCode)
@@ -743,6 +752,11 @@ function Lobby({ onBack, onJoined }) {
         <p className="rg-lobby-sub">Speel met vrienden</p>
         <div className="rg-lobby-field"><label>Jouw naam</label>
           <input className="rg-input" placeholder="Speler" value={name} maxLength={12} onChange={e => setName(e.target.value)} /></div>
+        <div className="rg-lobby-field"><label>Kies een map</label>
+          <div className="pb-map-pick">
+            <button type="button" className={'pb-map-btn' + (mapKey === 'dorp' ? ' on' : '')} onClick={() => setMapKey('dorp')}>🏜️ Dorp</button>
+            <button type="button" className={'pb-map-btn' + (mapKey === 'bos' ? ' on' : '')} onClick={() => setMapKey('bos')}>🌲 Bos</button>
+          </div></div>
         <button className="rg-lobby-btn rg-lobby-create" disabled={loading} onClick={() => connect(true)}>{loading ? '…' : '＋ Lobby aanmaken'}</button>
         <div className="rg-lobby-divider">of</div>
         <div className="rg-lobby-field"><label>Lobby-code</label>
@@ -811,14 +825,16 @@ export default function PaintballGame({ onBack }) {
 
   useEffect(() => {
     if (screen !== 'playing' || !canvasRef.current || !room) return
+    const mapCfg = MAPS[roomStateRef.current?.map] || MAPS.dorp
+    ARENA_X = mapCfg.ax; ARENA_Z = mapCfg.az
     const sc = initScene(canvasRef.current, {
       localSessionId: room.sessionId,
       getRoomState: () => roomStateRef.current,
-      sendInput: inp => roomRef.current?.send('input', inp),
       sendState: s => roomRef.current?.send('state', s),
       sendShoot: dir => roomRef.current?.send('shoot', dir),
       sendReload: () => roomRef.current?.send('reload'),
       onCrouchToggle: v => setCrouchOn(v),
+      mapCfg,
       timerDomRef, hpDomRef, ammoDomRef,
     })
     sceneRef.current = sc
