@@ -19,7 +19,8 @@ const PLAYER_SPD = 270
 const JUMP_FORCE = 560
 const DRIBBLE_FACTOR = 0.52   // speed multiplier when dribbling
 const AI_SPD_BY_DIFF = { 1: 155, 2: 180, 3: 215, 4: 248, 5: 272 }
-const GAME_TIME = 120
+const GAME_TIME_NORMAL   = 120
+const GAME_TIME_TWOPLAYER = 60
 
 // Pre-generated crowd dots for the stands (stable across frames)
 const CROWD = Array.from({ length: 340 }, (_, i) => ({
@@ -418,14 +419,14 @@ function charContactDist(player, ball) {
 }
 
 // ── Game state ────────────────────────────────────────────────────
-const newState = () => ({
+const newState = (tp = false) => ({
   player: { x: FIELD_MID - 280, y: GROUND_Y - PR, vx: 0, vy: 0, onGround: true, facingRight: true,  dizzy: 0, stompImmunity: 0 },
   ai:     { x: FIELD_MID + 280, y: GROUND_Y - PR, vx: 0, vy: 0, onGround: true, facingRight: false, dizzy: 0, stompImmunity: 0 },
   ball:   { x: FIELD_MID, y: GROUND_Y - BR, vx: 0, vy: 0, angle: 0 },
   trail:  [],
   particles: [],
   score:  { p: 0, ai: 0 },
-  time:   GAME_TIME,
+  time:   tp ? GAME_TIME_TWOPLAYER : GAME_TIME_NORMAL,
   camera: FIELD_MID - W / 2,
   subPhase: 'playing',
   goalTimer: 0,
@@ -457,16 +458,18 @@ function JerseyCircle({ country, size = 32 }) {
 }
 
 // ── Main component ────────────────────────────────────────────────
-export default function FootballGame({ year, onBack, addCuruntie, noQuiz = false, twoPlayer = false }) {
-  const [phase,       setPhase]      = useState('country_select')
-  const [bracket,     setBracket]    = useState(null)
+export default function FootballGame({ year, onBack, addCuruntie, noQuiz = false, twoPlayer = false,
+                                       rewardMode = false, initialBracket = null, onMatchDone }) {
+  const [phase,       setPhase]      = useState(rewardMode && initialBracket ? 'match_preview' : 'country_select')
+  const [bracket,     setBracket]    = useState(rewardMode ? initialBracket : null)
   const [difficulty,  setDifficulty] = useState(null)
   const [questions,   setQuestions]  = useState([])
   const [qIndex,      setQIndex]     = useState(0)
   const [input,       setInput]      = useState('')
   const [feedback,    setFeedback]   = useState(null)
   const [score,       setScore]      = useState({ p: 0, ai: 0 })
-  const [timeLeft,    setTimeLeft]   = useState(GAME_TIME)
+  const gameDuration = twoPlayer ? GAME_TIME_TWOPLAYER : GAME_TIME_NORMAL
+  const [timeLeft,    setTimeLeft]   = useState(gameDuration)
   const [goalInfo,    setGoalInfo]   = useState(null) // { isPlayer: bool }
   const [earnedCoins, setEarnedCoins] = useState(0)
 
@@ -550,7 +553,7 @@ export default function FootballGame({ year, onBack, addCuruntie, noQuiz = false
   const startGame = useCallback(() => {
     const canvas = canvasRef.current; if (!canvas) return
     const ctx = canvas.getContext('2d')
-    const state = newState()
+    const state = newState(twoPlayer)
     state.running = true
     gameRef.current = state
     const aiSpd = aiSpeed
@@ -838,7 +841,7 @@ export default function FootballGame({ year, onBack, addCuruntie, noQuiz = false
   const restart = () => {
     if (rafRef.current) cancelAnimationFrame(rafRef.current)
     if (gameRef.current) gameRef.current.running = false
-    setScore({ p: 0, ai: 0 }); setTimeLeft(GAME_TIME); setGoalInfo(null); setEarnedCoins(0)
+    setScore({ p: 0, ai: 0 }); setTimeLeft(gameDuration); setGoalInfo(null); setEarnedCoins(0)
     if (noQuiz) {
       setPhase('match_preview')
     } else {
@@ -857,9 +860,23 @@ export default function FootballGame({ year, onBack, addCuruntie, noQuiz = false
     }
     const nextRound = bracket.currentRound + 1
     setBracket(b => ({ ...b, currentRound: nextRound, results: newResults }))
-    setScore({ p: 0, ai: 0 }); setTimeLeft(GAME_TIME); setGoalInfo(null); setEarnedCoins(0)
+    setScore({ p: 0, ai: 0 }); setTimeLeft(gameDuration); setGoalInfo(null); setEarnedCoins(0)
     setPhase('match_preview')
   }
+
+  // ── Reward-mode: na de wedstrijd automatisch terug naar spelling ──
+  const rewardNextBracket = () => {
+    const won = score.p >= score.ai          // gelijk = strafschoppen gewonnen
+    if (!won) return { won:false, next:null }                                  // verloren → nieuw toernooi
+    if (bracket.currentRound >= 3) return { won:true, next:null }              // hele toernooi gewonnen
+    return { won:true, next:{ ...bracket, currentRound: bracket.currentRound + 1, results:[...bracket.results, 'win'] } }
+  }
+  useEffect(() => {
+    if (!rewardMode || phase !== 'match_end') return
+    const { won, next } = rewardNextBracket()
+    const t = setTimeout(() => onMatchDone?.(won, next, true), 2800)
+    return () => clearTimeout(t)
+  }, [phase, rewardMode])
 
   // ── Renders ───────────────────────────────────────────────────────
 
@@ -912,7 +929,7 @@ export default function FootballGame({ year, onBack, addCuruntie, noQuiz = false
     const rnd = bracket.roundNames[bracket.currentRound]
     return (
       <div className="fb-screen">
-        <button className="back-btn" onClick={() => setPhase('country_select')}>← Terug</button>
+        <button className="back-btn" onClick={() => rewardMode ? onMatchDone?.(false, bracket, false) : setPhase('country_select')}>← Terug</button>
         <div className="wk-preview">
           <div className="wk-round-badge">{rnd}</div>
           <div className="wk-vs-row">
@@ -1071,6 +1088,42 @@ export default function FootballGame({ year, onBack, addCuruntie, noQuiz = false
             ? 'P1: ← → lopen · ↑ springen   |   P2: A D lopen · W springen   |   Stamp op hoofd = duizelig'
             : '← → lopen · ↑ springen · Dribble = trager · Stamp op hoofd = duizelig'}
         </p>
+      </div>
+    )
+  }
+
+  // Match end — reward-mode (auto terug naar spelling)
+  if (phase === 'match_end' && bracket && rewardMode) {
+    const won  = score.p >= score.ai     // gelijk = strafschoppen gewonnen
+    const pl   = playerCountry
+    const opp  = currentOpponent
+    const { next } = rewardNextBracket()
+    return (
+      <div className="fb-screen">
+        <div className="fb-end-card">
+          <div style={{ display:'flex', gap:12, alignItems:'center', justifyContent:'center' }}>
+            <span style={{ fontSize:'2rem' }}>{pl.flag}</span>
+            <span className="fb-end-score" style={{ fontSize:'1.8rem', color:'#fff' }}>{score.p} – {score.ai}</span>
+            <span style={{ fontSize:'2rem' }}>{opp.flag}</span>
+          </div>
+          <span className="fb-end-icon">{won ? '🏆' : '😢'}</span>
+          <h2 className="fb-end-title" style={{ color: won ? '#FFD23F' : '#FF6B6B' }}>
+            {won ? 'Gewonnen!' : 'Verloren'}
+          </h2>
+          <p style={{ color:'rgba(255,255,255,0.7)', fontSize:'0.9rem', margin:'4px 0' }}>
+            {won
+              ? (next ? 'Top! Na 5 sommen speel je de volgende ronde 🏆' : '🎉 Je hebt het hele toernooi gewonnen!')
+              : 'Volgende keer een nieuw toernooi 💪'}
+          </p>
+          <div className="fb-end-coins"><span>💵</span><span>+ € 50 briefgeld!</span></div>
+          <div className="fb-end-btns">
+            <button className="fb-end-btn fb-end-btn-again" style={{ background:'#FFD23F' }}
+              onClick={() => onMatchDone?.(won, next, true)}>
+              ✏️ Verder met spelling →
+            </button>
+          </div>
+          <p style={{ color:'rgba(255,255,255,0.4)', fontSize:'0.75rem', marginTop:6 }}>Je gaat zo automatisch verder…</p>
+        </div>
       </div>
     )
   }

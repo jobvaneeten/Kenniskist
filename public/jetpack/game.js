@@ -819,7 +819,7 @@ function spawnCoinRow() {
     z.type === 'horizontal' && Math.abs(y - z.y) < 40
   ));
 
-  for (let i = 0; i < 6; i++) {
+  for (let i = 0; i < 8; i++) {   // 6→8 munten per rij (balans met Spacerunner)
     const cx = canvas.width + 200 + i * 52; // ver genoeg vooruit spawnen
     coinObjects.push({ x:cx, y, r:16, collected:false, phase:i*0.3 });
   }
@@ -873,7 +873,7 @@ function drawCoins() {
 
 function updateCoins() {
   coinTimer += S;
-  const cInterval = Math.max(60, Math.floor(180 - frameCount / 150));
+  const cInterval = Math.max(52, Math.floor(155 - frameCount / 150));
   if (coinTimer >= cInterval) { spawnCoinRow(); coinTimer = 0; }
   coinObjects.forEach(c => {
     c.x -= gameSpeed * slowMoFactor * S;

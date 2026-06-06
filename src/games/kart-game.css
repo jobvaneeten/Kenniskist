@@ -1,0 +1,139 @@
+.kart-wrap { position: fixed; inset: 0; background: #000; overflow: hidden; }
+.kart-canvas { width: 100%; height: 100%; display: block; outline: none; touch-action: none; }
+
+.kart-exit {
+  position: absolute; top: 12px; left: 12px; z-index: 20;
+  background: rgba(0,0,0,0.6); color: #fff;
+  border: 1px solid rgba(255,255,255,0.25); border-radius: 10px;
+  padding: 8px 16px; font-size: 0.9rem; font-weight: 700; cursor: pointer;
+}
+.kart-exit:hover { background: rgba(0,0,0,0.8); }
+
+.kart-hud {
+  position: absolute; top: 12px; right: 12px; z-index: 15;
+  display: flex; flex-direction: column; align-items: flex-end; gap: 6px;
+  font-family: 'Segoe UI', system-ui, sans-serif; color: #fff;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.7); pointer-events: none;
+}
+.kart-hud-lap  { font-size: 1.3rem; font-weight: 900; }
+.kart-hud-time { font-size: 1rem; font-weight: 700; color: #ffe27a; }
+.kart-hud-speed {
+  font-size: 2.6rem; font-weight: 900; line-height: 1;
+  background: rgba(0,0,0,0.35); padding: 4px 14px; border-radius: 12px;
+}
+.kart-hud-speed span { font-size: 0.9rem; font-weight: 700; margin-left: 4px; opacity: 0.8; }
+.kart-hud-pos { font-size: 1.1rem; font-weight: 800; color: #9be7ff; }
+
+.kart-count {
+  position: absolute; inset: 0; z-index: 25;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: 9rem; font-weight: 900; color: #fff;
+  text-shadow: 0 6px 24px rgba(0,0,0,0.8);
+  animation: kart-pop 1s ease-in-out infinite; pointer-events: none;
+}
+@keyframes kart-pop { 0%,100%{ transform: scale(1) } 50%{ transform: scale(1.25) } }
+
+.kart-finish {
+  position: absolute; inset: 0; z-index: 30;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 18px; background: rgba(10,12,28,0.82); backdrop-filter: blur(4px);
+  font-family: 'Segoe UI', system-ui, sans-serif; color: #fff; text-align: center;
+}
+.kart-finish h1 { font-size: 3.5rem; font-weight: 900; margin: 0; }
+.kart-finish-time { font-size: 1.4rem; font-weight: 700; color: #ffe27a; margin: 0; }
+.kart-finish-btns { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
+.kart-finish-btns button {
+  background: linear-gradient(135deg, #f4a261, #e76f51); border: none;
+  border-radius: 14px; color: #fff; font-size: 1.1rem; font-weight: 800;
+  padding: 14px 28px; cursor: pointer; transition: transform 0.15s;
+}
+.kart-finish-btns button:hover { transform: translateY(-3px); }
+
+.kart-help {
+  position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); z-index: 15;
+  color: rgba(255,255,255,0.6); font-size: 0.8rem;
+  font-family: 'Segoe UI', system-ui, sans-serif; pointer-events: none;
+}
+
+/* ── Menu & lobby ── */
+.kart-menu {
+  position: fixed; inset: 0;
+  background: linear-gradient(160deg, #1b2a4a 0%, #14203a 60%, #0d1626 100%);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Segoe UI', system-ui, sans-serif; color: #fff;
+}
+.kart-menu-box {
+  display: flex; flex-direction: column; align-items: stretch; gap: 12px;
+  width: min(92vw, 380px);
+  background: rgba(255,255,255,0.05);
+  border: 2px solid rgba(255,255,255,0.12);
+  border-radius: 22px; padding: 28px 24px; text-align: center;
+}
+.kart-menu-icon { font-size: 3.4rem; }
+.kart-menu-title { font-size: 2.2rem; font-weight: 900; margin: 0; }
+.kart-menu-sub { margin: 0 0 6px; color: #9fb3d6; font-weight: 600; }
+.kart-menu-btn {
+  border: none; border-radius: 14px; color: #fff;
+  font-size: 1.05rem; font-weight: 800; padding: 15px 18px; cursor: pointer;
+  transition: transform 0.12s, box-shadow 0.12s;
+}
+.kart-menu-btn:hover { transform: translateY(-2px); }
+.kart-menu-btn:disabled { opacity: 0.5; cursor: default; transform: none; }
+.kart-menu-btn.solo   { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+.kart-menu-btn.online { background: linear-gradient(135deg, #f4a261, #e76f51); }
+.kart-track-pick { display: flex; gap: 8px; }
+.kart-track-card {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 12px 6px; border-radius: 14px; cursor: pointer;
+  background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.12);
+  color: #fff; transition: transform 0.12s, border-color 0.12s;
+}
+.kart-track-card:hover { transform: translateY(-2px); }
+.kart-track-card.on { border-color: #f4a261; background: rgba(244,162,97,0.16); }
+.kt-icon { font-size: 1.8rem; }
+.kt-name { font-size: 0.82rem; font-weight: 800; }
+.kt-diff { font-size: 0.72rem; color: #9fb3d6; font-weight: 700; }
+
+.kart-lobby-field { display: flex; flex-direction: column; gap: 5px; text-align: left; }
+.kart-lobby-field label { font-size: 0.85rem; color: #9fb3d6; font-weight: 700; }
+.kart-input {
+  background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.18);
+  border-radius: 12px; color: #fff; font-size: 1.1rem; font-weight: 700;
+  padding: 11px 14px; outline: none; text-align: center; letter-spacing: 0.08em;
+}
+.kart-input:focus { border-color: #f4a261; }
+.kart-lobby-err  { color: #fca5a5; font-weight: 700; margin: 2px 0 0; }
+.kart-lobby-info { color: #9fb3d6; margin: 2px 0 0; }
+
+/* ── Wachtkamer (in-game overlay) ── */
+.kart-lobby-wait {
+  position: absolute; inset: 0; z-index: 30;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+  background: rgba(10,16,30,0.82); backdrop-filter: blur(4px);
+  font-family: 'Segoe UI', system-ui, sans-serif; color: #fff; text-align: center;
+}
+.kart-lobby-wait h1 { font-size: 2.4rem; font-weight: 900; margin: 0; }
+.kart-lobby-code { font-size: 1.3rem; }
+.kart-lobby-code strong {
+  font-size: 1.8rem; letter-spacing: 0.12em; color: #ffd34d;
+  background: rgba(255,211,77,0.12); padding: 2px 14px; border-radius: 10px;
+}
+.kart-lobby-list { list-style: none; padding: 0; margin: 6px 0; display: flex; flex-direction: column; gap: 6px; }
+.kart-lobby-list li { font-size: 1.1rem; font-weight: 700; }
+.kart-lobby-list li.me { color: #ffd34d; }
+.kart-bot-row { display: flex; gap: 10px; }
+.kart-bot-btn {
+  border: 1px solid rgba(255,255,255,0.25); border-radius: 12px;
+  background: rgba(255,255,255,0.08); color: #fff;
+  font-size: 0.95rem; font-weight: 700; padding: 10px 16px; cursor: pointer;
+  transition: background 0.12s;
+}
+.kart-bot-btn:hover { background: rgba(255,255,255,0.18); }
+.kart-start-btn {
+  margin-top: 8px; border: none; border-radius: 14px; color: #fff;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  font-size: 1.15rem; font-weight: 800; padding: 14px 32px; cursor: pointer;
+  transition: transform 0.12s;
+}
+.kart-start-btn:hover { transform: translateY(-2px); }

@@ -881,6 +881,10 @@ export default class GameScene extends Phaser.Scene {
       this.gold += bonus
       this.events.emit('gold_changed', this.gold)
       uiScene?.events.emit('show_bonus', bonus)
+      // Reward-mode: na elke golf terug naar spelling (spel blijft actief)
+      if (this.game.registry.get('rewardMode')) {
+        this.time.delayedCall(1800, () => this.game.events.emit('round_done'))
+      }
     }
   }
 
@@ -897,6 +901,10 @@ export default class GameScene extends Phaser.Scene {
     this.gameOver = true
     this.scene.get('UI')?.events.emit('game_over', { wave: this.waveNum })
     this.spawnTimers.forEach(t => t.remove())
+    // Reward-mode: na het potje automatisch terug naar de spelling
+    if (this.game.registry.get('rewardMode')) {
+      this.time.delayedCall(3200, () => this.game.events.emit('round_done'))
+    }
   }
 
   _triggerVictory() {
@@ -915,6 +923,10 @@ export default class GameScene extends Phaser.Scene {
     this.spawnTimers.forEach(t => t.remove())
     // Victory fireworks
     this._launchFireworks()
+    // Reward-mode: na het potje automatisch terug naar de spelling
+    if (this.game.registry.get('rewardMode')) {
+      this.time.delayedCall(3800, () => this.game.events.emit('round_done'))
+    }
   }
 
   _launchFireworks() {

@@ -298,6 +298,43 @@
   box-shadow: 0 7px 22px rgba(214,31,68,0.6);
 }
 
+.play-kart-btn {
+  background: linear-gradient(135deg, #f4a261, #e76f51);
+  box-shadow: 0 4px 18px rgba(231,111,81,0.45);
+}
+.play-kart-btn:hover {
+  box-shadow: 0 7px 22px rgba(231,111,81,0.6);
+}
+
+/* ── Spel-keuze menu in de kledingkast ── */
+.wd-game-menu {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: stretch;
+}
+.wd-game-menu .play3d-btn {
+  position: static;
+  left: auto;
+  bottom: auto;
+  transform: none;
+}
+.wd-game-menu .play3d-btn:hover {
+  transform: translateY(-2px);
+}
+.wd-game-menu .play3d-btn:active { transform: translateY(0); }
+.wd-game-close {
+  background: linear-gradient(135deg, #555, #333) !important;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.4) !important;
+  font-size: 14px !important;
+  padding: 8px 28px !important;
+}
+
 /* ── 3D viewer loading ──────────────────────── */
 .viewer-loading {
   position: absolute;

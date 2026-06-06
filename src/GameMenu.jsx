@@ -2,8 +2,10 @@ import { useState } from 'react'
 import FootballGame from './games/FootballGame'
 import TowerDefenseGame from './games/TowerDefenseGame'
 import JetpackGame from './games/JetpackGame'
+import SterrenstroompGame from './games/SterrenstroompGame'
 import IepOefenen from './games/IepOefenen'
 import BlokOefenen from './games/BlokOefenen'
+import WerkwoordSpelling from './games/WerkwoordSpelling'
 import './game.css'
 
 const YEARS = [
@@ -24,12 +26,15 @@ const SUBJECTS = [
 // Which (year, subject) combos have a real game — rest shows placeholder
 const GAMES = {
   '7-rekenen': 'iep',
+  '7-spelling': 'werkwoord',
+  '8-spelling': 'werkwoord',
 }
 
 const FREE_GAMES = [
-  { key: 'football',     emoji: '⚽', name: 'WK Voetbal',    desc: 'Alle groepen' },
-  { key: 'towerdefense', emoji: '🏰', name: 'Tower Defense', desc: 'Alle groepen' },
-  { key: 'jetpack',      emoji: '🚀', name: 'Jetpack',        desc: 'Vlieg zo ver mogelijk!' },
+  { key: 'football',      emoji: '⚽', name: 'WK Voetbal',      desc: 'Alle groepen' },
+  { key: 'towerdefense',  emoji: '🏰', name: 'Tower Defense',   desc: 'Alle groepen' },
+  { key: 'jetpack',       emoji: '🚀', name: 'Jetpack',          desc: 'Vlieg zo ver mogelijk!' },
+  { key: 'sterrenstroom', emoji: '🛸', name: 'Spacerunner',     desc: 'Vlieg door de ruimte!' },
 ]
 
 export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
@@ -37,7 +42,8 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
   const [subject,    setSubject]    = useState(null)
   const [directGame, setDirectGame] = useState(null)
   const [gameMode,   setGameMode]   = useState(null)
-  const [rekenKeuze, setRekenKeuze] = useState(null)   // null | 'verhaal' | 'blok9'
+  const [rekenKeuze,    setRekenKeuze]    = useState(null)   // null | 'verhaal' | 'blok9'
+  const [spellingKeuze, setSpellingKeuze] = useState(null)   // null | 'werkwoord'
 
   // Tower defense (no mode selection needed)
   if (directGame === 'towerdefense') {
@@ -46,6 +52,10 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
 
   if (directGame === 'jetpack') {
     return <JetpackGame onBack={onBack} addCuruntie={addCuruntie} />
+  }
+
+  if (directGame === 'sterrenstroom') {
+    return <SterrenstroompGame onBack={onBack} />
   }
 
 
@@ -122,6 +132,36 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
       )
     }
 
+    if (GAMES[gameId] === 'werkwoord') {
+      if (spellingKeuze === 'werkwoord') {
+        return (
+          <WerkwoordSpelling
+            groep={year}
+            onBack={() => setSpellingKeuze(null)}
+            addBriefgeld={addBriefgeld}
+          />
+        )
+      }
+      // keuzescherm spelling
+      return (
+        <div className="game-screen game-screen-center">
+          <button className="back-btn" onClick={() => setSubject(null)}>← Menu</button>
+          <div className="game-header">
+            <span className="game-header-icon" style={{ color: '#CE93D8' }}>✏️</span>
+            <h1 className="game-header-title">Spelling — Groep {year}</h1>
+            <p className="game-header-sub">Wat wil je oefenen?</p>
+          </div>
+          <div className="mode-grid">
+            <button className="mode-card" onClick={() => setSpellingKeuze('werkwoord')}>
+              <span className="mode-emoji">✒️</span>
+              <span className="mode-name">Werkwoordspelling</span>
+              <span className="mode-desc">Tegenwoordige tijd, verleden tijd & voltooid deelwoord</span>
+            </button>
+          </div>
+        </div>
+      )
+    }
+
     if (GAMES[gameId] === 'football') {
       return (
         <FootballGame
@@ -177,6 +217,8 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
                 <span className="subject-tag">
                   {GAMES[`${year}-${s.key}`] === 'iep'
                     ? '🚀 Verhaaltjessommen'
+                    : GAMES[`${year}-${s.key}`] === 'werkwoord'
+                    ? '✒️ Werkwoordspelling'
                     : hasGame
                     ? '▶ Spelen'
                     : 'Groep ' + year}

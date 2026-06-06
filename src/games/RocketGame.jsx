@@ -1109,6 +1109,10 @@ function WaitingRoom({ code, players, room, onBack }) {
             </div>
           ))}
         </div>
+        <div className="rg-bot-row">
+          <button className="rg-bot-btn" onClick={() => room?.send('addBot')}>🤖 Bot erbij</button>
+          <button className="rg-bot-btn" onClick={() => room?.send('removeBot')}>➖ Bot eraf</button>
+        </div>
         <button className="rg-lobby-btn rg-lobby-create" onClick={() => room?.send('start')}>
           ▶ Start spel
         </button>

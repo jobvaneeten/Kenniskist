@@ -1,0 +1,382 @@
+/* ===== Werkwoordspelling — Spelling thema (paars) ===== */
+
+.ws-wrap {
+  min-height: 100vh;
+  background: linear-gradient(160deg, #3b1a5f 0%, #25103f 60%, #160726 100%);
+  color: #fff;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ── Gecentreerd scherm ── */
+.ws-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 32px 20px 48px;
+  gap: 18px;
+  text-align: center;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+.ws-icon {
+  font-size: 4.5rem;
+  filter: drop-shadow(0 4px 18px rgba(206,147,216,0.5));
+  animation: ws-float 3s ease-in-out infinite;
+}
+.ws-bounce { animation: ws-bounce 0.7s ease-in-out infinite alternate; }
+@keyframes ws-float  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+@keyframes ws-bounce { from{transform:scale(1)} to{transform:scale(1.12)} }
+.ws-title {
+  font-size: clamp(1.8rem, 5vw, 2.6rem);
+  font-weight: 900;
+  margin: 0;
+  background: linear-gradient(135deg, #e9a8f5, #a78bfa, #f0abfc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.ws-sub { margin: 0; color: #d8b4fe; font-size: 1.05rem; font-weight: 600; }
+
+/* ── Beloning-keuze ── */
+.ws-beloning-grid {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 10px;
+}
+.ws-beloning-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 26px 22px;
+  border-radius: 22px;
+  border: 3px solid rgba(206,147,216,0.4);
+  background: linear-gradient(145deg, rgba(168,85,247,0.22), rgba(126,34,206,0.18));
+  cursor: pointer;
+  transition: transform 0.18s, border-color 0.18s, box-shadow 0.18s;
+  min-width: 150px;
+}
+.ws-beloning-card:hover {
+  transform: translateY(-6px) scale(1.04);
+  border-color: #e9a8f5;
+  box-shadow: 0 10px 30px rgba(168,85,247,0.4);
+}
+.ws-bc-emoji { font-size: 2.6rem; }
+.ws-bc-name { font-size: 1.05rem; font-weight: 800; color: #f3e8ff; }
+.ws-bc-reward {
+  font-size: 0.82rem; font-weight: 700; color: #fde68a;
+  background: rgba(251,191,36,0.12);
+  border-radius: 8px; padding: 3px 10px;
+}
+
+/* ── Oefenscherm ── */
+.ws-oefen {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 16px 16px 48px;
+  gap: 14px;
+  position: relative;
+  z-index: 1;
+}
+.ws-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.ws-back-btn {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #fff;
+  border-radius: 10px;
+  padding: 7px 16px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.ws-back-btn:hover { background: rgba(255,255,255,0.2); }
+.ws-header-title {
+  flex: 1;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #d8b4fe;
+  text-align: center;
+}
+.ws-verdiend { color: #fde68a; font-weight: 800; font-size: 0.9rem; white-space: nowrap; }
+
+.ws-progress-wrap {
+  height: 8px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.ws-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #e9a8f5, #a855f7);
+  border-radius: 99px;
+  transition: width 0.4s ease;
+}
+.ws-progress-label { font-size: 0.8rem; color: #c4b5fd; display: flex; justify-content: space-between; }
+.ws-opgave-teller { color: #fde68a; font-weight: 700; }
+
+/* ── Overzichtsscherm (na 20 opgaven) ── */
+.ws-overzicht {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.ws-ov-banner {
+  text-align: center;
+  font-size: clamp(1.4rem, 4.5vw, 2rem);
+  font-weight: 900;
+  padding: 16px 18px;
+  border-radius: 16px;
+  color: #1a1206;
+  background: linear-gradient(135deg, #fde68a, #fbbf24, #f59e0b);
+  box-shadow: 0 6px 28px rgba(251, 191, 36, 0.45);
+  letter-spacing: 0.01em;
+}
+.ws-ov-score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 14px;
+  background: rgba(255,255,255,0.05);
+  border: 2px solid rgba(206,147,216,0.3);
+  border-radius: 16px;
+}
+.ws-ov-score-groot {
+  font-size: 2.6rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, #34d399, #60a5fa);
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+.ws-ov-score-label { font-size: 0.95rem; color: #c4b5fd; font-weight: 600; }
+
+.ws-ov-cats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+.ws-ov-cat {
+  padding: 14px 16px;
+  border-radius: 14px;
+  border-left: 6px solid var(--tijd-kleur, #a855f7);
+  background: var(--tijd-bg, rgba(168,85,247,0.12));
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ws-ov-cat-head { display: flex; flex-direction: column; gap: 2px; }
+.ws-ov-cat-naam { font-size: 0.95rem; font-weight: 800; color: var(--tijd-kleur, #f3e8ff); }
+.ws-ov-cat-cijfer { font-size: 0.85rem; color: #e2e8f0; font-weight: 600; }
+.ws-ov-cat-fout    { font-size: 0.9rem; font-weight: 700; color: #fca5a5; }
+.ws-ov-cat-perfect { font-size: 0.9rem; font-weight: 700; color: #6ee7b7; }
+.ws-ov-cat-leeg    { font-size: 0.9rem; color: #94a3b8; }
+
+.ws-ov-foutenlijst {
+  background: rgba(248,113,113,0.08);
+  border: 1.5px solid rgba(248,113,113,0.3);
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ws-ov-foutenlijst-titel { font-size: 0.9rem; font-weight: 800; color: #fca5a5; text-transform: uppercase; letter-spacing: 0.04em; }
+.ws-ov-fout-rij {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: baseline;
+  font-size: 0.92rem;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.ws-ov-fout-inf  { font-weight: 800; color: #f5f3ff; min-width: 90px; }
+.ws-ov-fout-jouw { color: #fca5a5; }
+.ws-ov-fout-goed { color: #6ee7b7; font-weight: 600; margin-left: auto; }
+
+.ws-ov-verder-btn {
+  align-self: center;
+  margin-top: 6px;
+  background: linear-gradient(135deg, #9333ea, #7c3aed);
+  border: none;
+  border-radius: 14px;
+  color: #fff;
+  font-size: 1.05rem;
+  font-weight: 800;
+  padding: 14px 32px;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.15s;
+}
+.ws-ov-verder-btn:hover { opacity: 0.9; transform: translateY(-2px); }
+
+/* ── Vraagkaart ── */
+.ws-card {
+  background: rgba(255,255,255,0.05);
+  border: 2px solid rgba(206,147,216,0.25);
+  border-radius: 20px;
+  padding: 24px 24px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+/* ── Opdracht: groot werkwoord + tijd (gekleurd per tijd) ── */
+.ws-opdracht {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 14px 18px;
+  border-radius: 14px;
+  border-left: 6px solid var(--tijd-kleur, #a855f7);
+  background: var(--tijd-bg, rgba(168,85,247,0.12));
+}
+.ws-inf-groot {
+  font-size: 2.4rem;
+  font-weight: 900;
+  line-height: 1;
+  color: var(--tijd-kleur, #f3e8ff);
+  letter-spacing: 0.01em;
+}
+.ws-tijd-tag {
+  font-size: 0.9rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--tijd-kleur, #d8b4fe);
+  opacity: 0.95;
+}
+
+/* Kleuren per tijd: tt = blauw, vt = oranje, vd = totaal anders (groen) */
+.ws-tijd-tt { --tijd-kleur: #38bdf8; --tijd-bg: rgba(56,189,248,0.12); }
+.ws-tijd-vt { --tijd-kleur: #fb923c; --tijd-bg: rgba(251,146,60,0.12); }
+.ws-tijd-vd { --tijd-kleur: #34d399; --tijd-bg: rgba(52,211,153,0.14); }
+
+.ws-zin {
+  font-size: 1.45rem;
+  font-weight: 700;
+  line-height: 1.7;
+  color: #f5f3ff;
+}
+.ws-gat {
+  display: inline-block;
+  min-width: 90px;
+  text-align: center;
+  margin: 0 4px;
+  padding: 0 10px;
+  border-bottom: 3px solid var(--tijd-kleur, #e9a8f5);
+  color: #fde68a;
+  font-weight: 900;
+}
+
+.ws-antwoord-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.ws-input {
+  flex: 1;
+  min-width: 150px;
+  background: rgba(255,255,255,0.08);
+  border: 2px solid rgba(206,147,216,0.35);
+  border-radius: 12px;
+  color: #fff;
+  font-size: 1.15rem;
+  font-weight: 700;
+  padding: 12px 16px;
+  outline: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+.ws-input:focus { border-color: #e9a8f5; background: rgba(206,147,216,0.1); }
+.ws-check-btn {
+  background: linear-gradient(135deg, #9333ea, #7c3aed);
+  border: none;
+  border-radius: 12px;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 800;
+  padding: 12px 22px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.15s, transform 0.15s;
+}
+.ws-check-btn:hover { opacity: 0.9; transform: translateY(-2px); }
+
+.ws-feedback {
+  border-radius: 14px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  animation: ws-pop 0.2s ease;
+}
+@keyframes ws-pop { from{transform:scale(0.95);opacity:0} to{transform:scale(1);opacity:1} }
+.ws-goed { background: rgba(52,211,153,0.15); border: 2px solid #34d399; color: #6ee7b7; }
+.ws-fout { background: rgba(248,113,113,0.12); border: 2px solid #f87171; color: #fca5a5; }
+.ws-goed strong { color: #a7f3d0; }
+.ws-fout strong { color: #fecaca; }
+.ws-verder-btn {
+  align-self: flex-end;
+  background: rgba(255,255,255,0.12);
+  border: 1.5px solid rgba(255,255,255,0.25);
+  border-radius: 10px;
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 800;
+  padding: 9px 20px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.ws-verder-btn:hover { background: rgba(255,255,255,0.22); }
+
+/* ── Spel-embed (Jetpack) ── */
+.ws-game-wrap {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: #000;
+  display: flex;
+  flex-direction: column;
+}
+.ws-game-wrap iframe { flex: 1; width: 100%; border: none; }
+.ws-game-exit {
+  position: absolute;
+  top: 12px; left: 12px;
+  z-index: 320;
+  background: rgba(0,0,0,0.75);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 8px;
+  padding: 6px 16px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.ws-game-hint {
+  text-align: center;
+  color: rgba(255,255,255,0.45);
+  font-size: 0.8rem;
+  padding: 6px;
+  background: #000;
+}

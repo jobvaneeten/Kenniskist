@@ -5,6 +5,7 @@ import Shop            from './Shop'
 import GameMenu        from './GameMenu'
 import RocketGame      from './games/RocketGame'
 import PaintballGame   from './games/PaintballGame'
+import KartGame        from './games/KartGame'
 import { allUnlockedMap } from './itemsCatalog'
 
 const CODES = { pabo: 100000 }
@@ -177,20 +178,20 @@ export default function App() {
       <CurrencyBadge munten={curuntie} briefgeld={briefgeld} />
       <Wardrobe
         onBack={goMenu}
-        onPlay3D={() => setScreen('football3d')}
         onPlayRocket={() => setScreen('rocket')}
         onPlayPaintball={() => setScreen('paintball')}
+        onPlayKart={() => setScreen('kart')}
         unlockedColors={unlockedColors}
       />
     </>
   )
 
-  if (screen === 'football3d') return (
-    <RocketGame solo onBack={() => setScreen('wardrobe')} />
-  )
-
   if (screen === 'rocket') return (
     <RocketGame onBack={() => setScreen('wardrobe')} />
+  )
+
+  if (screen === 'kart') return (
+    <KartGame onBack={() => setScreen('wardrobe')} />
   )
 
   if (screen === 'paintball') return (

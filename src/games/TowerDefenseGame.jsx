@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { createGame } from './towerdefense/GameEngine.js'
 import './towerdefense.css'
 
-export default function TowerDefenseGame({ onBack }) {
+export default function TowerDefenseGame({ onBack, onRoundDone, visible = true }) {
   const containerRef = useRef(null)
   const gameRef      = useRef(null)
 
@@ -12,9 +12,16 @@ export default function TowerDefenseGame({ onBack }) {
     return () => { document.body.style.overflow = prev }
   }, [])
 
+  // Pause/resume als het venster wordt verborgen (visible prop)
+  useEffect(() => {
+    if (!gameRef.current) return
+    if (visible) gameRef.current.resumeScenes?.()
+    else         gameRef.current.pauseScenes?.()
+  }, [visible])
+
   useEffect(() => {
     if (!containerRef.current || gameRef.current) return
-    gameRef.current = createGame(containerRef.current, { onBack })
+    gameRef.current = createGame(containerRef.current, { onBack, onRoundDone })
     return () => {
       if (gameRef.current) {
         try { gameRef.current.destroy(true) } catch {}
@@ -24,7 +31,7 @@ export default function TowerDefenseGame({ onBack }) {
   }, [])
 
   return (
-    <div className="td-wrapper">
+    <div className="td-wrapper" style={{ display: visible ? 'block' : 'none' }}>
       <button
         onClick={onBack}
         style={{

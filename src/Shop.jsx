@@ -201,7 +201,7 @@ export default function Shop({ curuntie, briefgeld, addBriefgeld, onExchange, un
     const won = bag[Math.floor(Math.random() * bag.length)]
 
     if (isDuplicate) {
-      addBriefgeld(-LOOTBOX_COST + 50)
+      // item al in bezit → volledige teruggave, niets afschrijven
     } else {
       addBriefgeld(-LOOTBOX_COST)
       onUnlock(item.key, won.key)
@@ -499,7 +499,7 @@ export default function Shop({ curuntie, briefgeld, addBriefgeld, onExchange, un
                           {RARITIES[overlay.wonItem.rarity].label}
                         </div>
                         <div className={`lb-wc-message ${isUltra ? 'lb-msg-ultra' : ''}`}>
-                          {overlay.isDuplicate ? '🔄 Al gewonnen! +50 💵' : isUltra ? '🎆 GEWELDIG! JE HEBT HET! 🎆' : '🎉 NIEUW GEWONNEN!'}
+                          {overlay.isDuplicate ? `🔄 Al in bezit! Geld terug 💵 ${fmt(LOOTBOX_COST)}` : isUltra ? '🎆 GEWELDIG! JE HEBT HET! 🎆' : '🎉 NIEUW GEWONNEN!'}
                         </div>
                       </>
                     )}

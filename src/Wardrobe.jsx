@@ -126,7 +126,7 @@ function applyItem(mesh, item, scene) {
 }
 
 // ── Component ─────────────────────────────────────────────────────
-export default function Wardrobe({ onBack, onPlay3D, onPlayRocket, onPlayPaintball, unlockedColors = {} }) {
+export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlayKart, unlockedColors = {} }) {
   const canvasRef      = useRef(null)
   const sceneRef       = useRef(null)
   const skeletonRef    = useRef(null)
@@ -144,6 +144,7 @@ export default function Wardrobe({ onBack, onPlay3D, onPlayRocket, onPlayPaintba
   const [loading,    setLoading]    = useState(true)
   const [activeAnim, setActiveAnim] = useState(null)
   const [animsReady, setAnimsReady] = useState(false)
+  const [showGames,  setShowGames]  = useState(false)
 
   useEffect(() => {
     if (shirtColor) localStorage.setItem('kk_shirt', shirtColor)
@@ -487,20 +488,27 @@ export default function Wardrobe({ onBack, onPlay3D, onPlayRocket, onPlayPaintba
       <div className="viewer-panel">
         <canvas ref={canvasRef} className="three-canvas" />
         {loading && <div className="viewer-loading">Laden...</div>}
-        {!loading && onPlay3D && (
-          <button className="play3d-btn" onClick={onPlay3D}>
-            ⚽ Speel in 3D
-          </button>
-        )}
-        {!loading && onPlayRocket && (
-          <button className="play3d-btn play-rocket-btn" onClick={onPlayRocket}>
-            ⚽ Potje voetballen
-          </button>
-        )}
-        {!loading && onPlayPaintball && (
-          <button className="play3d-btn play-paintball-btn" onClick={onPlayPaintball}>
-            🎯 Paintball
-          </button>
+        {!loading && (
+          showGames ? (
+            <div className="wd-game-menu">
+              <button className="play3d-btn play-rocket-btn" onClick={onPlayRocket}>
+                ⚽ Voetbal
+              </button>
+              <button className="play3d-btn play-paintball-btn" onClick={onPlayPaintball}>
+                🎯 Paintball
+              </button>
+              <button className="play3d-btn play-kart-btn" onClick={onPlayKart}>
+                🏎️ Racen
+              </button>
+              <button className="play3d-btn wd-game-close" onClick={() => setShowGames(false)}>
+                ✕ Sluiten
+              </button>
+            </div>
+          ) : (
+            <button className="play3d-btn" onClick={() => setShowGames(true)}>
+              🎮 Speel een spel!
+            </button>
+          )
         )}
       </div>
 

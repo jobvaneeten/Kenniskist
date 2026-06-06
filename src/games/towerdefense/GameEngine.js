@@ -8,7 +8,7 @@ import { MAP_ROWS, MAP_COLS, TILE_SIZE, PANEL_WIDTH } from './data/MapData.js'
 const W = MAP_COLS * TILE_SIZE + PANEL_WIDTH  // 1024 + 256 = 1280
 const H = MAP_ROWS * TILE_SIZE                // 640
 
-export function createGame(parent, { onBack }) {
+export function createGame(parent, { onBack, onRoundDone }) {
   const config = {
     type:   Phaser.WEBGL,
     width:  W,
@@ -38,6 +38,16 @@ export function createGame(parent, { onBack }) {
   game.events.on('back', () => {
     if (typeof onBack === 'function') onBack()
   })
+
+  // Reward-mode: na een potje (victory/game over) automatisch terug
+  game.registry.set('rewardMode', typeof onRoundDone === 'function')
+  game.events.on('round_done', () => {
+    if (typeof onRoundDone === 'function') onRoundDone()
+  })
+
+  // Pause/resume alle scenes (gebruikt wanneer TD verborgen is achter spelling)
+  game.pauseScenes  = () => { ['Game','UI'].forEach(k => { try { game.scene.pause(k) }  catch {} }) }
+  game.resumeScenes = () => { ['Game','UI'].forEach(k => { try { game.scene.resume(k) } catch {} }) }
 
   return game
 }
