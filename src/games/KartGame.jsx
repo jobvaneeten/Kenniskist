@@ -297,7 +297,7 @@ function KartRace({ onBack, room, sessionId, joinCode, track = 'groen' }) {
     buildTrack(scene, sg, trackId)
 
     // ── Eigen kart + avatar ──
-    const myGrid = mp ? (room.state.players.get(sessionId)?.grid ?? 0) : 0
+    const myGrid = mp ? (room.state.players?.get(sessionId)?.grid ?? 0) : 0
     const myColor = KART_COLORS[myGrid % KART_COLORS.length]
     const { root: kartRoot, wheels } = buildKart(scene, myColor, 'me')
     const gs = gridStart(myGrid)
@@ -352,16 +352,21 @@ function KartRace({ onBack, room, sessionId, joinCode, track = 'groen' }) {
     // ── Race-fasen ──
     let cdTimer = null
     if (mp) {
-      // Server bepaalt de fase; lobby-lijst + countdown via listeners
-      const refreshList = () => setPlayers([...room.state.players].map(([sid, p]) => ({ sid, name: p.name, me: sid === sessionId, bot: p.isBot })))
-      refreshList()
-      room.state.players.onAdd(() => refreshList())
-      room.state.players.onRemove(() => refreshList())
-      room.state.listen('phase', (v) => {
-        setPhase(v)
-        if (v === 'racing') { phys.lapStart = performance.now(); stateRef.current.racing = true }
-      })
-      room.state.listen('countdown', (v) => setCount(v))
+      // Server bepaalt de fase; lobby-lijst + countdown via onStateChange
+      let lastPhase = room.state.phase
+      const sync = (state) => {
+        const arr = []
+        state.players?.forEach((p, sid) => arr.push({ sid, name: p.name, me: sid === sessionId, bot: p.isBot }))
+        setPlayers(arr)
+        setCount(state.countdown)
+        if (state.phase !== lastPhase) {
+          lastPhase = state.phase
+          setPhase(state.phase)
+          if (state.phase === 'racing') { phys.lapStart = performance.now(); stateRef.current.racing = true }
+        }
+      }
+      sync(room.state)
+      room.onStateChange(sync)
       if (room.state.phase === 'racing') { phys.lapStart = performance.now(); stateRef.current.racing = true }
     } else {
       let cd = 3
@@ -380,7 +385,7 @@ function KartRace({ onBack, room, sessionId, joinCode, track = 'groen' }) {
       const dt = Math.min(0.05, (now - lastT) / 1000); lastT = now
 
       // Remote karts bijwerken + soepel interpoleren
-      if (mp) {
+      if (mp && room.state.players) {
         room.state.players.forEach((p, sid) => {
           if (sid === sessionId) return
           let e = remotes.get(sid)
@@ -482,7 +487,7 @@ function KartRace({ onBack, room, sessionId, joinCode, track = 'groen' }) {
             const eProg = e.lap * NSEG + nearestIdx(e.root.position).idx
             if (eProg > myProg) pos++
           })
-          setPlace({ pos, total: room.state.players.size })
+          setPlace({ pos, total: room.state.players?.size ?? 1 })
         }
 
         setSpeed(Math.round(Math.abs(phys.vel) * 3.6))
