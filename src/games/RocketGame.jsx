@@ -1094,6 +1094,7 @@ function Lobby({ onBack, onJoined }) {
 
 // ── Waiting room ───────────────────────────────────────────────────────
 function WaitingRoom({ code, players, room, onBack }) {
+  const [botDiff, setBotDiff] = useState('normaal')
   return (
     <div className="rg-waiting">
       <button className="rg-back" onClick={onBack}>← Menu</button>
@@ -1109,8 +1110,15 @@ function WaitingRoom({ code, players, room, onBack }) {
             </div>
           ))}
         </div>
+        <div className="rg-diff-row">
+          {['makkelijk', 'normaal', 'moeilijk'].map(d => (
+            <button key={d} className={'rg-diff-btn' + (botDiff === d ? ' on' : '')} onClick={() => setBotDiff(d)}>
+              {d === 'makkelijk' ? '😊 Makkelijk' : d === 'normaal' ? '😐 Normaal' : '😈 Moeilijk'}
+            </button>
+          ))}
+        </div>
         <div className="rg-bot-row">
-          <button className="rg-bot-btn" onClick={() => room?.send('addBot')}>🤖 Bot erbij</button>
+          <button className="rg-bot-btn" onClick={() => room?.send('addBot', botDiff)}>🤖 Bot erbij</button>
           <button className="rg-bot-btn" onClick={() => room?.send('removeBot')}>➖ Bot eraf</button>
         </div>
         <button className="rg-lobby-btn rg-lobby-create" onClick={() => room?.send('start')}>

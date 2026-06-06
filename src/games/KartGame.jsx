@@ -276,6 +276,7 @@ function KartRace({ onBack, room, sessionId, joinCode, track = 'groen' }) {
   const [place, setPlace]   = useState({ pos: 1, total: 1 })
   const [result, setResult]   = useState(null)
   const [players, setPlayers] = useState([])      // lobby-lijst
+  const [botDiff, setBotDiff] = useState('normaal')
   const stateRef = useRef({})
 
   // Lobby: start de race (server zet phase → countdown → racing)
@@ -524,8 +525,15 @@ function KartRace({ onBack, room, sessionId, joinCode, track = 'groen' }) {
           <ul className="kart-lobby-list">
             {players.map(p => <li key={p.sid} className={p.me ? 'me' : ''}>{p.me ? '⭐ ' : (p.bot ? '🤖 ' : '🏎️ ')}{p.name}</li>)}
           </ul>
+          <div className="kart-diff-row">
+            {['makkelijk', 'normaal', 'moeilijk'].map(d => (
+              <button key={d} className={'kart-diff-btn' + (botDiff === d ? ' on' : '')} onClick={() => setBotDiff(d)}>
+                {d === 'makkelijk' ? '😊 Makkelijk' : d === 'normaal' ? '😐 Normaal' : '😈 Moeilijk'}
+              </button>
+            ))}
+          </div>
           <div className="kart-bot-row">
-            <button className="kart-bot-btn" onClick={() => room.send('addBot')}>🤖 Bot erbij</button>
+            <button className="kart-bot-btn" onClick={() => room.send('addBot', botDiff)}>🤖 Bot erbij</button>
             <button className="kart-bot-btn" onClick={() => room.send('removeBot')}>➖ Bot eraf</button>
           </div>
           <button className="kart-start-btn" onClick={startRace}>Start race! ({players.length})</button>
