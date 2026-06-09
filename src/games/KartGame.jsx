@@ -266,7 +266,7 @@ function gridStart(grid) {
 
 function KartRace({ onBack, room, sessionId, joinCode, track = 'groen' }) {
   const mp = !!room
-  const trackId = mp ? (room.state.track || 'groen') : track
+  const trackId = track || 'groen'
   const canvasRef = useRef(null)
   const [phase, setPhase]   = useState(mp ? 'lobby' : 'countdown')   // lobby | countdown | racing | finished
   const [count, setCount]   = useState(3)
@@ -577,18 +577,19 @@ export default function KartGame({ onBack }) {
   const [sessionId, setSessionId] = useState(null)
   const [joinCode, setJoinCode] = useState(null)
   const [selTrack, setSelTrack] = useState('groen')
+  const [raceTrack, setRaceTrack] = useState('groen')
 
   if (screen === 'solo') return <KartRace onBack={() => setScreen('menu')} track={selTrack} />
 
   if (screen === 'race' && room) {
-    return <KartRace onBack={() => { try { room.leave() } catch {} ; setRoom(null); setScreen('menu') }} room={room} sessionId={sessionId} joinCode={joinCode} />
+    return <KartRace onBack={() => { try { room.leave() } catch {} ; setRoom(null); setScreen('menu') }} room={room} sessionId={sessionId} joinCode={joinCode} track={raceTrack} />
   }
 
   if (screen === 'lobby') {
     return <KartLobby
       track={selTrack}
       onBack={() => setScreen('menu')}
-      onJoined={(r, jc) => { setRoom(r); setSessionId(r.sessionId); setJoinCode(jc); setScreen('race') }}
+      onJoined={(r, jc) => { setRoom(r); setSessionId(r.sessionId); setJoinCode(jc); setRaceTrack(r.state?.track || selTrack); setScreen('race') }}
     />
   }
 
