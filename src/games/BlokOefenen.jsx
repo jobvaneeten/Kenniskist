@@ -239,6 +239,22 @@ function VraagKaart({ q, intro, onNext }) {
   )
 }
 
+// ── Jetpack embed ────────────────────────────────────────────────────────
+function JetpackBeloning({ onDone }) {
+  useEffect(() => {
+    const h = (e) => { if (e.data?.type === 'jetpack-gameover') setTimeout(onDone, 2200) }
+    window.addEventListener('message', h)
+    return () => window.removeEventListener('message', h)
+  }, [onDone])
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: '#000', display: 'flex', flexDirection: 'column' }}>
+      <button className="bk-back-btn" style={{ position: 'absolute', top: 10, left: 10, zIndex: 10 }} onClick={onDone}>← Klaar</button>
+      <iframe src="/jetpack/index.html" title="Jetpack" allow="autoplay" style={{ flex: 1, border: 'none' }} />
+      <div style={{ textAlign: 'center', color: '#aaa', padding: '8px', fontSize: '0.85rem' }}>Je gaat automatisch verder na het spel ✈️</div>
+    </div>
+  )
+}
+
 // ── Oefenscherm ──────────────────────────────────────────────────────────
 function Oefenen({ level, blokNr, doelNr, addBriefgeld, onBack }) {
   const blok = BLOKKEN.find(b => b.nr === blokNr)
@@ -247,28 +263,28 @@ function Oefenen({ level, blokNr, doelNr, addBriefgeld, onBack }) {
 
   const [oi, setOi] = useState(0)
   const [vi, setVi] = useState(0)
-  const [reward, setReward] = useState(false)
-  const [done, setDone] = useState(false)
+  const [screen, setScreen] = useState('oefening')   // 'oefening' | 'reward' | 'jetpack' | 'done'
   const [verdiend, setVerdiend] = useState(0)
   const [showHulp, setShowHulp] = useState(false)
+  const currentOpgave = useRef(null)
 
   const opgave = opgaven[oi]
   const vraag  = opgave?.vragen[vi]
   const voortgang = opgaven.length ? (oi / opgaven.length) * 100 : 0
-  // Hulp-screenshot uit het werkblad: bestandsnaam = niveau + doelnummer
   const hulpImg = `/hulp/${level === 'FS' ? 'fs' : 'sp'}${doel.nr}.png`
+
+  const afterReward = () => {
+    if (oi + 1 < opgaven.length) { setOi(oi + 1); setVi(0); setScreen('oefening') }
+    else setScreen('done')
+  }
 
   const next = () => {
     if (vi + 1 < opgave.vragen.length) { setVi(vi + 1); return }
-    addBriefgeld?.(100); setVerdiend(v => v + 100); setReward(true)
-  }
-  const afterReward = () => {
-    setReward(false)
-    if (oi + 1 < opgaven.length) { setOi(oi + 1); setVi(0) }
-    else setDone(true)
+    currentOpgave.current = opgave
+    addBriefgeld?.(100); setVerdiend(v => v + 100); setScreen('reward')
   }
 
-  if (done) return (
+  if (screen === 'done') return (
     <div className="bk-screen">
       <div className="bk-icon">🏆</div>
       <h2 className="bk-title">Doel {doel.nr} klaar!</h2>
@@ -277,14 +293,17 @@ function Oefenen({ level, blokNr, doelNr, addBriefgeld, onBack }) {
     </div>
   )
 
-  if (reward) return (
+  if (screen === 'reward') return (
     <div className="bk-screen">
       <div className="bk-icon bk-bounce">💵</div>
-      <h2 className="bk-title">Opgave {opgave.nr} af!</h2>
+      <h2 className="bk-title">Opgave {currentOpgave.current?.nr ?? oi + 1} af!</h2>
       <p className="bk-sub">Je verdient € 100 briefgeld! 🎉</p>
-      <button className="bk-primary-btn" onClick={afterReward}>Verder →</button>
+      <button className="bk-primary-btn" onClick={() => setScreen('jetpack')}>🚀 Speel Jetpack!</button>
+      <button className="bk-skip-btn" onClick={afterReward} style={{ marginTop: 8 }}>Sla over →</button>
     </div>
   )
+
+  if (screen === 'jetpack') return <JetpackBeloning onDone={afterReward} />
 
   return (
     <div className="bk-oefen-wrap">

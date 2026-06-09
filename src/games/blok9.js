@@ -153,10 +153,10 @@ export const BLOK9 = {
             nr: 4,
             intro: 'Reken de omtrek en oppervlakte uit.',
             vragen: [
-              { vraag: 'Figuur 1: omtrek (zijden: 5,2,2,1,3,2,5,3 m) =', antwoord: '24' },
+              { vraag: 'Figuur 1: omtrek (zijden: 5,2,2,1,3,2,5,3 m) =', antwoord: '23' },
               { vraag: 'Figuur 1: oppervlakte (splits in 2 rechthoeken: 5×3 en 2×2 = 15+4) =', antwoord: '19' },
               { vraag: 'Figuur 2: omtrek (zijden: 3,2,3,3,4,2,8,3 m) =', antwoord: '28' },
-              { vraag: 'Figuur 2: oppervlakte (splits: 3×8, 3×4, 2×2 = 24+12... bereken zelf) =', antwoord: '31' },
+              { vraag: 'Figuur 2: oppervlakte (splits in rechthoeken, zie 💡 hulp) =', antwoord: '31' },
             ],
           },
           {
@@ -511,7 +511,7 @@ export const BLOK9 = {
             nr: 4,
             intro: 'Reken de omtrek en oppervlakte uit.',
             vragen: [
-              { vraag: 'Figuur 1: omtrek (zijden 5,2,2,1,3,2,5,3 m) =', antwoord: '24' },
+              { vraag: 'Figuur 1: omtrek (zijden 5,2,2,1,3,2,5,3 m) =', antwoord: '23' },
               { vraag: 'Figuur 1: oppervlakte (in m²) =', antwoord: '19' },
               { vraag: 'Figuur 2: omtrek (zijden 3,2,3,3,4,2,8,3 m) =', antwoord: '28' },
               { vraag: 'Figuur 2: oppervlakte (in m²) =', antwoord: '31' },
