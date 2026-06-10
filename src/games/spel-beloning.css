@@ -1,0 +1,104 @@
+.sb-screen {
+  width: 100vw;
+  min-height: 100vh;
+  box-sizing: border-box;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 32px 16px 48px;
+  font-family: inherit;
+  /* stacking context boven de fixed currency-badge → voorkomt compositing-glitch */
+  position: relative;
+  z-index: 1;
+  isolation: isolate;
+}
+.sb-screen > * { position: relative; z-index: 1; }
+
+.sb-star {
+  font-size: 3.4rem;
+  animation: sb-pop 0.5s ease-out;
+}
+@keyframes sb-pop {
+  from { transform: scale(0) rotate(-180deg); }
+  to   { transform: scale(1) rotate(0deg); }
+}
+
+.sb-title {
+  margin: 8px 0 2px;
+  font-size: 1.7rem;
+  color: #f59e0b;
+}
+.sb-line { margin: 0; color: #ddd; }
+.sb-geld {
+  margin: 8px 0 0;
+  background: rgba(245,158,11,0.15);
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+  padding: 6px 14px;
+  color: #f59e0b;
+  font-weight: 700;
+}
+.sb-sub { margin: 18px 0 10px; color: #aaa; font-size: 0.95rem; }
+
+.sb-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  width: 100%;
+  max-width: 420px;
+}
+
+.sb-card {
+  background: rgba(255,255,255,0.07);
+  border: 2px solid rgba(79,195,247,0.3);
+  border-radius: 16px;
+  padding: 18px 12px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  color: #fff;
+  font-family: inherit;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+}
+.sb-card:hover {
+  background: rgba(79,195,247,0.12);
+  border-color: #4FC3F7;
+  transform: translateY(-2px);
+}
+.sb-emoji { font-size: 2.1rem; }
+.sb-name  { font-size: 1.02rem; font-weight: 700; }
+.sb-desc  { font-size: 0.76rem; color: #aaa; }
+
+.sb-skip {
+  margin-top: 18px;
+  background: rgba(255,255,255,0.08);
+  color: #aaa;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 22px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  cursor: pointer;
+}
+.sb-skip:hover { background: rgba(255,255,255,0.15); }
+
+.sb-game-back {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 200;
+  background: rgba(0,0,0,0.75);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 8px;
+  padding: 6px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  font-family: inherit;
+}

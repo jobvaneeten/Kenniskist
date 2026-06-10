@@ -11,18 +11,76 @@ body {
   overflow-x: hidden;
 }
 
-/* ── Animated background ─────────────────── */
+/* ── Animated aurora background ─────────────────── */
 body::before {
   content: '';
   position: fixed;
-  inset: 0;
+  inset: -20%;
   background:
-    radial-gradient(ellipse 80% 60% at 20% 10%, rgba(99, 58, 220, 0.22) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 50% at 80% 80%, rgba(6, 214, 160, 0.14) 0%, transparent 55%),
-    radial-gradient(ellipse 70% 70% at 50% 50%, rgba(15, 52, 96, 0.6) 0%, transparent 70%),
-    linear-gradient(160deg, #0d0d1a 0%, #111128 40%, #0a1628 100%);
+    radial-gradient(ellipse 50% 45% at 18% 12%, rgba(232,67,147,0.30) 0%, transparent 60%),
+    radial-gradient(ellipse 45% 40% at 82% 18%, rgba(124,58,237,0.30) 0%, transparent 60%),
+    radial-gradient(ellipse 55% 50% at 80% 85%, rgba(6,214,160,0.22) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 45% at 15% 88%, rgba(56,189,248,0.22) 0%, transparent 60%),
+    linear-gradient(160deg, #0c0c1c 0%, #11112a 45%, #0a1426 100%);
   z-index: 0;
   pointer-events: none;
+  animation: aurora 18s ease-in-out infinite alternate;
+}
+@keyframes aurora {
+  0%   { transform: translate3d(0,0,0) scale(1)    rotate(0deg);   filter: hue-rotate(0deg); }
+  50%  { transform: translate3d(2%, -2%, 0) scale(1.08) rotate(2deg); filter: hue-rotate(18deg); }
+  100% { transform: translate3d(-2%, 2%, 0) scale(1.04) rotate(-2deg); filter: hue-rotate(-12deg); }
+}
+
+/* subtiel sterren-stippelpatroon erbovenop */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: radial-gradient(rgba(255,255,255,0.5) 1px, transparent 1px);
+  background-size: 42px 42px;
+  opacity: 0.06;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* ── Zwevende lichtbollen ── */
+.bg-orbs { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(48px);
+  opacity: 0.5;
+  will-change: transform;
+}
+.orb-1 { width: 320px; height: 320px; top: -60px;  left: -60px;  background: #e84393; animation: drift1 16s ease-in-out infinite; }
+.orb-2 { width: 280px; height: 280px; top: 30%;    right: -80px; background: #7c3aed; animation: drift2 20s ease-in-out infinite; }
+.orb-3 { width: 300px; height: 300px; bottom: -80px; left: 10%;  background: #06d6a0; animation: drift3 22s ease-in-out infinite; }
+.orb-4 { width: 220px; height: 220px; bottom: 20%; right: 20%;   background: #38bdf8; animation: drift1 19s ease-in-out infinite reverse; }
+@keyframes drift1 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(40px,60px); } }
+@keyframes drift2 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(-50px,40px); } }
+@keyframes drift3 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(30px,-50px); } }
+
+/* ── Zwevende emoji ── */
+.floaties { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+.floaty {
+  position: absolute;
+  font-size: 1.8rem;
+  opacity: 0.16;
+  filter: drop-shadow(0 4px 10px rgba(0,0,0,0.4));
+  animation: bobfloat 9s ease-in-out infinite;
+}
+.floaty-1 { top: 12%; left: 8%;  animation-delay: 0s;   font-size: 2.2rem; }
+.floaty-2 { top: 22%; right: 10%; animation-delay: 1.2s; }
+.floaty-3 { top: 46%; left: 5%;  animation-delay: 2.4s; font-size: 2.4rem; }
+.floaty-4 { top: 64%; right: 7%;  animation-delay: 0.8s; }
+.floaty-5 { top: 78%; left: 14%; animation-delay: 3.1s; font-size: 2rem; }
+.floaty-6 { top: 36%; right: 16%; animation-delay: 1.8s; font-size: 2.3rem; }
+.floaty-7 { top: 86%; right: 22%; animation-delay: 2.7s; }
+.floaty-8 { top: 8%;  left: 40%;  animation-delay: 3.6s; }
+@keyframes bobfloat {
+  0%,100% { transform: translateY(0) rotate(-6deg); }
+  50%     { transform: translateY(-22px) rotate(8deg); }
 }
 
 .screen {
@@ -53,31 +111,53 @@ body::before {
 }
 
 .logo-icon {
-  font-size: 3.4rem;
-  filter: drop-shadow(0 0 24px rgba(99,58,220,0.5)) drop-shadow(0 4px 12px rgba(0,0,0,0.5));
-  animation: float 4s ease-in-out infinite;
+  font-size: 3.8rem;
+  filter: drop-shadow(0 0 28px rgba(232,67,147,0.55)) drop-shadow(0 4px 12px rgba(0,0,0,0.5));
+  animation: float 4s ease-in-out infinite, wobble 6s ease-in-out infinite;
 }
 
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
-  50%       { transform: translateY(-6px); }
+  50%       { transform: translateY(-8px); }
+}
+@keyframes wobble {
+  0%, 100% { rotate: -8deg; }
+  50%      { rotate: 8deg; }
 }
 
 .logo-title {
-  font-size: 3.2rem;
+  font-size: 3.6rem;
   font-weight: 900;
-  color: #fff;
   letter-spacing: -2px;
-  text-shadow: 0 4px 24px rgba(0,0,0,0.5);
+  background: linear-gradient(100deg, #fff 0%, #ffe9a8 30%, #fff 50%, #d6c4ff 70%, #fff 100%);
+  background-size: 220% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 4px 24px rgba(0,0,0,0.45));
+  animation: shine 5s linear infinite;
+}
+@keyframes shine { to { background-position: 220% center; } }
+
+.accent {
+  background: linear-gradient(100deg, #FFD23F, #ff8a3d, #FFD23F);
+  background-size: 220% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shine 5s linear infinite;
 }
 
-.accent { color: #FFD23F; }
-
 .hero-sub {
-  font-size: 1rem;
-  font-weight: 700;
-  color: rgba(255,255,255,0.45);
-  letter-spacing: 0.03em;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: rgba(255,255,255,0.7);
+  letter-spacing: 0.04em;
+  animation: pulseGlow 2.6s ease-in-out infinite;
+}
+@keyframes pulseGlow {
+  0%,100% { opacity: 0.6; text-shadow: 0 0 8px rgba(255,210,63,0.0); }
+  50%     { opacity: 1;   text-shadow: 0 0 18px rgba(255,210,63,0.5); }
 }
 
 /* ── Menu ────────────────────────────────── */
@@ -93,16 +173,25 @@ body::before {
   align-items: center;
   gap: 18px;
   width: 100%;
-  padding: 20px 24px;
+  padding: 24px 26px;
   border: 1.5px solid transparent;
-  border-radius: 22px;
+  border-radius: 24px;
   cursor: pointer;
   font-family: inherit;
   color: #fff;
   text-align: left;
-  transition: transform 0.18s cubic-bezier(.34,1.56,.64,1), box-shadow 0.18s, border-color 0.18s;
+  transition: transform 0.2s cubic-bezier(.34,1.56,.64,1), box-shadow 0.2s, border-color 0.2s;
   position: relative;
   overflow: hidden;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: cardIn 0.55s cubic-bezier(.34,1.56,.64,1) forwards;
+}
+.btn-game     { animation-delay: 0.05s; }
+.btn-wardrobe { animation-delay: 0.16s; }
+.btn-shop     { animation-delay: 0.27s; }
+@keyframes cardIn {
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* Gloss overlay */
@@ -111,12 +200,31 @@ body::before {
   position: absolute;
   top: 0; left: 0; right: 0;
   height: 50%;
-  background: linear-gradient(180deg, rgba(255,255,255,0.12), transparent);
-  border-radius: 22px 22px 0 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.16), transparent);
+  border-radius: 24px 24px 0 0;
   pointer-events: none;
 }
 
-.menu-btn:hover { transform: translateY(-3px) scale(1.015); }
+/* Glanzende veeg die over de knop schiet */
+.menu-btn::after {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0;
+  left: -60%;
+  width: 50%;
+  background: linear-gradient(100deg, transparent, rgba(255,255,255,0.35), transparent);
+  transform: skewX(-18deg);
+  animation: sweep 4.5s ease-in-out infinite;
+  pointer-events: none;
+}
+.btn-wardrobe::after { animation-delay: 1.5s; }
+.btn-shop::after     { animation-delay: 3s; }
+@keyframes sweep {
+  0%, 60%   { left: -60%; }
+  85%, 100% { left: 130%; }
+}
+
+.menu-btn:hover { transform: translateY(-5px) scale(1.03); }
 .menu-btn:active { transform: scale(0.97); }
 
 .btn-game {

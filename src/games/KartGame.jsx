@@ -44,22 +44,24 @@ function polarPath(N, fn) {
   return pts
 }
 
-// 3 banen: makkelijk (ovaal) → moeilijker (meer bochten) → moeilijkst (smal + scherp)
+// 3 banen: makkelijk (lange ovaal) → lastig (golvend bos) → moeilijk (lang, smal & scherp)
+// LET OP: de path-functies MOETEN exact gelijk zijn aan de server (KartRoom.ts).
+// Langer (grotere straal) + moeilijker (meer/scherpere bochten).
 const TRACKS = {
   groen: {
     name: 'Groene Weide', diff: 'Makkelijk', laps: 3, roadHW: 7.2,
-    path: (N) => stadiumPath(N, 36, 26),
-    theme: { grass: [0.34, 0.62, 0.31], sky: ['#7ec8ff', '#dff1ff'], trees: 34, rocks: 0, accent: '#e9c46a' },
+    path: (N) => polarPath(N, (a) => 82 + 22 * Math.cos(2 * a) + 5 * Math.cos(3 * a)),
+    theme: { grass: [0.30, 0.66, 0.32], sky: ['#74c7ff', '#eaf7ff'], trees: 90, rocks: 6, accent: '#ffd23f' },
   },
   woud: {
-    name: 'Boscircuit', diff: 'Lastig', laps: 3, roadHW: 6,
-    path: (N) => polarPath(N, (a) => 48 + 12 * Math.cos(2 * a) + 7 * Math.cos(3 * a)),
-    theme: { grass: [0.2, 0.42, 0.22], sky: ['#6fae8f', '#cfe8d6'], trees: 80, rocks: 6, accent: '#7ad67a' },
+    name: 'Boscircuit', diff: 'Lastig', laps: 3, roadHW: 5.6,
+    path: (N) => polarPath(N, (a) => 84 + 18 * Math.cos(2 * a) + 11 * Math.cos(3 * a) + 7 * Math.sin(5 * a)),
+    theme: { grass: [0.16, 0.40, 0.20], sky: ['#5fa17f', '#d3ecda'], trees: 170, rocks: 26, accent: '#8ae66a' },
   },
   bergen: {
-    name: 'Bergpas', diff: 'Moeilijk', laps: 4, roadHW: 5,
-    path: (N) => polarPath(N, (a) => 44 + 10 * Math.cos(2 * a) + 9 * Math.sin(3 * a) + 6 * Math.cos(5 * a)),
-    theme: { grass: [0.5, 0.46, 0.38], sky: ['#c79a86', '#f0ddcf'], trees: 22, rocks: 30, accent: '#d98a5a' },
+    name: 'Bergpas', diff: 'Moeilijk', laps: 4, roadHW: 4.4,
+    path: (N) => polarPath(N, (a) => 86 + 20 * Math.cos(2 * a) + 13 * Math.sin(3 * a) + 9 * Math.cos(5 * a) + 5 * Math.sin(7 * a)),
+    theme: { grass: [0.52, 0.48, 0.42], sky: ['#b98a76', '#f3e3d7'], trees: 46, rocks: 80, accent: '#ff8a3d' },
   },
 }
 const TRACK_IDS = ['groen', 'woud', 'bergen']

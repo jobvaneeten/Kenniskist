@@ -819,7 +819,7 @@ function spawnCoinRow() {
     z.type === 'horizontal' && Math.abs(y - z.y) < 40
   ));
 
-  for (let i = 0; i < 8; i++) {   // 6→8 munten per rij (balans met Spacerunner)
+  for (let i = 0; i < 4; i++) {   // 4 munten per rij
     const cx = canvas.width + 200 + i * 52; // ver genoeg vooruit spawnen
     coinObjects.push({ x:cx, y, r:16, collected:false, phase:i*0.3 });
   }

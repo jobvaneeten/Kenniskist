@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { answersMatch } from './iepQuestions'
 import { BLOK9 } from './blok9'
+import SpelBeloning from './SpelBeloning'
 import './blok-oefenen.css'
 
 // Alle beschikbare blokken (later uitbreiden)
@@ -239,31 +240,15 @@ function VraagKaart({ q, intro, onNext }) {
   )
 }
 
-// ── Jetpack embed ────────────────────────────────────────────────────────
-function JetpackBeloning({ onDone }) {
-  useEffect(() => {
-    const h = (e) => { if (e.data?.type === 'jetpack-gameover') setTimeout(onDone, 2200) }
-    window.addEventListener('message', h)
-    return () => window.removeEventListener('message', h)
-  }, [onDone])
-  return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: '#000', display: 'flex', flexDirection: 'column' }}>
-      <button className="bk-back-btn" style={{ position: 'absolute', top: 10, left: 10, zIndex: 10 }} onClick={onDone}>← Klaar</button>
-      <iframe src="/jetpack/index.html" title="Jetpack" allow="autoplay" style={{ flex: 1, border: 'none' }} />
-      <div style={{ textAlign: 'center', color: '#aaa', padding: '8px', fontSize: '0.85rem' }}>Je gaat automatisch verder na het spel ✈️</div>
-    </div>
-  )
-}
-
 // ── Oefenscherm ──────────────────────────────────────────────────────────
-function Oefenen({ level, blokNr, doelNr, addBriefgeld, onBack }) {
+function Oefenen({ level, blokNr, doelNr, addBriefgeld, addCuruntie, onBack }) {
   const blok = BLOKKEN.find(b => b.nr === blokNr)
   const doel = blok?.data?.[level]?.doelen.find(d => d.nr === doelNr)
   const opgaven = doel?.opgaven ?? []
 
   const [oi, setOi] = useState(0)
   const [vi, setVi] = useState(0)
-  const [screen, setScreen] = useState('oefening')   // 'oefening' | 'reward' | 'jetpack' | 'done'
+  const [screen, setScreen] = useState('oefening')   // 'oefening' | 'reward' | 'done'
   const [verdiend, setVerdiend] = useState(0)
   const [showHulp, setShowHulp] = useState(false)
   const currentOpgave = useRef(null)
@@ -294,16 +279,13 @@ function Oefenen({ level, blokNr, doelNr, addBriefgeld, onBack }) {
   )
 
   if (screen === 'reward') return (
-    <div className="bk-screen">
-      <div className="bk-icon bk-bounce">💵</div>
-      <h2 className="bk-title">Opgave {currentOpgave.current?.nr ?? oi + 1} af!</h2>
-      <p className="bk-sub">Je verdient € 100 briefgeld! 🎉</p>
-      <button className="bk-primary-btn" onClick={() => setScreen('jetpack')}>🚀 Speel Jetpack!</button>
-      <button className="bk-skip-btn" onClick={afterReward} style={{ marginTop: 8 }}>Sla over →</button>
-    </div>
+    <SpelBeloning
+      title={`Opgave ${currentOpgave.current?.nr ?? oi + 1} af!`}
+      geld={100}
+      addCuruntie={addCuruntie}
+      onDone={afterReward}
+    />
   )
-
-  if (screen === 'jetpack') return <JetpackBeloning onDone={afterReward} />
 
   return (
     <div className="bk-oefen-wrap">
@@ -333,7 +315,7 @@ function Oefenen({ level, blokNr, doelNr, addBriefgeld, onBack }) {
 }
 
 // ── Hoofdcomponent ───────────────────────────────────────────────────────
-export default function BlokOefenen({ onBack, addBriefgeld }) {
+export default function BlokOefenen({ onBack, addBriefgeld, addCuruntie }) {
   const [level,  setLevel]  = useState(null)
   const [blokNr, setBlokNr] = useState(null)
   const [doelNr, setDoelNr] = useState(null)
@@ -353,6 +335,7 @@ export default function BlokOefenen({ onBack, addBriefgeld }) {
         <Oefenen
           level={level} blokNr={blokNr} doelNr={doelNr}
           addBriefgeld={addBriefgeld}
+          addCuruntie={addCuruntie}
           onBack={() => setDoelNr(null)}
         />
       )}

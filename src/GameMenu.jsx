@@ -6,6 +6,7 @@ import SterrenstroompGame from './games/SterrenstroompGame'
 import IepOefenen from './games/IepOefenen'
 import BlokOefenen from './games/BlokOefenen'
 import WerkwoordSpelling from './games/WerkwoordSpelling'
+import TaalOefenen from './games/TaalOefenen'
 import './game.css'
 
 const YEARS = [
@@ -25,6 +26,10 @@ const SUBJECTS = [
 
 // Which (year, subject) combos have a real game — rest shows placeholder
 const GAMES = {
+  '5-taal': 'taal',
+  '6-taal': 'taal',
+  '7-taal': 'taal',
+  '8-taal': 'taal',
   '7-rekenen': 'iep',
   '7-spelling': 'werkwoord',
   '8-spelling': 'werkwoord',
@@ -44,6 +49,7 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
   const [gameMode,   setGameMode]   = useState(null)
   const [rekenKeuze,    setRekenKeuze]    = useState(null)   // null | 'verhaal' | 'blok9'
   const [spellingKeuze, setSpellingKeuze] = useState(null)   // null | 'werkwoord'
+  const [taalActive,    setTaalActive]    = useState(false)
 
   // Tower defense (no mode selection needed)
   if (directGame === 'towerdefense') {
@@ -100,12 +106,22 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
   if (year !== null && subject !== null) {
     const gameId = `${year}-${subject}`
 
+    if (GAMES[gameId] === 'taal') {
+      return (
+        <TaalOefenen
+          onBack={() => { setTaalActive(false); setSubject(null) }}
+          addBriefgeld={addBriefgeld}
+          addCuruntie={addCuruntie}
+        />
+      )
+    }
+
     if (GAMES[gameId] === 'iep') {
       if (rekenKeuze === 'verhaal') {
         return <IepOefenen onBack={() => setRekenKeuze(null)} addCuruntie={addCuruntie} />
       }
       if (rekenKeuze === 'blok9') {
-        return <BlokOefenen onBack={() => setRekenKeuze(null)} addBriefgeld={addBriefgeld} />
+        return <BlokOefenen onBack={() => setRekenKeuze(null)} addBriefgeld={addBriefgeld} addCuruntie={addCuruntie} />
       }
       // keuzescherm: verhaaltjessommen of oefenen blok 9
       return (
@@ -219,6 +235,8 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
                     ? '🚀 Verhaaltjessommen'
                     : GAMES[`${year}-${s.key}`] === 'werkwoord'
                     ? '✒️ Werkwoordspelling'
+                    : GAMES[`${year}-${s.key}`] === 'taal'
+                    ? '📖 Taalverkennen'
                     : hasGame
                     ? '▶ Spelen'
                     : 'Groep ' + year}

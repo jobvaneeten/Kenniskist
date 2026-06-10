@@ -19,7 +19,7 @@ const PLAYER_SPD = 270
 const JUMP_FORCE = 560
 const DRIBBLE_FACTOR = 0.52   // speed multiplier when dribbling
 const AI_SPD_BY_DIFF = { 1: 155, 2: 180, 3: 215, 4: 248, 5: 272 }
-const GAME_TIME_NORMAL   = 120
+const GAME_TIME_NORMAL   = 60
 const GAME_TIME_TWOPLAYER = 60
 
 // Pre-generated crowd dots for the stands (stable across frames)

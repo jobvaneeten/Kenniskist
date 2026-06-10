@@ -215,6 +215,19 @@ export default function App() {
 
   return (
     <div className="screen">
+      {/* Spectaculaire achtergrond-lagen */}
+      <div className="bg-orbs" aria-hidden="true">
+        <span className="orb orb-1" />
+        <span className="orb orb-2" />
+        <span className="orb orb-3" />
+        <span className="orb orb-4" />
+      </div>
+      <div className="floaties" aria-hidden="true">
+        {['🚀','⭐','🎮','✏️','🔢','📚','🏆','🎨'].map((e, i) => (
+          <span key={i} className={`floaty floaty-${i + 1}`}>{e}</span>
+        ))}
+      </div>
+
       <CurrencyBadge munten={curuntie} briefgeld={briefgeld} />
 
       <div className="hero">
@@ -222,7 +235,7 @@ export default function App() {
           <span className="logo-icon">🗃️</span>
           <h1 className="logo-title">Kennis<span className="accent">kist</span></h1>
         </div>
-        <p className="hero-sub">Leren terwijl je speelt 🚀</p>
+        <p className="hero-sub">✨ Leren terwijl je speelt ✨</p>
       </div>
 
       <div className="menu">
