@@ -2,12 +2,22 @@
 
 .ws-wrap {
   min-height: 100vh;
-  background: linear-gradient(160deg, #3b1a5f 0%, #25103f 60%, #160726 100%);
+  background:
+    radial-gradient(ellipse 55% 45% at 18% 12%, rgba(232,168,245,0.18) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 45% at 85% 20%, rgba(124,58,237,0.28) 0%, transparent 60%),
+    radial-gradient(ellipse 55% 50% at 80% 90%, rgba(56,189,248,0.14) 0%, transparent 60%),
+    linear-gradient(160deg, #3b1a5f 0%, #25103f 60%, #160726 100%);
+  background-size: 200% 200%, 200% 200%, 200% 200%, 100% 100%;
+  animation: ws-bg 18s ease-in-out infinite alternate;
   color: #fff;
   font-family: 'Segoe UI', system-ui, sans-serif;
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+@keyframes ws-bg {
+  0%   { background-position: 0% 0%, 100% 0%, 100% 100%, 0 0; }
+  100% { background-position: 25% 18%, 72% 22%, 60% 78%, 0 0; }
 }
 
 /* ── Gecentreerd scherm ── */
@@ -61,15 +71,33 @@
   padding: 26px 22px;
   border-radius: 22px;
   border: 3px solid rgba(206,147,216,0.4);
-  background: linear-gradient(145deg, rgba(168,85,247,0.22), rgba(126,34,206,0.18));
+  background: linear-gradient(145deg, rgba(168,85,247,0.26), rgba(126,34,206,0.18));
   cursor: pointer;
   transition: transform 0.18s, border-color 0.18s, box-shadow 0.18s;
   min-width: 150px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 6px 22px rgba(0,0,0,0.3);
 }
+.ws-beloning-card::after {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0; left: -65%;
+  width: 45%;
+  background: linear-gradient(100deg, transparent, rgba(255,255,255,0.28), transparent);
+  transform: skewX(-18deg);
+  pointer-events: none;
+  animation: ws-sweep 4.5s ease-in-out infinite;
+}
+.ws-beloning-card:nth-child(2)::after { animation-delay: 0.6s; }
+.ws-beloning-card:nth-child(3)::after { animation-delay: 1.2s; }
+.ws-beloning-card:nth-child(4)::after { animation-delay: 1.8s; }
+.ws-beloning-card:nth-child(5)::after { animation-delay: 2.4s; }
+@keyframes ws-sweep { 0%,60% { left: -65%; } 85%,100% { left: 140%; } }
 .ws-beloning-card:hover {
   transform: translateY(-6px) scale(1.04);
   border-color: #e9a8f5;
-  box-shadow: 0 10px 30px rgba(168,85,247,0.4);
+  box-shadow: 0 14px 36px rgba(168,85,247,0.45);
 }
 .ws-bc-emoji { font-size: 2.6rem; }
 .ws-bc-name { font-size: 1.05rem; font-weight: 800; color: #f3e8ff; }
@@ -235,13 +263,19 @@
 
 /* ── Vraagkaart ── */
 .ws-card {
-  background: rgba(255,255,255,0.05);
-  border: 2px solid rgba(206,147,216,0.25);
-  border-radius: 20px;
-  padding: 24px 24px 22px;
+  background: linear-gradient(160deg, rgba(255,255,255,0.1), rgba(255,255,255,0.04));
+  border: 2px solid rgba(206,147,216,0.3);
+  border-radius: 22px;
+  padding: 26px 24px 24px;
   display: flex;
   flex-direction: column;
   gap: 16px;
+  box-shadow: 0 12px 34px rgba(20,8,40,0.5);
+  animation: ws-cardpop 0.32s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes ws-cardpop {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 /* ── Opdracht: groot werkwoord + tijd (gekleurd per tijd) ── */
 .ws-opdracht {
@@ -283,13 +317,20 @@
 }
 .ws-gat {
   display: inline-block;
-  min-width: 90px;
+  min-width: 96px;
   text-align: center;
   margin: 0 4px;
-  padding: 0 10px;
+  padding: 2px 12px;
+  border-radius: 8px 8px 0 0;
   border-bottom: 3px solid var(--tijd-kleur, #e9a8f5);
+  background: color-mix(in srgb, var(--tijd-kleur, #e9a8f5) 14%, transparent);
   color: #fde68a;
   font-weight: 900;
+  animation: ws-gat-glow 1.6s ease-in-out infinite;
+}
+@keyframes ws-gat-glow {
+  0%,100% { box-shadow: 0 2px 0 0 color-mix(in srgb, var(--tijd-kleur,#e9a8f5) 0%, transparent); }
+  50%     { box-shadow: 0 4px 16px 0 color-mix(in srgb, var(--tijd-kleur,#e9a8f5) 45%, transparent); }
 }
 
 .ws-antwoord-row { display: flex; gap: 10px; flex-wrap: wrap; }

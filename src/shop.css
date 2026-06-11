@@ -2,7 +2,13 @@
 .shop-screen {
   width: 100vw;
   min-height: 100vh;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  background:
+    radial-gradient(ellipse 55% 45% at 16% 12%, rgba(255,210,63,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 45% at 85% 18%, rgba(124,58,237,0.20) 0%, transparent 60%),
+    radial-gradient(ellipse 55% 50% at 80% 90%, rgba(6,214,160,0.16) 0%, transparent 60%),
+    linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  background-size: 200% 200%, 200% 200%, 200% 200%, 100% 100%;
+  animation: shop-bg 18s ease-in-out infinite alternate;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -10,6 +16,10 @@
   font-family: 'Nunito', sans-serif;
   color: #fff;
   gap: 12px;
+}
+@keyframes shop-bg {
+  0%   { background-position: 0% 0%, 100% 0%, 100% 100%, 0 0; }
+  100% { background-position: 25% 18%, 72% 22%, 60% 78%, 0 0; }
 }
 
 .back-btn {
@@ -30,7 +40,18 @@
 }
 .back-btn:hover { background: rgba(255,255,255,0.22); }
 
-.shop-title { font-size: 2.2rem; font-weight: 900; }
+.shop-title {
+  font-size: 2.4rem;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  background: linear-gradient(100deg, #fff 0%, #ffe9a8 30%, #fff 50%, #a5e8ff 70%, #fff 100%);
+  background-size: 220% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shop-shine 5s linear infinite;
+}
+@keyframes shop-shine { to { background-position: 220% center; } }
 .shop-sub   { font-size: 0.9rem; color: rgba(255,255,255,0.45); font-weight: 600; margin-bottom: 16px; }
 
 /* ── Exchange box ─────────────────────── */

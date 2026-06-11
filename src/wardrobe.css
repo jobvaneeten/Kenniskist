@@ -1,13 +1,22 @@
 .wardrobe-screen {
   width: 100vw;
   height: 100vh;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  background:
+    radial-gradient(ellipse 50% 45% at 12% 12%, rgba(206,147,216,0.16) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 45% at 88% 22%, rgba(79,195,247,0.16) 0%, transparent 60%),
+    linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  background-size: 200% 200%, 200% 200%, 100% 100%;
+  animation: wd-bg 20s ease-in-out infinite alternate;
   display: flex;
   flex-direction: row;
   font-family: 'Nunito', sans-serif;
   color: #fff;
   overflow: hidden;
   position: relative;
+}
+@keyframes wd-bg {
+  0%   { background-position: 0% 0%, 100% 0%, 0 0; }
+  100% { background-position: 30% 20%, 70% 22%, 0 0; }
 }
 
 /* ── Back button ───────────────────────────── */
@@ -45,10 +54,17 @@
 }
 
 .panel-title {
-  font-size: 1.4rem;
+  font-size: 1.5rem;
   font-weight: 900;
   margin-bottom: 2px;
+  background: linear-gradient(100deg, #fff 0%, #ffe9a8 35%, #fff 55%, #e9a8f5 80%, #fff 100%);
+  background-size: 220% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shop-shine 5s linear infinite;
 }
+@keyframes shop-shine { to { background-position: 220% center; } }
 .panel-sub {
   font-size: 0.78rem;
   color: rgba(255,255,255,0.45);

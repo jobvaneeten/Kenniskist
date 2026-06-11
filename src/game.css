@@ -13,15 +13,34 @@
   overflow-x: hidden;
 }
 
-/* Ambient glow layers */
+/* Ambient glow layers (langzaam bewegende aurora) */
 .game-screen::before {
   content: '';
   position: fixed;
-  inset: 0;
+  inset: -20%;
   background:
-    radial-gradient(ellipse 70% 50% at 15% 15%, rgba(99,58,220,0.18) 0%, transparent 55%),
-    radial-gradient(ellipse 55% 45% at 85% 85%, rgba(6,214,160,0.12) 0%, transparent 50%),
-    linear-gradient(160deg, #0d0d1a 0%, #111128 40%, #0a1628 100%);
+    radial-gradient(ellipse 50% 42% at 14% 14%, rgba(232,67,147,0.20) 0%, transparent 58%),
+    radial-gradient(ellipse 46% 40% at 86% 18%, rgba(124,58,237,0.20) 0%, transparent 58%),
+    radial-gradient(ellipse 52% 46% at 84% 86%, rgba(6,214,160,0.15) 0%, transparent 58%),
+    radial-gradient(ellipse 48% 42% at 12% 86%, rgba(56,189,248,0.15) 0%, transparent 58%),
+    linear-gradient(160deg, #0c0c1c 0%, #111128 42%, #0a1426 100%);
+  z-index: 0;
+  pointer-events: none;
+  animation: gs-aurora 20s ease-in-out infinite alternate;
+}
+@keyframes gs-aurora {
+  0%   { transform: translate3d(0,0,0) scale(1)    rotate(0deg);   filter: hue-rotate(0deg); }
+  50%  { transform: translate3d(2%,-2%,0) scale(1.07) rotate(2deg); filter: hue-rotate(16deg); }
+  100% { transform: translate3d(-2%,2%,0) scale(1.04) rotate(-2deg); filter: hue-rotate(-10deg); }
+}
+/* fijne sterren-stippen */
+.game-screen::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: radial-gradient(rgba(255,255,255,0.5) 1px, transparent 1px);
+  background-size: 44px 44px;
+  opacity: 0.05;
   z-index: 0;
   pointer-events: none;
 }
@@ -42,21 +61,29 @@
   text-align: center;
 }
 .game-header-icon {
-  font-size: 3.4rem;
+  font-size: 3.8rem;
   line-height: 1;
-  filter: drop-shadow(0 0 20px rgba(99,58,220,0.4)) drop-shadow(0 4px 12px rgba(0,0,0,0.5));
+  filter: drop-shadow(0 0 24px rgba(124,58,237,0.5)) drop-shadow(0 4px 12px rgba(0,0,0,0.5));
   margin-bottom: 4px;
+  animation: gs-float 4s ease-in-out infinite;
+}
+@keyframes gs-float {
+  0%,100% { transform: translateY(0) rotate(-4deg); }
+  50%     { transform: translateY(-8px) rotate(4deg); }
 }
 .game-header-title {
-  font-size: 2.6rem;
+  font-size: 2.8rem;
   font-weight: 900;
   letter-spacing: -1px;
-  background: linear-gradient(135deg, #fff 30%, rgba(255,255,255,0.7));
+  background: linear-gradient(100deg, #fff 0%, #ffe9a8 30%, #fff 50%, #d6c4ff 70%, #fff 100%);
+  background-size: 220% auto;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   text-shadow: none;
+  animation: gs-shine 5s linear infinite;
 }
+@keyframes gs-shine { to { background-position: 220% center; } }
 .game-header-sub {
   font-size: 0.9rem;
   color: rgba(255,255,255,0.38);
@@ -360,6 +387,60 @@
   transform: translateX(-2px);
 }
 .back-btn:active { transform: scale(0.96); }
+
+/* ── Glans + entree-animaties (spectaculair) ───────────────────────────── */
+.mode-card, .free-game-card { position: relative; overflow: hidden; }
+
+/* glanzende veeg die over de kaarten schiet */
+.year-card::after, .subject-card::after, .mode-card::after, .free-game-card::after {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0; left: -65%;
+  width: 45%;
+  background: linear-gradient(100deg, transparent, rgba(255,255,255,0.28), transparent);
+  transform: skewX(-18deg);
+  pointer-events: none;
+  animation: gs-sweep 5s ease-in-out infinite;
+  z-index: 2;
+}
+.subject-card:nth-child(2)::after { animation-delay: 0.6s; }
+.subject-card:nth-child(3)::after { animation-delay: 1.2s; }
+.subject-card:nth-child(4)::after { animation-delay: 1.8s; }
+.year-card:nth-child(2)::after { animation-delay: 0.4s; }
+.year-card:nth-child(3)::after { animation-delay: 0.8s; }
+.year-card:nth-child(4)::after { animation-delay: 1.2s; }
+.year-card:nth-child(5)::after { animation-delay: 1.6s; }
+.free-game-card:nth-child(2)::after { animation-delay: 0.7s; }
+.free-game-card:nth-child(3)::after { animation-delay: 1.4s; }
+.free-game-card:nth-child(4)::after { animation-delay: 2.1s; }
+@keyframes gs-sweep {
+  0%, 62%   { left: -65%; }
+  88%, 100% { left: 135%; }
+}
+
+/* zachte entree (faden) — alleen opacity zodat hover-transform vrij blijft */
+.year-card, .subject-card, .mode-card, .free-game-card {
+  opacity: 0;
+  animation: gs-cardin 0.5s ease forwards;
+}
+.year-card:nth-child(1), .subject-card:nth-child(1), .mode-card:nth-child(1), .free-game-card:nth-child(1) { animation-delay: 0.04s; }
+.year-card:nth-child(2), .subject-card:nth-child(2), .mode-card:nth-child(2), .free-game-card:nth-child(2) { animation-delay: 0.10s; }
+.year-card:nth-child(3), .subject-card:nth-child(3), .free-game-card:nth-child(3) { animation-delay: 0.16s; }
+.year-card:nth-child(4), .subject-card:nth-child(4), .free-game-card:nth-child(4) { animation-delay: 0.22s; }
+.year-card:nth-child(5) { animation-delay: 0.28s; }
+@keyframes gs-cardin {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* emoji's iets levendiger */
+.subject-emoji, .mode-emoji, .free-game-emoji {
+  animation: gs-bob 3.5s ease-in-out infinite;
+}
+@keyframes gs-bob {
+  0%,100% { transform: translateY(0); }
+  50%     { transform: translateY(-4px); }
+}
 
 /* ── iPad / mobile responsive ──────────────── */
 @media (max-width: 600px) {
