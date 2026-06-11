@@ -1,0 +1,1093 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Astro Katapult — kenniskist.nl</title>
+<style>
+  :root{
+    --space-0:#070713; --space-1:#0e1030; --space-2:#1a1d4a;
+    --cyan:#37e6ff; --orange:#ff8a3d; --green:#7dff8a; --pink:#ff5d8f;
+    --star:#fdfdff; --muted:#9aa0d8; --gold:#ffd34d;
+    --panel:rgba(14,16,48,.82);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;height:100%;overflow:hidden;background:var(--space-0);}
+  body{
+    font-family:"Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+    color:#eef0ff; user-select:none; touch-action:none;
+  }
+  #game{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;}
+  canvas{display:block;width:100%;height:100%;
+    background:radial-gradient(120% 90% at 70% 8%, #1a1f57 0%, #0c0e2e 45%, #060611 100%);}
+
+  /* ---- shared overlay styling ---- */
+  .screen{position:absolute;inset:0;display:none;flex-direction:column;
+    align-items:center;justify-content:center;padding:24px;text-align:center;
+    background:radial-gradient(120% 90% at 50% 0%, rgba(40,46,120,.55), rgba(6,6,17,.92));
+    backdrop-filter:blur(2px);z-index:5;}
+  .screen.on{display:flex;}
+  .logo{font-weight:800;letter-spacing:.18em;text-transform:uppercase;line-height:.95;
+    font-size:clamp(34px,9vw,76px);
+    background:linear-gradient(180deg,#fff 0%,var(--cyan) 70%,#2aa6ff 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 0 22px rgba(55,230,255,.35));}
+  .tag{color:var(--muted);letter-spacing:.32em;text-transform:uppercase;
+    font-size:clamp(10px,2.6vw,13px);margin-top:14px;}
+  .btn{cursor:pointer;border:none;border-radius:14px;font-weight:700;
+    letter-spacing:.06em;text-transform:uppercase;font-size:15px;padding:15px 30px;
+    color:#06122a;background:linear-gradient(180deg,#8df3ff,var(--cyan));
+    box-shadow:0 8px 0 #1685a3,0 14px 26px rgba(55,230,255,.28);
+    transition:transform .08s ease, box-shadow .08s ease;}
+  .btn:active{transform:translateY(4px);box-shadow:0 4px 0 #1685a3,0 8px 14px rgba(55,230,255,.25);}
+  .btn.alt{color:#fff;background:linear-gradient(180deg,#3a3f86,#262a63);
+    box-shadow:0 8px 0 #14163c,0 14px 26px rgba(0,0,0,.4);}
+  .btn.alt:active{box-shadow:0 4px 0 #14163c;}
+  .btn-row{display:flex;gap:14px;margin-top:30px;flex-wrap:wrap;justify-content:center;}
+
+  /* ---- level select ---- */
+  #select h2{font-weight:800;letter-spacing:.12em;text-transform:uppercase;
+    font-size:clamp(20px,5vw,30px);margin:0 0 6px;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));
+    gap:12px;width:min(720px,92vw);max-height:60vh;overflow-y:auto;margin-top:22px;padding:6px;
+    touch-action:pan-y;}
+  .cell{position:relative;aspect-ratio:1;border-radius:16px;cursor:pointer;
+    background:linear-gradient(180deg,var(--space-2),#11143a);
+    border:1px solid rgba(120,130,220,.35);
+    display:flex;align-items:center;justify-content:center;flex-direction:column;
+    font-weight:800;font-size:22px;color:#fff;
+    transition:transform .08s ease, border-color .15s ease;}
+  .cell:active{transform:scale(.94);}
+  .cell.locked{color:#454a86;cursor:not-allowed;background:#0c0e29;border-color:rgba(80,86,150,.25);}
+  .cell.locked::after{content:"🔒";position:absolute;font-size:20px;}
+  .cell.locked span{visibility:hidden;}
+  .cell .stars{position:absolute;bottom:6px;font-size:11px;letter-spacing:1px;color:var(--gold);}
+  .cell.cleared{border-color:rgba(125,255,138,.5);}
+
+  /* ---- HUD ---- */
+  #hud{position:absolute;top:0;left:0;right:0;display:none;z-index:4;
+    padding:12px 14px;justify-content:space-between;align-items:flex-start;pointer-events:none;}
+  #hud.on{display:flex;}
+  .hud-pill{pointer-events:auto;background:var(--panel);border:1px solid rgba(120,130,220,.3);
+    border-radius:14px;padding:9px 14px;display:flex;align-items:center;gap:10px;
+    box-shadow:0 6px 18px rgba(0,0,0,.4);}
+  .hud-label{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);}
+  .hud-val{font-weight:800;font-size:18px;font-variant-numeric:tabular-nums;}
+  .icon-btn{pointer-events:auto;width:44px;height:44px;border-radius:13px;cursor:pointer;
+    background:var(--panel);border:1px solid rgba(120,130,220,.3);color:#dfe3ff;
+    font-size:18px;display:flex;align-items:center;justify-content:center;
+    box-shadow:0 6px 18px rgba(0,0,0,.4);}
+  .icon-btn:active{transform:translateY(2px);}
+  .hud-right{display:flex;gap:10px;}
+
+  /* ---- result modal ---- */
+  #result .card{background:var(--panel);border:1px solid rgba(120,130,220,.35);
+    border-radius:22px;padding:30px 34px;width:min(420px,92vw);
+    box-shadow:0 24px 70px rgba(0,0,0,.6);}
+  #result h2{margin:0;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+    font-size:clamp(24px,6vw,36px);}
+  .stars-big{font-size:46px;letter-spacing:8px;margin:14px 0 4px;height:54px;}
+  .score-line{color:var(--muted);letter-spacing:.04em;font-size:14px;}
+  .score-line b{color:#fff;font-variant-numeric:tabular-nums;}
+  .credit{position:absolute;bottom:12px;width:100%;text-align:center;
+    color:#4a5092;font-size:11px;letter-spacing:.2em;text-transform:uppercase;}
+</style>
+</head>
+<body>
+<div id="game">
+  <canvas id="c"></canvas>
+
+  <!-- HUD -->
+  <div id="hud">
+    <div style="display:flex;gap:10px;align-items:flex-start;">
+      <button class="icon-btn" id="btnMenu" title="Menu">☰</button>
+      <button class="icon-btn" id="btnRetry" title="Opnieuw">↻</button>
+    </div>
+    <div class="hud-pill">
+      <span class="hud-label">Level</span><span class="hud-val" id="hudLevel">1</span>
+      <span style="width:1px;height:20px;background:rgba(120,130,220,.3)"></span>
+      <span class="hud-label">Score</span><span class="hud-val" id="hudScore">0</span>
+    </div>
+  </div>
+
+  <!-- Start -->
+  <div class="screen on" id="start">
+    <div class="logo">Astro<br>Katapult</div>
+    <div class="tag">Sleep om te richten · tik tijdens de vlucht voor de speciale actie</div>
+    <div class="btn-row">
+      <button class="btn" id="btnPlay">Spelen</button>
+      <button class="btn alt" id="btnLevels">Levels</button>
+    </div>
+    <div class="credit">kenniskist.nl</div>
+  </div>
+
+  <!-- Level select -->
+  <div class="screen" id="select">
+    <h2>Kies een missie</h2>
+    <div class="tag">Versla alle aliens met zo min mogelijk schoten</div>
+    <div class="grid" id="grid"></div>
+    <div class="btn-row"><button class="btn alt" id="btnBack">Terug</button></div>
+  </div>
+
+  <!-- Result -->
+  <div class="screen" id="result">
+    <div class="card">
+      <h2 id="resTitle">Missie geslaagd</h2>
+      <div class="stars-big" id="resStars">★★★</div>
+      <div class="score-line">Score: <b id="resScore">0</b></div>
+      <div class="btn-row">
+        <button class="btn alt" id="btnResMenu">Levels</button>
+        <button class="btn alt" id="btnResRetry">Opnieuw</button>
+        <button class="btn" id="btnResNext">Volgend level</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* Matter.js robuust laden: probeer meerdere CDN's, toon nette fout bij falen */
+(function(){
+  var urls=[
+    "https://cdn.jsdelivr.net/npm/matter-js@0.20.0/build/matter.min.js",
+    "https://unpkg.com/matter-js@0.20.0/build/matter.min.js",
+    "https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.20.0/matter.min.js"
+  ];
+  var i=0;
+  function next(){
+    if(typeof Matter!=="undefined"){ boot(); return; }
+    if(i>=urls.length){ fail(); return; }
+    var s=document.createElement("script");
+    s.src=urls[i++];
+    s.onload=function(){ (typeof Matter!=="undefined") ? boot() : next(); };
+    s.onerror=next;
+    document.head.appendChild(s);
+  }
+  function fail(){
+    var el=document.getElementById("start");
+    if(el) el.innerHTML='<div style="color:#fff;max-width:440px;line-height:1.6;font-size:16px">'+
+      'Kon de physics-bibliotheek (Matter.js) niet laden.<br>'+
+      'Controleer je internetverbinding en herlaad de pagina.</div>';
+  }
+  window.__startLoad=next;
+})();
+</script>
+<script>
+function boot(){
+"use strict";
+/* Beloning-modus (ingebed in werkwoordspelling): direct level 1, 1 level, dan terug */
+const REWARD = new URLSearchParams(location.search).has('reward');
+/* ============================================================
+   ASTRO KATAPULT  —  single-file ruimte-physicaspel
+   Physics: Matter.js  ·  Render: custom canvas
+   ============================================================ */
+
+/* ---------- veilige opslag (localStorage + in-memory fallback) ---------- */
+const Store = (() => {
+  let mem = {};
+  return {
+    get(k){ try { return localStorage.getItem(k); } catch(e){ return (k in mem) ? mem[k] : null; } },
+    set(k,v){ try { localStorage.setItem(k,v); } catch(e){ mem[k] = v; } }
+  };
+})();
+
+/* ---------- wereld-constanten ---------- */
+const WORLD_W = 1600, WORLD_H = 720;
+const G_TOP   = 648;                 // bovenkant van de grond
+const ANCHOR  = { x: 130, y: 480 };  // katapult-vork — ver links, lager
+const MAX_STRETCH = 155;
+const POWER   = 0.19;
+const MAX_SPEED = 28;
+const FIXED_DT = 1000/60;           // physics volledig normaal — bereik intact
+const LERP = 0.16;                  // render-positie volgt physics traag: ~2.5× slow-motion beeld
+
+/* ---------- materialen ---------- */
+const MAT = {
+  ice:   { density:0.0012, friction:0.25, hp:9,   destructible:true,  fill:"#9fe8ff", edge:"#d7f6ff", glass:true },
+  stone: { density:0.0030, friction:0.7,  hp:46,  destructible:true,  fill:"#8b8da6", edge:"#b7b9d0" },
+  metal: { density:0.0060, friction:0.6,  hp:9999,destructible:false, fill:"#5d6c8f", edge:"#9fb0e0" }
+};
+
+/* ---------- Matter aliassen ---------- */
+const { Engine, World, Bodies, Body, Composite, Events, Vector, Sleeping } = Matter;
+
+/* ============================================================
+   LEVELS — aparte, bewerkbare datastructuur
+   Elk level: { ammo, blocks:[...], aliens:[...], quiz:null }
+   - block: {x,y,w,h,mat,angle?}  (x,y = middelpunt, wereld-eenheden)
+   - alien: {x,y,r?}
+   - quiz : nu null; later { vraag, opties:[], juist:index } toe te voegen
+   Helpers hieronder genereren veelgebruikte bouwwerken.
+   ============================================================ */
+const U = 44; // standaard bloksteen
+
+function box(x,y,w,h,mat,angle){ return {x,y,w,h,mat,angle:angle||0}; }
+function stack(cx,n,mat,w,h){ w=w||U; h=h||U; const a=[]; for(let i=0;i<n;i++) a.push(box(cx, G_TOP-h/2-i*h, w,h,mat)); return a; }
+function beam(cx,mat,h){ h=h||130; return box(cx, G_TOP-h/2, 22,h,mat); }
+function plankAt(cx,topY,mat,w){ w=w||180; return box(cx, topY, w,24, mat); }
+function groundAlien(x,r){ return {x, y:G_TOP-(r||24), r:r||24}; }
+function topAlien(cx,n,h,r){ h=h||U; r=r||24; return {x:cx, y:(G_TOP-n*h)-r}; }
+
+/* bouwstenen-blueprints, geven {blocks, aliens} terug */
+function bpWall(cx,mat,n,alienX){ return { blocks:stack(cx,n,mat,52,40), aliens:[groundAlien(alienX)] }; }
+function bpHut(cx,mat,topper){
+  const h=140, topY=(G_TOP-h)-12;
+  const blocks=[ beam(cx-72,mat,h), beam(cx+72,mat,h), plankAt(cx,topY,mat,200) ];
+  const aliens=[ groundAlien(cx) ];
+  if(topper){ blocks.push(box(cx-30,topY-32,40,40,"ice"),box(cx+30,topY-32,40,40,"ice")); aliens.push({x:cx,y:topY-24-24}); }
+  return {blocks,aliens};
+}
+function bpTower(cx,mat,n,withTop,withBase){
+  const blocks=stack(cx,n,mat,56,44);
+  const aliens=[];
+  if(withBase) aliens.push(groundAlien(cx-90));
+  if(withTop)  aliens.push(topAlien(cx,n,44));
+  return {blocks,aliens};
+}
+function bpBunker(cx,roofMat){
+  const h=118, topY=(G_TOP-h)-12;
+  return {
+    blocks:[ beam(cx-58,"metal",h), beam(cx+58,"metal",h), plankAt(cx,topY,roofMat||"metal",168),
+             box(cx, topY-32, 40,40,"ice") ],
+    aliens:[ groundAlien(cx) ]
+  };
+}
+function bpPyramid(cx,mat){
+  const blocks=[];
+  const lvls=[4,3,2,1];
+  lvls.forEach((count,row)=>{
+    const span=(count-1)*U;
+    for(let i=0;i<count;i++){ const x=cx-span/2+i*U; blocks.push(box(x, G_TOP-U/2-row*U, U,U, mat)); }
+  });
+  return { blocks, aliens:[ groundAlien(cx-120), topAlien(cx,4) ] };
+}
+function bpFortress(cx){
+  const h=170, topY=(G_TOP-h)-12;
+  const blocks=[
+    beam(cx-150,"metal",h), beam(cx+150,"metal",h),
+    plankAt(cx,topY,"stone",400),
+    ...stack(cx,3,"ice",46,44),
+    box(cx-150, topY-32, 46,46,"stone"), box(cx+150, topY-32, 46,46,"stone")
+  ];
+  const aliens=[ groundAlien(cx), {x:cx, y:topY-24-24}, groundAlien(cx+185) ];
+  return {blocks,aliens};
+}
+
+/* zet meerdere blueprints naast elkaar samen */
+function merge(){ const blocks=[],aliens=[]; for(const p of arguments){ blocks.push(...p.blocks); aliens.push(...p.aliens); } return {blocks,aliens}; }
+function L(ammo,parts,quiz){
+  const rockets = Array.isArray(ammo) ? ammo.slice() : Array(ammo).fill("standard");
+  return { ammo:rockets.length, rockets, blocks:parts.blocks, aliens:parts.aliens, quiz: quiz||null };
+}
+
+const LEVELS = [
+  /* 1  introductie */ L(2, { blocks:[], aliens:[ groundAlien(1050) ] }),
+  /* 2  twee doelen  */ L(2, { blocks:[], aliens:[ groundAlien(900), groundAlien(1280) ] }),
+  /* 3  ijsmuur + extra doel */ L(3, merge(bpWall(840,"ice",4,1060), {blocks:[],aliens:[groundAlien(1300)]})),
+  /* 4  DRIEDELER: twee verspreide doelen */ L(["splitter","standard","standard"],
+        merge({blocks:stack(900,1,"stone",52,40),aliens:[groundAlien(920)]},
+              {blocks:stack(1280,1,"stone",52,40),aliens:[groundAlien(1300)]})),
+  /* 5  hut met doel binnen + bovenop */ L(3, bpHut(1040,"stone",true)),
+  /* 6  BOMMENWERPER: doel in metalen bunker */ L(["bomber","standard","standard"],
+        merge(bpBunker(1020,"metal"), {blocks:[],aliens:[groundAlien(1320)]})),
+  /* 7  BOOSTER: doel achter dikke metalen muur */ L(["booster","standard"],
+        merge({blocks:stack(900,5,"metal",52,44),aliens:[]},
+              {blocks:[box(900,G_TOP-5*44-24,46,46,"ice")],aliens:[groundAlien(1080),{x:900,y:G_TOP-5*44-48}]})),
+  /* 8  METEOR: doel onder metalen dak */ L(["meteor","standard"],
+        merge(bpHut(1050,"metal",false), {blocks:[],aliens:[groundAlien(1310)]})),
+  /* 9  drie doelen, gemengd */ L(["bomber","standard","standard"],
+        merge(bpHut(880,"stone",false), bpBunker(1140,"stone"), {blocks:[],aliens:[groundAlien(1380)]})),
+  /* 10 hoge ijstoren, 3 doelen */ L(3, merge(bpTower(1100,"ice",6,true,true), {blocks:[],aliens:[groundAlien(1370)]})),
+  /* 11 fort, krap */ L(["bomber","standard","standard"], bpFortress(1080)),
+  /* 12 dubbele metalen bunker */ L(["bomber","bomber","bomber"], merge(bpBunker(960,"metal"), bpBunker(1280,"metal"))),
+  /* 13 metalen piramide */ L(["meteor","standard","standard"],
+        merge(bpPyramid(1030,"metal"), {blocks:[],aliens:[groundAlien(1360)]})),
+  /* 14 drie huizen verspreid */ L(["splitter","standard","standard"],
+        merge(bpHut(840,"stone",false), bpHut(1080,"metal",true), bpHut(1340,"stone",false))),
+  /* 15 twee hoge torens, 4 doelen */ L(["booster","standard","standard","standard"],
+        merge(bpTower(960,"metal",5,true,false), bpTower(1260,"ice",5,true,true))),
+  /* 16 fort + bunker */ L(["bomber","booster","standard"], merge(bpFortress(950), bpBunker(1310,"metal"))),
+  /* 17 ijskathedraal op metalen poten */ L(["splitter","standard","standard"],
+        merge({blocks:[ beam(900,"metal",210),beam(1020,"metal",210),beam(1140,"metal",210),
+              plankAt(960,G_TOP-210-12,"stone",170),plankAt(1080,G_TOP-210-12,"stone",170),
+              plankAt(1020,G_TOP-210-48,"ice",260)],
+              aliens:[groundAlien(960),groundAlien(1080),{x:1020,y:G_TOP-210-72}]})),
+  /* 18 metalen doolhof */ L(["booster","bomber","standard"],
+        merge({blocks:[ beam(900,"metal",170),beam(1100,"metal",170),beam(1300,"metal",170),
+              plankAt(1000,G_TOP-170-12,"metal",250),plankAt(1200,G_TOP-170-12,"metal",250)],
+              aliens:[groundAlien(1000),groundAlien(1200),{x:1100,y:G_TOP-24}]})),
+  /* 19 twee piramides, 4 doelen */ L(["meteor","bomber","standard","standard"],
+        merge(bpPyramid(940,"metal"), bpPyramid(1260,"stone"))),
+  /* 20 megafort */ L(["bomber","splitter","booster","standard"],
+        merge(bpFortress(1000), bpHut(1320,"metal",true), {blocks:stack(780,3,"stone",52,44),aliens:[groundAlien(780)]})),
+  /* 21 precisie: kleine doelen hoog op metalen pilaren */ L(["booster","standard","standard"],
+        merge({blocks:[ beam(900,"metal",250),beam(1160,"metal",250),beam(1420,"metal",250),
+              plankAt(900,G_TOP-250-12,"stone",110),plankAt(1160,G_TOP-250-12,"stone",110),plankAt(1420,G_TOP-250-12,"stone",110)],
+              aliens:[{x:900,y:G_TOP-250-36},{x:1160,y:G_TOP-250-36},{x:1420,y:G_TOP-250-36}]})),
+  /* 22 BAAS */ L(["meteor","bomber","splitter","booster","standard","standard","standard"],
+        merge(bpFortress(920), bpBunker(1180,"metal"), bpBunker(1390,"metal"),
+              bpTower(760,"ice",4,true,false))),
+];
+
+/* ============================================================
+   STATE & SETUP
+   ============================================================ */
+const canvas = document.getElementById("c");
+const ctx = canvas.getContext("2d");
+let view = { scale:1, ox:0, oy:0, dpr:1 };
+
+let engine, world;
+let state = {
+  screen:"start",          // start | select | play | result
+  levelIndex:0,
+  shotsLeft:0,
+  score:0,
+  phase:"aim",             // aim | fly | settle | done
+  projectile:null,
+  dragging:false,
+  aimPoint:null,           // huidige (geklemde) positie projectiel
+  launchAt:0,
+  settleAt:0,
+  rockets:[],              // volgorde van raket-types in dit level
+};
+let blocks=[], aliens=[], statics=[], shards=[];
+let particles=[], floaters=[], shake=0;
+let starfield=null;
+
+/* ---------- raket-types (speciale acties tijdens vlucht via tik) ---------- */
+const ROCKETS = {
+  standard: { naam:"Standaard", r:22, density:0.0070, body:"#e9eeff", nose:"#ff7a3d", dot:"#ff8a3d", ability:null,    shape:"rocket", hint:"" },
+  splitter: { naam:"Driedeler", r:20, density:0.0060, body:"#efe0ff", nose:"#b15dff", dot:"#b15dff", ability:"split", shape:"rocket", hint:"Tik: splitst in 3" },
+  bomber:   { naam:"Bommenwerper", r:23, density:0.0080, body:"#3a3550", nose:"#ff3d3d", dot:"#ff3d3d", ability:"bomb", shape:"bomb",  hint:"Tik: explodeert" },
+  booster:  { naam:"Booster",   r:20, density:0.0072, body:"#d8fff0", nose:"#37e6ff", dot:"#37e6ff", ability:"boost", shape:"rocket", hint:"Tik: turbo-stoot" },
+  meteor:   { naam:"Meteoor",   r:27, density:0.0190, body:"#b59a73", nose:"#7c6038", dot:"#caa46a", ability:"slam",  shape:"rock",  hint:"Tik: ramt omlaag" },
+};
+
+/* progressie laden */
+let progress = { unlocked:1, stars:{} };
+try { const raw=Store.get("astro_progress"); if(raw) progress=Object.assign(progress, JSON.parse(raw)); } catch(e){}
+function saveProgress(){ try{ Store.set("astro_progress", JSON.stringify(progress)); }catch(e){} }
+
+function initEngine(){
+  engine = Engine.create();
+  engine.enableSleeping = true;
+  engine.gravity.y = 1;
+  engine.gravity.scale = 0.0012;
+  world = engine.world;
+}
+const G_STEP = () => engine.gravity.y * engine.gravity.scale * FIXED_DT * FIXED_DT;
+
+/* ============================================================
+   LEVEL OPBOUW
+   ============================================================ */
+function clearLevel(){
+  if(world){ World.clear(world,false); }
+  blocks=[]; aliens=[]; statics=[]; shards=[]; particles=[]; floaters=[];
+  state.projectile=null; state.dragging=false; aiming=false; state.aimPoint=null;
+}
+function makeStatics(){
+  const opt={ isStatic:true, friction:0.9 };
+  const ground = Bodies.rectangle(WORLD_W/2, G_TOP+ (WORLD_H-G_TOP)/2, WORLD_W*3, WORLD_H-G_TOP, opt);
+  const leftW  = Bodies.rectangle(-60, WORLD_H/2, 120, WORLD_H*2, opt);
+  ground.gameData={kind:"ground"};
+  statics=[ground,leftW];
+  World.add(world, statics);
+}
+function makeBlockBody(b){
+  const m=MAT[b.mat];
+  const body=Bodies.rectangle(b.x,b.y,b.w,b.h,{
+    angle:b.angle, density:m.density, friction:m.friction, frictionStatic:1,
+    restitution:0.02, chamfer:{radius:Math.min(6,Math.min(b.w,b.h)/4)}, sleepThreshold:26
+  });
+  body.gameData={kind:"block", mat:b.mat, hp:m.hp, maxhp:m.hp, w:b.w, h:b.h, flash:0};
+  return body;
+}
+function makeAlienBody(a){
+  const r=a.r||24;
+  const body=Bodies.circle(a.x,a.y,r,{ density:0.0016, friction:0.45, restitution:0.12, sleepThreshold:26 });
+  body.gameData={kind:"alien", hp:16, maxhp:16, r, bob:Math.random()*Math.PI*2, dead:false, flash:0};
+  return body;
+}
+function makeProjectile(type){
+  const cfg=ROCKETS[type]||ROCKETS.standard;
+  const body=Bodies.circle(ANCHOR.x, ANCHOR.y, cfg.r, {
+    density:cfg.density, friction:0.5, frictionAir:0.006, restitution:0.28, sleepThreshold:22
+  });
+  body.gameData={kind:"rocket", r:cfg.r, type, ability:cfg.ability, abilityUsed:false, trail:[]};
+  Body.setStatic(body,true);
+  return body;
+}
+function makeShard(x,y,type){
+  const cfg=ROCKETS[type]||ROCKETS.standard;
+  const body=Bodies.circle(x,y,12,{ density:0.006, friction:0.5, frictionAir:0.006, restitution:0.32, sleepThreshold:22 });
+  body.gameData={kind:"rocket", r:12, type, ability:null, abilityUsed:true, trail:[], shard:true, color:cfg.dot};
+  return body;
+}
+
+function loadLevel(i){
+  state.levelIndex=i;
+  state.score=0; state.phase="aim";
+  initEngine(); clearLevel(); makeStatics();
+  const lvl=LEVELS[i];
+  state.shotsLeft=lvl.ammo;
+  state.rockets=lvl.rockets.slice();
+  for(const b of lvl.blocks){ const body=makeBlockBody(b); blocks.push(body); World.add(world,body); }
+  for(const a of lvl.aliens){ const body=makeAlienBody(a); aliens.push(body); World.add(world,body); }
+  bindCollisions();
+  loadProjectile();
+  updateHUD();
+  show("play");
+}
+function currentRocketType(){
+  const idx=state.rockets.length - state.shotsLeft;   // 0-gebaseerd in de volgorde
+  return state.rockets[idx] || "standard";
+}
+function loadProjectile(){
+  if(state.shotsLeft<=0){ state.projectile=null; return; }
+  const p=makeProjectile(currentRocketType());
+  Body.setAngle(p,-0.6);
+  state.projectile=p; state.aimPoint={x:ANCHOR.x,y:ANCHOR.y};
+  World.add(world,p);
+  state.phase="aim";
+}
+
+/* ============================================================
+   BOTSINGEN & SCHADE
+   ============================================================ */
+function bindCollisions(){
+  Events.on(engine,"collisionStart",(ev)=>{
+    for(const pair of ev.pairs){
+      const a=pair.bodyA, b=pair.bodyB;
+      const rel=Vector.magnitude(Vector.sub(a.velocity,b.velocity));
+      // bommenwerper detoneert automatisch bij een stevige inslag
+      const pr=state.projectile;
+      if(pr && pr.gameData.ability==="bomb" && !pr.gameData.abilityUsed && (a===pr||b===pr) && rel>3.2){
+        detonate(pr); continue;
+      }
+      if(rel<1.4) continue;
+      hit(a,b,rel); hit(b,a,rel);
+    }
+  });
+}
+function hit(target, other, rel){
+  const g=target.gameData; if(!g) return;
+  if(g.kind==="alien" && !g.dead){
+    const dmg=(rel-1.8)*5.5;
+    if(dmg>0){ g.hp-=dmg; g.flash=1; if(g.hp<=0) killAlien(target); }
+  } else if(g.kind==="block"){
+    const m=MAT[g.mat]; if(!m.destructible) return;
+    const dmg=(rel-3.2)*3.4;
+    if(dmg>0){ g.hp-=dmg; g.flash=1; if(g.hp<=0) destroyBlock(target); }
+  }
+}
+function killAlien(body){
+  const g=body.gameData; if(g.dead) return; g.dead=true;
+  const p=body.position;
+  burst(p.x,p.y,18,"#7dff8a"); burst(p.x,p.y,8,"#caffd2");
+  floaters.push({x:p.x,y:p.y-30,text:"+5000",life:1,color:"#7dff8a"});
+  addScore(5000); shake=Math.max(shake,8);
+  World.remove(world,body);
+  aliens=aliens.filter(x=>x!==body);
+}
+function destroyBlock(body){
+  const g=body.gameData; const p=body.position; const m=MAT[g.mat];
+  burst(p.x,p.y, m.glass?16:12, m.glass?"#d7f6ff":m.fill);
+  floaters.push({x:p.x,y:p.y-20,text:"+250",life:.8,color:"#cdd2ff"});
+  addScore(250); shake=Math.max(shake, m.glass?3:5);
+  World.remove(world,body);
+  blocks=blocks.filter(x=>x!==body);
+}
+function addScore(n){ state.score+=n; updateHUD(); }
+
+/* ---------- speciale acties (tik tijdens vlucht) ---------- */
+function activateAbility(){
+  const p=state.projectile; if(!p) return;
+  const g=p.gameData; if(!g.ability || g.abilityUsed) return;
+  const v=p.velocity, ang=Math.atan2(v.y,v.x), sp=Math.hypot(v.x,v.y);
+  if(g.ability==="split"){
+    g.abilityUsed=true;
+    for(const off of [-0.40, 0.40]){
+      const a=ang+off; const sh=makeShard(p.position.x, p.position.y, g.type);
+      World.add(world, sh); shards.push(sh);
+      Sleeping.set(sh,false);
+      Body.setVelocity(sh,{x:Math.cos(a)*sp, y:Math.sin(a)*sp});
+    }
+    burst(p.position.x,p.position.y,12,"#b15dff");
+    beep(520,0.08,"square");
+  } else if(g.ability==="bomb"){
+    detonate(p);
+  } else if(g.ability==="boost"){
+    g.abilityUsed=true;
+    const ns=Math.min(MAX_SPEED*1.7, sp*2.2+8);
+    Body.setVelocity(p,{x:Math.cos(ang)*ns, y:Math.sin(ang)*ns});
+    for(let i=0;i<14;i++){ const a=ang+Math.PI+(Math.random()-0.5)*0.8, s=3+Math.random()*5;
+      particles.push({x:p.position.x,y:p.position.y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:.6,max:.6,size:3,color:"#37e6ff"}); }
+    beep(720,0.1,"sawtooth");
+  } else if(g.ability==="slam"){
+    g.abilityUsed=true;
+    Body.setVelocity(p,{x:v.x*0.35, y:Math.max(v.y,0)+28});
+    burst(p.position.x,p.position.y,12,"#ffd34d");
+    shake=Math.max(shake,6); beep(120,0.12,"square");
+  }
+}
+function detonate(p){
+  const g=p.gameData; if(g.abilityUsed) return; g.abilityUsed=true;
+  explodeAt(p.position.x, p.position.y, 145, 30);
+  World.remove(world,p); state.projectile=null;
+  state.phase="settle"; state.settleAt=performance.now();
+}
+function explodeAt(x,y,radius,power){
+  burst(x,y,34,"#ff8a3d"); burst(x,y,18,"#fff3b0"); burst(x,y,10,"#ff3d3d");
+  shake=Math.max(shake,13); beep(90,0.22,"square");
+  const bodies=[...aliens, ...blocks, ...shards];
+  for(const b of bodies){
+    const dx=b.position.x-x, dy=b.position.y-y; const d=Math.hypot(dx,dy)||1;
+    if(d>radius) continue;
+    const f=1-d/radius;
+    Sleeping.set(b,false);
+    Body.setVelocity(b,{ x:b.velocity.x + dx/d*f*24, y:b.velocity.y + dy/d*f*24 - f*7 });
+    const g=b.gameData;
+    if(g.kind==="alien" && !g.dead){ g.hp-=power*f*1.5; g.flash=1; if(g.hp<=0) killAlien(b); }
+    else if(g.kind==="block"){ const m=MAT[g.mat]; if(m.destructible){ g.hp-=power*f*2.2; g.flash=1; if(g.hp<=0) destroyBlock(b); } }
+  }
+}
+
+/* ============================================================
+   AFVUREN & SCHOT-AFHANDELING
+   ============================================================ */
+function fire(){
+  const p=state.projectile; if(!p||!state.aimPoint) return;
+  let vx=(ANCHOR.x-state.aimPoint.x)*POWER, vy=(ANCHOR.y-state.aimPoint.y)*POWER;
+  const sp=Math.hypot(vx,vy);
+  if(sp<3){ state.aimPoint={x:ANCHOR.x,y:ANCHOR.y}; Body.setAngle(p,-0.6); return; } // te weinig vermogen
+  if(sp>MAX_SPEED){ vx=vx/sp*MAX_SPEED; vy=vy/sp*MAX_SPEED; }
+  Body.setStatic(p,false);
+  Sleeping.set(p,false);                 // forceer ontwaken zodat de snelheid telt
+  Body.setVelocity(p,{x:vx,y:vy});
+  Body.setAngularVelocity(p,0.2);
+  state.phase="fly"; state.launchAt=performance.now(); physSteps=0;
+  // lanceer-FX: vlamstoot tegengesteld aan vliegrichting
+  const ang=Math.atan2(vy,vx);
+  for(let i=0;i<18;i++){ const a=ang+Math.PI+(Math.random()-0.5)*1.1, s=2+Math.random()*6;
+    particles.push({x:ANCHOR.x,y:ANCHOR.y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:.7,max:.7,
+      size:3+Math.random()*3,color:["#fff3b0","#ff8a3d","#ff5d2e"][i%3]}); }
+  shake=Math.max(shake,5);
+  beep(170,0.13,"sawtooth");
+}
+function maxSpeedOfDynamics(){
+  let mx=0;
+  const all=[...blocks,...aliens,...shards]; if(state.projectile && !state.projectile.isStatic) all.push(state.projectile);
+  for(const b of all){ if(b.isSleeping) continue; const s=Vector.magnitude(b.velocity); if(s>mx)mx=s; }
+  return mx;
+}
+function resolveShot(){
+  if(state.phase==="done") return;
+  if(state.projectile){ World.remove(world,state.projectile); state.projectile=null; }
+  if(shards.length){ for(const sh of shards) World.remove(world,sh); shards=[]; }
+  state.shotsLeft--;
+  if(aliens.length===0){ state.phase="done"; winLevel(); return; }
+  if(state.shotsLeft>0){ loadProjectile(); updateHUD(); }
+  else { state.phase="done"; setTimeout(()=>{ if(aliens.length>0) loseLevel(); }, 500); }
+  updateHUD();
+}
+
+function starsFor(shotsLeftAfter){ return Math.max(1, Math.min(3, 1+shotsLeftAfter)); }
+function winLevel(){
+  const lvlNum=state.levelIndex+1;
+  const stars=starsFor(state.shotsLeft);
+  state.score+= state.shotsLeft*2000;
+  const prev=progress.stars[lvlNum]||0;
+  if(stars>prev) progress.stars[lvlNum]=stars;
+  if(lvlNum+1>progress.unlocked && lvlNum<LEVELS.length) progress.unlocked=lvlNum+1;
+  saveProgress();
+  burstScreenWin();
+  beep(660,0.12,"triangle"); setTimeout(()=>beep(880,0.16,"triangle"),120);
+  showResult(true, stars, state.score);
+}
+function loseLevel(){
+  beep(150,0.2,"square");
+  showResult(false, 0, state.score);
+}
+
+/* ============================================================
+   INPUT (muis + touch via pointer events)
+   ============================================================ */
+function toWorld(clientX,clientY){
+  const r=canvas.getBoundingClientRect();
+  return { x:(clientX-r.left-view.ox)/view.scale, y:(clientY-r.top-view.oy)/view.scale };
+}
+let aiming=false;
+function pointerDown(e){
+  if(state.screen!=="play") return;
+  if(state.phase==="fly"){ e.preventDefault(); resumeAudio(); activateAbility(); return; }
+  if(state.phase!=="aim"||!state.projectile) return;
+  e.preventDefault(); resumeAudio();
+  try{ canvas.setPointerCapture(e.pointerId); }catch(_){}
+  aiming=true; setAim(e);
+}
+function pointerMove(e){ if(aiming){ e.preventDefault(); setAim(e); } }
+function pointerUp(e){
+  if(!aiming) return;
+  aiming=false;
+  try{ if(e&&e.pointerId!=null) canvas.releasePointerCapture(e.pointerId); }catch(_){}
+  fire();
+}
+function setAim(e){
+  let dx=0,dy=0;
+  const w=toWorld(e.clientX,e.clientY);
+  dx=w.x-ANCHOR.x; dy=w.y-ANCHOR.y;
+  const d=Math.hypot(dx,dy);
+  if(d>MAX_STRETCH){ dx=dx/d*MAX_STRETCH; dy=dy/d*MAX_STRETCH; }
+  state.aimPoint={x:ANCHOR.x+dx, y:ANCHOR.y+dy};
+  // raket wijst in afvuurrichting (tegengesteld aan het terugtrekken)
+  if(state.projectile && (dx||dy)) Body.setAngle(state.projectile, Math.atan2(-dy,-dx));
+}
+
+/* ============================================================
+   PARTICLES & SCREEN FX
+   ============================================================ */
+function burst(x,y,n,color){
+  for(let i=0;i<n;i++){ const a=Math.random()*Math.PI*2, s=2+Math.random()*7;
+    particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-2,life:1,max:1,
+      size:2+Math.random()*4,color}); }
+}
+function burstScreenWin(){ for(let i=0;i<40;i++){ const a=Math.random()*Math.PI*2,s=3+Math.random()*8;
+  particles.push({x:WORLD_W/2,y:WORLD_H/2,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:1.4,max:1.4,
+    size:3+Math.random()*4,color:["#7dff8a","#37e6ff","#ffd34d","#ff8a3d"][i%4]}); } }
+function stepFx(){
+  for(const p of particles){ p.vy+=0.25; p.x+=p.vx; p.y+=p.vy; p.vx*=0.99; p.life-=0.02; }
+  particles=particles.filter(p=>p.life>0);
+  for(const f of floaters){ f.y-=0.7; f.life-=0.014; }
+  floaters=floaters.filter(f=>f.life>0);
+  if(shake>0) shake*=0.86; if(shake<0.3) shake=0;
+}
+
+/* ============================================================
+   AUDIO (optioneel, mini WebAudio)
+   ============================================================ */
+let actx=null;
+function resumeAudio(){ try{ if(!actx) actx=new (window.AudioContext||window.webkitAudioContext)(); if(actx.state==="suspended") actx.resume(); }catch(e){} }
+function beep(freq,dur,type){
+  try{ if(!actx) return; const o=actx.createOscillator(),g=actx.createGain();
+    o.type=type||"sine"; o.frequency.value=freq; o.connect(g); g.connect(actx.destination);
+    g.gain.setValueAtTime(0.06,actx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001,actx.currentTime+dur);
+    o.start(); o.stop(actx.currentTime+dur);
+  }catch(e){}
+}
+
+/* ============================================================
+   GAME LOOP
+   ============================================================ */
+let lastSpeed=99;
+function loop(){
+  requestAnimationFrame(loop);
+  if(state.screen==="play"){
+    Engine.update(engine, FIXED_DT);
+
+    // Lerp render-posities richting echte physics-posities
+    const allBodies=[...blocks,...aliens,...shards];
+    if(state.projectile) allBodies.push(state.projectile);
+    for(const b of allBodies){
+      const g=b.gameData, p=b.position;
+      // Initialiseer rp de eerste keer
+      if(!g.rp) g.rp={x:p.x, y:p.y, a:b.angle};
+      if(state.phase==="fly"||state.phase==="settle"){
+        g.rp.x += (p.x - g.rp.x) * LERP;
+        g.rp.y += (p.y - g.rp.y) * LERP;
+        g.rp.a += (b.angle - g.rp.a) * LERP;
+      } else {
+        // In aim/done: direct volgen (geen slow-mo nodig)
+        g.rp.x=p.x; g.rp.y=p.y; g.rp.a=b.angle;
+      }
+    }
+
+    // trail gebruikt render-positie zodat het spoor ook traag beweegt
+    const pr=state.projectile;
+    if(pr && state.phase==="fly"){
+      const rp=pr.gameData.rp||pr.position;
+      pr.gameData.trail.push({x:rp.x,y:rp.y});
+      if(pr.gameData.trail.length>18) pr.gameData.trail.shift();
+      if(Math.random()<0.55) particles.push({x:rp.x,y:rp.y,
+        vx:(Math.random()-0.5)*1.5,vy:(Math.random()-0.5)*1.5+1,life:0.6,max:0.6,size:3,color:"#ff8a3d"});
+    }
+    for(const sh of shards){
+      const rp=sh.gameData.rp||sh.position;
+      sh.gameData.trail.push({x:rp.x,y:rp.y});
+      if(sh.gameData.trail.length>10) sh.gameData.trail.shift();
+    }
+
+    // schot-status (op echte physics-positie, niet render-positie)
+    if(state.phase==="fly"){
+      const out = pr && (pr.position.y>WORLD_H+200 || pr.position.x>WORLD_W+400 || pr.position.x<-300);
+      const slow = pr && Vector.magnitude(pr.velocity)<0.7 && (performance.now()-state.launchAt>800);
+      const timeout = (performance.now()-state.launchAt>8000);
+      if(out||slow||timeout){ state.phase="settle"; state.settleAt=performance.now(); }
+    } else if(state.phase==="settle"){
+      if(maxSpeedOfDynamics()<0.9 || performance.now()-state.settleAt>2000){ resolveShot(); }
+    }
+    for(const b of [...blocks,...aliens]) if(b.gameData.flash>0) b.gameData.flash-=0.08;
+    stepFx();
+  } else {
+    stepFx();
+  }
+  render();
+}
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+function resize(){
+  view.dpr=Math.min(window.devicePixelRatio||1,2);
+  const w=canvas.clientWidth, h=canvas.clientHeight;
+  canvas.width=Math.round(w*view.dpr); canvas.height=Math.round(h*view.dpr);
+  view.scale=Math.min(w/WORLD_W, h/WORLD_H);
+  view.ox=(w-WORLD_W*view.scale)/2; view.oy=(h-WORLD_H*view.scale)/2;
+  buildStarfield(w,h);
+}
+function buildStarfield(w,h){
+  starfield={w,h,stars:[],planets:[]};
+  for(let i=0;i<140;i++) starfield.stars.push({x:Math.random()*WORLD_W,y:Math.random()*WORLD_H,
+    r:Math.random()*1.6+0.3,a:Math.random()*0.6+0.3,t:Math.random()*Math.PI*2});
+  starfield.planets=[
+    {x:WORLD_W*0.82,y:130,r:70,c1:"#ff8a3d",c2:"#8a2d12",ring:true},
+    {x:WORLD_W*0.18,y:200,r:40,c1:"#37e6ff",c2:"#0e3a6b",ring:false},
+  ];
+}
+function render(){
+  const dpr=view.dpr;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  // achtergrond (in scherm-css-px)
+  const cw=canvas.width/dpr, ch=canvas.height/dpr;
+  const grd=ctx.createRadialGradient(cw*0.7,ch*0.1,40, cw*0.7,ch*0.1, Math.max(cw,ch));
+  grd.addColorStop(0,"#1a1f57"); grd.addColorStop(.45,"#0c0e2e"); grd.addColorStop(1,"#060611");
+  ctx.fillStyle=grd; ctx.fillRect(0,0,cw,ch);
+
+  // wereld-transform + shake
+  const sh = shake>0 ? (Math.random()-0.5)*shake : 0;
+  ctx.translate(view.ox+sh, view.oy+sh);
+  ctx.scale(view.scale,view.scale);
+
+  drawStars(); drawPlanets();
+  if(state.screen==="play"||state.screen==="result"){
+    drawGround(); drawLauncher(); drawBlocks(); drawAliens(); drawShards(); drawProjectile();
+    if(aiming) drawTrajectory();
+    drawParticles(); drawFloaters(); drawShots(); drawAbilityHint();
+  } else {
+    drawGround(); drawParticles();
+  }
+}
+function drawStars(){
+  const t=performance.now()/1000;
+  for(const s of starfield.stars){ const a=s.a*(0.6+0.4*Math.sin(t+s.t));
+    ctx.globalAlpha=a; ctx.fillStyle="#fdfdff"; ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,7); ctx.fill(); }
+  ctx.globalAlpha=1;
+}
+function drawPlanets(){
+  for(const p of starfield.planets){
+    if(p.ring){ ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(-0.4); ctx.strokeStyle="rgba(255,200,150,.5)";
+      ctx.lineWidth=6; ctx.beginPath(); ctx.ellipse(0,0,p.r*1.7,p.r*0.5,0,0,7); ctx.stroke(); ctx.restore(); }
+    const g=ctx.createRadialGradient(p.x-p.r*0.4,p.y-p.r*0.4,4,p.x,p.y,p.r);
+    g.addColorStop(0,p.c1); g.addColorStop(1,p.c2);
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,7); ctx.fill();
+  }
+}
+function drawGround(){
+  const g=ctx.createLinearGradient(0,G_TOP,0,WORLD_H);
+  g.addColorStop(0,"#2a2150"); g.addColorStop(1,"#150f2c");
+  ctx.fillStyle=g; ctx.fillRect(-200,G_TOP,WORLD_W+400,WORLD_H-G_TOP+40);
+  ctx.strokeStyle="rgba(125,255,138,.35)"; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.moveTo(-200,G_TOP); ctx.lineTo(WORLD_W+200,G_TOP); ctx.stroke();
+  // craters
+  ctx.fillStyle="rgba(255,255,255,.05)";
+  for(let x=40;x<WORLD_W;x+=160){ ctx.beginPath(); ctx.ellipse(x,G_TOP+30,26,8,0,0,7); ctx.fill(); }
+}
+function drawLauncher(){
+  const baseY=G_TOP;
+  ctx.save();
+  // steunpoten naar de grond
+  ctx.strokeStyle="#39446f"; ctx.lineCap="round"; ctx.lineWidth=10;
+  ctx.beginPath();
+  ctx.moveTo(ANCHOR.x-30,baseY); ctx.lineTo(ANCHOR.x-8,ANCHOR.y+20);
+  ctx.moveTo(ANCHOR.x+34,baseY); ctx.lineTo(ANCHOR.x+10,ANCHOR.y+20);
+  ctx.stroke();
+  // platform
+  ctx.fillStyle="#2b3566"; ctx.strokeStyle="#6f80c8"; ctx.lineWidth=3;
+  roundRect(ANCHOR.x-36, ANCHOR.y+8, 72, 26, 8); ctx.fill(); ctx.stroke();
+  ctx.fillStyle="#1c2348"; roundRect(ANCHOR.x-26, ANCHOR.y+13, 52, 8, 4); ctx.fill();
+
+  // power/charge berekenen
+  const ap=state.aimPoint||{x:ANCHOR.x,y:ANCHOR.y};
+  const stretch=Math.hypot(ap.x-ANCHOR.x, ap.y-ANCHOR.y);
+  const power=Math.min(1, stretch/MAX_STRETCH);
+
+  // basisring rond lanceerpunt (gloeit)
+  const t=performance.now()/400;
+  const glow=aiming ? (0.45+0.55*power) : (0.3+0.12*Math.sin(t));
+  ctx.lineWidth=4; ctx.strokeStyle=`rgba(55,230,255,${glow})`;
+  ctx.beginPath(); ctx.arc(ANCHOR.x,ANCHOR.y,31,0,Math.PI*2); ctx.stroke();
+
+  if(aiming && power>0.02){
+    // power-ring vult op
+    ctx.lineWidth=5; ctx.strokeStyle="#ff8a3d";
+    ctx.beginPath(); ctx.arc(ANCHOR.x,ANCHOR.y,31,-Math.PI/2,-Math.PI/2+power*Math.PI*2); ctx.stroke();
+    // richtpijl in afvuurrichting
+    const ang=Math.atan2(ANCHOR.y-ap.y, ANCHOR.x-ap.x);
+    const len=44+power*60;
+    const ex=ANCHOR.x+Math.cos(ang)*len, ey=ANCHOR.y+Math.sin(ang)*len;
+    ctx.strokeStyle="#ffd34d"; ctx.lineWidth=4; ctx.setLineDash([2,7]);
+    ctx.beginPath(); ctx.moveTo(ANCHOR.x+Math.cos(ang)*34,ANCHOR.y+Math.sin(ang)*34); ctx.lineTo(ex,ey); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle="#ffd34d"; ctx.save(); ctx.translate(ex,ey); ctx.rotate(ang);
+    ctx.beginPath(); ctx.moveTo(7,0); ctx.lineTo(-9,-7); ctx.lineTo(-9,7); ctx.closePath(); ctx.fill(); ctx.restore();
+  }
+  ctx.restore();
+}
+function drawBlocks(){
+  for(const b of blocks){
+    const g=b.gameData, m=MAT[g.mat];
+    const rp=g.rp||b.position; const ra=g.rp?g.rp.a:b.angle;
+    ctx.save(); ctx.translate(rp.x,rp.y); ctx.rotate(ra);
+    const w=g.w,h=g.h;
+    ctx.fillStyle=m.glass?"rgba(159,232,255,.55)":m.fill;
+    roundRect(-w/2,-h/2,w,h,5); ctx.fill();
+    ctx.lineWidth=2.5; ctx.strokeStyle=m.edge; ctx.stroke();
+    if(g.mat==="metal"){ ctx.fillStyle="rgba(255,255,255,.5)";
+      [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(c=>{ctx.beginPath();ctx.arc(c[0]*(w/2-7),c[1]*(h/2-7),2.2,0,7);ctx.fill();}); }
+    if(g.mat==="stone"){ ctx.fillStyle="rgba(0,0,0,.12)"; ctx.fillRect(-w/2+4,-2,w-8,2); }
+    // schade-scheuren
+    const dmg=1-g.hp/g.maxhp;
+    if(dmg>0.25 && m.destructible){ ctx.strokeStyle="rgba(0,0,0,.4)"; ctx.lineWidth=1.5;
+      ctx.beginPath(); ctx.moveTo(-w/4,-h/2); ctx.lineTo(0,0); ctx.lineTo(w/5,h/2); ctx.stroke(); }
+    if(g.flash>0){ ctx.fillStyle=`rgba(255,255,255,${g.flash*0.6})`; roundRect(-w/2,-h/2,w,h,5); ctx.fill(); }
+    ctx.restore();
+  }
+}
+function drawAliens(){
+  const t=performance.now()/300;
+  for(const a of aliens){
+    const g=a.gameData, r=g.r;
+    const rp=g.rp||a.position; const ra=g.rp?g.rp.a:a.angle;
+    ctx.save(); ctx.translate(rp.x,rp.y+Math.sin(t+g.bob)*1.5); ctx.rotate(ra*0.3);
+    // lichaam
+    ctx.fillStyle="#7dff8a"; ctx.strokeStyle="#2fae4a"; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.arc(0,0,r,0,7); ctx.fill(); ctx.stroke();
+    // antennes
+    ctx.strokeStyle="#2fae4a"; ctx.lineWidth=2.5;
+    ctx.beginPath(); ctx.moveTo(-6,-r+3); ctx.lineTo(-9,-r-7); ctx.moveTo(6,-r+3); ctx.lineTo(9,-r-7); ctx.stroke();
+    ctx.fillStyle="#ffd34d"; ctx.beginPath(); ctx.arc(-9,-r-8,2.4,0,7); ctx.arc(9,-r-8,2.4,0,7); ctx.fill();
+    // ogen
+    ctx.fillStyle="#0b1a10";
+    ctx.beginPath(); ctx.ellipse(-r*0.35,-2,r*0.22,r*0.32,0,0,7); ctx.ellipse(r*0.35,-2,r*0.22,r*0.32,0,0,7); ctx.fill();
+    ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(-r*0.3,-6,2,0,7); ctx.arc(r*0.4,-6,2,0,7); ctx.fill();
+    // mond
+    ctx.strokeStyle="#1c5e2c"; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(0,r*0.4,r*0.3,0.1*Math.PI,0.9*Math.PI); ctx.stroke();
+    if(g.flash>0){ ctx.fillStyle=`rgba(255,90,90,${g.flash*0.7})`; ctx.beginPath(); ctx.arc(0,0,r,0,7); ctx.fill(); }
+    ctx.restore();
+  }
+}
+function rocketBody(r, cfg){
+  // romp-vorm in lokale coords, neus naar +x; gebruikt door raket-type projectielen
+  ctx.fillStyle="#ff5d8f";
+  ctx.beginPath(); ctx.moveTo(-r+4,-r*0.5); ctx.lineTo(-r-7,-r*0.95); ctx.lineTo(-r+9,-r*0.15); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(-r+4, r*0.5); ctx.lineTo(-r-7, r*0.95); ctx.lineTo(-r+9, r*0.15); ctx.closePath(); ctx.fill();
+  ctx.fillStyle=cfg.body; ctx.strokeStyle="#9aa3d8"; ctx.lineWidth=2;
+  roundRect(-r, -r*0.55, r*1.45, r*1.1, r*0.5); ctx.fill(); ctx.stroke();
+  ctx.fillStyle=cfg.nose;
+  ctx.beginPath(); ctx.moveTo(r*0.42,-r*0.56); ctx.lineTo(r*1.28,0); ctx.lineTo(r*0.42,r*0.56); ctx.closePath(); ctx.fill();
+  ctx.fillStyle="#37e6ff"; ctx.strokeStyle="#1685a3"; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.arc(-r*0.02,0,r*0.27,0,7); ctx.fill(); ctx.stroke();
+}
+function drawThruster(r){
+  if(state.phase!=="fly") return;
+  const f=12+Math.random()*12;
+  const fl=ctx.createLinearGradient(-r,0,-r-f-16,0);
+  fl.addColorStop(0,"#fff3b0"); fl.addColorStop(.5,"#ff8a3d"); fl.addColorStop(1,"rgba(255,80,30,0)");
+  ctx.fillStyle=fl;
+  ctx.beginPath(); ctx.moveTo(-r+3,-6); ctx.lineTo(-r-f-16,0); ctx.lineTo(-r+3,6); ctx.closePath(); ctx.fill();
+}
+function drawBodyByType(g){
+  const cfg=ROCKETS[g.type]||ROCKETS.standard; const r=g.r;
+  if(cfg.shape==="bomb"){
+    drawThruster(r);
+    ctx.fillStyle=cfg.body; ctx.strokeStyle="#ff3d3d"; ctx.lineWidth=2.5;
+    ctx.beginPath(); ctx.arc(0,0,r,0,7); ctx.fill(); ctx.stroke();
+    // lont
+    ctx.strokeStyle="#caa46a"; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(r*0.5,-r*0.6); ctx.quadraticCurveTo(r*0.9,-r*1.0,r*1.1,-r*0.7); ctx.stroke();
+    ctx.fillStyle="#ffd34d"; ctx.beginPath(); ctx.arc(r*1.12,-r*0.7,3,0,7); ctx.fill();
+    ctx.fillStyle="rgba(255,255,255,.25)"; ctx.beginPath(); ctx.arc(-r*0.3,-r*0.3,r*0.3,0,7); ctx.fill();
+  } else if(cfg.shape==="rock"){
+    drawThruster(r);
+    const grd=ctx.createRadialGradient(-r*0.3,-r*0.3,2,0,0,r);
+    grd.addColorStop(0,"#d8b98a"); grd.addColorStop(1,cfg.body);
+    ctx.fillStyle=grd; ctx.strokeStyle="#5d4827"; ctx.lineWidth=2.5;
+    ctx.beginPath();
+    for(let i=0;i<9;i++){ const a=i/9*Math.PI*2, rr=r*(0.82+0.18*((i*37)%5)/4); const x=Math.cos(a)*rr,y=Math.sin(a)*rr; i?ctx.lineTo(x,y):ctx.moveTo(x,y); }
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle="rgba(0,0,0,.18)"; ctx.beginPath(); ctx.arc(r*0.25,r*0.15,4,0,7); ctx.arc(-r*0.2,r*0.35,3,0,7); ctx.fill();
+  } else {
+    drawThruster(r); rocketBody(r,cfg);
+  }
+}
+function drawProjectile(){
+  const p=state.projectile; if(!p) return;
+  const cfg=ROCKETS[p.gameData.type]||ROCKETS.standard;
+  if(p.gameData.trail.length){
+    ctx.strokeStyle="rgba(255,138,61,.45)"; ctx.lineWidth=6; ctx.lineCap="round"; ctx.beginPath();
+    p.gameData.trail.forEach((pt,i)=> i?ctx.lineTo(pt.x,pt.y):ctx.moveTo(pt.x,pt.y)); ctx.stroke();
+  }
+  // pulserende ring als de actie nog beschikbaar is tijdens de vlucht
+  if(state.phase==="fly" && p.gameData.ability && !p.gameData.abilityUsed){
+    const rp=p.gameData.rp||p.position;
+    const t=performance.now()/180; const a=0.5+0.5*Math.sin(t);
+    ctx.strokeStyle=`rgba(255,255,255,${0.25+0.4*a})`; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.arc(rp.x,rp.y, p.gameData.r+8+a*4, 0,7); ctx.stroke();
+  }
+  const rp=p.gameData.rp||p.position; const ra=p.gameData.rp?p.gameData.rp.a:p.angle;
+  ctx.save(); ctx.translate(rp.x,rp.y); ctx.rotate(ra);
+  drawBodyByType(p.gameData);
+  ctx.restore();
+}
+function drawShards(){
+  for(const sh of shards){
+    if(sh.gameData.trail.length){ ctx.strokeStyle="rgba(255,160,90,.35)"; ctx.lineWidth=3; ctx.lineCap="round"; ctx.beginPath();
+      sh.gameData.trail.forEach((pt,i)=> i?ctx.lineTo(pt.x,pt.y):ctx.moveTo(pt.x,pt.y)); ctx.stroke(); }
+    const rp=sh.gameData.rp||sh.position; const ra=sh.gameData.rp?sh.gameData.rp.a:sh.angle;
+    ctx.save(); ctx.translate(rp.x,rp.y); ctx.rotate(ra);
+    ctx.fillStyle=sh.gameData.color||"#ff8a3d"; ctx.strokeStyle="#fff"; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.arc(0,0,sh.gameData.r,0,7); ctx.fill(); ctx.stroke();
+    ctx.restore();
+  }
+}
+function drawAbilityHint(){
+  const p=state.projectile; if(!p) return;
+  const cfg=ROCKETS[p.gameData.type]||ROCKETS.standard;
+  ctx.textAlign="center"; ctx.font="700 20px Segoe UI, system-ui, sans-serif";
+  if(state.phase==="aim" && cfg.hint){
+    ctx.fillStyle="rgba(255,255,255,.85)";
+    ctx.fillText(cfg.naam, ANCHOR.x, ANCHOR.y-58);
+    ctx.font="600 15px Segoe UI, system-ui, sans-serif"; ctx.fillStyle="rgba(154,160,216,.95)";
+    ctx.fillText(cfg.hint, ANCHOR.x, ANCHOR.y-38);
+  } else if(state.phase==="fly" && p.gameData.ability && !p.gameData.abilityUsed){
+    const rp=p.gameData.rp||p.position;
+    const t=performance.now()/150; ctx.globalAlpha=0.7+0.3*Math.sin(t);
+    ctx.fillStyle="#ffd34d";
+    ctx.fillText("TIK!", rp.x, rp.y - p.gameData.r - 16);
+    ctx.globalAlpha=1;
+  }
+}
+function drawTrajectory(){
+  if(!state.aimPoint) return;
+  let vx=(ANCHOR.x-state.aimPoint.x)*POWER, vy=(ANCHOR.y-state.aimPoint.y)*POWER;
+  const sp=Math.hypot(vx,vy); if(sp<3) return;
+  if(sp>MAX_SPEED){ vx=vx/sp*MAX_SPEED; vy=vy/sp*MAX_SPEED; }
+  let x=ANCHOR.x, y=ANCHOR.y; const g=G_STEP(), fa=0.006;
+  const SHOW=17;                       // alleen het begin van de baan tonen
+  ctx.fillStyle="rgba(255,255,255,.85)";
+  for(let n=0;n<SHOW;n++){
+    vy+=g; vx*=(1-fa); vy*=(1-fa); x+=vx; y+=vy;
+    if(y>G_TOP-4) break;
+    if(n%2===0){ ctx.globalAlpha=Math.max(.1, 0.9-n/SHOW); const sz=Math.max(1.4, 3-n*0.12);
+      ctx.beginPath(); ctx.arc(x,y,sz,0,7); ctx.fill(); }
+  }
+  ctx.globalAlpha=1;
+}
+function drawParticles(){
+  for(const p of particles){ ctx.globalAlpha=Math.max(0,p.life/p.max);
+    ctx.fillStyle=p.color; ctx.beginPath(); ctx.arc(p.x,p.y,p.size,0,7); ctx.fill(); }
+  ctx.globalAlpha=1;
+}
+function drawFloaters(){
+  ctx.textAlign="center"; ctx.font="700 22px Segoe UI, system-ui, sans-serif";
+  for(const f of floaters){ ctx.globalAlpha=Math.max(0,f.life); ctx.fillStyle=f.color;
+    ctx.fillText(f.text,f.x,f.y); }
+  ctx.globalAlpha=1;
+}
+function drawShots(){
+  // resterende raketten naast de installatie, gekleurd per type
+  const used=state.rockets.length - state.shotsLeft; // index van huidige
+  const reserve=state.rockets.slice(used+1);          // komende types
+  for(let i=0;i<reserve.length;i++){
+    const cfg=ROCKETS[reserve[i]]||ROCKETS.standard;
+    const x=70 - i*26, y=G_TOP-18;
+    ctx.fillStyle=cfg.dot; ctx.strokeStyle="#0c0e2e"; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.arc(x,y,11,0,7); ctx.fill(); ctx.stroke();
+  }
+}
+function roundRect(x,y,w,h,r){ ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+
+/* ============================================================
+   SCHERMEN / UI
+   ============================================================ */
+const screens={ start:document.getElementById("start"), select:document.getElementById("select"),
+  result:document.getElementById("result") };
+const hud=document.getElementById("hud");
+function show(s){
+  state.screen=s;
+  for(const k in screens) screens[k].classList.toggle("on", k===s && s!=="play");
+  hud.classList.toggle("on", s==="play");
+}
+function updateHUD(){
+  document.getElementById("hudLevel").textContent=state.levelIndex+1;
+  document.getElementById("hudScore").textContent=state.score.toLocaleString("nl-NL");
+}
+function buildGrid(){
+  const grid=document.getElementById("grid"); grid.innerHTML="";
+  LEVELS.forEach((_,i)=>{
+    const num=i+1; const unlocked=num<=progress.unlocked;
+    const stars=progress.stars[num]||0;
+    const cell=document.createElement("div");
+    cell.className="cell"+(unlocked?"":" locked")+(stars>0?" cleared":"");
+    cell.innerHTML=`<span>${num}</span>`+(stars>0?`<div class="stars">${"★".repeat(stars)}${"☆".repeat(3-stars)}</div>`:"");
+    if(unlocked) cell.addEventListener("click",()=>{ resumeAudio(); loadLevel(i); });
+    grid.appendChild(cell);
+  });
+}
+function showResult(win,stars,score){
+  state.screen="result"; show("result");
+  document.getElementById("resTitle").textContent= win?"Missie geslaagd":"Missie mislukt";
+  document.getElementById("resStars").textContent= win? ("★".repeat(stars)+"☆".repeat(3-stars)) : "—";
+  document.getElementById("resScore").textContent=score.toLocaleString("nl-NL");
+  const next=document.getElementById("btnResNext");
+  next.style.display = (win && state.levelIndex+1<LEVELS.length) ? "" : "none";
+  // Beloning-modus: 1 level gespeeld → meld aan de ouder zodat we terug gaan
+  if(REWARD){ try{ parent.postMessage({type:"astrokatapult-leveldone", win:!!win},"*"); }catch(e){} }
+}
+
+/* knoppen */
+document.getElementById("btnPlay").onclick=()=>{ resumeAudio(); loadLevel(Math.min(progress.unlocked-1,LEVELS.length-1)); };
+document.getElementById("btnLevels").onclick=()=>{ buildGrid(); show("select"); };
+document.getElementById("btnBack").onclick=()=>show("start");
+document.getElementById("btnMenu").onclick=()=>{ buildGrid(); show("select"); };
+document.getElementById("btnRetry").onclick=()=>loadLevel(state.levelIndex);
+document.getElementById("btnResMenu").onclick=()=>{ buildGrid(); show("select"); };
+document.getElementById("btnResRetry").onclick=()=>loadLevel(state.levelIndex);
+document.getElementById("btnResNext").onclick=()=>loadLevel(Math.min(state.levelIndex+1,LEVELS.length-1));
+
+/* pointer events */
+/* pointer events (canvas vangt alles via pointer-capture) */
+canvas.addEventListener("pointerdown",pointerDown);
+canvas.addEventListener("pointermove",pointerMove);
+canvas.addEventListener("pointerup",pointerUp);
+canvas.addEventListener("pointercancel",pointerUp);
+canvas.addEventListener("lostpointercapture",pointerUp);
+canvas.addEventListener("contextmenu",e=>e.preventDefault());
+
+/* init */
+window.addEventListener("resize",resize);
+initEngine(); resize(); loop();
+
+/* Beloning-modus: sla het startscherm/level-keuze over en start direct level 1 */
+if(REWARD){
+  document.getElementById("btnMenu").style.display="none";       // geen level-keuze tijdens beloning
+  document.getElementById("btnResMenu").style.display="none";
+  loadLevel(0);
+}
+}
+</script>
+<script>window.__startLoad();</script>
+</body>
+</html>

@@ -53,6 +53,24 @@ function JetpackBeloning({ onDone }) {
   )
 }
 
+// ── Astro Katapult embed (1 level, dan terug) ─────────────────────────────
+function AstroBeloning({ onDone }) {
+  useEffect(() => {
+    const h = (e) => {
+      if (e.data && e.data.type === 'astrokatapult-leveldone') setTimeout(onDone, 1800)
+    }
+    window.addEventListener('message', h)
+    return () => window.removeEventListener('message', h)
+  }, [onDone])
+  return (
+    <div className="ws-game-wrap">
+      <button className="ws-game-exit" onClick={onDone}>← Klaar</button>
+      <iframe src="/astrokatapult/?reward=1" title="Astro Katapult" allow="autoplay" />
+      <div className="ws-game-hint">Speel 1 level — daarna ga je verder 🪐</div>
+    </div>
+  )
+}
+
 // ── Spacerunner embed ─────────────────────────────────────────────────────
 function SpacerunnerBeloning({ onDone }) {
   useEffect(() => {
@@ -87,6 +105,11 @@ function BeloningKeuze({ onPick, heeftToernooi }) {
         <button className="ws-beloning-card" onClick={() => onPick('towerdefense')}>
           <span className="ws-bc-emoji">🏰</span>
           <span className="ws-bc-name">Tower Defense</span>
+          <span className="ws-bc-reward">+ € {BRIEFGELD} briefgeld</span>
+        </button>
+        <button className="ws-beloning-card" onClick={() => onPick('astrokatapult')}>
+          <span className="ws-bc-emoji">🪐</span>
+          <span className="ws-bc-name">Astro Katapult</span>
           <span className="ws-bc-reward">+ € {BRIEFGELD} briefgeld</span>
         </button>
         <button className="ws-beloning-card" onClick={() => onPick('jetpack')}>
@@ -271,8 +294,13 @@ export default function WerkwoordSpelling({ groep, onBack, addBriefgeld }) {
 
   const kiesBeloning = (key) => {
     if (key === 'towerdefense') setTdStarted(true)
+    // Astro Katapult: je krijgt de €50 meteen (zodra je speelt)
+    if (key === 'astrokatapult') { addBriefgeld?.(BRIEFGELD); setVerdiend(v => v + BRIEFGELD) }
     setPhase(key)
   }
+
+  // Astro Katapult klaar (1 level gespeeld) → briefgeld is al gegeven → terug
+  const astroKlaar = useCallback(() => setPhase('play'), [])
 
   // Tower Defense golf klaar → 50 briefgeld + terug naar spelling (spel blijft gemount)
   const tdKlaar = useCallback(() => {
@@ -311,6 +339,9 @@ export default function WerkwoordSpelling({ groep, onBack, addBriefgeld }) {
   }
   if (phase === 'jetpack') {
     return <JetpackBeloning onDone={jetpackKlaar} />
+  }
+  if (phase === 'astrokatapult') {
+    return <AstroBeloning onDone={astroKlaar} />
   }
   if (phase === 'spacerunner') {
     return <SpacerunnerBeloning onDone={jetpackKlaar} />

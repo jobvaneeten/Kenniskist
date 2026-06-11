@@ -2,6 +2,7 @@ import { useState } from 'react'
 import FootballGame from './games/FootballGame'
 import TowerDefenseGame from './games/TowerDefenseGame'
 import JetpackGame from './games/JetpackGame'
+import AstroKatapultGame from './games/AstroKatapultGame'
 import SterrenstroompGame from './games/SterrenstroompGame'
 import IepOefenen from './games/IepOefenen'
 import BlokOefenen from './games/BlokOefenen'
@@ -39,6 +40,7 @@ const FREE_GAMES = [
   { key: 'football',      emoji: '⚽', name: 'WK Voetbal',      desc: 'Alle groepen' },
   { key: 'towerdefense',  emoji: '🏰', name: 'Tower Defense',   desc: 'Alle groepen' },
   { key: 'jetpack',       emoji: '🚀', name: 'Jetpack',          desc: 'Vlieg zo ver mogelijk!' },
+  { key: 'astrokatapult', emoji: '🪐', name: 'Astro Katapult',   desc: 'Lanceer & versla de aliens!' },
   { key: 'sterrenstroom', emoji: '🛸', name: 'Spacerunner',     desc: 'Vlieg door de ruimte!' },
 ]
 
@@ -58,6 +60,10 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
 
   if (directGame === 'jetpack') {
     return <JetpackGame onBack={onBack} addCuruntie={addCuruntie} />
+  }
+
+  if (directGame === 'astrokatapult') {
+    return <AstroKatapultGame onBack={onBack} />
   }
 
   if (directGame === 'sterrenstroom') {
