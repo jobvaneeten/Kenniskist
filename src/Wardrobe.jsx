@@ -436,23 +436,28 @@ export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlay
               <span className="clothing-label">Shirt</span>
               {shirtColor && <span className="clothing-check">✓</span>}
             </div>
-            <div className="color-swatches">
-              {getCatalog('shirt').map(c => {
-                const locked = !(unlockedColors.shirt || []).includes(c.key)
-                const emoji  = swatchEmoji(c)
-                return (
-                  <button
-                    key={c.key}
-                    className={`color-swatch ${shirtColor === c.key ? 'swatch-active' : ''} ${locked ? 'swatch-locked' : ''}`}
-                    style={swatchStyle(c)}
-                    title={locked ? '🔒 Win via lootbox' : c.label}
-                    onClick={() => !locked && pickShirt(c.key)}
-                  >
-                    {emoji && <span className="swatch-emoji">{emoji}</span>}
-                  </button>
-                )
-              })}
-            </div>
+            {(() => {
+              const items = getCatalog('shirt').filter(c => (unlockedColors.shirt || []).includes(c.key))
+              if (!items.length) return <p className="clothing-empty">Nog niets ontgrendeld — win shirts in de 🛒 Winkel!</p>
+              return (
+                <div className="color-swatches">
+                  {items.map(c => {
+                    const emoji = swatchEmoji(c)
+                    return (
+                      <button
+                        key={c.key}
+                        className={`color-swatch ${shirtColor === c.key ? 'swatch-active' : ''}`}
+                        style={swatchStyle(c)}
+                        title={c.label}
+                        onClick={() => pickShirt(c.key)}
+                      >
+                        {emoji && <span className="swatch-emoji">{emoji}</span>}
+                      </button>
+                    )
+                  })}
+                </div>
+              )
+            })()}
           </div>
 
           {ITEMS.map(item => (
@@ -462,23 +467,28 @@ export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlay
                 <span className="clothing-label">{item.label}</span>
                 {wearing[item.key] && <span className="clothing-check">✓</span>}
               </div>
-              <div className="color-swatches">
-                {getCatalog(item.key).map(c => {
-                  const locked = !(unlockedColors[item.key] || []).includes(c.key)
-                  const emoji  = swatchEmoji(c)
-                  return (
-                    <button
-                      key={c.key}
-                      className={`color-swatch ${wearing[item.key] === c.key ? 'swatch-active' : ''} ${locked ? 'swatch-locked' : ''}`}
-                      style={swatchStyle(c)}
-                      title={locked ? '🔒 Win via lootbox' : c.label}
-                      onClick={() => !locked && pickClothing(item.key, c.key)}
-                    >
-                      {emoji && <span className="swatch-emoji">{emoji}</span>}
-                    </button>
-                  )
-                })}
-              </div>
+              {(() => {
+                const items = getCatalog(item.key).filter(c => (unlockedColors[item.key] || []).includes(c.key))
+                if (!items.length) return <p className="clothing-empty">Nog niets ontgrendeld — win {item.label.toLowerCase()} in de 🛒 Winkel!</p>
+                return (
+                  <div className="color-swatches">
+                    {items.map(c => {
+                      const emoji = swatchEmoji(c)
+                      return (
+                        <button
+                          key={c.key}
+                          className={`color-swatch ${wearing[item.key] === c.key ? 'swatch-active' : ''}`}
+                          style={swatchStyle(c)}
+                          title={c.label}
+                          onClick={() => pickClothing(item.key, c.key)}
+                        >
+                          {emoji && <span className="swatch-emoji">{emoji}</span>}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )
+              })()}
             </div>
           ))}
         </div>

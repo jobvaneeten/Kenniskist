@@ -15,7 +15,7 @@ export const WERKWOORDEN = [
   { inf:'werken',     ik:'werk',     hij:'werkt',     vtev:'werkte',    vtmv:'werkten',    vd:'gewerkt',     hulp:'heeft', ctx:'in de tuin',     type:'zwak' },
   { inf:'maken',      ik:'maak',     hij:'maakt',     vtev:'maakte',    vtmv:'maakten',    vd:'gemaakt',     hulp:'heeft', ctx:'een tekening',   type:'zwak' },
   { inf:'koken',      ik:'kook',     hij:'kookt',     vtev:'kookte',    vtmv:'kookten',    vd:'gekookt',     hulp:'heeft', ctx:'lekkere soep',   type:'zwak' },
-  { inf:'fietsen',    ik:'fiets',    hij:'fietst',    vtev:'fietste',   vtmv:'fietsten',   vd:'gefietst',    hulp:'heeft', ctx:'naar school',    type:'zwak' },
+  { inf:'fietsen',    ik:'fiets',    hij:'fietst',    vtev:'fietste',   vtmv:'fietsten',   vd:'gefietst',    hulp:'is',    ctx:'naar school',    type:'zwak' },
   { inf:'wonen',      ik:'woon',     hij:'woont',     vtev:'woonde',    vtmv:'woonden',    vd:'gewoond',     hulp:'heeft', ctx:'in de stad',     type:'zwak' },
   { inf:'spelen',     ik:'speel',    hij:'speelt',    vtev:'speelde',   vtmv:'speelden',   vd:'gespeeld',    hulp:'heeft', ctx:'buiten',         type:'zwak' },
   { inf:'leren',      ik:'leer',     hij:'leert',     vtev:'leerde',    vtmv:'leerden',    vd:'geleerd',     hulp:'heeft', ctx:'voor de toets',  type:'zwak' },
@@ -29,17 +29,17 @@ export const WERKWOORDEN = [
   { inf:'luisteren',  ik:'luister',  hij:'luistert',  vtev:'luisterde', vtmv:'luisterden', vd:'geluisterd',  hulp:'heeft', ctx:'naar muziek',    type:'zwak' },
   { inf:'tellen',     ik:'tel',      hij:'telt',      vtev:'telde',     vtmv:'telden',     vd:'geteld',      hulp:'heeft', ctx:'de knikkers',    type:'zwak' },
   { inf:'plakken',    ik:'plak',     hij:'plakt',     vtev:'plakte',    vtmv:'plakten',    vd:'geplakt',     hulp:'heeft', ctx:'een poster',     type:'zwak' },
-  { inf:'roeien',     ik:'roei',     hij:'roeit',     vtev:'roeide',    vtmv:'roeiden',    vd:'geroeid',     hulp:'heeft', ctx:'over het meer',  type:'zwak' },
+  { inf:'roeien',     ik:'roei',     hij:'roeit',     vtev:'roeide',    vtmv:'roeiden',    vd:'geroeid',     hulp:'heeft', ctx:'op het meer',    type:'zwak' },
   { inf:'zwaaien',    ik:'zwaai',    hij:'zwaait',    vtev:'zwaaide',   vtmv:'zwaaiden',   vd:'gezwaaid',    hulp:'heeft', ctx:'naar oma',       type:'zwak' },
   { inf:'verven',     ik:'verf',     hij:'verft',     vtev:'verfde',    vtmv:'verfden',    vd:'geverfd',     hulp:'heeft', ctx:'de muur',        type:'zwak' },
-  { inf:'reizen',     ik:'reis',     hij:'reist',     vtev:'reisde',    vtmv:'reisden',    vd:'gereisd',     hulp:'heeft', ctx:'door Europa',    type:'zwak' },
+  { inf:'reizen',     ik:'reis',     hij:'reist',     vtev:'reisde',    vtmv:'reisden',    vd:'gereisd',     hulp:'is',    ctx:'door Europa',    type:'zwak' },
   { inf:'antwoorden', ik:'antwoord', hij:'antwoordt', vtev:'antwoordde',vtmv:'antwoordden',vd:'geantwoord',  hulp:'heeft', ctx:'snel',           type:'zwak' },
   { inf:'groeten',    ik:'groet',    hij:'groet',     vtev:'groette',   vtmv:'groetten',   vd:'gegroet',     hulp:'heeft', ctx:'de buurman',     type:'zwak' },
   { inf:'praten',     ik:'praat',    hij:'praat',     vtev:'praatte',   vtmv:'praatten',   vd:'gepraat',     hulp:'heeft', ctx:'met de juf',     type:'zwak' },
   { inf:'stoppen',    ik:'stop',     hij:'stopt',     vtev:'stopte',    vtmv:'stopten',    vd:'gestopt',     hulp:'heeft', ctx:'de bal',         type:'zwak' },
-  { inf:'rusten',     ik:'rust',     hij:'rust',      vtev:'rustte',    vtmv:'rustten',    vd:'gerust',      hulp:'heeft', ctx:'even uit',       type:'zwak' },
+  { inf:'rusten',     ik:'rust',     hij:'rust',      vtev:'rustte',    vtmv:'rustten',    vd:'gerust',      hulp:'heeft', ctx:'op de bank',     type:'zwak' },
   { inf:'duwen',      ik:'duw',      hij:'duwt',      vtev:'duwde',     vtmv:'duwden',     vd:'geduwd',      hulp:'heeft', ctx:'tegen de kar',   type:'zwak' },
-  { inf:'zetten',     ik:'zet',      hij:'zet',       vtev:'zette',     vtmv:'zetten',     vd:'gezet',       hulp:'heeft', ctx:'de vaas neer',   type:'zwak' },
+  { inf:'zetten',     ik:'zet',      hij:'zet',       vtev:'zette',     vtmv:'zetten',     vd:'gezet',       hulp:'heeft', ctx:'de vaas op tafel', type:'zwak' },
   { inf:'redden',     ik:'red',      hij:'redt',      vtev:'redde',     vtmv:'redden',     vd:'gered',       hulp:'heeft', ctx:'de kat',         type:'zwak' },
   { inf:'wensen',     ik:'wens',     hij:'wenst',     vtev:'wenste',    vtmv:'wensten',    vd:'gewenst',     hulp:'heeft', ctx:'haar veel geluk',type:'zwak' },
 
@@ -105,6 +105,13 @@ const SUBJ_MV = [
 // Tijdmarkers voor de verleden tijd (starten de zin → inversie)
 const VT_MARK = ['Gisteren', 'Vorige week', 'Toen', 'Eergisteren', 'Vannacht']
 
+// Hulpwerkwoord (persoonsvorm) passend bij het onderwerp.
+// hulp = 3e pers. ev. ('heeft' of 'is'); alleen "Jij" wijkt af → hebt / bent.
+function hulpBij(hulp, subjBegin) {
+  if (subjBegin === 'Jij' || subjBegin === 'jij') return hulp === 'heeft' ? 'hebt' : 'bent'
+  return hulp
+}
+
 // ── Oefeningen genereren ────────────────────────────────────────
 // Elke oefening: { zin (met ___), inf, tijdKey:'tt'|'vt'|'vd', tijd (label), antwoord }
 function maakOefeningen() {
@@ -129,7 +136,7 @@ function maakOefeningen() {
     // Verleden tijd — meervoud
     lijst.push({ zin:`${mk2} ___ ${mv2.mid} ${w.ctx}.`,        inf:w.inf, type:w.type, tijdKey:'vt', tijd:'verleden tijd', antwoord:w.vtmv })
     // Voltooid deelwoord — enkelvoud
-    lijst.push({ zin:`${ev.begin} ${w.hulp} ${w.ctx} ___.`,    inf:w.inf, type:w.type, tijdKey:'vd', tijd:'voltooid deelwoord', antwoord:w.vd })
+    lijst.push({ zin:`${ev.begin} ${hulpBij(w.hulp, ev.begin)} ${w.ctx} ___.`, inf:w.inf, type:w.type, tijdKey:'vd', tijd:'voltooid deelwoord', antwoord:w.vd })
     // Voltooid deelwoord — meervoud
     lijst.push({ zin:`${mv.begin} ${hulpMv} ${w.ctx} ___.`,    inf:w.inf, type:w.type, tijdKey:'vd', tijd:'voltooid deelwoord', antwoord:w.vd })
   })

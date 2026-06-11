@@ -1,0 +1,185 @@
+// Thema 8 — Taal groep 7 (oefenen voor de toets)
+// Geporteerd uit kenniskist_groep7.html
+
+export const DOELEN = [
+  { id: 1, naam: 'Het gezegde herkennen',      emoji: '🎯', kleur: '#3b82f6', licht: '#dbeafe' },
+  { id: 2, naam: 'Nederlandse woorden kiezen', emoji: '🌿', kleur: '#22c07a', licht: '#c8f5e2' },
+  { id: 3, naam: 'Spreekwoorden aanvullen',    emoji: '💬', kleur: '#f59e0b', licht: '#fef3c7' },
+  { id: 4, naam: 'Zinsdelen benoemen',         emoji: '🔤', kleur: '#8b5cf6', licht: '#ede9fe' },
+  { id: 5, naam: 'Rijmsoort herkennen',        emoji: '🎵', kleur: '#ec4899', licht: '#fce7f3' },
+]
+
+// ── DOEL 1 — GEZEGDE ──
+export const VRAGEN_D1 = [
+  { type: 'gezegde', zin: 'De kinderen zitten na te denken over de moeilijke som.',
+    woorden: ['De', 'kinderen', 'zitten', 'na', 'te', 'denken', 'over', 'de', 'moeilijke', 'som'],
+    gezegde: [2, 3, 4, 5],
+    uitleg: 'Het gezegde is "zitten na te denken". Dit zijn vier werkwoorden die samen één gezegde vormen. De persoonsvorm is "zitten" — die hoort er altijd bij!' },
+  { type: 'gezegde', zin: 'We begonnen te schrijven in de nieuwe schriften.',
+    woorden: ['We', 'begonnen', 'te', 'schrijven', 'in', 'de', 'nieuwe', 'schriften'],
+    gezegde: [1, 2, 3],
+    uitleg: 'Het gezegde is "begonnen te schrijven". "Begonnen" is de persoonsvorm en hoort samen met "te schrijven" bij het gezegde.' },
+  { type: 'gezegde', zin: 'Moos en Sara liggen te luieren op het strand.',
+    woorden: ['Moos', 'en', 'Sara', 'liggen', 'te', 'luieren', 'op', 'het', 'strand'],
+    gezegde: [3, 4, 5],
+    uitleg: 'Het gezegde is "liggen te luieren". "Liggen" is de persoonsvorm — en "te luieren" hoort er ook bij.' },
+  { type: 'gezegde', zin: 'Ik zal morgen proberen op tijd te komen.',
+    woorden: ['Ik', 'zal', 'morgen', 'proberen', 'op', 'tijd', 'te', 'komen'],
+    gezegde: [1, 3, 6, 7],
+    uitleg: 'Het gezegde is "zal proberen te komen". Alle werkwoorden van de groep horen bij het gezegde: "zal" (pv) + "proberen" + "te komen".' },
+  { type: 'gezegde', zin: 'Mijn vader heeft de rommel opgeruimd.',
+    woorden: ['Mijn', 'vader', 'heeft', 'de', 'rommel', 'opgeruimd'],
+    gezegde: [2, 5],
+    uitleg: 'Het gezegde is "heeft opgeruimd" — dit is een voltooide tijd. "Heeft" is de persoonsvorm en "opgeruimd" is het voltooid deelwoord. Samen vormen ze het gezegde.' },
+  { type: 'gezegde', zin: 'Stijn en Eslem staan bij het hek te lachen.',
+    woorden: ['Stijn', 'en', 'Eslem', 'staan', 'bij', 'het', 'hek', 'te', 'lachen'],
+    gezegde: [3, 7, 8],
+    uitleg: 'Het gezegde is "staan te lachen". "Staan" is de persoonsvorm en "te lachen" hoort erbij als werkwoordgroep.' },
+  { type: 'gezegde', zin: 'De hond heeft de bal achter het struikje verstopt.',
+    woorden: ['De', 'hond', 'heeft', 'de', 'bal', 'achter', 'het', 'struikje', 'verstopt'],
+    gezegde: [2, 8],
+    uitleg: 'Het gezegde is "heeft verstopt" — voltooide tijd. "Heeft" is de persoonsvorm, "verstopt" het voltooid deelwoord.' },
+  { type: 'gezegde', zin: 'Wij zijn gisteren naar het museum geweest.',
+    woorden: ['Wij', 'zijn', 'gisteren', 'naar', 'het', 'museum', 'geweest'],
+    gezegde: [1, 6],
+    uitleg: 'Het gezegde is "zijn geweest" — voltooide tijd. "Zijn" is de persoonsvorm, "geweest" het voltooid deelwoord.' },
+  { type: 'gezegde', zin: 'De lerares kan heel goed uitleggen.',
+    woorden: ['De', 'lerares', 'kan', 'heel', 'goed', 'uitleggen'],
+    gezegde: [2, 5],
+    uitleg: 'Het gezegde is "kan uitleggen". "Kan" is de persoonsvorm (een hulpwerkwoord) en "uitleggen" hoort erbij.' },
+  { type: 'gezegde', zin: 'Jullie mogen straks buiten spelen.',
+    woorden: ['Jullie', 'mogen', 'straks', 'buiten', 'spelen'],
+    gezegde: [1, 4],
+    uitleg: 'Het gezegde is "mogen spelen". "Mogen" is de persoonsvorm en "spelen" hoort er als heel werkwoord bij.' },
+]
+
+// ── DOEL 2 — NEDERLANDSE WOORDEN ──
+export const VRAGEN_D2 = [
+  { buitenlands: 'zelfklever',     opties: ['sticker', 'etiket', 'label'],          correct: 0, uitleg: 'Een "zelfklever" is het Nederlandse woord voor sticker — iets wat zichzelf vastplakt.' },
+  { buitenlands: 'zwerfauto',      opties: ['caravan', 'camper', 'bestelwagen'],    correct: 1, uitleg: 'Een "zwerfauto" is het Nederlandse woord voor camper — een auto waarmee je overal kunt rondzwerven.' },
+  { buitenlands: 'droogzwierder',  opties: ['wasdroger', 'centrifuge', 'droger'],   correct: 1, uitleg: 'Een "droogzwierder" is het Nederlandse woord voor centrifuge — het zwiert het water eruit.' },
+  { buitenlands: 'dampkap',        opties: ['afzuigkap', 'ventilator', 'schoorsteen'], correct: 0, uitleg: '"Dampkap" = afzuigkap. De damp (stoom) boven het fornuis wordt weggezogen.' },
+  { buitenlands: 'gaatjesdrukker', opties: ['perforator', 'gatentang', 'prikker'],  correct: 0, uitleg: '"Gaatjesdrukker" is het Nederlandse woord voor perforator — je drukt gaatjes in papier.' },
+  { buitenlands: 'klevertje',      opties: ['lijm', 'plakband', 'paperclip'],       correct: 1, uitleg: '"Klevertje" of "kleefband" is het Nederlandse woord voor tape/plakband.' },
+  { buitenlands: 'ongek',          opties: ['raar', 'gewoon', 'nieuw'],             correct: 1, uitleg: '"Ongek" is een oud Nederlands woord voor gewoon of normaal.' },
+  { buitenlands: 'hysbak',         opties: ['lift', 'trap', 'rolstoel'],            correct: 0, uitleg: '"Hysbak" is het Nederlandse woord voor lift. "Hijsen" betekent omhoogtrekken.' },
+  { buitenlands: 'haarsnijer',     opties: ['barbier', 'kapper', 'stylist'],        correct: 1, uitleg: '"Haarsnijer" is het Nederlandse woord voor kapper — iemand die haar knipt.' },
+  { buitenlands: 'schuifaf',       opties: ['slee', 'glijbaan', 'schommel'],        correct: 1, uitleg: '"Schuifaf" is het Nederlandse woord voor glijbaan — je schuift eraf.' },
+]
+
+// ── DOEL 3 — SPREEKWOORDEN ──
+export const VRAGEN_D3 = [
+  { spreekwoord: 'Iets met een korreltje ___ nemen.',  opties: ['suiker', 'zout', 'zand'],      correct: 1, uitleg: 'Met een korreltje zout nemen = iets niet helemaal serieus nemen.' },
+  { spreekwoord: 'Een kat in de ___ kopen.',           opties: ['zak', 'mand', 'uitverkoop'],   correct: 0, uitleg: 'Een kat in de zak kopen = iets kopen zonder te weten wat het echt is.' },
+  { spreekwoord: 'Op stel en ___.',                    opties: ['slag', 'stal', 'sprong'],      correct: 2, uitleg: 'Op stel en sprong = meteen, zonder te wachten.' },
+  { spreekwoord: 'De koe bij de ___ vatten.',          opties: ['staart', 'kop', 'hoorns'],     correct: 2, uitleg: 'De koe bij de hoorns vatten = ergens direct mee beginnen.' },
+  { spreekwoord: 'De puntjes op de ___ zetten.',       opties: ['e', 'ij', 'i'],                correct: 2, uitleg: 'De puntjes op de i zetten = de laatste details afmaken.' },
+  { spreekwoord: 'Vele ___ maken licht werk.',         opties: ['handen', 'mensen', 'hulpjes'], correct: 0, uitleg: 'Vele handen maken licht werk = samen gaat het sneller.' },
+  { spreekwoord: 'De appel valt niet ver van de ___.', opties: ['mand', 'boom', 'grond'],       correct: 1, uitleg: 'De appel valt niet ver van de boom = kinderen lijken op hun ouders.' },
+  { spreekwoord: 'Wie het kleine niet eert, is het ___ niet weerd.', opties: ['grote', 'mooie', 'goede'], correct: 0, uitleg: 'Wie het kleine niet eert, is het grote niet weerd = pas op kleine dingen, dan verdien je ook grote.' },
+  { spreekwoord: 'Al ___ leert men.',                  opties: ['denkende', 'spelende', 'doende'], correct: 2, uitleg: 'Al doende leert men = je leert het beste door iets gewoon te proberen.' },
+  { spreekwoord: 'Beter een half ei dan een lege ___.', opties: ['kip', 'schaal', 'doos'],      correct: 1, uitleg: 'Beter een half ei dan een lege schaal = iets is beter dan helemaal niets.' },
+]
+
+// ── DOEL 4 — ZINSDELEN ──
+export const VRAGEN_D4 = [
+  { soort: 'samengesteld', zin: 'De arts opereert mijn knie nadat de wond genezen is.',
+    uitleg: 'Hoofdzin: "De arts" = onderwerp, "opereert" = pv/gez (de persoonsvorm is hier ook het volledige gezegde), "mijn knie" = lijdend voorwerp. "nadat" = voegwoord. Bijzin: "de wond" = onderwerp, "genezen is" = gezegde (werkwoordgroep).',
+    delen: [
+      { tekst: 'De arts',    label: 'ond',    toelichting: 'onderwerp — wie opereert?' },
+      { tekst: 'opereert',   label: 'pv/gez', toelichting: 'persoonsvorm — én het gezegde (alleen werkwoord in deze zin)' },
+      { tekst: 'mijn knie',  label: 'lv',     toelichting: 'lijdend voorwerp — wat wordt geopereerd?' },
+      { tekst: 'nadat',      label: 'vgw',    isVoegwoord: true },
+      { tekst: 'de wond',    label: 'ond',    toelichting: 'onderwerp van de bijzin' },
+      { tekst: 'genezen is', label: 'gez',    toelichting: 'gezegde (werkwoordgroep): voltooid deelwoord + koppelwerkwoord' },
+    ] },
+  { soort: 'samengesteld', zin: 'Ik bied de juf mijn hulp aan want ze heeft mij gisteren geholpen.',
+    uitleg: '"Ik" = onderwerp, "bied aan" = gezegde (scheidbaar werkwoord), "de juf" = meewerkend voorwerp, "mijn hulp" = lijdend voorwerp. "want" = voegwoord. "ze" = onderwerp, "gisteren" = bepaling (van tijd), "heeft geholpen" = gezegde.',
+    delen: [
+      { tekst: 'Ik',             label: 'ond', toelichting: 'onderwerp — wie biedt hulp aan?' },
+      { tekst: 'bied aan',       label: 'gez', toelichting: 'gezegde — scheidbaar werkwoord: "aanbieden" staat uit elkaar' },
+      { tekst: 'de juf',         label: 'mv',  toelichting: 'meewerkend voorwerp — aan wie wordt hulp aangeboden?' },
+      { tekst: 'mijn hulp',      label: 'lv',  toelichting: 'lijdend voorwerp — wat wordt aangeboden?' },
+      { tekst: 'want',           label: 'vgw', isVoegwoord: true },
+      { tekst: 'ze',             label: 'ond', toelichting: 'onderwerp van de bijzin' },
+      { tekst: 'gisteren',       label: 'bep', toelichting: 'bepaling van tijd — wanneer?' },
+      { tekst: 'heeft geholpen', label: 'gez', toelichting: 'gezegde (voltooide tijd)' },
+    ] },
+  { soort: 'samengesteld', zin: 'Ik maakte een foto toen de dolfijn boven het water sprong.',
+    uitleg: '"Ik" = onderwerp, "maakte" = pv/gez (persoonsvorm = gezegde), "een foto" = lijdend voorwerp. "toen" = voegwoord. Bijzin: "de dolfijn" = onderwerp, "boven het water" = bepaling, "sprong" = pv/gez.',
+    delen: [
+      { tekst: 'Ik',              label: 'ond',    toelichting: 'onderwerp — wie maakte de foto?' },
+      { tekst: 'maakte',          label: 'pv/gez', toelichting: 'persoonsvorm = gezegde (enkel werkwoord)' },
+      { tekst: 'een foto',        label: 'lv',     toelichting: 'lijdend voorwerp — wat maakte ik?' },
+      { tekst: 'toen',            label: 'vgw',    isVoegwoord: true },
+      { tekst: 'de dolfijn',      label: 'ond',    toelichting: 'onderwerp van de bijzin' },
+      { tekst: 'boven het water', label: 'bep',    toelichting: 'bepaling van plaats — waar?' },
+      { tekst: 'sprong',          label: 'pv/gez', toelichting: 'persoonsvorm = gezegde in de bijzin' },
+    ] },
+  { soort: 'enkelvoudig', zin: 'Mijn zus geeft de hond elke dag een koekje.',
+    uitleg: '"Mijn zus" = onderwerp, "geeft" = pv/gez (persoonsvorm = gezegde), "de hond" = meewerkend voorwerp, "elke dag" = bepaling van tijd, "een koekje" = lijdend voorwerp.',
+    delen: [
+      { tekst: 'Mijn zus',   label: 'ond',    toelichting: 'onderwerp — wie geeft?' },
+      { tekst: 'geeft',      label: 'pv/gez', toelichting: 'persoonsvorm = gezegde' },
+      { tekst: 'de hond',    label: 'mv',     toelichting: 'meewerkend voorwerp — aan wie wordt een koekje gegeven?' },
+      { tekst: 'elke dag',   label: 'bep',    toelichting: 'bepaling van tijd — wanneer?' },
+      { tekst: 'een koekje', label: 'lv',     toelichting: 'lijdend voorwerp — wat wordt gegeven?' },
+    ] },
+  { soort: 'enkelvoudig', zin: 'De leraar heeft de leerlingen gisteren huiswerk gegeven.',
+    uitleg: '"De leraar" = onderwerp, "heeft gegeven" = gezegde (voltooide tijd), "de leerlingen" = meewerkend voorwerp, "gisteren" = bepaling van tijd, "huiswerk" = lijdend voorwerp.',
+    delen: [
+      { tekst: 'De leraar',     label: 'ond', toelichting: 'onderwerp' },
+      { tekst: 'heeft gegeven', label: 'gez', toelichting: 'gezegde — voltooide tijd (pv + voltooid deelwoord)' },
+      { tekst: 'de leerlingen', label: 'mv',  toelichting: 'meewerkend voorwerp' },
+      { tekst: 'gisteren',      label: 'bep', toelichting: 'bepaling van tijd' },
+      { tekst: 'huiswerk',      label: 'lv',  toelichting: 'lijdend voorwerp' },
+    ] },
+]
+
+// ── DOEL 5 — RIJMSOORT ──
+export const VRAGEN_D5 = [
+  { gedicht: ['Tante Tessa tekent aan tafel,', 'Ze tekent een zwarte rat.'], rijmsoort: 'beginrijm',
+    uitleg: 'Tante, Tessa, tekent, tafel — al beginnen met de T-klank. Dat is beginrijm (ook wel alliteratie).',
+    opties: ['beginrijm', 'eindrijm', 'middenrijm'] },
+  { gedicht: ['We gaan op zoek naar rode boten, Teun!', 'Ik zie ze daar al liggen, Pleun!'], rijmsoort: 'eindrijm',
+    uitleg: '"Teun" en "Pleun" rijmen aan het einde van de versregels — dat is eindrijm.',
+    opties: ['beginrijm', 'eindrijm', 'middenrijm'] },
+  { gedicht: ['Kijk nu eens naar Bram!', 'Hij brandt zijn vinger aan de vlam.'], rijmsoort: 'eindrijm',
+    uitleg: '"Bram" en "vlam" rijmen aan het einde van de regels — eindrijm.',
+    opties: ['beginrijm', 'eindrijm', 'middenrijm'] },
+  { gedicht: ['Zita het zwarte zwijn loopt in het bos,', 'Ze kijkt om zich heen en ziet een vos.'], rijmsoort: 'beginrijm',
+    uitleg: '"Zita, zwarte, zwijn" beginnen alle met Z of Zw → beginrijm. "bos" en "vos" zijn eindrijm. Beide soorten zijn aanwezig, maar beginrijm valt het meest op.',
+    opties: ['beginrijm', 'eindrijm', 'middenrijm'] },
+  { gedicht: ['De zwarte zwaluw zwiert op zijn gemak.'], rijmsoort: 'beginrijm',
+    uitleg: '"zwarte, zwaluw, zwiert" beginnen alle met zw- → beginrijm (alliteratie).',
+    opties: ['beginrijm', 'eindrijm', 'middenrijm'] },
+  { gedicht: ['Lars zag een dolfijn in de zee,', "Hij riep: 'Mag ik met je mee?'"], rijmsoort: 'eindrijm',
+    uitleg: '"zee" en "mee" rijmen aan het einde van de regels — eindrijm.',
+    opties: ['beginrijm', 'eindrijm', 'middenrijm'] },
+  { gedicht: ['De zon schijnt, de zee glijdt en glinstert goud.'], rijmsoort: 'middenrijm',
+    uitleg: '"schijnt", "glijdt" en "glinstert" klinken op elkaar in het midden van de zin — dat is middenrijm.',
+    opties: ['beginrijm', 'eindrijm', 'middenrijm'] },
+  { gedicht: ['Peter Puk pakt zijn pen en papier.', 'Hij schrijft een brief, heel eerlijk en fier.'], rijmsoort: 'beginrijm',
+    uitleg: '"Peter, Puk, pakt, pen, papier" — al deze woorden beginnen met P → beginrijm. "papier" en "fier" zijn ook eindrijm!',
+    opties: ['beginrijm', 'eindrijm', 'middenrijm'] },
+  { gedicht: ['Sofie speelt snel schaak op school.', 'Ze wint altijd, dat is haar doel.'], rijmsoort: 'beginrijm',
+    uitleg: '"Sofie, speelt, snel, schaak, school" beginnen met S → beginrijm. "school" en "doel" zijn eindrijm.',
+    opties: ['beginrijm', 'eindrijm', 'middenrijm'] },
+  { gedicht: ['Ik zag een roos in de tuin,', 'Rood als bloed en zacht als satijn.'], rijmsoort: 'eindrijm',
+    uitleg: '"tuin" en "satijn" rijmen aan het einde — eindrijm.',
+    opties: ['beginrijm', 'eindrijm', 'middenrijm'] },
+]
+
+export const OEFENVRAGEN = [VRAGEN_D1, VRAGEN_D2, VRAGEN_D3, VRAGEN_D4, VRAGEN_D5]
+
+// Instaptoets: 2 per doel (gemengd)
+export const INSTAPTOETS_VRAGEN = [
+  { doel: 1, ...VRAGEN_D1[0] },
+  { doel: 1, ...VRAGEN_D1[4] },
+  { doel: 2, ...VRAGEN_D2[0] },
+  { doel: 2, ...VRAGEN_D2[7] },
+  { doel: 3, ...VRAGEN_D3[0] },
+  { doel: 3, ...VRAGEN_D3[3] },
+  { doel: 4, ...VRAGEN_D4[0] },
+  { doel: 5, ...VRAGEN_D5[0] },
+]

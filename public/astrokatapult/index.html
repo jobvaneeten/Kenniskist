@@ -63,6 +63,10 @@
   .cell.locked span{visibility:hidden;}
   .cell .stars{position:absolute;bottom:6px;font-size:11px;letter-spacing:1px;color:var(--gold);}
   .cell.cleared{border-color:rgba(125,255,138,.5);}
+  .planet-head{grid-column:1/-1;display:flex;align-items:center;gap:10px;margin:6px 2px 0;
+    font-weight:800;letter-spacing:.14em;text-transform:uppercase;font-size:13px;color:#cdd3ff;}
+  .planet-head::before{content:"🪐";font-size:16px;}
+  .planet-head::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(120,130,220,.5),transparent);}
 
   /* ---- HUD ---- */
   #hud{position:absolute;top:0;left:0;right:0;display:none;z-index:4;
@@ -326,7 +330,95 @@ const LEVELS = [
   /* 22 BAAS */ L(["meteor","bomber","splitter","booster","standard","standard","standard"],
         merge(bpFortress(920), bpBunker(1180,"metal"), bpBunker(1390,"metal"),
               bpTower(760,"ice",4,true,false))),
+
+  /* ====== PLANEET 3 — IJSPLANEET (levels 21-30) ====== */
+  /* 23 dubbele toren */ L(4, merge(bpTower(960,"ice",6,true,true), bpTower(1280,"stone",5,true,false))),
+  /* 24 drie huizen */ L(["splitter","standard","standard","standard"],
+        merge(bpHut(840,"stone",false), bpHut(1090,"stone",true), bpHut(1340,"metal",false))),
+  /* 25 metalen muur + piramide */ L(["bomber","booster","standard"],
+        merge({blocks:stack(860,6,"metal",52,44),aliens:[groundAlien(1060)]}, bpPyramid(1320,"stone"))),
+  /* 26 drie bunkers */ L(["bomber","bomber","standard"],
+        merge(bpBunker(880,"metal"), bpBunker(1120,"metal"), bpBunker(1360,"stone"))),
+  /* 27 precisie-pilaren */ L(["booster","booster","standard"],
+        merge({blocks:[ beam(880,"metal",260),beam(1140,"metal",260),beam(1400,"metal",260),
+              plankAt(880,G_TOP-260-12,"stone",110),plankAt(1140,G_TOP-260-12,"stone",110),plankAt(1400,G_TOP-260-12,"stone",110)],
+              aliens:[{x:880,y:G_TOP-260-36},{x:1140,y:G_TOP-260-36},{x:1400,y:G_TOP-260-36}]})),
+  /* 28 fort + toren */ L(["meteor","bomber","standard","standard"],
+        merge(bpFortress(960), bpTower(1340,"ice",5,true,true))),
+  /* 29 twee metalen piramides */ L(["meteor","bomber","booster","standard"],
+        merge(bpPyramid(940,"metal"), bpPyramid(1280,"metal"))),
+  /* 30 MINI-BAAS */ L(["meteor","bomber","splitter","booster","standard","standard"],
+        merge(bpFortress(940), bpBunker(1200,"metal"), bpBunker(1410,"metal"))),
+
+  /* ====== PLANEET 4 — JUNGLEPLANEET (levels 31-40) ====== */
+  /* 31 drie metalen torens */ L(["booster","standard","standard","standard"],
+        merge(bpTower(900,"metal",6,true,false), bpTower(1180,"metal",6,true,true), bpTower(1460,"ice",6,true,false))),
+  /* 32 vier bunkers */ L(["bomber","bomber","booster","standard"],
+        merge(bpBunker(880,"metal"),bpBunker(1090,"metal"),bpBunker(1300,"metal"),bpBunker(1510,"metal"))),
+  /* 33 hut + fort */ L(["meteor","splitter","standard","standard"],
+        merge(bpHut(820,"metal",true), bpFortress(1200))),
+  /* 34 dak-bunker combo */ L(["booster","bomber","standard","standard"],
+        merge({blocks:[ beam(900,"metal",250),beam(1140,"metal",250),plankAt(1020,G_TOP-250-12,"metal",300),box(1020,G_TOP-250-48,44,44,"ice")],
+              aliens:[groundAlien(900),groundAlien(1140),{x:1020,y:G_TOP-250-72}]}, bpBunker(1420,"metal"))),
+  /* 35 fort + metalen piramide */ L(["meteor","bomber","booster","splitter","standard"],
+        merge(bpFortress(940), bpPyramid(1300,"metal"))),
+  /* 36 vier metalen bunkers */ L(["bomber","bomber","bomber","standard"],
+        merge(bpBunker(860,"metal"),bpBunker(1060,"metal"),bpBunker(1260,"metal"),bpBunker(1460,"metal"))),
+  /* 37 hoge pilaren + grond */ L(["booster","booster","meteor","standard"],
+        merge({blocks:[ beam(880,"metal",290),beam(1160,"metal",290),beam(1440,"metal",290),
+              plankAt(880,G_TOP-290-12,"stone",120),plankAt(1160,G_TOP-290-12,"stone",120),plankAt(1440,G_TOP-290-12,"stone",120)],
+              aliens:[{x:880,y:G_TOP-290-36},{x:1160,y:G_TOP-290-36},{x:1440,y:G_TOP-290-36}]},
+              {blocks:[],aliens:[groundAlien(1020),groundAlien(1300)]})),
+  /* 38 dubbel fort */ L(["meteor","bomber","splitter","booster","standard","standard"],
+        merge(bpFortress(820), bpFortress(1340))),
+  /* 39 drie hoge torens */ L(["bomber","booster","meteor","standard","standard"],
+        merge(bpTower(900,"metal",7,true,true),bpTower(1180,"metal",7,true,false),bpTower(1460,"ice",6,true,true))),
+  /* 40 BAAS 2 */ L(["meteor","bomber","splitter","booster","bomber","standard","standard"],
+        merge(bpFortress(900), bpBunker(1200,"metal"), bpPyramid(1440,"metal"))),
+
+  /* ====== PLANEET 5 — LAVAPLANEET (levels 41-50) ====== */
+  /* 41 fort + metalen toren */ L(["booster","bomber","meteor","standard","standard"],
+        merge(bpFortress(950), bpTower(1340,"metal",6,true,true))),
+  /* 42 vier bunkers + extra */ L(["bomber","bomber","booster","splitter","standard"],
+        merge(bpBunker(840,"metal"),bpBunker(1050,"metal"),bpBunker(1260,"metal"),bpBunker(1470,"metal"))),
+  /* 43 twee piramides + grond */ L(["meteor","meteor","bomber","standard"],
+        merge(bpPyramid(900,"metal"),bpPyramid(1240,"metal"),{blocks:[],aliens:[groundAlien(1480)]})),
+  /* 44 bekroonde pilaren */ L(["booster","booster","bomber","meteor","standard"],
+        merge({blocks:[ beam(880,"metal",300),beam(1160,"metal",300),beam(1440,"metal",300),
+              plankAt(880,G_TOP-300-12,"metal",120),plankAt(1160,G_TOP-300-12,"metal",120),plankAt(1440,G_TOP-300-12,"metal",120),
+              box(880,G_TOP-300-48,44,44,"ice"),box(1160,G_TOP-300-48,44,44,"ice"),box(1440,G_TOP-300-48,44,44,"ice")],
+              aliens:[{x:880,y:G_TOP-300-72},{x:1160,y:G_TOP-300-72},{x:1440,y:G_TOP-300-72}]})),
+  /* 45 dubbel fort + stapel */ L(["meteor","bomber","splitter","booster","standard","standard"],
+        merge(bpFortress(820), bpFortress(1340), {blocks:stack(1540,3,"metal",52,44),aliens:[groundAlien(1540)]})),
+  /* 46 vier metalen bunkers */ L(["bomber","bomber","bomber","booster","standard"],
+        merge(bpBunker(880,"metal"),bpBunker(1080,"metal"),bpBunker(1280,"metal"),bpBunker(1480,"metal"))),
+  /* 47 drie reuzentorens */ L(["meteor","booster","bomber","splitter","standard"],
+        merge(bpTower(900,"metal",8,true,true),bpTower(1180,"metal",8,true,false),bpTower(1460,"metal",7,true,true))),
+  /* 48 dubbel fort + bunker */ L(["meteor","meteor","bomber","booster","standard","standard"],
+        merge(bpFortress(820), bpFortress(1280), bpBunker(1500,"metal"))),
+  /* 49 fort + piramide + toren */ L(["booster","bomber","meteor","splitter","bomber","standard"],
+        merge(bpFortress(880), bpPyramid(1240,"metal"), bpTower(1460,"metal",6,true,true))),
+  /* 50 EINDBAAS */ L(["meteor","bomber","splitter","booster","meteor","bomber","standard","standard"],
+        merge(bpTower(660,"metal",5,true,false), bpFortress(900), bpFortress(1320), bpBunker(1540,"metal"))),
 ];
+
+/* ============================================================
+   PLANEET-THEMA'S — elke 10 levels een andere planeet
+   ============================================================ */
+const PLANETS = [
+  { name:"Maan",        bg:["#1a1f57","#0c0e2e","#060611"], gTop:"#2a2150", gBot:"#150f2c", line:"rgba(125,255,138,.35)",
+    planets:[{x:0.82,y:130,r:70,c1:"#cfd6ff",c2:"#3a3f6b",ring:false},{x:0.18,y:200,r:40,c1:"#9aa0d8",c2:"#2a2d55",ring:false}] },
+  { name:"Mars",        bg:["#3a1f1a","#220c0e","#110606"], gTop:"#5a2a20", gBot:"#2c120c", line:"rgba(255,138,61,.40)",
+    planets:[{x:0.82,y:130,r:72,c1:"#ff8a3d",c2:"#8a2d12",ring:true},{x:0.18,y:200,r:38,c1:"#ffcaa0",c2:"#7a3a1a",ring:false}] },
+  { name:"IJsplaneet",  bg:["#163a57","#0c2233","#06121a"], gTop:"#234a5a", gBot:"#0f2430", line:"rgba(120,230,255,.40)",
+    planets:[{x:0.82,y:130,r:70,c1:"#bdecff",c2:"#2a6a8f",ring:false},{x:0.18,y:200,r:42,c1:"#e0f6ff",c2:"#3a7aa0",ring:true}] },
+  { name:"Jungleplaneet",bg:["#1f3a1a","#0e220c","#061106"], gTop:"#2a4a20", gBot:"#12240c", line:"rgba(180,255,120,.40)",
+    planets:[{x:0.82,y:130,r:70,c1:"#9dff8a",c2:"#2d6a12",ring:false},{x:0.18,y:200,r:40,c1:"#caffa0",c2:"#3a7a1a",ring:false}] },
+  { name:"Lavaplaneet", bg:["#3a1228","#220612","#11030a"], gTop:"#4a1530", gBot:"#240818", line:"rgba(255,93,143,.45)",
+    planets:[{x:0.82,y:130,r:74,c1:"#ff5d8f",c2:"#7a1030",ring:true},{x:0.18,y:200,r:38,c1:"#ffae6a",c2:"#7a2a10",ring:false}] },
+];
+function planetOf(i){ return PLANETS[Math.min(PLANETS.length-1, Math.floor(i/10))]; }
+function curPlanet(){ return planetOf(state.levelIndex); }
 
 /* ============================================================
    STATE & SETUP
@@ -760,8 +852,9 @@ function render(){
 
   // achtergrond (in scherm-css-px)
   const cw=canvas.width/dpr, ch=canvas.height/dpr;
+  const TH=curPlanet();
   const grd=ctx.createRadialGradient(cw*0.7,ch*0.1,40, cw*0.7,ch*0.1, Math.max(cw,ch));
-  grd.addColorStop(0,"#1a1f57"); grd.addColorStop(.45,"#0c0e2e"); grd.addColorStop(1,"#060611");
+  grd.addColorStop(0,TH.bg[0]); grd.addColorStop(.45,TH.bg[1]); grd.addColorStop(1,TH.bg[2]);
   ctx.fillStyle=grd; ctx.fillRect(0,0,cw,ch);
 
   // wereld-transform + shake
@@ -785,19 +878,22 @@ function drawStars(){
   ctx.globalAlpha=1;
 }
 function drawPlanets(){
-  for(const p of starfield.planets){
-    if(p.ring){ ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(-0.4); ctx.strokeStyle="rgba(255,200,150,.5)";
+  const list = (state.screen==="play"||state.screen==="result") ? curPlanet().planets : starfield.planets;
+  for(const p of list){
+    const px = p.x<=1 ? p.x*WORLD_W : p.x;
+    if(p.ring){ ctx.save(); ctx.translate(px,p.y); ctx.rotate(-0.4); ctx.strokeStyle="rgba(255,200,150,.5)";
       ctx.lineWidth=6; ctx.beginPath(); ctx.ellipse(0,0,p.r*1.7,p.r*0.5,0,0,7); ctx.stroke(); ctx.restore(); }
-    const g=ctx.createRadialGradient(p.x-p.r*0.4,p.y-p.r*0.4,4,p.x,p.y,p.r);
+    const g=ctx.createRadialGradient(px-p.r*0.4,p.y-p.r*0.4,4,px,p.y,p.r);
     g.addColorStop(0,p.c1); g.addColorStop(1,p.c2);
-    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,7); ctx.fill();
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(px,p.y,p.r,0,7); ctx.fill();
   }
 }
 function drawGround(){
+  const TH=curPlanet();
   const g=ctx.createLinearGradient(0,G_TOP,0,WORLD_H);
-  g.addColorStop(0,"#2a2150"); g.addColorStop(1,"#150f2c");
+  g.addColorStop(0,TH.gTop); g.addColorStop(1,TH.gBot);
   ctx.fillStyle=g; ctx.fillRect(-200,G_TOP,WORLD_W+400,WORLD_H-G_TOP+40);
-  ctx.strokeStyle="rgba(125,255,138,.35)"; ctx.lineWidth=3;
+  ctx.strokeStyle=TH.line; ctx.lineWidth=3;
   ctx.beginPath(); ctx.moveTo(-200,G_TOP); ctx.lineTo(WORLD_W+200,G_TOP); ctx.stroke();
   // craters
   ctx.fillStyle="rgba(255,255,255,.05)";
@@ -1037,6 +1133,8 @@ function updateHUD(){
 function buildGrid(){
   const grid=document.getElementById("grid"); grid.innerHTML="";
   LEVELS.forEach((_,i)=>{
+    if(i%10===0){ const h=document.createElement("div"); h.className="planet-head";
+      h.textContent=planetOf(i).name; grid.appendChild(h); }
     const num=i+1; const unlocked=num<=progress.unlocked;
     const stars=progress.stars[num]||0;
     const cell=document.createElement("div");

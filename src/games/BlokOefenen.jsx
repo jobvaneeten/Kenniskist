@@ -4,6 +4,12 @@ import { BLOK9 } from './blok9'
 import SpelBeloning from './SpelBeloning'
 import './blok-oefenen.css'
 
+const BRIEFGELD = 50              // max per opgave
+const BELOOND_KEY = 'kk_blok_beloond'   // opgaven die al beloond zijn (1x geld)
+function laadBeloond() {
+  try { return new Set(JSON.parse(localStorage.getItem(BELOOND_KEY) || '[]')) } catch { return new Set() }
+}
+
 // Alle beschikbare blokken (later uitbreiden)
 const BLOKKEN = [
   { nr: 9, data: BLOK9, beschikbaar: true },
@@ -252,6 +258,7 @@ function Oefenen({ level, blokNr, doelNr, addBriefgeld, addCuruntie, onBack }) {
   const [verdiend, setVerdiend] = useState(0)
   const [showHulp, setShowHulp] = useState(false)
   const currentOpgave = useRef(null)
+  const rewardGeld = useRef(BRIEFGELD)
 
   const opgave = opgaven[oi]
   const vraag  = opgave?.vragen[vi]
@@ -266,7 +273,18 @@ function Oefenen({ level, blokNr, doelNr, addBriefgeld, addCuruntie, onBack }) {
   const next = () => {
     if (vi + 1 < opgave.vragen.length) { setVi(vi + 1); return }
     currentOpgave.current = opgave
-    addBriefgeld?.(100); setVerdiend(v => v + 100); setScreen('reward')
+    // eenmalig 50 briefgeld per opgave — bij herhalen geen geld meer
+    const key = `${level}-${blokNr}-${doelNr}-${opgave.nr}`
+    const beloond = laadBeloond()
+    if (beloond.has(key)) {
+      rewardGeld.current = null
+    } else {
+      rewardGeld.current = BRIEFGELD
+      addBriefgeld?.(BRIEFGELD); setVerdiend(v => v + BRIEFGELD)
+      beloond.add(key)
+      try { localStorage.setItem(BELOOND_KEY, JSON.stringify([...beloond])) } catch {}
+    }
+    setScreen('reward')
   }
 
   if (screen === 'done') return (
@@ -281,7 +299,8 @@ function Oefenen({ level, blokNr, doelNr, addBriefgeld, addCuruntie, onBack }) {
   if (screen === 'reward') return (
     <SpelBeloning
       title={`Opgave ${currentOpgave.current?.nr ?? oi + 1} af!`}
-      geld={100}
+      sub={rewardGeld.current == null ? 'Deze opgave had je al — geen extra briefgeld' : null}
+      geld={rewardGeld.current}
       addCuruntie={addCuruntie}
       onDone={afterReward}
     />

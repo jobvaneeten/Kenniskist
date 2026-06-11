@@ -175,6 +175,13 @@
   padding: 4px 4px 4px 8px;
 }
 
+.clothing-empty {
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.5);
+  padding: 4px 4px 4px 8px;
+  font-style: italic;
+}
+
 .color-swatch {
   width: 30px;
   height: 30px;
