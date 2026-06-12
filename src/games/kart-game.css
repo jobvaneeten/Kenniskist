@@ -145,3 +145,38 @@
   transition: transform 0.12s;
 }
 .kart-start-btn:hover { transform: translateY(-2px); }
+
+/* ── Item-systeem HUD ─────────────────────────────────────── */
+.kart-item-btn {
+  position: absolute; left: 50%; bottom: 88px; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 1px;
+  width: 110px; padding: 8px 6px 6px; border-radius: 16px;
+  background: rgba(10,14,30,.72); border: 2px solid rgba(255,255,255,.18);
+  color: #fff; font-family: inherit; cursor: pointer; z-index: 30;
+  transition: transform .12s, box-shadow .2s, border-color .2s;
+}
+.kart-item-btn:disabled { opacity: .5; cursor: default; }
+.kart-item-btn.has-item {
+  border-color: #ffd23f; box-shadow: 0 0 22px rgba(255,210,63,.5);
+  animation: kart-item-pulse 1s ease-in-out infinite;
+}
+@keyframes kart-item-pulse {
+  0%,100% { transform: translateX(-50%) scale(1); }
+  50%     { transform: translateX(-50%) scale(1.06); }
+}
+.kart-item-emoji { font-size: 34px; line-height: 1; }
+.kart-item-label { font-size: 13px; font-weight: 800; }
+.kart-item-use   { font-size: 10px; opacity: .8; }
+
+/* Effect-randen op het scherm */
+.kart-fx { position: absolute; inset: 0; pointer-events: none; z-index: 25; }
+.kart-fx-boost { box-shadow: inset 0 0 120px 30px rgba(255,140,0,.45); animation: kart-fx-fade .3s ease; }
+.kart-fx-star  { box-shadow: inset 0 0 140px 40px rgba(255,215,0,.5); animation: kart-fx-rainbow 1s linear infinite; }
+.kart-fx-spin  { box-shadow: inset 0 0 140px 40px rgba(80,160,255,.5); animation: kart-fx-fade .3s ease; }
+@keyframes kart-fx-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes kart-fx-rainbow {
+  0%   { box-shadow: inset 0 0 140px 40px rgba(255,80,80,.45); }
+  33%  { box-shadow: inset 0 0 140px 40px rgba(80,255,120,.45); }
+  66%  { box-shadow: inset 0 0 140px 40px rgba(80,160,255,.45); }
+  100% { box-shadow: inset 0 0 140px 40px rgba(255,80,80,.45); }
+}

@@ -4,8 +4,8 @@ import TowerDefenseGame from './games/TowerDefenseGame'
 import JetpackGame from './games/JetpackGame'
 import AstroKatapultGame from './games/AstroKatapultGame'
 import SterrenstroompGame from './games/SterrenstroompGame'
-import IepOefenen from './games/IepOefenen'
 import BlokOefenen from './games/BlokOefenen'
+import ProcentenBreuken from './games/ProcentenBreuken'
 import WerkwoordSpelling from './games/WerkwoordSpelling'
 import TaalOefenen from './games/TaalOefenen'
 import MenuScene from './MenuScenes'
@@ -144,11 +144,11 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
     }
 
     if (GAMES[gameId] === 'iep') {
-      if (rekenKeuze === 'verhaal') {
-        return <IepOefenen onBack={() => setRekenKeuze(null)} addCuruntie={addCuruntie} />
-      }
       if (rekenKeuze === 'blok9') {
         return <BlokOefenen onBack={() => setRekenKeuze(null)} addBriefgeld={addBriefgeld} addCuruntie={addCuruntie} />
+      }
+      if (rekenKeuze === 'procenten') {
+        return <ProcentenBreuken onBack={() => setRekenKeuze(null)} addBriefgeld={addBriefgeld} />
       }
       // keuzescherm: verhaaltjessommen of oefenen blok 9
       return (
@@ -160,19 +160,19 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
             <p className="game-header-sub">Wat wil je oefenen?</p>
           </div>
           <div className="mode-grid">
-            <button className="mode-card" onClick={() => setRekenKeuze('verhaal')}>
-              <MenuScene name="verhaal" />
-              <span className="mode-name">🚀 Verhaaltjessommen</span>
-              <span className="mode-desc">Oefenen met verhaalsommen</span>
-              <span className="vb-line">"Lisa koopt 3 pakken sap van € 2,45. Hoeveel betaalt ze?"</span>
-              <RewardChips rewards={['🪙 munten']} />
-            </button>
             <button className="mode-card" onClick={() => setRekenKeuze('blok9')}>
               <MenuScene name="blok9" />
               <span className="mode-name">📘 Oefenen blok 9</span>
               <span className="mode-desc">FS en S+ werkbladen</span>
               <span className="vb-line">"748 + 156 = ?" en "6 × 125 = ?"</span>
               <RewardChips rewards={['🪙 munten', '💵 briefgeld']} />
+            </button>
+            <button className="mode-card" onClick={() => setRekenKeuze('procenten')}>
+              <MenuScene name="blok9" />
+              <span className="mode-name">💯 Procenten · Breuken · Komma</span>
+              <span className="mode-desc">Sleep wat bij elkaar hoort</span>
+              <span className="vb-line">"25% = 1/4 = 0,25"</span>
+              <RewardChips rewards={['💵 briefgeld']} />
             </button>
           </div>
         </div>

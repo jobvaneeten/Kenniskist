@@ -350,8 +350,47 @@ class PlayerInstance {
   }
 }
 
+// ── Sky-decor: zonnegloed + zachte wolken (statisch, GPU-goedkoop) ──────
+function addSkyDecor(scene, mapCfg) {
+  // Zon-gloed in de richting van het zonlicht
+  const sunPos = new Vector3(-0.5, -1.05, -0.4).normalize().scale(-130)
+  const glowTex = new DynamicTexture('sunGlow', { width: 128, height: 128 }, scene)
+  const gc = glowTex.getContext()
+  const gg = gc.createRadialGradient(64, 64, 3, 64, 64, 62)
+  gg.addColorStop(0, 'rgba(255,253,238,1)'); gg.addColorStop(0.22, 'rgba(255,246,205,0.8)'); gg.addColorStop(1, 'rgba(255,240,190,0)')
+  gc.fillStyle = gg; gc.fillRect(0, 0, 128, 128); glowTex.update(); glowTex.hasAlpha = true
+  const sunMat = new StandardMaterial('sunGlowMat', scene)
+  sunMat.diffuseTexture = glowTex; sunMat.useAlphaFromDiffuseTexture = true
+  sunMat.emissiveColor = Color3.White(); sunMat.disableLighting = true; sunMat.backFaceCulling = false
+  const sunDisc = MeshBuilder.CreatePlane('sunDisc', { size: 80 }, scene)
+  sunDisc.position = sunPos; sunDisc.billboardMode = 7; sunDisc.isPickable = false
+  sunDisc.material = sunMat; sunDisc.applyFog = false
+
+  // Geen wolken in het bos (dicht bladerdak)
+  if (mapCfg.glb === 'bos.glb') return
+  const cloudTex = new DynamicTexture('cloudTex', { width: 256, height: 128 }, scene)
+  const cc = cloudTex.getContext()
+  cc.clearRect(0, 0, 256, 128)
+  for (let i = 0; i < 8; i++) {
+    const x = 40 + Math.random() * 176, y = 48 + Math.random() * 42, r = 24 + Math.random() * 30
+    const cg = cc.createRadialGradient(x, y, 2, x, y, r)
+    cg.addColorStop(0, 'rgba(255,255,255,0.92)'); cg.addColorStop(1, 'rgba(255,255,255,0)')
+    cc.fillStyle = cg; cc.beginPath(); cc.arc(x, y, r, 0, Math.PI * 2); cc.fill()
+  }
+  cloudTex.update(); cloudTex.hasAlpha = true
+  const cloudMat = new StandardMaterial('cloudMat', scene)
+  cloudMat.diffuseTexture = cloudTex; cloudMat.useAlphaFromDiffuseTexture = true
+  cloudMat.emissiveColor = new Color3(0.96, 0.97, 1); cloudMat.disableLighting = true; cloudMat.backFaceCulling = false
+  for (let i = 0; i < 6; i++) {
+    const cl = MeshBuilder.CreatePlane('cloud' + i, { width: 64, height: 30 }, scene)
+    const ang = (i / 6) * Math.PI * 2 + Math.random()
+    cl.position = new Vector3(Math.cos(ang) * 95, 52 + Math.random() * 28, Math.sin(ang) * 95)
+    cl.billboardMode = 7; cl.isPickable = false; cl.material = cloudMat; cl.applyFog = false
+  }
+}
+
 // ── Arena world (loads the chosen GLB map) ─────────────────────────────
-function buildWorld(scene, mapCfg) {
+function buildWorld(scene, mapCfg, onObstacles) {
   scene.clearColor = new Color4(mapCfg.clear[0], mapCfg.clear[1], mapCfg.clear[2], 1)
   scene.fogMode = Scene.FOGMODE_EXP2
   scene.fogColor = new Color3(mapCfg.fog[0], mapCfg.fog[1], mapCfg.fog[2])
@@ -359,25 +398,44 @@ function buildWorld(scene, mapCfg) {
   scene.collisionsEnabled = true   // real mesh collision against the GLB map
 
   const ambient = new HemisphericLight('hemi', new Vector3(0, 1, 0), scene)
-  ambient.intensity = 0.8; ambient.groundColor = new Color3(0.22, 0.26, 0.2)
-  ambient.diffuse = new Color3(0.95, 0.97, 1.0)
+  ambient.intensity = 0.72
+  ambient.groundColor = new Color3(0.20, 0.24, 0.22)
+  ambient.diffuse = new Color3(0.92, 0.96, 1.0)
+  ambient.specular = new Color3(0.12, 0.12, 0.14)
 
-  const sun = new DirectionalLight('sun', new Vector3(-0.5, -1.1, -0.35), scene)
-  sun.position = new Vector3(22, 44, 22); sun.intensity = 1.8; sun.diffuse = new Color3(1, 0.98, 0.92)
+  // Warme zon (key light) met zachte schaduwen
+  const sun = new DirectionalLight('sun', new Vector3(-0.5, -1.05, -0.4), scene)
+  sun.position = new Vector3(40, 70, 35); sun.intensity = 2.0
+  sun.diffuse = new Color3(1.0, 0.96, 0.86); sun.specular = new Color3(1.0, 0.94, 0.82)
+  sun.shadowMinZ = 1; sun.shadowMaxZ = 170
   const sg = new ShadowGenerator(1024, sun)
-  sg.usePoissonSampling = true; sg.bias = 0.0004
+  sg.useBlurExponentialShadowMap = true; sg.blurKernel = 24; sg.bias = 0.0009; sg.setDarkness(0.38)
+
+  // Koel invullicht voor diepte (geen schaduw → goedkoop)
+  const fill = new DirectionalLight('fill', new Vector3(0.55, -0.35, 0.7), scene)
+  fill.intensity = 0.32; fill.diffuse = new Color3(0.62, 0.74, 0.96); fill.specular = Color3.Black()
 
   // Sky dome (vertical gradient, follows the camera)
   const sky = MeshBuilder.CreateSphere('sky', { diameter: 280, segments: 16 }, scene)
   sky.infiniteDistance = true; sky.isPickable = false
   const skyMat = new StandardMaterial('skyMat', scene)
   skyMat.backFaceCulling = false; skyMat.disableLighting = true; skyMat.diffuseColor = Color3.Black()
-  const skyTex = new DynamicTexture('skyTex', { width: 8, height: 256 }, scene)
+  const skyTex = new DynamicTexture('skyTex', { width: 16, height: 512 }, scene)
   const skc = skyTex.getContext()
-  const sgrad = skc.createLinearGradient(0, 0, 0, 256)
-  sgrad.addColorStop(0, mapCfg.sky[0]); sgrad.addColorStop(0.6, mapCfg.sky[1]); sgrad.addColorStop(1, mapCfg.sky[2])
-  skc.fillStyle = sgrad; skc.fillRect(0, 0, 8, 256); skyTex.update()
+  const sgrad = skc.createLinearGradient(0, 0, 0, 512)
+  sgrad.addColorStop(0,    mapCfg.sky[0])
+  sgrad.addColorStop(0.42, mapCfg.sky[1])
+  sgrad.addColorStop(0.78, mapCfg.sky[2])
+  sgrad.addColorStop(1,    mapCfg.sky[2])
+  skc.fillStyle = sgrad; skc.fillRect(0, 0, 16, 512)
+  // zachte heldere band rond de horizon
+  const haze = skc.createLinearGradient(0, 360, 0, 470)
+  haze.addColorStop(0, 'rgba(255,255,255,0)'); haze.addColorStop(1, 'rgba(255,255,255,0.18)')
+  skc.fillStyle = haze; skc.fillRect(0, 360, 16, 110)
+  skyTex.update()
   skyMat.emissiveTexture = skyTex; sky.material = skyMat
+
+  addSkyDecor(scene, mapCfg)
 
   // Optionele texturen voor deze map: grond + gebouwen.
   let groundTex = null, stoneBaseTex = null
@@ -401,12 +459,29 @@ function buildWorld(scene, mapCfg) {
   }
 
   // The chosen GLB map. Real mesh collision drives walking + the shoot-raycast.
+  const derivedObstacles = []   // hitbox-AABB's, afgeleid uit de échte geometrie
   SceneLoader.ImportMesh('', '/', mapCfg.glb, scene, (meshes) => {
     meshes.forEach(m => {
       if (m.getTotalVertices && m.getTotalVertices() > 0) {
         m.receiveShadows = true
         m.checkCollisions = true   // blocks the player collider
         m.isPickable = true        // so the shoot-raycast + grounded-ray hit real walls/floor
+
+        // Hitbox-AABB afleiden (alles behalve grond/vloer) → naar de server voor bot-LOS
+        const mnL = (m.name || '').toLowerCase()
+        const matnL = (m.material?.name || '').toLowerCase()
+        const ground = matnL.includes('ground') || matnL.includes('grass') || mnL === 'floor' || mnL.includes('floor')
+        if (!ground) {
+          try {
+            m.computeWorldMatrix(true)
+            const bb = m.getBoundingInfo().boundingBox
+            const mn2 = bb.minimumWorld, mx2 = bb.maximumWorld
+            const hw = (mx2.x - mn2.x) / 2, hd = (mx2.z - mn2.z) / 2, top = mx2.y
+            if (top > 0.5 && hw < 30 && hd < 30 && (hw > 0.2 || hd > 0.2)) {
+              derivedObstacles.push({ x: (mn2.x + mx2.x) / 2, z: (mn2.z + mx2.z) / 2, hw, hd, top })
+            }
+          } catch {}
+        }
         if (mapCfg.tex) {
           const mn   = (m.name || '').toLowerCase()
           const matn = (m.material?.name || '').toLowerCase()
@@ -435,6 +510,7 @@ function buildWorld(scene, mapCfg) {
         try { sg.getShadowMap()?.renderList?.push(m) } catch {}
       } else { m.isPickable = false }
     })
+    onObstacles?.(derivedObstacles)
   }, null, (_s, msg, err) => console.error('map load error:', msg, err))
 
   // Invisible boundary walls so you can't glitch off the map.
@@ -483,7 +559,7 @@ function VirtualJoystick({ joyRef }) {
 function fmtTime(s) { const m = Math.floor(s / 60); const sec = Math.floor(s) % 60; return `${m}:${String(sec).padStart(2, '0')}` }
 
 // ── Scene init ─────────────────────────────────────────────────────────
-function initScene(canvas, { localSessionId, getRoomState, sendState, sendShoot, sendReload, onCrouchToggle, mapCfg, hpDomRef, timerDomRef, ammoDomRef }) {
+function initScene(canvas, { localSessionId, getRoomState, sendState, sendShoot, sendReload, sendObstacles, onCrouchToggle, mapCfg, hpDomRef, timerDomRef, ammoDomRef }) {
   const engine = new Engine(canvas, true, { adaptToDeviceRatio: true, stencil: true, powerPreference: 'high-performance' })
   if (window.devicePixelRatio > 1.5) engine.setHardwareScalingLevel(window.devicePixelRatio / 1.5)
   canvas.style.cursor = 'none'   // only the crosshair shows
@@ -491,10 +567,17 @@ function initScene(canvas, { localSessionId, getRoomState, sendState, sendShoot,
   const camera = new FreeCamera('cam', new Vector3(0, 5, -12), scene)
   camera.inputs.clear(); camera.minZ = 0.1; camera.maxZ = 300
 
-  const sg = buildWorld(scene, mapCfg)
+  const sg = buildWorld(scene, mapCfg, (obstacles) => sendObstacles?.(obstacles))
   try {
-    const pipe = new DefaultRenderingPipeline('pipe', false, scene, [camera])
-    pipe.imageProcessingEnabled = true; pipe.imageProcessing.contrast = 1.1; pipe.imageProcessing.exposure = 1.1
+    const pipe = new DefaultRenderingPipeline('pipe', true, scene, [camera])   // HDR → mooiere bloom
+    pipe.imageProcessingEnabled = true; pipe.imageProcessing.contrast = 1.12; pipe.imageProcessing.exposure = 1.12
+    pipe.fxaaEnabled = true            // gladde randen (smoother)
+    pipe.samples = 4                   // MSAA tegen kartelranden
+    pipe.bloomEnabled = true; pipe.bloomThreshold = 0.82; pipe.bloomWeight = 0.18; pipe.bloomScale = 0.5
+    // Subtiele vignette voor meer sfeer/diepte
+    pipe.imageProcessing.vignetteEnabled = true
+    pipe.imageProcessing.vignetteWeight = 2.2
+    pipe.imageProcessing.vignetteColor = new Color4(0, 0, 0, 0)
   } catch {}
 
   const players = new Map()
@@ -820,6 +903,7 @@ function Lobby({ onBack, onJoined }) {
           <input className="rg-input rg-input-code" placeholder="12345" value={code} maxLength={5} inputMode="numeric"
             onChange={e => setCode(e.target.value.replace(/\D/g, ''))} onKeyDown={e => e.key === 'Enter' && connect(false)} /></div>
         <button className="rg-lobby-btn rg-lobby-join" disabled={loading || !code.trim()} onClick={() => connect(false)}>{loading ? '…' : '→ Joinen'}</button>
+        {loading && <p className="rg-lobby-sub">⏳ Verbinden… de server kan even wakker worden (~1 min de eerste keer).</p>}
         {error && <p className="rg-lobby-error">{error}</p>}
       </div>
     </div>
@@ -902,6 +986,7 @@ export default function PaintballGame({ onBack }) {
       sendState: s => roomRef.current?.send('state', s),
       sendShoot: dir => roomRef.current?.send('shoot', dir),
       sendReload: () => roomRef.current?.send('reload'),
+      sendObstacles: o => roomRef.current?.send('mapObstacles', o),
       onCrouchToggle: v => setCrouchOn(v),
       mapCfg,
       timerDomRef, hpDomRef, ammoDomRef,

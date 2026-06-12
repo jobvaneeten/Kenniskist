@@ -1,0 +1,106 @@
+.pbk-screen {
+  position: fixed; inset: 0; z-index: 50;
+  display: flex; flex-direction: column; align-items: center;
+  padding: 14px 14px 18px;
+  background: radial-gradient(120% 90% at 50% -10%, #20305c 0%, #131a36 45%, #0a0e22 100%);
+  color: #fff; font-family: inherit; overflow-y: auto;
+  user-select: none; -webkit-user-select: none; touch-action: none;
+}
+
+.pbk-screen .back-btn {
+  position: absolute; top: 12px; left: 12px; z-index: 60;
+  background: rgba(0,0,0,.5); color: #fff; border: 1px solid rgba(255,255,255,.2);
+  border-radius: 9px; padding: 7px 14px; cursor: pointer; font-size: 14px;
+}
+
+.pbk-head { text-align: center; margin: 34px 0 10px; max-width: 640px; }
+.pbk-head h1 { margin: 0; font-size: clamp(18px, 4.5vw, 27px); }
+.pbk-head p { margin: 6px 0 0; opacity: .8; font-size: clamp(12px, 3vw, 15px); }
+.pbk-stats { display: flex; gap: 14px; justify-content: center; margin-top: 10px; }
+.pbk-stats span {
+  background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.14);
+  border-radius: 999px; padding: 4px 13px; font-size: 13px; font-weight: 700;
+}
+
+/* ── Doel-vakjes ───────────────────────────────────────── */
+.pbk-boxes {
+  display: grid; grid-template-columns: repeat(2, minmax(140px, 1fr));
+  gap: 12px; width: 100%; max-width: 620px; margin: 8px 0 auto;
+}
+@media (min-width: 720px) { .pbk-boxes { grid-template-columns: repeat(4, 1fr); } }
+
+.pbk-box {
+  position: relative;
+  background: linear-gradient(160deg, rgba(255,255,255,.10), rgba(255,255,255,.03));
+  border: 2px solid rgba(255,255,255,.16); border-radius: 16px;
+  padding: 12px 10px; display: flex; flex-direction: column; align-items: center; gap: 9px;
+  transition: border-color .2s, transform .2s, box-shadow .2s;
+}
+.pbk-box-done {
+  border-color: #34d27a; box-shadow: 0 0 22px rgba(52,210,122,.45);
+  background: linear-gradient(160deg, rgba(52,210,122,.22), rgba(52,210,122,.05));
+}
+.pbk-box-pct {
+  font-size: clamp(22px, 6vw, 34px); font-weight: 900; letter-spacing: .5px;
+  color: #ffe066; text-shadow: 0 2px 8px rgba(0,0,0,.4);
+}
+.pbk-slots { display: flex; flex-direction: column; gap: 7px; width: 100%; }
+.pbk-slot {
+  min-height: 40px; border-radius: 11px; display: flex; align-items: center; justify-content: center;
+  border: 2px dashed rgba(255,255,255,.22); background: rgba(0,0,0,.18);
+  transition: background .15s, border-color .15s;
+}
+.pbk-slot.filled { border-style: solid; border-color: transparent; background: transparent; }
+.pbk-slot-hint { font-size: 11px; opacity: .55; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+.pbk-check {
+  position: absolute; top: -10px; right: -10px; width: 30px; height: 30px;
+  background: #34d27a; color: #06301a; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 18px;
+  box-shadow: 0 3px 10px rgba(0,0,0,.4); animation: pbk-pop .3s ease;
+}
+
+/* ── Sleep-bak ─────────────────────────────────────────── */
+.pbk-tray {
+  display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;
+  width: 100%; max-width: 620px; margin-top: 16px;
+  padding: 14px 12px; border-radius: 16px;
+  background: rgba(0,0,0,.28); border: 1px solid rgba(255,255,255,.1);
+  min-height: 64px;
+}
+
+/* ── Chips ─────────────────────────────────────────────── */
+.pbk-chip {
+  font-family: inherit; font-weight: 800; font-size: clamp(16px, 4.5vw, 21px);
+  border: none; border-radius: 12px; padding: 9px 16px; cursor: grab;
+  color: #fff; box-shadow: 0 4px 0 rgba(0,0,0,.28), 0 6px 14px rgba(0,0,0,.3);
+  touch-action: none;
+}
+.pbk-chip.breuk { background: linear-gradient(160deg, #4aa3ff, #2b6fd0); }
+.pbk-chip.deci  { background: linear-gradient(160deg, #c07bff, #8a3fd0); }
+.pbk-chip.placed { box-shadow: none; padding: 7px 14px; cursor: default; font-size: clamp(15px, 4vw, 19px); }
+.pbk-chip.pbk-dragging-src { opacity: .25; }
+.pbk-float { position: fixed; transform: translate(-50%, -50%); z-index: 200; pointer-events: none; cursor: grabbing; }
+.pbk-wrong { animation: pbk-shake .4s ease; }
+
+@keyframes pbk-shake {
+  0%,100% { transform: translateX(0); }
+  20% { transform: translateX(-7px); } 40% { transform: translateX(7px); }
+  60% { transform: translateX(-5px); } 80% { transform: translateX(5px); }
+}
+@keyframes pbk-pop { from { transform: scale(0); } to { transform: scale(1); } }
+
+/* ── Celebrate ─────────────────────────────────────────── */
+.pbk-celebrate {
+  position: fixed; inset: 0; z-index: 150; display: flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,.45); animation: pbk-fade .2s ease;
+}
+.pbk-celebrate-box {
+  text-align: center; font-size: clamp(22px, 6vw, 34px); font-weight: 900; line-height: 1.4;
+  background: linear-gradient(160deg, #1e2b54, #0e1430); padding: 26px 38px; border-radius: 20px;
+  border: 2px solid #ffe066; box-shadow: 0 0 40px rgba(255,224,102,.4); animation: pbk-pop .35s ease;
+}
+.pbk-celebrate-box span { font-size: .7em; color: #ffe066; }
+@keyframes pbk-fade { from { opacity: 0; } to { opacity: 1; } }
+
+/* Beloning-keuze wrapper (hergebruikt de ws-* stijlen uit werkwoord-spelling.css) */
+.pbk-belonen-wrap { position: fixed; inset: 0; z-index: 60; }

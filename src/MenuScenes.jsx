@@ -1,6 +1,7 @@
 // Mini getekende SVG-scenes voor menukaarten.
 // .msa = actie-animatie (speelt alleen bij hover op de kaart)
-// .msi = idle-animatie (speelt altijd zachtjes)
+// .msi = idle-animatie (gepauzeerd in rust → geen lag; speelt bij hover)
+import { useRef, useEffect } from 'react'
 import './menu-scenes.css'
 
 const FONT = 'Nunito, sans-serif'
@@ -338,5 +339,14 @@ const SCENES = {
 
 export default function MenuScene({ name }) {
   const s = SCENES[name]
-  return s ? <div className="ms-wrap">{s}</div> : null
+  const ref = useRef(null)
+  // SMIL-animaties (animateMotion) staan stil in rust en lopen pas bij hover.
+  useEffect(() => {
+    const svg = ref.current?.querySelector('svg')
+    try { svg?.pauseAnimations?.() } catch {}
+  }, [name])
+  if (!s) return null
+  const enter = () => { try { ref.current?.querySelector('svg')?.unpauseAnimations?.() } catch {} }
+  const leave = () => { try { ref.current?.querySelector('svg')?.pauseAnimations?.() } catch {} }
+  return <div className="ms-wrap" ref={ref} onPointerEnter={enter} onPointerLeave={leave}>{s}</div>
 }

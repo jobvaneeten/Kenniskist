@@ -413,22 +413,38 @@ const birds = Array.from({length:3}, () => ({
 function drawBackground() {
   const w = canvas.width, h = canvas.height;
   const floorY = FLOOR_Y();
+  const theme = shopEquipped['theme'] || 'default';
 
-  // Diepere mooiere lucht
+  // Lucht per thema
+  const SKY = {
+    default: ['#020802','#051205','#0d2a0d','#1a4a15'],
+    space:   ['#000003','#030010','#050018','#080028'],
+    ocean:   ['#000a18','#001528','#002040','#003055'],
+    winter:  ['#0a1525','#12253a','#1a3550','#204565'],
+    volcano: ['#0e0200','#220500','#380800','#500c00'],
+  };
+  const sc = SKY[theme] || SKY.default;
   const sky = ctx.createLinearGradient(0,0,0,floorY);
-  sky.addColorStop(0,   '#020802');
-  sky.addColorStop(0.25,'#051205');
-  sky.addColorStop(0.6, '#0d2a0d');
-  sky.addColorStop(1,   '#1a4a15');
+  sky.addColorStop(0,   sc[0]);
+  sky.addColorStop(0.25,sc[1]);
+  sky.addColorStop(0.6, sc[2]);
+  sky.addColorStop(1,   sc[3]);
   ctx.fillStyle = sky; ctx.fillRect(0,0,w,floorY);
 
-  // Atmosferische mist onderaan
+  // Atmosferische mist onderaan (kleur per thema)
+  const MIST = {
+    default: 'rgba(20,60,15,',
+    space:   'rgba(10,10,40,',
+    ocean:   'rgba(0,30,60,',
+    winter:  'rgba(180,210,240,',
+    volcano: 'rgba(80,15,0,',
+  };
+  const mc = MIST[theme] || MIST.default;
   const mist = ctx.createLinearGradient(0, floorY-150, 0, floorY);
-  mist.addColorStop(0, 'rgba(20,60,15,0)');
-  mist.addColorStop(1, 'rgba(20,60,15,0.4)');
+  mist.addColorStop(0, mc+'0)'); mist.addColorStop(1, mc+'0.4)');
   ctx.fillStyle = mist; ctx.fillRect(0, floorY-150, w, 150);
 
-  // Zon grote glow
+  // Zon / maan / lava gloed
   const sx=w*0.78, sy=CEIL_Y+55;
   const sg = ctx.createRadialGradient(sx,sy,0,sx,sy,180);
   sg.addColorStop(0,'rgba(255,230,100,0.22)');
@@ -436,18 +452,50 @@ function drawBackground() {
   sg.addColorStop(1,'rgba(255,140,0,0)');
   ctx.fillStyle=sg; ctx.fillRect(0,0,w,floorY);
 
-  // Zon kern gradient
+  // Zon / hemellichaam per thema
   ctx.save();
-  const sunG = ctx.createRadialGradient(sx-4,sy-4,0,sx,sy,26);
-  sunG.addColorStop(0,'#ffffff');
-  sunG.addColorStop(0.3,'#ffe566');
-  sunG.addColorStop(1,'#ffbb00');
-  ctx.fillStyle=sunG;
-  ctx.beginPath(); ctx.arc(sx,sy,26,0,Math.PI*2); ctx.fill();
+  if (theme === 'space') {
+    // Maan
+    const moonG = ctx.createRadialGradient(sx-5,sy-5,0,sx,sy,22);
+    moonG.addColorStop(0,'#ffffff'); moonG.addColorStop(0.5,'#dde8ff'); moonG.addColorStop(1,'#8899bb');
+    ctx.fillStyle=moonG; ctx.beginPath(); ctx.arc(sx,sy,22,0,Math.PI*2); ctx.fill();
+    // Krater
+    ctx.fillStyle='rgba(100,120,160,0.35)'; ctx.beginPath(); ctx.arc(sx+6,sy+4,7,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='rgba(100,120,160,0.2)'; ctx.beginPath(); ctx.arc(sx-8,sy-6,4,0,Math.PI*2); ctx.fill();
+  } else if (theme === 'ocean') {
+    // Onderwaterlicht bundel
+    const ug = ctx.createRadialGradient(sx,sy,0,sx,sy,160);
+    ug.addColorStop(0,'rgba(100,200,255,0.15)'); ug.addColorStop(1,'rgba(0,100,200,0)');
+    ctx.fillStyle=ug; ctx.fillRect(0,0,w,floorY);
+  } else if (theme === 'volcano') {
+    // Lavaglow aan de horizon
+    const lg = ctx.createRadialGradient(w*0.5,floorY,0,w*0.5,floorY,w*0.6);
+    lg.addColorStop(0,'rgba(255,60,0,0.3)'); lg.addColorStop(0.5,'rgba(200,30,0,0.1)'); lg.addColorStop(1,'rgba(100,0,0,0)');
+    ctx.fillStyle=lg; ctx.fillRect(0,0,w,floorY);
+    // Rode zon
+    const sg2 = ctx.createRadialGradient(sx-4,sy-4,0,sx,sy,30);
+    sg2.addColorStop(0,'#ffffff'); sg2.addColorStop(0.3,'#ffaa00'); sg2.addColorStop(1,'#cc2200');
+    ctx.fillStyle=sg2; ctx.beginPath(); ctx.arc(sx,sy,30,0,Math.PI*2); ctx.fill();
+  } else if (theme === 'winter') {
+    // Bleke zon
+    const wg = ctx.createRadialGradient(sx,sy,0,sx,sy,150);
+    wg.addColorStop(0,'rgba(200,220,255,0.18)'); wg.addColorStop(1,'rgba(150,180,255,0)');
+    ctx.fillStyle=wg; ctx.fillRect(0,0,w,floorY);
+    const sg3 = ctx.createRadialGradient(sx-3,sy-3,0,sx,sy,22);
+    sg3.addColorStop(0,'#ffffff'); sg3.addColorStop(0.5,'#ddeeff'); sg3.addColorStop(1,'#aaccee');
+    ctx.fillStyle=sg3; ctx.beginPath(); ctx.arc(sx,sy,22,0,Math.PI*2); ctx.fill();
+  } else {
+    // Standaard zon
+    const sunG = ctx.createRadialGradient(sx-4,sy-4,0,sx,sy,26);
+    sunG.addColorStop(0,'#ffffff'); sunG.addColorStop(0.3,'#ffe566'); sunG.addColorStop(1,'#ffbb00');
+    ctx.fillStyle=sunG; ctx.beginPath(); ctx.arc(sx,sy,26,0,Math.PI*2); ctx.fill();
+  }
   ctx.restore();
 
-  // Vogels
-  birds.forEach(b => {
+  // Vogels (niet in space/ocean/volcano)
+  if (theme === 'space' || theme === 'ocean' || theme === 'volcano') {
+    birds.forEach(b => { b.x -= b.spd*slowMoFactor; if(b.x<-20) b.x=w+20; });
+  } else birds.forEach(b => {
     b.x -= b.spd*slowMoFactor; b.phase += 0.12*slowMoFactor;
     if (b.x < -20) b.x = w+20;
     ctx.save(); ctx.strokeStyle='rgba(0,0,0,0.4)'; ctx.lineWidth=1.5;
@@ -506,23 +554,140 @@ function drawForegroundTrees() {
 
 function drawFloorCeil() {
   const w=canvas.width, h=canvas.height, floorY=FLOOR_Y();
+  const theme = shopEquipped['theme'] || 'default';
+
+  const THEME_FLOOR = {
+    default: { g1:'#2d5a1b', g2:'#1e3d12', g3:'#0a1a06', grass:'#4aaa20', ceil:'#0a1a06', liana:'#2a5018' },
+    space:   { g1:'#18182a', g2:'#10102a', g3:'#080815', grass:'#444466', ceil:'#000005', liana:'#22223a' },
+    ocean:   { g1:'#00223a', g2:'#001a2e', g3:'#000f1e', grass:'#00bbbb', ceil:'#000a18', liana:'#005566' },
+    winter:  { g1:'#c8dff0', g2:'#a8c8e0', g3:'#88b0cc', grass:'#ffffff', ceil:'#0a1525', liana:'#b0cce0' },
+    volcano: { g1:'#2e0a00', g2:'#1e0600', g3:'#100200', grass:'#ff2200', ceil:'#0e0200', liana:'#3a1000' },
+  };
+  const t = THEME_FLOOR[theme] || THEME_FLOOR.default;
+
   // Vloer
   const fg=ctx.createLinearGradient(0,floorY,0,h);
-  fg.addColorStop(0,'#2d5a1b'); fg.addColorStop(0.2,'#1e3d12'); fg.addColorStop(1,'#0a1a06');
+  fg.addColorStop(0,t.g1); fg.addColorStop(0.2,t.g2); fg.addColorStop(1,t.g3);
   ctx.fillStyle=fg; ctx.fillRect(0,floorY,w,h-floorY);
-  // Simpele groene rand ipv losse gras puntjes (sneller)
-  ctx.fillStyle='#4aaa20';
-  ctx.fillRect(0,floorY,w,3);
-  // Plafond
-  ctx.fillStyle='#0a1a06'; ctx.fillRect(0,0,w,CEIL_Y);
-  // Lianen
-  ctx.strokeStyle='#2a5018'; ctx.lineWidth=3;
-  for (let lx=(bgOffsets.far*0.5)%80; lx<w; lx+=80) {
-    ctx.beginPath(); ctx.moveTo(lx,0);
-    ctx.quadraticCurveTo(lx+15,CEIL_Y*0.6,lx+5,CEIL_Y); ctx.stroke();
+  // Vulkaan: gloeiende lava rand
+  if (theme === 'volcano') {
+    const lv = ctx.createLinearGradient(0,floorY,0,floorY+12);
+    lv.addColorStop(0,'#ff4400'); lv.addColorStop(1,'rgba(200,0,0,0)');
+    ctx.fillStyle=lv; ctx.fillRect(0,floorY,w,12);
   }
-  ctx.fillStyle='#4aaa20';
-  ctx.fillRect(0,CEIL_Y-2,w,3);
+  ctx.fillStyle=t.grass; ctx.fillRect(0,floorY,w,3);
+  // Plafond
+  ctx.fillStyle=t.ceil; ctx.fillRect(0,0,w,CEIL_Y);
+  // Lianen / decoratie
+  if (theme !== 'space') {
+    ctx.strokeStyle=t.liana; ctx.lineWidth=3;
+    for (let lx=(bgOffsets.far*0.5)%80; lx<w; lx+=80) {
+      ctx.beginPath(); ctx.moveTo(lx,0);
+      ctx.quadraticCurveTo(lx+15,CEIL_Y*0.6,lx+5,CEIL_Y); ctx.stroke();
+    }
+  }
+  ctx.fillStyle=t.grass; ctx.fillRect(0,CEIL_Y-2,w,3);
+}
+
+// ===== THEMA PARTICLES =====
+function spawnThemeParticle() {
+  const theme = shopEquipped['theme'];
+  if (!theme || theme === 'default') return;
+  if (theme === 'space') {
+    if (Math.random() > 0.985) {
+      themeParticles.push({
+        type:'shootingstar', x:canvas.width+20, y:CEIL_Y + Math.random()*(FLOOR_Y()-CEIL_Y)*0.6,
+        vx:-10-Math.random()*8, vy:1.5+Math.random()*3,
+        life:1, len:50+Math.random()*70
+      });
+    }
+  } else if (theme === 'ocean') {
+    if (Math.random() > 0.82) {
+      themeParticles.push({
+        type:'oceanbubble', x:Math.random()*canvas.width, y:FLOOR_Y(),
+        vx:(Math.random()-0.5)*0.5, vy:-1.2-Math.random()*2,
+        life:1, size:3+Math.random()*9
+      });
+    }
+  } else if (theme === 'winter') {
+    if (Math.random() > 0.65) {
+      themeParticles.push({
+        type:'snowflake', x:canvas.width + Math.random()*80, y:CEIL_Y + Math.random()*(FLOOR_Y()-CEIL_Y),
+        vx:-0.5-Math.random()*0.8, vy:0.8+Math.random()*1.6,
+        life:1, size:2+Math.random()*4, phase:Math.random()*Math.PI*2
+      });
+    }
+  } else if (theme === 'volcano') {
+    if (Math.random() > 0.78) {
+      themeParticles.push({
+        type:'ember', x:Math.random()*canvas.width, y:FLOOR_Y(),
+        vx:(Math.random()-0.5)*2.5, vy:-3-Math.random()*5,
+        life:1, size:1.5+Math.random()*3.5, hue:8+Math.random()*28
+      });
+    }
+  }
+}
+
+function updateThemeParticles() {
+  spawnThemeParticle();
+  themeParticles.forEach(p => {
+    p.x += p.vx * slowMoFactor * S;
+    p.y += p.vy * slowMoFactor * S;
+    if (p.type === 'snowflake') { p.phase += 0.04*S; p.x += Math.sin(p.phase)*0.4; }
+    if (p.type === 'ember')     { p.vx += (Math.random()-0.5)*0.3; }
+    p.life -= 0.006 * slowMoFactor * S;
+  });
+  themeParticles = themeParticles.filter(p =>
+    p.life > 0 && p.y > CEIL_Y-20 && p.y < canvas.height+20 && p.x > -60
+  );
+}
+
+function drawThemeParticles() {
+  const theme = shopEquipped['theme'];
+  if (!theme || theme === 'default') return;
+
+  // Space: statische sterren
+  if (theme === 'space') {
+    const w = canvas.width;
+    SPACE_STARS.forEach(s => {
+      s.twinkle += 0.025 * S;
+      const alpha = s.brightness * (0.6 + Math.sin(s.twinkle)*0.4);
+      const sx = ((s.x - bgOffsets.mount * 0.5) % (w+400) + w+400) % (w+400) - 200;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath(); ctx.arc(sx, s.y, s.size, 0, Math.PI*2); ctx.fill();
+      ctx.restore();
+    });
+  }
+
+  themeParticles.forEach(p => {
+    ctx.save();
+    if (p.type === 'shootingstar') {
+      const sg = ctx.createLinearGradient(p.x, p.y, p.x - p.vx*(p.len/10), p.y - p.vy*(p.len/10));
+      sg.addColorStop(0,'rgba(255,255,220,0.95)'); sg.addColorStop(1,'rgba(255,255,200,0)');
+      ctx.globalAlpha = p.life;
+      ctx.strokeStyle = sg; ctx.lineWidth = 2.5 * p.life;
+      ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(p.x-p.vx*(p.len/10),p.y-p.vy*(p.len/10)); ctx.stroke();
+    } else if (p.type === 'oceanbubble') {
+      ctx.globalAlpha = p.life * 0.35;
+      ctx.fillStyle = 'rgba(80,190,255,0.25)';
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.size,0,Math.PI*2); ctx.fill();
+      ctx.globalAlpha = p.life * 0.55;
+      ctx.strokeStyle = 'rgba(140,225,255,0.8)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.size,0,Math.PI*2); ctx.stroke();
+    } else if (p.type === 'snowflake') {
+      ctx.globalAlpha = p.life * 0.85;
+      ctx.fillStyle = 'rgba(220,240,255,0.9)';
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.size*p.life,0,Math.PI*2); ctx.fill();
+    } else if (p.type === 'ember') {
+      ctx.globalAlpha = p.life * 0.85;
+      ctx.fillStyle = `hsl(${p.hue},100%,${50+p.life*20}%)`;
+      ctx.shadowColor = `hsl(${p.hue},100%,55%)`; ctx.shadowBlur = 6;
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.size*p.life,0,Math.PI*2); ctx.fill();
+    }
+    ctx.restore();
+  });
 }
 
 // ===== ZAPPERS =====
@@ -853,6 +1018,27 @@ function drawCoins() {
     } else if (skin === 'heart') {
       ctx.font = `${c.r*2}px Arial`;
       ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('❤️', c.x, by);
+    } else if (skin === 'rainbow') {
+      const rh = (frameCount * 3 + c.phase * 50) % 360;
+      const rg = ctx.createRadialGradient(c.x-3,by-3,1,c.x,by,c.r);
+      rg.addColorStop(0,'#ffffff'); rg.addColorStop(0.4,`hsl(${rh},100%,65%)`); rg.addColorStop(1,`hsl(${(rh+80)%360},100%,45%)`);
+      ctx.beginPath(); ctx.arc(c.x,by,c.r+4,0,Math.PI*2);
+      ctx.fillStyle=`hsla(${rh},100%,60%,0.15)`; ctx.fill();
+      ctx.beginPath(); ctx.arc(c.x,by,c.r,0,Math.PI*2);
+      ctx.fillStyle=rg; ctx.fill();
+      ctx.strokeStyle=`hsl(${(rh+40)%360},100%,60%)`; ctx.lineWidth=2; ctx.stroke();
+      ctx.fillStyle='rgba(255,255,255,0.9)'; ctx.font=`bold ${c.r*1.0}px Arial`;
+      ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('✦',c.x,by+1);
+    } else if (skin === 'lava') {
+      const lg = ctx.createRadialGradient(c.x-3,by-3,1,c.x,by,c.r);
+      lg.addColorStop(0,'#ffffa0'); lg.addColorStop(0.4,'#ff5500'); lg.addColorStop(1,'#880000');
+      ctx.beginPath(); ctx.arc(c.x,by,c.r+4,0,Math.PI*2);
+      ctx.fillStyle='rgba(255,80,0,0.15)'; ctx.fill();
+      ctx.beginPath(); ctx.arc(c.x,by,c.r,0,Math.PI*2);
+      ctx.fillStyle=lg; ctx.fill();
+      ctx.strokeStyle='#ff3300'; ctx.lineWidth=2; ctx.stroke();
+      ctx.fillStyle='#fff'; ctx.font=`bold ${c.r*1.1}px Arial`;
+      ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('🔥',c.x,by);
     } else {
       // Standaard gouden munt
       ctx.beginPath(); ctx.arc(c.x, by, c.r+4, 0, Math.PI*2);
@@ -895,9 +1081,20 @@ function showCoinPopup(x,y) {
 }
 
 // ===== TRAIL SYSTEEM =====
-// Trail types: stars, smoke, fire, rainbow, energy
+// Trail types: stars, smoke, fire, rainbow, energy, bubbles, lightning, ice
 // Geselecteerd via shopEquipped['trail']
 let trailParticles = [];
+
+// ===== THEMA PARTICLES =====
+let themeParticles = [];
+
+// Statische sterren voor space-thema (eenmalig gegenereerd)
+const SPACE_STARS = Array.from({length: 220}, () => ({
+  x: Math.random() * 3000, y: Math.random() * 580,
+  size: 0.5 + Math.random() * 1.8,
+  brightness: 0.3 + Math.random() * 0.7,
+  twinkle: Math.random() * Math.PI * 2
+}));
 
 function spawnTrail() {
   const trailType = shopEquipped['trail'];
@@ -982,6 +1179,49 @@ function spawnTrail() {
         type:'electric',
         x: tx + Math.random()*20, y: ty + (Math.random()-0.5)*28,
         vx: -3 - Math.random()*4, vy: (Math.random()-0.5)*2.5,
+        life: 1, size: 1.5 + Math.random()*2.5, hue: 200
+      });
+    }
+
+  } else if (trailType === 'bubbles') {
+    if (Math.random() > 0.45) {
+      trailParticles.push({
+        type:'bubble',
+        x: tx + Math.random()*14, y: ty + (Math.random()-0.5)*22,
+        vx: -0.8 - Math.random()*1.5, vy: -0.6 - Math.random()*1.2,
+        life: 1, size: 5 + Math.random()*10,
+        hue: 175 + Math.random()*50
+      });
+    }
+
+  } else if (trailType === 'lightning') {
+    for (let i = 0; i < 2; i++) {
+      trailParticles.push({
+        type:'lightning_bolt',
+        x: tx + Math.random()*12, y: ty + (Math.random()-0.5)*24,
+        vx: -3 - Math.random()*4, vy: (Math.random()-0.5)*2,
+        life: 1, size: 3 + Math.random()*5,
+        hue: 215 + Math.random()*45,
+        segs: 3 + Math.floor(Math.random()*3)
+      });
+    }
+
+  } else if (trailType === 'ice') {
+    for (let i = 0; i < 2; i++) {
+      trailParticles.push({
+        type:'ice_crystal',
+        x: tx + Math.random()*10, y: ty + (Math.random()-0.5)*20,
+        vx: -1.8 - Math.random()*2.5, vy: (Math.random()-0.5)*1,
+        life: 1, size: 5 + Math.random()*8,
+        hue: 188 + Math.random()*22,
+        rot: Math.random()*Math.PI*2, rotSpeed: (Math.random()-0.5)*0.08
+      });
+    }
+    if (Math.random() > 0.5) {
+      trailParticles.push({
+        type:'ice_spark',
+        x: tx + Math.random()*16, y: ty + (Math.random()-0.5)*26,
+        vx: -2 - Math.random()*3, vy: (Math.random()-0.5)*2,
         life: 1, size: 1.5 + Math.random()*2.5, hue: 200
       });
     }
@@ -1097,6 +1337,61 @@ function drawTrail() {
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.size*p.life, 0, Math.PI*2);
       ctx.fill();
+
+    } else if (p.type === 'bubble') {
+      const r = p.size * p.life;
+      ctx.globalAlpha = p.life * 0.25;
+      ctx.fillStyle = `hsl(${p.hue},75%,80%)`;
+      ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI*2); ctx.fill();
+      ctx.globalAlpha = p.life * 0.7;
+      ctx.strokeStyle = `hsl(${p.hue},90%,78%)`;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI*2); ctx.stroke();
+      ctx.globalAlpha = p.life * 0.55;
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath(); ctx.arc(p.x - r*0.28, p.y - r*0.28, r*0.22, 0, Math.PI*2); ctx.fill();
+
+    } else if (p.type === 'lightning_bolt') {
+      ctx.globalAlpha = p.life * 0.9;
+      ctx.strokeStyle = `hsl(${p.hue},100%,82%)`;
+      ctx.lineWidth = 1.8 * p.life;
+      ctx.shadowColor = `hsl(${p.hue},100%,70%)`; ctx.shadowBlur = 10 * p.life;
+      ctx.beginPath(); ctx.moveTo(p.x, p.y);
+      let lx = p.x, ly = p.y;
+      for (let s = 0; s < (p.segs||3); s++) {
+        lx -= 6 + Math.random()*6; ly += (Math.random()-0.5)*10;
+        ctx.lineTo(lx, ly);
+      }
+      ctx.stroke(); ctx.shadowBlur = 0;
+
+    } else if (p.type === 'ice_crystal') {
+      const r = p.size * p.life;
+      ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+      ctx.globalAlpha = p.life * 0.85;
+      ctx.strokeStyle = `hsl(${p.hue},80%,82%)`;
+      ctx.lineWidth = 1.3 * p.life;
+      for (let i = 0; i < 3; i++) {
+        const a = (Math.PI / 3) * i;
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(a)*r, Math.sin(a)*r);
+        ctx.lineTo(Math.cos(a+Math.PI)*r, Math.sin(a+Math.PI)*r);
+        ctx.stroke();
+        // kleine tak op elk been
+        const mx = Math.cos(a)*r*0.55, my = Math.sin(a)*r*0.55;
+        const pa = a + Math.PI/2;
+        ctx.beginPath();
+        ctx.moveTo(mx - Math.cos(pa)*r*0.25, my - Math.sin(pa)*r*0.25);
+        ctx.lineTo(mx + Math.cos(pa)*r*0.25, my + Math.sin(pa)*r*0.25);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = p.life * 0.5;
+      ctx.fillStyle = `rgba(180,235,255,${p.life*0.45})`;
+      ctx.beginPath(); ctx.arc(0, 0, r*0.28, 0, Math.PI*2); ctx.fill();
+
+    } else if (p.type === 'ice_spark') {
+      ctx.globalAlpha = p.life * 0.9;
+      ctx.fillStyle = `hsl(${p.hue},90%,88%)`;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.size*p.life, 0, Math.PI*2); ctx.fill();
     }
 
     ctx.restore();
@@ -1143,6 +1438,9 @@ function spawnFireParticles() {
     if      (fireColor === 'blue')    hue = 200 + Math.random()*20;
     else if (fireColor === 'green')   hue = 110 + Math.random()*20;
     else if (fireColor === 'rainbow') hue = Math.random()*360;
+    else if (fireColor === 'purple')  hue = 270 + Math.random()*25;
+    else if (fireColor === 'gold')    hue = 45 + Math.random()*10;
+    else if (fireColor === 'ice')     hue = 188 + Math.random()*20;
     else                              hue = Math.random() > 0.4 ? 35 : 15;
 
     fireParticles.push({
@@ -1245,7 +1543,7 @@ function drawPowerupCapsules() {
 }
 function updatePowerupObjects() {
   powerupTimer -= S;
-  if (powerupTimer <= 0) { spawnPowerupCapsule(); powerupTimer = 900; }
+  if (powerupTimer <= 0) { spawnPowerupCapsule(); powerupTimer = window._powerupRate || 900; }
   powerupObjects.forEach(p => {
     p.x -= gameSpeed*slowMoFactor*S;
     if (!player.alive||player.invincible) return;
@@ -1402,21 +1700,35 @@ function drawPlayer() {
 // ===== SHOP SYSTEEM =====
 const SHOP_ITEMS = {
   fire: [
-    { id:'fire_blue',    name:'Blauw Vuur',     icon:'🔵', desc:'Verander de jetpack vlam naar ijskoud blauw.', price:80,  type:'fire_color', value:'blue' },
-    { id:'fire_green',   name:'Groen Vuur',     icon:'💚', desc:'Neon groene vlammen uit je jetpack!',          price:100, type:'fire_color', value:'green' },
-    { id:'fire_rainbow', name:'Regenboog Vuur', icon:'🌈', desc:'Alle kleuren tegelijk — maximale stijl.',      price:250, type:'fire_color', value:'rainbow' },
+    { id:'fire_blue',    name:'Blauw Vuur',     icon:'🔵', desc:'Verander de jetpack vlam naar ijskoud blauw.',  price:80,  type:'fire_color', value:'blue' },
+    { id:'fire_green',   name:'Groen Vuur',     icon:'💚', desc:'Neon groene vlammen uit je jetpack!',           price:100, type:'fire_color', value:'green' },
+    { id:'fire_rainbow', name:'Regenboog Vuur', icon:'🌈', desc:'Alle kleuren tegelijk — maximale stijl.',       price:250, type:'fire_color', value:'rainbow' },
+    { id:'fire_purple',  name:'Paars Vuur',     icon:'💜', desc:'Mystieke paarse vlammen — magisch!',            price:140, type:'fire_color', value:'purple' },
+    { id:'fire_gold',    name:'Goud Vuur',      icon:'✨', desc:'Koninklijk gouden vlammen uit je jetpack.',     price:180, type:'fire_color', value:'gold' },
+    { id:'fire_ice',     name:'Ijs Vuur',       icon:'🧊', desc:'Ijskoude cyaan vlammen — vriest alles om je.', price:220, type:'fire_color', value:'ice' },
   ],
   trail: [
-    { id:'trail_stars',   name:'Sterren Trail',   icon:'✨', desc:'Glinsterende sterretjes achter je aan.',   price:120, type:'trail', value:'stars' },
-    { id:'trail_smoke',   name:'Rook Trail',      icon:'💨', desc:'Mysterieuze rookwolken achter je.',        price:80,  type:'trail', value:'smoke' },
-    { id:'trail_fire',    name:'Vuur Trail',      icon:'🔥', desc:'Komeet-effect — jij bent het vuur!',      price:150, type:'trail', value:'fire'  },
-    { id:'trail_rainbow', name:'Regenboog Trail', icon:'🌈', desc:'Kleurexplosie achter elke beweging.',     price:200, type:'trail', value:'rainbow' },
-    { id:'trail_energy',  name:'Energie Trail',   icon:'⚡', desc:'Elektrische energie bollen achter je.',   price:180, type:'trail', value:'energy' },
+    { id:'trail_stars',     name:'Sterren Trail',   icon:'✨', desc:'Glinsterende sterretjes achter je aan.',    price:120, type:'trail', value:'stars' },
+    { id:'trail_smoke',     name:'Rook Trail',      icon:'💨', desc:'Mysterieuze rookwolken achter je.',         price:80,  type:'trail', value:'smoke' },
+    { id:'trail_fire',      name:'Vuur Trail',      icon:'🔥', desc:'Komeet-effect — jij bent het vuur!',       price:150, type:'trail', value:'fire'  },
+    { id:'trail_rainbow',   name:'Regenboog Trail', icon:'🌈', desc:'Kleurexplosie achter elke beweging.',      price:200, type:'trail', value:'rainbow' },
+    { id:'trail_energy',    name:'Energie Trail',   icon:'⚡', desc:'Elektrische energie bollen achter je.',    price:180, type:'trail', value:'energy' },
+    { id:'trail_bubbles',   name:'Bubbels Trail',   icon:'🫧', desc:'Vrolijke zeepbellen — zacht en kleurrijk.', price:130, type:'trail', value:'bubbles' },
+    { id:'trail_lightning', name:'Bliksem Trail',   icon:'⚡', desc:'Elektrische bliksemschichten achter je.',  price:190, type:'trail', value:'lightning' },
+    { id:'trail_ice',       name:'IJs Trail',       icon:'❄️', desc:'Ijskristallen — laat een ijsspoor achter.', price:160, type:'trail', value:'ice' },
   ],
   coins: [
-    { id:'coin_diamond', name:'Diamant Munten', icon:'💎', desc:'Verander gewone munten in glinsterende diamanten.', price:150, type:'coin_skin', value:'diamond' },
-    { id:'coin_star',    name:'Ster Munten',    icon:'⭐', desc:'Gouden sterren in plaats van munten.',              price:120, type:'coin_skin', value:'star' },
-    { id:'coin_heart',   name:'Hart Munten',    icon:'❤️', desc:'Schattige harten — voor de romanticus.',            price:100, type:'coin_skin', value:'heart' },
+    { id:'coin_diamond', name:'Diamant Munten',   icon:'💎', desc:'Verander gewone munten in glinsterende diamanten.', price:150, type:'coin_skin', value:'diamond' },
+    { id:'coin_star',    name:'Ster Munten',      icon:'⭐', desc:'Gouden sterren in plaats van munten.',               price:120, type:'coin_skin', value:'star' },
+    { id:'coin_heart',   name:'Hart Munten',      icon:'❤️', desc:'Schattige harten — voor de romanticus.',             price:100, type:'coin_skin', value:'heart' },
+    { id:'coin_rainbow', name:'Regenboog Munten', icon:'🌈', desc:'Munten die van kleur wisselen — psychedelisch!',     price:175, type:'coin_skin', value:'rainbow' },
+    { id:'coin_lava',    name:'Lava Munten',      icon:'🔥', desc:'Gloeiend hete lava munten — gevaarlijk mooi.',      price:160, type:'coin_skin', value:'lava' },
+  ],
+  themes: [
+    { id:'theme_space',   name:'Ruimte',   icon:'🌌', desc:'Vlieg door de sterrennacht — planeten, maan en meteoren.', price:350, type:'theme', value:'space' },
+    { id:'theme_ocean',   name:'Oceaan',   icon:'🌊', desc:'Onderwater avontuur met bellen en zeeblauw licht.',        price:300, type:'theme', value:'ocean' },
+    { id:'theme_winter',  name:'Winter',   icon:'❄️', desc:'IJzige sneeuwwereld met vallende vlokken.',                price:280, type:'theme', value:'winter' },
+    { id:'theme_volcano', name:'Vulkaan',  icon:'🌋', desc:'Vlieg langs een actieve vulkaan — lava en vuur overal.',   price:320, type:'theme', value:'volcano' },
   ],
   upgrades: [
     {
@@ -1472,6 +1784,39 @@ const SHOP_ITEMS = {
         { level:2, desc:'Begin elk potje met 3 kogels.',          price:300,  effect:{ startBullets:3 } },
         { level:3, desc:'Begin elk potje met 4 kogels.',          price:500,  effect:{ startBullets:4 } },
         { level:4, desc:'Begin elk potje met 5 kogels.',          price:800,  effect:{ startBullets:5 } },
+      ]
+    },
+    {
+      id: 'rocket_dur',
+      name: 'Raket Duur',
+      icon: '🚀',
+      levels: [
+        { level:1, desc:'Raket duurt 20 seconden (was 15).',      price:180,  effect:{ rocketDuration:1200 } },
+        { level:2, desc:'Raket duurt 25 seconden.',               price:360,  effect:{ rocketDuration:1500 } },
+        { level:3, desc:'Raket duurt 35 seconden.',               price:580,  effect:{ rocketDuration:2100 } },
+        { level:4, desc:'Raket duurt 50 seconden — mega boost!',  price:900,  effect:{ rocketDuration:3000 } },
+      ]
+    },
+    {
+      id: 'powerup_rate',
+      name: 'Meer Powerups',
+      icon: '💊',
+      levels: [
+        { level:1, desc:'Powerups spawnen 20% vaker.',            price:140,  effect:{ powerupRate:720 } },
+        { level:2, desc:'Powerups spawnen 40% vaker.',            price:280,  effect:{ powerupRate:540 } },
+        { level:3, desc:'Powerups spawnen 60% vaker.',            price:460,  effect:{ powerupRate:360 } },
+        { level:4, desc:'Powerups spawnen 75% vaker — onstopbaar!', price:750, effect:{ powerupRate:225 } },
+      ]
+    },
+    {
+      id: 'speed_ramp',
+      name: 'Soepele Start',
+      icon: '🐌',
+      levels: [
+        { level:1, desc:'Snelheid stijgt iets langzamer.',        price:120,  effect:{ speedIncrement:0.11 } },
+        { level:2, desc:'Snelheid stijgt duidelijk langzamer.',   price:240,  effect:{ speedIncrement:0.08 } },
+        { level:3, desc:'Snelheid stijgt veel langzamer.',        price:400,  effect:{ speedIncrement:0.05 } },
+        { level:4, desc:'Snelheid stijgt nauwelijks — voor altijd snel!', price:700, effect:{ speedIncrement:0.02 } },
       ]
     },
   ],
@@ -1678,11 +2023,14 @@ function toggleUpgrade(upgId) {
 }
 
 function resetUpgradeEffect(upgId) {
-  if (upgId === 'magnet')  window._magnetRange    = 220;
-  if (upgId === 'shield')  { window._shieldHits = 1; window._shieldRegen = null; }
-  if (upgId === 'slowmo')  POWERUP_TYPES.slowmo.duration = 360;
-  if (upgId === 'coins')   window._coinMulti      = 1;
-  if (upgId === 'speed')   { POWERUP_TYPES.speed.duration = 300; window._speedMult = 1.8; }
+  if (upgId === 'magnet')      window._magnetRange    = 220;
+  if (upgId === 'shield')      { window._shieldHits = 1; window._shieldRegen = null; }
+  if (upgId === 'slowmo')      POWERUP_TYPES.slowmo.duration = 360;
+  if (upgId === 'coins')       window._coinMulti      = 1;
+  if (upgId === 'speed')       { POWERUP_TYPES.speed.duration = 300; window._speedMult = 1.8; }
+  if (upgId === 'rocket_dur')  POWERUP_TYPES.rocket.duration  = 900;
+  if (upgId === 'powerup_rate') window._powerupRate   = 900;
+  if (upgId === 'speed_ramp')  window._speedIncrement = 0.15;
 }
 
 function buyItem(id, type, value, tab) {
@@ -1719,12 +2067,15 @@ function applyUpgradeLevel(upgId, level) {
   if (!upg || level < 1) return;
   const effect = upg.levels[level-1].effect;
 
-  if (effect.magnetRange)   window._magnetRange    = effect.magnetRange;
-  if (effect.shieldHits)    window._shieldHits     = effect.shieldHits;
-  if (effect.shieldRegen)   window._shieldRegen    = effect.shieldRegen;
+  if (effect.magnetRange)    window._magnetRange    = effect.magnetRange;
+  if (effect.shieldHits)     window._shieldHits     = effect.shieldHits;
+  if (effect.shieldRegen)    window._shieldRegen    = effect.shieldRegen;
   if (effect.slowmoDuration) POWERUP_TYPES.slowmo.duration = effect.slowmoDuration;
-  if (effect.coinMulti)     window._coinMulti      = effect.coinMulti;
-  if (effect.startBullets)  window._startBullets   = effect.startBullets;
+  if (effect.coinMulti)      window._coinMulti      = effect.coinMulti;
+  if (effect.startBullets)   window._startBullets   = effect.startBullets;
+  if (effect.rocketDuration) POWERUP_TYPES.rocket.duration = effect.rocketDuration;
+  if (effect.powerupRate)    window._powerupRate    = effect.powerupRate;
+  if (effect.speedIncrement) window._speedIncrement = effect.speedIncrement;
 }
 
 function applyUpgrade(value) {} // legacy stub
@@ -1840,7 +2191,7 @@ function startGame() {
   bulletsLeft = window._startBullets || 1; bullet.active=false; shootTimer=0;
   zapperTimer=0; coinTimer=0; speedUpTimer=700; letterTimer=360; powerupTimer=450;
   zappers=[]; coinObjects=[]; fireParticles=[]; powerupObjects=[];
-  trailParticles=[];
+  trailParticles=[]; themeParticles=[];
   activePowerups={}; rocketActive=false; rocketY=0; rocketVy=0;
   rocketParticles=[]; collectedLetters=[]; letterObjects=[];
   slowMo=false; slowMoFactor=1.0; slowMoTimer=0; shakeTimer=0; shakeX=0; shakeY=0;
@@ -2147,7 +2498,7 @@ function gameLoop(now) {
   if (player.alive) {
     distance = Math.floor(frameCount * gameSpeed / 60);
     speedUpTimer -= S;
-    if (speedUpTimer <= 0) { baseSpeed=Math.min(baseSpeed+0.15,5); if (!rocketActive) gameSpeed=baseSpeed; speedUpTimer=700; }
+    if (speedUpTimer <= 0) { baseSpeed=Math.min(baseSpeed+(window._speedIncrement||0.15),5); if (!rocketActive) gameSpeed=baseSpeed; speedUpTimer=700; }
   }
   updateSlowMoShake();
   updatePowerupTick();
@@ -2156,6 +2507,7 @@ function gameLoop(now) {
   ctx.clearRect(-20,-20,canvas.width+40,canvas.height+40);
 
   drawBackground();
+  drawThemeParticles();  // 🌌 Thema ambient particles (sterren/sneeuw/etc)
   drawFloorCeil();
   drawForegroundTrees();
   drawTrail();           // ✨ Trail achter speler
@@ -2187,6 +2539,7 @@ function gameLoop(now) {
   updateCoins();
   updateFireParticles();
   updateTrail();
+  updateThemeParticles();
   updateBullet();
   updateRocketFX();      // 🚀 Raket transformatie effect
   updateRocketParticles();

@@ -157,3 +157,34 @@ export function checkAntwoord(invoer, juist) {
   const norm = (s) => String(s).toLowerCase().replace(/\s+/g, ' ').trim()
   return norm(invoer) === norm(juist)
 }
+
+// ── Uitleg: waarom is dit het juiste antwoord / hoe schrijf je het ─────
+// Kindvriendelijke regel-uitleg per vorm. Gebruikt bij goed én fout.
+export function uitlegVoor(oef) {
+  const a = oef.antwoord
+  const inf = oef.inf
+  const startMetIk = /^ik\s/i.test(oef.zin.trim())
+
+  if (oef.tijdKey === 'tt') {
+    if (startMetIk)
+      return `Tegenwoordige tijd met "ik" → de stam zónder -t. De stam van "${inf}" is "${a}".`
+    if (a === inf)
+      return `Meervoud (wij/jullie/zij) in de tegenwoordige tijd → het hele werkwoord: "${inf}".`
+    return `Enkelvoud (hij/zij/het/een naam) → stam + t = "${a}". Eindigt de stam al op -t? Dan blijft het één t.`
+  }
+
+  if (oef.tijdKey === 'vt') {
+    if (oef.type === 'sterk')
+      return `Sterk werkwoord: in de verleden tijd verandert de klinker. "${inf}" → "${a}". Die leer je uit je hoofd (geen -te/-de).`
+    if (/(te|ten)$/.test(a))
+      return `Zwak werkwoord. De stam eindigt op een 't kofschip'-klank (t, k, f, s, ch, p), dus verleden tijd met -te(n): "${a}".`
+    return `Zwak werkwoord. De stam eindigt NIET op een 't kofschip'-klank, dus verleden tijd met -de(n): "${a}".`
+  }
+
+  // voltooid deelwoord
+  if (oef.type === 'sterk')
+    return `Voltooid deelwoord (sterk): meestal ge…-en met klinkerwisseling. "${inf}" → "${a}". Uit je hoofd leren.`
+  if (/t$/.test(a))
+    return `Voltooid deelwoord (zwak): ge + stam + t, want de stam eindigt op een 't kofschip'-klank → "${a}".`
+  return `Voltooid deelwoord (zwak): ge + stam + d, want de stam eindigt NIET op een 't kofschip'-klank → "${a}".`
+}

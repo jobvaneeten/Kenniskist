@@ -421,3 +421,10 @@
   padding: 6px;
   background: #000;
 }
+
+/* Uitleg onder het antwoord (waarom goed / hoe het moet) */
+.ws-uitleg {
+  margin: 8px 0 4px; padding: 10px 14px; border-radius: 12px;
+  background: rgba(0,0,0,.18); border: 1px solid rgba(255,255,255,.14);
+  font-size: 14px; line-height: 1.45; text-align: left; max-width: 460px;
+}

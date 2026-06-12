@@ -17,6 +17,7 @@ const SERVER_URL = 'wss://kenniskist-server.onrender.com'
 // ── Banen ───────────────────────────────────────────────────────────────
 const NSEG = 400          // centerline-resolutie
 const KART_SCALE = 1.0    // kart op maat van het (native) poppetje
+const KART_VISUAL = 0.6   // hele kart+poppetje kleiner op de baan (duidelijk compacter)
 const AV_Y = -0.12        // zithoogte avatar in de kart
 const AV_Z = -0.12        // voor/achter-positie avatar
 const KART_COLORS = ['#e63946', '#1d6fd0', '#2a9d8f', '#e9c46a', '#9b5de5', '#f4a261', '#43aa8b', '#ff6b6b']
@@ -129,6 +130,7 @@ const FACE_NAMES     = new Set(['Gezicht','Face','Ogen','Eyes','Wenkbrauwen','Ey
 // ── Procedurele kart (alles onder één TransformNode) ────────────────────
 function buildKart(scene, hex, idSuffix) {
   const root = new TransformNode('kartRoot_' + idSuffix, scene)
+  root.scaling.setAll(KART_VISUAL)   // kart + gezeten poppetje uniform kleiner
   const chassis = new TransformNode('chassis_' + idSuffix, scene)
   chassis.parent = root; chassis.scaling = new Vector3(KART_SCALE, KART_SCALE, KART_SCALE)
   const c = Color3.FromHexString(hex)
@@ -266,6 +268,43 @@ function gridStart(grid) {
   return { x, z, heading: Math.atan2(t.x, t.z) }
 }
 
+// ── Item-systeem visuals ────────────────────────────────────────────────
+const ITEM_INFO = {
+  boost:  { emoji: '🍄', label: 'Boost' },
+  star:   { emoji: '⭐', label: 'Ster' },
+  banana: { emoji: '🍌', label: 'Banaan' },
+  shell:  { emoji: '🐢', label: 'Schild' },
+}
+// Zwevend, draaiend "?"-blok
+function makeItemBox(scene, x, z) {
+  const cube = MeshBuilder.CreateBox('ibox', { size: 1.3 }, scene)
+  cube.position.set(x, 1.1, z); cube.isPickable = false
+  const m = new StandardMaterial('iboxm', scene)
+  const tex = new DynamicTexture('iboxt', { width: 64, height: 64 }, scene, false)
+  const c = tex.getContext()
+  c.fillStyle = '#19c3ff'; c.fillRect(0, 0, 64, 64)
+  c.fillStyle = '#fff'; c.font = 'bold 46px Arial'; c.textAlign = 'center'; c.textBaseline = 'middle'
+  c.fillText('?', 32, 36)
+  tex.update()
+  m.diffuseTexture = tex; m.emissiveColor = new Color3(0.2, 0.55, 0.8); m.specularColor = new Color3(0.4, 0.4, 0.4)
+  cube.material = m
+  return cube
+}
+function makeHazardMesh(scene) {
+  const b = MeshBuilder.CreateSphere('hz', { diameter: 0.9, segments: 8 }, scene)
+  const m = new StandardMaterial('hzm', scene)
+  m.diffuseColor = new Color3(0.95, 0.82, 0.1); m.emissiveColor = new Color3(0.45, 0.38, 0.0)
+  b.material = m; b.isPickable = false; b.scaling.y = 0.6
+  return b
+}
+function makeShellMesh(scene) {
+  const b = MeshBuilder.CreateSphere('sh', { diameter: 0.8, segments: 8 }, scene)
+  const m = new StandardMaterial('shm', scene)
+  m.diffuseColor = new Color3(0.2, 0.85, 0.4); m.emissiveColor = new Color3(0.1, 0.5, 0.2)
+  b.material = m; b.isPickable = false
+  return b
+}
+
 function KartRace({ onBack, room, sessionId, joinCode, track = 'groen' }) {
   const mp = !!room
   const trackId = track || 'groen'
@@ -279,6 +318,9 @@ function KartRace({ onBack, room, sessionId, joinCode, track = 'groen' }) {
   const [result, setResult]   = useState(null)
   const [players, setPlayers] = useState([])      // lobby-lijst
   const [botDiff, setBotDiff] = useState('normaal')
+  const [heldItem, setHeldItem] = useState('')    // item in bezit (HUD)
+  const [fxFlash, setFxFlash]   = useState('')    // 'boost' | 'star' | 'spin' korte HUD-flits
+  const useItemRef = useRef(() => {})
   const stateRef = useRef({})
 
   // Lobby: start de race (server zet phase → countdown → racing)
@@ -309,7 +351,7 @@ function KartRace({ onBack, room, sessionId, joinCode, track = 'groen' }) {
 
     const cam = new FollowCamera('cam', new Vector3(0, 6, -12), scene)
     cam.lockedTarget = kartRoot
-    cam.radius = 13; cam.heightOffset = 5; cam.rotationOffset = 180
+    cam.radius = 9; cam.heightOffset = 3.4; cam.rotationOffset = 180
     cam.cameraAcceleration = 0.06; cam.maxCameraSpeed = 40
 
     loadAvatar(scene, localStorage.getItem('kk_shirt') || '', safeJSON(localStorage.getItem('kk_wearing')), (av) => {
@@ -336,9 +378,26 @@ function KartRace({ onBack, room, sessionId, joinCode, track = 'groen' }) {
       remotes.set(sid, ent)
     }
 
+    // ── Item-boxes + hazards/shells (alleen multiplayer) ──
+    const itemBoxes = []   // { mesh, box }
+    try {
+      if (mp && room.state.boxes) {
+        room.state.boxes.forEach(b => itemBoxes.push({ mesh: makeItemBox(scene, b.x, b.z), box: b }))
+      }
+    } catch (e) { console.warn('item-boxes init overgeslagen:', e) }
+    const hazardMeshes = new Map()   // id → mesh
+    const shellMeshes  = new Map()   // id → mesh
+
+    // Item gebruiken
+    const useItem = () => { if (mp) room.send('useItem') }
+    useItemRef.current = useItem
+
     // ── Input ──
     const keys = {}
-    const kd = e => { keys[e.key.toLowerCase()] = true }
+    const kd = e => {
+      keys[e.key.toLowerCase()] = true
+      if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); useItem() }
+    }
     const ku = e => { keys[e.key.toLowerCase()] = false }
     window.addEventListener('keydown', kd)
     window.addEventListener('keyup', ku)
@@ -416,41 +475,58 @@ function KartRace({ onBack, room, sessionId, joinCode, track = 'groen' }) {
         const left  = keys['a'] || keys['arrowleft']
         const right = keys['d'] || keys['arrowright']
 
-        if (gas)        phys.vel += phys.accel * dt
-        else if (brake) phys.vel -= phys.brakeForce * dt
-        else { const f = phys.friction * dt; phys.vel = phys.vel > 0 ? Math.max(0, phys.vel - f) : Math.min(0, phys.vel + f) }
+        // Eigen item-effecten (server-gestuurd via aftellende timers)
+        const meP = mp ? room.state.players.get(sessionId) : null
+        const spinning = !!(meP && meP.spin  > 0)
+        const boosting = !!(meP && meP.boost > 0)
+        const starring = !!(meP && meP.star  > 0)
 
         const near = nearestIdx(kartRoot.position)
         const offRoad = near.dist > ROAD_HW
-        const cap = offRoad ? phys.maxSpeed * 0.45 : phys.maxSpeed
-        phys.vel = Math.max(-phys.maxSpeed * 0.4, Math.min(cap, phys.vel))
-        if (offRoad) phys.vel *= (1 - 1.5 * dt)
-
-        const steer = (right ? 1 : 0) - (left ? 1 : 0)
-        const speedFactor = Math.min(1, Math.abs(phys.vel) / 6)
-        phys.heading += steer * phys.turnSpeed * dt * speedFactor * Math.sign(phys.vel || 1)
-        kartRoot.rotation.y = phys.heading
-
         const fwd = new Vector3(Math.sin(phys.heading), 0, Math.cos(phys.heading))
-        kartRoot.position.addInPlace(fwd.scale(phys.vel * dt))
 
-        // ── BEUKEN: botsing met andere karts (push apart + snelheidsverlies) ──
-        const BUMP = 2.4
-        remotes.forEach(e => {
-          let dx = kartRoot.position.x - e.root.position.x
-          let dz = kartRoot.position.z - e.root.position.z
-          const d = Math.hypot(dx, dz)
-          if (d > 0.001 && d < BUMP) {
-            const overlap = BUMP - d
-            dx /= d; dz /= d
-            kartRoot.position.x += dx * overlap
-            kartRoot.position.z += dz * overlap
-            const into = -(fwd.x * dx + fwd.z * dz)   // >0 = ik ram erop in
-            if (into > 0) phys.vel *= 0.55             // klap → snelheid eruit
-            phys.vel += 6 * overlap                    // kleine terugstoot-impuls
-            phys.vel = Math.min(phys.vel, phys.maxSpeed)
-          }
-        })
+        if (spinning) {
+          // Geraakt → tollen + afremmen, even geen besturing
+          phys.vel *= (1 - 3.5 * dt)
+          kartRoot.rotation.y += 16 * dt
+          kartRoot.position.addInPlace(fwd.scale(phys.vel * dt))
+        } else {
+          if (gas)        phys.vel += phys.accel * dt
+          else if (brake) phys.vel -= phys.brakeForce * dt
+          else { const f = phys.friction * dt; phys.vel = phys.vel > 0 ? Math.max(0, phys.vel - f) : Math.min(0, phys.vel + f) }
+
+          let cap = offRoad ? phys.maxSpeed * 0.45 : phys.maxSpeed
+          if (boosting)      cap = phys.maxSpeed * 1.7
+          else if (starring) cap = phys.maxSpeed * 1.25
+          phys.vel = Math.max(-phys.maxSpeed * 0.4, Math.min(cap, phys.vel))
+          if (boosting) phys.vel = Math.max(phys.vel, phys.maxSpeed * 1.35)   // duwt naar boost-snelheid
+          if (offRoad && !boosting && !starring) phys.vel *= (1 - 1.5 * dt)
+
+          const steer = (right ? 1 : 0) - (left ? 1 : 0)
+          const speedFactor = Math.min(1, Math.abs(phys.vel) / 6)
+          phys.heading += steer * phys.turnSpeed * dt * speedFactor * Math.sign(phys.vel || 1)
+          kartRoot.rotation.y = phys.heading
+
+          kartRoot.position.addInPlace(fwd.scale(phys.vel * dt))
+
+          // ── BEUKEN: botsing met andere karts (push apart + snelheidsverlies) ──
+          const BUMP = 1.6
+          remotes.forEach(e => {
+            let dx = kartRoot.position.x - e.root.position.x
+            let dz = kartRoot.position.z - e.root.position.z
+            const d = Math.hypot(dx, dz)
+            if (d > 0.001 && d < BUMP) {
+              const overlap = BUMP - d
+              dx /= d; dz /= d
+              kartRoot.position.x += dx * overlap
+              kartRoot.position.z += dz * overlap
+              const into = -(fwd.x * dx + fwd.z * dz)   // >0 = ik ram erop in
+              if (into > 0 && !starring) phys.vel *= 0.55   // klap → snelheid eruit (niet met ster)
+              phys.vel += 6 * overlap                       // kleine terugstoot-impuls
+              phys.vel = Math.min(phys.vel, phys.maxSpeed * (boosting ? 1.7 : 1))
+            }
+          })
+        }
 
         wheels.forEach(w => { w.rotation.x += phys.vel * dt * 3 })
 
@@ -496,6 +572,45 @@ function KartRace({ onBack, room, sessionId, joinCode, track = 'groen' }) {
         setSpeed(Math.round(Math.abs(phys.vel) * 3.6))
         setLapTime((performance.now() - phys.lapStart) / 1000)
       }
+
+      // ── Item-visuals (elke frame, ook tijdens countdown) ──
+      if (mp) try {
+        // Boxes draaien + op/neer + zichtbaarheid via active
+        itemBoxes.forEach((ib, i) => {
+          ib.mesh.rotation.y += dt * 2.2
+          ib.mesh.position.y = 1.1 + Math.sin(now / 400 + i) * 0.18
+          ib.mesh.setEnabled(ib.box.active)
+        })
+        // Bananen syncen
+        if (room.state.hazards) {
+          room.state.hazards.forEach((h, id) => {
+            let m = hazardMeshes.get(id)
+            if (!m) { m = makeHazardMesh(scene); hazardMeshes.set(id, m) }
+            m.position.set(h.x, 0.45, h.z)
+          })
+          for (const id of [...hazardMeshes.keys()]) {
+            if (!room.state.hazards.get(id)) { hazardMeshes.get(id).dispose(); hazardMeshes.delete(id) }
+          }
+        }
+        // Schilden (projectielen) syncen
+        if (room.state.shells) {
+          room.state.shells.forEach((s, id) => {
+            let m = shellMeshes.get(id)
+            if (!m) { m = makeShellMesh(scene); shellMeshes.set(id, m) }
+            m.position.set(s.x, 0.6, s.z); m.rotation.y += dt * 8
+          })
+          for (const id of [...shellMeshes.keys()]) {
+            if (!room.state.shells.get(id)) { shellMeshes.get(id).dispose(); shellMeshes.delete(id) }
+          }
+        }
+        // HUD: vastgehouden item + effect-tint op eigen kart
+        const meP2 = room.state.players.get(sessionId)
+        const it = meP2?.item || ''
+        if (it !== phys._lastItem) { phys._lastItem = it; setHeldItem(it) }
+        const fx = meP2 ? (meP2.spin > 0 ? 'spin' : meP2.star > 0 ? 'star' : meP2.boost > 0 ? 'boost' : '') : ''
+        if (fx !== phys._lastFx) { phys._lastFx = fx; setFxFlash(fx) }
+      } catch (e) { /* item-visuals fout mag de race nooit breken */ }
+
       scene.render()
     })
 
@@ -555,6 +670,20 @@ function KartRace({ onBack, room, sessionId, joinCode, track = 'groen' }) {
         <div className="kart-count">{count > 0 ? count : 'GO!'}</div>
       )}
 
+      {/* Item-HUD (alleen online/met bots) */}
+      {mp && phase !== 'finished' && phase !== 'lobby' && (
+        <button
+          className={'kart-item-btn' + (heldItem ? ' has-item' : '')}
+          onClick={() => useItemRef.current()}
+          disabled={!heldItem}
+        >
+          <span className="kart-item-emoji">{heldItem ? ITEM_INFO[heldItem]?.emoji : '❔'}</span>
+          <span className="kart-item-label">{heldItem ? ITEM_INFO[heldItem]?.label : 'Geen item'}</span>
+          {heldItem && <span className="kart-item-use">Gebruik · spatie</span>}
+        </button>
+      )}
+      {mp && fxFlash && <div className={'kart-fx kart-fx-' + fxFlash} />}
+
       {phase === 'finished' && result && (
         <div className="kart-finish">
           <h1>🏁 FINISH!</h1>
@@ -567,7 +696,7 @@ function KartRace({ onBack, room, sessionId, joinCode, track = 'groen' }) {
         </div>
       )}
 
-      <div className="kart-help">W/↑ gas · S/↓ rem · A/← D/→ sturen{mp ? ' · ram je tegenstanders!' : ''}</div>
+      <div className="kart-help">W/↑ gas · S/↓ rem · A/← D/→ sturen{mp ? ' · spatie = item · pak de ❔-blokken!' : ''}</div>
     </div>
   )
 }

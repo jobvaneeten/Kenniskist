@@ -21,7 +21,11 @@ button:hover > * > .ms-wrap svg {
 /* SVG-elementen draaien/schalen om hun eigen midden */
 .msi, .msa { transform-box: fill-box; transform-origin: center; }
 
-/* idle-animaties: spelen altijd zachtjes */
+/* idle-animaties: in rust GEPAUZEERD (geen lag), draaien pas bij hover op de kaart */
+.msi { animation-play-state: paused !important; }
+button:hover .msi,
+.ms-wrap:hover .msi { animation-play-state: running !important; }
+
 .ms-hover    { animation: ms-hover 2.6s ease-in-out infinite; }
 .ms-flame    { animation: ms-flame 0.45s ease-in-out infinite; }
 .ms-drift    { animation: ms-drift 3s linear infinite; }
