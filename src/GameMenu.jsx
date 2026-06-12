@@ -8,6 +8,7 @@ import IepOefenen from './games/IepOefenen'
 import BlokOefenen from './games/BlokOefenen'
 import WerkwoordSpelling from './games/WerkwoordSpelling'
 import TaalOefenen from './games/TaalOefenen'
+import MenuScene from './MenuScenes'
 import './game.css'
 
 const YEARS = [
@@ -19,11 +20,18 @@ const YEARS = [
 ]
 
 const SUBJECTS = [
-  { key: 'taal',       label: 'Taal',            emoji: '📖', color: '#4FC3F7', dark: '#0d6ea3' },
-  { key: 'spelling',   label: 'Spelling',         emoji: '✏️', color: '#CE93D8', dark: '#8e3fa8' },
-  { key: 'rekenen',    label: 'Rekenen',          emoji: '🔢', color: '#FFD23F', dark: '#c09800' },
-  { key: 'begrijpend', label: 'Begrijpend Lezen', emoji: '📚', color: '#06D6A0', dark: '#04a077' },
+  { key: 'taal',       label: 'Taal',            emoji: '📖', color: '#4FC3F7', dark: '#0d6ea3', scene: 'taal',       vb: '"Enorm" betekent: heel groot of heel klein?' },
+  { key: 'spelling',   label: 'Spelling',         emoji: '✏️', color: '#CE93D8', dark: '#8e3fa8', scene: 'spelling',   vb: 'ik loop → hij ...?' },
+  { key: 'rekenen',    label: 'Rekenen',          emoji: '🔢', color: '#FFD23F', dark: '#c09800', scene: 'rekenen',    vb: '23 × 4 = ?' },
+  { key: 'begrijpend', label: 'Begrijpend Lezen', emoji: '📚', color: '#06D6A0', dark: '#04a077', scene: 'begrijpend', vb: 'Lees de tekst & beantwoord de vragen' },
 ]
+
+// Beloningen per spel-type (chips op de kaarten)
+const REWARDS = {
+  taal:      ['🪙 munten', '💵 briefgeld'],
+  iep:       ['🪙 munten', '💵 briefgeld'],
+  werkwoord: ['💵 briefgeld'],
+}
 
 // Which (year, subject) combos have a real game — rest shows placeholder
 const GAMES = {
@@ -37,12 +45,23 @@ const GAMES = {
 }
 
 const FREE_GAMES = [
-  { key: 'football',      emoji: '⚽', name: 'WK Voetbal',      desc: 'Alle groepen' },
-  { key: 'towerdefense',  emoji: '🏰', name: 'Tower Defense',   desc: 'Alle groepen' },
-  { key: 'jetpack',       emoji: '🚀', name: 'Jetpack',          desc: 'Vlieg zo ver mogelijk!' },
-  { key: 'astrokatapult', emoji: '🪐', name: 'Astro Katapult',   desc: 'Lanceer & versla de aliens!' },
-  { key: 'sterrenstroom', emoji: '🛸', name: 'Spacerunner',     desc: 'Vlieg door de ruimte!' },
+  { key: 'football',      emoji: '⚽', name: 'WK Voetbal',      desc: 'Scoor tegen de computer of een vriend', rewards: ['🪙 munten'] },
+  { key: 'towerdefense',  emoji: '🏰', name: 'Tower Defense',   desc: 'Bouw torens & stop de vijanden' },
+  { key: 'jetpack',       emoji: '🚀', name: 'Jetpack',          desc: 'Vlieg zo ver mogelijk!', rewards: ['🪙 munten'] },
+  { key: 'astrokatapult', emoji: '🪐', name: 'Astro Katapult',   desc: 'Lanceer & versla de aliens in 50 levels!' },
+  { key: 'sterrenstroom', emoji: '🛸', name: 'Spacerunner',     desc: 'Ontwijk de asteroïden in de ruimte!' },
 ]
+
+function RewardChips({ rewards }) {
+  if (!rewards?.length) return null
+  return (
+    <span className="reward-chips">
+      {rewards.map(r => (
+        <span key={r} className={`reward-chip${r.includes('💵') ? ' brief' : ''}`}>{r}</span>
+      ))}
+    </span>
+  )
+}
 
 export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
   const [year,       setYear]       = useState(null)
@@ -94,14 +113,16 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
         </div>
         <div className="mode-grid">
           <button className="mode-card" onClick={() => setGameMode('solo')}>
-            <span className="mode-emoji">🧑</span>
-            <span className="mode-name">1 Speler</span>
+            <MenuScene name="solo" />
+            <span className="mode-name">🧑 1 Speler</span>
             <span className="mode-desc">Jij tegen de computer</span>
+            <RewardChips rewards={['🪙 munten']} />
           </button>
           <button className="mode-card" onClick={() => setGameMode('2player')}>
-            <span className="mode-emoji">👥</span>
-            <span className="mode-name">2 Spelers</span>
+            <MenuScene name="duo" />
+            <span className="mode-name">👥 2 Spelers</span>
             <span className="mode-desc">Pijltjes vs WASD</span>
+            <RewardChips rewards={['🪙 munten']} />
           </button>
         </div>
       </div>
@@ -140,14 +161,18 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
           </div>
           <div className="mode-grid">
             <button className="mode-card" onClick={() => setRekenKeuze('verhaal')}>
-              <span className="mode-emoji">🚀</span>
-              <span className="mode-name">Verhaaltjessommen</span>
+              <MenuScene name="verhaal" />
+              <span className="mode-name">🚀 Verhaaltjessommen</span>
               <span className="mode-desc">Oefenen met verhaalsommen</span>
+              <span className="vb-line">"Lisa koopt 3 pakken sap van € 2,45. Hoeveel betaalt ze?"</span>
+              <RewardChips rewards={['🪙 munten']} />
             </button>
             <button className="mode-card" onClick={() => setRekenKeuze('blok9')}>
-              <span className="mode-emoji">📘</span>
-              <span className="mode-name">Oefenen blok 9</span>
+              <MenuScene name="blok9" />
+              <span className="mode-name">📘 Oefenen blok 9</span>
               <span className="mode-desc">FS en S+ werkbladen</span>
+              <span className="vb-line">"748 + 156 = ?" en "6 × 125 = ?"</span>
+              <RewardChips rewards={['🪙 munten', '💵 briefgeld']} />
             </button>
           </div>
         </div>
@@ -175,9 +200,11 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
           </div>
           <div className="mode-grid">
             <button className="mode-card" onClick={() => setSpellingKeuze('werkwoord')}>
-              <span className="mode-emoji">✒️</span>
-              <span className="mode-name">Werkwoordspelling</span>
+              <MenuScene name="spelling" />
+              <span className="mode-name">✒️ Werkwoordspelling</span>
               <span className="mode-desc">Tegenwoordige tijd, verleden tijd & voltooid deelwoord</span>
+              <span className="vb-line">"ik vind → gisteren ... hij" en "lopen → hij heeft ...?"</span>
+              <RewardChips rewards={['💵 briefgeld']} />
             </button>
           </div>
         </div>
@@ -226,7 +253,7 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
         </div>
         <div className="subject-grid">
           {SUBJECTS.map(s => {
-            const hasGame = !!GAMES[`${year}-${s.key}`]
+            const game = GAMES[`${year}-${s.key}`]
             return (
               <button
                 key={s.key}
@@ -234,19 +261,19 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
                 style={{ '--sc': s.color, '--sd': s.dark }}
                 onClick={() => setSubject(s.key)}
               >
-                <span className="subject-emoji">{s.emoji}</span>
-                <span className="subject-label">{s.label}</span>
+                <MenuScene name={s.scene} />
+                <span className="subject-label">{s.emoji} {s.label}</span>
                 <span className="subject-tag">
-                  {GAMES[`${year}-${s.key}`] === 'iep'
-                    ? '🚀 Verhaaltjessommen'
-                    : GAMES[`${year}-${s.key}`] === 'werkwoord'
+                  {game === 'iep'
+                    ? '🚀 Verhaaltjessommen + blok 9'
+                    : game === 'werkwoord'
                     ? '✒️ Werkwoordspelling'
-                    : GAMES[`${year}-${s.key}`] === 'taal'
-                    ? '📖 Taalverkennen'
-                    : hasGame
-                    ? '▶ Spelen'
-                    : 'Groep ' + year}
+                    : game === 'taal'
+                    ? '📖 Taalverkennen + toets'
+                    : '🚧 Komt binnenkort'}
                 </span>
+                {game && <span className="vb-line">{s.vb}</span>}
+                {game && <RewardChips rewards={REWARDS[game]} />}
               </button>
             )
           })}
@@ -265,18 +292,28 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
         <p className="game-header-sub">Kies jouw groep</p>
       </div>
       <div className="year-grid">
-        {YEARS.map(y => (
-          <button
-            key={y.num}
-            className="year-card"
-            style={{ '--yc': y.color, '--yd': y.dark }}
-            onClick={() => setYear(y.num)}
-          >
-            <span className="year-badge">Groep</span>
-            <span className="year-num">{y.num}</span>
-            <span className="year-arrow">→</span>
-          </button>
-        ))}
+        {YEARS.map(y => {
+          const tags = SUBJECTS
+            .filter(s => GAMES[`${y.num}-${s.key}`])
+            .map(s => `${s.emoji} ${s.label}`)
+          return (
+            <button
+              key={y.num}
+              className="year-card"
+              style={{ '--yc': y.color, '--yd': y.dark }}
+              onClick={() => setYear(y.num)}
+            >
+              <span className="year-badge">Groep</span>
+              <span className="year-num">{y.num}</span>
+              <span className="year-tags">
+                {tags.length
+                  ? tags.map(t => <span key={t} className="year-tag">{t}</span>)
+                  : <span className="year-tag year-tag-soon">🚧 In aanbouw</span>}
+              </span>
+              <span className="year-arrow">→</span>
+            </button>
+          )
+        })}
       </div>
 
       <div className="free-games-section">
@@ -284,9 +321,10 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
         <div className="free-games-grid">
           {FREE_GAMES.map(g => (
             <button key={g.key} className="free-game-card" onClick={() => setDirectGame(g.key)}>
-              <span className="free-game-emoji">{g.emoji}</span>
-              <span className="free-game-name">{g.name}</span>
+              <MenuScene name={g.key} />
+              <span className="free-game-name">{g.emoji} {g.name}</span>
               <span className="free-game-desc">{g.desc}</span>
+              <RewardChips rewards={g.rewards} />
             </button>
           ))}
         </div>

@@ -1,0 +1,143 @@
+/* ── Mini-scenes op menukaarten ─────────────────────────── */
+.ms-wrap {
+  width: 100%;
+  border-radius: 14px;
+  overflow: hidden;
+  line-height: 0;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1), 0 4px 14px rgba(0,0,0,0.35);
+  position: relative;
+}
+.ms-wrap svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  transition: transform 0.3s ease;
+}
+button:hover > .ms-wrap svg,
+button:hover > * > .ms-wrap svg {
+  transform: scale(1.07);
+}
+
+/* SVG-elementen draaien/schalen om hun eigen midden */
+.msi, .msa { transform-box: fill-box; transform-origin: center; }
+
+/* idle-animaties: spelen altijd zachtjes */
+.ms-hover    { animation: ms-hover 2.6s ease-in-out infinite; }
+.ms-flame    { animation: ms-flame 0.45s ease-in-out infinite; }
+.ms-drift    { animation: ms-drift 3s linear infinite; }
+.ms-streak   { animation: ms-streak 1.6s linear infinite; }
+.ms-bob      { animation: ms-bob 2.8s ease-in-out infinite; }
+.ms-sway     { animation: ms-sway 3.4s ease-in-out infinite; }
+.ms-pop      { animation: ms-pop 2.4s ease-in-out infinite; }
+.ms-coinflip { animation: ms-coinflip 2.6s ease-in-out infinite; }
+
+/* actie-animaties: pas bij hover op de kaart */
+.ms-kick    { animation: ms-kick 1.5s ease-in-out infinite; }
+.ms-launch  { animation: ms-launch 1.8s ease-in infinite; }
+.ms-liftoff { animation: ms-liftoff 1.6s ease-in infinite; }
+.ms-scan    { animation: ms-scan 2.2s ease-in-out infinite; }
+.ms-write   { animation: ms-write 0.8s ease-in-out infinite; }
+.ms-shoot   { animation: ms-shoot 1s ease-in infinite; }
+.ms-bounce  { animation: ms-bounce 0.7s ease-in-out infinite; }
+.msa { animation-play-state: paused !important; }
+button:hover .msa { animation-play-state: running !important; }
+
+@keyframes ms-hover {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-5px); }
+}
+@keyframes ms-flame {
+  0%, 100% { transform: scaleY(1); opacity: 1; }
+  50%      { transform: scaleY(1.5); opacity: 0.85; }
+}
+@keyframes ms-drift {
+  0%   { transform: translateX(0); opacity: 1; }
+  100% { transform: translateX(-46px); opacity: 0; }
+}
+@keyframes ms-streak {
+  0%   { transform: translateX(160px); }
+  100% { transform: translateX(-60px); }
+}
+@keyframes ms-bob {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-4px); }
+}
+@keyframes ms-sway {
+  0%, 100% { transform: rotate(-5deg); }
+  50%      { transform: rotate(5deg); }
+}
+@keyframes ms-pop {
+  0%, 20%, 100% { transform: scale(1); }
+  10%           { transform: scale(1.5); }
+}
+@keyframes ms-coinflip {
+  0%, 100% { transform: scaleX(1); }
+  50%      { transform: scaleX(0.15); }
+}
+@keyframes ms-kick {
+  0%, 12%   { transform: translate(0, 0); }
+  55%       { transform: translate(62px, -34px); }
+  72%, 100% { transform: translate(72px, -16px); }
+}
+@keyframes ms-launch {
+  0%, 8% { transform: translate(0, 0); opacity: 1; }
+  50%    { transform: translate(48px, -28px); opacity: 1; }
+  72%    { transform: translate(94px, -14px); opacity: 1; }
+  78%, 100% { transform: translate(94px, -14px); opacity: 0; }
+}
+@keyframes ms-liftoff {
+  0%, 18%   { transform: translateY(0); opacity: 1; }
+  78%       { transform: translateY(-52px); opacity: 1; }
+  85%, 100% { transform: translateY(-52px); opacity: 0; }
+}
+@keyframes ms-scan {
+  0%, 100% { transform: translate(0, 0); }
+  50%      { transform: translate(40px, 6px); }
+}
+@keyframes ms-write {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  30%      { transform: translate(4px, 1px) rotate(2deg); }
+  70%      { transform: translate(-4px, -1px) rotate(-2deg); }
+}
+@keyframes ms-shoot {
+  0%, 20%   { transform: translate(0, 0); opacity: 1; }
+  60%       { transform: translate(28px, 6px); opacity: 1; }
+  65%, 100% { transform: translate(28px, 6px); opacity: 0; }
+}
+@keyframes ms-bounce {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-12px); }
+}
+
+/* ── Voorbeeldopgave-regel op kaarten ───────────────────── */
+.vb-line {
+  font-size: 0.7rem;
+  font-weight: 700;
+  font-style: italic;
+  color: rgba(255,255,255,0.6);
+  background: rgba(255,255,255,0.05);
+  border: 1px dashed rgba(255,255,255,0.2);
+  border-radius: 10px;
+  padding: 5px 10px;
+  text-align: center;
+  line-height: 1.4;
+}
+
+/* ── Belonings-chips ────────────────────────────────────── */
+.reward-chips { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+.reward-chip {
+  font-size: 0.62rem;
+  font-weight: 800;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(255,210,63,0.12);
+  border: 1px solid rgba(255,210,63,0.35);
+  color: #FFD23F;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.reward-chip.brief {
+  background: rgba(80,224,160,0.1);
+  border-color: rgba(80,224,160,0.35);
+  color: #4fe0a0;
+}

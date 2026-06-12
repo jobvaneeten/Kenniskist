@@ -293,6 +293,25 @@ body::after {
 }
 .menu-btn:hover .btn-arrow { transform: translateX(4px); opacity: 1; }
 
+.btn-scene {
+  width: 108px;
+  flex-shrink: 0;
+  border-radius: 14px;
+}
+.btn-scene .ms-wrap { border-radius: 14px; }
+
+.btn-examples {
+  font-size: 0.68rem;
+  font-weight: 700;
+  opacity: 0.85;
+  margin-top: 5px;
+  background: rgba(0,0,0,0.22);
+  border-radius: 12px;
+  padding: 4px 10px;
+  align-self: flex-start;
+  letter-spacing: 0.01em;
+}
+
 /* ── Currency badges ─────────────────────── */
 .currency-badges {
   position: fixed;
@@ -437,6 +456,8 @@ body::after {
   .menu-btn   { padding: 16px 18px; gap: 14px; }
   .btn-icon   { font-size: 1.8rem; }
   .btn-label  { font-size: 1.1rem; }
+  .btn-scene  { width: 78px; }
+  .btn-examples { font-size: 0.6rem; padding: 3px 8px; }
   .curuntie-badge { top: 12px; right: 12px; padding: 6px 14px 6px 10px; }
   .curuntie-icon  { font-size: 1rem; }
   .curuntie-amount { font-size: 0.85rem; }
