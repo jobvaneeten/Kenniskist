@@ -5,7 +5,7 @@ import {
   Color3, Color4, Vector3, Quaternion, Ray,
   HemisphericLight, DirectionalLight, ShadowGenerator,
   MeshBuilder, StandardMaterial, DynamicTexture, Texture,
-  DefaultRenderingPipeline,
+  DefaultRenderingPipeline, ParticleSystem,
 } from '@babylonjs/core'
 import { SceneLoader } from '@babylonjs/core/Loading/sceneLoader'
 import '@babylonjs/loaders/glTF'
@@ -389,6 +389,220 @@ function addSkyDecor(scene, mapCfg) {
   }
 }
 
+// ── Zachte ronde stip-textuur voor particles ────────────────────────────
+function softDotTexture(scene, rgb = '255,255,255') {
+  const t = new DynamicTexture('dot' + Math.random(), { width: 64, height: 64 }, scene)
+  const c = t.getContext()
+  const g = c.createRadialGradient(32, 32, 2, 32, 32, 30)
+  g.addColorStop(0, `rgba(${rgb},1)`); g.addColorStop(1, `rgba(${rgb},0)`)
+  c.fillStyle = g; c.fillRect(0, 0, 64, 64)
+  t.update(); t.hasAlpha = true
+  return t
+}
+
+// ── Map-decor: omgeving buiten de arena + sfeer-particles ───────────────
+// Alles is puur visueel: isPickable=false, geen collisions, frozen matrices.
+function addMapDecor(scene, mapCfg) {
+  const ax = mapCfg.ax, az = mapCfg.az
+  const isBos  = mapCfg.glb === 'bos.glb'
+  const isStad = mapCfg.glb === 'stad.glb'
+  const rnd  = (a, b) => a + Math.random() * (b - a)
+  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)]
+
+  const mkMat = (hex, emiss = 0) => {
+    const m = new StandardMaterial('dm' + Math.random(), scene)
+    const c = Color3.FromHexString(hex)
+    m.diffuseColor = c; m.specularColor = Color3.Black()
+    if (emiss) m.emissiveColor = c.scale(emiss)
+    return m
+  }
+  const done = (m) => { m.isPickable = false; try { m.freezeWorldMatrix() } catch {} }
+
+  // Grote omgevingsvloer — geen lege void meer achter de arenarand
+  const groundHex = isBos ? '#27431f' : isStad ? '#3c4046' : '#cdb377'
+  const bigGround = MeshBuilder.CreateDisc('decoGround', { radius: 220, tessellation: 48 }, scene)
+  bigGround.rotation.x = Math.PI / 2
+  bigGround.position.y = -0.08
+  bigGround.material = mkMat(groundHex)
+  done(bigGround)
+
+  // Punt op een ellips-ring net buiten de speelgrens
+  const ringSpot = (pad = 0) => {
+    const a = Math.random() * Math.PI * 2
+    const rx = ax + 5 + pad + Math.random() * 16
+    const rz = az + 5 + pad + Math.random() * 16
+    return { x: Math.cos(a) * rx, z: Math.sin(a) * rz, a }
+  }
+
+  const mkTree = (x, z, s, leafHex) => {
+    const trunk = MeshBuilder.CreateCylinder('dTr', { height: 2.2 * s, diameter: 0.5 * s, tessellation: 6 }, scene)
+    trunk.material = mkMat('#6b4a2a'); trunk.position.set(x, 1.1 * s, z); done(trunk)
+    const top = MeshBuilder.CreateCylinder('dLf', { height: 3.6 * s, diameterTop: 0, diameterBottom: 2.9 * s, tessellation: 7 }, scene)
+    top.material = mkMat(leafHex); top.position.set(x, 2.2 * s + 1.6 * s, z); done(top)
+  }
+  const mkRock = (x, z, s) => {
+    const r = MeshBuilder.CreatePolyhedron('dRk', { type: Math.floor(Math.random() * 4), size: s }, scene)
+    r.material = mkMat(pick(['#8d8a82', '#7c7a74', '#9a958a']))
+    r.position.set(x, s * 0.45, z)
+    r.rotation.set(Math.random(), Math.random() * 6, Math.random())
+    done(r)
+  }
+
+  if (isBos) {
+    // Dichte boswand rondom + rotsen
+    for (let i = 0; i < 52; i++) { const p = ringSpot(); mkTree(p.x, p.z, rnd(0.9, 1.9), pick(['#2d6b35', '#1f5429', '#357840'])) }
+    for (let i = 0; i < 14; i++) { const p = ringSpot(); mkRock(p.x, p.z, rnd(0.8, 2.0)) }
+  } else if (isStad) {
+    // Containers, schoorstenen (met rook) en lantaarns rond het terrein
+    const colors = ['#b3472e', '#2e6fb3', '#3f9c5a', '#b3962e', '#7a4fb3', '#b35a2e']
+    for (let i = 0; i < 22; i++) {
+      const p = ringSpot()
+      const w = rnd(5, 8), h = rnd(2.6, 4.6), d = rnd(2.4, 3)
+      const box = MeshBuilder.CreateBox('dCt', { width: w, height: h, depth: d }, scene)
+      box.material = mkMat(pick(colors))
+      box.position.set(p.x, h / 2, p.z); box.rotation.y = p.a + rnd(-0.4, 0.4)
+      done(box)
+    }
+    for (let i = 0; i < 3; i++) {
+      const p = ringSpot(8)
+      const h = rnd(11, 15)
+      const ch = MeshBuilder.CreateCylinder('dCh', { height: h, diameterBottom: 2.2, diameterTop: 1.6, tessellation: 10 }, scene)
+      ch.material = mkMat('#8a4a3a'); ch.position.set(p.x, h / 2, p.z); done(ch)
+      const smoke = new ParticleSystem('dSm' + i, 50, scene)
+      smoke.particleTexture = softDotTexture(scene, '205,205,212')
+      smoke.emitter = new Vector3(p.x, h + 0.4, p.z)
+      smoke.minEmitBox = new Vector3(-0.3, 0, -0.3); smoke.maxEmitBox = new Vector3(0.3, 0, 0.3)
+      smoke.color1 = new Color4(0.62, 0.62, 0.68, 0.16); smoke.color2 = new Color4(0.5, 0.5, 0.56, 0.1)
+      smoke.colorDead = new Color4(0.5, 0.5, 0.56, 0)
+      smoke.minSize = 1.4; smoke.maxSize = 3.2
+      smoke.minLifeTime = 3.5; smoke.maxLifeTime = 6; smoke.emitRate = 8
+      smoke.direction1 = new Vector3(-0.25, 1, -0.25); smoke.direction2 = new Vector3(0.5, 1.6, 0.5)
+      smoke.minEmitPower = 0.6; smoke.maxEmitPower = 1.2; smoke.updateSpeed = 0.012
+      smoke.start()
+    }
+    for (let i = 0; i < 10; i++) {
+      const a = (i / 10) * Math.PI * 2 + 0.3
+      const x = Math.cos(a) * (ax + 3.2), z = Math.sin(a) * (az + 3.2)
+      const pole = MeshBuilder.CreateCylinder('dLp', { height: 4.2, diameter: 0.14, tessellation: 6 }, scene)
+      pole.material = mkMat('#23252a'); pole.position.set(x, 2.1, z); done(pole)
+      const lamp = MeshBuilder.CreateSphere('dLl', { diameter: 0.38, segments: 8 }, scene)
+      lamp.material = mkMat('#ffd27a', 0.95); lamp.position.set(x, 4.3, z); done(lamp)
+    }
+  } else {
+    // Dorp: huisjes in de verte + bomen + rotsen
+    for (let i = 0; i < 9; i++) {
+      const p = ringSpot(4)
+      const w = rnd(4, 6), h = rnd(2.6, 3.4), d = rnd(3.5, 5)
+      const body = MeshBuilder.CreateBox('dHs', { width: w, height: h, depth: d }, scene)
+      body.material = mkMat(pick(['#e8d9b8', '#d9c4a0', '#e3cfae']))
+      body.position.set(p.x, h / 2, p.z); body.rotation.y = p.a + rnd(-0.5, 0.5)
+      done(body)
+      const roof = MeshBuilder.CreateCylinder('dRf', { height: rnd(1.4, 1.9), diameterTop: 0, diameterBottom: Math.max(w, d) * 1.3, tessellation: 4 }, scene)
+      roof.material = mkMat(pick(['#b0563a', '#9c4a30', '#bd6a48']))
+      roof.position.set(p.x, h + 0.75, p.z); roof.rotation.y = body.rotation.y + Math.PI / 4
+      done(roof)
+    }
+    for (let i = 0; i < 14; i++) { const p = ringSpot(); mkTree(p.x, p.z, rnd(0.8, 1.5), pick(['#3f8a4a', '#4a9a55'])) }
+    for (let i = 0; i < 10; i++) { const p = ringSpot(); mkRock(p.x, p.z, rnd(0.6, 1.5)) }
+  }
+
+  // ── Sfeer-particles boven de arena ──
+  if (isBos) {
+    const lv = new ParticleSystem('dLv', 90, scene)
+    lv.particleTexture = softDotTexture(scene, '200,235,130')
+    lv.emitter = new Vector3(0, 11, 0)
+    lv.minEmitBox = new Vector3(-ax, 0, -az); lv.maxEmitBox = new Vector3(ax, 0, az)
+    lv.color1 = new Color4(0.55, 0.78, 0.3, 0.8); lv.color2 = new Color4(0.85, 0.62, 0.25, 0.75)
+    lv.colorDead = new Color4(0.6, 0.6, 0.3, 0)
+    lv.minSize = 0.1; lv.maxSize = 0.26
+    lv.minLifeTime = 6; lv.maxLifeTime = 10; lv.emitRate = 9
+    lv.direction1 = new Vector3(-0.4, -1, -0.4); lv.direction2 = new Vector3(0.4, -0.6, 0.4)
+    lv.minEmitPower = 0.5; lv.maxEmitPower = 1.1
+    lv.gravity = new Vector3(0, -0.45, 0); lv.updateSpeed = 0.01
+    lv.start()
+  } else if (!isStad) {
+    const dust = new ParticleSystem('dDu', 70, scene)
+    dust.particleTexture = softDotTexture(scene, '255,245,220')
+    dust.emitter = new Vector3(0, 1.4, 0)
+    dust.minEmitBox = new Vector3(-ax, 0, -az); dust.maxEmitBox = new Vector3(ax, 2.5, az)
+    dust.color1 = new Color4(1, 0.96, 0.85, 0.1); dust.color2 = new Color4(1, 0.94, 0.8, 0.07)
+    dust.colorDead = new Color4(1, 0.95, 0.85, 0)
+    dust.minSize = 0.08; dust.maxSize = 0.22
+    dust.minLifeTime = 5; dust.maxLifeTime = 9; dust.emitRate = 8
+    dust.direction1 = new Vector3(-0.3, 0.05, -0.1); dust.direction2 = new Vector3(0.5, 0.25, 0.2)
+    dust.minEmitPower = 0.2; dust.maxEmitPower = 0.6; dust.updateSpeed = 0.008
+    dust.start()
+  }
+}
+
+// ── Kleine details binnen de arena (niet-botsend, mijdt obstakels) ──────
+function addInsideDecor(scene, mapCfg, obstacles) {
+  const ax = mapCfg.ax - 2, az = mapCfg.az - 2
+  const isBos  = mapCfg.glb === 'bos.glb'
+  const isStad = mapCfg.glb === 'stad.glb'
+  const rnd = (a, b) => a + Math.random() * (b - a)
+
+  const mkMat = (hex, emiss = 0) => {
+    const m = new StandardMaterial('im' + Math.random(), scene)
+    const c = Color3.FromHexString(hex)
+    m.diffuseColor = c; m.specularColor = Color3.Black()
+    if (emiss) m.emissiveColor = c.scale(emiss)
+    return m
+  }
+  const blocked = (x, z) => obstacles.some(o =>
+    x > o.x - o.hw - 0.7 && x < o.x + o.hw + 0.7 && z > o.z - o.hd - 0.7 && z < o.z + o.hd + 0.7)
+  const spot = () => {
+    for (let t = 0; t < 14; t++) {
+      const x = (Math.random() * 2 - 1) * ax, z = (Math.random() * 2 - 1) * az
+      if (!blocked(x, z)) return { x, z }
+    }
+    return null
+  }
+  const place = (m, x, y, z) => {
+    m.position.set(x, y, z); m.isPickable = false
+    try { m.freezeWorldMatrix() } catch {}
+  }
+  // Eén basis-mesh + goedkope instances (1 draw call per soort)
+  const scatter = (base, count, y) => {
+    base.isPickable = false
+    const p0 = spot(); if (p0) place(base, p0.x, y, p0.z); else base.setEnabled(false)
+    for (let i = 1; i < count; i++) {
+      const p = spot(); if (!p) continue
+      const inst = base.createInstance(base.name + i)
+      inst.rotation.y = Math.random() * Math.PI * 2
+      place(inst, p.x, y, p.z)
+    }
+  }
+
+  if (isStad) {
+    const cone = MeshBuilder.CreateCylinder('iCone', { height: 0.6, diameterTop: 0.05, diameterBottom: 0.45, tessellation: 8 }, scene)
+    cone.material = mkMat('#ff7a1a', 0.25)
+    scatter(cone, 9, 0.3)
+    const tire = MeshBuilder.CreateTorus('iTire', { diameter: 0.85, thickness: 0.26, tessellation: 14 }, scene)
+    tire.material = mkMat('#26282c')
+    scatter(tire, 7, 0.14)
+  } else {
+    const tuft = MeshBuilder.CreateCylinder('iTuft', { height: 0.42, diameterTop: 0, diameterBottom: 0.32, tessellation: 5 }, scene)
+    tuft.material = mkMat(isBos ? '#3f8a3a' : '#b5a45a')
+    scatter(tuft, isBos ? 55 : 34, 0.21)
+    const stem = MeshBuilder.CreateCylinder('iFlS', { height: 0.34, diameter: 0.05, tessellation: 5 }, scene)
+    stem.material = mkMat('#3f7a35')
+    scatter(stem, 12, 0.17)
+    const head = MeshBuilder.CreateSphere('iFlH', { diameter: 0.18, segments: 6 }, scene)
+    head.material = mkMat(isBos ? '#e8e2f0' : '#ff9a3d', 0.3)
+    // bloemhoofdjes op dezelfde plekken als losse strooi (eigen scatter is prima — stijl blijft speels)
+    scatter(head, 12, 0.36)
+    if (isBos) {
+      const mStem = MeshBuilder.CreateCylinder('iMuS', { height: 0.3, diameter: 0.16, tessellation: 6 }, scene)
+      mStem.material = mkMat('#e8e0d0')
+      scatter(mStem, 13, 0.15)
+      const mCap = MeshBuilder.CreateSphere('iMuC', { diameter: 0.42, segments: 7, slice: 0.55 }, scene)
+      mCap.material = mkMat('#c9463a')
+      scatter(mCap, 13, 0.27)
+    }
+  }
+}
+
 // ── Arena world (loads the chosen GLB map) ─────────────────────────────
 function buildWorld(scene, mapCfg, onObstacles) {
   scene.clearColor = new Color4(mapCfg.clear[0], mapCfg.clear[1], mapCfg.clear[2], 1)
@@ -436,6 +650,7 @@ function buildWorld(scene, mapCfg, onObstacles) {
   skyMat.emissiveTexture = skyTex; sky.material = skyMat
 
   addSkyDecor(scene, mapCfg)
+  try { addMapDecor(scene, mapCfg) } catch (e) { console.warn('map-decor overgeslagen:', e) }
 
   // Optionele texturen voor deze map: grond + gebouwen.
   let groundTex = null, stoneBaseTex = null
@@ -511,6 +726,7 @@ function buildWorld(scene, mapCfg, onObstacles) {
       } else { m.isPickable = false }
     })
     onObstacles?.(derivedObstacles)
+    try { addInsideDecor(scene, mapCfg, derivedObstacles) } catch (e) { console.warn('inside-decor overgeslagen:', e) }
   }, null, (_s, msg, err) => console.error('map load error:', msg, err))
 
   // Invisible boundary walls so you can't glitch off the map.
@@ -567,7 +783,19 @@ function initScene(canvas, { localSessionId, getRoomState, sendState, sendShoot,
   const camera = new FreeCamera('cam', new Vector3(0, 5, -12), scene)
   camera.inputs.clear(); camera.minZ = 0.1; camera.maxZ = 300
 
-  const sg = buildWorld(scene, mapCfg, (obstacles) => sendObstacles?.(obstacles))
+  // Compact versturen: plat getallen-array, gefilterd + afgerond + gecapt zodat
+  // het bericht ruim binnen de websocket-payloadlimiet blijft (bos heeft veel meshes).
+  const packObstacles = (list) => {
+    const r1 = v => Math.round(v * 10) / 10
+    const sorted = [...list]
+      .filter(o => o.top > 0.9 && o.hw * o.hd > 0.15)
+      .sort((a, b) => (b.hw * b.hd) - (a.hw * a.hd))
+      .slice(0, 80)
+    const flat = []
+    sorted.forEach(o => flat.push(r1(o.x), r1(o.z), r1(o.hw), r1(o.hd), r1(o.top)))
+    return flat
+  }
+  const sg = buildWorld(scene, mapCfg, (obstacles) => sendObstacles?.(packObstacles(obstacles)))
   try {
     const pipe = new DefaultRenderingPipeline('pipe', true, scene, [camera])   // HDR → mooiere bloom
     pipe.imageProcessingEnabled = true; pipe.imageProcessing.contrast = 1.12; pipe.imageProcessing.exposure = 1.12
