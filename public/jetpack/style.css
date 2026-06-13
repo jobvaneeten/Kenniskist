@@ -787,3 +787,35 @@ body {
   .go-buttons .btn-start, .go-buttons .btn-shop { width: 100%; }
   .new-record { font-size: 15px; padding: 8px 16px; }
 }
+
+/* ===== KORT SCHERM (liggende telefoon): menu's passend maken ===== */
+@media (max-height: 540px) {
+  .screen { align-items: center; }
+  .menu-content, .gameover-content { gap: 8px; transform: scale(0.9); }
+  .logo-rocket { font-size: 28px; }
+  .title-line1, .title-line2 { font-size: 30px; letter-spacing: 1px; }
+  .subtitle { font-size: 12px; }
+  .controls-grid { grid-template-columns: 1fr 1fr; gap: 6px; max-width: 520px; }
+  .control-card { padding: 5px 8px; }
+  .ctrl-icon { font-size: 16px; }
+  .ctrl-text { font-size: 10px; }
+  .powerup-preview { padding: 5px 12px; }
+  .preview-icon { font-size: 17px; }
+  .preview-label { font-size: 10px; }
+  .menu-buttons { gap: 10px; }
+  .btn-start, .btn-shop { padding: 10px 20px; font-size: 15px; }
+  .highscore-hint { font-size: 12px; }
+
+  .gameover-title { font-size: 34px; }
+  .go-crash-icon { font-size: 28px; }
+  .new-record { font-size: 13px; padding: 5px 14px; }
+  .score-display { gap: 8px; }
+  .score-item { min-width: 76px; padding: 8px 10px; }
+  .score-emoji { font-size: 16px; margin-bottom: 2px; }
+  .score-value { font-size: 18px; }
+  .score-label { font-size: 10px; }
+  .rating { font-size: 18px; }
+  .go-buttons { gap: 10px; }
+  .go-buttons .btn-start, .go-buttons .btn-shop { padding: 9px 18px; font-size: 15px; }
+  .go-tip { font-size: 11px; }
+}

@@ -3,18 +3,19 @@ const canvas = document.getElementById('gameCanvas');
 const ctx    = canvas.getContext('2d');
 canvas.width  = window.innerWidth;
 canvas.height = window.innerHeight;
-// Schaalfactor zodat het poppetje + spelobjecten op ELK scherm dezelfde
-// verhouding houden (op telefoon was het poppetje veel te groot).
-function sizeFor() { return Math.max(0.55, Math.min(1, canvas.width / 1100)); }
+// Schaal alles mee met de schermHOOGTE, zodat het speelveld op telefoon
+// (liggend = laag scherm) dezelfde verhouding heeft als op iPad/pc.
+// Op breedte schalen werkte niet: liggend is het scherm juist breed maar laag.
+function sizeFor() { return Math.max(0.42, Math.min(1, canvas.height / 760)); }
 let SIZE = sizeFor();
-window.addEventListener('resize', () => {
-  canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+function resizeGame() {
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
   SIZE = sizeFor();
-  if (typeof player !== 'undefined') {
-    player.width  = FRAME_W * SCALE * SIZE;
-    player.height = FRAME_H * SCALE * SIZE;
-  }
-});
+  recomputeBounds();
+  if (typeof player !== 'undefined') applyScale();
+}
+window.addEventListener('resize', resizeGame);
 
 // Performance: disable image smoothing voor snellere rendering
 ctx.imageSmoothingEnabled = false;
@@ -44,8 +45,16 @@ const JETPACK_X = 0.373;
 const JETPACK_Y = 0.62;
 
 // ===== CONSTANTEN =====
-const FLOOR_Y  = () => canvas.height - 80;
-const CEIL_Y   = 60;
+// Plafond- en vloer-marge schalen mee met de schermhoogte → het speelveld is
+// op elk toestel dezelfde verhouding (geen vast plafond dat op telefoon te dik is).
+let CEIL_Y    = 60;
+let FLOOR_OFF = 80;
+function recomputeBounds() {
+  CEIL_Y    = Math.max(22, Math.min(64, Math.round(canvas.height * 0.055)));
+  FLOOR_OFF = Math.max(46, Math.min(86, Math.round(canvas.height * 0.078)));
+}
+recomputeBounds();
+const FLOOR_Y  = () => canvas.height - FLOOR_OFF;
 const FOOT_OFF = () => player.height * 0.18;
 
 // ===== GAME STATE =====
@@ -112,6 +121,18 @@ const player = {
   currentAnim:'run', currentFrame:0, frameTimer:0, frameRate:3,
   alive:true, onGround:false, dieFrameDone:false
 };
+// Poppetje-grootte én verticale snelheid schalen met SIZE, zodat het op telefoon
+// even soepel en even "groot" speelt als op iPad/pc (zelfde verhouding).
+const PHYS_BASE = { gravity:0.08, thrustPower:0.11, maxUp:-2, maxDown:2.5 };
+function applyScale() {
+  player.width       = FRAME_W*SCALE*SIZE;
+  player.height      = FRAME_H*SCALE*SIZE;
+  player.gravity     = PHYS_BASE.gravity     * SIZE;
+  player.thrustPower = PHYS_BASE.thrustPower * SIZE;
+  player.maxUp       = PHYS_BASE.maxUp       * SIZE;
+  player.maxDown     = PHYS_BASE.maxDown     * SIZE;
+}
+applyScale();
 
 // ===== POWERUPS =====
 const POWERUP_TYPES = {
@@ -704,20 +725,23 @@ function drawThemeParticles() {
 // ===== ZAPPERS =====
 let zappers = [];
 function spawnZapper() {
+  // Alle laser-maten schalen met SIZE (= schermhoogte), zodat de moeilijkheid
+  // op telefoon hetzelfde is als op iPad/pc en gaten niet groter zijn dan het veld.
+  const Z = SIZE;
   const floorY=FLOOR_Y(), roll=Math.random();
   if (roll < 0.4) {
-    const gs=280+Math.random()*80, gy=CEIL_Y+40+Math.random()*(floorY-CEIL_Y-80-gs);
-    zappers.push({ type:'vertical', x:canvas.width+50, gapY:gy, gapSize:gs, width:20, glowPhase:Math.random()*Math.PI*2 });
+    const gs=(280+Math.random()*80)*Z, gy=CEIL_Y+40*Z+Math.random()*Math.max(20,(floorY-CEIL_Y-80*Z-gs));
+    zappers.push({ type:'vertical', x:canvas.width+50, gapY:gy, gapSize:gs, width:20*Z, glowPhase:Math.random()*Math.PI*2 });
   } else if (roll < 0.7) {
-    const gs  = 270 + Math.random() * 80;
-    const len = 220 + Math.random() * 120;
+    const gs  = (270 + Math.random() * 80) * Z;
+    const len = (220 + Math.random() * 120) * Z;
     // y is het midden van de laser, gewoon een vaste hoogte in het speelveld
-    const y = CEIL_Y + 100 + Math.random() * (floorY - CEIL_Y - 200);
-    zappers.push({ type:'horizontal', x:canvas.width + len/2 + 50, y, gapSize:gs, height:20, length:len, glowPhase:Math.random()*Math.PI*2 });
+    const y = CEIL_Y + 100*Z + Math.random() * Math.max(20,(floorY - CEIL_Y - 200*Z));
+    zappers.push({ type:'horizontal', x:canvas.width + len/2 + 50, y, gapSize:gs, height:20*Z, length:len, glowPhase:Math.random()*Math.PI*2 });
   } else {
     const angle=(Math.random()>0.5?1:-1)*(25+Math.random()*25)*Math.PI/180;
-    const cy=CEIL_Y+80+Math.random()*(floorY-CEIL_Y-200);
-    zappers.push({ type:'diagonal', x:canvas.width+60, y:cy, angle, len:200+Math.random()*100, gap:160+Math.random()*60, width:18, glowPhase:Math.random()*Math.PI*2 });
+    const cy=CEIL_Y+80*Z+Math.random()*Math.max(20,(floorY-CEIL_Y-200*Z));
+    zappers.push({ type:'diagonal', x:canvas.width+60, y:cy, angle, len:(200+Math.random()*100)*Z, gap:(160+Math.random()*60)*Z, width:18*Z, glowPhase:Math.random()*Math.PI*2 });
   }
 }
 
@@ -2196,6 +2220,7 @@ document.getElementById('shopBtnMenu').addEventListener('click', () => openShop(
 document.getElementById('shopBtnGO').addEventListener('click',   () => openShop('gameover'));
 
 function startGame() {
+  SIZE = sizeFor(); recomputeBounds(); applyScale();   // klopt met huidige schermstand
   gameState='playing'; coins=0; distance=0; frameCount=0;
   gameSpeed=2.0; baseSpeed=2.0;
   lastTime=0; S=1;
