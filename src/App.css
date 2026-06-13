@@ -111,7 +111,7 @@ body::after {
 }
 
 .logo-icon {
-  font-size: 3.8rem;
+  font-size: clamp(2rem, 8.5vw, 3.8rem);
   filter: drop-shadow(0 0 28px rgba(232,67,147,0.55)) drop-shadow(0 4px 12px rgba(0,0,0,0.5));
   animation: float 4s ease-in-out infinite, wobble 6s ease-in-out infinite;
 }
@@ -126,7 +126,7 @@ body::after {
 }
 
 .logo-title {
-  font-size: 3.6rem;
+  font-size: clamp(1.7rem, 7vw, 3.6rem);
   font-weight: 900;
   letter-spacing: -2px;
   background: linear-gradient(100deg, #fff 0%, #ffe9a8 30%, #fff 50%, #d6c4ff 70%, #fff 100%);
@@ -449,9 +449,7 @@ body::after {
 
 /* ── iPad / mobile responsive ──────────────── */
 @media (max-width: 600px) {
-  .screen { gap: 28px; padding: 36px 16px 72px; }
-  .logo-icon  { font-size: 2.6rem; }
-  .logo-title { font-size: 2.4rem; }
+  .screen { gap: 28px; padding: 52px 16px 72px; }
   .hero-sub   { font-size: 0.9rem; }
   .menu-btn   { padding: 16px 18px; gap: 14px; }
   .btn-icon   { font-size: 1.8rem; }
