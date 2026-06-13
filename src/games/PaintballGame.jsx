@@ -400,6 +400,39 @@ function softDotTexture(scene, rgb = '255,255,255') {
   return t
 }
 
+// ── Onregelmatige verf-splat als alpha-masker (witte vlek + spetters + drips) ──
+function makeSplatAlphaTexture(scene) {
+  const S = 128
+  const t = new DynamicTexture('splatA' + Math.random(), { width: S, height: S }, scene)
+  const c = t.getContext()
+  c.clearRect(0, 0, S, S)
+  c.fillStyle = '#ffffff'
+  const cx = 64, cy = 64
+  // centrale grillige klodder
+  c.beginPath()
+  const pts = 12
+  for (let i = 0; i <= pts; i++) {
+    const a = (i / pts) * Math.PI * 2
+    const r = 22 + Math.random() * 20
+    const x = cx + Math.cos(a) * r, y = cy + Math.sin(a) * r
+    i === 0 ? c.moveTo(x, y) : c.lineTo(x, y)
+  }
+  c.closePath(); c.fill()
+  // losse spetters eromheen
+  for (let i = 0; i < 16; i++) {
+    const a = Math.random() * Math.PI * 2, d = 26 + Math.random() * 34
+    c.beginPath(); c.arc(cx + Math.cos(a) * d, cy + Math.sin(a) * d, 1.5 + Math.random() * 6, 0, Math.PI * 2); c.fill()
+  }
+  // een paar drips
+  for (let i = 0; i < 4; i++) {
+    const a = Math.random() * Math.PI * 2, d = 18 + Math.random() * 14
+    c.save(); c.translate(cx + Math.cos(a) * d, cy + Math.sin(a) * d); c.rotate(a)
+    c.beginPath(); c.ellipse(0, 0, 2.5, 7 + Math.random() * 7, 0, 0, Math.PI * 2); c.fill(); c.restore()
+  }
+  t.update(); t.hasAlpha = true
+  return t
+}
+
 // ── Map-decor: omgeving buiten de arena + sfeer-particles ───────────────
 // Alles is puur visueel: isPickable=false, geen collisions, frozen matrices.
 function addMapDecor(scene, mapCfg) {
@@ -885,24 +918,60 @@ function initScene(canvas, { localSessionId, getRoomState, sendState, sendShoot,
   let prevReloadSeq = {}
   let prevJumpSeq = {}
 
-  // Paint splat
-  const mkSplatMat = (hex) => { const m = new StandardMaterial('sp', scene); m.disableLighting = true; m.backFaceCulling = false; const c = Color3.FromHexString(hex); m.diffuseColor = c; m.emissiveColor = c; return m }
+  // Paint splat: gekleurd vlak met een grillig verf-alpha-masker → echte splat-vorm.
+  const mkSplatMat = (hex) => {
+    const m = new StandardMaterial('sp', scene); m.disableLighting = true; m.backFaceCulling = false
+    const c = Color3.FromHexString(hex); m.diffuseColor = c; m.emissiveColor = c
+    m.useAlphaFromDiffuseTexture = true            // alpha (splat-vorm) uit de textuur
+    return m
+  }
   const splatMat0 = mkSplatMat(TEAM_HEX[0]), splatMat1 = mkSplatMat(TEAM_HEX[1])
-  // Server-driven splat: flat disc oriented to the surface normal at the impact.
+  const splatTextures = [0, 1, 2, 3].map(() => makeSplatAlphaTexture(scene))   // wat variatie
+  const burstTex = softDotTexture(scene, '255,255,255')
+
+  // Server-driven splat: plat vlak op het oppervlak, plus een spetter-burst.
   const addSplat = (x, y, z, nx, ny, nz, team) => {
-    const b = MeshBuilder.CreateDisc('splat', { radius: 0.3, tessellation: 14 }, scene)
-    b.isPickable = false; b.material = (team === 0 ? splatMat0 : splatMat1).clone('spm')
     const n = new Vector3(nx, ny, nz)
     if (n.lengthSquared() < 1e-6) n.set(0, 1, 0)
     n.normalize()
     const up = Math.abs(n.y) > 0.9 ? new Vector3(1, 0, 0) : new Vector3(0, 1, 0)
     const right = Vector3.Cross(up, n); right.normalize()
     const up2 = Vector3.Cross(n, right); up2.normalize()
-    b.rotationQuaternion = Quaternion.RotationQuaternionFromAxis(right, up2, n)   // disc face (+Z) → normal
-    b.position.set(x + n.x * 0.03, y + n.y * 0.03, z + n.z * 0.03)
-    b.scaling.x = 0.7 + Math.random() * 0.6; b.scaling.y = 0.7 + Math.random() * 0.6
-    splats.push({ mesh: b, life: 4 })
+    let quat = Quaternion.RotationQuaternionFromAxis(right, up2, n)              // vlak (+Z) → normaal
+    quat = Quaternion.RotationAxis(n, Math.random() * Math.PI * 2).multiply(quat) // willekeurige rol
+    const px = x + n.x * 0.03, py = y + n.y * 0.03, pz = z + n.z * 0.03
+
+    const b = MeshBuilder.CreatePlane('splat', { size: 0.78, sideOrientation: 2 }, scene)
+    b.isPickable = false
+    const mat = (team === 0 ? splatMat0 : splatMat1).clone('spm')
+    mat.diffuseTexture = splatTextures[(Math.random() * splatTextures.length) | 0]   // grillige verf-vorm (alpha)
+    mat.transparencyMode = 2   // ALPHABLEND
+    mat.zOffset = -4
+    b.material = mat
+    b.rotationQuaternion = quat
+    b.position.set(px, py, pz)
+    b.renderingGroupId = 1     // bovenop de muur (geen z-fighting)
+    b.scaling.x = 0.8 + Math.random() * 0.7
+    b.scaling.y = 0.8 + Math.random() * 0.7
+    splats.push({ mesh: b, life: 8 })
     if (splats.length > 80) { const s = splats.shift(); s.mesh.dispose() }
+
+    // ── Spetter-burst: kleine verfdruppels spatten van het oppervlak ──
+    const ps = new ParticleSystem('splatBurst', 22, scene)
+    ps.particleTexture = burstTex
+    ps.emitter = new Vector3(px, py, pz)
+    ps.minEmitBox = Vector3.Zero(); ps.maxEmitBox = Vector3.Zero()
+    const c = Color3.FromHexString(TEAM_HEX[team])
+    ps.color1 = new Color4(c.r, c.g, c.b, 1); ps.color2 = new Color4(c.r * 0.75, c.g * 0.75, c.b * 0.75, 1)
+    ps.colorDead = new Color4(c.r, c.g, c.b, 0)
+    ps.minSize = 0.04; ps.maxSize = 0.15
+    ps.minLifeTime = 0.2; ps.maxLifeTime = 0.5
+    ps.emitRate = 320; ps.targetStopDuration = 0.06; ps.disposeOnStop = true
+    ps.gravity = new Vector3(0, -9, 0)
+    ps.direction1 = new Vector3(n.x - right.x - up2.x, n.y + 0.2, n.z - right.z - up2.z)
+    ps.direction2 = new Vector3(n.x + right.x + up2.x, n.y + 0.9, n.z + right.z + up2.z)
+    ps.minEmitPower = 1.6; ps.maxEmitPower = 4.4; ps.updateSpeed = 0.016
+    ps.start()
   }
 
   scene.registerBeforeRender(() => {
@@ -970,14 +1039,20 @@ function initScene(canvas, { localSessionId, getRoomState, sendState, sendShoot,
       dx /= dl; dy /= dl; dz /= dl
       // Raycast to the first real wall so balls fly through doorways but splat on
       // solid walls. range = 999 → no wall, ball just flies (server doesn't have the mesh).
-      let range = 999, nx = 0, ny = 1, nz = 0
+      let range = 999, nx = 0, ny = 1, nz = 0, hx = 0, hy = 0, hz = 0, hit = 0
       const ro = new Vector3(ex + dx * 0.6, ey + dy * 0.6, ez + dz * 0.6)   // start just ahead of the gun
       const pick = scene.pickWithRay(new Ray(ro, new Vector3(dx, dy, dz), 70), m => m.checkCollisions && m !== collider)
       if (pick && pick.hit) {
-        range = Math.max(3, pick.distance + 0.6)   // altijd minstens 3 m vliegen (zichtbaar)
-        const n = pick.getNormal(true); if (n) { nx = n.x; ny = n.y; nz = n.z }
+        range = Math.max(0.4, pick.distance)   // bal stopt OP de muur (geen overshoot → splat op het oppervlak)
+        const n = pick.getNormal(true)
+        if (n) {
+          // Zorg dat de normaal naar de schutter wijst (anders komt de splat ACHTER de muur → onzichtbaar)
+          if (n.x * dx + n.y * dy + n.z * dz > 0) { n.x = -n.x; n.y = -n.y; n.z = -n.z }
+          nx = n.x; ny = n.y; nz = n.z
+        }
+        const pp = pick.pickedPoint; if (pp) { hx = pp.x; hy = pp.y; hz = pp.z; hit = 1 }   // exact raakpunt
       }
-      sendShoot({ dx, dy, dz, range, nx, ny, nz, oy: ey })
+      sendShoot({ dx, dy, dz, range, nx, ny, nz, oy: ey, hx, hy, hz, hit })
     }
 
     // HP bar
