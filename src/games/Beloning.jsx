@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import OrientationGate from '../OrientationGate'
 import './werkwoord-spelling.css'
 
 export const BRIEFGELD = 50   // eurobiljetten voor voetbal / tower defense / astro
@@ -15,6 +16,7 @@ export function JetpackBeloning({ onDone }) {
       <button className="ws-game-exit" onClick={onDone}>← Klaar</button>
       <iframe src="/jetpack/" title="Jetpack" allow="autoplay" />
       <div className="ws-game-hint">Je gaat automatisch verder na het spel ✈️</div>
+      <OrientationGate />
     </div>
   )
 }
@@ -31,6 +33,7 @@ export function AstroBeloning({ onDone }) {
       <button className="ws-game-exit" onClick={onDone}>← Klaar</button>
       <iframe src="/astrokatapult/?reward=1" title="Astro Katapult" allow="autoplay" />
       <div className="ws-game-hint">Speel 1 level — daarna ga je verder 🪐</div>
+      <OrientationGate />
     </div>
   )
 }
@@ -47,6 +50,7 @@ export function SpacerunnerBeloning({ onDone }) {
       <button className="ws-game-exit" onClick={onDone}>← Klaar</button>
       <iframe src="/sterrenstroom/" title="Spacerunner" allow="autoplay" />
       <div className="ws-game-hint">Je gaat automatisch verder na het spel 🛸</div>
+      <OrientationGate want="portrait" />
     </div>
   )
 }

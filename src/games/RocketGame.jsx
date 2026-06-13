@@ -11,6 +11,7 @@ import { SceneLoader } from '@babylonjs/core/Loading/sceneLoader'
 import '@babylonjs/loaders/glTF'
 import { findItem } from '../itemsCatalog'
 import { applyItemToMesh, loadClothingDonor, usesDonor } from '../applyClothing'
+import OrientationGate from '../OrientationGate'
 import './rocket-game.css'
 
 const SERVER_URL = 'wss://kenniskist-server.onrender.com'
@@ -1245,6 +1246,7 @@ export default function RocketGame({ onBack, solo = false }) {
   const rs = roomState
   return (
     <div className="rg-outer">
+      <OrientationGate />
       <canvas ref={canvasRef} className="rg-canvas" />
 
       <button className="rg-back" onClick={() => { room?.leave(); onBack() }}>← Menu</button>

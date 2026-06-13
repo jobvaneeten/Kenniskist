@@ -10,6 +10,7 @@ import '@babylonjs/loaders/glTF'
 import * as Colyseus from '@colyseus/sdk'
 import { findItem } from '../itemsCatalog'
 import { applyItemToMesh, loadClothingDonor, usesDonor } from '../applyClothing'
+import OrientationGate from '../OrientationGate'
 import './kart-game.css'
 
 const SERVER_URL = 'wss://kenniskist-server.onrender.com'
@@ -631,6 +632,7 @@ function KartRace({ onBack, room, sessionId, joinCode, track = 'groen' }) {
 
   return (
     <div className="kart-wrap">
+      <OrientationGate />
       <canvas ref={canvasRef} className="kart-canvas" />
       <button className="kart-exit" onClick={onBack}>← {mp ? 'Verlaten' : 'Kledingkast'}</button>
 

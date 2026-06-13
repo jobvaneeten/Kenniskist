@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { createGame } from './towerdefense/GameEngine.js'
+import OrientationGate from '../OrientationGate'
 import './towerdefense.css'
 
 export default function TowerDefenseGame({ onBack, onRoundDone, visible = true }) {
@@ -46,6 +47,7 @@ export default function TowerDefenseGame({ onBack, onRoundDone, visible = true }
         ← Menu
       </button>
       <div ref={containerRef} className="td-container" />
+      {visible && <OrientationGate />}
     </div>
   )
 }

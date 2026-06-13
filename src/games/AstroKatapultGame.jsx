@@ -1,3 +1,5 @@
+import OrientationGate from '../OrientationGate'
+
 export default function AstroKatapultGame({ onBack }) {
   // Volledige game (eigen level-keuze). Voortgang staat in localStorage van het spel zelf.
   return (
@@ -20,6 +22,7 @@ export default function AstroKatapultGame({ onBack }) {
         title="Astro Katapult"
         allow="autoplay"
       />
+      <OrientationGate />
     </div>
   )
 }

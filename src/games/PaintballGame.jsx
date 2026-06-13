@@ -11,6 +11,7 @@ import { SceneLoader } from '@babylonjs/core/Loading/sceneLoader'
 import '@babylonjs/loaders/glTF'
 import { findItem } from '../itemsCatalog'
 import { applyItemToMesh, loadClothingDonor, usesDonor } from '../applyClothing'
+import OrientationGate from '../OrientationGate'
 import './rocket-game.css'
 import './paintball.css'
 
@@ -1234,6 +1235,7 @@ export default function PaintballGame({ onBack }) {
   const me = rs?.players?.get(room?.sessionId)
   return (
     <div className="rg-outer">
+      <OrientationGate />
       <canvas ref={canvasRef} className="rg-canvas" />
       <button className="rg-back" onClick={() => { room?.leave(); onBack() }}>← Menu</button>
 

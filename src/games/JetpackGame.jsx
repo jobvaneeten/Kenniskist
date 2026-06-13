@@ -1,3 +1,5 @@
+import OrientationGate from '../OrientationGate'
+
 export default function JetpackGame({ onBack }) {
   // The jetpack game reads/writes the SAME wallet (kk_curuntie) as the rest of
   // the app, so coins always match. The home badge refreshes on ← Menu.
@@ -20,6 +22,7 @@ export default function JetpackGame({ onBack }) {
         style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
         title="Jetpack"
       />
+      <OrientationGate />
     </div>
   )
 }

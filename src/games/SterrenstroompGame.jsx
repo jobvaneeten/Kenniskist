@@ -1,3 +1,5 @@
+import OrientationGate from '../OrientationGate'
+
 export default function SterrenstroompGame({ onBack }) {
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: '#000' }}>
@@ -18,6 +20,7 @@ export default function SterrenstroompGame({ onBack }) {
         style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
         title="Sterrenstroom"
       />
+      <OrientationGate want="portrait" />
     </div>
   )
 }
