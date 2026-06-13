@@ -3,7 +3,18 @@ const canvas = document.getElementById('gameCanvas');
 const ctx    = canvas.getContext('2d');
 canvas.width  = window.innerWidth;
 canvas.height = window.innerHeight;
-window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
+// Schaalfactor zodat het poppetje + spelobjecten op ELK scherm dezelfde
+// verhouding houden (op telefoon was het poppetje veel te groot).
+function sizeFor() { return Math.max(0.55, Math.min(1, canvas.width / 1100)); }
+let SIZE = sizeFor();
+window.addEventListener('resize', () => {
+  canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+  SIZE = sizeFor();
+  if (typeof player !== 'undefined') {
+    player.width  = FRAME_W * SCALE * SIZE;
+    player.height = FRAME_H * SCALE * SIZE;
+  }
+});
 
 // Performance: disable image smoothing voor snellere rendering
 ctx.imageSmoothingEnabled = false;
@@ -97,7 +108,7 @@ const player = {
   x:150, y:300, vy:0,
   gravity:0.08, thrustPower:0.11, maxUp:-2, maxDown:2.5,
   isThrusting:false, invincible:false,
-  width: FRAME_W*SCALE, height: FRAME_H*SCALE,
+  width: FRAME_W*SCALE*SIZE, height: FRAME_H*SCALE*SIZE,
   currentAnim:'run', currentFrame:0, frameTimer:0, frameRate:3,
   alive:true, onGround:false, dieFrameDone:false
 };
