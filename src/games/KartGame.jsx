@@ -9,7 +9,7 @@ import { SceneLoader } from '@babylonjs/core/Loading/sceneLoader'
 import '@babylonjs/loaders/glTF'
 import * as Colyseus from '@colyseus/sdk'
 import { findItem } from '../itemsCatalog'
-import { applyItemToMesh, loadClothingDonor, usesDonor } from '../applyClothing'
+import { applyItemToMesh, loadClothingDonor, usesDonor, loadHeadItem } from '../applyClothing'
 import OrientationGate from '../OrientationGate'
 import './kart-game.css'
 
@@ -224,6 +224,14 @@ function loadAvatar(scene, shirt, wearing, onReady) {
       if (usesDonor(key, item)) loadClothingDonor(scene, m, skeleton, key, item)
       else { applyItemToMesh(scene, m, item); m.setEnabled(true) }
     })
+    // Pet (hoofd): los GLB-model getint naar kleur, volgt de Head-bone
+    if (wearing?.hoofd) {
+      const headItem = findItem('hoofd', wearing.hoofd)
+      if (headItem) {
+        const parent = meshes.find(m => CLOTHING_NAMES.has(m.name))?.parent || root
+        loadHeadItem(scene, parent, skeleton, headItem, wearing.hoofdStance || 'normaal')
+      }
+    }
     // Zwart gezicht (zoals paintball)
     meshes.forEach(m => {
       if (!FACE_NAMES.has(m.name) || !m.material) return

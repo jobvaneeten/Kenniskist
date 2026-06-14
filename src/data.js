@@ -40,6 +40,7 @@ export const CLOTHING_ITEMS = [
   { key: 'broek',    label: 'Broek',    emoji: '👖' },
   { key: 'sokken',   label: 'Sokken',   emoji: '🧦' },
   { key: 'schoenen', label: 'Schoenen', emoji: '👟' },
+  { key: 'hoofd',    label: 'Pet',      emoji: '🧢' },
 ]
 
 export const LOOTBOX_COST = 100

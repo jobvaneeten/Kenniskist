@@ -10,7 +10,7 @@ import {
 import { SceneLoader } from '@babylonjs/core/Loading/sceneLoader'
 import '@babylonjs/loaders/glTF'
 import { findItem } from '../itemsCatalog'
-import { applyItemToMesh, loadClothingDonor, usesDonor } from '../applyClothing'
+import { applyItemToMesh, loadClothingDonor, usesDonor, loadHeadItem } from '../applyClothing'
 import OrientationGate from '../OrientationGate'
 import './rocket-game.css'
 
@@ -214,6 +214,18 @@ class PlayerInstance {
           m.setEnabled(true)
         }
       })
+
+      // Pet (hoofd): standalone GLB tinted to a colour, follows the Head bone
+      const headKey = this.opts.wearing?.hoofd
+      if (headKey) {
+        const headItem = findItem('hoofd', headKey)
+        if (headItem) {
+          const parent = meshes.find(m => CLOTHING_NAMES.has(m.name))?.parent || this.root
+          loadHeadItem(this.scene, parent, this._skeleton, headItem,
+            this.opts.wearing?.hoofdStance || 'normaal',
+            (g) => { this._donors.push(g); this.sg?.addShadowCaster(g) })
+        }
+      }
 
       // Team skin color
       if (this.opts.teamColor) {

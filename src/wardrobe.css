@@ -404,3 +404,21 @@
   .clothing-label { font-size: 0.7rem; }
   .clothing-btn, .clothing-header { padding: 7px 6px; }
 }
+
+/* ── Pet stance toggle (normaal / achterstevoren) ── */
+.head-stance { display: flex; gap: 6px; margin: 4px 0 8px; }
+.head-stance-btn {
+  flex: 1; padding: 5px 6px; font-size: 0.7rem; cursor: pointer;
+  border: 2px solid rgba(255,255,255,0.25); border-radius: 8px;
+  background: rgba(255,255,255,0.06); color: #e8ecf4;
+}
+.head-stance-btn.stance-active {
+  background: #4f7cff; border-color: #4f7cff; color: #fff; font-weight: 700;
+}
+
+/* Tekst-badge in een swatch-rondje (bijv. petny → "NY") */
+.color-swatch .swatch-badge {
+  display: flex; align-items: center; justify-content: center;
+  width: 100%; height: 100%;
+  font-size: 0.62rem; font-weight: 800; color: #3a2a00; letter-spacing: 0.5px;
+}

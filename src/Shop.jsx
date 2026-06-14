@@ -1,14 +1,16 @@
 import { useState, useRef, useEffect } from 'react'
 import { CLOTHING_ITEMS, LOOTBOX_COST, RARITIES } from './data'
-import { getCatalog, swatchStyle, swatchEmoji } from './itemsCatalog'
+import { getCatalog, swatchStyle, swatchEmoji, swatchBadge } from './itemsCatalog'
 import './shop.css'
 
 // Generic visual for any item (colour / pattern / print / model)
 function ItemSwatch({ item, className = '', style, title }) {
   const emoji = swatchEmoji(item)
+  const badge = swatchBadge(item)
   return (
     <div className={`item-swatch ${className}`} title={title} style={{ ...swatchStyle(item), ...style }}>
       {emoji && <span className="item-swatch-emoji">{emoji}</span>}
+      {badge && <span className="item-swatch-badge">{badge}</span>}
     </div>
   )
 }

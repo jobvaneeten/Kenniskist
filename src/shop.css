@@ -979,3 +979,10 @@
   80%  { box-shadow: 0 40px 100px rgba(0,0,0,0.7), 0 0 60px rgba(200, 80,220,  0.5); }
   100% { box-shadow: 0 40px 100px rgba(0,0,0,0.7), 0 0 60px rgba(255, 80, 80,  0.5); }
 }
+
+/* Tekst-badge in een shop-swatch (bijv. petny → "NY") */
+.item-swatch-badge {
+  display: flex; align-items: center; justify-content: center;
+  width: 100%; height: 100%;
+  font-size: 0.6rem; font-weight: 800; color: #3a2a00; letter-spacing: 0.5px;
+}

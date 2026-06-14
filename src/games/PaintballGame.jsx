@@ -10,7 +10,7 @@ import {
 import { SceneLoader } from '@babylonjs/core/Loading/sceneLoader'
 import '@babylonjs/loaders/glTF'
 import { findItem } from '../itemsCatalog'
-import { applyItemToMesh, loadClothingDonor, usesDonor } from '../applyClothing'
+import { applyItemToMesh, loadClothingDonor, usesDonor, loadHeadItem } from '../applyClothing'
 import OrientationGate from '../OrientationGate'
 import './rocket-game.css'
 import './paintball.css'
@@ -165,6 +165,21 @@ class PlayerInstance {
         })
         else { applyItemToMesh(this.scene, m, item); m.setEnabled(true) }
       })
+
+      // Pet (hoofd): los GLB-model getint naar kleur, volgt de Head-bone
+      const headKey = this.opts.wearing?.hoofd
+      if (headKey) {
+        const headItem = findItem('hoofd', headKey)
+        if (headItem) {
+          const parent = meshes.find(m => CLOTHING_NAMES.has(m.name))?.parent || this.root
+          loadHeadItem(this.scene, parent, this._skeleton, headItem,
+            this.opts.wearing?.hoofdStance || 'normaal', (g) => {
+              this._donors.push(g)
+              this.sg?.addShadowCaster(g)
+              if (!this._bodyVisible) { g.isVisible = false; g.getChildMeshes?.(false).forEach(c => c.isVisible = false) }
+            })
+        }
+      }
 
       if (this.opts.teamColor) {
         const tc = Color3.FromHexString(this.opts.teamColor)

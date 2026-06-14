@@ -239,6 +239,23 @@ export const CATALOG = {
     print('bloem_sch',  'Bloemen',              'epic',      '🌸',     '#2a0a1a'),
     print('ufo_sch',    'Invaders',             'legendary', '👾',     '#10102a'),
   ],
+  // Hoofd = pet (één GLB-model, normaal/achterstevoren te dragen) getint naar
+  // de gekozen kleur. Alleen kleur-items: het 3D-model wordt gekleurd, net als
+  // de shirt-kleuren het lichaam tinten.
+  hoofd: [
+    ...BASE(),
+    color('turkoois',   'Turkoois',             'common',    '#2ec4b6'),
+    color('roze',       'Roze',                 'common',    '#ff6fb5'),
+    color('lime',       'Limegroen',            'rare',      '#9ccc3c'),
+    color('navy',       'Marineblauw',          'rare',      '#1b2a52'),
+    color('magentakl',  'Magenta',              'epic',      '#d6336c'),
+    color('zilver',     'Zilver',               'epic',      '#c4cdd6'),
+    color('goud_h',     'Goud',                 'legendary', '#d4af37'),
+    // Ultra legendary: pet met een eigen UV-design (petny.png op het pet-model).
+    // badge 'NY' wordt in het swatch-rondje getoond i.p.v. de zware UV-afbeelding.
+    { ...texmodel('petny', 'Toffe Pet', '/Pet/petnormaal.glb', '/Pet/petny.png', '/Pet/petny.png'), badge: 'NY' },
+    { ...texmodel('petgiraffe', 'Giraffe Pet', '/Pet/petnormaal.glb', '/Pet/petgiraffe.png', '/Pet/petgiraffe.png'), badge: '🦒' },
+  ],
 }
 
 export function getCatalog(type) { return CATALOG[type] || CATALOG.shirt }
@@ -254,6 +271,9 @@ export function allUnlockedMap() {
 // ── CSS swatch background (for shop/wardrobe UI previews) ─────────────
 export function swatchStyle(item) {
   if (!item) return { background: '#333' }
+  // Items with a text badge (e.g. petny → "NY") show the badge on a solid
+  // gradient instead of a (heavy) preview image.
+  if (item.badge) return { background: 'linear-gradient(135deg, #ffe08a, #d4af37)' }
   switch (item.kind) {
     case 'color':  return { background: item.hex }
     case 'model':
@@ -264,6 +284,7 @@ export function swatchStyle(item) {
   }
 }
 export function swatchEmoji(item) { return item && item.kind === 'print' ? item.emoji : null }
+export function swatchBadge(item) { return item && item.badge ? item.badge : null }
 
 // Lighten a #rrggbb colour by amount (0..1)
 function lighten(hex, amt) {

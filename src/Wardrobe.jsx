@@ -7,8 +7,8 @@ import {
 } from '@babylonjs/core'
 import { SceneLoader } from '@babylonjs/core/Loading/sceneLoader'
 import '@babylonjs/loaders/glTF'
-import { getCatalog, findItem, swatchStyle, swatchEmoji } from './itemsCatalog'
-import { applyItemToMesh, loadClothingDonor, usesDonor } from './applyClothing'
+import { getCatalog, findItem, swatchStyle, swatchEmoji, swatchBadge } from './itemsCatalog'
+import { applyItemToMesh, loadClothingDonor, usesDonor, loadHeadItem } from './applyClothing'
 import './wardrobe.css'
 
 const CLOTHING_MESHES = ['Shirt', 'Broek', 'Sokken', 'Schoenen']
@@ -132,6 +132,8 @@ export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlay
   const skeletonRef    = useRef(null)
   const meshesRef      = useRef({})
   const donorsRef      = useRef({})   // slot -> donor mesh
+  const headRef        = useRef(null) // loaded pet mesh (hoofd slot)
+  const headGenRef     = useRef(0)    // guards against stale/duplicate pet loads
   const animGroupsRef  = useRef({})
   const restPoseRef    = useRef({})   // bone name → { node, rot, pos } captured at T-pose
 
@@ -159,8 +161,12 @@ export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlay
     const d = donorsRef.current[slot]
     if (d) { try { d.dispose() } catch {} ; donorsRef.current[slot] = null }
   }
+  const disposeHead = () => {
+    if (headRef.current) { try { headRef.current.dispose() } catch {} ; headRef.current = null }
+  }
   const clearExtraMeshes = () => {
     Object.keys(donorsRef.current).forEach(disposeDonor)
+    disposeHead()
   }
 
   // Apply an item to a clothing slot (shirt/broek/sokken/schoenen):
@@ -194,6 +200,38 @@ export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlay
       applySlot(itemKey, next)
       return { ...prev, [itemKey]: next }
     })
+  }
+
+  // ── Hoofd (pet): standalone GLB tinted to a colour, normaal/achter stance ──
+  // NB: keep applyHead OUT of the setWearing updater — StrictMode invokes
+  // updaters twice, which would load (and leave) two caps. A generation guard
+  // also discards any load that a newer pick has already superseded.
+  const applyHead = (colorKey, stance) => {
+    const scene = sceneRef.current
+    if (!scene) return
+    const gen = ++headGenRef.current
+    disposeHead()
+    if (!colorKey) return
+    const item = findItem('hoofd', colorKey)
+    if (!item) return
+    const parent = (meshesRef.current.shirt || meshesRef.current.broek ||
+                    meshesRef.current.sokken || meshesRef.current.schoenen)?.parent || null
+    loadHeadItem(scene, parent, skeletonRef.current, item, stance, (g) => {
+      if (gen !== headGenRef.current) { try { g.dispose() } catch {} ; return }
+      headRef.current = g
+    })
+  }
+
+  const pickHead = (colorKey) => {
+    const next = wearing.hoofd === colorKey ? null : colorKey
+    applyHead(next, wearing.hoofdStance || 'normaal')
+    setWearing(prev => ({ ...prev, hoofd: next }))
+  }
+
+  const setHeadStance = (stance) => {
+    if ((wearing.hoofdStance || 'normaal') === stance) return
+    applyHead(wearing.hoofd || null, stance)
+    setWearing(prev => ({ ...prev, hoofdStance: stance }))
   }
 
   const resetToTPose = () => {
@@ -291,7 +329,11 @@ export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlay
 
       // Restore saved clothing
       if (shirtColor) applySlot('shirt', shirtColor)
-      Object.entries(wearing).forEach(([slot, key]) => { if (key) applySlot(slot, key) })
+      Object.entries(wearing).forEach(([slot, key]) => {
+        if (!key || slot === 'hoofd' || slot === 'hoofdStance') return
+        applySlot(slot, key)
+      })
+      if (wearing.hoofd) applyHead(wearing.hoofd, wearing.hoofdStance || 'normaal')
 
       // Face features always black
       meshes.forEach(m => {
@@ -491,6 +533,47 @@ export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlay
               })()}
             </div>
           ))}
+
+          {/* ── Pet (hoofd): kleuren + normaal/achterstevoren ── */}
+          <div className="clothing-section">
+            <div className={`clothing-header ${wearing.hoofd ? 'clothing-on' : ''}`}>
+              <span className="clothing-emoji">🧢</span>
+              <span className="clothing-label">Pet</span>
+              {wearing.hoofd && <span className="clothing-check">✓</span>}
+            </div>
+            {(() => {
+              const headStance = wearing.hoofdStance || 'normaal'
+              const items = getCatalog('hoofd').filter(c => (unlockedColors.hoofd || []).includes(c.key))
+              if (!items.length) return <p className="clothing-empty">Nog niets ontgrendeld — win petten in de 🛒 Winkel!</p>
+              return (
+                <>
+                  <div className="head-stance">
+                    <button
+                      className={`head-stance-btn ${headStance === 'normaal' ? 'stance-active' : ''}`}
+                      onClick={() => setHeadStance('normaal')}
+                    >Normaal</button>
+                    <button
+                      className={`head-stance-btn ${headStance === 'achter' ? 'stance-active' : ''}`}
+                      onClick={() => setHeadStance('achter')}
+                    >Achterstevoren</button>
+                  </div>
+                  <div className="color-swatches">
+                    {items.map(c => (
+                      <button
+                        key={c.key}
+                        className={`color-swatch ${wearing.hoofd === c.key ? 'swatch-active' : ''}`}
+                        style={swatchStyle(c)}
+                        title={c.label}
+                        onClick={() => pickHead(c.key)}
+                      >
+                        {swatchBadge(c) && <span className="swatch-badge">{swatchBadge(c)}</span>}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )
+            })()}
+          </div>
         </div>
       </aside>
 
