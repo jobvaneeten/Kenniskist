@@ -174,36 +174,31 @@ export function loadHeadItem(scene, parentNode, skeleton, item, stance, onReady)
       applyColor(g, item.hex)
     }
 
-    // The pet is rigid (100% weighted to the Head bone). Rather than re-skin it
-    // onto Poppetje's skeleton (fragile across separate GLB exports), keep the
-    // GLB's own __root__ (so its authored orientation/position on the head is
-    // preserved) and rigidly parent that root to the Head bone's transform node,
-    // so it follows the head without skinning.
+    // The pet is rigid (100% Head bone). Skinning onto Poppetje's skeleton is
+    // unreliable for this GLB (its bind pose differs), so keep the GLB's own
+    // __root__ (correct orientation/placement) and rigidly parent it to the
+    // Head bone's transform node. Compute the offset against the Head bone's
+    // REST (bind) matrix — NOT its live world — so it is independent of where
+    // the avatar root currently is (e.g. seated in the kart) or its pose.
+    let capRoot = g; while (capRoot.parent) capRoot = capRoot.parent
     const headBone = skeleton?.bones?.find(b => b.name === 'Head')
     const headNode = headBone?.getTransformNode?.()
-    // top of the imported hierarchy (the glTF __root__)
-    let capRoot = g; while (capRoot.parent) capRoot = capRoot.parent
+    const restHead = headBone && (
+      headBone.getAbsoluteBindMatrix?.() ||
+      headBone.getAbsoluteInverseBindMatrix?.()?.clone().invert()
+    )
 
-    if (headNode) {
+    if (headNode && restHead) {
       capRoot.computeWorldMatrix(true)
-      // Use the head node's REST world (cached once at load, before any emote),
-      // not its live animated world — otherwise re-attaching while an animation
-      // plays (e.g. toggling stance/colour) would pin the cap to a posed head
-      // and it would drift off in other poses.
-      let restHead = skeleton.__headRestWorld
-      if (!restHead) {
-        headNode.computeWorldMatrix(true)
-        restHead = headNode.getWorldMatrix().clone()
-        skeleton.__headRestWorld = restHead
-      }
-      // capRoot.world = local · restHead  ⇒  local = capRoot.world · restHead⁻¹
+      // cap.world = local · headNode.world ; want cap.world = capWorld0 when the
+      // head is at its rest (bind) → local = capWorld0 · restHead⁻¹
       const local = capRoot.getWorldMatrix().multiply(restHead.clone().invert())
       capRoot.parent = headNode
       if (!capRoot.rotationQuaternion) capRoot.rotationQuaternion = Quaternion.Identity()
       local.decompose(capRoot.scaling, capRoot.rotationQuaternion, capRoot.position)
       walkSet(g, m => { m.skeleton = null })   // rigid follow → no skinning
     } else if (skeleton) {
-      // Fallback: share Poppetje's skeleton (remap bone indices by name)
+      // Fallback: skinning (works when avatar is at the origin)
       if (parentNode) g.parent = parentNode
       g.position = new Vector3(0, 0, 0); g.rotationQuaternion = null; g.scaling = new Vector3(1, 1, 1)
       const srcSkel = srcSkels?.[0]
@@ -215,7 +210,6 @@ export function loadHeadItem(scene, parentNode, skeleton, item, stance, onReady)
     g.setEnabled(true)
     onReady?.(capRoot)
 
-    // dispose anything imported that's not part of the cap hierarchy we kept
     const keep = new Set(); walkSet(capRoot, m => keep.add(m))
     loaded.forEach(lm => { if (!keep.has(lm)) { try { lm.dispose() } catch {} } })
     srcSkels?.[0]?.dispose()

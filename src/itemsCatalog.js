@@ -132,8 +132,8 @@ export const CATALOG = {
     print('robot_b',    'Robots',               'epic',      '🤖',     '#10202a'),
     print('skull_b',    'Skulls',               'legendary', '💀',     '#1a1a1a'),
     print('planeet_b',  'Planeten',             'legendary', '🪐',     '#0a0a2a'),
-    texmodel('ajaxbroek', 'Ajax Broek', '/test/nieuwebroektest.glb', '/test/uvmapajaxbroek.png', '/logo_ajax.svg'),
-    texmodel('psvbroek',  'PSV Broek',  '/test/nieuwebroektest.glb', '/test/uvmappsvbroek.png',  '/logo_psv.svg'),
+    texmodel('ajaxbroek', 'Ajax Broek', '/test/nieuwebroektest.glb', '/Broekjes/ajaxbroek.png', '/logo_ajax.svg'),
+    texmodel('psvbroek',  'PSV Broek',  '/test/nieuwebroektest.glb', '/Broekjes/psvbroek.png',  '/logo_psv.svg'),
   ],
   sokken: [
     ...BASE(),
