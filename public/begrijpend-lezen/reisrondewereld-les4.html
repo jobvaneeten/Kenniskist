@@ -493,7 +493,11 @@ let markState = questions.map(() => new Set());
 // ─────────────────────────────────────────────────────────────────────────────
 // PERSISTENCE
 // ─────────────────────────────────────────────────────────────────────────────
+let paidSet = new Set();
+function loadPaid() { try { const s = localStorage.getItem('bl_wereld_les4_paid'); if (s) paidSet = new Set(JSON.parse(s)); } catch(e){} }
+function savePaid() { try { localStorage.setItem('bl_wereld_les4_paid', JSON.stringify([...paidSet])); } catch(e){} }
 function loadProgress() {
+  loadPaid();
   try {
     const saved = localStorage.getItem('bl_wereld_les4');
     if (saved) {
@@ -847,7 +851,9 @@ function recordAnswer(pts) {
   score = scores.reduce((a,b)=>a+b,0);
   document.getElementById('score-num').textContent = score;
   saveProgress();
-  if (pts > 0) {
+  if (pts > 0 && !paidSet.has(current)) {
+    paidSet.add(current);
+    savePaid();
     try { window.parent.postMessage({ type: 'begrijpend-correct', amount: 10 }, '*'); } catch(e){}
   }
 }
