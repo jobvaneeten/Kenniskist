@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Begrijpend Lezen – De Eerste Wereldreizigers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d1a;
+    --card: rgba(255,255,255,0.05);
+    --card-border: rgba(255,255,255,0.10);
+    --ink: #ffffff;
+    --ink-soft: rgba(255,255,255,0.50);
+    --primary: #9B4DCA;
+    --primary-d: #7a35a8;
+    --primary-glow: rgba(155,77,202,0.35);
+    --gold: #FFC23C;
+    --correct: #15A66B;
+    --wrong: #FF6150;
+    --line: rgba(255,255,255,0.10);
+    --shadow: 0 24px 48px -16px rgba(0,0,0,0.6);
+    --r: 20px;
+    --highlight-hover: rgba(155,77,202,.22);
+    --highlight-sel: rgba(155,77,202,.45);
+    --highlight-ok: rgba(21,166,107,.30);
+    --highlight-err: rgba(255,97,80,.25);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', system-ui, sans-serif;
+    color: var(--ink);
+    background:
+      radial-gradient(ellipse 55% 45% at 14% 14%, rgba(232,67,147,0.18) 0%, transparent 58%),
+      radial-gradient(ellipse 50% 42% at 86% 18%, rgba(124,58,237,0.20) 0%, transparent 58%),
+      radial-gradient(ellipse 52% 46% at 84% 86%, rgba(6,214,160,0.12) 0%, transparent 58%),
+      radial-gradient(ellipse 48% 42% at 12% 86%, rgba(56,189,248,0.12) 0%, transparent 58%),
+      var(--bg);
+    font-size: 17px;
+    line-height: 1.7;
+    min-height: 100vh;
+  }
+
+  header {
+    padding: 28px 24px 10px;
+    text-align: center;
+  }
+  header .eyebrow {
+    font-size: 11px;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--primary);
+    margin-bottom: 6px;
+    font-weight: 700;
+    opacity: .9;
+  }
+  header h1 {
+    font-family: 'Baloo 2', system-ui, sans-serif;
+    font-size: clamp(1.6rem, 5vw, 2.8rem);
+    font-weight: 800;
+    line-height: 1.1;
+    color: #fff;
+  }
+  header p { margin-top: 8px; font-size: 14px; color: var(--ink-soft); }
+
+  #progress-bar-wrap { background: rgba(255,255,255,0.10); height: 8px; border-radius: 99px; max-width: 800px; margin: 0 auto; }
+  #progress-bar { height: 8px; border-radius: 99px; background: linear-gradient(90deg,var(--primary),#c084f5); width: 0%; transition: width .5s ease; box-shadow: 0 0 12px var(--primary-glow); }
+
+  #score-badge {
+    position: fixed; top: 12px; right: 16px;
+    background: linear-gradient(135deg,var(--primary),var(--primary-d)); color: #fff;
+    font-weight: 800; font-size: 13px;
+    padding: 5px 12px; border-radius: 20px;
+    z-index: 100; display: none;
+    box-shadow: 0 8px 24px -6px var(--primary-glow);
+  }
+
+  main { max-width: 800px; margin: 0 auto; padding: 32px 20px 80px; }
+
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* INTRO */
+  #intro-screen { text-align: center; padding: 40px 0; }
+  #intro-screen .compass { font-size: 64px; margin-bottom: 16px; filter: drop-shadow(0 0 24px var(--primary-glow)); }
+  #intro-screen h2 { font-family: 'Baloo 2', system-ui, sans-serif; font-size: 1.8rem; margin-bottom: 12px; color: #fff; }
+  #intro-screen p { max-width: 520px; margin: 0 auto 20px; color: var(--ink-soft); }
+  .legend { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-bottom:28px; }
+  .legend span { padding:5px 12px; border-radius:99px; font-size:13px; font-weight:700; }
+
+  /* CARD */
+  .q-card {
+    background: var(--card);
+    border: 1.5px solid var(--card-border);
+    border-radius: var(--r);
+    padding: 28px 28px 24px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,0.08);
+    backdrop-filter: blur(12px);
+  }
+  .q-type-label {
+    display: inline-block;
+    font-size: 10px; letter-spacing: .13em; text-transform: uppercase;
+    font-weight: 700; padding: 3px 9px; border-radius: 99px; margin-bottom: 12px;
+  }
+  .label-literal   { background:rgba(56,189,248,.18); color:#7dd3fc; }
+  .label-inferring { background:rgba(255,193,60,.18); color:var(--gold); }
+  .label-evaluating{ background:rgba(21,166,107,.18); color:#4ade80; }
+
+  .q-card h3 {
+    font-family: 'Baloo 2', system-ui, sans-serif;
+    font-size: 1.12rem; font-weight: 700;
+    margin-bottom: 16px; line-height: 1.4;
+    color: #fff;
+  }
+
+  /* PASSAGE */
+  .passage {
+    background: rgba(255,255,255,0.04);
+    border-left: 3px solid var(--primary);
+    padding: 16px 18px;
+    border-radius: 0 12px 12px 0;
+    font-size: 15.5px;
+    line-height: 1.75;
+    margin-bottom: 20px;
+    position: relative;
+    color: rgba(255,255,255,0.85);
+  }
+  .passage.markable { cursor: text; }
+
+  /* WORD-LEVEL MARKING */
+  .mw {
+    border-radius: 2px;
+    padding: 1px 1px;
+    cursor: pointer;
+    transition: background .1s;
+    display: inline;
+  }
+  .mw:hover  { background: var(--highlight-hover); }
+  .mw.sel    { background: var(--highlight-sel); outline: 1.5px solid var(--primary); border-radius: 3px; }
+  .mw.ok     { background: var(--highlight-ok);  outline: 1.5px solid var(--correct); border-radius: 3px; }
+  .mw.err    { background: var(--highlight-err); outline: 1.5px solid var(--wrong);   border-radius: 3px; }
+
+  .mark-instruction {
+    font-size: 13px; color: var(--ink-soft); font-style: italic;
+    margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+  }
+  .mark-instruction::before { content: '✏️'; font-style: normal; }
+
+  .mark-check-btn {
+    margin-top: 12px;
+    display: inline-block;
+    padding: 9px 18px;
+    background: linear-gradient(135deg,var(--primary),var(--primary-d)); color: #fff;
+    border: none; border-radius: 10px;
+    font-size: 14px; font-weight: 700;
+    cursor: pointer; font-family: 'Nunito', sans-serif;
+    transition: opacity .15s, box-shadow .15s;
+    box-shadow: 0 8px 24px -6px var(--primary-glow);
+  }
+  .mark-check-btn:hover { opacity: .85; }
+  .mark-check-btn:disabled { opacity: .35; cursor: default; box-shadow: none; }
+
+  /* OPTIONS (MC) */
+  .options { display:flex; flex-direction:column; gap:10px; margin-bottom:18px; }
+  .opt-btn {
+    background: rgba(255,255,255,0.05); border:1.5px solid var(--line); border-radius:12px;
+    padding:11px 16px; text-align:left; cursor:pointer;
+    font-size:15px; font-family:'Nunito',sans-serif; color: #fff;
+    transition: border-color .15s, background .15s;
+  }
+  .opt-btn:hover:not(:disabled) { border-color:var(--primary); background:rgba(155,77,202,0.12); }
+  .opt-btn.correct { border-color:var(--correct); background:rgba(21,166,107,0.18); color:#fff; font-weight:600; }
+  .opt-btn.wrong   { border-color:var(--wrong);   background:rgba(255,97,80,0.18); color:#fff; }
+  .opt-btn:disabled { cursor:default; }
+
+  /* DRAG */
+  .drag-container { display:flex; gap:14px; flex-wrap:wrap; margin-bottom:16px; }
+  .drag-pool { flex:1; min-width:170px; }
+  .drag-pool h4 { font-size:12px; text-transform:uppercase; letter-spacing:.1em; color:var(--ink-soft); margin-bottom:7px; font-weight:700; }
+  .drag-list { min-height:70px; border:2px dashed var(--line); border-radius:12px; padding:8px; display:flex; flex-direction:column; gap:6px; }
+  .drag-list.over { border-color:var(--primary); background:rgba(155,77,202,0.10); }
+  .drag-item {
+    background:rgba(255,255,255,0.06); border:1.5px solid var(--line); border-radius:10px;
+    padding:7px 12px; font-size:14px; cursor:grab; user-select:none; color:#fff;
+    transition:box-shadow .15s, border-color .15s, background .15s;
+  }
+  .drag-item:active { cursor:grabbing; box-shadow:0 4px 12px rgba(0,0,0,.35); }
+  .drag-item.correct-drag { border-color:var(--correct); background:rgba(21,166,107,0.18); color:#fff; font-weight:600; }
+  .drag-item.wrong-drag   { border-color:var(--wrong);   background:rgba(255,97,80,0.18); }
+
+  /* ORDER */
+  .order-list { display:flex; flex-direction:column; gap:8px; margin-bottom:16px; }
+  .order-item {
+    background:rgba(255,255,255,0.06); border:1.5px solid var(--line); border-radius:10px;
+    padding:10px 14px; cursor:grab; font-size:14.5px; color:#fff;
+    display:flex; align-items:center; gap:12px; user-select:none;
+  }
+  .order-item:active { cursor:grabbing; box-shadow:0 4px 14px rgba(0,0,0,.35); }
+  .order-item .handle { color:var(--ink-soft); font-size:18px; }
+  .order-item.correct-order { border-color:var(--correct); background:rgba(21,166,107,0.18); }
+  .order-item.wrong-order   { border-color:var(--wrong);   background:rgba(255,97,80,0.18); }
+
+  /* FEEDBACK */
+  .feedback { display:none; margin-top:14px; padding:12px 16px; border-radius:12px; font-size:14.5px; line-height:1.55; }
+  .feedback.show { display:block; }
+  .feedback.correct-fb { background:rgba(21,166,107,0.12); border-left:3px solid var(--correct); color:#bdf5d8; }
+  .feedback.wrong-fb   { background:rgba(255,97,80,0.12); border-left:3px solid var(--wrong);   color:#ffd2cb; }
+
+  /* BUTTONS */
+  .btn {
+    display:inline-block; padding:12px 24px; border-radius:12px;
+    font-size:15px; font-family:'Baloo 2',sans-serif; font-weight:700;
+    cursor:pointer; border:none; transition:opacity .15s, transform .1s, box-shadow .15s;
+  }
+  .btn:hover { opacity:.88; transform:translateY(-1px); }
+  .btn-primary   { background:linear-gradient(135deg,var(--primary),var(--primary-d)); color:#fff; box-shadow:0 8px 24px -6px var(--primary-glow); }
+  .btn-secondary { background:transparent; color:rgba(255,255,255,.75); border:1.5px solid var(--line); }
+  .btn-gold      { background:linear-gradient(135deg,var(--gold),#e0a82e); color:#1c1208; }
+  .btn-row { display:flex; gap:12px; margin-top:20px; flex-wrap:wrap; }
+
+  .q-progress { font-size:12px; color:var(--ink-soft); text-align:right; margin-bottom:4px; font-weight:700; }
+
+  /* FINISH */
+  #finish-screen { text-align:center; padding:40px 0; }
+  #finish-screen .medal { font-size:72px; filter: drop-shadow(0 0 24px var(--primary-glow)); }
+  #finish-screen h2 { font-family:'Baloo 2',sans-serif; font-size:2rem; margin:16px 0 10px; color:#fff; }
+  #finish-screen .score-big { font-size:3.5rem; font-weight:800; color:var(--primary); font-family:'Baloo 2',sans-serif; text-shadow: 0 0 30px var(--primary-glow); }
+  #finish-screen p { max-width:460px; margin:12px auto 28px; color:var(--ink-soft); }
+  #finish-overview { max-width:520px; margin:0 auto 28px; text-align:left; }
+  .ov-title { text-align:center; font-family:'Baloo 2',sans-serif; font-weight:800; color:#fff; font-size:1.15rem; margin-bottom:14px; }
+  .ov-row { display:flex; align-items:flex-start; gap:10px; padding:9px 12px; border-radius:10px; margin-bottom:7px; border:1.5px solid var(--line); font-size:14px; }
+  .ov-row.ov-ok { background:rgba(21,166,107,0.12); border-color:rgba(21,166,107,0.4); }
+  .ov-row.ov-no { background:rgba(255,97,80,0.12); border-color:rgba(255,97,80,0.4); }
+  .ov-ic { flex-shrink:0; }
+  .ov-q { color:rgba(255,255,255,0.85); line-height:1.4; }
+  .ov-q b { color:#fff; }
+
+  @media(max-width:560px){
+    .q-card { padding:18px 16px; }
+    .drag-container { flex-direction:column; }
+  }
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<header>
+  <p class="eyebrow">Begrijpend lezen · Groep 7-8</p>
+  <h1>Ieder dier zijn eigen plekje</h1>
+  <p>Bron: Blink Wereld – Reis de wereld rond</p>
+</header>
+<div id="progress-bar-wrap"><div id="progress-bar"></div></div>
+<div id="score-badge">⭐ <span id="score-num">0</span> pt</div>
+
+<main>
+
+<div id="intro-screen" class="screen active">
+  <div class="compass">🌍</div>
+  <h2>Klaar voor een reis langs de klimaten?</h2>
+  <p>Je leest teksten over klimaten en hoe dieren en planten zich aanpassen, en beantwoordt vragen. Bij <strong>letterlijke vragen</strong> markeer je het antwoord <em>in de tekst zelf</em>. Klik woorden aan om ze te selecteren.</p>
+  <div class="legend">
+    <span style="background:#d0e8ff;color:#0a3a6e;">🔍 Letterlijk – markeer in de tekst</span>
+    <span style="background:#fde8c0;color:#7a3d00;">💡 Afleidend</span>
+    <span style="background:#dff0e2;color:#1a5c2a;">💬 Evaluerend</span>
+  </div>
+  <button class="btn btn-primary" onclick="startQuiz()">Begin de oefening →</button>
+</div>
+
+<div id="quiz-screen" class="screen">
+  <p class="q-progress" id="q-progress"></p>
+  <div id="question-area"></div>
+  <div class="btn-row" id="nav-row"></div>
+</div>
+
+<div id="finish-screen" class="screen">
+  <div class="medal" id="finish-medal">🏅</div>
+  <h2>Goed gedaan, ontdekkingsreiziger!</h2>
+  <div class="score-big" id="finish-score">0/0</div>
+  <p id="finish-msg"></p>
+  <div id="finish-overview"></div>
+  <button class="btn btn-primary" onclick="restartQuiz()">Opnieuw proberen</button>
+</div>
+
+</main>
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// QUESTION DATA
+// type: 'mark'   → klik woorden aan in de passage (letterlijk)
+// type: 'mc'     → multiple choice
+// type: 'order'  → sleep op volgorde
+// type: 'drag'   → sleep naar categorie
+//
+// Voor 'mark': passage is een string. correctWords = array van exacte
+// woorden/woordgroepen die de leerling moet selecteren (elk woord apart
+// als string). Het systeem splitst de passage in klikbare woorden.
+// correctSpan: [startWordIndex, endWordIndex] (inclusive) = de juiste selectie.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const questions = [
+
+  // ── Q1  Letterlijk → markeren  (klimaat, span geverifieerd 13-25)
+  {
+    type: 'mark',
+    qtype: 'literal',
+    label: '🔍 Letterlijk',
+    labelClass: 'label-literal',
+    question: 'Markeer in de tekst wat "klimaat" betekent.',
+    passage: 'Temperatuur, neerslag, wind en zon bepalen het weer. Het weer verandert per dag. Het klimaat is het gemiddelde weer over een lange periode: minstens dertig jaar. In Nederland hebben we een gematigd klimaat. Het is hier gemiddeld niet extreem koud of warm en het regent zo\'n 800 millimeter per jaar.',
+    // "Het klimaat is het gemiddelde weer over een lange periode: minstens dertig jaar."
+    correctSpan: { start: 13, end: 25 },
+    coreWords: [17, 21, 24], // gemiddelde, lange, dertig
+    feedback: 'Het antwoord staat in de zin: "Het klimaat is het gemiddelde weer over een lange periode: minstens dertig jaar." Het weer verandert per dag, maar het klimaat gaat over een lange tijd.',
+    points: 2
+  },
+
+  // ── Q2  Letterlijk → markeren  (eekhoorn, span geverifieerd 18-28)
+  {
+    type: 'mark',
+    qtype: 'literal',
+    label: '🔍 Letterlijk',
+    labelClass: 'label-literal',
+    question: 'Markeer in de tekst waarom de eekhoorn in de herfst een voorraad voedsel aanlegt.',
+    passage: 'Zijn mooie pluimstaart gebruikt de eekhoorn op warme dagen als parasol en als het koud is als dekentje! Omdat er in de winter minder voedsel in de bossen is, legt de eekhoorn in de herfst een voorraad voedsel aan.',
+    // "Omdat er in de winter minder voedsel in de bossen is,"
+    correctSpan: { start: 18, end: 28 },
+    coreWords: [22, 23, 27], // winter, minder, bossen
+    feedback: 'Het antwoord staat in de zin: "Omdat er in de winter minder voedsel in de bossen is, legt de eekhoorn in de herfst een voorraad voedsel aan."',
+    points: 2
+  },
+
+  // ── Q3  Letterlijk → markeren  (kameel, span geverifieerd 0-12)
+  {
+    type: 'mark',
+    qtype: 'literal',
+    label: '🔍 Letterlijk',
+    labelClass: 'label-literal',
+    question: 'Markeer in de tekst hoe kamelen ervoor zorgen dat er geen zand in hun neus komt.',
+    passage: 'Kamelen kunnen hun neusvleugels dichtklappen, zodat er geen zand in hun neus komt. De lange wimpers van een kameel beschermen zijn ogen tegen zandkorreltjes. In de woestijn is bijna geen eten en drinken te vinden voor kamelen. Ze slaan vet op in hun bulten als reserve-energie.',
+    // "Kamelen kunnen hun neusvleugels dichtklappen, zodat er geen zand in hun neus komt."
+    correctSpan: { start: 0, end: 12 },
+    coreWords: [3, 8, 12], // neusvleugels, zand, komt.
+    feedback: 'Het antwoord staat in de zin: "Kamelen kunnen hun neusvleugels dichtklappen, zodat er geen zand in hun neus komt." De lange wimpers beschermen daarnaast hun ogen.',
+    points: 2
+  },
+
+  // ── Q4  Letterlijk → markeren  (evenaar, span geverifieerd 35-48)
+  {
+    type: 'mark',
+    qtype: 'literal',
+    label: '🔍 Letterlijk',
+    labelClass: 'label-literal',
+    question: 'Markeer in de tekst wat het verband is tussen de ligging bij de evenaar en hoe warm het klimaat is.',
+    passage: 'Op de wereld zijn verschillende klimaatzones. De zones gaan vloeiend in elkaar over, het zijn geen grenzen zoals bij een land. Er zijn verschillende invloeden die het klimaat bepalen. De ligging op de aarde bijvoorbeeld: hoe dichter een gebied bij de evenaar ligt, hoe warmer het klimaat daar is. Ook de aanwezigheid van zeeën, oceanen en bergen heeft invloed op het klimaat.',
+    // "hoe dichter een gebied bij de evenaar ligt, hoe warmer het klimaat daar is."
+    correctSpan: { start: 35, end: 48 },
+    coreWords: [36, 41, 44], // dichter, evenaar, warmer
+    feedback: 'Het antwoord staat in de zin: "...hoe dichter een gebied bij de evenaar ligt, hoe warmer het klimaat daar is."',
+    points: 2
+  },
+
+  // ── Q5  Afleidend MC
+  {
+    type: 'mc',
+    qtype: 'inferring',
+    label: '💡 Afleidend',
+    labelClass: 'label-inferring',
+    question: 'Waarom hebben dieren in koude gebieden vaak kleine oren?',
+    passage: 'Een dier past zich aan aan het weer en het klimaat waarin het leeft. Dieren in koude gebieden hebben vaak kleine oren. Uitstekende delen kunnen namelijk gemakkelijk bevriezen in de winter.',
+    options: [
+      'Kleine oren staan schattiger',
+      'Uitstekende delen zoals grote oren kunnen in de winter gemakkelijk bevriezen',
+      'Met kleine oren kunnen ze beter horen in de sneeuw',
+      'Grote oren bestaan niet bij dieren'
+    ],
+    correct: 1,
+    feedback: 'De tekst zegt dat uitstekende delen gemakkelijk bevriezen in de winter. Kleine oren steken minder uit en bevriezen dus minder snel — handig in een koud gebied.',
+    points: 1
+  },
+
+  // ── Q6  Afleidend MC
+  {
+    type: 'mc',
+    qtype: 'inferring',
+    label: '💡 Afleidend',
+    labelClass: 'label-inferring',
+    question: 'Waarom groeien sommige planten in het tropisch regenwoud zo enorm hoog?',
+    passage: 'In het tropisch regenwoud hebben planten het heerlijk. De temperatuur is goed en de grond vruchtbaar. Er is maar één ding waar ze voor moeten vechten: het licht van de zon. Om die race te winnen, groeien sommige planten enorm hoog: er zijn bomen zo hoog als een gebouw van 28 verdiepingen! Zij spreiden hun enorme bladeren uit om zoveel mogelijk licht te vangen.',
+    options: [
+      'Omdat de grond te nat is om laag te blijven',
+      'Om zo veel mogelijk licht van de zon te vangen, want daar moeten ze om vechten',
+      'Omdat er geen dieren zijn die de planten opeten',
+      'Omdat het er nooit regent'
+    ],
+    correct: 1,
+    feedback: 'In het regenwoud is alles er wel, behalve genoeg licht onderin. Door hoog te groeien en hun bladeren uit te spreiden, vangen planten zo veel mogelijk zonlicht. Dat is de "race" waar de tekst over spreekt.',
+    points: 1
+  },
+
+  // ── Q7  Letterlijk → markeren  (pinguïn, span geverifieerd 0-6)
+  {
+    type: 'mark',
+    qtype: 'literal',
+    label: '🔍 Letterlijk',
+    labelClass: 'label-literal',
+    question: 'Markeer in de tekst waardoor een pinguïn het niet koud krijgt in het water.',
+    passage: 'Het verenjasje van de pinguïn is waterdicht. Zo krijgt de vogel het niet koud in het water. Eronder zit een dikke laag isolerend vet. De spieren van pinguïnpoten zitten aan de bovenkant van de voet. Zo bevriezen ze niet zo snel op het ijs.',
+    // "Het verenjasje van de pinguïn is waterdicht."
+    correctSpan: { start: 0, end: 6 },
+    coreWords: [1, 6], // verenjasje, waterdicht.
+    feedback: 'Het antwoord staat in de zin: "Het verenjasje van de pinguïn is waterdicht." Daardoor en door de dikke laag isolerend vet eronder krijgt de vogel het niet koud in het water.',
+    points: 2
+  },
+
+  // ── Q8  Afleidend drag naar categorie
+  {
+    type: 'drag',
+    qtype: 'inferring',
+    label: '💡 Afleidend – Sorteren',
+    labelClass: 'label-inferring',
+    question: 'Bij welk klimaat hoort elk kenmerk? Lees de tekst en sleep elk kenmerk naar het juiste klimaat.',
+    passage: 'Woestijnklimaat: Overdag tussen de 25 en 45 graden, neerslag bijna niks (0 tot 200 millimeter per jaar). Tropisch regenwoudklimaat: nat, bijna iedere dag een bui, en er groeien bomen zo hoog als een gebouw. Sneeuw-en-ijsklimaat: altijd koud, de grond is bedekt met ijs en sneeuw, en in de winter is het op de polen bijna de hele dag donker.',
+    categories: ['Woestijnklimaat', 'Tropisch regenwoudklimaat', 'Sneeuw-en-ijsklimaat'],
+    items: [
+      { id: 'w1', text: '0 tot 200 millimeter regen per jaar', correct: 'Woestijnklimaat' },
+      { id: 'w2', text: 'Overdag tussen de 25 en 45 graden',  correct: 'Woestijnklimaat' },
+      { id: 'r1', text: 'Bijna iedere dag een bui',           correct: 'Tropisch regenwoudklimaat' },
+      { id: 'r2', text: 'Bomen zo hoog als een gebouw',       correct: 'Tropisch regenwoudklimaat' },
+      { id: 's1', text: 'De grond is bedekt met ijs en sneeuw', correct: 'Sneeuw-en-ijsklimaat' },
+      { id: 's2', text: 'In de winter de hele dag donker',    correct: 'Sneeuw-en-ijsklimaat' }
+    ],
+    feedback: 'Woestijnklimaat → heel weinig regen en grote hitte overdag. Tropisch regenwoud → nat met dagelijkse buien en hoge bomen. Sneeuw-en-ijsklimaat → altijd koud, ijs en sneeuw, en donkere poolwinters.',
+    points: 2
+  },
+
+  // ── Q9  Evaluerend MC
+  {
+    type: 'mc',
+    qtype: 'evaluating',
+    label: '💬 Evaluerend',
+    labelClass: 'label-evaluating',
+    question: 'Waarom komen dezelfde klimaatzones op verschillende plekken in de wereld voor? Welk antwoord wordt het best door de tekst onderbouwd?',
+    passage: 'Op de wereld zijn verschillende klimaatzones. Dezelfde klimaatzones komen op verschillende plekken in de wereld voor. Er zijn verschillende invloeden die het klimaat bepalen, zoals de ligging op de aarde: hoe dichter bij de evenaar, hoe warmer. Ook de aanwezigheid van zeeën, oceanen en bergen heeft invloed op het klimaat.',
+    options: [
+      'Omdat het klimaat overal op aarde precies hetzelfde is',
+      'Omdat plekken die even ver van de evenaar liggen en dezelfde invloeden hebben, op elkaar lijken',
+      'Omdat landen grenzen hebben getrokken om de klimaten heen',
+      'Omdat de zon elke dag op een andere plek schijnt'
+    ],
+    correct: 1,
+    feedback: 'De tekst zegt dat dezelfde invloeden (zoals de afstand tot de evenaar, en zeeën of bergen) het klimaat bepalen. Plekken met dezelfde invloeden krijgen daardoor dezelfde klimaatzone, ook al liggen ze ver uit elkaar.',
+    points: 1
+  },
+
+  // ── Q10  Evaluerend MC
+  {
+    type: 'mc',
+    qtype: 'evaluating',
+    label: '💬 Evaluerend',
+    labelClass: 'label-evaluating',
+    question: 'Waarom is het volgens de tekst juist om over het "klimaat" van een gebied te praten en niet over het "weer" van één dag?',
+    passage: 'Temperatuur, neerslag, wind en zon bepalen het weer. Het weer verandert per dag. Het klimaat is het gemiddelde weer over een lange periode: minstens dertig jaar. In het tropisch regenwoud valt wel 2000 millimeter regen per jaar. Daarom heet het ook regenwoud.',
+    options: [
+      'Omdat het weer nooit verandert',
+      'Omdat het klimaat het gemiddelde weer over een lange tijd (minstens dertig jaar) is, en één dag te kort is',
+      'Omdat weer en klimaat precies hetzelfde betekenen',
+      'Omdat alleen het regenwoud een klimaat heeft'
+    ],
+    correct: 1,
+    feedback: 'Het weer verandert per dag, dus één dag zegt weinig over een gebied. Het klimaat is het gemiddelde weer over minstens dertig jaar — dat geeft pas een goed beeld van hoe een gebied echt is.',
+    points: 1
+  }
+
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────────────────────────────────────
+let current = 0;
+let score   = 0;
+let answered = new Array(questions.length).fill(false);
+let scores   = new Array(questions.length).fill(0);
+
+// per-question word selection state (mark questions)
+// markState[i] = Set of selected word indices
+let markState = questions.map(() => new Set());
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PERSISTENCE
+// ─────────────────────────────────────────────────────────────────────────────
+function loadProgress() {
+  try {
+    const saved = localStorage.getItem('bl_wereld_les4');
+    if (saved) {
+      const d = JSON.parse(saved);
+      scores   = d.scores   || scores;
+      answered = d.answered || answered;
+      score    = scores.reduce((a,b)=>a+b,0);
+    }
+  } catch(e){}
+}
+
+function saveProgress() {
+  try {
+    localStorage.setItem('bl_wereld_les4', JSON.stringify({ scores, answered }));
+  } catch(e){}
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FLOW
+// ─────────────────────────────────────────────────────────────────────────────
+function startQuiz() {
+  loadProgress();
+  document.getElementById('score-badge').style.display = 'block';
+  show('quiz-screen');
+  renderQuestion();
+}
+
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function updateProgress() {
+  const pct = (current / questions.length) * 100;
+  document.getElementById('progress-bar').style.width = pct + '%';
+  document.getElementById('q-progress').textContent = `Vraag ${current + 1} van ${questions.length}`;
+  document.getElementById('score-num').textContent = score;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RENDER DISPATCH
+// ─────────────────────────────────────────────────────────────────────────────
+function renderQuestion() {
+  updateProgress();
+  const q   = questions[current];
+  const area = document.getElementById('question-area');
+  const nav  = document.getElementById('nav-row');
+
+  let html = `<div class="q-card">`;
+  html += `<span class="q-type-label ${q.labelClass}">${q.label}</span>`;
+  html += `<h3>${q.question}</h3>`;
+
+  if      (q.type === 'mark')  html += renderMark(q);
+  else if (q.type === 'mc')    html += renderMC(q);
+  else if (q.type === 'order') html += renderOrder(q);
+  else if (q.type === 'drag')  html += renderDrag(q);
+
+  html += `<div class="feedback" id="feedback-box"></div>`;
+  html += `</div>`;
+  area.innerHTML = html;
+
+  if (q.type === 'order') attachOrderHandlers();
+  if (q.type === 'drag')  attachDragHandlers();
+
+  nav.innerHTML = '';
+  if (current > 0) {
+    const b = document.createElement('button');
+    b.className = 'btn btn-secondary';
+    b.textContent = '← Vorige';
+    b.onclick = () => { current--; renderQuestion(); };
+    nav.appendChild(b);
+  }
+
+  if (answered[current]) {
+    restoreAnswered();
+    addNextBtn(nav);
+  }
+}
+
+function addNextBtn(nav) {
+  if (document.getElementById('next-btn')) return;
+  const isLast = current === questions.length - 1;
+  const b = document.createElement('button');
+  b.className = 'btn btn-primary';
+  b.id = 'next-btn';
+  b.textContent = isLast ? 'Bekijk resultaat →' : 'Volgende vraag →';
+  b.onclick = () => {
+    if (isLast) showFinish();
+    else { current++; renderQuestion(); }
+  };
+  nav.appendChild(b);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MARK (word-level highlighting)
+// ─────────────────────────────────────────────────────────────────────────────
+function tokenize(text) {
+  // Split into words and whitespace/punctuation tokens
+  // Each entry: { word: string, isWord: bool }
+  const parts = [];
+  const re = /(\s+|[^\s]+)/g;
+  let m;
+  while ((m = re.exec(text)) !== null) {
+    const t = m[0];
+    const isWord = /\S/.test(t);
+    parts.push({ text: t, isWord });
+  }
+  return parts;
+}
+
+function renderMark(q) {
+  const tokens = tokenize(q.passage);
+  let html = `<p class="mark-instruction">Klik op woorden in de tekst om ze te selecteren. Klik nog een keer om de selectie ongedaan te maken.</p>`;
+  html += `<div class="passage markable" id="mark-passage">`;
+  let wordIdx = 0;
+  tokens.forEach(tok => {
+    if (tok.isWord) {
+      html += `<span class="mw" data-wi="${wordIdx}" onclick="toggleWord(${wordIdx})">${escHtml(tok.text)}</span>`;
+      wordIdx++;
+    } else {
+      html += escHtml(tok.text);
+    }
+  });
+  html += `</div>`;
+  html += `<button class="mark-check-btn" id="mark-check" onclick="checkMark()">Controleer markering</button>`;
+  return html;
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function toggleWord(wi) {
+  if (answered[current]) return;
+  const sel = markState[current];
+  const el  = document.querySelector(`.mw[data-wi="${wi}"]`);
+  if (!el) return;
+  if (sel.has(wi)) { sel.delete(wi); el.classList.remove('sel'); }
+  else             { sel.add(wi);    el.classList.add('sel'); }
+}
+
+function checkMark() {
+  if (answered[current]) return;
+  const q   = questions[current];
+  const sel = markState[current];
+  if (sel.size === 0) return;
+
+  // Full correct set (all words in the ideal span)
+  const correctSet = new Set();
+  for (let i = q.correctSpan.start; i <= q.correctSpan.end; i++) correctSet.add(i);
+
+  // Core words: the keywords that MUST be present for any credit
+  const coreSet = new Set(q.coreWords || []);
+
+  // How many core words did the student select?
+  let coreHit = 0;
+  coreSet.forEach(wi => { if (sel.has(wi)) coreHit++; });
+  const coreRatio = coreSet.size > 0 ? coreHit / coreSet.size : 1;
+
+  // Overlap with full correct span
+  let overlap = 0;
+  sel.forEach(wi => { if (correctSet.has(wi)) overlap++; });
+  const precision = overlap / sel.size;          // hoe veel van wat je selecteerde klopt
+  const recall    = overlap / correctSet.size;   // hoe veel van het goede antwoord heb je
+
+  // Scoring:
+  // 2 pts: kernwoorden aangeraakt én selectie is redelijk precies
+  // 1 pt:  kernwoorden aangeraakt maar selectie te ruim/smal, of goede richting
+  // 0 pt:  kernwoorden gemist
+  let pts = 0;
+  let ok  = false;
+  if (coreRatio >= 0.6) {
+    if (precision >= 0.55 && recall >= 0.45) {
+      pts = q.points;  // vol
+      ok  = true;
+    } else {
+      pts = 1;         // gedeeltelijk — goede richting
+      ok  = true;
+    }
+  }
+
+  // Colour words: groen = goed geselecteerd, rood = fout geselecteerd,
+  // goud omlijnd = had je moeten selecteren (alleen tonen als fout)
+  document.querySelectorAll('.mw').forEach(el => {
+    const wi = parseInt(el.dataset.wi);
+    el.style.pointerEvents = 'none';
+    const inCorrect = correctSet.has(wi);
+    const inSel     = sel.has(wi);
+    if (inCorrect && inSel)  { el.classList.remove('sel'); el.classList.add('ok'); }
+    else if (inSel)          { el.classList.remove('sel'); el.classList.add('err'); }
+    else if (inCorrect && !ok) { el.classList.add('ok'); } // toon gemiste woorden alleen als fout
+  });
+
+  document.getElementById('mark-check').disabled = true;
+  recordAnswer(pts);
+
+  // Aangepaste feedbacktekst afhankelijk van score
+  let fbPrefix = '';
+  if (pts === q.points)    fbPrefix = '✅ <strong>Heel goed!</strong> ';
+  else if (pts === 1)      fbPrefix = '👍 <strong>Bijna!</strong> Je had de goede plek, maar markeer iets preciezer. ';
+  else                     fbPrefix = '❌ <strong>Niet helemaal.</strong> ';
+
+  const fb = document.getElementById('feedback-box');
+  fb.className = 'feedback show ' + (pts > 0 ? 'correct-fb' : 'wrong-fb');
+  fb.innerHTML = fbPrefix + q.feedback;
+
+  addNextBtn(document.getElementById('nav-row'));
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MC
+// ─────────────────────────────────────────────────────────────────────────────
+function renderMC(q) {
+  let html = '';
+  if (q.passage) html += `<div class="passage">${q.passage}</div>`;
+  html += '<div class="options">';
+  q.options.forEach((opt, i) => {
+    html += `<button class="opt-btn" onclick="answerMC(${i})">${opt}</button>`;
+  });
+  html += '</div>';
+  return html;
+}
+
+function answerMC(i) {
+  if (answered[current]) return;
+  const q    = questions[current];
+  const btns = document.querySelectorAll('.opt-btn');
+  btns.forEach(b => b.disabled = true);
+  btns[i].classList.add(i === q.correct ? 'correct' : 'wrong');
+  if (i !== q.correct) btns[q.correct].classList.add('correct');
+  const ok  = i === q.correct;
+  recordAnswer(ok ? q.points : 0);
+  showFeedback(ok, q.feedback);
+  addNextBtn(document.getElementById('nav-row'));
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ORDER
+// ─────────────────────────────────────────────────────────────────────────────
+function renderOrder(q) {
+  const shuffled = [...q.items].sort(() => Math.random() - .5);
+  let html = '<div class="order-list" id="order-list">';
+  shuffled.forEach(item => {
+    html += `<div class="order-item" draggable="true" data-id="${item.id}">
+      <span class="handle">⠿</span><span>${item.text}</span>
+    </div>`;
+  });
+  html += '</div>';
+  html += '<button class="btn btn-gold" onclick="checkOrder()" style="margin-top:4px;">Controleer volgorde</button>';
+  return html;
+}
+
+function attachOrderHandlers() {
+  const list = document.getElementById('order-list');
+  if (!list) return;
+  let dragEl = null;
+  list.addEventListener('dragstart', e => { dragEl = e.target.closest('.order-item'); e.dataTransfer.effectAllowed = 'move'; });
+  list.addEventListener('dragover',  e => {
+    e.preventDefault();
+    const target = e.target.closest('.order-item');
+    if (target && target !== dragEl) {
+      const mid = target.getBoundingClientRect().top + target.getBoundingClientRect().height / 2;
+      if (e.clientY < mid) list.insertBefore(dragEl, target);
+      else list.insertBefore(dragEl, target.nextSibling);
+    }
+  });
+}
+
+function checkOrder() {
+  if (answered[current]) return;
+  const q      = questions[current];
+  const items  = document.querySelectorAll('.order-item');
+  const user   = [...items].map(el => el.dataset.id);
+  const ok     = JSON.stringify(user) === JSON.stringify(q.correctOrder);
+  items.forEach((el,i) => {
+    el.draggable = false;
+    el.classList.add(user[i] === q.correctOrder[i] ? 'correct-order' : 'wrong-order');
+  });
+  document.querySelector('[onclick="checkOrder()"]').disabled = true;
+  const correct = user.filter((v,i) => v === q.correctOrder[i]).length;
+  const pts = ok ? q.points : (correct >= 3 ? 1 : 0);
+  recordAnswer(pts);
+  showFeedback(ok, q.feedback);
+  addNextBtn(document.getElementById('nav-row'));
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DRAG CATEGORY
+// ─────────────────────────────────────────────────────────────────────────────
+function renderDrag(q) {
+  let html = '';
+  if (q.passage) html += `<div class="passage">${q.passage}</div>`;
+  html += '<div class="drag-container">';
+  const shuffled = [...q.items].sort(() => Math.random() - .5);
+  html += '<div class="drag-pool"><h4>Sleep de namen →</h4><div class="drag-list" id="pool" data-cat="pool">';
+  shuffled.forEach(item => {
+    html += `<div class="drag-item" draggable="true" data-id="${item.id}">${item.text}</div>`;
+  });
+  html += '</div></div>';
+  q.categories.forEach(cat => {
+    const catId = cat.replace(/[\s\/]/g,'_');
+    html += `<div class="drag-pool"><h4>${cat}</h4><div class="drag-list" id="cat_${catId}" data-cat="${cat}"></div></div>`;
+  });
+  html += '</div>';
+  html += '<button class="btn btn-gold" onclick="checkDrag()" style="margin-top:4px;">Controleer</button>';
+  return html;
+}
+
+function attachDragHandlers() {
+  let src = null;
+  document.querySelectorAll('.drag-item').forEach(el => {
+    el.addEventListener('dragstart', e => { src = e.currentTarget; e.dataTransfer.effectAllowed='move'; });
+  });
+  document.querySelectorAll('.drag-list').forEach(zone => {
+    zone.addEventListener('dragover',  e => { e.preventDefault(); zone.classList.add('over'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('over'));
+    zone.addEventListener('drop', e => {
+      e.preventDefault(); zone.classList.remove('over');
+      if (src) zone.appendChild(src); src = null;
+    });
+  });
+}
+
+function checkDrag() {
+  if (answered[current]) return;
+  const q = questions[current];
+  let correct = 0;
+  q.items.forEach(item => {
+    const el   = document.querySelector(`.drag-item[data-id="${item.id}"]`);
+    if (!el) return;
+    const zone = el.closest('.drag-list');
+    const cat  = zone ? zone.dataset.cat : '';
+    if (cat === item.correct) { el.classList.add('correct-drag'); correct++; }
+    else el.classList.add('wrong-drag');
+    el.draggable = false;
+  });
+  document.querySelector('[onclick="checkDrag()"]').disabled = true;
+  const ok  = correct === q.items.length;
+  const pts = ok ? q.points : (correct >= 2 ? 1 : 0);
+  recordAnswer(pts);
+  showFeedback(ok, q.feedback);
+  addNextBtn(document.getElementById('nav-row'));
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────────────────────────────────────
+function recordAnswer(pts) {
+  scores[current]   = pts;
+  answered[current] = true;
+  score = scores.reduce((a,b)=>a+b,0);
+  document.getElementById('score-num').textContent = score;
+  saveProgress();
+  if (pts > 0) {
+    try { window.parent.postMessage({ type: 'begrijpend-correct', amount: 10 }, '*'); } catch(e){}
+  }
+}
+
+function showFeedback(ok, text) {
+  const fb = document.getElementById('feedback-box');
+  fb.className = 'feedback show ' + (ok ? 'correct-fb' : 'wrong-fb');
+  fb.innerHTML = (ok ? '✅ <strong>Goed!</strong> ' : '❌ <strong>Niet helemaal.</strong> ') + text;
+}
+
+function restoreAnswered() {
+  const q   = questions[current];
+  const pts = scores[current];
+  const ok  = pts > 0;
+  const fb  = document.getElementById('feedback-box');
+  if (fb) {
+    fb.className = 'feedback show ' + (ok ? 'correct-fb' : 'wrong-fb');
+    fb.innerHTML = (ok ? '✅ <strong>Goed!</strong> ' : '❌ <strong>Niet helemaal.</strong> ') + q.feedback;
+  }
+  // For mark questions re-disable check button
+  const mc = document.getElementById('mark-check');
+  if (mc) mc.disabled = true;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FINISH
+// ─────────────────────────────────────────────────────────────────────────────
+function showFinish() {
+  const total = questions.reduce((a,q)=>a+q.points,0);
+  const pct   = Math.round((score/total)*100);
+  document.getElementById('progress-bar').style.width = '100%';
+  document.getElementById('finish-score').textContent = `${score} / ${total}`;
+  let medal = '🏅', msg = '';
+  if (pct >= 85) { medal='🏆'; msg='Uitstekend! Je begrijpt de teksten heel goed en markeert precies het juiste stuk.'; }
+  else if (pct >= 60) { medal='⭐'; msg='Goed gedaan! Je snapt de meeste teksten prima. Probeer bij letterlijke vragen nog preciezer te markeren.'; }
+  else { medal='📖'; msg='Nog een keer lezen helpt! Let goed op welk stukje tekst echt het antwoord geeft.'; }
+  document.getElementById('finish-medal').textContent = medal;
+  document.getElementById('finish-msg').textContent   = msg;
+  const goed = scores.filter(p => p > 0).length;
+  const rows = questions.map((q,i) => {
+    const ok = scores[i] > 0;
+    let t = q.question.replace(/<[^>]*>/g,'');
+    if (t.length > 72) t = t.slice(0,72) + '…';
+    return `<div class="ov-row ${ok?'ov-ok':'ov-no'}"><span class="ov-ic">${ok?'✅':'❌'}</span><span class="ov-q"><b>Vraag ${i+1}:</b> ${t}</span></div>`;
+  }).join('');
+  document.getElementById('finish-overview').innerHTML =
+    `<div class="ov-title">${goed} van ${questions.length} vragen goed</div>` + rows;
+  show('finish-screen');
+}
+
+function restartQuiz() {
+  current  = 0; score = 0;
+  scores   = new Array(questions.length).fill(0);
+  answered = new Array(questions.length).fill(false);
+  markState= questions.map(() => new Set());
+  localStorage.removeItem('bl_wereld_les4');
+  document.getElementById('score-num').textContent = 0;
+  show('quiz-screen');
+  renderQuestion();
+}
+</script>
+</body>
+</html>

@@ -10,6 +10,7 @@ import TafelsOefenen from './games/TafelsOefenen'
 import WerkwoordSpelling from './games/WerkwoordSpelling'
 import DicteeThema from './games/DicteeThema'
 import TaalOefenen from './games/TaalOefenen'
+import BegrijpendLezen from './games/BegrijpendLezen'
 import MenuScene from './MenuScenes'
 import './game.css'
 
@@ -48,6 +49,8 @@ const GAMES = {
   '7-rekenen': 'iep',
   '7-spelling': 'werkwoord',
   '8-spelling': 'werkwoord',
+  '7-begrijpend': 'begrijpend',
+  '8-begrijpend': 'begrijpend',
 }
 
 const FREE_GAMES = [
@@ -197,6 +200,16 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
       )
     }
 
+    if (GAMES[gameId] === 'begrijpend') {
+      return (
+        <BegrijpendLezen
+          onBack={() => setSubject(null)}
+          addBriefgeld={addBriefgeld}
+          addCuruntie={addCuruntie}
+        />
+      )
+    }
+
     if (subject === 'spelling') {
       if (spellingKeuze === 'dictee') {
         return <DicteeThema onBack={() => setSpellingKeuze(null)} addCuruntie={addCuruntie} addBriefgeld={addBriefgeld} />
@@ -326,6 +339,8 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
                     ? (game === 'werkwoord' ? '✒️ Werkwoord + Taal Actief 5' : '📕 Taal Actief 5')
                     : game === 'taal'
                     ? '📖 Taalverkennen + toets'
+                    : game === 'begrijpend'
+                    ? '🧭 Reis rond de wereld'
                     : '🚧 Komt binnenkort'}
                 </span>
                 {(game || s.key === 'spelling') && <span className="vb-line">{s.vb}</span>}

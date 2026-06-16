@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Begrijpend Lezen – De Eerste Wereldreizigers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d1a;
+    --card: rgba(255,255,255,0.05);
+    --card-border: rgba(255,255,255,0.10);
+    --ink: #ffffff;
+    --ink-soft: rgba(255,255,255,0.50);
+    --primary: #9B4DCA;
+    --primary-d: #7a35a8;
+    --primary-glow: rgba(155,77,202,0.35);
+    --gold: #FFC23C;
+    --correct: #15A66B;
+    --wrong: #FF6150;
+    --line: rgba(255,255,255,0.10);
+    --shadow: 0 24px 48px -16px rgba(0,0,0,0.6);
+    --r: 20px;
+    --highlight-hover: rgba(155,77,202,.22);
+    --highlight-sel: rgba(155,77,202,.45);
+    --highlight-ok: rgba(21,166,107,.30);
+    --highlight-err: rgba(255,97,80,.25);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', system-ui, sans-serif;
+    color: var(--ink);
+    background:
+      radial-gradient(ellipse 55% 45% at 14% 14%, rgba(232,67,147,0.18) 0%, transparent 58%),
+      radial-gradient(ellipse 50% 42% at 86% 18%, rgba(124,58,237,0.20) 0%, transparent 58%),
+      radial-gradient(ellipse 52% 46% at 84% 86%, rgba(6,214,160,0.12) 0%, transparent 58%),
+      radial-gradient(ellipse 48% 42% at 12% 86%, rgba(56,189,248,0.12) 0%, transparent 58%),
+      var(--bg);
+    font-size: 17px;
+    line-height: 1.7;
+    min-height: 100vh;
+  }
+
+  header {
+    padding: 28px 24px 10px;
+    text-align: center;
+  }
+  header .eyebrow {
+    font-size: 11px;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--primary);
+    margin-bottom: 6px;
+    font-weight: 700;
+    opacity: .9;
+  }
+  header h1 {
+    font-family: 'Baloo 2', system-ui, sans-serif;
+    font-size: clamp(1.6rem, 5vw, 2.8rem);
+    font-weight: 800;
+    line-height: 1.1;
+    color: #fff;
+  }
+  header p { margin-top: 8px; font-size: 14px; color: var(--ink-soft); }
+
+  #progress-bar-wrap { background: rgba(255,255,255,0.10); height: 8px; border-radius: 99px; max-width: 800px; margin: 0 auto; }
+  #progress-bar { height: 8px; border-radius: 99px; background: linear-gradient(90deg,var(--primary),#c084f5); width: 0%; transition: width .5s ease; box-shadow: 0 0 12px var(--primary-glow); }
+
+  #score-badge {
+    position: fixed; top: 12px; right: 16px;
+    background: linear-gradient(135deg,var(--primary),var(--primary-d)); color: #fff;
+    font-weight: 800; font-size: 13px;
+    padding: 5px 12px; border-radius: 20px;
+    z-index: 100; display: none;
+    box-shadow: 0 8px 24px -6px var(--primary-glow);
+  }
+
+  main { max-width: 800px; margin: 0 auto; padding: 32px 20px 80px; }
+
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* INTRO */
+  #intro-screen { text-align: center; padding: 40px 0; }
+  #intro-screen .compass { font-size: 64px; margin-bottom: 16px; filter: drop-shadow(0 0 24px var(--primary-glow)); }
+  #intro-screen h2 { font-family: 'Baloo 2', system-ui, sans-serif; font-size: 1.8rem; margin-bottom: 12px; color: #fff; }
+  #intro-screen p { max-width: 520px; margin: 0 auto 20px; color: var(--ink-soft); }
+  .legend { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-bottom:28px; }
+  .legend span { padding:5px 12px; border-radius:99px; font-size:13px; font-weight:700; }
+
+  /* CARD */
+  .q-card {
+    background: var(--card);
+    border: 1.5px solid var(--card-border);
+    border-radius: var(--r);
+    padding: 28px 28px 24px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,0.08);
+    backdrop-filter: blur(12px);
+  }
+  .q-type-label {
+    display: inline-block;
+    font-size: 10px; letter-spacing: .13em; text-transform: uppercase;
+    font-weight: 700; padding: 3px 9px; border-radius: 99px; margin-bottom: 12px;
+  }
+  .label-literal   { background:rgba(56,189,248,.18); color:#7dd3fc; }
+  .label-inferring { background:rgba(255,193,60,.18); color:var(--gold); }
+  .label-evaluating{ background:rgba(21,166,107,.18); color:#4ade80; }
+
+  .q-card h3 {
+    font-family: 'Baloo 2', system-ui, sans-serif;
+    font-size: 1.12rem; font-weight: 700;
+    margin-bottom: 16px; line-height: 1.4;
+    color: #fff;
+  }
+
+  /* PASSAGE */
+  .passage {
+    background: rgba(255,255,255,0.04);
+    border-left: 3px solid var(--primary);
+    padding: 16px 18px;
+    border-radius: 0 12px 12px 0;
+    font-size: 15.5px;
+    line-height: 1.75;
+    margin-bottom: 20px;
+    position: relative;
+    color: rgba(255,255,255,0.85);
+  }
+  .passage.markable { cursor: text; }
+
+  /* WORD-LEVEL MARKING */
+  .mw {
+    border-radius: 2px;
+    padding: 1px 1px;
+    cursor: pointer;
+    transition: background .1s;
+    display: inline;
+  }
+  .mw:hover  { background: var(--highlight-hover); }
+  .mw.sel    { background: var(--highlight-sel); outline: 1.5px solid var(--primary); border-radius: 3px; }
+  .mw.ok     { background: var(--highlight-ok);  outline: 1.5px solid var(--correct); border-radius: 3px; }
+  .mw.err    { background: var(--highlight-err); outline: 1.5px solid var(--wrong);   border-radius: 3px; }
+
+  .mark-instruction {
+    font-size: 13px; color: var(--ink-soft); font-style: italic;
+    margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+  }
+  .mark-instruction::before { content: '✏️'; font-style: normal; }
+
+  .mark-check-btn {
+    margin-top: 12px;
+    display: inline-block;
+    padding: 9px 18px;
+    background: linear-gradient(135deg,var(--primary),var(--primary-d)); color: #fff;
+    border: none; border-radius: 10px;
+    font-size: 14px; font-weight: 700;
+    cursor: pointer; font-family: 'Nunito', sans-serif;
+    transition: opacity .15s, box-shadow .15s;
+    box-shadow: 0 8px 24px -6px var(--primary-glow);
+  }
+  .mark-check-btn:hover { opacity: .85; }
+  .mark-check-btn:disabled { opacity: .35; cursor: default; box-shadow: none; }
+
+  /* OPTIONS (MC) */
+  .options { display:flex; flex-direction:column; gap:10px; margin-bottom:18px; }
+  .opt-btn {
+    background: rgba(255,255,255,0.05); border:1.5px solid var(--line); border-radius:12px;
+    padding:11px 16px; text-align:left; cursor:pointer;
+    font-size:15px; font-family:'Nunito',sans-serif; color: #fff;
+    transition: border-color .15s, background .15s;
+  }
+  .opt-btn:hover:not(:disabled) { border-color:var(--primary); background:rgba(155,77,202,0.12); }
+  .opt-btn.correct { border-color:var(--correct); background:rgba(21,166,107,0.18); color:#fff; font-weight:600; }
+  .opt-btn.wrong   { border-color:var(--wrong);   background:rgba(255,97,80,0.18); color:#fff; }
+  .opt-btn:disabled { cursor:default; }
+
+  /* DRAG */
+  .drag-container { display:flex; gap:14px; flex-wrap:wrap; margin-bottom:16px; }
+  .drag-pool { flex:1; min-width:170px; }
+  .drag-pool h4 { font-size:12px; text-transform:uppercase; letter-spacing:.1em; color:var(--ink-soft); margin-bottom:7px; font-weight:700; }
+  .drag-list { min-height:70px; border:2px dashed var(--line); border-radius:12px; padding:8px; display:flex; flex-direction:column; gap:6px; }
+  .drag-list.over { border-color:var(--primary); background:rgba(155,77,202,0.10); }
+  .drag-item {
+    background:rgba(255,255,255,0.06); border:1.5px solid var(--line); border-radius:10px;
+    padding:7px 12px; font-size:14px; cursor:grab; user-select:none; color:#fff;
+    transition:box-shadow .15s, border-color .15s, background .15s;
+  }
+  .drag-item:active { cursor:grabbing; box-shadow:0 4px 12px rgba(0,0,0,.35); }
+  .drag-item.correct-drag { border-color:var(--correct); background:rgba(21,166,107,0.18); color:#fff; font-weight:600; }
+  .drag-item.wrong-drag   { border-color:var(--wrong);   background:rgba(255,97,80,0.18); }
+
+  /* ORDER */
+  .order-list { display:flex; flex-direction:column; gap:8px; margin-bottom:16px; }
+  .order-item {
+    background:rgba(255,255,255,0.06); border:1.5px solid var(--line); border-radius:10px;
+    padding:10px 14px; cursor:grab; font-size:14.5px; color:#fff;
+    display:flex; align-items:center; gap:12px; user-select:none;
+  }
+  .order-item:active { cursor:grabbing; box-shadow:0 4px 14px rgba(0,0,0,.35); }
+  .order-item .handle { color:var(--ink-soft); font-size:18px; }
+  .order-item.correct-order { border-color:var(--correct); background:rgba(21,166,107,0.18); }
+  .order-item.wrong-order   { border-color:var(--wrong);   background:rgba(255,97,80,0.18); }
+
+  /* FEEDBACK */
+  .feedback { display:none; margin-top:14px; padding:12px 16px; border-radius:12px; font-size:14.5px; line-height:1.55; }
+  .feedback.show { display:block; }
+  .feedback.correct-fb { background:rgba(21,166,107,0.12); border-left:3px solid var(--correct); color:#bdf5d8; }
+  .feedback.wrong-fb   { background:rgba(255,97,80,0.12); border-left:3px solid var(--wrong);   color:#ffd2cb; }
+
+  /* BUTTONS */
+  .btn {
+    display:inline-block; padding:12px 24px; border-radius:12px;
+    font-size:15px; font-family:'Baloo 2',sans-serif; font-weight:700;
+    cursor:pointer; border:none; transition:opacity .15s, transform .1s, box-shadow .15s;
+  }
+  .btn:hover { opacity:.88; transform:translateY(-1px); }
+  .btn-primary   { background:linear-gradient(135deg,var(--primary),var(--primary-d)); color:#fff; box-shadow:0 8px 24px -6px var(--primary-glow); }
+  .btn-secondary { background:transparent; color:rgba(255,255,255,.75); border:1.5px solid var(--line); }
+  .btn-gold      { background:linear-gradient(135deg,var(--gold),#e0a82e); color:#1c1208; }
+  .btn-row { display:flex; gap:12px; margin-top:20px; flex-wrap:wrap; }
+
+  .q-progress { font-size:12px; color:var(--ink-soft); text-align:right; margin-bottom:4px; font-weight:700; }
+
+  /* FINISH */
+  #finish-screen { text-align:center; padding:40px 0; }
+  #finish-screen .medal { font-size:72px; filter: drop-shadow(0 0 24px var(--primary-glow)); }
+  #finish-screen h2 { font-family:'Baloo 2',sans-serif; font-size:2rem; margin:16px 0 10px; color:#fff; }
+  #finish-screen .score-big { font-size:3.5rem; font-weight:800; color:var(--primary); font-family:'Baloo 2',sans-serif; text-shadow: 0 0 30px var(--primary-glow); }
+  #finish-screen p { max-width:460px; margin:12px auto 28px; color:var(--ink-soft); }
+  #finish-overview { max-width:520px; margin:0 auto 28px; text-align:left; }
+  .ov-title { text-align:center; font-family:'Baloo 2',sans-serif; font-weight:800; color:#fff; font-size:1.15rem; margin-bottom:14px; }
+  .ov-row { display:flex; align-items:flex-start; gap:10px; padding:9px 12px; border-radius:10px; margin-bottom:7px; border:1.5px solid var(--line); font-size:14px; }
+  .ov-row.ov-ok { background:rgba(21,166,107,0.12); border-color:rgba(21,166,107,0.4); }
+  .ov-row.ov-no { background:rgba(255,97,80,0.12); border-color:rgba(255,97,80,0.4); }
+  .ov-ic { flex-shrink:0; }
+  .ov-q { color:rgba(255,255,255,0.85); line-height:1.4; }
+  .ov-q b { color:#fff; }
+
+  @media(max-width:560px){
+    .q-card { padding:18px 16px; }
+    .drag-container { flex-direction:column; }
+  }
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<header>
+  <p class="eyebrow">Begrijpend lezen · Groep 7-8</p>
+  <h1>Online de grens over</h1>
+  <p>Bron: Blink Wereld – Reis de wereld rond</p>
+</header>
+<div id="progress-bar-wrap"><div id="progress-bar"></div></div>
+<div id="score-badge">⭐ <span id="score-num">0</span> pt</div>
+
+<main>
+
+<div id="intro-screen" class="screen active">
+  <div class="compass">🌐</div>
+  <h2>Klaar om de wereld te verbinden?</h2>
+  <p>Je leest teksten over internet en globalisering en beantwoordt vragen. Bij <strong>letterlijke vragen</strong> markeer je het antwoord <em>in de tekst zelf</em>. Klik woorden aan om ze te selecteren.</p>
+  <div class="legend">
+    <span style="background:#d0e8ff;color:#0a3a6e;">🔍 Letterlijk – markeer in de tekst</span>
+    <span style="background:#fde8c0;color:#7a3d00;">💡 Afleidend</span>
+    <span style="background:#dff0e2;color:#1a5c2a;">💬 Evaluerend</span>
+  </div>
+  <button class="btn btn-primary" onclick="startQuiz()">Begin de oefening →</button>
+</div>
+
+<div id="quiz-screen" class="screen">
+  <p class="q-progress" id="q-progress"></p>
+  <div id="question-area"></div>
+  <div class="btn-row" id="nav-row"></div>
+</div>
+
+<div id="finish-screen" class="screen">
+  <div class="medal" id="finish-medal">🏅</div>
+  <h2>Goed gedaan, ontdekkingsreiziger!</h2>
+  <div class="score-big" id="finish-score">0/0</div>
+  <p id="finish-msg"></p>
+  <div id="finish-overview"></div>
+  <button class="btn btn-primary" onclick="restartQuiz()">Opnieuw proberen</button>
+</div>
+
+</main>
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// QUESTION DATA
+// type: 'mark'   → klik woorden aan in de passage (letterlijk)
+// type: 'mc'     → multiple choice
+// type: 'order'  → sleep op volgorde
+// type: 'drag'   → sleep naar categorie
+//
+// Voor 'mark': passage is een string. correctWords = array van exacte
+// woorden/woordgroepen die de leerling moet selecteren (elk woord apart
+// als string). Het systeem splitst de passage in klikbare woorden.
+// correctSpan: [startWordIndex, endWordIndex] (inclusive) = de juiste selectie.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const questions = [
+
+  // ── Q1  Letterlijk → markeren  (Bol.com pakketten, span geverifieerd 33-36)
+  {
+    type: 'mark',
+    qtype: 'literal',
+    label: '🔍 Letterlijk',
+    labelClass: 'label-literal',
+    question: 'Markeer in de tekst hoeveel pakketten één medewerker op een superdrukke dag moet inpakken.',
+    passage: 'Je kunt bijna alles kopen via internet. Een boek, een nieuwe fiets of een weekendje Parijs. Bol.com verkoopt op drukke dagen wel 25 producten per seconde. Eén medewerker moet op zo\'n superdrukke dag wel 500 pakketten inpakken! Al die spullen moeten vervoerd worden naar de mensen die ze hebben gekocht. Kun je je voorstellen hoeveel vrachtwagens, bestelbusjes en bezorgers hier elke dag mee bezig zijn?',
+    // "wel 500 pakketten inpakken!"
+    correctSpan: { start: 33, end: 36 },
+    coreWords: [34, 35, 36], // 500, pakketten, inpakken!
+    feedback: 'Het antwoord staat in de zin: "Eén medewerker moet op zo\'n superdrukke dag wel 500 pakketten inpakken!" Let op: 25 producten per seconde is hoeveel Bol.com verkóópt, niet hoeveel één medewerker inpakt.',
+    points: 2
+  },
+
+  // ── Q2  Letterlijk → markeren  (onderzoekers, span geverifieerd 34-47)
+  {
+    type: 'mark',
+    qtype: 'literal',
+    label: '🔍 Letterlijk',
+    labelClass: 'label-literal',
+    question: 'Markeer in de tekst wat onderzoekers die ziektes willen genezen via internet met elkaar kunnen doen.',
+    passage: 'Er worden niet alleen veel spullen via internet gekocht, maar ook ideeën, muziek, onderzoek, kunst, nieuws, filmpjes en kennis gaan draadloos of via de kabel naar talloze mensen. Onderzoekers die bijvoorbeeld ziektes willen genezen, kunnen hun onderzoeksresultaten delen met collega\'s die werken in laboratoria over de hele wereld. Dan hoeven ze niet allemaal hetzelfde te onderzoeken en kunnen ze sneller samen een oplossing bedenken.',
+    // "kunnen hun onderzoeksresultaten delen met collega's die werken in laboratoria over de hele wereld."
+    correctSpan: { start: 34, end: 47 },
+    coreWords: [36, 37, 43], // onderzoeksresultaten, delen, laboratoria
+    feedback: 'Het antwoord staat in de zin: "...kunnen hun onderzoeksresultaten delen met collega\'s die werken in laboratoria over de hele wereld." Daardoor hoeven ze niet allemaal hetzelfde te onderzoeken.',
+    points: 2
+  },
+
+  // ── Q3  Letterlijk → markeren  (Tomlinson, span geverifieerd 22-26)
+  {
+    type: 'mark',
+    qtype: 'literal',
+    label: '🔍 Letterlijk',
+    labelClass: 'label-literal',
+    question: 'Markeer in de tekst wie de video van 5 Seconds of Summer op Twitter deelde.',
+    passage: 'Ook de Australische band 5 Seconds of Summer werd bekend dankzij YouTube. Al snel hadden ze miljoenen fans, waaronder ook enkele celebrities. Louis Tomlinson van One Direction vond de band zo geweldig, dat hij hun video op Twitter deelde. Even later stond 5 Seconds Of Summer dan ook in het voorprogramma van One Direction.',
+    // "Louis Tomlinson van One Direction"
+    correctSpan: { start: 22, end: 26 },
+    coreWords: [22, 23], // Louis, Tomlinson
+    feedback: 'Het antwoord staat in de zin: "Louis Tomlinson van One Direction vond de band zo geweldig, dat hij hun video op Twitter deelde."',
+    points: 2
+  },
+
+  // ── Q4  Letterlijk → markeren  (globalisering, span geverifieerd 66-81)
+  {
+    type: 'mark',
+    qtype: 'literal',
+    label: '🔍 Letterlijk',
+    labelClass: 'label-literal',
+    question: 'Markeer in de tekst hoe het verschijnsel heet waarbij de hele wereld met elkaar verbonden is, en wat het betekent.',
+    passage: 'Via internet kom jij op veel plaatsen in de wereld. Je luistert naar liedjes of kijkt naar films van over de hele wereld. Je zoekt naar informatie en zet informatie op internet. Daardoor wordt de uitwisseling van ideeën en kennis over de wereld steeds groter. Je bestelt goederen van over de hele wereld. Daardoor wordt er meer vervoerd over de wereld en neemt het transport toe. Zo ontstaat een samenleving waarbij de hele wereld met elkaar verbonden is. Dit noemen we globalisering.',
+    // "Zo ontstaat een samenleving waarbij de hele wereld met elkaar verbonden is. Dit noemen we globalisering."
+    correctSpan: { start: 66, end: 81 },
+    coreWords: [69, 76, 81], // samenleving, verbonden, globalisering.
+    feedback: 'Het antwoord staat in de zinnen: "Zo ontstaat een samenleving waarbij de hele wereld met elkaar verbonden is. Dit noemen we globalisering."',
+    points: 2
+  },
+
+  // ── Q5  Afleidend MC
+  {
+    type: 'mc',
+    qtype: 'inferring',
+    label: '💡 Afleidend',
+    labelClass: 'label-inferring',
+    question: 'Lees de tekst "Eventjes offline". Wat wil de schrijver hiermee vooral duidelijk maken?',
+    passage: 'Stel je eens voor dat er geen internet was. Je vrienden een berichtje sturen via mail, Instagram of Snapchat gaat dan niet meer. Als je iets af wilt spreken, moet dat via de telefoon of morgen op school. Nieuwe kleren kopen via een webwinkel, muziek downloaden of een filmpje op YouTube bekijken is er ook niet meer bij. En net nu je zonder internet zit, moet je spreekbeurt af. Waar zoek je informatie over dolfijnen, breakdance of hockey? Internet heeft de hele wereld veranderd.',
+    options: [
+      'Internet is gevaarlijk en je kunt er beter mee stoppen',
+      'We gebruiken internet voor heel veel dagelijkse dingen, zonder dat we er vaak bij stilstaan',
+      'Vroeger was alles beter dan nu',
+      'Een spreekbeurt maak je het best zonder internet'
+    ],
+    correct: 1,
+    feedback: 'De tekst geeft allemaal voorbeelden — communiceren, kopen, muziek, een spreekbeurt maken — die zonder internet lastig worden. Zo laat de schrijver zien hoeveel we eigenlijk van internet gebruiken.',
+    points: 1
+  },
+
+  // ── Q6  Afleidend MC
+  {
+    type: 'mc',
+    qtype: 'inferring',
+    label: '💡 Afleidend',
+    labelClass: 'label-inferring',
+    question: 'De tekst vraagt of je je kunt voorstellen hoeveel vrachtwagens en bezorgers elke dag bezig zijn. Wat kun je daaruit afleiden over online winkelen?',
+    passage: 'Je kunt bijna alles kopen via internet. Bol.com verkoopt op drukke dagen wel 25 producten per seconde. Eén medewerker moet op zo\'n superdrukke dag wel 500 pakketten inpakken! Al die spullen moeten vervoerd worden naar de mensen die ze hebben gekocht. Kun je je voorstellen hoeveel vrachtwagens, bestelbusjes en bezorgers hier elke dag mee bezig zijn?',
+    options: [
+      'Online winkelen zorgt voor heel veel vervoer van spullen over de wereld',
+      'Niemand bestelt eigenlijk iets via internet',
+      'Vrachtwagens rijden meestal leeg rond',
+      'Online winkelen is verboden op drukke dagen'
+    ],
+    correct: 0,
+    feedback: '25 producten per seconde en 500 pakketten per medewerker betekenen een enorme hoeveelheid spullen. Die moeten allemaal worden bezorgd, dus online winkelen zorgt voor heel veel vervoer.',
+    points: 1
+  },
+
+  // ── Q7  Letterlijk → markeren  (bijwerkingen, span geverifieerd 6-10)
+  {
+    type: 'mark',
+    qtype: 'literal',
+    label: '🔍 Letterlijk',
+    labelClass: 'label-literal',
+    question: 'Markeer in de tekst wat veel mensen door internet over hun gezondheid gaan denken.',
+    passage: 'Door internet denken veel meer mensen dat ze rare kwalen hebben. Ze voelen iets geks in hun grote teen, gaan googelen en komen dan de engste ziektes tegen.',
+    // "dat ze rare kwalen hebben."
+    correctSpan: { start: 6, end: 10 },
+    coreWords: [8, 9, 10], // rare, kwalen, hebben.
+    feedback: 'Het antwoord staat in de zin: "Door internet denken veel meer mensen dat ze rare kwalen hebben." Ze googelen een klein ongemak en komen dan de engste ziektes tegen.',
+    points: 2
+  },
+
+  // ── Q8  Afleidend drag naar categorie
+  {
+    type: 'drag',
+    qtype: 'inferring',
+    label: '💡 Afleidend – Sorteren',
+    labelClass: 'label-inferring',
+    question: 'Waarvoor gebruik je internet volgens de tekst? Sleep elk voorbeeld naar de juiste categorie.',
+    passage: 'Via internet koop je spullen, zoals een nieuwe fiets of een weekendje Parijs. Je communiceert ook met anderen, bijvoorbeeld door een berichtje te sturen of iets af te spreken. En er gaan ideeën en kennis de wereld over: onderzoekers delen resultaten en muziek en filmpjes worden verspreid.',
+    categories: ['Spullen kopen', 'Communiceren', 'Kennis en ideeën delen'],
+    items: [
+      { id: 'fiets',  text: 'Een nieuwe fiets bestellen',              correct: 'Spullen kopen' },
+      { id: 'parijs', text: 'Een weekendje Parijs boeken',            correct: 'Spullen kopen' },
+      { id: 'snap',   text: 'Een berichtje sturen via Snapchat',      correct: 'Communiceren' },
+      { id: 'afspr',  text: 'Met je vrienden iets afspreken',         correct: 'Communiceren' },
+      { id: 'onderz', text: 'Onderzoeksresultaten delen',             correct: 'Kennis en ideeën delen' },
+      { id: 'muziek', text: 'Muziek en filmpjes verspreiden',         correct: 'Kennis en ideeën delen' }
+    ],
+    feedback: 'Spullen kopen → een fiets of een weekendje Parijs. Communiceren → een berichtje sturen of iets afspreken. Kennis en ideeën delen → onderzoeksresultaten delen en muziek/filmpjes verspreiden.',
+    points: 2
+  },
+
+  // ── Q9  Evaluerend MC
+  {
+    type: 'mc',
+    qtype: 'evaluating',
+    label: '💬 Evaluerend',
+    labelClass: 'label-evaluating',
+    question: 'Noemt de tekst alleen maar goede kanten van internet? Welk antwoord past het best bij de tekst?',
+    passage: 'De tekst laat zien hoeveel internet ons brengt: je kunt erdoor communiceren, spullen kopen, muziek luisteren en kennis over de hele wereld delen. Maar er is ook een nadeel. Door internet denken veel meer mensen dat ze rare kwalen hebben. Ze voelen iets geks in hun grote teen, gaan googelen en komen dan de engste ziektes tegen.',
+    options: [
+      'Ja, de tekst noemt alleen voordelen van internet',
+      'Nee, de tekst noemt ook een nadeel: door googelen denken mensen dat ze rare ziektes hebben',
+      'Nee, volgens de tekst is internet vooral slecht',
+      'Ja, want internet heeft volgens de tekst geen enkel nadeel'
+    ],
+    correct: 1,
+    feedback: 'De meeste voorbeelden zijn positief, maar bij "Bijwerkingen" staat een nadeel: mensen googelen een klein ongemak en denken dan dat ze een ernstige ziekte hebben. De tekst noemt dus voordelen én een nadeel.',
+    points: 1
+  },
+
+  // ── Q10  Evaluerend MC
+  {
+    type: 'mc',
+    qtype: 'evaluating',
+    label: '💬 Evaluerend',
+    labelClass: 'label-evaluating',
+    question: 'Aan het einde legt de tekst uit wat "globalisering" betekent. Waarom past dit onderwerp goed bij het thema "Reis de wereld rond"?',
+    passage: 'Via internet kom jij op veel plaatsen in de wereld. Je luistert naar liedjes en kijkt naar films van over de hele wereld, en je bestelt goederen van overal. Daardoor wordt er ook meer vervoerd over de wereld. Zo ontstaat een samenleving waarbij de hele wereld met elkaar verbonden is. Dit noemen we globalisering.',
+    options: [
+      'Omdat je door internet zelf nooit meer hoeft te reizen',
+      'Omdat internet de hele wereld met elkaar verbindt: informatie, spullen en muziek gaan de hele wereld over',
+      'Omdat globalisering betekent dat de wereld kleiner wordt',
+      'Omdat alleen Australische bands beroemd kunnen worden'
+    ],
+    correct: 1,
+    feedback: 'Globalisering betekent dat de hele wereld met elkaar verbonden is. Niet alleen mensen reizen, maar ook informatie, spullen en muziek "reizen" de hele wereld over. Daarom past het bij "Reis de wereld rond".',
+    points: 1
+  }
+
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────────────────────────────────────
+let current = 0;
+let score   = 0;
+let answered = new Array(questions.length).fill(false);
+let scores   = new Array(questions.length).fill(0);
+
+// per-question word selection state (mark questions)
+// markState[i] = Set of selected word indices
+let markState = questions.map(() => new Set());
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PERSISTENCE
+// ─────────────────────────────────────────────────────────────────────────────
+function loadProgress() {
+  try {
+    const saved = localStorage.getItem('bl_wereld_les3');
+    if (saved) {
+      const d = JSON.parse(saved);
+      scores   = d.scores   || scores;
+      answered = d.answered || answered;
+      score    = scores.reduce((a,b)=>a+b,0);
+    }
+  } catch(e){}
+}
+
+function saveProgress() {
+  try {
+    localStorage.setItem('bl_wereld_les3', JSON.stringify({ scores, answered }));
+  } catch(e){}
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FLOW
+// ─────────────────────────────────────────────────────────────────────────────
+function startQuiz() {
+  loadProgress();
+  document.getElementById('score-badge').style.display = 'block';
+  show('quiz-screen');
+  renderQuestion();
+}
+
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function updateProgress() {
+  const pct = (current / questions.length) * 100;
+  document.getElementById('progress-bar').style.width = pct + '%';
+  document.getElementById('q-progress').textContent = `Vraag ${current + 1} van ${questions.length}`;
+  document.getElementById('score-num').textContent = score;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RENDER DISPATCH
+// ─────────────────────────────────────────────────────────────────────────────
+function renderQuestion() {
+  updateProgress();
+  const q   = questions[current];
+  const area = document.getElementById('question-area');
+  const nav  = document.getElementById('nav-row');
+
+  let html = `<div class="q-card">`;
+  html += `<span class="q-type-label ${q.labelClass}">${q.label}</span>`;
+  html += `<h3>${q.question}</h3>`;
+
+  if      (q.type === 'mark')  html += renderMark(q);
+  else if (q.type === 'mc')    html += renderMC(q);
+  else if (q.type === 'order') html += renderOrder(q);
+  else if (q.type === 'drag')  html += renderDrag(q);
+
+  html += `<div class="feedback" id="feedback-box"></div>`;
+  html += `</div>`;
+  area.innerHTML = html;
+
+  if (q.type === 'order') attachOrderHandlers();
+  if (q.type === 'drag')  attachDragHandlers();
+
+  nav.innerHTML = '';
+  if (current > 0) {
+    const b = document.createElement('button');
+    b.className = 'btn btn-secondary';
+    b.textContent = '← Vorige';
+    b.onclick = () => { current--; renderQuestion(); };
+    nav.appendChild(b);
+  }
+
+  if (answered[current]) {
+    restoreAnswered();
+    addNextBtn(nav);
+  }
+}
+
+function addNextBtn(nav) {
+  if (document.getElementById('next-btn')) return;
+  const isLast = current === questions.length - 1;
+  const b = document.createElement('button');
+  b.className = 'btn btn-primary';
+  b.id = 'next-btn';
+  b.textContent = isLast ? 'Bekijk resultaat →' : 'Volgende vraag →';
+  b.onclick = () => {
+    if (isLast) showFinish();
+    else { current++; renderQuestion(); }
+  };
+  nav.appendChild(b);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MARK (word-level highlighting)
+// ─────────────────────────────────────────────────────────────────────────────
+function tokenize(text) {
+  // Split into words and whitespace/punctuation tokens
+  // Each entry: { word: string, isWord: bool }
+  const parts = [];
+  const re = /(\s+|[^\s]+)/g;
+  let m;
+  while ((m = re.exec(text)) !== null) {
+    const t = m[0];
+    const isWord = /\S/.test(t);
+    parts.push({ text: t, isWord });
+  }
+  return parts;
+}
+
+function renderMark(q) {
+  const tokens = tokenize(q.passage);
+  let html = `<p class="mark-instruction">Klik op woorden in de tekst om ze te selecteren. Klik nog een keer om de selectie ongedaan te maken.</p>`;
+  html += `<div class="passage markable" id="mark-passage">`;
+  let wordIdx = 0;
+  tokens.forEach(tok => {
+    if (tok.isWord) {
+      html += `<span class="mw" data-wi="${wordIdx}" onclick="toggleWord(${wordIdx})">${escHtml(tok.text)}</span>`;
+      wordIdx++;
+    } else {
+      html += escHtml(tok.text);
+    }
+  });
+  html += `</div>`;
+  html += `<button class="mark-check-btn" id="mark-check" onclick="checkMark()">Controleer markering</button>`;
+  return html;
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function toggleWord(wi) {
+  if (answered[current]) return;
+  const sel = markState[current];
+  const el  = document.querySelector(`.mw[data-wi="${wi}"]`);
+  if (!el) return;
+  if (sel.has(wi)) { sel.delete(wi); el.classList.remove('sel'); }
+  else             { sel.add(wi);    el.classList.add('sel'); }
+}
+
+function checkMark() {
+  if (answered[current]) return;
+  const q   = questions[current];
+  const sel = markState[current];
+  if (sel.size === 0) return;
+
+  // Full correct set (all words in the ideal span)
+  const correctSet = new Set();
+  for (let i = q.correctSpan.start; i <= q.correctSpan.end; i++) correctSet.add(i);
+
+  // Core words: the keywords that MUST be present for any credit
+  const coreSet = new Set(q.coreWords || []);
+
+  // How many core words did the student select?
+  let coreHit = 0;
+  coreSet.forEach(wi => { if (sel.has(wi)) coreHit++; });
+  const coreRatio = coreSet.size > 0 ? coreHit / coreSet.size : 1;
+
+  // Overlap with full correct span
+  let overlap = 0;
+  sel.forEach(wi => { if (correctSet.has(wi)) overlap++; });
+  const precision = overlap / sel.size;          // hoe veel van wat je selecteerde klopt
+  const recall    = overlap / correctSet.size;   // hoe veel van het goede antwoord heb je
+
+  // Scoring:
+  // 2 pts: kernwoorden aangeraakt én selectie is redelijk precies
+  // 1 pt:  kernwoorden aangeraakt maar selectie te ruim/smal, of goede richting
+  // 0 pt:  kernwoorden gemist
+  let pts = 0;
+  let ok  = false;
+  if (coreRatio >= 0.6) {
+    if (precision >= 0.55 && recall >= 0.45) {
+      pts = q.points;  // vol
+      ok  = true;
+    } else {
+      pts = 1;         // gedeeltelijk — goede richting
+      ok  = true;
+    }
+  }
+
+  // Colour words: groen = goed geselecteerd, rood = fout geselecteerd,
+  // goud omlijnd = had je moeten selecteren (alleen tonen als fout)
+  document.querySelectorAll('.mw').forEach(el => {
+    const wi = parseInt(el.dataset.wi);
+    el.style.pointerEvents = 'none';
+    const inCorrect = correctSet.has(wi);
+    const inSel     = sel.has(wi);
+    if (inCorrect && inSel)  { el.classList.remove('sel'); el.classList.add('ok'); }
+    else if (inSel)          { el.classList.remove('sel'); el.classList.add('err'); }
+    else if (inCorrect && !ok) { el.classList.add('ok'); } // toon gemiste woorden alleen als fout
+  });
+
+  document.getElementById('mark-check').disabled = true;
+  recordAnswer(pts);
+
+  // Aangepaste feedbacktekst afhankelijk van score
+  let fbPrefix = '';
+  if (pts === q.points)    fbPrefix = '✅ <strong>Heel goed!</strong> ';
+  else if (pts === 1)      fbPrefix = '👍 <strong>Bijna!</strong> Je had de goede plek, maar markeer iets preciezer. ';
+  else                     fbPrefix = '❌ <strong>Niet helemaal.</strong> ';
+
+  const fb = document.getElementById('feedback-box');
+  fb.className = 'feedback show ' + (pts > 0 ? 'correct-fb' : 'wrong-fb');
+  fb.innerHTML = fbPrefix + q.feedback;
+
+  addNextBtn(document.getElementById('nav-row'));
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MC
+// ─────────────────────────────────────────────────────────────────────────────
+function renderMC(q) {
+  let html = '';
+  if (q.passage) html += `<div class="passage">${q.passage}</div>`;
+  html += '<div class="options">';
+  q.options.forEach((opt, i) => {
+    html += `<button class="opt-btn" onclick="answerMC(${i})">${opt}</button>`;
+  });
+  html += '</div>';
+  return html;
+}
+
+function answerMC(i) {
+  if (answered[current]) return;
+  const q    = questions[current];
+  const btns = document.querySelectorAll('.opt-btn');
+  btns.forEach(b => b.disabled = true);
+  btns[i].classList.add(i === q.correct ? 'correct' : 'wrong');
+  if (i !== q.correct) btns[q.correct].classList.add('correct');
+  const ok  = i === q.correct;
+  recordAnswer(ok ? q.points : 0);
+  showFeedback(ok, q.feedback);
+  addNextBtn(document.getElementById('nav-row'));
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ORDER
+// ─────────────────────────────────────────────────────────────────────────────
+function renderOrder(q) {
+  const shuffled = [...q.items].sort(() => Math.random() - .5);
+  let html = '<div class="order-list" id="order-list">';
+  shuffled.forEach(item => {
+    html += `<div class="order-item" draggable="true" data-id="${item.id}">
+      <span class="handle">⠿</span><span>${item.text}</span>
+    </div>`;
+  });
+  html += '</div>';
+  html += '<button class="btn btn-gold" onclick="checkOrder()" style="margin-top:4px;">Controleer volgorde</button>';
+  return html;
+}
+
+function attachOrderHandlers() {
+  const list = document.getElementById('order-list');
+  if (!list) return;
+  let dragEl = null;
+  list.addEventListener('dragstart', e => { dragEl = e.target.closest('.order-item'); e.dataTransfer.effectAllowed = 'move'; });
+  list.addEventListener('dragover',  e => {
+    e.preventDefault();
+    const target = e.target.closest('.order-item');
+    if (target && target !== dragEl) {
+      const mid = target.getBoundingClientRect().top + target.getBoundingClientRect().height / 2;
+      if (e.clientY < mid) list.insertBefore(dragEl, target);
+      else list.insertBefore(dragEl, target.nextSibling);
+    }
+  });
+}
+
+function checkOrder() {
+  if (answered[current]) return;
+  const q      = questions[current];
+  const items  = document.querySelectorAll('.order-item');
+  const user   = [...items].map(el => el.dataset.id);
+  const ok     = JSON.stringify(user) === JSON.stringify(q.correctOrder);
+  items.forEach((el,i) => {
+    el.draggable = false;
+    el.classList.add(user[i] === q.correctOrder[i] ? 'correct-order' : 'wrong-order');
+  });
+  document.querySelector('[onclick="checkOrder()"]').disabled = true;
+  const correct = user.filter((v,i) => v === q.correctOrder[i]).length;
+  const pts = ok ? q.points : (correct >= 3 ? 1 : 0);
+  recordAnswer(pts);
+  showFeedback(ok, q.feedback);
+  addNextBtn(document.getElementById('nav-row'));
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DRAG CATEGORY
+// ─────────────────────────────────────────────────────────────────────────────
+function renderDrag(q) {
+  let html = '';
+  if (q.passage) html += `<div class="passage">${q.passage}</div>`;
+  html += '<div class="drag-container">';
+  const shuffled = [...q.items].sort(() => Math.random() - .5);
+  html += '<div class="drag-pool"><h4>Sleep de namen →</h4><div class="drag-list" id="pool" data-cat="pool">';
+  shuffled.forEach(item => {
+    html += `<div class="drag-item" draggable="true" data-id="${item.id}">${item.text}</div>`;
+  });
+  html += '</div></div>';
+  q.categories.forEach(cat => {
+    const catId = cat.replace(/[\s\/]/g,'_');
+    html += `<div class="drag-pool"><h4>${cat}</h4><div class="drag-list" id="cat_${catId}" data-cat="${cat}"></div></div>`;
+  });
+  html += '</div>';
+  html += '<button class="btn btn-gold" onclick="checkDrag()" style="margin-top:4px;">Controleer</button>';
+  return html;
+}
+
+function attachDragHandlers() {
+  let src = null;
+  document.querySelectorAll('.drag-item').forEach(el => {
+    el.addEventListener('dragstart', e => { src = e.currentTarget; e.dataTransfer.effectAllowed='move'; });
+  });
+  document.querySelectorAll('.drag-list').forEach(zone => {
+    zone.addEventListener('dragover',  e => { e.preventDefault(); zone.classList.add('over'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('over'));
+    zone.addEventListener('drop', e => {
+      e.preventDefault(); zone.classList.remove('over');
+      if (src) zone.appendChild(src); src = null;
+    });
+  });
+}
+
+function checkDrag() {
+  if (answered[current]) return;
+  const q = questions[current];
+  let correct = 0;
+  q.items.forEach(item => {
+    const el   = document.querySelector(`.drag-item[data-id="${item.id}"]`);
+    if (!el) return;
+    const zone = el.closest('.drag-list');
+    const cat  = zone ? zone.dataset.cat : '';
+    if (cat === item.correct) { el.classList.add('correct-drag'); correct++; }
+    else el.classList.add('wrong-drag');
+    el.draggable = false;
+  });
+  document.querySelector('[onclick="checkDrag()"]').disabled = true;
+  const ok  = correct === q.items.length;
+  const pts = ok ? q.points : (correct >= 2 ? 1 : 0);
+  recordAnswer(pts);
+  showFeedback(ok, q.feedback);
+  addNextBtn(document.getElementById('nav-row'));
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────────────────────────────────────
+function recordAnswer(pts) {
+  scores[current]   = pts;
+  answered[current] = true;
+  score = scores.reduce((a,b)=>a+b,0);
+  document.getElementById('score-num').textContent = score;
+  saveProgress();
+  if (pts > 0) {
+    try { window.parent.postMessage({ type: 'begrijpend-correct', amount: 10 }, '*'); } catch(e){}
+  }
+}
+
+function showFeedback(ok, text) {
+  const fb = document.getElementById('feedback-box');
+  fb.className = 'feedback show ' + (ok ? 'correct-fb' : 'wrong-fb');
+  fb.innerHTML = (ok ? '✅ <strong>Goed!</strong> ' : '❌ <strong>Niet helemaal.</strong> ') + text;
+}
+
+function restoreAnswered() {
+  const q   = questions[current];
+  const pts = scores[current];
+  const ok  = pts > 0;
+  const fb  = document.getElementById('feedback-box');
+  if (fb) {
+    fb.className = 'feedback show ' + (ok ? 'correct-fb' : 'wrong-fb');
+    fb.innerHTML = (ok ? '✅ <strong>Goed!</strong> ' : '❌ <strong>Niet helemaal.</strong> ') + q.feedback;
+  }
+  // For mark questions re-disable check button
+  const mc = document.getElementById('mark-check');
+  if (mc) mc.disabled = true;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FINISH
+// ─────────────────────────────────────────────────────────────────────────────
+function showFinish() {
+  const total = questions.reduce((a,q)=>a+q.points,0);
+  const pct   = Math.round((score/total)*100);
+  document.getElementById('progress-bar').style.width = '100%';
+  document.getElementById('finish-score').textContent = `${score} / ${total}`;
+  let medal = '🏅', msg = '';
+  if (pct >= 85) { medal='🏆'; msg='Uitstekend! Je begrijpt de teksten heel goed en markeert precies het juiste stuk.'; }
+  else if (pct >= 60) { medal='⭐'; msg='Goed gedaan! Je snapt de meeste teksten prima. Probeer bij letterlijke vragen nog preciezer te markeren.'; }
+  else { medal='📖'; msg='Nog een keer lezen helpt! Let goed op welk stukje tekst echt het antwoord geeft.'; }
+  document.getElementById('finish-medal').textContent = medal;
+  document.getElementById('finish-msg').textContent   = msg;
+  const goed = scores.filter(p => p > 0).length;
+  const rows = questions.map((q,i) => {
+    const ok = scores[i] > 0;
+    let t = q.question.replace(/<[^>]*>/g,'');
+    if (t.length > 72) t = t.slice(0,72) + '…';
+    return `<div class="ov-row ${ok?'ov-ok':'ov-no'}"><span class="ov-ic">${ok?'✅':'❌'}</span><span class="ov-q"><b>Vraag ${i+1}:</b> ${t}</span></div>`;
+  }).join('');
+  document.getElementById('finish-overview').innerHTML =
+    `<div class="ov-title">${goed} van ${questions.length} vragen goed</div>` + rows;
+  show('finish-screen');
+}
+
+function restartQuiz() {
+  current  = 0; score = 0;
+  scores   = new Array(questions.length).fill(0);
+  answered = new Array(questions.length).fill(false);
+  markState= questions.map(() => new Set());
+  localStorage.removeItem('bl_wereld_les3');
+  document.getElementById('score-num').textContent = 0;
+  show('quiz-screen');
+  renderQuestion();
+}
+</script>
+</body>
+</html>
