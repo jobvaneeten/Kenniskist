@@ -6,7 +6,9 @@ import AstroKatapultGame from './games/AstroKatapultGame'
 import SterrenstroompGame from './games/SterrenstroompGame'
 import BlokOefenen from './games/BlokOefenen'
 import ProcentenBreuken from './games/ProcentenBreuken'
+import TafelsOefenen from './games/TafelsOefenen'
 import WerkwoordSpelling from './games/WerkwoordSpelling'
+import DicteeThema from './games/DicteeThema'
 import TaalOefenen from './games/TaalOefenen'
 import MenuScene from './MenuScenes'
 import './game.css'
@@ -31,6 +33,7 @@ const REWARDS = {
   taal:      ['🪙 munten', '💵 briefgeld'],
   iep:       ['🪙 munten', '💵 briefgeld'],
   werkwoord: ['💵 briefgeld'],
+  tafels:    ['💵 briefgeld'],
 }
 
 // Which (year, subject) combos have a real game — rest shows placeholder
@@ -39,6 +42,9 @@ const GAMES = {
   '6-taal': 'taal',
   '7-taal': 'taal',
   '8-taal': 'taal',
+  '4-rekenen': 'tafels',
+  '5-rekenen': 'tafels',
+  '6-rekenen': 'tafels',
   '7-rekenen': 'iep',
   '7-spelling': 'werkwoord',
   '8-spelling': 'werkwoord',
@@ -69,7 +75,8 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
   const [directGame, setDirectGame] = useState(null)
   const [gameMode,   setGameMode]   = useState(null)
   const [rekenKeuze,    setRekenKeuze]    = useState(null)   // null | 'verhaal' | 'blok9'
-  const [spellingKeuze, setSpellingKeuze] = useState(null)   // null | 'werkwoord'
+  const [spellingKeuze, setSpellingKeuze] = useState(null)   // null | 'werkwoord' | 'dictee'
+  const [taSoonBlok,    setTaSoonBlok]    = useState(null)   // blok-nr met "komt binnenkort"
   const [taalActive,    setTaalActive]    = useState(false)
 
   // Tower defense (no mode selection needed)
@@ -143,6 +150,17 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
       )
     }
 
+    if (GAMES[gameId] === 'tafels') {
+      return (
+        <TafelsOefenen
+          groep={year}
+          onBack={() => setSubject(null)}
+          addBriefgeld={addBriefgeld}
+          addCuruntie={addCuruntie}
+        />
+      )
+    }
+
     if (GAMES[gameId] === 'iep') {
       if (rekenKeuze === 'blok9') {
         return <BlokOefenen onBack={() => setRekenKeuze(null)} addBriefgeld={addBriefgeld} addCuruntie={addCuruntie} />
@@ -179,7 +197,10 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
       )
     }
 
-    if (GAMES[gameId] === 'werkwoord') {
+    if (subject === 'spelling') {
+      if (spellingKeuze === 'dictee') {
+        return <DicteeThema onBack={() => setSpellingKeuze(null)} addCuruntie={addCuruntie} addBriefgeld={addBriefgeld} />
+      }
       if (spellingKeuze === 'werkwoord') {
         return (
           <WerkwoordSpelling
@@ -189,7 +210,22 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
           />
         )
       }
-      // keuzescherm spelling
+      if (taSoonBlok !== null) {
+        return (
+          <div className="game-screen game-screen-center">
+            <button className="back-btn" onClick={() => setTaSoonBlok(null)}>← Terug</button>
+            <div className="game-placeholder">
+              <span className="gp-emoji">✏️</span>
+              <h2 className="gp-title" style={{ color: '#CE93D8' }}>Taal Actief 5 — Blok {taSoonBlok}</h2>
+              <p className="gp-sub">Groep {year}</p>
+              <div className="gp-soon-badge">🚧 Komt binnenkort 🚧</div>
+              <p className="gp-desc">Dit blok is nog in aanbouw.<br />Check snel weer terug!</p>
+            </div>
+          </div>
+        )
+      }
+      const hasWerkwoord = GAMES[gameId] === 'werkwoord'
+      const dicteeBlok = year === 7 ? 8 : null   // alleen groep 7 blok 8 is af
       return (
         <div className="game-screen game-screen-center">
           <button className="back-btn" onClick={() => setSubject(null)}>← Menu</button>
@@ -198,14 +234,32 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
             <h1 className="game-header-title">Spelling — Groep {year}</h1>
             <p className="game-header-sub">Wat wil je oefenen?</p>
           </div>
-          <div className="mode-grid">
-            <button className="mode-card" onClick={() => setSpellingKeuze('werkwoord')}>
-              <MenuScene name="spelling" />
-              <span className="mode-name">✒️ Werkwoordspelling</span>
-              <span className="mode-desc">Tegenwoordige tijd, verleden tijd & voltooid deelwoord</span>
-              <span className="vb-line">"ik vind → gisteren ... hij" en "lopen → hij heeft ...?"</span>
-              <RewardChips rewards={['💵 briefgeld']} />
-            </button>
+          {hasWerkwoord && (
+            <div className="mode-grid">
+              <button className="mode-card" onClick={() => setSpellingKeuze('werkwoord')}>
+                <MenuScene name="spelling" />
+                <span className="mode-name">✒️ Werkwoordspelling</span>
+                <span className="mode-desc">Tegenwoordige tijd, verleden tijd & voltooid deelwoord</span>
+                <span className="vb-line">"ik vind → gisteren ... hij" en "lopen → hij heeft ...?"</span>
+                <RewardChips rewards={['💵 briefgeld']} />
+              </button>
+            </div>
+          )}
+          <p className="ta-section-title">📕 Taal Actief 5</p>
+          <div className="blok-grid">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map(b => {
+              const ready = b === dicteeBlok
+              return (
+                <button
+                  key={b}
+                  className={`blok-card${ready ? ' ready' : ''}`}
+                  onClick={() => ready ? setSpellingKeuze('dictee') : setTaSoonBlok(b)}
+                >
+                  <span className="blok-num">Blok {b}</span>
+                  <span className="blok-tag">{ready ? '✅ Dictee + dieren' : '🚧 binnenkort'}</span>
+                </button>
+              )
+            })}
           </div>
         </div>
       )
@@ -264,15 +318,17 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
                 <MenuScene name={s.scene} />
                 <span className="subject-label">{s.emoji} {s.label}</span>
                 <span className="subject-tag">
-                  {game === 'iep'
+                  {game === 'tafels'
+                    ? '✖️ Tafels oefenen'
+                    : game === 'iep'
                     ? '🚀 Verhaaltjessommen + blok 9'
-                    : game === 'werkwoord'
-                    ? '✒️ Werkwoordspelling'
+                    : s.key === 'spelling'
+                    ? (game === 'werkwoord' ? '✒️ Werkwoord + Taal Actief 5' : '📕 Taal Actief 5')
                     : game === 'taal'
                     ? '📖 Taalverkennen + toets'
                     : '🚧 Komt binnenkort'}
                 </span>
-                {game && <span className="vb-line">{s.vb}</span>}
+                {(game || s.key === 'spelling') && <span className="vb-line">{s.vb}</span>}
                 {game && <RewardChips rewards={REWARDS[game]} />}
               </button>
             )

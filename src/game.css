@@ -293,6 +293,55 @@
 .mode-name  { font-size: 1.1rem; font-weight: 900; }
 .mode-desc  { font-size: 0.75rem; color: rgba(255,255,255,0.4); font-weight: 600; text-align: center; }
 
+/* ── Taal Actief 5 blok-grid ────────────── */
+.ta-section-title {
+  width: 100%;
+  max-width: 480px;
+  margin: 26px 0 12px;
+  font-size: 1rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  color: #CE93D8;
+}
+.blok-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  width: 100%;
+  max-width: 480px;
+}
+.blok-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 8px;
+  border-radius: 16px;
+  border: 1.5px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.04);
+  cursor: pointer;
+  font-family: inherit;
+  color: #fff;
+  transition: transform 0.18s cubic-bezier(.34,1.56,.64,1), border-color 0.18s, background 0.18s;
+}
+.blok-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(206,147,216,0.55);
+  background: rgba(206,147,216,0.08);
+}
+.blok-card:active { transform: scale(0.96); }
+.blok-card.ready {
+  border-color: rgba(206,147,216,0.6);
+  background: rgba(206,147,216,0.1);
+}
+.blok-num { font-size: 0.95rem; font-weight: 900; }
+.blok-tag { font-size: 0.62rem; font-weight: 700; color: rgba(255,255,255,0.45); text-align: center; }
+.blok-card.ready .blok-tag { color: #d8a9e0; }
+
+@media (max-width: 520px) {
+  .blok-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
 /* ── Free games section ─────────────────── */
 .free-games-section {
   width: 100%;

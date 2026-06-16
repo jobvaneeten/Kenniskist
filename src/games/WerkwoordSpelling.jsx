@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import FootballGame from './FootballGame'
 import TowerDefenseGame from './TowerDefenseGame'
-import { shuffleOefeningen, checkAntwoord, uitlegVoor } from './werkwoorden'
+import { shuffleOefeningen, shuffleGefilterd, checkAntwoord, uitlegVoor } from './werkwoorden'
 import { BeloningKeuze, JetpackBeloning, AstroBeloning, SpacerunnerBeloning, BRIEFGELD } from './Beloning'
 import './werkwoord-spelling.css'
 
@@ -148,9 +148,59 @@ function Overzicht({ stats, totaalGoed, fouten, onVerder }) {
   )
 }
 
+const ALLE_CATS = ['tt', 'vtZwak', 'vtSterk', 'vd']
+const CAT_INFO = {
+  tt:      { label: 'Tegenwoordige tijd',   vb: 'hij werkt · wij werken',         cls: 'ws-tijd-tt' },
+  vtZwak:  { label: 'Verleden tijd — zwak', vb: 'hij werkte · -de of -te',        cls: 'ws-tijd-vt' },
+  vtSterk: { label: 'Verleden tijd — sterk',vb: 'hij liep · reed · zong',         cls: 'ws-tijd-vt' },
+  vd:      { label: 'Voltooid deelwoord',   vb: 'hij heeft gewerkt · is gelopen', cls: 'ws-tijd-vd' },
+}
+
+function CatSelectie({ groep, onStart, onBack }) {
+  const [gekozen, setGekozen] = useState(new Set(ALLE_CATS))
+
+  const toggle = (key) => setGekozen(prev => {
+    const s = new Set(prev)
+    if (s.has(key)) { if (s.size > 1) s.delete(key) }
+    else s.add(key)
+    return s
+  })
+
+  return (
+    <div className="ws-catsel">
+      <button className="ws-back-btn" onClick={onBack}>← Terug</button>
+      <div className="ws-catsel-header">
+        <div className="ws-header-title">Werkwoordspelling · Groep {groep}</div>
+        <p className="ws-catsel-sub">Kies wat je wil oefenen</p>
+      </div>
+      <div className="ws-catsel-lijst">
+        {ALLE_CATS.map(key => {
+          const info = CAT_INFO[key]
+          const aan = gekozen.has(key)
+          return (
+            <button
+              key={key}
+              className={`ws-catsel-rij ${info.cls}${aan ? ' aan' : ''}`}
+              onClick={() => toggle(key)}
+            >
+              <span className="ws-catsel-check">{aan ? '✅' : '⬜'}</span>
+              <span className="ws-catsel-label">{info.label}</span>
+              <span className="ws-catsel-vb">{info.vb}</span>
+            </button>
+          )
+        })}
+      </div>
+      <button className="ws-ov-verder-btn" onClick={() => onStart(gekozen)}>
+        Start! ({gekozen.size} categorie{gekozen.size !== 1 ? 'ën' : ''}) →
+      </button>
+    </div>
+  )
+}
+
 // ── Hoofdcomponent ───────────────────────────────────────────────────────
 export default function WerkwoordSpelling({ groep, onBack, addBriefgeld }) {
-  const [oefeningen, setOefeningen] = useState(() => shuffleOefeningen())
+  const [gekozenCats, setGekozenCats] = useState(null)   // null = nog niet gekozen
+  const [oefeningen, setOefeningen]   = useState([])
   const [idx, setIdx]       = useState(0)
   const [sinds, setSinds]   = useState(0)       // correcte antwoorden sinds laatste beloning
   const [verdiend, setVerdiend] = useState(0)
@@ -175,7 +225,7 @@ export default function WerkwoordSpelling({ groep, onBack, addBriefgeld }) {
 
     // volgende opgave
     const nieuwIdx = idx + 1
-    if (nieuwIdx >= oefeningen.length) { setOefeningen(shuffleOefeningen()); setIdx(0) }
+    if (nieuwIdx >= oefeningen.length) { setOefeningen(shuffleGefilterd(gekozenCats)); setIdx(0) }
     else setIdx(nieuwIdx)
 
     // 20-opgaven overzicht heeft voorrang
@@ -193,46 +243,42 @@ export default function WerkwoordSpelling({ groep, onBack, addBriefgeld }) {
       if (nieuwSinds >= PER_BELONING) { setSinds(0); setPhase('keuze') }
       else setSinds(nieuwSinds)
     }
-  }, [idx, sinds, gemaakt, oef, oefeningen.length])
+  }, [idx, sinds, gemaakt, oef, oefeningen.length, gekozenCats])
 
-  // Nieuwe ronde starten na het overzicht
+  // Nieuwe ronde: terug naar cat-selectie
   const nieuweRonde = useCallback(() => {
-    setStats(legeStats()); setFouten([]); setGemaakt(0); setSinds(0); setPhase('play')
+    setStats(legeStats()); setFouten([]); setGemaakt(0); setSinds(0)
+    setGekozenCats(null); setPhase('play')
   }, [])
 
-  const totaalGoed = CATEGORIEEN.reduce((sum, c) => sum + stats[c.key].goed, 0)
-
-  const kiesBeloning = (key) => {
-    if (key === 'towerdefense') setTdStarted(true)
-    // Astro Katapult: je krijgt de €50 meteen (zodra je speelt)
-    if (key === 'astrokatapult') { addBriefgeld?.(BRIEFGELD); setVerdiend(v => v + BRIEFGELD) }
-    setPhase(key)
-  }
-
-  // Astro Katapult klaar (1 level gespeeld) → briefgeld is al gegeven → terug
-  const astroKlaar = useCallback(() => setPhase('play'), [])
-
-  // Tower Defense golf klaar → 50 briefgeld + terug naar spelling (spel blijft gemount)
-  const tdKlaar = useCallback(() => {
-    addBriefgeld?.(BRIEFGELD); setVerdiend(v => v + BRIEFGELD)
-    setPhase('play')
-  }, [addBriefgeld])
-
-  // TD handmatig verlaten (via ← Terug) → volledig unmounten
-  const tdTerug = useCallback(() => {
-    setTdStarted(false)
-    setPhase('play')
+  const startMetCats = useCallback((cats) => {
+    setGekozenCats(cats)
+    setOefeningen(shuffleGefilterd(cats))
+    setIdx(0); setSinds(0); setGemaakt(0); setStats(legeStats()); setFouten([])
   }, [])
 
-  // Jetpack klaar → munten zaten al in het spel → geen briefgeld
+  const astroKlaar   = useCallback(() => setPhase('play'), [])
+  const tdKlaar      = useCallback(() => { addBriefgeld?.(BRIEFGELD); setVerdiend(v => v + BRIEFGELD); setPhase('play') }, [addBriefgeld])
+  const tdTerug      = useCallback(() => { setTdStarted(false); setPhase('play') }, [])
   const jetpackKlaar = useCallback(() => setPhase('play'), [])
-
-  // Voetbal-wedstrijd afgelopen → toernooi bewaren, 50 briefgeld (als gespeeld), terug
   const voetbalKlaar = useCallback((won, nextBracket, played) => {
     setFootballBracket(nextBracket || null)
     if (played) { addBriefgeld?.(BRIEFGELD); setVerdiend(v => v + BRIEFGELD) }
     setPhase('play')
   }, [addBriefgeld])
+
+  // ── Early return voor cat-selectie (pas ná alle hooks) ──
+  if (gekozenCats === null) {
+    return <div className="ws-catsel-screen"><CatSelectie groep={groep} onStart={startMetCats} onBack={onBack} /></div>
+  }
+
+  const totaalGoed = CATEGORIEEN.reduce((sum, c) => sum + stats[c.key].goed, 0)
+
+  const kiesBeloning = (key) => {
+    if (key === 'towerdefense') setTdStarted(true)
+    if (key === 'astrokatapult') { addBriefgeld?.(BRIEFGELD); setVerdiend(v => v + BRIEFGELD) }
+    setPhase(key)
+  }
 
   // ── Niet-persistente spellen (volledig unmounten na gebruik) ──
   if (phase === 'football') {

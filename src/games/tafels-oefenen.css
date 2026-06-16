@@ -1,0 +1,296 @@
+.to-outer {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.to-back-btn {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: rgba(255,255,255,0.15);
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 14px;
+  padding: 6px 12px;
+  cursor: pointer;
+  z-index: 10;
+}
+.to-back-btn:hover { background: rgba(255,255,255,0.25); }
+
+.to-wrap {
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 20px 16px 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+/* ── Selectie ── */
+.to-selectie { padding-top: 60px; }
+
+.to-header { text-align: center; margin-bottom: 4px; }
+.to-icon { font-size: 40px; }
+.to-titel { font-size: 22px; font-weight: 700; color: #fff; margin: 4px 0 2px; }
+.to-sub { font-size: 14px; color: rgba(255,255,255,0.7); margin: 0; }
+
+.to-tafel-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  width: 100%;
+}
+
+.to-tafel-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 8px;
+  border-radius: 12px;
+  border: 2px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.5);
+  cursor: pointer;
+  transition: all .15s;
+}
+.to-tafel-btn.gekozen {
+  border-color: #FFD23F;
+  background: rgba(255,210,63,0.15);
+  color: #fff;
+}
+.to-tafel-num { font-size: 18px; font-weight: 700; }
+.to-tafel-vb { font-size: 11px; opacity: .7; margin-top: 2px; }
+
+/* ── Type-keuze ── */
+.to-type-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  width: 100%;
+}
+.to-type-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 28px 16px;
+  border-radius: 16px;
+  border: 2px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+  cursor: pointer;
+  transition: all .15s;
+}
+.to-type-btn:hover {
+  border-color: #FFD23F;
+  background: rgba(255,210,63,0.12);
+}
+.to-type-sym {
+  font-size: 48px;
+  font-weight: 800;
+  color: #FFD23F;
+  line-height: 1;
+}
+.to-type-naam { font-size: 16px; font-weight: 700; }
+.to-type-vb { font-size: 13px; color: rgba(255,255,255,0.5); }
+
+.to-start-btn {
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  border: none;
+  background: #FFD23F;
+  color: #1a1a1a;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 8px;
+}
+.to-start-btn:hover { background: #ffe066; }
+
+/* ── Spel ── */
+.to-spel { padding-top: 80px; justify-content: flex-start; }
+
+.to-timer-balk {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 12px;
+  margin-bottom: 8px;
+}
+.to-timer {
+  font-size: 28px;
+  font-weight: 700;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+  min-width: 60px;
+}
+.to-timer.urgent { color: #FF6B6B; animation: to-pulse .6s infinite alternate; }
+@keyframes to-pulse { from { opacity: 1 } to { opacity: .5 } }
+.to-teller, .to-goed-teller {
+  font-size: 14px;
+  color: rgba(255,255,255,0.7);
+  margin-left: auto;
+}
+.to-goed-teller { color: #06D6A0; margin-left: 0; }
+
+.to-vraag-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+.to-vraag {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 16px;
+  padding: 20px 24px;
+  width: 100%;
+  justify-content: center;
+}
+.to-getal { font-size: 48px; font-weight: 800; color: #fff; }
+.to-keer, .to-is { font-size: 36px; color: rgba(255,255,255,0.6); }
+.to-input {
+  width: 100px;
+  font-size: 48px;
+  font-weight: 800;
+  text-align: center;
+  background: rgba(255,255,255,0.15);
+  border: 2px solid rgba(255,255,255,0.3);
+  border-radius: 10px;
+  color: #fff;
+  padding: 4px 8px;
+  -moz-appearance: textfield;
+}
+.to-input::-webkit-inner-spin-button,
+.to-input::-webkit-outer-spin-button { display: none; }
+.to-input:focus { outline: none; border-color: #FFD23F; }
+
+.to-check-btn {
+  font-size: 24px;
+  padding: 12px 32px;
+  border-radius: 12px;
+  border: none;
+  background: #FFD23F;
+  color: #1a1a1a;
+  font-weight: 700;
+  cursor: pointer;
+}
+.to-check-btn:disabled { opacity: .4; cursor: default; }
+
+.to-flash-goed { animation: flash-goed .28s ease; }
+.to-flash-fout { animation: flash-fout .28s ease; }
+@keyframes flash-goed { 0%,100% { background: transparent } 50% { background: rgba(6,214,160,.25) } }
+@keyframes flash-fout { 0%,100% { background: transparent } 50% { background: rgba(255,107,107,.25) } }
+
+/* ── Overzicht ── */
+.to-overzicht { padding-top: 60px; gap: 16px; }
+
+.to-ov-banner {
+  background: rgba(255,255,255,0.12);
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-size: 14px;
+  color: rgba(255,255,255,0.8);
+  width: 100%;
+  text-align: center;
+}
+.to-ov-score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.to-ov-groot { font-size: 52px; font-weight: 800; color: #FFD23F; }
+.to-ov-label { font-size: 14px; color: rgba(255,255,255,0.6); }
+
+.to-ov-tafels { display: flex; flex-direction: column; gap: 6px; width: 100%; }
+
+.to-ov-rij {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 12px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 10px;
+  gap: 6px;
+}
+.to-ov-rij.heeft-fout { background: rgba(255,107,107,0.12); }
+.to-ov-rij-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.to-ov-inline-fouten {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-left: 2px;
+}
+.to-ov-inline-fout {
+  font-size: 12px;
+  background: rgba(255,107,107,0.2);
+  border-radius: 6px;
+  padding: 3px 8px;
+  color: #fff;
+}
+.to-ov-inline-jouw {
+  color: rgba(255,255,255,0.5);
+  margin-left: 4px;
+  font-size: 11px;
+}
+.to-ov-tafel-naam { flex: 1; font-size: 14px; color: #fff; }
+.to-ov-tafel-score { font-size: 14px; color: rgba(255,255,255,0.6); min-width: 36px; text-align: right; }
+.to-ov-fout-tag { font-size: 12px; color: #FF6B6B; min-width: 60px; text-align: right; }
+.to-ov-ok-tag { font-size: 14px; min-width: 60px; text-align: right; }
+.to-ov-leeg-tag { font-size: 14px; color: rgba(255,255,255,0.3); min-width: 60px; text-align: right; }
+
+.to-ov-foutenlijst {
+  width: 100%;
+  background: rgba(255,107,107,0.1);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+.to-ov-fouten-titel { font-size: 13px; color: rgba(255,255,255,0.6); margin-bottom: 8px; }
+.to-ov-fout-rij {
+  display: flex;
+  gap: 12px;
+  font-size: 14px;
+  color: #fff;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.to-ov-fout-rij:last-child { border-bottom: none; }
+.to-jouw { color: #FF6B6B; }
+.to-goed { color: #06D6A0; margin-left: auto; }
+
+.to-spelletje-btn {
+  width: 100%;
+  padding: 16px;
+  border-radius: 14px;
+  border: none;
+  background: linear-gradient(135deg, #FFD23F, #ff9f00);
+  color: #1a1a1a;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 4px;
+}
+.to-spelletje-btn:hover { filter: brightness(1.1); }
+
+@media (max-width: 400px) {
+  .to-getal { font-size: 36px; }
+  .to-keer, .to-is { font-size: 28px; }
+  .to-input { font-size: 36px; width: 80px; }
+  .to-tafel-grid { grid-template-columns: repeat(3, 1fr); }
+}

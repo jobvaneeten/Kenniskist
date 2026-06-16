@@ -130,7 +130,22 @@
       "Bash(cp /tmp/kart-smoke.mjs ./kart-smoke.mjs)",
       "Bash(node ./kart-smoke.mjs)",
       "Bash(grep -iE \"error|EADDRINUSE|listen\" /tmp/kart-server.log | head -5)",
-      "PowerShell($c = Get-NetTCPConnection -LocalPort 2567 -State Listen -ErrorAction SilentlyContinue; if \\($c\\) { $c.OwningProcess | Select-Object -Unique | ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue; \"killed $_\" } } else { \"none\" })"
+      "PowerShell($c = Get-NetTCPConnection -LocalPort 2567 -State Listen -ErrorAction SilentlyContinue; if \\($c\\) { $c.OwningProcess | Select-Object -Unique | ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue; \"killed $_\" } } else { \"none\" })",
+      "Bash(python -c \"import json,sys; data=json.load\\(sys.stdin\\); print\\(f'Count: {len\\(data\\)}'\\); [print\\(f'[{i}] {q[\\\\\"questionText\\\\\"][:80]} | ans={q[\\\\\"answer\\\\\"]}'\\) for i,q in enumerate\\(data[:20]\\)]\")",
+      "Bash(git -C \"C:/Users/nieuwaccount/kenniskist-server\" add -A)",
+      "Bash(git -C C:/Users/nieuwaccount/kenniskist-server commit -m ' *)",
+      "Bash(git -C \"C:/Users/nieuwaccount/kenniskist-server\" push origin master)",
+      "Bash(git -C \"C:/Users/nieuwaccount/kenniskist\" add src/games/BlokOefenen.jsx src/games/blok9.js)",
+      "Bash(git -C C:/Users/nieuwaccount/kenniskist commit -m ' *)",
+      "Bash(git -C \"C:/Users/nieuwaccount/kenniskist\" push origin main)",
+      "Bash(git -C \"C:/Users/nieuwaccount/kenniskist\" add src/games/KartGame.jsx)",
+      "Bash(npm --prefix \"C:/Users/nieuwaccount/kenniskist\" run deploy)",
+      "Bash(node /tmp/track_check.mjs)",
+      "Bash(node /tmp/t2.mjs)",
+      "PowerShell(Set-Location C:\\\\Users\\\\nieuwaccount\\\\kenniskist-server; $o = npx tsc --noEmit 2>&1 | Out-String; \"EXIT=$LASTEXITCODE\"; if\\($o.Trim\\(\\).Length -eq 0\\){\"NO TS ERRORS\"}else{$o})",
+      "PowerShell(Set-Location C:\\\\Users\\\\nieuwaccount\\\\kenniskist; $o = npm run build 2>&1 | Out-String; \"CLIENT_EXIT=$LASTEXITCODE\"; \\($o -split \"`n\" | Select-String -Pattern 'error|Error|✓ built' | Select-Object -Last 4\\))",
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('top mcpServers:', list\\(d.get\\('mcpServers',{}\\).keys\\(\\)\\)\\); print\\('projects:', list\\(d.get\\('projects',{}\\).keys\\(\\)\\)[:5]\\)\")",
+      "Bash(node -e \"const d=require\\(process.env.USERPROFILE+'/.claude.json'\\); console.log\\(JSON.stringify\\(d.enabledPlugins||{},null,0\\)\\); console.log\\('extensionMcp?', Object.keys\\(d\\).filter\\(k=>/mcp|plugin|extension/i.test\\(k\\)\\)\\)\")"
     ]
   }
 }

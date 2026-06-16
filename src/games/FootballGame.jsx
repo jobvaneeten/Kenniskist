@@ -460,7 +460,7 @@ function JerseyCircle({ country, size = 32 }) {
 
 // ── Main component ────────────────────────────────────────────────
 export default function FootballGame({ year, onBack, addCuruntie, noQuiz = false, twoPlayer = false,
-                                       rewardMode = false, initialBracket = null, onMatchDone }) {
+                                       rewardMode = false, initialBracket = null, onMatchDone, onMatchEnd }) {
   const [phase,       setPhase]      = useState(rewardMode && initialBracket ? 'match_preview' : 'country_select')
   const [bracket,     setBracket]    = useState(rewardMode ? initialBracket : null)
   const [difficulty,  setDifficulty] = useState(null)
@@ -872,6 +872,10 @@ export default function FootballGame({ year, onBack, addCuruntie, noQuiz = false
     if (bracket.currentRound >= 3) return { won:true, next:null }              // hele toernooi gewonnen
     return { won:true, next:{ ...bracket, currentRound: bracket.currentRound + 1, results:[...bracket.results, 'win'] } }
   }
+  useEffect(() => {
+    if (phase === 'match_end') onMatchEnd?.()
+  }, [phase])
+
   useEffect(() => {
     if (!rewardMode || phase !== 'match_end') return
     const { won, next } = rewardNextBracket()

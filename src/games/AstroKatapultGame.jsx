@@ -1,6 +1,6 @@
 import OrientationGate from '../OrientationGate'
 
-export default function AstroKatapultGame({ onBack }) {
+export default function AstroKatapultGame({ onBack, reward = false }) {
   // Volledige game (eigen level-keuze). Voortgang staat in localStorage van het spel zelf.
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: '#060611' }}>
@@ -17,7 +17,7 @@ export default function AstroKatapultGame({ onBack }) {
         ← Menu
       </button>
       <iframe
-        src="/astrokatapult/"
+        src={reward ? '/astrokatapult/?reward' : '/astrokatapult/'}
         style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
         title="Astro Katapult"
         allow="autoplay"

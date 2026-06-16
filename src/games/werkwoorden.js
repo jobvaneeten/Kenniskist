@@ -152,6 +152,20 @@ export function shuffleOefeningen() {
   return arr
 }
 
+export function shuffleGefilterd(cats) {
+  const s = cats instanceof Set ? cats : new Set(cats)
+  const arr = maakOefeningen().filter(oef => {
+    if (oef.tijdKey === 'tt') return s.has('tt')
+    if (oef.tijdKey === 'vd') return s.has('vd')
+    return oef.type === 'sterk' ? s.has('vtSterk') : s.has('vtZwak')
+  })
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[arr[i], arr[j]] = [arr[j], arr[i]]
+  }
+  return arr
+}
+
 // Antwoord-vergelijking: hoofdletters/spaties negeren
 export function checkAntwoord(invoer, juist) {
   const norm = (s) => String(s).toLowerCase().replace(/\s+/g, ' ').trim()

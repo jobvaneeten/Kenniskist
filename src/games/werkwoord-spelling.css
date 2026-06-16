@@ -161,6 +161,49 @@
 .ws-progress-label { font-size: 0.8rem; color: #c4b5fd; display: flex; justify-content: space-between; }
 .ws-opgave-teller { color: #fde68a; font-weight: 700; }
 
+/* ── Categorie-selectie ── */
+.ws-catsel-screen {
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+  background: linear-gradient(160deg, #2d1b69, #4a2a8a 50%, #6b2fa0);
+}
+.ws-catsel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 60px 20px 40px;
+  max-width: 500px;
+  margin: 0 auto;
+  width: 100%;
+  min-height: 100vh;
+}
+.ws-catsel-header { text-align: center; }
+.ws-catsel-sub { font-size: 14px; color: rgba(255,255,255,0.6); margin: 4px 0 0; }
+.ws-catsel-lijst { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+.ws-catsel-rij {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 2px solid rgba(255,255,255,0.15);
+  background: rgba(0,0,0,0.35);
+  cursor: pointer;
+  transition: all .15s;
+  text-align: left;
+}
+.ws-catsel-rij.aan.ws-tijd-tt { border-color: #4FC3F7; background: rgba(79,195,247,0.18); }
+.ws-catsel-rij.aan.ws-tijd-vt { border-color: #FFB74D; background: rgba(255,183,77,0.18); }
+.ws-catsel-rij.aan.ws-tijd-vd { border-color: #A5D6A7; background: rgba(165,214,167,0.18); }
+.ws-catsel-rij.ws-tijd-tt { color: #4FC3F7; }
+.ws-catsel-rij.ws-tijd-vt { color: #FFB74D; }
+.ws-catsel-rij.ws-tijd-vd { color: #A5D6A7; }
+.ws-catsel-check { font-size: 20px; flex-shrink: 0; }
+.ws-catsel-label { font-size: 15px; font-weight: 600; color: #fff; flex: 1; }
+.ws-catsel-vb { font-size: 12px; color: rgba(255,255,255,0.5); }
+
 /* ── Overzichtsscherm (na 20 opgaven) ── */
 .ws-overzicht {
   position: relative;
