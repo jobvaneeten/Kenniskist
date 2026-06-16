@@ -80,6 +80,7 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
   const [rekenKeuze,    setRekenKeuze]    = useState(null)   // null | 'verhaal' | 'blok9'
   const [spellingKeuze, setSpellingKeuze] = useState(null)   // null | 'werkwoord' | 'dictee'
   const [taSoonBlok,    setTaSoonBlok]    = useState(null)   // blok-nr met "komt binnenkort"
+  const [dicteeNr,      setDicteeNr]      = useState(8)      // gekozen dictee-blok (7 of 8)
   const [taalActive,    setTaalActive]    = useState(false)
 
   // Tower defense (no mode selection needed)
@@ -212,7 +213,7 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
 
     if (subject === 'spelling') {
       if (spellingKeuze === 'dictee') {
-        return <DicteeThema onBack={() => setSpellingKeuze(null)} addCuruntie={addCuruntie} addBriefgeld={addBriefgeld} />
+        return <DicteeThema thema={dicteeNr} onBack={() => setSpellingKeuze(null)} addCuruntie={addCuruntie} addBriefgeld={addBriefgeld} />
       }
       if (spellingKeuze === 'werkwoord') {
         return (
@@ -238,7 +239,7 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
         )
       }
       const hasWerkwoord = GAMES[gameId] === 'werkwoord'
-      const dicteeBlok = year === 7 ? 8 : null   // alleen groep 7 blok 8 is af
+      const dicteeBlokken = year === 7 ? [1, 2, 3, 4, 5, 6, 7, 8] : []   // groep 7: blok 1 t/m 8 zijn af
       return (
         <div className="game-screen game-screen-center">
           <button className="back-btn" onClick={() => setSubject(null)}>← Menu</button>
@@ -261,12 +262,12 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
           <p className="ta-section-title">📕 Taal Actief 5</p>
           <div className="blok-grid">
             {[1, 2, 3, 4, 5, 6, 7, 8].map(b => {
-              const ready = b === dicteeBlok
+              const ready = dicteeBlokken.includes(b)
               return (
                 <button
                   key={b}
                   className={`blok-card${ready ? ' ready' : ''}`}
-                  onClick={() => ready ? setSpellingKeuze('dictee') : setTaSoonBlok(b)}
+                  onClick={() => ready ? (setDicteeNr(b), setSpellingKeuze('dictee')) : setTaSoonBlok(b)}
                 >
                   <span className="blok-num">Blok {b}</span>
                   <span className="blok-tag">{ready ? '✅ Dictee + dieren' : '🚧 binnenkort'}</span>

@@ -293,6 +293,30 @@
 .mode-name  { font-size: 1.1rem; font-weight: 900; }
 .mode-desc  { font-size: 0.75rem; color: rgba(255,255,255,0.4); font-weight: 600; text-align: center; }
 
+/* ── Begrijpend Lezen: thema-kaarten ─────── */
+.bl-thema-grid { flex-wrap: wrap; justify-content: center; }
+.bl-thema-card {
+  flex: 0 1 230px;
+  max-width: 260px;
+  padding: 24px 18px 20px;
+  border-color: color-mix(in srgb, var(--bl-kleur, #06D6A0) 35%, rgba(255,255,255,0.1));
+  background: linear-gradient(165deg, color-mix(in srgb, var(--bl-kleur, #06D6A0) 16%, transparent), rgba(255,255,255,0.02));
+}
+.bl-thema-card:hover {
+  border-color: color-mix(in srgb, var(--bl-kleur, #06D6A0) 70%, transparent);
+  background: linear-gradient(165deg, color-mix(in srgb, var(--bl-kleur, #06D6A0) 26%, transparent), rgba(255,255,255,0.03));
+  box-shadow: 0 14px 38px color-mix(in srgb, var(--bl-kleur, #06D6A0) 22%, transparent), 0 4px 20px rgba(0,0,0,0.35);
+}
+.bl-thema-emoji {
+  font-size: 3rem; line-height: 1;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.45));
+}
+.bl-thema-go {
+  margin-top: 4px;
+  font-size: 0.72rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase;
+  color: var(--bl-kleur, #06D6A0);
+}
+
 /* ── Taal Actief 5 blok-grid ────────────── */
 .ta-section-title {
   width: 100%;
@@ -306,37 +330,74 @@
 .blok-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
+  gap: 14px;
   width: 100%;
   max-width: 480px;
 }
 .blok-card {
+  position: relative;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 14px 8px;
-  border-radius: 16px;
+  justify-content: center;
+  gap: 9px;
+  padding: 20px 8px 16px;
+  border-radius: 18px;
   border: 1.5px solid rgba(255,255,255,0.1);
-  background: rgba(255,255,255,0.04);
+  background: linear-gradient(160deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 6px 18px rgba(0,0,0,0.25);
   cursor: pointer;
   font-family: inherit;
   color: #fff;
-  transition: transform 0.18s cubic-bezier(.34,1.56,.64,1), border-color 0.18s, background 0.18s;
+  transition: transform 0.18s cubic-bezier(.34,1.56,.64,1), border-color 0.18s, box-shadow 0.18s, background 0.18s;
 }
 .blok-card:hover {
-  transform: translateY(-4px);
-  border-color: rgba(206,147,216,0.55);
-  background: rgba(206,147,216,0.08);
+  transform: translateY(-5px);
+  border-color: rgba(206,147,216,0.6);
+  box-shadow: 0 14px 32px rgba(155,77,202,0.28), inset 0 1px 0 rgba(255,255,255,0.12);
 }
 .blok-card:active { transform: scale(0.96); }
+.blok-card:disabled { cursor: default; opacity: 0.5; }
 .blok-card.ready {
-  border-color: rgba(206,147,216,0.6);
-  background: rgba(206,147,216,0.1);
+  border-color: rgba(206,147,216,0.7);
+  background: linear-gradient(160deg, rgba(206,147,216,0.24), rgba(155,77,202,0.10));
+  box-shadow: 0 8px 22px rgba(155,77,202,0.25), inset 0 1px 0 rgba(255,255,255,0.14);
 }
-.blok-num { font-size: 0.95rem; font-weight: 900; }
-.blok-tag { font-size: 0.62rem; font-weight: 700; color: rgba(255,255,255,0.45); text-align: center; }
-.blok-card.ready .blok-tag { color: #d8a9e0; }
+/* accent-streepje bovenaan bij beschikbare blokken */
+.blok-card.ready::before {
+  content: '';
+  position: absolute; top: 0; left: 18%; right: 18%; height: 3px;
+  border-radius: 0 0 4px 4px;
+  background: linear-gradient(90deg, transparent, #e6b0f5, transparent);
+}
+.blok-num { font-size: 1.05rem; font-weight: 900; letter-spacing: 0.2px; z-index: 1; line-height: 1.15; text-align: center; max-width: 100%; overflow-wrap: anywhere; hyphens: auto; }
+.blok-card.ready .blok-num {
+  background: linear-gradient(180deg, #ffffff, #f0d6f8);
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+.blok-tag {
+  font-size: 0.6rem; font-weight: 800; letter-spacing: 0.02em; text-align: center;
+  padding: 3px 9px; border-radius: 99px; z-index: 1;
+  background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.45);
+}
+.blok-card.ready .blok-tag { background: rgba(206,147,216,0.22); color: #f3d6fb; }
+
+/* glanzende veeg over beschikbare blokken + gefaseerde fade-in */
+.blok-card.ready::after {
+  content: ''; position: absolute; top: 0; bottom: 0; left: -65%; width: 45%;
+  background: linear-gradient(100deg, transparent, rgba(255,255,255,0.22), transparent);
+  transform: skewX(-18deg); pointer-events: none; animation: gs-sweep 5s ease-in-out infinite; z-index: 2;
+}
+.blok-card { opacity: 0; animation: gs-cardin 0.5s ease forwards; }
+.blok-card:nth-child(1){animation-delay:.04s}
+.blok-card:nth-child(2){animation-delay:.09s}
+.blok-card:nth-child(3){animation-delay:.14s}
+.blok-card:nth-child(4){animation-delay:.19s}
+.blok-card:nth-child(5){animation-delay:.24s}
+.blok-card:nth-child(6){animation-delay:.29s}
+.blok-card:nth-child(7){animation-delay:.34s}
+.blok-card:nth-child(8){animation-delay:.39s}
 
 @media (max-width: 520px) {
   .blok-grid { grid-template-columns: repeat(2, 1fr); }

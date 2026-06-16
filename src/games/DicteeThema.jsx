@@ -6,7 +6,7 @@ import TowerDefenseGame from './TowerDefenseGame'
 import FootballGame from './FootballGame'
 import './dictee-thema.css'
 
-export default function DicteeThema({ onBack, addCuruntie, addBriefgeld }) {
+export default function DicteeThema({ onBack, addCuruntie, addBriefgeld, thema = 8 }) {
   const frameRef   = useRef(null)
   const wavesRef   = useRef(0)
   const [game, setGame]       = useState(null)
@@ -53,8 +53,8 @@ export default function DicteeThema({ onBack, addCuruntie, addBriefgeld }) {
         <iframe
           ref={frameRef}
           className="dictee-frame"
-          src={`${import.meta.env.BASE_URL}taalactief5/dictee-thema8.html`}
-          title="Taal Actief 5 — Dictee thema 8"
+          src={`${import.meta.env.BASE_URL}taalactief5/dictee-thema${thema}.html`}
+          title={`Taal Actief 5 — Dictee thema ${thema}`}
         />
       </div>
       {overlay}

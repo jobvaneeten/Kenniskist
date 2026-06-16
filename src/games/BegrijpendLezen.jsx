@@ -62,11 +62,18 @@ export default function BegrijpendLezen({ onBack, addBriefgeld, addCuruntie }) {
         <h1 className="game-header-title">Begrijpend Lezen</h1>
         <p className="game-header-sub">Kies een thema</p>
       </div>
-      <div className="mode-grid">
+      <div className="mode-grid bl-thema-grid">
         {THEMAS.map(t => (
-          <button key={t.key} className="mode-card" onClick={() => setThema(t)}>
-            <span className="mode-name">{t.emoji} {t.naam}</span>
+          <button
+            key={t.key}
+            className="mode-card bl-thema-card"
+            onClick={() => setThema(t)}
+            style={{ '--bl-kleur': t.kleur }}
+          >
+            <span className="bl-thema-emoji">{t.emoji}</span>
+            <span className="mode-name">{t.naam}</span>
             <span className="mode-desc">{t.lessen.length} lessen</span>
+            <span className="bl-thema-go">Start →</span>
           </button>
         ))}
       </div>
