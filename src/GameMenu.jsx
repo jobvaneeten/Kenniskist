@@ -215,6 +215,9 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
       if (spellingKeuze === 'dictee') {
         return <DicteeThema thema={dicteeNr} onBack={() => setSpellingKeuze(null)} addCuruntie={addCuruntie} addBriefgeld={addBriefgeld} />
       }
+      if (spellingKeuze === 'categorie') {
+        return <DicteeThema file="taalactief5/dictee-categorie.html" onBack={() => setSpellingKeuze(null)} addCuruntie={addCuruntie} addBriefgeld={addBriefgeld} />
+      }
       if (spellingKeuze === 'werkwoord') {
         return (
           <WerkwoordSpelling
@@ -248,8 +251,8 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
             <h1 className="game-header-title">Spelling — Groep {year}</h1>
             <p className="game-header-sub">Wat wil je oefenen?</p>
           </div>
-          {hasWerkwoord && (
-            <div className="mode-grid">
+          <div className="mode-grid">
+            {hasWerkwoord && (
               <button className="mode-card" onClick={() => setSpellingKeuze('werkwoord')}>
                 <MenuScene name="spelling" />
                 <span className="mode-name">✒️ Werkwoordspelling</span>
@@ -257,8 +260,15 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
                 <span className="vb-line">"ik vind → gisteren ... hij" en "lopen → hij heeft ...?"</span>
                 <RewardChips rewards={['💵 briefgeld']} />
               </button>
-            </div>
-          )}
+            )}
+            <button className="mode-card" onClick={() => setSpellingKeuze('categorie')}>
+              <MenuScene name="taal" />
+              <span className="mode-name">🐾 Oefenen per categorie</span>
+              <span className="mode-desc">Kies een spellingregel en oefen alleen die woorden</span>
+              <span className="vb-line">"open lettergreep", "ei/ij", "verkleinwoord -je", ...</span>
+              <RewardChips rewards={['💵 briefgeld']} />
+            </button>
+          </div>
           <p className="ta-section-title">📕 Taal Actief 5</p>
           <div className="blok-grid">
             {[1, 2, 3, 4, 5, 6, 7, 8].map(b => {
