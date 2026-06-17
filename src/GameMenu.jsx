@@ -269,6 +269,7 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
                   className={`blok-card${ready ? ' ready' : ''}`}
                   onClick={() => ready ? (setDicteeNr(b), setSpellingKeuze('dictee')) : setTaSoonBlok(b)}
                 >
+                  <MenuScene name="spelling" />
                   <span className="blok-num">Blok {b}</span>
                   <span className="blok-tag">{ready ? '✅ Dictee + dieren' : '🚧 binnenkort'}</span>
                 </button>

@@ -329,10 +329,10 @@
 }
 .blok-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 14px;
   width: 100%;
-  max-width: 480px;
+  max-width: 460px;
 }
 .blok-card {
   position: relative;

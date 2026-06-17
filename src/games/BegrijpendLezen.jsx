@@ -1,30 +1,69 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { THEMAS } from './begrijpendLezenData'
+import JetpackGame from './JetpackGame'
+import SterrenstroompGame from './SterrenstroompGame'
+import AstroKatapultGame from './AstroKatapultGame'
+import TowerDefenseGame from './TowerDefenseGame'
+import FootballGame from './FootballGame'
+import MenuScene from '../MenuScenes'
 import './dictee-thema.css'
 
 export default function BegrijpendLezen({ onBack, addBriefgeld, addCuruntie }) {
   const [thema, setThema] = useState(null)
   const [les, setLes]     = useState(null)
+  const frameRef = useRef(null)
+  const wavesRef = useRef(0)
+  const [game, setGame] = useState(null)
+  const [tdMounted, setTdMounted] = useState(false)
 
-  // Elk goed antwoord in de oefening (iframe) levert 10 briefgeld op
+  const resume = useCallback(() => {
+    wavesRef.current = 0
+    frameRef.current?.contentWindow?.postMessage({ type: 'begrijpend-resume' }, '*')
+    setGame(null)
+  }, [])
+
+  // Elk goed antwoord levert 10 briefgeld op + spelletje na elke 5 goede antwoorden
   useEffect(() => {
     function onMsg(e) {
-      if (e.data?.type === 'begrijpend-correct') addBriefgeld?.(e.data.amount || 10)
+      if (e.data?.type === 'begrijpend-correct')  { addBriefgeld?.(e.data.amount || 10); return }
+      if (e.data?.type === 'begrijpend-game')      { if (e.data.game === 'towerdefense') setTdMounted(true); setGame(e.data.game); return }
+      if (e.data?.type === 'jetpack-gameover')       { resume(); return }
+      if (e.data?.type === 'spacerunner-gameover')   { resume(); return }
+      if (e.data?.type === 'astrokatapult-leveldone') { addBriefgeld?.(50); resume(); return }
     }
     window.addEventListener('message', onMsg)
     return () => window.removeEventListener('message', onMsg)
-  }, [addBriefgeld])
+  }, [addBriefgeld, resume])
+
+  function onWaveDone() {
+    wavesRef.current += 1
+    if (wavesRef.current >= 2) { addBriefgeld?.(50); resume() }
+  }
+
+  const overlay = (
+    <>
+      {game === 'jetpack'       && <JetpackGame        onBack={resume} addCuruntie={addCuruntie} />}
+      {game === 'sterrenstroom' && <SterrenstroompGame onBack={resume} />}
+      {game === 'astrokatapult' && <AstroKatapultGame  onBack={resume} reward />}
+      {tdMounted && <TowerDefenseGame visible={game === 'towerdefense'} onBack={resume} onRoundDone={onWaveDone} />}
+      {game === 'football'      && <FootballGame       onBack={resume} addCuruntie={addCuruntie} noQuiz onMatchEnd={() => addBriefgeld?.(50)} />}
+    </>
+  )
 
   if (thema && les) {
     return (
-      <div className="game-screen dictee-screen">
-        <button className="back-btn" onClick={() => setLes(null)}>← Terug</button>
-        <iframe
-          className="dictee-frame"
-          src={`${import.meta.env.BASE_URL}begrijpend-lezen/${les.file}`}
-          title={les.naam}
-        />
-      </div>
+      <>
+        <div className="game-screen dictee-screen">
+          <button className="back-btn" onClick={() => setLes(null)}>← Terug</button>
+          <iframe
+            ref={frameRef}
+            className="dictee-frame"
+            src={`${import.meta.env.BASE_URL}begrijpend-lezen/${les.file}`}
+            title={les.naam}
+          />
+        </div>
+        {overlay}
+      </>
     )
   }
 
@@ -45,6 +84,7 @@ export default function BegrijpendLezen({ onBack, addBriefgeld, addCuruntie }) {
               onClick={() => l.klaar && setLes(l)}
               disabled={!l.klaar}
             >
+              <MenuScene name="begrijpend" />
               <span className="blok-num">{l.naam}</span>
               <span className="blok-tag">{l.klaar ? '✅ Klaar' : '🚧 binnenkort'}</span>
             </button>
@@ -70,8 +110,8 @@ export default function BegrijpendLezen({ onBack, addBriefgeld, addCuruntie }) {
             onClick={() => setThema(t)}
             style={{ '--bl-kleur': t.kleur }}
           >
-            <span className="bl-thema-emoji">{t.emoji}</span>
-            <span className="mode-name">{t.naam}</span>
+            <MenuScene name="begrijpend" />
+            <span className="mode-name">{t.emoji} {t.naam}</span>
             <span className="mode-desc">{t.lessen.length} lessen</span>
             <span className="bl-thema-go">Start →</span>
           </button>
