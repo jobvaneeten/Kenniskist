@@ -4,6 +4,7 @@ import SterrenstroompGame from './SterrenstroompGame'
 import AstroKatapultGame from './AstroKatapultGame'
 import TowerDefenseGame from './TowerDefenseGame'
 import FootballGame from './FootballGame'
+import HeadSoccer from './HeadSoccer'
 import './dictee-thema.css'
 
 export default function DicteeThema({ onBack, addCuruntie, addBriefgeld, thema = 8, file }) {
@@ -44,6 +45,7 @@ export default function DicteeThema({ onBack, addCuruntie, addBriefgeld, thema =
       {game === 'astrokatapult' && <AstroKatapultGame  onBack={resume} reward />}
       {tdMounted && <TowerDefenseGame visible={game === 'towerdefense'} onBack={resume} onRoundDone={onWaveDone} />}
       {game === 'football'      && <FootballGame       onBack={resume} addCuruntie={addCuruntie} noQuiz onMatchEnd={() => addBriefgeld?.(50)} />}
+      {game === 'headsoccer'    && <HeadSoccer reward   onBack={() => { addBriefgeld?.(50); resume() }} addCuruntie={addCuruntie} />}
     </>
   )
 

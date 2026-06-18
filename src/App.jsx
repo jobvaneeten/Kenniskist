@@ -8,10 +8,12 @@ import PaintballGame   from './games/PaintballGame'
 import KartGame        from './games/KartGame'
 import MenuScene       from './MenuScenes'
 import { allUnlockedMap } from './itemsCatalog'
+import { COUNTRIES } from './games/countries'
 
 const CODES = { pabo: 100000 }
 const BRIEF_CODES = { start: 800 }   // eenmalige briefgeld-codes
 const UNLOCK_ALL_CODE = 'joop'
+const UNLOCK_COUNTRIES_CODE = 'frans'   // ontgrendelt alle Head Soccer-landen
 
 function fmt(n) { return n.toLocaleString('nl-NL') }
 
@@ -30,7 +32,7 @@ function CurrencyBadge({ munten, briefgeld }) {
   )
 }
 
-function CodeModal({ onClose, onRedeem, onRedeemBrief, onUnlockAll, usedCodes }) {
+function CodeModal({ onClose, onRedeem, onRedeemBrief, onUnlockAll, onUnlockCountries, usedCodes }) {
   const [code, setCode] = useState('')
   const [msg,  setMsg]  = useState(null)
   const [ok,   setOk]   = useState(false)
@@ -40,6 +42,10 @@ function CodeModal({ onClose, onRedeem, onRedeemBrief, onUnlockAll, usedCodes })
     if (key === UNLOCK_ALL_CODE) {
       onUnlockAll()
       setMsg('🎉 Alle kleding ontgrendeld!')
+      setOk(true)
+    } else if (key === UNLOCK_COUNTRIES_CODE) {
+      onUnlockCountries()
+      setMsg('🎉 Alle Head Soccer-landen ontgrendeld!')
       setOk(true)
     } else if (BRIEF_CODES[key] !== undefined) {
       if (usedCodes.includes(key)) {
@@ -157,6 +163,11 @@ export default function App() {
     const all = allUnlockedMap()
     localStorage.setItem('kk_unlocked', JSON.stringify(all))
     setUnlockedColors(all)
+  }
+
+  // "frans" code → ontgrendel alle Head Soccer-landen
+  const unlockCountries = () => {
+    localStorage.setItem('kk_hs_unlocked', JSON.stringify(COUNTRIES.map(c => c.key)))
   }
 
   // Re-read the wallet from localStorage (games update it directly) so the
@@ -281,6 +292,7 @@ export default function App() {
           onRedeem={(key, amount) => redeemCode(key, amount)}
           onRedeemBrief={(key, amount) => redeemBriefCode(key, amount)}
           onUnlockAll={unlockAll}
+          onUnlockCountries={unlockCountries}
           usedCodes={usedCodes}
         />
       )}

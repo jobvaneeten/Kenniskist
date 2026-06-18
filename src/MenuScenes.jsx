@@ -35,6 +35,41 @@ const SCENES = {
     </svg>
   ),
 
+  headsoccer: (
+    <svg viewBox="0 0 160 90" preserveAspectRatio="xMidYMid slice">
+      <defs>
+        <linearGradient id="ms-hs-sky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#0a1a2e" /><stop offset="1" stopColor="#1a4060" />
+        </linearGradient>
+      </defs>
+      <rect width="160" height="90" fill="url(#ms-hs-sky)" />
+      <rect y="64" width="160" height="26" fill="#267a32" />
+      <rect y="64" width="160" height="4" fill="#37a04a" />
+      {/* goals */}
+      <path d="M6 38 v26 M2 38 h8" stroke="#f2f2f2" strokeWidth="2.5" fill="none" />
+      <path d="M154 38 v26 M150 38 h8" stroke="#f2f2f2" strokeWidth="2.5" fill="none" />
+      {/* left bighead */}
+      <g>
+        <rect x="34" y="48" width="20" height="16" rx="4" fill="#FF6900" />
+        <circle cx="44" cy="40" r="11" fill="#F5C89A" />
+        <circle cx="41" cy="39" r="1.8" fill="#1a1a2e" /><circle cx="47" cy="39" r="1.8" fill="#1a1a2e" />
+      </g>
+      {/* right bighead */}
+      <g>
+        <rect x="106" y="48" width="20" height="16" rx="4" fill="#009C3B" />
+        <circle cx="116" cy="40" r="11" fill="#F5C89A" />
+        <circle cx="113" cy="39" r="1.8" fill="#1a1a2e" /><circle cx="119" cy="39" r="1.8" fill="#1a1a2e" />
+      </g>
+      {/* ball */}
+      <g className="msa ms-kick">
+        <circle cx="80" cy="58" r="6.5" fill="#fff" />
+        <circle cx="80" cy="58" r="2.4" fill="#1a1a2e" />
+      </g>
+      {/* spark */}
+      <text x="80" y="22" textAnchor="middle" fontSize="13" className="msa ms-shoot">⚡</text>
+    </svg>
+  ),
+
   towerdefense: (
     <svg viewBox="0 0 160 90" preserveAspectRatio="xMidYMid slice">
       <rect width="160" height="90" fill="#2f6b35" />
