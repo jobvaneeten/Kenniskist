@@ -1,6 +1,9 @@
 .sb-screen {
+  /* volledig dekkend overlay: dekt altijd het oefenscherm af zodra je 5 goed hebt */
+  position: fixed;
+  inset: 0;
   width: 100vw;
-  min-height: 100vh;
+  height: 100vh;
   box-sizing: border-box;
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
   color: #fff;
@@ -11,9 +14,8 @@
   text-align: center;
   padding: 32px 16px 48px;
   font-family: inherit;
-  /* stacking context boven de fixed currency-badge → voorkomt compositing-glitch */
-  position: relative;
-  z-index: 1;
+  z-index: 300;
+  overflow-y: auto;
   isolation: isolate;
 }
 .sb-screen > * { position: relative; z-index: 1; }

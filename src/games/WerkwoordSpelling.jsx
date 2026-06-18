@@ -229,21 +229,18 @@ export default function WerkwoordSpelling({ groep, onBack, addBriefgeld }) {
     if (nieuwIdx >= oefeningen.length) { setOefeningen(shuffleGefilterd(gekozenCats)); setIdx(0) }
     else setIdx(nieuwIdx)
 
-    // 20-opgaven overzicht heeft voorrang
     const nieuwGemaakt = gemaakt + 1
-    if (nieuwGemaakt >= PER_OVERZICHT) {
-      setGemaakt(PER_OVERZICHT)   // bevries op 20 voor het overzicht
-      setPhase('overzicht')
-      return
-    }
-    setGemaakt(nieuwGemaakt)
+    setGemaakt(Math.min(nieuwGemaakt, PER_OVERZICHT))
 
-    // anders: na 5 goede een spelletje
+    // na 5 goede een spelletje — heeft VOORRANG op het 20-opgaven overzicht
     if (correct) {
       const nieuwSinds = sinds + 1
-      if (nieuwSinds >= PER_BELONING) { setSinds(0); setPhase('keuze') }
-      else setSinds(nieuwSinds)
+      if (nieuwSinds >= PER_BELONING) { setSinds(0); setPhase('keuze'); return }
+      setSinds(nieuwSinds)
     }
+
+    // anders: na 20 opgaven het overzicht
+    if (nieuwGemaakt >= PER_OVERZICHT) { setPhase('overzicht') }
   }, [idx, sinds, gemaakt, oef, oefeningen.length, gekozenCats])
 
   // Nieuwe ronde: terug naar cat-selectie
