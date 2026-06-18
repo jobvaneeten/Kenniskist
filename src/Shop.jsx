@@ -278,28 +278,6 @@ export default function Shop({ curuntie, briefgeld, addBriefgeld, onExchange, un
       <p className="shop-sub">Open een lootbox en win een kleur — of iets legendarisch!</p>
 
       <div className="lootbox-grid">
-        <div className="exchange-box">
-          <div className="exchange-head">💱 Munten inwisselen voor briefgeld</div>
-          <div className="exchange-body">
-            <div className="exchange-col">
-              <span className="exchange-col-label">Kost</span>
-              <span className="exchange-col-val">🪙 1.000</span>
-            </div>
-            <span className="exchange-arrow">→</span>
-            <div className="exchange-col">
-              <span className="exchange-col-label">Krijg</span>
-              <span className="exchange-col-val exchange-get">💵 100</span>
-            </div>
-            <button
-              className="exchange-btn"
-              onClick={onExchange}
-              disabled={curuntie < 1000}
-            >
-              {curuntie < 1000 ? 'Te weinig 🪙' : 'Wisselen'}
-            </button>
-          </div>
-        </div>
-
         {CLOTHING_ITEMS.map(item => {
           const pool      = getPool(item.key)
           const unlocked  = (unlockedColors[item.key] || []).length

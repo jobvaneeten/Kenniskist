@@ -121,17 +121,6 @@ export default function App() {
     })
   }
 
-  // Exchange in the shop: 1000 munten → 100 briefgeld
-  const exchangeCoins = () => {
-    setCuruntie(prev => {
-      if (prev < 1000) return prev
-      const next = prev - 1000
-      localStorage.setItem('kk_curuntie', String(next))
-      addBriefgeld(100)
-      return next
-    })
-  }
-
   const redeemCode = (key, amount) => {
     if (usedCodes.includes(key)) return
     addCuruntie(amount)
@@ -217,7 +206,6 @@ export default function App() {
         curuntie={curuntie}
         briefgeld={briefgeld}
         addBriefgeld={addBriefgeld}
-        onExchange={exchangeCoins}
         unlockedColors={unlockedColors}
         onUnlock={unlockColor}
         onBack={goMenu}

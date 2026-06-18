@@ -2059,7 +2059,7 @@ function toggleUpgrade(upgId) {
 
 function resetUpgradeEffect(upgId) {
   if (upgId === 'magnet')      window._magnetRange    = 220;
-  if (upgId === 'shield')      { window._shieldHits = 1; window._shieldRegen = null; }
+  if (upgId === 'shield')      { window._shieldHits = 0; window._shieldRegen = null; }
   if (upgId === 'slowmo')      POWERUP_TYPES.slowmo.duration = 360;
   if (upgId === 'coins')       window._coinMulti      = 1;
   if (upgId === 'speed')       { POWERUP_TYPES.speed.duration = 300; window._speedMult = 1.8; }
@@ -2112,8 +2112,6 @@ function applyUpgradeLevel(upgId, level) {
   if (effect.powerupRate)    window._powerupRate    = effect.powerupRate;
   if (effect.speedIncrement) window._speedIncrement = effect.speedIncrement;
 }
-
-function applyUpgrade(value) {} // legacy stub
 
 function equipItem(id, type, value, tab) {
   shopEquipped[type] = value;
@@ -2221,6 +2219,7 @@ document.getElementById('shopBtnGO').addEventListener('click',   () => openShop(
 
 function startGame() {
   SIZE = sizeFor(); recomputeBounds(); applyScale();   // klopt met huidige schermstand
+  window._gameGen = (window._gameGen || 0) + 1;   // ongeldig maken van oude schild-regen timers
   gameState='playing'; coins=0; distance=0; frameCount=0;
   gameSpeed=2.0; baseSpeed=2.0;
   lastTime=0; S=1;
@@ -2243,6 +2242,8 @@ function startGame() {
   if (activeStarters.includes('start_magnet')) activatePowerup('magnet');
   if (activeStarters.includes('start_shield')) activatePowerup('shield');
   if (activeStarters.includes('start_slow'))   activatePowerup('slowmo');
+  // Schild-upgrade: begin elk potje met een schild (en regen brengt 'm terug)
+  if (window._shieldHits > 0) activePowerups.shield = 1;
   // Reset starters na gebruik (eenmalig per run)
   activeStarters = [];
   saveShop();
@@ -2260,6 +2261,14 @@ function endGame() {
     delete activePowerups.shield; shieldHit=true;
     setTimeout(()=>{shieldHit=false;},600);
     player.invincible=true; setTimeout(()=>{player.invincible=false;},800);
+    // Schild-upgrade: herlaad het schild na X seconden (lvl 3 = 25s, lvl 4 = 12s)
+    if (window._shieldRegen) {
+      const regenSec = typeof window._shieldRegen === 'number' ? window._shieldRegen : 15;
+      const gen = window._gameGen;
+      setTimeout(() => {
+        if (player.alive && gameState === 'playing' && window._gameGen === gen) activePowerups.shield = 1;
+      }, regenSec * 1000);
+    }
     return;
   }
   if (rocketActive) deactivatePowerup('rocket');

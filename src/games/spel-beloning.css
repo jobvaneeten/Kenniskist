@@ -20,6 +20,9 @@
 }
 .sb-screen > * { position: relative; z-index: 1; }
 
+/* Gelanceerd beloningsspel: vast scherm-vullend overlay boven het oefenscherm */
+.sb-gamewrap { position: fixed; inset: 0; z-index: 300; background: #05080f; }
+
 .sb-star {
   font-size: 3.4rem;
   animation: sb-pop 0.5s ease-out;

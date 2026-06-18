@@ -37,12 +37,15 @@ export default function SpelBeloning({ title, sub, geld, addCuruntie, onDone }) 
   const [picked, setPicked] = useState(null)
   // Briefgeld wordt door de ouder-component uitgekeerd (via onDone); hier kies
   // je alleen het spel. Elk spel speelt één potje/ronde/level en gaat dan terug.
-  if (picked === 'headsoccer') return <HeadSoccer reward onBack={onDone} addCuruntie={addCuruntie} />
-  if (picked === 'voetbal')    return <FootballGame noQuiz twoPlayer={false} onBack={onDone} addCuruntie={addCuruntie} />
+  // Wrapper = vast scherm-vullend overlay zodat het spel altijd bovenop het
+  // (nog gemounte) oefenscherm valt en kliks goed opvangt.
+  const wrap = (el) => <div className="sb-gamewrap">{el}</div>
+  if (picked === 'headsoccer') return wrap(<HeadSoccer reward onBack={onDone} addCuruntie={addCuruntie} />)
+  if (picked === 'voetbal')    return wrap(<FootballGame noQuiz twoPlayer={false} onBack={onDone} addCuruntie={addCuruntie} />)
   if (picked === 'jetpack')    return <IframeEmbed src="/jetpack/index.html" title="Jetpack" doneType="jetpack-gameover" hint="Je gaat automatisch verder na het spel ✈️" onDone={onDone} />
   if (picked === 'astro')      return <IframeEmbed src="/astrokatapult/?reward=1" title="Astro Katapult" doneType="astrokatapult-leveldone" hint="Speel 1 level — daarna ga je verder 🪐" onDone={onDone} />
-  if (picked === 'space')      return <SterrenstroompGame onBack={onDone} />
-  if (picked === 'tower')      return <TowerDefenseGame onBack={onDone} />
+  if (picked === 'space')      return wrap(<SterrenstroompGame onBack={onDone} />)
+  if (picked === 'tower')      return wrap(<TowerDefenseGame onBack={onDone} />)
 
   return (
     <div className="sb-screen">
