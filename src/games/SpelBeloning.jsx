@@ -1,40 +1,48 @@
 import { useState, useEffect } from 'react'
 import FootballGame from './FootballGame'
+import HeadSoccer from './HeadSoccer'
 import SterrenstroompGame from './SterrenstroompGame'
 import TowerDefenseGame from './TowerDefenseGame'
 import './spel-beloning.css'
 
-// Jetpack draait in een iframe; we gaan automatisch verder na game-over,
-// of via de ← Klaar knop.
-function JetpackEmbed({ onDone }) {
+// ── Gedeeld beloning-systeem: na 5 goede antwoorden mag je 1 van de 6 games
+// spelen (in "reward-modus": één potje/ronde/level, dan automatisch terug).
+// Wordt overal gebruikt (sommen, woorden, begrijpend lezen, spelling, …).
+
+function IframeEmbed({ src, title, doneType, hint, onDone }) {
   useEffect(() => {
-    const h = (e) => { if (e.data?.type === 'jetpack-gameover') setTimeout(onDone, 2200) }
+    const h = (e) => { if (e.data?.type === doneType) setTimeout(onDone, 1800) }
     window.addEventListener('message', h)
     return () => window.removeEventListener('message', h)
-  }, [onDone])
+  }, [onDone, doneType])
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: '#000', display: 'flex', flexDirection: 'column' }}>
       <button className="sb-game-back" onClick={onDone}>← Klaar</button>
-      <iframe src="/jetpack/index.html" title="Jetpack" allow="autoplay" style={{ flex: 1, border: 'none' }} />
-      <div style={{ textAlign: 'center', color: '#aaa', padding: '8px', fontSize: '0.85rem' }}>Je gaat automatisch verder na het spel ✈️</div>
+      <iframe src={src} title={title} allow="autoplay" style={{ flex: 1, border: 'none' }} />
+      <div style={{ textAlign: 'center', color: '#aaa', padding: '8px', fontSize: '0.85rem' }}>{hint}</div>
     </div>
   )
 }
 
 const SPELLEN = [
-  { key: 'jetpack', emoji: '🚀', name: 'Jetpack',       desc: 'Vlieg zo ver mogelijk!' },
-  { key: 'voetbal', emoji: '⚽', name: '1v1 Voetbal',    desc: 'Jij tegen de computer' },
-  { key: 'space',   emoji: '🛸', name: 'Spacerunner',    desc: 'Vlieg door de ruimte!' },
-  { key: 'tower',   emoji: '🏰', name: 'Tower Defense',  desc: 'Verdedig je toren!' },
+  { key: 'headsoccer', emoji: '🥅', name: 'Head Soccer',   desc: 'Speel een ronde van het toernooi' },
+  { key: 'voetbal',    emoji: '⚽', name: '1v1 Voetbal',    desc: 'Jij tegen de computer' },
+  { key: 'jetpack',    emoji: '🚀', name: 'Jetpack',        desc: 'Vlieg zo ver mogelijk!' },
+  { key: 'astro',      emoji: '🪐', name: 'Astro Katapult', desc: 'Speel 1 level' },
+  { key: 'space',      emoji: '🛸', name: 'Spacerunner',    desc: 'Vlieg door de ruimte!' },
+  { key: 'tower',      emoji: '🏰', name: 'Tower Defense',  desc: 'Verdedig je toren!' },
 ]
 
 export default function SpelBeloning({ title, sub, geld, addCuruntie, onDone }) {
   const [picked, setPicked] = useState(null)
-
-  if (picked === 'jetpack') return <JetpackEmbed onDone={onDone} />
-  if (picked === 'voetbal') return <FootballGame noQuiz twoPlayer={false} onBack={onDone} addCuruntie={addCuruntie} />
-  if (picked === 'space')   return <SterrenstroompGame onBack={onDone} />
-  if (picked === 'tower')   return <TowerDefenseGame onBack={onDone} />
+  // Briefgeld wordt door de ouder-component uitgekeerd (via onDone); hier kies
+  // je alleen het spel. Elk spel speelt één potje/ronde/level en gaat dan terug.
+  if (picked === 'headsoccer') return <HeadSoccer reward onBack={onDone} addCuruntie={addCuruntie} />
+  if (picked === 'voetbal')    return <FootballGame noQuiz twoPlayer={false} onBack={onDone} addCuruntie={addCuruntie} />
+  if (picked === 'jetpack')    return <IframeEmbed src="/jetpack/index.html" title="Jetpack" doneType="jetpack-gameover" hint="Je gaat automatisch verder na het spel ✈️" onDone={onDone} />
+  if (picked === 'astro')      return <IframeEmbed src="/astrokatapult/?reward=1" title="Astro Katapult" doneType="astrokatapult-leveldone" hint="Speel 1 level — daarna ga je verder 🪐" onDone={onDone} />
+  if (picked === 'space')      return <SterrenstroompGame onBack={onDone} />
+  if (picked === 'tower')      return <TowerDefenseGame onBack={onDone} />
 
   return (
     <div className="sb-screen">

@@ -783,6 +783,32 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
         })
       }
     }
+    // CINEMATISCHE entree per effect → elk land krijgt een groots, themed figuur
+    const ENTRANCE = {
+      charge: 'charge', rocket: 'sky', multiball: 'swarm', freeze: 'sky', bighead: 'rise',
+      magnet: 'charge', firecurve: 'spin', shield: 'rise', teleport: 'spin', quake: 'sky',
+      tornado: 'spin', giantball: 'sky', superjump: 'charge', bouncy: 'sky', ghost: 'swarm',
+    }
+    const bigEntrance = (p, m) => {
+      const e = m.mascot || m.emoji, atk = p.facing, col = m.color
+      const type = ENTRANCE[m.effect] || 'charge'
+      if (type === 'sky') {                       // daalt reusachtig uit de lucht
+        spawnMascot(p, m, { emoji: e, size: 175, x: p.x + atk * 120, y: CEIL - 50, vx: atk * 70, vy: 440, dur: 2.0, scale0: 0.2 })
+        for (let i = 0; i < 22; i++) { const a = Math.random() * Math.PI * 2, v = 220 + Math.random() * 240; S.particles.push({ x: p.x + atk * 120, y: CEIL, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 1.2, color: i % 2 ? '#fff' : col, r: 2 + Math.random() * 3 }) }
+      } else if (type === 'charge') {             // stormt gigantisch vanaf je eigen kant
+        spawnMascot(p, m, { emoji: e, size: 165, x: p.x - atk * 220, y: GROUND_Y - PR - 6, vx: atk * 760, vy: 0, dur: 1.7, scale0: 0.4 })
+        for (let i = 0; i < 18; i++) S.particles.push({ x: p.x - atk * 60, y: GROUND_Y - 5, vx: -atk * (160 + Math.random() * 160), vy: -60 - Math.random() * 90, life: 0.85, color: i % 2 ? '#caa' : col, r: 3 + Math.random() * 4 })
+      } else if (type === 'rise') {               // rijst enorm op uit de grond
+        spawnMascot(p, m, { emoji: e, size: 180, x: p.x, y: GROUND_Y + 140, vx: 0, vy: -300, dur: 1.9, scale0: 0.5 })
+        for (let i = 0; i < 16; i++) S.particles.push({ x: p.x + (Math.random() - 0.5) * 80, y: GROUND_Y - 5, vx: (Math.random() - 0.5) * 200, vy: -150 - Math.random() * 160, life: 0.9, color: col, r: 3 + Math.random() * 4 })
+      } else if (type === 'spin') {               // groot, draaiend figuur
+        spawnMascot(p, m, { emoji: e, size: 160, x: p.x + atk * 40, y: p.y - PR - 30, vx: atk * 240, vy: -40, dur: 1.9, scale0: 0.25 })
+        for (let i = 0; i < 16; i++) { const a = (i / 16) * Math.PI * 2; S.particles.push({ x: p.x, y: p.y - PR, vx: Math.cos(a) * 260, vy: Math.sin(a) * 260, life: 1.0, color: i % 2 ? '#fff' : col, r: 3 + Math.random() * 3 }) }
+      } else if (type === 'swarm') {              // hele zwerm figuren
+        for (let i = 0; i < 6; i++) spawnMascot(p, m, { emoji: e, size: 95, x: p.x - atk * (30 + i * 36), y: p.y - PR - 10 + (Math.random() - 0.5) * 70, vx: atk * (520 + i * 70), vy: (Math.random() - 0.5) * 120, dur: 1.7, scale0: 0.2 })
+      }
+      addShock(p.x, p.y - PR * 0.4, col, 230, 0.7)
+    }
     const activateSpecial = (p, opp) => {
       if (p.charge < 1 || p.dizzy > 0) return
       p.charge = 0
@@ -797,11 +823,11 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
       S.specFlash = { t: 0.5, color: m.color }
       // langere cinematische slow-motion cut-in zodat je de special echt ziet
       S.cutin = { t: 1.3, dur: 1.3, color: m.color, emoji: m.emoji, name: m.name, flag: (p === S.L ? playerCountry : oppCountry).flag, side: p.side }
+      bigEntrance(p, m)   // groots themed figuur per land
       flash(`${m.emoji} ${m.name}!`)
       switch (m.effect) {
         case 'charge':   // STORMRAM: kudde rammen stormt mee
           p.t.dash = pa.dur; p.dashVx = p.facing * pa.vx; p.ram = true; p.ramKnock = pa.knock; p.ramStun = pa.stun
-          spawnMascot(p, m, { size: 80, trail: 4, dur: 1.4 })
           for (let i = 0; i < 3; i++) addShock(p.x + p.facing * i * 40, p.y - PR * 0.4, m.color, 100, 0.45)
           break
         case 'rocket': {  // RAKET UIT HET HEELAL: gigantische raket daalt uit de lucht en knalt de goal in

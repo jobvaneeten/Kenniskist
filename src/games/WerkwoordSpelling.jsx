@@ -3,6 +3,7 @@ import FootballGame from './FootballGame'
 import TowerDefenseGame from './TowerDefenseGame'
 import { shuffleOefeningen, shuffleGefilterd, checkAntwoord, uitlegVoor } from './werkwoorden'
 import { BeloningKeuze, JetpackBeloning, AstroBeloning, SpacerunnerBeloning, BRIEFGELD } from './Beloning'
+import SpelBeloning from './SpelBeloning'
 import './werkwoord-spelling.css'
 
 const PER_BELONING = 5     // na elke 5 goede antwoorden een spel kiezen
@@ -322,11 +323,14 @@ export default function WerkwoordSpelling({ groep, onBack, addBriefgeld }) {
         />
       )}
 
-      {/* Beloningkeuze */}
+      {/* Beloningkeuze — gedeeld reward-systeem met alle 6 games */}
       {phase === 'keuze' && (
-        <div className="ws-wrap">
-          <BeloningKeuze onPick={kiesBeloning} heeftToernooi={!!footballBracket} />
-        </div>
+        <SpelBeloning
+          title="5 goed gedaan!"
+          geld={BRIEFGELD}
+          addCuruntie={() => {}}
+          onDone={() => { addBriefgeld?.(BRIEFGELD); setVerdiend(v => v + BRIEFGELD); setPhase('play') }}
+        />
       )}
 
       {/* Oefenscherm (altijd gemount als niet football/jetpack) */}

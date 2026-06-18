@@ -3,6 +3,7 @@ import { PROCENT_SETS, shuffle } from './procentenData'
 import FootballGame from './FootballGame'
 import TowerDefenseGame from './TowerDefenseGame'
 import { BeloningKeuze, JetpackBeloning, AstroBeloning, SpacerunnerBeloning, BRIEFGELD } from './Beloning'
+import SpelBeloning from './SpelBeloning'
 import './procenten.css'
 
 const PER_ROUND    = 4   // aantal vakjes (percentages) per ronde
@@ -113,10 +114,12 @@ export default function ProcentenBreuken({ onBack, addBriefgeld }) {
       )}
 
       {phase === 'keuze' && (
-        <div className="pbk-belonen-wrap">
-          <BeloningKeuze onPick={kiesBeloning} heeftToernooi={!!footballBracket}
-            title="5 rondes opgelost!" sub="Kies jouw beloning — daarna ga je verder" />
-        </div>
+        <SpelBeloning
+          title="5 rondes opgelost!"
+          geld={BRIEFGELD}
+          addCuruntie={() => {}}
+          onDone={() => { addBriefgeld?.(BRIEFGELD); setVerdiend(v => v + BRIEFGELD); nieuweRonde() }}
+        />
       )}
 
       <div className="pbk-screen" style={{ display: phase === 'play' ? 'flex' : 'none' }}>

@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import FootballGame from './FootballGame'
 import TowerDefenseGame from './TowerDefenseGame'
 import { BeloningKeuze, JetpackBeloning, AstroBeloning, SpacerunnerBeloning, BRIEFGELD } from './Beloning'
+import SpelBeloning from './SpelBeloning'
 import './tafels-oefenen.css'
 
 const ALLE_TAFELS = [2, 3, 4, 5, 6, 7, 8, 9, 10]
@@ -281,14 +282,12 @@ export default function TafelsOefenen({ groep, onBack, addBriefgeld, addCuruntie
       )}
 
       {fase === 'keuze' && (
-        <div className="to-wrap">
-          <BeloningKeuze
-            onPick={kiesBeloning}
-            heeftToernooi={!!footballBracket}
-            title="Goed gedaan!"
-            sub="Speel een spelletje als beloning"
-          />
-        </div>
+        <SpelBeloning
+          title="Goed gedaan!"
+          geld={BRIEFGELD}
+          addCuruntie={addCuruntie}
+          onDone={() => { addBriefgeld?.(BRIEFGELD); setVerdiend(v => v + BRIEFGELD); setFase('type') }}
+        />
       )}
 
       {fase === 'type' && (
