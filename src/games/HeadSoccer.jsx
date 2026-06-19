@@ -101,7 +101,7 @@ function drawPlayer(ctx, p, country) {
   const x = p.x, y = p.y
   const bodyCY = y + PR * 0.5                 // lijf onderaan
   const headCY = bodyCY - BH * 0.55 - HR * 0.78
-  const charged = p.charge >= 1
+  const charged = p.armed                     // gloed pas ná het indrukken van de super-knop
   const auraOn = charged || p.t.dash > 0 || p.t.bighead > 0 || p.t.powershot > 0 || p.t.magnet > 0
   const run = p.onGround && moving ? Math.sin(now / 90) : 0
 
@@ -597,9 +597,9 @@ function SpecialDemo({ countryKey }) {
     const period = 3.0
 
     const reset = () => {
-      p.x = VX + 80; p.y = G - PR; p.vx = 0; p.vy = 0; p.onGround = true; p.charge = 0; p.bigScale = 1; p.buried = 0; p.powerKick = 0
+      p.x = VX + 80; p.y = G - PR; p.vx = 0; p.vy = 0; p.onGround = true; p.charge = 0; p.bigScale = 1; p.buried = 0; p.powerKick = 0; p.armed = false
       for (const k in p.t) p.t[k] = 0
-      dummy.x = VX + VW - 90; dummy.dizzy = 0; dummy.vx = 0; dummy.vy = 0; dummy.buried = 0; dummy.onGround = true; for (const k in dummy.t) dummy.t[k] = 0
+      dummy.x = VX + VW - 90; dummy.dizzy = 0; dummy.vx = 0; dummy.vy = 0; dummy.buried = 0; dummy.onGround = true; dummy.armed = false; for (const k in dummy.t) dummy.t[k] = 0
       ball = newBall()
       shocks = []; parts = []; decoys = []; tornado = null; mascots = []; rockets = []; bolts = []; sun = null; triggered = false
     }
@@ -610,8 +610,10 @@ function SpecialDemo({ countryKey }) {
       const su = getSuper(countryKey)
       const col = su.color || move.color
       // acrobatische omhaal + gouden sunburst (zelfde model als in de match)
+      p.armed = true                                   // gloed om het hoofd
       p.powerKick = 0.6; p.vy = -540; p.onGround = false
       ball.x = p.x + PR + BR; ball.y = p.y - PR * 0.3; ball.vx = 0; ball.vy = 0
+      ball.bouncyT = 0; ball.ghostT = 0; ball.scale = 1; ball.scaleT = 0
       sun = { x: ball.x, y: ball.y - PR * 0.2, t: 0.55, dur: 0.55, color: col }
       shocks.push({ x: ball.x, y: ball.y, color: '#ffffff', r0: 6, maxR: 120, t: 0.45, dur: 0.45 })
       burst(ball.x, ball.y, col, 24)
@@ -658,6 +660,27 @@ function SpecialDemo({ countryKey }) {
           break
         case 'tornado':
           tornado = { x: p.x + 30, y: G, vx: 220, t: 3.0, pull: 3000, dir: 1, color: col }
+          break
+        case 'curveball':
+          ball.vx = 1100; ball.vy = -360; ball.spin = 1500; ball.fx = { t: 1.4, type: 'flame', color: col }; ball.superColor = col
+          break
+        case 'bouncy':
+          ball.bouncyT = 3; ball.vx = 1050; ball.vy = 260; ball.superColor = col
+          break
+        case 'ghost':
+          ball.ghostT = 3; ball.vx = 1100; ball.vy = -160; ball.superColor = col
+          for (let i = 0; i < 5; i++) { const sp = ((i - 2) / 5) * 0.5; decoys.push({ x: ball.x, y: ball.y, vx: ball.vx * Math.cos(sp) - ball.vy * Math.sin(sp), vy: ball.vx * Math.sin(sp) + ball.vy * Math.cos(sp), angle: 0, life: 2, color: col }) }
+          break
+        case 'giantball':
+          ball.scale = 2.6; ball.scaleT = 2.6; ball.vx = 900; ball.vy = -240; ball.fx = { t: 1.4, type: 'flame', color: col }; ball.superColor = col
+          break
+        case 'meteor':
+          ball.vx = 300; ball.vy = -700; ball.fx = { t: 1.4, type: 'flame', color: col }; ball.superColor = col
+          for (let i = 0; i < 5; i++) rockets.push({ x: gx + (Math.random() - 0.5) * 50, y: VY - 50 - Math.random() * 70, vx: 50 + Math.random() * 50, vy: 380 + Math.random() * 140, color: col, life: 2.0, owner: 'L', delay: 0.4 + i * 0.05 })
+          break
+        case 'charge':
+          p.vy = -120; ball.vx = 900; ball.vy = -120; ball.fx = { t: 1.4, type: 'flame', color: col }; ball.superColor = col
+          dummy.dizzy = 1.2; dummy.vx = 700; dummy.vy = -220; dummy.onGround = false
           break
         default:
           ball.vx = 1100; ball.vy = -260
@@ -874,7 +897,7 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
     const mkPlayer = (side, move) => ({
       side, move, facing: side === 'L' ? 1 : -1,
       x: side === 'L' ? W * 0.28 : W * 0.72, y: GROUND_Y - PR,
-      vx: 0, vy: 0, onGround: true, dizzy: 0, kickCD: 0, kickAnim: 0, powerKick: 0, buried: 0,
+      vx: 0, vy: 0, onGround: true, dizzy: 0, kickCD: 0, kickAnim: 0, powerKick: 0, buried: 0, armed: false,
       charge: 0, bigScale: 1, powMult: 1, powCurve: false, powCurveDir: 1, dashVx: 0, powFx: 'energy',
       magForce: 0, frozenFactor: 1, comebackT: 0,
       ram: false, ramKnock: 0, ramStun: 0,
@@ -894,11 +917,11 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
     stateRef.current = S
 
     const resetPositions = (serveTo) => {
-      S.L.x = W * 0.28; S.L.y = GROUND_Y - PR; S.L.vx = 0; S.L.vy = 0; S.L.onGround = true
-      S.R.x = W * 0.72; S.R.y = GROUND_Y - PR; S.R.vx = 0; S.R.vy = 0; S.R.onGround = true
+      S.L.x = W * 0.28; S.L.y = GROUND_Y - PR; S.L.vx = 0; S.L.vy = 0; S.L.onGround = true; S.L.armed = false
+      S.R.x = W * 0.72; S.R.y = GROUND_Y - PR; S.R.vx = 0; S.R.vy = 0; S.R.onGround = true; S.R.armed = false
       S.ball = mkBall(W / 2, GROUND_Y - 120)
       S.ball.vx = serveTo === 'L' ? -90 : serveTo === 'R' ? 90 : 0
-      S.decoys = []; S.tornado = null; S.mascots = []
+      S.decoys = []; S.tornado = null; S.mascots = []; S.rockets = []; S.bolts = []
       S.kickoffT = 0.6
     }
     const flash = txt => { S.msg = txt; S.msgT = 1.2 }
@@ -972,99 +995,105 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
       }
       addShock(p.x, p.y - PR * 0.4, col, 230, 0.7)
     }
-    const activateSpecial = (p, opp) => {  // eslint-disable-line no-unused-vars
-      if (p.charge < 1 || p.dizzy > 0) return
-      p.charge = 0
-      // ALTIJD richting de goal van de tegenstander schieten (niet de kijkrichting!)
+    // ── 1) Super "scherp zetten": knop indrukken → gloed om het hoofd. ──
+    // De super gaat NIET meteen af; hij wacht tot je de bal raakt (zie doKick/ballPlayerCollide).
+    const armSpecial = (p) => {
+      if (p.charge < 1 || p.dizzy > 0 || p.armed) return
+      p.armed = true
+      const col = getSuper(p === S.L ? playerKey : oppKey).color || p.move.color
+      addShock(p.x, p.y - PR * 0.6, col, 90, 0.4)
+      addParticles(p.x, p.y - PR, col, 12, 240)
+    }
+
+    // ── 2) Super afvuren OP HET MOMENT van balcontact, vanaf de huidige balpositie. ──
+    // Geen grabBall/teleport: het schot vertrekt waar de bal nú is.
+    const fireSuper = (p) => {
+      const opp = p === S.L ? S.R : S.L
+      p.charge = 0; p.armed = false
       p.facing = p.side === 'L' ? 1 : -1
       const m = p.move
       const su = getSuper(p === S.L ? playerKey : oppKey)
       const col = su.color || m.color
       const dir = p.facing
 
-      // ── acrobatische omhaal: speler springt op en draait een salto ──
       p.powerKick = 0.6
-      p.vy = -JUMP_FORCE * 0.6; p.onGround = false
-
-      // pak de bal aan de voet en mik op de goal
-      grabBall(p)
-
-      // ── gouden sunburst op de bal + witte flits + schermschud ──
+      // gouden sunburst + flits op de plek waar de bal geraakt wordt
       S.sunburst = { t: 0.55, dur: 0.55, x: S.ball.x, y: S.ball.y - PR * 0.2, color: col }
       S.specFlash = { t: 0.4, color: '#fff' }
       addShock(S.ball.x, S.ball.y, '#ffffff', 130, 0.45)
       addParticles(S.ball.x, S.ball.y, col, 30, 460)
       addParticles(S.ball.x, S.ball.y, '#ffffff', 16, 320)
       addShake(14, 0.45)
-
-      // cinematische slow-motion cut-in (gouden burst + landnaam)
       S.cutin = { t: 1.0, dur: 1.0, color: col, name: m.name, flag: (p === S.L ? playerCountry : oppCountry).flag, side: p.side }
 
-      // ── de bal + de echte gameplay-mechaniek van dit land ──
+      // reset bal-effecten, behoud huidige positie
       S.ball.superT = 1.6; S.ball.superColor = col; S.ball.dark = false; S.ball.laser = false
-      S.ball.emoji = null; S.ball.spin = 0; S.ball.scale = 1
+      S.ball.emoji = null; S.ball.spin = 0; S.ball.scale = 1; S.ball.scaleT = 0; S.ball.bouncyT = 0; S.ball.ghostT = 0
       S.ball.superKind = null; S.ball.superOwner = p.side
       setBallFx(col, 'energy')
       const goalX = dir > 0 ? W - GOAL_W - 20 : GOAL_W + 20
       switch (su.behavior) {
         case 'skyrockets': // HEMELDUIK: bal schiet omhoog, daarna regent het raketten op de goal
-          S.ball.vx = dir * 260; S.ball.vy = -980          // hoog de lucht in
-          S.ball.homing = 0; setBallFx(col, 'flame')
+          S.ball.vx = dir * 260; S.ball.vy = -980; S.ball.homing = 0; setBallFx(col, 'flame')
           p.vy = -JUMP_FORCE * 0.9
-          for (let i = 0; i < 9; i++) {
-            const rx = goalX + (Math.random() - 0.5) * 90
-            S.rockets.push({ x: rx - dir * 220, y: CEIL - 40 - Math.random() * 120, vx: dir * (180 + Math.random() * 120), vy: 360 + Math.random() * 220, color: col, life: 2.2, owner: p.side, delay: i * 0.07 })
-          }
-          addShake(16, 0.5)
-          break
-        case 'goalram':    // BEUK: keiharde lage dreun; raakt-ie de tegenstander → die vliegt mét bal de goal in
-          S.ball.vx = dir * 1500; S.ball.vy = -40
-          S.ball.superKind = 'goalram'; setBallFx(col, 'flame')
-          break
-        case 'groundspike':// GRONDSTAMP: schot dat de tegenstander de grond in ramt
-          S.ball.vx = dir * 1250; S.ball.vy = 60
-          S.ball.superKind = 'groundspike'; S.ball.dark = true; S.ball.spin = dir * 800
-          break
-        case 'airshot':    // LUCHT-OMHAAL: speler springt hoog, haalt de bal uit de lucht over
-          p.vy = -1150; p.onGround = false
-          S.ball.vx = dir * 520; S.ball.vy = -760         // boog hoog door de lucht de goal in
-          S.ball.homing = dir; S.ball.homingStr = 3
-          break
-        case 'freeze': {   // IJSTIJD: vries de tegenstander vast in een blok ijs
-          grabBall(p); aimAtGoal(p, 1050); S.ball.homing = dir; S.ball.homingStr = 4
-          S.ball.superColor = '#bfe8ff'
+          for (let i = 0; i < 9; i++) { const rx = goalX + (Math.random() - 0.5) * 90; S.rockets.push({ x: rx - dir * 220, y: CEIL - 40 - Math.random() * 120, vx: dir * (180 + Math.random() * 120), vy: 360 + Math.random() * 220, color: col, life: 2.2, owner: p.side, delay: i * 0.07 }) }
+          addShake(16, 0.5); break
+        case 'goalram':    // BEUK: tegenstander vliegt mét de bal de goal in
+          S.ball.vx = dir * 1500; S.ball.vy = -40; S.ball.superKind = 'goalram'; setBallFx(col, 'flame'); break
+        case 'groundspike':// GRONDSTAMP: ramt de tegenstander de grond in
+          S.ball.vx = dir * 1250; S.ball.vy = 60; S.ball.superKind = 'groundspike'; S.ball.dark = true; S.ball.spin = dir * 800; break
+        case 'airshot':    // LUCHT-OMHAAL: speler springt hoog, bal hoog door de lucht
+          p.vy = -1150; p.onGround = false; S.ball.vx = dir * 520; S.ball.vy = -760; S.ball.homing = dir; S.ball.homingStr = 3; break
+        case 'freeze':     // IJSTIJD: vries de tegenstander vast
+          aimAtGoal(p, 1050); S.ball.homing = dir; S.ball.homingStr = 4; S.ball.superColor = '#bfe8ff'
           opp.t.frozen = 2.6; opp.frozenFactor = 0; opp.dizzy = 2.6
           addShock(opp.x, opp.y - PR * 0.4, '#bde0ff', 170, 0.6)
           for (let i = 0; i < 22; i++) { const a = Math.random() * Math.PI * 2, v = 160 + Math.random() * 220; S.particles.push({ x: opp.x, y: opp.y - PR * 0.6, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 80, life: 0.9, color: i % 2 ? '#bde0ff' : '#ffffff', r: 2 + Math.random() * 3 }) }
           break
-        }
-        case 'icespikes': { // IJSPEGELS: pegels schieten uit de grond, lanceren de tegenstander
+        case 'icespikes':  // IJSPEGELS: lanceren de tegenstander omhoog
           aimAtGoal(p, 1150); S.ball.homing = dir; S.ball.homingStr = 4; S.ball.superColor = col
           opp.dizzy = 1.4; opp.vy = -640; opp.onGround = false
           addShock(opp.x, GROUND_Y, '#bfe8ff', 200, 0.55); addShake(16, 0.45)
           for (let i = 0; i < 18; i++) S.particles.push({ x: opp.x + (Math.random() - 0.5) * 70, y: GROUND_Y - 5, vx: (Math.random() - 0.5) * 160, vy: -300 - Math.random() * 360, life: 1.0, color: i % 2 ? '#bfe8ff' : '#ffffff', r: 3 + Math.random() * 3 })
           break
-        }
-        case 'multiball': { // SAMBA: vijf ballen tegelijk naar de goal
-          grabBall(p); aimAtGoal(p, 1150); S.ball.homing = dir; S.ball.homingStr = 3; S.ball.superColor = col
+        case 'multiball':  // SAMBA: vijf ballen tegelijk
+          aimAtGoal(p, 1150); S.ball.homing = dir; S.ball.homingStr = 3; S.ball.superColor = col
           for (let i = 0; i < 4; i++) { const sp = ((i - 1.5) / 4) * 0.7; S.decoys.push({ x: S.ball.x, y: S.ball.y, vx: S.ball.vx * Math.cos(sp) - S.ball.vy * Math.sin(sp), vy: S.ball.vx * Math.sin(sp) + S.ball.vy * Math.cos(sp), angle: 0, life: 1.8, color: col }) }
           break
-        }
-        case 'bighead': {  // KOPWAND: reuzenkop kopt de bal keihard binnen
+        case 'bighead':    // KOPWAND: reuzenkop kopt de bal keihard binnen
           p.t.bighead = 2.4; p.bigScale = 2.2
-          grabBall(p); aimAtGoal(p, 1350); S.ball.homing = dir; S.ball.homingStr = 5; S.ball.superColor = col
-          addShock(p.x, p.y - PR * 1.4, col, 200, 0.6)
-          break
-        }
-        case 'lightning': { // BLIKSEM: schichten slaan in op de tegenstander
+          aimAtGoal(p, 1350); S.ball.homing = dir; S.ball.homingStr = 5; S.ball.superColor = col
+          addShock(p.x, p.y - PR * 1.4, col, 200, 0.6); break
+        case 'lightning':  // BLIKSEM: schichten slaan in op de tegenstander
           aimAtGoal(p, 1150); S.ball.homing = dir; S.ball.homingStr = 4; S.ball.superColor = col
           opp.dizzy = 1.6; opp.vy = -260; opp.onGround = false
           for (let i = 0; i < 5; i++) S.bolts.push({ x: opp.x + (Math.random() - 0.5) * 120, t: 0.5, dur: 0.5, color: col, delay: i * 0.05 })
-          addShake(18, 0.5)
-          break
-        }
+          addShake(18, 0.5); break
         case 'tornado':    // TORNADO: wervelwind zuigt de bal de goal in
           S.tornado = { x: p.x + dir * 30, y: GROUND_Y, vx: dir * 230, t: 3.0, pull: 3200, dir, color: col }
+          aimAtGoal(p, 700); break
+        case 'curveball':  // BANANA: brandende curve om de keeper heen
+          S.ball.vx = dir * 1150; S.ball.vy = -360; S.ball.spin = dir * 1500
+          setBallFx(col, 'flame'); S.ball.superColor = col; break
+        case 'bouncy':     // STUITERBAL: kaatst razendsnel laag over de grond
+          S.ball.bouncyT = 3; S.ball.vx = dir * 1050; S.ball.vy = 260; S.ball.superColor = col; break
+        case 'ghost':      // SPOOKBAL: (half-)onzichtbare bal + meevliegende spoken
+          S.ball.ghostT = 3; aimAtGoal(p, 1250); S.ball.homing = dir; S.ball.homingStr = 3; S.ball.superColor = col
+          for (let i = 0; i < 5; i++) { const sp = ((i - 2) / 5) * 0.5; S.decoys.push({ x: S.ball.x, y: S.ball.y, vx: S.ball.vx * Math.cos(sp) - S.ball.vy * Math.sin(sp), vy: S.ball.vx * Math.sin(sp) + S.ball.vy * Math.cos(sp), angle: 0, life: 2, color: col }) }
+          break
+        case 'giantball':  // REUZENBAL: bal wordt gigantisch en rolt de goal in
+          S.ball.scale = 2.6; S.ball.scaleT = 2.6; S.ball.vx = dir * 900; S.ball.vy = -240
+          setBallFx(col, 'flame'); S.ball.superColor = col; addShake(14, 0.4); break
+        case 'meteor':     // METEOOR: bal vliegt hoog op en stort als vuurbal de goal in
+          S.ball.vx = dir * 300; S.ball.vy = -760; S.ball.homing = dir; S.ball.homingStr = 6
+          setBallFx(col, 'flame'); S.ball.superColor = col
+          for (let i = 0; i < 6; i++) S.rockets.push({ x: goalX + (Math.random() - 0.5) * 50, y: CEIL - 60 - Math.random() * 80, vx: dir * (60 + Math.random() * 60), vy: 420 + Math.random() * 160, color: col, life: 2.0, owner: p.side, delay: 0.4 + i * 0.05 })
+          break
+        case 'charge':     // STORMRAM: speler dendert vooruit en beukt tegenstander + bal weg
+          p.t.dash = 0.5; p.dashVx = dir * 950; p.ram = true; p.ramKnock = 720; p.ramStun = 1.2
+          p.vy = -120; p.onGround = false
+          S.ball.vx = dir * 900; S.ball.vy = -120; setBallFx(col, 'flame'); S.ball.superColor = col
+          for (let i = 0; i < 3; i++) addShock(p.x + dir * i * 40, p.y - PR * 0.4, col, 110, 0.45)
           break
         default:           // krachtige rechte knal
           aimAtGoal(p, 1180); S.ball.homing = dir; S.ball.homingStr = 4
@@ -1076,6 +1105,7 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
       if (p.kickCD > 0) return
       const dx = S.ball.x - p.x, dy = S.ball.y - (p.y - PR * 0.3)
       if (Math.hypot(dx, dy) > KICK_RANGE) return
+      if (p.armed) { fireSuper(p); p.kickCD = 0.42; p.kickAnim = KICK_ANIM; return }   // super vuurt op contact
       p.kickCD = 0.42; p.kickAnim = KICK_ANIM       // langere cooldown tussen schoten
       const isPower = p.t.powershot > 0
       let power = isPower ? KICK_POWER * p.powMult : KICK_POWER
@@ -1096,6 +1126,8 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
       const dist = Math.hypot(dx, dy)
       const minD = rad + BR * (S.ball.scale || 1)
       if (dist < minD && dist > 0) {
+        // ── super staat scherp en deze speler raakt de bal → vuur hier af ──
+        if (p.armed) { fireSuper(p); return true }
         // ── super-mechaniek raakt de TEGENSTANDER (niet de schutter zelf) ──
         if (S.ball.superKind && p.side !== S.ball.superOwner) {
           const kdir = Math.sign(S.ball.vx) || (S.ball.superOwner === 'L' ? 1 : -1)
@@ -1199,7 +1231,7 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
           if (L.t.dash > 0) L.vx = L.dashVx * L.frozenFactor
           if (c.jump && L.onGround) { L.vy = -JUMP_FORCE; L.onGround = false }
           if (c.kick) doKick(L)
-          if (c.special) { activateSpecial(L, S.R); c.special = false }
+          if (c.special) { armSpecial(L); c.special = false }
         } else L.vx *= 0.8
 
         // ── AI (R) ──
@@ -1223,8 +1255,8 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
           if (R.onGround && S.ball.y < GROUND_Y - 130 && Math.abs(S.ball.x - R.x) < 80 && S.ball.vy > -50 && Math.random() < 0.12 + oppDiff * 0.04) { R.vy = -JUMP_FORCE; R.onGround = false }
           // schiet als de bal binnen bereik is (sneller bij meer sterren)
           if (Math.hypot(S.ball.x - R.x, S.ball.y - (R.y - PR * 0.3)) < KICK_RANGE && Math.random() < 0.2 + oppDiff * 0.09) doKick(R)
-          // gebruikt special wat vaker bij meer sterren
-          if (R.charge >= 1 && Math.random() < 0.005 + oppDiff * 0.0035 && S.ball.x > W * 0.45) activateSpecial(R, S.L)
+          // zet de super scherp (vuurt vanzelf zodra de AI de bal raakt)
+          if (R.charge >= 1 && !R.armed && Math.random() < 0.01 + oppDiff * 0.006) armSpecial(R)
         } else R.vx *= 0.8
 
         // physics players

@@ -50,6 +50,7 @@ export const MOVES = {
 //   tornado     -> een tornado zuigt de bal mee de goal in
 //   power       -> krachtige rechte knal (fallback)
 // color = hoofdtint van de gloed/sunburst/bal.
+// 16 landen, 16 verschillende supers — elk land een eigen mechaniek.
 export const SUPERS = {
   nl: { behavior: 'groundspike', color: '#2bd46a' },
   de: { behavior: 'goalram',     color: '#ff7a00' },
@@ -57,16 +58,16 @@ export const SUPERS = {
   fr: { behavior: 'tornado',     color: '#3a6ee0' },
   en: { behavior: 'skyrockets',  color: '#ff2a2a' },
   es: { behavior: 'bighead',     color: '#ffcc00' },
-  pt: { behavior: 'goalram',     color: '#ff4500' },
+  pt: { behavior: 'curveball',   color: '#ff4500' },
   it: { behavior: 'freeze',      color: '#5bc8ff' },
   be: { behavior: 'lightning',   color: '#ffd23f' },
   us: { behavior: 'icespikes',   color: '#9fdcff' },
   mx: { behavior: 'airshot',     color: '#2aa8ff' },
-  jp: { behavior: 'multiball',   color: '#ff8800' },
-  ma: { behavior: 'groundspike', color: '#c1272d' },
-  sn: { behavior: 'icespikes',   color: '#00853f' },
-  hr: { behavior: 'airshot',     color: '#ff3030' },
-  ar: { behavior: 'skyrockets',  color: '#74acdf' },
+  jp: { behavior: 'giantball',   color: '#ff8800' },
+  ma: { behavior: 'charge',      color: '#c1272d' },
+  sn: { behavior: 'ghost',       color: '#9ad9c0' },
+  hr: { behavior: 'bouncy',      color: '#ff3030' },
+  ar: { behavior: 'meteor',      color: '#ff8c42' },
 }
 export const getSuper = key => SUPERS[key] || { behavior: 'power', color: (MOVES[key] || MOVES.nl).color }
 
@@ -82,6 +83,12 @@ export const SUPER_DESC = {
   bighead:     'Je kop wordt gigantisch en kopt de bal keihard binnen',
   lightning:   'Roep bliksemschichten op die op de tegenstander inslaan',
   tornado:     'Een tornado zuigt de bal mee de goal in',
+  curveball:   'Brandende banaan-curve die om de keeper heen krult',
+  bouncy:      'Superstuiterende bal die laag en razendsnel de goal in kaatst',
+  ghost:       'De bal wordt een spookbal — bijna onzichtbaar voor je tegenstander',
+  giantball:   'De bal wordt gigantisch en rolt onhoudbaar de goal in',
+  meteor:      'De bal vliegt omhoog en stort als een vuurmeteoor de goal in',
+  charge:      'Je dendert vooruit en beukt de tegenstander én de bal weg',
   power:       'Krachtige knal recht op de goal',
 }
 export const superDescOf = key => SUPER_DESC[getSuper(key).behavior] || SUPER_DESC.power
