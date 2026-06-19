@@ -14,6 +14,8 @@ const CODES = { pabo: 100000 }
 const BRIEF_CODES = { start: 800 }   // eenmalige briefgeld-codes
 const UNLOCK_ALL_CODE = 'joop'
 const UNLOCK_COUNTRIES_CODE = 'frans'   // ontgrendelt alle Head Soccer-landen
+const UNLOCK_TARA_CODE = 'tara'         // ontgrendelt de Tara Pet
+const UNLOCK_NINA_CODE = 'nina'         // ontgrendelt de Nina Pet
 
 function fmt(n) { return n.toLocaleString('nl-NL') }
 
@@ -32,7 +34,7 @@ function CurrencyBadge({ munten, briefgeld }) {
   )
 }
 
-function CodeModal({ onClose, onRedeem, onRedeemBrief, onUnlockAll, onUnlockCountries, usedCodes }) {
+function CodeModal({ onClose, onRedeem, onRedeemBrief, onUnlockAll, onUnlockCountries, onUnlockTara, onUnlockNina, usedCodes }) {
   const [code, setCode] = useState('')
   const [msg,  setMsg]  = useState(null)
   const [ok,   setOk]   = useState(false)
@@ -46,6 +48,14 @@ function CodeModal({ onClose, onRedeem, onRedeemBrief, onUnlockAll, onUnlockCoun
     } else if (key === UNLOCK_COUNTRIES_CODE) {
       onUnlockCountries()
       setMsg('🎉 Alle Head Soccer-landen ontgrendeld!')
+      setOk(true)
+    } else if (key === UNLOCK_TARA_CODE) {
+      onUnlockTara()
+      setMsg('🌈 Tara Pet ontgrendeld!')
+      setOk(true)
+    } else if (key === UNLOCK_NINA_CODE) {
+      onUnlockNina()
+      setMsg('💖 Nina Pet ontgrendeld!')
       setOk(true)
     } else if (BRIEF_CODES[key] !== undefined) {
       if (usedCodes.includes(key)) {
@@ -158,6 +168,12 @@ export default function App() {
   const unlockCountries = () => {
     localStorage.setItem('kk_hs_unlocked', JSON.stringify(COUNTRIES.map(c => c.key)))
   }
+
+  // "tara" code → ontgrendel de Tara Pet
+  const unlockTara = () => unlockColor('hoofd', 'pettara')
+
+  // "nina" code → ontgrendel de Nina Pet
+  const unlockNina = () => unlockColor('hoofd', 'petnina')
 
   // Re-read the wallet from localStorage (games update it directly) so the
   // home badge always matches — call when returning to a React screen.
@@ -281,6 +297,8 @@ export default function App() {
           onRedeemBrief={(key, amount) => redeemBriefCode(key, amount)}
           onUnlockAll={unlockAll}
           onUnlockCountries={unlockCountries}
+          onUnlockTara={unlockTara}
+          onUnlockNina={unlockNina}
           usedCodes={usedCodes}
         />
       )}

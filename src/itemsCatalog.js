@@ -255,6 +255,8 @@ export const CATALOG = {
     // badge 'NY' wordt in het swatch-rondje getoond i.p.v. de zware UV-afbeelding.
     { ...texmodel('petny', 'Toffe Pet', '/Pet/petnormaal.glb', '/Pet/petny.png', '/Pet/petny.png'), badge: 'NY' },
     { ...texmodel('petgiraffe', 'Giraffe Pet', '/Pet/petnormaal.glb', '/Pet/petgiraffe.png', '/Pet/petgiraffe.png'), badge: '🦒' },
+    { ...texmodel('pettara', 'Tara Pet', '/Pet/petnormaal.glb', '/Pet/pettara.png', '/Pet/pettara.png'), badge: '🌈' },
+    { ...texmodel('petnina', 'Nina Pet', '/Pet/petnormaal.glb', '/Pet/ninapet.png', '/Pet/ninapet.png'), badge: '💖' },
   ],
 }
 

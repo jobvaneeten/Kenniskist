@@ -118,7 +118,7 @@
   overflow: hidden;
 }
 .hs-hud {
-  width: 100%; max-width: 900px;
+  width: 100%; max-width: 1100px;
   display: flex; align-items: center; justify-content: space-between;
   padding: 8px 16px; gap: 12px;
 }
@@ -139,7 +139,7 @@
 .hs-canvas {
   max-width: 100%; max-height: 100%;
   width: auto; height: auto;
-  aspect-ratio: 900 / 480;
+  aspect-ratio: 1100 / 480;
   border-radius: 10px;
   box-shadow: 0 10px 40px rgba(0,0,0,0.6);
   touch-action: none;
@@ -147,7 +147,7 @@
 
 /* ── On-screen controls ── */
 .hs-controls {
-  width: 100%; max-width: 900px;
+  width: 100%; max-width: 1100px;
   display: flex; align-items: center; justify-content: space-between;
   padding: 10px 20px 18px; gap: 10px;
   user-select: none;
@@ -166,6 +166,13 @@
 .hs-jump { background: rgba(80,180,255,0.18); border-color: rgba(80,180,255,0.5); }
 .hs-kick { background: rgba(255,160,40,0.18); border-color: rgba(255,160,40,0.5); }
 .hs-special { width: 70px; height: 70px; font-size: 1.9rem; background: rgba(255,255,255,0.1); border-width: 3px; }
+.hs-special-ready {
+  font-size: 0.85rem; font-weight: 900; letter-spacing: 1px; color: #fff;
+  background: linear-gradient(135deg, #ffd23f, #ff8a00);
+  box-shadow: 0 0 16px rgba(255,200,60,0.9);
+  animation: hs-power-pulse 0.7s ease-in-out infinite;
+}
+@keyframes hs-power-pulse { 0%,100% { transform: scale(1) } 50% { transform: scale(1.12) } }
 
 @media (max-width: 560px) {
   .hs-btn { width: 52px; height: 52px; font-size: 1.4rem; }

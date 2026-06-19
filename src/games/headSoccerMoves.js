@@ -35,4 +35,44 @@ export const MOVES = {
   ar: { name: 'Spookbal',      emoji: '👻', mascot: '👻', ballEmoji: '👻', effect: 'ghost',     color: '#74ACDF', charge: 26, desc: 'De bal wordt een onzichtbare spookbal richting de goal', params: { dur: 3, speed: 1300 } },
 }
 
+// ── Authentieke Head Soccer power-shot per land ──────────────────────
+// behavior = de ECHTE gameplay-mechaniek bij de super-omhaal (zie activateSpecial):
+//   skyrockets  -> bal schiet omhoog, daarna regent het raketten op de goal (Engeland-stijl)
+//   goalram     -> keiharde dreun; raakt de tegenstander → die vliegt mét de bal de goal in
+//   groundspike -> schot dat de tegenstander bij contact de grond in ramt (vast in de vloer)
+//   airshot     -> speler springt hoog en haalt de bal uit de lucht over de keeper
+//   power       -> krachtige rechte knal (fallback)
+// color = hoofdtint van de gloed/sunburst/bal.
+// 4 bevestigd uit de video: en(hemelduik+raketten), de(beuk de goal in), nl(grond in rammen), mx(lucht-omhaal).
+// De rest is in dezelfde stijl verdeeld over deze 4 — koppeling vrij aanpasbaar.
+export const SUPERS = {
+  nl: { behavior: 'groundspike', color: '#2bd46a' },
+  de: { behavior: 'goalram',     color: '#ff7a00' },
+  br: { behavior: 'goalram',     color: '#00d46a' },
+  fr: { behavior: 'skyrockets',  color: '#3a6ee0' },
+  en: { behavior: 'skyrockets',  color: '#ff2a2a' },
+  es: { behavior: 'groundspike', color: '#ffcc00' },
+  pt: { behavior: 'goalram',     color: '#ff4500' },
+  it: { behavior: 'airshot',     color: '#0066cc' },
+  be: { behavior: 'groundspike', color: '#ef3340' },
+  us: { behavior: 'skyrockets',  color: '#b22234' },
+  mx: { behavior: 'airshot',     color: '#2aa8ff' },
+  jp: { behavior: 'airshot',     color: '#ff8800' },
+  ma: { behavior: 'groundspike', color: '#c1272d' },
+  sn: { behavior: 'goalram',     color: '#00853f' },
+  hr: { behavior: 'airshot',     color: '#ff3030' },
+  ar: { behavior: 'skyrockets',  color: '#74acdf' },
+}
+export const getSuper = key => SUPERS[key] || { behavior: 'power', color: (MOVES[key] || MOVES.nl).color }
+
+// Korte uitleg per mechaniek (getoond op keuze-/intro-scherm, los van de land-naam)
+export const SUPER_DESC = {
+  skyrockets:  'Schiet omhoog en laat een raketregen op de goal neerdalen',
+  goalram:     'Knal de bal zo hard dat de tegenstander mét bal de goal in vliegt',
+  groundspike: 'Ram de tegenstander met de bal de grond in',
+  airshot:     'Spring hoog en haal de bal uit de lucht over de keeper',
+  power:       'Krachtige knal recht op de goal',
+}
+export const superDescOf = key => SUPER_DESC[getSuper(key).behavior] || SUPER_DESC.power
+
 export const getMove = key => MOVES[key] || MOVES.nl
