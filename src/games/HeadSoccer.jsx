@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { COUNTRIES, getCountry, generateBracket } from './countries'
+import { COUNTRIES, getCountry, generateBracket, UNLOCK_TIERS, LEVELS } from './countries'
 import { getMove, getSuper, superDescOf } from './headSoccerMoves'
 import OrientationGate from '../OrientationGate'
 import './football.css'
@@ -22,7 +22,15 @@ const KICK_RANGE = PR + BR + 16
 const KICK_ANIM = 0.24       // iets langere schop-animatie (zwaarder gevoel)
 const MATCH_TIME = 75        // iets langer potje (want minder goals)
 const KICK_POWER = 340       // zwakker, rustiger basis-schot
-const AI_SPD_BY_DIFF = { 1: 105, 2: 126, 3: 148, 4: 170, 5: 196 }  // iets zwakker; hogere sterren = sneller
+// Basis-AI = "hard" (de sterke AI van vóór). Per niveau wordt dit geschaald.
+const AI_SPD_BY_DIFF = { 1: 120, 2: 145, 3: 170, 4: 195, 5: 225 }
+// Per niveau: spd = snelheidsfactor, err = mik-fout (hoger = slechter mikken),
+// kick/jump/special = kans-factoren (lager = minder vaak).
+const LEVEL_TUNE = {
+  hard:   { spd: 1.0,  err: 1.0, kick: 1.0,  jump: 1.0,  special: 1.0 },
+  medium: { spd: 0.85, err: 1.6, kick: 0.78, jump: 0.8,  special: 0.7 },
+  easy:   { spd: 0.66, err: 2.4, kick: 0.5,  jump: 0.55, special: 0.4 },
+}
 
 const DEFAULT_UNLOCKED = ['nl', 'de', 'br', 'fr']
 const UNLOCK_KEY = 'kk_hs_unlocked'
@@ -795,6 +803,7 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
   const [playerKey, setPlayerKey] = useState(rewardTour?.playerKey || null)
   const [oppKey, setOppKey] = useState(null)
   const [bracket, setBracket] = useState(rewardTour?.bracket || null)  // {playerKey, currentRound, opponents[], roundNames[], results[]}
+  const [level, setLevel]   = useState(rewardTour?.level || 'medium')  // toernooi-niveau: easy | medium | hard
   const [score, setScore]   = useState({ L: 0, R: 0 })
   const [result, setResult] = useState(null)        // 'win' | 'lose'
   const [mysteryReveal, setMysteryReveal] = useState(null)
@@ -818,7 +827,8 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
     const opp = pool[Math.floor(Math.random() * pool.length)].key
     setOppKey(opp); setBracket(null); setCoinsEarned(0); setPhase('match')
   }
-  const startWK = () => {
+  const chooseLevel = (l) => {
+    setLevel(l)
     const b = generateBracket(playerKey)
     setBracket(b); setOppKey(b.opponents[0]); setCoinsEarned(0); setPhase('wk_bracket')
   }
@@ -864,10 +874,10 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
     if (bracket.currentRound >= 3) {
       setBracket(b => ({ ...b, results }))
       addCuruntie?.(50); setCoinsEarned(c => c + 50)
-      // mystery box: unlock random locked country
-      const locked = COUNTRIES.filter(c => !unlocked.includes(c.key)).map(c => c.key)
-      if (locked.length) {
-        const win = locked[Math.floor(Math.random() * locked.length)]
+      // mysterybox: ontgrendel een nog-vergrendeld land van DIT niveau
+      const pool = (UNLOCK_TIERS[level] || []).filter(k => !unlocked.includes(k))
+      if (pool.length) {
+        const win = pool[Math.floor(Math.random() * pool.length)]
         const next = [...unlocked, win]
         setUnlocked(next); saveUnlocked(next); setMysteryReveal(win)
       } else {
@@ -879,7 +889,7 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
     setBracket(b => ({ ...b, currentRound: nextRound, results }))
     setOppKey(bracket.opponents[nextRound])
     setPhase('wk_round')
-  }, [bracket, unlocked, addCuruntie, reward, playerKey])
+  }, [bracket, unlocked, addCuruntie, reward, playerKey, level])
   onMatchEndRef.current = handleMatchEnd
 
   const nextWKMatch = () => { setPhase('vs_intro') }
@@ -892,7 +902,8 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
     const ctx = canvas.getContext('2d')
     const pMove = getMove(playerKey), oMove = getMove(oppKey)
     const oppDiff = oppCountry?.diff || 3
-    const aiSpd = AI_SPD_BY_DIFF[oppDiff] || 240
+    const LV = LEVEL_TUNE[level] || LEVEL_TUNE.medium    // toernooi-niveau (easy/medium/hard)
+    const aiSpd = (AI_SPD_BY_DIFF[oppDiff] || 240) * LV.spd
 
     const mkPlayer = (side, move) => ({
       side, move, facing: side === 'L' ? 1 : -1,
@@ -1263,8 +1274,8 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
           const aspd = aiSpd * R.frozenFactor
           // spookbal: AI ziet de bal slecht → mikt met grote fout
           const ghostErr = S.ball.ghostT > 0 ? (Math.sin(now / 140) * 120) : 0
-          // mikt onnauwkeurig (kleinere fout bij meer sterren); blijft wel actief
-          const aiErr = (6 - oppDiff) * 16
+          // mik-fout: groter bij minder sterren én op een lager niveau
+          const aiErr = (6 - oppDiff) * 12 * LV.err
           const ballSide = S.ball.x + ghostErr + Math.sin(now / 520) * aiErr
           // chase ball, but retreat to defend if ball behind toward own goal
           let target = ballSide
@@ -1274,13 +1285,13 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
           if (Math.abs(dxr) > 14) { R.vx = Math.sign(dxr) * aspd; R.facing = S.ball.x < R.x ? -1 : 1 }
           else R.vx *= 0.7
           if (R.t.dash > 0) R.vx = R.dashVx * R.frozenFactor
-          // springt voor hoge ballen (vaker bij meer sterren)
-          if (R.onGround && S.ball.y < GROUND_Y - 130 && Math.abs(S.ball.x - R.x) < 80 && S.ball.vy > -50 && Math.random() < 0.12 + oppDiff * 0.04) { R.vy = -JUMP_FORCE; R.onGround = false }
-          // schiet als de bal binnen bereik is (sneller bij meer sterren)
-          if (Math.hypot(S.ball.x - R.x, S.ball.y - (R.y - PR * 0.3)) < KICK_RANGE && Math.random() < 0.15 + oppDiff * 0.075) doKick(R)
-          if (Math.abs(S.L.x - R.x) < PR * 2.1 && Math.random() < 0.06 + oppDiff * 0.02) meleeHit(R, S.L)
+          // springt voor hoge ballen (minder vaak op een lager niveau)
+          if (R.onGround && S.ball.y < GROUND_Y - 130 && Math.abs(S.ball.x - R.x) < 80 && S.ball.vy > -50 && Math.random() < (0.12 + oppDiff * 0.04) * LV.jump) { R.vy = -JUMP_FORCE; R.onGround = false }
+          // schiet als de bal binnen bereik is (minder vaak op een lager niveau)
+          if (Math.hypot(S.ball.x - R.x, S.ball.y - (R.y - PR * 0.3)) < KICK_RANGE && Math.random() < (0.2 + oppDiff * 0.09) * LV.kick) doKick(R)
+          if (Math.abs(S.L.x - R.x) < PR * 2.1 && Math.random() < (0.06 + oppDiff * 0.02) * LV.kick) meleeHit(R, S.L)
           // zet de super scherp (vuurt vanzelf zodra de AI de bal raakt)
-          if (R.charge >= 1 && !R.armed && Math.random() < 0.01 + oppDiff * 0.006) armSpecial(R)
+          if (R.charge >= 1 && !R.armed && Math.random() < (0.01 + oppDiff * 0.006) * LV.special) armSpecial(R)
         } else R.vx *= 0.8
 
         // physics players
@@ -1354,14 +1365,16 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
         // side walls above crossbar
         if (b.x <= effBR && b.y < CROSSBAR) { b.x = effBR; b.vx = Math.abs(b.vx) * BB }
         if (b.x >= W - effBR && b.y < CROSSBAR) { b.x = W - effBR; b.vx = -Math.abs(b.vx) * BB }
-        // crossbar = massieve bovenlat: de bal kan NIET van bovenaf de goal in vallen
+        // crossbar = volledig massieve bovenlat: de bal kan NERGENS van bovenaf de goal
+        // in vallen. We kijken of de bal de latlijn deze frame is overgestoken (swept),
+        // zodat ook snelle ballen niet door de lat heen tunnelen.
         for (const x0 of [0, W - GOAL_W]) {
-          const inX = b.x > x0 - effBR && b.x < x0 + GOAL_W + effBR
+          const inX = b.x + effBR > x0 && b.x - effBR < x0 + GOAL_W
           if (!inX) continue
           const prevY = b.y - b.vy * dt
-          if (b.vy >= 0 && prevY <= CROSSBAR && b.y + effBR >= CROSSBAR) {        // van boven → kaatst bovenop de lat
-            b.y = CROSSBAR - effBR; b.vy = -Math.abs(b.vy) * BB; b.vx *= 0.92
-          } else if (b.vy < 0 && Math.abs(b.y - CROSSBAR) < effBR + 3) {           // van onder → omlaag
+          if (b.vy >= 0 && b.y + effBR >= CROSSBAR && prevY - effBR <= CROSSBAR) {  // van boven → kaatst bovenop de lat
+            b.y = CROSSBAR - effBR; b.vy = -Math.abs(b.vy) * BB; b.vx *= 0.9
+          } else if (b.vy < 0 && b.y - effBR <= CROSSBAR && prevY + effBR >= CROSSBAR) {  // van onder → omlaag
             b.y = CROSSBAR + effBR; b.vy = Math.abs(b.vy) * BB
           }
         }
@@ -1714,11 +1727,42 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
             <span className="mode-name">Start wedstrijd</span>
             <span className="mode-desc">1 potje tegen een willekeurig land</span>
           </button>
-          <button className="mode-card" onClick={startWK}>
+          <button className="mode-card" onClick={() => setPhase('wk_level')}>
             <span style={{ fontSize: '2rem' }}>🏆</span>
             <span className="mode-name">Speel Cup</span>
-            <span className="mode-desc">Win 4 rondes → mysterybox met nieuw land</span>
+            <span className="mode-desc">Kies een niveau → win 4 rondes → nieuw land</span>
           </button>
+        </div>
+      </div>
+    )
+  }
+
+  if (phase === 'wk_level') {
+    return (
+      <div className="game-screen game-screen-center">
+        <button className="back-btn" onClick={() => setPhase('mode')}>← Terug</button>
+        <div className="wk-header">
+          <span className="wk-trophy">🏆</span>
+          <h1 className="wk-title">Kies je niveau</h1>
+          <p className="wk-sub">Elk niveau heeft eigen landen om te winnen — moeilijker = sterkere landen!</p>
+        </div>
+        <div className="mode-grid hs-level-grid">
+          {LEVELS.map(lv => {
+            const tier = UNLOCK_TIERS[lv.key] || []
+            return (
+              <button key={lv.key} className="mode-card hs-level-card" onClick={() => chooseLevel(lv.key)}>
+                <span style={{ fontSize: '1.8rem' }}>{lv.emoji}</span>
+                <span className="mode-name">{lv.label}</span>
+                <span className="mode-desc">{lv.desc}</span>
+                <span className="hs-level-prizes">
+                  {tier.map(k => {
+                    const c = getCountry(k), owned = unlocked.includes(k)
+                    return <span key={k} className="hs-level-prize" style={owned ? { opacity: 0.35 } : undefined} title={owned ? `${c.name} (al ontgrendeld)` : c.name}>{owned ? '✓' : c.flag}</span>
+                  })}
+                </span>
+              </button>
+            )
+          })}
         </div>
       </div>
     )
@@ -1727,11 +1771,11 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
   if (phase === 'wk_bracket') {
     return (
       <div className="game-screen game-screen-center">
-        <button className="back-btn" onClick={() => { setBracket(null); setPhase('mode') }}>← Terug</button>
+        <button className="back-btn" onClick={() => { setBracket(null); setPhase('wk_level') }}>← Terug</button>
         <div className="wk-header">
           <span className="wk-trophy">🏆</span>
           <h1 className="wk-title">WK Toernooi</h1>
-          <p className="wk-sub">{playerCountry.flag} {playerCountry.name} — versla 4 landen om te winnen!</p>
+          <p className="wk-sub">{playerCountry.flag} {playerCountry.name} — {(LEVELS.find(l => l.key === level) || {}).emoji} {(LEVELS.find(l => l.key === level) || {}).label} — versla 4 landen!</p>
         </div>
         <Bracket bracket={bracket} playerKey={playerKey} />
         <button className="mode-card hs-go" onClick={() => setPhase('vs_intro')}>▶ Start toernooi</button>

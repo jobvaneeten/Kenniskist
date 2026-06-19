@@ -19,6 +19,19 @@ export const COUNTRIES = [
 
 export const getCountry = key => COUNTRIES.find(c => c.key === key)
 
+// Welke (vergrendelde) landen je per toernooi-niveau kunt winnen.
+// Standaard al ontgrendeld: nl, de, br, fr. Easy = zwakkere landen, hard = sterkste.
+export const UNLOCK_TIERS = {
+  easy:   ['us', 'mx', 'jp', 'sn'],
+  medium: ['ma', 'hr', 'be', 'it'],
+  hard:   ['en', 'es', 'pt', 'ar'],
+}
+export const LEVELS = [
+  { key: 'easy',   label: 'Makkelijk', emoji: '🟢', desc: 'Trage tegenstanders die veel missen' },
+  { key: 'medium', label: 'Gemiddeld', emoji: '🟡', desc: 'Een eerlijke uitdaging' },
+  { key: 'hard',   label: 'Moeilijk',  emoji: '🔴', desc: 'Snelle, scherpe tegenstanders' },
+]
+
 // Generate a 4-round bracket: one random opponent per difficulty tier (2 → 3 → 4 → 5)
 export function generateBracket(playerKey) {
   const rand = arr => arr[Math.floor(Math.random() * arr.length)]
