@@ -436,6 +436,20 @@ function drawRocket(ctx, rk) {
   ctx.restore()
 }
 
+// jagged verticale bliksemschicht van plafond naar grond
+function drawBolt(ctx, x, k, color) {
+  const a = Math.sin(Math.min(1, Math.max(0, k)) * Math.PI)
+  if (a <= 0.02) return
+  ctx.save(); ctx.globalAlpha = a; ctx.lineCap = 'round'; ctx.lineJoin = 'round'
+  for (const [w, c] of [[8, color], [3, '#ffffff']]) {
+    ctx.strokeStyle = c; ctx.lineWidth = w
+    ctx.beginPath(); let yy = CEIL; ctx.moveTo(x, yy)
+    while (yy < GROUND_Y) { yy += 22 + Math.random() * 22; ctx.lineTo(x + (Math.random() - 0.5) * 38, Math.min(GROUND_Y, yy)) }
+    ctx.stroke()
+  }
+  ctx.restore(); ctx.globalAlpha = 1
+}
+
 // grote gouden 3D-"GOAL!"-letters die over het scherm vegen
 function drawGoalText(ctx, k) {
   const env = k < 0.15 ? k / 0.15 : k > 0.82 ? Math.max(0, (1 - k) / 0.18) : 1
@@ -579,7 +593,7 @@ function SpecialDemo({ countryKey }) {
     const dummy = mkP(VX + VW - 90, -1)
     const newBall = () => ({ x: p.x + 46, y: G - 26, vx: 0, vy: 0, angle: 0, spin: 0, scale: 1, ghostT: 0, bouncyT: 0, superT: 0, superColor: null, dark: false, laser: false, superKind: null, superOwner: null, trail: [], fx: { t: 0, type: 'energy', color: '#fff' } })
     let ball = newBall()
-    let shocks = [], parts = [], decoys = [], tornado = null, mascots = [], rockets = [], sun = null, tt = 0, triggered = false
+    let shocks = [], parts = [], decoys = [], tornado = null, mascots = [], rockets = [], bolts = [], sun = null, tt = 0, triggered = false
     const period = 3.0
 
     const reset = () => {
@@ -587,7 +601,7 @@ function SpecialDemo({ countryKey }) {
       for (const k in p.t) p.t[k] = 0
       dummy.x = VX + VW - 90; dummy.dizzy = 0; dummy.vx = 0; dummy.vy = 0; dummy.buried = 0; dummy.onGround = true; for (const k in dummy.t) dummy.t[k] = 0
       ball = newBall()
-      shocks = []; parts = []; decoys = []; tornado = null; mascots = []; rockets = []; sun = null; triggered = false
+      shocks = []; parts = []; decoys = []; tornado = null; mascots = []; rockets = []; bolts = []; sun = null; triggered = false
     }
     const burst = (x, y, color, n = 20) => { for (let i = 0; i < n; i++) { const a = Math.random() * Math.PI * 2, v = 300 * (0.4 + Math.random()); parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 120, life: 0.5 + Math.random() * 0.4, color, r: 2 + Math.random() * 3 }) } }
     const goalDir = () => { const gx = W - 4, gy = (G - 175) + 90; const dx = gx - ball.x, dy = gy - ball.y, d = Math.hypot(dx, dy) || 1; return { x: dx / d, y: dy / d } }
@@ -618,6 +632,32 @@ function SpecialDemo({ countryKey }) {
           break
         case 'airshot':
           p.vy = -1000; ball.vx = 460; ball.vy = -680
+          break
+        case 'freeze':
+          ball.vx = 1000; ball.vy = -120; ball.superColor = '#bfe8ff'
+          dummy.t.frozen = 2.6; dummy.frozenFactor = 0; dummy.dizzy = 2.6
+          burst(dummy.x, dummy.y - PR * 0.6, '#bde0ff', 18)
+          break
+        case 'icespikes':
+          ball.vx = 1050; ball.vy = -120
+          dummy.dizzy = 1.4; dummy.vy = -560; dummy.onGround = false
+          for (let i = 0; i < 14; i++) parts.push({ x: dummy.x + (Math.random() - 0.5) * 60, y: G - 5, vx: (Math.random() - 0.5) * 120, vy: -260 - Math.random() * 300, life: 1.0, color: i % 2 ? '#bfe8ff' : '#fff', r: 3 + Math.random() * 3 })
+          break
+        case 'multiball':
+          ball.vx = 1050; ball.vy = -160
+          for (let i = 0; i < 4; i++) { const sp = ((i - 1.5) / 4) * 0.7; decoys.push({ x: ball.x, y: ball.y, vx: ball.vx * Math.cos(sp) - ball.vy * Math.sin(sp), vy: ball.vx * Math.sin(sp) + ball.vy * Math.cos(sp), angle: 0, life: 1.8, color: col }) }
+          break
+        case 'bighead':
+          p.t.bighead = 2.4; p.bigScale = 2.2
+          ball.vx = 1200; ball.vy = -200
+          break
+        case 'lightning':
+          ball.vx = 1000; ball.vy = -150
+          dummy.dizzy = 1.6; dummy.vy = -240; dummy.onGround = false
+          for (let i = 0; i < 5; i++) bolts.push({ x: dummy.x + (Math.random() - 0.5) * 100, t: 0.5, dur: 0.5, color: col, delay: i * 0.05 })
+          break
+        case 'tornado':
+          tornado = { x: p.x + 30, y: G, vx: 220, t: 3.0, pull: 3000, dir: 1, color: col }
           break
         default:
           ball.vx = 1100; ball.vy = -260
@@ -660,6 +700,8 @@ function SpecialDemo({ countryKey }) {
         if (Math.hypot(rk.x - dummy.x, rk.y - (dummy.y - PR)) < PR + 8) { dummy.dizzy = Math.max(dummy.dizzy, 0.7); dummy.vy = -220; dummy.onGround = false; rk.life = 0; burst(rk.x, rk.y, rk.color, 10) }
       }
       rockets = rockets.filter(rk => rk.life > 0)
+      for (const lb of bolts) { if (lb.delay > 0) { lb.delay -= dt; continue } lb.t -= dt }
+      bolts = bolts.filter(lb => lb.t > 0)
       ball.trail.push({ x: ball.x, y: ball.y }); while (ball.trail.length > (ball.fx.t > 0 ? 16 : 8)) ball.trail.shift()
       if (ball.fx.t > 0) ball.fx.t -= dt
       for (const d of decoys) { d.vy += GRAVITY * 0.30 * dt; d.x += d.vx * dt; d.y += d.vy * dt; d.angle += d.vx * dt * 0.05; if (d.y >= G - BR) { d.y = G - BR; d.vy = -d.vy * 0.6 } d.life -= dt }
@@ -685,6 +727,7 @@ function SpecialDemo({ countryKey }) {
       drawBall(ctx, ball)
       if (sun) drawSunburst(ctx, ball.x, ball.y, 1 - sun.t / sun.dur, sun.color)
       for (const rk of rockets) { if (rk.delay <= 0) drawRocket(ctx, rk) }
+      for (const lb of bolts) { if (lb.delay <= 0) drawBolt(ctx, lb.x, 1 - lb.t / lb.dur, lb.color) }
       for (const ms of mascots) { ctx.globalAlpha = Math.max(0, Math.min(1, ms.t / 0.3)); ctx.font = `${60 * ms.scale}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(ms.emoji, ms.x, ms.y); ctx.globalAlpha = 1 }
       ctx.restore()
       raf = requestAnimationFrame(loop)
@@ -841,7 +884,7 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
     const S = {
       L: mkPlayer('L', pMove), R: mkPlayer('R', oMove),
       ball: mkBall(W / 2, GROUND_Y - 120),
-      decoys: [], tornado: null, mascots: [], rockets: [],
+      decoys: [], tornado: null, mascots: [], rockets: [], bolts: [],
       cutin: { t: 0, dur: 0 },
       score: { L: 0, R: 0 }, time: MATCH_TIME, golden: false,
       kickoffT: 0.8, msg: '', msgT: 0, ended: false, particles: [],
@@ -986,6 +1029,42 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
           p.vy = -1150; p.onGround = false
           S.ball.vx = dir * 520; S.ball.vy = -760         // boog hoog door de lucht de goal in
           S.ball.homing = dir; S.ball.homingStr = 3
+          break
+        case 'freeze': {   // IJSTIJD: vries de tegenstander vast in een blok ijs
+          grabBall(p); aimAtGoal(p, 1050); S.ball.homing = dir; S.ball.homingStr = 4
+          S.ball.superColor = '#bfe8ff'
+          opp.t.frozen = 2.6; opp.frozenFactor = 0; opp.dizzy = 2.6
+          addShock(opp.x, opp.y - PR * 0.4, '#bde0ff', 170, 0.6)
+          for (let i = 0; i < 22; i++) { const a = Math.random() * Math.PI * 2, v = 160 + Math.random() * 220; S.particles.push({ x: opp.x, y: opp.y - PR * 0.6, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 80, life: 0.9, color: i % 2 ? '#bde0ff' : '#ffffff', r: 2 + Math.random() * 3 }) }
+          break
+        }
+        case 'icespikes': { // IJSPEGELS: pegels schieten uit de grond, lanceren de tegenstander
+          aimAtGoal(p, 1150); S.ball.homing = dir; S.ball.homingStr = 4; S.ball.superColor = col
+          opp.dizzy = 1.4; opp.vy = -640; opp.onGround = false
+          addShock(opp.x, GROUND_Y, '#bfe8ff', 200, 0.55); addShake(16, 0.45)
+          for (let i = 0; i < 18; i++) S.particles.push({ x: opp.x + (Math.random() - 0.5) * 70, y: GROUND_Y - 5, vx: (Math.random() - 0.5) * 160, vy: -300 - Math.random() * 360, life: 1.0, color: i % 2 ? '#bfe8ff' : '#ffffff', r: 3 + Math.random() * 3 })
+          break
+        }
+        case 'multiball': { // SAMBA: vijf ballen tegelijk naar de goal
+          grabBall(p); aimAtGoal(p, 1150); S.ball.homing = dir; S.ball.homingStr = 3; S.ball.superColor = col
+          for (let i = 0; i < 4; i++) { const sp = ((i - 1.5) / 4) * 0.7; S.decoys.push({ x: S.ball.x, y: S.ball.y, vx: S.ball.vx * Math.cos(sp) - S.ball.vy * Math.sin(sp), vy: S.ball.vx * Math.sin(sp) + S.ball.vy * Math.cos(sp), angle: 0, life: 1.8, color: col }) }
+          break
+        }
+        case 'bighead': {  // KOPWAND: reuzenkop kopt de bal keihard binnen
+          p.t.bighead = 2.4; p.bigScale = 2.2
+          grabBall(p); aimAtGoal(p, 1350); S.ball.homing = dir; S.ball.homingStr = 5; S.ball.superColor = col
+          addShock(p.x, p.y - PR * 1.4, col, 200, 0.6)
+          break
+        }
+        case 'lightning': { // BLIKSEM: schichten slaan in op de tegenstander
+          aimAtGoal(p, 1150); S.ball.homing = dir; S.ball.homingStr = 4; S.ball.superColor = col
+          opp.dizzy = 1.6; opp.vy = -260; opp.onGround = false
+          for (let i = 0; i < 5; i++) S.bolts.push({ x: opp.x + (Math.random() - 0.5) * 120, t: 0.5, dur: 0.5, color: col, delay: i * 0.05 })
+          addShake(18, 0.5)
+          break
+        }
+        case 'tornado':    // TORNADO: wervelwind zuigt de bal de goal in
+          S.tornado = { x: p.x + dir * 30, y: GROUND_Y, vx: dir * 230, t: 3.0, pull: 3200, dir, color: col }
           break
         default:           // krachtige rechte knal
           aimAtGoal(p, 1180); S.ball.homing = dir; S.ball.homingStr = 4
@@ -1281,6 +1360,10 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
       }
       S.rockets = S.rockets.filter(rk => rk.life > 0)
 
+      // bliksemschichten
+      for (const lb of S.bolts) { if (lb.delay > 0) { lb.delay -= dt; continue } lb.t -= dt }
+      S.bolts = S.bolts.filter(lb => lb.t > 0)
+
       for (const pt of S.particles) { pt.vy += 900 * dt; pt.x += pt.vx * dt; pt.y += pt.vy * dt; pt.life -= dt }
       S.particles = S.particles.filter(p => p.life > 0)
 
@@ -1301,6 +1384,8 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
       if (S.sunburst.t > 0) drawSunburst(ctx, S.ball.x, S.ball.y, 1 - S.sunburst.t / S.sunburst.dur, S.sunburst.color)
       // raketregen
       for (const rk of S.rockets) { if (rk.delay <= 0) drawRocket(ctx, rk) }
+      // bliksemschichten
+      for (const lb of S.bolts) { if (lb.delay <= 0) drawBolt(ctx, lb.x, 1 - lb.t / lb.dur, lb.color) }
       // themed mascotte-figuren (groot, met gloed)
       for (const ms of S.mascots) {
         const a = Math.min(1, ms.t / 0.3) * Math.min(1, (ms.dur - ms.t) / 0.12 + 0.3)

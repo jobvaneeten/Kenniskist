@@ -36,30 +36,35 @@ export const MOVES = {
 }
 
 // ── Authentieke Head Soccer power-shot per land ──────────────────────
-// behavior = de ECHTE gameplay-mechaniek bij de super-omhaal (zie activateSpecial):
-//   skyrockets  -> bal schiet omhoog, daarna regent het raketten op de goal (Engeland-stijl)
+// behavior = de ECHTE gameplay-mechaniek bij de super-omhaal (zie activateSpecial).
+// Geïnspireerd op de gameplay-video's; elk land krijgt een eigen mechaniek:
+//   skyrockets  -> bal schiet omhoog, daarna regent het raketten op de goal
 //   goalram     -> keiharde dreun; raakt de tegenstander → die vliegt mét de bal de goal in
-//   groundspike -> schot dat de tegenstander bij contact de grond in ramt (vast in de vloer)
+//   groundspike -> schot dat de tegenstander bij contact de grond in ramt
 //   airshot     -> speler springt hoog en haalt de bal uit de lucht over de keeper
+//   freeze      -> vriest de tegenstander vast in een blok ijs
+//   icespikes   -> ijspegels schieten uit de grond en lanceren de tegenstander omhoog
+//   multiball   -> vijf ballen tegelijk naar de goal (welke is echt?)
+//   bighead     -> je kop wordt gigantisch en kopt de bal keihard binnen
+//   lightning   -> bliksemschichten slaan in op de tegenstander
+//   tornado     -> een tornado zuigt de bal mee de goal in
 //   power       -> krachtige rechte knal (fallback)
 // color = hoofdtint van de gloed/sunburst/bal.
-// 4 bevestigd uit de video: en(hemelduik+raketten), de(beuk de goal in), nl(grond in rammen), mx(lucht-omhaal).
-// De rest is in dezelfde stijl verdeeld over deze 4 — koppeling vrij aanpasbaar.
 export const SUPERS = {
   nl: { behavior: 'groundspike', color: '#2bd46a' },
   de: { behavior: 'goalram',     color: '#ff7a00' },
-  br: { behavior: 'goalram',     color: '#00d46a' },
-  fr: { behavior: 'skyrockets',  color: '#3a6ee0' },
+  br: { behavior: 'multiball',   color: '#00d46a' },
+  fr: { behavior: 'tornado',     color: '#3a6ee0' },
   en: { behavior: 'skyrockets',  color: '#ff2a2a' },
-  es: { behavior: 'groundspike', color: '#ffcc00' },
+  es: { behavior: 'bighead',     color: '#ffcc00' },
   pt: { behavior: 'goalram',     color: '#ff4500' },
-  it: { behavior: 'airshot',     color: '#0066cc' },
-  be: { behavior: 'groundspike', color: '#ef3340' },
-  us: { behavior: 'skyrockets',  color: '#b22234' },
+  it: { behavior: 'freeze',      color: '#5bc8ff' },
+  be: { behavior: 'lightning',   color: '#ffd23f' },
+  us: { behavior: 'icespikes',   color: '#9fdcff' },
   mx: { behavior: 'airshot',     color: '#2aa8ff' },
-  jp: { behavior: 'airshot',     color: '#ff8800' },
+  jp: { behavior: 'multiball',   color: '#ff8800' },
   ma: { behavior: 'groundspike', color: '#c1272d' },
-  sn: { behavior: 'goalram',     color: '#00853f' },
+  sn: { behavior: 'icespikes',   color: '#00853f' },
   hr: { behavior: 'airshot',     color: '#ff3030' },
   ar: { behavior: 'skyrockets',  color: '#74acdf' },
 }
@@ -71,6 +76,12 @@ export const SUPER_DESC = {
   goalram:     'Knal de bal zo hard dat de tegenstander mét bal de goal in vliegt',
   groundspike: 'Ram de tegenstander met de bal de grond in',
   airshot:     'Spring hoog en haal de bal uit de lucht over de keeper',
+  freeze:      'Vries de tegenstander vast in een blok ijs',
+  icespikes:   'Laat ijspegels uit de grond schieten die de tegenstander lanceren',
+  multiball:   'Schiet vijf ballen tegelijk op de goal af',
+  bighead:     'Je kop wordt gigantisch en kopt de bal keihard binnen',
+  lightning:   'Roep bliksemschichten op die op de tegenstander inslaan',
+  tornado:     'Een tornado zuigt de bal mee de goal in',
   power:       'Krachtige knal recht op de goal',
 }
 export const superDescOf = key => SUPER_DESC[getSuper(key).behavior] || SUPER_DESC.power
