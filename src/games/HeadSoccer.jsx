@@ -22,7 +22,7 @@ const KICK_RANGE = PR + BR + 16
 const KICK_ANIM = 0.24       // iets langere schop-animatie (zwaarder gevoel)
 const MATCH_TIME = 75        // iets langer potje (want minder goals)
 const KICK_POWER = 340       // zwakker, rustiger basis-schot
-const AI_SPD_BY_DIFF = { 1: 120, 2: 145, 3: 170, 4: 195, 5: 225 }  // zwakker dan vroeger, maar actief; hogere sterren = sneller
+const AI_SPD_BY_DIFF = { 1: 105, 2: 126, 3: 148, 4: 170, 5: 196 }  // iets zwakker; hogere sterren = sneller
 
 const DEFAULT_UNLOCKED = ['nl', 'de', 'br', 'fr']
 const UNLOCK_KEY = 'kk_hs_unlocked'
@@ -898,6 +898,7 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
       side, move, facing: side === 'L' ? 1 : -1,
       x: side === 'L' ? W * 0.28 : W * 0.72, y: GROUND_Y - PR,
       vx: 0, vy: 0, onGround: true, dizzy: 0, kickCD: 0, kickAnim: 0, powerKick: 0, buried: 0, armed: false,
+      kickHits: 0, hitWindow: 0, meleeCD: 0,
       charge: 0, bigScale: 1, powMult: 1, powCurve: false, powCurveDir: 1, dashVx: 0, powFx: 'energy',
       magForce: 0, frozenFactor: 1, comebackT: 0,
       ram: false, ramKnock: 0, ramStun: 0,
@@ -917,8 +918,8 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
     stateRef.current = S
 
     const resetPositions = (serveTo) => {
-      S.L.x = W * 0.28; S.L.y = GROUND_Y - PR; S.L.vx = 0; S.L.vy = 0; S.L.onGround = true; S.L.armed = false
-      S.R.x = W * 0.72; S.R.y = GROUND_Y - PR; S.R.vx = 0; S.R.vy = 0; S.R.onGround = true; S.R.armed = false
+      S.L.x = W * 0.28; S.L.y = GROUND_Y - PR; S.L.vx = 0; S.L.vy = 0; S.L.onGround = true; S.L.armed = false; S.L.kickHits = 0; S.L.hitWindow = 0
+      S.R.x = W * 0.72; S.R.y = GROUND_Y - PR; S.R.vx = 0; S.R.vy = 0; S.R.onGround = true; S.R.armed = false; S.R.kickHits = 0; S.R.hitWindow = 0
       S.ball = mkBall(W / 2, GROUND_Y - 120)
       S.ball.vx = serveTo === 'L' ? -90 : serveTo === 'R' ? 90 : 0
       S.decoys = []; S.tornado = null; S.mascots = []; S.rockets = []; S.bolts = []
@@ -1118,6 +1119,26 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
       if (isPower) triggerPower(p)
     }
 
+    // Raak je de tegenstander met een trap (binnen mêlee-bereik, in zijn richting),
+    // dan telt dat. 5 treffers snel achter elkaar → tegenstander even K.O.
+    const meleeHit = (att, vic) => {
+      if (att.meleeCD > 0 || vic.dizzy > 0 || vic.buried > 0) return
+      const dx = vic.x - att.x
+      if (Math.abs(dx) > PR * 2.1 || Math.sign(dx) !== att.facing) return
+      if (Math.abs((vic.y) - (att.y)) > PR * 1.4) return
+      att.meleeCD = 0.32; att.kickAnim = KICK_ANIM
+      vic.kickHits = (vic.kickHits || 0) + 1
+      vic.hitWindow = 1.2
+      vic.vx += att.facing * 150; vic.vy = Math.min(vic.vy, -60)
+      addParticles(vic.x, vic.y - PR * 0.4, '#ffffff', 6, 220); addShake(3, 0.12)
+      if (vic.kickHits >= 5) {           // K.O.!
+        vic.kickHits = 0; vic.hitWindow = 0
+        vic.dizzy = 2.4; vic.vx = att.facing * 360; vic.vy = -300; vic.onGround = false
+        flash('💥 K.O.!'); addShock(vic.x, vic.y - PR * 0.4, '#ffd23f', 170, 0.55)
+        addParticles(vic.x, vic.y - PR, '#ffd23f', 24, 420); addShake(16, 0.45)
+      }
+    }
+
     const ballPlayerCollide = (p) => {
       const headScale = p.t.bighead > 0 ? p.bigScale : 1
       const rad = PR * (0.95) * (1 + (headScale - 1) * 0.5)
@@ -1195,6 +1216,8 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
         if (p.kickAnim > 0) p.kickAnim -= dt
         if (p.powerKick > 0) p.powerKick -= dt
         if (p.buried > 0) { p.buried -= dt; p.vx = 0; p.x = p.x }   // vastgeramd in de grond
+        if (p.meleeCD > 0) p.meleeCD -= dt
+        if (p.hitWindow > 0) { p.hitWindow -= dt; if (p.hitWindow <= 0) p.kickHits = 0 }   // streak verloopt
         if (p.comebackT > 0) p.comebackT -= dt
         if (p.ram && p.t.dash <= 0) p.ram = false
         // special laadt langzaam; na een tegengoal iets sneller (comeback)
@@ -1230,7 +1253,7 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
           else L.vx *= 0.7
           if (L.t.dash > 0) L.vx = L.dashVx * L.frozenFactor
           if (c.jump && L.onGround) { L.vy = -JUMP_FORCE; L.onGround = false }
-          if (c.kick) doKick(L)
+          if (c.kick) { doKick(L); meleeHit(L, S.R) }
           if (c.special) { armSpecial(L); c.special = false }
         } else L.vx *= 0.8
 
@@ -1241,7 +1264,7 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
           // spookbal: AI ziet de bal slecht → mikt met grote fout
           const ghostErr = S.ball.ghostT > 0 ? (Math.sin(now / 140) * 120) : 0
           // mikt onnauwkeurig (kleinere fout bij meer sterren); blijft wel actief
-          const aiErr = (6 - oppDiff) * 12
+          const aiErr = (6 - oppDiff) * 16
           const ballSide = S.ball.x + ghostErr + Math.sin(now / 520) * aiErr
           // chase ball, but retreat to defend if ball behind toward own goal
           let target = ballSide
@@ -1254,7 +1277,8 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
           // springt voor hoge ballen (vaker bij meer sterren)
           if (R.onGround && S.ball.y < GROUND_Y - 130 && Math.abs(S.ball.x - R.x) < 80 && S.ball.vy > -50 && Math.random() < 0.12 + oppDiff * 0.04) { R.vy = -JUMP_FORCE; R.onGround = false }
           // schiet als de bal binnen bereik is (sneller bij meer sterren)
-          if (Math.hypot(S.ball.x - R.x, S.ball.y - (R.y - PR * 0.3)) < KICK_RANGE && Math.random() < 0.2 + oppDiff * 0.09) doKick(R)
+          if (Math.hypot(S.ball.x - R.x, S.ball.y - (R.y - PR * 0.3)) < KICK_RANGE && Math.random() < 0.15 + oppDiff * 0.075) doKick(R)
+          if (Math.abs(S.L.x - R.x) < PR * 2.1 && Math.random() < 0.06 + oppDiff * 0.02) meleeHit(R, S.L)
           // zet de super scherp (vuurt vanzelf zodra de AI de bal raakt)
           if (R.charge >= 1 && !R.armed && Math.random() < 0.01 + oppDiff * 0.006) armSpecial(R)
         } else R.vx *= 0.8
@@ -1275,11 +1299,13 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
           }
         }
 
-        // speler-speler: niet door elkaar heen (voorkomt klem-bal-glitch)
+        // speler-speler: alleen botsen op ~gelijke hoogte, zodat je OVER elkaar
+        // heen kunt springen (en niemand je klem kan zetten)
         {
           const dx2 = S.R.x - S.L.x
           const minSep = PR * 1.7
-          if (Math.abs(dx2) < minSep) {
+          const closeY = Math.abs(S.L.y - S.R.y) < PR * 1.1
+          if (Math.abs(dx2) < minSep && closeY) {
             const push = (minSep - Math.abs(dx2)) / 2
             const dir = dx2 >= 0 ? 1 : -1
             S.L.x = Math.max(PR, Math.min(W - PR, S.L.x - dir * push))
@@ -1328,9 +1354,16 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
         // side walls above crossbar
         if (b.x <= effBR && b.y < CROSSBAR) { b.x = effBR; b.vx = Math.abs(b.vx) * BB }
         if (b.x >= W - effBR && b.y < CROSSBAR) { b.x = W - effBR; b.vx = -Math.abs(b.vx) * BB }
-        // crossbar
+        // crossbar = massieve bovenlat: de bal kan NIET van bovenaf de goal in vallen
         for (const x0 of [0, W - GOAL_W]) {
-          if (b.x > x0 - effBR && b.x < x0 + GOAL_W + effBR && Math.abs(b.y - (CROSSBAR - 3)) < effBR + 3 && b.vy < 0) { b.y = CROSSBAR - 3 + effBR; b.vy = Math.abs(b.vy) * BB }
+          const inX = b.x > x0 - effBR && b.x < x0 + GOAL_W + effBR
+          if (!inX) continue
+          const prevY = b.y - b.vy * dt
+          if (b.vy >= 0 && prevY <= CROSSBAR && b.y + effBR >= CROSSBAR) {        // van boven → kaatst bovenop de lat
+            b.y = CROSSBAR - effBR; b.vy = -Math.abs(b.vy) * BB; b.vx *= 0.92
+          } else if (b.vy < 0 && Math.abs(b.y - CROSSBAR) < effBR + 3) {           // van onder → omlaag
+            b.y = CROSSBAR + effBR; b.vy = Math.abs(b.vy) * BB
+          }
         }
         // collisions
         const hitL = ballPlayerCollide(S.L)
