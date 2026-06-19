@@ -641,7 +641,7 @@ function SpecialDemo({ countryKey }) {
       if (ball.superT > 0) { ball.superT -= dt; if (ball.superT <= 0) { ball.superColor = null; ball.dark = false; ball.laser = false; ball.superKind = null } }
       if (sun) { sun.t -= dt; if (sun.t <= 0) sun = null }
       const ebr = BR * (ball.scale || 1), bb = ball.bouncyT > 0 ? 0.95 : 0.6
-      ball.vy += GRAVITY * 0.38 * dt; ball.vx += ball.spin * dt * 0.06; ball.spin *= 0.96
+      ball.vy += GRAVITY * 0.30 * dt; ball.vx += ball.spin * dt * 0.06; ball.spin *= 0.96
       ball.x += ball.vx * dt; ball.y += ball.vy * dt; ball.angle += ball.vx * dt * 0.05
       if (ball.y >= G - ebr) { ball.y = G - ebr; ball.vy = -ball.vy * bb; ball.vx *= 0.97 }
       // super-mechaniek raakt de dummy (beuk / grondstamp)
@@ -662,7 +662,7 @@ function SpecialDemo({ countryKey }) {
       rockets = rockets.filter(rk => rk.life > 0)
       ball.trail.push({ x: ball.x, y: ball.y }); while (ball.trail.length > (ball.fx.t > 0 ? 16 : 8)) ball.trail.shift()
       if (ball.fx.t > 0) ball.fx.t -= dt
-      for (const d of decoys) { d.vy += GRAVITY * 0.38 * dt; d.x += d.vx * dt; d.y += d.vy * dt; d.angle += d.vx * dt * 0.05; if (d.y >= G - BR) { d.y = G - BR; d.vy = -d.vy * 0.6 } d.life -= dt }
+      for (const d of decoys) { d.vy += GRAVITY * 0.30 * dt; d.x += d.vx * dt; d.y += d.vy * dt; d.angle += d.vx * dt * 0.05; if (d.y >= G - BR) { d.y = G - BR; d.vy = -d.vy * 0.6 } d.life -= dt }
       decoys = decoys.filter(d => d.life > 0)
       for (const ms of mascots) { ms.t -= dt; ms.x += ms.vx * dt; ms.scale = Math.min(1, ms.scale + dt * 4) }
       mascots = mascots.filter(ms => ms.t > 0)
@@ -1001,7 +1001,8 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
       const isPower = p.t.powershot > 0
       let power = isPower ? KICK_POWER * p.powMult : KICK_POWER
       S.ball.vx = p.facing * power + p.vx * 0.4
-      S.ball.vy = -power * 0.55
+      S.ball.vy = -power * 0.85                      // schopt makkelijk de lucht in
+      if (dy < 0) S.ball.vy -= 200                   // van onderaf geraakt → extra lift
       if (p.powCurve) { S.ball.spin = (p.powCurveDir || 1) * p.facing * 1100; p.powCurve = false }
       addParticles(S.ball.x, S.ball.y, '#ffffff', 6, 220)
       addShake(3, 0.12)
@@ -1040,7 +1041,8 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
         const rel = S.ball.vx * nx + S.ball.vy * ny
         let imp = -rel * (1 + 0.45)               // minder elastische botsing
         S.ball.vx += nx * imp + p.vx * 0.4
-        S.ball.vy += ny * imp + p.vy * 0.3 - 30
+        S.ball.vy += ny * imp + p.vy * 0.3 - 110     // wat meer omhoog-bias
+        if (ny < 0) S.ball.vy += ny * 240            // van onderaf geraakt → wipt makkelijk de lucht in
         if (p.t.powershot > 0) { S.ball.vx *= p.powMult; S.ball.vy *= p.powMult; if (p.powCurve) S.ball.spin = (p.powCurveDir || 1) * p.facing * 1000; triggerPower(p) }
         else {
           // voorkom dat de bal aan de speler 'kleeft': geef altijd een duidelijke wegduw
@@ -1198,7 +1200,7 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
         const b = S.ball
         const effBR = BR * (b.scale || 1)
         const BB = b.bouncyT > 0 ? 0.95 : BALL_BOUNCE
-        b.vy += GRAVITY * 0.38 * dt
+        b.vy += GRAVITY * 0.30 * dt
         b.vx += b.spin * dt * 0.06; b.spin *= 0.96
         b.x += b.vx * dt; b.y += b.vy * dt
         b.angle += b.vx * dt * 0.05
@@ -1259,7 +1261,7 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
 
       // decoy-ballen (multibal): vliegen, stuiteren, vervagen
       for (const d of S.decoys) {
-        d.vy += GRAVITY * 0.38 * dt; d.x += d.vx * dt; d.y += d.vy * dt; d.angle += d.vx * dt * 0.05
+        d.vy += GRAVITY * 0.30 * dt; d.x += d.vx * dt; d.y += d.vy * dt; d.angle += d.vx * dt * 0.05
         if (d.y >= GROUND_Y - BR) { d.y = GROUND_Y - BR; d.vy = -d.vy * BALL_BOUNCE }
         d.life -= dt
       }
