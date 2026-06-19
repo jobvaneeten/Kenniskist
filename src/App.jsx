@@ -244,8 +244,6 @@ export default function App() {
         ))}
       </div>
 
-      <CurrencyBadge munten={curuntie} briefgeld={briefgeld} />
-
       <div className="hero">
         <div className="logo-wrap">
           <span className="logo-icon">🗃️</span>

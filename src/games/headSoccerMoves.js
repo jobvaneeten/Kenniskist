@@ -51,23 +51,24 @@ export const MOVES = {
 //   power       -> krachtige rechte knal (fallback)
 // color = hoofdtint van de gloed/sunburst/bal.
 // 16 landen, 16 verschillende supers — elk land een eigen mechaniek.
+// figure = het grote themed figuur dat tijdens de super in beeld komt (uniek per land).
 export const SUPERS = {
-  nl: { behavior: 'groundspike', color: '#2bd46a' },
-  de: { behavior: 'goalram',     color: '#ff7a00' },
-  br: { behavior: 'multiball',   color: '#00d46a' },
-  fr: { behavior: 'tornado',     color: '#3a6ee0' },
-  en: { behavior: 'skyrockets',  color: '#ff2a2a' },
-  es: { behavior: 'bighead',     color: '#ffcc00' },
-  pt: { behavior: 'curveball',   color: '#ff4500' },
-  it: { behavior: 'freeze',      color: '#5bc8ff' },
-  be: { behavior: 'lightning',   color: '#ffd23f' },
-  us: { behavior: 'icespikes',   color: '#9fdcff' },
-  mx: { behavior: 'airshot',     color: '#2aa8ff' },
-  jp: { behavior: 'giantball',   color: '#ff8800' },
-  ma: { behavior: 'charge',      color: '#c1272d' },
-  sn: { behavior: 'ghost',       color: '#9ad9c0' },
-  hr: { behavior: 'bouncy',      color: '#ff3030' },
-  ar: { behavior: 'meteor',      color: '#ff8c42' },
+  nl: { behavior: 'groundspike', color: '#2bd46a', figure: '🐏' },
+  de: { behavior: 'goalram',     color: '#ff7a00', figure: '🚂' },
+  br: { behavior: 'multiball',   color: '#00d46a', figure: '🥁' },
+  fr: { behavior: 'tornado',     color: '#3a6ee0', figure: '🌪️' },
+  en: { behavior: 'skyrockets',  color: '#ff2a2a', figure: '🚀' },
+  es: { behavior: 'bighead',     color: '#ffcc00', figure: '🐂' },
+  pt: { behavior: 'curveball',   color: '#ff4500', figure: '🔥' },
+  it: { behavior: 'freeze',      color: '#5bc8ff', figure: '⛄' },
+  be: { behavior: 'lightning',   color: '#ffd23f', figure: '⚡' },
+  us: { behavior: 'icespikes',   color: '#9fdcff', figure: '🧊' },
+  mx: { behavior: 'airshot',     color: '#2aa8ff', figure: '🦅' },
+  jp: { behavior: 'giantball',   color: '#ff8800', figure: '🐯' },
+  ma: { behavior: 'charge',      color: '#c1272d', figure: '🐫' },
+  sn: { behavior: 'ghost',       color: '#9ad9c0', figure: '👻' },
+  hr: { behavior: 'bouncy',      color: '#ff3030', figure: '🏀' },
+  ar: { behavior: 'meteor',      color: '#ff8c42', figure: '☄️' },
 }
 export const getSuper = key => SUPERS[key] || { behavior: 'power', color: (MOVES[key] || MOVES.nl).color }
 

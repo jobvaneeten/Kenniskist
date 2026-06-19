@@ -629,6 +629,12 @@ function SpecialDemo({ countryKey }) {
       ball.superKind = null; ball.superOwner = 'L'
       ball.fx = { t: 1.4, type: 'energy', color: col }
       const gx = VX + VW - 40
+      // groot, uniek themed figuur (zelfde idee als in de match)
+      const fig = su.figure || move.emoji, beh = su.behavior
+      if (beh === 'charge' || beh === 'goalram' || beh === 'groundspike') mascots.push({ emoji: fig, x: VX - 30, y: G - PR - 6, vx: 760, vy: 0, t: 1.6, dur: 1.6, scale: 0.4, size: 150 })
+      else if (beh === 'bighead') mascots.push({ emoji: fig, x: p.x, y: G + 130, vx: 0, vy: -300, t: 1.7, dur: 1.7, scale: 0.5, size: 165 })
+      else if (beh === 'freeze' || beh === 'icespikes' || beh === 'lightning') mascots.push({ emoji: fig, x: dummy.x, y: VY - 30, vx: 0, vy: 540, t: 1.5, dur: 1.5, scale: 0.3, size: 160 })
+      else mascots.push({ emoji: fig, x: VX + 110, y: VY - 30, vx: 70, vy: 430, t: 1.7, dur: 1.7, scale: 0.25, size: 155 })
       switch (su.behavior) {
         case 'skyrockets':
           ball.vx = 120; ball.vy = -900; ball.fx = { t: 1.4, type: 'flame', color: col }; p.vy = -560
@@ -737,7 +743,7 @@ function SpecialDemo({ countryKey }) {
       if (ball.fx.t > 0) ball.fx.t -= dt
       for (const d of decoys) { d.vy += GRAVITY * 0.30 * dt; d.x += d.vx * dt; d.y += d.vy * dt; d.angle += d.vx * dt * 0.05; if (d.y >= G - BR) { d.y = G - BR; d.vy = -d.vy * 0.6 } d.life -= dt }
       decoys = decoys.filter(d => d.life > 0)
-      for (const ms of mascots) { ms.t -= dt; ms.x += ms.vx * dt; ms.scale = Math.min(1, ms.scale + dt * 4) }
+      for (const ms of mascots) { ms.t -= dt; ms.x += ms.vx * dt; ms.y += (ms.vy || 0) * dt; ms.scale = Math.min(1, ms.scale + dt * 4) }
       mascots = mascots.filter(ms => ms.t > 0)
       for (const s of shocks) s.t -= dt; shocks = shocks.filter(s => s.t > 0)
       for (const pt of parts) { pt.vy += 800 * dt; pt.x += pt.vx * dt; pt.y += pt.vy * dt; pt.life -= dt } parts = parts.filter(q => q.life > 0)
@@ -759,7 +765,7 @@ function SpecialDemo({ countryKey }) {
       if (sun) drawSunburst(ctx, ball.x, ball.y, 1 - sun.t / sun.dur, sun.color)
       for (const rk of rockets) { if (rk.delay <= 0) drawRocket(ctx, rk) }
       for (const lb of bolts) { if (lb.delay <= 0) drawBolt(ctx, lb.x, 1 - lb.t / lb.dur, lb.color) }
-      for (const ms of mascots) { ctx.globalAlpha = Math.max(0, Math.min(1, ms.t / 0.3)); ctx.font = `${60 * ms.scale}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(ms.emoji, ms.x, ms.y); ctx.globalAlpha = 1 }
+      for (const ms of mascots) { ctx.globalAlpha = Math.max(0, Math.min(1, ms.t / 0.3)); ctx.font = `${(ms.size || 70) * (0.55 + ms.scale * 0.45)}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.shadowColor = '#fff'; ctx.shadowBlur = 14; ctx.fillText(ms.emoji, ms.x, ms.y); ctx.shadowBlur = 0; ctx.globalAlpha = 1 }
       ctx.restore()
       raf = requestAnimationFrame(loop)
     }
@@ -981,29 +987,37 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
         })
       }
     }
-    // CINEMATISCHE entree per effect → elk land krijgt een groots, themed figuur
-    const ENTRANCE = {
-      charge: 'charge', rocket: 'sky', multiball: 'swarm', freeze: 'sky', bighead: 'rise',
-      magnet: 'charge', firecurve: 'spin', shield: 'rise', teleport: 'spin', quake: 'sky',
-      tornado: 'spin', giantball: 'sky', superjump: 'charge', bouncy: 'sky', ghost: 'swarm',
+    // Welke entree-stijl hoort bij welke super-mechaniek (zodat elk land een
+    // herkenbaar, eigen groots figuur krijgt — net als in de echte gameplay).
+    const ENTRANCE_BY_BEH = {
+      groundspike: 'charge', goalram: 'charge', charge: 'charge',
+      skyrockets: 'sky', meteor: 'sky', airshot: 'sky',
+      bighead: 'rise',
+      tornado: 'spin', curveball: 'spin',
+      multiball: 'swarm', ghost: 'swarm', bouncy: 'swarm',
+      freeze: 'strike', icespikes: 'strike', lightning: 'strike',
     }
-    const bigEntrance = (p, m) => {
-      const e = m.mascot || m.emoji, atk = p.facing, col = m.color
-      const type = ENTRANCE[m.effect] || 'charge'
+    // CINEMATISCHE entree: een groot themed figuur (e) komt het veld op.
+    const bigEntrance = (p, e, col, type, tx) => {
+      const atk = p.facing
       if (type === 'sky') {                       // daalt reusachtig uit de lucht
-        spawnMascot(p, m, { emoji: e, size: 175, x: p.x + atk * 120, y: CEIL - 50, vx: atk * 70, vy: 440, dur: 2.0, scale0: 0.2 })
+        spawnMascot(p, {}, { emoji: e, size: 180, x: p.x + atk * 120, y: CEIL - 50, vx: atk * 70, vy: 460, dur: 2.0, scale0: 0.2 })
         for (let i = 0; i < 22; i++) { const a = Math.random() * Math.PI * 2, v = 220 + Math.random() * 240; S.particles.push({ x: p.x + atk * 120, y: CEIL, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 1.2, color: i % 2 ? '#fff' : col, r: 2 + Math.random() * 3 }) }
       } else if (type === 'charge') {             // stormt gigantisch vanaf je eigen kant
-        spawnMascot(p, m, { emoji: e, size: 165, x: p.x - atk * 220, y: GROUND_Y - PR - 6, vx: atk * 760, vy: 0, dur: 1.7, scale0: 0.4 })
+        spawnMascot(p, {}, { emoji: e, size: 168, x: p.x - atk * 240, y: GROUND_Y - PR - 6, vx: atk * 820, vy: 0, dur: 1.7, scale0: 0.4 })
         for (let i = 0; i < 18; i++) S.particles.push({ x: p.x - atk * 60, y: GROUND_Y - 5, vx: -atk * (160 + Math.random() * 160), vy: -60 - Math.random() * 90, life: 0.85, color: i % 2 ? '#caa' : col, r: 3 + Math.random() * 4 })
-      } else if (type === 'rise') {               // rijst enorm op uit de grond
-        spawnMascot(p, m, { emoji: e, size: 180, x: p.x, y: GROUND_Y + 140, vx: 0, vy: -300, dur: 1.9, scale0: 0.5 })
+      } else if (type === 'rise') {               // rijst enorm op uit de grond achter de speler
+        spawnMascot(p, {}, { emoji: e, size: 190, x: p.x, y: GROUND_Y + 150, vx: 0, vy: -320, dur: 1.9, scale0: 0.5 })
         for (let i = 0; i < 16; i++) S.particles.push({ x: p.x + (Math.random() - 0.5) * 80, y: GROUND_Y - 5, vx: (Math.random() - 0.5) * 200, vy: -150 - Math.random() * 160, life: 0.9, color: col, r: 3 + Math.random() * 4 })
       } else if (type === 'spin') {               // groot, draaiend figuur
-        spawnMascot(p, m, { emoji: e, size: 160, x: p.x + atk * 40, y: p.y - PR - 30, vx: atk * 240, vy: -40, dur: 1.9, scale0: 0.25 })
+        spawnMascot(p, {}, { emoji: e, size: 165, x: p.x + atk * 40, y: p.y - PR - 30, vx: atk * 260, vy: -40, dur: 1.9, scale0: 0.25 })
         for (let i = 0; i < 16; i++) { const a = (i / 16) * Math.PI * 2; S.particles.push({ x: p.x, y: p.y - PR, vx: Math.cos(a) * 260, vy: Math.sin(a) * 260, life: 1.0, color: i % 2 ? '#fff' : col, r: 3 + Math.random() * 3 }) }
-      } else if (type === 'swarm') {              // hele zwerm figuren
-        for (let i = 0; i < 6; i++) spawnMascot(p, m, { emoji: e, size: 95, x: p.x - atk * (30 + i * 36), y: p.y - PR - 10 + (Math.random() - 0.5) * 70, vx: atk * (520 + i * 70), vy: (Math.random() - 0.5) * 120, dur: 1.7, scale0: 0.2 })
+      } else if (type === 'swarm') {              // hele zwerm figuren naar de goal
+        for (let i = 0; i < 6; i++) spawnMascot(p, {}, { emoji: e, size: 100, x: p.x - atk * (30 + i * 36), y: p.y - PR - 10 + (Math.random() - 0.5) * 70, vx: atk * (560 + i * 70), vy: (Math.random() - 0.5) * 120, dur: 1.7, scale0: 0.2 })
+      } else if (type === 'strike') {             // reuzenfiguur dondert op de TEGENSTANDER
+        const X = tx != null ? tx : p.x + atk * 220
+        spawnMascot(p, {}, { emoji: e, size: 185, x: X, y: CEIL - 40, vx: 0, vy: 560, dur: 1.6, scale0: 0.3 })
+        for (let i = 0; i < 18; i++) { const a = Math.random() * Math.PI * 2, v = 200 + Math.random() * 220; S.particles.push({ x: X, y: CEIL + 10, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 1.1, color: i % 2 ? '#fff' : col, r: 2 + Math.random() * 3 }) }
       }
       addShock(p.x, p.y - PR * 0.4, col, 230, 0.7)
     }
@@ -1027,16 +1041,19 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
       const su = getSuper(p === S.L ? playerKey : oppKey)
       const col = su.color || m.color
       const dir = p.facing
+      const figure = su.figure || m.emoji
 
       p.powerKick = 0.6
-      // gouden sunburst + flits op de plek waar de bal geraakt wordt
+      // sunburst + flits op de plek waar de bal geraakt wordt (getint naar de super-kleur)
       S.sunburst = { t: 0.55, dur: 0.55, x: S.ball.x, y: S.ball.y - PR * 0.2, color: col }
-      S.specFlash = { t: 0.4, color: '#fff' }
+      S.specFlash = { t: 0.4, color: col }
       addShock(S.ball.x, S.ball.y, '#ffffff', 130, 0.45)
       addParticles(S.ball.x, S.ball.y, col, 30, 460)
       addParticles(S.ball.x, S.ball.y, '#ffffff', 16, 320)
       addShake(14, 0.45)
-      S.cutin = { t: 1.0, dur: 1.0, color: col, name: m.name, flag: (p === S.L ? playerCountry : oppCountry).flag, side: p.side }
+      // groot, uniek themed figuur per land (draak/Buddha/bliksem/…)
+      bigEntrance(p, figure, col, ENTRANCE_BY_BEH[su.behavior] || 'charge', opp.x)
+      S.cutin = { t: 1.0, dur: 1.0, color: col, name: m.name, emoji: figure, flag: (p === S.L ? playerCountry : oppCountry).flag, side: p.side }
 
       // reset bal-effecten, behoud huidige positie
       S.ball.superT = 1.6; S.ball.superColor = col; S.ball.dark = false; S.ball.laser = false
@@ -1500,10 +1517,16 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
         // speed-lijnen
         ctx.globalAlpha = 0.5 * inOut; ctx.strokeStyle = '#fff'; ctx.lineWidth = 3
         for (let i = 0; i < 10; i++) { const yy = (i / 10) * H + ((Date.now() / 8) % (H / 10)); ctx.beginPath(); ctx.moveTo(0, yy); ctx.lineTo(W, yy - 30); ctx.stroke() }
-        // grote gouden sunburst die inzoomt + landnaam
+        // sunburst + groot uniek figuur dat inzoomt + landnaam
         const dir = ci.side === 'L' ? 1 : -1
         const ex = W / 2 - dir * (1 - inOut) * 260
         drawSunburst(ctx, ex, bandY - 4, Math.min(1, k * 1.3), ci.color)
+        if (ci.emoji) {
+          ctx.globalAlpha = inOut
+          ctx.font = `${96 + inOut * 28}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
+          ctx.shadowColor = ci.color; ctx.shadowBlur = 24
+          ctx.fillText(ci.emoji, ex, bandY - 4); ctx.shadowBlur = 0
+        }
         ctx.globalAlpha = inOut
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
         ctx.font = '900 40px Arial'; ctx.fillStyle = '#fff'
