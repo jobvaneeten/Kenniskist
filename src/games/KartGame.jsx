@@ -434,12 +434,9 @@ function KartRace({ onBack, room, sessionId, joinCode, track = 'groen' }) {
     }
 
     // ── Item-boxes + hazards/shells (alleen multiplayer) ──
-    const itemBoxes = []   // { mesh, box }
-    try {
-      if (mp && room.state.boxes) {
-        room.state.boxes.forEach(b => itemBoxes.push({ mesh: makeItemBox(scene, b.x, b.z), box: b }))
-      }
-    } catch (e) { console.warn('item-boxes init overgeslagen:', e) }
+    // Boxes dynamisch syncen uit de room-state: bij join is state.boxes vaak nog
+    // leeg, dus maken we de mesh aan zodra een box verschijnt (net als bananen).
+    const itemBoxMeshes = new Map()   // index → mesh
     const hazardMeshes = new Map()   // id → mesh
     const shellMeshes  = new Map()   // id → mesh
 
@@ -630,12 +627,20 @@ function KartRace({ onBack, room, sessionId, joinCode, track = 'groen' }) {
 
       // ── Item-visuals (elke frame, ook tijdens countdown) ──
       if (mp) try {
-        // Boxes draaien + op/neer + zichtbaarheid via active
-        itemBoxes.forEach((ib, i) => {
-          ib.mesh.rotation.y += dt * 2.2
-          ib.mesh.position.y = 1.1 + Math.sin(now / 400 + i) * 0.18
-          ib.mesh.setEnabled(ib.box.active)
-        })
+        // Boxes draaien + op/neer + zichtbaarheid via active (mesh op aanvraag)
+        if (room.state.boxes) {
+          room.state.boxes.forEach((box, i) => {
+            let m = itemBoxMeshes.get(i)
+            if (!m) { m = makeItemBox(scene, box.x, box.z); itemBoxMeshes.set(i, m) }
+            m.rotation.y += dt * 2.2
+            m.position.y = 1.1 + Math.sin(now / 400 + i) * 0.18
+            m.setEnabled(box.active)
+          })
+          const n = room.state.boxes.length
+          for (const i of [...itemBoxMeshes.keys()]) {
+            if (i >= n) { itemBoxMeshes.get(i).dispose(); itemBoxMeshes.delete(i) }
+          }
+        }
         // Bananen syncen
         if (room.state.hazards) {
           room.state.hazards.forEach((h, id) => {
