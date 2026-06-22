@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   Engine, Scene, ArcRotateCamera,
-  HemisphericLight, DirectionalLight,
-  Vector3, Color3, Color4, Texture,
+  HemisphericLight, DirectionalLight, SpotLight,
+  Vector3, Color3, Color4, Texture, Plane,
   MeshBuilder, StandardMaterial, Quaternion, Mesh,
+  MirrorTexture, TransformNode,
 } from '@babylonjs/core'
 import { SceneLoader } from '@babylonjs/core/Loading/sceneLoader'
 import '@babylonjs/loaders/glTF'
-import { getCatalog, findItem, swatchStyle, swatchEmoji, swatchBadge } from './itemsCatalog'
+import { getCatalog, findItem, swatchStyle, emojiUrl } from './itemsCatalog'
 import { applyItemToMesh, loadClothingDonor, usesDonor, loadHeadItem } from './applyClothing'
 import './wardrobe.css'
 
@@ -51,6 +52,63 @@ const EMOTE_META = {
   breakdance: { emoji: '🕺', label: 'Breakdance' },
   lopen:      { emoji: '🚶', label: 'Lopen'      },
   verloren:   { emoji: '😢', label: 'Verloren'   },
+}
+
+// Neon rarity-randkleuren voor de item-tegels
+const RARITY = {
+  common:          '#7fa6c9',
+  rare:            '#27c6ff',
+  epic:            '#b06bff',
+  legendary:       '#ffcb3a',
+  ultra_legendary: '#ff4fe0',
+}
+
+// Kledingstuk-silhouetten (viewBox 0 0 100 100) → als CSS-mask, zodat de
+// tegel de vorm van het échte kledingstuk krijgt i.p.v. een rondje/emoji.
+const GARMENT_PATH = {
+  shirt:    'M35,20 L45,14 Q50,19 55,14 L65,20 L84,32 L75,45 L66,39 L66,84 L34,84 L34,39 L25,45 L16,32 Z',
+  broek:    'M32,16 L68,16 L70,40 L62,86 L52,86 L50,50 L48,86 L38,86 L30,40 Z',
+  sokken:   'M40,14 L58,14 L58,56 Q58,66 68,70 L82,80 Q70,90 56,82 L46,76 Q40,70 40,58 Z',
+  schoenen: 'M14,66 L18,48 Q22,40 36,42 L66,52 Q86,56 88,68 L88,74 L14,74 Z',
+  hoofd:    'M20,54 Q20,28 50,28 Q80,28 80,54 L80,58 Q50,50 20,58 Z M78,52 L96,60 L94,67 L77,60 Z',
+}
+const maskUrl = (path) =>
+  `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='${path}' fill='white'/></svg>`)}")`
+const GARMENT_MASK = Object.fromEntries(Object.entries(GARMENT_PATH).map(([k, p]) => [k, maskUrl(p)]))
+
+// De echte vulling van een kledingstuk: kleur, patroon, getegelde print of
+// model-preview. Voor prints tegelen we het Twemoji-plaatje als stof-print.
+function appearanceStyle(item) {
+  if (item.kind === 'print') return {
+    backgroundColor: item.bg,
+    backgroundImage: `url("${emojiUrl(item.emoji)}")`,
+    backgroundSize: '40%',
+    backgroundRepeat: 'repeat',
+  }
+  return swatchStyle(item)   // color → hex, pattern → CSS-patroon, model/texmodel → preview-afbeelding
+}
+
+// Eén item als mini-preview-tegel: een kledingstuk-silhouet gevuld met de
+// echte look, met een gloeiende rariteits-rand.
+function SwatchTile({ item, slot, active, onClick }) {
+  const rar   = RARITY[item.rarity] || RARITY.common
+  const badge = item.badge || null
+  const mask  = GARMENT_MASK[slot]
+  return (
+    <button
+      className={`swatch-tile rar-${item.rarity || 'common'} ${active ? 'tile-active' : ''}`}
+      style={{ '--rar': rar }}
+      title={item.label}
+      onClick={onClick}
+    >
+      <span
+        className="tile-garment"
+        style={{ ...appearanceStyle(item), WebkitMaskImage: mask, maskImage: mask }}
+      />
+      {badge && <span className="tile-badge">{badge}</span>}
+      {active && <span className="tile-check">✓</span>}
+    </button>
+  )
 }
 
 // ── Remap shirt bone indices to match Poppetje's skeleton ─────────
@@ -136,6 +194,8 @@ export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlay
   const headGenRef     = useRef(0)    // guards against stale/duplicate pet loads
   const animGroupsRef  = useRef({})
   const restPoseRef    = useRef({})   // bone name → { node, rot, pos } captured at T-pose
+  const podiumRef      = useRef(null) // draaiend showpodium
+  const positionStageRef = useRef(null) // herpositioneert podium op de echte zool-hoogte
 
   const [shirtColor, setShirtColor] = useState(() => {
     try { return localStorage.getItem('kk_shirt') || null } catch { return null }
@@ -181,10 +241,14 @@ export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlay
     const item = findItem(slot, key)
     if (!item) { mesh.setEnabled(false); return }
     if (usesDonor(slot, item)) {
-      loadClothingDonor(scene, mesh, skeletonRef.current, slot, item, (g) => { donorsRef.current[slot] = g })
+      loadClothingDonor(scene, mesh, skeletonRef.current, slot, item, (g) => {
+        donorsRef.current[slot] = g
+        positionStageRef.current?.()
+      })
     } else {
       applyItemToMesh(scene, mesh, item)
       mesh.setEnabled(true)
+      requestAnimationFrame(() => positionStageRef.current?.())
     }
   }
 
@@ -234,6 +298,22 @@ export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlay
     setWearing(prev => ({ ...prev, hoofdStance: stance }))
   }
 
+  // 🎲 Verras me: trek een willekeurige outfit aan uit wat je hebt ontgrendeld.
+  const surpriseMe = () => {
+    const rnd = (arr) => arr[Math.floor(Math.random() * arr.length)]
+    const unlocked = (slot) => getCatalog(slot).filter(c => (unlockedColors[slot] || []).includes(c.key))
+    const sh = unlocked('shirt')
+    if (sh.length) { const k = rnd(sh).key; setShirtColor(k); applySlot('shirt', k) }
+    const next = {}
+    ITEMS.forEach(it => {
+      const list = unlocked(it.key)
+      if (list.length) { const k = rnd(list).key; applySlot(it.key, k); next[it.key] = k }
+    })
+    const hd = unlocked('hoofd')
+    if (hd.length) { const k = rnd(hd).key; applyHead(k, wearing.hoofdStance || 'normaal'); next.hoofd = k }
+    if (Object.keys(next).length) setWearing(prev => ({ ...prev, ...next }))
+  }
+
   const resetToTPose = () => {
     Object.values(restPoseRef.current).forEach(({ node, rot, pos }) => {
       if (node.rotationQuaternion) node.rotationQuaternion.copyFrom(rot)
@@ -276,15 +356,23 @@ export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlay
     sceneRef.current = scene
     scene.clearColor = new Color4(0, 0, 0, 0)
 
-    const camera = new ArcRotateCamera('cam', Math.PI / 2, Math.PI / 2.5, 5, Vector3.Zero(), scene)
+    const camera = new ArcRotateCamera('cam', Math.PI / 2, Math.PI / 2.04, 5, Vector3.Zero(), scene)
     camera.wheelPrecision = 50
-    camera.lowerBetaLimit = Math.PI / 2.5
-    camera.upperBetaLimit = Math.PI / 2.5
+    camera.lowerBetaLimit = Math.PI / 2.04
+    camera.upperBetaLimit = Math.PI / 2.04
     camera.attachControl(canvas, true)
+    // Auto-draaien; stopt zodra de speler zelf sleept en hervat na een rust.
+    camera.useAutoRotationBehavior = true
+    if (camera.autoRotationBehavior) {
+      camera.autoRotationBehavior.idleRotationSpeed     = 0.35
+      camera.autoRotationBehavior.idleRotationWaitTime  = 1500
+      camera.autoRotationBehavior.idleRotationSpinupTime = 1000
+      camera.autoRotationBehavior.zoomStopsAnimation    = false
+    }
 
-    new HemisphericLight('hemi', new Vector3(0, 1, 0), scene).intensity = 1.6
+    new HemisphericLight('hemi', new Vector3(0, 1, 0), scene).intensity = 1.35
     const sun = new DirectionalLight('sun', new Vector3(-1, -2, -1), scene)
-    sun.intensity = 1.8
+    sun.intensity = 1.6
 
     SceneLoader.ImportMesh('', '/', 'Poppetje.glb', scene, (meshes) => {
       // Store Poppetje's skeleton so extra meshes (Ajax shirt) can share it
@@ -312,20 +400,99 @@ export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlay
       const center = Vector3.Lerp(min, max, 0.5)
       const maxDim = Math.max(...max.subtract(min).asArray())
       camera.target           = center
-      camera.radius           = maxDim * 1.8
+      camera.radius           = maxDim * 1.5
       camera.lowerRadiusLimit = maxDim * 0.8
       camera.upperRadiusLimit = maxDim * 5
 
-      // Floor plane at the character's feet
-      const ground = MeshBuilder.CreateGround('ground', { width: maxDim * 3, height: maxDim * 3 }, scene)
-      // Drop the floor a touch: the rust/idle pose sits lower than the T-pose
-      // bounds, so at min.y the feet clip through. Small offset keeps him on it.
-      ground.position.y = min.y - maxDim * 0.035
-      const groundMat = new StandardMaterial('groundMat', scene)
-      groundMat.emissiveColor = new Color3(0.10, 0.11, 0.20)
-      groundMat.diffuseColor  = Color3.Black()
-      groundMat.specularColor = Color3.Black()
-      ground.material = groundMat
+      // ── Neon-showpodium: reflecterend bovenblad, draaiende ring, spotlight ──
+      // Het poppetje staat ~lift hoger zodat hij bovenóp het podium staat
+      // (anders zakt hij door het bovenblad heen).
+      const lift   = maxDim * 0.20
+      const stageY = min.y - maxDim * 0.035 + lift   // schatting; wordt na de rust-pose exact gemeten
+
+      // Til het hele personage op tot op het podium.
+      const charRoot = scene.getTransformNodeByName('__root__')
+      if (charRoot) charRoot.position.y += lift
+      camera.target = new Vector3(center.x, center.y + lift * 0.6, center.z)
+
+      // Reflecterend bovenblad (spiegel) — toont het poppelje mét kleren.
+      const plate = MeshBuilder.CreateCylinder('stagePlate', { diameter: maxDim * 1.5, height: 0.06, tessellation: 64 }, scene)
+      plate.position.set(center.x, stageY - 0.03, center.z)
+      const plateMat = new StandardMaterial('stagePlateM', scene)
+      plateMat.diffuseColor  = new Color3(0.03, 0.04, 0.10)
+      plateMat.specularColor = new Color3(0.35, 0.4, 0.7)
+      plateMat.specularPower = 90
+      const mirror = new MirrorTexture('mirror', 512, scene, true)
+      mirror.mirrorPlane = new Plane(0, -1, 0, stageY)
+      mirror.level = 0.55
+      mirror.adaptiveBlurKernel = 12
+      plateMat.reflectionTexture = mirror
+      plate.material = plateMat
+
+      // Draaiende podium-onderdelen (basis + neon-ring + cyaan blokjes).
+      const podium = new TransformNode('podiumRoot', scene)
+      podium.position.set(center.x, stageY, center.z)
+      podiumRef.current = podium
+      const base = MeshBuilder.CreateCylinder('podiumBase', { diameterTop: maxDim * 1.5, diameterBottom: maxDim * 1.68, height: lift, tessellation: 64 }, scene)
+      base.parent = podium; base.position.y = -0.03 - lift / 2
+      const baseMat = new StandardMaterial('podiumBaseM', scene)
+      baseMat.diffuseColor  = new Color3(0.05, 0.05, 0.13)
+      baseMat.emissiveColor = new Color3(0.16, 0.02, 0.28)
+      base.material = baseMat
+      const ring = MeshBuilder.CreateTorus('podiumRing', { diameter: maxDim * 1.55, thickness: 0.06, tessellation: 72 }, scene)
+      ring.parent = podium
+      const ringMat = new StandardMaterial('podiumRingM', scene)
+      ringMat.emissiveColor = new Color3(1.0, 0.15, 0.9)   // neon magenta
+      ringMat.disableLighting = true
+      ring.material = ringMat
+      const nibMat = new StandardMaterial('podiumNibM', scene)
+      nibMat.emissiveColor = new Color3(0.15, 0.95, 1.0)   // neon cyaan
+      nibMat.disableLighting = true
+      const nibR = maxDim * 0.77
+      for (let i = 0; i < 12; i++) {
+        const a = (i / 12) * Math.PI * 2
+        const nib = MeshBuilder.CreateBox('podiumNib' + i, { size: 0.09 }, scene)
+        nib.parent = podium
+        nib.position.set(Math.cos(a) * nibR, 0.02, Math.sin(a) * nibR)
+        nib.material = nibMat
+      }
+
+      // Spotlight van schuin boven → gerichte lichtpoel op het personage.
+      const spot = new SpotLight('spot',
+        new Vector3(center.x, center.y + maxDim * 2.0 + lift, center.z + maxDim * 0.7),
+        new Vector3(0, -1, -0.32), Math.PI / 2.3, 8, scene)
+      spot.intensity = 1.5
+      spot.diffuse = new Color3(0.78, 0.88, 1.0)
+
+      // Draai het podium + houd de spiegel-renderlijst actueel (incl. kleding/
+      // pet die later inladen), zodat de reflectie altijd de hele outfit toont.
+      scene.onBeforeRenderObservable.add(() => {
+        podium.rotation.y += 0.004
+        mirror.renderList = scene.meshes.filter(
+          m => m.isEnabled() && m.isVisible !== false && !/^(stagePlate|podium)/.test(m.name)
+        )
+      })
+
+      // Meet de échte voetzool-hoogte (na de rust-pose) en zet het podium-
+      // oppervlak er net onder, zodat hij er bovenop staat en de schoenen
+      // altijd zichtbaar blijven — geen giswerk met pose-offsets meer.
+      const positionStage = () => {
+        let lowest = Infinity
+        scene.meshes.forEach(m => {
+          if (!m.isEnabled() || m.isVisible === false || /^(stagePlate|podium)/.test(m.name)) return
+          // Skinned meshes: neem de échte (geanimeerde) pose mee, anders meet je
+          // de T-pose en lijkt het poppetje boven het podium te zweven.
+          try { if (m.skeleton) m.refreshBoundingInfo({ applySkeleton: true, applyMorph: true }) } catch {}
+          const bb = m.getBoundingInfo && m.getBoundingInfo().boundingBox
+          if (bb) lowest = Math.min(lowest, bb.minimumWorld.y)
+        })
+        if (!isFinite(lowest)) return
+        const top = lowest + maxDim * 0.006    // oppervlak precies op de zolen (geen zweef-gat)
+        plate.position.y  = top - 0.03         // plate-hoogte 0.06 → bovenkant op `top`
+        podium.position.y = top
+        mirror.mirrorPlane = new Plane(0, -1, 0, top)
+      }
+      positionStageRef.current = positionStage
 
       // Restore saved clothing
       if (shirtColor) applySlot('shirt', shirtColor)
@@ -374,6 +541,9 @@ export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlay
           animGroupsRef.current = groups
           setAnimsReady(true)
           playRust(groups)
+          // Pose is nu actief → meet de zolen en zet het podium eronder.
+          scene.onAfterRenderObservable.addOnce(() => positionStageRef.current?.())
+          setTimeout(() => positionStageRef.current?.(), 300)
         }
       }
 
@@ -471,6 +641,10 @@ export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlay
         <h2 className="panel-title">Kledingkast</h2>
         <p className="panel-sub">Klik om aan te trekken</p>
 
+        <button className="surprise-btn" onClick={surpriseMe}>
+          <span className="surprise-dice">🎲</span> Verras me!
+        </button>
+
         <div className="clothing-list">
           <div className="clothing-section">
             <div className={`clothing-header ${shirtColor ? 'clothing-on' : ''}`}>
@@ -483,20 +657,15 @@ export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlay
               if (!items.length) return <p className="clothing-empty">Nog niets ontgrendeld — win shirts in de 🛒 Winkel!</p>
               return (
                 <div className="color-swatches">
-                  {items.map(c => {
-                    const emoji = swatchEmoji(c)
-                    return (
-                      <button
-                        key={c.key}
-                        className={`color-swatch ${shirtColor === c.key ? 'swatch-active' : ''}`}
-                        style={swatchStyle(c)}
-                        title={c.label}
-                        onClick={() => pickShirt(c.key)}
-                      >
-                        {emoji && <span className="swatch-emoji">{emoji}</span>}
-                      </button>
-                    )
-                  })}
+                  {items.map(c => (
+                    <SwatchTile
+                      key={c.key}
+                      item={c}
+                      slot="shirt"
+                      active={shirtColor === c.key}
+                      onClick={() => pickShirt(c.key)}
+                    />
+                  ))}
                 </div>
               )
             })()}
@@ -514,20 +683,15 @@ export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlay
                 if (!items.length) return <p className="clothing-empty">Nog niets ontgrendeld — win {item.label.toLowerCase()} in de 🛒 Winkel!</p>
                 return (
                   <div className="color-swatches">
-                    {items.map(c => {
-                      const emoji = swatchEmoji(c)
-                      return (
-                        <button
-                          key={c.key}
-                          className={`color-swatch ${wearing[item.key] === c.key ? 'swatch-active' : ''}`}
-                          style={swatchStyle(c)}
-                          title={c.label}
-                          onClick={() => pickClothing(item.key, c.key)}
-                        >
-                          {emoji && <span className="swatch-emoji">{emoji}</span>}
-                        </button>
-                      )
-                    })}
+                    {items.map(c => (
+                      <SwatchTile
+                        key={c.key}
+                        item={c}
+                        slot={item.key}
+                        active={wearing[item.key] === c.key}
+                        onClick={() => pickClothing(item.key, c.key)}
+                      />
+                    ))}
                   </div>
                 )
               })()}
@@ -559,15 +723,13 @@ export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlay
                   </div>
                   <div className="color-swatches">
                     {items.map(c => (
-                      <button
+                      <SwatchTile
                         key={c.key}
-                        className={`color-swatch ${wearing.hoofd === c.key ? 'swatch-active' : ''}`}
-                        style={swatchStyle(c)}
-                        title={c.label}
+                        item={c}
+                        slot="hoofd"
+                        active={wearing.hoofd === c.key}
                         onClick={() => pickHead(c.key)}
-                      >
-                        {swatchBadge(c) && <span className="swatch-badge">{swatchBadge(c)}</span>}
-                      </button>
+                      />
                     ))}
                   </div>
                 </>
@@ -605,41 +767,32 @@ export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlay
         )}
       </div>
 
-      {/* ── Right: emotes ── */}
-      <aside className="emotes-panel">
-        <h2 className="panel-title">Emotes</h2>
-        <p className="panel-sub">Klik om te bewegen</p>
-        <div className="emote-list">
-          {/* Rust button — speelt rust.glb in lus */}
-          <button
-            className={`emote-btn ${activeAnim === 'rust' ? 'emote-on' : ''}`}
-            onClick={() => playRust()}
-            disabled={!animsReady}
-            title={!animsReady ? 'Laden…' : ''}
-          >
-            <span className="emote-emoji">🧍</span>
-            <span className="emote-label">Rust</span>
-            {activeAnim === 'rust' && <span className="emote-play">▶</span>}
-          </button>
+      {/* ── Emote-knoppen los bovenin (geen balk) ── */}
+      <div className="emote-bar">
+        {/* Rust button — speelt rust.glb in lus */}
+        <button
+          className={`emote-btn ${activeAnim === 'rust' ? 'emote-on' : ''}`}
+          onClick={() => playRust()}
+          disabled={!animsReady}
+          title={!animsReady ? 'Laden…' : 'Rust'}
+        >
+          <span className="emote-emoji">🧍</span>
+          <span className="emote-label">Rust</span>
+        </button>
 
-          {Object.entries(EMOTE_META).map(([name, meta]) => (
-            <button
-              key={name}
-              className={`emote-btn ${activeAnim === name ? 'emote-on' : ''}`}
-              onClick={() => pickEmote(name)}
-              disabled={!animsReady}
-              title={!animsReady ? 'Laden…' : ''}
-            >
-              <span className="emote-emoji">{meta.emoji}</span>
-              <span className="emote-label">{meta.label}</span>
-              {activeAnim === name && <span className="emote-play">▶</span>}
-            </button>
-          ))}
-        </div>
-        {!animsReady && !loading && (
-          <p className="panel-sub" style={{ marginTop: 8 }}>Animaties laden…</p>
-        )}
-      </aside>
+        {Object.entries(EMOTE_META).map(([name, meta]) => (
+          <button
+            key={name}
+            className={`emote-btn ${activeAnim === name ? 'emote-on' : ''}`}
+            onClick={() => pickEmote(name)}
+            disabled={!animsReady}
+            title={!animsReady ? 'Laden…' : meta.label}
+          >
+            <span className="emote-emoji">{meta.emoji}</span>
+            <span className="emote-label">{meta.label}</span>
+          </button>
+        ))}
+      </div>
     </div>
   )
 }
