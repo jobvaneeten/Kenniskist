@@ -16,16 +16,20 @@ const UNLOCK_ALL_CODE = 'joop'
 const UNLOCK_COUNTRIES_CODE = 'frans'   // ontgrendelt alle Head Soccer-landen
 const UNLOCK_TARA_CODE = 'tara'         // ontgrendelt de Tara Pet
 const UNLOCK_NINA_CODE = 'nina'         // ontgrendelt de Nina Pet
+const UNLOCK_PIM_CODE = 'pim'           // ontgrendelt de Pim Pet
+const UNLOCK_VINN_CODE = 'vinn'         // ontgrendelt de Vinn Pet
 
 function fmt(n) { return n.toLocaleString('nl-NL') }
 
-function CurrencyBadge({ munten, briefgeld }) {
+function CurrencyBadge({ munten, briefgeld, hideMunten }) {
   return (
     <div className="currency-badges">
-      <div className="curuntie-badge">
-        <span className="curuntie-icon">🪙</span>
-        <span className="curuntie-amount">{fmt(munten)}</span>
-      </div>
+      {!hideMunten && (
+        <div className="curuntie-badge">
+          <span className="curuntie-icon">🪙</span>
+          <span className="curuntie-amount">{fmt(munten)}</span>
+        </div>
+      )}
       <div className="curuntie-badge briefgeld-badge">
         <span className="curuntie-icon">💵</span>
         <span className="curuntie-amount briefgeld-amount">{fmt(briefgeld)}</span>
@@ -34,7 +38,7 @@ function CurrencyBadge({ munten, briefgeld }) {
   )
 }
 
-function CodeModal({ onClose, onRedeem, onRedeemBrief, onUnlockAll, onUnlockCountries, onUnlockTara, onUnlockNina, usedCodes }) {
+function CodeModal({ onClose, onRedeem, onRedeemBrief, onUnlockAll, onUnlockCountries, onUnlockTara, onUnlockNina, onUnlockPim, onUnlockVinn, usedCodes }) {
   const [code, setCode] = useState('')
   const [msg,  setMsg]  = useState(null)
   const [ok,   setOk]   = useState(false)
@@ -56,6 +60,14 @@ function CodeModal({ onClose, onRedeem, onRedeemBrief, onUnlockAll, onUnlockCoun
     } else if (key === UNLOCK_NINA_CODE) {
       onUnlockNina()
       setMsg('💖 Nina Pet ontgrendeld!')
+      setOk(true)
+    } else if (key === UNLOCK_PIM_CODE) {
+      onUnlockPim()
+      setMsg('🧢 Pim Pet ontgrendeld!')
+      setOk(true)
+    } else if (key === UNLOCK_VINN_CODE) {
+      onUnlockVinn()
+      setMsg('🧢 Vinn Pet ontgrendeld!')
       setOk(true)
     } else if (BRIEF_CODES[key] !== undefined) {
       if (usedCodes.includes(key)) {
@@ -175,6 +187,12 @@ export default function App() {
   // "nina" code → ontgrendel de Nina Pet
   const unlockNina = () => unlockColor('hoofd', 'petnina')
 
+  // "pim" code → ontgrendel de Pim Pet
+  const unlockPim = () => unlockColor('hoofd', 'petpim')
+
+  // "vinn" code → ontgrendel de Vinn Pet
+  const unlockVinn = () => unlockColor('hoofd', 'petvinn')
+
   // Re-read the wallet from localStorage (games update it directly) so the
   // home badge always matches — call when returning to a React screen.
   const refreshWallet = () => {
@@ -185,7 +203,7 @@ export default function App() {
 
   if (screen === 'game') return (
     <>
-      <CurrencyBadge munten={curuntie} briefgeld={briefgeld} />
+      <CurrencyBadge munten={curuntie} briefgeld={briefgeld} hideMunten />
       <GameMenu onBack={goMenu} addCuruntie={addCuruntie} addBriefgeld={addBriefgeld} />
     </>
   )
@@ -297,6 +315,8 @@ export default function App() {
           onUnlockCountries={unlockCountries}
           onUnlockTara={unlockTara}
           onUnlockNina={unlockNina}
+          onUnlockPim={unlockPim}
+          onUnlockVinn={unlockVinn}
           usedCodes={usedCodes}
         />
       )}

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import FootballGame from './games/FootballGame'
 import TowerDefenseGame from './games/TowerDefenseGame'
 import JetpackGame from './games/JetpackGame'
@@ -85,17 +85,39 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
   const [dicteeNr,      setDicteeNr]      = useState(8)      // gekozen dictee-blok (7 of 8)
   const [taalActive,    setTaalActive]    = useState(false)
 
+  // Eenmalig-verdienen: alle spellen geven maar 1x geld, behalve de oefen-
+  // activiteiten (heel spelling, breuken/procenten/komma, zinsontleding +
+  // woordsoorten, tafels + deelsommen) die hun eigen rauwe add-functies houden.
+  const earnedRef = useRef(null)
+  if (earnedRef.current === null) {
+    try { earnedRef.current = JSON.parse(localStorage.getItem('kk_earned_once') || '{}') } catch { earnedRef.current = {} }
+  }
+  const gateRef = useRef({})   // gameKey -> beloning aan/uit voor deze sessie
+  const makeGated = (key, realAdd) => {
+    if (!(key in gateRef.current)) gateRef.current[key] = !earnedRef.current[key]
+    const on = gateRef.current[key]
+    return (amount) => {
+      if (!on) return
+      if (!earnedRef.current[key]) {
+        earnedRef.current[key] = true
+        try { localStorage.setItem('kk_earned_once', JSON.stringify(earnedRef.current)) } catch {}
+      }
+      realAdd?.(amount)
+    }
+  }
+  const clearGate = (key) => { delete gateRef.current[key] }
+
   // Tower defense (no mode selection needed)
   if (directGame === 'towerdefense') {
     return <TowerDefenseGame onBack={onBack} />
   }
 
   if (directGame === 'jetpack') {
-    return <JetpackGame onBack={onBack} addCuruntie={addCuruntie} />
+    return <JetpackGame onBack={onBack} addCuruntie={makeGated('jetpack', addCuruntie)} />
   }
 
   if (directGame === 'headsoccer') {
-    return <HeadSoccer onBack={onBack} addCuruntie={addCuruntie} />
+    return <HeadSoccer onBack={onBack} addCuruntie={makeGated('headsoccer', addCuruntie)} />
   }
 
   if (directGame === 'astrokatapult') {
@@ -114,7 +136,7 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
         noQuiz
         twoPlayer={gameMode === '2player'}
         onBack={onBack}
-        addCuruntie={addCuruntie}
+        addCuruntie={makeGated('football', addCuruntie)}
       />
     )
   }
@@ -173,7 +195,7 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
 
     if (GAMES[gameId] === 'iep') {
       if (rekenKeuze === 'blok9') {
-        return <BlokOefenen onBack={() => setRekenKeuze(null)} addBriefgeld={addBriefgeld} addCuruntie={addCuruntie} />
+        return <BlokOefenen onBack={() => { clearGate('blok9'); setRekenKeuze(null) }} addBriefgeld={makeGated('blok9', addBriefgeld)} addCuruntie={makeGated('blok9', addCuruntie)} />
       }
       if (rekenKeuze === 'procenten') {
         return <ProcentenBreuken onBack={() => setRekenKeuze(null)} addBriefgeld={addBriefgeld} />
@@ -190,9 +212,9 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
           <div className="mode-grid">
             <button className="mode-card" onClick={() => setRekenKeuze('blok9')}>
               <MenuScene name="blok9" />
-              <span className="mode-name">📘 Oefenen blok 9</span>
+              <span className="mode-name">📘 Oefenen blok 9 & 10</span>
               <span className="mode-desc">FS en S+ werkbladen</span>
-              <span className="vb-line">"748 + 156 = ?" en "6 × 125 = ?"</span>
+              <span className="vb-line">"5825 : 23 = ?" en "7 × €3,70 = ?"</span>
               <RewardChips rewards={['🪙 munten', '💵 briefgeld']} />
             </button>
             <button className="mode-card" onClick={() => setRekenKeuze('procenten')}>
@@ -210,9 +232,9 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
     if (GAMES[gameId] === 'begrijpend') {
       return (
         <BegrijpendLezen
-          onBack={() => setSubject(null)}
-          addBriefgeld={addBriefgeld}
-          addCuruntie={addCuruntie}
+          onBack={() => { clearGate('begrijpend'); setSubject(null) }}
+          addBriefgeld={makeGated('begrijpend', addBriefgeld)}
+          addCuruntie={makeGated('begrijpend', addCuruntie)}
         />
       )
     }
@@ -301,7 +323,7 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
         <FootballGame
           year={year}
           onBack={onBack}
-          addCuruntie={addCuruntie}
+          addCuruntie={makeGated('football', addCuruntie)}
         />
       )
     }
@@ -352,7 +374,7 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
                   {game === 'tafels'
                     ? '✖️ Tafels oefenen'
                     : game === 'iep'
-                    ? '🚀 Verhaaltjessommen + blok 9'
+                    ? '🚀 Verhaaltjessommen + blok 9 & 10'
                     : s.key === 'spelling'
                     ? (game === 'werkwoord' ? '✒️ Werkwoord + Taal Actief 5' : '📕 Taal Actief 5')
                     : game === 'taal'

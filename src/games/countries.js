@@ -15,6 +15,22 @@ export const COUNTRIES = [
   { key: 'ma', name: 'Marokko',    flag: '🇲🇦', c1: '#C1272D', c2: '#006233', pattern: 'solid',    diff: 2, abbr: 'MA' },
   { key: 'sn', name: 'Senegal',    flag: '🇸🇳', c1: '#FFFFFF', c2: '#00853F', pattern: 'vstripes', diff: 2, abbr: 'SN' },
   { key: 'hr', name: 'Kroatië',    flag: '🇭🇷', c1: '#FFFFFF', c2: '#FF0000', pattern: 'checker',  diff: 3, abbr: 'HR' },
+  { key: 'ng', name: 'Nigeria',    flag: '🇳🇬', c1: '#008751', c2: '#FFFFFF', pattern: 'vstripes', diff: 4, abbr: 'NG' },
+  { key: 'gh', name: 'Ghana',      flag: '🇬🇭', c1: '#006B3F', c2: '#FCD116', pattern: 'hstripes', diff: 3, abbr: 'GH' },
+  { key: 'eg', name: 'Egypte',     flag: '🇪🇬', c1: '#CE1126', c2: '#FFFFFF', pattern: 'hstripes', diff: 3, abbr: 'EG' },
+  { key: 'cm', name: 'Kameroen',   flag: '🇨🇲', c1: '#007A5E', c2: '#CE1126', pattern: 'vstripes', diff: 3, abbr: 'CM' },
+  { key: 'kr', name: 'Zuid-Korea', flag: '🇰🇷', c1: '#FFFFFF', c2: '#003478', pattern: 'solid',    diff: 2, abbr: 'KR' },
+  { key: 'sa', name: 'Saoedi-Ar.', flag: '🇸🇦', c1: '#006C35', c2: '#FFFFFF', pattern: 'solid',    diff: 2, abbr: 'SA' },
+  { key: 'au', name: 'Australië',  flag: '🇦🇺', c1: '#00843D', c2: '#FFCD00', pattern: 'solid',    diff: 2, abbr: 'AU' },
+  { key: 'ca', name: 'Canada',     flag: '🇨🇦', c1: '#FF0000', c2: '#FFFFFF', pattern: 'vstripes', diff: 2, abbr: 'CA' },
+  { key: 'co', name: 'Colombia',   flag: '🇨🇴', c1: '#FCD116', c2: '#003893', pattern: 'hstripes', diff: 4, abbr: 'CO' },
+  { key: 'uy', name: 'Uruguay',    flag: '🇺🇾', c1: '#0038A8', c2: '#FFFFFF', pattern: 'hstripes', diff: 4, abbr: 'UY' },
+  { key: 'ch', name: 'Zwitserland',flag: '🇨🇭', c1: '#D52B1E', c2: '#FFFFFF', pattern: 'cross',    diff: 3, abbr: 'CH' },
+  { key: 'pl', name: 'Polen',      flag: '🇵🇱', c1: '#FFFFFF', c2: '#DC143C', pattern: 'hstripes', diff: 3, abbr: 'PL' },
+  { key: 'dk', name: 'Denemarken', flag: '🇩🇰', c1: '#C60C30', c2: '#FFFFFF', pattern: 'cross',    diff: 2, abbr: 'DK' },
+  { key: 'se', name: 'Zweden',     flag: '🇸🇪', c1: '#006AA7', c2: '#FECC00', pattern: 'cross',    diff: 3, abbr: 'SE' },
+  { key: 'tr', name: 'Turkije',    flag: '🇹🇷', c1: '#E30A17', c2: '#FFFFFF', pattern: 'solid',    diff: 3, abbr: 'TR' },
+  { key: 'gr', name: 'Griekenland',flag: '🇬🇷', c1: '#0D5EAF', c2: '#FFFFFF', pattern: 'hstripes', diff: 3, abbr: 'GR' },
 ]
 
 export const getCountry = key => COUNTRIES.find(c => c.key === key)
@@ -22,9 +38,9 @@ export const getCountry = key => COUNTRIES.find(c => c.key === key)
 // Welke (vergrendelde) landen je per toernooi-niveau kunt winnen.
 // Standaard al ontgrendeld: nl, de, br, fr. Easy = zwakkere landen, hard = sterkste.
 export const UNLOCK_TIERS = {
-  easy:   ['us', 'mx', 'jp', 'sn'],
-  medium: ['ma', 'hr', 'be', 'it'],
-  hard:   ['en', 'es', 'pt', 'ar'],
+  easy:   ['us', 'mx', 'jp', 'sn', 'kr', 'sa', 'au', 'ca', 'dk'],
+  medium: ['ma', 'hr', 'be', 'it', 'gh', 'eg', 'cm', 'ch', 'pl', 'se', 'tr', 'gr'],
+  hard:   ['en', 'es', 'pt', 'ar', 'ng', 'co', 'uy'],
 }
 export const LEVELS = [
   { key: 'easy',   label: 'Makkelijk', emoji: '🟢', desc: 'Trage tegenstanders die veel missen' },

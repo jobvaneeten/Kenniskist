@@ -257,6 +257,8 @@ export const CATALOG = {
     { ...texmodel('petgiraffe', 'Giraffe Pet', '/Pet/petnormaal.glb', '/Pet/petgiraffe.png', '/Pet/petgiraffe.png'), badge: '🦒' },
     { ...texmodel('pettara', 'Tara Pet', '/Pet/petnormaal.glb', '/Pet/pettara.png', '/Pet/pettara.png'), badge: '🌈' },
     { ...texmodel('petnina', 'Nina Pet', '/Pet/petnormaal.glb', '/Pet/ninapet.png', '/Pet/ninapet.png'), badge: '💖' },
+    { ...texmodel('petpim', 'Pim Pet', '/Pet/petnormaal.glb', '/Pet/petpim.png', '/Pet/petpim.png'), badge: 'Pim' },
+    { ...texmodel('petvinn', 'Vinn Pet', '/Pet/petnormaal.glb', '/Pet/petvinn.png', '/Pet/petvinn.png'), badge: 'Vinn' },
   ],
 }
 

@@ -122,10 +122,42 @@
   display: flex; align-items: center; justify-content: space-between;
   padding: 8px 16px; gap: 12px;
 }
-.hs-hud-team { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; font-size: 1.6rem; flex: 1; }
+.hs-hud-team { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; font-size: 1.9rem; flex: 1; }
 .hs-hud-right { align-items: flex-end; }
-.hs-charge { width: 90px; height: 9px; border-radius: 6px; background: rgba(255,255,255,0.12); overflow: hidden; }
-.hs-charge-fill { height: 100%; border-radius: 6px; transition: width 0.1s linear; }
+.hs-charge {
+  position: relative; width: 190px; max-width: 42vw; height: 26px;
+  border-radius: 14px; overflow: hidden;
+  background: rgba(0,0,0,0.45);
+  border: 2px solid rgba(255,255,255,0.28);
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.5), 0 2px 6px rgba(0,0,0,0.4);
+}
+.hs-charge-fill {
+  position: relative; overflow: hidden;
+  height: 100%; border-radius: 12px 0 0 12px;
+  transition: width 0.12s linear;
+  box-shadow: 0 0 14px var(--chg, #ffd23f);
+  background-image: linear-gradient(180deg, rgba(255,255,255,0.45), rgba(255,255,255,0) 55%);
+}
+/* glanzende veeg die over de balk loopt terwijl je oplaadt */
+.hs-charge-fill::after {
+  content: ''; position: absolute; top: 0; left: 0; width: 60%; height: 100%;
+  background: linear-gradient(100deg, transparent, rgba(255,255,255,0.55), transparent);
+  animation: hs-charge-shine 1.6s ease-in-out infinite;
+}
+.hs-charge-label {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.82rem; font-weight: 900; letter-spacing: 1.5px; color: #fff;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.9); pointer-events: none;
+}
+.hs-charge-full {
+  border-color: #fff;
+  box-shadow: 0 0 18px var(--chg, #ffd23f), inset 0 0 10px rgba(255,255,255,0.4);
+  animation: hs-charge-ready 0.7s ease-in-out infinite;
+}
+.hs-charge-full .hs-charge-label { font-size: 0.9rem; }
+@keyframes hs-charge-shine { 0% { transform: translateX(-120%) } 60%,100% { transform: translateX(320%) } }
+@keyframes hs-charge-ready { 0%,100% { transform: scale(1); filter: brightness(1) } 50% { transform: scale(1.05); filter: brightness(1.35) } }
 .hs-scoreboard {
   font-size: 1.9rem; font-weight: 900; color: #fff; letter-spacing: 2px;
   display: flex; align-items: center; gap: 14px; white-space: nowrap;

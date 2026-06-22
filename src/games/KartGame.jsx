@@ -284,34 +284,62 @@ const ITEM_INFO = {
   banana: { emoji: '🍌', label: 'Banaan' },
   shell:  { emoji: '🐢', label: 'Schild' },
 }
-// Zwevend, draaiend "?"-blok
+// Zwevend, draaiend Mario-Kart "?"-blok met regenboog-glans en gloed-halo.
 function makeItemBox(scene, x, z) {
-  const cube = MeshBuilder.CreateBox('ibox', { size: 1.3 }, scene)
-  cube.position.set(x, 1.1, z); cube.isPickable = false
+  const root = new TransformNode('iboxRoot', scene)
+  root.position.set(x, 1.1, z)
+  const cube = MeshBuilder.CreateBox('ibox', { size: 1.35 }, scene)
+  cube.parent = root; cube.isPickable = false
   const m = new StandardMaterial('iboxm', scene)
-  const tex = new DynamicTexture('iboxt', { width: 64, height: 64 }, scene, false)
+  const tex = new DynamicTexture('iboxt', { width: 128, height: 128 }, scene, false)
   const c = tex.getContext()
-  c.fillStyle = '#19c3ff'; c.fillRect(0, 0, 64, 64)
-  c.fillStyle = '#fff'; c.font = 'bold 46px Arial'; c.textAlign = 'center'; c.textBaseline = 'middle'
-  c.fillText('?', 32, 36)
+  const g = c.createLinearGradient(0, 0, 128, 128)
+  g.addColorStop(0, '#ffe14d'); g.addColorStop(0.5, '#ff8a3d'); g.addColorStop(1, '#ff4db8')
+  c.fillStyle = g; c.fillRect(0, 0, 128, 128)
+  c.strokeStyle = 'rgba(255,255,255,0.9)'; c.lineWidth = 8; c.strokeRect(6, 6, 116, 116)
+  c.fillStyle = '#fff'; c.font = 'bold 92px Arial'; c.textAlign = 'center'; c.textBaseline = 'middle'
+  c.shadowColor = 'rgba(0,0,0,0.35)'; c.shadowBlur = 6
+  c.fillText('?', 64, 70)
   tex.update()
-  m.diffuseTexture = tex; m.emissiveColor = new Color3(0.2, 0.55, 0.8); m.specularColor = new Color3(0.4, 0.4, 0.4)
+  m.diffuseTexture = tex; m.emissiveColor = new Color3(0.6, 0.45, 0.2); m.specularColor = new Color3(0.8, 0.8, 0.8)
   cube.material = m
-  return cube
+  // doorzichtige gloed-schil eromheen
+  const glow = MeshBuilder.CreateBox('iboxGlow', { size: 1.8 }, scene)
+  glow.parent = root; glow.isPickable = false
+  const gm = new StandardMaterial('iboxGlowM', scene)
+  gm.emissiveColor = new Color3(1, 0.8, 0.3); gm.alpha = 0.18; gm.disableLighting = true
+  glow.material = gm
+  root._cube = cube
+  return root
 }
 function makeHazardMesh(scene) {
-  const b = MeshBuilder.CreateSphere('hz', { diameter: 0.9, segments: 8 }, scene)
+  // Banaan: gebogen gele tube met bruine puntjes.
+  const path = []
+  for (let i = 0; i <= 8; i++) { const t = i / 8; path.push(new Vector3((t - 0.5) * 1.1, Math.sin(t * Math.PI) * 0.28, 0)) }
+  const b = MeshBuilder.CreateTube('hz', { path, radius: 0.18, tessellation: 8, cap: 1 }, scene)
   const m = new StandardMaterial('hzm', scene)
-  m.diffuseColor = new Color3(0.95, 0.82, 0.1); m.emissiveColor = new Color3(0.45, 0.38, 0.0)
-  b.material = m; b.isPickable = false; b.scaling.y = 0.6
+  m.diffuseColor = new Color3(1, 0.85, 0.12); m.emissiveColor = new Color3(0.4, 0.34, 0.02); m.specularColor = new Color3(0.6, 0.6, 0.3)
+  b.material = m; b.isPickable = false
+  for (const sx of [-0.55, 0.55]) {
+    const tip = MeshBuilder.CreateSphere('hztip', { diameter: 0.22, segments: 6 }, scene)
+    tip.parent = b; tip.position.set(sx, sx > 0 ? 0 : 0, 0)
+    const tm = new StandardMaterial('hztm', scene); tm.diffuseColor = new Color3(0.4, 0.25, 0.08); tm.emissiveColor = new Color3(0.15, 0.09, 0.02)
+    tip.material = tm
+  }
   return b
 }
 function makeShellMesh(scene) {
-  const b = MeshBuilder.CreateSphere('sh', { diameter: 0.8, segments: 8 }, scene)
+  // Groen schild: koepel met lichte onderrand.
+  const dome = MeshBuilder.CreateSphere('sh', { diameter: 0.95, segments: 10, slice: 0.62 }, scene)
+  dome.scaling.y = 0.78
   const m = new StandardMaterial('shm', scene)
-  m.diffuseColor = new Color3(0.2, 0.85, 0.4); m.emissiveColor = new Color3(0.1, 0.5, 0.2)
-  b.material = m; b.isPickable = false
-  return b
+  m.diffuseColor = new Color3(0.18, 0.8, 0.32); m.emissiveColor = new Color3(0.08, 0.42, 0.16); m.specularColor = new Color3(0.5, 0.7, 0.5)
+  dome.material = m; dome.isPickable = false
+  const rim = MeshBuilder.CreateCylinder('shrim', { diameter: 0.96, height: 0.22, tessellation: 16 }, scene)
+  rim.parent = dome; rim.position.y = 0.02
+  const rm = new StandardMaterial('shrimm', scene); rm.diffuseColor = new Color3(0.97, 0.95, 0.8); rm.emissiveColor = new Color3(0.4, 0.39, 0.3)
+  rim.material = rm
+  return dome
 }
 
 function KartRace({ onBack, room, sessionId, joinCode, track = 'groen' }) {
@@ -329,8 +357,26 @@ function KartRace({ onBack, room, sessionId, joinCode, track = 'groen' }) {
   const [botDiff, setBotDiff] = useState('normaal')
   const [heldItem, setHeldItem] = useState('')    // item in bezit (HUD)
   const [fxFlash, setFxFlash]   = useState('')    // 'boost' | 'star' | 'spin' korte HUD-flits
+  const [spinEmoji, setSpinEmoji] = useState(null) // Mario-Kart roulette tijdens oppakken
+  const prevItemRef = useRef('')
+  const rollingRef = useRef(false)
   const useItemRef = useRef(() => {})
   const stateRef = useRef({})
+
+  // Roulette: net opgepakt (leeg → item) → laat de emoji's even rollen vóór de onthulling.
+  useEffect(() => {
+    const had = prevItemRef.current; prevItemRef.current = heldItem
+    if (!heldItem || had) { return }
+    const pool = ['🍄', '⭐', '🍌', '🐢']
+    let n = 0; const ticks = 13 + Math.floor(Math.random() * 5)
+    rollingRef.current = true; setSpinEmoji(pool[0])
+    const iv = setInterval(() => {
+      n++
+      if (n >= ticks) { clearInterval(iv); rollingRef.current = false; setSpinEmoji(null) }
+      else setSpinEmoji(pool[Math.floor(Math.random() * pool.length)])
+    }, 55)
+    return () => { clearInterval(iv); rollingRef.current = false }
+  }, [heldItem])
 
   // Lobby: start de race (server zet phase → countdown → racing)
   const startRace = () => { if (room) room.send('start') }
@@ -405,7 +451,7 @@ function KartRace({ onBack, room, sessionId, joinCode, track = 'groen' }) {
     const keys = {}
     const kd = e => {
       keys[e.key.toLowerCase()] = true
-      if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); useItem() }
+      if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); if (!rollingRef.current) useItem() }
     }
     const ku = e => { keys[e.key.toLowerCase()] = false }
     window.addEventListener('keydown', kd)
@@ -683,13 +729,13 @@ function KartRace({ onBack, room, sessionId, joinCode, track = 'groen' }) {
       {/* Item-HUD (alleen online/met bots) */}
       {mp && phase !== 'finished' && phase !== 'lobby' && (
         <button
-          className={'kart-item-btn' + (heldItem ? ' has-item' : '')}
+          className={'kart-item-btn' + (heldItem ? ' has-item' : '') + (spinEmoji ? ' rolling' : '')}
           onClick={() => useItemRef.current()}
-          disabled={!heldItem}
+          disabled={!heldItem || !!spinEmoji}
         >
-          <span className="kart-item-emoji">{heldItem ? ITEM_INFO[heldItem]?.emoji : '❔'}</span>
-          <span className="kart-item-label">{heldItem ? ITEM_INFO[heldItem]?.label : 'Geen item'}</span>
-          {heldItem && <span className="kart-item-use">Gebruik · spatie</span>}
+          <span className="kart-item-emoji">{spinEmoji ? spinEmoji : (heldItem ? ITEM_INFO[heldItem]?.emoji : '❔')}</span>
+          <span className="kart-item-label">{spinEmoji ? '…' : (heldItem ? ITEM_INFO[heldItem]?.label : 'Geen item')}</span>
+          {heldItem && !spinEmoji && <span className="kart-item-use">Gebruik · spatie</span>}
         </button>
       )}
       {mp && fxFlash && <div className={'kart-fx kart-fx-' + fxFlash} />}

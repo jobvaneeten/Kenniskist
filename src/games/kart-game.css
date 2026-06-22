@@ -156,6 +156,24 @@
   transition: transform .12s, box-shadow .2s, border-color .2s;
 }
 .kart-item-btn:disabled { opacity: .5; cursor: default; }
+/* Roulette: terwijl de items rollen → opvallende regenboog-rand, emoji wiebelt */
+.kart-item-btn.rolling {
+  opacity: 1;
+  border-color: #fff;
+  box-shadow: 0 0 26px rgba(255,255,255,.6);
+  animation: kart-item-roll .18s linear infinite;
+}
+.kart-item-btn.rolling .kart-item-emoji { animation: kart-roll-emoji .11s steps(1) infinite; }
+@keyframes kart-item-roll {
+  0%   { border-color: #ff4db8; }
+  33%  { border-color: #ffe14d; }
+  66%  { border-color: #19c3ff; }
+  100% { border-color: #ff4db8; }
+}
+@keyframes kart-roll-emoji {
+  0%,100% { transform: translateY(0) scale(1.05); }
+  50%     { transform: translateY(-2px) scale(1.12); }
+}
 .kart-item-btn.has-item {
   border-color: #ffd23f; box-shadow: 0 0 22px rgba(255,210,63,.5);
   animation: kart-item-pulse 1s ease-in-out infinite;

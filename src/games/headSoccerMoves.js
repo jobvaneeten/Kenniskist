@@ -33,6 +33,23 @@ export const MOVES = {
   sn: { name: 'Leeuwensprong', emoji: '🦁', mascot: '🦁', effect: 'superjump', color: '#00853F', charge: 20, desc: 'Enorme leeuwensprong en knal de bal naar beneden', params: { vy: 1000, dur: 0.85, lob: true } },
   hr: { name: 'Stuiterbal',    emoji: '🏀', mascot: '🏀', ballEmoji: '🏀', effect: 'bouncy',    color: '#FF0000', charge: 22, desc: 'Maak de bal superstuiterend en razendsnel', params: { dur: 4, speed: 1000 } },
   ar: { name: 'Spookbal',      emoji: '👻', mascot: '👻', ballEmoji: '👻', effect: 'ghost',     color: '#74ACDF', charge: 26, desc: 'De bal wordt een onzichtbare spookbal richting de goal', params: { dur: 3, speed: 1300 } },
+  // ── 16 nieuwe landen: vooral LUCHT-supers (poppetje springt eerst, schiet dan van boven op de goal) ──
+  ng: { name: 'Adelaarsomhaal',emoji: '🦅', mascot: '🦅', effect: 'air', color: '#008751', charge: 24, desc: 'Spring hoog en sla de bal in een omhaal over de keeper' },
+  gh: { name: 'Sterrenduik',   emoji: '⭐', mascot: '⭐', effect: 'air', color: '#FCD116', charge: 24, desc: 'De bal stijgt en stort als een vallende ster op de goal' },
+  eg: { name: 'Maanschot',     emoji: '🌙', mascot: '🌙', effect: 'air', color: '#CE1126', charge: 26, desc: 'Een gigantische maansprong en de bal valt loodrecht in de goal' },
+  cm: { name: 'Leeuwenduik',   emoji: '🦁', mascot: '🦁', effect: 'air', color: '#007A5E', charge: 24, desc: 'Spring als een leeuw uit de lucht en duik op de bal' },
+  kr: { name: 'Donderdunk',    emoji: '🐯', mascot: '🐯', effect: 'air', color: '#003478', charge: 24, desc: 'Spring hoog en dunk de bal met de donder de goal in' },
+  sa: { name: 'Kanonduik',     emoji: '🐪', mascot: '🐪', effect: 'air', color: '#006C35', charge: 26, desc: 'De bal schiet de lucht in en valt als een kanonbal omlaag' },
+  au: { name: 'Kangoeroesmash',emoji: '🦘', mascot: '🦘', effect: 'air', color: '#00843D', charge: 22, desc: 'Een mega kangoeroesprong en een smash van bovenaf' },
+  ca: { name: 'Sneeuwstorm',   emoji: '🍁', mascot: '🍁', effect: 'air', color: '#FF0000', charge: 24, desc: 'Spring op en laat de bal door een sneeuwstorm naar binnen vallen' },
+  co: { name: 'Sterrenregen',  emoji: '🌟', mascot: '🌟', effect: 'air', color: '#FCD116', charge: 24, desc: 'Spring hoog terwijl een sterrenregen de bal de goal in jaagt' },
+  uy: { name: 'Zonvolley',     emoji: '☀️', mascot: '☀️', effect: 'air', color: '#0038A8', charge: 24, desc: 'Spring en volley de hoge bal vol op de goal' },
+  ch: { name: 'Bergtol',       emoji: '🏔️', mascot: '🏔️', effect: 'air', color: '#D52B1E', charge: 24, desc: 'Een tollende sprong slingert de bal van boven de goal in' },
+  pl: { name: 'Komeetduik',    emoji: '☄️', mascot: '☄️', effect: 'air', color: '#DC143C', charge: 24, desc: 'De bal vliegt op en komt als een komeet naar beneden' },
+  dk: { name: 'Achterwaartse', emoji: '🪙', mascot: '🪙', effect: 'air', color: '#C60C30', charge: 22, desc: 'Een achterwaartse salto-trap hoog over de keeper heen' },
+  se: { name: 'Zweefschot',    emoji: '💛', mascot: '💛', effect: 'air', color: '#006AA7', charge: 22, desc: 'Zweef hoog door de lucht en laat de bal zacht binnenvallen' },
+  tr: { name: 'Draakduik',     emoji: '🐉', mascot: '🐉', effect: 'air', color: '#E30A17', charge: 24, desc: 'Duik als een draak uit de lucht boven op de bal' },
+  gr: { name: 'Feniksvlucht',  emoji: '🔱', mascot: '🔱', effect: 'air', color: '#0D5EAF', charge: 24, desc: 'Rijs op als een feniks en laat de bal omlaag spiralen' },
 }
 
 // ── Authentieke Head Soccer power-shot per land ──────────────────────
@@ -69,6 +86,23 @@ export const SUPERS = {
   sn: { behavior: 'ghost',       color: '#9ad9c0', figure: '👻' },
   hr: { behavior: 'bouncy',      color: '#ff3030', figure: '🏀' },
   ar: { behavior: 'meteor',      color: '#ff8c42', figure: '☄️' },
+  // 16 nieuwe LUCHT-supers — elk een EIGEN mechaniek (geen reskins onderling):
+  ng: { behavior: 'bicycle',     color: '#00b85e', figure: '🦅' }, // krullende omhaal
+  gh: { behavior: 'multidrop',   color: '#ffd23f', figure: '⭐' }, // bal splitst in meerdere
+  eg: { behavior: 'moonshot',    color: '#ff4d5e', figure: '🌙' }, // slow-motion zweefsprong
+  cm: { behavior: 'eagledive',   color: '#00c98a', figure: '🦁' }, // poppetje duikt mee omlaag
+  kr: { behavior: 'thunderdunk', color: '#3a7bff', figure: '🐯' }, // bliksem verlamt keeper
+  sa: { behavior: 'cannondrop',  color: '#19a35f', figure: '🐪' }, // reuzenkogel
+  au: { behavior: 'skyhammer',   color: '#3ad17a', figure: '🦘' }, // hamert keeper de grond in
+  ca: { behavior: 'snowfreeze',  color: '#ff5a5a', figure: '🍁' }, // bevriest de keeper
+  co: { behavior: 'starshower',  color: '#ffe04d', figure: '🌟' }, // loodrechte sterregen
+  uy: { behavior: 'flatvolley',  color: '#3a8eff', figure: '☀️' }, // vlakke knal-volley
+  ch: { behavior: 'airtornado',  color: '#ff4040', figure: '🏔️' }, // wervelwind zuigt bal in
+  pl: { behavior: 'cometfall',   color: '#ff3b5c', figure: '☄️' }, // vuurkomeet + inslagregen
+  dk: { behavior: 'bouncelob',   color: '#ff3050', figure: '🪙' }, // stuiterende salto
+  se: { behavior: 'ghostfloat',  color: '#3aa0ff', figure: '💛' }, // zwevende spookbal
+  tr: { behavior: 'dragonram',   color: '#ff3030', figure: '🐉' }, // ramt keeper mét bal binnen
+  gr: { behavior: 'phoenixhead', color: '#2a7fff', figure: '🔱' }, // reuzenkop-kopbal
 }
 export const getSuper = key => SUPERS[key] || { behavior: 'power', color: (MOVES[key] || MOVES.nl).color }
 
@@ -91,6 +125,22 @@ export const SUPER_DESC = {
   meteor:      'De bal vliegt omhoog en stort als een vuurmeteoor de goal in',
   charge:      'Je dendert vooruit en beukt de tegenstander én de bal weg',
   power:       'Krachtige knal recht op de goal',
+  bicycle:     'Hoge omhaal-salto; de bal krult met veel effect over de keeper',
+  multidrop:   'De bal springt op en splitst in meerdere die op de goal neerdalen',
+  moonshot:    'Slow-motion zweefsprong; de bal daalt loom en onhoudbaar in de goal',
+  eagledive:   'Schiet omhoog en duik dan pijlsnel mét de bal op de goal',
+  thunderdunk: 'Bliksemschichten verlammen de keeper, dan een spies van bovenaf',
+  cannondrop:  'De bal zwelt tot een reuzenkogel en beukt de goal in',
+  skyhammer:   'Een reuzenhamer ramt de keeper de grond in; de bal lobt erin',
+  snowfreeze:  'De keeper vriest vast in het ijs terwijl de bal binnenvalt',
+  starshower:  'Sterren vallen loodrecht op de goal en verlammen de keeper',
+  flatvolley:  'Een keiharde, vlakke volley op kophoogte vol op de goal',
+  airtornado:  'Een wervelwind tilt de bal op en zuigt hem de goal in',
+  cometfall:   'De bal stort als vuurkomeet neer met een inslagregen',
+  bouncelob:   'Achterwaartse salto; de bal stuitert hoog over de keeper heen',
+  ghostfloat:  'De bal wordt half-onzichtbaar en zweeft onleesbaar traag binnen',
+  dragonram:   'Een vurige duik die de keeper mét bal de goal in ramt',
+  phoenixhead: 'Rijs op met een reuzenkop en kop de bal keihard omlaag binnen',
 }
 export const superDescOf = key => SUPER_DESC[getSuper(key).behavior] || SUPER_DESC.power
 
