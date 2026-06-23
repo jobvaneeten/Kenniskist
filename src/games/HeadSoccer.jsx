@@ -597,26 +597,27 @@ function SpecialDemo({ countryKey }) {
     const VW = 520, VX = 100, VY = 150
     const scale = cv.width / VW
     const G = GROUND_Y
+    const DGX = VX + VW - 6, DGY = G - 95   // goal-mond (rechts) → doel voor homing/aim
 
     const mkP = (px, facing) => ({
       side: facing > 0 ? 'L' : 'R', move: facing > 0 ? move : getMove(dummyC.key), facing,
       x: px, y: G - PR, vx: 0, vy: 0, onGround: true, dizzy: 0, kickCD: 0, kickAnim: 0, powerKick: 0, buried: 0,
       charge: 0, bigScale: 1, powMult: 1, powCurve: false, powFx: 'energy',
-      t: { dash: 0, bighead: 0, magnet: 0, shield: 0, powershot: 0, frozen: 0 },
+      t: { dash: 0, bighead: 0, magnet: 0, shield: 0, powershot: 0, frozen: 0, float: 0 },
     })
     const p = mkP(VX + 80, 1)
     const dummy = mkP(VX + VW - 90, -1)
-    const newBall = () => ({ x: p.x + 46, y: G - 26, vx: 0, vy: 0, angle: 0, spin: 0, scale: 1, ghostT: 0, bouncyT: 0, superT: 0, superColor: null, dark: false, laser: false, superKind: null, superOwner: null, trail: [], fx: { t: 0, type: 'energy', color: '#fff' } })
+    const newBall = () => ({ x: p.x + 46, y: G - 26, vx: 0, vy: 0, angle: 0, spin: 0, scale: 1, scaleT: 0, ghostT: 0, bouncyT: 0, floatT: 0, homing: 0, homingStr: 4, homeT: 0, held: false, superT: 0, superColor: null, dark: false, laser: false, superKind: null, superOwner: null, trail: [], fx: { t: 0, type: 'energy', color: '#fff' } })
     let ball = newBall()
-    let shocks = [], parts = [], decoys = [], tornado = null, mascots = [], rockets = [], bolts = [], sun = null, tt = 0, triggered = false
-    const period = 3.0
+    let shocks = [], parts = [], decoys = [], tornado = null, mascots = [], rockets = [], bolts = [], sun = null, superSeq = null, tt = 0, triggered = false
+    const period = 4.0
 
     const reset = () => {
       p.x = VX + 80; p.y = G - PR; p.vx = 0; p.vy = 0; p.onGround = true; p.charge = 0; p.bigScale = 1; p.buried = 0; p.powerKick = 0; p.armed = false
       for (const k in p.t) p.t[k] = 0
       dummy.x = VX + VW - 90; dummy.dizzy = 0; dummy.vx = 0; dummy.vy = 0; dummy.buried = 0; dummy.onGround = true; dummy.armed = false; for (const k in dummy.t) dummy.t[k] = 0
       ball = newBall()
-      shocks = []; parts = []; decoys = []; tornado = null; mascots = []; rockets = []; bolts = []; sun = null; triggered = false
+      shocks = []; parts = []; decoys = []; tornado = null; mascots = []; rockets = []; bolts = []; sun = null; superSeq = null; triggered = false
     }
     const burst = (x, y, color, n = 20) => { for (let i = 0; i < n; i++) { const a = Math.random() * Math.PI * 2, v = 300 * (0.4 + Math.random()); parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 120, life: 0.5 + Math.random() * 0.4, color, r: 2 + Math.random() * 3 }) } }
     const goalDir = () => { const gx = W - 4, gy = (G - 175) + 90; const dx = gx - ball.x, dy = gy - ball.y, d = Math.hypot(dx, dy) || 1; return { x: dx / d, y: dy / d } }
@@ -626,8 +627,9 @@ function SpecialDemo({ countryKey }) {
       const col = su.color || move.color
       // acrobatische omhaal + gouden sunburst (zelfde model als in de match)
       p.armed = true                                   // gloed om het hoofd
-      p.powerKick = 0.6; p.vy = -540; p.onGround = false
+      p.powerKick = 0.6                                  // sprong wordt per super bepaald
       ball.x = p.x + PR + BR; ball.y = p.y - PR * 0.3; ball.vx = 0; ball.vy = 0
+      ball.homing = 0; ball.homeT = 0; ball.held = false; ball.floatT = 0
       ball.bouncyT = 0; ball.ghostT = 0; ball.scale = 1; ball.scaleT = 0
       sun = { x: ball.x, y: ball.y - PR * 0.2, t: 0.55, dur: 0.55, color: col }
       shocks.push({ x: ball.x, y: ball.y, color: '#ffffff', r0: 6, maxR: 120, t: 0.45, dur: 0.45 })
@@ -642,101 +644,101 @@ function SpecialDemo({ countryKey }) {
       else if (beh === 'bighead') mascots.push({ emoji: fig, x: p.x, y: G + 130, vx: 0, vy: -300, t: 1.7, dur: 1.7, scale: 0.5, size: 165 })
       else if (beh === 'freeze' || beh === 'icespikes' || beh === 'lightning') mascots.push({ emoji: fig, x: dummy.x, y: VY - 30, vx: 0, vy: 540, t: 1.5, dur: 1.5, scale: 0.3, size: 160 })
       else mascots.push({ emoji: fig, x: VX + 110, y: VY - 30, vx: 70, vy: 430, t: 1.7, dur: 1.7, scale: 0.25, size: 155 })
+      // ── Gedeelde bouwstenen (zelfde mechaniek als de echte match-super) ──
+      const dir = 1
+      const aimAtGoal = (speed) => { const ddx = DGX - ball.x, ddy = DGY - ball.y, d = Math.hypot(ddx, ddy) || 1; ball.vx = ddx / d * speed; ball.vy = ddy / d * speed }
+      const leap = (h) => { p.vy = -h; p.onGround = false }
+      const lift = () => { burst(p.x, p.y - PR * 0.6, col, 10) }
+      const air = (jump, upV, hstr) => { leap(jump); lift(); ball.x = p.x + dir * 22; ball.y = G - PR - 6; ball.vx = dir * 150; ball.vy = -(upV || 1050); ball.homing = dir; ball.homingStr = hstr || 4; ball.homeT = 1.4 }
+      const startSeq = (jump, total, hold, run) => { leap(jump); lift(); p.t.float = total + 0.6; superSeq = { t: total, hold, apexY: null, run, col } }
+      const strikeDown = (fwd, down, hstr, extra) => () => {
+        ball.vx = dir * fwd; ball.vy = down; ball.homing = dir; ball.homingStr = hstr; ball.homeT = 1.2
+        ball.superColor = col; ball.fx = { t: 1.4, type: 'flame', color: col }
+        shocks.push({ x: ball.x, y: ball.y, color: col, r0: 6, maxR: 170, t: 0.55, dur: 0.55 }); burst(ball.x, ball.y, col, 18)
+        if (extra) extra()
+      }
+      const dropRain = (n) => { for (let i = 0; i < n; i++) rockets.push({ x: gx + (Math.random() - 0.5) * 40, y: VY - 30 - Math.random() * 120, vx: 0, vy: 420 + Math.random() * 200, color: col, life: 2.2, owner: 'L', delay: 0.2 + i * 0.05 }) }
+
       switch (su.behavior) {
-        case 'skyrockets':
-          ball.vx = 120; ball.vy = -900; ball.fx = { t: 1.4, type: 'flame', color: col }; p.vy = -560
-          for (let i = 0; i < 8; i++) rockets.push({ x: gx - 160 + (Math.random() - 0.5) * 70, y: VY - 30 - Math.random() * 90, vx: 120 + Math.random() * 90, vy: 320 + Math.random() * 160, color: col, life: 2.2, owner: 'L', delay: i * 0.08 })
+        case 'skyrockets': // bal omhoog, daarna raketregen op de goal
+          ball.vx = dir * 260; ball.vy = -980; ball.homing = 0; ball.fx = { t: 1.4, type: 'flame', color: col }; leap(560)
+          for (let i = 0; i < 9; i++) rockets.push({ x: gx - dir * 220 + (Math.random() - 0.5) * 90, y: VY - 40 - Math.random() * 120, vx: dir * (180 + Math.random() * 120), vy: 360 + Math.random() * 220, color: col, life: 2.2, owner: 'L', delay: i * 0.07 })
           break
-        case 'goalram':
-          ball.vx = 1300; ball.vy = -40; ball.superKind = 'goalram'; ball.fx = { t: 1.4, type: 'flame', color: col }
-          break
-        case 'groundspike':
-          ball.vx = 1150; ball.vy = 60; ball.superKind = 'groundspike'; ball.dark = true; ball.spin = 800
-          break
-        case 'airshot':
-          p.vy = -1000; ball.vx = 460; ball.vy = -680
-          break
-        case 'freeze':
-          ball.vx = 1000; ball.vy = -120; ball.superColor = '#bfe8ff'
-          dummy.t.frozen = 2.6; dummy.frozenFactor = 0; dummy.dizzy = 2.6
-          burst(dummy.x, dummy.y - PR * 0.6, '#bde0ff', 18)
-          break
-        case 'icespikes':
-          ball.vx = 1050; ball.vy = -120
-          dummy.dizzy = 1.4; dummy.vy = -560; dummy.onGround = false
-          for (let i = 0; i < 14; i++) parts.push({ x: dummy.x + (Math.random() - 0.5) * 60, y: G - 5, vx: (Math.random() - 0.5) * 120, vy: -260 - Math.random() * 300, life: 1.0, color: i % 2 ? '#bfe8ff' : '#fff', r: 3 + Math.random() * 3 })
-          break
-        case 'multiball':
-          ball.vx = 1050; ball.vy = -160
+        case 'goalram':    // beuk: tegenstander vliegt mét de bal de goal in
+          ball.vx = dir * 1500; ball.vy = -40; ball.superKind = 'goalram'; ball.fx = { t: 1.4, type: 'flame', color: col }; break
+        case 'groundspike':// grondstamp: ramt de tegenstander de grond in
+          ball.vx = dir * 1250; ball.vy = 60; ball.superKind = 'groundspike'; ball.dark = true; ball.spin = dir * 800; break
+        case 'airshot':    // lucht-omhaal over de keeper
+          leap(1150); ball.vx = dir * 520; ball.vy = -760; ball.homing = dir; ball.homingStr = 3; break
+        case 'freeze':     // vries de tegenstander vast
+          aimAtGoal(1050); ball.homing = dir; ball.homingStr = 4; ball.superColor = '#bfe8ff'
+          dummy.t.frozen = 2.6; dummy.frozenFactor = 0; dummy.dizzy = 2.6; burst(dummy.x, dummy.y - PR * 0.6, '#bde0ff', 18); break
+        case 'icespikes':  // ijspegels lanceren de tegenstander omhoog
+          aimAtGoal(1150); ball.homing = dir; ball.homingStr = 4; ball.superColor = col
+          dummy.dizzy = 1.4; dummy.vy = -640; dummy.onGround = false
+          for (let i = 0; i < 18; i++) parts.push({ x: dummy.x + (Math.random() - 0.5) * 70, y: G - 5, vx: (Math.random() - 0.5) * 160, vy: -300 - Math.random() * 360, life: 1.0, color: i % 2 ? '#bfe8ff' : '#fff', r: 3 + Math.random() * 3 }); break
+        case 'multiball':  // vijf ballen tegelijk
+          aimAtGoal(1150); ball.homing = dir; ball.homingStr = 3; ball.superColor = col
           for (let i = 0; i < 4; i++) { const sp = ((i - 1.5) / 4) * 0.7; decoys.push({ x: ball.x, y: ball.y, vx: ball.vx * Math.cos(sp) - ball.vy * Math.sin(sp), vy: ball.vx * Math.sin(sp) + ball.vy * Math.cos(sp), angle: 0, life: 1.8, color: col }) }
           break
-        case 'bighead':
-          p.t.bighead = 2.4; p.bigScale = 2.2
-          ball.vx = 1200; ball.vy = -200
-          break
-        case 'lightning':
-          ball.vx = 1000; ball.vy = -150
-          dummy.dizzy = 1.6; dummy.vy = -240; dummy.onGround = false
-          for (let i = 0; i < 5; i++) bolts.push({ x: dummy.x + (Math.random() - 0.5) * 100, t: 0.5, dur: 0.5, color: col, delay: i * 0.05 })
-          break
-        case 'tornado':
-          tornado = { x: p.x + 30, y: G, vx: 220, t: 3.0, pull: 3000, dir: 1, color: col }
-          break
-        case 'curveball':
-          ball.vx = 1100; ball.vy = -360; ball.spin = 1500; ball.fx = { t: 1.4, type: 'flame', color: col }; ball.superColor = col
-          break
-        case 'bouncy':
-          ball.bouncyT = 3; ball.vx = 1050; ball.vy = 260; ball.superColor = col
-          break
-        case 'ghost':
-          ball.ghostT = 3; ball.vx = 1100; ball.vy = -160; ball.superColor = col
+        case 'bighead':    // reuzenkop kopt keihard binnen
+          p.t.bighead = 2.4; p.bigScale = 2.2; aimAtGoal(1350); ball.homing = dir; ball.homingStr = 5; ball.superColor = col; break
+        case 'lightning':  // bliksem slaat in op de tegenstander
+          aimAtGoal(1150); ball.homing = dir; ball.homingStr = 4; ball.superColor = col
+          dummy.dizzy = 1.6; dummy.vy = -260; dummy.onGround = false
+          for (let i = 0; i < 5; i++) bolts.push({ x: dummy.x + (Math.random() - 0.5) * 120, t: 0.5, dur: 0.5, color: col, delay: i * 0.05 }); break
+        case 'tornado':    // wervelwind zuigt de bal de goal in
+          tornado = { x: p.x + dir * 30, y: G, vx: dir * 230, t: 3.0, pull: 3200, dir, color: col }; aimAtGoal(700); break
+        case 'curveball':  // brandende banaan-curve
+          ball.vx = dir * 1150; ball.vy = -360; ball.spin = dir * 1500; ball.fx = { t: 1.4, type: 'flame', color: col }; ball.superColor = col; break
+        case 'bouncy':     // razendsnelle stuiterbal
+          ball.bouncyT = 3; ball.vx = dir * 1050; ball.vy = 260; ball.superColor = col; break
+        case 'ghost':      // (half-)onzichtbare spookbal + meevliegende spoken
+          ball.ghostT = 3; aimAtGoal(1250); ball.homing = dir; ball.homingStr = 3; ball.superColor = col
           for (let i = 0; i < 5; i++) { const sp = ((i - 2) / 5) * 0.5; decoys.push({ x: ball.x, y: ball.y, vx: ball.vx * Math.cos(sp) - ball.vy * Math.sin(sp), vy: ball.vx * Math.sin(sp) + ball.vy * Math.cos(sp), angle: 0, life: 2, color: col }) }
           break
-        case 'giantball':
-          ball.scale = 2.6; ball.scaleT = 2.6; ball.vx = 900; ball.vy = -240; ball.fx = { t: 1.4, type: 'flame', color: col }; ball.superColor = col
-          break
-        case 'meteor':
-          ball.vx = 300; ball.vy = -700; ball.fx = { t: 1.4, type: 'flame', color: col }; ball.superColor = col
-          for (let i = 0; i < 5; i++) rockets.push({ x: gx + (Math.random() - 0.5) * 50, y: VY - 50 - Math.random() * 70, vx: 50 + Math.random() * 50, vy: 380 + Math.random() * 140, color: col, life: 2.0, owner: 'L', delay: 0.4 + i * 0.05 })
-          break
-        case 'charge':
-          p.vy = -120; ball.vx = 900; ball.vy = -120; ball.fx = { t: 1.4, type: 'flame', color: col }; ball.superColor = col
-          dummy.dizzy = 1.2; dummy.vx = 700; dummy.vy = -220; dummy.onGround = false
-          break
-        case 'bicycle': case 'eagledive': case 'dragonram':
-          p.vy = -1000; ball.vx = 820; ball.vy = -560; ball.spin = beh === 'bicycle' ? 1500 : 0
-          ball.fx = { t: 1.4, type: 'flame', color: col }; ball.superColor = col; break
-        case 'multidrop':
-          p.vy = -900; ball.vx = 360; ball.vy = -700; ball.superColor = col
-          for (let i = 0; i < 4; i++) decoys.push({ x: ball.x, y: ball.y, vx: 240 + i * 130, vy: -560 - i * 70, angle: 0, life: 2.0, color: col }); break
-        case 'moonshot': case 'ghostfloat':
-          p.vy = -820; ball.vx = 320; ball.vy = -320; ball.floatT = 1.6; ball.superColor = col
-          if (beh === 'ghostfloat') ball.ghostT = 3; break
-        case 'cannondrop':
-          p.vy = -900; ball.scale = 2.7; ball.scaleT = 2.6; ball.vx = 760; ball.vy = -480; ball.fx = { t: 1.4, type: 'flame', color: col }; ball.superColor = col; break
-        case 'thunderdunk':
-          p.vy = -1000; ball.vx = 980; ball.vy = -480; ball.superColor = col
-          dummy.dizzy = 1.4; for (let i = 0; i < 5; i++) bolts.push({ x: dummy.x + (Math.random() - 0.5) * 100, t: 0.5, dur: 0.5, color: col, delay: i * 0.05 }); break
-        case 'skyhammer':
-          p.vy = -1100; ball.vx = 780; ball.vy = -520; ball.superColor = col
-          dummy.dizzy = 1.8; dummy.buried = 1.6; dummy.vx = 0; dummy.vy = 0; dummy.onGround = true
-          for (let i = 0; i < 12; i++) parts.push({ x: dummy.x + (Math.random() - 0.5) * 60, y: G - 5, vx: (Math.random() - 0.5) * 160, vy: -160 - Math.random() * 180, life: 0.9, color: '#8a6a4a', r: 3 + Math.random() * 3 }); break
-        case 'snowfreeze':
-          p.vy = -950; ball.vx = 880; ball.vy = -480; ball.superColor = '#cfeaff'
-          dummy.t.frozen = 2.6; dummy.frozenFactor = 0; dummy.dizzy = 2.6; burst(dummy.x, dummy.y - PR * 0.6, '#bde0ff', 16); break
-        case 'starshower': case 'cometfall':
-          p.vy = -1000; ball.vx = beh === 'cometfall' ? 300 : 820; ball.vy = -640; ball.fx = { t: 1.4, type: 'flame', color: col }; ball.superColor = col
-          for (let i = 0; i < 6; i++) rockets.push({ x: gx + (Math.random() - 0.5) * 60, y: VY - 40 - Math.random() * 70, vx: beh === 'cometfall' ? 50 : 0, vy: 360 + Math.random() * 160, color: col, life: 2.0, owner: 'L', delay: 0.25 + i * 0.05 }); break
-        case 'flatvolley':
-          p.vy = -560; ball.vx = 1250; ball.vy = -40; ball.fx = { t: 1.4, type: 'electric', color: col }; ball.superColor = col; break
-        case 'airtornado':
-          p.vy = -820; tornado = { x: p.x + 30, y: G, vx: 240, t: 3.0, pull: 3200, dir: 1, color: col }; ball.vx = 200; ball.vy = -560; break
-        case 'bouncelob':
-          p.vy = -1000; ball.bouncyT = 3; ball.vx = 760; ball.vy = -560; ball.spin = -900; ball.superColor = col; break
-        case 'phoenixhead':
-          p.vy = -950; p.t.bighead = 2.6; p.bigScale = 2.3; ball.vx = 1000; ball.vy = -420; ball.superColor = col; break
-        default:
-          ball.vx = 1100; ball.vy = -260
+        case 'giantball':  // reuzenbal rolt de goal in
+          ball.scale = 2.6; ball.scaleT = 2.6; ball.vx = dir * 900; ball.vy = -240; ball.fx = { t: 1.4, type: 'flame', color: col }; ball.superColor = col; break
+        case 'meteor':     // bal omhoog en stort als vuurmeteoor de goal in
+          ball.vx = dir * 300; ball.vy = -760; ball.homing = dir; ball.homingStr = 6; ball.fx = { t: 1.4, type: 'flame', color: col }; ball.superColor = col
+          for (let i = 0; i < 6; i++) rockets.push({ x: gx + (Math.random() - 0.5) * 50, y: VY - 60 - Math.random() * 80, vx: dir * (60 + Math.random() * 60), vy: 420 + Math.random() * 160, color: col, life: 2.0, owner: 'L', delay: 0.4 + i * 0.05 }); break
+        case 'charge':     // stormram: dendert vooruit en beukt tegenstander + bal weg
+          leap(120); ball.vx = dir * 900; ball.vy = -120; ball.fx = { t: 1.4, type: 'flame', color: col }; ball.superColor = col
+          dummy.dizzy = 1.2; dummy.vx = dir * 700; dummy.vy = -220; dummy.onGround = false; break
+        case 'bicycle':    // hoge omhaal die van boven binnenkrult
+          air(1250, 1080, 4); ball.spin = dir * 1900; break
+        case 'multidrop':  // zweef, dan omlaag en de bal splitst
+          startSeq(1150, 1.0, 0.55, strikeDown(700, 760, 5, () => { for (let i = 0; i < 4; i++) decoys.push({ x: ball.x, y: ball.y, vx: dir * (260 + i * 130), vy: 360 + i * 90, angle: 0, life: 2.0, color: col }) })); break
+        case 'moonshot':   // lange slow-motion zweef, loom neerwaarts schot
+          startSeq(900, 1.5, 0.9, strikeDown(360, 360, 3, () => { ball.floatT = 1.6; ball.superT = 2.8; ball.homeT = 2.6 })); break
+        case 'eagledive':  // zweef, dan duikt het poppetje zélf mee omlaag
+          startSeq(1250, 1.0, 0.5, () => { p.vy = 1050; p.onGround = false; ball.vx = dir * 760; ball.vy = 980; ball.homing = dir; ball.homingStr = 6; ball.homeT = 1.0; ball.fx = { t: 1.4, type: 'flame', color: col }; ball.superColor = col }); break
+        case 'thunderdunk':// zweef, bliksem verlamt keeper, spies omlaag
+          startSeq(1200, 1.1, 0.6, strikeDown(620, 980, 5, () => { dummy.dizzy = 1.6; dummy.vy = -200; dummy.onGround = false; for (let i = 0; i < 5; i++) bolts.push({ x: dummy.x + (Math.random() - 0.5) * 110, t: 0.5, dur: 0.5, color: col, delay: i * 0.05 }) })); break
+        case 'cannondrop': // zweef, bal zwelt tot reuzenkogel, stort omlaag
+          startSeq(1100, 1.0, 0.6, strikeDown(560, 980, 4, () => { ball.scale = 2.7; ball.scaleT = 2.6 })); break
+        case 'skyhammer':  // zweef, ramt de keeper de grond in
+          startSeq(1300, 1.1, 0.6, strikeDown(700, 880, 4, () => { dummy.dizzy = 1.8; dummy.buried = 1.6; dummy.vx = 0; dummy.vy = 0; dummy.y = G - PR; dummy.onGround = true; shocks.push({ x: dummy.x, y: G, color: col, r0: 6, maxR: 200, t: 0.6, dur: 0.6 }); for (let i = 0; i < 14; i++) parts.push({ x: dummy.x + (Math.random() - 0.5) * 70, y: G - 5, vx: (Math.random() - 0.5) * 200, vy: -180 - Math.random() * 200, life: 0.9, color: '#8a6a4a', r: 3 + Math.random() * 4 }) })); break
+        case 'snowfreeze': // zweef, keeper vriest vast, schot omlaag
+          startSeq(1150, 1.1, 0.6, strikeDown(760, 820, 4, () => { ball.superColor = '#cfeaff'; dummy.t.frozen = 2.6; dummy.frozenFactor = 0; dummy.dizzy = 2.6; burst(dummy.x, dummy.y - PR * 0.6, '#bde0ff', 16); for (let i = 0; i < 14; i++) parts.push({ x: gx + (Math.random() - 0.5) * 60, y: VY, vx: 0, vy: 150 + Math.random() * 170, life: 1.6, color: '#eaf6ff', r: 2 + Math.random() * 2 }) })); break
+        case 'starshower': // zweef, schot omlaag + loodrechte sterregen
+          startSeq(1200, 1.0, 0.55, strikeDown(720, 820, 4, () => dropRain(7))); break
+        case 'flatvolley': // korte zweef, dan vlakke knal vol op de goal
+          startSeq(900, 0.7, 0.3, () => { ball.vx = dir * 1250; ball.vy = 90; ball.homing = dir; ball.homingStr = 6; ball.homeT = 1.0; ball.fx = { t: 1.4, type: 'electric', color: col }; ball.superColor = col; burst(ball.x, ball.y, col, 18) }); break
+        case 'airtornado': // zweef, dan wervelwind die de bal de goal in zuigt
+          startSeq(1000, 1.0, 0.55, () => { tornado = { x: p.x + dir * 30, y: G, vx: dir * 250, t: 3.0, pull: 3400, dir, color: col }; ball.vx = dir * 360; ball.vy = 500; ball.superColor = col }); break
+        case 'cometfall':  // zweef, stort als vuurkomeet + inslagregen
+          startSeq(1200, 1.1, 0.6, strikeDown(360, 1050, 6, () => { ball.dark = true; dropRain(6) })); break
+        case 'bouncelob':  // zweef, schot omlaag dat razend over de grond kaatst
+          startSeq(1150, 1.0, 0.55, strikeDown(820, 620, 3, () => { ball.bouncyT = 3; ball.spin = -dir * 900 })); break
+        case 'ghostfloat': // lange zweef; half-onzichtbare bal daalt traag
+          startSeq(1000, 1.5, 0.9, strikeDown(360, 360, 3, () => { ball.ghostT = 3.2; ball.floatT = 1.6; ball.superT = 2.8; ball.homeT = 2.6 })); break
+        case 'dragonram':  // zweef, vurige duik die keeper mét bal de goal in ramt
+          startSeq(1200, 1.0, 0.5, () => { ball.vx = dir * 1000; ball.vy = 520; ball.superKind = 'goalram'; ball.fx = { t: 1.4, type: 'flame', color: col }; ball.superColor = col; ball.homing = dir; ball.homingStr = 4; ball.homeT = 0.8 }); break
+        case 'phoenixhead':// zweef met reuzenkop, kop de bal van boven omlaag
+          startSeq(1100, 1.1, 0.6, strikeDown(680, 900, 5, () => { p.t.bighead = 2.6; p.bigScale = 2.3; shocks.push({ x: p.x, y: p.y - PR * 1.4, color: col, r0: 6, maxR: 200, t: 0.6, dur: 0.6 }) })); break
+        default:           // krachtige rechte knal
+          aimAtGoal(1180); ball.homing = dir; ball.homingStr = 4
       }
     }
 
@@ -756,10 +758,33 @@ function SpecialDemo({ countryKey }) {
       if (ball.bouncyT > 0) ball.bouncyT -= dt
       if (ball.superT > 0) { ball.superT -= dt; if (ball.superT <= 0) { ball.superColor = null; ball.dark = false; ball.laser = false; ball.superKind = null } }
       if (sun) { sun.t -= dt; if (sun.t <= 0) sun = null }
+      // Zweef-sequence: poppetje springt, blijft hangen op het hoogste punt, en
+      // schiet DAARNA pas (run) — zelfde mechaniek als de echte match-super.
+      if (superSeq) {
+        superSeq.t -= dt
+        superSeq.apexY = superSeq.apexY == null ? p.y : Math.min(superSeq.apexY, p.y)
+        if (superSeq.t < superSeq.hold) { p.y = superSeq.apexY; p.vy = 0; p.onGround = false }
+        ball.held = true
+        ball.x = p.x + 20; ball.y = p.y - PR * 1.7; ball.vx = 0; ball.vy = 0
+        if (Math.random() < 0.7) burst(ball.x, ball.y, superSeq.col, 2)
+        if (superSeq.t <= 0) { ball.held = false; superSeq.run(); superSeq = null }
+      }
+      // Homing: krult de bal richting de goal (lucht-supers krullen van bovenaf in).
+      if (ball.homeT > 0) ball.homeT -= dt
+      if (ball.homing && !ball.held) {
+        const ddx = DGX - ball.x, ddy = DGY - ball.y, d = Math.hypot(ddx, ddy) || 1
+        const sp = Math.max(900, Math.hypot(ball.vx, ball.vy)), str = ball.homingStr || 4
+        ball.vx += ((ddx / d) * sp - ball.vx) * Math.min(1, str * dt)
+        ball.vy += ((ddy / d) * sp - ball.vy) * Math.min(1, str * dt)
+        if (ball.homeT <= 0) ball.homing = 0
+      }
+      if (ball.floatT > 0) ball.floatT -= dt
       const ebr = BR * (ball.scale || 1), bb = ball.bouncyT > 0 ? 0.95 : 0.6
-      ball.vy += GRAVITY * 0.30 * dt; ball.vx += ball.spin * dt * 0.06; ball.spin *= 0.96
-      ball.x += ball.vx * dt; ball.y += ball.vy * dt; ball.angle += ball.vx * dt * 0.05
-      if (ball.y >= G - ebr) { ball.y = G - ebr; ball.vy = -ball.vy * bb; ball.vx *= 0.97 }
+      if (!ball.held) {
+        ball.vy += GRAVITY * (ball.floatT > 0 ? 0.06 : 0.30) * dt; ball.vx += ball.spin * dt * 0.06; ball.spin *= 0.96
+        ball.x += ball.vx * dt; ball.y += ball.vy * dt; ball.angle += ball.vx * dt * 0.05
+        if (ball.y >= G - ebr) { ball.y = G - ebr; ball.vy = -ball.vy * bb; ball.vx *= 0.97 }
+      }
       // super-mechaniek raakt de dummy (beuk / grondstamp)
       if (ball.superKind && Math.hypot(ball.x - dummy.x, ball.y - (dummy.y - PR * 0.2)) < PR + BR) {
         const fxCol = ball.fx.color
