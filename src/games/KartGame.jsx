@@ -49,24 +49,47 @@ function polarPath(N, fn) {
 // 3 banen: makkelijk (lange ovaal) → lastig (golvend bos) → moeilijk (lang, smal & scherp)
 // LET OP: de path-functies MOETEN exact gelijk zijn aan de server (KartRoom.ts).
 // Langer (grotere straal) + moeilijker (meer/scherpere bochten).
+// features: boosts/ramps = posities (fractie van de ronde) van boost-pads & sprong-
+// ramps; grip = stroefheid (1 = normaal, lager = glad/ijs). MOET kloppen met server-pad.
 const TRACKS = {
   groen: {
     name: 'Groene Weide', diff: 'Makkelijk', laps: 3, roadHW: 7.2,
     path: (N) => polarPath(N, (a) => 82 + 22 * Math.cos(2 * a) + 5 * Math.cos(3 * a)),
     theme: { grass: [0.30, 0.66, 0.32], sky: ['#74c7ff', '#eaf7ff'], trees: 90, rocks: 6, accent: '#ffd23f' },
+    features: { boosts: [0.5], ramps: [], grip: 1 },
   },
   woud: {
     name: 'Boscircuit', diff: 'Lastig', laps: 3, roadHW: 5.6,
     path: (N) => polarPath(N, (a) => 84 + 18 * Math.cos(2 * a) + 11 * Math.cos(3 * a) + 7 * Math.sin(5 * a)),
     theme: { grass: [0.16, 0.40, 0.20], sky: ['#5fa17f', '#d3ecda'], trees: 170, rocks: 26, accent: '#8ae66a' },
+    features: { boosts: [0.28, 0.72], ramps: [], grip: 1 },
   },
   bergen: {
     name: 'Bergpas', diff: 'Moeilijk', laps: 4, roadHW: 4.4,
     path: (N) => polarPath(N, (a) => 86 + 20 * Math.cos(2 * a) + 13 * Math.sin(3 * a) + 9 * Math.cos(5 * a) + 5 * Math.sin(7 * a)),
     theme: { grass: [0.52, 0.48, 0.42], sky: ['#b98a76', '#f3e3d7'], trees: 46, rocks: 80, accent: '#ff8a3d' },
+    features: { boosts: [0.6], ramps: [0.25], grip: 1 },
+  },
+  vuur: {
+    name: 'Vulkaanbaan', diff: 'Heet! 🔥', laps: 3, roadHW: 6.0,
+    path: (N) => polarPath(N, (a) => 80 + 24 * Math.cos(3 * a) + 10 * Math.sin(5 * a)),
+    theme: { grass: [0.20, 0.12, 0.10], sky: ['#3a0d0a', '#ff7a3d'], trees: 0, rocks: 70, accent: '#ff5a1f' },
+    features: { boosts: [0.18, 0.52, 0.82], ramps: [0.35, 0.68], grip: 1 },
+  },
+  ijs: {
+    name: 'IJsbaan', diff: 'Glad! ❄️', laps: 3, roadHW: 6.5,
+    path: (N) => polarPath(N, (a) => 84 + 16 * Math.cos(2 * a) + 8 * Math.cos(4 * a)),
+    theme: { grass: [0.80, 0.88, 0.95], sky: ['#9fc7e8', '#eaf6ff'], trees: 20, rocks: 30, accent: '#56ccf2' },
+    features: { boosts: [0.3, 0.7], ramps: [], grip: 0.55 },
+  },
+  regenboog: {
+    name: 'Regenboogbaan', diff: 'Episch! 🌈', laps: 4, roadHW: 4.2,
+    path: (N) => polarPath(N, (a) => 88 + 22 * Math.cos(2 * a) + 14 * Math.sin(3 * a) + 8 * Math.cos(7 * a)),
+    theme: { grass: [0.10, 0.08, 0.20], sky: ['#1a0b3a', '#7b2ff7'], trees: 0, rocks: 0, accent: '#ff4fd8' },
+    features: { boosts: [0.15, 0.45, 0.75], ramps: [0.3, 0.6, 0.9], grip: 0.85 },
   },
 }
-const TRACK_IDS = ['groen', 'woud', 'bergen']
+const TRACK_IDS = ['groen', 'woud', 'bergen', 'vuur', 'ijs', 'regenboog']
 
 // Actieve baan (mutabel; gezet via setTrack vóór het bouwen)
 let CENTER = []
@@ -74,6 +97,9 @@ let ROAD_HW = 7
 let TOTAL_LAPS = 3
 let CUR_TRACK = 'groen'
 let START_IDX = 0
+let RAMP_IDX = []
+let BOOST_IDX = []
+let TRACK_GRIP = 1
 
 function setTrack(id) {
   const t = TRACKS[id] || TRACKS.groen
@@ -82,6 +108,10 @@ function setTrack(id) {
   ROAD_HW = t.roadHW
   TOTAL_LAPS = t.laps
   START_IDX = computeStartIdx()
+  const f = t.features || {}
+  RAMP_IDX  = (f.ramps  || []).map(fr => ((Math.round(fr * NSEG) % NSEG) + NSEG) % NSEG)
+  BOOST_IDX = (f.boosts || []).map(fr => ((Math.round(fr * NSEG) % NSEG) + NSEG) % NSEG)
+  TRACK_GRIP = f.grip ?? 1
 }
 // Startvak op het rechtste stuk (laagste kromming) zodat de grid mooi staat
 function computeStartIdx() {
@@ -460,6 +490,7 @@ function KartRace({ onBack, room, sessionId, joinCode, track = 'groen' }) {
       turnSpeed: 2.2, heading: gs.heading,
       lapsDone: 0, prevIdx: START_IDX, cumIdx: 0, lapStart: performance.now(),
       finished: false, sendAcc: 0,
+      airborne: false, vy: 0, jumpCd: 0, padBoost: 0,   // sprong-ramps + boost-pads
     }
     stateRef.current = { phys, scene }
 
@@ -545,18 +576,30 @@ function KartRace({ onBack, room, sessionId, joinCode, track = 'groen' }) {
         } else {
           if (gas)        phys.vel += phys.accel * dt
           else if (brake) phys.vel -= phys.brakeForce * dt
-          else { const f = phys.friction * dt; phys.vel = phys.vel > 0 ? Math.max(0, phys.vel - f) : Math.min(0, phys.vel + f) }
+          else { const f = phys.friction * TRACK_GRIP * dt; phys.vel = phys.vel > 0 ? Math.max(0, phys.vel - f) : Math.min(0, phys.vel + f) }
+
+          // ── Boost-pad: rij over een chevron-strip → snelheidsboost ──
+          if (!offRoad) for (const bi of BOOST_IDX) { let d2 = near.idx - bi; if (d2 > NSEG / 2) d2 -= NSEG; if (d2 < -NSEG / 2) d2 += NSEG; if (Math.abs(d2) <= 2) { phys.padBoost = 1.0; break } }
+          phys.padBoost = Math.max(0, phys.padBoost - dt)
 
           let cap = offRoad ? phys.maxSpeed * 0.45 : phys.maxSpeed
-          if (boosting)      cap = phys.maxSpeed * 1.7
-          else if (starring) cap = phys.maxSpeed * 1.25
+          if (boosting)            cap = phys.maxSpeed * 1.7
+          else if (phys.padBoost > 0) cap = phys.maxSpeed * 1.6
+          else if (starring)       cap = phys.maxSpeed * 1.25
           phys.vel = Math.max(-phys.maxSpeed * 0.4, Math.min(cap, phys.vel))
           if (boosting) phys.vel = Math.max(phys.vel, phys.maxSpeed * 1.35)   // duwt naar boost-snelheid
+          else if (phys.padBoost > 0) phys.vel = Math.max(phys.vel, phys.maxSpeed * 1.3)
           if (offRoad && !boosting && !starring) phys.vel *= (1 - 1.5 * dt)
+
+          // ── Sprong-ramp: lanceer de kart de lucht in (lokaal; y wordt niet gesynct) ──
+          if (!phys.airborne && phys.jumpCd <= 0 && !offRoad && phys.vel > phys.maxSpeed * 0.5) {
+            for (const ri of RAMP_IDX) { let d2 = near.idx - ri; if (d2 > NSEG / 2) d2 -= NSEG; if (d2 < -NSEG / 2) d2 += NSEG; if (Math.abs(d2) <= 2) { phys.airborne = true; phys.vy = 7 + phys.vel * 0.45; phys.jumpCd = 1.3; phys.vel = Math.min(phys.maxSpeed * 1.25, phys.vel * 1.05); break } }
+          }
+          phys.jumpCd = Math.max(0, phys.jumpCd - dt)
 
           const steer = (right ? 1 : 0) - (left ? 1 : 0)
           const speedFactor = Math.min(1, Math.abs(phys.vel) / 6)
-          phys.heading += steer * phys.turnSpeed * dt * speedFactor * Math.sign(phys.vel || 1)
+          phys.heading += steer * phys.turnSpeed * TRACK_GRIP * dt * speedFactor * Math.sign(phys.vel || 1)
           kartRoot.rotation.y = phys.heading
 
           kartRoot.position.addInPlace(fwd.scale(phys.vel * dt))
@@ -578,6 +621,13 @@ function KartRace({ onBack, room, sessionId, joinCode, track = 'groen' }) {
               phys.vel = Math.min(phys.vel, phys.maxSpeed * (boosting ? 1.7 : 1))
             }
           })
+        }
+
+        // ── Sprong-hoogte (lokaal, eigen kart) ──
+        if (phys.airborne) {
+          kartRoot.position.y += phys.vy * dt
+          phys.vy -= 24 * dt
+          if (kartRoot.position.y <= 0) { kartRoot.position.y = 0; phys.airborne = false; phys.vy = 0 }
         }
 
         wheels.forEach(w => { w.rotation.x += phys.vel * dt * 3 })
@@ -771,8 +821,6 @@ export default function KartGame({ onBack }) {
   const [selTrack, setSelTrack] = useState('groen')
   const [raceTrack, setRaceTrack] = useState('groen')
 
-  if (screen === 'solo') return <KartRace onBack={() => setScreen('menu')} track={selTrack} />
-
   if (screen === 'race' && room) {
     return <KartRace onBack={() => { try { room.leave() } catch {} ; setRoom(null); setScreen('menu') }} room={room} sessionId={sessionId} joinCode={joinCode} track={raceTrack} />
   }
@@ -793,8 +841,7 @@ export default function KartGame({ onBack }) {
         <h1 className="kart-menu-title">Karten</h1>
         <p className="kart-menu-sub">Kies een baan</p>
         <TrackPicker value={selTrack} onChange={setSelTrack} />
-        <button className="kart-menu-btn solo" onClick={() => setScreen('solo')}>🧑 Oefenen (alleen)</button>
-        <button className="kart-menu-btn online" onClick={() => setScreen('lobby')}>🌍 Online — beuk tegen vrienden</button>
+        <button className="kart-menu-btn online" onClick={() => setScreen('lobby')}>🌍 Online — beuk tegen vrienden (of bots)</button>
       </div>
     </div>
   )
@@ -802,7 +849,7 @@ export default function KartGame({ onBack }) {
 
 // Baan-keuze (3 banen oplopend in moeilijkheid)
 function TrackPicker({ value, onChange }) {
-  const ICON = { groen: '🌳', woud: '🌲', bergen: '⛰️' }
+  const ICON = { groen: '🌳', woud: '🌲', bergen: '⛰️', vuur: '🌋', ijs: '❄️', regenboog: '🌈' }
   return (
     <div className="kart-track-pick">
       {TRACK_IDS.map(id => (
@@ -963,6 +1010,41 @@ function buildTrack(scene, sg, id) {
   })
   const top = MeshBuilder.CreateBox('bannerTop', { width: ROAD_HW * 2 + 3, height: 1.2, depth: 0.4 }, scene)
   top.material = poleMat; top.position.set(sc.x, 6, sc.z); top.rotation.y = sh
+
+  // ── Speciale baan-elementen: boost-pads (chevrons) + sprong-ramps ──
+  const accent = theme.accent || '#ffd23f'
+  if (BOOST_IDX.length) {
+    const boostTex = new DynamicTexture('boostTex', { width: 64, height: 128 }, scene, false)
+    const bx = boostTex.getContext()
+    bx.clearRect(0, 0, 64, 128)
+    bx.fillStyle = 'rgba(0,0,0,0.30)'; bx.fillRect(0, 0, 64, 128)
+    bx.strokeStyle = accent; bx.lineWidth = 9; bx.lineCap = 'round'
+    for (let r = 0; r < 3; r++) { const yy = 26 + r * 40; bx.beginPath(); bx.moveTo(8, yy + 18); bx.lineTo(32, yy - 8); bx.lineTo(56, yy + 18); bx.stroke() }
+    boostTex.update(); boostTex.hasAlpha = true
+    const boostMat = new StandardMaterial('boostMat', scene)
+    boostMat.diffuseTexture = boostTex; boostMat.diffuseTexture.hasAlpha = true
+    boostMat.emissiveColor = Color3.FromHexString(accent)
+    boostMat.specularColor = Color3.Black(); boostMat.backFaceCulling = false; boostMat.useAlphaFromDiffuseTexture = true
+    BOOST_IDX.forEach((idx, i) => {
+      const c = ringPos(idx), t = tangentAt(idx)
+      const pad = MeshBuilder.CreateGround('boostpad' + i, { width: ROAD_HW * 1.4, height: 7 }, scene)
+      pad.material = boostMat; pad.position.set(c.x, 0.06, c.z); pad.rotation.y = Math.atan2(t.x, t.z)
+    })
+  }
+  if (RAMP_IDX.length) {
+    const rampMat = new StandardMaterial('rampMat', scene)
+    rampMat.diffuseColor = Color3.FromHexString(accent); rampMat.emissiveColor = Color3.FromHexString(accent).scale(0.35); rampMat.specularColor = Color3.Black()
+    const rampEdge = new StandardMaterial('rampEdge', scene)
+    rampEdge.emissiveColor = Color3.FromHexString(accent); rampEdge.disableLighting = true
+    RAMP_IDX.forEach((idx, i) => {
+      const c = ringPos(idx), t = tangentAt(idx), ang = Math.atan2(t.x, t.z)
+      const ramp = MeshBuilder.CreateBox('ramp' + i, { width: ROAD_HW * 1.7, height: 0.5, depth: 6 }, scene)
+      ramp.material = rampMat; ramp.position.set(c.x, 0.85, c.z); ramp.rotation.y = ang; ramp.rotation.x = 0.3
+      ramp.receiveShadows = true; sg.addShadowCaster(ramp)
+      const lip = MeshBuilder.CreateBox('rampLip' + i, { width: ROAD_HW * 1.7, height: 0.14, depth: 0.5 }, scene)
+      lip.material = rampEdge; lip.position.set(c.x, 1.55, c.z); lip.rotation.y = ang
+    })
+  }
 
   // ── Decor: bomen + rotsen, alleen ver genoeg van de baan ──
   const trunkMat = new StandardMaterial('trunkMat', scene)
