@@ -285,16 +285,9 @@ export default function BrugBouwen({ onBack }) {
     const axle = (w, dx) => M.Constraint.create({ bodyA: chassis, pointA: { x: dx, y: wy - cy0 }, bodyB: w, length: 0, stiffness: 0.85, damping: 0.35 })
     M.Composite.add(world, [chassis, wA, wB, axle(wA, -wb), axle(wB, wb)])
 
-    // onzichtbaar laten settelen (geen sprong bij Start)
-    const clampV = (b, mx) => { const v = b.velocity, sp = Math.hypot(v.x, v.y); if (sp > mx) M.Body.setVelocity(b, { x: v.x * mx / sp, y: v.y * mx / sp }) }
-    for (let i = 1; i <= 36; i++) {
-      engine.gravity.y = Math.min(1, i / 24)
-      M.Engine.update(engine, 16.666)
-      nodeBodies.forEach(b => { if (!b.isStatic) clampV(b, 18) })
-      memObjs.forEach(p => { if (!p.broken && !p.rope) clampV(p.body, 18) })
-    }
-    engine.gravity.y = 1
-
+    // GEEN onzichtbare pre-settle meer: de zwaartekracht wordt nu live en
+    // geleidelijk opgevoerd (in step), zodat je de brug ziet inzakken/bezwijken.
+    engine.gravity.y = 0
     st.engine = engine; st.bodies = { nodeBodies, memObjs, CAT, origY: st.nodes.map(n => n.y) }
     st.car = { chassis, wheels: [wA, wB], wr, heavy }; st.t0 = performance.now()
     st.boat = null; st.boatHit = false
@@ -304,15 +297,19 @@ export default function BrugBouwen({ onBack }) {
   function step() {
     const M = Matter, st = S.current
     const el = performance.now() - st.t0
-    M.Engine.update(st.engine, 16.666)
+    // zwaartekracht zacht opvoeren ⇒ je ziet de brug rustig inzakken/bezwijken
+    st.engine.gravity.y = Math.min(1, el / 1100)
+    // alles in slow-motion: kleinere tijdstap = trager én stabieler
+    const SLOW = 0.6
+    M.Engine.update(st.engine, 16.666 * SLOW)
 
     const clampV = (b, mx) => { const v = b.velocity, sp = Math.hypot(v.x, v.y); if (sp > mx) M.Body.setVelocity(b, { x: v.x * mx / sp, y: v.y * mx / sp }) }
-    st.bodies.nodeBodies.forEach(b => { if (!b.isStatic) clampV(b, 22) })
-    st.bodies.memObjs.forEach(p => { if (!p.broken && !p.rope) clampV(p.body, 22) })
+    st.bodies.nodeBodies.forEach(b => { if (!b.isStatic) clampV(b, 16) })
+    st.bodies.memObjs.forEach(p => { if (!p.broken && !p.rope) clampV(p.body, 16) })
 
     if (modeRef.current === 'run') {
-      // rustig optrekken, maar genoeg kracht/grip om hellingen op te rijden
-      if (el > 300) {
+      // eerst rustig laten settelen (je ziet of de brug houdt), dan pas rijden
+      if (el > 1700) {
         const TARGET = st.car.heavy ? 0.30 : 0.36
         st.car.wheels.forEach(w => {
           if (st.car.chassis.velocity.x < 4.5 && w.angularVelocity < TARGET)
@@ -344,9 +341,9 @@ export default function BrugBouwen({ onBack }) {
       })
       // de boot vaart door de kloof — bouw je te laag, dan ramt hij je brug
       if (st.lv.boat) {
-        const bc = st.lv.boat, sail = el - 1100
+        const bc = st.lv.boat, sail = el - 2200
         if (sail > 0) {
-          const pr = sail / 4600
+          const pr = sail / 6500
           st.boat = { x: bc.x - bc.half + pr * bc.half * 2, on: pr <= 1, pr }
           if (st.boat.on) {
             const bx = st.boat.x
@@ -360,7 +357,7 @@ export default function BrugBouwen({ onBack }) {
       }
       const c = st.car.chassis
       if (c.position.x > st.lv.finishX && c.position.y < st.lv.finishY + 70) finish('win')
-      else if (c.position.y > KILL_Y || el > 45000) finish('lose')
+      else if (c.position.y > KILL_Y || el > 60000) finish('lose')
     }
   }
 
