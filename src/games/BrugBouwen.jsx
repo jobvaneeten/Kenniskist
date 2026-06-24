@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import Matter from 'matter-js'
 import OrientationGate from '../OrientationGate'
+
+// Eigen massa-veer-physics (Verlet + constraint-relaxatie, Jakobsen-methode).
+// Breken op basis van échte balkkracht i.p.v. een doorzak-trucje.
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  BRUG BOUWEN — Build-a-Bridge-stijl (matter-js)
@@ -16,13 +18,22 @@ const HIT = 34
 // cost = budget per balk · maxLen = langste balk · break = rekgrens (hoger=sterker)
 // density = gewicht · drive = of de auto erop kan rijden · rope = trekkabel (geen balk)
 // drive=true ⇒ de auto rijdt erop (alleen WEG). hout/metaal/touw zijn pure steun.
+// strength = max balkkracht voor breuk · stiff = relaxatie-stijfheid · tension = alleen trekken (touw)
 const MAT = {
-  weg:    { name: 'Weg',    icon: '🛣️', cost: 10, maxLen: 120, break: 0.20, density: 0.011, drive: true,  rope: false, w: 15, col: '#3c4250', col2: '#262b36', edge: '#15181f', sag: 24 },
-  hout:   { name: 'Hout',   icon: '🪵', cost: 6,  maxLen: 135, break: 0.30, density: 0.005, drive: false, rope: false, w: 12, col: '#c79a52', col2: '#8a6a30', edge: '#6b4f22' },
-  metaal: { name: 'Metaal', icon: '🔩', cost: 16, maxLen: 160, break: 1.0,  density: 0.008, drive: false, rope: false, w: 11, col: '#9fb0cc', col2: '#5d6c84', edge: '#3c4860' },
-  touw:   { name: 'Touw',   icon: '🪢', cost: 4,  maxLen: 240, break: 0.45, density: 0.002, drive: false, rope: true,  w: 5,  col: '#dcc48e', col2: '#a98a54', edge: '#7c5a30' },
+  weg:    { name: 'Weg',    icon: '🛣️', cost: 10, maxLen: 168, drive: true,  rope: false, w: 15, col: '#3c4250', col2: '#262b36', edge: '#15181f', strength: 1.7, stiff: 1,   tension: false },
+  hout:   { name: 'Hout',   icon: '🪵', cost: 6,  maxLen: 160, drive: false, rope: false, w: 12, col: '#c79a52', col2: '#8a6a30', edge: '#6b4f22', strength: 3.2, stiff: 1,   tension: false },
+  metaal: { name: 'Metaal', icon: '🔩', cost: 16, maxLen: 185, drive: false, rope: false, w: 11, col: '#9fb0cc', col2: '#5d6c84', edge: '#3c4860', strength: 9,   stiff: 1,   tension: false },
+  touw:   { name: 'Touw',   icon: '🪢', cost: 4,  maxLen: 260, drive: false, rope: true,  w: 5,  col: '#dcc48e', col2: '#a98a54', edge: '#7c5a30', strength: 4,   stiff: 0.9, tension: true },
 }
 const MAT_ORDER = ['weg', 'hout', 'metaal', 'touw']
+
+// ── Verlet-physics-constanten ──
+const GRAV = 0.34       // zwaartekracht (px/frame²)
+const DAMP = 0.985      // snelheidsbehoud
+const ITER = 22         // relaxatie-iteraties per frame (hoger = stijver)
+const NODE_R = 5        // botsradius knoop met terrein
+const DRIVE_START = 1500
+const MAXVX = 4.3       // kruissnelheid auto (genoeg om van een schans te lanceren)
 
 // ── level-fabriek ────────────────────────────────────────────────────────────
 // platforms: [{x0,x1,y}] vaste grond · posts: [{x,top}] hoge torens (hangbrug)
@@ -48,37 +59,101 @@ function L(cfg) {
     // boot: alleen op open-water levels. Vaart door de kloof; bouw je te laag
     // (steun onder de waterlijn-clearance) dan ramt hij je brug.
     boat: cfg.boat ? { x: sx, half: cfg.boatHalf || 300, top: cfg.boatTop || 512 } : null,
-    terrain, anchors,
+    terrain, anchors, ramps: cfg.ramps || [],
     start: cfg.start || { x: first.x1 - 110, y: first.y },
     finishX: cfg.finishX != null ? cfg.finishX : last.x0 + 26,
     finishY: last.y,
   }
 }
 
+// ── level-generatoren (oplosbaar door constructie) ──
+const ALL = ['weg', 'hout', 'metaal', 'touw'], WH = ['weg', 'hout'], WHM = ['weg', 'hout', 'metaal']
+// kloof met pijlers: elke deelspan blijft kort genoeg om met de weg te overbruggen;
+// pijlers staan ≤150 onder het dek zodat je ze met hout/metaal kunt schoren.
+function gp(title, budget, mats, o = {}) {
+  const gap = o.gap ?? 280, cx = o.cx ?? 640, yL = o.yL ?? 440, yR = o.yR ?? 440
+  const piers = o.piers ?? 1, depth = Math.min(o.depth ?? 90, 150)
+  const cL = cx - gap / 2, cR = cx + gap / 2
+  const platforms = [{ x0: -300, x1: cL, y: yL }]
+  for (let i = 1; i <= piers; i++) {
+    const f = i / (piers + 1), px = cL + gap * f
+    platforms.push({ x0: px - 28, x1: px + 28, y: yL + (yR - yL) * f + depth })
+  }
+  platforms.push({ x0: cR, x1: 1580, y: yR })
+  return L({ title, budget, mats, platforms, heavy: o.heavy, posts: o.posts })
+}
+// schans: lange aanloop, helling aan de rand, kloof, lager landingsplatform.
+function jp(title, budget, mats, o = {}) {
+  const lx = o.lx ?? 550, yL = o.yL ?? 405, rx = o.rx ?? 690, yR = o.yR ?? 480
+  const rise = o.rise ?? 58, run = o.run ?? 120
+  return L({
+    title, budget, mats, heavy: o.heavy,
+    platforms: [{ x0: -300, x1: lx, y: yL }, { x0: rx, x1: 1580, y: yR }],
+    ramps: [{ x0: lx - run, y0: yL, x1: lx, y1: yL - rise }],
+    start: { x: lx - 330, y: yL },
+  })
+}
+
 const LEVELS = [
-  // weg = berijdbaar dek (verplicht) · hout/metaal/touw = steun
-  L({ title: 'Eerste stapjes',   budget: 100, mats: ['weg'],                          platforms: [{ x0: -300, x1: 580, y: 440 }, { x0: 700, x1: 1580, y: 440 }] }),
-  L({ title: 'Over de pilaar',   budget: 120, mats: ['weg'],                          platforms: [{ x0: -300, x1: 510, y: 440 }, { x0: 610, x1: 670, y: 440 }, { x0: 770, x1: 1580, y: 440 }] }),
-  L({ title: 'Steun met hout',   budget: 150, mats: ['weg', 'hout'],                  platforms: [{ x0: -300, x1: 520, y: 440 }, { x0: 612, x1: 668, y: 520 }, { x0: 760, x1: 1580, y: 440 }] }),
-  L({ title: 'Bredere kloof',    budget: 190, mats: ['weg', 'hout'],                  platforms: [{ x0: -300, x1: 460, y: 440 }, { x0: 600, x1: 680, y: 490 }, { x0: 820, x1: 1580, y: 440 }] }),
-  L({ title: 'Op en af',         budget: 220, mats: ['weg', 'hout', 'metaal'],        platforms: [{ x0: -300, x1: 470, y: 420 }, { x0: 605, x1: 675, y: 500 }, { x0: 800, x1: 1580, y: 470 }] }),
-  L({ title: 'Diep ravijn',      budget: 240, mats: ['weg', 'hout', 'metaal'],        platforms: [{ x0: -300, x1: 430, y: 430 }, { x0: 612, x1: 668, y: 545 }, { x0: 870, x1: 1580, y: 430 }] }),
-  L({ title: 'Twee pilaren',     budget: 260, mats: ['weg', 'hout'],                  platforms: [{ x0: -300, x1: 360, y: 440 }, { x0: 500, x1: 560, y: 540 }, { x0: 720, x1: 780, y: 540 }, { x0: 920, x1: 1580, y: 440 }] }),
-  L({ title: 'Over de boot',     budget: 290, mats: ['weg', 'hout', 'metaal'],        platforms: [{ x0: -300, x1: 430, y: 440 }, { x0: 850, x1: 1580, y: 440 }], boat: true, boatHalf: 200 }),
-  L({ title: 'Lange overspanning', budget: 300, mats: ['weg', 'hout', 'metaal'],      platforms: [{ x0: -300, x1: 400, y: 435 }, { x0: 612, x1: 668, y: 560 }, { x0: 880, x1: 1580, y: 435 }] }),
-  L({ title: 'Trap omhoog',      budget: 270, mats: ['weg', 'hout', 'metaal'],        platforms: [{ x0: -300, x1: 470, y: 490 }, { x0: 640, x1: 700, y: 470 }, { x0: 870, x1: 1580, y: 400 }] }),
-  L({ title: 'Touwbrug',         budget: 300, mats: ['weg', 'hout', 'touw'],          platforms: [{ x0: -300, x1: 430, y: 440 }, { x0: 850, x1: 1580, y: 440 }], posts: [{ x: 400, top: 300 }, { x: 880, top: 300 }], boat: true, boatHalf: 200 }),
-  L({ title: 'Hangbrug',         budget: 340, mats: ['weg', 'hout', 'metaal', 'touw'],platforms: [{ x0: -300, x1: 400, y: 450 }, { x0: 880, x1: 1580, y: 450 }], posts: [{ x: 380, top: 300 }, { x: 900, top: 300 }], boat: true, boatHalf: 230 }),
-  L({ title: 'Eilandhoppen',     budget: 320, mats: ['weg', 'hout', 'metaal'],        platforms: [{ x0: -300, x1: 320, y: 440 }, { x0: 470, x1: 560, y: 470 }, { x0: 720, x1: 810, y: 470 }, { x0: 960, x1: 1580, y: 440 }] }),
-  L({ title: 'Zware vracht',     budget: 330, mats: ['weg', 'hout', 'metaal'],        platforms: [{ x0: -300, x1: 430, y: 440 }, { x0: 612, x1: 668, y: 540 }, { x0: 850, x1: 1580, y: 440 }], heavy: true }),
-  L({ title: 'Hoog en laag',     budget: 330, mats: ['weg', 'hout', 'metaal'],        platforms: [{ x0: -300, x1: 450, y: 400 }, { x0: 620, x1: 690, y: 540 }, { x0: 880, x1: 1580, y: 470 }] }),
-  L({ title: 'Wijde kloof',      budget: 390, mats: ['weg', 'hout', 'metaal', 'touw'],platforms: [{ x0: -300, x1: 330, y: 440 }, { x0: 950, x1: 1580, y: 440 }], posts: [{ x: 310, top: 300 }, { x: 970, top: 300 }], boat: true, boatHalf: 300 }),
-  L({ title: 'Dubbele toren',    budget: 390, mats: ['weg', 'hout', 'metaal', 'touw'],platforms: [{ x0: -300, x1: 360, y: 450 }, { x0: 620, x1: 690, y: 600 }, { x0: 920, x1: 1580, y: 450 }], posts: [{ x: 340, top: 300 }, { x: 940, top: 300 }] }),
-  L({ title: 'Grand Canyon',     budget: 430, mats: ['weg', 'hout', 'metaal', 'touw'],platforms: [{ x0: -300, x1: 320, y: 430 }, { x0: 980, x1: 1580, y: 430 }], posts: [{ x: 300, top: 280 }, { x: 1000, top: 280 }], boat: true, boatHalf: 320 }),
-  L({ title: 'Trappenhuis',      budget: 380, mats: ['weg', 'hout', 'metaal'],        platforms: [{ x0: -300, x1: 380, y: 510 }, { x0: 540, x1: 610, y: 470 }, { x0: 740, x1: 810, y: 430 }, { x0: 940, x1: 1580, y: 390 }] }),
-  L({ title: 'Mega-vracht',      budget: 470, mats: ['weg', 'hout', 'metaal', 'touw'],platforms: [{ x0: -300, x1: 400, y: 440 }, { x0: 900, x1: 1580, y: 440 }], posts: [{ x: 380, top: 280 }, { x: 920, top: 280 }], heavy: true, boat: true, boatHalf: 240 }),
-  L({ title: 'Het ravijn',       budget: 470, mats: ['weg', 'hout', 'metaal', 'touw'],platforms: [{ x0: -300, x1: 340, y: 420 }, { x0: 940, x1: 1580, y: 420 }], posts: [{ x: 320, top: 270 }, { x: 960, top: 270 }], boat: true, boatHalf: 300 }),
-  L({ title: 'Meesterbouwer',    budget: 540, mats: ['weg', 'hout', 'metaal', 'touw'],platforms: [{ x0: -300, x1: 300, y: 440 }, { x0: 470, x1: 540, y: 600 }, { x0: 740, x1: 810, y: 600 }, { x0: 1000, x1: 1580, y: 440 }], posts: [{ x: 280, top: 270 }, { x: 1020, top: 270 }], heavy: true }),
+  // ── Tier 1 (1-10): rustig leren — weg schoren met hout/metaal ──
+  gp('Eerste brug',     140, WH,  { gap: 240, depth: 70 }),
+  gp('Steun nodig',     150, WH,  { gap: 260, depth: 95 }),
+  gp('Dieper ravijn',   175, WHM, { gap: 280, depth: 125 }),
+  gp('Schuin omhoog',   180, WHM, { gap: 280, depth: 95, yL: 460, yR: 410 }),
+  jp('De schans',       150, WH,  { lx: 540, yL: 405, rx: 680, yR: 480, rise: 58 }),
+  gp('Brede kloof',     210, WHM, { gap: 320, depth: 115 }),
+  gp('Zware vracht',    230, WHM, { gap: 280, depth: 100, heavy: true }),
+  gp('Twee steunen',    250, WHM, { gap: 360, piers: 2, depth: 110 }),
+  gp('Diepe pijler',    230, WHM, { gap: 300, depth: 150 }),
+  gp('Hoog en laag',    250, WHM, { gap: 320, depth: 120, yL: 400, yR: 470 }),
+
+  // ── Tier 2 (11-20): groter, zwaarder, eerste verre sprongen ──
+  gp('Lange brug',      300, WHM, { gap: 400, piers: 2, depth: 120 }),
+  gp('Zwaar & diep',    300, WHM, { gap: 340, depth: 150, heavy: true }),
+  jp('Verre sprong',    200, WHM, { lx: 560, yL: 395, rx: 715, yR: 485, rise: 64 }),
+  gp('De trap',         270, WHM, { gap: 360, piers: 2, depth: 105, yL: 495, yR: 405 }),
+  gp('Drie steunen',    340, WHM, { gap: 460, piers: 3, depth: 120 }),
+  gp('Staal vereist',   290, WHM, { gap: 360, depth: 150, heavy: true }),
+  gp('Brede vracht',    340, WHM, { gap: 420, piers: 2, depth: 130, heavy: true }),
+  gp('Steile helling',  310, WHM, { gap: 400, piers: 2, depth: 110, yL: 380, yR: 500 }),
+  gp('Canyon',          360, WHM, { gap: 480, piers: 3, depth: 140 }),
+  jp('Grote sprong',    230, WHM, { lx: 560, yL: 390, rx: 730, yR: 490, rise: 70 }),
+
+  // ── Tier 3 (21-30): wijde kloven, veel steun, krappe budgetten ──
+  gp('Wijde steun',     360, WHM, { gap: 440, piers: 2, depth: 150 }),
+  gp('Drie & zwaar',    400, WHM, { gap: 480, piers: 3, depth: 130, heavy: true }),
+  gp('Vier steunen',    420, WHM, { gap: 560, piers: 4, depth: 125 }),
+  gp('Diep & breed',    400, WHM, { gap: 500, piers: 3, depth: 150 }),
+  gp('Berg op',         360, WHM, { gap: 460, piers: 2, depth: 130, yL: 360, yR: 510 }),
+  jp('Dubbele sprong',  280, WHM, { lx: 560, yL: 385, rx: 740, yR: 495, rise: 74 }),
+  gp('Zware overspan',  440, WHM, { gap: 520, piers: 3, depth: 145, heavy: true }),
+  gp('Het diepe gat',   400, WHM, { gap: 480, piers: 3, depth: 150 }),
+  gp('Lange vracht',    460, WHM, { gap: 540, piers: 3, depth: 140, heavy: true }),
+  gp('Vijf steunen',    480, WHM, { gap: 620, piers: 5, depth: 130 }),
+
+  // ── Tier 4 (31-40): torens & touw mogelijk, grote ravijnen ──
+  gp('Touwbrug',        380, ['weg', 'hout', 'touw'],   { gap: 420, piers: 2, depth: 130, posts: [{ x: 430, top: 300 }, { x: 850, top: 300 }] }),
+  gp('Hangbrug',        440, ALL, { gap: 520, piers: 3, depth: 140, posts: [{ x: 400, top: 290 }, { x: 880, top: 290 }] }),
+  gp('Diep & zwaar',    460, WHM, { gap: 500, piers: 3, depth: 150, heavy: true }),
+  jp('Mega-sprong',     300, WHM, { lx: 560, yL: 380, rx: 745, yR: 500, rise: 78 }),
+  gp('Reuzenkloof',     520, ALL, { gap: 640, piers: 4, depth: 145, posts: [{ x: 360, top: 280 }, { x: 920, top: 280 }] }),
+  gp('Zes steunen',     540, WHM, { gap: 700, piers: 6, depth: 135 }),
+  gp('Berghelling',     460, WHM, { gap: 560, piers: 3, depth: 140, yL: 350, yR: 520, heavy: true }),
+  gp('Diepste pijler',  480, WHM, { gap: 520, piers: 3, depth: 150, heavy: true }),
+  gp('Grand Canyon',    560, ALL, { gap: 660, piers: 4, depth: 150, posts: [{ x: 350, top: 270 }, { x: 930, top: 270 }] }),
+  jp('Wereldsprong',    340, ALL, { lx: 560, yL: 375, rx: 750, yR: 505, rise: 82 }),
+
+  // ── Tier 5 (41-50): meesterproef — alles tegelijk, krap, zwaar ──
+  gp('Lange reis',      560, WHM, { gap: 720, piers: 6, depth: 140 }),
+  gp('Zwaar transport', 580, ALL, { gap: 640, piers: 4, depth: 150, heavy: true, posts: [{ x: 360, top: 270 }, { x: 920, top: 270 }] }),
+  gp('Het ravijn',      600, ALL, { gap: 700, piers: 5, depth: 150, posts: [{ x: 340, top: 260 }, { x: 940, top: 260 }] }),
+  gp('Bergpas',         560, WHM, { gap: 640, piers: 4, depth: 145, yL: 340, yR: 540, heavy: true }),
+  jp('Onmogelijke sprong', 380, ALL, { lx: 560, yL: 370, rx: 758, yR: 510, rise: 86 }),
+  gp('Zeven steunen',   640, WHM, { gap: 800, piers: 7, depth: 140 }),
+  gp('Mega-vracht',     640, ALL, { gap: 700, piers: 5, depth: 150, heavy: true, posts: [{ x: 330, top: 260 }, { x: 950, top: 260 }] }),
+  gp('Diepe afgrond',   620, ALL, { gap: 720, piers: 5, depth: 150, posts: [{ x: 330, top: 250 }, { x: 950, top: 250 }] }),
+  gp('De eindbaas',     720, ALL, { gap: 820, piers: 7, depth: 150, heavy: true }),
+  gp('Meesterbouwer',   780, ALL, { gap: 860, piers: 7, depth: 150, heavy: true, posts: [{ x: 300, top: 250 }, { x: 980, top: 250 }] }),
 ]
 
 // ── progressie ──
@@ -105,7 +180,7 @@ export default function BrugBouwen({ onBack }) {
     S.current = {
       ...S.current, lv, idx, nodes, members: [],
       drag: null, flash: 0, lp: null, lpTimer: null,
-      engine: null, bodies: null, car: null, t0: 0,
+      sim: null, t0: 0,
     }
     setLevelIdx(idx)
     setBudget(lv.budget)
@@ -217,7 +292,7 @@ export default function BrugBouwen({ onBack }) {
     let raf, last = performance.now()
     function frame(now) {
       const dt = Math.min(40, now - last); last = now
-      if (S.current.engine) step()
+      if (S.current.sim) step()
       draw(dt / 1000)
       raf = requestAnimationFrame(frame)
     }
@@ -232,134 +307,124 @@ export default function BrugBouwen({ onBack }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // ── physics opbouwen + testen ──
+  // ── physics opbouwen (Verlet) ──
   function startRun() {
     const st = S.current
-    if (st.members.length === 0) { st.flash = 0.4; return }
-    const M = Matter
-    const engine = M.Engine.create()
-    engine.gravity.y = 0
-    engine.positionIterations = 26; engine.velocityIterations = 18; engine.constraintIterations = 10
-    const world = engine.world
-    // ROAD = berijdbaar dek (botst met auto+grond) · SUPPORT = puur structuur (botst nergens)
-    const CAT = { TERRAIN: 1, ROAD: 2, SUPPORT: 16, NODE: 4, CAR: 8 }
+    // (schans-levels mogen zonder brug starten ⇒ geen lege-brug-blokkade meer)
 
-    st.lv.terrain.forEach(t => M.Composite.add(world, M.Bodies.rectangle(
-      t.x + t.w / 2, t.y + t.h / 2, t.w, t.h,
-      { isStatic: true, friction: 1, collisionFilter: { category: CAT.TERRAIN, mask: CAT.ROAD | CAT.CAR } })))
-
-    const nodeBodies = st.nodes.map(n => M.Bodies.circle(n.x, n.y, 6, {
-      isStatic: n.fixed, density: 0.01, frictionAir: 0.08, collisionFilter: { category: CAT.NODE, mask: 0 } }))
-    M.Composite.add(world, nodeBodies)
-
-    const memObjs = st.members.map(mm => {
-      const mat = MAT[mm.mat]
-      const a = nodeBodies[mm.a].position, b = nodeBodies[mm.b].position
-      const len = Math.hypot(a.x - b.x, a.y - b.y)
-      if (mat.rope) {
-        const con = M.Constraint.create({ bodyA: nodeBodies[mm.a], bodyB: nodeBodies[mm.b], length: len, stiffness: 0.9, damping: 0.06 })
-        M.Composite.add(world, con)
-        return { rope: true, con, a: mm.a, b: mm.b, rest: len, mat: mm.mat, broken: false }
-      }
-      const cx = (a.x + b.x) / 2, cy = (a.y + b.y) / 2, ang = Math.atan2(b.y - a.y, b.x - a.x)
-      const cf = mat.drive ? { category: CAT.ROAD, mask: CAT.TERRAIN | CAT.CAR } : { category: CAT.SUPPORT, mask: 0 }
-      const body = M.Bodies.rectangle(cx, cy, len, mat.w, {
-        angle: ang, density: mat.density, friction: 0.95, frictionAir: 0.02,
-        collisionFilter: cf, chamfer: { radius: 3 } })
-      const pin = (px, nb) => M.Constraint.create({ bodyA: body, pointA: { x: px, y: 0 }, bodyB: nb, length: 0, stiffness: 1, damping: 0.1 })
-      const cons = [pin(-len / 2, nodeBodies[mm.a]), pin(len / 2, nodeBodies[mm.b])]
-      M.Composite.add(world, [body, ...cons])
-      return { body, cons, a: mm.a, b: mm.b, rest: len, mat: mm.mat, broken: false }
+    // knopen → puntmassa's (im = inverse massa; 0 = vast anker)
+    const pts = st.nodes.map(n => ({ x: n.x, y: n.y, px: n.x, py: n.y, im: n.fixed ? 0 : 1, r: NODE_R }))
+    // balken → constraints met rustlengte
+    const beams = st.members.map(m => {
+      const a = pts[m.a], b = pts[m.b]
+      return { a: m.a, b: m.b, rest: Math.hypot(a.x - b.x, a.y - b.y), mat: m.mat, broken: false, force: 0 }
     })
 
-    // voertuig
+    // ── voertuig: stijve doos van 4 punten (2 wielen onder, 2 hoeken boven) ──
     const s = st.lv.start, heavy = st.lv.heavy
-    const cw = heavy ? 120 : 96, ch = heavy ? 26 : 18, cy0 = s.y - (heavy ? 30 : 24)
-    const cd = heavy ? 0.006 : 0.0035
-    const chassis = M.Bodies.rectangle(s.x, cy0, cw, ch, { density: cd, friction: 0.5, chamfer: { radius: 6 },
-      collisionFilter: { category: CAT.CAR, mask: CAT.TERRAIN | CAT.ROAD } })
-    const wr = heavy ? 19 : 16, wb = heavy ? 42 : 34, wy = cy0 + (heavy ? 16 : 12)
-    const wopt = { density: heavy ? 0.016 : 0.012, friction: 1.6, frictionStatic: 2.2,
-      collisionFilter: { category: CAT.CAR, mask: CAT.TERRAIN | CAT.ROAD } }
-    const wA = M.Bodies.circle(s.x - wb, wy, wr, wopt), wB = M.Bodies.circle(s.x + wb, wy, wr, wopt)
-    const axle = (w, dx) => M.Constraint.create({ bodyA: chassis, pointA: { x: dx, y: wy - cy0 }, bodyB: w, length: 0, stiffness: 0.85, damping: 0.35 })
-    M.Composite.add(world, [chassis, wA, wB, axle(wA, -wb), axle(wB, wb)])
+    const wR = heavy ? 18 : 15, halfW = heavy ? 48 : 40, bodyH = heavy ? 36 : 30
+    const by = s.y - wR - 2, ty = by - bodyH, im = heavy ? 0.34 : 0.42
+    const base = pts.length
+    const mk = (x, y, r) => { pts.push({ x, y, px: x, py: y, im, r, car: true }); return pts.length - 1 }
+    const wl = mk(s.x - halfW, by, wR), wr = mk(s.x + halfW, by, wR)
+    const tl = mk(s.x - halfW, ty, 6), tr = mk(s.x + halfW, ty, 6)
+    const carBeam = (i, j) => beams.push({ a: i, b: j, rest: Math.hypot(pts[i].x - pts[j].x, pts[i].y - pts[j].y), car: true })
+    carBeam(wl, wr); carBeam(tl, tr); carBeam(wl, tl); carBeam(wr, tr); carBeam(wl, tr); carBeam(wr, tl)
 
-    // GEEN onzichtbare pre-settle meer: de zwaartekracht wordt nu live en
-    // geleidelijk opgevoerd (in step), zodat je de brug ziet inzakken/bezwijken.
-    engine.gravity.y = 0
-    st.engine = engine; st.bodies = { nodeBodies, memObjs, CAT, origY: st.nodes.map(n => n.y) }
-    st.car = { chassis, wheels: [wA, wB], wr, heavy }; st.t0 = performance.now()
-    st.boat = null; st.boatHit = false
+    st.sim = {
+      pts, beams, terrain: st.lv.terrain, ramps: st.lv.ramps || [],
+      car: { wl, wr, tl, tr, wR, heavy, base },
+      wheels: [wl, wr], grounded: true,
+    }
+    st.t0 = performance.now(); st.maxX = s.x; st.lastProg = 0
     setMode('run')
   }
 
   function step() {
-    const M = Matter, st = S.current
+    const st = S.current, sim = st.sim
     const el = performance.now() - st.t0
-    // zwaartekracht zacht opvoeren ⇒ je ziet de brug rustig inzakken/bezwijken
-    st.engine.gravity.y = Math.min(1, el / 1100)
-    // alles in slow-motion: kleinere tijdstap = trager én stabieler
-    const SLOW = 0.6
-    M.Engine.update(st.engine, 16.666 * SLOW)
+    const grav = GRAV * Math.min(1, el / 1100)   // zwaartekracht zacht opvoeren ⇒ zichtbaar inzakken
+    const { pts, beams } = sim
 
-    const clampV = (b, mx) => { const v = b.velocity, sp = Math.hypot(v.x, v.y); if (sp > mx) M.Body.setVelocity(b, { x: v.x * mx / sp, y: v.y * mx / sp }) }
-    st.bodies.nodeBodies.forEach(b => { if (!b.isStatic) clampV(b, 16) })
-    st.bodies.memObjs.forEach(p => { if (!p.broken && !p.rope) clampV(p.body, 16) })
+    // 1) Verlet-integratie
+    for (const p of pts) {
+      if (p.im === 0) continue
+      const vx = (p.x - p.px) * DAMP, vy = (p.y - p.py) * DAMP
+      p.px = p.x; p.py = p.y
+      p.x += vx; p.y += vy + grav
+    }
+
+    // 2) aandrijving: alleen op de grond (wielcontact). In de lucht geen duw ⇒
+    //    de auto maakt een natuurlijke boog en kan van een schans af vliegen.
+    if (modeRef.current === 'run' && el > DRIVE_START && sim.grounded) {
+      const c = sim.car
+      const w = pts[c.wl], vx = w.x - w.px
+      const push = vx >= MAXVX ? 0 : vx < 0.6 ? 0.95 : 0.6
+      if (push) for (const ci of [c.wl, c.wr, c.tl, c.tr]) pts[ci].x += push
+    }
+    // in de lucht: zachte zelf-stabilisatie ⇒ landt op z'n wielen na een sprong
+    if (modeRef.current === 'run' && el > DRIVE_START && !sim.grounded) {
+      const c = sim.car, P = [c.wl, c.wr, c.tl, c.tr]
+      let cx = 0, cy = 0; for (const ci of P) { cx += pts[ci].x; cy += pts[ci].y }; cx /= 4; cy /= 4
+      const ang = Math.atan2(pts[c.wr].y - pts[c.wl].y, pts[c.wr].x - pts[c.wl].x)
+      const corr = -ang * 0.09, cs = Math.cos(corr), sn = Math.sin(corr)
+      for (const ci of P) { const p = pts[ci], dx = p.x - cx, dy = p.y - cy; p.x = cx + dx * cs - dy * sn; p.y = cy + dx * sn + dy * cs }
+    }
+
+    // 3) relaxatie: balken stijf maken + botsingen oplossen
+    const wlp = pts[sim.car.wl], wrp = pts[sim.car.wr]
+    wlp._hit = false; wrp._hit = false
+    for (let it = 0; it < ITER; it++) {
+      const first = it === 0
+      for (const bm of beams) {
+        if (bm.broken) continue
+        const a = pts[bm.a], b = pts[bm.b]
+        let dx = b.x - a.x, dy = b.y - a.y
+        let d = Math.hypot(dx, dy) || 0.0001
+        const mat = bm.mat ? MAT[bm.mat] : null
+        // touw trekt alleen (geen druk)
+        if (mat && mat.tension && d < bm.rest) continue
+        const diff = (d - bm.rest)
+        if (first && mat) bm.force = bm.force * 0.82 + Math.abs(diff) * 0.18   // kracht-proxy
+        const stiff = mat ? mat.stiff : 1
+        const k = (diff / d) * 0.5 * stiff
+        const imA = a.im, imB = b.im, sum = imA + imB
+        if (sum === 0) continue
+        const fa = imA / sum, fb = imB / sum
+        a.x += dx * k * 2 * fa; a.y += dy * k * 2 * fa
+        b.x -= dx * k * 2 * fb; b.y -= dy * k * 2 * fb
+      }
+      // terrein- en schans-botsing voor alle punten
+      for (const p of pts) { if (p.im !== 0) { collideTerrain(p, sim.terrain); collideRamp(p, sim.ramps) } }
+      // wielen op het weg-dek (lastoverdracht naar de brug)
+      for (const wi of sim.wheels) {
+        const w = pts[wi]
+        for (const bm of beams) {
+          if (bm.broken || bm.car || !MAT[bm.mat]?.drive) continue
+          collideWheelBeam(w, pts[bm.a], pts[bm.b], MAT[bm.mat].w * 0.5)
+        }
+      }
+    }
+    sim.grounded = !!(wlp._hit || wrp._hit)   // wielcontact deze frame
 
     if (modeRef.current === 'run') {
-      // eerst rustig laten settelen (je ziet of de brug houdt), dan pas rijden
-      if (el > 1700) {
-        const TARGET = st.car.heavy ? 0.30 : 0.36
-        st.car.wheels.forEach(w => {
-          if (st.car.chassis.velocity.x < 4.5 && w.angularVelocity < TARGET)
-            M.Body.setAngularVelocity(w, Math.min(TARGET, w.angularVelocity + 0.03))
-        })
-        // continue duwkracht zolang hij niet op kruissnelheid is (helpt klimmen)
-        if (st.car.chassis.velocity.x < 3)
-          M.Body.applyForce(st.car.chassis, { x: st.car.chassis.position.x, y: st.car.chassis.position.y + 10 },
-            { x: (st.car.heavy ? 0.0026 : 0.0019) * st.car.chassis.mass, y: 0 })
+      // breken zodra de balkkracht de sterkte overschrijdt
+      if (el > 500) for (const bm of beams) {
+        if (bm.broken || bm.car) continue
+        if (bm.force > MAT[bm.mat].strength) bm.broken = true
       }
-      // breken bij overbelasting (rek) of — voor de weg — bij te ver doorzakken.
-      // Een weg-dek is zwak op zichzelf: zakt een vrije weg-knoop te ver door,
-      // dan bezwijkt de weg. Steun je die knoop met hout/metaal, dan blijft hij.
-      st.bodies.memObjs.forEach(p => {
-        if (p.broken) return
-        const a = st.bodies.nodeBodies[p.a].position, b = st.bodies.nodeBodies[p.b].position
-        const cur = Math.hypot(a.x - b.x, a.y - b.y)
-        let brk = Math.abs(cur - p.rest) / p.rest > MAT[p.mat].break
-        if (!brk && MAT[p.mat].sag) {
-          const sagA = st.nodes[p.a].fixed ? 0 : a.y - st.bodies.origY[p.a]
-          const sagB = st.nodes[p.b].fixed ? 0 : b.y - st.bodies.origY[p.b]
-          if (Math.max(sagA, sagB) > MAT[p.mat].sag) brk = true
-        }
-        if (brk) {
-          p.broken = true
-          if (p.rope) M.Composite.remove(st.engine.world, p.con)
-          else M.Composite.remove(st.engine.world, [p.body, ...p.cons])
-        }
-      })
-      // de boot vaart door de kloof — bouw je te laag, dan ramt hij je brug
-      if (st.lv.boat) {
-        const bc = st.lv.boat, sail = el - 2200
-        if (sail > 0) {
-          const pr = sail / 6500
-          st.boat = { x: bc.x - bc.half + pr * bc.half * 2, on: pr <= 1, pr }
-          if (st.boat.on) {
-            const bx = st.boat.x
-            for (const p of st.bodies.memObjs) {
-              if (p.broken) continue
-              const a = st.bodies.nodeBodies[p.a].position, b = st.bodies.nodeBodies[p.b].position
-              if (Math.max(a.y, b.y) > bc.top && Math.max(a.x, b.x) > bx - 92 && Math.min(a.x, b.x) < bx + 92) { st.boatHit = true; finish('lose'); break }
-            }
-          }
-        }
-      }
-      const c = st.car.chassis
-      if (c.position.x > st.lv.finishX && c.position.y < st.lv.finishY + 70) finish('win')
-      else if (c.position.y > KILL_Y || el > 60000) finish('lose')
+      // win / verlies
+      const wl = pts[sim.car.wl], wr = pts[sim.car.wr]
+      const cx = (wl.x + wr.x) / 2, cy = (wl.y + wr.y) / 2
+      // vooruitgang bijhouden ⇒ vastgelopen auto verliest (i.p.v. eindeloos wachten)
+      if (cx > st.maxX + 2) { st.maxX = cx; st.lastProg = el }
+      const stuck = el > DRIVE_START + 600 && el - st.lastProg > 2600
+      if (cx > st.lv.finishX && cy < st.lv.finishY + 70) finish('win')
+      else if (cy > KILL_Y || stuck || el > 30000) finish('lose')
     }
   }
+
+  function teardown() { if (S.current) S.current.sim = null }
 
   function finish(result) {
     if (modeRef.current !== 'run') return
@@ -377,10 +442,6 @@ export default function BrugBouwen({ onBack }) {
     }
   }
 
-  function teardown() {
-    if (S.current?.engine) { Matter.World.clear(S.current.engine.world, false); Matter.Engine.clear(S.current.engine) }
-    if (S.current) { S.current.engine = null; S.current.bodies = null; S.current.car = null }
-  }
   function backToBuild() { teardown(); setMode('build') }
   function wisLaatste() { if (S.current.members.length) { S.current.members.pop(); S.current.rebuild(); S.current.sync() } }
   function leeg() { S.current.members.length = 0; S.current.nodes.length = S.current.lv.anchors.length; S.current.sync() }
@@ -395,7 +456,7 @@ export default function BrugBouwen({ onBack }) {
     ctx.translate(view.ox, view.oy); ctx.scale(view.scale, view.scale)
     ctx.beginPath(); ctx.rect(0, 0, VW, VH); ctx.clip()
 
-    const lv = st.lv, run = !!st.engine, t = st.tAcc
+    const lv = st.lv, run = !!st.sim, t = st.tAcc
 
     // lucht — zachte dag-gradient
     const sky = ctx.createLinearGradient(0, 0, 0, VH)
@@ -453,15 +514,15 @@ export default function BrugBouwen({ onBack }) {
 
     // terrein
     lv.terrain.forEach(tr => drawTerrain(ctx, tr, t))
+    lv.ramps.forEach(rm => drawRamp(ctx, rm))
 
     // ── leden ──
     if (run) {
-      st.bodies.memObjs.forEach(p => {
-        if (p.broken) return
-        const a = st.bodies.nodeBodies[p.a].position, b = st.bodies.nodeBodies[p.b].position
-        const cur = Math.hypot(a.x - b.x, a.y - b.y)
-        const strain = Math.min(1, Math.abs(cur - p.rest) / p.rest / MAT[p.mat].break)
-        drawMember(ctx, a, b, p.mat, strainCol(strain), true)
+      st.sim.beams.forEach(p => {
+        if (p.broken || p.car) return
+        const a = st.sim.pts[p.a], b = st.sim.pts[p.b]
+        const stress = Math.min(1, p.force / MAT[p.mat].strength)
+        drawMember(ctx, a, b, p.mat, strainCol(stress), true)
       })
     } else {
       st.members.forEach(m => drawMember(ctx, st.nodes[m.a], st.nodes[m.b], m.mat, null, false))
@@ -477,12 +538,12 @@ export default function BrugBouwen({ onBack }) {
       ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(st.drag.x, st.drag.y); ctx.stroke()
     }
 
-    // knopen
-    const nodes = run ? st.bodies.nodeBodies.map((nb, i) => ({ x: nb.position.x, y: nb.position.y, fixed: st.nodes[i].fixed })) : st.nodes
+    // knopen (in run: alleen de brug-knopen, niet de auto-punten)
+    const nodes = run ? st.sim.pts.slice(0, st.sim.car.base).map((p, i) => ({ x: p.x, y: p.y, fixed: st.nodes[i].fixed })) : st.nodes
     nodes.forEach(n => peg(ctx, n.x, n.y, n.fixed))
 
     // truck
-    if (st.car) drawTruck(ctx, st.car)
+    if (run) drawTruck(ctx, st.sim)
 
     // finish-vlag
     flag(ctx, lv.finishX + 6, lv.finishY)
@@ -497,7 +558,7 @@ export default function BrugBouwen({ onBack }) {
 
   return (
     <div style={wrap}>
-      <button style={backBtn} onClick={() => screen === 'play' ? setScreen('select') : onBack()}>← {screen === 'play' ? 'Levels' : 'Menu'}</button>
+      <button style={backBtn} onClick={() => { if (screen === 'play') { teardown(); setMode('build'); setScreen('select') } else onBack() }}>← {screen === 'play' ? 'Levels' : 'Menu'}</button>
       <div style={{ position: 'absolute', inset: 0 }}>
         <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block', touchAction: 'none' }} />
       </div>
@@ -775,41 +836,100 @@ function flag(ctx, x, y) {
   ctx.fillStyle = '#ff4d6a'
   ctx.beginPath(); ctx.moveTo(x, y - 64); ctx.lineTo(x + 34, y - 54); ctx.lineTo(x, y - 44); ctx.closePath(); ctx.fill()
 }
-function drawTruck(ctx, car) {
-  const c = car.chassis
-  ctx.save(); ctx.translate(c.position.x, c.position.y); ctx.rotate(c.angle)
-  const w = car.heavy ? 122 : 98, h = car.heavy ? 26 : 19
+function drawTruck(ctx, sim) {
+  const car = sim.car, pts = sim.pts
+  const wl = pts[car.wl], wr = pts[car.wr], tl = pts[car.tl], tr = pts[car.tr]
+  const cx = (wl.x + wr.x + tl.x + tr.x) / 4, cy = (wl.y + wr.y + tl.y + tr.y) / 4
+  const ang = Math.atan2(wr.y - wl.y, wr.x - wl.x)
+  const w = Math.hypot(wr.x - wl.x, wr.y - wl.y) + 16, h = car.heavy ? 26 : 20
   const body = car.heavy ? ['#3f7fd6', '#2c63b0'] : ['#ec4b4b', '#c22f2f']
-  // onderstel-schaduw
+  ctx.save(); ctx.translate(cx, cy - 2); ctx.rotate(ang)
   ctx.fillStyle = 'rgba(0,0,0,.22)'; roundRect(ctx, -w / 2, h / 2 - 3, w, 7, 4); ctx.fill()
-  // carrosserie met gradient
-  const g = ctx.createLinearGradient(0, -h / 2, 0, h / 2)
-  g.addColorStop(0, body[0]); g.addColorStop(1, body[1])
+  const g = ctx.createLinearGradient(0, -h / 2, 0, h / 2); g.addColorStop(0, body[0]); g.addColorStop(1, body[1])
   ctx.fillStyle = g; roundRect(ctx, -w / 2, -h / 2, w, h, 7); ctx.fill()
-  // cabine
   const cabW = car.heavy ? 34 : 28
   ctx.fillStyle = body[1]; roundRect(ctx, w / 2 - cabW - 4, -h / 2 - 12, cabW, 14, 5); ctx.fill()
-  // raam
-  const win = ctx.createLinearGradient(0, -h / 2 - 12, 0, -h / 2)
-  win.addColorStop(0, '#dff1ff'); win.addColorStop(1, '#9cc8f0')
+  const win = ctx.createLinearGradient(0, -h / 2 - 12, 0, -h / 2); win.addColorStop(0, '#dff1ff'); win.addColorStop(1, '#9cc8f0')
   ctx.fillStyle = win; roundRect(ctx, w / 2 - cabW, -h / 2 - 9, cabW - 8, 11, 3); ctx.fill()
-  // glans-streep
   ctx.fillStyle = 'rgba(255,255,255,.35)'; roundRect(ctx, -w / 2 + 5, -h / 2 + 3, w - cabW - 12, 4, 2); ctx.fill()
-  // koplamp + lading
   ctx.fillStyle = '#ffe27a'; ctx.beginPath(); ctx.arc(w / 2 - 2, h / 2 - 7, 3, 0, 7); ctx.fill()
-  ctx.fillStyle = 'rgba(0,0,0,.15)'; for (let i = 0; i < 3; i++) ctx.fillRect(-w / 2 + 10 + i * 16, -h / 2 + 4, 10, h - 8)
   ctx.restore()
-  car.wheels.forEach(w2 => {
-    ctx.save(); ctx.translate(w2.position.x, w2.position.y); ctx.rotate(w2.angle)
-    ctx.fillStyle = '#15171b'; ctx.beginPath(); ctx.arc(0, 0, car.wr, 0, 7); ctx.fill()
-    ctx.fillStyle = '#2b2f36'; ctx.beginPath(); ctx.arc(0, 0, car.wr * 0.92, 0, 7); ctx.fill()
-    const hub = ctx.createRadialGradient(-2, -2, 1, 0, 0, car.wr * 0.5)
-    hub.addColorStop(0, '#e8eef6'); hub.addColorStop(1, '#8a93a0')
-    ctx.fillStyle = hub; ctx.beginPath(); ctx.arc(0, 0, car.wr * 0.42, 0, 7); ctx.fill()
+  // wielen (rol-hoek uit afgelegde weg)
+  for (const wi of [car.wl, car.wr]) {
+    const wp = pts[wi]
+    wp._spin = (wp._spin || 0) + (wp.x - wp.px) / car.wR
+    ctx.save(); ctx.translate(wp.x, wp.y); ctx.rotate(wp._spin)
+    ctx.fillStyle = '#15171b'; ctx.beginPath(); ctx.arc(0, 0, car.wR, 0, 7); ctx.fill()
+    ctx.fillStyle = '#2b2f36'; ctx.beginPath(); ctx.arc(0, 0, car.wR * 0.92, 0, 7); ctx.fill()
+    const hub = ctx.createRadialGradient(-2, -2, 1, 0, 0, car.wR * 0.5); hub.addColorStop(0, '#e8eef6'); hub.addColorStop(1, '#8a93a0')
+    ctx.fillStyle = hub; ctx.beginPath(); ctx.arc(0, 0, car.wR * 0.42, 0, 7); ctx.fill()
     ctx.strokeStyle = 'rgba(60,66,76,.9)'; ctx.lineWidth = 2
-    for (let i = 0; i < 4; i++) { const a = i * Math.PI / 2; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(Math.cos(a) * car.wr * 0.4, Math.sin(a) * car.wr * 0.4); ctx.stroke() }
+    for (let i = 0; i < 4; i++) { const a = i * Math.PI / 2; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(Math.cos(a) * car.wR * 0.4, Math.sin(a) * car.wR * 0.4); ctx.stroke() }
     ctx.restore()
-  })
+  }
+}
+// ── Verlet-botsingshelpers ──
+function collideTerrain(p, terrain) {
+  const r = p.r || 0
+  for (const t of terrain) {
+    const L = t.x - r, R = t.x + t.w + r, T = t.y - r, B = t.y + t.h + r
+    if (p.x <= L || p.x >= R || p.y <= T || p.y >= B) continue
+    const dL = p.x - L, dR = R - p.x, dT = p.y - T, dB = B - p.y
+    const m = Math.min(dL, dR, dT, dB)
+    if (m === dT) p.y = T           // bovenop landen (meest voorkomend)
+    else if (m === dL) p.x = L
+    else if (m === dR) p.x = R
+    else p.y = B
+    p._hit = true
+  }
+}
+function drawRamp(ctx, rm) {
+  const base = rm.y0 + 10
+  const g = ctx.createLinearGradient(0, rm.y1, 0, base + 120)
+  g.addColorStop(0, '#c47e34'); g.addColorStop(.5, '#9a5f2a'); g.addColorStop(1, '#6f441f')
+  ctx.fillStyle = g
+  ctx.beginPath(); ctx.moveTo(rm.x0, base); ctx.lineTo(rm.x0, rm.y0); ctx.lineTo(rm.x1, rm.y1); ctx.lineTo(rm.x1, base + 120); ctx.closePath(); ctx.fill()
+  // gras op de helling
+  ctx.strokeStyle = '#5bbf52'; ctx.lineWidth = 11; ctx.lineCap = 'round'
+  ctx.beginPath(); ctx.moveTo(rm.x0, rm.y0); ctx.lineTo(rm.x1, rm.y1); ctx.stroke()
+  ctx.strokeStyle = '#6ad068'; ctx.lineWidth = 5
+  ctx.beginPath(); ctx.moveTo(rm.x0, rm.y0 - 2); ctx.lineTo(rm.x1, rm.y1 - 2); ctx.stroke()
+  // richtpijl
+  ctx.fillStyle = 'rgba(255,255,255,.7)'
+  const mx = (rm.x0 + rm.x1) / 2, my = (rm.y0 + rm.y1) / 2 - 16, ang = Math.atan2(rm.y1 - rm.y0, rm.x1 - rm.x0)
+  ctx.save(); ctx.translate(mx, my); ctx.rotate(ang)
+  ctx.beginPath(); ctx.moveTo(-10, -6); ctx.lineTo(6, -6); ctx.lineTo(6, -11); ctx.lineTo(16, 0); ctx.lineTo(6, 11); ctx.lineTo(6, 6); ctx.lineTo(-10, 6); ctx.closePath(); ctx.fill()
+  ctx.restore()
+}
+// schans: gladde helling van (x0,y0) laag naar (x1,y1) hoog. Een punt op de
+// helling wordt naar het oppervlak geduwd ⇒ de auto rijdt omhoog en lanceert.
+function collideRamp(p, ramps) {
+  const r = p.r || 0
+  for (const rm of ramps) {
+    if (p.x < rm.x0 || p.x > rm.x1) continue
+    const yr = rm.y0 + (rm.y1 - rm.y0) * (p.x - rm.x0) / (rm.x1 - rm.x0)
+    if (p.y > yr - r && p.y < yr - r + 70) { p.y = yr - r; p._hit = true }
+  }
+}
+function collideWheelBeam(w, a, b, h) {
+  const R = (w.r || 14) + h
+  let dx = b.x - a.x, dy = b.y - a.y
+  const l2 = dx * dx + dy * dy || 1
+  let u = ((w.x - a.x) * dx + (w.y - a.y) * dy) / l2
+  u = Math.max(0, Math.min(1, u))
+  const cxp = a.x + u * dx, cyp = a.y + u * dy
+  let nx = w.x - cxp, ny = w.y - cyp
+  let d = Math.hypot(nx, ny) || 0.0001
+  if (d >= R) return
+  nx /= d; ny /= d
+  const overlap = R - d
+  // verdeel correctie over wiel en de twee balk-uiteinden (inverse massa + parameter u)
+  const imW = w.im, imA = a.im * (1 - u), imB = b.im * u, sum = imW + imA + imB
+  if (sum === 0) return
+  w.x += nx * overlap * (imW / sum); w.y += ny * overlap * (imW / sum)
+  a.x -= nx * overlap * (imA / sum); a.y -= ny * overlap * (imA / sum)
+  b.x -= nx * overlap * (imB / sum); b.y -= ny * overlap * (imB / sum)
+  w._hit = true
 }
 function roundRect(ctx, x, y, w, h, r) {
   ctx.beginPath(); ctx.moveTo(x + r, y)
