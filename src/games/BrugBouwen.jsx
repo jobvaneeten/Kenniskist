@@ -17,7 +17,7 @@ const HIT = 34
 // density = gewicht · drive = of de auto erop kan rijden · rope = trekkabel (geen balk)
 // drive=true ⇒ de auto rijdt erop (alleen WEG). hout/metaal/touw zijn pure steun.
 const MAT = {
-  weg:    { name: 'Weg',    icon: '🛣️', cost: 10, maxLen: 120, break: 0.55, density: 0.006, drive: true,  rope: false, w: 15, col: '#3c4250', col2: '#262b36', edge: '#15181f' },
+  weg:    { name: 'Weg',    icon: '🛣️', cost: 10, maxLen: 120, break: 0.20, density: 0.011, drive: true,  rope: false, w: 15, col: '#3c4250', col2: '#262b36', edge: '#15181f', sag: 24 },
   hout:   { name: 'Hout',   icon: '🪵', cost: 6,  maxLen: 135, break: 0.30, density: 0.005, drive: false, rope: false, w: 12, col: '#c79a52', col2: '#8a6a30', edge: '#6b4f22' },
   metaal: { name: 'Metaal', icon: '🔩', cost: 16, maxLen: 160, break: 1.0,  density: 0.008, drive: false, rope: false, w: 11, col: '#9fb0cc', col2: '#5d6c84', edge: '#3c4860' },
   touw:   { name: 'Touw',   icon: '🪢', cost: 4,  maxLen: 240, break: 0.45, density: 0.002, drive: false, rope: true,  w: 5,  col: '#dcc48e', col2: '#a98a54', edge: '#7c5a30' },
@@ -295,7 +295,7 @@ export default function BrugBouwen({ onBack }) {
     }
     engine.gravity.y = 1
 
-    st.engine = engine; st.bodies = { nodeBodies, memObjs, CAT }
+    st.engine = engine; st.bodies = { nodeBodies, memObjs, CAT, origY: st.nodes.map(n => n.y) }
     st.car = { chassis, wheels: [wA, wB], wr, heavy }; st.t0 = performance.now()
     st.boat = null; st.boatHit = false
     setMode('run')
@@ -323,12 +323,20 @@ export default function BrugBouwen({ onBack }) {
           M.Body.applyForce(st.car.chassis, { x: st.car.chassis.position.x, y: st.car.chassis.position.y + 10 },
             { x: (st.car.heavy ? 0.0026 : 0.0019) * st.car.chassis.mass, y: 0 })
       }
-      // breken bij overbelasting
+      // breken bij overbelasting (rek) of — voor de weg — bij te ver doorzakken.
+      // Een weg-dek is zwak op zichzelf: zakt een vrije weg-knoop te ver door,
+      // dan bezwijkt de weg. Steun je die knoop met hout/metaal, dan blijft hij.
       st.bodies.memObjs.forEach(p => {
         if (p.broken) return
         const a = st.bodies.nodeBodies[p.a].position, b = st.bodies.nodeBodies[p.b].position
         const cur = Math.hypot(a.x - b.x, a.y - b.y)
-        if (Math.abs(cur - p.rest) / p.rest > MAT[p.mat].break) {
+        let brk = Math.abs(cur - p.rest) / p.rest > MAT[p.mat].break
+        if (!brk && MAT[p.mat].sag) {
+          const sagA = st.nodes[p.a].fixed ? 0 : a.y - st.bodies.origY[p.a]
+          const sagB = st.nodes[p.b].fixed ? 0 : b.y - st.bodies.origY[p.b]
+          if (Math.max(sagA, sagB) > MAT[p.mat].sag) brk = true
+        }
+        if (brk) {
           p.broken = true
           if (p.rope) M.Composite.remove(st.engine.world, p.con)
           else M.Composite.remove(st.engine.world, [p.body, ...p.cons])
