@@ -50,7 +50,6 @@ export function SpacerunnerBeloning({ onDone }) {
       <button className="ws-game-exit" onClick={onDone}>← Klaar</button>
       <iframe src="/sterrenstroom/" title="Spacerunner" allow="autoplay" />
       <div className="ws-game-hint">Je gaat automatisch verder na het spel 🛸</div>
-      <OrientationGate want="portrait" />
     </div>
   )
 }

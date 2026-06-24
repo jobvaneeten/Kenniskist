@@ -210,7 +210,7 @@ export default function App() {
 
   if (screen === 'wardrobe') return (
     <>
-      <CurrencyBadge munten={curuntie} briefgeld={briefgeld} />
+      <CurrencyBadge munten={curuntie} briefgeld={briefgeld} hideMunten />
       <Wardrobe
         onBack={goMenu}
         onPlayRocket={() => setScreen('rocket')}

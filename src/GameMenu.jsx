@@ -5,6 +5,7 @@ import JetpackGame from './games/JetpackGame'
 import HeadSoccer from './games/HeadSoccer'
 import AstroKatapultGame from './games/AstroKatapultGame'
 import SterrenstroompGame from './games/SterrenstroompGame'
+import BrugBouwen from './games/BrugBouwen'
 import BlokOefenen from './games/BlokOefenen'
 import ProcentenBreuken from './games/ProcentenBreuken'
 import TafelsOefenen from './games/TafelsOefenen'
@@ -61,6 +62,7 @@ const FREE_GAMES = [
   { key: 'jetpack',       emoji: '🚀', name: 'Jetpack',          desc: 'Vlieg zo ver mogelijk!', rewards: ['🪙 munten'] },
   { key: 'astrokatapult', emoji: '🪐', name: 'Astro Katapult',   desc: 'Lanceer & versla de aliens in 50 levels!' },
   { key: 'sterrenstroom', emoji: '🛸', name: 'Spacerunner',     desc: 'Ontwijk de asteroïden in de ruimte!' },
+  { key: 'brug',          emoji: '🌉', name: 'Brug Bouwen',     desc: 'Bouw bruggen in 22 levels — hout, weg, metaal & touw!' },
 ]
 
 function RewardChips({ rewards }) {
@@ -126,6 +128,10 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
 
   if (directGame === 'sterrenstroom') {
     return <SterrenstroompGame onBack={onBack} />
+  }
+
+  if (directGame === 'brug') {
+    return <BrugBouwen onBack={onBack} />
   }
 
 
