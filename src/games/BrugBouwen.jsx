@@ -72,7 +72,9 @@ const ALL = ['weg', 'hout', 'metaal', 'touw'], WH = ['weg', 'hout'], WHM = ['weg
 // pijlers staan ≤150 onder het dek zodat je ze met hout/metaal kunt schoren.
 function gp(title, budget, mats, o = {}) {
   const gap = o.gap ?? 280, cx = o.cx ?? 640, yL = o.yL ?? 440, yR = o.yR ?? 440
-  const piers = o.piers ?? 1, depth = Math.min(o.depth ?? 90, 150)
+  // minder pijlers + bredere vakken ⇒ je moet zelf het vakwerk bedenken (minder
+  // "verbind de stippen"). Vakken blijven ≤ ~190 zodat schoren met metaal nog reikt.
+  const piers = Math.max(1, Math.ceil(gap / 195) - 1), depth = Math.min(o.depth ?? 90, 150)
   const cL = cx - gap / 2, cR = cx + gap / 2
   const platforms = [{ x0: -300, x1: cL, y: yL }]
   for (let i = 1; i <= piers; i++) {
@@ -872,6 +874,7 @@ function drawTruck(ctx, sim) {
 function collideTerrain(p, terrain) {
   const r = p.r || 0
   for (const t of terrain) {
+    if (t.post) continue   // torens zijn decoratie + topanker; auto/dek rijden er niet tegenaan
     const L = t.x - r, R = t.x + t.w + r, T = t.y - r, B = t.y + t.h + r
     if (p.x <= L || p.x >= R || p.y <= T || p.y >= B) continue
     const dL = p.x - L, dR = R - p.x, dT = p.y - T, dB = B - p.y
