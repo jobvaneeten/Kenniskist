@@ -10,7 +10,7 @@ import OrientationGate from '../OrientationGate'
 // ═══════════════════════════════════════════════════════════════════════════
 
 const VW = 1280, VH = 720
-const KILL_Y = 820
+const KILL_Y = 1200    // wereld-bodem (ruim, voor diepe/uitgezoomde levels)
 const SNAP = 20
 const HIT = 34
 
@@ -52,13 +52,9 @@ function L(cfg) {
     push(po.x, po.top)
   })
   const first = cfg.platforms[0], last = cfg.platforms[cfg.platforms.length - 1]
-  const sx = cfg.shipX != null ? cfg.shipX : 640
   return {
     title: cfg.title, budget: cfg.budget, mats: cfg.mats, heavy: !!cfg.heavy,
-    shipX: sx,
-    // boot: alleen op open-water levels. Vaart door de kloof; bouw je te laag
-    // (steun onder de waterlijn-clearance) dan ramt hij je brug.
-    boat: cfg.boat ? { x: sx, half: cfg.boatHalf || 300, top: cfg.boatTop || 512 } : null,
+    worldW: cfg.worldW || 1280, worldH: cfg.worldH || 720,
     terrain, anchors, ramps: cfg.ramps || [],
     start: cfg.start || { x: first.x1 - 110, y: first.y },
     finishX: cfg.finishX != null ? cfg.finishX : last.x0 + 26,
@@ -69,93 +65,125 @@ function L(cfg) {
 // ── level-generatoren (oplosbaar door constructie) ──
 const ALL = ['weg', 'hout', 'metaal', 'touw'], WH = ['weg', 'hout'], WHM = ['weg', 'hout', 'metaal']
 // kloof met pijlers: elke deelspan blijft kort genoeg om met de weg te overbruggen;
-// pijlers staan ≤150 onder het dek zodat je ze met hout/metaal kunt schoren.
-function gp(title, budget, mats, o = {}) {
-  const gap = o.gap ?? 280, cx = o.cx ?? 640, yL = o.yL ?? 440, yR = o.yR ?? 440
-  // minder pijlers + bredere vakken ⇒ je moet zelf het vakwerk bedenken (minder
-  // "verbind de stippen"). Vakken blijven ≤ ~190 zodat schoren met metaal nog reikt.
-  const piers = Math.max(1, Math.ceil(gap / 195) - 1), depth = Math.min(o.depth ?? 90, 150)
-  const cL = cx - gap / 2, cR = cx + gap / 2
+// pijler-brug: kloof gecentreerd in de wereld, met n pijlers ≤150 onder het dek.
+function pil(title, budget, mats, o = {}) {
+  const gap = o.gap ?? 280, piers = o.piers ?? 1, depth = Math.min(o.depth ?? 110, 150)
+  const yL = o.yL ?? 440, yR = o.yR ?? 440, W = o.worldW ?? 1280, H = o.worldH ?? 720
+  const cx = W / 2, cL = cx - gap / 2, cR = cx + gap / 2
+  const towers = o.towers ? [{ x: cL, top: Math.min(yL, yR) - 150 }, { x: cR, top: Math.min(yL, yR) - 150 }] : undefined
   const platforms = [{ x0: -300, x1: cL, y: yL }]
   for (let i = 1; i <= piers; i++) {
     const f = i / (piers + 1), px = cL + gap * f
-    platforms.push({ x0: px - 28, x1: px + 28, y: yL + (yR - yL) * f + depth })
+    platforms.push({ x0: px - 30, x1: px + 30, y: yL + (yR - yL) * f + depth })
   }
-  platforms.push({ x0: cR, x1: 1580, y: yR })
-  return L({ title, budget, mats, platforms, heavy: o.heavy, posts: o.posts })
+  platforms.push({ x0: cR, x1: W + 300, y: yR })
+  return L({ title, budget, mats, platforms, heavy: o.heavy, posts: towers, worldW: W, worldH: H })
+}
+// open kloof zonder pijler: je bouwt zélf een vakwerk (bv. een king-post-truss).
+function opn(title, budget, mats, o = {}) {
+  const gap = o.gap ?? 280, yL = o.yL ?? 440, yR = o.yR ?? 440, W = o.worldW ?? 1280, H = o.worldH ?? 720
+  const cx = W / 2
+  const towers = o.towers ? [{ x: cx - gap / 2, top: Math.min(yL, yR) - 150 }, { x: cx + gap / 2, top: Math.min(yL, yR) - 150 }] : undefined
+  return L({ title, budget, mats, heavy: o.heavy, posts: towers, worldW: W, worldH: H,
+    platforms: [{ x0: -300, x1: cx - gap / 2, y: yL }, { x0: cx + gap / 2, x1: W + 300, y: yR }] })
 }
 // schans: lange aanloop, helling aan de rand, kloof, lager landingsplatform.
-function jp(title, budget, mats, o = {}) {
-  const lx = o.lx ?? 550, yL = o.yL ?? 405, rx = o.rx ?? 690, yR = o.yR ?? 480
-  const rise = o.rise ?? 58, run = o.run ?? 120
-  return L({
-    title, budget, mats, heavy: o.heavy,
-    platforms: [{ x0: -300, x1: lx, y: yL }, { x0: rx, x1: 1580, y: yR }],
+function jmp(title, budget, mats, o = {}) {
+  const gap = o.gap ?? 145, drop = o.drop ?? 78, rise = o.rise ?? 60, run = o.run ?? 120
+  const yL = o.yL ?? 405, W = o.worldW ?? 1280, H = o.worldH ?? 720
+  const cx = W / 2, lx = cx - gap / 2, rx = cx + gap / 2, yR = yL + drop
+  return L({ title, budget, mats, heavy: o.heavy, worldW: W, worldH: H,
+    platforms: [{ x0: -300, x1: lx, y: yL }, { x0: rx, x1: W + 300, y: yR }],
     ramps: [{ x0: lx - run, y0: yL, x1: lx, y1: yL - rise }],
-    start: { x: lx - 330, y: yL },
-  })
+    start: { x: lx - 330, y: yL } })
+}
+// dubbele schans: ramp → sprong → tussenplatform met ramp → sprong → finish.
+function mjmp(title, budget, mats, o = {}) {
+  const g1 = o.gap1 ?? 135, g2 = o.gap2 ?? 135, d1 = o.drop1 ?? 70, d2 = o.drop2 ?? 70
+  const midW = o.midW ?? 230, rise = o.rise ?? 60, run = o.run ?? 110, yL = o.yL ?? 395, W = o.worldW ?? 1280, H = o.worldH ?? 720
+  const total = g1 + midW + g2, cx = W / 2, lx = cx - total / 2
+  const m0 = lx + g1, m1 = m0 + midW, rx = m1 + g2, ymid = yL + d1, yR = ymid + d2
+  return L({ title, budget, mats, worldW: W, worldH: H,
+    platforms: [{ x0: -300, x1: lx, y: yL }, { x0: m0, x1: m1, y: ymid }, { x0: rx, x1: W + 300, y: yR }],
+    ramps: [{ x0: lx - run, y0: yL, x1: lx, y1: yL - rise }, { x0: m1 - run, y0: ymid, x1: m1, y1: ymid - rise }],
+    start: { x: lx - 330, y: yL } })
+}
+// trapsgewijze platforms (zigzag) — elk gat met één plank te overbruggen.
+function stairs(title, budget, mats, o = {}) {
+  const n = o.n ?? 4, gapW = o.gapW ?? 150, step = o.step ?? 60, yTop = o.yTop ?? 380
+  const W = o.worldW ?? 1280, H = o.worldH ?? 720, midW = o.midW ?? 130, up = o.up
+  const inner = (n - 1) * gapW + (n - 2) * midW, startX = W / 2 - inner / 2
+  const platforms = []
+  let x = -300
+  for (let i = 0; i < n; i++) {
+    const y = yTop + (up ? (n - 1 - i) : i) * step
+    const w = i === 0 ? startX + 300 : i === n - 1 ? W + 300 - x : midW
+    platforms.push({ x0: x, x1: x + w, y })
+    x += w + gapW
+  }
+  return L({ title, budget, mats, platforms, heavy: o.heavy, worldW: W, worldH: H })
 }
 
 const LEVELS = [
-  // ── Tier 1 (1-10): rustig leren — weg schoren met hout/metaal ──
-  gp('Eerste brug',     140, WH,  { gap: 240, depth: 70 }),
-  gp('Steun nodig',     150, WH,  { gap: 260, depth: 95 }),
-  gp('Dieper ravijn',   175, WHM, { gap: 280, depth: 125 }),
-  gp('Schuin omhoog',   180, WHM, { gap: 280, depth: 95, yL: 460, yR: 410 }),
-  jp('De schans',       150, WH,  { lx: 540, yL: 405, rx: 680, yR: 480, rise: 58 }),
-  gp('Brede kloof',     210, WHM, { gap: 320, depth: 115 }),
-  gp('Zware vracht',    230, WHM, { gap: 280, depth: 100, heavy: true }),
-  gp('Twee steunen',    250, WHM, { gap: 360, piers: 2, depth: 110 }),
-  gp('Diepe pijler',    230, WHM, { gap: 300, depth: 150 }),
-  gp('Hoog en laag',    250, WHM, { gap: 320, depth: 120, yL: 400, yR: 470 }),
+  // ── Tier 1 (1-10): leer de bouwsteentjes — pijler, open vakwerk, schans, trap ──
+  pil('Eerste brug',     150, WH,  { gap: 240, depth: 80 }),
+  opn('Zonder pijler',   180, WHM, { gap: 260 }),
+  jmp('De schans',       150, WH,  { gap: 145, drop: 78, rise: 58 }),
+  pil('Twee steunen',    240, WHM, { gap: 360, piers: 2, depth: 100 }),
+  stairs('Trapje af',    230, WHM, { n: 4, step: 58, gapW: 150, yTop: 360 }),
+  pil('Schuine kloof',   210, WHM, { gap: 300, depth: 105, yL: 470, yR: 405 }),
+  opn('Hangend dek',     230, WHM, { gap: 280 }),
+  pil('Zware vracht',    250, WHM, { gap: 300, depth: 110, heavy: true }),
+  jmp('Verre sprong',    200, WHM, { gap: 158, drop: 90, rise: 66 }),
+  pil('Diep gat',        240, WHM, { gap: 320, piers: 1, depth: 150 }),
 
-  // ── Tier 2 (11-20): groter, zwaarder, eerste verre sprongen ──
-  gp('Lange brug',      300, WHM, { gap: 400, piers: 2, depth: 120 }),
-  gp('Zwaar & diep',    300, WHM, { gap: 340, depth: 150, heavy: true }),
-  jp('Verre sprong',    200, WHM, { lx: 560, yL: 395, rx: 715, yR: 485, rise: 64 }),
-  gp('De trap',         270, WHM, { gap: 360, piers: 2, depth: 105, yL: 495, yR: 405 }),
-  gp('Drie steunen',    340, WHM, { gap: 460, piers: 3, depth: 120 }),
-  gp('Staal vereist',   290, WHM, { gap: 360, depth: 150, heavy: true }),
-  gp('Brede vracht',    340, WHM, { gap: 420, piers: 2, depth: 130, heavy: true }),
-  gp('Steile helling',  310, WHM, { gap: 400, piers: 2, depth: 110, yL: 380, yR: 500 }),
-  gp('Canyon',          360, WHM, { gap: 480, piers: 3, depth: 140 }),
-  jp('Grote sprong',    230, WHM, { lx: 560, yL: 390, rx: 730, yR: 490, rise: 70 }),
+  // ── Tier 2 (11-20): groter en breder — beeld zoomt uit ──
+  pil('Lange brug',      320, WHM, { gap: 460, piers: 2, depth: 130, worldW: 1450 }),
+  opn('Brede boog',      290, WHM, { gap: 300, worldW: 1350 }),
+  mjmp('Dubbele schans', 260, WHM, { gap1: 135, gap2: 135, drop1: 70, drop2: 60 }),
+  stairs('Naar boven',   270, WHM, { n: 4, step: 60, gapW: 150, yTop: 520, up: true }),
+  pil('Vier steunen',    380, WHM, { gap: 600, piers: 3, depth: 130, worldW: 1550 }),
+  pil('Zwaar & diep',    340, WHM, { gap: 360, piers: 1, depth: 150, heavy: true }),
+  opn('Diepe boog',      320, WHM, { gap: 290, heavy: true }),
+  jmp('Grote sprong',    250, WHM, { gap: 168, drop: 100, rise: 72, worldW: 1350 }),
+  pil('Bergpas',         370, WHM, { gap: 500, piers: 3, depth: 130, yL: 370, yR: 520, worldW: 1500 }),
+  pil('Touwbrug',        360, ['weg', 'hout', 'touw'], { gap: 460, piers: 2, depth: 140, towers: true, worldW: 1450 }),
 
-  // ── Tier 3 (21-30): wijde kloven, veel steun, krappe budgetten ──
-  gp('Wijde steun',     360, WHM, { gap: 440, piers: 2, depth: 150 }),
-  gp('Drie & zwaar',    400, WHM, { gap: 480, piers: 3, depth: 130, heavy: true }),
-  gp('Vier steunen',    420, WHM, { gap: 560, piers: 4, depth: 125 }),
-  gp('Diep & breed',    400, WHM, { gap: 500, piers: 3, depth: 150 }),
-  gp('Berg op',         360, WHM, { gap: 460, piers: 2, depth: 130, yL: 360, yR: 510 }),
-  jp('Dubbele sprong',  280, WHM, { lx: 560, yL: 385, rx: 740, yR: 495, rise: 74 }),
-  gp('Zware overspan',  440, WHM, { gap: 520, piers: 3, depth: 145, heavy: true }),
-  gp('Het diepe gat',   400, WHM, { gap: 480, piers: 3, depth: 150 }),
-  gp('Lange vracht',    460, WHM, { gap: 540, piers: 3, depth: 140, heavy: true }),
-  gp('Vijf steunen',    480, WHM, { gap: 620, piers: 5, depth: 130 }),
+  // ── Tier 3 (21-30): wijde en diepe ravijnen, flink uitgezoomd ──
+  pil('Reuzenkloof',     480, ALL, { gap: 760, piers: 4, depth: 145, towers: true, worldW: 1750 }),
+  opn('Wijde boog',      360, ALL, { gap: 300, worldW: 1500 }),
+  mjmp('Sprong-estafette', 320, WHM, { gap1: 150, gap2: 150, drop1: 80, drop2: 70, midW: 250, worldW: 1450 }),
+  pil('Diepe afgrond',   460, WHM, { gap: 560, piers: 3, depth: 150, heavy: true, worldW: 1550, worldH: 880 }),
+  stairs('Grote trap',   400, WHM, { n: 5, step: 55, gapW: 155, yTop: 350, worldW: 1500 }),
+  pil('Hangbrug',        500, ALL, { gap: 660, piers: 4, depth: 140, towers: true, worldW: 1650 }),
+  jmp('Mega-sprong',     310, WHM, { gap: 180, drop: 115, rise: 78, worldW: 1400 }),
+  pil('Zwaar transport', 520, WHM, { gap: 680, piers: 4, depth: 150, heavy: true, worldW: 1650 }),
+  opn('Het gat',         380, ALL, { gap: 300, heavy: true }),
+  pil('Lange reis',      560, WHM, { gap: 900, piers: 5, depth: 140, worldW: 1950 }),
 
-  // ── Tier 4 (31-40): torens & touw mogelijk, grote ravijnen ──
-  gp('Touwbrug',        380, ['weg', 'hout', 'touw'],   { gap: 420, piers: 2, depth: 130, posts: [{ x: 430, top: 300 }, { x: 850, top: 300 }] }),
-  gp('Hangbrug',        440, ALL, { gap: 520, piers: 3, depth: 140, posts: [{ x: 400, top: 290 }, { x: 880, top: 290 }] }),
-  gp('Diep & zwaar',    460, WHM, { gap: 500, piers: 3, depth: 150, heavy: true }),
-  jp('Mega-sprong',     300, WHM, { lx: 560, yL: 380, rx: 745, yR: 500, rise: 78 }),
-  gp('Reuzenkloof',     520, ALL, { gap: 640, piers: 4, depth: 145, posts: [{ x: 360, top: 280 }, { x: 920, top: 280 }] }),
-  gp('Zes steunen',     540, WHM, { gap: 700, piers: 6, depth: 135 }),
-  gp('Berghelling',     460, WHM, { gap: 560, piers: 3, depth: 140, yL: 350, yR: 520, heavy: true }),
-  gp('Diepste pijler',  480, WHM, { gap: 520, piers: 3, depth: 150, heavy: true }),
-  gp('Grand Canyon',    560, ALL, { gap: 660, piers: 4, depth: 150, posts: [{ x: 350, top: 270 }, { x: 930, top: 270 }] }),
-  jp('Wereldsprong',    340, ALL, { lx: 560, yL: 375, rx: 750, yR: 505, rise: 82 }),
+  // ── Tier 4 (31-40): epische, ver uitgezoomde overspanningen ──
+  pil('Grand Canyon',    640, ALL, { gap: 1000, piers: 5, depth: 150, towers: true, worldW: 2050 }),
+  mjmp('Drie platforms', 360, WHM, { gap1: 160, gap2: 160, drop1: 85, drop2: 80, midW: 240, worldW: 1500 }),
+  pil('Diep ravijn',     580, WHM, { gap: 760, piers: 4, depth: 150, heavy: true, worldW: 1800, worldH: 900 }),
+  opn('Reuzenboog',      440, ALL, { gap: 300, worldW: 1600, towers: true }),
+  pil('Zware overspan',  640, WHM, { gap: 880, piers: 5, depth: 150, heavy: true, worldW: 1950 }),
+  jmp('Wereldsprong',    360, ALL, { gap: 196, drop: 130, rise: 84, worldW: 1500 }),
+  pil('Bergketen',       580, WHM, { gap: 820, piers: 5, depth: 145, yL: 360, yR: 560, worldW: 1900 }),
+  pil('Hangende stad',   680, ALL, { gap: 1000, piers: 5, depth: 150, towers: true, worldW: 2050 }),
+  stairs('Eindeloze trap', 540, WHM, { n: 6, step: 52, gapW: 158, yTop: 340, worldW: 1900 }),
+  pil('Het diepe',       600, WHM, { gap: 780, piers: 4, depth: 150, worldW: 1850, worldH: 960 }),
 
-  // ── Tier 5 (41-50): meesterproef — alles tegelijk, krap, zwaar ──
-  gp('Lange reis',      560, WHM, { gap: 720, piers: 6, depth: 140 }),
-  gp('Zwaar transport', 580, ALL, { gap: 640, piers: 4, depth: 150, heavy: true, posts: [{ x: 360, top: 270 }, { x: 920, top: 270 }] }),
-  gp('Het ravijn',      600, ALL, { gap: 700, piers: 5, depth: 150, posts: [{ x: 340, top: 260 }, { x: 940, top: 260 }] }),
-  gp('Bergpas',         560, WHM, { gap: 640, piers: 4, depth: 145, yL: 340, yR: 540, heavy: true }),
-  jp('Onmogelijke sprong', 380, ALL, { lx: 560, yL: 370, rx: 758, yR: 510, rise: 86 }),
-  gp('Zeven steunen',   640, WHM, { gap: 800, piers: 7, depth: 140 }),
-  gp('Mega-vracht',     640, ALL, { gap: 700, piers: 5, depth: 150, heavy: true, posts: [{ x: 330, top: 260 }, { x: 950, top: 260 }] }),
-  gp('Diepe afgrond',   620, ALL, { gap: 720, piers: 5, depth: 150, posts: [{ x: 330, top: 250 }, { x: 950, top: 250 }] }),
-  gp('De eindbaas',     720, ALL, { gap: 820, piers: 7, depth: 150, heavy: true }),
-  gp('Meesterbouwer',   780, ALL, { gap: 860, piers: 7, depth: 150, heavy: true, posts: [{ x: 300, top: 250 }, { x: 980, top: 250 }] }),
+  // ── Tier 5 (41-50): meesterproef — gigantisch, zwaar, ver uitgezoomd ──
+  pil('Lange overtocht', 760, WHM, { gap: 1200, piers: 7, depth: 145, worldW: 2300 }),
+  pil('Zwaar & ver',     780, ALL, { gap: 1000, piers: 6, depth: 150, heavy: true, towers: true, worldW: 2150 }),
+  opn('De grote boog',   480, ALL, { gap: 300, heavy: true, worldW: 1700, towers: true }),
+  mjmp('Sprong-marathon', 420, WHM, { gap1: 165, gap2: 165, drop1: 95, drop2: 90, midW: 240, worldW: 1700 }),
+  pil('Diepste afgrond', 740, ALL, { gap: 1000, piers: 6, depth: 150, heavy: true, worldW: 2100, worldH: 1000 }),
+  pil('Reuzenbrug',      860, WHM, { gap: 1400, piers: 8, depth: 145, worldW: 2500 }),
+  jmp('Onmogelijke sprong', 420, ALL, { gap: 205, drop: 140, rise: 88, worldW: 1550 }),
+  pil('Mega-transport',  880, ALL, { gap: 1200, piers: 7, depth: 150, heavy: true, towers: true, worldW: 2300 }),
+  pil('De eindbaas',     980, ALL, { gap: 1500, piers: 8, depth: 150, heavy: true, worldW: 2600 }),
+  pil('Meesterbouwer',  1100, ALL, { gap: 1600, piers: 9, depth: 150, heavy: true, towers: true, worldW: 2700 }),
 ]
 
 // ── progressie ──
@@ -184,6 +212,7 @@ export default function BrugBouwen({ onBack }) {
       drag: null, flash: 0, lp: null, lpTimer: null,
       sim: null, t0: 0,
     }
+    S.current.resize?.()   // view herberekenen voor de zoom van dit level
     setLevelIdx(idx)
     setBudget(lv.budget)
     setMode('build')
@@ -203,9 +232,11 @@ export default function BrugBouwen({ onBack }) {
       const dpr = Math.min(window.devicePixelRatio || 1, 2)
       cv.width = Math.floor(r.width * dpr); cv.height = Math.floor(r.height * dpr)
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-      const scale = Math.min(r.width / VW, r.height / VH)
-      S.current.view = { scale, ox: (r.width - VW * scale) / 2, oy: (r.height - VH * scale) / 2, cssW: r.width, cssH: r.height }
+      const W = S.current.lv?.worldW || VW, H = S.current.lv?.worldH || VH
+      const scale = Math.min(r.width / W, r.height / H)
+      S.current.view = { scale, ox: (r.width - W * scale) / 2, oy: (r.height - H * scale) / 2, cssW: r.width, cssH: r.height, W, H }
     }
+    S.current.resize = resize
     resize(); window.addEventListener('resize', resize)
 
     const toWorld = e => {
@@ -422,7 +453,7 @@ export default function BrugBouwen({ onBack }) {
       if (cx > st.maxX + 2) { st.maxX = cx; st.lastProg = el }
       const stuck = el > DRIVE_START + 600 && el - st.lastProg > 2600
       if (cx > st.lv.finishX && cy < st.lv.finishY + 70) finish('win')
-      else if (cy > KILL_Y || stuck || el > 30000) finish('lose')
+      else if (cy > KILL_Y || stuck || el > 50000) finish('lose')
     }
   }
 
@@ -454,64 +485,61 @@ export default function BrugBouwen({ onBack }) {
     const { ctx, view } = st
     if (st.flash > 0) st.flash = Math.max(0, st.flash - dt)
     st.tAcc = (st.tAcc || 0) + dt
+    const W = view.W || VW, H = view.H || VH
     ctx.save(); ctx.clearRect(0, 0, view.cssW, view.cssH)
     ctx.translate(view.ox, view.oy); ctx.scale(view.scale, view.scale)
-    ctx.beginPath(); ctx.rect(0, 0, VW, VH); ctx.clip()
+    ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.clip()
 
     const lv = st.lv, run = !!st.sim, t = st.tAcc
 
     // lucht — zachte dag-gradient
-    const sky = ctx.createLinearGradient(0, 0, 0, VH)
+    const sky = ctx.createLinearGradient(0, 0, 0, H)
     sky.addColorStop(0, '#1f5fc6'); sky.addColorStop(0.4, '#3f8ce0'); sky.addColorStop(0.72, '#8fc8ef'); sky.addColorStop(1, '#d6f0f6')
-    ctx.fillStyle = sky; ctx.fillRect(0, 0, VW, VH)
+    ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H)
     // zon + zonnestralen
     ctx.save()
-    const sunX = 1070, sunY = 140
+    const sunX = W - 210, sunY = 140
     ctx.globalCompositeOperation = 'lighter'
     ctx.strokeStyle = 'rgba(255,248,210,.10)'; ctx.lineWidth = 26
-    for (let i = 0; i < 12; i++) { const a = i * Math.PI / 6 + t * 0.05; ctx.beginPath(); ctx.moveTo(sunX, sunY); ctx.lineTo(sunX + Math.cos(a) * 600, sunY + Math.sin(a) * 600); ctx.stroke() }
+    for (let i = 0; i < 12; i++) { const a = i * Math.PI / 6 + t * 0.05; ctx.beginPath(); ctx.moveTo(sunX, sunY); ctx.lineTo(sunX + Math.cos(a) * 700, sunY + Math.sin(a) * 700); ctx.stroke() }
     ctx.restore()
     const sun = ctx.createRadialGradient(sunX, sunY, 16, sunX, sunY, 300)
     sun.addColorStop(0, 'rgba(255,250,220,.95)'); sun.addColorStop(0.18, 'rgba(255,244,190,.7)'); sun.addColorStop(1, 'rgba(255,246,200,0)')
-    ctx.fillStyle = sun; ctx.fillRect(0, 0, VW, VH)
+    ctx.fillStyle = sun; ctx.fillRect(0, 0, W, H)
     ctx.fillStyle = '#fff7da'; ctx.beginPath(); ctx.arc(sunX, sunY, 34, 0, 7); ctx.fill()
     // verre bergen (parallax, gelaagd)
-    ctx.fillStyle = '#9fb6cf'; mountains(ctx, -50, 410, 1400, 150, 6, 1)
-    ctx.fillStyle = '#8aa9c6'; mountains(ctx, 120, 430, 1300, 120, 5, 3)
-    ctx.fillStyle = 'rgba(120,180,150,.55)'; hill(ctx, 0, 452, 1280, 120, 3, 12)
-    ctx.fillStyle = 'rgba(96,168,138,.6)';   hill(ctx, -100, 486, 1480, 150, 4, 30)
+    const hy = H - 268
+    ctx.fillStyle = '#9fb6cf'; mountains(ctx, -50, hy, W + 100, 150, 6, 1)
+    ctx.fillStyle = '#8aa9c6'; mountains(ctx, 120, hy + 20, W, 120, 5, 3)
+    ctx.fillStyle = 'rgba(120,180,150,.55)'; hill(ctx, 0, hy + 42, W, 120, 3, 12)
+    ctx.fillStyle = 'rgba(96,168,138,.6)';   hill(ctx, -100, hy + 76, W + 200, 150, 4, 30)
     // grid (alleen bouwen, blueprint-stijl)
     if (!run) {
       ctx.strokeStyle = 'rgba(255,255,255,.06)'; ctx.lineWidth = 1
-      for (let x = 0; x <= VW; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, VH); ctx.stroke() }
-      for (let y = 0; y <= VH; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(VW, y); ctx.stroke() }
+      for (let x = 0; x <= W; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke() }
+      for (let y = 0; y <= H; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke() }
     }
     // wolken + ballon + vogels
-    cloud(ctx, 170 + Math.sin(t * 0.05) * 14, 110, 1.1)
-    cloud(ctx, 520 + Math.sin(t * 0.03) * 10, 70, 0.7)
-    cloud(ctx, 860 + Math.sin(t * 0.04) * 16, 96, 0.95)
-    balloon(ctx, 620, 116 + Math.sin(t * 0.5) * 7)
-    birds(ctx, 380 + (t * 8) % 540, 150)
+    cloud(ctx, W * 0.13 + Math.sin(t * 0.05) * 14, 110, 1.1)
+    cloud(ctx, W * 0.4 + Math.sin(t * 0.03) * 10, 70, 0.7)
+    cloud(ctx, W * 0.67 + Math.sin(t * 0.04) * 16, 96, 0.95)
+    balloon(ctx, W * 0.48, 116 + Math.sin(t * 0.5) * 7)
+    birds(ctx, 380 + (t * 8) % (W - 200), 150)
 
     // water — gradient, glinstering en zon-reflectie
-    const wy = 596
-    const water = ctx.createLinearGradient(0, wy, 0, VH)
+    const wy = H - 124
+    const water = ctx.createLinearGradient(0, wy, 0, H)
     water.addColorStop(0, '#56c0e2'); water.addColorStop(0.5, '#2f97c4'); water.addColorStop(1, '#176a96')
-    ctx.fillStyle = water; ctx.fillRect(0, wy, VW, VH - wy)
-    const refl = ctx.createLinearGradient(sunX - 60, wy, sunX + 60, VH)
+    ctx.fillStyle = water; ctx.fillRect(0, wy, W, H - wy)
+    const refl = ctx.createLinearGradient(sunX - 60, wy, sunX + 60, H)
     refl.addColorStop(0, 'rgba(255,250,210,.0)'); refl.addColorStop(0.5, 'rgba(255,250,210,.22)'); refl.addColorStop(1, 'rgba(255,250,210,0)')
-    ctx.fillStyle = refl; ctx.fillRect(sunX - 90, wy, 180, VH - wy)
+    ctx.fillStyle = refl; ctx.fillRect(sunX - 90, wy, 180, H - wy)
     ctx.strokeStyle = 'rgba(255,255,255,.16)'; ctx.lineWidth = 2
     for (let i = 0; i < 6; i++) {
       const yy = wy + 14 + i * 22
       ctx.beginPath()
-      for (let x = 0; x <= VW; x += 40) ctx.lineTo(x, yy + Math.sin(x * 0.03 + t * 1.4 + i) * 2.2)
+      for (let x = 0; x <= W; x += 40) ctx.lineTo(x, yy + Math.sin(x * 0.03 + t * 1.4 + i) * 2.2)
       ctx.stroke()
-    }
-    // boot: in run vaart hij; in bouwfase staat hij klaar links in de kloof
-    if (lv.boat) {
-      const bx = run && st.boat ? st.boat.x : lv.boat.x - lv.boat.half
-      ship(ctx, bx, wy, t)
     }
 
     // terrein
@@ -550,7 +578,7 @@ export default function BrugBouwen({ onBack }) {
     // finish-vlag
     flag(ctx, lv.finishX + 6, lv.finishY)
 
-    if (st.flash > 0) { ctx.fillStyle = `rgba(255,40,40,${st.flash * 0.5})`; ctx.fillRect(0, 0, VW, VH) }
+    if (st.flash > 0) { ctx.fillStyle = `rgba(255,40,40,${st.flash * 0.5})`; ctx.fillRect(0, 0, W, H) }
     ctx.restore()
   }
 
