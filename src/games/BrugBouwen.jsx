@@ -51,11 +51,15 @@ function L(cfg) {
     terrain.push({ x: po.x - 9, y: po.top, w: 18, h: KILL_Y + 80 - po.top, post: true })
     push(po.x, po.top)
   })
+  // zwevende ankers (ballonnen): vaste ankerpunten hoog in de lucht voor hangbruggen
+  ;(cfg.floats || []).forEach(f => push(f.x, f.y))
   const first = cfg.platforms[0], last = cfg.platforms[cfg.platforms.length - 1]
   return {
     title: cfg.title, budget: cfg.budget, mats: cfg.mats, heavy: !!cfg.heavy,
     worldW: cfg.worldW || 1280, worldH: cfg.worldH || 720,
     terrain, anchors, ramps: cfg.ramps || [],
+    floatAnchors: cfg.floats || [],          // voor het tekenen van de ballonnen
+    prebuilt: cfg.prebuilt || [],            // [{ pts:[[x,y],…], mat }] voorgebouwde stukken
     start: cfg.start || { x: first.x1 - 110, y: first.y },
     finishX: cfg.finishX != null ? cfg.finishX : last.x0 + 26,
     finishY: last.y,
@@ -123,72 +127,130 @@ function stairs(title, budget, mats, o = {}) {
   }
   return L({ title, budget, mats, platforms, heavy: o.heavy, worldW: W, worldH: H })
 }
+// hangbrug: open kloof met zwevende ballon-ankers hoog in de lucht. Hang er touw/
+// kabel aan en draag het dek ⇒ je MOET de hangende ankers gebruiken.
+function susp(title, budget, mats, o = {}) {
+  const gap = o.gap ?? 380, yL = o.yL ?? 430, yR = o.yR ?? 430, W = o.worldW ?? 1450, H = o.worldH ?? 720
+  const cx = W / 2, cL = cx - gap / 2, cR = cx + gap / 2, ah = o.anchorH ?? 210
+  const floats = (o.anchors ?? [0.34, 0.66]).map(f => ({ x: cL + gap * f, y: Math.min(yL, yR) - ah, balloon: true }))
+  return L({ title, budget, mats, heavy: o.heavy, worldW: W, worldH: H, floats, prebuilt: o.prebuilt,
+    platforms: [{ x0: -300, x1: cL, y: yL }, { x0: cR, x1: W + 300, y: yR }] })
+}
+// voorgebouwd: een deels-aangelegd stuk (touw/weg) steekt het ravijn in; jij maakt
+// het af naar de overkant.
+function pre(title, budget, mats, o = {}) {
+  const gap = o.gap ?? 340, yL = o.yL ?? 430, yR = o.yR ?? 430, W = o.worldW ?? 1400, H = o.worldH ?? 720
+  const cx = W / 2, cL = cx - gap / 2, cR = cx + gap / 2
+  const mat = o.preMat ?? 'touw', segs = o.segs ?? 5, pl = o.preLen ?? gap * 0.42
+  const sag = o.sag ?? (mat === 'touw' ? 40 : 0)
+  const pts = []
+  for (let i = 0; i <= segs; i++) { const f = i / segs; pts.push([cL + pl * f, yL + Math.sin(Math.PI * f) * sag]) }
+  return L({ title, budget, mats, heavy: o.heavy, worldW: W, worldH: H, prebuilt: [{ pts, mat }], floats: o.floats,
+    platforms: [{ x0: -300, x1: cL, y: yL }, { x0: cR, x1: W + 300, y: yR }] })
+}
+// afdalende start: de auto rolt eerst een helling af (vaart!) en rijdt dan jouw
+// brug over een kloof (open of met pijlers).
+function slope(title, budget, mats, o = {}) {
+  const gap = o.gap ?? 300, piers = o.piers ?? 0, depth = Math.min(o.depth ?? 120, 150)
+  const yL = o.yL ?? 360, yR = o.yR ?? 460, W = o.worldW ?? 1400, H = o.worldH ?? 720
+  const run = o.run ?? 270, rise = o.rise ?? 150
+  const cx = W / 2, cL = cx - gap / 2, cR = cx + gap / 2
+  const platforms = [{ x0: -300, x1: cL, y: yL }]
+  for (let i = 1; i <= piers; i++) { const f = i / (piers + 1), px = cL + gap * f; platforms.push({ x0: px - 30, x1: px + 30, y: yL + (yR - yL) * f + depth }) }
+  platforms.push({ x0: cR, x1: W + 300, y: yR })
+  const rx = cL - 150, lx = rx - run
+  return L({ title, budget, mats, heavy: o.heavy, worldW: W, worldH: H, floats: o.floats, prebuilt: o.prebuilt,
+    platforms, ramps: [{ x0: lx, y0: yL - rise, x1: rx, y1: yL }], start: { x: lx + 24, y: yL - rise } })
+}
+// wisselende pilaren: steunen op verschillende hoogtes en diktes (sommige steken
+// boven het dek uit ⇒ je dek moet eromheen/overheen weven).
+function pylons(title, budget, mats, o = {}) {
+  const gap = o.gap ?? 560, yL = o.yL ?? 430, yR = o.yR ?? 430, W = o.worldW ?? 1500, H = o.worldH ?? 720
+  const cx = W / 2, cL = cx - gap / 2, cR = cx + gap / 2
+  const platforms = [{ x0: -300, x1: cL, y: yL }]
+  ;(o.pillars ?? [{ f: 0.33, top: 470, w: 44 }, { f: 0.66, top: 380, w: 30 }]).forEach(p => {
+    const px = cL + gap * p.f, w = p.w ?? 40
+    platforms.push({ x0: px - w / 2, x1: px + w / 2, y: p.top })
+  })
+  platforms.push({ x0: cR, x1: W + 300, y: yR })
+  return L({ title, budget, mats, heavy: o.heavy, worldW: W, worldH: H, floats: o.floats, prebuilt: o.prebuilt, platforms })
+}
 
+const WHT = ['weg', 'hout', 'touw']
 const LEVELS = [
-  // ── Tier 1 (1-10): leer de bouwsteentjes. Weg alleen zakt door — driehoek je dek vast! ──
-  pil('Eerste brug',     150, WH,  { gap: 240, depth: 80 }),
-  opn('Zonder pijler',   190, WH,  { gap: 230 }),
-  jmp('De schans',       150, WH,  { gap: 145, drop: 78, rise: 58 }),
-  opn('Klein vakwerk',   220, WHM, { gap: 260 }),
-  stairs('Trapje af',    240, WHM, { n: 4, step: 58, gapW: 175, yTop: 360 }),
-  pil('Twee steunen',    250, WHM, { gap: 380, piers: 2, depth: 100 }),
-  opn('Hangend dek',     250, WHM, { gap: 280 }),
-  jmp('Verre sprong',    200, WHM, { gap: 158, drop: 90, rise: 66 }),
-  pil('Schuine kloof',   240, WHM, { gap: 300, depth: 110, yL: 470, yR: 405 }),
-  opn('Diepe boog',      280, WHM, { gap: 290, heavy: true }),
+  // ── Tier 1 (1-10): leer elke bouwsteen kennen — pijler, open vakwerk, helling,
+  //    kabel (ballon), voorgebouwd stuk, wisselende pilaren ──
+  pil('Eerste brug',      150, WH,  { gap: 240, depth: 80 }),
+  opn('Zonder pijler',    190, WH,  { gap: 230 }),
+  slope('Van de heuvel',  180, WH,  { gap: 150, yL: 340, yR: 430, rise: 130, run: 240 }),
+  opn('Klein vakwerk',    220, WHM, { gap: 260 }),
+  pylons('Twee pieren',   240, WHM, { gap: 420, pillars: [{ f: 0.34, top: 470, w: 42 }, { f: 0.66, top: 470, w: 42 }] }),
+  susp('Eerste kabel',    240, WHT, { gap: 280, anchorH: 180, anchors: [0.5] }),
+  jmp('De schans',        160, WH,  { gap: 150, drop: 80, rise: 60 }),
+  pre('Maak het af',      220, WHM, { gap: 340, preMat: 'touw', preLen: 150 }),
+  pylons('Hoge piek',     260, WHM, { gap: 460, pillars: [{ f: 0.5, top: 360, w: 30 }] }),
+  opn('Diepe boog',       280, WHM, { gap: 290, heavy: true }),
 
-  // ── Tier 2 (11-20): groter en breder — beeld zoomt uit ──
-  opn('Brede boog',      300, WHM, { gap: 300, worldW: 1350 }),
-  mjmp('Dubbele schans', 260, WHM, { gap1: 135, gap2: 135, drop1: 70, drop2: 60 }),
-  pil('Lange brug',      340, WHM, { gap: 480, piers: 2, depth: 130, worldW: 1450 }),
-  stairs('Naar boven',   290, WHM, { n: 4, step: 60, gapW: 180, yTop: 520, up: true }),
-  opn('Wijde boog',      340, WHM, { gap: 320, worldW: 1400 }),
-  jmp('Grote sprong',    250, WHM, { gap: 168, drop: 100, rise: 72, worldW: 1350 }),
-  pil('Vier steunen',    400, WHM, { gap: 620, piers: 3, depth: 130, worldW: 1550 }),
-  opn('Zware boog',      360, ALL, { gap: 300, heavy: true, worldW: 1400 }),
-  mjmp('Sprong-estafette', 320, WHM, { gap1: 150, gap2: 150, drop1: 80, drop2: 70, midW: 250, worldW: 1450 }),
-  pil('Touwbrug',        380, ['weg', 'hout', 'touw'], { gap: 480, piers: 2, depth: 140, towers: true, worldW: 1450 }),
+  // ── Tier 2 (11-20): groter, breder, beeld zoomt uit — combineer de bouwstenen ──
+  slope('Afdaling',       300, WHM, { gap: 300, piers: 1, depth: 120, yL: 330, yR: 470, rise: 150, worldW: 1400 }),
+  susp('Hangbrug',        300, WHT, { gap: 360, anchors: [0.34, 0.66], worldW: 1450 }),
+  pylons('Pieren-trap',   340, WHM, { gap: 560, pillars: [{ f: 0.25, top: 500, w: 40 }, { f: 0.5, top: 430, w: 32 }, { f: 0.75, top: 360, w: 26 }], worldW: 1500 }),
+  mjmp('Dubbele schans',  260, WHM, { gap1: 135, gap2: 135, drop1: 70, drop2: 60 }),
+  opn('Brede boog',       320, WHM, { gap: 320, worldW: 1400 }),
+  pre('Halve weg',        320, WHM, { gap: 360, preMat: 'weg', preLen: 170, sag: 0, worldW: 1400 }),
+  susp('Twee ballonnen',  380, ALL, { gap: 420, anchors: [0.34, 0.66], worldW: 1500 }),
+  stairs('Naar boven',    300, WHM, { n: 4, step: 60, gapW: 180, yTop: 520, up: true, worldW: 1350 }),
+  jmp('Grote sprong',     250, WHM, { gap: 168, drop: 100, rise: 72, worldW: 1350 }),
+  pylons('Pilaarwoud',    400, WHM, { gap: 660, pillars: [{ f: 0.2, top: 470, w: 36 }, { f: 0.45, top: 380, w: 26 }, { f: 0.7, top: 500, w: 40 }], worldW: 1650 }),
 
   // ── Tier 3 (21-30): wijde en diepe ravijnen, flink uitgezoomd ──
-  opn('Grote kloof',     380, ALL, { gap: 330, worldW: 1500 }),
-  jmp('Mega-sprong',     310, WHM, { gap: 180, drop: 115, rise: 78, worldW: 1400 }),
-  pil('Reuzenkloof',     500, ALL, { gap: 780, piers: 4, depth: 145, towers: true, worldW: 1750 }),
-  opn('Diepe afgrond',   400, WHM, { gap: 320, heavy: true, worldW: 1500 }),
-  stairs('Grote trap',   420, WHM, { n: 5, step: 55, gapW: 185, yTop: 350, worldW: 1550 }),
-  opn('Het gat',         400, ALL, { gap: 340, heavy: true, worldW: 1500 }),
-  pil('Bergpas',         400, WHM, { gap: 520, piers: 3, depth: 130, yL: 370, yR: 520, worldW: 1500 }),
-  mjmp('Drie platforms', 360, WHM, { gap1: 160, gap2: 160, drop1: 85, drop2: 80, midW: 240, worldW: 1500 }),
-  pil('Hangbrug',        520, ALL, { gap: 680, piers: 4, depth: 140, towers: true, worldW: 1650 }),
-  pil('Lange reis',      580, WHM, { gap: 920, piers: 5, depth: 140, worldW: 1950 }),
+  susp('Kabelravijn',     440, ALL, { gap: 520, anchorH: 230, anchors: [0.25, 0.5, 0.75], worldW: 1700 }),
+  slope('Steile inrit',   380, WHM, { gap: 360, piers: 1, depth: 140, yL: 320, yR: 500, rise: 170, worldW: 1500 }),
+  pre('Touwbrug-rest',    400, WHT, { gap: 420, preMat: 'touw', preLen: 200, worldW: 1500 }),
+  opn('Het gat',          400, ALL, { gap: 340, heavy: true, worldW: 1500 }),
+  pylons('Wisselhoogte',  480, ALL, { gap: 700, pillars: [{ f: 0.22, top: 520, w: 44 }, { f: 0.5, top: 360, w: 24 }, { f: 0.78, top: 470, w: 36 }], worldW: 1700 }),
+  mjmp('Sprong-estafette', 340, WHM, { gap1: 150, gap2: 150, drop1: 80, drop2: 70, midW: 250, worldW: 1500 }),
+  susp('Hoge hangbrug',   500, ALL, { gap: 520, anchorH: 250, anchors: [0.25, 0.5, 0.75], worldW: 1750 }),
+  stairs('Grote trap',    440, WHM, { n: 5, step: 55, gapW: 185, yTop: 350, worldW: 1600 }),
+  slope('Afdaling diep',  480, ALL, { gap: 420, piers: 1, depth: 150, yL: 330, yR: 540, rise: 160, worldW: 1650, worldH: 880 }),
+  pil('Lange reis',       560, WHM, { gap: 900, piers: 5, depth: 140, worldW: 1950 }),
 
   // ── Tier 4 (31-40): epische, ver uitgezoomde overspanningen ──
-  opn('Reuzenboog',      460, ALL, { gap: 340, towers: true, worldW: 1600 }),
-  jmp('Wereldsprong',    360, ALL, { gap: 196, drop: 130, rise: 84, worldW: 1500 }),
-  pil('Grand Canyon',    660, ALL, { gap: 1000, piers: 5, depth: 150, towers: true, worldW: 2050 }),
-  opn('Wijde afgrond',   480, ALL, { gap: 350, heavy: true, towers: true, worldW: 1650 }),
+  susp('Reuzenkabel',     600, ALL, { gap: 600, anchorH: 260, anchors: [0.2, 0.4, 0.6, 0.8], worldW: 1900 }),
+  pylons('Canyonpieren',  640, ALL, { gap: 900, pillars: [{ f: 0.2, top: 520, w: 46 }, { f: 0.4, top: 400, w: 28 }, { f: 0.6, top: 520, w: 46 }, { f: 0.8, top: 400, w: 28 }], worldW: 2050 }),
+  slope('Bergafrit',      480, ALL, { gap: 360, yL: 300, yR: 520, rise: 190, run: 320, worldW: 1700 }),
+  pre('Halve hangbrug',   520, WHT, { gap: 480, preMat: 'touw', preLen: 230, worldW: 1700 }),
   mjmp('Sprong-marathon', 420, WHM, { gap1: 165, gap2: 165, drop1: 95, drop2: 90, midW: 240, worldW: 1700 }),
-  pil('Diep ravijn',     600, WHM, { gap: 780, piers: 4, depth: 150, heavy: true, worldW: 1800, worldH: 900 }),
+  opn('Wijde afgrond',    480, ALL, { gap: 350, heavy: true, worldW: 1650 }),
   stairs('Eindeloze trap', 560, WHM, { n: 6, step: 52, gapW: 185, yTop: 340, worldW: 1900 }),
-  opn('De grote boog',   500, ALL, { gap: 350, heavy: true, towers: true, worldW: 1700 }),
-  pil('Bergketen',       600, WHM, { gap: 840, piers: 5, depth: 145, yL: 360, yR: 560, worldW: 1900 }),
-  pil('Hangende stad',   700, ALL, { gap: 1000, piers: 5, depth: 150, towers: true, worldW: 2050 }),
+  susp('Drie ballonnen',  640, ALL, { gap: 560, anchorH: 240, anchors: [0.25, 0.5, 0.75], worldW: 1950 }),
+  pil('Diep ravijn',      600, WHM, { gap: 780, piers: 4, depth: 150, heavy: true, worldW: 1800, worldH: 900 }),
+  pylons('Hangende stad',  720, ALL, { gap: 1000, pillars: [{ f: 0.18, top: 520, w: 44 }, { f: 0.38, top: 380, w: 26 }, { f: 0.6, top: 520, w: 44 }, { f: 0.82, top: 380, w: 26 }], worldW: 2050 }),
 
   // ── Tier 5 (41-50): meesterproef — gigantisch, zwaar, ver uitgezoomd ──
-  opn('Meesterboog',     540, ALL, { gap: 360, heavy: true, towers: true, worldW: 1750 }),
+  susp('Meesterkabel',    700, ALL, { gap: 600, anchorH: 270, anchors: [0.2, 0.4, 0.6, 0.8], worldW: 2050 }),
+  slope('Bergpas-afrit',  620, ALL, { gap: 520, piers: 2, depth: 150, yL: 320, yR: 560, rise: 180, worldW: 2000 }),
   jmp('Onmogelijke sprong', 420, ALL, { gap: 205, drop: 140, rise: 88, worldW: 1550 }),
-  pil('Lange overtocht', 780, WHM, { gap: 1200, piers: 7, depth: 145, worldW: 2300 }),
-  opn('Het ravijn',      560, ALL, { gap: 360, heavy: true, towers: true, worldW: 1800 }),
-  mjmp('Sprong-finale',  440, WHM, { gap1: 170, gap2: 170, drop1: 95, drop2: 90, midW: 240, worldW: 1750 }),
-  pil('Diepste afgrond', 760, ALL, { gap: 1000, piers: 6, depth: 150, heavy: true, worldW: 2100, worldH: 1000 }),
-  pil('Reuzenbrug',      880, WHM, { gap: 1400, piers: 8, depth: 145, worldW: 2500 }),
-  pil('Mega-transport',  900, ALL, { gap: 1200, piers: 7, depth: 150, heavy: true, towers: true, worldW: 2300 }),
-  pil('De eindbaas',    1000, ALL, { gap: 1500, piers: 8, depth: 150, heavy: true, worldW: 2600 }),
-  pil('Meesterbouwer',  1100, ALL, { gap: 1600, piers: 9, depth: 150, heavy: true, towers: true, worldW: 2700 }),
+  pre('Voltooi de brug',  640, ALL, { gap: 560, preMat: 'weg', preLen: 240, sag: 0, worldW: 1900 }),
+  pylons('Reuzenpieren',  860, ALL, { gap: 1200, pillars: [{ f: 0.16, top: 520, w: 46 }, { f: 0.33, top: 400, w: 28 }, { f: 0.5, top: 520, w: 46 }, { f: 0.66, top: 400, w: 28 }, { f: 0.83, top: 520, w: 46 }], worldW: 2300 }),
+  mjmp('Sprong-finale',   440, WHM, { gap1: 170, gap2: 170, drop1: 95, drop2: 90, midW: 240, worldW: 1750 }),
+  susp('Hemelbrug',       820, ALL, { gap: 680, anchorH: 280, anchors: [0.2, 0.4, 0.6, 0.8], worldW: 2200 }),
+  pil('Mega-transport',   900, ALL, { gap: 1200, piers: 7, depth: 150, heavy: true, worldW: 2300 }),
+  slope('De grote afrit', 880, ALL, { gap: 800, piers: 4, depth: 150, yL: 320, yR: 560, rise: 190, heavy: true, worldW: 2300 }),
+  pylons('Meesterbouwer', 1100, ALL, { gap: 1500, pillars: [{ f: 0.14, top: 540, w: 48 }, { f: 0.3, top: 400, w: 28 }, { f: 0.46, top: 540, w: 48 }, { f: 0.62, top: 380, w: 26 }, { f: 0.8, top: 520, w: 44 }], heavy: true, worldW: 2700 }),
 ]
 
 // ── progressie ──
-function loadProg() { try { return JSON.parse(localStorage.getItem('kk_brug') || '{}') } catch { return {} } }
-function saveProg(d) { localStorage.setItem('kk_brug', JSON.stringify(d)) }
+// Versie bumpen ⇒ nieuwe/gewijzigde levels: iedereen begint opnieuw bij level 1.
+const PROG_VERSION = 2
+function loadProg() {
+  try {
+    const d = JSON.parse(localStorage.getItem('kk_brug') || '{}')
+    if (d.v !== PROG_VERSION) { const r = { v: PROG_VERSION, unlocked: 1, stars: {} }; saveProg(r); return r }
+    return d
+  } catch { return { v: PROG_VERSION, unlocked: 1, stars: {} } }
+}
+function saveProg(d) { localStorage.setItem('kk_brug', JSON.stringify({ ...d, v: PROG_VERSION })) }
 
 export default function BrugBouwen({ onBack }) {
   const canvasRef = useRef(null)
@@ -207,8 +269,19 @@ export default function BrugBouwen({ onBack }) {
   function loadLevel(idx) {
     const lv = LEVELS[idx]
     const nodes = lv.anchors.map(a => ({ x: a.x, y: a.y, fixed: true }))
+    // voorgebouwde stukken: vaste knopen + niet-wisbare, gratis, onbreekbare members
+    const members = []
+    const findOrAdd = (x, y) => {
+      const i = nodes.findIndex(n => Math.abs(n.x - x) < 7 && Math.abs(n.y - y) < 7)
+      if (i >= 0) return i
+      nodes.push({ x, y, fixed: true, pre: true }); return nodes.length - 1
+    }
+    ;(lv.prebuilt || []).forEach(pb => {
+      const ids = pb.pts.map(([x, y]) => findOrAdd(x, y))
+      for (let k = 0; k < ids.length - 1; k++) members.push({ a: ids[k], b: ids[k + 1], mat: pb.mat, pre: true })
+    })
     S.current = {
-      ...S.current, lv, idx, nodes, members: [],
+      ...S.current, lv, idx, nodes, members,
       drag: null, flash: 0, lp: null, lpTimer: null, pan: null, pinch: null,
       cam: { z: 1, tx: 0, ty: 0 },   // camera reset: pan (tx,ty in schermpx) + zoom (z)
       sim: null, t0: 0,
@@ -279,13 +352,14 @@ export default function BrugBouwen({ onBack }) {
     const nearestMember = p => {
       let bi = -1, bd = 16
       S.current.members.forEach((m, i) => {
+        if (m.pre) return                              // voorgebouwde stukken kun je niet wissen
         const a = S.current.nodes[m.a], b = S.current.nodes[m.b]
         const d = segDist(p.x, p.y, a.x, a.y, b.x, b.y)
         if (d < bd) { bd = d; bi = i }
       })
       return bi
     }
-    function cost() { return S.current.members.reduce((s, m) => s + MAT[m.mat].cost, 0) }
+    function cost() { return S.current.members.reduce((s, m) => s + (m.pre ? 0 : MAT[m.mat].cost), 0) }
     function sync() { setBudget(S.current.lv.budget - cost()) }
 
     function rebuild() {
@@ -412,7 +486,7 @@ export default function BrugBouwen({ onBack }) {
     // balken → constraints met rustlengte
     const beams = st.members.map(m => {
       const a = pts[m.a], b = pts[m.b]
-      return { a: m.a, b: m.b, rest: Math.hypot(a.x - b.x, a.y - b.y), mat: m.mat, broken: false, force: 0 }
+      return { a: m.a, b: m.b, rest: Math.hypot(a.x - b.x, a.y - b.y), mat: m.mat, pre: m.pre, broken: false, force: 0 }
     })
 
     // ── voertuig: stijve doos van 4 punten (2 wielen onder, 2 hoeken boven) ──
@@ -505,7 +579,7 @@ export default function BrugBouwen({ onBack }) {
     if (modeRef.current === 'run') {
       // breken zodra de balkkracht de sterkte overschrijdt
       if (el > 500) for (const bm of beams) {
-        if (bm.broken || bm.car) continue
+        if (bm.broken || bm.car || bm.pre) continue
         if (bm.force > MAT[bm.mat].strength) bm.broken = true
       }
       // win / verlies
@@ -608,6 +682,7 @@ export default function BrugBouwen({ onBack }) {
     // terrein
     lv.terrain.forEach(tr => drawTerrain(ctx, tr, t))
     lv.ramps.forEach(rm => drawRamp(ctx, rm))
+    ;(lv.floatAnchors || []).forEach(fa => { if (fa.balloon) balloonAnchor(ctx, fa.x, fa.y, t) })
 
     // ── leden ──
     if (run) {
@@ -893,6 +968,16 @@ function balloon(ctx, x, y) {
   ctx.strokeStyle = '#7a5a36'; ctx.lineWidth = 1.5
   ctx.beginPath(); ctx.moveTo(x - 14, y + 30); ctx.lineTo(x - 8, y + 56); ctx.moveTo(x + 14, y + 30); ctx.lineTo(x + 8, y + 56); ctx.stroke()
   ctx.fillStyle = '#8a5a32'; ctx.fillRect(x - 10, y + 56, 20, 14)
+}
+// zwevend ballon-anker: ballon hoog erboven, touwtje omlaag naar het ankerpunt (x,y)
+function balloonAnchor(ctx, x, y, t = 0) {
+  const by = y - 78 + Math.sin((t || 0) * 0.8 + x) * 4
+  ctx.strokeStyle = 'rgba(40,30,20,.55)'; ctx.lineWidth = 2
+  ctx.beginPath(); ctx.moveTo(x, by + 56); ctx.lineTo(x, y); ctx.stroke()
+  balloon(ctx, x, by)
+  // ankerplaatje waar je aan vastmaakt
+  ctx.fillStyle = '#6b4f2a'; roundRect(ctx, x - 11, y - 5, 22, 10, 3); ctx.fill()
+  ctx.fillStyle = '#caa15a'; ctx.fillRect(x - 9, y - 3, 18, 3)
 }
 function birds(ctx, x, y) {
   ctx.strokeStyle = 'rgba(40,50,70,.55)'; ctx.lineWidth = 2
