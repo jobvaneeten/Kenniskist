@@ -246,6 +246,7 @@
   }
   @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
+<style>.order-item,.drag-item{touch-action:none}.order-item.dragging,.drag-item.dragging{opacity:.6}</style>
 </head>
 <body>
 
@@ -764,6 +765,27 @@ function attachOrderHandlers() {
       else list.insertBefore(dragEl, target.nextSibling);
     }
   });
+  // ── touch (iPad): emuleer slepen ──
+  let touchEl = null;
+  list.addEventListener("touchstart", e => {
+    const t = e.target.closest(".order-item");
+    if (!t || t.draggable === false) return;
+    touchEl = dragEl = t; t.classList.add("dragging");
+  }, { passive: true });
+  list.addEventListener("touchmove", e => {
+    if (!touchEl) return;
+    e.preventDefault();
+    const pt = e.touches[0];
+    const target = document.elementFromPoint(pt.clientX, pt.clientY)?.closest(".order-item");
+    if (target && target !== touchEl) {
+      const r = target.getBoundingClientRect();
+      if (pt.clientY < r.top + r.height / 2) list.insertBefore(touchEl, target);
+      else list.insertBefore(touchEl, target.nextSibling);
+    }
+  }, { passive: false });
+  const endOrderTouch = () => { if (touchEl) touchEl.classList.remove("dragging"); touchEl = null; };
+  list.addEventListener("touchend", endOrderTouch);
+  list.addEventListener("touchcancel", endOrderTouch);
 }
 
 function checkOrder() {
@@ -818,6 +840,32 @@ function attachDragHandlers() {
       e.preventDefault(); zone.classList.remove('over');
       if (src) zone.appendChild(src); src = null;
     });
+  });
+  // ── touch (iPad): emuleer slepen naar categorie ──
+  document.querySelectorAll(".drag-item").forEach(el => {
+    el.addEventListener("touchstart", e => {
+      if (el.draggable === false) return;
+      src = el; el.classList.add("dragging");
+    }, { passive: true });
+    el.addEventListener("touchmove", e => {
+      if (src !== el) return;
+      e.preventDefault();
+      const pt = e.touches[0];
+      const zone = document.elementFromPoint(pt.clientX, pt.clientY)?.closest(".drag-list");
+      document.querySelectorAll(".drag-list.over").forEach(z => z.classList.remove("over"));
+      if (zone) zone.classList.add("over");
+    }, { passive: false });
+    const drop = e => {
+      if (src !== el) return;
+      el.classList.remove("dragging");
+      const pt = e.changedTouches[0];
+      const zone = pt ? document.elementFromPoint(pt.clientX, pt.clientY)?.closest(".drag-list") : null;
+      document.querySelectorAll(".drag-list.over").forEach(z => z.classList.remove("over"));
+      if (zone) zone.appendChild(src);
+      src = null;
+    };
+    el.addEventListener("touchend", drop);
+    el.addEventListener("touchcancel", drop);
   });
 }
 

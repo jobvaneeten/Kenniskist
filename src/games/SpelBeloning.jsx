@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import FootballGame from './FootballGame'
 import HeadSoccer from './HeadSoccer'
-import SterrenstroompGame from './SterrenstroompGame'
 import TowerDefenseGame from './TowerDefenseGame'
 import './spel-beloning.css'
 
@@ -44,7 +43,7 @@ export default function SpelBeloning({ title, sub, geld, addCuruntie, onDone }) 
   if (picked === 'voetbal')    return wrap(<FootballGame noQuiz twoPlayer={false} onBack={onDone} addCuruntie={addCuruntie} />)
   if (picked === 'jetpack')    return <IframeEmbed src="/jetpack/index.html" title="Jetpack" doneType="jetpack-gameover" hint="Je gaat automatisch verder na het spel ✈️" onDone={onDone} />
   if (picked === 'astro')      return <IframeEmbed src="/astrokatapult/?reward=1" title="Astro Katapult" doneType="astrokatapult-leveldone" hint="Speel 1 level — daarna ga je verder 🪐" onDone={onDone} />
-  if (picked === 'space')      return wrap(<SterrenstroompGame onBack={onDone} />)
+  if (picked === 'space')      return <IframeEmbed src="/sterrenstroom/" title="Spacerunner" doneType="spacerunner-gameover" hint="Je gaat automatisch verder na het spel 🛸" onDone={onDone} />
   if (picked === 'tower')      return wrap(<TowerDefenseGame onBack={onDone} />)
 
   return (

@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import FootballGame from './games/FootballGame'
+import FootballGame, { loadToernooi } from './games/FootballGame'
 import TowerDefenseGame from './games/TowerDefenseGame'
 import JetpackGame from './games/JetpackGame'
 import HeadSoccer from './games/HeadSoccer'
@@ -13,6 +13,7 @@ import WerkwoordSpelling from './games/WerkwoordSpelling'
 import DicteeThema from './games/DicteeThema'
 import TaalOefenen from './games/TaalOefenen'
 import BegrijpendLezen from './games/BegrijpendLezen'
+import EngelsOefenen from './games/EngelsOefenen'
 import MenuScene from './MenuScenes'
 import './game.css'
 
@@ -29,6 +30,7 @@ const SUBJECTS = [
   { key: 'spelling',   label: 'Spelling',         emoji: '✏️', color: '#CE93D8', dark: '#8e3fa8', scene: 'spelling',   vb: 'ik loop → hij ...?' },
   { key: 'rekenen',    label: 'Rekenen',          emoji: '🔢', color: '#FFD23F', dark: '#c09800', scene: 'rekenen',    vb: '23 × 4 = ?' },
   { key: 'begrijpend', label: 'Begrijpend Lezen', emoji: '📚', color: '#06D6A0', dark: '#04a077', scene: 'begrijpend', vb: 'Lees de tekst & beantwoord de vragen' },
+  { key: 'engels',     label: 'Engels',           emoji: '🇬🇧', color: '#8b6bff', dark: '#5a3fd6', scene: 'taal',       vb: '"phone" → telefoon · RONDÉ Song 7, 8 & 9' },
 ]
 
 // Beloningen per spel-type (chips op de kaarten)
@@ -53,6 +55,7 @@ const GAMES = {
   '8-spelling': 'werkwoord',
   '7-begrijpend': 'begrijpend',
   '8-begrijpend': 'begrijpend',
+  '7-engels': 'engels',
 }
 
 const FREE_GAMES = [
@@ -135,6 +138,18 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
   }
 
 
+  // Verder met een opgeslagen toernooi (buiten de opgaves)
+  if (directGame === 'football' && gameMode === 'resume') {
+    return (
+      <FootballGame
+        noQuiz
+        resumeBracket={loadToernooi()}
+        onBack={onBack}
+        addCuruntie={makeGated('football', addCuruntie)}
+      />
+    )
+  }
+
   // Direct game (no quiz)
   if (directGame === 'football' && gameMode) {
     return (
@@ -156,6 +171,12 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
           <h1 className="game-header-title">WK Voetbal</h1>
           <p className="game-header-sub">Kies een modus</p>
         </div>
+        {loadToernooi() && (
+          <button className="mode-card" style={{ maxWidth: 360, marginBottom: 14 }} onClick={() => setGameMode('resume')}>
+            <span className="mode-name">🏆 Verder met je toernooi</span>
+            <span className="mode-desc">Speel de volgende ronde van je lopende toernooi</span>
+          </button>
+        )}
         <div className="mode-grid">
           <button className="mode-card" onClick={() => setGameMode('solo')}>
             <MenuScene name="solo" />
@@ -233,6 +254,10 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
           </div>
         </div>
       )
+    }
+
+    if (GAMES[gameId] === 'engels') {
+      return <EngelsOefenen onBack={() => setSubject(null)} />
     }
 
     if (GAMES[gameId] === 'begrijpend') {
@@ -387,6 +412,8 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
                     ? '📖 Taalverkennen + toets'
                     : game === 'begrijpend'
                     ? '🧭 Reis rond de wereld'
+                    : game === 'engels'
+                    ? '🇬🇧 Song 7, 8 & 9'
                     : '🚧 Komt binnenkort'}
                 </span>
                 {(game || s.key === 'spelling') && <span className="vb-line">{s.vb}</span>}

@@ -231,16 +231,17 @@ export default function WerkwoordSpelling({ groep, onBack, addBriefgeld }) {
 
     const nieuwGemaakt = gemaakt + 1
     setGemaakt(Math.min(nieuwGemaakt, PER_OVERZICHT))
+    const overzichtNu = nieuwGemaakt >= PER_OVERZICHT
 
-    // na 5 goede een spelletje — heeft VOORRANG op het 20-opgaven overzicht
+    // na 5 goede een spelletje — maar op de 20e opgave gaat het eindoverzicht vóór
     if (correct) {
       const nieuwSinds = sinds + 1
-      if (nieuwSinds >= PER_BELONING) { setSinds(0); setPhase('keuze'); return }
+      if (!overzichtNu && nieuwSinds >= PER_BELONING) { setSinds(0); setPhase('keuze'); return }
       setSinds(nieuwSinds)
     }
 
-    // anders: na 20 opgaven het overzicht
-    if (nieuwGemaakt >= PER_OVERZICHT) { setPhase('overzicht') }
+    // na precies 20 opgaven het overzicht
+    if (overzichtNu) { setPhase('overzicht') }
   }, [idx, sinds, gemaakt, oef, oefeningen.length, gekozenCats])
 
   // Nieuwe ronde: terug naar cat-selectie

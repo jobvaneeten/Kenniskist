@@ -10,7 +10,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  /* safe center: top blijft bereikbaar (scroll) als de kaarten niet passen */
+  justify-content: safe center;
   text-align: center;
   padding: 32px 16px 48px;
   font-family: inherit;
@@ -21,7 +22,7 @@
 .sb-screen > * { position: relative; z-index: 1; }
 
 /* Gelanceerd beloningsspel: vast scherm-vullend overlay boven het oefenscherm */
-.sb-gamewrap { position: fixed; inset: 0; z-index: 300; background: #05080f; }
+.sb-gamewrap { position: fixed; inset: 0; z-index: 300; background: #05080f; overflow-y: auto; -webkit-overflow-scrolling: touch; }
 
 .sb-star {
   font-size: 3.4rem;

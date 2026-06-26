@@ -18,6 +18,7 @@ const UNLOCK_TARA_CODE = 'tara'         // ontgrendelt de Tara Pet
 const UNLOCK_NINA_CODE = 'nina'         // ontgrendelt de Nina Pet
 const UNLOCK_PIM_CODE = 'pim'           // ontgrendelt de Pim Pet
 const UNLOCK_VINN_CODE = 'vinn'         // ontgrendelt de Vinn Pet
+const ESCAPE_CODE = 'vrijdag'           // opent de GLITCH-escaperoom
 
 function fmt(n) { return n.toLocaleString('nl-NL') }
 
@@ -38,14 +39,16 @@ function CurrencyBadge({ munten, briefgeld, hideMunten }) {
   )
 }
 
-function CodeModal({ onClose, onRedeem, onRedeemBrief, onUnlockAll, onUnlockCountries, onUnlockTara, onUnlockNina, onUnlockPim, onUnlockVinn, usedCodes }) {
+function CodeModal({ onClose, onRedeem, onRedeemBrief, onUnlockAll, onUnlockCountries, onUnlockTara, onUnlockNina, onUnlockPim, onUnlockVinn, onEscape, usedCodes }) {
   const [code, setCode] = useState('')
   const [msg,  setMsg]  = useState(null)
   const [ok,   setOk]   = useState(false)
 
   const submit = () => {
     const key = code.trim().toLowerCase()
-    if (key === UNLOCK_ALL_CODE) {
+    if (key === ESCAPE_CODE) {
+      onEscape()
+    } else if (key === UNLOCK_ALL_CODE) {
       onUnlockAll()
       setMsg('🎉 Alle kleding ontgrendeld!')
       setOk(true)
@@ -233,6 +236,24 @@ export default function App() {
     <PaintballGame onBack={() => setScreen('wardrobe')} />
   )
 
+  if (screen === 'escaperoom') return (
+    <div style={{ position: 'fixed', inset: 0, background: '#0a0e14' }}>
+      <iframe
+        src="/escaperoom.html"
+        title="GLITCH Escaperoom"
+        style={{ width: '100%', height: '100%', border: 'none' }}
+      />
+      <button
+        onClick={goMenu}
+        style={{ position: 'fixed', left: 12, top: 12, zIndex: 100, padding: '8px 14px',
+          borderRadius: 10, border: '1px solid #1d2a38', background: '#0f1620',
+          color: '#cfe3ef', fontWeight: 700, cursor: 'pointer' }}
+      >
+        ← Terug
+      </button>
+    </div>
+  )
+
   if (screen === 'shop') return (
     <>
       <CurrencyBadge munten={curuntie} briefgeld={briefgeld} />
@@ -317,6 +338,7 @@ export default function App() {
           onUnlockNina={unlockNina}
           onUnlockPim={unlockPim}
           onUnlockVinn={unlockVinn}
+          onEscape={() => { setShowCode(false); setScreen('escaperoom') }}
           usedCodes={usedCodes}
         />
       )}

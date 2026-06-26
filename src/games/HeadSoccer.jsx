@@ -912,6 +912,14 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
   }
   const rewardStartRound = () => { setOppKey(bracket.opponents[bracket.currentRound]); setCoinsEarned(0); setPhase('vs_intro') }
 
+  // ── toernooi voortzetten vanuit het menu (buiten de opgaves) ──
+  const [menuTour, setMenuTour] = useState(false)
+  const resumeRewardTour = () => {
+    const t = loadRewardTour(); if (!t) return
+    setPlayerKey(t.playerKey); setBracket(t.bracket); setLevel(t.level || 'medium')
+    setMenuTour(true); setCoinsEarned(0); setPhase('reward_round')
+  }
+
   // ── match end handling ──
   const handleMatchEnd = useCallback((finalScore) => {
     const won = finalScore.L > finalScore.R
@@ -919,8 +927,8 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
     setResult(won ? 'win' : 'lose')
     // geen curuntie voor dit spel
 
-    // reward-modus: speel precies één ronde, bewaar voortgang, ga daarna terug
-    if (reward) {
+    // reward-modus of menu-toernooi: speel precies één ronde, bewaar voortgang
+    if (reward || menuTour) {
       if (won && bracket.currentRound >= 3) {
         const locked = COUNTRIES.filter(c => !unlocked.includes(c.key)).map(c => c.key)
         if (locked.length) { const w = locked[Math.floor(Math.random() * locked.length)]; const next = [...unlocked, w]; setUnlocked(next); saveUnlocked(next); setMysteryReveal(w) }
@@ -957,7 +965,7 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
     setBracket(b => ({ ...b, currentRound: nextRound, results }))
     setOppKey(bracket.opponents[nextRound])
     setPhase('wk_round')
-  }, [bracket, unlocked, addCuruntie, reward, playerKey, level])
+  }, [bracket, unlocked, addCuruntie, reward, menuTour, playerKey, level])
   onMatchEndRef.current = handleMatchEnd
 
   const nextWKMatch = () => { setPhase('vs_intro') }
@@ -1346,6 +1354,19 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
           p.charge = Math.min(1, p.charge + 0.05)
           return true
         }
+        // ── dash: bal schoon vooruit punten i.p.v. eromheen glitchen ──
+        if (p.t.dash > 0) {
+          const ddir = Math.sign(p.dashVx) || p.facing
+          if (dx * ddir >= -BR) {                      // bal staat vóór de dashende speler
+            S.ball.x = p.x + ddir * (minD + 2)
+            S.ball.y = Math.min(S.ball.y, cy)
+            S.ball.vx = ddir * Math.max(Math.abs(p.dashVx) * 1.05, 620)
+            S.ball.vy = Math.min(S.ball.vy, 0) - 240
+            p.charge = Math.min(1, p.charge + 0.05)
+            addShake(2, 0.08)
+            return true
+          }
+        }
         const nx = dx / dist, ny = dy / dist
         S.ball.x = cx + nx * minD; S.ball.y = cy + ny * minD
         const rel = S.ball.vx * nx + S.ball.vy * ny
@@ -1584,7 +1605,16 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
           }
           if (hit) {
             if (nx) { b.vx = (nx > 0 ? Math.abs(b.vx) : -Math.abs(b.vx)) * BB; b.vy *= 0.92 }
-            if (ny) { b.vy = (ny > 0 ? Math.abs(b.vy) : -Math.abs(b.vy)) * BB; b.vx *= 0.9 }
+            if (ny) {
+              b.vy = (ny > 0 ? Math.abs(b.vy) : -Math.abs(b.vy)) * BB; b.vx *= 0.9
+              // op de lat geland → laat de bal altijd naar voren (richting veld) rollen
+              // zodat hij er nooit boven op blijft liggen
+              if (ny < 0) {
+                const fieldDir = gx0 < W / 2 ? 1 : -1
+                const minRoll = 130
+                if (b.vx * fieldDir < minRoll) b.vx += fieldDir * (minRoll - b.vx * fieldDir)
+              }
+            }
           }
         }
         collideBar(0); collideBar(W - GOAL_W)
@@ -1849,7 +1879,7 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
         </div>
         <Bracket bracket={bracket} playerKey={playerKey} />
         <button className="mode-card hs-go" onClick={rewardStartRound}>▶ Start ronde</button>
-        <button className="hs-skip-link" onClick={onBack}>Sla over →</button>
+        <button className="hs-skip-link" onClick={onBack}>{menuTour ? '← Menu' : 'Sla over →'}</button>
       </div>
     )
   }
@@ -1862,9 +1892,14 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
           <span className="wk-champ-trophy">{won ? '🎉' : '💪'}</span>
           <h1 className="wk-champ-title">{won ? 'Ronde gewonnen!' : 'Helaas verloren'}</h1>
           <p className="wk-champ-sub">{playerCountry.flag} {score.L} — {score.R} {oppCountry.flag}</p>
-          <p className="wk-champ-sub">{won ? 'Geef weer 5 goede antwoorden voor de volgende ronde!' : 'Volgende keer speel je deze ronde opnieuw.'}</p>
+          <p className="wk-champ-sub">{menuTour
+            ? (won ? 'Door naar de volgende ronde!' : 'Je speelt deze ronde opnieuw.')
+            : (won ? 'Geef weer 5 goede antwoorden voor de volgende ronde!' : 'Volgende keer speel je deze ronde opnieuw.')}</p>
         </div>
-        <button className="mode-card hs-go" onClick={onBack}>← Terug naar spelling</button>
+        {menuTour
+          ? <button className="mode-card hs-go" onClick={() => setPhase('reward_round')}>▶ Volgende ronde</button>
+          : <button className="mode-card hs-go" onClick={onBack}>← Terug naar spelling</button>}
+        {menuTour && <button className="hs-skip-link" onClick={onBack}>← Menu</button>}
       </div>
     )
   }
@@ -1884,7 +1919,7 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
             ? <><div className="hs-box">🎁</div><p className="wk-champ-sub">Mysterybox: <b>{revealC.flag} {revealC.name}</b> ontgrendeld!</p></>
             : <p className="wk-champ-sub">Je hebt alle landen al! 🪙 Extra bonus.</p>}
         </div>
-        <button className="mode-card hs-go" onClick={onBack}>← Terug naar spelling</button>
+        <button className="mode-card hs-go" onClick={onBack}>{menuTour ? '← Menu' : '← Terug naar spelling'}</button>
       </div>
     )
   }
@@ -1900,6 +1935,11 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
           <p className="hs-select-sub">Kies jouw land — elk land heeft een eigen special move!</p>
           <span className="hs-select-count">{got} / {total} landen</span>
         </div>
+        {loadRewardTour() && (
+          <button className="mode-card hs-go" style={{ marginBottom: 14 }} onClick={resumeRewardTour}>
+            🏆 Verder met je toernooi
+          </button>
+        )}
         <div className="wk-country-grid hs-grid">
           {COUNTRIES.map(c => {
             const open = unlocked.includes(c.key)

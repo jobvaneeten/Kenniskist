@@ -459,10 +459,22 @@ function JerseyCircle({ country, size = 32 }) {
 }
 
 // ── Main component ────────────────────────────────────────────────
+// Toernooi-voortgang bewaren zodat je buiten de opgaves verder kunt spelen.
+const TOERNOOI_KEY = 'kk_toernooi_voetbal'
+export function loadToernooi() {
+  try { const v = JSON.parse(localStorage.getItem(TOERNOOI_KEY)); if (v && v.playerKey && v.opponents?.length) return v } catch { /* ignore */ }
+  return null
+}
+function saveToernooi(b) {
+  // alleen echte 1-speler-toernooien (geen 2-speler-potje, niet uitgespeeld)
+  try { if (b && !b.p2Key && b.opponents?.length && b.currentRound <= 3) localStorage.setItem(TOERNOOI_KEY, JSON.stringify(b)) } catch { /* ignore */ }
+}
+function clearToernooi() { try { localStorage.removeItem(TOERNOOI_KEY) } catch { /* ignore */ } }
+
 export default function FootballGame({ year, onBack, addCuruntie, noQuiz = false, twoPlayer = false,
-                                       rewardMode = false, initialBracket = null, onMatchDone, onMatchEnd }) {
-  const [phase,       setPhase]      = useState(rewardMode && initialBracket ? 'match_preview' : 'country_select')
-  const [bracket,     setBracket]    = useState(rewardMode ? initialBracket : null)
+                                       rewardMode = false, initialBracket = null, resumeBracket = null, onMatchDone, onMatchEnd }) {
+  const [phase,       setPhase]      = useState((rewardMode && initialBracket) || resumeBracket ? 'match_preview' : 'country_select')
+  const [bracket,     setBracket]    = useState(rewardMode ? initialBracket : resumeBracket)
   const [difficulty,  setDifficulty] = useState(null)
   const [questions,   setQuestions]  = useState([])
   const [qIndex,      setQIndex]     = useState(0)
@@ -512,7 +524,8 @@ export default function FootballGame({ year, onBack, addCuruntie, noQuiz = false
       setBracket({ playerKey: key, p2Key: null, currentRound: 0, roundNames: ['Potje'], opponents: [], results: [] })
       setPhase('pick_p2_country')
     } else {
-      setBracket(generateBracket(key))
+      const nb = generateBracket(key)
+      setBracket(nb); saveToernooi(nb)
       setPhase('match_preview')
     }
   }
@@ -856,11 +869,13 @@ export default function FootballGame({ year, onBack, addCuruntie, noQuiz = false
     const newResults = [...bracket.results, won ? 'win' : 'lose']
     if (!won || bracket.currentRound >= 3) {
       setBracket(b => ({ ...b, results: newResults }))
+      clearToernooi()
       setPhase(won && bracket.currentRound >= 3 ? 'wk_won' : 'wk_lost')
       return
     }
     const nextRound = bracket.currentRound + 1
-    setBracket(b => ({ ...b, currentRound: nextRound, results: newResults }))
+    const nb = { ...bracket, currentRound: nextRound, results: newResults }
+    setBracket(nb); saveToernooi(nb)
     setScore({ p: 0, ai: 0 }); setTimeLeft(gameDuration); setGoalInfo(null); setEarnedCoins(0)
     setPhase('match_preview')
   }
@@ -879,6 +894,7 @@ export default function FootballGame({ year, onBack, addCuruntie, noQuiz = false
   useEffect(() => {
     if (!rewardMode || phase !== 'match_end') return
     const { won, next } = rewardNextBracket()
+    if (next) saveToernooi(next); else clearToernooi()   // toernooi ook buiten de opgaves verder speelbaar
     const t = setTimeout(() => onMatchDone?.(won, next, true), 2800)
     return () => clearTimeout(t)
   }, [phase, rewardMode])
@@ -1172,7 +1188,7 @@ export default function FootballGame({ year, onBack, addCuruntie, noQuiz = false
             {!won && !draw && (
               <>
                 <button className="fb-end-btn fb-end-btn-again" onClick={restart}>🔄 Wedstrijd herspelen</button>
-                <button className="fb-end-btn fb-end-btn-back" onClick={() => { setBracket(null); setPhase('country_select') }}>← Nieuw toernooi</button>
+                <button className="fb-end-btn fb-end-btn-back" onClick={() => { clearToernooi(); setBracket(null); setPhase('country_select') }}>← Nieuw toernooi</button>
               </>
             )}
             {(won || draw) && (
@@ -1192,7 +1208,7 @@ export default function FootballGame({ year, onBack, addCuruntie, noQuiz = false
         <h1 className="wk-champ-title">WERELDKAMPIOEN!</h1>
         <div className="wk-champ-flag">{playerCountry?.flag}</div>
         <p className="wk-champ-sub">{playerCountry?.name} heeft het WK 2026 gewonnen!</p>
-        <button className="fb-end-btn fb-end-btn-again" style={{ marginTop: 16 }} onClick={() => { setBracket(null); setPhase('country_select') }}>
+        <button className="fb-end-btn fb-end-btn-again" style={{ marginTop: 16 }} onClick={() => { clearToernooi(); setBracket(null); setPhase('country_select') }}>
           🔄 Nieuw toernooi
         </button>
         <button className="fb-end-btn fb-end-btn-back" onClick={onBack}>← Terug naar menu</button>
@@ -1209,7 +1225,7 @@ export default function FootballGame({ year, onBack, addCuruntie, noQuiz = false
         <p style={{ color: 'rgba(255,255,255,0.5)' }}>Je bent uitgeschakeld in de {bracket?.roundNames[bracket?.currentRound]}.</p>
         <div className="fb-end-btns">
           <button className="fb-end-btn fb-end-btn-again" onClick={restart}>🔄 Wedstrijd herspelen</button>
-          <button className="fb-end-btn fb-end-btn-back" onClick={() => { setBracket(null); setPhase('country_select') }}>← Nieuw toernooi</button>
+          <button className="fb-end-btn fb-end-btn-back" onClick={() => { clearToernooi(); setBracket(null); setPhase('country_select') }}>← Nieuw toernooi</button>
         </div>
       </div>
     </div>

@@ -48,7 +48,8 @@
 .game-screen > * { position: relative; z-index: 1; }
 
 .game-screen-center {
-  justify-content: center;
+  /* safe center: bij te veel inhoud lijnt de top uit i.p.v. afknippen, zodat alles bereikbaar blijft */
+  justify-content: safe center;
 }
 
 /* ── Header ─────────────────────────────── */

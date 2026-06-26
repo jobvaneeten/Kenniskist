@@ -20,7 +20,7 @@ const HIT = 34
 // drive=true ⇒ de auto rijdt erop (alleen WEG). hout/metaal/touw zijn pure steun.
 // strength = max balkkracht voor breuk · stiff = relaxatie-stijfheid · tension = alleen trekken (touw)
 const MAT = {
-  weg:    { name: 'Weg',    icon: '🛣️', cost: 10, maxLen: 168, drive: true,  rope: false, w: 15, col: '#3c4250', col2: '#262b36', edge: '#15181f', strength: 1.7, stiff: 1,   tension: false },
+  weg:    { name: 'Weg',    icon: '🛣️', cost: 10, maxLen: 150, drive: true,  rope: false, w: 15, col: '#3c4250', col2: '#262b36', edge: '#15181f', strength: 0.8, stiff: 0.8, tension: false },
   hout:   { name: 'Hout',   icon: '🪵', cost: 6,  maxLen: 160, drive: false, rope: false, w: 12, col: '#c79a52', col2: '#8a6a30', edge: '#6b4f22', strength: 3.2, stiff: 1,   tension: false },
   metaal: { name: 'Metaal', icon: '🔩', cost: 16, maxLen: 185, drive: false, rope: false, w: 11, col: '#9fb0cc', col2: '#5d6c84', edge: '#3c4860', strength: 9,   stiff: 1,   tension: false },
   touw:   { name: 'Touw',   icon: '🪢', cost: 4,  maxLen: 260, drive: false, rope: true,  w: 5,  col: '#dcc48e', col2: '#a98a54', edge: '#7c5a30', strength: 4,   stiff: 0.9, tension: true },
@@ -125,64 +125,64 @@ function stairs(title, budget, mats, o = {}) {
 }
 
 const LEVELS = [
-  // ── Tier 1 (1-10): leer de bouwsteentjes — pijler, open vakwerk, schans, trap ──
+  // ── Tier 1 (1-10): leer de bouwsteentjes. Weg alleen zakt door — driehoek je dek vast! ──
   pil('Eerste brug',     150, WH,  { gap: 240, depth: 80 }),
-  opn('Zonder pijler',   180, WHM, { gap: 260 }),
+  opn('Zonder pijler',   190, WH,  { gap: 230 }),
   jmp('De schans',       150, WH,  { gap: 145, drop: 78, rise: 58 }),
-  pil('Twee steunen',    240, WHM, { gap: 360, piers: 2, depth: 100 }),
-  stairs('Trapje af',    230, WHM, { n: 4, step: 58, gapW: 150, yTop: 360 }),
-  pil('Schuine kloof',   210, WHM, { gap: 300, depth: 105, yL: 470, yR: 405 }),
-  opn('Hangend dek',     230, WHM, { gap: 280 }),
-  pil('Zware vracht',    250, WHM, { gap: 300, depth: 110, heavy: true }),
+  opn('Klein vakwerk',   220, WHM, { gap: 260 }),
+  stairs('Trapje af',    240, WHM, { n: 4, step: 58, gapW: 175, yTop: 360 }),
+  pil('Twee steunen',    250, WHM, { gap: 380, piers: 2, depth: 100 }),
+  opn('Hangend dek',     250, WHM, { gap: 280 }),
   jmp('Verre sprong',    200, WHM, { gap: 158, drop: 90, rise: 66 }),
-  pil('Diep gat',        240, WHM, { gap: 320, piers: 1, depth: 150 }),
+  pil('Schuine kloof',   240, WHM, { gap: 300, depth: 110, yL: 470, yR: 405 }),
+  opn('Diepe boog',      280, WHM, { gap: 290, heavy: true }),
 
   // ── Tier 2 (11-20): groter en breder — beeld zoomt uit ──
-  pil('Lange brug',      320, WHM, { gap: 460, piers: 2, depth: 130, worldW: 1450 }),
-  opn('Brede boog',      290, WHM, { gap: 300, worldW: 1350 }),
+  opn('Brede boog',      300, WHM, { gap: 300, worldW: 1350 }),
   mjmp('Dubbele schans', 260, WHM, { gap1: 135, gap2: 135, drop1: 70, drop2: 60 }),
-  stairs('Naar boven',   270, WHM, { n: 4, step: 60, gapW: 150, yTop: 520, up: true }),
-  pil('Vier steunen',    380, WHM, { gap: 600, piers: 3, depth: 130, worldW: 1550 }),
-  pil('Zwaar & diep',    340, WHM, { gap: 360, piers: 1, depth: 150, heavy: true }),
-  opn('Diepe boog',      320, WHM, { gap: 290, heavy: true }),
+  pil('Lange brug',      340, WHM, { gap: 480, piers: 2, depth: 130, worldW: 1450 }),
+  stairs('Naar boven',   290, WHM, { n: 4, step: 60, gapW: 180, yTop: 520, up: true }),
+  opn('Wijde boog',      340, WHM, { gap: 320, worldW: 1400 }),
   jmp('Grote sprong',    250, WHM, { gap: 168, drop: 100, rise: 72, worldW: 1350 }),
-  pil('Bergpas',         370, WHM, { gap: 500, piers: 3, depth: 130, yL: 370, yR: 520, worldW: 1500 }),
-  pil('Touwbrug',        360, ['weg', 'hout', 'touw'], { gap: 460, piers: 2, depth: 140, towers: true, worldW: 1450 }),
+  pil('Vier steunen',    400, WHM, { gap: 620, piers: 3, depth: 130, worldW: 1550 }),
+  opn('Zware boog',      360, ALL, { gap: 300, heavy: true, worldW: 1400 }),
+  mjmp('Sprong-estafette', 320, WHM, { gap1: 150, gap2: 150, drop1: 80, drop2: 70, midW: 250, worldW: 1450 }),
+  pil('Touwbrug',        380, ['weg', 'hout', 'touw'], { gap: 480, piers: 2, depth: 140, towers: true, worldW: 1450 }),
 
   // ── Tier 3 (21-30): wijde en diepe ravijnen, flink uitgezoomd ──
-  pil('Reuzenkloof',     480, ALL, { gap: 760, piers: 4, depth: 145, towers: true, worldW: 1750 }),
-  opn('Wijde boog',      360, ALL, { gap: 300, worldW: 1500 }),
-  mjmp('Sprong-estafette', 320, WHM, { gap1: 150, gap2: 150, drop1: 80, drop2: 70, midW: 250, worldW: 1450 }),
-  pil('Diepe afgrond',   460, WHM, { gap: 560, piers: 3, depth: 150, heavy: true, worldW: 1550, worldH: 880 }),
-  stairs('Grote trap',   400, WHM, { n: 5, step: 55, gapW: 155, yTop: 350, worldW: 1500 }),
-  pil('Hangbrug',        500, ALL, { gap: 660, piers: 4, depth: 140, towers: true, worldW: 1650 }),
+  opn('Grote kloof',     380, ALL, { gap: 330, worldW: 1500 }),
   jmp('Mega-sprong',     310, WHM, { gap: 180, drop: 115, rise: 78, worldW: 1400 }),
-  pil('Zwaar transport', 520, WHM, { gap: 680, piers: 4, depth: 150, heavy: true, worldW: 1650 }),
-  opn('Het gat',         380, ALL, { gap: 300, heavy: true }),
-  pil('Lange reis',      560, WHM, { gap: 900, piers: 5, depth: 140, worldW: 1950 }),
+  pil('Reuzenkloof',     500, ALL, { gap: 780, piers: 4, depth: 145, towers: true, worldW: 1750 }),
+  opn('Diepe afgrond',   400, WHM, { gap: 320, heavy: true, worldW: 1500 }),
+  stairs('Grote trap',   420, WHM, { n: 5, step: 55, gapW: 185, yTop: 350, worldW: 1550 }),
+  opn('Het gat',         400, ALL, { gap: 340, heavy: true, worldW: 1500 }),
+  pil('Bergpas',         400, WHM, { gap: 520, piers: 3, depth: 130, yL: 370, yR: 520, worldW: 1500 }),
+  mjmp('Drie platforms', 360, WHM, { gap1: 160, gap2: 160, drop1: 85, drop2: 80, midW: 240, worldW: 1500 }),
+  pil('Hangbrug',        520, ALL, { gap: 680, piers: 4, depth: 140, towers: true, worldW: 1650 }),
+  pil('Lange reis',      580, WHM, { gap: 920, piers: 5, depth: 140, worldW: 1950 }),
 
   // ── Tier 4 (31-40): epische, ver uitgezoomde overspanningen ──
-  pil('Grand Canyon',    640, ALL, { gap: 1000, piers: 5, depth: 150, towers: true, worldW: 2050 }),
-  mjmp('Drie platforms', 360, WHM, { gap1: 160, gap2: 160, drop1: 85, drop2: 80, midW: 240, worldW: 1500 }),
-  pil('Diep ravijn',     580, WHM, { gap: 760, piers: 4, depth: 150, heavy: true, worldW: 1800, worldH: 900 }),
-  opn('Reuzenboog',      440, ALL, { gap: 300, worldW: 1600, towers: true }),
-  pil('Zware overspan',  640, WHM, { gap: 880, piers: 5, depth: 150, heavy: true, worldW: 1950 }),
+  opn('Reuzenboog',      460, ALL, { gap: 340, towers: true, worldW: 1600 }),
   jmp('Wereldsprong',    360, ALL, { gap: 196, drop: 130, rise: 84, worldW: 1500 }),
-  pil('Bergketen',       580, WHM, { gap: 820, piers: 5, depth: 145, yL: 360, yR: 560, worldW: 1900 }),
-  pil('Hangende stad',   680, ALL, { gap: 1000, piers: 5, depth: 150, towers: true, worldW: 2050 }),
-  stairs('Eindeloze trap', 540, WHM, { n: 6, step: 52, gapW: 158, yTop: 340, worldW: 1900 }),
-  pil('Het diepe',       600, WHM, { gap: 780, piers: 4, depth: 150, worldW: 1850, worldH: 960 }),
+  pil('Grand Canyon',    660, ALL, { gap: 1000, piers: 5, depth: 150, towers: true, worldW: 2050 }),
+  opn('Wijde afgrond',   480, ALL, { gap: 350, heavy: true, towers: true, worldW: 1650 }),
+  mjmp('Sprong-marathon', 420, WHM, { gap1: 165, gap2: 165, drop1: 95, drop2: 90, midW: 240, worldW: 1700 }),
+  pil('Diep ravijn',     600, WHM, { gap: 780, piers: 4, depth: 150, heavy: true, worldW: 1800, worldH: 900 }),
+  stairs('Eindeloze trap', 560, WHM, { n: 6, step: 52, gapW: 185, yTop: 340, worldW: 1900 }),
+  opn('De grote boog',   500, ALL, { gap: 350, heavy: true, towers: true, worldW: 1700 }),
+  pil('Bergketen',       600, WHM, { gap: 840, piers: 5, depth: 145, yL: 360, yR: 560, worldW: 1900 }),
+  pil('Hangende stad',   700, ALL, { gap: 1000, piers: 5, depth: 150, towers: true, worldW: 2050 }),
 
   // ── Tier 5 (41-50): meesterproef — gigantisch, zwaar, ver uitgezoomd ──
-  pil('Lange overtocht', 760, WHM, { gap: 1200, piers: 7, depth: 145, worldW: 2300 }),
-  pil('Zwaar & ver',     780, ALL, { gap: 1000, piers: 6, depth: 150, heavy: true, towers: true, worldW: 2150 }),
-  opn('De grote boog',   480, ALL, { gap: 300, heavy: true, worldW: 1700, towers: true }),
-  mjmp('Sprong-marathon', 420, WHM, { gap1: 165, gap2: 165, drop1: 95, drop2: 90, midW: 240, worldW: 1700 }),
-  pil('Diepste afgrond', 740, ALL, { gap: 1000, piers: 6, depth: 150, heavy: true, worldW: 2100, worldH: 1000 }),
-  pil('Reuzenbrug',      860, WHM, { gap: 1400, piers: 8, depth: 145, worldW: 2500 }),
+  opn('Meesterboog',     540, ALL, { gap: 360, heavy: true, towers: true, worldW: 1750 }),
   jmp('Onmogelijke sprong', 420, ALL, { gap: 205, drop: 140, rise: 88, worldW: 1550 }),
-  pil('Mega-transport',  880, ALL, { gap: 1200, piers: 7, depth: 150, heavy: true, towers: true, worldW: 2300 }),
-  pil('De eindbaas',     980, ALL, { gap: 1500, piers: 8, depth: 150, heavy: true, worldW: 2600 }),
+  pil('Lange overtocht', 780, WHM, { gap: 1200, piers: 7, depth: 145, worldW: 2300 }),
+  opn('Het ravijn',      560, ALL, { gap: 360, heavy: true, towers: true, worldW: 1800 }),
+  mjmp('Sprong-finale',  440, WHM, { gap1: 170, gap2: 170, drop1: 95, drop2: 90, midW: 240, worldW: 1750 }),
+  pil('Diepste afgrond', 760, ALL, { gap: 1000, piers: 6, depth: 150, heavy: true, worldW: 2100, worldH: 1000 }),
+  pil('Reuzenbrug',      880, WHM, { gap: 1400, piers: 8, depth: 145, worldW: 2500 }),
+  pil('Mega-transport',  900, ALL, { gap: 1200, piers: 7, depth: 150, heavy: true, towers: true, worldW: 2300 }),
+  pil('De eindbaas',    1000, ALL, { gap: 1500, piers: 8, depth: 150, heavy: true, worldW: 2600 }),
   pil('Meesterbouwer',  1100, ALL, { gap: 1600, piers: 9, depth: 150, heavy: true, towers: true, worldW: 2700 }),
 ]
 
@@ -209,7 +209,8 @@ export default function BrugBouwen({ onBack }) {
     const nodes = lv.anchors.map(a => ({ x: a.x, y: a.y, fixed: true }))
     S.current = {
       ...S.current, lv, idx, nodes, members: [],
-      drag: null, flash: 0, lp: null, lpTimer: null,
+      drag: null, flash: 0, lp: null, lpTimer: null, pan: null, pinch: null,
+      cam: { z: 1, tx: 0, ty: 0 },   // camera reset: pan (tx,ty in schermpx) + zoom (z)
       sim: null, t0: 0,
     }
     S.current.resize?.()   // view herberekenen voor de zoom van dit level
@@ -226,6 +227,8 @@ export default function BrugBouwen({ onBack }) {
     const ctx = cv.getContext('2d')
     if (!S.current) S.current = { lv: LEVELS[0], nodes: [], members: [], view: { scale: 1, ox: 0, oy: 0 } }
     S.current.ctx = ctx
+    if (!S.current.cam) S.current.cam = { z: 1, tx: 0, ty: 0 }
+    S.current.ptrs = new Map()   // actieve pointers (voor pinch-zoom)
 
     function resize() {
       const r = cv.parentElement.getBoundingClientRect()
@@ -235,13 +238,38 @@ export default function BrugBouwen({ onBack }) {
       const W = S.current.lv?.worldW || VW, H = S.current.lv?.worldH || VH
       const scale = Math.min(r.width / W, r.height / H)
       S.current.view = { scale, ox: (r.width - W * scale) / 2, oy: (r.height - H * scale) / 2, cssW: r.width, cssH: r.height, W, H }
+      clampCam()
     }
     S.current.resize = resize
     resize(); window.addEventListener('resize', resize)
 
+    // camera: effectieve schaal = view.scale * cam.z, met pan-offset cam.tx/ty (schermpx)
     const toWorld = e => {
-      const r = cv.getBoundingClientRect(), v = S.current.view
-      return { x: (e.clientX - r.left - v.ox) / v.scale, y: (e.clientY - r.top - v.oy) / v.scale }
+      const r = cv.getBoundingClientRect(), v = S.current.view, c = S.current.cam
+      const s = v.scale * c.z
+      return { x: (e.clientX - r.left - v.ox - c.tx) / s, y: (e.clientY - r.top - v.oy - c.ty) / s }
+    }
+    function clampCam() {
+      const c = S.current.cam, v = S.current.view; if (!v) return
+      const s = v.scale * c.z, wsW = v.W * s, wsH = v.H * s
+      const mX = v.cssW * 0.3, mY = v.cssH * 0.3
+      const minTx = (v.cssW - v.ox - wsW) - mX, maxTx = -v.ox + mX
+      const minTy = (v.cssH - v.oy - wsH) - mY, maxTy = -v.oy + mY
+      c.tx = minTx > maxTx ? 0 : Math.max(minTx, Math.min(maxTx, c.tx))
+      c.ty = minTy > maxTy ? 0 : Math.max(minTy, Math.min(maxTy, c.ty))
+    }
+    function zoomAt(mx, my, f) {
+      const c = S.current.cam, v = S.current.view
+      const nz = Math.max(1, Math.min(3.5, c.z * f))
+      const s = v.scale * c.z, s2 = v.scale * nz
+      const wx = (mx - v.ox - c.tx) / s, wy = (my - v.oy - c.ty) / s
+      c.tx = mx - v.ox - wx * s2; c.ty = my - v.oy - wy * s2; c.z = nz
+      clampCam()
+    }
+    function onWheel(e) {
+      e.preventDefault()
+      const r = cv.getBoundingClientRect()
+      zoomAt(e.clientX - r.left, e.clientY - r.top, e.deltaY < 0 ? 1.12 : 1 / 1.12)
     }
     const nearestNode = p => {
       let bi = -1, bd = HIT * HIT
@@ -269,20 +297,46 @@ export default function BrugBouwen({ onBack }) {
       S.current.members = S.current.members.map(m => ({ ...m, a: map[m.a], b: map[m.b] }))
     }
 
+    const dist2 = () => { const a = [...S.current.ptrs.values()]; return Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y) }
     function onDown(e) {
-      if (modeRef.current !== 'build') return
-      const p = toWorld(e)
-      const i = nearestNode(p)
-      if (i >= 0) { S.current.drag = { from: i, x: p.x, y: p.y }; return }
-      const mi = nearestMember(p)
-      if (mi >= 0) {
-        S.current.lp = { x: e.clientX, y: e.clientY }
-        S.current.lpTimer = setTimeout(() => {
-          S.current.members.splice(mi, 1); rebuild(); sync(); S.current.lp = null; S.current.lpTimer = null
-        }, 420)
+      S.current.ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY })
+      // tweede vinger → pinch-zoom: stop bouwen/pannen
+      if (S.current.ptrs.size === 2) {
+        S.current.drag = null; S.current.pan = null
+        if (S.current.lpTimer) { clearTimeout(S.current.lpTimer); S.current.lpTimer = null }
+        S.current.lp = null; S.current.pinch = { d: dist2() }
+        return
       }
+      const p = toWorld(e)
+      if (modeRef.current === 'build') {
+        const i = nearestNode(p)
+        if (i >= 0) { S.current.drag = { from: i, x: p.x, y: p.y }; return }
+        const mi = nearestMember(p)
+        if (mi >= 0) {
+          S.current.lp = { x: e.clientX, y: e.clientY }
+          S.current.lpTimer = setTimeout(() => {
+            S.current.members.splice(mi, 1); rebuild(); sync(); S.current.lp = null; S.current.lpTimer = null
+          }, 420)
+          return
+        }
+      }
+      // lege plek (of run-modus) → rondkijken door te slepen
+      S.current.pan = { sx: e.clientX, sy: e.clientY, tx: S.current.cam.tx, ty: S.current.cam.ty }
     }
     function onMove(e) {
+      if (S.current.ptrs.has(e.pointerId)) S.current.ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY })
+      if (S.current.pinch && S.current.ptrs.size >= 2) {
+        const r = cv.getBoundingClientRect(), a = [...S.current.ptrs.values()]
+        const d = dist2(), mx = (a[0].x + a[1].x) / 2 - r.left, my = (a[0].y + a[1].y) / 2 - r.top
+        if (S.current.pinch.d > 0) zoomAt(mx, my, d / S.current.pinch.d)
+        S.current.pinch.d = d
+        return
+      }
+      if (S.current.pan) {
+        S.current.cam.tx = S.current.pan.tx + (e.clientX - S.current.pan.sx)
+        S.current.cam.ty = S.current.pan.ty + (e.clientY - S.current.pan.sy)
+        clampCam(); return
+      }
       if (S.current.lp && Math.hypot(e.clientX - S.current.lp.x, e.clientY - S.current.lp.y) > 10) {
         clearTimeout(S.current.lpTimer); S.current.lp = null; S.current.lpTimer = null
       }
@@ -290,6 +344,9 @@ export default function BrugBouwen({ onBack }) {
       const p = toWorld(e); S.current.drag.x = p.x; S.current.drag.y = p.y
     }
     function onUp(e) {
+      S.current.ptrs.delete(e.pointerId)
+      if (S.current.ptrs.size < 2) S.current.pinch = null
+      if (S.current.pan) { S.current.pan = null; return }
       if (S.current.lpTimer) { clearTimeout(S.current.lpTimer); S.current.lpTimer = null }
       S.current.lp = null
       const d = S.current.drag; S.current.drag = null
@@ -301,7 +358,8 @@ export default function BrugBouwen({ onBack }) {
       if (j === d.from) return
       if (j < 0) {
         const nx = Math.round(p.x / SNAP) * SNAP, ny = Math.round(p.y / SNAP) * SNAP
-        if (ny < 30 || ny > 700 || nx < -260 || nx > 1540) { S.current.flash = 0.4; return }
+        const wW = S.current.lv.worldW || VW, wH = S.current.lv.worldH || VH
+        if (ny < 20 || ny > wH + 60 || nx < -280 || nx > wW + 280) { S.current.flash = 0.4; return }
         S.current.nodes.push({ x: nx, y: ny, fixed: false }); j = S.current.nodes.length - 1
       }
       const a = S.current.nodes[d.from], b = S.current.nodes[j]
@@ -321,6 +379,8 @@ export default function BrugBouwen({ onBack }) {
     cv.addEventListener('pointerdown', onDown)
     window.addEventListener('pointermove', onMove)
     window.addEventListener('pointerup', onUp)
+    window.addEventListener('pointercancel', onUp)
+    cv.addEventListener('wheel', onWheel, { passive: false })
 
     let raf, last = performance.now()
     function frame(now) {
@@ -335,6 +395,8 @@ export default function BrugBouwen({ onBack }) {
       cv.removeEventListener('pointerdown', onDown)
       window.removeEventListener('pointermove', onMove)
       window.removeEventListener('pointerup', onUp)
+      window.removeEventListener('pointercancel', onUp)
+      cv.removeEventListener('wheel', onWheel)
       teardown()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -486,8 +548,9 @@ export default function BrugBouwen({ onBack }) {
     if (st.flash > 0) st.flash = Math.max(0, st.flash - dt)
     st.tAcc = (st.tAcc || 0) + dt
     const W = view.W || VW, H = view.H || VH
+    const cam = st.cam || { z: 1, tx: 0, ty: 0 }
     ctx.save(); ctx.clearRect(0, 0, view.cssW, view.cssH)
-    ctx.translate(view.ox, view.oy); ctx.scale(view.scale, view.scale)
+    ctx.translate(view.ox + cam.tx, view.oy + cam.ty); ctx.scale(view.scale * cam.z, view.scale * cam.z)
     ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.clip()
 
     const lv = st.lv, run = !!st.sim, t = st.tAcc
@@ -640,7 +703,7 @@ export default function BrugBouwen({ onBack }) {
               </div>
             </div>
           )}
-          {mode === 'build' && <div style={hint}>Leg een 🛣️ weg-dek waar de auto op rijdt · steun het met 🪵 hout, 🔩 metaal of 🪢 touw · houd een balk vast om te wissen</div>}
+          {mode === 'build' && <div style={hint}>Leg een 🛣️ weg-dek · steun het met 🪵 hout, 🔩 metaal of 🪢 touw (driehoeken!) · houd een balk vast om te wissen · sleep een lege plek om rond te kijken, scroll/knijp om te zoomen</div>}
         </>
       )}
 

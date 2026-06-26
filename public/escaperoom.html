@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GLITCH // Noodprotocol De Linde</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0e14; --panel:#0f1620; --line:#1d2a38;
+    --virus:#ff2e6e; --virus-soft:#ff6b9c; --safe:#27e0a0; --safe-soft:#7af3cd;
+    --ink:#cfe3ef; --ink-dim:#6f8aa0; --amber:#ffd166; --blue:#7cc0ff;
+    --mono:'Space Mono',ui-monospace,'Courier New',monospace;
+    --sans:'Inter',system-ui,-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:radial-gradient(1200px 700px at 50% -10%, #12202e 0%, var(--bg) 60%),var(--bg);
+    color:var(--ink);font-family:var(--sans);min-height:100vh;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:50;
+    background:repeating-linear-gradient(0deg, rgba(0,0,0,0) 0 2px, rgba(0,0,0,.18) 2px 3px);
+    mix-blend-mode:overlay;opacity:.5}
+  .wrap{max-width:780px;margin:0 auto;padding:22px 18px 70px}
+
+  .top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+  .brand{font-family:var(--mono);font-weight:700;letter-spacing:2px;font-size:15px;color:var(--virus)}
+  .brand.safe{color:var(--safe)}
+  .status{font-family:var(--mono);font-size:12px;color:var(--ink-dim);letter-spacing:1px}
+  .spacer{flex:1}
+  .timer{font-family:var(--mono);font-weight:700;font-size:16px;color:var(--amber);
+    border:1px solid var(--line);border-radius:8px;padding:4px 10px;letter-spacing:1px}
+  .timer.low{color:var(--virus);border-color:var(--virus)}
+
+  .meter{display:flex;gap:8px;margin:0 0 22px}
+  .seg{flex:1;height:12px;border-radius:6px;border:1px solid var(--line);
+    background:linear-gradient(90deg, rgba(255,46,110,.12), rgba(255,46,110,.04));position:relative;overflow:hidden}
+  .seg.done{background:linear-gradient(90deg,var(--safe),var(--safe-soft));border-color:var(--safe);box-shadow:0 0 14px rgba(39,224,160,.45)}
+  .seg .lab{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--mono);font-size:9px;color:var(--ink-dim)}
+  .seg.done .lab{color:#062018;font-weight:700}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:26px 24px;box-shadow:0 24px 60px rgba(0,0,0,.45)}
+  h1{font-family:var(--mono);font-weight:700;font-size:clamp(26px,6vw,40px);line-height:1.05;margin:0 0 6px;letter-spacing:1px}
+  h1 .g{color:var(--virus);text-shadow:0 0 18px rgba(255,46,110,.5)}
+  .lead{font-size:16px;line-height:1.6;color:var(--ink);margin:14px 0}
+  .lead b{color:var(--safe-soft)}
+  .meta{font-family:var(--mono);font-size:12px;color:var(--ink-dim);letter-spacing:1px;margin-bottom:4px}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:3px;color:var(--virus);text-transform:uppercase;margin-bottom:10px}
+  .eyebrow.safe{color:var(--safe)}
+
+  .mission{background:#0b121b;border:1px dashed var(--line);border-radius:12px;padding:16px 18px;margin:16px 0;line-height:1.55}
+  .mission .tag{font-family:var(--mono);font-size:11px;letter-spacing:2px;color:var(--amber);display:block;margin-bottom:6px}
+
+  .glitchmsg{background:rgba(255,46,110,.08);border:1px solid rgba(255,46,110,.45);border-radius:12px;
+    padding:14px 16px;margin:14px 0 4px;line-height:1.5;color:var(--virus-soft)}
+  .glitchmsg .gtag{font-family:var(--mono);font-size:11px;letter-spacing:2px;color:var(--virus);display:block;margin-bottom:6px;text-transform:uppercase}
+  .glitchmsg .gwarn{display:block;margin-top:8px;font-size:12px;color:var(--ink-dim);font-style:italic}
+
+  /* ---- ingebouwde opgaven ---- */
+  .puzzle{margin:8px 0 4px}
+  .p-instr{font-size:14.5px;color:var(--ink);line-height:1.55;margin:10px 0}
+  .p-instr b{color:var(--safe-soft)}
+  .ticons{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px 0}
+  .ticon{border:1px solid var(--line);border-radius:10px;padding:6px;text-align:center;background:#0c141e;color:#dCEBF4}
+  .ticon svg{width:34px;height:34px;display:block;margin:0 auto}
+  .ticon .l{font-family:var(--mono);font-weight:700;font-size:13px;color:var(--safe-soft);margin-top:3px}
+  .triddles{list-style:none;padding:0;margin:10px 0}
+  .triddles li{background:#0b121b;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:8px 0;font-size:14px;display:flex;gap:10px;line-height:1.5}
+  .triddles li .n{font-family:var(--mono);font-weight:700;color:var(--virus);flex:none}
+  .tcontrols{display:flex;gap:12px;flex-wrap:wrap;margin:10px 0}
+  .tctrl{display:inline-flex;align-items:center;gap:8px;background:rgba(39,224,160,.08);border:1px solid var(--safe);
+    border-radius:10px;padding:8px 14px;font-weight:700;color:var(--safe-soft)}
+  .tctrl svg{width:24px;height:24px}
+  .tword{display:flex;gap:18px;justify-content:center;background:#0b121b;border:1px solid var(--line);border-radius:12px;padding:16px;margin:12px 0}
+  .tword svg{width:46px;height:46px;color:#fff}
+  .tword .c{text-align:center}
+  .tword .c .u{width:42px;border-bottom:2px solid var(--ink-dim);margin:8px auto 0;height:0}
+  .tzoek{background:#f4f7f9;border-radius:12px;padding:6px;margin:10px 0;border:1px solid var(--line)}
+  .tzoek .leg{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:#15202b;padding:6px 8px 0}
+  .tzoek .leg span{display:inline-flex;align-items:center;gap:5px}
+  .tzoek .leg svg{width:20px;height:20px}
+  .tquestions{list-style:none;padding:0;margin:10px 0}
+  .tquestions li{background:#0b121b;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:8px 0;font-size:14px;line-height:1.5}
+  .tquestions li .n{font-family:var(--mono);font-weight:700;color:var(--virus);margin-right:8px}
+  .tvault{background:#0b121b;border:1px solid var(--line);border-radius:12px;padding:2px 14px;margin:10px 0}
+  .tvault .row{display:flex;gap:12px;padding:11px 0;border-bottom:1px dashed var(--line);font-size:14px;line-height:1.5}
+  .tvault .row:last-child{border-bottom:none}
+  .tvault .b{font-family:var(--mono);font-weight:700;color:var(--virus);flex:none;min-width:62px}
+  .tnote{background:rgba(39,224,160,.07);border:1px solid var(--safe);border-radius:10px;padding:10px 12px;margin:10px 0;font-size:13.5px;color:var(--safe-soft);line-height:1.5}
+  .tsearch{background:rgba(124,192,255,.10);border:1px solid #3a7bd6;border-radius:10px;padding:10px 12px;margin:10px 0;font-size:13.5px;color:var(--blue);line-height:1.5}
+  .tpw{width:100%;border-collapse:collapse;margin:10px 0;font-size:14px}
+  .tpw th,.tpw td{border:1px solid var(--line);padding:8px 10px;text-align:left}
+  .tpw th{color:var(--ink-dim);font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase}
+  .tpw .m{font-family:var(--mono);font-weight:700;color:var(--safe-soft);font-size:15px;letter-spacing:1px}
+
+  /* ---- code-invoer ---- */
+  .code-row{display:flex;gap:10px;justify-content:center;margin:20px 0 6px}
+  .digit{width:64px;height:78px;border-radius:12px;border:2px solid var(--line);background:#070b11;color:var(--safe-soft);
+    font-family:var(--mono);font-weight:700;font-size:36px;text-align:center;line-height:74px;transition:.15s}
+  .digit.active{border-color:var(--safe);box-shadow:0 0 0 3px rgba(39,224,160,.18)}
+  .feedback{text-align:center;min-height:24px;font-family:var(--mono);font-size:14px;letter-spacing:1px;margin:8px 0 2px}
+  .feedback.bad{color:var(--virus)} .feedback.good{color:var(--safe)}
+  .keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:330px;margin:16px auto 4px}
+  .key{padding:16px 0;border-radius:12px;border:1px solid var(--line);background:#0c141e;color:var(--ink);
+    font-family:var(--mono);font-weight:700;font-size:22px;cursor:pointer;transition:.12s;user-select:none}
+  .key:hover{border-color:var(--safe);color:var(--safe-soft)} .key:active{transform:translateY(1px)}
+  .key.wide{font-size:14px;letter-spacing:1px} .key.del{color:var(--virus-soft)}
+
+  .btn{display:inline-flex;align-items:center;gap:10px;cursor:pointer;border:none;font-family:var(--mono);font-weight:700;
+    font-size:16px;letter-spacing:1px;padding:16px 26px;border-radius:12px;color:#04130d;
+    background:linear-gradient(180deg,var(--safe),#19b683);box-shadow:0 10px 28px rgba(39,224,160,.3);transition:.15s}
+  .btn:hover{transform:translateY(-2px)}
+  .btn.block{display:flex;width:100%;justify-content:center;margin-top:18px}
+  .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--ink-dim);box-shadow:none;font-size:12px;padding:8px 14px}
+  .hintbtn{display:block;margin:14px auto 0;background:none;border:none;color:var(--amber);font-family:var(--mono);font-size:12px;letter-spacing:1px;cursor:pointer;text-decoration:underline}
+  .hintbox{display:none;margin:10px auto 0;max-width:520px;background:#1a1505;border:1px solid #463a12;color:var(--amber);border-radius:10px;padding:12px 14px;font-size:14px;line-height:1.5}
+
+  @keyframes shake{10%,90%{transform:translateX(-2px)}20%,80%{transform:translateX(4px)}30%,50%,70%{transform:translateX(-7px)}40%,60%{transform:translateX(7px)}}
+  .shake{animation:shake .5s}
+  @keyframes glitchflash{0%,100%{filter:none}50%{filter:hue-rotate(80deg) saturate(2)}}
+  .flash{animation:glitchflash .4s}
+
+  .win h1{color:var(--safe)}
+  .badge{font-family:var(--mono);font-size:64px;text-align:center;margin:10px 0;color:var(--safe);text-shadow:0 0 30px rgba(39,224,160,.6)}
+  .codeword{font-family:var(--mono);font-weight:700;letter-spacing:6px;font-size:30px;text-align:center;color:var(--amber);margin:18px 0;border:1px dashed var(--line);border-radius:12px;padding:18px}
+
+  .reset{position:fixed;right:12px;bottom:12px;z-index:60}
+  @media (max-width:520px){.digit{width:52px;height:64px;font-size:28px;line-height:60px}.panel{padding:20px 16px}}
+  @media (prefers-reduced-motion:reduce){.shake,.flash{animation:none}body::after{display:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <span class="brand" id="brand">GLITCH//ACTIEF</span>
+    <span class="status" id="sysstatus">SYSTEEM: BESMET</span>
+    <span class="spacer"></span>
+    <span class="timer" id="timer">30:00</span>
+  </div>
+  <div class="meter" id="meter"></div>
+  <div id="app"></div>
+</div>
+<button class="btn ghost reset" id="resetBtn" title="Voor de docent: begin opnieuw">⟳ reset</button>
+
+<script>
+/* ====== herbruikbare svg-stukjes ====== */
+const SQ='<svg viewBox="0 0 40 40"><rect x="9" y="9" width="22" height="22" fill="currentColor"/></svg>';
+const STAR='<svg viewBox="0 0 40 40"><polygon points="20,6 24,16 35,16 26,23 29,34 20,27 11,34 14,23 5,16 16,16" fill="currentColor"/></svg>';
+const CIRC='<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="11" fill="currentColor"/></svg>';
+const BOLT='<svg viewBox="0 0 40 40"><polygon points="22,5 11,22 19,22 16,35 30,17 21,17" fill="currentColor"/></svg>';
+
+/* 16 iconen (donker thema, currentColor) */
+const ICONS16=`
+<div class="ticons">
+<div class="ticon"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 17 A20 20 0 0 1 34 17"/><path d="M11 23 A12 12 0 0 1 29 23"/><path d="M16 29 A5 5 0 0 1 24 29"/><circle cx="20" cy="33" r="1.6" fill="currentColor" stroke="none"/></svg><div class="l">1</div></div>
+<div class="ticon"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="8" y1="13" x2="32" y2="13"/><circle cx="15" cy="13" r="3.2" fill="#0c141e"/><line x1="8" y1="20" x2="32" y2="20"/><circle cx="26" cy="20" r="3.2" fill="#0c141e"/><line x1="8" y1="27" x2="32" y2="27"/><circle cx="18" cy="27" r="3.2" fill="#0c141e"/></svg><div class="l">2</div></div>
+<div class="ticon"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M8 8 H28 L32 12 V32 H8 Z"/><rect x="13" y="8" width="11" height="8"/><rect x="12" y="22" width="16" height="10"/></svg><div class="l">3</div></div>
+<div class="ticon"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="20" y1="7" x2="20" y2="24"/><polyline points="13,18 20,25 27,18"/><path d="M9 30 H31"/></svg><div class="l">4</div></div>
+<div class="ticon"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M8 20 L20 9 L32 20"/><path d="M11 18 V31 H29 V18"/><rect x="17" y="24" width="6" height="7"/></svg><div class="l">5</div></div>
+<div class="ticon"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="11" y1="29" x2="11" y2="25"/><line x1="17" y1="29" x2="17" y2="21"/><line x1="23" y1="29" x2="23" y2="16"/><line x1="29" y1="29" x2="29" y2="11"/></svg><div class="l">6</div></div>
+<div class="ticon"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><circle cx="18" cy="18" r="9"/><line x1="25" y1="25" x2="33" y2="33"/></svg><div class="l">7</div></div>
+<div class="ticon"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"><path d="M9 12 H31"/><path d="M16 12 V9 H24 V12"/><path d="M11 12 L13 33 H27 L29 12"/><line x1="17" y1="17" x2="17" y2="28"/><line x1="23" y1="17" x2="23" y2="28"/></svg><div class="l">8</div></div>
+<div class="ticon"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M30 14 A12 12 0 1 0 32 22"/><polyline points="30,7 30,14 23,14"/></svg><div class="l">9</div></div>
+<div class="ticon"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><circle cx="13" cy="24" r="6"/><circle cx="27" cy="24" r="6"/><path d="M13 18 V12 H17 V20"/><path d="M27 18 V12 H23 V20"/><line x1="18" y1="22" x2="22" y2="22"/></svg><div class="l">10</div></div>
+<div class="ticon"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M7 12 H17 L20 16 H33 V30 H7 Z"/></svg><div class="l">11</div></div>
+<div class="ticon"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="20" y1="25" x2="20" y2="8"/><polyline points="13,15 20,8 27,15"/><path d="M9 30 H31"/></svg><div class="l">12</div></div>
+<div class="ticon"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><polygon points="20,7 24,16 34,17 26,24 28,34 20,29 12,34 14,24 6,17 16,16"/></svg><div class="l">13</div></div>
+<div class="ticon"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="18" cy="18" r="9"/><line x1="25" y1="25" x2="33" y2="33"/><line x1="18" y1="14" x2="18" y2="22"/><line x1="14" y1="18" x2="22" y2="18"/></svg><div class="l">14</div></div>
+<div class="ticon"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="20" cy="20" r="13"/><line x1="15" y1="15" x2="25" y2="25"/><line x1="25" y1="15" x2="15" y2="25"/></svg><div class="l">15</div></div>
+<div class="ticon"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M12 28 a6 6 0 0 1 0-12 a8 8 0 0 1 15 -2 a6 6 0 0 1 1 14 Z"/></svg><div class="l">16</div></div>
+</div>`;
+
+/* zoekplaat (lichte plaat in donkere terminal) */
+const ZOEK=`
+<div class="tzoek">
+<div class="leg">
+<span><svg viewBox="0 0 40 40" fill="none" stroke="#15202b" stroke-width="2"><rect x="13" y="8" width="14" height="24" rx="7"/><line x1="20" y1="8" x2="20" y2="17"/></svg>muis</span>
+<span><svg viewBox="0 0 40 40" fill="none" stroke="#15202b" stroke-width="2"><rect x="12" y="14" width="20" height="12" rx="2"/><rect x="6" y="17" width="6" height="6"/></svg>USB</span>
+<span><svg viewBox="0 0 40 40" fill="none" stroke="#15202b" stroke-width="2"><circle cx="20" cy="20" r="13"/><line x1="20" y1="20" x2="20" y2="11"/><line x1="20" y1="20" x2="28" y2="20"/></svg>klok</span>
+<span><svg viewBox="0 0 40 40" fill="none" stroke="#15202b" stroke-width="2"><ellipse cx="20" cy="21" rx="8" ry="10"/><circle cx="20" cy="11" r="4"/></svg>bug</span>
+</div>
+<svg viewBox="0 0 700 490" xmlns="http://www.w3.org/2000/svg" style="display:block;width:100%;height:auto;background:#f4f7f9;border-radius:8px">
+<defs>
+<g id="mouse"><rect x="-9" y="-14" width="18" height="28" rx="9" fill="#fff" stroke="#15202b" stroke-width="2"/><line x1="0" y1="-14" x2="0" y2="-2" stroke="#15202b" stroke-width="2"/></g>
+<g id="usb"><rect x="-12" y="-7" width="20" height="14" rx="2" fill="#cfd8de" stroke="#15202b" stroke-width="2"/><rect x="-18" y="-4" width="6" height="8" fill="#9aa7b0" stroke="#15202b" stroke-width="1.5"/></g>
+<g id="bug"><ellipse cx="0" cy="2" rx="8" ry="10" fill="#fff" stroke="#15202b" stroke-width="2"/><line x1="0" y1="-8" x2="0" y2="12" stroke="#15202b" stroke-width="1.5"/><circle cx="0" cy="-8" r="4" fill="#15202b"/><line x1="-8" y1="-3" x2="-15" y2="-6" stroke="#15202b" stroke-width="1.5"/><line x1="8" y1="-3" x2="15" y2="-6" stroke="#15202b" stroke-width="1.5"/><line x1="-8" y1="3" x2="-15" y2="3" stroke="#15202b" stroke-width="1.5"/><line x1="8" y1="3" x2="15" y2="3" stroke="#15202b" stroke-width="1.5"/><line x1="-8" y1="9" x2="-15" y2="12" stroke="#15202b" stroke-width="1.5"/><line x1="8" y1="9" x2="15" y2="12" stroke="#15202b" stroke-width="1.5"/></g>
+<g id="monitor"><rect x="-26" y="-20" width="52" height="36" rx="3" fill="#dce3e8" stroke="#15202b" stroke-width="2"/><rect x="-21" y="-15" width="42" height="26" fill="#aebcc6"/><rect x="-6" y="16" width="12" height="6" fill="#dce3e8" stroke="#15202b" stroke-width="2"/><rect x="-14" y="22" width="28" height="4" rx="2" fill="#15202b"/></g>
+<g id="cup"><path d="M-9 -8 H9 L7 12 H-7 Z" fill="#fff" stroke="#15202b" stroke-width="2"/><path d="M9 -4 q8 0 8 8 q0 7 -8 6" fill="none" stroke="#15202b" stroke-width="2"/></g>
+<g id="keyb"><rect x="-30" y="-10" width="60" height="20" rx="3" fill="#e7edf1" stroke="#15202b" stroke-width="2"/><g fill="#b8c4cc"><rect x="-25" y="-6" width="7" height="5"/><rect x="-15" y="-6" width="7" height="5"/><rect x="-5" y="-6" width="7" height="5"/><rect x="5" y="-6" width="7" height="5"/><rect x="15" y="-6" width="7" height="5"/><rect x="-25" y="1" width="7" height="5"/><rect x="-15" y="1" width="7" height="5"/><rect x="-5" y="1" width="7" height="5"/><rect x="5" y="1" width="7" height="5"/><rect x="15" y="1" width="7" height="5"/></g></g>
+<g id="phones"><path d="M-12 4 A12 12 0 0 1 12 4" fill="none" stroke="#15202b" stroke-width="2.5"/><rect x="-15" y="2" width="7" height="12" rx="3" fill="#cfd8de" stroke="#15202b" stroke-width="2"/><rect x="8" y="2" width="7" height="12" rx="3" fill="#cfd8de" stroke="#15202b" stroke-width="2"/></g>
+<g id="sd"><path d="M-8 -10 H6 L10 -6 V10 H-8 Z" fill="#e7edf1" stroke="#15202b" stroke-width="2"/><line x1="-5" y1="-10" x2="-5" y2="-4" stroke="#15202b" stroke-width="1.5"/><line x1="-1" y1="-10" x2="-1" y2="-4" stroke="#15202b" stroke-width="1.5"/><line x1="3" y1="-10" x2="3" y2="-4" stroke="#15202b" stroke-width="1.5"/></g>
+<g id="web"><path d="M0 0 L34 0 M0 0 L30 14 M0 0 L24 24 M0 0 L14 30 M0 0 L0 34" fill="none" stroke="#15202b" stroke-width="1.4"/><path d="M9 0 Q7 7 0 9 M18 0 Q14 14 0 18 M27 0 Q21 21 0 27" fill="none" stroke="#15202b" stroke-width="1.2"/></g>
+</defs>
+<rect x="0" y="0" width="700" height="490" fill="#f4f7f9"/>
+<rect x="0" y="345" width="700" height="145" fill="#e7edf1"/>
+<rect x="30" y="260" width="300" height="92" rx="6" fill="#dfe6ea" stroke="#cdd6dc" stroke-width="2"/>
+<rect x="380" y="260" width="290" height="92" rx="6" fill="#dfe6ea" stroke="#cdd6dc" stroke-width="2"/>
+<rect x="120" y="398" width="320" height="72" rx="6" fill="#dfe6ea" stroke="#cdd6dc" stroke-width="2"/>
+<g transform="translate(300,58)"><circle r="33" fill="#fff" stroke="#15202b" stroke-width="3"/><circle r="2.5" fill="#15202b"/><line x1="0" y1="0" x2="0" y2="-23" stroke="#15202b" stroke-width="3"/><line x1="0" y1="0" x2="20" y2="0" stroke="#15202b" stroke-width="3"/><text x="0" y="-22" text-anchor="middle" font-size="9" fill="#15202b">12</text><text x="26" y="4" text-anchor="middle" font-size="9" fill="#15202b">3</text><text x="0" y="29" text-anchor="middle" font-size="9" fill="#15202b">6</text><text x="-26" y="4" text-anchor="middle" font-size="9" fill="#15202b">9</text></g>
+<g transform="translate(560,58)"><circle r="33" fill="#fff" stroke="#15202b" stroke-width="3"/><circle r="2.5" fill="#15202b"/><line x1="0" y1="0" x2="-12" y2="-19" stroke="#15202b" stroke-width="3"/><line x1="0" y1="0" x2="-19" y2="9" stroke="#15202b" stroke-width="3"/><text x="0" y="-22" text-anchor="middle" font-size="9" fill="#15202b" font-weight="bold">13</text><text x="26" y="4" text-anchor="middle" font-size="9" fill="#15202b">3</text><text x="0" y="29" text-anchor="middle" font-size="9" fill="#15202b">6</text><text x="-26" y="4" text-anchor="middle" font-size="9" fill="#15202b">9</text></g>
+<use href="#monitor" x="95" y="250"/><use href="#monitor" x="250" y="250"/><use href="#monitor" x="470" y="250"/>
+<use href="#keyb" x="185" y="312"/><use href="#keyb" x="525" y="312"/>
+<use href="#cup" x="60" y="312"/><use href="#cup" x="665" y="170"/><use href="#cup" x="380" y="418"/>
+<use href="#phones" x="300" y="438"/><use href="#phones" x="645" y="305"/>
+<use href="#sd" x="115" y="165"/><use href="#sd" x="455" y="140"/><use href="#sd" x="600" y="425"/>
+<use href="#web" x="8" y="8"/><use href="#web" x="690" y="478" transform="rotate(180 690 478)"/>
+<use href="#mouse" x="125" y="312" transform="rotate(8 125 312)"/><use href="#mouse" x="240" y="125"/><use href="#mouse" x="565" y="312" transform="rotate(-12 565 312)"/><use href="#mouse" x="430" y="422"/>
+<use href="#usb" x="205" y="170" transform="rotate(20 205 170)"/><use href="#usb" x="410" y="120"/><use href="#usb" x="60" y="210" transform="rotate(-15 60 210)"/><use href="#usb" x="650" y="245"/><use href="#usb" x="255" y="425" transform="rotate(10 255 425)"/><use href="#usb" x="615" y="420" transform="rotate(-8 615 420)"/>
+<use href="#bug" x="150" y="118"/><use href="#bug" x="350" y="160" transform="rotate(15 350 160)"/><use href="#bug" x="80" y="420"/><use href="#bug" x="335" y="312" transform="rotate(-20 335 312)"/><use href="#bug" x="495" y="190"/><use href="#bug" x="678" y="350"/><use href="#bug" x="490" y="430" transform="rotate(25 490 430)"/><use href="#bug" x="175" y="430" transform="rotate(-10 175 430)"/><use href="#bug" x="630" y="135"/>
+</svg>
+</div>`;
+
+/* ====== firewalls met ingebouwde opgaven ====== */
+const FIREWALLS=[
+ { n:1, code:"3718", titel:"Iconen-firewall",
+   tekst:"GLITCH heeft 16 pictogrammen door elkaar gegooid, met veel <b>look-alikes</b>. Los de vier raadsels op — de code = de iconnummers in volgorde.",
+   nep:"😈 GLITCH zegt: \"Makkie! Lees de cijfers gewoon van groot naar klein. Vertrouw me...\"",
+   hint:"Lees elk raadsel precíes — het zegt welk look-alike je NIET moet kiezen. Code = de nummers in volgorde van de raadsels.",
+   puzzle:`<div class="puzzle">${ICONS16}
+     <ul class="triddles">
+       <li><span class="n">1</span>Druk op mij en je werk is veilig <b>bewaard</b> — maar ik ben géén map en géén wolk.</li>
+       <li><span class="n">2</span>Ik vergroot het kleine om iets te <b>zoeken</b> — maar ik ben géén verrekijker en heb géén plusje.</li>
+       <li><span class="n">3</span>Zonder draad verbind ik je met <b>internet</b> — maar ik ben géén losse signaalbalkjes.</li>
+       <li><span class="n">4</span>Wat je <b>weggooit</b>, verdwijnt in mij — ik ben een bak, géén kruisje.</li>
+     </ul>
+     <div class="tnote">De code = de nummers van de juiste iconen, in volgorde van de raadsels (1→2→3→4).</div>
+   </div>` },
+
+ { n:2, code:"3582", titel:"Code-firewall",
+   tekst:"De cijfersleutel ligt verstopt in het lokaal op kaarten die er <b>hetzelfde uitzien</b> — maar er klopt er maar één.",
+   nep:"😈 GLITCH zegt: \"Hier is de sleutel: ● = 9. Echt waar hoor. Type maar 9...\"",
+   hint:"De échte sleutel klopt met twee controles tegelijk: ■=2 én ★=5. Eentje die maar aan één klopt, is nep.",
+   puzzle:`<div class="puzzle">
+     <div class="tsearch">🔎 Zoek in het lokaal de <b>SLEUTEL-kaarten</b>. Ze zien er allemaal hetzelfde uit — maar er klopt er maar één.</div>
+     <div class="p-instr">De échte sleutel klopt met <b>twee controles tegelijk</b>. Klopt een kaart maar met één? Dan is hij nep.</div>
+     <div class="tcontrols">
+       <div class="tctrl">${SQ} = 2</div>
+       <div class="tctrl">${STAR} = 5</div>
+     </div>
+     <div class="p-instr">Vertaal het glitch-woord met de échte sleutel (links → rechts):</div>
+     <div class="tword">
+       <div class="c">${CIRC}<div class="u"></div></div>
+       <div class="c">${STAR}<div class="u"></div></div>
+       <div class="c">${BOLT}<div class="u"></div></div>
+       <div class="c">${SQ}<div class="u"></div></div>
+     </div>
+   </div>` },
+
+ { n:3, code:"4637", titel:"Zoekplaat-firewall",
+   tekst:"Zoek mee op de plaat. Tel zorgvuldig — er zijn <b>look-alikes</b>, <b>twee klokken</b> en een <b>rekensom</b>.",
+   nep:"😈 GLITCH zegt: \"Die spinnenwebben? Negeer ze, tel gewoon álle bugs!\"",
+   hint:"Eén klok is beschadigd (een fout op de wijzerplaat). Bij de bugs: tel ze en trek de spinnenwebben eraf.",
+   puzzle:`<div class="puzzle">${ZOEK}
+     <ul class="tquestions">
+       <li><span class="n">1</span>Hoeveel échte <b>computermuizen</b> liggen er? (een koptelefoon telt niet mee)</li>
+       <li><span class="n">2</span>Hoeveel <b>USB-sticks</b>? (een geheugenkaartje telt niet mee)</li>
+       <li><span class="n">3</span>Er hangen <b>twee klokken</b>. Eén is kapot (er staat een onmogelijk getal op). Lees de júiste klok: hoe laat (heel uur)?</li>
+       <li><span class="n">4</span>Reken: aantal <b>bugs</b> − aantal <b>spinnenwebben</b>.</li>
+     </ul>
+     <div class="tnote">Code = antwoord 1 → 2 → 3 → 4.</div>
+   </div>` },
+
+ { n:4, code:"4692", titel:"Kluis-firewall",
+   tekst:"Kraak de kluiscode. Reken cijfer 1–3 uit (meerdere stappen!). Voor cijfer 4 <b>zoek</b> je de juiste kaart in het lokaal.",
+   nep:"😈 GLITCH zegt: \"De kluiscode is gewoon 0 0 0 0. Probeer maar!\"",
+   hint:"Controle: de vier cijfers zijn samen 21. Reken cijfer 1–3 uit en kijk welke kaart-aanwijzing cijfer 4 kloppend maakt.",
+   puzzle:`<div class="puzzle">
+     <div class="tvault">
+       <div class="row"><span class="b">cijfer 1</span><span>Het aantal poten van <b>3 katten</b> (elke kat 4 poten), gedeeld door het aantal benen van een mens, daarna <b>min 2</b>.</span></div>
+       <div class="row"><span class="b">cijfer 2</span><span>Het aantal kanten (zijvlakken) van een gewone <b>dobbelsteen</b>.</span></div>
+       <div class="row"><span class="b">cijfer 3</span><span>Hoeveel <b>levens</b> heeft een kat volgens het spreekwoord?</span></div>
+       <div class="row"><span class="b">cijfer 4</span><span>🔎 Zoek de <b>KLUIS-kaarten</b> in het lokaal. Welke aanwijzing is de echte? Gebruik de controle hieronder.</span></div>
+     </div>
+     <div class="tnote">Controle: de vier cijfers samen zijn precies <b>21</b>. Tel cijfer 1+2+3 op en kijk welke kaart-aanwijzing cijfer 4 zó maakt dat het totaal 21 wordt.</div>
+     <div class="p-instr" style="font-size:13px;color:var(--ink-dim)">Hulp: mens 2 benen, fiets 2 wielen, auto 4 wielen, spin 8 poten.</div>
+   </div>` },
+
+ { n:5, code:"4013", titel:"Wachtwoord-firewall",
+   tekst:"Laatste firewall! GLITCH heeft <b>te korte nepwachtwoorden</b> tussen de echte gezet. Tel alleen de cijfers in de wachtwoorden die <b>lang genoeg</b> zijn.",
+   nep:"😈 GLITCH zegt: \"Tel mijn korte wachtwoorden óók mee, dat hoort zo!\"",
+   hint:"Een veilig wachtwoord is minstens 8 tekens. Tel éérst de lengte; alleen 8+ telt mee. Dan de cijfers, van boven naar beneden.",
+   puzzle:`<div class="puzzle">
+     <div class="p-instr"><b>Stap 1:</b> tel de lengte. <b>Stap 2:</b> alleen bij wachtwoorden van <b>8 tekens of meer</b> tel je het aantal cijfers (0–9). De korte sla je over.</div>
+     <table class="tpw">
+       <tr><th>Wachtwoord</th><th>8+ ?</th><th>Cijfers</th></tr>
+       <tr><td class="m">Hond2024!</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+       <tr><td class="m">Mees4</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+       <tr><td class="m">appeltaart</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+       <tr><td class="m">Tijger7Blauw</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+       <tr><td class="m">zon!2</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+       <tr><td class="m">K9m!x3Pq8</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+     </table>
+     <div class="tnote">Code = de cijferaantallen van de lange wachtwoorden, van boven naar beneden. Let op: de letter O lijkt op een 0, maar is geen cijfer!</div>
+   </div>` }
+];
+const TOTAAL_SEC=30*60;
+const KEY="glitch_de_linde_v2";
+
+let state=load();
+function load(){ try{const s=JSON.parse(localStorage.getItem(KEY)); if(s) return s;}catch(e){}
+  return {stap:0,klaar:false,gestart:false,seconden:TOTAAL_SEC,pogingen:0}; }
+function save(){ try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){} }
+
+let timerInt=null;
+function startTimer(){ if(timerInt) return;
+  timerInt=setInterval(()=>{ if(state.klaar) return; if(state.seconden>0){state.seconden--;save();} renderTimer(); },1000); }
+function renderTimer(){ const t=document.getElementById('timer'); const m=Math.floor(state.seconden/60),s=state.seconden%60;
+  t.textContent=String(m).padStart(2,'0')+":"+String(s).padStart(2,'0'); t.classList.toggle('low',state.seconden<=120); }
+
+function renderMeter(){ const m=document.getElementById('meter'); m.innerHTML="";
+  for(let i=0;i<5;i++){ const d=document.createElement('div'); d.className="seg"+(i<state.stap?" done":"");
+    d.innerHTML='<span class="lab">FW'+(i+1)+(i<state.stap?' ✓':'')+'</span>'; m.appendChild(d); } }
+function renderHeader(){ const safe=state.klaar;
+  document.getElementById('brand').textContent=safe?"SYSTEEM//VEILIG":"GLITCH//ACTIEF";
+  document.getElementById('brand').className="brand"+(safe?" safe":"");
+  document.getElementById('sysstatus').textContent=safe?"SYSTEEM: BEVEILIGD":"SYSTEEM: BESMET"; }
+
+const app=document.getElementById('app');
+
+function renderStart(){
+  app.innerHTML=`<div class="panel">
+    <div class="eyebrow">noodprotocol • kindcentrum de linde</div>
+    <h1>Het virus <span class="g">GLITCH</span> heeft de computer overgenomen</h1>
+    <p class="lead">Het hele systeem is besmet. De vijf <b>firewalls</b> die de school beschermen liggen plat.
+    Jullie zijn het <b>IT-noodteam</b>. Herstel alle vijf voordat de tijd om is en verjaag GLITCH!</p>
+    <div class="mission"><span class="tag">// hoe werkt het</span>
+      Elke firewall heeft een <b>opgave op dit scherm</b>. Los hem op en vul de <b>4-cijferige code</b> in.
+      Pas als de code klopt, opent de <b>volgende</b> firewall. Soms moet je iets <b>zoeken in het lokaal</b>.</div>
+    <div class="glitchmsg"><span class="gtag">⚠ waarschuwing</span>
+      GLITCH vecht terug! Hij stuurt <b>nepberichten</b> met foute codes en heeft kaarten in het lokaal verstopt —
+      sommige echt, sommige namaak. <b>Vertrouw alleen wat je zelf controleert.</b></div>
+    <button class="btn block" id="startBtn">▶ START NOODPROTOCOL</button>
+  </div>`;
+  document.getElementById('startBtn').onclick=()=>{ state.gestart=true; save(); startTimer(); renderStap(); };
+}
+
+let buffer="";
+function renderStap(){
+  renderHeader(); renderMeter(); startTimer();
+  if(state.stap>=5) return renderWin();
+  const fw=FIREWALLS[state.stap]; buffer="";
+  app.innerHTML=`<div class="panel" id="card">
+    <div class="eyebrow">firewall ${fw.n} van 5 • ${fw.titel}</div>
+    <h1 style="font-size:clamp(22px,5vw,32px)">Herstel firewall <span class="g">${fw.n}</span></h1>
+    <div class="mission"><span class="tag">// missie</span> ${fw.tekst}</div>
+    ${fw.puzzle}
+    <div class="glitchmsg"><span class="gtag">⚠ onderschept bericht — bron: GLITCH</span>${fw.nep}
+      <span class="gwarn">GLITCH liegt om je te misleiden. Vertrouw alleen je eigen werk en de échte kaarten.</span></div>
+    <div class="meta center" style="text-align:center;margin-top:6px">VOER DE 4-CIJFERIGE CODE IN</div>
+    <div class="code-row" id="digits"></div>
+    <div class="feedback" id="fb"></div>
+    <div class="keypad" id="keypad"></div>
+    <button class="hintbtn" id="hintBtn">hulp nodig? (alleen als je vastzit)</button>
+    <div class="hintbox" id="hintBox">💡 ${fw.hint}</div>
+  </div>`;
+  buildKeypad(); renderDigits();
+  document.getElementById('hintBtn').onclick=()=>{ const b=document.getElementById('hintBox');
+    b.style.display=b.style.display==='block'?'none':'block'; };
+}
+
+function buildKeypad(){ const kp=document.getElementById('keypad');
+  const keys=['1','2','3','4','5','6','7','8','9','wis','0','ok']; kp.innerHTML="";
+  keys.forEach(k=>{ const b=document.createElement('button');
+    b.className="key"+(k==='wis'?' del wide':'')+(k==='ok'?' wide':'');
+    b.textContent=k==='wis'?'← wis':(k==='ok'?'check ✓':k); b.onclick=()=>press(k); kp.appendChild(b); }); }
+function renderDigits(){ const d=document.getElementById('digits'); d.innerHTML="";
+  for(let i=0;i<4;i++){ const box=document.createElement('div'); box.className="digit"+(i===buffer.length?" active":"");
+    box.textContent=buffer[i]||""; d.appendChild(box); } }
+function press(k){ const fb=document.getElementById('fb');
+  if(k==='wis'){ buffer=buffer.slice(0,-1); fb.textContent=""; fb.className="feedback"; renderDigits(); return; }
+  if(k==='ok') return check();
+  if(buffer.length<4){ buffer+=k; renderDigits(); } }
+function check(){ const fb=document.getElementById('fb'); const card=document.getElementById('card'); const fw=FIREWALLS[state.stap];
+  if(buffer.length<4){ fb.textContent="Vul eerst 4 cijfers in."; fb.className="feedback bad"; return; }
+  if(buffer===fw.code){
+    fb.textContent="✓ TOEGANG VERLEEND — firewall hersteld!"; fb.className="feedback good"; card.classList.add('flash');
+    state.stap++; state.pogingen=0; save(); renderMeter();
+    setTimeout(()=>{ window.scrollTo({top:0,behavior:'smooth'}); renderStap(); }, 900);
+  }else{
+    state.pogingen++; save();
+    const taunts=["✗ TOEGANG GEWEIGERD — GLITCH: \"Haha, mis!\"","✗ FOUT — GLITCH: \"Trapte je in mijn leugen?\"",
+      "✗ GEWEIGERD — GLITCH: \"Kijk nog eens goed...\"","✗ FOUT — GLITCH: \"Probeer het maar opnieuw, mensje.\""];
+    fb.textContent=taunts[Math.min(state.pogingen-1,taunts.length-1)]; fb.className="feedback bad";
+    card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake'); buffer=""; renderDigits();
+  } }
+
+function renderWin(){ state.klaar=true; save(); renderHeader(); renderMeter();
+  if(timerInt){clearInterval(timerInt);timerInt=null;}
+  const m=Math.floor(state.seconden/60),s=state.seconden%60;
+  app.innerHTML=`<div class="panel win">
+    <div class="eyebrow safe">missie geslaagd</div><div class="badge">✓</div>
+    <h1 class="center" style="text-align:center">GLITCH is <span style="color:var(--safe)">verwijderd</span>!</h1>
+    <p class="lead center" style="text-align:center">Alle vijf de firewalls staan weer online. Het systeem van De Linde is veilig. Top gewerkt, IT-team! 🛡️</p>
+    <div class="codeword">SYSTEEM&nbsp;BEVEILIGD</div>
+    <p class="center meta" style="text-align:center">Tijd over: ${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}</p>
+  </div>`; }
+
+document.addEventListener('keydown',(e)=>{ if(!state.gestart||state.klaar||state.stap>=5) return;
+  if(/^[0-9]$/.test(e.key)) press(e.key); else if(e.key==='Backspace') press('wis'); else if(e.key==='Enter') press('ok'); });
+
+document.getElementById('resetBtn').onclick=()=>{
+  if(confirm("Escaperoom opnieuw beginnen? Alle voortgang op dit apparaat wordt gewist.")){
+    localStorage.removeItem(KEY); state=load(); if(timerInt){clearInterval(timerInt);timerInt=null;}
+    renderHeader(); renderMeter(); renderTimer(); renderStart(); } };
+
+renderHeader(); renderMeter(); renderTimer();
+if(state.klaar) renderWin(); else if(state.gestart){ startTimer(); renderStap(); } else renderStart();
+</script>
+</body>
+</html>
