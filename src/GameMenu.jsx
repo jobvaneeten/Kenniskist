@@ -8,6 +8,7 @@ import SterrenstroompGame from './games/SterrenstroompGame'
 import BrugBouwen from './games/BrugBouwen'
 import BlokOefenen from './games/BlokOefenen'
 import ProcentenBreuken from './games/ProcentenBreuken'
+import VerhaaltjesSommen from './games/VerhaaltjesSommen'
 import TafelsOefenen from './games/TafelsOefenen'
 import WerkwoordSpelling from './games/WerkwoordSpelling'
 import DicteeThema from './games/DicteeThema'
@@ -227,6 +228,9 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
       if (rekenKeuze === 'procenten') {
         return <ProcentenBreuken onBack={() => setRekenKeuze(null)} addBriefgeld={addBriefgeld} />
       }
+      if (rekenKeuze === 'verhaal') {
+        return <VerhaaltjesSommen groep={year} onBack={() => setRekenKeuze(null)} addBriefgeld={addBriefgeld} addCuruntie={addCuruntie} />
+      }
       // keuzescherm: verhaaltjessommen of oefenen blok 9
       return (
         <div className="game-screen game-screen-center">
@@ -251,6 +255,15 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
               <span className="vb-line">"25% = 1/4 = 0,25"</span>
               <RewardChips rewards={['💵 briefgeld']} />
             </button>
+            {year === 7 && (
+              <button className="mode-card" onClick={() => setRekenKeuze('verhaal')}>
+                <MenuScene name="taal" />
+                <span className="mode-name">📖 Verhaaltjessommen</span>
+                <span className="mode-desc">Redactiesommen op jouw niveau (FS of S+)</span>
+                <span className="vb-line">Kies de blokken die je al gehad hebt</span>
+                <RewardChips rewards={['💵 briefgeld']} />
+              </button>
+            )}
           </div>
         </div>
       )
@@ -272,10 +285,10 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
 
     if (subject === 'spelling') {
       if (spellingKeuze === 'dictee') {
-        return <DicteeThema thema={dicteeNr} onBack={() => setSpellingKeuze(null)} addCuruntie={addCuruntie} addBriefgeld={addBriefgeld} />
+        return <DicteeThema thema={dicteeNr} onBack={() => setSpellingKeuze('blokken')} addCuruntie={addCuruntie} addBriefgeld={addBriefgeld} />
       }
       if (spellingKeuze === 'categorie') {
-        return <DicteeThema file="taalactief5/dictee-categorie.html" onBack={() => setSpellingKeuze(null)} addCuruntie={addCuruntie} addBriefgeld={addBriefgeld} />
+        return <DicteeThema file="taalactief5/dictee-categorie.html" onBack={() => setSpellingKeuze('nietww')} addCuruntie={addCuruntie} addBriefgeld={addBriefgeld} />
       }
       if (spellingKeuze === 'werkwoord') {
         return (
@@ -302,6 +315,68 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
       }
       const hasWerkwoord = GAMES[gameId] === 'werkwoord'
       const dicteeBlokken = year === 7 ? [1, 2, 3, 4, 5, 6, 7, 8] : []   // groep 7: blok 1 t/m 8 zijn af
+
+      // Niet-werkwoordspelling: keuze tussen per blok of per categorie
+      if (spellingKeuze === 'nietww') {
+        return (
+          <div className="game-screen game-screen-center">
+            <button className="back-btn" onClick={() => setSpellingKeuze(null)}>← Terug</button>
+            <div className="game-header">
+              <span className="game-header-icon" style={{ color: '#CE93D8' }}>✏️</span>
+              <h1 className="game-header-title">Niet-werkwoordspelling</h1>
+              <p className="game-header-sub">Hoe wil je oefenen?</p>
+            </div>
+            <div className="mode-grid">
+              <button className="mode-card" onClick={() => setSpellingKeuze('blokken')}>
+                <MenuScene name="spelling" />
+                <span className="mode-name">📕 Per blok oefenen</span>
+                <span className="mode-desc">Oefen de woorden van een blok uit Taal Actief 5</span>
+                <span className="vb-line">Blok 1 t/m 8 — dictee + dieren</span>
+                <RewardChips rewards={['💵 briefgeld']} />
+              </button>
+              <button className="mode-card" onClick={() => setSpellingKeuze('categorie')}>
+                <MenuScene name="taal" />
+                <span className="mode-name">🐾 Per categorie oefenen</span>
+                <span className="mode-desc">Kies een spellingregel en oefen alleen die woorden</span>
+                <span className="vb-line">"open lettergreep", "ei/ij", "verkleinwoord -je", ...</span>
+                <RewardChips rewards={['💵 briefgeld']} />
+              </button>
+            </div>
+          </div>
+        )
+      }
+
+      // Per blok: de losse blokken
+      if (spellingKeuze === 'blokken') {
+        return (
+          <div className="game-screen game-screen-center">
+            <button className="back-btn" onClick={() => setSpellingKeuze('nietww')}>← Terug</button>
+            <div className="game-header">
+              <span className="game-header-icon" style={{ color: '#CE93D8' }}>📕</span>
+              <h1 className="game-header-title">Per blok oefenen</h1>
+              <p className="game-header-sub">Taal Actief 5 — kies een blok</p>
+            </div>
+            <div className="blok-grid">
+              {[1, 2, 3, 4, 5, 6, 7, 8].map(b => {
+                const ready = dicteeBlokken.includes(b)
+                return (
+                  <button
+                    key={b}
+                    className={`blok-card${ready ? ' ready' : ''}`}
+                    onClick={() => ready ? (setDicteeNr(b), setSpellingKeuze('dictee')) : setTaSoonBlok(b)}
+                  >
+                    <MenuScene name="spelling" />
+                    <span className="blok-num">Blok {b}</span>
+                    <span className="blok-tag">{ready ? '✅ Dictee + dieren' : '🚧 binnenkort'}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )
+      }
+
+      // Hoofdkeuze: werkwoordspelling of niet-werkwoordspelling
       return (
         <div className="game-screen game-screen-center">
           <button className="back-btn" onClick={() => setSubject(null)}>← Menu</button>
@@ -320,30 +395,13 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
                 <RewardChips rewards={['💵 briefgeld']} />
               </button>
             )}
-            <button className="mode-card" onClick={() => setSpellingKeuze('categorie')}>
+            <button className="mode-card" onClick={() => setSpellingKeuze('nietww')}>
               <MenuScene name="taal" />
-              <span className="mode-name">🐾 Oefenen per categorie</span>
-              <span className="mode-desc">Kies een spellingregel en oefen alleen die woorden</span>
-              <span className="vb-line">"open lettergreep", "ei/ij", "verkleinwoord -je", ...</span>
+              <span className="mode-name">📝 Niet-werkwoordspelling</span>
+              <span className="mode-desc">Per blok of per categorie oefenen</span>
+              <span className="vb-line">Taal Actief 5 blokken of een spellingregel</span>
               <RewardChips rewards={['💵 briefgeld']} />
             </button>
-          </div>
-          <p className="ta-section-title">📕 Taal Actief 5</p>
-          <div className="blok-grid">
-            {[1, 2, 3, 4, 5, 6, 7, 8].map(b => {
-              const ready = dicteeBlokken.includes(b)
-              return (
-                <button
-                  key={b}
-                  className={`blok-card${ready ? ' ready' : ''}`}
-                  onClick={() => ready ? (setDicteeNr(b), setSpellingKeuze('dictee')) : setTaSoonBlok(b)}
-                >
-                  <MenuScene name="spelling" />
-                  <span className="blok-num">Blok {b}</span>
-                  <span className="blok-tag">{ready ? '✅ Dictee + dieren' : '🚧 binnenkort'}</span>
-                </button>
-              )
-            })}
           </div>
         </div>
       )

@@ -4,7 +4,7 @@ import SpelBeloning from './SpelBeloning'
 import ToetsOefenen from './ToetsOefenen'
 import './taal-oefenen.css'
 
-const BRIEFGELD_PER_REWARD = 100   // gelijk aan rekenen
+const BRIEFGELD_PER_AANGEVINKT = 5 // € per aangevinkt onderdeel, per beloning
 const CORRECT_VOOR_REWARD = 5
 
 function shuffle(arr) {
@@ -57,6 +57,7 @@ export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie }) {
   }, [mode])
 
   const checkedLabels = Object.entries(checked).filter(([, v]) => v).map(([k]) => k)
+  const beloning = checkedLabels.length * BRIEFGELD_PER_AANGEVINKT
 
   function buildPool() {
     const field = mode === 'woordsoorten' ? 'woordsoort' : 'zinsdeel'
@@ -109,7 +110,7 @@ export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie }) {
 
   function afterReward() {
     setShowReward(false)
-    if (addBriefgeld) addBriefgeld(BRIEFGELD_PER_REWARD)
+    if (addBriefgeld) addBriefgeld(beloning)
     advanceQuestion()
   }
 
@@ -117,7 +118,7 @@ export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie }) {
     return (
       <SpelBeloning
         title="Geweldig — 5 zinnen goed!"
-        geld={BRIEFGELD_PER_REWARD}
+        geld={beloning}
         addCuruntie={addCuruntie}
         onDone={afterReward}
       />

@@ -169,10 +169,11 @@ function CatSelectie({ groep, onStart, onBack }) {
 
   return (
     <div className="ws-catsel">
-      <button className="ws-back-btn" onClick={onBack}>← Terug</button>
+      <button className="ws-back-btn ws-catsel-back" onClick={onBack}>← Terug</button>
       <div className="ws-catsel-header">
-        <div className="ws-header-title">Werkwoordspelling · Groep {groep}</div>
-        <p className="ws-catsel-sub">Kies wat je wil oefenen</p>
+        <span className="ws-icon">📝</span>
+        <h1 className="ws-title">Werkwoordspelling</h1>
+        <p className="ws-sub">Groep {groep} · kies wat je wil oefenen</p>
       </div>
       <div className="ws-catsel-lijst">
         {ALLE_CATS.map(key => {
@@ -184,15 +185,19 @@ function CatSelectie({ groep, onStart, onBack }) {
               className={`ws-catsel-rij ${info.cls}${aan ? ' aan' : ''}`}
               onClick={() => toggle(key)}
             >
-              <span className="ws-catsel-check">{aan ? '✅' : '⬜'}</span>
-              <span className="ws-catsel-label">{info.label}</span>
-              <span className="ws-catsel-vb">{info.vb}</span>
+              <span className="ws-catsel-check">{aan ? '☑' : '☐'}</span>
+              <span className="ws-catsel-tekst">
+                <span className="ws-catsel-label">{info.label}</span>
+                <span className="ws-catsel-vb">{info.vb}</span>
+              </span>
+              <span className="ws-catsel-geld">€ {10}</span>
             </button>
           )
         })}
       </div>
+      <p className="ws-catsel-uitleg">Je verdient € 10 per onderdeel dat je aanvinkt bij elk spelletje 🎮</p>
       <button className="ws-ov-verder-btn" onClick={() => onStart(gekozen)}>
-        Start! ({gekozen.size} categorie{gekozen.size !== 1 ? 'ën' : ''}) →
+        Start! (€ {gekozen.size * 10} per spel) →
       </button>
     </div>
   )
@@ -215,6 +220,7 @@ export default function WerkwoordSpelling({ groep, onBack, addBriefgeld }) {
   const [fouten, setFouten]   = useState([])           // lijst foute opgaven
 
   const oef = oefeningen[idx]
+  const beloning = gekozenCats ? gekozenCats.size * 10 : BRIEFGELD
 
   const volgende = useCallback((correct, jouwInput) => {
     // categoriseer en registreer
@@ -257,14 +263,14 @@ export default function WerkwoordSpelling({ groep, onBack, addBriefgeld }) {
   }, [])
 
   const astroKlaar   = useCallback(() => setPhase('play'), [])
-  const tdKlaar      = useCallback(() => { addBriefgeld?.(BRIEFGELD); setVerdiend(v => v + BRIEFGELD); setPhase('play') }, [addBriefgeld])
+  const tdKlaar      = useCallback(() => { addBriefgeld?.(beloning); setVerdiend(v => v + beloning); setPhase('play') }, [addBriefgeld, beloning])
   const tdTerug      = useCallback(() => { setTdStarted(false); setPhase('play') }, [])
   const jetpackKlaar = useCallback(() => setPhase('play'), [])
   const voetbalKlaar = useCallback((won, nextBracket, played) => {
     setFootballBracket(nextBracket || null)
-    if (played) { addBriefgeld?.(BRIEFGELD); setVerdiend(v => v + BRIEFGELD) }
+    if (played) { addBriefgeld?.(beloning); setVerdiend(v => v + beloning) }
     setPhase('play')
-  }, [addBriefgeld])
+  }, [addBriefgeld, beloning])
 
   // ── Early return voor cat-selectie (pas ná alle hooks) ──
   if (gekozenCats === null) {
@@ -275,7 +281,7 @@ export default function WerkwoordSpelling({ groep, onBack, addBriefgeld }) {
 
   const kiesBeloning = (key) => {
     if (key === 'towerdefense') setTdStarted(true)
-    if (key === 'astrokatapult') { addBriefgeld?.(BRIEFGELD); setVerdiend(v => v + BRIEFGELD) }
+    if (key === 'astrokatapult') { addBriefgeld?.(beloning); setVerdiend(v => v + beloning) }
     setPhase(key)
   }
 
@@ -325,9 +331,9 @@ export default function WerkwoordSpelling({ groep, onBack, addBriefgeld }) {
       {phase === 'keuze' && (
         <SpelBeloning
           title="5 goed gedaan!"
-          geld={BRIEFGELD}
+          geld={beloning}
           addCuruntie={() => {}}
-          onDone={() => { addBriefgeld?.(BRIEFGELD); setVerdiend(v => v + BRIEFGELD); setPhase('play') }}
+          onDone={() => { addBriefgeld?.(beloning); setVerdiend(v => v + beloning); setPhase('play') }}
         />
       )}
 
