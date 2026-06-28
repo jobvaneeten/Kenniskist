@@ -1016,6 +1016,9 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
     const addParticles = (x, y, color, n = 14, spd = 320) => { for (let i = 0; i < n; i++) { const a = Math.random() * Math.PI * 2, v = spd * (0.4 + Math.random() * 0.8); S.particles.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - spd * 0.3, life: 0.4 + Math.random() * 0.5, color, r: 2 + Math.random() * 3 }) } }
     const addShock = (x, y, color, maxR = 90, dur = 0.45) => S.shockwaves.push({ x, y, color, r0: 6, maxR, t: dur, dur })
     const addShake = (mag, dur = 0.3) => { if (mag > S.shake.mag || S.shake.t <= 0) { S.shake.mag = mag; S.shake.t = dur; S.shake.dur = dur } }
+    // bal-contact laadt de super, maar met cooldown: anders vult aanhoudend contact
+    // (bv. een ram-super of dash die de bal meesleept) de bar meteen weer vol.
+    const gainCharge = (p, amt) => { if ((p.chargeCD || 0) > 0) return; p.charge = Math.min(1, p.charge + amt); p.chargeCD = 0.5 }
     const setBallFx = (color, type) => { S.ball.fx = { t: 0.6, type: type || 'energy', color } }
 
     const triggerPower = (p) => {
@@ -1351,7 +1354,7 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
             for (let i = 0; i < 24; i++) { const a = Math.PI + Math.random() * Math.PI; const v = 220 + Math.random() * 220; S.particles.push({ x: p.x + (Math.random() - 0.5) * 60, y: GROUND_Y - 5, vx: Math.cos(a) * v * 0.6, vy: Math.sin(a) * v - 120, life: 0.9, color: i % 2 ? '#8a6a4a' : fxCol, r: 3 + Math.random() * 4 }) }
           }
           S.ball.superKind = null
-          p.charge = Math.min(1, p.charge + 0.05)
+          gainCharge(p, 0.05)
           return true
         }
         // ── dash: bal schoon vooruit punten i.p.v. eromheen glitchen ──
@@ -1362,7 +1365,7 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
             S.ball.y = Math.min(S.ball.y, cy)
             S.ball.vx = ddir * Math.max(Math.abs(p.dashVx) * 1.05, 620)
             S.ball.vy = Math.min(S.ball.vy, 0) - 240
-            p.charge = Math.min(1, p.charge + 0.05)
+            gainCharge(p, 0.05)
             addShake(2, 0.08)
             return true
           }
@@ -1382,7 +1385,7 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
           if (outV < MIN_SEP) { const add = MIN_SEP - outV; S.ball.vx += nx * add; S.ball.vy += ny * add }
           addShake(2, 0.08)
         }
-        p.charge = Math.min(1, p.charge + 0.05)
+        gainCharge(p, 0.05)
         return true
       }
       return false
@@ -1416,6 +1419,7 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
         if (p.powerKick > 0) p.powerKick -= dt
         if (p.buried > 0) { p.buried -= dt; p.vx = 0; p.x = p.x }   // vastgeramd in de grond
         if (p.meleeCD > 0) p.meleeCD -= dt
+        if (p.chargeCD > 0) p.chargeCD -= dt   // cooldown op super-laden via bal-contact
         if (p.hitWindow > 0) { p.hitWindow -= dt; if (p.hitWindow <= 0) p.kickHits = 0 }   // streak verloopt
         if (p.comebackT > 0) p.comebackT -= dt
         if (p.ram && p.t.dash <= 0) p.ram = false
