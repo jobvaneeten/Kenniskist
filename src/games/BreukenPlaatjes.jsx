@@ -1,18 +1,16 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import SpelBeloning from './SpelBeloning'
 import './breuken-plaatjes.css'
 
 const PER_BELONING = 5
 const BELONING     = 50
 
-const rnd  = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a
+const rnd = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a
 const pick = a => a[Math.floor(Math.random() * a.length)]
-const val  = (m, n) => m / n
-const shuffle = a => { const r = [...a]; for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[r[i], r[j]] = [r[j], r[i]] } return r }
 
 // ── Plaatje van een breuk: rond (taart) of langwerpig (reep) ──
-function BreukPlaatje({ shape, m, n, size = 130 }) {
-  const SH = '#ffd23f', LEEG = 'rgba(255,255,255,0.08)', LIJN = '#ffd23f'
+function BreukPlaatje({ shape, m, n, size = 150 }) {
+  const SH = '#ffd23f', LEEG = 'rgba(255,255,255,0.08)', LIJN = '#8a5a00'
   if (shape === 'rond') {
     const cx = size / 2, cy = size / 2, r = size / 2 - 6
     const pt = (deg) => [cx + r * Math.cos((deg - 90) * Math.PI / 180), cy + r * Math.sin((deg - 90) * Math.PI / 180)]
@@ -23,7 +21,7 @@ function BreukPlaatje({ shape, m, n, size = 130 }) {
     }
     return (
       <svg viewBox={`0 0 ${size} ${size}`} width={size} height={size} className="bp-svg">
-        {[...Array(n)].map((_, i) => <path key={i} d={sector(i)} fill={i < m ? SH : LEEG} stroke={LIJN} strokeWidth="2" />)}
+        {[...Array(n)].map((_, i) => <path key={i} d={sector(i)} fill={i < m ? SH : LEEG} stroke={LIJN} strokeWidth="2.5" strokeLinejoin="round" />)}
       </svg>
     )
   }
@@ -32,7 +30,7 @@ function BreukPlaatje({ shape, m, n, size = 130 }) {
   return (
     <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} className="bp-svg">
       {[...Array(n)].map((_, i) => (
-        <rect key={i} x={i * seg} y={0} width={seg} height={H} fill={i < m ? SH : LEEG} stroke={LIJN} strokeWidth="2" />
+        <rect key={i} x={i * seg} y={0} width={seg} height={H} fill={i < m ? SH : LEEG} stroke={LIJN} strokeWidth="2.5" strokeLinejoin="round" />
       ))}
     </svg>
   )
@@ -41,36 +39,30 @@ function BreukPlaatje({ shape, m, n, size = 130 }) {
 function maakVraag() {
   const shape = pick(['rond', 'langwerpig'])
   const n = rnd(2, 8), m = rnd(1, n - 1)
-  const opts = [{ m, n }]
-  const gezien = new Set([val(m, n)])
-  let guard = 0
-  while (opts.length < 4 && guard++ < 300) {
-    const nn = rnd(2, 8), mm = rnd(1, nn - 1)
-    if (!gezien.has(val(mm, nn))) { gezien.add(val(mm, nn)); opts.push({ m: mm, n: nn }) }
-  }
-  const mode = pick(['kiesBreuk', 'kiesPlaatje'])
-  return { shape, m, n, opts: shuffle(opts), mode }
+  return { shape, m, n }
 }
 
 export default function BreukenPlaatjes({ onBack, addBriefgeld, addCuruntie }) {
-  const [vraag, setVraag]   = useState(maakVraag)
-  const [phase, setPhase]   = useState('vraag')   // vraag | goed | fout
-  const [gekozen, setGekozen] = useState(null)
-  const [sinds, setSinds]   = useState(0)
+  const [vraag, setVraag] = useState(maakVraag)
+  const [phase, setPhase] = useState('vraag')   // vraag | goed | fout
+  const [teller, setTeller] = useState('')
+  const [noemer, setNoemer] = useState('')
+  const [sinds, setSinds] = useState(0)
   const [verdiend, setVerdiend] = useState(0)
   const [reward, setReward] = useState(false)
+  const tellerRef = useRef(null)
 
-  const goed = (o) => o.m === vraag.m && o.n === vraag.n
+  useEffect(() => { if (phase === 'vraag') setTimeout(() => tellerRef.current?.focus(), 50) }, [vraag, phase])
 
-  const kies = (o) => {
+  const check = () => {
     if (phase !== 'vraag') return
-    setGekozen(o)
-    setPhase(goed(o) ? 'goed' : 'fout')
+    if (!teller.trim() || !noemer.trim()) return
+    setPhase(+teller === vraag.m && +noemer === vraag.n ? 'goed' : 'fout')
   }
 
   const verder = () => {
     const wasGoed = phase === 'goed'
-    setGekozen(null); setPhase('vraag')
+    setTeller(''); setNoemer(''); setPhase('vraag')
     if (wasGoed) {
       const ns = sinds + 1
       if (ns >= PER_BELONING) { setSinds(0); setReward(true); return }
@@ -88,7 +80,7 @@ export default function BreukenPlaatjes({ onBack, addBriefgeld, addCuruntie }) {
 
   if (reward) return <SpelBeloning title="5 goed!" geld={BELONING} addCuruntie={addCuruntie} onDone={naBeloning} />
 
-  const { shape, m, n, opts, mode } = vraag
+  const { shape, m, n } = vraag
 
   return (
     <div className="bp-screen">
@@ -96,42 +88,29 @@ export default function BreukenPlaatjes({ onBack, addBriefgeld, addCuruntie }) {
       <div className="bp-head">
         <span className="bp-icon">🍕</span>
         <h1 className="bp-title">Breuken &amp; plaatjes</h1>
-        <p className="bp-sub">{mode === 'kiesBreuk' ? 'Welke breuk hoort bij dit plaatje?' : 'Welk plaatje hoort bij deze breuk?'}</p>
+        <p className="bp-sub">Welke breuk is gekleurd? Vul de teller en de noemer in.</p>
       </div>
 
       <div className="bp-progress-wrap"><div className="bp-progress-bar" style={{ width: `${(sinds / PER_BELONING) * 100}%` }} /></div>
       <div className="bp-progress-label">{PER_BELONING - sinds} goede tot een spelletje 🎮 · 💵 € {verdiend}</div>
 
-      {mode === 'kiesBreuk' ? (
-        <>
-          <div className="bp-prompt"><BreukPlaatje shape={shape} m={m} n={n} size={150} /></div>
-          <div className="bp-opts bp-opts-breuk">
-            {opts.map((o, i) => {
-              const st = phase !== 'vraag' && (goed(o) ? ' goed' : (o === gekozen ? ' fout' : ''))
-              return (
-                <button key={i} className={'bp-opt bp-opt-breuk' + (st || '')} onClick={() => kies(o)} disabled={phase !== 'vraag'}>
-                  <span className="bp-breuk"><span className="bp-teller">{o.m}</span><span className="bp-streep" /><span className="bp-noemer">{o.n}</span></span>
-                </button>
-              )
-            })}
-          </div>
-        </>
-      ) : (
-        <>
-          <div className="bp-prompt"><span className="bp-breuk bp-breuk-groot"><span className="bp-teller">{m}</span><span className="bp-streep" /><span className="bp-noemer">{n}</span></span></div>
-          <div className="bp-opts bp-opts-plaatje">
-            {opts.map((o, i) => {
-              const st = phase !== 'vraag' && (goed(o) ? ' goed' : (o === gekozen ? ' fout' : ''))
-              return (
-                <button key={i} className={'bp-opt bp-opt-plaatje' + (st || '')} onClick={() => kies(o)} disabled={phase !== 'vraag'}>
-                  <BreukPlaatje shape={shape} m={o.m} n={o.n} size={shape === 'rond' ? 92 : 80} />
-                </button>
-              )
-            })}
-          </div>
-        </>
-      )}
+      <div className="bp-prompt"><BreukPlaatje shape={shape} m={m} n={n} size={150} /></div>
 
+      <div className="bp-invul">
+        <input ref={tellerRef} className={'bp-input' + (phase === 'fout' ? ' fout' : '')} type="text" inputMode="numeric" autoComplete="off"
+          aria-label="teller (boven de streep)" placeholder="?" value={teller}
+          onChange={e => setTeller(e.target.value.replace(/[^0-9]/g, ''))}
+          onKeyDown={e => e.key === 'Enter' && check()} disabled={phase !== 'vraag'} />
+        <span className="bp-invul-streep" />
+        <input className={'bp-input' + (phase === 'fout' ? ' fout' : '')} type="text" inputMode="numeric" autoComplete="off"
+          aria-label="noemer (onder de streep)" placeholder="?" value={noemer}
+          onChange={e => setNoemer(e.target.value.replace(/[^0-9]/g, ''))}
+          onKeyDown={e => e.key === 'Enter' && check()} disabled={phase !== 'vraag'} />
+      </div>
+
+      {phase === 'vraag' && (
+        <button className="bp-verder-btn" onClick={check} disabled={!teller.trim() || !noemer.trim()}>Controleer →</button>
+      )}
       {phase === 'goed' && (
         <div className="bp-feedback bp-goed">
           <span>🎉 Goed! Het is <b>{m}/{n}</b>.</span>
