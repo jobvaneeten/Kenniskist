@@ -291,7 +291,7 @@
 }
 .mode-card:active { transform: scale(0.97); }
 .mode-emoji { font-size: 3rem; line-height: 1; }
-.mode-name  { font-size: 1.1rem; font-weight: 900; }
+.mode-name  { font-size: 1.1rem; font-weight: 900; text-align: center; max-width: 100%; line-height: 1.15; overflow-wrap: break-word; word-break: break-word; }
 .mode-desc  { font-size: 0.75rem; color: rgba(255,255,255,0.4); font-weight: 600; text-align: center; }
 
 /* ── Begrijpend Lezen: thema-kaarten ─────── */

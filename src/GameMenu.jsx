@@ -9,6 +9,7 @@ import BrugBouwen from './games/BrugBouwen'
 import BlokOefenen from './games/BlokOefenen'
 import ProcentenBreuken from './games/ProcentenBreuken'
 import VerhaaltjesSommen from './games/VerhaaltjesSommen'
+import BreukenPlaatjes from './games/BreukenPlaatjes'
 import TafelsOefenen from './games/TafelsOefenen'
 import WerkwoordSpelling from './games/WerkwoordSpelling'
 import DicteeThema from './games/DicteeThema'
@@ -49,9 +50,10 @@ const GAMES = {
   '7-taal': 'taal',
   '8-taal': 'taal',
   '4-rekenen': 'tafels',
-  '5-rekenen': 'tafels',
-  '6-rekenen': 'tafels',
+  '5-rekenen': 'iep',
+  '6-rekenen': 'iep',
   '7-rekenen': 'iep',
+  '8-rekenen': 'iep',
   '7-spelling': 'werkwoord',
   '8-spelling': 'werkwoord',
   '7-begrijpend': 'begrijpend',
@@ -231,6 +233,12 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
       if (rekenKeuze === 'verhaal') {
         return <VerhaaltjesSommen groep={year} onBack={() => setRekenKeuze(null)} addBriefgeld={addBriefgeld} addCuruntie={addCuruntie} />
       }
+      if (rekenKeuze === 'tafels') {
+        return <TafelsOefenen groep={year} onBack={() => setRekenKeuze(null)} addBriefgeld={addBriefgeld} addCuruntie={addCuruntie} />
+      }
+      if (rekenKeuze === 'breuken') {
+        return <BreukenPlaatjes onBack={() => setRekenKeuze(null)} addBriefgeld={addBriefgeld} addCuruntie={addCuruntie} />
+      }
       // keuzescherm: verhaaltjessommen of oefenen blok 9
       return (
         <div className="game-screen game-screen-center">
@@ -241,29 +249,49 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
             <p className="game-header-sub">Wat wil je oefenen?</p>
           </div>
           <div className="mode-grid">
-            <button className="mode-card" onClick={() => setRekenKeuze('blok9')}>
-              <MenuScene name="blok9" />
-              <span className="mode-name">📘 Oefenen blok 9 & 10</span>
-              <span className="mode-desc">FS en S+ werkbladen</span>
-              <span className="vb-line">"5825 : 23 = ?" en "7 × €3,70 = ?"</span>
-              <RewardChips rewards={['🪙 munten', '💵 briefgeld']} />
-            </button>
-            <button className="mode-card" onClick={() => setRekenKeuze('procenten')}>
-              <MenuScene name="blok9" />
-              <span className="mode-name">💯 Procenten · Breuken · Komma</span>
-              <span className="mode-desc">Sleep wat bij elkaar hoort</span>
-              <span className="vb-line">"25% = 1/4 = 0,25"</span>
-              <RewardChips rewards={['💵 briefgeld']} />
-            </button>
-            {year === 7 && (
-              <button className="mode-card" onClick={() => setRekenKeuze('verhaal')}>
-                <MenuScene name="taal" />
-                <span className="mode-name">📖 Verhaaltjessommen</span>
-                <span className="mode-desc">Redactiesommen op jouw niveau (FS of S+)</span>
-                <span className="vb-line">Kies de blokken die je al gehad hebt</span>
+            {(year === 5 || year === 6) && (
+              <button className="mode-card" onClick={() => setRekenKeuze('tafels')}>
+                <MenuScene name="blok9" />
+                <span className="mode-name">✖️ Tafels &amp; deelsommen</span>
+                <span className="mode-desc">Oefen de keer- en deelsommen</span>
+                <span className="vb-line">"7 × 8 = ?" en "56 : 8 = ?"</span>
                 <RewardChips rewards={['💵 briefgeld']} />
               </button>
             )}
+            {year === 6 && (
+              <button className="mode-card" onClick={() => setRekenKeuze('breuken')}>
+                <MenuScene name="blok9" />
+                <span className="mode-name">🍕 Breuken &amp; plaatjes</span>
+                <span className="mode-desc">Koppel de breuk aan het plaatje</span>
+                <span className="vb-line">Ronde taarten en langwerpige repen</span>
+                <RewardChips rewards={['💵 briefgeld']} />
+              </button>
+            )}
+            {year === 7 && (
+              <button className="mode-card" onClick={() => setRekenKeuze('blok9')}>
+                <MenuScene name="blok9" />
+                <span className="mode-name">📘 Oefenen blok 9 &amp; 10</span>
+                <span className="mode-desc">FS en S+ werkbladen</span>
+                <span className="vb-line">"5825 : 23 = ?" en "7 × €3,70 = ?"</span>
+                <RewardChips rewards={['🪙 munten', '💵 briefgeld']} />
+              </button>
+            )}
+            {(year === 7 || year === 8) && (
+              <button className="mode-card" onClick={() => setRekenKeuze('procenten')}>
+                <MenuScene name="blok9" />
+                <span className="mode-name">💯 Procenten · Breuken · Komma</span>
+                <span className="mode-desc">Sleep wat bij elkaar hoort</span>
+                <span className="vb-line">"25% = 1/4 = 0,25"</span>
+                <RewardChips rewards={['💵 briefgeld']} />
+              </button>
+            )}
+            <button className="mode-card" onClick={() => setRekenKeuze('verhaal')}>
+              <MenuScene name="taal" />
+              <span className="mode-name">📖 Verhaaltjessommen</span>
+              <span className="mode-desc">Redactiesommen op jouw niveau{year >= 6 ? ' (FS of S+)' : ''}</span>
+              <span className="vb-line">Kies de blokken die je al gehad hebt</span>
+              <RewardChips rewards={['💵 briefgeld']} />
+            </button>
           </div>
         </div>
       )

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { onderdelenVan, maakOpgaveUit, GROEPEN, HEEFT_ROUTE, checkAntwoord, checkSom, checkTijd, GROEP_DOELEN, doelKey } from './redactiesommen'
+import { onderdelenVan, maakOpgaveUit, maakToets, GROEPEN, HEEFT_ROUTE, checkAntwoord, checkSom, checkTijd, GROEP_DOELEN, doelKey } from './redactiesommen'
 import SpelBeloning from './SpelBeloning'
 import './verhaaltjes-sommen.css'
 
@@ -47,13 +47,14 @@ function Figuur({ figuur }) {
     const ha = ((figuur.h % 12) + figuur.m / 60) * 30, ma = figuur.m * 6
     const [hx, hy] = hand(ha, 30), [mx, my] = hand(ma, 48)
     return (
-      <svg className="rs-figuur" viewBox="0 0 140 140" width="150" height="150">
+      <svg className="rs-figuur" viewBox="0 0 140 158" width="150" height="168">
         <circle cx={cx} cy={cy} r={R} fill="rgba(255,210,63,0.08)" stroke="#ffd23f" strokeWidth="3" />
         {[...Array(12)].map((_, i) => { const [x1, y1] = hand(i * 30, R - 2), [x2, y2] = hand(i * 30, R - 9); return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#ffd23f" strokeWidth="2" /> })}
         {[[12, 0], [3, 90], [6, 180], [9, 270]].map(([n, a]) => { const [x, y] = hand(a, R - 20); return <text key={n} x={x} y={y} textAnchor="middle" dominantBaseline="central" fill="#fffbeb" fontSize="15" fontWeight="800">{n}</text> })}
         <line x1={cx} y1={cy} x2={hx} y2={hy} stroke="#fffbeb" strokeWidth="4" strokeLinecap="round" />
         <line x1={cx} y1={cy} x2={mx} y2={my} stroke="#fde68a" strokeWidth="2.5" strokeLinecap="round" />
         <circle cx={cx} cy={cy} r="4" fill="#fffbeb" />
+        {figuur.dagdeel && <text x={cx} y={146} textAnchor="middle" fill="#fffbeb" fontSize="15" fontWeight="800">{figuur.icon} {figuur.dagdeel}</text>}
       </svg>
     )
   }
@@ -313,10 +314,10 @@ function Overzicht({ stats, terugLabel, onTerug, onWis }) {
 }
 
 const GROEP_INFO = {
-  5: { icon: '🌱', desc: 'Herhaling: optellen/aftrekken, tafels, delen, geld, maten' },
-  6: { icon: '🌿', desc: 'Herhaling: kolomsgewijs rekenen, maten, omtrek, tijd' },
-  7: { icon: '⭐', desc: 'Blok 1 t/m 10' },
-  8: { icon: '🚀', desc: 'Vooruitkijken: komma-delen, driehoek, schaal, korting' },
+  5: { icon: '🌱', desc: 'Alle doelen · blok 1 t/m 10' },
+  6: { icon: '🌿', desc: 'Alle doelen · blok 1 t/m 10 · FS & S+' },
+  7: { icon: '⭐', desc: 'Alle doelen · blok 1 t/m 10 · FS & S+' },
+  8: { icon: '🚀', desc: 'Alle doelen · blok 1 t/m 10 · FS & S+' },
 }
 
 export default function VerhaaltjesSommen({ groep: eigenGroep = 7, onBack, addBriefgeld, addCuruntie }) {
@@ -330,19 +331,30 @@ export default function VerhaaltjesSommen({ groep: eigenGroep = 7, onBack, addBr
   const [showReward, setShowReward] = useState(false)
   const [stats, setStats]     = useState(laadStats)
   const [terugNaar, setTerugNaar] = useState('groep')
+  const [toetsJaren, setToetsJaren] = useState(() => new Set([5, 6, 7, 8]))
+  const [toetsLijst, setToetsLijst] = useState([])
+  const [toetsIdx, setToetsIdx]     = useState(0)
+  const [toetsGoed, setToetsGoed]   = useState(0)
 
   const toggleKeuze = (k) => setGekozen(prev => {
     const s = new Set(prev)
     s.has(k) ? s.delete(k) : s.add(k)
     return s
   })
+  const toggleBlok = (o) => setGekozen(prev => {
+    const keys = o.gens.map(g => g.key)
+    const allesAan = keys.every(k => prev.has(k))
+    const s = new Set(prev)
+    keys.forEach(k => allesAan ? s.delete(k) : s.add(k))
+    return s
+  })
 
   const nieuweOpgave = (k = klas, r = route, sel = gekozen) =>
-    maakOpgaveUit(onderdelenVan(k, r).filter(o => sel.has(o.key)))
+    maakOpgaveUit([{ gens: onderdelenVan(k, r).flatMap(o => o.gens).filter(g => sel.has(g.key)) }])
 
   const naarKies = (k, r) => {
-    // standaard alle blokken aan, herhaal-onderdelen uit
-    setGekozen(new Set(onderdelenVan(k, r).filter(o => !o.herhaling).map(o => o.key)))
+    // standaard alle doelen van de gewone blokken aan, herhaal-onderdelen uit
+    setGekozen(new Set(onderdelenVan(k, r).filter(o => !o.herhaling).flatMap(o => o.gens.map(g => g.key))))
     setScreen('kies')
   }
   const kiesGroep = (g) => { setKlas(g); if (HEEFT_ROUTE(g)) { setRoute(null); setScreen('route') } else { setRoute(null); naarKies(g, null) } }
@@ -356,16 +368,30 @@ export default function VerhaaltjesSommen({ groep: eigenGroep = 7, onBack, addBr
   const openOverzicht = (vanaf) => { setTerugNaar(vanaf); setScreen('overzicht') }
   const wisOverzicht  = () => { setStats({}); bewaarStats({}) }
 
+  const recordStat = (opg, correct) => setStats(s => {
+    const key = doelKey(opg.groep, opg.doel)
+    const cur = s[key] || { goed: 0, fout: 0, groep: opg.groep, doel: opg.doel }
+    const next = { ...s, [key]: { ...cur, goed: cur.goed + (correct ? 1 : 0), fout: cur.fout + (correct ? 0 : 1) } }
+    bewaarStats(next)
+    return next
+  })
+
+  const toggleJaar = (g) => setToetsJaren(p => { const s = new Set(p); s.has(g) ? s.delete(g) : s.add(g); return s })
+  const startToets = () => {
+    if (!toetsJaren.size) return
+    const lijst = maakToets(toetsJaren)
+    if (!lijst.length) return
+    setToetsLijst(lijst); setToetsIdx(0); setToetsGoed(0); setScreen('toets')
+  }
+  const toetsVolgende = (correct) => {
+    const opg = toetsLijst[toetsIdx]
+    if (opg) recordStat(opg, correct)
+    if (correct) setToetsGoed(g => g + 1)
+    setToetsIdx(i => i + 1)
+  }
+
   const volgende = useCallback((correct) => {
-    if (opgave) {
-      setStats(s => {
-        const key = doelKey(opgave.groep, opgave.doel)
-        const cur = s[key] || { goed: 0, fout: 0, groep: opgave.groep, doel: opgave.doel }
-        const next = { ...s, [key]: { ...cur, goed: cur.goed + (correct ? 1 : 0), fout: cur.fout + (correct ? 0 : 1) } }
-        bewaarStats(next)
-        return next
-      })
-    }
+    if (opgave) recordStat(opgave, correct)
     if (correct) {
       const ns = sinds + 1
       if (ns >= PER_BELONING) { setSinds(0); setShowReward(true); return }
@@ -405,14 +431,78 @@ export default function VerhaaltjesSommen({ groep: eigenGroep = 7, onBack, addBr
           ))}
         </div>
         <button className="rs-bekijk-btn" onClick={() => openOverzicht('groep')}>📊 Bekijk mijn overzicht</button>
+        <button className="rs-toets-btn" onClick={() => setScreen('toetsKies')}>📝 Toets — test of je alles kent</button>
       </div>
     )
   }
 
   // ── Overzicht ──
   if (screen === 'overzicht') {
-    const labels = { groep: 'Terug', route: 'Terug', kies: 'Terug', oefen: 'Verder oefenen' }
+    const labels = { groep: 'Terug', route: 'Terug', kies: 'Terug', oefen: 'Verder oefenen', toets: 'Terug naar toets' }
     return <Overzicht stats={stats} terugLabel={labels[terugNaar] || 'Terug'} onTerug={() => setScreen(terugNaar)} onWis={wisOverzicht} />
+  }
+
+  // ── Toets: jaren kiezen ──
+  if (screen === 'toetsKies') {
+    const aantal = maakToets(toetsJaren).length
+    return (
+      <div className="rs-screen">
+        <button className="rs-back" onClick={() => setScreen('groep')}>← Terug</button>
+        <div className="rs-header">
+          <span className="rs-icon">📝</span>
+          <h1 className="rs-title">Toets</h1>
+          <p className="rs-sub">Vink de jaren aan. Je krijgt 1 som over elk doel van die jaren.</p>
+        </div>
+        <div className="rs-toets-jaren">
+          {GROEPEN.map(g => {
+            const aan = toetsJaren.has(g)
+            return (
+              <button key={g} className={`rs-doel-rij${aan ? ' aan' : ''}`} onClick={() => toggleJaar(g)}>
+                <span className="rs-doel-check">{aan ? '☑' : '☐'}</span>
+                <span className="rs-doel-tekst">{GROEP_INFO[g].icon} Groep {g}</span>
+              </button>
+            )
+          })}
+        </div>
+        <button className="rs-start-btn" onClick={startToets} disabled={!toetsJaren.size}>
+          {toetsJaren.size ? `Start toets! (${aantal} ${aantal === 1 ? 'som' : 'sommen'}) →` : 'Kies een jaar'}
+        </button>
+        <button className="rs-bekijk-btn" onClick={() => openOverzicht('toetsKies')}>📊 Bekijk mijn overzicht</button>
+      </div>
+    )
+  }
+
+  // ── Toets: lopend / klaar ──
+  if (screen === 'toets') {
+    if (toetsIdx >= toetsLijst.length) {
+      const tot = toetsLijst.length, pct = tot ? Math.round((toetsGoed / tot) * 100) : 0
+      return (
+        <div className="rs-screen">
+          <div className="rs-header">
+            <span className="rs-icon">{pct >= 80 ? '🏆' : pct >= 50 ? '👍' : '💪'}</span>
+            <h1 className="rs-title">Toets klaar!</h1>
+            <p className="rs-sub">Je had <b>{toetsGoed}</b> van de <b>{tot}</b> goed ({pct}%).</p>
+          </div>
+          <p className="rs-ov-tip">Alle antwoorden staan nu in je overzicht. Rode balkjes zijn doelen om nog te oefenen! 💪</p>
+          <button className="rs-bekijk-btn" onClick={() => openOverzicht('toetsKies')}>📊 Bekijk mijn overzicht</button>
+          <button className="rs-start-btn" onClick={() => setScreen('groep')}>Klaar →</button>
+        </div>
+      )
+    }
+    const opg = toetsLijst[toetsIdx]
+    return (
+      <div className="rs-screen rs-screen-oefen">
+        <div className="rs-oefen-top">
+          <button className="rs-back" onClick={() => setScreen('groep')}>← Stop</button>
+          <span className="rs-verdiend">📝 Groep {opg.groep}</span>
+        </div>
+        <div className="rs-progress-wrap">
+          <div className="rs-progress-bar" style={{ width: `${(toetsIdx / toetsLijst.length) * 100}%` }} />
+        </div>
+        <div className="rs-progress-label">Vraag {toetsIdx + 1} van {toetsLijst.length}</div>
+        <VraagKaart key={toetsIdx} opgave={opg} onNext={toetsVolgende} />
+      </div>
+    )
   }
 
   // ── 2. Route-keuze (FS/S+), alleen groep 6/7/8 ──
@@ -453,21 +543,34 @@ export default function VerhaaltjesSommen({ groep: eigenGroep = 7, onBack, addBr
 
         <div className="rs-blok-lijst">
           {onderdelen.map(o => {
-            const aan = gekozen.has(o.key)
+            const keys = o.gens.map(g => g.key)
+            const aantalAan = keys.filter(k => gekozen.has(k)).length
+            const allesAan = aantalAan === keys.length
+            const blokVink = allesAan ? '☑' : aantalAan > 0 ? '◪' : '☐'
             return (
-              <button key={o.key} className={`rs-blok-rij${o.herhaling ? ' rs-blok-herh' : ''}${aan ? ' aan' : ''}`} onClick={() => toggleKeuze(o.key)}>
-                <span className="rs-blok-check">{aan ? '☑' : '☐'}</span>
-                <span className="rs-blok-tekst">
+              <div key={o.key} className={`rs-blok-groep${o.herhaling ? ' rs-blok-herh' : ''}`}>
+                <button className={`rs-blok-kop${aantalAan ? ' aan' : ''}`} onClick={() => toggleBlok(o)}>
+                  <span className="rs-blok-check">{blokVink}</span>
                   <span className="rs-blok-naam">{o.label}</span>
-                  {o.doelen.length > 0 && <span className="rs-blok-doelen">{o.doelen.join(' · ')}</span>}
-                </span>
-              </button>
+                </button>
+                <div className="rs-doel-lijst">
+                  {o.gens.map((g, i) => {
+                    const aan = gekozen.has(g.key)
+                    return (
+                      <button key={g.key} className={`rs-doel-rij${aan ? ' aan' : ''}`} onClick={() => toggleKeuze(g.key)}>
+                        <span className="rs-doel-check">{aan ? '☑' : '☐'}</span>
+                        <span className="rs-doel-tekst">{g.doel || `Doel ${i + 1}`}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
             )
           })}
         </div>
 
         <button className="rs-start-btn" onClick={start} disabled={!gekozen.size}>
-          {gekozen.size ? `Start! (${gekozen.size} onderdeel${gekozen.size > 1 ? 'en' : ''}) →` : 'Kies iets om te oefenen'}
+          {gekozen.size ? `Start! (${gekozen.size} doel${gekozen.size > 1 ? 'en' : ''}) →` : 'Kies iets om te oefenen'}
         </button>
         <button className="rs-bekijk-btn" onClick={() => openOverzicht('kies')}>📊 Bekijk mijn overzicht</button>
       </div>
