@@ -41,6 +41,7 @@ function maakBlokken(plus) {
         return { vraag: `De trein vertrekt om ${h1}:${String(m1).padStart(2, '0')} uur en komt om ${h2}:${String(m2).padStart(2, '0')} uur aan. Hoeveel minuten duurt de reis?`,
                  antwoord: dur, uitleg: `Van ${h1}:${String(m1).padStart(2, '0')} tot ${h2}:${String(m2).padStart(2, '0')} = ${dur} minuten` }
       }},
+      { doel: 'Je leert getallen tot en met 1 miljoen op volgorde zetten, aflezen, en schattend plaatsen en aflezen op een getallenlijn.', gen: () => getallenlijnV(rnd(0, 5) * 100000, 500000, 50000) },
     ],
     2: [
       { doel: 'Je leert sommen als 12 × 64 cijferend uitrekenen of met de strategie splitsen en je begrijpt wat je opschrijft.', gen: () => {
@@ -107,6 +108,7 @@ function maakBlokken(plus) {
         return { vraag: `Op het schoolplein staan ${n} kinderen. ${p}% gaat naar binnen. Hoeveel kinderen zijn dat?`,
                  antwoord: n * p / 100, uitleg: `${p}% van ${n} = ${n} ÷ ${per} = ${n * p / 100}` }
       }},
+      { doel: 'Je leert staafdiagrammen aflezen, maken en gebruiken bij berekeningen.', gen: () => diagramV('staaf', pick([5, 10]), rnd(3, 9)) },
     ],
     7: [
       { doel: 'Je leert het gemiddelde berekenen met hoofdrekenen.', gen: () => {
@@ -163,6 +165,7 @@ function maakBlokken(plus) {
         return { vraag: `1 liter benzine kost ${euro(a)}. Je tankt ${komma(liter)} liter. Hoeveel betaal je?`,
                  antwoord: +(a * liter).toFixed(2), eenheid: '€', uitleg: `${komma(liter)} × ${euro(a)} = ${euro(a * liter)}` }
       }},
+      { doel: 'Je leert eenvoudige lijndiagrammen aflezen, maken en er berekeningen mee maken.', gen: () => diagramV('lijn', pick([5, 10]), rnd(3, 9)) },
     ],
   }
 }
@@ -230,19 +233,71 @@ const afrondV = (max, opties) => {
   return { vraag: `Rond het getal ${getal(n)} af op ${nm}.`, antwoord: af, uitleg: `${getal(n)} afgerond op ${nm} = ${getal(af)}` }
 }
 
+// ── Klok aflezen (analoge klok) ──
+const PAD = (n) => String(n).padStart(2, '0')
+const klokV = (mins) => {   // mins = toegestane minuut-waarden
+  const h = rnd(1, 12), m = pick(mins)
+  const wijzer = m === 0 ? 'de 12' : `de ${m / 5}`
+  return {
+    vraag: 'Hoe laat is het op de klok? Schrijf het zo: 3:25',
+    antwoordType: 'tijd', tijdH: h, tijdM: m, antwoord: `${h}:${PAD(m)}`,
+    figuur: { type: 'klok', h, m },
+    uitleg: `De grote wijzer wijst naar ${wijzer} en de kleine wijzer naar de ${h}. Het is ${h}:${PAD(m)} uur.`,
+  }
+}
+
+// ── Getallenlijn aflezen ──
+const getallenlijnV = (start, lengte, stap) => {
+  const segs = 10, eind = start + lengte
+  const i = rnd(1, segs - 1), waarde = start + i * (lengte / segs)
+  return {
+    vraag: 'Welk getal hoort bij de pijl op de getallenlijn?',
+    antwoord: waarde, figuur: { type: 'getallenlijn', start, eind, waarde, segs },
+    uitleg: `De getallenlijn loopt van ${getal(start)} tot ${getal(eind)} in ${segs} stappen van ${getal(lengte / segs)}. De pijl staat op ${getal(waarde)}.`,
+  }
+}
+
+// ── Diagram aflezen (staaf of lijn) ──
+const DIAGRAM_SETS = [
+  { titel: 'bezoekers', labels: ['ma', 'di', 'wo', 'do', 'vr'] },
+  { titel: 'verkochte ijsjes', labels: ['ma', 'di', 'wo', 'do', 'vr'] },
+  { titel: 'punten', labels: ['Sem', 'Noor', 'Daan', 'Mila'] },
+  { titel: 'boeken', labels: ['jan', 'feb', 'mrt', 'apr'] },
+]
+const diagramV = (type, step, maxUnits) => {
+  const set = pick(DIAGRAM_SETS)
+  const items = set.labels.map(l => ({ label: l, waarde: rnd(1, maxUnits) * step }))
+  const soort = pick(['lees', 'diff', 'totaal'])
+  const fig = { type, items, step, titel: set.titel }
+  if (soort === 'totaal') {
+    const som = items.reduce((s, x) => s + x.waarde, 0)
+    return { vraag: `Hoeveel ${set.titel} in totaal volgens het diagram?`, antwoord: som, figuur: fig, uitleg: `${items.map(x => x.waarde).join(' + ')} = ${som}` }
+  }
+  if (soort === 'diff') {
+    const sorted = [...items].sort((a, b) => b.waarde - a.waarde)
+    const a = sorted[0], b = sorted[sorted.length - 1]
+    return { vraag: `Hoeveel meer ${set.titel} bij ${a.label} dan bij ${b.label}?`, antwoord: a.waarde - b.waarde, figuur: fig, uitleg: `${a.waarde} − ${b.waarde} = ${a.waarde - b.waarde}` }
+  }
+  const k = pick(items)
+  return { vraag: `Hoeveel ${set.titel} bij ${k.label} volgens het diagram?`, antwoord: k.waarde, figuur: fig, uitleg: `Lees de hoogte bij ${k.label} af: ${k.waarde}.` }
+}
+
 // ── Groep 5 (Pluspunt). Eén traject (geen FS/S+). Per blok, exacte doelen. ──
 function maakGroep5() {
   return {
     1: [
       { doel: 'Je leert alle tafelsommen vlot maken.', gen: () => keerV(rnd(2, 10), rnd(2, 10)) },
+      { doel: 'Je leert de tijd van een digitale klok aflezen, bij hele en halve uren en bij kwartieren.', gen: () => klokV([0, 15, 30, 45]) },
     ],
     2: [
       { doel: 'Je leert keersommen uitrekenen met behulp van de kleine som.', gen: () => keerV(rnd(2, 9), rnd(2, 9) * 10) },
       { doel: 'Je leert bij een deelverhaal of een plaatje een deelsom bedenken.', gen: () => deelV(rnd(2, 5), rnd(2, 9)) },
+      { doel: 'Je leert getallen tot en met 1000 schattend plaatsen en aflezen op de streepjesgetallenlijn vanaf een willekeurig getal.', gen: () => getallenlijnV(rnd(0, 5) * 100, 500, 50) },
     ],
     3: [
       { doel: 'Je leert optellen tot en met 1000 met de strategie: rijgen, bij sommen als 380 + 200 en 380 + 160.', gen: () => optelV(rnd(11, 80) * 10, rnd(2, 8) * 20) },
       { doel: 'Je leert sommen als 3 × 14 uitrekenen met de basisstrategie: splitsen.', gen: () => keerV(rnd(2, 9), rnd(11, 19)) },
+      { doel: 'Je leert van een klok met wijzers 5 en 10 minuten voor en over een heel uur aflezen.', gen: () => klokV([5, 10, 50, 55]) },
     ],
     4: [
       { doel: 'Je leert aftrekken tot en met 1000 met de strategie: rijgen, bij sommen als 580 - 200 en 540 - 160.', gen: () => { const a = rnd(30, 95) * 10, b = rnd(2, 8) * 20; return aftrekV(a, Math.min(b, a - 20)) } },
@@ -253,6 +308,7 @@ function maakGroep5() {
       { doel: 'Je leert optellen en aftrekken tot en met 1000 in maximaal 3 sprongen met de strategie: rijgen, bij sommen als 246 + 37 en 482 - 46.', gen: () => { const a = rnd(120, 880), b = rnd(20, 90); return Math.random() < 0.5 ? optelV(a, b) : aftrekV(a, b) } },
       { doel: 'Je leert optellen tot en met 1000 in maximaal 2 sprongen met de strategie: rijgen, bij sommen als 486 + 50.', gen: () => optelV(rnd(120, 880), rnd(2, 9) * 10) },
       { doel: 'Je leert een deelsom uitrekenen met een keersom en je begrijpt waarom dit mag.', gen: () => deelV(rnd(2, 8), rnd(3, 9)) },
+      { doel: 'Je leert van een klok met wijzers 5 en 10 minuten voor en over een half uur aflezen.', gen: () => klokV([20, 25, 35, 40]) },
     ],
     6: [
       { doel: 'Je leert aftrekken tot en met 1000 in maximaal 2 sprongen met de strategie: rijgen, bij sommen als 434 - 70.', gen: () => { const a = rnd(150, 900), b = rnd(2, 9) * 10; return aftrekV(a, b) } },
@@ -280,6 +336,8 @@ function maakGroep5() {
       { doel: 'Je leert handig rekenen bij een lange optelsom en aftreksom.', gen: () => { const a = rnd(20, 90) * 10, b = rnd(15, 60) * 10, c = rnd(10, 40) * 10, d = ding(); return { vraag: `In 3 dozen zitten ${getal(a)}, ${getal(b)} en ${getal(c)} ${d[1]}. Hoeveel ${d[1]} samen?`, antwoord: a + b + c, uitleg: `${getal(a)} + ${getal(b)} + ${getal(c)} = ${getal(a + b + c)}` } } },
       { doel: 'Je leert sommen als 4 × 35 uitrekenen met de variastrategie: halveren en verdubbelen.', gen: () => keerV(rnd(2, 8), rnd(3, 9) * 5) },
       { doel: 'Je leert sommen als 72 : 3 uitrekenen met de basisstrategie: splitsen.', gen: () => deelV(rnd(2, 6), rnd(11, 40)) },
+      { doel: 'Je leert een stapeldiagram aflezen en gebruiken.', gen: () => diagramV('staaf', pick([2, 5]), rnd(3, 8)) },
+      { doel: 'Je leert een lijndiagram aflezen en gebruiken.', gen: () => diagramV('lijn', pick([2, 5]), rnd(3, 8)) },
     ],
   }
 }
@@ -296,9 +354,11 @@ function maakGroep6(plus) {
         if (k === 3) return keerV(rnd(2, 9), rnd(2, 9) * 100)
         return deelV(rnd(2, 9), rnd(2, 9) * 100)
       } },
+      { doel: 'Je leert van een klok met wijzers de tijd op de minuut nauwkeurig aflezen en aangeven.', gen: () => klokV([0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55]) },
     ],
     2: [
       { doel: 'Je leert sommen als 368 + 257 kolomsgewijs optellen en je begrijpt wat je opschrijft.', gen: () => optelV(rnd(140, 680 + M * 200), rnd(140, 680)) },
+      { doel: 'Je leert getallen tot en met 10.000 schattend plaatsen en aflezen op de getallenlijn.', gen: () => getallenlijnV(rnd(0, 5) * 1000, 5000, 500) },
     ],
     3: [
       { doel: 'Je leert getallen afronden op tientallen, honderdtallen en duizendtallen.', gen: () => afrondV(9800, [10, 100, 1000]) },
@@ -331,6 +391,7 @@ function maakGroep6(plus) {
     ],
     10: [
       { doel: 'Je leert sommen als 4 × 231 en 4 × 536 cijferend of kolomsgewijs uitrekenen, en je begrijpt wat je opschrijft.', gen: () => keerV(rnd(3, 9), rnd(110, 590)) },
+      { doel: 'Je leert rekenen met lijndiagrammen.', gen: () => diagramV('lijn', pick([5, 10]), rnd(3, 9)) },
     ],
   }
 }
@@ -450,4 +511,15 @@ export function checkAntwoord(input, antwoord) {
   const v = parseFloat(s)
   if (Number.isNaN(v)) return false
   return Math.abs(v - antwoord) < 0.005
+}
+
+// Tijd-antwoord vergelijken (klok). Accepteert 3:25, 3.25, 15:25, "3 uur 25".
+export function checkTijd(input, h, m) {
+  if (!input) return false
+  const s = String(input).toLowerCase().replace(/uur|u\b/g, ' ')
+  const mm = s.match(/(\d{1,2})\s*[:.\s]\s*(\d{1,2})/)
+  if (mm) return (+mm[1]) % 12 === h % 12 && (+mm[2]) === m
+  const one = s.match(/\d{1,2}/)
+  if (one && m === 0) return (+one[0]) % 12 === h % 12
+  return false
 }

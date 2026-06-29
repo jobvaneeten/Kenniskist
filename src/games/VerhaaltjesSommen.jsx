@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { onderdelenVan, maakOpgaveUit, GROEPEN, HEEFT_ROUTE, checkAntwoord, checkSom, GROEP_DOELEN, doelKey } from './redactiesommen'
+import { onderdelenVan, maakOpgaveUit, GROEPEN, HEEFT_ROUTE, checkAntwoord, checkSom, checkTijd, GROEP_DOELEN, doelKey } from './redactiesommen'
 import SpelBeloning from './SpelBeloning'
 import './verhaaltjes-sommen.css'
 
@@ -20,6 +20,7 @@ const ROUTES = [
 ]
 
 function toonAntwoord(o) {
+  if (o.antwoordType === 'tijd') return `${o.tijdH}:${String(o.tijdM).padStart(2, '0')}`
   if (o.eenheid === '€') return '€ ' + o.antwoord.toFixed(2).replace('.', ',')
   const n = Number.isInteger(o.antwoord) ? o.antwoord.toLocaleString('nl-NL') : String(o.antwoord).replace('.', ',')
   return o.eenheid ? `${n} ${o.eenheid}` : n
@@ -37,6 +38,63 @@ function Figuur({ figuur }) {
         <rect x="38" y="8" width={w} height={h} fill="rgba(255,210,63,0.14)" stroke="#ffd23f" strokeWidth="2.5" rx="3" />
         <text x={38 + w / 2} y="2" textAnchor="middle" dominantBaseline="hanging" fill="#fffbeb" fontSize="14" fontWeight="700">{figuur.l} {e}</text>
         <text x="30" y={8 + h / 2} textAnchor="end" dominantBaseline="middle" fill="#fffbeb" fontSize="14" fontWeight="700">{figuur.b} {e}</text>
+      </svg>
+    )
+  }
+  if (figuur.type === 'klok') {
+    const cx = 70, cy = 70, R = 60
+    const hand = (deg, len) => [cx + len * Math.sin(deg * Math.PI / 180), cy - len * Math.cos(deg * Math.PI / 180)]
+    const ha = ((figuur.h % 12) + figuur.m / 60) * 30, ma = figuur.m * 6
+    const [hx, hy] = hand(ha, 30), [mx, my] = hand(ma, 48)
+    return (
+      <svg className="rs-figuur" viewBox="0 0 140 140" width="150" height="150">
+        <circle cx={cx} cy={cy} r={R} fill="rgba(255,210,63,0.08)" stroke="#ffd23f" strokeWidth="3" />
+        {[...Array(12)].map((_, i) => { const [x1, y1] = hand(i * 30, R - 2), [x2, y2] = hand(i * 30, R - 9); return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#ffd23f" strokeWidth="2" /> })}
+        {[[12, 0], [3, 90], [6, 180], [9, 270]].map(([n, a]) => { const [x, y] = hand(a, R - 20); return <text key={n} x={x} y={y} textAnchor="middle" dominantBaseline="central" fill="#fffbeb" fontSize="15" fontWeight="800">{n}</text> })}
+        <line x1={cx} y1={cy} x2={hx} y2={hy} stroke="#fffbeb" strokeWidth="4" strokeLinecap="round" />
+        <line x1={cx} y1={cy} x2={mx} y2={my} stroke="#fde68a" strokeWidth="2.5" strokeLinecap="round" />
+        <circle cx={cx} cy={cy} r="4" fill="#fffbeb" />
+      </svg>
+    )
+  }
+  if (figuur.type === 'getallenlijn') {
+    const x0 = 24, W = 300, y = 46
+    const frac = (figuur.waarde - figuur.start) / (figuur.eind - figuur.start)
+    const px = x0 + frac * W
+    return (
+      <svg className="rs-figuur" viewBox={`0 0 ${W + 48} 78`} width={W + 48} height="78">
+        <line x1={x0} y1={y} x2={x0 + W} y2={y} stroke="#ffd23f" strokeWidth="3" />
+        {[...Array(figuur.segs + 1)].map((_, i) => { const x = x0 + i * (W / figuur.segs); return <line key={i} x1={x} y1={y - 6} x2={x} y2={y + 6} stroke="#ffd23f" strokeWidth="2" /> })}
+        <text x={x0} y={y + 22} textAnchor="middle" fill="#fffbeb" fontSize="13" fontWeight="700">{figuur.start.toLocaleString('nl-NL')}</text>
+        <text x={x0 + W} y={y + 22} textAnchor="middle" fill="#fffbeb" fontSize="13" fontWeight="700">{figuur.eind.toLocaleString('nl-NL')}</text>
+        <polygon points={`${px},${y - 8} ${px - 7},${y - 22} ${px + 7},${y - 22}`} fill="#f87171" />
+        <text x={px} y={y - 26} textAnchor="middle" fill="#fca5a5" fontSize="15" fontWeight="900">?</text>
+      </svg>
+    )
+  }
+  if (figuur.type === 'staaf' || figuur.type === 'lijn') {
+    const items = figuur.items, step = figuur.step
+    const top = Math.ceil(Math.max(...items.map(i => i.waarde)) / step) * step
+    const x0 = 34, y0 = 10, chartH = 120, bw = 40, gap = 14
+    const chartW = items.length * (bw + gap)
+    const sx = (i) => x0 + gap / 2 + i * (bw + gap) + bw / 2
+    const sy = (v) => y0 + chartH - (v / top) * chartH
+    const lines = []
+    for (let v = 0; v <= top; v += step) lines.push(v)
+    return (
+      <svg className="rs-figuur" viewBox={`0 0 ${x0 + chartW + 10} ${y0 + chartH + 28}`} width={x0 + chartW + 10} height={y0 + chartH + 28}>
+        {lines.map(v => (
+          <g key={v}>
+            <line x1={x0} y1={sy(v)} x2={x0 + chartW} y2={sy(v)} stroke="rgba(255,255,255,0.15)" strokeWidth="1" />
+            <text x={x0 - 4} y={sy(v)} textAnchor="end" dominantBaseline="central" fill="rgba(255,255,255,0.7)" fontSize="10">{v}</text>
+          </g>
+        ))}
+        {figuur.type === 'staaf' && items.map((it, i) => (
+          <rect key={i} x={x0 + gap / 2 + i * (bw + gap)} y={sy(it.waarde)} width={bw} height={y0 + chartH - sy(it.waarde)} fill="#ffd23f" rx="2" />
+        ))}
+        {figuur.type === 'lijn' && <polyline points={items.map((it, i) => `${sx(i)},${sy(it.waarde)}`).join(' ')} fill="none" stroke="#ffd23f" strokeWidth="2.5" />}
+        {figuur.type === 'lijn' && items.map((it, i) => <circle key={i} cx={sx(i)} cy={sy(it.waarde)} r="3.5" fill="#fde68a" />)}
+        {items.map((it, i) => <text key={i} x={sx(i)} y={y0 + chartH + 14} textAnchor="middle" fill="#fffbeb" fontSize="11" fontWeight="700">{it.label}</text>)}
       </svg>
     )
   }
@@ -79,13 +137,15 @@ function VraagKaart({ opgave, onNext }) {
   const [phase, setPhase] = useState('answering')   // answering | good | bad
   const [somOk, setSomOk] = useState(null)
   const somRef = useRef(null)
-  const heeftRest = opgave.rest != null
+  const isTijd = opgave.antwoordType === 'tijd'
+  const heeftRest = opgave.rest != null && !isTijd
 
   useEffect(() => { setSom(''); setAntw(''); setRest(''); setPhase('answering'); setSomOk(null); setTimeout(() => somRef.current?.focus(), 50) }, [opgave])
 
   const check = () => {
     if (!antw.trim()) return
     if (heeftRest && !rest.trim()) return
+    if (isTijd) { setPhase(checkTijd(antw, opgave.tijdH, opgave.tijdM) ? 'good' : 'bad'); return }
     setSomOk(checkSom(som, opgave.antwoord))
     const antwOk = checkAntwoord(antw, opgave.antwoord)
     const restOk = !heeftRest || checkAntwoord(rest, opgave.rest)
@@ -102,7 +162,20 @@ function VraagKaart({ opgave, onNext }) {
       <div className="rs-vraag">{opgave.vraag}</div>
       {opgave.figuur && <div className="rs-figuur-wrap"><Figuur figuur={opgave.figuur} /></div>}
 
-      {phase === 'answering' && (
+      {phase === 'answering' && isTijd && (
+        <div className="rs-velden">
+          <div className="rs-veld">
+            <label className="rs-veld-label">Hoe laat is het?</label>
+            <div className="rs-antwoord-row">
+              <input ref={somRef} className="rs-input" type="text" autoComplete="off" placeholder="bijv. 3:25"
+                value={antw} onChange={e => setAntw(e.target.value)} onKeyDown={e => e.key === 'Enter' && check()} />
+              <button className="rs-check-btn" onClick={check}>Controleer →</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {phase === 'answering' && !isTijd && (
         <div className="rs-velden">
           <div className="rs-veld">
             <label className="rs-veld-label">Wat is de som? <span className="rs-veld-opt">(hoe reken je het uit)</span></label>
