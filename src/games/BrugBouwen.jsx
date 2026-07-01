@@ -21,9 +21,9 @@ const HIT = 34
 // strength = max balkkracht voor breuk · stiff = relaxatie-stijfheid · tension = alleen trekken (touw)
 const MAT = {
   weg:    { name: 'Weg',    icon: '🛣️', cost: 10, maxLen: 150, drive: true,  rope: false, w: 15, col: '#3c4250', col2: '#262b36', edge: '#15181f', strength: 0.8, stiff: 0.8, tension: false },
-  hout:   { name: 'Hout',   icon: '🪵', cost: 6,  maxLen: 160, drive: false, rope: false, w: 12, col: '#c79a52', col2: '#8a6a30', edge: '#6b4f22', strength: 3.2, stiff: 1,   tension: false },
-  metaal: { name: 'Metaal', icon: '🔩', cost: 16, maxLen: 185, drive: false, rope: false, w: 11, col: '#9fb0cc', col2: '#5d6c84', edge: '#3c4860', strength: 9,   stiff: 1,   tension: false },
-  touw:   { name: 'Touw',   icon: '🪢', cost: 4,  maxLen: 260, drive: false, rope: true,  w: 5,  col: '#dcc48e', col2: '#a98a54', edge: '#7c5a30', strength: 4,   stiff: 0.9, tension: true },
+  hout:   { name: 'Hout',   icon: '🪵', cost: 6,  maxLen: 160, drive: false, rope: false, w: 12, col: '#c79a52', col2: '#8a6a30', edge: '#6b4f22', strength: 2.2, stiff: 1,   tension: false },
+  metaal: { name: 'Metaal', icon: '🔩', cost: 16, maxLen: 185, drive: false, rope: false, w: 11, col: '#9fb0cc', col2: '#5d6c84', edge: '#3c4860', strength: 6,   stiff: 1,   tension: false },
+  touw:   { name: 'Touw',   icon: '🪢', cost: 4,  maxLen: 260, drive: false, rope: true,  w: 5,  col: '#dcc48e', col2: '#a98a54', edge: '#7c5a30', strength: 2.6, stiff: 0.4, tension: true },
 }
 const MAT_ORDER = ['weg', 'hout', 'metaal', 'touw']
 
@@ -186,7 +186,7 @@ const LEVELS = [
   opn('Klein vakwerk',    220, WHM, { gap: 260 }),
   pylons('Twee pieren',   240, WHM, { gap: 420, pillars: [{ f: 0.34, top: 470, w: 42 }, { f: 0.66, top: 470, w: 42 }] }),
   susp('Eerste kabel',    240, WHT, { gap: 280, anchorH: 180, anchors: [0.5] }),
-  jmp('De schans',        160, WH,  { gap: 150, drop: 80, rise: 60 }),
+  jmp('De schans',        280, WH,  { gap: 380, drop: 80, rise: 60 }),
   pre('Maak het af',      220, WHM, { gap: 340, preMat: 'touw', preLen: 150 }),
   pylons('Hoge piek',     260, WHM, { gap: 460, pillars: [{ f: 0.5, top: 360, w: 30 }] }),
   opn('Diepe boog',       280, WHM, { gap: 290, heavy: true }),
@@ -195,12 +195,12 @@ const LEVELS = [
   slope('Afdaling',       300, WHM, { gap: 300, piers: 1, depth: 120, yL: 330, yR: 470, rise: 150, worldW: 1400 }),
   susp('Hangbrug',        300, WHT, { gap: 360, anchors: [0.34, 0.66], worldW: 1450 }),
   pylons('Pieren-trap',   340, WHM, { gap: 560, pillars: [{ f: 0.25, top: 500, w: 40 }, { f: 0.5, top: 430, w: 32 }, { f: 0.75, top: 360, w: 26 }], worldW: 1500 }),
-  mjmp('Dubbele schans',  260, WHM, { gap1: 135, gap2: 135, drop1: 70, drop2: 60 }),
+  mjmp('Dubbele schans',  400, WHM, { gap1: 350, gap2: 350, drop1: 70, drop2: 60 }),
   opn('Brede boog',       320, WHM, { gap: 320, worldW: 1400 }),
   pre('Halve weg',        320, WHM, { gap: 360, preMat: 'weg', preLen: 170, sag: 0, worldW: 1400 }),
   susp('Twee ballonnen',  380, ALL, { gap: 420, anchors: [0.34, 0.66], worldW: 1500 }),
   stairs('Naar boven',    300, WHM, { n: 4, step: 60, gapW: 180, yTop: 520, up: true, worldW: 1350 }),
-  jmp('Grote sprong',     250, WHM, { gap: 168, drop: 100, rise: 72, worldW: 1350 }),
+  jmp('Grote sprong',     360, WHM, { gap: 430, drop: 100, rise: 72, worldW: 1500 }),
   pylons('Pilaarwoud',    400, WHM, { gap: 660, pillars: [{ f: 0.2, top: 470, w: 36 }, { f: 0.45, top: 380, w: 26 }, { f: 0.7, top: 500, w: 40 }], worldW: 1650 }),
 
   // ── Tier 3 (21-30): wijde en diepe ravijnen, flink uitgezoomd ──
@@ -209,7 +209,7 @@ const LEVELS = [
   pre('Touwbrug-rest',    400, WHT, { gap: 420, preMat: 'touw', preLen: 200, worldW: 1500 }),
   opn('Het gat',          400, ALL, { gap: 340, heavy: true, worldW: 1500 }),
   pylons('Wisselhoogte',  480, ALL, { gap: 700, pillars: [{ f: 0.22, top: 520, w: 44 }, { f: 0.5, top: 360, w: 24 }, { f: 0.78, top: 470, w: 36 }], worldW: 1700 }),
-  mjmp('Sprong-estafette', 340, WHM, { gap1: 150, gap2: 150, drop1: 80, drop2: 70, midW: 250, worldW: 1500 }),
+  mjmp('Sprong-estafette', 480, WHM, { gap1: 380, gap2: 380, drop1: 80, drop2: 70, midW: 260, worldW: 1650 }),
   susp('Hoge hangbrug',   500, ALL, { gap: 520, anchorH: 250, anchors: [0.25, 0.5, 0.75], worldW: 1750 }),
   stairs('Grote trap',    440, WHM, { n: 5, step: 55, gapW: 185, yTop: 350, worldW: 1600 }),
   slope('Afdaling diep',  480, ALL, { gap: 420, piers: 1, depth: 150, yL: 330, yR: 540, rise: 160, worldW: 1650, worldH: 880 }),
@@ -220,7 +220,7 @@ const LEVELS = [
   pylons('Canyonpieren',  640, ALL, { gap: 900, pillars: [{ f: 0.2, top: 520, w: 46 }, { f: 0.4, top: 400, w: 28 }, { f: 0.6, top: 520, w: 46 }, { f: 0.8, top: 400, w: 28 }], worldW: 2050 }),
   slope('Bergafrit',      480, ALL, { gap: 360, yL: 300, yR: 520, rise: 190, run: 320, worldW: 1700 }),
   pre('Halve hangbrug',   520, WHT, { gap: 480, preMat: 'touw', preLen: 230, worldW: 1700 }),
-  mjmp('Sprong-marathon', 420, WHM, { gap1: 165, gap2: 165, drop1: 95, drop2: 90, midW: 240, worldW: 1700 }),
+  mjmp('Sprong-marathon', 560, WHM, { gap1: 400, gap2: 400, drop1: 95, drop2: 90, midW: 250, worldW: 1850 }),
   opn('Wijde afgrond',    480, ALL, { gap: 350, heavy: true, worldW: 1650 }),
   stairs('Eindeloze trap', 560, WHM, { n: 6, step: 52, gapW: 185, yTop: 340, worldW: 1900 }),
   susp('Drie ballonnen',  640, ALL, { gap: 560, anchorH: 240, anchors: [0.25, 0.5, 0.75], worldW: 1950 }),
@@ -230,10 +230,10 @@ const LEVELS = [
   // ── Tier 5 (41-50): meesterproef — gigantisch, zwaar, ver uitgezoomd ──
   susp('Meesterkabel',    700, ALL, { gap: 600, anchorH: 270, anchors: [0.2, 0.4, 0.6, 0.8], worldW: 2050 }),
   slope('Bergpas-afrit',  620, ALL, { gap: 520, piers: 2, depth: 150, yL: 320, yR: 560, rise: 180, worldW: 2000 }),
-  jmp('Onmogelijke sprong', 420, ALL, { gap: 205, drop: 140, rise: 88, worldW: 1550 }),
+  jmp('Onmogelijke sprong', 560, ALL, { gap: 560, drop: 140, rise: 88, worldW: 1700 }),
   pre('Voltooi de brug',  640, ALL, { gap: 560, preMat: 'weg', preLen: 240, sag: 0, worldW: 1900 }),
   pylons('Reuzenpieren',  860, ALL, { gap: 1200, pillars: [{ f: 0.16, top: 520, w: 46 }, { f: 0.33, top: 400, w: 28 }, { f: 0.5, top: 520, w: 46 }, { f: 0.66, top: 400, w: 28 }, { f: 0.83, top: 520, w: 46 }], worldW: 2300 }),
-  mjmp('Sprong-finale',   440, WHM, { gap1: 170, gap2: 170, drop1: 95, drop2: 90, midW: 240, worldW: 1750 }),
+  mjmp('Sprong-finale',   580, WHM, { gap1: 410, gap2: 410, drop1: 95, drop2: 90, midW: 250, worldW: 1900 }),
   susp('Hemelbrug',       820, ALL, { gap: 680, anchorH: 280, anchors: [0.2, 0.4, 0.6, 0.8], worldW: 2200 }),
   pil('Mega-transport',   900, ALL, { gap: 1200, piers: 7, depth: 150, heavy: true, worldW: 2300 }),
   slope('De grote afrit', 880, ALL, { gap: 800, piers: 4, depth: 150, yL: 320, yR: 560, rise: 190, heavy: true, worldW: 2300 }),
@@ -242,7 +242,7 @@ const LEVELS = [
 
 // ── progressie ──
 // Versie bumpen ⇒ nieuwe/gewijzigde levels: iedereen begint opnieuw bij level 1.
-const PROG_VERSION = 2
+const PROG_VERSION = 3
 function loadProg() {
   try {
     const d = JSON.parse(localStorage.getItem('kk_brug') || '{}')
@@ -1047,18 +1047,34 @@ function drawTruck(ctx, sim) {
   }
 }
 // ── Verlet-botsingshelpers ──
+// echte cirkel-vs-rechthoek-botsing (dichtstbijzijnde-punt-methode). De oude
+// versie behandelde de rand-marge (r) als onderdeel van het blok zelf, waardoor
+// een wiel dat net over een rand (bv. een plateau-einde) naar beneden viel eerst
+// nog als "erop" werd gezien en met een schok rechtop teruggeduwd werd → het
+// zak-en-lanceer-effect bij het wegrijden van een platform.
 function collideTerrain(p, terrain) {
   const r = p.r || 0
   for (const t of terrain) {
     if (t.post) continue   // torens zijn decoratie + topanker; auto/dek rijden er niet tegenaan
-    const L = t.x - r, R = t.x + t.w + r, T = t.y - r, B = t.y + t.h + r
-    if (p.x <= L || p.x >= R || p.y <= T || p.y >= B) continue
-    const dL = p.x - L, dR = R - p.x, dT = p.y - T, dB = B - p.y
-    const m = Math.min(dL, dR, dT, dB)
-    if (m === dT) p.y = T           // bovenop landen (meest voorkomend)
-    else if (m === dL) p.x = L
-    else if (m === dR) p.x = R
-    else p.y = B
+    const x0 = t.x, x1 = t.x + t.w, y0 = t.y, y1 = t.y + t.h
+    const inside = p.x > x0 && p.x < x1 && p.y > y0 && p.y < y1
+    const cx = Math.max(x0, Math.min(p.x, x1)), cy = Math.max(y0, Math.min(p.y, y1))
+    const dx = p.x - cx, dy = p.y - cy, d2 = dx * dx + dy * dy
+    if (!inside && d2 >= r * r) continue
+    if (inside) {
+      // middelpunt zit volledig in het blok → naar dichtstbijzijnde vlak duwen
+      const dL = p.x - x0, dR = x1 - p.x, dT = p.y - y0, dB = y1 - p.y
+      const m = Math.min(dL, dR, dT, dB)
+      if (m === dT) p.y = y0 - r      // bovenop landen (meest voorkomend)
+      else if (m === dB) p.y = y1 + r
+      else if (m === dL) p.x = x0 - r
+      else p.x = x1 + r
+    } else {
+      // net buiten het blok, binnen bereik van rand/hoek → recht van de rand/hoek af duwen
+      const d = Math.sqrt(d2) || 0.0001
+      p.x += (dx / d) * (r - d)
+      p.y += (dy / d) * (r - d)
+    }
     p._hit = true
   }
 }

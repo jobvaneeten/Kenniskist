@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { getQuestions } from './questions_rekenen'
-import { COUNTRIES, getCountry, generateBracket } from './countries'
+import { COUNTRIES, getCountry, generateBracket, DEFAULT_UNLOCKED } from './countries'
 import OrientationGate from '../OrientationGate'
 import './football.css'
 
@@ -39,38 +39,69 @@ function isLight(hex) {
 }
 
 function drawShirt(ctx, x, y, country, r = PR) {
-  const { c1, c2, pattern } = country
+  const { c1, c2, c3, pattern } = country
   const d = r * 2
   ctx.save()
   ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.clip()
 
   switch (pattern) {
-    case 'vstripes': {
-      const sw = d / 3
-      for (let i = 0; i < 3; i++) {
-        ctx.fillStyle = i % 2 === 0 ? c1 : c2
-        ctx.fillRect(x - r + i * sw, y - r, sw, d)
-      }
+    case 'v2':
+      ctx.fillStyle = c1; ctx.fillRect(x - r, y - r, r, d)
+      ctx.fillStyle = c2; ctx.fillRect(x, y - r, r, d)
+      break
+    case 'v3': {
+      const bw = d / 3
+      ctx.fillStyle = c1; ctx.fillRect(x - r, y - r, bw, d)
+      ctx.fillStyle = c2; ctx.fillRect(x - r + bw, y - r, bw, d)
+      ctx.fillStyle = c3 || c1; ctx.fillRect(x - r + 2 * bw, y - r, bw, d)
       break
     }
-    case 'hstripes':
+    case 'h2':
       ctx.fillStyle = c1; ctx.fillRect(x - r, y - r, d, r)
       ctx.fillStyle = c2; ctx.fillRect(x - r, y, d, r)
       break
-    case 'checker': {
-      const cs = d / 4
-      for (let row = 0; row < 4; row++)
-        for (let col = 0; col < 4; col++) {
-          ctx.fillStyle = (row + col) % 2 === 0 ? c1 : c2
-          ctx.fillRect(x - r + col * cs, y - r + row * cs, cs, cs)
-        }
+    case 'h3': {
+      const bh = d / 3
+      ctx.fillStyle = c1; ctx.fillRect(x - r, y - r, d, bh)
+      ctx.fillStyle = c2; ctx.fillRect(x - r, y - r + bh, d, bh)
+      ctx.fillStyle = c3 || c1; ctx.fillRect(x - r, y - r + 2 * bh, d, bh)
       break
     }
     case 'cross':
       ctx.fillStyle = c1; ctx.fillRect(x - r, y - r, d, d)
       ctx.fillStyle = c2
-      ctx.fillRect(x - 5, y - r, 10, d)
-      ctx.fillRect(x - r, y - 5, d, 10)
+      ctx.fillRect(x - d * 0.09, y - r, d * 0.18, d)
+      ctx.fillRect(x - r, y - d * 0.09, d, d * 0.18)
+      if (c3) {
+        ctx.fillStyle = c3
+        ctx.fillRect(x - d * 0.045, y - r, d * 0.09, d)
+        ctx.fillRect(x - r, y - d * 0.045, d, d * 0.09)
+      }
+      break
+    case 'circle':
+      ctx.fillStyle = c1; ctx.fillRect(x - r, y - r, d, d)
+      ctx.fillStyle = c2
+      ctx.beginPath(); ctx.arc(x, y, r * 0.55, 0, Math.PI * 2); ctx.fill()
+      break
+    case 'circle2':
+      ctx.fillStyle = c1; ctx.fillRect(x - r, y - r, d, d)
+      ctx.save(); ctx.beginPath(); ctx.arc(x, y, r * 0.55, 0, Math.PI * 2); ctx.clip()
+      ctx.fillStyle = c2; ctx.fillRect(x - r, y - r, d, r)
+      ctx.fillStyle = c3 || c2; ctx.fillRect(x - r, y, d, r)
+      ctx.restore()
+      break
+    case 'usa': {
+      const bands = 7, bh = d / bands
+      for (let i = 0; i < bands; i++) { ctx.fillStyle = i % 2 === 0 ? c1 : c2; ctx.fillRect(x - r, y - r + i * bh, d, bh) }
+      ctx.fillStyle = c3 || '#3C3B6E'
+      ctx.fillRect(x - r, y - r, d * 0.5, d * 0.5)
+      break
+    }
+    case 'quarters':
+      ctx.fillStyle = c1; ctx.fillRect(x - r, y - r, r, r)
+      ctx.fillStyle = c2; ctx.fillRect(x, y - r, r, r)
+      ctx.fillStyle = c3 || c2; ctx.fillRect(x - r, y, r, r)
+      ctx.fillStyle = c1; ctx.fillRect(x, y, r, r)
       break
     default:
       ctx.fillStyle = c1; ctx.fillRect(x - r, y - r, d, d)
@@ -440,16 +471,36 @@ const newState = (tp = false) => ({
 // ── Jersey preview (React component for UI) ───────────────────────
 function JerseyCircle({ country, size = 32 }) {
   let bg
-  const { c1, c2, pattern } = country
+  const { c1, c2, c3, pattern } = country
   switch (pattern) {
-    case 'vstripes':
-      bg = `repeating-linear-gradient(90deg,${c1} 0%,${c1} 33%,${c2} 33%,${c2} 66%,${c1} 66%,${c1} 100%)`; break
-    case 'hstripes':
+    case 'v2':
+      bg = `linear-gradient(90deg,${c1} 50%,${c2} 50%)`; break
+    case 'v3':
+      bg = `linear-gradient(90deg,${c1} 0,${c1} 33.3%,${c2} 33.3%,${c2} 66.6%,${c3 || c1} 66.6%,${c3 || c1} 100%)`; break
+    case 'h2':
       bg = `linear-gradient(180deg,${c1} 50%,${c2} 50%)`; break
-    case 'checker':
-      bg = `repeating-conic-gradient(${c1} 0% 25%,${c2} 0% 50%) 0 0/${size/2}px ${size/2}px`; break
+    case 'h3':
+      bg = `linear-gradient(180deg,${c1} 0,${c1} 33.3%,${c2} 33.3%,${c2} 66.6%,${c3 || c1} 66.6%,${c3 || c1} 100%)`; break
     case 'cross':
-      bg = c1; break  // simplified
+      bg = `linear-gradient(${c2},${c2}) center/18% 100% no-repeat,` +
+           `linear-gradient(${c2},${c2}) center/100% 18% no-repeat,` +
+           (c3 ? `linear-gradient(${c3},${c3}) center/9% 100% no-repeat,linear-gradient(${c3},${c3}) center/100% 9% no-repeat,` : '') +
+           c1
+      break
+    case 'circle':
+      bg = `radial-gradient(circle at center, ${c2} 0 38%, ${c1} 38% 100%)`; break
+    case 'circle2':
+      bg = `radial-gradient(circle at center, transparent 0 38%, ${c1} 38% 100%), linear-gradient(180deg,${c2} 50%,${c3 || c2} 50%)`; break
+    case 'usa':
+      bg = `linear-gradient(${c3 || '#3C3B6E'},${c3 || '#3C3B6E'}) 0 0/50% 50% no-repeat,` +
+           `repeating-linear-gradient(180deg,${c1} 0,${c1} 14.28%,${c2} 14.28%,${c2} 28.56%)`
+      break
+    case 'quarters':
+      bg = `linear-gradient(${c1},${c1}) 0 0/50% 50% no-repeat,` +
+           `linear-gradient(${c2},${c2}) 100% 0/50% 50% no-repeat,` +
+           `linear-gradient(${c3 || c2},${c3 || c2}) 0 100%/50% 50% no-repeat,` +
+           `linear-gradient(${c1},${c1}) 100% 100%/50% 50% no-repeat`
+      break
     default:
       bg = c1
   }
@@ -471,6 +522,16 @@ function saveToernooi(b) {
 }
 function clearToernooi() { try { localStorage.removeItem(TOERNOOI_KEY) } catch { /* ignore */ } }
 
+// Ontgrendelde landen: standaard 10, rest ontgrendel je door het WK te winnen.
+const UNLOCK_KEY = 'kk_wk_unlocked'
+function loadUnlocked() {
+  try { const v = JSON.parse(localStorage.getItem(UNLOCK_KEY)); if (Array.isArray(v) && v.length) return v } catch { /* ignore */ }
+  return [...DEFAULT_UNLOCKED]
+}
+function saveUnlocked(arr) {
+  try { localStorage.setItem(UNLOCK_KEY, JSON.stringify([...new Set(arr)])) } catch { /* ignore */ }
+}
+
 export default function FootballGame({ year, onBack, addCuruntie, noQuiz = false, twoPlayer = false,
                                        rewardMode = false, initialBracket = null, resumeBracket = null, onMatchDone, onMatchEnd }) {
   const [phase,       setPhase]      = useState((rewardMode && initialBracket) || resumeBracket ? 'match_preview' : 'country_select')
@@ -485,6 +546,8 @@ export default function FootballGame({ year, onBack, addCuruntie, noQuiz = false
   const [timeLeft,    setTimeLeft]   = useState(gameDuration)
   const [goalInfo,    setGoalInfo]   = useState(null) // { isPlayer: bool }
   const [earnedCoins, setEarnedCoins] = useState(0)
+  const [unlocked,    setUnlocked]   = useState(loadUnlocked)
+  const [newUnlock,   setNewUnlock]  = useState(null)
 
   // Deterministic confetti pieces – recomputed each time goalInfo changes
   const confetti = useMemo(() => {
@@ -870,6 +933,16 @@ export default function FootballGame({ year, onBack, addCuruntie, noQuiz = false
     if (!won || bracket.currentRound >= 3) {
       setBracket(b => ({ ...b, results: newResults }))
       clearToernooi()
+      if (won && bracket.currentRound >= 3) {
+        const locked = COUNTRIES.filter(c => !unlocked.includes(c.key)).map(c => c.key)
+        if (locked.length) {
+          const win = locked[Math.floor(Math.random() * locked.length)]
+          const next = [...unlocked, win]
+          setUnlocked(next); saveUnlocked(next); setNewUnlock(win)
+        } else {
+          setNewUnlock(null)
+        }
+      }
       setPhase(won && bracket.currentRound >= 3 ? 'wk_won' : 'wk_lost')
       return
     }
@@ -911,7 +984,7 @@ export default function FootballGame({ year, onBack, addCuruntie, noQuiz = false
         <p className="wk-sub">WASD — kies jouw land</p>
       </div>
       <div className="wk-country-grid">
-        {COUNTRIES.filter(c => c.key !== bracket?.playerKey).map(c => (
+        {COUNTRIES.filter(c => c.key !== bracket?.playerKey && unlocked.includes(c.key)).map(c => (
           <button key={c.key} className="wk-country-card" onClick={() => pickP2Country(c.key)}>
             <span className="wk-country-flag">{c.flag}</span>
             <JerseyCircle country={c} size={30} />
@@ -931,15 +1004,21 @@ export default function FootballGame({ year, onBack, addCuruntie, noQuiz = false
         <p className="wk-sub">{twoPlayer ? 'Pijltjes — kies jouw land (P1)' : 'Kies jouw land'}</p>
       </div>
       <div className="wk-country-grid">
-        {COUNTRIES.map(c => (
-          <button key={c.key} className="wk-country-card" onClick={() => pickCountry(c.key)}>
-            <span className="wk-country-flag">{c.flag}</span>
-            <JerseyCircle country={c} size={30} />
-            <span className="wk-country-name">{c.name}</span>
-            <span className="wk-country-stars">{'⭐'.repeat(c.diff)}</span>
-          </button>
-        ))}
+        {COUNTRIES.map(c => {
+          const open = unlocked.includes(c.key)
+          return (
+            <button key={c.key} className={`wk-country-card${open ? '' : ' wk-locked'}`} disabled={!open}
+              onClick={() => open && pickCountry(c.key)} title={open ? undefined : 'Win het WK om dit land te ontgrendelen'}>
+              {!open && <span className="wk-lock-badge">🔒</span>}
+              <span className="wk-country-flag">{c.flag}</span>
+              <JerseyCircle country={c} size={30} />
+              <span className="wk-country-name">{c.name}</span>
+              <span className="wk-country-stars">{'⭐'.repeat(c.diff)}</span>
+            </button>
+          )
+        })}
       </div>
+      <p className="wk-unlock-progress">{unlocked.length}/{COUNTRIES.length} landen ontgrendeld</p>
     </div>
   )
 
@@ -1208,7 +1287,10 @@ export default function FootballGame({ year, onBack, addCuruntie, noQuiz = false
         <h1 className="wk-champ-title">WERELDKAMPIOEN!</h1>
         <div className="wk-champ-flag">{playerCountry?.flag}</div>
         <p className="wk-champ-sub">{playerCountry?.name} heeft het WK 2026 gewonnen!</p>
-        <button className="fb-end-btn fb-end-btn-again" style={{ marginTop: 16 }} onClick={() => { clearToernooi(); setBracket(null); setPhase('country_select') }}>
+        {newUnlock && (
+          <p className="wk-champ-unlock">🔓 Nieuw land ontgrendeld: {getCountry(newUnlock)?.flag} {getCountry(newUnlock)?.name}!</p>
+        )}
+        <button className="fb-end-btn fb-end-btn-again" style={{ marginTop: 16 }} onClick={() => { clearToernooi(); setBracket(null); setNewUnlock(null); setPhase('country_select') }}>
           🔄 Nieuw toernooi
         </button>
         <button className="fb-end-btn fb-end-btn-back" onClick={onBack}>← Terug naar menu</button>

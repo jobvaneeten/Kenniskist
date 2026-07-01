@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { COUNTRIES, getCountry, generateBracket, UNLOCK_TIERS, LEVELS } from './countries'
-import { getMove, getSuper, superDescOf } from './headSoccerMoves'
+import { getMove, getSuper, superDescOf, INSTANT_BEHAVIORS } from './headSoccerMoves'
 import OrientationGate from '../OrientationGate'
 import './football.css'
 import './headsoccer.css'
@@ -67,32 +67,77 @@ function hexA(hex, a) {
   const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16)
   return `rgba(${r},${g},${b},${a})`
 }
+// Voorspelt waar de bal landt (simpele projectielbaan), zodat de AI een lob
+// kan onderscheppen i.p.v. alleen de huidige bal-positie te achtervolgen.
+function predictLandingX(ball, groundY) {
+  const a = 0.5 * GRAVITY * 0.30
+  const b = ball.vy, c = ball.y - groundY
+  if (a <= 0) return ball.x
+  const disc = b * b - 4 * a * c
+  if (disc < 0) return ball.x
+  const t = (-b + Math.sqrt(disc)) / (2 * a)
+  if (!isFinite(t) || t < 0) return ball.x
+  return ball.x + ball.vx * t
+}
 
 function drawShirt(ctx, x, y, country, r) {
-  const { c1, c2, pattern } = country
+  const { c1, c2, c3, pattern } = country
   const d = r * 2
   ctx.save()
   ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.clip()
   switch (pattern) {
-    case 'vstripes': {
-      const sw = d / 3
-      for (let i = 0; i < 3; i++) { ctx.fillStyle = i % 2 === 0 ? c1 : c2; ctx.fillRect(x - r + i * sw, y - r, sw, d) }
+    case 'v2':
+      ctx.fillStyle = c1; ctx.fillRect(x - r, y - r, r, d)
+      ctx.fillStyle = c2; ctx.fillRect(x, y - r, r, d); break
+    case 'v3': {
+      const bw = d / 3
+      ctx.fillStyle = c1; ctx.fillRect(x - r, y - r, bw, d)
+      ctx.fillStyle = c2; ctx.fillRect(x - r + bw, y - r, bw, d)
+      ctx.fillStyle = c3 || c1; ctx.fillRect(x - r + 2 * bw, y - r, bw, d)
       break
     }
-    case 'hstripes':
+    case 'h2':
       ctx.fillStyle = c1; ctx.fillRect(x - r, y - r, d, r)
       ctx.fillStyle = c2; ctx.fillRect(x - r, y, d, r); break
-    case 'checker': {
-      const cs = d / 4
-      for (let row = 0; row < 4; row++) for (let col = 0; col < 4; col++) {
-        ctx.fillStyle = (row + col) % 2 === 0 ? c1 : c2
-        ctx.fillRect(x - r + col * cs, y - r + row * cs, cs, cs)
-      }
+    case 'h3': {
+      const bh = d / 3
+      ctx.fillStyle = c1; ctx.fillRect(x - r, y - r, d, bh)
+      ctx.fillStyle = c2; ctx.fillRect(x - r, y - r + bh, d, bh)
+      ctx.fillStyle = c3 || c1; ctx.fillRect(x - r, y - r + 2 * bh, d, bh)
       break
     }
     case 'cross':
       ctx.fillStyle = c1; ctx.fillRect(x - r, y - r, d, d)
-      ctx.fillStyle = c2; ctx.fillRect(x - 5, y - r, 10, d); ctx.fillRect(x - r, y - 5, d, 10); break
+      ctx.fillStyle = c2
+      ctx.fillRect(x - d * 0.09, y - r, d * 0.18, d); ctx.fillRect(x - r, y - d * 0.09, d, d * 0.18)
+      if (c3) {
+        ctx.fillStyle = c3
+        ctx.fillRect(x - d * 0.045, y - r, d * 0.09, d); ctx.fillRect(x - r, y - d * 0.045, d, d * 0.09)
+      }
+      break
+    case 'circle':
+      ctx.fillStyle = c1; ctx.fillRect(x - r, y - r, d, d)
+      ctx.fillStyle = c2; ctx.beginPath(); ctx.arc(x, y, r * 0.55, 0, Math.PI * 2); ctx.fill()
+      break
+    case 'circle2':
+      ctx.fillStyle = c1; ctx.fillRect(x - r, y - r, d, d)
+      ctx.save(); ctx.beginPath(); ctx.arc(x, y, r * 0.55, 0, Math.PI * 2); ctx.clip()
+      ctx.fillStyle = c2; ctx.fillRect(x - r, y - r, d, r)
+      ctx.fillStyle = c3 || c2; ctx.fillRect(x - r, y, d, r)
+      ctx.restore()
+      break
+    case 'usa': {
+      const bands = 7, bh = d / bands
+      for (let i = 0; i < bands; i++) { ctx.fillStyle = i % 2 === 0 ? c1 : c2; ctx.fillRect(x - r, y - r + i * bh, d, bh) }
+      ctx.fillStyle = c3 || '#3C3B6E'; ctx.fillRect(x - r, y - r, d * 0.5, d * 0.5)
+      break
+    }
+    case 'quarters':
+      ctx.fillStyle = c1; ctx.fillRect(x - r, y - r, r, r)
+      ctx.fillStyle = c2; ctx.fillRect(x, y - r, r, r)
+      ctx.fillStyle = c3 || c2; ctx.fillRect(x - r, y, r, r)
+      ctx.fillStyle = c1; ctx.fillRect(x, y, r, r)
+      break
     default:
       ctx.fillStyle = c1; ctx.fillRect(x - r, y - r, d, d)
   }
@@ -575,6 +620,46 @@ function drawIce(ctx, p) {
   ctx.restore()
 }
 
+function drawRoots(ctx, p) {
+  const now = Date.now()
+  ctx.save()
+  ctx.strokeStyle = '#2e7d32'; ctx.lineWidth = 4; ctx.lineCap = 'round'
+  for (let i = 0; i < 3; i++) {
+    const bx = p.x + (i - 1) * (PR * 0.6)
+    const wob = Math.sin(now / 260 + i) * 4
+    ctx.beginPath(); ctx.moveTo(bx, GROUND_Y + 4)
+    ctx.quadraticCurveTo(bx + wob, GROUND_Y - PR * 0.5, bx - wob * 0.6, GROUND_Y - PR * 1.0)
+    ctx.stroke()
+  }
+  ctx.font = '16px Arial'; ctx.textAlign = 'center'
+  ctx.fillText('🌿', p.x, GROUND_Y - PR * 1.3)
+  ctx.restore()
+}
+function drawWall(ctx, wall) {
+  const now = Date.now()
+  ctx.save()
+  ctx.globalAlpha = Math.min(1, wall.t)
+  ctx.fillStyle = hexA(wall.col, 0.55)
+  ctx.strokeStyle = hexA(wall.col, 0.9); ctx.lineWidth = 3
+  const x0 = wall.x - wall.w / 2, y0 = GROUND_Y - wall.h
+  ctx.beginPath(); ctx.rect(x0, y0, wall.w, wall.h); ctx.fill(); ctx.stroke()
+  ctx.fillStyle = 'rgba(255,255,255,0.5)'
+  for (let i = 0; i < 4; i++) ctx.fillRect(x0 + 6, y0 + 10 + i * (wall.h - 20) / 4 + Math.sin(now / 200 + i) * 2, wall.w - 12, 5)
+  ctx.restore()
+}
+function drawBumpers(ctx, bumpers) {
+  const now = Date.now()
+  ctx.save()
+  for (const bp of bumpers) {
+    const pulse = 1 + Math.sin(now / 140 + bp.x) * 0.08
+    ctx.globalAlpha = Math.min(1, bp.life)
+    ctx.fillStyle = hexA(bp.col, 0.85)
+    ctx.beginPath(); ctx.arc(bp.x, bp.y, bp.r * pulse, 0, Math.PI * 2); ctx.fill()
+    ctx.fillStyle = 'rgba(255,255,255,0.7)'
+    ctx.beginPath(); ctx.arc(bp.x, bp.y - bp.r * 0.3, bp.r * 0.35, 0, Math.PI * 2); ctx.fill()
+  }
+  ctx.globalAlpha = 1; ctx.restore()
+}
 function shieldX(side) { return side === 'L' ? GOAL_W + 40 : W - GOAL_W - 40 }
 function drawShieldWall(ctx, side, color) {
   const sx = shieldX(side)
@@ -610,6 +695,7 @@ function SpecialDemo({ countryKey }) {
     const newBall = () => ({ x: p.x + 46, y: G - 26, vx: 0, vy: 0, angle: 0, spin: 0, scale: 1, scaleT: 0, ghostT: 0, bouncyT: 0, floatT: 0, homing: 0, homingStr: 4, homeT: 0, held: false, superT: 0, superColor: null, dark: false, laser: false, superKind: null, superOwner: null, trail: [], fx: { t: 0, type: 'energy', color: '#fff' } })
     let ball = newBall()
     let shocks = [], parts = [], decoys = [], tornado = null, mascots = [], rockets = [], bolts = [], sun = null, superSeq = null, tt = 0, triggered = false
+    let wall = null, bumpers = [], gravityT = 0, waveT = 0, waveNext = 0, waveDir = 1, waveCol = '#fff', pulseSeq = null
     const period = 4.0
 
     const reset = () => {
@@ -618,6 +704,7 @@ function SpecialDemo({ countryKey }) {
       dummy.x = VX + VW - 90; dummy.dizzy = 0; dummy.vx = 0; dummy.vy = 0; dummy.buried = 0; dummy.onGround = true; dummy.armed = false; for (const k in dummy.t) dummy.t[k] = 0
       ball = newBall()
       shocks = []; parts = []; decoys = []; tornado = null; mascots = []; rockets = []; bolts = []; sun = null; superSeq = null; triggered = false
+      wall = null; bumpers = []; gravityT = 0; waveT = 0; waveNext = 0; pulseSeq = null
     }
     const burst = (x, y, color, n = 20) => { for (let i = 0; i < n; i++) { const a = Math.random() * Math.PI * 2, v = 300 * (0.4 + Math.random()); parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 120, life: 0.5 + Math.random() * 0.4, color, r: 2 + Math.random() * 3 }) } }
     const goalDir = () => { const gx = W - 4, gy = (G - 175) + 90; const dx = gx - ball.x, dy = gy - ball.y, d = Math.hypot(dx, dy) || 1; return { x: dx / d, y: dy / d } }
@@ -705,38 +792,80 @@ function SpecialDemo({ countryKey }) {
         case 'charge':     // stormram: dendert vooruit en beukt tegenstander + bal weg
           leap(120); ball.vx = dir * 900; ball.vy = -120; ball.fx = { t: 1.4, type: 'flame', color: col }; ball.superColor = col
           dummy.dizzy = 1.2; dummy.vx = dir * 700; dummy.vy = -220; dummy.onGround = false; break
-        case 'bicycle':    // hoge omhaal die van boven binnenkrult
-          air(1250, 1080, 4); ball.spin = dir * 1900; break
+        case 'bicycle':    // hoge omhaal die van boven binnenkrult + een enkele meevliegende spookbal
+          air(1250, 1080, 4); ball.spin = dir * 1900
+          decoys.push({ x: ball.x, y: ball.y, vx: ball.vx * 0.9, vy: ball.vy * 1.05, angle: 0, life: 1.6, color: col }); break
         case 'multidrop':  // zweef, dan omlaag en de bal splitst
           startSeq(1150, 1.0, 0.55, strikeDown(700, 760, 5, () => { for (let i = 0; i < 4; i++) decoys.push({ x: ball.x, y: ball.y, vx: dir * (260 + i * 130), vy: 360 + i * 90, angle: 0, life: 2.0, color: col }) })); break
-        case 'moonshot':   // lange slow-motion zweef, loom neerwaarts schot
-          startSeq(900, 1.5, 0.9, strikeDown(360, 360, 3, () => { ball.floatT = 1.6; ball.superT = 2.8; ball.homeT = 2.6 })); break
-        case 'eagledive':  // zweef, dan duikt het poppetje zélf mee omlaag
-          startSeq(1250, 1.0, 0.5, () => { p.vy = 1050; p.onGround = false; ball.vx = dir * 760; ball.vy = 980; ball.homing = dir; ball.homingStr = 6; ball.homeT = 1.0; ball.fx = { t: 1.4, type: 'flame', color: col }; ball.superColor = col }); break
+        case 'moonshot':   // lange slow-motion zweef; de tegenstander zweeft ook even hulpeloos mee omhoog
+          startSeq(900, 1.5, 0.9, strikeDown(360, 360, 3, () => { ball.floatT = 1.6; ball.superT = 2.8; ball.homeT = 2.6; dummy.t.float = 1.3; dummy.vy = -280; dummy.onGround = false })); break
+        case 'eagledive':  // zweef, dan duikt het poppetje zélf mee omlaag en stoot de tegenstander kort omhoog
+          startSeq(1250, 1.0, 0.5, () => { p.vy = 1050; p.onGround = false; ball.vx = dir * 760; ball.vy = 980; ball.homing = dir; ball.homingStr = 6; ball.homeT = 1.0; ball.fx = { t: 1.4, type: 'flame', color: col }; ball.superColor = col; dummy.vy = -320; dummy.onGround = false }); break
         case 'thunderdunk':// zweef, bliksem verlamt keeper, spies omlaag
           startSeq(1200, 1.1, 0.6, strikeDown(620, 980, 5, () => { dummy.dizzy = 1.6; dummy.vy = -200; dummy.onGround = false; for (let i = 0; i < 5; i++) bolts.push({ x: dummy.x + (Math.random() - 0.5) * 110, t: 0.5, dur: 0.5, color: col, delay: i * 0.05 }) })); break
-        case 'cannondrop': // zweef, bal zwelt tot reuzenkogel, stort omlaag
-          startSeq(1100, 1.0, 0.6, strikeDown(560, 980, 4, () => { ball.scale = 2.7; ball.scaleT = 2.6 })); break
+        case 'cannondrop': // zweef, bal zwelt tot reuzenkogel; de inslag blaast beiden uit elkaar
+          startSeq(1100, 1.0, 0.6, strikeDown(560, 980, 4, () => { ball.scale = 2.7; ball.scaleT = 2.6; p.vx -= dir * 160; dummy.vx += dir * 160 })); break
         case 'skyhammer':  // zweef, ramt de keeper de grond in
           startSeq(1300, 1.1, 0.6, strikeDown(700, 880, 4, () => { dummy.dizzy = 1.8; dummy.buried = 1.6; dummy.vx = 0; dummy.vy = 0; dummy.y = G - PR; dummy.onGround = true; shocks.push({ x: dummy.x, y: G, color: col, r0: 6, maxR: 200, t: 0.6, dur: 0.6 }); for (let i = 0; i < 14; i++) parts.push({ x: dummy.x + (Math.random() - 0.5) * 70, y: G - 5, vx: (Math.random() - 0.5) * 200, vy: -180 - Math.random() * 200, life: 0.9, color: '#8a6a4a', r: 3 + Math.random() * 4 }) })); break
-        case 'snowfreeze': // zweef, keeper vriest vast, schot omlaag
-          startSeq(1150, 1.1, 0.6, strikeDown(760, 820, 4, () => { ball.superColor = '#cfeaff'; dummy.t.frozen = 2.6; dummy.frozenFactor = 0; dummy.dizzy = 2.6; burst(dummy.x, dummy.y - PR * 0.6, '#bde0ff', 16); for (let i = 0; i < 14; i++) parts.push({ x: gx + (Math.random() - 0.5) * 60, y: VY, vx: 0, vy: 150 + Math.random() * 170, life: 1.6, color: '#eaf6ff', r: 2 + Math.random() * 2 }) })); break
+        case 'icyslide': // zweef, schot omlaag terwijl het veld spekglad wordt
+          startSeq(1150, 1.1, 0.6, strikeDown(760, 820, 4, () => { burst(dummy.x, G - 4, '#bde0ff', 14) })); break
         case 'starshower': // zweef, schot omlaag + loodrechte sterregen
           startSeq(1200, 1.0, 0.55, strikeDown(720, 820, 4, () => dropRain(7))); break
-        case 'flatvolley': // korte zweef, dan vlakke knal vol op de goal
-          startSeq(900, 0.7, 0.3, () => { ball.vx = dir * 1250; ball.vy = 90; ball.homing = dir; ball.homingStr = 6; ball.homeT = 1.0; ball.fx = { t: 1.4, type: 'electric', color: col }; ball.superColor = col; burst(ball.x, ball.y, col, 18) }); break
-        case 'airtornado': // zweef, dan wervelwind die de bal de goal in zuigt
+        case 'flatvolley': // korte zweef, dan vlakke knal die de tegenstander even verblindt (kan niet springen)
+          startSeq(900, 0.7, 0.3, () => { ball.vx = dir * 1250; ball.vy = 90; ball.homing = dir; ball.homingStr = 6; ball.homeT = 1.0; ball.fx = { t: 1.4, type: 'electric', color: col }; ball.superColor = col; burst(ball.x, ball.y, col, 18); burst(dummy.x, dummy.y - PR, '#fff8c0', 10) }); break
+        case 'airtornado': // zweef, dan een wervelwind die de bal én de tegenstander naar zich toe zuigt
           startSeq(1000, 1.0, 0.55, () => { tornado = { x: p.x + dir * 30, y: G, vx: dir * 250, t: 3.0, pull: 3400, dir, color: col }; ball.vx = dir * 360; ball.vy = 500; ball.superColor = col }); break
         case 'cometfall':  // zweef, stort als vuurkomeet + inslagregen
           startSeq(1200, 1.1, 0.6, strikeDown(360, 1050, 6, () => { ball.dark = true; dropRain(6) })); break
-        case 'bouncelob':  // zweef, schot omlaag dat razend over de grond kaatst
-          startSeq(1150, 1.0, 0.55, strikeDown(820, 620, 3, () => { ball.bouncyT = 3; ball.spin = -dir * 900 })); break
-        case 'ghostfloat': // lange zweef; half-onzichtbare bal daalt traag
-          startSeq(1000, 1.5, 0.9, strikeDown(360, 360, 3, () => { ball.ghostT = 3.2; ball.floatT = 1.6; ball.superT = 2.8; ball.homeT = 2.6 })); break
-        case 'dragonram':  // zweef, vurige duik die keeper mét bal de goal in ramt
-          startSeq(1200, 1.0, 0.5, () => { ball.vx = dir * 1000; ball.vy = 520; ball.superKind = 'goalram'; ball.fx = { t: 1.4, type: 'flame', color: col }; ball.superColor = col; ball.homing = dir; ball.homingStr = 4; ball.homeT = 0.8 }); break
-        case 'phoenixhead':// zweef met reuzenkop, kop de bal van boven omlaag
-          startSeq(1100, 1.1, 0.6, strikeDown(680, 900, 5, () => { p.t.bighead = 2.6; p.bigScale = 2.3; shocks.push({ x: p.x, y: p.y - PR * 1.4, color: col, r0: 6, maxR: 200, t: 0.6, dur: 0.6 }) })); break
+        case 'coinflip': { // 50% kans op een megaschot, 50% kans op een mislukking
+          if (Math.random() < 0.5) { aimAtGoal(1550); ball.homing = dir; ball.homingStr = 8; ball.superColor = '#FFD23F'; burst(ball.x, ball.y, '#FFD23F', 26) }
+          else { ball.vx = dir * 220; ball.vy = -70; burst(ball.x, ball.y, '#888', 8) }
+          break
+        }
+        case 'windwall': // zweef, dan blaast een muur van wind de tegenstander weg bij de bal
+          startSeq(1000, 1.0, 0.5, () => { ball.vx = dir * 700; ball.vy = 120; ball.homing = dir; ball.homingStr = 3; ball.homeT = 0.9; ball.repelT = 3.5; ball.fx = { t: 1.4, type: 'electric', color: col }; ball.superColor = col }); break
+        case 'dragonfire': // zweef, dan een duik die de bal in brand zet
+          startSeq(1200, 1.0, 0.5, () => { ball.vx = dir * 950; ball.vy = -280; ball.homing = dir; ball.homingStr = 4; ball.homeT = 1.0; ball.burnT = 4.0; ball.fx = { t: 1.4, type: 'flame', color: col }; ball.superColor = col }); break
+        case 'phoenixshield': // zweef, landt en is even onraakbaar
+          startSeq(1100, 1.0, 0.55, () => { p.t.immune = 3.0; burst(p.x, p.y - PR, col, 20); aimAtGoal(1000); ball.homing = dir; ball.homingStr = 3 }); break
+        // ── 7 echte superschoten (nieuwe lichting): hebben de bal nodig ──
+        case 'sandchaos':  // de bal stuitert compleet onvoorspelbaar
+          ball.chaosT = 3.5; ball.vx = dir * 700; ball.vy = -200; ball.fx = { t: 1.4, type: 'flame', color: col }; ball.superColor = col; break
+        case 'desertswap': { // speler en tegenstander wisselen van plek
+          const tx = p.x, ty = p.y
+          p.x = dummy.x; p.y = Math.min(dummy.y, G - PR); dummy.x = tx; dummy.y = Math.min(ty, G - PR)
+          burst(p.x, p.y - PR, col, 14); burst(dummy.x, dummy.y - PR, col, 14)
+          ball.x = p.x + PR + BR; ball.y = p.y - PR * 0.3; aimAtGoal(1000)
+          break
+        }
+        case 'carpetflight': // vliegt in één keer dwars over het veld
+          air(950, 900, 5); p.vx = dir * 760; break
+        case 'heatblink': { // de bal flitst in een oogwenk vooruit
+          const oldX = ball.x
+          ball.x = Math.min(DGX - 20, ball.x + dir * 150)
+          burst(oldX, ball.y, col, 10); burst(ball.x, ball.y, col, 10); aimAtGoal(1200)
+          break
+        }
+        case 'canalboost': // vertraagde, enorme snelheidsboost
+          ball.boostT = 0.4; ball.boostFx = 'speed'; aimAtGoal(650); break
+        case 'coralfield': // hindernissen laten de bal alle kanten op springen
+          for (let i = 0; i < 4; i++) bumpers.push({ x: gx - (60 + i * 55), y: G - 14, r: 14, life: 4, col })
+          aimAtGoal(850); break
+        case 'duneramp': // schiet na een korte vertraging steil omhoog
+          ball.boostT = 0.35; ball.boostFx = 'ramp'; ball.vx = dir * 600; ball.vy = 40; ball.fx = { t: 1.4, type: 'flame', color: col }; ball.superColor = col; break
+        // ── 10 instant veld-/controle-effecten: geen bal nodig, alleen het effect ──
+        case 'lowgravity': gravityT = 4.5; break
+        case 'reversecontrols': burst(dummy.x, dummy.y - PR, col, 16); break
+        case 'rootvines': burst(dummy.x, G - 5, col, 14); break
+        case 'tidewave': waveT = 3.2; waveNext = 0.5; waveDir = 1; waveCol = col; break
+        case 'hornlock': burst(dummy.x, dummy.y - PR, col, 16); break
+        case 'sandwall':
+          wall = { x: (p.x + dummy.x) / 2, w: 50, h: 120, t: 3.0, col }
+          burst(wall.x, G - 60, col, 16); break
+        case 'silkleash': burst(dummy.x, dummy.y - PR, col, 16); break
+        case 'voodoolink': burst(dummy.x, dummy.y - PR, col, 16); break
+        case 'hakapulse': pulseSeq = { t: 3.0, next: 0, interval: 0.5, x: p.x, col }; break
+        case 'auroraflip': burst(dummy.x, dummy.y - PR, col, 16); break
         default:           // krachtige rechte knal
           aimAtGoal(1180); ball.homing = dir; ball.homingStr = 4
       }
@@ -750,9 +879,22 @@ function SpecialDemo({ countryKey }) {
       if (tt > period) { tt = 0; reset() }
       p.charge = triggered ? 1 : Math.min(1, tt / 1.0)
 
-      for (const q of [p, dummy]) { for (const k in q.t) if (q.t[k] > 0) q.t[k] = Math.max(0, q.t[k] - dt); if (q.dizzy > 0) q.dizzy -= dt; if (q.kickAnim > 0) q.kickAnim -= dt; if (q.powerKick > 0) q.powerKick -= dt; if (q.buried > 0) { q.buried -= dt; q.vx = 0 } q.vy += GRAVITY * dt; q.x += q.vx * dt; q.y += q.vy * dt; if (q.y >= G - PR) { q.y = G - PR; q.vy = 0; q.onGround = true } q.vx *= 0.9 }
+      if (gravityT > 0) gravityT -= dt
+      const gmulDemo = gravityT > 0 ? 0.1 : 1
+      for (const q of [p, dummy]) { for (const k in q.t) if (q.t[k] > 0) q.t[k] = Math.max(0, q.t[k] - dt); if (q.dizzy > 0) q.dizzy -= dt; if (q.kickAnim > 0) q.kickAnim -= dt; if (q.powerKick > 0) q.powerKick -= dt; if (q.buried > 0) { q.buried -= dt; q.vx = 0 } q.vy += GRAVITY * (q.t.float > 0 ? 0.32 : 1) * gmulDemo * dt; q.x += q.vx * dt; q.y += q.vy * dt; if (q.y >= G - PR) { q.y = G - PR; q.vy = 0; q.onGround = true } q.vx *= 0.9 }
       if (p.t.magnet > 0) { const dx = p.x - ball.x, dy = (p.y - PR) - ball.y, d = Math.hypot(dx, dy) || 1; ball.vx += dx / d * 3200 * dt; ball.vy += dy / d * 3200 * dt }
       if (tornado) { tornado.t -= dt; tornado.x += tornado.vx * dt; if (tornado.t <= 0) tornado = null; else { const dx = tornado.x - ball.x, dy = (G - 70) - ball.y, d = Math.hypot(dx, dy) || 1; if (d < 200) { ball.vx += dx / d * 3000 * dt + 200 * dt; ball.vy += dy / d * 3000 * dt } } }
+      if (wall) { wall.t -= dt; if (wall.t <= 0) wall = null }
+      for (const bp of bumpers) bp.life -= dt
+      bumpers = bumpers.filter(bp => bp.life > 0)
+      if (waveT > 0) { waveT -= dt; waveNext -= dt; if (waveNext <= 0) { waveNext = 0.5; ball.vy -= 220; ball.vx += waveDir * 180 } }
+      if (pulseSeq) {
+        pulseSeq.t -= dt; pulseSeq.next -= dt
+        if (pulseSeq.next <= 0) { pulseSeq.next = pulseSeq.interval; shocks.push({ x: pulseSeq.x, y: G, color: pulseSeq.col, r0: 6, maxR: 130, t: 0.4, dur: 0.4 }); if (Math.hypot(ball.x - pulseSeq.x, ball.y - G) < 110) { ball.vy -= 360; ball.vx += 60 } }
+        if (pulseSeq.t <= 0) pulseSeq = null
+      }
+      if (ball.boostT > 0) { ball.boostT -= dt; if (ball.boostT <= 0) { if (ball.boostFx === 'speed') ball.vx *= 2.0; else if (ball.boostFx === 'ramp') ball.vy -= 850; ball.boostFx = null } }
+      if (ball.chaosT > 0) ball.chaosT -= dt
       if (ball.scaleT > 0) { ball.scaleT -= dt; if (ball.scaleT <= 0) ball.scale = 1 }
       if (ball.ghostT > 0) ball.ghostT -= dt
       if (ball.bouncyT > 0) ball.bouncyT -= dt
@@ -781,9 +923,27 @@ function SpecialDemo({ countryKey }) {
       if (ball.floatT > 0) ball.floatT -= dt
       const ebr = BR * (ball.scale || 1), bb = ball.bouncyT > 0 ? 0.95 : 0.6
       if (!ball.held) {
-        ball.vy += GRAVITY * (ball.floatT > 0 ? 0.06 : 0.30) * dt; ball.vx += ball.spin * dt * 0.06; ball.spin *= 0.96
+        ball.vy += GRAVITY * (ball.floatT > 0 ? 0.06 : 0.30) * gmulDemo * dt; ball.vx += ball.spin * dt * 0.06; ball.spin *= 0.96
         ball.x += ball.vx * dt; ball.y += ball.vy * dt; ball.angle += ball.vx * dt * 0.05
-        if (ball.y >= G - ebr) { ball.y = G - ebr; ball.vy = -ball.vy * bb; ball.vx *= 0.97 }
+        if (ball.y >= G - ebr) {
+          ball.y = G - ebr; ball.vy = -ball.vy * bb; ball.vx *= 0.97
+          if (ball.chaosT > 0) { ball.vx += (Math.random() - 0.5) * 700; ball.vy -= Math.random() * 220 }
+        }
+        if (wall) {
+          const wx0 = wall.x - wall.w / 2, wx1 = wall.x + wall.w / 2, wy0 = G - wall.h
+          if (ball.x + ebr > wx0 && ball.x - ebr < wx1 && ball.y + ebr > wy0 && ball.y < G) {
+            ball.x = ball.x < wall.x ? wx0 - ebr : wx1 + ebr; ball.vx = -ball.vx * 0.9
+          }
+        }
+        for (const bp of bumpers) {
+          const bd = Math.hypot(ball.x - bp.x, ball.y - bp.y)
+          if (bd < bp.r + ebr) {
+            const nx2 = (ball.x - bp.x) / (bd || 1), ny2 = (ball.y - bp.y) / (bd || 1)
+            ball.x = bp.x + nx2 * (bp.r + ebr); ball.y = bp.y + ny2 * (bp.r + ebr)
+            const spd2 = Math.max(380, Math.hypot(ball.vx, ball.vy)), a2 = Math.atan2(ny2, nx2) + (Math.random() - 0.5) * 1.2
+            ball.vx = Math.cos(a2) * spd2; ball.vy = Math.sin(a2) * spd2 - 100
+          }
+        }
       }
       // super-mechaniek raakt de dummy (beuk / grondstamp)
       if (ball.superKind && Math.hypot(ball.x - dummy.x, ball.y - (dummy.y - PR * 0.2)) < PR + BR) {
@@ -823,6 +983,8 @@ function SpecialDemo({ countryKey }) {
       for (const pt of parts) { ctx.globalAlpha = Math.max(0, pt.life * 1.4); ctx.fillStyle = pt.color; ctx.beginPath(); ctx.arc(pt.x, pt.y, pt.r || 3, 0, Math.PI * 2); ctx.fill() } ctx.globalAlpha = 1
       for (const d of decoys) { ctx.globalAlpha = Math.min(0.85, d.life); drawBall(ctx, { x: d.x, y: d.y, angle: d.angle, trail: [], fx: { t: 0.4, type: 'energy', color: d.color }, scale: 1 }); ctx.globalAlpha = 1 }
       if (tornado) { ctx.save(); for (let i = 0; i < 7; i++) { const k = i / 7, cy = G - k * 150, w = 14 + k * 46, ox = Math.sin(now / 90 + i) * (6 + k * 10); ctx.globalAlpha = 0.35 + k * 0.4; ctx.fillStyle = i % 2 ? hexA(move.color, 0.7) : 'rgba(220,235,255,0.65)'; ctx.beginPath(); ctx.ellipse(tornado.x + ox, cy, w, 7 + k * 4, 0, 0, Math.PI * 2); ctx.fill() } ctx.globalAlpha = 1; ctx.restore() }
+      if (wall) drawWall(ctx, wall)
+      if (bumpers.length) drawBumpers(ctx, bumpers)
       if (showDummy) { drawPlayer(ctx, dummy, dummyC); if (dummy.t.frozen > 0) drawIce(ctx, dummy) }
       drawPlayer(ctx, p, country)
       drawBall(ctx, ball)
@@ -985,17 +1147,19 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
       side, move, facing: side === 'L' ? 1 : -1,
       x: side === 'L' ? W * 0.28 : W * 0.72, y: GROUND_Y - PR,
       vx: 0, vy: 0, onGround: true, dizzy: 0, kickCD: 0, kickAnim: 0, powerKick: 0, buried: 0, armed: false,
-      kickHits: 0, hitWindow: 0, meleeCD: 0,
+      kickHits: 0, hitWindow: 0, meleeCD: 0, dashCD: 0,
       charge: 0, bigScale: 1, powMult: 1, powCurve: false, powCurveDir: 1, dashVx: 0, powFx: 'energy',
       magForce: 0, frozenFactor: 1, comebackT: 0,
       ram: false, ramKnock: 0, ramStun: 0,
-      t: { dash: 0, bighead: 0, magnet: 0, shield: 0, powershot: 0, frozen: 0 },
+      leashOrigin: 0, leashRadius: 0,
+      t: { dash: 0, bighead: 0, magnet: 0, shield: 0, powershot: 0, frozen: 0, reversed: 0, rooted: 0, leash: 0, chargeLock: 0, mirrored: 0, kickFlip: 0, slippery: 0, immune: 0, noJump: 0 },
     })
-    const mkBall = (x, y) => ({ x, y, vx: 0, vy: 0, angle: 0, spin: 0, scale: 1, scaleT: 0, ghostT: 0, bouncyT: 0, emoji: null, emojiT: 0, homing: 0, homingStr: 4, superT: 0, superColor: null, dark: false, laser: false, superKind: null, superOwner: null, trail: [], fx: { t: 0, type: 'energy', color: '#fff' } })
+    const mkBall = (x, y) => ({ x, y, vx: 0, vy: 0, angle: 0, spin: 0, scale: 1, scaleT: 0, ghostT: 0, bouncyT: 0, chaosT: 0, boostT: 0, boostFx: null, burnT: 0, burnOwner: null, repelT: 0, repelOwner: null, emoji: null, emojiT: 0, homing: 0, homingStr: 4, superT: 0, superColor: null, dark: false, laser: false, superKind: null, superOwner: null, trail: [], fx: { t: 0, type: 'energy', color: '#fff' } })
     const S = {
       L: mkPlayer('L', pMove), R: mkPlayer('R', oMove),
       ball: mkBall(W / 2, GROUND_Y - 120),
       decoys: [], tornado: null, mascots: [], rockets: [], bolts: [],
+      wall: null, bumpers: [], gravityT: 0, waveT: 0, waveNext: 0, waveDir: 0, waveCol: '#38b6ff', pulseSeq: null,
       cutin: { t: 0, dur: 0 },
       score: { L: 0, R: 0 }, time: MATCH_TIME, golden: false,
       kickoffT: 0.8, msg: '', msgT: 0, ended: false, particles: [],
@@ -1010,6 +1174,7 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
       S.ball = mkBall(W / 2, GROUND_Y - 120)
       S.ball.vx = serveTo === 'L' ? -90 : serveTo === 'R' ? 90 : 0
       S.decoys = []; S.tornado = null; S.mascots = []; S.rockets = []; S.bolts = []
+      S.wall = null; S.bumpers = []; S.gravityT = 0; S.waveT = 0; S.waveNext = 0; S.pulseSeq = null
       S.kickoffT = 0.6
     }
     const flash = txt => { S.msg = txt; S.msgT = 1.2 }
@@ -1071,9 +1236,15 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
       freeze: 'strike', icespikes: 'strike', lightning: 'strike',
       // nieuwe lucht-supers: groot figuur daalt uit de lucht / slaat toe / rijst op
       bicycle: 'sky', multidrop: 'swarm', moonshot: 'sky', eagledive: 'sky',
-      cannondrop: 'sky', cometfall: 'sky', bouncelob: 'sky', flatvolley: 'sky',
-      thunderdunk: 'strike', starshower: 'sky', snowfreeze: 'strike', skyhammer: 'strike',
-      airtornado: 'spin', ghostfloat: 'swarm', dragonram: 'charge', phoenixhead: 'rise',
+      cannondrop: 'sky', cometfall: 'sky', coinflip: 'sky', flatvolley: 'sky',
+      thunderdunk: 'strike', starshower: 'sky', icyslide: 'strike', skyhammer: 'strike',
+      airtornado: 'spin', windwall: 'swarm', dragonfire: 'charge', phoenixshield: 'rise',
+      // 17 nieuwe mechanieken: entree-stijl gekozen naar het gevoel van het effect
+      lowgravity: 'rise', reversecontrols: 'strike', sandchaos: 'spin', desertswap: 'charge',
+      rootvines: 'rise', tidewave: 'spin', hornlock: 'strike', carpetflight: 'sky',
+      sandwall: 'rise', silkleash: 'strike', heatblink: 'sky', canalboost: 'spin',
+      coralfield: 'swarm', voodoolink: 'strike', hakapulse: 'charge', duneramp: 'sky',
+      auroraflip: 'strike',
     }
     // CINEMATISCHE entree: een groot themed figuur (e) komt het veld op.
     const bigEntrance = (p, e, col, type, tx) => {
@@ -1103,10 +1274,78 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
     // De super gaat NIET meteen af; hij wacht tot je de bal raakt (zie doKick/ballPlayerCollide).
     const armSpecial = (p) => {
       if (p.charge < 1 || p.dizzy > 0 || p.armed) return
+      const su = getSuper(p === S.L ? playerKey : oppKey)
+      // veld-/controle-effecten hebben geen bal nodig → gaan direct af
+      if (INSTANT_BEHAVIORS.has(su.behavior)) { castInstant(p); return }
       p.armed = true
-      const col = getSuper(p === S.L ? playerKey : oppKey).color || p.move.color
+      const col = su.color || p.move.color
       addShock(p.x, p.y - PR * 0.6, col, 90, 0.4)
       addParticles(p.x, p.y - PR, col, 12, 240)
+    }
+
+    // ── Instant veld-/controle-effecten: gaan direct af zonder de bal nodig te
+    // hebben (zie INSTANT_BEHAVIORS). De 7 echte superschoten wachten nog steeds
+    // op balcontact via fireSuper hierboven.
+    const castInstant = (p) => {
+      const opp = p === S.L ? S.R : S.L
+      p.charge = 0
+      p.facing = p.side === 'L' ? 1 : -1
+      const m = p.move
+      const su = getSuper(p === S.L ? playerKey : oppKey)
+      const col = su.color || m.color
+      const dir = p.facing
+      const figure = su.figure || m.emoji
+
+      S.specFlash = { t: 0.4, color: col }
+      addShock(p.x, p.y - PR * 0.5, col, 150, 0.5)
+      addParticles(p.x, p.y - PR, col, 26, 400)
+      addShake(10, 0.35)
+      bigEntrance(p, figure, col, ENTRANCE_BY_BEH[su.behavior] || 'rise', opp.x)
+      S.cutin = { t: 0.9, dur: 0.9, color: col, name: m.name, emoji: figure, flag: (p === S.L ? playerCountry : oppCountry).flag, side: p.side }
+
+      switch (su.behavior) {
+        case 'lowgravity': // ZWAARTEKRACHTGOLF: extreem lage zwaartekracht — iedereen zweeft bijna gewichtloos
+          S.gravityT = 4.5
+          break
+        case 'reversecontrols': // SPIEGELTRUC: de besturing van de tegenstander draait om
+          opp.t.reversed = 3.5
+          addShock(opp.x, opp.y - PR * 0.4, col, 160, 0.5)
+          addParticles(opp.x, opp.y - PR, col, 20, 300)
+          break
+        case 'rootvines': // WORTELGREEP: de tegenstander wortelt vast aan de grond
+          opp.t.rooted = 2.6
+          addShock(opp.x, GROUND_Y, col, 190, 0.55)
+          for (let i = 0; i < 16; i++) S.particles.push({ x: opp.x + (Math.random() - 0.5) * 50, y: GROUND_Y - 5, vx: (Math.random() - 0.5) * 40, vy: -260 - Math.random() * 200, life: 1.0, color: i % 2 ? col : '#2e7d32', r: 2 + Math.random() * 3 })
+          break
+        case 'tidewave': // VLOEDGOLF: periodieke golfstoten duwen de bal richting de goal
+          S.waveT = 3.6; S.waveNext = 0.5; S.waveDir = dir; S.waveCol = col
+          break
+        case 'hornlock': // VUVUZELA: blokkeert alleen de super-meter (geen stun — puur een meter-effect)
+          opp.t.chargeLock = 4.0
+          addShock(opp.x, opp.y - PR * 0.5, col, 220, 0.55); addShake(8, 0.25)
+          break
+        case 'sandwall': // ZANDMUUR: bouwt een tijdelijke muur midden op het veld
+          S.wall = { x: p.x + dir * (W * 0.22), w: 60, h: 150, t: 3.2, col }
+          addShock(S.wall.x, GROUND_Y - 70, col, 190, 0.55)
+          addParticles(S.wall.x, GROUND_Y - 70, col, 20, 300)
+          break
+        case 'silkleash': // ZIJDENBAND: bindt de tegenstander vast aan een klein gebied
+          opp.t.leash = 3.2; opp.leashOrigin = opp.x; opp.leashRadius = 85
+          addShock(opp.x, opp.y - PR * 0.4, col, 170, 0.5)
+          break
+        case 'voodoolink': // VOODOULINK: de tegenstander moet jouw bewegingen kopiëren
+          opp.t.mirrored = 3.0
+          addShock(opp.x, opp.y - PR * 0.4, col, 160, 0.5)
+          break
+        case 'hakapulse': // HAKA-SCHOK: herhaalde schokgolven stampen de bal omhoog
+          S.pulseSeq = { t: 3.0, next: 0, interval: 0.55, x: p.x, dir, col, owner: p.side }
+          break
+        case 'auroraflip': // AURORA-SABOTAGE: de volgende trap van de tegenstander gaat verkeerd om
+          opp.t.kickFlip = 5.0
+          addShock(opp.x, opp.y - PR * 0.5, col, 170, 0.5)
+          break
+      }
+      flash(`${m.name}!`)
     }
 
     // ── 2) Super afvuren OP HET MOMENT van balcontact, vanaf de huidige balpositie. ──
@@ -1234,56 +1473,139 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
           S.ball.vx = dir * 900; S.ball.vy = -120; setBallFx(col, 'flame'); S.ball.superColor = col
           for (let i = 0; i < 3; i++) addShock(p.x + dir * i * 40, p.y - PR * 0.4, col, 110, 0.45)
           break
-        case 'bicycle':    // OMHAAL (de ENE boog): de bal wordt hoog de lucht in geslagen en krult van boven binnen
-          air(1250, 1080, 4); S.ball.spin = dir * 1900; break
+        case 'bicycle': { // OMHAAL: de bal wordt hoog de lucht in geslagen en krult van boven binnen —
+          // plús een enkele spookbal die meevliegt, zodat de keeper moet raden welke bal echt is
+          air(1250, 1080, 4); S.ball.spin = dir * 1900
+          S.decoys.push({ x: S.ball.x, y: S.ball.y, vx: S.ball.vx * 0.9, vy: S.ball.vy * 1.05, angle: 0, life: 1.6, color: col })
+          break
+        }
         case 'multidrop':  // STERREN: zweeft hoog, schiet dan omlaag en de bal splitst in meerdere
           startSeq(1150, 1.0, 0.55, strikeDown(700, 760, 5, () => {
             for (let i = 0; i < 4; i++) S.decoys.push({ x: S.ball.x, y: S.ball.y, vx: dir * (260 + i * 130), vy: 360 + i * 90, angle: 0, life: 2.0, color: col })
           })); break
-        case 'moonshot':   // MAANSPRONG: lange slow-motion zweef, daarna een loom neerwaarts schot
-          startSeq(900, 1.5, 0.9, strikeDown(360, 360, 3, () => { S.ball.floatT = 1.6; S.ball.superT = 2.8; S.ball.homeT = 2.6 })); break
-        case 'eagledive':  // ROOFVOGELDUIK: zweeft, dan DUIKT het poppetje zélf mee pijlsnel omlaag
+        case 'moonshot':   // MAANSPRONG: lange slow-motion zweef, daarna een loom neerwaarts schot —
+          // de maanzwaartekracht grijpt ook de tegenstander: die zweeft even hulpeloos omhoog
+          startSeq(900, 1.5, 0.9, strikeDown(360, 360, 3, () => {
+            S.ball.floatT = 1.6; S.ball.superT = 2.8; S.ball.homeT = 2.6
+            opp.t.float = 1.3; opp.vy = -280; opp.onGround = false
+            addParticles(opp.x, opp.y - PR, '#e6e6e6', 12, 200)
+          })); break
+        case 'eagledive':  // ROOFVOGELDUIK: zweeft, dan DUIKT het poppetje zélf mee pijlsnel omlaag —
+          // de inslag stoot de tegenstander met een korte schok omhoog (geen zweef, gewoon een bonk)
           startSeq(1250, 1.0, 0.5, () => { p.vy = 1050; p.onGround = false; p.t.dash = 0.5; p.dashVx = dir * 700
-            S.ball.vx = dir * 760; S.ball.vy = 980; S.ball.homing = dir; S.ball.homingStr = 6; S.ball.homeT = 1.0; setBallFx(col, 'flame'); S.ball.superColor = col; addShake(16, 0.5) }); break
+            S.ball.vx = dir * 760; S.ball.vy = 980; S.ball.homing = dir; S.ball.homingStr = 6; S.ball.homeT = 1.0; setBallFx(col, 'flame'); S.ball.superColor = col; addShake(16, 0.5)
+            if (Math.abs(opp.x - p.x) < 220) { opp.vy = -320; opp.onGround = false; addShock(opp.x, opp.y - PR * 0.3, col, 130, 0.4) }
+          }); break
         case 'thunderdunk':// DONDERDUNK: zweeft, bliksem verlamt de keeper, dan een spies recht omlaag
           startSeq(1200, 1.1, 0.6, strikeDown(620, 980, 5, () => {
             opp.dizzy = 1.6; opp.vy = -200; opp.onGround = false
             for (let i = 0; i < 5; i++) S.bolts.push({ x: opp.x + (Math.random() - 0.5) * 110, t: 0.5, dur: 0.5, color: col, delay: i * 0.05 })
           })); break
-        case 'cannondrop': // KANONKOGEL: zweeft, de bal zwelt tot reuzenkogel en stort recht naar beneden
-          startSeq(1100, 1.0, 0.6, strikeDown(560, 980, 4, () => { S.ball.scale = 2.7; S.ball.scaleT = 2.6 })); break
+        case 'cannondrop': // KANONKOGEL: zweeft, de bal zwelt tot reuzenkogel en stort recht naar beneden —
+          // de inslag is zo zwaar dat beide spelers uit elkaar worden geblazen
+          startSeq(1100, 1.0, 0.6, strikeDown(560, 980, 4, () => {
+            S.ball.scale = 2.7; S.ball.scaleT = 2.6
+            p.vx -= dir * 160; opp.vx += dir * 160
+          })); break
         case 'skyhammer':  // LUCHTHAMER: zweeft, ramt de keeper de grond in en schiet omlaag
           startSeq(1300, 1.1, 0.6, strikeDown(700, 880, 4, () => {
             opp.dizzy = 1.8; opp.buried = 1.6; opp.vx = 0; opp.vy = 0; opp.y = GROUND_Y - PR; opp.onGround = true
             addShock(opp.x, GROUND_Y, col, 220, 0.6); addShake(18, 0.5)
             for (let i = 0; i < 14; i++) S.particles.push({ x: opp.x + (Math.random() - 0.5) * 70, y: GROUND_Y - 5, vx: (Math.random() - 0.5) * 200, vy: -180 - Math.random() * 200, life: 0.9, color: '#8a6a4a', r: 3 + Math.random() * 4 })
           })); break
-        case 'snowfreeze': // SNEEUWSTORM: zweeft, de keeper vriest vast, dan een schot omlaag
+        case 'icyslide': // IJSGLADHEID: zweeft, dan schot omlaag terwijl het veld spekglad wordt
           startSeq(1150, 1.1, 0.6, strikeDown(760, 820, 4, () => {
-            S.ball.superColor = '#cfeaff'; opp.t.frozen = 2.6; opp.frozenFactor = 0; opp.dizzy = 2.6; addShock(opp.x, opp.y - PR * 0.4, '#bde0ff', 180, 0.6)
-            for (let i = 0; i < 18; i++) S.particles.push({ x: goalX + (Math.random() - 0.5) * GOAL_W, y: CEIL, vx: dir * 30, vy: 150 + Math.random() * 170, life: 1.6, color: '#eaf6ff', r: 2 + Math.random() * 2 })
+            opp.t.slippery = 3.5; addShock(opp.x, GROUND_Y, '#bde0ff', 170, 0.5)
+            for (let i = 0; i < 14; i++) S.particles.push({ x: opp.x + (Math.random() - 0.5) * 60, y: GROUND_Y - 4, vx: (Math.random() - 0.5) * 260, vy: -60 - Math.random() * 80, life: 0.8, color: '#dff3ff', r: 2 + Math.random() * 2 })
           })); break
         case 'starshower': // STERRENREGEN: zweeft, dan schot omlaag terwijl sterren loodrecht neervallen
           startSeq(1200, 1.0, 0.55, strikeDown(720, 820, 4, () => dropRain(7))); break
-        case 'flatvolley': // ZONVOLLEY: korte zweef, dan een keiharde vlakke knal vol op de goal
+        case 'flatvolley': // ZONVOLLEY: korte zweef, dan een keiharde vlakke knal vol op de goal —
+          // de felle flits verblindt de tegenstander: die kan even niet springen
           startSeq(900, 0.7, 0.3, () => { S.ball.vx = dir * 1250; S.ball.vy = 90; S.ball.homing = dir; S.ball.homingStr = 6; S.ball.homeT = 1.0
-            setBallFx(col, 'electric'); S.ball.superColor = col; addShake(14, 0.45); addParticles(S.ball.x, S.ball.y, col, 24, 480) }); break
-        case 'airtornado': // BERGTORNADO: zweeft, dan vormt een wervelwind die de bal de goal in zuigt
-          startSeq(1000, 1.0, 0.55, () => { S.tornado = { x: p.x + dir * 30, y: GROUND_Y, vx: dir * 250, t: 3.0, pull: 3400, dir, color: col }
+            setBallFx(col, 'electric'); S.ball.superColor = col; addShake(14, 0.45); addParticles(S.ball.x, S.ball.y, col, 24, 480)
+            opp.t.noJump = 2.6; addParticles(opp.x, opp.y - PR, '#fff8c0', 10, 220) }); break
+        case 'airtornado': // BERGTORNADO: zweeft, dan vormt een wervelwind die de bal de goal in zuigt —
+          // trekt (i.p.v. wegduwt) de tegenstander ook mee, zodat die z'n positie kwijtraakt
+          startSeq(1000, 1.0, 0.55, () => { S.tornado = { x: p.x + dir * 30, y: GROUND_Y, vx: dir * 250, t: 3.0, pull: 3400, dir, color: col, suckPlayer: true }
             S.ball.vx = dir * 360; S.ball.vy = 500; S.ball.superColor = col; addShake(13, 0.45) }); break
         case 'cometfall':  // KOMEET: zweeft, stort als vuurkomeet recht omlaag + inslagregen
           startSeq(1200, 1.1, 0.6, strikeDown(360, 1050, 6, () => { S.ball.dark = true
             for (let i = 0; i < 6; i++) S.rockets.push({ x: goalX + (Math.random() - 0.5) * 70, y: CEIL - 50 - Math.random() * 90, vx: dir * (60 + Math.random() * 70), vy: 420 + Math.random() * 180, color: col, life: 2.0, owner: p.side, delay: 0.35 + i * 0.05 })
           })); break
-        case 'bouncelob':  // SALTO-STUITER: zweeft, schiet omlaag en de bal kaatst razend over de grond
-          startSeq(1150, 1.0, 0.55, strikeDown(820, 620, 3, () => { S.ball.bouncyT = 3; S.ball.spin = -dir * 900 })); break
-        case 'ghostfloat': // ZWEEFSPOOK: lange zweef; de bal wordt half-onzichtbaar en daalt traag omlaag
-          startSeq(1000, 1.5, 0.9, strikeDown(360, 360, 3, () => { S.ball.ghostT = 3.2; S.ball.floatT = 1.6; S.ball.superT = 2.8; S.ball.homeT = 2.6 })); break
-        case 'dragonram':  // DRAAKBEUK: zweeft, dan een vurige duik die de keeper mét bal de goal in ramt
-          startSeq(1200, 1.0, 0.5, () => { S.ball.vx = dir * 1000; S.ball.vy = 520; S.ball.superKind = 'goalram'; setBallFx(col, 'flame'); S.ball.superColor = col
-            S.ball.homing = dir; S.ball.homingStr = 4; S.ball.homeT = 0.8; addShake(16, 0.5) }); break
-        case 'phoenixhead':// FENIKSKOP: zweeft met een reuzenkop, kopt de bal van bovenaf omlaag binnen
-          startSeq(1100, 1.1, 0.6, strikeDown(680, 900, 5, () => { p.t.bighead = 2.6; p.bigScale = 2.3; addShock(p.x, p.y - PR * 1.4, col, 200, 0.6) })); break
+        case 'coinflip': { // MUNTFLIP: 50% kans op een megaschot, 50% kans op een mislukking
+          const jackpot = Math.random() < 0.5
+          if (jackpot) {
+            aimAtGoal(p, 1550); S.ball.homing = dir; S.ball.homingStr = 8; S.ball.superColor = '#FFD23F'
+            setBallFx('#FFD23F', 'electric'); addShake(18, 0.5); addParticles(S.ball.x, S.ball.y, '#FFD23F', 30, 500)
+          } else {
+            S.ball.vx = dir * 220; S.ball.vy = -70
+            addParticles(S.ball.x, S.ball.y, '#888', 10, 140); addShake(4, 0.2)
+          }
+          break
+        }
+        case 'windwall': // WINDMUUR: zweeft, dan blaast een muur van wind de tegenstander weg bij de bal
+          startSeq(1000, 1.0, 0.5, () => {
+            S.ball.vx = dir * 700; S.ball.vy = 120; S.ball.homing = dir; S.ball.homingStr = 3; S.ball.homeT = 0.9
+            S.ball.repelT = 3.5; S.ball.repelOwner = p.side
+            setBallFx(col, 'electric'); S.ball.superColor = col
+          }); break
+        case 'dragonfire': // DRAKENVUUR: zweeft, dan een duik die de bal in brand zet
+          startSeq(1200, 1.0, 0.5, () => {
+            S.ball.vx = dir * 950; S.ball.vy = -280; S.ball.homing = dir; S.ball.homingStr = 4; S.ball.homeT = 1.0
+            S.ball.burnT = 4.0; S.ball.burnOwner = p.side
+            setBallFx(col, 'flame'); S.ball.superColor = col; addShake(14, 0.4)
+          }); break
+        case 'phoenixshield': // FENIKS HERRIJZENIS: zweeft, landt en is even onraakbaar voor meppen/rammen
+          startSeq(1100, 1.0, 0.55, () => {
+            p.t.immune = 3.0
+            addShock(p.x, p.y - PR * 1.2, col, 210, 0.6)
+            for (let i = 0; i < 20; i++) { const a = Math.random() * Math.PI * 2, v = 200 + Math.random() * 220; S.particles.push({ x: p.x, y: p.y - PR, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 100, life: 1.0, color: i % 2 ? col : '#fff', r: 2 + Math.random() * 3 }) }
+            aimAtGoal(p, 1000); S.ball.homing = dir; S.ball.homingStr = 3
+          }); break
+        // ── 7 ECHTE superschoten uit de nieuwe lichting: deze hebben de bal nodig
+        // en vuren dus pas af zodra de speler hem raakt (zoals alle andere schoten).
+        // De overige 10 zijn veld-/controle-effecten en gaan instant af — zie castInstant.
+        case 'sandchaos': // WOESTIJNSTORM: de bal stuitert compleet onvoorspelbaar
+          S.ball.chaosT = 3.5
+          S.ball.vx = dir * 950; S.ball.vy = -200
+          setBallFx(col, 'flame'); S.ball.superColor = col
+          addParticles(S.ball.x, S.ball.y, col, 22, 380)
+          break
+        case 'desertswap': { // WOESTIJNWISSEL: speler en tegenstander wisselen van plek
+          const tx = p.x, ty = p.y
+          p.x = opp.x; p.y = Math.min(opp.y, GROUND_Y - PR)
+          opp.x = tx; opp.y = Math.min(ty, GROUND_Y - PR)
+          addShock(p.x, p.y - PR * 0.4, col, 180, 0.5); addShock(opp.x, opp.y - PR * 0.4, col, 180, 0.5)
+          addParticles(p.x, p.y - PR, col, 18, 300); addParticles(opp.x, opp.y - PR, col, 18, 300)
+          grabBall(p); aimAtGoal(p, 1200); S.ball.homing = dir; S.ball.homingStr = 4
+          break
+        }
+        case 'carpetflight': // TAPIJTVLUCHT: vliegt in één keer dwars over het veld
+          p.t.dash = 0.85; p.dashVx = dir * 880; p.vy = -700; p.onGround = false
+          air(950, 900, 5)
+          break
+        case 'heatblink': { // HITTEFLITS: de bal flitst in een oogwenk vooruit
+          const oldX = S.ball.x
+          S.ball.x = Math.max(GOAL_W + 20, Math.min(W - GOAL_W - 20, S.ball.x + dir * 260))
+          addParticles(oldX, S.ball.y, col, 16, 260); addParticles(S.ball.x, S.ball.y, col, 16, 260)
+          aimAtGoal(p, 1300); S.ball.homing = dir; S.ball.homingStr = 4
+          break
+        }
+        case 'canalboost': // KANAALBOOST: de bal krijgt na een korte vertraging een snelheidsboost
+          S.ball.boostT = 0.4; S.ball.boostFx = 'speed'
+          aimAtGoal(p, 700)
+          addParticles(S.ball.x, S.ball.y, col, 16, 280)
+          break
+        case 'coralfield': // KORAALVELD: hindernissen laten de bal alle kanten op springen
+          for (let i = 0; i < 5; i++) { const bx = Math.min(W - GOAL_W - 40, Math.max(GOAL_W + 40, goalX - dir * (60 + i * 70))); S.bumpers.push({ x: bx, y: GROUND_Y - 14, r: 16, life: 4.5, col }) }
+          aimAtGoal(p, 900)
+          break
+        case 'duneramp': // DUINRAMP: de bal schiet na een korte vertraging steil omhoog
+          S.ball.boostT = 0.35; S.ball.boostFx = 'ramp'
+          S.ball.vx = dir * 700; S.ball.vy = 40
+          setBallFx(col, 'flame'); S.ball.superColor = col
+          break
         default:           // krachtige rechte knal
           aimAtGoal(p, 1180); S.ball.homing = dir; S.ball.homingStr = 4
       }
@@ -1298,7 +1620,10 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
       p.kickCD = 0.42; p.kickAnim = KICK_ANIM       // langere cooldown tussen schoten
       const isPower = p.t.powershot > 0
       let power = isPower ? KICK_POWER * p.powMult : KICK_POWER
-      S.ball.vx = p.facing * power + p.vx * 0.4
+      // aurora-sabotage: de gesaboteerde trap gaat één keer de verkeerde kant op
+      const kdir = p.t.kickFlip > 0 ? -p.facing : p.facing
+      if (p.t.kickFlip > 0) { p.t.kickFlip = 0; addParticles(S.ball.x, S.ball.y, '#7fd6ff', 10, 260) }
+      S.ball.vx = kdir * power + p.vx * 0.4
       S.ball.vy = -power * 0.85                      // schopt makkelijk de lucht in
       if (dy < 0) S.ball.vy -= 200                   // van onderaf geraakt → extra lift
       if (p.powCurve) { S.ball.spin = (p.powCurveDir || 1) * p.facing * 1100; p.powCurve = false }
@@ -1314,6 +1639,8 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
       const dx = vic.x - att.x
       if (Math.abs(dx) > PR * 2.1 || Math.sign(dx) !== att.facing) return
       if (Math.abs((vic.y) - (att.y)) > PR * 1.4) return
+      // feniks herrijzenis: onraakbaar voor meppen
+      if (vic.t.immune > 0) { att.meleeCD = 0.32; addParticles(vic.x, vic.y - PR * 0.4, '#fff8d6', 8, 220); return }
       att.meleeCD = 0.32; att.kickAnim = KICK_ANIM
       vic.kickHits = (vic.kickHits || 0) + 1
       vic.hitWindow = 1.2
@@ -1338,11 +1665,18 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
       if (dist < minD && dist > 0) {
         // ── super staat scherp en deze speler raakt de bal → vuur hier af ──
         if (p.armed) { fireSuper(p); return true }
+        // ── drakenvuur: brandende bal verzengt iedereen behalve de schutter ──
+        if (S.ball.burnT > 0 && p.side !== S.ball.burnOwner && p.dizzy <= 0 && p.t.immune <= 0) {
+          p.dizzy = 0.5; p.vx += (p.x < S.ball.x ? -1 : 1) * 240
+          addShock(p.x, p.y - PR * 0.4, '#ff6a00', 130, 0.4); addParticles(p.x, p.y - PR, '#ff6a00', 14, 300)
+        }
         // ── super-mechaniek raakt de TEGENSTANDER (niet de schutter zelf) ──
         if (S.ball.superKind && p.side !== S.ball.superOwner) {
           const kdir = Math.sign(S.ball.vx) || (S.ball.superOwner === 'L' ? 1 : -1)
           const fxCol = S.ball.fx.color
-          if (S.ball.superKind === 'goalram') {            // tegenstander vliegt mét de bal de goal in
+          if (p.t.immune > 0) {                             // feniks herrijzenis: deflect zonder effect
+            addParticles(p.x, p.y - PR, '#fff8d6', 14, 300); addShock(p.x, p.y - PR * 0.4, '#fff8d6', 120, 0.4)
+          } else if (S.ball.superKind === 'goalram') {      // tegenstander vliegt mét de bal de goal in
             p.dizzy = 1.4; p.vx = kdir * 1000; p.vy = -240; p.onGround = false
             S.ball.x = p.x; S.ball.vx = kdir * 1100; S.ball.vy = -120
             addShock(p.x, p.y - PR * 0.4, fxCol, 200, 0.6); addShake(20, 0.5)
@@ -1419,16 +1753,67 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
         if (p.powerKick > 0) p.powerKick -= dt
         if (p.buried > 0) { p.buried -= dt; p.vx = 0; p.x = p.x }   // vastgeramd in de grond
         if (p.meleeCD > 0) p.meleeCD -= dt
+        if (p.dashCD > 0) p.dashCD -= dt   // recharge-tijd voordat je weer kan dashen
         if (p.chargeCD > 0) p.chargeCD -= dt   // cooldown op super-laden via bal-contact
         if (p.hitWindow > 0) { p.hitWindow -= dt; if (p.hitWindow <= 0) p.kickHits = 0 }   // streak verloopt
         if (p.comebackT > 0) p.comebackT -= dt
         if (p.ram && p.t.dash <= 0) p.ram = false
-        // special laadt langzaam; na een tegengoal iets sneller (comeback)
+        // special laadt langzaam; na een tegengoal iets sneller (comeback) — geblokkeerd door hornlock
         const rate = p.comebackT > 0 ? 1.5 : 1
-        p.charge = Math.min(1, p.charge + (dt / p.move.charge) * rate)
+        if (p.t.chargeLock <= 0) p.charge = Math.min(1, p.charge + (dt / p.move.charge) * rate)
       }
+      // veld-effect timers (nieuwe mechanieken)
+      if (S.gravityT > 0) {
+        S.gravityT -= dt
+        // drijvende sterretjes zolang de zwaartekracht extreem laag is — zodat het
+        // effect ook duidelijk ZICHTBAAR blijft, niet alleen voelbaar
+        if (Math.random() < 0.5) S.particles.push({ x: Math.random() * W, y: GROUND_Y + 10, vx: (Math.random() - 0.5) * 30, vy: -40 - Math.random() * 30, life: 1.4, color: '#ffe066', r: 1.5 + Math.random() * 1.5 })
+      }
+      if (S.wall) { S.wall.t -= dt; if (S.wall.t <= 0) S.wall = null }
+      for (const bp of S.bumpers) bp.life -= dt
+      S.bumpers = S.bumpers.filter(bp => bp.life > 0)
+      if (S.waveT > 0) {
+        S.waveT -= dt; S.waveNext -= dt
+        if (S.waveNext <= 0) {
+          S.waveNext = 0.55
+          S.ball.vy -= 260; S.ball.vx += S.waveDir * 220
+          addShock(S.ball.x, S.ball.y, S.waveCol, 90, 0.35)
+        }
+      }
+      if (S.pulseSeq) {
+        const ps = S.pulseSeq
+        ps.t -= dt; ps.next -= dt
+        if (ps.next <= 0) {
+          ps.next = ps.interval
+          addShock(ps.x, GROUND_Y, ps.col, 150, 0.4); addShake(8, 0.25)
+          if (Math.hypot(S.ball.x - ps.x, S.ball.y - GROUND_Y) < 130) { S.ball.vy -= 420; S.ball.vx += ps.dir * 160 }
+          // raakt ook de tegenstander als die vlakbij staat (i.p.v. alleen de bal, zoals vloedgolf)
+          const opp2 = ps.owner === 'L' ? S.R : S.L
+          if (opp2.dizzy <= 0 && Math.hypot(opp2.x - ps.x, opp2.y - GROUND_Y) < 110) { opp2.dizzy = 0.5; opp2.vy = -260; opp2.onGround = false }
+        }
+        if (ps.t <= 0) S.pulseSeq = null
+      }
+      // windmuur: blaast de tegenstander continu weg bij de bal
+      if (S.ball.repelT > 0) {
+        S.ball.repelT -= dt
+        for (const q of [S.L, S.R]) if (q.side !== S.ball.repelOwner) {
+          const dx = q.x - S.ball.x, dy = (q.y - PR) - S.ball.y, d = Math.hypot(dx, dy) || 1
+          if (d < 140) { q.vx += (dx / d) * 900 * dt; q.vy += (dy / d) * 400 * dt }
+        }
+        if (S.ball.repelT <= 0) S.ball.repelOwner = null
+      }
+      if (S.ball.burnT > 0) S.ball.burnT -= dt
       // bal-effect timers
       if (S.ball.scaleT > 0) { S.ball.scaleT -= dt; if (S.ball.scaleT <= 0) S.ball.scale = 1 }
+      if (S.ball.chaosT > 0) S.ball.chaosT -= dt
+      if (S.ball.boostT > 0) {
+        S.ball.boostT -= dt
+        if (S.ball.boostT <= 0) {
+          if (S.ball.boostFx === 'speed') { S.ball.vx *= 2.2; addShake(10, 0.3) }
+          else if (S.ball.boostFx === 'ramp') { S.ball.vy -= 950; addShake(12, 0.35) }
+          S.ball.boostFx = null
+        }
+      }
       if (S.ball.ghostT > 0) S.ball.ghostT -= dt
       if (S.ball.bouncyT > 0) S.ball.bouncyT -= dt
       if (S.ball.floatT > 0) S.ball.floatT -= dt   // maan/zweef-bal: trage val
@@ -1454,11 +1839,23 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
         const c = controlsRef.current, L = S.L
         const spd = PLAYER_SPD * L.frozenFactor
         if (L.dizzy <= 0) {
-          if (c.left)  { L.vx = -spd; L.facing = -1 }
-          else if (c.right) { L.vx = spd; L.facing = 1 }
-          else L.vx *= 0.7
+          // voodoolink: gedwongen om de bewegingen van de tegenstander te kopiëren
+          if (L.t.mirrored > 0) { L.vx = S.R.vx; L.facing = S.R.facing }
+          // wortelgreep: vastgeworteld, kan niet lopen (wel springen/schoppen)
+          else if (L.t.rooted > 0) { L.vx *= 0.7 }
+          else {
+            const rev = L.t.reversed > 0   // spiegeltruc: links/rechts omgedraaid
+            if (c.left || c.right) {
+              const tgtVx = c.left ? (rev ? spd : -spd) : (rev ? -spd : spd)
+              L.facing = c.left ? (rev ? 1 : -1) : (rev ? -1 : 1)
+              // ijsgladheid: kan niet direct stoppen/draaien, glijdt geleidelijk naar de nieuwe snelheid
+              L.vx = L.t.slippery > 0 ? L.vx + (tgtVx - L.vx) * Math.min(1, 1.8 * dt) : tgtVx
+            } else {
+              L.vx *= L.t.slippery > 0 ? 0.985 : 0.7   // ijsgladheid: blijft veel langer doorglijden
+            }
+          }
           if (L.t.dash > 0) L.vx = L.dashVx * L.frozenFactor
-          if (c.jump && L.onGround) { L.vy = -JUMP_FORCE; L.onGround = false }
+          if (c.jump && L.onGround && L.t.noJump <= 0) { L.vy = -JUMP_FORCE; L.onGround = false }
           if (c.kick) { doKick(L); meleeHit(L, S.R) }
           if (c.special) { armSpecial(L); c.special = false }
         } else L.vx *= 0.8
@@ -1472,16 +1869,36 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
           // mik-fout: groter bij minder sterren én op een lager niveau
           const aiErr = (6 - oppDiff) * 12 * LV.err
           const ballSide = S.ball.x + ghostErr + Math.sin(now / 520) * aiErr
-          // chase ball, but retreat to defend if ball behind toward own goal
+          // voorspelde landingsplek van de bal (met dezelfde mik-fout) — voorkomt dat
+          // een lob over het hoofd van de AI altijd raak is.
+          const predictedX = predictLandingX(S.ball, GROUND_Y - BR) + ghostErr + Math.sin(now / 520) * aiErr
+          // dreiging: tegenstander laadt/houdt een super vast → zak terug naar het eigen
+          // doel i.p.v. recht onder de springende speler te blijven staan.
+          const superThreat = S.ball.held || (S.superSeq && S.superSeq.p === S.L)
+          const lobOverHead = S.ball.vy < -80 && predictedX > R.x + 20
           let target = ballSide
-          if (S.ball.x > W * 0.62 && S.ball.vx > 0) target = Math.max(W * 0.6, S.ball.x - 30)
+          if (superThreat) target = Math.min(W - GOAL_W - 60, Math.max(W * 0.7, predictedX))
+          else if (lobOverHead || (S.ball.x > W * 0.55 && S.ball.vx > 0)) target = Math.max(W * 0.58, Math.min(predictedX, W - GOAL_W - 20))
           const dxr = target - R.x
-          // kleine dode zone → AI beweegt vrijwel altijd richting de bal
-          if (Math.abs(dxr) > 14) { R.vx = Math.sign(dxr) * aspd; R.facing = S.ball.x < R.x ? -1 : 1 }
-          else R.vx *= 0.7
+          // voodoolink: gedwongen om de bewegingen van de tegenstander te kopiëren
+          if (R.t.mirrored > 0) { R.vx = S.L.vx; R.facing = S.L.facing }
+          // wortelgreep: vastgeworteld, kan niet lopen (wel springen/schoppen)
+          else if (R.t.rooted > 0) { R.vx *= 0.7 }
+          else {
+            const dxrEff = R.t.reversed > 0 ? -dxr : dxr   // spiegeltruc: beweegt de verkeerde kant op
+            // kleine dode zone → AI beweegt vrijwel altijd richting de bal
+            if (Math.abs(dxr) > 14) {
+              const tgtVx = Math.sign(dxrEff) * aspd
+              R.facing = S.ball.x < R.x ? -1 : 1
+              // ijsgladheid: kan niet direct stoppen/draaien, glijdt geleidelijk naar de nieuwe snelheid
+              R.vx = R.t.slippery > 0 ? R.vx + (tgtVx - R.vx) * Math.min(1, 1.8 * dt) : tgtVx
+            } else {
+              R.vx *= R.t.slippery > 0 ? 0.985 : 0.7
+            }
+          }
           if (R.t.dash > 0) R.vx = R.dashVx * R.frozenFactor
           // springt voor hoge ballen (minder vaak op een lager niveau)
-          if (R.onGround && S.ball.y < GROUND_Y - 130 && Math.abs(S.ball.x - R.x) < 80 && S.ball.vy > -50 && Math.random() < (0.12 + oppDiff * 0.04) * LV.jump) { R.vy = -JUMP_FORCE; R.onGround = false }
+          if (R.onGround && R.t.noJump <= 0 && S.ball.y < GROUND_Y - 130 && Math.abs(S.ball.x - R.x) < 80 && S.ball.vy > -50 && Math.random() < (0.12 + oppDiff * 0.04) * LV.jump) { R.vy = -JUMP_FORCE; R.onGround = false }
           // schiet als de bal binnen bereik is (minder vaak op een lager niveau)
           if (Math.hypot(S.ball.x - R.x, S.ball.y - (R.y - PR * 0.3)) < KICK_RANGE && Math.random() < (0.2 + oppDiff * 0.09) * LV.kick) doKick(R)
           if (Math.abs(S.L.x - R.x) < PR * 2.1 && Math.random() < (0.06 + oppDiff * 0.02) * LV.kick) meleeHit(R, S.L)
@@ -1490,16 +1907,20 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
         } else R.vx *= 0.8
 
         // physics players
+        // zwaartekrachtgolf: EXTREEM lage zwaartekracht — veel sterker dan de "float"
+        // van een maan-sprong (0.32x), zodat het effect direct overduidelijk voelt.
+        const gravMul = S.gravityT > 0 ? 0.1 : 1
         for (const p of [S.L, S.R]) {
-          p.vy += GRAVITY * (p.t.float > 0 ? 0.32 : 1) * dt   // maan-sprong = lange hangtijd
+          p.vy += GRAVITY * (p.t.float > 0 ? 0.32 : 1) * gravMul * dt   // maan-sprong = lange hangtijd
           p.x += p.vx * dt; p.y += p.vy * dt
           if (p.y >= GROUND_Y - PR) { p.y = GROUND_Y - PR; p.vy = 0; p.onGround = true }
           p.x = Math.max(PR, Math.min(W - PR, p.x))
+          if (p.t.leash > 0) p.x = Math.max(p.leashOrigin - p.leashRadius, Math.min(p.leashOrigin + p.leashRadius, p.x))   // zijdenband
         }
 
         // stormram (charge): beukt de tegenstander weg
         for (const [p, opp] of [[S.L, S.R], [S.R, S.L]]) {
-          if (p.ram && p.t.dash > 0 && opp.dizzy <= 0 && Math.abs(p.x - opp.x) < PR * 1.9 && (p.facing > 0) === (opp.x > p.x)) {
+          if (p.ram && p.t.dash > 0 && opp.dizzy <= 0 && opp.t.immune <= 0 && Math.abs(p.x - opp.x) < PR * 1.9 && (p.facing > 0) === (opp.x > p.x)) {
             opp.dizzy = p.ramStun; opp.vx = p.facing * p.ramKnock; opp.vy = -200; opp.onGround = false
             addShock(opp.x, opp.y - PR * 0.4, p.move.color, 120, 0.5); addShake(10, 0.3)
           }
@@ -1527,9 +1948,12 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
           else {
             const dx = T.x - S.ball.x, dy = (GROUND_Y - 70) - S.ball.y, d = Math.hypot(dx, dy) || 1
             if (d < 180) { S.ball.vx += (dx / d) * T.pull * dt + T.dir * 240 * dt; S.ball.vy += (dy / d) * T.pull * dt }
-            // duw tegenstander licht weg
             const opp = T.dir > 0 ? S.R : S.L
-            if (Math.abs(opp.x - T.x) < 80) opp.vx += T.dir * 300 * dt
+            if (T.suckPlayer) {
+              // bergtol: zuigt de tegenstander juist NAAR zich toe, i.p.v. weg te duwen
+              const odx = T.x - opp.x, od = Math.abs(odx) || 1
+              if (od < 130) opp.vx += Math.sign(odx) * 260 * dt
+            } else if (Math.abs(opp.x - T.x) < 80) opp.vx += T.dir * 300 * dt   // duw tegenstander licht weg
           }
         }
 
@@ -1557,14 +1981,38 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
         const b = S.ball
         const effBR = BR * (b.scale || 1)
         const BB = b.bouncyT > 0 ? 0.95 : BALL_BOUNCE
-        b.vy += GRAVITY * (b.floatT > 0 ? 0.07 : 0.30) * dt   // zweef-bal valt heel traag
+        b.vy += GRAVITY * (b.floatT > 0 ? 0.07 : 0.30) * gravMul * dt   // zweef-bal valt heel traag
         b.vx += b.spin * dt * 0.06; b.spin *= 0.96
         b.x += b.vx * dt; b.y += b.vy * dt
         b.angle += b.vx * dt * 0.05
         // ground
-        if (b.y >= GROUND_Y - effBR) { b.y = GROUND_Y - effBR; b.vy = -b.vy * BB; b.vx *= b.bouncyT > 0 ? 0.99 : 0.94; if (Math.abs(b.vy) < 40 && b.bouncyT <= 0) b.vy = 0 }
+        if (b.y >= GROUND_Y - effBR) {
+          b.y = GROUND_Y - effBR; b.vy = -b.vy * BB; b.vx *= b.bouncyT > 0 ? 0.99 : 0.94
+          if (Math.abs(b.vy) < 40 && b.bouncyT <= 0) b.vy = 0
+          if (b.chaosT > 0) { b.vx += (Math.random() - 0.5) * 900; b.vy -= Math.random() * 260 }   // woestijnstorm
+        }
         // ceiling
         if (b.y <= CEIL + effBR) { b.y = CEIL + effBR; b.vy = -b.vy * BB }
+        // zandmuur: blokkeert de bal midden op het veld zolang hij actief is
+        if (S.wall) {
+          const wx0 = S.wall.x - S.wall.w / 2, wx1 = S.wall.x + S.wall.w / 2
+          const wy0 = GROUND_Y - S.wall.h, wy1 = GROUND_Y
+          if (b.x + effBR > wx0 && b.x - effBR < wx1 && b.y + effBR > wy0 && b.y < wy1) {
+            b.x = b.x < S.wall.x ? wx0 - effBR : wx1 + effBR
+            b.vx = -b.vx * 0.9
+          }
+        }
+        // koraalveld: hindernissen kaatsen de bal onvoorspelbaar weg
+        for (const bp of S.bumpers) {
+          const bd = Math.hypot(b.x - bp.x, b.y - bp.y)
+          if (bd < bp.r + effBR) {
+            const nx2 = (b.x - bp.x) / (bd || 1), ny2 = (b.y - bp.y) / (bd || 1)
+            b.x = bp.x + nx2 * (bp.r + effBR); b.y = bp.y + ny2 * (bp.r + effBR)
+            const spd2 = Math.max(420, Math.hypot(b.vx, b.vy))
+            const a2 = Math.atan2(ny2, nx2) + (Math.random() - 0.5) * 1.2
+            b.vx = Math.cos(a2) * spd2; b.vy = Math.sin(a2) * spd2 - 120
+          }
+        }
         // shields
         for (const p of [S.L, S.R]) if (p.t.shield > 0) {
           const sx = shieldX(p.side)
@@ -1699,8 +2147,14 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
       ctx.globalAlpha = 1
       for (const d of S.decoys) { ctx.globalAlpha = Math.min(0.85, d.life); drawBall(ctx, { x: d.x, y: d.y, vx: d.vx, vy: d.vy, angle: d.angle, trail: [], fx: { t: 0.4, type: 'energy', color: d.color }, scale: 1, emoji: d.emoji || null }); ctx.globalAlpha = 1 }
       if (S.tornado) drawTornado(ctx, S.tornado)
-      drawPlayer(ctx, S.L, playerCountry); if (S.L.t.frozen > 0 && S.L.frozenFactor < 0.2) drawIce(ctx, S.L)
-      drawPlayer(ctx, S.R, oppCountry); if (S.R.t.frozen > 0 && S.R.frozenFactor < 0.2) drawIce(ctx, S.R)
+      if (S.wall) drawWall(ctx, S.wall)
+      if (S.bumpers.length) drawBumpers(ctx, S.bumpers)
+      drawPlayer(ctx, S.L, playerCountry)
+      if (S.L.t.frozen > 0 && S.L.frozenFactor < 0.2) drawIce(ctx, S.L)
+      if (S.L.t.rooted > 0) drawRoots(ctx, S.L)
+      drawPlayer(ctx, S.R, oppCountry)
+      if (S.R.t.frozen > 0 && S.R.frozenFactor < 0.2) drawIce(ctx, S.R)
+      if (S.R.t.rooted > 0) drawRoots(ctx, S.R)
       drawBall(ctx, S.ball)
       // gouden sunburst van de power-shot (volgt de bal zolang actief)
       if (S.sunburst.t > 0) drawSunburst(ctx, S.ball.x, S.ball.y, 1 - S.sunburst.t / S.sunburst.dur, S.sunburst.color)
@@ -1790,8 +2244,10 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
     const tapDash = (dir) => {
       const L = S.L
       if (!L || L.dizzy > 0 || L.buried > 0 || S.kickoffT > 0 || S.ended) return
+      if (L.dashCD > 0) return   // nog aan het opladen — kan niet dashen op dashen stapelen
       L.facing = dir
       L.t.dash = 0.26; L.dashVx = dir * 560
+      L.dashCD = 0.9
       addParticles(L.x - dir * PR, L.y - PR * 0.3, '#ffffff', 8, 280)
       addShake(4, 0.12)
     }

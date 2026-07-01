@@ -43,6 +43,7 @@ button:hover .msi,
 .ms-write   { animation: ms-write 0.8s ease-in-out infinite; }
 .ms-shoot   { animation: ms-shoot 1s ease-in infinite; }
 .ms-bounce  { animation: ms-bounce 0.7s ease-in-out infinite; }
+.ms-drive   { animation: ms-drive 2.2s ease-in-out infinite; }
 .msa { animation-play-state: paused !important; }
 button:hover .msa { animation-play-state: running !important; }
 
@@ -111,6 +112,10 @@ button:hover .msa { animation-play-state: running !important; }
 @keyframes ms-bounce {
   0%, 100% { transform: translateY(0); }
   50%      { transform: translateY(-12px); }
+}
+@keyframes ms-drive {
+  0%, 10%   { transform: translate(0, 0); }
+  85%, 100% { transform: translate(96px, 0); }
 }
 
 /* ── Voorbeeldopgave-regel op kaarten ───────────────────── */

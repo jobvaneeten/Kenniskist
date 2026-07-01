@@ -163,6 +163,30 @@ const SCENES = {
     </svg>
   ),
 
+  brug: (
+    <svg viewBox="0 0 160 90" preserveAspectRatio="xMidYMid slice">
+      <defs>
+        <linearGradient id="ms-br-sky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#1f5fc6" /><stop offset="1" stopColor="#8fc8ef" />
+        </linearGradient>
+      </defs>
+      <rect width="160" height="90" fill="url(#ms-br-sky)" />
+      <rect y="66" width="160" height="24" fill="#2f97c4" />
+      <path d="M0 40 h50 v50 h-50 z" fill="#8a6a30" />
+      <path d="M0 40 h50 v9 h-50 z" fill="#3a7d41" />
+      <path d="M110 40 h50 v50 h-50 z" fill="#8a6a30" />
+      <path d="M110 40 h50 v9 h-50 z" fill="#3a7d41" />
+      <rect x="50" y="40" width="60" height="7" fill="#c79a52" />
+      <path d="M56 40 v7 M66 40 v7 M76 40 v7 M86 40 v7 M96 40 v7 M104 40 v7" stroke="#8a6a30" strokeWidth="1.4" />
+      <path d="M50 40 L80 22 L110 40" fill="none" stroke="#7c5a30" strokeWidth="2.5" />
+      <g className="msa ms-drive">
+        <rect x="16" y="28" width="26" height="10" rx="3" fill="#e8434b" />
+        <rect x="22" y="22" width="12" height="8" rx="2" fill="#e8434b" />
+        <circle cx="22" cy="38" r="3.2" fill="#1a1a2e" /><circle cx="36" cy="38" r="3.2" fill="#1a1a2e" />
+      </g>
+    </svg>
+  ),
+
   taal: (
     <svg viewBox="0 0 160 90" preserveAspectRatio="xMidYMid slice">
       <defs>
