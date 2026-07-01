@@ -6,6 +6,7 @@ import GameMenu        from './GameMenu'
 import RocketGame      from './games/RocketGame'
 import PaintballGame   from './games/PaintballGame'
 import KartGame        from './games/KartGame'
+import BotsenGame      from './games/BotsenGame'
 import MenuScene       from './MenuScenes'
 import { allUnlockedMap } from './itemsCatalog'
 import { COUNTRIES } from './games/countries'
@@ -219,6 +220,7 @@ export default function App() {
         onPlayRocket={() => setScreen('rocket')}
         onPlayPaintball={() => setScreen('paintball')}
         onPlayKart={() => setScreen('kart')}
+        onPlayBotsen={() => setScreen('botsen')}
         unlockedColors={unlockedColors}
       />
     </>
@@ -230,6 +232,10 @@ export default function App() {
 
   if (screen === 'kart') return (
     <KartGame onBack={() => setScreen('wardrobe')} />
+  )
+
+  if (screen === 'botsen') return (
+    <BotsenGame onBack={() => setScreen('wardrobe')} />
   )
 
   if (screen === 'paintball') return (
