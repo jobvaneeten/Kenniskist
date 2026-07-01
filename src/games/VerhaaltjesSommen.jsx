@@ -131,17 +131,61 @@ function Figuur({ figuur }) {
 }
 
 // ── Vraagkaart: eerst de som, daaronder het antwoord (+ rest indien nodig) ──
+// Eenvoudige rekenmachine — alleen zichtbaar bij doelen waar de methode
+// het gebruik van een rekenmachine toestaat ("…met de rekenmachine").
+function RekenMachine() {
+  const [expr, setExpr] = useState('')
+  const [res, setRes]   = useState('')
+  const druk = (t) => { setRes(''); setExpr(e => e + t) }
+  const wis  = () => { setExpr(''); setRes('') }
+  const backspace = () => { setRes(''); setExpr(e => e.slice(0, -1)) }
+  const reken = () => {
+    let s = expr.replace(/×/g, '*').replace(/÷/g, '/').replace(/,/g, '.')
+    if (!/^[0-9+\-*/.() ]+$/.test(s)) { setRes('?'); return }
+    try {
+      // eslint-disable-next-line no-new-func
+      const v = Function(`"use strict";return (${s})`)()
+      if (typeof v !== 'number' || Number.isNaN(v) || !Number.isFinite(v)) { setRes('?'); return }
+      setRes(String(Math.round(v * 1e6) / 1e6).replace('.', ','))
+    } catch { setRes('?') }
+  }
+  const TOETSEN = ['7', '8', '9', '÷', '4', '5', '6', '×', '1', '2', '3', '-', '0', ',', '=', '+']
+  return (
+    <div className="rs-calc">
+      <div className="rs-calc-display">
+        <span className="rs-calc-expr">{expr || '0'}</span>
+        {res !== '' && <span className="rs-calc-res">= {res}</span>}
+      </div>
+      <div className="rs-calc-grid">
+        <button className="rs-calc-key rs-calc-wis" onClick={wis}>C</button>
+        <button className="rs-calc-key rs-calc-fn" onClick={backspace}>⌫</button>
+        <button className="rs-calc-key rs-calc-fn" onClick={() => druk('(')}>(</button>
+        <button className="rs-calc-key rs-calc-fn" onClick={() => druk(')')}>)</button>
+        {TOETSEN.map(t => (
+          <button key={t}
+            className={'rs-calc-key' + (['÷', '×', '-', '+'].includes(t) ? ' rs-calc-op' : '') + (t === '=' ? ' rs-calc-eq' : '')}
+            onClick={() => t === '=' ? reken() : druk(t)}>
+            {t}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function VraagKaart({ opgave, onNext }) {
   const [som, setSom]   = useState('')
   const [antw, setAntw] = useState('')
   const [rest, setRest] = useState('')
   const [phase, setPhase] = useState('answering')   // answering | good | bad
   const [somOk, setSomOk] = useState(null)
+  const [calcOpen, setCalcOpen] = useState(false)
   const somRef = useRef(null)
   const isTijd = opgave.antwoordType === 'tijd'
   const heeftRest = opgave.rest != null && !isTijd
+  const magRekenmachine = /rekenmachine/i.test(opgave.doel || '')
 
-  useEffect(() => { setSom(''); setAntw(''); setRest(''); setPhase('answering'); setSomOk(null); setTimeout(() => somRef.current?.focus(), 50) }, [opgave])
+  useEffect(() => { setSom(''); setAntw(''); setRest(''); setPhase('answering'); setSomOk(null); setCalcOpen(false); setTimeout(() => somRef.current?.focus(), 50) }, [opgave])
 
   const check = () => {
     if (!antw.trim()) return
@@ -153,15 +197,25 @@ function VraagKaart({ opgave, onNext }) {
     setPhase(antwOk && restOk ? 'good' : 'bad')
   }
 
-  const label = opgave.groep === 7 ? `📖 Blok ${opgave.blok} · ${opgave.doel}`
-    : opgave.groep === 8 ? `🚀 Groep 8 · ${opgave.doel}`
-    : `🔁 Groep ${opgave.groep} · ${opgave.doel}`
+  const blokLabel = opgave.blok === 0 ? 'Instap' : `Blok ${opgave.blok}`
+  const label = opgave.groep === 7 ? `📖 ${blokLabel} · ${opgave.doel}`
+    : opgave.groep === 8 ? `🚀 Groep 8 · ${blokLabel} · ${opgave.doel}`
+    : `🔁 Groep ${opgave.groep} · ${blokLabel} · ${opgave.doel}`
 
   return (
     <div className="rs-card">
       <div className={`rs-doel${opgave.groep !== 7 ? ' rs-doel-herhaling' : ''}`}>{label}</div>
       <div className="rs-vraag">{opgave.vraag}</div>
       {opgave.figuur && <div className="rs-figuur-wrap"><Figuur figuur={opgave.figuur} /></div>}
+
+      {magRekenmachine && (
+        <div className="rs-calc-wrap">
+          <button className="rs-calc-toggle" onClick={() => setCalcOpen(o => !o)}>
+            🧮 {calcOpen ? 'Verberg rekenmachine' : 'Rekenmachine mag bij deze som'}
+          </button>
+          {calcOpen && <RekenMachine />}
+        </div>
+      )}
 
       {phase === 'answering' && isTijd && (
         <div className="rs-velden">
@@ -335,6 +389,8 @@ export default function VerhaaltjesSommen({ groep: eigenGroep = 7, onBack, addBr
   const [toetsLijst, setToetsLijst] = useState([])
   const [toetsIdx, setToetsIdx]     = useState(0)
   const [toetsGoed, setToetsGoed]   = useState(0)
+  const [toetsSinds, setToetsSinds] = useState(0)
+  const [rewardVan, setRewardVan]   = useState('oefen')   // 'oefen' | 'toets'
 
   const toggleKeuze = (k) => setGekozen(prev => {
     const s = new Set(prev)
@@ -381,20 +437,25 @@ export default function VerhaaltjesSommen({ groep: eigenGroep = 7, onBack, addBr
     if (!toetsJaren.size) return
     const lijst = maakToets(toetsJaren)
     if (!lijst.length) return
-    setToetsLijst(lijst); setToetsIdx(0); setToetsGoed(0); setScreen('toets')
+    setToetsLijst(lijst); setToetsIdx(0); setToetsGoed(0); setToetsSinds(0); setScreen('toets')
   }
   const toetsVolgende = (correct) => {
     const opg = toetsLijst[toetsIdx]
     if (opg) recordStat(opg, correct)
-    if (correct) setToetsGoed(g => g + 1)
     setToetsIdx(i => i + 1)
+    if (correct) {
+      setToetsGoed(g => g + 1)
+      const ns = toetsSinds + 1
+      if (ns >= PER_BELONING) { setToetsSinds(0); setRewardVan('toets'); setShowReward(true); return }
+      setToetsSinds(ns)
+    }
   }
 
   const volgende = useCallback((correct) => {
     if (opgave) recordStat(opgave, correct)
     if (correct) {
       const ns = sinds + 1
-      if (ns >= PER_BELONING) { setSinds(0); setShowReward(true); return }
+      if (ns >= PER_BELONING) { setSinds(0); setRewardVan('oefen'); setShowReward(true); return }
       setSinds(ns)
     }
     setOpgave(nieuweOpgave())
@@ -404,7 +465,7 @@ export default function VerhaaltjesSommen({ groep: eigenGroep = 7, onBack, addBr
     setShowReward(false)
     addBriefgeld?.(BELONING)
     setVerdiend(v => v + BELONING)
-    setOpgave(nieuweOpgave())
+    if (rewardVan === 'oefen') setOpgave(nieuweOpgave())
   }
 
   if (showReward) {

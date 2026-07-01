@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { WOORDSOORTEN, ZINSDELEN, VRAGEN } from './taalData.js'
 import SpelBeloning from './SpelBeloning'
-import ToetsOefenen from './ToetsOefenen'
 import './taal-oefenen.css'
 
 const BRIEFGELD_PER_AANGEVINKT = 5 // € per aangevinkt onderdeel, per beloning
@@ -229,10 +228,6 @@ export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie }) {
     )
   }
 
-  if (screen === 'toets') {
-    return <ToetsOefenen onBack={() => setScreen('menu')} addBriefgeld={addBriefgeld} addCuruntie={addCuruntie} />
-  }
-
   // menu
   return (
     <div className="tv-screen tv-screen-center">
@@ -243,11 +238,6 @@ export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie }) {
         <p>Kies een onderdeel</p>
       </div>
       <div className="tv-mode-grid">
-        <button className="tv-mode-card" onClick={() => setScreen('toets')}>
-          <span className="tv-mode-emoji">📝</span>
-          <span className="tv-mode-name">Oefenen voor de toets</span>
-          <span className="tv-mode-desc">Thema 8 — instaptoets + 5 doelen</span>
-        </button>
         <button className="tv-mode-card" onClick={() => setScreen('taalverkennen')}>
           <span className="tv-mode-emoji">🌱</span>
           <span className="tv-mode-name">Taalverkennen</span>

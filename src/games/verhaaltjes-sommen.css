@@ -266,3 +266,20 @@
 .rs-wis-knoppen { display: flex; gap: 10px; }
 .rs-wis-ja { background: #ef4444; border: none; color: #fff; border-radius: 10px; padding: 9px 18px; font-weight: 800; cursor: pointer; }
 .rs-wis-nee { background: rgba(255,255,255,0.12); border: 1.5px solid rgba(255,255,255,0.25); color: #fff; border-radius: 10px; padding: 9px 18px; font-weight: 800; cursor: pointer; }
+
+/* ── Rekenmachine (alleen bij doelen waar het mag) ── */
+.rs-calc-wrap { margin: 4px 0 14px; }
+.rs-calc-toggle { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 12px; border: 1.5px solid rgba(96,165,250,0.5); background: rgba(96,165,250,0.12); color: #bfdbfe; font-family: inherit; font-weight: 800; font-size: 0.9rem; cursor: pointer; transition: background 0.15s; }
+.rs-calc-toggle:hover { background: rgba(96,165,250,0.22); }
+.rs-calc { margin-top: 12px; max-width: 280px; background: rgba(15,23,42,0.6); border: 1.5px solid rgba(255,255,255,0.12); border-radius: 16px; padding: 12px; }
+.rs-calc-display { min-height: 44px; background: rgba(0,0,0,0.35); border-radius: 10px; padding: 8px 12px; margin-bottom: 10px; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; }
+.rs-calc-expr { color: #fffbeb; font-size: 1.25rem; font-weight: 700; word-break: break-all; }
+.rs-calc-res { color: #6ee7b7; font-size: 1.05rem; font-weight: 800; }
+.rs-calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; }
+.rs-calc-key { padding: 12px 0; border-radius: 10px; border: 1.5px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.06); color: #fffbeb; font-family: inherit; font-weight: 800; font-size: 1.1rem; cursor: pointer; transition: transform 0.1s, background 0.12s; }
+.rs-calc-key:hover { background: rgba(255,255,255,0.13); }
+.rs-calc-key:active { transform: scale(0.93); }
+.rs-calc-op { background: rgba(96,165,250,0.18); color: #bfdbfe; }
+.rs-calc-eq { background: #facc15; color: #1f2937; }
+.rs-calc-fn { color: #cbd5e1; }
+.rs-calc-wis { color: #fca5a5; }

@@ -10,6 +10,7 @@ import BlokOefenen from './games/BlokOefenen'
 import ProcentenBreuken from './games/ProcentenBreuken'
 import VerhaaltjesSommen from './games/VerhaaltjesSommen'
 import BreukenPlaatjes from './games/BreukenPlaatjes'
+import MaatenOmrekenen from './games/MaatenOmrekenen'
 import TafelsOefenen from './games/TafelsOefenen'
 import WerkwoordSpelling from './games/WerkwoordSpelling'
 import DicteeThema from './games/DicteeThema'
@@ -54,6 +55,7 @@ const GAMES = {
   '6-rekenen': 'iep',
   '7-rekenen': 'iep',
   '8-rekenen': 'iep',
+  '6-spelling': 'werkwoord',
   '7-spelling': 'werkwoord',
   '8-spelling': 'werkwoord',
   '7-begrijpend': 'begrijpend',
@@ -239,6 +241,9 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
       if (rekenKeuze === 'breuken') {
         return <BreukenPlaatjes onBack={() => setRekenKeuze(null)} addBriefgeld={addBriefgeld} addCuruntie={addCuruntie} />
       }
+      if (rekenKeuze === 'maten') {
+        return <MaatenOmrekenen onBack={() => setRekenKeuze(null)} addBriefgeld={addBriefgeld} addCuruntie={addCuruntie} />
+      }
       // keuzescherm: verhaaltjessommen of oefenen blok 9
       return (
         <div className="game-screen game-screen-center">
@@ -274,6 +279,15 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
                 <span className="mode-desc">FS en S+ werkbladen</span>
                 <span className="vb-line">"5825 : 23 = ?" en "7 × €3,70 = ?"</span>
                 <RewardChips rewards={['🪙 munten', '💵 briefgeld']} />
+              </button>
+            )}
+            {(year === 6 || year === 7) && (
+              <button className="mode-card" onClick={() => setRekenKeuze('maten')}>
+                <MenuScene name="blok9" />
+                <span className="mode-name">📏 Maten omrekenen</span>
+                <span className="mode-desc">Lengte &amp; inhoud · 3 levels</span>
+                <span className="vb-line">"5 m = ? cm" · "2,5 m = ? cm"</span>
+                <RewardChips rewards={['💵 briefgeld']} />
               </button>
             )}
             {(year === 7 || year === 8) && (

@@ -1902,7 +1902,7 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
         </div>
         {menuTour
           ? <button className="mode-card hs-go" onClick={() => setPhase('reward_round')}>▶ Volgende ronde</button>
-          : <button className="mode-card hs-go" onClick={onBack}>← Terug naar spelling</button>}
+          : <button className="mode-card hs-go" onClick={onBack}>← En weer terug naar het leren!</button>}
         {menuTour && <button className="hs-skip-link" onClick={onBack}>← Menu</button>}
       </div>
     )
@@ -1923,7 +1923,7 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
             ? <><div className="hs-box">🎁</div><p className="wk-champ-sub">Mysterybox: <b>{revealC.flag} {revealC.name}</b> ontgrendeld!</p></>
             : <p className="wk-champ-sub">Je hebt alle landen al! 🪙 Extra bonus.</p>}
         </div>
-        <button className="mode-card hs-go" onClick={onBack}>{menuTour ? '← Menu' : '← Terug naar spelling'}</button>
+        <button className="mode-card hs-go" onClick={onBack}>{menuTour ? '← Menu' : '← En weer terug naar het leren!'}</button>
       </div>
     )
   }

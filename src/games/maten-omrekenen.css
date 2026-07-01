@@ -1,0 +1,27 @@
+.mo-hulp-btn {
+  margin-top: 12px;
+  align-self: center;
+  padding: 8px 18px;
+  border-radius: 14px;
+  border: 1.5px solid rgba(255,210,63,0.5);
+  background: rgba(255,210,63,0.1);
+  color: #fde68a;
+  font-family: inherit;
+  font-weight: 800;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.12s;
+}
+.mo-hulp-btn:hover { background: rgba(255,210,63,0.18); }
+.mo-hulp-btn:active { transform: scale(0.96); }
+
+.mo-trap-wrap {
+  margin-top: 12px;
+  display: flex;
+  justify-content: center;
+  background: rgba(255,255,255,0.04);
+  border: 1.5px solid rgba(255,255,255,0.1);
+  border-radius: 16px;
+  padding: 10px;
+}
+.mo-trap { display: block; }
