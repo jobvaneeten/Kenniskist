@@ -173,7 +173,7 @@ function BotsenMatch({ onBack, room, sessionId, joinCode }) {
     const arena = buildArena(scene, sg)
 
     // ── Eigen kart + avatar ──
-    const myP = room.state.players.get(sessionId)
+    const myP = room.state.players?.get(sessionId)
     const myColor = KART_COLORS[(myP?.grid ?? 0) % KART_COLORS.length]
     const { root: kartRoot, wheels } = buildKart(scene, myColor, 'me')
     kartRoot.position.set(myP?.x ?? 0, 0, myP?.z ?? 0)
@@ -261,7 +261,7 @@ function BotsenMatch({ onBack, room, sessionId, joinCode }) {
       const dt = Math.min(0.05, (now - lastT) / 1000); lastT = now
 
       // Remote karts bijwerken
-      room.state.players.forEach((p, sid) => {
+      room.state.players?.forEach((p, sid) => {
         if (sid === sessionId) return
         let e = remotes.get(sid)
         if (!e) { makeRemote(sid, p); e = remotes.get(sid) }
@@ -270,7 +270,7 @@ function BotsenMatch({ onBack, room, sessionId, joinCode }) {
         e.root.setEnabled(p.alive)
       })
       for (const sid of [...remotes.keys()]) {
-        if (!room.state.players.get(sid)) { remotes.get(sid).root.dispose(); remotes.delete(sid) }
+        if (!room.state.players?.get(sid)) { remotes.get(sid).root.dispose(); remotes.delete(sid) }
       }
       const k = Math.min(1, dt * 12)
       remotes.forEach(e => {
@@ -283,7 +283,7 @@ function BotsenMatch({ onBack, room, sessionId, joinCode }) {
       })
 
       const playing = room.state.phase === 'playing'
-      const meNow = room.state.players.get(sessionId)
+      const meNow = room.state.players?.get(sessionId)
       if (meNow && meNow.balloons !== stateRef.current.lastMyBalloons) {
         setBalloons(myBalloonMeshes, meNow.balloons); stateRef.current.lastMyBalloons = meNow.balloons
       }
