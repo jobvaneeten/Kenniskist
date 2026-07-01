@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import {
-  Engine, Scene, FollowCamera,
+  Engine, Scene, FollowCamera, TransformNode,
   HemisphericLight, DirectionalLight, ShadowGenerator,
   Vector3, Color3, Color4,
   MeshBuilder, StandardMaterial, DynamicTexture, ParticleSystem,
@@ -30,13 +30,13 @@ const CAR_RADIUS = 1.5
 const PLATEAU = { x: 0, z: -40, w: 22, d: 14, h: 4.2 }
 const RAMP_LEN = 16
 const OBSTACLES = [
-  { x: 20, z: 18, w: 8, d: 8, kind: 'rock' },
-  { x: -20, z: -6, w: 8, d: 8, kind: 'crate' },
-  { x: -22, z: 20, w: 7, d: 7, kind: 'rock' },
-  { x: 22, z: -6, w: 7, d: 7, kind: 'crate' },
-  { x: 0, z: 10, w: 9, d: 4, kind: 'rock' },
-  { x: 34, z: -28, w: 6, d: 6, kind: 'crate' },
-  { x: -34, z: 28, w: 6, d: 6, kind: 'rock' },
+  { x: 20, z: 18, w: 8, d: 8, color: '#e63946' },
+  { x: -20, z: -6, w: 8, d: 8, color: '#1d6fd0' },
+  { x: -22, z: 20, w: 7, d: 7, color: '#ffd23f' },
+  { x: 22, z: -6, w: 7, d: 7, color: '#2a9d8f' },
+  { x: 0, z: 10, w: 9, d: 4, color: '#9b5de5' },
+  { x: 34, z: -28, w: 6, d: 6, color: '#f4a261' },
+  { x: -34, z: 28, w: 6, d: 6, color: '#43aa8b' },
 ]
 const BALLOON_COLORS = ['#ff4d6d', '#ffd23f', '#4dd2ff']
 // Item-boxen: vaste plekken (MOET kloppen met de server BotsenRoom.ts) —
@@ -134,13 +134,83 @@ function makeShellMesh(scene, kind, fireTex) {
     core._fireParticles = ps
     return core
   }
-  const dome = MeshBuilder.CreateSphere('bshell', { diameter: 0.85, segments: 10, slice: 0.62 }, scene)
+  const dome = MeshBuilder.CreateSphere('bshell', { diameter: 0.9, segments: 14, slice: 0.62 }, scene)
   dome.scaling.y = 0.78
+  const tex = new DynamicTexture('bshellTex', { width: 128, height: 128 }, scene, false)
+  const tc = tex.getContext()
+  const g = tc.createRadialGradient(64, 44, 4, 64, 44, 76)
+  g.addColorStop(0, '#7CFF9E'); g.addColorStop(0.55, '#1FA648'); g.addColorStop(1, '#0B5B27')
+  tc.fillStyle = g; tc.fillRect(0, 0, 128, 128)
+  tc.strokeStyle = 'rgba(6,50,20,0.55)'; tc.lineWidth = 4
+  for (let i = 0; i < 3; i++) { tc.beginPath(); tc.arc(64, 128, 34 + i * 26, Math.PI, Math.PI * 2); tc.stroke() }
+  tc.strokeStyle = 'rgba(255,255,255,0.55)'; tc.lineWidth = 3
+  tc.beginPath(); tc.ellipse(64, 44, 46, 26, 0, 0, Math.PI * 2); tc.stroke()
+  tex.update()
   const m = new StandardMaterial('bshellm', scene)
-  m.diffuseColor = new Color3(0.18, 0.8, 0.32); m.emissiveColor = new Color3(0.08, 0.42, 0.16); m.specularColor = new Color3(0.5, 0.7, 0.5)
+  m.diffuseTexture = tex; m.emissiveColor = new Color3(0.08, 0.35, 0.14); m.specularColor = new Color3(0.7, 0.9, 0.7); m.specularPower = 24
   dome.material = m; dome.isPickable = false
+  // subtiel glinster-sparkeltje eromheen (minder druk dan het vuurtje)
+  const ps = new ParticleSystem('shellSparkle', 24, scene)
+  ps.particleTexture = fireTex
+  ps.emitter = dome
+  ps.minEmitBox = new Vector3(-0.3, -0.1, -0.3); ps.maxEmitBox = new Vector3(0.3, 0.3, 0.3)
+  ps.color1 = new Color4(0.6, 1, 0.7, 0.8); ps.color2 = new Color4(0.3, 0.9, 0.5, 0.6)
+  ps.colorDead = new Color4(0.2, 0.6, 0.3, 0)
+  ps.minSize = 0.12; ps.maxSize = 0.28
+  ps.minLifeTime = 0.2; ps.maxLifeTime = 0.4
+  ps.emitRate = 30
+  ps.blendMode = ParticleSystem.BLENDMODE_ADD
+  ps.direction1 = new Vector3(-0.3, 0.2, -0.3); ps.direction2 = new Vector3(0.3, 0.6, 0.3)
+  ps.minEmitPower = 0.1; ps.maxEmitPower = 0.3
+  ps.start()
+  dome._fireParticles = ps
   return dome
 }
+// ── Explosie: felle lichtflits + deeltjes-uitbarsting + een uitdovende
+//    ring die de schade-straal van de bom laat zien ──────────────────────
+function makeExplosion(scene, x, y, z, radius, fireTex) {
+  const burst = new ParticleSystem('boom', 140, scene)
+  burst.particleTexture = fireTex
+  burst.emitter = new Vector3(x, y + 0.3, z)
+  burst.minEmitBox = new Vector3(-0.2, -0.2, -0.2); burst.maxEmitBox = new Vector3(0.2, 0.2, 0.2)
+  burst.color1 = new Color4(1, 0.9, 0.4, 1); burst.color2 = new Color4(1, 0.4, 0.05, 1)
+  burst.colorDead = new Color4(0.3, 0.05, 0, 0)
+  burst.minSize = 0.6; burst.maxSize = 1.6
+  burst.minLifeTime = 0.25; burst.maxLifeTime = 0.55
+  burst.emitRate = 0
+  burst.manualEmitCount = 90
+  burst.blendMode = ParticleSystem.BLENDMODE_ADD
+  burst.direction1 = new Vector3(-1, 0.3, -1); burst.direction2 = new Vector3(1, 1.6, 1)
+  burst.minEmitPower = 3; burst.maxEmitPower = 9
+  burst.gravity = new Vector3(0, -2, 0)
+  burst.targetStopDuration = 0.15
+  burst.disposeOnStop = true
+  burst.start()
+
+  // ringen die uitdijen tot de echte schade-straal en dan vervagen
+  const rings = []
+  for (let i = 0; i < 2; i++) {
+    const ring = MeshBuilder.CreateTorus('boomRing' + i, { diameter: 0.6, thickness: 0.18, tessellation: 40 }, scene)
+    ring.position.set(x, y + 0.15, z); ring.rotation.x = Math.PI / 2
+    const rm = new StandardMaterial('boomRingM' + i, scene)
+    rm.emissiveColor = new Color3(1, 0.55, 0.1); rm.disableLighting = true; rm.alpha = 0.85
+    ring.material = rm
+    rings.push({ mesh: ring, delay: i * 0.08 })
+  }
+  return { rings, radius, t: 0, dur: 0.5 }
+}
+function stepExplosion(ex, dt) {
+  ex.t += dt
+  const p = Math.min(1, ex.t / ex.dur)
+  ex.rings.forEach(r => {
+    const rp = Math.min(1, Math.max(0, (ex.t - r.delay) / (ex.dur - r.delay)))
+    const d = 0.6 + rp * (ex.radius * 2 - 0.6)
+    r.mesh.scaling.setAll(d / 0.6)
+    r.mesh.material.alpha = 0.85 * (1 - rp)
+  })
+  return ex.t >= ex.dur
+}
+function disposeExplosion(ex) { ex.rings.forEach(r => r.mesh.dispose()) }
 function disposeShellMesh(mesh) {
   mesh._fireParticles?.stop(); mesh._fireParticles?.dispose()
   mesh.dispose()
@@ -183,15 +253,15 @@ function makeItemBox(scene, x, z) {
 // hex '#rrggbb' → [r,g,b] in 0..1
 function hexRgb(hex) { const c = Color3.FromHexString(hex); return [c.r, c.g, c.b] }
 
-// ── Arena bouwen: lucht + mist, gras, plateau+helling, natuurlijke
-//    obstakels (rots/kist), bomen/rotsen als rand-decor. Grens = ONZICHTBAAR
-//    (geen muur-mesh — alleen botsing), de mist verbergt waar de wereld
-//    "stopt" zodat het niet blokkerig aanvoelt. ──────────────────────────
+// ── Arena bouwen: alleen lucht (géén gras/bomen), fort-achtige gekleurde
+//    vloer + platform/helling, gekleurde kratten als dekking. Grens =
+//    ONZICHTBAAR (geen muur-mesh — alleen botsing); mist laat de vloer
+//    zachtjes in de lucht verdwijnen zodat het een zwevend eiland lijkt. ──
 function buildArena(scene, sg) {
   const half = ARENA_HALF
-  const skyTop = '#bfe6ff', skyBot = '#eefaff'
+  const skyTop = '#5fb0ff', skyBot = '#d8f0ff'
 
-  // Skydome met verticale gradient (zelfde aanpak als Karten)
+  // Skydome met verticale gradient
   const sky = MeshBuilder.CreateSphere('bsky', { diameter: (half + 160) * 2, segments: 16 }, scene)
   const skyTex = new DynamicTexture('bskyTex', { width: 8, height: 256 }, scene, false)
   const sx = skyTex.getContext()
@@ -203,37 +273,39 @@ function buildArena(scene, sg) {
   skyMat.diffuseColor = Color3.Black(); skyMat.specularColor = Color3.Black()
   sky.material = skyMat; sky.isPickable = false
   scene.clearColor = new Color4(...hexRgb(skyBot), 1)
-  scene.fogMode = Scene.FOGMODE_LINEAR; scene.fogStart = half + 20; scene.fogEnd = half + 95
+  // Mist vlak achter de speelgrens: de vloer "verdwijnt" in de lucht i.p.v.
+  // een harde rand — er is verder geen grond, dus je ziet er gewoon lucht.
+  scene.fogMode = Scene.FOGMODE_LINEAR; scene.fogStart = half - 6; scene.fogEnd = half + 22
   scene.fogColor = new Color3(...hexRgb(skyBot))
 
-  // Grasveld (groot, loopt door tot ver voorbij de onzichtbare grens)
-  const grass = MeshBuilder.CreateGround('bgrass', { width: (half + 130) * 2, height: (half + 130) * 2 }, scene)
-  const gMat = new StandardMaterial('bgMat', scene)
-  gMat.diffuseColor = new Color3(0.32, 0.62, 0.32); gMat.specularColor = Color3.Black()
-  grass.material = gMat; grass.receiveShadows = true; grass.position.y = -0.03
-
-  // Zandkleurige "arena-vloer" binnen de speelgrens (visueel onderscheid, geen muur)
+  // Fort-vloer: lichtgrijze platen met een subtiel paneel-patroon
+  const floorTex = new DynamicTexture('bfloorTex', { width: 256, height: 256 }, scene, false)
+  const fx = floorTex.getContext()
+  fx.fillStyle = '#c9cdd6'; fx.fillRect(0, 0, 256, 256)
+  fx.strokeStyle = '#a9aebb'; fx.lineWidth = 3
+  for (let i = 0; i <= 4; i++) { fx.beginPath(); fx.moveTo(i * 64, 0); fx.lineTo(i * 64, 256); fx.stroke(); fx.beginPath(); fx.moveTo(0, i * 64); fx.lineTo(256, i * 64); fx.stroke() }
+  floorTex.update(); floorTex.wrapU = floorTex.wrapV = 1; floorTex.uScale = floorTex.vScale = half / 4
   const floor = MeshBuilder.CreateGround('bfloor', { width: half * 2, height: half * 2 }, scene)
   const fMat = new StandardMaterial('bfloorMat', scene)
-  fMat.diffuseColor = new Color3(0.78, 0.68, 0.46); fMat.specularColor = Color3.Black()
+  fMat.diffuseTexture = floorTex; fMat.specularColor = Color3.Black()
   floor.material = fMat; floor.receiveShadows = true; floor.position.y = -0.015
 
   // vloerlijnen (cirkel-patroon, decoratief)
   const ringMat = new StandardMaterial('bringMat', scene)
-  ringMat.diffuseColor = new Color3(0.66, 0.56, 0.36); ringMat.specularColor = Color3.Black()
+  ringMat.diffuseColor = new Color3(0.55, 0.6, 0.68); ringMat.specularColor = Color3.Black()
   for (let r = 12; r < half; r += 12) {
     const ring = MeshBuilder.CreateTorus('bring' + r, { diameter: r * 2, thickness: 0.22, tessellation: 56 }, scene)
     ring.rotation.x = Math.PI / 2; ring.position.y = 0.01; ring.material = ringMat; ring.isPickable = false
   }
 
-  // ── Plateau + helling (beklimbaar, hoogte via heightAt()) ──
-  const rockMat = new StandardMaterial('bplatMat', scene)
-  rockMat.diffuseColor = new Color3(0.5, 0.47, 0.44); rockMat.specularColor = new Color3(0.1, 0.1, 0.1)
+  // ── Plateau + helling (beklimbaar, hoogte via heightAt()) — fort-rood ──
+  const platMat = new StandardMaterial('bplatMat', scene)
+  platMat.diffuseColor = Color3.FromHexString('#e63946'); platMat.specularColor = new Color3(0.2, 0.2, 0.2)
   const topMat = new StandardMaterial('bplatTopMat', scene)
-  topMat.diffuseColor = new Color3(0.42, 0.66, 0.36); topMat.specularColor = Color3.Black()
+  topMat.diffuseColor = Color3.FromHexString('#ff8a94'); topMat.specularColor = Color3.Black()
   const { x: px, z: pz, w: pw, d: pd, h: ph } = PLATEAU
   const plat = MeshBuilder.CreateBox('bplateau', { width: pw, height: ph, depth: pd }, scene)
-  plat.position.set(px, ph / 2, pz); plat.material = rockMat
+  plat.position.set(px, ph / 2, pz); plat.material = platMat
   plat.receiveShadows = true; sg.addShadowCaster(plat)
   const platTop = MeshBuilder.CreateGround('bplateauTop', { width: pw, height: pd }, scene)
   platTop.position.set(px, ph + 0.01, pz); platTop.material = topMat; platTop.receiveShadows = true
@@ -241,11 +313,13 @@ function buildArena(scene, sg) {
   const rampSlopeLen = Math.hypot(RAMP_LEN, ph)
   const ramp = MeshBuilder.CreateBox('bramp', { width: pw, height: 0.6, depth: rampSlopeLen }, scene)
   ramp.position.set(px, ph / 2, rampZ0 + RAMP_LEN / 2)
-  ramp.rotation.x = -Math.atan2(ph, RAMP_LEN)
-  ramp.material = rockMat; ramp.receiveShadows = true; sg.addShadowCaster(ramp)
+  // Positieve X-rotatie tilt (in Babylon's linkshandige systeem) het verre
+  // uiteinde (grootste z) omlaag naar de grond — het plateau-uiteinde blijft hoog.
+  ramp.rotation.x = Math.atan2(ph, RAMP_LEN)
+  ramp.material = platMat; ramp.receiveShadows = true; sg.addShadowCaster(ramp)
   // leuningen langs de helling + plateau-rand (visueel, volgt de botsing)
   const railMat = new StandardMaterial('bplatRailMat', scene)
-  railMat.diffuseColor = new Color3(0.9, 0.6, 0.2); railMat.specularColor = new Color3(0.3, 0.3, 0.3)
+  railMat.diffuseColor = Color3.FromHexString('#ffd23f'); railMat.specularColor = new Color3(0.3, 0.3, 0.3)
   plateauWalls().forEach((seg, i) => {
     const railH = 0.9
     const rail = MeshBuilder.CreateBox('brail' + i, { width: seg.hw * 2 * 0.9, height: railH, depth: seg.hd * 2 * 0.9 }, scene)
@@ -255,62 +329,24 @@ function buildArena(scene, sg) {
     rail.position.set(seg.x, y + railH / 2, midZ); rail.material = railMat
   })
 
-  // ── Natuurlijke obstakels: rotsblokken of houten kisten ──
-  const crateTex = new DynamicTexture('bcrateTex', { width: 64, height: 64 }, scene, false)
-  const ctx = crateTex.getContext()
-  ctx.fillStyle = '#a9702f'; ctx.fillRect(0, 0, 64, 64)
-  ctx.strokeStyle = '#6b4720'; ctx.lineWidth = 4
-  ctx.strokeRect(2, 2, 60, 60); ctx.beginPath(); ctx.moveTo(2, 2); ctx.lineTo(62, 62); ctx.moveTo(62, 2); ctx.lineTo(2, 62); ctx.stroke()
-  crateTex.update()
-  const crateMat = new StandardMaterial('bcrateMat', scene)
-  crateMat.diffuseTexture = crateTex; crateMat.specularColor = new Color3(0.1, 0.1, 0.1)
-  const obsRockMat = new StandardMaterial('bobsRockMat', scene)
-  obsRockMat.diffuseColor = new Color3(0.48, 0.46, 0.44); obsRockMat.specularColor = Color3.Black()
-
+  // ── Obstakels: gekleurde fort-kratten (metaal-paneel-look) ──
   const boxes = []
   OBSTACLES.forEach((o, i) => {
-    if (o.kind === 'crate') {
-      const h = 2.6
-      const box = MeshBuilder.CreateBox('bobs' + i, { width: o.w, height: h, depth: o.d }, scene)
-      box.position.set(o.x, h / 2, o.z); box.material = crateMat
-      box.receiveShadows = true; sg.addShadowCaster(box)
-    } else {
-      // rotscluster: een paar onregelmatige polyhedra samen (minder blokkerig dan een kubus)
-      const cx = o.x, cz = o.z, n = 3
-      for (let k = 0; k < n; k++) {
-        const s = Math.max(o.w, o.d) * (0.42 + Math.random() * 0.22)
-        const rock = MeshBuilder.CreatePolyhedron('bobsRock' + i + '_' + k, { type: Math.floor(Math.random() * 3), size: s * 0.5 }, scene)
-        rock.position.set(cx + (Math.random() - 0.5) * o.w * 0.5, s * 0.3, cz + (Math.random() - 0.5) * o.d * 0.5)
-        rock.rotation.set(Math.random() * 3, Math.random() * 6, Math.random() * 3)
-        rock.material = obsRockMat; rock.receiveShadows = true; sg.addShadowCaster(rock)
-      }
-    }
+    const h = 2.6
+    const tex = new DynamicTexture('bcrateTex' + i, { width: 64, height: 64 }, scene, false)
+    const ctx = tex.getContext()
+    ctx.fillStyle = o.color; ctx.fillRect(0, 0, 64, 64)
+    ctx.strokeStyle = 'rgba(0,0,0,0.35)'; ctx.lineWidth = 5
+    ctx.strokeRect(2, 2, 60, 60)
+    ctx.beginPath(); ctx.moveTo(32, 2); ctx.lineTo(32, 62); ctx.moveTo(2, 32); ctx.lineTo(62, 32); ctx.stroke()
+    tex.update()
+    const mat = new StandardMaterial('bcrateMat' + i, scene)
+    mat.diffuseTexture = tex; mat.specularColor = new Color3(0.25, 0.25, 0.25)
+    const box = MeshBuilder.CreateBox('bobs' + i, { width: o.w, height: h, depth: o.d }, scene)
+    box.position.set(o.x, h / 2, o.z); box.material = mat
+    box.receiveShadows = true; sg.addShadowCaster(box)
     boxes.push({ x: o.x, z: o.z, hw: o.w / 2, hd: o.d / 2 })
   })
-
-  // ── Rand-decor: bomen + rotsen net buiten de (onzichtbare) grens ──
-  const trunkMat = new StandardMaterial('btrunkMat', scene)
-  trunkMat.diffuseColor = new Color3(0.4, 0.26, 0.13); trunkMat.specularColor = Color3.Black()
-  const leafMat = new StandardMaterial('bleafMat', scene)
-  leafMat.diffuseColor = new Color3(0.22, 0.5, 0.24); leafMat.specularColor = Color3.Black()
-  const decoRockMat = new StandardMaterial('bdecoRockMat', scene)
-  decoRockMat.diffuseColor = new Color3(0.5, 0.48, 0.45); decoRockMat.specularColor = Color3.Black()
-  for (let i = 0; i < 70; i++) {
-    const a = Math.random() * Math.PI * 2, r = half + 6 + Math.random() * 55
-    const x = Math.cos(a) * r, z = Math.sin(a) * r
-    if (Math.random() < 0.7) {
-      const s = 0.9 + Math.random() * 1.1
-      const trunk = MeshBuilder.CreateCylinder('btr' + i, { height: 2.2 * s, diameter: 0.6 * s, tessellation: 6 }, scene)
-      trunk.material = trunkMat; trunk.position.set(x, 1.1 * s, z)
-      const leaves = MeshBuilder.CreateCylinder('blf' + i, { height: 4.2 * s, diameterTop: 0, diameterBottom: 3.2 * s, tessellation: 8 }, scene)
-      leaves.material = leafMat; leaves.position.set(x, 4.2 * s, z)
-    } else {
-      const s = 1.2 + Math.random() * 2.4
-      const rock = MeshBuilder.CreatePolyhedron('bdr' + i, { type: Math.floor(Math.random() * 4), size: s }, scene)
-      rock.material = decoRockMat; rock.position.set(x, s * 0.5, z)
-      rock.rotation.set(Math.random(), Math.random() * 6, Math.random())
-    }
-  }
 
   // ── Onzichtbare grens (alleen botsing, geen mesh) ──
   const invisWalls = [
@@ -348,12 +384,14 @@ function collideBoxes(pos, r, boxes) {
 
 function BotsenMatch({ onBack, room, sessionId, joinCode }) {
   const canvasRef = useRef(null)
+  const minimapRef = useRef(null)
   const [phase, setPhase] = useState('lobby')       // lobby | countdown | playing | gameover
   const [count, setCount] = useState(3)
   const [timeLeft, setTimeLeft] = useState(0)
   const [aliveCount, setAliveCount] = useState(0)
   const [myBalloons, setMyBalloons] = useState(3)
   const [amAlive, setAmAlive] = useState(true)
+  const [amStunned, setAmStunned] = useState(false)
   const [heldItem, setHeldItem] = useState('')
   const [heldCount, setHeldCount] = useState(0)
   const [winnerName, setWinnerName] = useState('')
@@ -379,16 +417,22 @@ function BotsenMatch({ onBack, room, sessionId, joinCode }) {
     const fireTex = makeFireTexture(scene)
 
     // ── Eigen kart + avatar ──
+    // "outer" = positie/richting voor besturing + camera (blijft stabiel).
+    // "kartRoot" (kind) = puur visueel; tolt los tijdens een treffer zonder
+    // dat de camera meedraait — je scherm blijft dus rustig, alleen je
+    // autootje met poppetje tolt even rond.
     const myP = room.state.players?.get(sessionId)
     const myColor = KART_COLORS[(myP?.grid ?? 0) % KART_COLORS.length]
+    const outer = new TransformNode('outerMe', scene)
+    outer.position.set(myP?.x ?? 0, heightAt(myP?.x ?? 0, myP?.z ?? 0), myP?.z ?? 0)
+    outer.rotation.y = myP?.rotY ?? 0
     const { root: kartRoot, wheels } = buildKart(scene, myColor, 'me')
-    kartRoot.position.set(myP?.x ?? 0, heightAt(myP?.x ?? 0, myP?.z ?? 0), myP?.z ?? 0)
-    kartRoot.rotation.y = myP?.rotY ?? 0
+    kartRoot.parent = outer
     const myBalloonMeshes = buildBalloons(scene, 'me')
     myBalloonMeshes.forEach(b => { b.parent = kartRoot })
 
     const cam = new FollowCamera('cam', new Vector3(0, 6, -12), scene)
-    cam.lockedTarget = kartRoot
+    cam.lockedTarget = outer
     cam.radius = 9; cam.heightOffset = 3.4; cam.rotationOffset = 180
     cam.cameraAcceleration = 0.06; cam.maxCameraSpeed = 40
 
@@ -399,16 +443,18 @@ function BotsenMatch({ onBack, room, sessionId, joinCode }) {
       av.getChildMeshes?.(false).forEach(m => sg.addShadowCaster(m))
     })
 
-    // ── Remote karts ──
+    // ── Remote karts (ook outer/visual gesplitst, voor dezelfde tol-animatie) ──
     const remotes = new Map()
     const makeRemote = (sid, p) => {
       const col = KART_COLORS[(p.grid ?? 0) % KART_COLORS.length]
+      const outerR = new TransformNode('outer_r' + sid, scene)
+      outerR.position.set(p.x || 0, heightAt(p.x || 0, p.z || 0), p.z || 0)
+      outerR.rotation.y = p.rotY || 0
       const built = buildKart(scene, col, 'r' + sid)
-      built.root.position.set(p.x || 0, heightAt(p.x || 0, p.z || 0), p.z || 0)
-      built.root.rotation.y = p.rotY || 0
+      built.root.parent = outerR
       const balloons = buildBalloons(scene, 'r' + sid)
       balloons.forEach(b => { b.parent = built.root })
-      const ent = { root: built.root, wheels: built.wheels, balloons, tx: built.root.position.x, tz: built.root.position.z, trot: built.root.rotation.y, tvel: 0, lastBalloons: 3 }
+      const ent = { outer: outerR, visual: built.root, wheels: built.wheels, balloons, tx: outerR.position.x, tz: outerR.position.z, trot: outerR.rotation.y, tvel: 0, lastBalloons: 3, lastHitSeq: p.hitSeq ?? 0 }
       loadAvatar(scene, p.shirt || '', safeJSON(p.wearing), (av) => {
         av.parent = built.root; av.position.set(0, AV_Y, AV_Z); av.rotation = new Vector3(0, Math.PI, 0)
         av.getChildMeshes?.(false).forEach(m => sg.addShadowCaster(m))
@@ -465,6 +511,13 @@ function BotsenMatch({ onBack, room, sessionId, joinCode }) {
     sync(room.state)
     room.onStateChange(sync)
 
+    // ── Bom-explosies: server stuurt een los bericht zodra een bom afgaat,
+    //    zodat we een lichtflits + schade-straal-ring kunnen tonen. ──
+    const explosions = []
+    room.onMessage('bombBoom', (msg) => {
+      explosions.push(makeExplosion(scene, msg.x, heightAt(msg.x, msg.z) + 0.2, msg.z, msg.r, fireTex))
+    })
+
     // ── Render/physics-loop ──
     let lastT = performance.now()
     engine.runRenderLoop(() => {
@@ -476,22 +529,31 @@ function BotsenMatch({ onBack, room, sessionId, joinCode }) {
         if (sid === sessionId) return
         let e = remotes.get(sid)
         if (!e) { makeRemote(sid, p); e = remotes.get(sid) }
-        e.tx = p.x; e.tz = p.z; e.trot = p.rotY; e.tvel = p.vel
+        e.tx = p.x; e.tz = p.z; e.trot = p.rotY; e.tvel = p.vel; e.stunTime = p.stunTime
         if (p.balloons !== e.lastBalloons) { setBalloons(e.balloons, p.balloons); e.lastBalloons = p.balloons }
-        e.root.setEnabled(p.alive)
+        e.outer.setEnabled(p.alive)
       })
       for (const sid of [...remotes.keys()]) {
-        if (!room.state.players?.get(sid)) { remotes.get(sid).root.dispose(); remotes.delete(sid) }
+        if (!room.state.players?.get(sid)) { remotes.get(sid).outer.dispose(); remotes.delete(sid) }
       }
       const k = Math.min(1, dt * 12)
       remotes.forEach(e => {
-        e.root.position.x += (e.tx - e.root.position.x) * k
-        e.root.position.z += (e.tz - e.root.position.z) * k
-        e.root.position.y = heightAt(e.root.position.x, e.root.position.z)
-        let dr = e.trot - e.root.rotation.y
+        e.outer.position.x += (e.tx - e.outer.position.x) * k
+        e.outer.position.z += (e.tz - e.outer.position.z) * k
+        e.outer.position.y = heightAt(e.outer.position.x, e.outer.position.z)
+        let dr = e.trot - e.outer.rotation.y
         while (dr > Math.PI) dr -= Math.PI * 2; while (dr < -Math.PI) dr += Math.PI * 2
-        e.root.rotation.y += dr * k
+        e.outer.rotation.y += dr * k
         e.wheels.forEach(w => { w.rotation.x += e.tvel * dt * 3 })
+        // Tol-animatie + knipperende onkwetsbaarheid, los van de (stabiele) outer-rotatie
+        if (e.stunTime > 0) {
+          e.visual.rotation.y += 16 * dt
+          const blink = Math.floor(now / 90) % 2 === 0
+          e.visual.getChildMeshes(false).forEach(m => { m.visibility = blink ? 1 : 0.35 })
+        } else if (e.visual.rotation.y !== 0) {
+          e.visual.rotation.y = 0
+          e.visual.getChildMeshes(false).forEach(m => { m.visibility = 1 })
+        }
       })
 
       const playing = room.state.phase === 'playing'
@@ -499,8 +561,23 @@ function BotsenMatch({ onBack, room, sessionId, joinCode }) {
       if (meNow && meNow.balloons !== stateRef.current.lastMyBalloons) {
         setBalloons(myBalloonMeshes, meNow.balloons); stateRef.current.lastMyBalloons = meNow.balloons
       }
+      const stunned = (meNow?.stunTime ?? 0) > 0
+      setAmStunned(stunned)
 
-      if (playing && meNow?.alive) {
+      if (stunned) {
+        // Getroffen: even geen besturing, autootje+poppetje tolt los rond
+        // (de camera/outer staat stil — je scherm blijft dus rustig) en je
+        // knippert als teken dat je nu onkwetsbaar bent.
+        phys.vel = 0
+        kartRoot.rotation.y += 16 * dt
+        const blink = Math.floor(now / 90) % 2 === 0
+        kartRoot.getChildMeshes(false).forEach(m => { m.visibility = blink ? 1 : 0.35 })
+      } else if (kartRoot.rotation.y !== 0) {
+        kartRoot.rotation.y = 0
+        kartRoot.getChildMeshes(false).forEach(m => { m.visibility = 1 })
+      }
+
+      if (playing && meNow?.alive && !stunned) {
         const gas   = keys['w'] || keys['arrowup']
         const brake = keys['s'] || keys['arrowdown']
         const left  = keys['a'] || keys['arrowleft']
@@ -515,26 +592,26 @@ function BotsenMatch({ onBack, room, sessionId, joinCode }) {
         // geen racewagen-traagheid nodig in een kleine arena).
         const steer = (right ? 1 : 0) - (left ? 1 : 0)
         phys.heading += steer * phys.turnSpeed * dt
-        kartRoot.rotation.y = phys.heading
+        outer.rotation.y = phys.heading
 
         const fwd = new Vector3(Math.sin(phys.heading), 0, Math.cos(phys.heading))
-        kartRoot.position.addInPlace(fwd.scale(phys.vel * dt))
+        outer.position.addInPlace(fwd.scale(phys.vel * dt))
 
         // Arena-grenzen + obstakels
-        collideBoxes(kartRoot.position, CAR_RADIUS, arena.boxes)
-        kartRoot.position.y = heightAt(kartRoot.position.x, kartRoot.position.z)
+        collideBoxes(outer.position, CAR_RADIUS, arena.boxes)
+        outer.position.y = heightAt(outer.position.x, outer.position.z)
 
         // Botsing met andere karts (beuken)
         remotes.forEach(e => {
-          if (!e.root.isEnabled()) return
-          let dx = kartRoot.position.x - e.root.position.x
-          let dz = kartRoot.position.z - e.root.position.z
+          if (!e.outer.isEnabled()) return
+          let dx = outer.position.x - e.outer.position.x
+          let dz = outer.position.z - e.outer.position.z
           const d = Math.hypot(dx, dz), BUMP = 1.6 * 2
           if (d > 0.001 && d < BUMP) {
             const overlap = BUMP - d
             dx /= d; dz /= d
-            kartRoot.position.x += dx * overlap * 0.5
-            kartRoot.position.z += dz * overlap * 0.5
+            outer.position.x += dx * overlap * 0.5
+            outer.position.z += dz * overlap * 0.5
             phys.vel *= 0.7
           }
         })
@@ -544,7 +621,7 @@ function BotsenMatch({ onBack, room, sessionId, joinCode }) {
         phys.sendAcc += dt
         if (phys.sendAcc >= 0.04) {
           phys.sendAcc = 0
-          room.send('state', { x: kartRoot.position.x, z: kartRoot.position.z, rotY: phys.heading, vel: phys.vel })
+          room.send('state', { x: outer.position.x, z: outer.position.z, rotY: phys.heading, vel: phys.vel })
         }
       }
 
@@ -576,6 +653,40 @@ function BotsenMatch({ onBack, room, sessionId, joinCode }) {
         m.position.y = heightAt(box.x, box.z) + 1.05 + Math.sin(now / 400 + i) * 0.15
         m.setEnabled(box.active)
       })
+
+      // Bom-explosies: ring laten uitdijen tot de schade-straal, dan opruimen
+      for (let i = explosions.length - 1; i >= 0; i--) {
+        if (stepExplosion(explosions[i], dt)) { disposeExplosion(explosions[i]); explosions.splice(i, 1) }
+      }
+
+      // Minimap: mezelf in het midden (vast), tegenstanders als stip relatief
+      // aan mijn positie — wereld-noord-boven (niet mee-roterend).
+      const mm = minimapRef.current
+      if (mm) {
+        const mctx = mm.getContext('2d')
+        const S = mm.width, R = S / 2, RANGE = 60
+        mctx.clearRect(0, 0, S, S)
+        mctx.fillStyle = 'rgba(10,10,20,0.55)'
+        mctx.beginPath(); mctx.arc(R, R, R - 2, 0, Math.PI * 2); mctx.fill()
+        mctx.strokeStyle = 'rgba(255,255,255,0.35)'; mctx.lineWidth = 2
+        mctx.beginPath(); mctx.arc(R, R, R - 2, 0, Math.PI * 2); mctx.stroke()
+        room.state.players?.forEach((p, sid) => {
+          if (sid === sessionId || !p.alive) return
+          const dx = p.x - outer.position.x, dz = p.z - outer.position.z
+          const d = Math.hypot(dx, dz) || 0.0001
+          const clamped = Math.min(d, RANGE) * ((R - 8) / RANGE)
+          const mx = R + (dx / d) * clamped
+          const my = R + (dz / d) * clamped
+          mctx.fillStyle = p.isBot ? '#ff8a3d' : '#ff4d6d'
+          mctx.beginPath(); mctx.arc(mx, my, 5, 0, Math.PI * 2); mctx.fill()
+          mctx.strokeStyle = 'rgba(0,0,0,0.5)'; mctx.lineWidth = 1; mctx.stroke()
+        })
+        // eigen kart: vaste pijl in het midden, wijst de rijrichting op
+        mctx.save(); mctx.translate(R, R); mctx.rotate(outer.rotation.y)
+        mctx.fillStyle = '#4dd2ff'
+        mctx.beginPath(); mctx.moveTo(0, -7); mctx.lineTo(5, 6); mctx.lineTo(-5, 6); mctx.closePath(); mctx.fill()
+        mctx.restore()
+      }
 
       scene.render()
     })
@@ -621,7 +732,12 @@ function BotsenMatch({ onBack, room, sessionId, joinCode }) {
           <div className="botsen-hud-balloons">
             {[0, 1, 2].map(i => <span key={i} className={i < myBalloons ? '' : 'popped'}>🎈</span>)}
           </div>
+          <canvas ref={minimapRef} className="botsen-minimap" width={140} height={140} />
         </div>
+      )}
+
+      {phase === 'playing' && amStunned && (
+        <div className="botsen-stunned">😵 Tollen… even onkwetsbaar!</div>
       )}
 
       {phase === 'countdown' && <div className="botsen-count">{count > 0 ? count : 'GO!'}</div>}
