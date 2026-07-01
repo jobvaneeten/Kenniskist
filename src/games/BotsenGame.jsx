@@ -659,8 +659,9 @@ function BotsenMatch({ onBack, room, sessionId, joinCode }) {
         if (stepExplosion(explosions[i], dt)) { disposeExplosion(explosions[i]); explosions.splice(i, 1) }
       }
 
-      // Minimap: mezelf in het midden (vast), tegenstanders als stip relatief
-      // aan mijn positie — wereld-noord-boven (niet mee-roterend).
+      // Minimap: "heading-up" — mijn pijl staat altijd vast rechtop (dat ben
+      // ik, ik kijk omhoog op de kaart) en de tegenstanders draaien om mij
+      // heen mee met mijn rijrichting, i.p.v. andersom.
       const mm = minimapRef.current
       if (mm) {
         const mctx = mm.getContext('2d')
@@ -670,22 +671,25 @@ function BotsenMatch({ onBack, room, sessionId, joinCode }) {
         mctx.beginPath(); mctx.arc(R, R, R - 2, 0, Math.PI * 2); mctx.fill()
         mctx.strokeStyle = 'rgba(255,255,255,0.35)'; mctx.lineWidth = 2
         mctx.beginPath(); mctx.arc(R, R, R - 2, 0, Math.PI * 2); mctx.stroke()
+        // Mijn eigen kijkrichting als lokaal assenstelsel: "voor" en "rechts".
+        const fxv = Math.sin(outer.rotation.y), fzv = Math.cos(outer.rotation.y)
+        const rxv = fzv, rzv = -fxv
         room.state.players?.forEach((p, sid) => {
           if (sid === sessionId || !p.alive) return
           const dx = p.x - outer.position.x, dz = p.z - outer.position.z
-          const d = Math.hypot(dx, dz) || 0.0001
+          const lf = dx * fxv + dz * fzv   // hoe ver vóór mij
+          const lr = dx * rxv + dz * rzv   // hoe ver rechts van mij
+          const d = Math.hypot(lf, lr) || 0.0001
           const clamped = Math.min(d, RANGE) * ((R - 8) / RANGE)
-          const mx = R + (dx / d) * clamped
-          const my = R + (dz / d) * clamped
+          const mx = R + (lr / d) * clamped
+          const my = R - (lf / d) * clamped   // "vóór mij" = omhoog op de kaart
           mctx.fillStyle = p.isBot ? '#ff8a3d' : '#ff4d6d'
           mctx.beginPath(); mctx.arc(mx, my, 5, 0, Math.PI * 2); mctx.fill()
           mctx.strokeStyle = 'rgba(0,0,0,0.5)'; mctx.lineWidth = 1; mctx.stroke()
         })
-        // eigen kart: vaste pijl in het midden, wijst de rijrichting op
-        mctx.save(); mctx.translate(R, R); mctx.rotate(outer.rotation.y)
+        // eigen kart: vaste pijl, wijst altijd recht omhoog (jij kijkt altijd "boven" op de kaart)
         mctx.fillStyle = '#4dd2ff'
-        mctx.beginPath(); mctx.moveTo(0, -7); mctx.lineTo(5, 6); mctx.lineTo(-5, 6); mctx.closePath(); mctx.fill()
-        mctx.restore()
+        mctx.beginPath(); mctx.moveTo(R, R - 7); mctx.lineTo(R + 5, R + 6); mctx.lineTo(R - 5, R + 6); mctx.closePath(); mctx.fill()
       }
 
       scene.render()
