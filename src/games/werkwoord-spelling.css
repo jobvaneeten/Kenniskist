@@ -45,8 +45,9 @@
 @keyframes ws-float  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
 @keyframes ws-bounce { from{transform:scale(1)} to{transform:scale(1.12)} }
 .ws-title {
-  font-size: clamp(1.8rem, 5vw, 2.6rem);
-  font-weight: 900;
+  font-family: var(--kk-head, 'Nunito', sans-serif);
+  font-size: clamp(1.85rem, 5vw, 2.6rem);
+  font-weight: 800;
   margin: 0;
   background: linear-gradient(135deg, #e9a8f5, #a78bfa, #f0abfc);
   -webkit-background-clip: text;

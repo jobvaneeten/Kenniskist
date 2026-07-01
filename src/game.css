@@ -73,9 +73,10 @@
   50%     { transform: translateY(-8px) rotate(4deg); }
 }
 .game-header-title {
-  font-size: 2.8rem;
-  font-weight: 900;
-  letter-spacing: -1px;
+  font-family: var(--kk-head);
+  font-size: 2.9rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
   background: linear-gradient(100deg, #fff 0%, #ffe9a8 30%, #fff 50%, #d6c4ff 70%, #fff 100%);
   background-size: 220% auto;
   -webkit-background-clip: text;
@@ -154,8 +155,9 @@
   text-align: right;
 }
 .year-num {
-  font-size: 3rem;
-  font-weight: 900;
+  font-family: var(--kk-head);
+  font-size: 3.1rem;
+  font-weight: 800;
   line-height: 1;
   padding: 14px 16px;
   color: #fff;
@@ -246,15 +248,16 @@
   filter: drop-shadow(0 3px 8px rgba(0,0,0,0.4));
 }
 .subject-label {
-  font-size: 1rem;
-  font-weight: 900;
+  font-family: var(--kk-head);
+  font-size: 1.05rem;
+  font-weight: 700;
   text-align: center;
   color: color-mix(in srgb, var(--sc) 90%, #fff);
 }
 .subject-tag {
   font-size: 0.68rem;
   font-weight: 700;
-  color: rgba(255,255,255,0.35);
+  color: var(--kk-text-faint);
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -292,8 +295,8 @@
 }
 .mode-card:active { transform: scale(0.97); }
 .mode-emoji { font-size: 3rem; line-height: 1; }
-.mode-name  { font-size: 1.1rem; font-weight: 900; text-align: center; max-width: 100%; line-height: 1.15; overflow-wrap: break-word; word-break: break-word; }
-.mode-desc  { font-size: 0.75rem; color: rgba(255,255,255,0.4); font-weight: 600; text-align: center; }
+.mode-name  { font-family: var(--kk-head); font-size: 1.15rem; font-weight: 700; text-align: center; max-width: 100%; line-height: 1.15; overflow-wrap: break-word; word-break: break-word; }
+.mode-desc  { font-size: 0.78rem; color: var(--kk-text-soft); font-weight: 600; text-align: center; }
 
 /* ── Begrijpend Lezen: thema-kaarten ─────── */
 .bl-thema-grid { flex-wrap: wrap; justify-content: center; }
@@ -457,8 +460,8 @@
 }
 .free-game-card:active { transform: scale(0.97); }
 .free-game-emoji { font-size: 2rem; line-height: 1; }
-.free-game-name  { font-size: 0.9rem; font-weight: 900; text-align: center; }
-.free-game-desc  { font-size: 0.68rem; color: rgba(255,255,255,0.38); font-weight: 600; text-align: center; }
+.free-game-name  { font-family: var(--kk-head); font-size: 0.95rem; font-weight: 700; text-align: center; }
+.free-game-desc  { font-size: 0.72rem; color: var(--kk-text-soft); font-weight: 600; text-align: center; }
 
 /* ── Game placeholder ───────────────────── */
 .game-placeholder {
@@ -476,8 +479,8 @@
               inset 0 1px 0 rgba(255,255,255,0.06);
 }
 .gp-emoji { font-size: 4rem; line-height: 1; }
-.gp-title { font-size: 1.8rem; font-weight: 900; margin: 0; letter-spacing: -0.5px; }
-.gp-sub   { font-size: 0.85rem; color: rgba(255,255,255,0.35); font-weight: 700; margin: 0; text-transform: uppercase; letter-spacing: 0.08em; }
+.gp-title { font-family: var(--kk-head); font-size: 1.85rem; font-weight: 800; margin: 0; letter-spacing: -0.3px; }
+.gp-sub   { font-size: 0.85rem; color: var(--kk-text-faint); font-weight: 700; margin: 0; text-transform: uppercase; letter-spacing: 0.08em; }
 .gp-soon-badge {
   background: rgba(255,255,255,0.06);
   border: 1.5px solid rgba(255,255,255,0.14);

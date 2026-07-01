@@ -278,7 +278,7 @@ export default function App() {
         <span className="orb orb-4" />
       </div>
       <div className="floaties" aria-hidden="true">
-        {['🚀','⭐','🎮','✏️','🔢','📚','🏆','🎨'].map((e, i) => (
+        {['🚀','⭐','🎮','✏️','🔢','📚','🏆','🎨','🧮','🌟','🎈','🪁'].map((e, i) => (
           <span key={i} className={`floaty floaty-${i + 1}`}>{e}</span>
         ))}
       </div>

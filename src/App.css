@@ -65,19 +65,23 @@ body::after {
 .floaties { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
 .floaty {
   position: absolute;
-  font-size: 1.8rem;
-  opacity: 0.16;
-  filter: drop-shadow(0 4px 10px rgba(0,0,0,0.4));
+  font-size: 2rem;
+  opacity: 0.42;
+  filter: drop-shadow(0 6px 14px rgba(0,0,0,0.45)) drop-shadow(0 0 18px rgba(124,58,237,0.25));
   animation: bobfloat 9s ease-in-out infinite;
 }
-.floaty-1 { top: 12%; left: 8%;  animation-delay: 0s;   font-size: 2.2rem; }
-.floaty-2 { top: 22%; right: 10%; animation-delay: 1.2s; }
-.floaty-3 { top: 46%; left: 5%;  animation-delay: 2.4s; font-size: 2.4rem; }
-.floaty-4 { top: 64%; right: 7%;  animation-delay: 0.8s; }
-.floaty-5 { top: 78%; left: 14%; animation-delay: 3.1s; font-size: 2rem; }
-.floaty-6 { top: 36%; right: 16%; animation-delay: 1.8s; font-size: 2.3rem; }
-.floaty-7 { top: 86%; right: 22%; animation-delay: 2.7s; }
-.floaty-8 { top: 8%;  left: 40%;  animation-delay: 3.6s; }
+.floaty-1  { top: 11%; left: 7%;   animation-delay: 0s;   font-size: 2.5rem; }
+.floaty-2  { top: 20%; right: 9%;  animation-delay: 1.2s; font-size: 2.2rem; }
+.floaty-3  { top: 45%; left: 4%;   animation-delay: 2.4s; font-size: 2.7rem; }
+.floaty-4  { top: 63%; right: 6%;  animation-delay: 0.8s; font-size: 2.3rem; }
+.floaty-5  { top: 80%; left: 12%;  animation-delay: 3.1s; font-size: 2.2rem; }
+.floaty-6  { top: 34%; right: 14%; animation-delay: 1.8s; font-size: 2.5rem; }
+.floaty-7  { top: 88%; right: 20%; animation-delay: 2.7s; font-size: 2.1rem; }
+.floaty-8  { top: 7%;  left: 38%;  animation-delay: 3.6s; font-size: 2rem; }
+.floaty-9  { top: 55%; right: 4%;  animation-delay: 1.5s; font-size: 2.1rem; }
+.floaty-10 { top: 72%; left: 3%;   animation-delay: 4.2s; font-size: 2.3rem; }
+.floaty-11 { top: 15%; right: 30%; animation-delay: 2.1s; font-size: 1.9rem; }
+.floaty-12 { top: 92%; left: 44%;  animation-delay: 0.4s; font-size: 2.2rem; }
 @keyframes bobfloat {
   0%,100% { transform: translateY(0) rotate(-6deg); }
   50%     { transform: translateY(-22px) rotate(8deg); }
@@ -126,9 +130,10 @@ body::after {
 }
 
 .logo-title {
-  font-size: clamp(1.7rem, 7vw, 3.6rem);
-  font-weight: 900;
-  letter-spacing: -2px;
+  font-family: var(--kk-head);
+  font-size: clamp(1.9rem, 7.4vw, 3.8rem);
+  font-weight: 800;
+  letter-spacing: -1px;
   background: linear-gradient(100deg, #fff 0%, #ffe9a8 30%, #fff 50%, #d6c4ff 70%, #fff 100%);
   background-size: 220% auto;
   -webkit-background-clip: text;
@@ -272,9 +277,10 @@ body::after {
 }
 
 .btn-label {
-  font-size: 1.25rem;
-  font-weight: 900;
-  letter-spacing: -0.3px;
+  font-family: var(--kk-head);
+  font-size: 1.3rem;
+  font-weight: 800;
+  letter-spacing: -0.2px;
   line-height: 1.2;
 }
 

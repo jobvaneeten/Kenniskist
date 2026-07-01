@@ -1,3 +1,10 @@
+/* Kenniskist — donker thema: gedeelde variabelen */
+:root {
+  --kk-head: 'Baloo 2', 'Nunito', system-ui, sans-serif;   /* speels display-font voor koppen */
+  --kk-text-soft:  rgba(255,255,255,0.72);   /* leesbare bijtekst (was ~0.4) */
+  --kk-text-faint: rgba(255,255,255,0.55);   /* subtiele labels */
+}
+
 *, *::before, *::after { box-sizing: border-box; }
 
 html, body {
