@@ -31,11 +31,16 @@ const OBSTACLES = [
   { x: 0, z: 0, w: 7, d: 3 },
 ]
 const BALLOON_COLORS = ['#ff4d6d', '#ffd23f', '#4dd2ff']
-const SHOOT_COOLDOWN = 1.3
-const SHELL_SPEED = 22
-const SHELL_LIFE = 3.2
-const HIT_RADIUS = 2.3
 const CAR_RADIUS = 1.5
+// Item-boxen: vaste plekken (MOET kloppen met de server BotsenRoom.ts)
+const BOX_SPOTS = [
+  { x: 0, z: 22 }, { x: 0, z: -22 }, { x: 22, z: 0 }, { x: -22, z: 0 }, { x: 22, z: -22 }, { x: -22, z: 22 },
+]
+const ITEM_INFO = {
+  schild:  { emoji: '🛡️', label: 'Schild' },
+  bom:     { emoji: '💣', label: 'Bom' },
+  vuurtje: { emoji: '🔥', label: 'Vuurtje' },
+}
 
 // ── Ballonnen: 3 bolletjes op een dun mastje achter de kart ─────────────
 function buildBalloons(scene, idSuffix) {
@@ -56,14 +61,52 @@ function setBalloons(balls, count) {
   balls.forEach((b, i) => b.setEnabled(i < count))
 }
 
-// ── Projectiel: klein groen schild (zelfde look als Karten) ─────────────
-function makeShellMesh(scene) {
-  const dome = MeshBuilder.CreateSphere('bshell', { diameter: 0.85, segments: 10, slice: 0.62 }, scene)
-  dome.scaling.y = 0.78
+// ── Projectielen: groen schild (zelfde look als Karten) of oranje vuurtje ──
+function makeShellMesh(scene, kind) {
+  const dome = MeshBuilder.CreateSphere('bshell', { diameter: 0.85, segments: 10, slice: kind === 'vuurtje' ? 1 : 0.62 }, scene)
+  if (kind !== 'vuurtje') dome.scaling.y = 0.78
   const m = new StandardMaterial('bshellm', scene)
-  m.diffuseColor = new Color3(0.18, 0.8, 0.32); m.emissiveColor = new Color3(0.08, 0.42, 0.16); m.specularColor = new Color3(0.5, 0.7, 0.5)
+  if (kind === 'vuurtje') {
+    m.diffuseColor = new Color3(1, 0.5, 0.1); m.emissiveColor = new Color3(0.9, 0.35, 0.05); m.specularColor = new Color3(0.9, 0.6, 0.3)
+  } else {
+    m.diffuseColor = new Color3(0.18, 0.8, 0.32); m.emissiveColor = new Color3(0.08, 0.42, 0.16); m.specularColor = new Color3(0.5, 0.7, 0.5)
+  }
   dome.material = m; dome.isPickable = false
   return dome
+}
+// ── Bom: zwarte bol met lont ─────────────────────────────────────────────
+function makeBombMesh(scene) {
+  const body = MeshBuilder.CreateSphere('bbomb', { diameter: 1.1, segments: 12 }, scene)
+  const m = new StandardMaterial('bbombm', scene)
+  m.diffuseColor = new Color3(0.1, 0.1, 0.12); m.specularColor = new Color3(0.4, 0.4, 0.4)
+  body.material = m; body.isPickable = false
+  const fuse = MeshBuilder.CreateCylinder('bfuse', { height: 0.4, diameter: 0.08, tessellation: 6 }, scene)
+  fuse.parent = body; fuse.position.set(0, 0.6, 0); fuse.rotation.x = -0.3
+  const fm = new StandardMaterial('bfusem', scene); fm.diffuseColor = new Color3(0.6, 0.5, 0.3)
+  fuse.material = fm
+  const spark = MeshBuilder.CreateSphere('bspark', { diameter: 0.18, segments: 6 }, scene)
+  spark.parent = body; spark.position.set(0, 0.82, 0)
+  const sm = new StandardMaterial('bsparkm', scene); sm.emissiveColor = new Color3(1, 0.7, 0.1); sm.diffuseColor = new Color3(1, 0.6, 0.1)
+  spark.material = sm
+  return body
+}
+// ── Item-box: draaiend "?"-blok (zelfde stijl als Karten) ───────────────
+function makeItemBox(scene, x, z) {
+  const box = MeshBuilder.CreateBox('bibox', { size: 1.3 }, scene)
+  box.position.set(x, 1.05, z); box.isPickable = false
+  const m = new StandardMaterial('biboxm', scene)
+  const tex = new DynamicTexture('biboxt', { width: 128, height: 128 }, scene, false)
+  const c = tex.getContext()
+  const g = c.createLinearGradient(0, 0, 128, 128)
+  g.addColorStop(0, '#ffe14d'); g.addColorStop(0.5, '#ff8a3d'); g.addColorStop(1, '#ff4db8')
+  c.fillStyle = g; c.fillRect(0, 0, 128, 128)
+  c.strokeStyle = 'rgba(255,255,255,0.9)'; c.lineWidth = 8; c.strokeRect(6, 6, 116, 116)
+  c.fillStyle = '#fff'; c.font = 'bold 92px Arial'; c.textAlign = 'center'; c.textBaseline = 'middle'
+  c.fillText('?', 64, 70)
+  tex.update()
+  m.diffuseTexture = tex; m.emissiveColor = new Color3(0.6, 0.45, 0.2)
+  box.material = m
+  return box
 }
 
 // ── Arena bouwen: grond, muren, obstakels ───────────────────────────────
@@ -152,10 +195,13 @@ function BotsenMatch({ onBack, room, sessionId, joinCode }) {
   const [aliveCount, setAliveCount] = useState(0)
   const [myBalloons, setMyBalloons] = useState(3)
   const [amAlive, setAmAlive] = useState(true)
+  const [heldItem, setHeldItem] = useState('')
+  const [heldCount, setHeldCount] = useState(0)
   const [winnerName, setWinnerName] = useState('')
   const [players, setPlayers] = useState([])
   const [botDiff, setBotDiff] = useState('normaal')
   const stateRef = useRef({})
+  const useItemRef = useRef(() => {})
 
   const startMatch = () => { room.send('start') }
 
@@ -210,16 +256,21 @@ function BotsenMatch({ onBack, room, sessionId, joinCode }) {
       remotes.set(sid, ent)
     }
 
-    // ── Schilden (projectielen) ──
+    // ── Projectielen, bommen, item-boxen ──
     const shellMeshes = new Map()
-    const shoot = () => { room.send('shoot') }
-    const shootRef = { current: shoot }
+    const bombMeshes = new Map()
+    const itemBoxMeshes = new Map()
+    const useItem = () => { room.send('useItem') }
+    useItemRef.current = useItem
 
-    // ── Input ──
+    // ── Input (WASD én pijltjes rijden, spatie schiet) ──
+    const MOVE_KEYS = new Set(['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'])
     const keys = {}
     const kd = e => {
-      keys[e.key.toLowerCase()] = true
-      if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); shootRef.current() }
+      const k = e.key.toLowerCase()
+      keys[k] = true
+      if (MOVE_KEYS.has(k)) e.preventDefault()
+      if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); useItemRef.current() }
     }
     const ku = e => { keys[e.key.toLowerCase()] = false }
     window.addEventListener('keydown', kd)
@@ -244,7 +295,7 @@ function BotsenMatch({ onBack, room, sessionId, joinCode }) {
       state.players?.forEach(p => { if (p.alive) alive++ })
       setAliveCount(alive)
       const me = state.players?.get(sessionId)
-      if (me) { setMyBalloons(me.balloons); setAmAlive(me.alive) }
+      if (me) { setMyBalloons(me.balloons); setAmAlive(me.alive); setHeldItem(me.item); setHeldCount(me.itemCount) }
       if (state.phase !== lastPhase) {
         lastPhase = state.phase
         setPhase(state.phase)
@@ -299,9 +350,10 @@ function BotsenMatch({ onBack, room, sessionId, joinCode }) {
         else { const f = phys.friction * dt; phys.vel = phys.vel > 0 ? Math.max(0, phys.vel - f) : Math.min(0, phys.vel + f) }
         phys.vel = Math.max(-phys.maxSpeed * 0.4, Math.min(phys.maxSpeed, phys.vel))
 
+        // Arcade-sturen: draait altijd direct, ook stilstaand (bumper-car-gevoel,
+        // geen racewagen-traagheid nodig in een kleine arena).
         const steer = (right ? 1 : 0) - (left ? 1 : 0)
-        const speedFactor = Math.min(1, Math.abs(phys.vel) / 6)
-        phys.heading += steer * phys.turnSpeed * dt * speedFactor * Math.sign(phys.vel || 1)
+        phys.heading += steer * phys.turnSpeed * dt
         kartRoot.rotation.y = phys.heading
 
         const fwd = new Vector3(Math.sin(phys.heading), 0, Math.cos(phys.heading))
@@ -334,15 +386,34 @@ function BotsenMatch({ onBack, room, sessionId, joinCode }) {
         }
       }
 
-      // Schilden syncen + draaien
+      // Schilden/vuurtjes syncen + draaien
       room.state.shells?.forEach((s, id) => {
         let m = shellMeshes.get(id)
-        if (!m) { m = makeShellMesh(scene); shellMeshes.set(id, m) }
+        if (!m) { m = makeShellMesh(scene, s.kind); shellMeshes.set(id, m) }
         m.position.set(s.x, 0.6, s.z); m.rotation.y += dt * 8
       })
       for (const id of [...shellMeshes.keys()]) {
         if (!room.state.shells?.get(id)) { shellMeshes.get(id).dispose(); shellMeshes.delete(id) }
       }
+      // Bommen syncen (lont knippert sneller naarmate hij korter wordt — hier simpel: schalen)
+      room.state.bombs?.forEach((b, id) => {
+        let m = bombMeshes.get(id)
+        if (!m) { m = makeBombMesh(scene); bombMeshes.set(id, m) }
+        m.position.set(b.x, 0.55, b.z)
+        const pulse = 1 + Math.sin(now / 90) * 0.08
+        m.scaling.setAll(pulse)
+      })
+      for (const id of [...bombMeshes.keys()]) {
+        if (!room.state.bombs?.get(id)) { bombMeshes.get(id).dispose(); bombMeshes.delete(id) }
+      }
+      // Item-boxen syncen (zichtbaarheid via active, respawn op de server)
+      room.state.boxes?.forEach((box, i) => {
+        let m = itemBoxMeshes.get(i)
+        if (!m) { m = makeItemBox(scene, box.x, box.z); itemBoxMeshes.set(i, m) }
+        m.rotation.y += dt * 1.8
+        m.position.y = 1.05 + Math.sin(now / 400 + i) * 0.15
+        m.setEnabled(box.active)
+      })
 
       scene.render()
     })
@@ -393,6 +464,18 @@ function BotsenMatch({ onBack, room, sessionId, joinCode }) {
 
       {phase === 'countdown' && <div className="botsen-count">{count > 0 ? count : 'GO!'}</div>}
 
+      {phase === 'playing' && amAlive && (
+        <button
+          className={'botsen-item-btn' + (heldItem ? ' has-item' : '')}
+          onClick={() => useItemRef.current()}
+          disabled={!heldItem}
+        >
+          <span className="botsen-item-emoji">{heldItem ? ITEM_INFO[heldItem]?.emoji : '❔'}</span>
+          <span className="botsen-item-label">{heldItem ? ITEM_INFO[heldItem]?.label : 'Geen item'}</span>
+          {heldItem && <span className="botsen-item-count">×{heldCount}</span>}
+        </button>
+      )}
+
       {phase === 'playing' && !amAlive && (
         <div className="botsen-out">💥 Uitgeschakeld — kijk toe tot het einde!</div>
       )}
@@ -407,7 +490,7 @@ function BotsenMatch({ onBack, room, sessionId, joinCode }) {
         </div>
       )}
 
-      <div className="botsen-help">W/↑ gas · S/↓ rem · A/← D/→ sturen · spatie = schild afvuren</div>
+      <div className="botsen-help">W/↑ gas · S/↓ rem · A/← D/→ sturen · spatie = item gebruiken · pak de ❔-blokken!</div>
     </div>
   )
 }

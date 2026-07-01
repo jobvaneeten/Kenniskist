@@ -21,6 +21,28 @@
 .botsen-hud-balloons span { font-size: 1.4rem; filter: drop-shadow(0 2px 3px rgba(0,0,0,.5)); }
 .botsen-hud-balloons span.popped { opacity: .25; filter: grayscale(1); }
 
+/* ── Item-systeem HUD ─────────────────────────────────────── */
+.botsen-item-btn {
+  position: absolute; left: 50%; bottom: 88px; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 1px;
+  width: 110px; padding: 8px 6px 6px; border-radius: 16px;
+  background: rgba(10,14,30,.72); border: 2px solid rgba(255,255,255,.18);
+  color: #fff; font-family: inherit; cursor: pointer; z-index: 30;
+  transition: transform .12s, box-shadow .2s, border-color .2s;
+}
+.botsen-item-btn:disabled { opacity: .5; cursor: default; }
+.botsen-item-btn.has-item {
+  border-color: #ff8a3d; box-shadow: 0 0 22px rgba(255,138,61,.5);
+  animation: botsen-item-pulse 1s ease-in-out infinite;
+}
+@keyframes botsen-item-pulse {
+  0%,100% { transform: translateX(-50%) scale(1); }
+  50%     { transform: translateX(-50%) scale(1.06); }
+}
+.botsen-item-emoji { font-size: 32px; line-height: 1; }
+.botsen-item-label { font-size: 13px; font-weight: 800; }
+.botsen-item-count { font-size: 12px; opacity: .85; font-weight: 800; }
+
 .botsen-count {
   position: absolute; inset: 0; z-index: 25;
   display: flex; align-items: center; justify-content: center;
