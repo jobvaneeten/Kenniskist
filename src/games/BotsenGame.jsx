@@ -26,12 +26,14 @@ const ROOM_TYPE = 'botsen'
 //    vormen (een centrale hub-tegel), elk platform ook bereikbaar via een
 //    helling naar de grond. Grens is ONZICHTBAAR (geen muur-mesh, alleen
 //    botsing). MOET kloppen met de server (BotsenRoom.ts). ────────────────
-const ARENA_HALF = 42            // speelveld: -42..42 in x en z
+const ARENA_HALF = 58            // speelveld: -58..58 in x en z (geeft de hellingen ruimte tot de rand)
 const CAR_RADIUS = 1.5
 const PLAT_H     = 4.2           // hoogte van alle vier platforms (gelijk)
 const PLAT_SIZE  = 22            // breedte/diepte per platform
-const GAP        = 12            // corridor-breedte tussen platforms (= brug/hub-breedte)
-const OFF        = PLAT_SIZE / 2 + GAP / 2   // 17 — afstand vanaf midden tot elk platform
+const CORRIDOR   = 20            // volledige open ruimte tussen twee platforms
+const BRIDGE_W   = 8             // breedte van het brug-dek zelf (smaller dan CORRIDOR,
+                                  // zodat er aan weerszijden grond overblijft om onderdoor te rijden)
+const OFF        = PLAT_SIZE / 2 + CORRIDOR / 2   // 21 — afstand vanaf midden tot elk platform
 const RAMP_LEN   = 14
 // Elk platform: kleur + welke kant (x-richting) de buiten-helling op wijst.
 const QUADRANTS = [
@@ -53,20 +55,22 @@ const BALLOON_COLORS = ['#ff4d6d', '#ffd23f', '#4dd2ff']
 // Item-boxen: één op elk platform (MOET kloppen met de server BotsenRoom.ts).
 const BOX_SPOTS = QUADRANTS.map(q => ({ x: q.x, z: q.z }))
 
-// Hoogte van de grond op (x,z). Alle vier platforms + de vier korte bruggen
-// ertussen liggen op dezelfde hoogte (PLAT_H) — de vier platforms vormen zo
-// samen een "ring" (N-brug NW↔NE, Z-brug SW↔SE, W-brug NW↔SW, O-brug NE↔SE).
+// Hoogte van de grond op (x,z). De vier platforms liggen op PLAT_H. De vier
+// bruggen ertussen zijn SMALLER dan de volledige opening (BRIDGE_W < CORRIDOR)
+// — aan weerszijden van elke brug blijft dus grond op hoogte 0 over, zodat je
+// er onderdoor kunt rijden i.p.v. dat de brug de hele opening vult.
 // Alleen de buiten-hellingen per platform lopen af naar de grond (0).
 function inRect(x, z, cx, cz, hw, hd) { return x >= cx - hw && x <= cx + hw && z >= cz - hd && z <= cz + hd }
 function heightAt(x, z) {
-  const hp = PLAT_SIZE / 2, hg = GAP / 2
+  const hp = PLAT_SIZE / 2, hc = CORRIDOR / 2, hb = BRIDGE_W / 2
   for (const q of QUADRANTS) if (inRect(x, z, q.x, q.z, hp, hp)) return PLAT_H
-  // horizontale bruggen (boven-/onderrij, tussen linker- en rechterplatform)
-  if (inRect(x, z, 0, -OFF, hg, hg)) return PLAT_H
-  if (inRect(x, z, 0, OFF, hg, hg)) return PLAT_H
-  // verticale bruggen (linker-/rechterkolom, tussen boven- en onderplatform)
-  if (inRect(x, z, -OFF, 0, hg, hg)) return PLAT_H
-  if (inRect(x, z, OFF, 0, hg, hg)) return PLAT_H
+  // horizontale bruggen (boven-/onderrij, tussen linker- en rechterplatform):
+  // dek loopt de volle corridor-lengte in x, maar is smal in z
+  if (inRect(x, z, 0, -OFF, hc, hb)) return PLAT_H
+  if (inRect(x, z, 0, OFF, hc, hb)) return PLAT_H
+  // verticale bruggen (linker-/rechterkolom): smal in x, volle lengte in z
+  if (inRect(x, z, -OFF, 0, hb, hc)) return PLAT_H
+  if (inRect(x, z, OFF, 0, hb, hc)) return PLAT_H
   // buiten-helling per platform (op de rampDir-zijde, x-richting)
   for (const q of QUADRANTS) {
     const rx0 = q.x + q.rampDir * hp
@@ -75,43 +79,21 @@ function heightAt(x, z) {
   }
   return 0
 }
-// Botsingswanden per platform: de buitenrand (tegenover het midden) is
-// volledig dicht; de helling-zijde heeft leuningen langs de opening; de
-// twee zijden die naar bruggen leiden hebben flankwanden naast de opening
-// (bruggen zijn smaller dan het platform zelf).
+// Botsingswanden per platform: alleen de buitenrand (tegenover het midden)
+// is dicht, met leuningen langs de helling-opening. De twee zijden die naar
+// bruggen leiden hebben GEEN wand — daar kun je onder de brug door rijden
+// op de grond (de brug zelf is alleen een hoger visueel dek, geen barrière).
 function platformWalls(q) {
-  const hp = PLAT_SIZE / 2, hg = GAP / 2
+  const hp = PLAT_SIZE / 2
   const isTop = q.z < 0
   const outerZ = isTop ? q.z - hp : q.z + hp        // buitenrand (dicht)
-  const innerZ = isTop ? q.z + hp : q.z - hp        // brug naar boven-/onderbuur
   const rampX0 = q.x + q.rampDir * hp
-  const innerX = q.x - q.rampDir * hp               // brug naar linker-/rechterbuur
   const railMidX = rampX0 + q.rampDir * (RAMP_LEN / 2)
-  const flankLen = hp - hg, flankOff = hg + flankLen / 2
   return [
     { x: q.x, z: outerZ, hw: hp, hd: 0.4 },                              // buitenrand (dicht)
     { x: railMidX, z: q.z - hp, hw: RAMP_LEN / 2, hd: 0.4 },             // helling-leuning noordkant
     { x: railMidX, z: q.z + hp, hw: RAMP_LEN / 2, hd: 0.4 },             // helling-leuning zuidkant
-    { x: q.x - flankOff, z: innerZ, hw: flankLen / 2, hd: 0.4 },         // flankwand naast Z-brug
-    { x: q.x + flankOff, z: innerZ, hw: flankLen / 2, hd: 0.4 },
-    { x: innerX, z: q.z - flankOff, hw: 0.4, hd: flankLen / 2 },         // flankwand naast X-brug
-    { x: innerX, z: q.z + flankOff, hw: 0.4, hd: flankLen / 2 },
   ]
-}
-// Lange zijleuningen langs elk van de vier bruggen zelf (voorkomt eraf
-// rijden in de "leegte" terwijl je oversteekt).
-function bridgeWalls() {
-  const hg = GAP / 2
-  const walls = []
-  ;[-OFF, OFF].forEach(rowZ => {
-    walls.push({ x: 0, z: rowZ - hg, hw: hg, hd: 0.4 })
-    walls.push({ x: 0, z: rowZ + hg, hw: hg, hd: 0.4 })
-  })
-  ;[-OFF, OFF].forEach(colX => {
-    walls.push({ x: colX - hg, z: 0, hw: 0.4, hd: hg })
-    walls.push({ x: colX + hg, z: 0, hw: 0.4, hd: hg })
-  })
-  return walls
 }
 const ITEM_INFO = {
   schild:  { emoji: '🛡️', label: 'Schild' },
@@ -448,26 +430,37 @@ function buildArena(scene, sg) {
   }
   QUADRANTS.forEach(buildQuadrant)
 
-  // ── Vier korte bruggen tussen de platforms (allemaal zelfde hoogte, dus
-  //    plat — geen helling nodig) + zijleuningen langs hun lengte ─────────
+  // ── Vier korte, SMALLE bruggen tussen de platforms — smaller dan de hele
+  //    opening (BRIDGE_W < CORRIDOR), met steunpoten, zodat duidelijk te
+  //    zien is dat je aan weerszijden op de grond eronderdoor kunt rijden ──
   const bridgeMat = new StandardMaterial('bbridgeMat', scene)
   bridgeMat.diffuseColor = new Color3(0.72, 0.75, 0.8); bridgeMat.specularColor = Color3.Black()
   const bridgeRailMat = new StandardMaterial('bbridgeRailMat', scene)
   bridgeRailMat.diffuseColor = new Color3(0.5, 0.53, 0.6); bridgeRailMat.specularColor = Color3.Black()
-  const hg = GAP / 2
+  const hc = CORRIDOR / 2, hb = BRIDGE_W / 2
   const BRIDGES = [
-    { x: 0, z: -OFF, w: GAP, d: GAP }, { x: 0, z: OFF, w: GAP, d: GAP },
-    { x: -OFF, z: 0, w: GAP, d: GAP }, { x: OFF, z: 0, w: GAP, d: GAP },
+    { x: 0, z: -OFF, horizontal: true }, { x: 0, z: OFF, horizontal: true },
+    { x: -OFF, z: 0, horizontal: false }, { x: OFF, z: 0, horizontal: false },
   ]
   BRIDGES.forEach((b, i) => {
-    const deck = MeshBuilder.CreateBox('bbridge' + i, { width: b.w, height: 0.6, depth: b.d }, scene)
+    const len = CORRIDOR, w = b.horizontal ? len : BRIDGE_W, d = b.horizontal ? BRIDGE_W : len
+    const deck = MeshBuilder.CreateBox('bbridge' + i, { width: w, height: 0.6, depth: d }, scene)
     deck.position.set(b.x, PLAT_H - 0.3, b.z); deck.material = bridgeMat
     deck.receiveShadows = true; sg.addShadowCaster(deck)
-  })
-  bridgeWalls().forEach((seg, i) => {
-    const railH = 0.9
-    const rail = MeshBuilder.CreateBox('bbrail' + i, { width: seg.hw * 2 * 0.9, height: railH, depth: seg.hd * 2 * 0.9 }, scene)
-    rail.position.set(seg.x, PLAT_H + railH / 2, seg.z); rail.material = bridgeRailMat
+    // leuningen langs de lange zijden van het dek (puur decoratief, geen botsing)
+    ;[-hb, hb].forEach(off => {
+      const rail = MeshBuilder.CreateBox('bbrail' + i + off, b.horizontal
+        ? { width: len * 0.95, height: 0.7, depth: 0.3 } : { width: 0.3, height: 0.7, depth: len * 0.95 }, scene)
+      rail.position.set(b.horizontal ? b.x : b.x + off, PLAT_H + 0.35, b.horizontal ? b.z + off : b.z)
+      rail.material = bridgeRailMat; rail.isPickable = false
+    })
+    // twee steunpoten omlaag naar de grond, in het midden van het dek (visueel;
+    // staan precies op de grens tussen brug en de open rijstroken ernaast)
+    ;[-len / 4, len / 4].forEach(off => {
+      const leg = MeshBuilder.CreateCylinder('bbleg' + i + off, { height: PLAT_H, diameter: 0.6, tessellation: 10 }, scene)
+      leg.position.set(b.horizontal ? b.x + off : b.x, PLAT_H / 2 - 0.3, b.horizontal ? b.z : b.z + off)
+      leg.material = bridgeRailMat
+    })
   })
 
   // ── Obstakels: gekleurde fort-kratten (metaal-paneel-look) ──
@@ -500,7 +493,7 @@ function buildArena(scene, sg) {
   buildClouds(scene)
 
   const platWalls = QUADRANTS.flatMap(platformWalls)
-  return { boxes: boxes.concat(invisWalls, platWalls, bridgeWalls()) }
+  return { boxes: boxes.concat(invisWalls, platWalls) }
 }
 
 // Cirkel-vs-AABB botsing: duwt een punt (met straal r) uit een blok.
@@ -733,7 +726,10 @@ function BotsenMatch({ onBack, room, sessionId, joinCode, myNameProp, myColorPro
       remotes.forEach(e => {
         e.outer.position.x += (e.tx - e.outer.position.x) * k
         e.outer.position.z += (e.tz - e.outer.position.z) * k
-        e.outer.position.y = heightAt(e.outer.position.x, e.outer.position.z)
+        // Vloeiend naar de doelhoogte i.p.v. snappen — zo ziet een val van een
+        // rand (bv. naast een brug) eruit als een val, niet als een glitch.
+        const targetYr = heightAt(e.outer.position.x, e.outer.position.z)
+        e.outer.position.y += (targetYr - e.outer.position.y) * Math.min(1, dt * 9)
         let dr = e.trot - e.outer.rotation.y
         while (dr > Math.PI) dr -= Math.PI * 2; while (dr < -Math.PI) dr += Math.PI * 2
         e.outer.rotation.y += dr * k
@@ -813,7 +809,10 @@ function BotsenMatch({ onBack, room, sessionId, joinCode, myNameProp, myColorPro
 
         // Arena-grenzen + obstakels
         collideBoxes(outer.position, CAR_RADIUS, arena.boxes)
-        outer.position.y = heightAt(outer.position.x, outer.position.z)
+        // Vloeiend naar de doelhoogte i.p.v. snappen — zo ziet een val van een
+        // rand (bv. naast een brug) eruit als een val, niet als een glitch.
+        const targetY = heightAt(outer.position.x, outer.position.z)
+        outer.position.y += (targetY - outer.position.y) * Math.min(1, dt * 9)
 
         // Botsing met andere karts (beuken)
         remotes.forEach(e => {
