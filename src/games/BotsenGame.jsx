@@ -21,65 +21,97 @@ import './botsen-game.css'
 const SERVER_URL = 'wss://kenniskist-server.onrender.com'
 const ROOM_TYPE = 'botsen'
 
-// ── Grote, sfeervolle arena met natuurlijke dekking + een oprijhelling naar
-//    een plateau. Grens is ONZICHTBAAR (geen muur-mesh, alleen botsing) —
-//    bomen/rotsen net erbuiten + mist geven het randgevoel zonder blokkerig
-//    "muur"-uiterlijk. MOET kloppen met de server (BotsenRoom.ts). ────────
-const ARENA_HALF = 55            // speelveld: -55..55 in x en z
+// ── Vier-kwadranten-arena: vier gekleurde platforms (blauw/rood/groen/geel)
+//    in een 2×2-grid, verbonden door bruggen die in het midden een kruising
+//    vormen (een centrale hub-tegel), elk platform ook bereikbaar via een
+//    helling naar de grond. Grens is ONZICHTBAAR (geen muur-mesh, alleen
+//    botsing). MOET kloppen met de server (BotsenRoom.ts). ────────────────
+const ARENA_HALF = 42            // speelveld: -42..42 in x en z
 const CAR_RADIUS = 1.5
-// Twee verdiepingen: een verhoogd plateau (boven) én een verzonken kuil
-// (beneden), allebei via een helling bereikbaar vanaf de begane grond.
-const RAMP_LEN = 16
-const UPPER = { x: 0, z: -40, w: 22, d: 14, h: 4.2 }
-const LOWER = { x: 0, z: 40, w: 22, d: 14, h: -4.2 }
+const PLAT_H     = 4.2           // hoogte van alle vier platforms (gelijk)
+const PLAT_SIZE  = 22            // breedte/diepte per platform
+const GAP        = 12            // corridor-breedte tussen platforms (= brug/hub-breedte)
+const OFF        = PLAT_SIZE / 2 + GAP / 2   // 17 — afstand vanaf midden tot elk platform
+const RAMP_LEN   = 14
+// Elk platform: kleur + welke kant (x-richting) de buiten-helling op wijst.
+const QUADRANTS = [
+  { key: 'nw', x: -OFF, z: -OFF, body: '#2f6fed', top: '#8fbaff', rail: '#d6ebff', name: 'Blauw',  rampDir: -1 },
+  { key: 'ne', x: OFF, z: -OFF, body: '#e63946', top: '#ff9b96', rail: '#ffd9d6', name: 'Rood',   rampDir: 1 },
+  { key: 'sw', x: -OFF, z: OFF, body: '#2a9d5a', top: '#8fe3a8', rail: '#d6f5e0', name: 'Groen',  rampDir: -1 },
+  { key: 'se', x: OFF, z: OFF, body: '#f2c11d', top: '#ffe27a', rail: '#fff3c2', name: 'Geel',   rampDir: 1 },
+]
+// Decoratieve dekking in de open grond-ring rond de vier platforms (in de
+// diagonale hoeken, ver van de platforms/bruggen zelf).
+const DIAG = OFF + PLAT_SIZE / 2 + 5
 const OBSTACLES = [
-  { x: 20, z: 18, w: 8, d: 8, color: '#e63946' },
-  { x: -20, z: -6, w: 8, d: 8, color: '#1d6fd0' },
-  { x: -22, z: 20, w: 7, d: 7, color: '#ffd23f' },
-  { x: 22, z: -6, w: 7, d: 7, color: '#2a9d8f' },
-  { x: 0, z: 10, w: 9, d: 4, color: '#9b5de5' },
-  { x: 34, z: -28, w: 6, d: 6, color: '#f4a261' },
-  { x: -34, z: 28, w: 6, d: 6, color: '#43aa8b' },
+  { x: -DIAG, z: -DIAG, w: 6, d: 6, color: '#9b5de5' },
+  { x: DIAG, z: -DIAG, w: 6, d: 6, color: '#f4a261' },
+  { x: -DIAG, z: DIAG, w: 6, d: 6, color: '#43aa8b' },
+  { x: DIAG, z: DIAG, w: 6, d: 6, color: '#ff6b9d' },
 ]
 const BALLOON_COLORS = ['#ff4d6d', '#ffd23f', '#4dd2ff']
-// Item-boxen: vaste plekken (MOET kloppen met de server BotsenRoom.ts) —
-// één op het plateau, één in de kuil, als beloning om te beklimmen/afdalen.
-const BOX_SPOTS = [
-  { x: 38, z: 6 }, { x: -38, z: 6 },
-  { x: 26, z: -34 }, { x: -26, z: -34 }, { x: 0, z: -40 },
-  { x: 26, z: 34 }, { x: -26, z: 34 }, { x: 0, z: 40 },
-]
+// Item-boxen: één op elk platform (MOET kloppen met de server BotsenRoom.ts).
+const BOX_SPOTS = QUADRANTS.map(q => ({ x: q.x, z: q.z }))
 
-// Hoogte van de grond op (x,z) voor één platform (plat.h > 0 = plateau,
-// plat.h < 0 = kuil); dir bepaalt aan welke kant de helling naar de grond
-// afloopt (+1 = naar grotere z, -1 = naar kleinere z). null = buiten bereik.
-function platformHeight(x, z, plat, dir) {
-  const hw = plat.w / 2, hd = plat.d / 2
-  if (x < plat.x - hw || x > plat.x + hw) return null
-  if (z > plat.z - hd && z < plat.z + hd) return plat.h
-  const rz0 = plat.z + dir * hd
-  const t = dir > 0 ? (z - rz0) / RAMP_LEN : (rz0 - z) / RAMP_LEN
-  if (t >= 0 && t <= 1) return plat.h * (1 - t)
-  return null
-}
-// Puur visueel (client) — de server rekent alleen in x/z, treffers/botsing
-// zijn hoogte-onafhankelijk.
+// Hoogte van de grond op (x,z). Alle vier platforms + de vier korte bruggen
+// ertussen liggen op dezelfde hoogte (PLAT_H) — de vier platforms vormen zo
+// samen een "ring" (N-brug NW↔NE, Z-brug SW↔SE, W-brug NW↔SW, O-brug NE↔SE).
+// Alleen de buiten-hellingen per platform lopen af naar de grond (0).
+function inRect(x, z, cx, cz, hw, hd) { return x >= cx - hw && x <= cx + hw && z >= cz - hd && z <= cz + hd }
 function heightAt(x, z) {
-  return platformHeight(x, z, UPPER, 1) ?? platformHeight(x, z, LOWER, -1) ?? 0
+  const hp = PLAT_SIZE / 2, hg = GAP / 2
+  for (const q of QUADRANTS) if (inRect(x, z, q.x, q.z, hp, hp)) return PLAT_H
+  // horizontale bruggen (boven-/onderrij, tussen linker- en rechterplatform)
+  if (inRect(x, z, 0, -OFF, hg, hg)) return PLAT_H
+  if (inRect(x, z, 0, OFF, hg, hg)) return PLAT_H
+  // verticale bruggen (linker-/rechterkolom, tussen boven- en onderplatform)
+  if (inRect(x, z, -OFF, 0, hg, hg)) return PLAT_H
+  if (inRect(x, z, OFF, 0, hg, hg)) return PLAT_H
+  // buiten-helling per platform (op de rampDir-zijde, x-richting)
+  for (const q of QUADRANTS) {
+    const rx0 = q.x + q.rampDir * hp
+    const t = q.rampDir > 0 ? (x - rx0) / RAMP_LEN : (rx0 - x) / RAMP_LEN
+    if (t >= 0 && t <= 1 && z >= q.z - hp && z <= q.z + hp) return PLAT_H * (1 - t)
+  }
+  return 0
 }
-// Botsingswanden voor één platform (3 zijden dicht, de helling-zijde open) +
-// lage leuningen langs de helling zodat je er niet naast af rijdt.
-function platformWalls(plat, dir) {
-  const hw = plat.w / 2, hd = plat.d / 2
-  const rz0 = plat.z + dir * hd
-  const railMid = rz0 + dir * (RAMP_LEN / 2)
+// Botsingswanden per platform: de buitenrand (tegenover het midden) is
+// volledig dicht; de helling-zijde heeft leuningen langs de opening; de
+// twee zijden die naar bruggen leiden hebben flankwanden naast de opening
+// (bruggen zijn smaller dan het platform zelf).
+function platformWalls(q) {
+  const hp = PLAT_SIZE / 2, hg = GAP / 2
+  const isTop = q.z < 0
+  const outerZ = isTop ? q.z - hp : q.z + hp        // buitenrand (dicht)
+  const innerZ = isTop ? q.z + hp : q.z - hp        // brug naar boven-/onderbuur
+  const rampX0 = q.x + q.rampDir * hp
+  const innerX = q.x - q.rampDir * hp               // brug naar linker-/rechterbuur
+  const railMidX = rampX0 + q.rampDir * (RAMP_LEN / 2)
+  const flankLen = hp - hg, flankOff = hg + flankLen / 2
   return [
-    { x: plat.x - hw, z: plat.z, hw: 0.4, hd },              // linkerzijde
-    { x: plat.x + hw, z: plat.z, hw: 0.4, hd },              // rechterzijde
-    { x: plat.x, z: plat.z - dir * hd, hw, hd: 0.4 },        // zijde tegenover de helling
-    { x: plat.x - hw, z: railMid, hw: 0.4, hd: RAMP_LEN / 2 }, // linkerleuning helling
-    { x: plat.x + hw, z: railMid, hw: 0.4, hd: RAMP_LEN / 2 }, // rechterleuning helling
+    { x: q.x, z: outerZ, hw: hp, hd: 0.4 },                              // buitenrand (dicht)
+    { x: railMidX, z: q.z - hp, hw: RAMP_LEN / 2, hd: 0.4 },             // helling-leuning noordkant
+    { x: railMidX, z: q.z + hp, hw: RAMP_LEN / 2, hd: 0.4 },             // helling-leuning zuidkant
+    { x: q.x - flankOff, z: innerZ, hw: flankLen / 2, hd: 0.4 },         // flankwand naast Z-brug
+    { x: q.x + flankOff, z: innerZ, hw: flankLen / 2, hd: 0.4 },
+    { x: innerX, z: q.z - flankOff, hw: 0.4, hd: flankLen / 2 },         // flankwand naast X-brug
+    { x: innerX, z: q.z + flankOff, hw: 0.4, hd: flankLen / 2 },
   ]
+}
+// Lange zijleuningen langs elk van de vier bruggen zelf (voorkomt eraf
+// rijden in de "leegte" terwijl je oversteekt).
+function bridgeWalls() {
+  const hg = GAP / 2
+  const walls = []
+  ;[-OFF, OFF].forEach(rowZ => {
+    walls.push({ x: 0, z: rowZ - hg, hw: hg, hd: 0.4 })
+    walls.push({ x: 0, z: rowZ + hg, hw: hg, hd: 0.4 })
+  })
+  ;[-OFF, OFF].forEach(colX => {
+    walls.push({ x: colX - hg, z: 0, hw: 0.4, hd: hg })
+    walls.push({ x: colX + hg, z: 0, hw: 0.4, hd: hg })
+  })
+  return walls
 }
 const ITEM_INFO = {
   schild:  { emoji: '🛡️', label: 'Schild' },
@@ -335,61 +367,108 @@ function buildArena(scene, sg) {
   scene.fogMode = Scene.FOGMODE_LINEAR; scene.fogStart = half - 6; scene.fogEnd = half + 22
   scene.fogColor = new Color3(...hexRgb(skyBot))
 
-  // Fort-vloer: lichtgrijze platen met een subtiel paneel-patroon
+  // Checker-tegelvloer: lichtblauw/wit schaakbordpatroon (zoals het voorbeeld)
   const floorTex = new DynamicTexture('bfloorTex', { width: 256, height: 256 }, scene, false)
   const fx = floorTex.getContext()
-  fx.fillStyle = '#c9cdd6'; fx.fillRect(0, 0, 256, 256)
-  fx.strokeStyle = '#a9aebb'; fx.lineWidth = 3
-  for (let i = 0; i <= 4; i++) { fx.beginPath(); fx.moveTo(i * 64, 0); fx.lineTo(i * 64, 256); fx.stroke(); fx.beginPath(); fx.moveTo(0, i * 64); fx.lineTo(256, i * 64); fx.stroke() }
+  const tileN = 8, tileS = 256 / tileN
+  for (let ty = 0; ty < tileN; ty++) for (let tx = 0; tx < tileN; tx++) {
+    fx.fillStyle = (tx + ty) % 2 === 0 ? '#d7e8f2' : '#c3dcea'
+    fx.fillRect(tx * tileS, ty * tileS, tileS, tileS)
+  }
+  fx.strokeStyle = 'rgba(160,190,210,0.5)'; fx.lineWidth = 2
+  for (let i = 0; i <= tileN; i++) { fx.beginPath(); fx.moveTo(i * tileS, 0); fx.lineTo(i * tileS, 256); fx.stroke(); fx.beginPath(); fx.moveTo(0, i * tileS); fx.lineTo(256, i * tileS); fx.stroke() }
   floorTex.update(); floorTex.wrapU = floorTex.wrapV = 1; floorTex.uScale = floorTex.vScale = half / 4
   const floor = MeshBuilder.CreateGround('bfloor', { width: half * 2, height: half * 2 }, scene)
   const fMat = new StandardMaterial('bfloorMat', scene)
-  fMat.diffuseTexture = floorTex; fMat.specularColor = Color3.Black()
+  fMat.diffuseTexture = floorTex; fMat.specularColor = new Color3(0.15, 0.15, 0.18)
   floor.material = fMat; floor.receiveShadows = true; floor.position.y = -0.015
 
-  // vloerlijnen (cirkel-patroon, decoratief)
-  const ringMat = new StandardMaterial('bringMat', scene)
-  ringMat.diffuseColor = new Color3(0.55, 0.6, 0.68); ringMat.specularColor = Color3.Black()
-  for (let r = 12; r < half; r += 12) {
-    const ring = MeshBuilder.CreateTorus('bring' + r, { diameter: r * 2, thickness: 0.22, tessellation: 56 }, scene)
-    ring.rotation.x = Math.PI / 2; ring.position.y = 0.01; ring.material = ringMat; ring.isPickable = false
-  }
+  // Rand rond de hele arena: een houten/gevlochten boord (zoals het voorbeeld)
+  const borderTex = new DynamicTexture('bborderTex', { width: 256, height: 32 }, scene, false)
+  const bx = borderTex.getContext()
+  bx.fillStyle = '#a9743a'; bx.fillRect(0, 0, 256, 32)
+  for (let i = 0; i < 16; i++) { bx.fillStyle = i % 2 ? '#8f5f2a' : '#b98548'; bx.fillRect(i * 16, 0, 16, 32) }
+  bx.fillStyle = 'rgba(0,0,0,0.18)'; bx.fillRect(0, 0, 256, 4); bx.fillRect(0, 28, 256, 4)
+  borderTex.update(); borderTex.wrapU = 1; borderTex.uScale = half / 2.5
+  const borderMat = new StandardMaterial('bborderMat', scene)
+  borderMat.diffuseTexture = borderTex; borderMat.specularColor = Color3.Black()
+  const borderH = 1.6, borderT = 2.2
+  ;[[0, -half - borderT / 2, half * 2 + borderT * 2, borderT], [0, half + borderT / 2, half * 2 + borderT * 2, borderT]].forEach(([, zc, w, d], i) => {
+    const seg = MeshBuilder.CreateBox('bborderZ' + i, { width: w, height: borderH, depth: d }, scene)
+    seg.position.set(0, borderH / 2 - 0.3, zc); seg.material = borderMat; seg.receiveShadows = true; sg.addShadowCaster(seg)
+  })
+  ;[[-half - borderT / 2, 0, borderT, half * 2 + borderT * 2], [half + borderT / 2, 0, borderT, half * 2 + borderT * 2]].forEach(([xc, , w, d], i) => {
+    const seg = MeshBuilder.CreateBox('bborderX' + i, { width: w, height: borderH, depth: d }, scene)
+    seg.position.set(xc, borderH / 2 - 0.3, 0); seg.material = borderMat; seg.receiveShadows = true; sg.addShadowCaster(seg)
+  })
 
-  // ── Plateau (boven) + kuil (beneden), allebei beklimbaar/afdaalbaar via
-  //    een helling (hoogte via heightAt()) ──────────────────────────────
-  function buildPlatform(plat, dir, colors, tag) {
-    const { x: px, z: pz, w: pw, d: pd, h: ph } = plat
-    const absH = Math.abs(ph)
-    const bodyMat = new StandardMaterial('bplatMat' + tag, scene)
-    bodyMat.diffuseColor = Color3.FromHexString(colors.body); bodyMat.specularColor = new Color3(0.2, 0.2, 0.2)
-    const topMat = new StandardMaterial('bplatTopMat' + tag, scene)
-    topMat.diffuseColor = Color3.FromHexString(colors.top); topMat.specularColor = Color3.Black()
-    const body = MeshBuilder.CreateBox('bplateau' + tag, { width: pw, height: absH, depth: pd }, scene)
-    body.position.set(px, ph / 2, pz); body.material = bodyMat
+  // ── Vier gekleurde platforms + hun buiten-helling naar de grond, elk met
+  //    een gekleurde rand bovenop (zoals het voorbeeld-plaatje) ───────────
+  function buildQuadrant(q) {
+    const hp = PLAT_SIZE / 2
+    const bodyMat = new StandardMaterial('bplatMat' + q.key, scene)
+    bodyMat.diffuseColor = Color3.FromHexString(q.body); bodyMat.specularColor = new Color3(0.2, 0.2, 0.2)
+    const topMat = new StandardMaterial('bplatTopMat' + q.key, scene)
+    topMat.diffuseColor = Color3.FromHexString(q.top); topMat.specularColor = Color3.Black()
+    const body = MeshBuilder.CreateBox('bplateau' + q.key, { width: PLAT_SIZE, height: PLAT_H, depth: PLAT_SIZE }, scene)
+    body.position.set(q.x, PLAT_H / 2, q.z); body.material = bodyMat
     body.receiveShadows = true; sg.addShadowCaster(body)
-    const topPlane = MeshBuilder.CreateGround('bplateauTop' + tag, { width: pw, height: pd }, scene)
-    topPlane.position.set(px, ph + (ph >= 0 ? 0.01 : -0.01), pz); topPlane.material = topMat; topPlane.receiveShadows = true
-    const rampZ0 = pz + dir * pd / 2
-    const rampSlopeLen = Math.hypot(RAMP_LEN, absH)
-    const ramp = MeshBuilder.CreateBox('bramp' + tag, { width: pw, height: 0.6, depth: rampSlopeLen }, scene)
-    ramp.position.set(px, ph / 2, rampZ0 + dir * RAMP_LEN / 2)
-    // Positieve X-rotatie tilt (in Babylon's linkshandige systeem) het verre
-    // uiteinde (grootste lokale z) omlaag — werkt voor zowel omhoog (plateau)
-    // als omlaag (kuil) hellingen, want alleen het hoogteverschil telt.
-    ramp.rotation.x = Math.atan2(absH, RAMP_LEN)
+    const topPlane = MeshBuilder.CreateGround('bplateauTop' + q.key, { width: PLAT_SIZE, height: PLAT_SIZE }, scene)
+    topPlane.position.set(q.x, PLAT_H + 0.01, q.z); topPlane.material = topMat; topPlane.receiveShadows = true
+
+    // gekleurde opstaande rand net binnen de buitenrand van het platform
+    const rimMat = new StandardMaterial('bplatRimMat' + q.key, scene)
+    rimMat.diffuseColor = Color3.FromHexString(q.rail)
+    rimMat.emissiveColor = Color3.FromHexString(q.rail).scale(0.3); rimMat.specularColor = Color3.Black()
+    const rimT = 1.1, rimH = 0.5
+    ;[-1, 1].forEach(s => {
+      const rimX = MeshBuilder.CreateBox('brimX' + q.key + s, { width: rimT, height: rimH, depth: PLAT_SIZE }, scene)
+      rimX.position.set(q.x + s * (hp - rimT / 2), PLAT_H + rimH / 2, q.z); rimX.material = rimMat
+      const rimZ = MeshBuilder.CreateBox('brimZ' + q.key + s, { width: PLAT_SIZE, height: rimH, depth: rimT }, scene)
+      rimZ.position.set(q.x, PLAT_H + rimH / 2, q.z + s * (hp - rimT / 2)); rimZ.material = rimMat
+    })
+
+    // helling naar de grond (buitenkant, in de x-richting van rampDir)
+    const rampX0 = q.x + q.rampDir * hp
+    const rampSlopeLen = Math.hypot(RAMP_LEN, PLAT_H)
+    const ramp = MeshBuilder.CreateBox('bramp' + q.key, { width: rampSlopeLen, height: 0.6, depth: PLAT_SIZE }, scene)
+    ramp.position.set(rampX0 + q.rampDir * RAMP_LEN / 2, PLAT_H / 2, q.z)
+    // Rotatie om de Z-as tilt het verre X-uiteinde omlaag (analoog aan de
+    // oude Z-georiënteerde helling die om de X-as tilde).
+    ramp.rotation.z = -q.rampDir * Math.atan2(PLAT_H, RAMP_LEN)
     ramp.material = bodyMat; ramp.receiveShadows = true; sg.addShadowCaster(ramp)
-    // leuningen langs de helling + platform-rand (visueel, volgt de botsing)
-    const railMat = new StandardMaterial('bplatRailMat' + tag, scene)
-    railMat.diffuseColor = Color3.FromHexString(colors.rail); railMat.specularColor = new Color3(0.3, 0.3, 0.3)
-    platformWalls(plat, dir).forEach((seg, i) => {
+
+    // leuningen (volgen de botsings-wanden van platformWalls exact)
+    platformWalls(q).forEach((seg, i) => {
       const railH = 0.9
-      const rail = MeshBuilder.CreateBox('brail' + tag + i, { width: seg.hw * 2 * 0.9, height: railH, depth: seg.hd * 2 * 0.9 }, scene)
-      const y = heightAt(seg.x > 0 ? seg.x - 0.01 : seg.x + 0.01, seg.z)
-      rail.position.set(seg.x, y + railH / 2, seg.z); rail.material = railMat
+      const rail = MeshBuilder.CreateBox('brail' + q.key + i, { width: seg.hw * 2 * 0.9, height: railH, depth: seg.hd * 2 * 0.9 }, scene)
+      const y = heightAt(seg.x, seg.z)
+      rail.position.set(seg.x, y + railH / 2, seg.z); rail.material = rimMat
     })
   }
-  buildPlatform(UPPER, 1, { body: '#e63946', top: '#ff8a94', rail: '#ffd23f' }, 'up')
-  buildPlatform(LOWER, -1, { body: '#233a56', top: '#3d5c82', rail: '#7cd4ff' }, 'lo')
+  QUADRANTS.forEach(buildQuadrant)
+
+  // ── Vier korte bruggen tussen de platforms (allemaal zelfde hoogte, dus
+  //    plat — geen helling nodig) + zijleuningen langs hun lengte ─────────
+  const bridgeMat = new StandardMaterial('bbridgeMat', scene)
+  bridgeMat.diffuseColor = new Color3(0.72, 0.75, 0.8); bridgeMat.specularColor = Color3.Black()
+  const bridgeRailMat = new StandardMaterial('bbridgeRailMat', scene)
+  bridgeRailMat.diffuseColor = new Color3(0.5, 0.53, 0.6); bridgeRailMat.specularColor = Color3.Black()
+  const hg = GAP / 2
+  const BRIDGES = [
+    { x: 0, z: -OFF, w: GAP, d: GAP }, { x: 0, z: OFF, w: GAP, d: GAP },
+    { x: -OFF, z: 0, w: GAP, d: GAP }, { x: OFF, z: 0, w: GAP, d: GAP },
+  ]
+  BRIDGES.forEach((b, i) => {
+    const deck = MeshBuilder.CreateBox('bbridge' + i, { width: b.w, height: 0.6, depth: b.d }, scene)
+    deck.position.set(b.x, PLAT_H - 0.3, b.z); deck.material = bridgeMat
+    deck.receiveShadows = true; sg.addShadowCaster(deck)
+  })
+  bridgeWalls().forEach((seg, i) => {
+    const railH = 0.9
+    const rail = MeshBuilder.CreateBox('bbrail' + i, { width: seg.hw * 2 * 0.9, height: railH, depth: seg.hd * 2 * 0.9 }, scene)
+    rail.position.set(seg.x, PLAT_H + railH / 2, seg.z); rail.material = bridgeRailMat
+  })
 
   // ── Obstakels: gekleurde fort-kratten (metaal-paneel-look) ──
   const boxes = []
@@ -420,7 +499,8 @@ function buildArena(scene, sg) {
 
   buildClouds(scene)
 
-  return { boxes: boxes.concat(invisWalls, platformWalls(UPPER, 1), platformWalls(LOWER, -1)) }
+  const platWalls = QUADRANTS.flatMap(platformWalls)
+  return { boxes: boxes.concat(invisWalls, platWalls, bridgeWalls()) }
 }
 
 // Cirkel-vs-AABB botsing: duwt een punt (met straal r) uit een blok.
