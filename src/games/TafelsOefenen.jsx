@@ -7,6 +7,16 @@ import './tafels-oefenen.css'
 
 const ALLE_TAFELS = [2, 3, 4, 5, 6, 7, 8, 9, 10]
 const DUUR = 120  // seconden
+const HIGHSCORE_KEY = 'kk_tafels_highscore'
+
+function leesHighscore() {
+  return parseInt(localStorage.getItem(HIGHSCORE_KEY) || '0', 10)
+}
+function schrijfHighscore(goed) {
+  const huidig = leesHighscore()
+  if (goed > huidig) { localStorage.setItem(HIGHSCORE_KEY, String(goed)); return goed }
+  return huidig
+}
 
 function maakVragen(tafels, soort) {
   const vragen = []
@@ -27,6 +37,7 @@ function maakVragen(tafels, soort) {
 
 // ── Type-keuze ────────────────────────────────────────────────────────────
 function TypeKeuze({ groep, onKies }) {
+  const [highscore] = useState(() => leesHighscore())
   return (
     <div className="to-wrap to-selectie">
       <div className="to-header">
@@ -34,6 +45,7 @@ function TypeKeuze({ groep, onKies }) {
         <h1 className="to-titel">Tafels oefenen · Groep {groep}</h1>
         <p className="to-sub">Wat wil je oefenen?</p>
       </div>
+      <div className="to-highscore-vooraf">⭐ Jouw record: {highscore} goed</div>
       <div className="to-type-grid">
         <button className="to-type-btn" onClick={() => onKies('keer')}>
           <span className="to-type-sym">×</span>
@@ -89,6 +101,7 @@ function TafelSelectie({ groep, soort, onStart }) {
 
 // ── Oefenspel ────────────────────────────────────────────────────────────
 function Oefenspel({ tafels, soort, onKlaar }) {
+  const [highscore] = useState(() => leesHighscore())
   const [vragen]   = useState(() => maakVragen(tafels, soort))
   const [idx, setIdx]   = useState(0)
   const [input, setInput] = useState('')
@@ -134,6 +147,7 @@ function Oefenspel({ tafels, soort, onKlaar }) {
         <span className={`to-timer${urgent ? ' urgent' : ''}`}>{min}:{sec}</span>
         <span className="to-teller">{resultaten.length} gedaan</span>
         <span className="to-goed-teller">{resultaten.filter(r => r.goed).length} goed</span>
+        <span className="to-highscore-teller">⭐ record: {highscore}</span>
       </div>
       <div className="to-vraag-wrap">
         <div className="to-vraag">
@@ -167,6 +181,9 @@ function Oefenspel({ tafels, soort, onKlaar }) {
 function Overzicht({ tafels, resultaten, onSpelletje }) {
   const goed  = resultaten.filter(r => r.goed).length
   const fout  = resultaten.length - goed
+  const [vorigeHighscore] = useState(() => leesHighscore())
+  const [highscore] = useState(() => schrijfHighscore(goed))
+  const nieuwRecord = goed > 0 && goed > vorigeHighscore
 
   // Stats per tafel
   const perTafel = {}
@@ -178,45 +195,58 @@ function Overzicht({ tafels, resultaten, onSpelletje }) {
     else { perTafel[t].fout++; perTafel[t].fouten.push(r) }
   }
 
+  const alleFouten = resultaten.filter(r => !r.goed)
+
   return (
-    <div className="to-wrap to-overzicht">
+    <div className="to-overzicht">
       <div className="to-ov-banner">📋 Laat dit aan de meester/juf zien!</div>
+
       <div className="to-ov-score">
-        <span className="to-ov-groot">{goed} / {resultaten.length}</span>
-        <span className="to-ov-label">goed in 2 minuten</span>
+        <span className="to-ov-score-groot">{goed} / {resultaten.length}</span>
+        <span className="to-ov-score-label">goed in 2 minuten</span>
       </div>
 
-      <div className="to-ov-tafels">
+      <div className="to-ov-highscore">
+        {nieuwRecord
+          ? <>🏆 Nieuw record! {goed} goed</>
+          : <>⭐ Jouw record: {highscore} goed</>}
+      </div>
+
+      <div className="to-ov-cats">
         {tafels.map(t => {
           const s = perTafel[t]
           const totaal = s.goed + s.fout
+          const pct = totaal > 0 ? Math.round((s.goed / totaal) * 100) : null
           return (
-            <div key={t} className={`to-ov-rij${s.fout > 0 ? ' heeft-fout' : ''}`}>
-              <div className="to-ov-rij-top">
-                <span className="to-ov-tafel-naam">Tafel van {t}</span>
-                <span className="to-ov-tafel-score">{s.goed}/{totaal}</span>
-                {s.fout > 0
-                  ? <span className="to-ov-fout-tag">❌ {s.fout} fout</span>
-                  : totaal > 0
-                  ? <span className="to-ov-ok-tag">✅</span>
-                  : <span className="to-ov-leeg-tag">—</span>}
+            <div key={t} className="to-ov-cat">
+              <div className="to-ov-cat-head">
+                <span className="to-ov-cat-naam">Tafel van {t}</span>
+                <span className="to-ov-cat-cijfer">{s.goed}/{totaal}{pct !== null ? ` (${pct}%)` : ''} goed</span>
               </div>
-              {s.fouten.length > 0 && (
-                <div className="to-ov-inline-fouten">
-                  {s.fouten.map((f, i) => (
-                    <span key={i} className="to-ov-inline-fout">
-                      {f.links} {f.sym} {f.rechts} = <b>{f.antwoord}</b>
-                      <span className="to-ov-inline-jouw">(jij: {isNaN(f.jouw) ? '—' : f.jouw})</span>
-                    </span>
-                  ))}
-                </div>
-              )}
+              {s.fout > 0
+                ? <span className="to-ov-cat-fout">❌ {s.fout} fout{s.fout > 1 ? 'en' : ''}</span>
+                : (totaal > 0
+                    ? <span className="to-ov-cat-perfect">✅ alles goed</span>
+                    : <span className="to-ov-cat-leeg">— niet geoefend</span>)}
             </div>
           )
         })}
       </div>
 
-      <button className="to-spelletje-btn" onClick={onSpelletje}>🎮 Speel een spelletje!</button>
+      {alleFouten.length > 0 && (
+        <div className="to-ov-foutenlijst">
+          <div className="to-ov-foutenlijst-titel">Fout gemaakt bij:</div>
+          {alleFouten.map((f, i) => (
+            <div key={i} className="to-ov-fout-rij">
+              <span className="to-ov-fout-som">{f.links} {f.sym} {f.rechts}</span>
+              <span className="to-ov-fout-jouw">jij: {isNaN(f.jouw) ? '—' : f.jouw}</span>
+              <span className="to-ov-fout-goed">goed: {f.antwoord}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <button className="to-ov-verder-btn" onClick={onSpelletje}>🎮 Speel een spelletje!</button>
     </div>
   )
 }

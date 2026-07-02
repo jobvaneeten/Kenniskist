@@ -52,6 +52,7 @@ export const COUNTRIES = [
   { key: 'nz', name: 'Nieuw-Zeeland', flag: '🇳🇿', c1: '#00247D', c2: '#CC142B', pattern: 'circle', diff: 2, abbr: 'NZ' },
   { key: 'iq', name: 'Irak',       flag: '🇮🇶', c1: '#CE1126', c2: '#FFFFFF', c3: '#000000', pattern: 'h3', diff: 2, abbr: 'IQ' },
   { key: 'no', name: 'Noorwegen',  flag: '🇳🇴', c1: '#EF2B2D', c2: '#FFFFFF', c3: '#002868', pattern: 'cross', diff: 3, abbr: 'NO' },
+  { key: 'so', name: 'Somalië',    flag: '🇸🇴', c1: '#4189DD', c2: '#FFFFFF', pattern: 'circle', diff: 3, abbr: 'SO' },
 ]
 
 export const getCountry = key => COUNTRIES.find(c => c.key === key)

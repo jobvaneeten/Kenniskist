@@ -9,12 +9,13 @@ import KartGame        from './games/KartGame'
 import BotsenGame      from './games/BotsenGame'
 import MenuScene       from './MenuScenes'
 import { allUnlockedMap } from './itemsCatalog'
-import { COUNTRIES } from './games/countries'
+import { COUNTRIES, DEFAULT_UNLOCKED } from './games/countries'
 
 const CODES = { pabo: 100000 }
 const BRIEF_CODES = { start: 800 }   // eenmalige briefgeld-codes
 const UNLOCK_ALL_CODE = 'joop'
 const UNLOCK_COUNTRIES_CODE = 'frans'   // ontgrendelt alle Head Soccer-landen
+const UNLOCK_SOMALIA_CODE = '124'       // ontgrendelt direct Somalië in Head Soccer
 const UNLOCK_TARA_CODE = 'tara'         // ontgrendelt de Tara Pet
 const UNLOCK_NINA_CODE = 'nina'         // ontgrendelt de Nina Pet
 const UNLOCK_PIM_CODE = 'pim'           // ontgrendelt de Pim Pet
@@ -40,7 +41,7 @@ function CurrencyBadge({ munten, briefgeld, hideMunten }) {
   )
 }
 
-function CodeModal({ onClose, onRedeem, onRedeemBrief, onUnlockAll, onUnlockCountries, onUnlockTara, onUnlockNina, onUnlockPim, onUnlockVinn, onEscape, usedCodes }) {
+function CodeModal({ onClose, onRedeem, onRedeemBrief, onUnlockAll, onUnlockCountries, onUnlockSomalia, onUnlockTara, onUnlockNina, onUnlockPim, onUnlockVinn, onEscape, usedCodes }) {
   const [code, setCode] = useState('')
   const [msg,  setMsg]  = useState(null)
   const [ok,   setOk]   = useState(false)
@@ -56,6 +57,10 @@ function CodeModal({ onClose, onRedeem, onRedeemBrief, onUnlockAll, onUnlockCoun
     } else if (key === UNLOCK_COUNTRIES_CODE) {
       onUnlockCountries()
       setMsg('🎉 Alle Head Soccer-landen ontgrendeld!')
+      setOk(true)
+    } else if (key === UNLOCK_SOMALIA_CODE) {
+      onUnlockSomalia()
+      setMsg('⭐ Somalië ontgrendeld in Head Soccer!')
       setOk(true)
     } else if (key === UNLOCK_TARA_CODE) {
       onUnlockTara()
@@ -183,6 +188,17 @@ export default function App() {
   // "frans" code → ontgrendel alle Head Soccer-landen
   const unlockCountries = () => {
     localStorage.setItem('kk_hs_unlocked', JSON.stringify(COUNTRIES.map(c => c.key)))
+  }
+
+  // "124" code → ontgrendel direct Somalië in Head Soccer
+  const unlockSomalia = () => {
+    let current
+    try {
+      const v = JSON.parse(localStorage.getItem('kk_hs_unlocked'))
+      current = Array.isArray(v) && v.length ? v : [...DEFAULT_UNLOCKED]
+    } catch { current = [...DEFAULT_UNLOCKED] }
+    if (!current.includes('so')) current.push('so')
+    localStorage.setItem('kk_hs_unlocked', JSON.stringify(current))
   }
 
   // "tara" code → ontgrendel de Tara Pet
@@ -340,6 +356,7 @@ export default function App() {
           onRedeemBrief={(key, amount) => redeemBriefCode(key, amount)}
           onUnlockAll={unlockAll}
           onUnlockCountries={unlockCountries}
+          onUnlockSomalia={unlockSomalia}
           onUnlockTara={unlockTara}
           onUnlockNina={unlockNina}
           onUnlockPim={unlockPim}

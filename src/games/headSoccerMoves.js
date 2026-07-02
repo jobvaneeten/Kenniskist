@@ -68,6 +68,7 @@ export const MOVES = {
   nz: { name: 'Haka-schok',        emoji: '🥝', mascot: '🥝', effect: 'charge', color: '#CC142B', charge: 22, desc: 'Dreunende schokgolven stampen de bal steeds weer omhoog', params: {} },
   iq: { name: 'Duinramp',          emoji: '🏺', mascot: '🏺', effect: 'charge', color: '#CE1126', charge: 24, desc: 'De bal raast over een duin en schiet steil de lucht in', params: {} },
   no: { name: 'Aurora-sabotage',   emoji: '🌌', mascot: '🌌', effect: 'charge', color: '#002868', charge: 24, desc: 'Een noorderlicht verwart je tegenstander: zijn volgende trap gaat de verkeerde kant op', params: {} },
+  so: { name: 'Abdi-Bal!',         emoji: '⭐', mascot: '⭐', effect: 'air', color: '#4189DD', charge: 24, desc: 'Raak de bal en schiet hem recht de lucht in — er vallen heel veel ballen naar beneden, maar er is er maar 1 echt!', params: {} },
 }
 
 // ── Authentieke Head Soccer power-shot per land ──────────────────────
@@ -139,6 +140,7 @@ export const SUPERS = {
   nz: { behavior: 'hakapulse',       color: '#7fd142', figure: '🥝' }, // herhaalde schokgolven
   iq: { behavior: 'duneramp',        color: '#e0a45c', figure: '🏺' }, // vertraagde lancering
   no: { behavior: 'auroraflip',      color: '#7fd6ff', figure: '🌌' }, // volgende trap verkeerd om
+  so: { behavior: 'multidrop',       color: '#4189DD', figure: '⭐' }, // bal schiet recht omhoog, splitst in een regen van ballen — 1 is echt
 }
 export const getSuper = key => SUPERS[key] || { behavior: 'power', color: (MOVES[key] || MOVES.nl).color }
 

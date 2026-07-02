@@ -6,8 +6,8 @@ import './football.css'
 import './headsoccer.css'
 
 // ── Arena constants (single screen) ───────────────────────────────
-const W = 1100, H = 480     // langer veld → rustiger tempo (canvas schaalt mee, blijft op scherm)
-const GROUND_Y = 400
+const W = 1100, H = 620     // hoger veld → zo blijven hoge super-sprongen (skyrockets, moonshot, ...) in beeld
+const GROUND_Y = 500
 const CEIL     = 28
 const GOAL_W   = 34          // goal opening depth
 const GOAL_H   = 110         // kleiner doel → moeilijker scoren
@@ -21,7 +21,7 @@ const JUMP_FORCE = 540       // wat lager springen
 const BALL_BOUNCE = 0.62     // bal verliest meer energie
 const KICK_RANGE = PR + BR + 16
 const KICK_ANIM = 0.24       // iets langere schop-animatie (zwaarder gevoel)
-const MATCH_TIME = 75        // iets langer potje (want minder goals)
+const MATCH_TIME = 60        // 1 minuut per potje
 const KICK_POWER = 340       // zwakker, rustiger basis-schot
 // Basis-AI = "hard" (de sterke AI van vóór). Per niveau wordt dit geschaald.
 const AI_SPD_BY_DIFF = { 1: 120, 2: 145, 3: 170, 4: 195, 5: 225 }
@@ -679,7 +679,7 @@ function SpecialDemo({ countryKey }) {
     const country = getCountry(countryKey), move = getMove(countryKey)
     const dummyC = COUNTRIES.find(c => c.key !== countryKey) || country
     const showDummy = true
-    const VW = 520, VX = 100, VY = 150
+    const VW = 520, VX = 100, VY = 250
     const scale = cv.width / VW
     const G = GROUND_Y
     const DGX = VX + VW - 6, DGY = G - 95   // goal-mond (rechts) → doel voor homing/aim
@@ -795,8 +795,13 @@ function SpecialDemo({ countryKey }) {
         case 'bicycle':    // hoge omhaal die van boven binnenkrult + een enkele meevliegende spookbal
           air(1250, 1080, 4); ball.spin = dir * 1900
           decoys.push({ x: ball.x, y: ball.y, vx: ball.vx * 0.9, vy: ball.vy * 1.05, angle: 0, life: 1.6, color: col }); break
-        case 'multidrop':  // zweef, dan omlaag en de bal splitst
-          startSeq(1150, 1.0, 0.55, strikeDown(700, 760, 5, () => { for (let i = 0; i < 4; i++) decoys.push({ x: ball.x, y: ball.y, vx: dir * (260 + i * 130), vy: 360 + i * 90, angle: 0, life: 2.0, color: col }) })); break
+        case 'multidrop': { // zweef, dan omlaag — de bal splitst, welke echt is, is willekeurig
+          const dropTiers = [0, 1, 2, 3, 4]
+          for (let i = dropTiers.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[dropTiers[i], dropTiers[j]] = [dropTiers[j], dropTiers[i]] }
+          const dropTraj = t => ({ vx: 260 + t * 110, vy: 360 + t * 100 })
+          const realTraj = dropTraj(dropTiers[0]), decoyTiers = dropTiers.slice(1)
+          startSeq(1150, 1.0, 0.55, strikeDown(realTraj.vx, realTraj.vy, 5, () => { decoyTiers.forEach(t => { const tr = dropTraj(t); decoys.push({ x: ball.x, y: ball.y, vx: dir * tr.vx, vy: tr.vy, angle: 0, life: 2.0, color: col }) }) })); break
+        }
         case 'moonshot':   // lange slow-motion zweef; de tegenstander zweeft ook even hulpeloos mee omhoog
           startSeq(900, 1.5, 0.9, strikeDown(360, 360, 3, () => { ball.floatT = 1.6; ball.superT = 2.8; ball.homeT = 2.6; dummy.t.float = 1.3; dummy.vy = -280; dummy.onGround = false })); break
         case 'eagledive':  // zweef, dan duikt het poppetje zélf mee omlaag en stoot de tegenstander kort omhoog
@@ -881,7 +886,7 @@ function SpecialDemo({ countryKey }) {
 
       if (gravityT > 0) gravityT -= dt
       const gmulDemo = gravityT > 0 ? 0.1 : 1
-      for (const q of [p, dummy]) { for (const k in q.t) if (q.t[k] > 0) q.t[k] = Math.max(0, q.t[k] - dt); if (q.dizzy > 0) q.dizzy -= dt; if (q.kickAnim > 0) q.kickAnim -= dt; if (q.powerKick > 0) q.powerKick -= dt; if (q.buried > 0) { q.buried -= dt; q.vx = 0 } q.vy += GRAVITY * (q.t.float > 0 ? 0.32 : 1) * gmulDemo * dt; q.x += q.vx * dt; q.y += q.vy * dt; if (q.y >= G - PR) { q.y = G - PR; q.vy = 0; q.onGround = true } q.vx *= 0.9 }
+      for (const q of [p, dummy]) { for (const k in q.t) if (q.t[k] > 0) q.t[k] = Math.max(0, q.t[k] - dt); if (q.dizzy > 0) q.dizzy -= dt; if (q.kickAnim > 0) q.kickAnim -= dt; if (q.powerKick > 0) q.powerKick -= dt; if (q.buried > 0) { q.buried -= dt; q.vx = 0 } q.vy += GRAVITY * (q.t.float > 0 ? 0.32 : 1) * gmulDemo * dt; q.x += q.vx * dt; q.y += q.vy * dt; if (q.y >= G - PR) { q.y = G - PR; q.vy = 0; q.onGround = true } if (q.y < VY + PR * 0.6) { q.y = VY + PR * 0.6; q.vy = Math.max(q.vy, 0) } q.vx *= 0.9 }
       if (p.t.magnet > 0) { const dx = p.x - ball.x, dy = (p.y - PR) - ball.y, d = Math.hypot(dx, dy) || 1; ball.vx += dx / d * 3200 * dt; ball.vy += dy / d * 3200 * dt }
       if (tornado) { tornado.t -= dt; tornado.x += tornado.vx * dt; if (tornado.t <= 0) tornado = null; else { const dx = tornado.x - ball.x, dy = (G - 70) - ball.y, d = Math.hypot(dx, dy) || 1; if (d < 200) { ball.vx += dx / d * 3000 * dt + 200 * dt; ball.vy += dy / d * 3000 * dt } } }
       if (wall) { wall.t -= dt; if (wall.t <= 0) wall = null }
@@ -1479,10 +1484,15 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
           S.decoys.push({ x: S.ball.x, y: S.ball.y, vx: S.ball.vx * 0.9, vy: S.ball.vy * 1.05, angle: 0, life: 1.6, color: col })
           break
         }
-        case 'multidrop':  // STERREN: zweeft hoog, schiet dan omlaag en de bal splitst in meerdere
-          startSeq(1150, 1.0, 0.55, strikeDown(700, 760, 5, () => {
-            for (let i = 0; i < 4; i++) S.decoys.push({ x: S.ball.x, y: S.ball.y, vx: dir * (260 + i * 130), vy: 360 + i * 90, angle: 0, life: 2.0, color: col })
+        case 'multidrop': { // STERREN: zweeft hoog, schiet dan omlaag — de bal splitst in meerdere, welke echt is, is elke keer willekeurig
+          const dropTiers = [0, 1, 2, 3, 4]
+          for (let i = dropTiers.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[dropTiers[i], dropTiers[j]] = [dropTiers[j], dropTiers[i]] }
+          const dropTraj = t => ({ vx: 260 + t * 110, vy: 360 + t * 100 })
+          const realTraj = dropTraj(dropTiers[0]), decoyTiers = dropTiers.slice(1)
+          startSeq(1150, 1.0, 0.55, strikeDown(realTraj.vx, realTraj.vy, 5, () => {
+            decoyTiers.forEach(t => { const tr = dropTraj(t); S.decoys.push({ x: S.ball.x, y: S.ball.y, vx: dir * tr.vx, vy: tr.vy, angle: 0, life: 2.0, color: col }) })
           })); break
+        }
         case 'moonshot':   // MAANSPRONG: lange slow-motion zweef, daarna een loom neerwaarts schot —
           // de maanzwaartekracht grijpt ook de tegenstander: die zweeft even hulpeloos omhoog
           startSeq(900, 1.5, 0.9, strikeDown(360, 360, 3, () => {
@@ -1914,6 +1924,7 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
           p.vy += GRAVITY * (p.t.float > 0 ? 0.32 : 1) * gravMul * dt   // maan-sprong = lange hangtijd
           p.x += p.vx * dt; p.y += p.vy * dt
           if (p.y >= GROUND_Y - PR) { p.y = GROUND_Y - PR; p.vy = 0; p.onGround = true }
+          if (p.y < CEIL + PR * 0.6) { p.y = CEIL + PR * 0.6; p.vy = Math.max(p.vy, 0) }   // nooit boven het scherm uit tijdens super-sprongen
           p.x = Math.max(PR, Math.min(W - PR, p.x))
           if (p.t.leash > 0) p.x = Math.max(p.leashOrigin - p.leashRadius, Math.min(p.leashOrigin + p.leashRadius, p.x))   // zijdenband
         }
