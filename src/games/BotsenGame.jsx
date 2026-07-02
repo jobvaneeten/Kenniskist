@@ -4,6 +4,7 @@ import {
   HemisphericLight, DirectionalLight, ShadowGenerator,
   Vector3, Color3, Color4,
   MeshBuilder, StandardMaterial, DynamicTexture, ParticleSystem,
+  DefaultRenderingPipeline,
 } from '@babylonjs/core'
 import * as Colyseus from '@colyseus/sdk'
 import OrientationGate from '../OrientationGate'
@@ -283,6 +284,32 @@ function makeItemBox(scene, x, z) {
 // hex '#rrggbb' → [r,g,b] in 0..1
 function hexRgb(hex) { const c = Color3.FromHexString(hex); return [c.r, c.g, c.b] }
 
+// ── Zachte wolken: een paar losse bolletjes-clusters die stil in de lucht
+//    hangen — puur sfeer, geen botsing. Maakt het "zwevend eiland"-gevoel
+//    af zonder de arena zelf drukker te maken. ──
+function buildClouds(scene) {
+  const mat = new StandardMaterial('bcloudMat', scene)
+  mat.diffuseColor = new Color3(1, 1, 1); mat.emissiveColor = new Color3(0.85, 0.9, 0.97)
+  mat.specularColor = Color3.Black(); mat.alpha = 0.9
+  const spots = [
+    { x: -70, z: -30, y: 34 }, { x: 60, z: -55, y: 40 }, { x: -55, z: 60, y: 30 },
+    { x: 75, z: 25, y: 44 }, { x: -20, z: -90, y: 38 }, { x: 30, z: 85, y: 36 },
+  ]
+  spots.forEach((s, si) => {
+    const cluster = new TransformNode('bcloud' + si, scene)
+    cluster.position.set(s.x, s.y, s.z)
+    const puffs = 4 + Math.floor(Math.random() * 3)
+    for (let i = 0; i < puffs; i++) {
+      const r = 3 + Math.random() * 3.5
+      const puff = MeshBuilder.CreateSphere('bcloudPuff' + si + i, { diameter: r * 2, segments: 8 }, scene)
+      puff.material = mat; puff.isPickable = false
+      puff.position.set((Math.random() - 0.5) * 10, (Math.random() - 0.5) * 2.2, (Math.random() - 0.5) * 6)
+      puff.scaling.y = 0.62
+      puff.parent = cluster
+    }
+  })
+}
+
 // ── Arena bouwen: alleen lucht (géén gras/bomen), fort-achtige gekleurde
 //    vloer + platform/helling, gekleurde kratten als dekking. Grens =
 //    ONZICHTBAAR (geen muur-mesh — alleen botsing); mist laat de vloer
@@ -391,6 +418,8 @@ function buildArena(scene, sg) {
     { x: -half - 1, z: 0, hw: 1, hd: half + 1 },
   ]
 
+  buildClouds(scene)
+
   return { boxes: boxes.concat(invisWalls, platformWalls(UPPER, 1), platformWalls(LOWER, -1)) }
 }
 
@@ -477,6 +506,17 @@ function BotsenMatch({ onBack, room, sessionId, joinCode, myNameProp, myColorPro
     cam.radius = 9; cam.heightOffset = 3.4; cam.rotationOffset = 180
     cam.cameraAcceleration = 0.06; cam.maxCameraSpeed = 40
 
+    // ── Subtiele beeldkwaliteit-boost: zachte gloed op felle kleuren +
+    //    net iets scherpere randen, zonder de speelse look te overdrijven ──
+    const pipeline = new DefaultRenderingPipeline('bpipeline', true, scene, [cam])
+    pipeline.fxaaEnabled = true
+    pipeline.bloomEnabled = true
+    pipeline.bloomThreshold = 0.7; pipeline.bloomWeight = 0.35; pipeline.bloomKernel = 48
+    pipeline.sharpenEnabled = true
+    pipeline.sharpen.edgeAmount = 0.25
+    pipeline.imageProcessing.contrast = 1.08
+    pipeline.imageProcessing.exposure = 1.05
+
     // ── Slip-vonken (Shift + sturen): puur visuele feedback tijdens het driften ──
     const driftPs = new ParticleSystem('driftPs', 60, scene)
     driftPs.particleTexture = fireTex
@@ -540,16 +580,22 @@ function BotsenMatch({ onBack, room, sessionId, joinCode, myNameProp, myColorPro
     window.addEventListener('keydown', kd)
     window.addEventListener('keyup', ku)
 
-    // ── Physics ──
+    // ── Physics (rustiger tempo dan Karten — dit is bots-en-botsen, geen race) ──
     const phys = {
-      vel: 0, maxSpeed: 28, accel: 24, brakeForce: 30, friction: 14,
-      turnSpeed: 2.5, heading: myP?.rotY ?? 0, sendAcc: 0,
+      vel: 0, maxSpeed: 19, accel: 17, brakeForce: 22, friction: 11,
+      turnSpeed: 2.1, heading: myP?.rotY ?? 0, sendAcc: 0,
       drifting: false, driftPower: 0, boostTime: 0,
     }
     stateRef.current = { phys, scene }
 
     // ── Fase / sync ──
     let lastPhase = room.state.phase
+    // room.state.players kan bij mount nog leeg zijn (de eerste server-sync
+    // komt soms een fractie later dan de join-belofte) — daarom zet de kart
+    // hierboven voorlopig op (0,0,0). Zodra de échte server-positie binnen
+    // is, snappen we outer/heading er ÉÉN keer naartoe, zodat je niet
+    // midden op de kaart blijft staan i.p.v. op je toegewezen spawn-plek.
+    let spawnedFromServer = false
     const sync = (state) => {
       const arr = []
       state.players?.forEach((p, sid) => arr.push({ sid, name: p.name, me: sid === sessionId, bot: p.isBot }))
@@ -560,7 +606,15 @@ function BotsenMatch({ onBack, room, sessionId, joinCode, myNameProp, myColorPro
       state.players?.forEach(p => { if (p.alive) alive++ })
       setAliveCount(alive)
       const me = state.players?.get(sessionId)
-      if (me) { setMyBalloons(me.balloons); setAmAlive(me.alive); setHeldItem(me.item); setHeldCount(me.itemCount) }
+      if (me) {
+        setMyBalloons(me.balloons); setAmAlive(me.alive); setHeldItem(me.item); setHeldCount(me.itemCount)
+        if (!spawnedFromServer) {
+          spawnedFromServer = true
+          outer.position.set(me.x, heightAt(me.x, me.z), me.z)
+          outer.rotation.y = me.rotY
+          phys.heading = me.rotY
+        }
+      }
       if (state.phase !== lastPhase) {
         lastPhase = state.phase
         setPhase(state.phase)
