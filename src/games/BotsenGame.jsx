@@ -26,9 +26,11 @@ const ROOM_TYPE = 'botsen'
 //    "muur"-uiterlijk. MOET kloppen met de server (BotsenRoom.ts). ────────
 const ARENA_HALF = 55            // speelveld: -55..55 in x en z
 const CAR_RADIUS = 1.5
-// Plateau + helling: vanaf de grond omhoog rijden naar een verhoogd platform.
-const PLATEAU = { x: 0, z: -40, w: 22, d: 14, h: 4.2 }
+// Twee verdiepingen: een verhoogd plateau (boven) én een verzonken kuil
+// (beneden), allebei via een helling bereikbaar vanaf de begane grond.
 const RAMP_LEN = 16
+const UPPER = { x: 0, z: -40, w: 22, d: 14, h: 4.2 }
+const LOWER = { x: 0, z: 40, w: 22, d: 14, h: -4.2 }
 const OBSTACLES = [
   { x: 20, z: 18, w: 8, d: 8, color: '#e63946' },
   { x: -20, z: -6, w: 8, d: 8, color: '#1d6fd0' },
@@ -40,35 +42,42 @@ const OBSTACLES = [
 ]
 const BALLOON_COLORS = ['#ff4d6d', '#ffd23f', '#4dd2ff']
 // Item-boxen: vaste plekken (MOET kloppen met de server BotsenRoom.ts) —
-// één staat bovenop het plateau om het beklimmen te belonen.
+// één op het plateau, één in de kuil, als beloning om te beklimmen/afdalen.
 const BOX_SPOTS = [
-  { x: 0, z: 44 }, { x: 38, z: 6 }, { x: -38, z: 6 },
+  { x: 38, z: 6 }, { x: -38, z: 6 },
   { x: 26, z: -34 }, { x: -26, z: -34 }, { x: 0, z: -40 },
+  { x: 26, z: 34 }, { x: -26, z: 34 }, { x: 0, z: 40 },
 ]
 
-// Hoogte van de grond op (x,z): 0 = normaal, oploopt over de helling naar
-// PLATEAU.h bovenop het plateau. Puur visueel (client) — de server rekent
-// alleen in x/z, treffers/botsing zijn hoogte-onafhankelijk.
-function heightAt(x, z) {
-  const { x: px, z: pz, w, d, h } = PLATEAU
-  const hw = w / 2, hd = d / 2
-  if (x < px - hw || x > px + hw) return 0
-  if (z > pz - hd && z < pz + hd) return h
-  const rz0 = pz + hd, rz1 = rz0 + RAMP_LEN
-  if (z >= rz0 && z <= rz1) return h * (1 - (z - rz0) / RAMP_LEN)
-  return 0
+// Hoogte van de grond op (x,z) voor één platform (plat.h > 0 = plateau,
+// plat.h < 0 = kuil); dir bepaalt aan welke kant de helling naar de grond
+// afloopt (+1 = naar grotere z, -1 = naar kleinere z). null = buiten bereik.
+function platformHeight(x, z, plat, dir) {
+  const hw = plat.w / 2, hd = plat.d / 2
+  if (x < plat.x - hw || x > plat.x + hw) return null
+  if (z > plat.z - hd && z < plat.z + hd) return plat.h
+  const rz0 = plat.z + dir * hd
+  const t = dir > 0 ? (z - rz0) / RAMP_LEN : (rz0 - z) / RAMP_LEN
+  if (t >= 0 && t <= 1) return plat.h * (1 - t)
+  return null
 }
-// Botsingswanden voor het plateau (3 zijden dicht, de helling-zijde open) +
+// Puur visueel (client) — de server rekent alleen in x/z, treffers/botsing
+// zijn hoogte-onafhankelijk.
+function heightAt(x, z) {
+  return platformHeight(x, z, UPPER, 1) ?? platformHeight(x, z, LOWER, -1) ?? 0
+}
+// Botsingswanden voor één platform (3 zijden dicht, de helling-zijde open) +
 // lage leuningen langs de helling zodat je er niet naast af rijdt.
-function plateauWalls() {
-  const { x: px, z: pz, w, d } = PLATEAU
-  const hw = w / 2, hd = d / 2, rz0 = pz + hd
+function platformWalls(plat, dir) {
+  const hw = plat.w / 2, hd = plat.d / 2
+  const rz0 = plat.z + dir * hd
+  const railMid = rz0 + dir * (RAMP_LEN / 2)
   return [
-    { x: px - hw, z: pz, hw: 0.4, hd },                              // linkerzijde plateau
-    { x: px + hw, z: pz, hw: 0.4, hd },                              // rechterzijde plateau
-    { x: px, z: pz - hd, hw, hd: 0.4 },                              // achterzijde plateau
-    { x: px - hw, z: rz0 + RAMP_LEN / 2, hw: 0.4, hd: RAMP_LEN / 2 }, // linkerleuning helling
-    { x: px + hw, z: rz0 + RAMP_LEN / 2, hw: 0.4, hd: RAMP_LEN / 2 }, // rechterleuning helling
+    { x: plat.x - hw, z: plat.z, hw: 0.4, hd },              // linkerzijde
+    { x: plat.x + hw, z: plat.z, hw: 0.4, hd },              // rechterzijde
+    { x: plat.x, z: plat.z - dir * hd, hw, hd: 0.4 },        // zijde tegenover de helling
+    { x: plat.x - hw, z: railMid, hw: 0.4, hd: RAMP_LEN / 2 }, // linkerleuning helling
+    { x: plat.x + hw, z: railMid, hw: 0.4, hd: RAMP_LEN / 2 }, // rechterleuning helling
   ]
 }
 const ITEM_INFO = {
@@ -94,6 +103,27 @@ function buildBalloons(scene, idSuffix) {
 }
 function setBalloons(balls, count) {
   balls.forEach((b, i) => b.setEnabled(i < count))
+}
+
+// ── Naamkaartje: zwevend, altijd naar de camera gericht, boven de kart ──
+function makeNameTag(scene, name) {
+  const plane = MeshBuilder.CreatePlane('bnametag', { width: 3.2, height: 0.8 }, scene)
+  plane.billboardMode = 7 // Mesh.BILLBOARDMODE_ALL
+  plane.isPickable = false
+  const tex = new DynamicTexture('bnametagTex', { width: 256, height: 64 }, scene, false)
+  const c = tex.getContext()
+  c.clearRect(0, 0, 256, 64)
+  c.fillStyle = 'rgba(10,10,20,0.55)'
+  c.beginPath(); c.roundRect ? c.roundRect(4, 12, 248, 40, 16) : c.rect(4, 12, 248, 40); c.fill()
+  c.fillStyle = '#fff'; c.font = 'bold 30px Arial'; c.textAlign = 'center'; c.textBaseline = 'middle'
+  c.fillText((name || 'Speler').slice(0, 14), 128, 33)
+  tex.update(); tex.hasAlpha = true
+  const m = new StandardMaterial('bnametagMat', scene)
+  m.diffuseTexture = tex; m.emissiveColor = new Color3(1, 1, 1); m.specularColor = Color3.Black()
+  m.diffuseTexture.hasAlpha = true; m.useAlphaFromDiffuseTexture = true; m.backFaceCulling = false
+  plane.material = m
+  plane.position.y = 3.3
+  return plane
 }
 
 // ── Zachte gloed-textuur voor vuurdeeltjes (radiaal verloop) ────────────
@@ -298,36 +328,41 @@ function buildArena(scene, sg) {
     ring.rotation.x = Math.PI / 2; ring.position.y = 0.01; ring.material = ringMat; ring.isPickable = false
   }
 
-  // ── Plateau + helling (beklimbaar, hoogte via heightAt()) — fort-rood ──
-  const platMat = new StandardMaterial('bplatMat', scene)
-  platMat.diffuseColor = Color3.FromHexString('#e63946'); platMat.specularColor = new Color3(0.2, 0.2, 0.2)
-  const topMat = new StandardMaterial('bplatTopMat', scene)
-  topMat.diffuseColor = Color3.FromHexString('#ff8a94'); topMat.specularColor = Color3.Black()
-  const { x: px, z: pz, w: pw, d: pd, h: ph } = PLATEAU
-  const plat = MeshBuilder.CreateBox('bplateau', { width: pw, height: ph, depth: pd }, scene)
-  plat.position.set(px, ph / 2, pz); plat.material = platMat
-  plat.receiveShadows = true; sg.addShadowCaster(plat)
-  const platTop = MeshBuilder.CreateGround('bplateauTop', { width: pw, height: pd }, scene)
-  platTop.position.set(px, ph + 0.01, pz); platTop.material = topMat; platTop.receiveShadows = true
-  const rampZ0 = pz + pd / 2
-  const rampSlopeLen = Math.hypot(RAMP_LEN, ph)
-  const ramp = MeshBuilder.CreateBox('bramp', { width: pw, height: 0.6, depth: rampSlopeLen }, scene)
-  ramp.position.set(px, ph / 2, rampZ0 + RAMP_LEN / 2)
-  // Positieve X-rotatie tilt (in Babylon's linkshandige systeem) het verre
-  // uiteinde (grootste z) omlaag naar de grond — het plateau-uiteinde blijft hoog.
-  ramp.rotation.x = Math.atan2(ph, RAMP_LEN)
-  ramp.material = platMat; ramp.receiveShadows = true; sg.addShadowCaster(ramp)
-  // leuningen langs de helling + plateau-rand (visueel, volgt de botsing)
-  const railMat = new StandardMaterial('bplatRailMat', scene)
-  railMat.diffuseColor = Color3.FromHexString('#ffd23f'); railMat.specularColor = new Color3(0.3, 0.3, 0.3)
-  plateauWalls().forEach((seg, i) => {
-    const railH = 0.9
-    const rail = MeshBuilder.CreateBox('brail' + i, { width: seg.hw * 2 * 0.9, height: railH, depth: seg.hd * 2 * 0.9 }, scene)
-    // hoogte van de leuning volgt de helling bij de hellingsegmenten, anders plateau-top
-    const midZ = seg.z
-    const y = heightAt(seg.x > 0 ? seg.x - 0.01 : seg.x + 0.01, midZ)
-    rail.position.set(seg.x, y + railH / 2, midZ); rail.material = railMat
-  })
+  // ── Plateau (boven) + kuil (beneden), allebei beklimbaar/afdaalbaar via
+  //    een helling (hoogte via heightAt()) ──────────────────────────────
+  function buildPlatform(plat, dir, colors, tag) {
+    const { x: px, z: pz, w: pw, d: pd, h: ph } = plat
+    const absH = Math.abs(ph)
+    const bodyMat = new StandardMaterial('bplatMat' + tag, scene)
+    bodyMat.diffuseColor = Color3.FromHexString(colors.body); bodyMat.specularColor = new Color3(0.2, 0.2, 0.2)
+    const topMat = new StandardMaterial('bplatTopMat' + tag, scene)
+    topMat.diffuseColor = Color3.FromHexString(colors.top); topMat.specularColor = Color3.Black()
+    const body = MeshBuilder.CreateBox('bplateau' + tag, { width: pw, height: absH, depth: pd }, scene)
+    body.position.set(px, ph / 2, pz); body.material = bodyMat
+    body.receiveShadows = true; sg.addShadowCaster(body)
+    const topPlane = MeshBuilder.CreateGround('bplateauTop' + tag, { width: pw, height: pd }, scene)
+    topPlane.position.set(px, ph + (ph >= 0 ? 0.01 : -0.01), pz); topPlane.material = topMat; topPlane.receiveShadows = true
+    const rampZ0 = pz + dir * pd / 2
+    const rampSlopeLen = Math.hypot(RAMP_LEN, absH)
+    const ramp = MeshBuilder.CreateBox('bramp' + tag, { width: pw, height: 0.6, depth: rampSlopeLen }, scene)
+    ramp.position.set(px, ph / 2, rampZ0 + dir * RAMP_LEN / 2)
+    // Positieve X-rotatie tilt (in Babylon's linkshandige systeem) het verre
+    // uiteinde (grootste lokale z) omlaag — werkt voor zowel omhoog (plateau)
+    // als omlaag (kuil) hellingen, want alleen het hoogteverschil telt.
+    ramp.rotation.x = Math.atan2(absH, RAMP_LEN)
+    ramp.material = bodyMat; ramp.receiveShadows = true; sg.addShadowCaster(ramp)
+    // leuningen langs de helling + platform-rand (visueel, volgt de botsing)
+    const railMat = new StandardMaterial('bplatRailMat' + tag, scene)
+    railMat.diffuseColor = Color3.FromHexString(colors.rail); railMat.specularColor = new Color3(0.3, 0.3, 0.3)
+    platformWalls(plat, dir).forEach((seg, i) => {
+      const railH = 0.9
+      const rail = MeshBuilder.CreateBox('brail' + tag + i, { width: seg.hw * 2 * 0.9, height: railH, depth: seg.hd * 2 * 0.9 }, scene)
+      const y = heightAt(seg.x > 0 ? seg.x - 0.01 : seg.x + 0.01, seg.z)
+      rail.position.set(seg.x, y + railH / 2, seg.z); rail.material = railMat
+    })
+  }
+  buildPlatform(UPPER, 1, { body: '#e63946', top: '#ff8a94', rail: '#ffd23f' }, 'up')
+  buildPlatform(LOWER, -1, { body: '#233a56', top: '#3d5c82', rail: '#7cd4ff' }, 'lo')
 
   // ── Obstakels: gekleurde fort-kratten (metaal-paneel-look) ──
   const boxes = []
@@ -356,7 +391,7 @@ function buildArena(scene, sg) {
     { x: -half - 1, z: 0, hw: 1, hd: half + 1 },
   ]
 
-  return { boxes: boxes.concat(invisWalls, plateauWalls()) }
+  return { boxes: boxes.concat(invisWalls, platformWalls(UPPER, 1), platformWalls(LOWER, -1)) }
 }
 
 // Cirkel-vs-AABB botsing: duwt een punt (met straal r) uit een blok.
@@ -422,7 +457,7 @@ function BotsenMatch({ onBack, room, sessionId, joinCode }) {
     // dat de camera meedraait — je scherm blijft dus rustig, alleen je
     // autootje met poppetje tolt even rond.
     const myP = room.state.players?.get(sessionId)
-    const myColor = KART_COLORS[(myP?.grid ?? 0) % KART_COLORS.length]
+    const myColor = myP?.color || KART_COLORS[(myP?.grid ?? 0) % KART_COLORS.length]
     const outer = new TransformNode('outerMe', scene)
     outer.position.set(myP?.x ?? 0, heightAt(myP?.x ?? 0, myP?.z ?? 0), myP?.z ?? 0)
     outer.rotation.y = myP?.rotY ?? 0
@@ -430,11 +465,28 @@ function BotsenMatch({ onBack, room, sessionId, joinCode }) {
     kartRoot.parent = outer
     const myBalloonMeshes = buildBalloons(scene, 'me')
     myBalloonMeshes.forEach(b => { b.parent = kartRoot })
+    const myNameTag = makeNameTag(scene, myP?.name)
+    myNameTag.parent = outer
 
     const cam = new FollowCamera('cam', new Vector3(0, 6, -12), scene)
     cam.lockedTarget = outer
     cam.radius = 9; cam.heightOffset = 3.4; cam.rotationOffset = 180
     cam.cameraAcceleration = 0.06; cam.maxCameraSpeed = 40
+
+    // ── Slip-vonken (Shift + sturen): puur visuele feedback tijdens het driften ──
+    const driftPs = new ParticleSystem('driftPs', 60, scene)
+    driftPs.particleTexture = fireTex
+    driftPs.emitter = outer
+    driftPs.minEmitBox = new Vector3(-0.6, -0.2, -1.6); driftPs.maxEmitBox = new Vector3(0.6, 0.1, -1.2)
+    driftPs.color1 = new Color4(0.65, 0.85, 1, 0.9); driftPs.color2 = new Color4(1, 1, 1, 0.7)
+    driftPs.colorDead = new Color4(0.4, 0.6, 1, 0)
+    driftPs.minSize = 0.14; driftPs.maxSize = 0.32
+    driftPs.minLifeTime = 0.15; driftPs.maxLifeTime = 0.3
+    driftPs.emitRate = 0
+    driftPs.blendMode = ParticleSystem.BLENDMODE_ADD
+    driftPs.direction1 = new Vector3(-0.3, 0.2, -0.3); driftPs.direction2 = new Vector3(0.3, 0.6, 0.3)
+    driftPs.minEmitPower = 0.5; driftPs.maxEmitPower = 1.2
+    driftPs.start()
 
     loadAvatar(scene, localStorage.getItem('kk_shirt') || '', safeJSON(localStorage.getItem('kk_wearing')), (av) => {
       av.parent = kartRoot
@@ -446,7 +498,7 @@ function BotsenMatch({ onBack, room, sessionId, joinCode }) {
     // ── Remote karts (ook outer/visual gesplitst, voor dezelfde tol-animatie) ──
     const remotes = new Map()
     const makeRemote = (sid, p) => {
-      const col = KART_COLORS[(p.grid ?? 0) % KART_COLORS.length]
+      const col = p.color || KART_COLORS[(p.grid ?? 0) % KART_COLORS.length]
       const outerR = new TransformNode('outer_r' + sid, scene)
       outerR.position.set(p.x || 0, heightAt(p.x || 0, p.z || 0), p.z || 0)
       outerR.rotation.y = p.rotY || 0
@@ -454,6 +506,8 @@ function BotsenMatch({ onBack, room, sessionId, joinCode }) {
       built.root.parent = outerR
       const balloons = buildBalloons(scene, 'r' + sid)
       balloons.forEach(b => { b.parent = built.root })
+      const nameTag = makeNameTag(scene, p.name)
+      nameTag.parent = outerR
       const ent = { outer: outerR, visual: built.root, wheels: built.wheels, balloons, tx: outerR.position.x, tz: outerR.position.z, trot: outerR.rotation.y, tvel: 0, lastBalloons: 3, lastHitSeq: p.hitSeq ?? 0 }
       loadAvatar(scene, p.shirt || '', safeJSON(p.wearing), (av) => {
         av.parent = built.root; av.position.set(0, AV_Y, AV_Z); av.rotation = new Vector3(0, Math.PI, 0)
@@ -486,6 +540,7 @@ function BotsenMatch({ onBack, room, sessionId, joinCode }) {
     const phys = {
       vel: 0, maxSpeed: 28, accel: 24, brakeForce: 30, friction: 14,
       turnSpeed: 2.5, heading: myP?.rotY ?? 0, sendAcc: 0,
+      drifting: false, driftPower: 0, boostTime: 0,
     }
     stateRef.current = { phys, scene }
 
@@ -582,17 +637,38 @@ function BotsenMatch({ onBack, room, sessionId, joinCode }) {
         const brake = keys['s'] || keys['arrowdown']
         const left  = keys['a'] || keys['arrowleft']
         const right = keys['d'] || keys['arrowright']
+        const driftKey = keys['shift']
 
         if (gas)        phys.vel += phys.accel * dt
         else if (brake) phys.vel -= phys.brakeForce * dt
         else { const f = phys.friction * dt; phys.vel = phys.vel > 0 ? Math.max(0, phys.vel - f) : Math.min(0, phys.vel + f) }
-        phys.vel = Math.max(-phys.maxSpeed * 0.4, Math.min(phys.maxSpeed, phys.vel))
 
-        // Arcade-sturen: draait altijd direct, ook stilstaand (bumper-car-gevoel,
-        // geen racewagen-traagheid nodig in een kleine arena).
+        // Slippen (Shift + sturen, met genoeg vaart): scherpere bocht, bouwt
+        // een boost op. Loslaten (of stoppen met sturen) geeft een korte
+        // snelheidsboost als er genoeg is opgebouwd — mini-turbo-gevoel.
         const steer = (right ? 1 : 0) - (left ? 1 : 0)
-        phys.heading += steer * phys.turnSpeed * dt
+        const canDrift = driftKey && steer !== 0 && Math.abs(phys.vel) > phys.maxSpeed * 0.45
+        if (canDrift) {
+          phys.drifting = true
+          phys.driftPower = Math.min(1.4, phys.driftPower + dt)
+          phys.heading += steer * phys.turnSpeed * 1.8 * dt
+        } else {
+          if (phys.drifting) {
+            if (phys.driftPower > 0.35) phys.boostTime = 0.8
+            phys.drifting = false; phys.driftPower = 0
+          }
+          phys.heading += steer * phys.turnSpeed * dt
+        }
+        driftPs.emitRate = canDrift ? 90 : 0
         outer.rotation.y = phys.heading
+
+        let capSpeed = phys.maxSpeed
+        if (phys.boostTime > 0) {
+          capSpeed = phys.maxSpeed * 1.45
+          phys.vel = Math.max(phys.vel, capSpeed * 0.92)
+          phys.boostTime = Math.max(0, phys.boostTime - dt)
+        }
+        phys.vel = Math.max(-phys.maxSpeed * 0.4, Math.min(capSpeed, phys.vel))
 
         const fwd = new Vector3(Math.sin(phys.heading), 0, Math.cos(phys.heading))
         outer.position.addInPlace(fwd.scale(phys.vel * dt))
@@ -623,6 +699,8 @@ function BotsenMatch({ onBack, room, sessionId, joinCode }) {
           phys.sendAcc = 0
           room.send('state', { x: outer.position.x, z: outer.position.z, rotY: phys.heading, vel: phys.vel })
         }
+      } else {
+        driftPs.emitRate = 0
       }
 
       // Schilden/vuurtjes syncen + draaien
@@ -811,6 +889,7 @@ export default function BotsenGame({ onBack }) {
 function BotsenLobby({ onBack, onJoined }) {
   const [code, setCode] = useState('')
   const [name, setName] = useState(() => localStorage.getItem('kk_playername') || '')
+  const [color, setColor] = useState(() => localStorage.getItem('kk_botsen_color') || KART_COLORS[0])
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
 
@@ -821,9 +900,10 @@ function BotsenLobby({ onBack, onJoined }) {
       const wearing = localStorage.getItem('kk_wearing') || '{}'
       const client = new Colyseus.Client(SERVER_URL)
       const joinCode = create ? String(Math.floor(1000 + Math.random() * 9000)) : code.trim()
-      const opts = { joinCode, shirt, wearing, name: name || 'Speler' }
+      const opts = { joinCode, shirt, wearing, name: name || 'Speler', color }
       const room = create ? await client.create(ROOM_TYPE, opts) : await client.join(ROOM_TYPE, opts)
       if (name) localStorage.setItem('kk_playername', name)
+      localStorage.setItem('kk_botsen_color', color)
       onJoined(room, joinCode)
     } catch { setError(create ? 'Kan geen potje aanmaken.' : 'Potje niet gevonden.'); setLoading(false) }
   }
@@ -837,6 +917,15 @@ function BotsenLobby({ onBack, onJoined }) {
         <div className="botsen-lobby-field">
           <label>Jouw naam</label>
           <input className="botsen-input" placeholder="Speler" value={name} maxLength={12} onChange={e => setName(e.target.value)} />
+        </div>
+        <div className="botsen-lobby-field">
+          <label>Kart-kleur</label>
+          <div className="botsen-color-row">
+            {KART_COLORS.map(c => (
+              <button key={c} type="button" className={'botsen-color-swatch' + (c === color ? ' on' : '')}
+                style={{ background: c }} onClick={() => setColor(c)} aria-label={c} />
+            ))}
+          </div>
         </div>
         <button className="botsen-menu-btn online" disabled={loading} onClick={() => connect(true)}>➕ Nieuw potje (maak code)</button>
         <div className="botsen-lobby-field">

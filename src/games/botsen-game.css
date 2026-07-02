@@ -132,6 +132,13 @@
   padding: 11px 14px; outline: none; text-align: center; letter-spacing: 0.08em;
 }
 .botsen-input:focus { border-color: #ff8a3d; }
+.botsen-color-row { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.botsen-color-swatch {
+  width: 32px; height: 32px; border-radius: 50%; cursor: pointer;
+  border: 3px solid rgba(255,255,255,0.25); padding: 0; transition: transform 0.12s, border-color 0.12s;
+}
+.botsen-color-swatch:hover { transform: scale(1.1); }
+.botsen-color-swatch.on { border-color: #fff; box-shadow: 0 0 0 2px rgba(255,138,61,0.7); }
 .botsen-lobby-err  { color: #fca5a5; font-weight: 700; margin: 2px 0 0; }
 .botsen-lobby-info { color: #e6a8d6; margin: 2px 0 0; }
 
