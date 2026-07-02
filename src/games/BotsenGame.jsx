@@ -417,7 +417,7 @@ function collideBoxes(pos, r, boxes) {
   }
 }
 
-function BotsenMatch({ onBack, room, sessionId, joinCode }) {
+function BotsenMatch({ onBack, room, sessionId, joinCode, myNameProp, myColorProp }) {
   const canvasRef = useRef(null)
   const minimapRef = useRef(null)
   const [phase, setPhase] = useState('lobby')       // lobby | countdown | playing | gameover
@@ -456,8 +456,12 @@ function BotsenMatch({ onBack, room, sessionId, joinCode }) {
     // "kartRoot" (kind) = puur visueel; tolt los tijdens een treffer zonder
     // dat de camera meedraait — je scherm blijft dus rustig, alleen je
     // autootje met poppetje tolt even rond.
+    // room.state.players kan bij mount nog leeg zijn (de eerste server-sync
+    // komt soms een fractie later dan de join-belofte) — voor je EIGEN kart
+    // gebruiken we daarom wat je net zelf in de lobby koos, niet wat we
+    // terug proberen te lezen uit de (mogelijk nog lege) server-state.
     const myP = room.state.players?.get(sessionId)
-    const myColor = myP?.color || KART_COLORS[(myP?.grid ?? 0) % KART_COLORS.length]
+    const myColor = myColorProp || myP?.color || KART_COLORS[(myP?.grid ?? 0) % KART_COLORS.length]
     const outer = new TransformNode('outerMe', scene)
     outer.position.set(myP?.x ?? 0, heightAt(myP?.x ?? 0, myP?.z ?? 0), myP?.z ?? 0)
     outer.rotation.y = myP?.rotY ?? 0
@@ -465,7 +469,7 @@ function BotsenMatch({ onBack, room, sessionId, joinCode }) {
     kartRoot.parent = outer
     const myBalloonMeshes = buildBalloons(scene, 'me')
     myBalloonMeshes.forEach(b => { b.parent = kartRoot })
-    const myNameTag = makeNameTag(scene, myP?.name)
+    const myNameTag = makeNameTag(scene, myNameProp || myP?.name)
     myNameTag.parent = outer
 
     const cam = new FollowCamera('cam', new Vector3(0, 6, -12), scene)
@@ -861,15 +865,17 @@ export default function BotsenGame({ onBack }) {
   const [room, setRoom] = useState(null)
   const [sessionId, setSessionId] = useState(null)
   const [joinCode, setJoinCode] = useState(null)
+  const [myName, setMyName] = useState('')
+  const [myColor, setMyColor] = useState('')
 
   if (screen === 'match' && room) {
-    return <BotsenMatch onBack={() => { try { room.leave() } catch {} ; setRoom(null); setScreen('menu') }} room={room} sessionId={sessionId} joinCode={joinCode} />
+    return <BotsenMatch onBack={() => { try { room.leave() } catch {} ; setRoom(null); setScreen('menu') }} room={room} sessionId={sessionId} joinCode={joinCode} myNameProp={myName} myColorProp={myColor} />
   }
 
   if (screen === 'lobby') {
     return <BotsenLobby
       onBack={() => setScreen('menu')}
-      onJoined={(r, jc) => { setRoom(r); setSessionId(r.sessionId); setJoinCode(jc); setScreen('match') }}
+      onJoined={(r, jc, name, color) => { setRoom(r); setSessionId(r.sessionId); setJoinCode(jc); setMyName(name); setMyColor(color); setScreen('match') }}
     />
   }
 
@@ -904,7 +910,7 @@ function BotsenLobby({ onBack, onJoined }) {
       const room = create ? await client.create(ROOM_TYPE, opts) : await client.join(ROOM_TYPE, opts)
       if (name) localStorage.setItem('kk_playername', name)
       localStorage.setItem('kk_botsen_color', color)
-      onJoined(room, joinCode)
+      onJoined(room, joinCode, name || 'Speler', color)
     } catch { setError(create ? 'Kan geen potje aanmaken.' : 'Potje niet gevonden.'); setLoading(false) }
   }
 
