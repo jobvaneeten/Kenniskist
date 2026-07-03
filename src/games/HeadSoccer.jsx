@@ -272,11 +272,19 @@ function drawPlayer(ctx, p, country) {
   ctx.strokeStyle = '#F0B07A'; ctx.lineWidth = 7
   ctx.beginPath(); ctx.moveTo(x, hy + HR * 0.7); ctx.lineTo(x, bodyCY - BH * 0.4); ctx.stroke()
 
-  ctx.fillStyle = '#F5C89A'
-  ctx.beginPath(); ctx.arc(x, hy, HR, 0, Math.PI * 2); ctx.fill()
-  // oren
+  // oren (achter de kop, plat huidkleur)
+  ctx.fillStyle = '#F0B98A'
   ctx.beginPath(); ctx.arc(x - HR, hy + 2, HR * 0.2, 0, Math.PI * 2); ctx.fill()
   ctx.beginPath(); ctx.arc(x + HR, hy + 2, HR * 0.2, 0, Math.PI * 2); ctx.fill()
+  // kop met zachte volume-schaduw (highlight linksboven, schaduw rechtsonder)
+  const skin = ctx.createRadialGradient(x - HR * 0.35, hy - HR * 0.4, HR * 0.2, x, hy, HR * 1.15)
+  skin.addColorStop(0, '#FFD9AE'); skin.addColorStop(0.6, '#F5C89A'); skin.addColorStop(1, '#E0A876')
+  ctx.fillStyle = skin
+  ctx.beginPath(); ctx.arc(x, hy, HR, 0, Math.PI * 2); ctx.fill()
+  // wang-blosjes
+  ctx.fillStyle = 'rgba(255,140,120,0.28)'
+  ctx.beginPath(); ctx.arc(x - HR * 0.5, hy + HR * 0.3, HR * 0.2, 0, Math.PI * 2); ctx.fill()
+  ctx.beginPath(); ctx.arc(x + HR * 0.5, hy + HR * 0.3, HR * 0.2, 0, Math.PI * 2); ctx.fill()
   // haar
   ctx.save(); ctx.beginPath(); ctx.arc(x, hy, HR, 0, Math.PI * 2); ctx.clip()
   ctx.fillStyle = '#3a2417'; ctx.fillRect(x - HR, hy - HR, HR * 2, HR * 0.62)
@@ -453,29 +461,47 @@ function drawShockwaves(ctx, list) {
 function drawSunburst(ctx, x, y, k, color) {
   const env = Math.sin(Math.min(1, Math.max(0, k)) * Math.PI)   // 0→1→0
   if (env <= 0.01) return
-  const rays = 16
+  const rays = 18
   const R = 44 + k * 150
   ctx.save()
   ctx.translate(x, y)
   ctx.globalAlpha = env
+  // gloeiende kern met additief-mengen voor een fellere flits
+  ctx.globalCompositeOperation = 'lighter'
   const g = ctx.createRadialGradient(0, 0, 2, 0, 0, R)
-  g.addColorStop(0, 'rgba(255,255,255,0.95)')
-  g.addColorStop(0.4, hexA(color, 0.7))
+  g.addColorStop(0, 'rgba(255,255,255,0.98)')
+  g.addColorStop(0.3, hexA(color, 0.85))
+  g.addColorStop(0.7, hexA(color, 0.35))
   g.addColorStop(1, hexA(color, 0))
   ctx.fillStyle = g
   ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI * 2); ctx.fill()
-  ctx.rotate(k * 2.2)
-  for (let i = 0; i < rays; i++) {
-    const a = (i / rays) * Math.PI * 2
-    const long = (i % 2 === 0) ? R * 1.2 : R * 0.72
-    ctx.fillStyle = (i % 2 === 0) ? '#fff' : color
-    ctx.beginPath()
-    ctx.moveTo(Math.cos(a) * long, Math.sin(a) * long)
-    ctx.lineTo(Math.cos(a + 0.05) * 14, Math.sin(a + 0.05) * 14)
-    ctx.lineTo(Math.cos(a - 0.05) * 14, Math.sin(a - 0.05) * 14)
-    ctx.closePath(); ctx.fill()
+  // twee tegengesteld draaiende stralenkransen (meer diepte)
+  ;[[k * 2.2, 1.2, 0.72], [-k * 1.4, 0.95, 0.55]].forEach(([rot, longMul, shortMul], layer) => {
+    ctx.save(); ctx.rotate(rot)
+    for (let i = 0; i < rays; i++) {
+      const a = (i / rays) * Math.PI * 2
+      const long = (i % 2 === 0) ? R * longMul : R * shortMul
+      ctx.fillStyle = (i % 2 === 0) ? '#fff' : color
+      ctx.globalAlpha = env * (layer === 0 ? 1 : 0.6)
+      ctx.beginPath()
+      ctx.moveTo(Math.cos(a) * long, Math.sin(a) * long)
+      ctx.lineTo(Math.cos(a + 0.05) * 14, Math.sin(a + 0.05) * 14)
+      ctx.lineTo(Math.cos(a - 0.05) * 14, Math.sin(a - 0.05) * 14)
+      ctx.closePath(); ctx.fill()
+    }
+    ctx.restore()
+  })
+  // uitdijende schokring
+  ctx.globalAlpha = env * 0.8; ctx.strokeStyle = '#fff'; ctx.lineWidth = 3
+  ctx.beginPath(); ctx.arc(0, 0, R * 0.9, 0, Math.PI * 2); ctx.stroke()
+  // fonkelende sterretjes eromheen
+  ctx.globalAlpha = env
+  for (let i = 0; i < 6; i++) {
+    const a = k * 3 + (i / 6) * Math.PI * 2, sr = R * 1.05
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 16px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
+    ctx.fillText('✦', Math.cos(a) * sr, Math.sin(a) * sr)
   }
-  ctx.restore(); ctx.globalAlpha = 1
+  ctx.restore(); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'
 }
 
 // kleine raket met vlam-staart (skyrockets / raketregen)
@@ -547,31 +573,81 @@ function drawGoal(ctx, side) {
 }
 
 function drawArena(ctx, ph) {
+  // ── avond-lucht met sterren en een warme gloed onderaan het stadion ──
   const sky = ctx.createLinearGradient(0, 0, 0, GROUND_Y)
-  sky.addColorStop(0, '#0a1a2e'); sky.addColorStop(1, '#1a4060')
+  sky.addColorStop(0, '#0a1428'); sky.addColorStop(0.55, '#122a4d'); sky.addColorStop(1, '#1d4a6e')
   ctx.fillStyle = sky; ctx.fillRect(0, 0, W, GROUND_Y)
-  // crowd band
-  ctx.fillStyle = 'rgba(5,10,20,0.7)'; ctx.fillRect(0, 0, W, 46)
-  for (let i = 0; i < 120; i++) {
-    ctx.fillStyle = `hsl(${(i * 137) % 360},55%,58%)`; ctx.globalAlpha = 0.7
-    ctx.beginPath(); ctx.arc((i * 71 + 13) % W, 8 + (i * 31) % 32, 2.6, 0, Math.PI * 2); ctx.fill()
+  // sterren (vast patroon, subtiel twinkelend)
+  const now = Date.now()
+  for (let i = 0; i < 40; i++) {
+    const sx = (i * 197 + 30) % W, sy = 20 + (i * 89) % 120
+    ctx.globalAlpha = 0.3 + 0.35 * (0.5 + 0.5 * Math.sin(now / 600 + i))
+    ctx.fillStyle = '#dfeaff'; ctx.beginPath(); ctx.arc(sx, sy, 1.2, 0, Math.PI * 2); ctx.fill()
   }
   ctx.globalAlpha = 1
-  // floodlights
-  ;[120, W - 120].forEach(lx => {
-    const lg = ctx.createRadialGradient(lx, 50, 2, lx, 50, 90)
-    lg.addColorStop(0, 'rgba(255,240,200,0.16)'); lg.addColorStop(1, 'rgba(255,240,200,0)')
-    ctx.fillStyle = lg; ctx.beginPath(); ctx.arc(lx, 50, 90, 0, Math.PI * 2); ctx.fill()
-    ctx.fillStyle = '#ffe8b0'; ctx.beginPath(); ctx.arc(lx, 50, 5, 0, Math.PI * 2); ctx.fill()
+
+  // ── stadion-tribunes: twee schuine dekken met rij-lijnen ──
+  const standTop = 30, standBot = 150
+  const standGrad = ctx.createLinearGradient(0, standTop, 0, standBot)
+  standGrad.addColorStop(0, '#1a2436'); standGrad.addColorStop(1, '#2b3a52')
+  ctx.fillStyle = standGrad; ctx.fillRect(0, standTop, W, standBot - standTop)
+  // rij-lijnen in de tribune
+  ctx.strokeStyle = 'rgba(0,0,0,0.25)'; ctx.lineWidth = 1
+  for (let ry = standTop + 12; ry < standBot; ry += 14) { ctx.beginPath(); ctx.moveTo(0, ry); ctx.lineTo(W, ry); ctx.stroke() }
+  // publiek: gekleurde stippen in rijen (dichter = verder weg bovenin)
+  for (let row = 0; row < 8; row++) {
+    const ry = standTop + 10 + row * 14
+    for (let cx = 8; cx < W; cx += 13) {
+      const seed = (row * 131 + cx * 17)
+      ctx.fillStyle = `hsl(${(seed * 47) % 360},60%,${58 + (seed % 3) * 6}%)`
+      ctx.globalAlpha = 0.55 + (seed % 4) * 0.1
+      const bob = Math.sin(now / 500 + seed) * 0.8
+      ctx.beginPath(); ctx.arc(cx + (row % 2) * 6, ry + bob, 2.4, 0, Math.PI * 2); ctx.fill()
+    }
+  }
+  ctx.globalAlpha = 1
+  // reclameboarding onder de tribune
+  ctx.fillStyle = '#0e1a2a'; ctx.fillRect(0, standBot, W, 14)
+  for (let bx = 0; bx < W; bx += 90) {
+    ctx.fillStyle = bx / 90 % 2 === 0 ? 'rgba(80,180,255,0.25)' : 'rgba(255,210,80,0.22)'
+    ctx.fillRect(bx + 3, standBot + 3, 84, 8)
+  }
+
+  // ── floodlight-masten met lichtbundels ──
+  ;[110, W - 110].forEach(lx => {
+    // mast
+    ctx.strokeStyle = '#0a1420'; ctx.lineWidth = 4
+    ctx.beginPath(); ctx.moveTo(lx, 8); ctx.lineTo(lx, 28); ctx.stroke()
+    // lampenpaneel
+    ctx.fillStyle = '#1a2636'; ctx.fillRect(lx - 16, 2, 32, 10)
+    for (let li = 0; li < 6; li++) { ctx.fillStyle = '#fff6d8'; ctx.beginPath(); ctx.arc(lx - 12 + li * 5, 7, 1.8, 0, Math.PI * 2); ctx.fill() }
+    // lichtbundel omlaag over het veld
+    const beam = ctx.createLinearGradient(lx, 12, lx, GROUND_Y)
+    beam.addColorStop(0, 'rgba(255,244,214,0.14)'); beam.addColorStop(1, 'rgba(255,244,214,0)')
+    ctx.fillStyle = beam
+    ctx.beginPath(); ctx.moveTo(lx - 14, 12); ctx.lineTo(lx + 14, 12); ctx.lineTo(lx + 150, GROUND_Y); ctx.lineTo(lx - 150, GROUND_Y); ctx.closePath(); ctx.fill()
   })
-  // pitch
-  ctx.fillStyle = '#267a32'; ctx.fillRect(0, GROUND_Y, W, H - GROUND_Y)
-  for (let x = 0; x < W; x += 120) { ctx.fillStyle = Math.floor(x / 120) % 2 === 0 ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.025)'; ctx.fillRect(x, GROUND_Y, 120, H - GROUND_Y) }
-  ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 2
+
+  // ── grasmat: verlopende groentint + gemaaide banen + glans ──
+  const pitch = ctx.createLinearGradient(0, GROUND_Y, 0, H)
+  pitch.addColorStop(0, '#3aa049'); pitch.addColorStop(1, '#218035')
+  ctx.fillStyle = pitch; ctx.fillRect(0, GROUND_Y, W, H - GROUND_Y)
+  for (let x = 0; x < W; x += 110) { ctx.fillStyle = Math.floor(x / 110) % 2 === 0 ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)'; ctx.fillRect(x, GROUND_Y, 110, H - GROUND_Y) }
+  // lichtglans vlak achter de grondlijn
+  const shine = ctx.createLinearGradient(0, GROUND_Y, 0, GROUND_Y + 26)
+  shine.addColorStop(0, 'rgba(255,255,255,0.18)'); shine.addColorStop(1, 'rgba(255,255,255,0)')
+  ctx.fillStyle = shine; ctx.fillRect(0, GROUND_Y, W, 26)
+  // grondlijn
+  ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 3
   ctx.beginPath(); ctx.moveTo(GOAL_W, GROUND_Y); ctx.lineTo(W - GOAL_W, GROUND_Y); ctx.stroke()
-  // center line
-  ctx.setLineDash([6, 8]); ctx.strokeStyle = 'rgba(255,255,255,0.2)'
+  // strafschopgebieden (halve bogen aan beide kanten)
+  ctx.strokeStyle = 'rgba(255,255,255,0.28)'; ctx.lineWidth = 2
+  ctx.beginPath(); ctx.arc(GOAL_W, GROUND_Y, 70, -Math.PI / 2.6, Math.PI / 2.6); ctx.stroke()
+  ctx.beginPath(); ctx.arc(W - GOAL_W, GROUND_Y, 70, Math.PI - Math.PI / 2.6, Math.PI + Math.PI / 2.6); ctx.stroke()
+  // center line + middenstip
+  ctx.setLineDash([6, 8]); ctx.strokeStyle = 'rgba(255,255,255,0.22)'
   ctx.beginPath(); ctx.moveTo(W / 2, CEIL); ctx.lineTo(W / 2, GROUND_Y); ctx.stroke(); ctx.setLineDash([])
+  ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.beginPath(); ctx.arc(W / 2, GROUND_Y, 4, 0, Math.PI * 2); ctx.fill()
 
   drawGoal(ctx, 'L'); drawGoal(ctx, 'R')
 
