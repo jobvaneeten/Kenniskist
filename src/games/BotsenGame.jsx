@@ -370,20 +370,29 @@ function buildArena(scene, sg) {
   scene.fogMode = Scene.FOGMODE_LINEAR; scene.fogStart = half - 6; scene.fogEnd = half + 22
   scene.fogColor = new Color3(...hexRgb(skyBot))
 
-  // Checker-tegelvloer: lichtblauw/wit schaakbordpatroon (zoals het voorbeeld)
-  const floorTex = new DynamicTexture('bfloorTex', { width: 256, height: 256 }, scene, false)
+  // Checker-tegelvloer: lichtblauw/wit schaakbordpatroon met een klein
+  // accent-tegeltje in elke tegel en zachte voegen (meer detail dan vlak).
+  const floorTex = new DynamicTexture('bfloorTex', { width: 512, height: 512 }, scene, false)
   const fx = floorTex.getContext()
-  const tileN = 8, tileS = 256 / tileN
+  const tileN = 8, tileS = 512 / tileN
   for (let ty = 0; ty < tileN; ty++) for (let tx = 0; tx < tileN; tx++) {
-    fx.fillStyle = (tx + ty) % 2 === 0 ? '#d7e8f2' : '#c3dcea'
-    fx.fillRect(tx * tileS, ty * tileS, tileS, tileS)
+    const even = (tx + ty) % 2 === 0
+    // subtiele verticale verloop-glans per tegel
+    const g = fx.createLinearGradient(tx * tileS, ty * tileS, tx * tileS, ty * tileS + tileS)
+    g.addColorStop(0, even ? '#e2eef6' : '#cfe1ee')
+    g.addColorStop(1, even ? '#d0e2ee' : '#bcd6e6')
+    fx.fillStyle = g; fx.fillRect(tx * tileS, ty * tileS, tileS, tileS)
+    // klein afgerond accent-tegeltje in het midden
+    fx.fillStyle = even ? 'rgba(255,255,255,0.35)' : 'rgba(120,160,190,0.22)'
+    const m = tileS * 0.26
+    fx.fillRect(tx * tileS + m, ty * tileS + m, tileS - m * 2, tileS - m * 2)
   }
-  fx.strokeStyle = 'rgba(160,190,210,0.5)'; fx.lineWidth = 2
-  for (let i = 0; i <= tileN; i++) { fx.beginPath(); fx.moveTo(i * tileS, 0); fx.lineTo(i * tileS, 256); fx.stroke(); fx.beginPath(); fx.moveTo(0, i * tileS); fx.lineTo(256, i * tileS); fx.stroke() }
+  fx.strokeStyle = 'rgba(150,182,205,0.55)'; fx.lineWidth = 3
+  for (let i = 0; i <= tileN; i++) { fx.beginPath(); fx.moveTo(i * tileS, 0); fx.lineTo(i * tileS, 512); fx.stroke(); fx.beginPath(); fx.moveTo(0, i * tileS); fx.lineTo(512, i * tileS); fx.stroke() }
   floorTex.update(); floorTex.wrapU = floorTex.wrapV = 1; floorTex.uScale = floorTex.vScale = half / 4
   const floor = MeshBuilder.CreateGround('bfloor', { width: half * 2, height: half * 2 }, scene)
   const fMat = new StandardMaterial('bfloorMat', scene)
-  fMat.diffuseTexture = floorTex; fMat.specularColor = new Color3(0.15, 0.15, 0.18)
+  fMat.diffuseTexture = floorTex; fMat.specularColor = new Color3(0.2, 0.22, 0.26); fMat.specularPower = 32
   floor.material = fMat; floor.receiveShadows = true; floor.position.y = -0.015
 
   // Rand rond de hele arena: een houten/gevlochten boord (zoals het voorbeeld)
@@ -481,22 +490,40 @@ function buildArena(scene, sg) {
     })
   })
 
-  // ── Obstakels: gekleurde fort-kratten (metaal-paneel-look) ──
+  // ── Obstakels: mooie afgeronde bumper-blokken met een glanzende top-dop,
+  //    een lichte body-glans en een donkere voet-ring (speelgoed-look) ──
   const boxes = []
   OBSTACLES.forEach((o, i) => {
     const h = 2.6
-    const tex = new DynamicTexture('bcrateTex' + i, { width: 64, height: 64 }, scene, false)
-    const ctx = tex.getContext()
-    ctx.fillStyle = o.color; ctx.fillRect(0, 0, 64, 64)
-    ctx.strokeStyle = 'rgba(0,0,0,0.35)'; ctx.lineWidth = 5
-    ctx.strokeRect(2, 2, 60, 60)
-    ctx.beginPath(); ctx.moveTo(32, 2); ctx.lineTo(32, 62); ctx.moveTo(2, 32); ctx.lineTo(62, 32); ctx.stroke()
-    tex.update()
-    const mat = new StandardMaterial('bcrateMat' + i, scene)
-    mat.diffuseTexture = tex; mat.specularColor = new Color3(0.25, 0.25, 0.25)
-    const box = MeshBuilder.CreateBox('bobs' + i, { width: o.w, height: h, depth: o.d }, scene)
-    box.position.set(o.x, h / 2, o.z); box.material = mat
-    box.receiveShadows = true; sg.addShadowCaster(box)
+    const col = Color3.FromHexString(o.color)
+    const bodyMat = new StandardMaterial('bobsMat' + i, scene)
+    bodyMat.diffuseColor = col; bodyMat.specularColor = new Color3(0.6, 0.6, 0.65); bodyMat.specularPower = 48
+    bodyMat.emissiveColor = col.scale(0.12)
+    const capMat = new StandardMaterial('bobsCapMat' + i, scene)
+    capMat.diffuseColor = col.scale(1.2); capMat.emissiveColor = col.scale(0.3); capMat.specularColor = new Color3(1, 1, 1); capMat.specularPower = 96
+    const footMat = new StandardMaterial('bobsFootMat' + i, scene)
+    footMat.diffuseColor = col.scale(0.5); footMat.specularColor = new Color3(0.3, 0.3, 0.35)
+    // afgeronde body (cilinder als het vierkant is, anders een box met dop)
+    const round = Math.abs(o.w - o.d) < 0.5
+    let body
+    if (round) {
+      body = MeshBuilder.CreateCylinder('bobs' + i, { height: h, diameter: o.w, tessellation: 24 }, scene)
+    } else {
+      body = MeshBuilder.CreateBox('bobs' + i, { width: o.w, height: h, depth: o.d }, scene)
+    }
+    body.position.set(o.x, h / 2, o.z); body.material = bodyMat
+    body.receiveShadows = true; sg.addShadowCaster(body)
+    // glanzende afgeronde top-dop
+    const cap = round
+      ? MeshBuilder.CreateSphere('bobsCap' + i, { diameter: o.w, segments: 16 }, scene)
+      : MeshBuilder.CreateBox('bobsCap' + i, { width: o.w, height: 0.5, depth: o.d }, scene)
+    if (round) cap.scaling.y = 0.45
+    cap.position.set(o.x, h + (round ? -0.05 : 0.0), o.z); cap.material = capMat
+    sg.addShadowCaster(cap)
+    // donkere voet-ring
+    const foot = MeshBuilder.CreateCylinder('bobsFoot' + i, { height: 0.35, diameter: Math.max(o.w, o.d) + 0.7, tessellation: round ? 24 : 4 }, scene)
+    if (!round) foot.rotation.y = Math.PI / 4
+    foot.position.set(o.x, 0.17, o.z); foot.material = footMat; foot.receiveShadows = true
     boxes.push({ x: o.x, z: o.z, hw: o.w / 2, hd: o.d / 2 })
   })
 
