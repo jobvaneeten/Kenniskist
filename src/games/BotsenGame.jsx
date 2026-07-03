@@ -79,6 +79,19 @@ function heightAt(x, z) {
   }
   return 0
 }
+// Bruggen/platforms hebben GEEN muur om je heen (dat is expres, zodat je op
+// de grond onder een brug door kunt rijden) — maar heightAt() geeft op die
+// zelfde (x,z) toch PLAT_H terug zodra je dat vlakke stuk raakt. Zonder
+// correctie zou je dus vanaf de grond zomaar "omhoog glitchen". Deze functie
+// laat een hoogtesprong alleen toe als je 'm via een helling opbouwt (of al
+// zo goed als boven was) — een plotselinge sprong van laag naar het volle,
+// vlakke PLAT_H wordt genegeerd, zodat je er gewoon onderdoor blijft rijden.
+function clampHeightStep(rawTarget, prevY) {
+  if (rawTarget <= prevY + 0.05) return rawTarget          // gelijk blijven of dalen mag altijd
+  if (prevY > PLAT_H - 0.3) return rawTarget                // je was al zo goed als boven (bv. platform → brug)
+  if (rawTarget > 0.02 && rawTarget < PLAT_H - 0.02) return rawTarget   // een helling-tussenwaarde: gewoon volgen
+  return prevY                                               // "cliff"-sprong vanaf de grond: geblokkeerd
+}
 // Botsingswanden per platform: de buitenrand is volledig dicht, de
 // helling-zijde heeft leuningen langs de opening, en de twee zijden die naar
 // een brug leiden zijn dicht BEHALVE precies waar het (smalle) brug-dek zelf
@@ -406,17 +419,14 @@ function buildArena(scene, sg) {
     const topPlane = MeshBuilder.CreateGround('bplateauTop' + q.key, { width: PLAT_SIZE, height: PLAT_SIZE }, scene)
     topPlane.position.set(q.x, PLAT_H + 0.01, q.z); topPlane.material = topMat; topPlane.receiveShadows = true
 
-    // gekleurde opstaande rand net binnen de buitenrand van het platform
+    // gekleurde opstaande rand — materiaal alvast klaarzetten; de rand zelf
+    // wordt verderop getekend als de botsings-wandsegmenten (platformWalls),
+    // NIET als los, doorlopend vierkant — anders zou de rand ook over de
+    // helling- en brug-opening heen lopen terwijl de botsing daar juist
+    // openstaat (dat gaf het "balken over de opening"-effect).
     const rimMat = new StandardMaterial('bplatRimMat' + q.key, scene)
     rimMat.diffuseColor = Color3.FromHexString(q.rail)
     rimMat.emissiveColor = Color3.FromHexString(q.rail).scale(0.3); rimMat.specularColor = Color3.Black()
-    const rimT = 1.1, rimH = 0.5
-    ;[-1, 1].forEach(s => {
-      const rimX = MeshBuilder.CreateBox('brimX' + q.key + s, { width: rimT, height: rimH, depth: PLAT_SIZE }, scene)
-      rimX.position.set(q.x + s * (hp - rimT / 2), PLAT_H + rimH / 2, q.z); rimX.material = rimMat
-      const rimZ = MeshBuilder.CreateBox('brimZ' + q.key + s, { width: PLAT_SIZE, height: rimH, depth: rimT }, scene)
-      rimZ.position.set(q.x, PLAT_H + rimH / 2, q.z + s * (hp - rimT / 2)); rimZ.material = rimMat
-    })
 
     // helling naar de grond (buitenkant, in de x-richting van rampDir)
     const rampX0 = q.x + q.rampDir * hp
@@ -734,10 +744,17 @@ function BotsenMatch({ onBack, room, sessionId, joinCode, myNameProp, myColorPro
       remotes.forEach(e => {
         e.outer.position.x += (e.tx - e.outer.position.x) * k
         e.outer.position.z += (e.tz - e.outer.position.z) * k
-        // Vloeiend naar de doelhoogte i.p.v. snappen — zo ziet een val van een
-        // rand (bv. naast een brug) eruit als een val, niet als een glitch.
-        const targetYr = heightAt(e.outer.position.x, e.outer.position.z)
-        e.outer.position.y += (targetYr - e.outer.position.y) * Math.min(1, dt * 9)
+        // Alleen omhoog via een helling (zie clampHeightStep), zo kun je onder
+        // een brug door rijden i.p.v. dat je er per ongeluk op glitcht. Stijgen
+        // gebeurt direct (de helling zelf is al geleidelijk — extra smoothing
+        // maakt de kart alleen maar zichtbaar te laag tijdens het klimmen);
+        // dalen blijft vloeiend, zodat een val van een rand er als een val
+        // uitziet i.p.v. een snap.
+        const rawYr = heightAt(e.outer.position.x, e.outer.position.z)
+        const targetYr = clampHeightStep(rawYr, e.outer.position.y)
+        e.outer.position.y = targetYr < e.outer.position.y
+          ? e.outer.position.y + (targetYr - e.outer.position.y) * Math.min(1, dt * 9)
+          : targetYr
         let dr = e.trot - e.outer.rotation.y
         while (dr > Math.PI) dr -= Math.PI * 2; while (dr < -Math.PI) dr += Math.PI * 2
         e.outer.rotation.y += dr * k
@@ -817,10 +834,17 @@ function BotsenMatch({ onBack, room, sessionId, joinCode, myNameProp, myColorPro
 
         // Arena-grenzen + obstakels
         collideBoxes(outer.position, CAR_RADIUS, arena.boxes)
-        // Vloeiend naar de doelhoogte i.p.v. snappen — zo ziet een val van een
-        // rand (bv. naast een brug) eruit als een val, niet als een glitch.
-        const targetY = heightAt(outer.position.x, outer.position.z)
-        outer.position.y += (targetY - outer.position.y) * Math.min(1, dt * 9)
+        // Alleen omhoog via een helling (zie clampHeightStep), zo kun je onder
+        // een brug door rijden i.p.v. dat je er per ongeluk op glitcht. Stijgen
+        // gebeurt direct (de helling zelf is al geleidelijk — extra smoothing
+        // maakt de kart alleen maar zichtbaar te laag tijdens het klimmen);
+        // dalen blijft vloeiend, zodat een val van een rand er als een val
+        // uitziet i.p.v. een snap.
+        const rawY = heightAt(outer.position.x, outer.position.z)
+        const targetY = clampHeightStep(rawY, outer.position.y)
+        outer.position.y = targetY < outer.position.y
+          ? outer.position.y + (targetY - outer.position.y) * Math.min(1, dt * 9)
+          : targetY
 
         // Botsing met andere karts (beuken)
         remotes.forEach(e => {
