@@ -252,7 +252,8 @@ function loadProg() {
 }
 function saveProg(d) { localStorage.setItem('kk_brug', JSON.stringify({ ...d, v: PROG_VERSION })) }
 
-export default function BrugBouwen({ onBack }) {
+export default function BrugBouwen({ onBack, reward = false }) {
+  const REWARD_LEVELS = 3   // aantal levels in beloning-modus voordat je terugkeert
   const canvasRef = useRef(null)
   const S = useRef(null)
   const [screen, setScreen] = useState('select')   // select | play
@@ -262,6 +263,7 @@ export default function BrugBouwen({ onBack }) {
   const [budget, setBudget] = useState(0)
   const [prog, setProg] = useState(loadProg())
   const [stars, setStars] = useState(0)
+  const [rewardWins, setRewardWins] = useState(0)   // gewonnen levels in beloning-modus
   const matRef = useRef(mat); matRef.current = mat
   const modeRef = useRef(mode); modeRef.current = mode
 
@@ -476,6 +478,12 @@ export default function BrugBouwen({ onBack }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // ── beloning-modus: start meteen in level 1, geen level-keuze ──
+  useEffect(() => {
+    if (reward) loadLevel(0)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reward])
+
   // ── physics opbouwen (Verlet) ──
   function startRun() {
     const st = S.current
@@ -608,6 +616,7 @@ export default function BrugBouwen({ onBack }) {
       p.unlocked = Math.max(p.unlocked || 1, Math.min(LEVELS.length, idx + 2))
       p.stars = { ...(p.stars || {}), [idx]: Math.max((p.stars || {})[idx] || 0, st3) }
       saveProg(p); setProg(p)
+      if (reward) setRewardWins(w => w + 1)
     }
   }
 
@@ -726,7 +735,7 @@ export default function BrugBouwen({ onBack }) {
 
   return (
     <div style={wrap}>
-      <button style={backBtn} onClick={() => { if (screen === 'play') { teardown(); setMode('build'); setScreen('select') } else onBack() }}>← {screen === 'play' ? 'Levels' : 'Menu'}</button>
+      <button style={backBtn} onClick={() => { if (reward) { teardown(); onBack() } else if (screen === 'play') { teardown(); setMode('build'); setScreen('select') } else onBack() }}>← {reward ? 'Klaar' : screen === 'play' ? 'Levels' : 'Menu'}</button>
       <div style={{ position: 'absolute', inset: 0 }}>
         <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block', touchAction: 'none' }} />
       </div>
@@ -766,6 +775,7 @@ export default function BrugBouwen({ onBack }) {
                 {mode === 'win' ? 'Gehaald! 🎉' : 'Mislukt 💥'}
               </div>
               {mode === 'win' && <div style={{ fontSize: 40, letterSpacing: 6 }}>{'★★★'.slice(0, stars)}<span style={{ opacity: .25 }}>{'★★★'.slice(stars)}</span></div>}
+              {mode === 'win' && reward && <div style={{ color: '#ffe08a', fontWeight: 800, marginTop: 2 }}>Level {Math.min(rewardWins, REWARD_LEVELS)} van {REWARD_LEVELS} gehaald {rewardWins >= REWARD_LEVELS ? '🎁' : ''}</div>}
               <div style={{ color: '#dbe6ff', marginTop: 4, maxWidth: 470 }}>
                 {mode === 'win' ? 'De truck is veilig overgestoken!'
                   : S.current?.boatHit ? '🚢 De boot ramde je brug! Bouw hoger, over de boot heen.'
@@ -773,7 +783,9 @@ export default function BrugBouwen({ onBack }) {
               </div>
               <div style={{ display: 'flex', gap: 12, marginTop: 22, flexWrap: 'wrap', justifyContent: 'center' }}>
                 <button style={ghost} onClick={backToBuild}>🔧 Aanpassen</button>
-                {mode === 'win' && levelIdx + 1 < LEVELS.length && <button style={primary} onClick={() => loadLevel(levelIdx + 1)}>Volgende →</button>}
+                {mode === 'win' && reward && rewardWins >= REWARD_LEVELS && <button style={primary} onClick={() => { teardown(); onBack() }}>Klaar! ✓</button>}
+                {mode === 'win' && reward && rewardWins < REWARD_LEVELS && levelIdx + 1 < LEVELS.length && <button style={primary} onClick={() => loadLevel(levelIdx + 1)}>Volgende →</button>}
+                {mode === 'win' && !reward && levelIdx + 1 < LEVELS.length && <button style={primary} onClick={() => loadLevel(levelIdx + 1)}>Volgende →</button>}
                 {mode === 'lose' && <button style={primary} onClick={() => { leeg(); backToBuild() }}>↺ Opnieuw</button>}
               </div>
             </div>

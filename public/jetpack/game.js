@@ -14,6 +14,7 @@ function resizeGame() {
   SIZE = sizeFor();
   recomputeBounds();
   if (typeof player !== 'undefined') applyScale();
+  if (typeof makeVignette === 'function' && typeof vignetteGrad !== 'undefined') makeVignette();
 }
 window.addEventListener('resize', resizeGame);
 
@@ -31,6 +32,12 @@ const SPRITES = {
   shootfly:   { img: new Image(), src: 'vliegendschieten.png',cols:5, rows:2, total:10 },
 };
 Object.values(SPRITES).forEach(s => { s.img.src = s.src; });
+
+// Verwissel de sprite-afbeeldingen naar een gekleurde skin (of terug naar origineel).
+function applySuitColor(color) {
+  const dir = color ? `skins/${color}/` : '';
+  Object.values(SPRITES).forEach(s => { s.img.src = dir + s.src; });
+}
 
 // Raket sprite (122x374, wijst omhoog → draaien naar rechts in code)
 const rocketImg = new Image();
@@ -98,6 +105,13 @@ let shakeY        = 0;
 function triggerDeathEffects() {
   slowMo = true; slowMoTimer = 120; slowMoFactor = 0.25;
   shakeTimer = 80; shakeIntensity = 10;
+  // Dramatische crash: witte flits + dubbele schokgolf + vonkenregen
+  const cx = player.x + player.width/2, cy = player.y + player.height/2;
+  screenFlash = 0.8;
+  spawnRing(cx, cy, 'rgba(255,120,60,', 130);
+  spawnRing(cx, cy, 'rgba(255,220,120,', 70);
+  spawnSparks(cx, cy, '#ff8844', 16);
+  spawnSparks(cx, cy, '#ffdd66', 10);
 }
 function updateSlowMoShake() {
   if (slowMoTimer > 0) {
@@ -250,6 +264,7 @@ function triggerJobRocket() {
   collectedLetters = []; // reset voor volgende ronde
   activatePowerup('rocket');
   showPowerupBanner('🚀', 'JOB RAKET!', '#ff6600');
+  missionEvent('job', 1);
 }
 
 function showLetterPopup(letter, x, y) {
@@ -413,25 +428,36 @@ const bgTreesMid  = [];
 const bgTreesNear = [];
 let bgOffsets     = { mount:0, far:0, mid:0, near:0 };
 
+// Flora-kleuren per thema: [hue, sat%, licht%] basis — random offsets per object
+const THEME_FLORA = {
+  default: { mount:[130,38,22], far:[125,38,26], mid:[122,48,32], near:[115,20,12], trunk:'#3a2010', trunkNear:'#150800' },
+  space:   { mount:[248,30,13], far:[252,26,17], mid:[256,32,21], near:[250,25,9],  trunk:'#1c1c34', trunkNear:'#0e0e1e' },
+  ocean:   { mount:[205,45,15], far:[192,50,20], mid:[185,55,26], near:[195,40,10], trunk:'#0a3040', trunkNear:'#052030' },
+  winter:  { mount:[210,25,45], far:[210,15,68], mid:[208,18,76], near:[212,15,55], trunk:'#4a3828', trunkNear:'#241a10' },
+  volcano: { mount:[12,45,14],  far:[18,42,17],  mid:[24,48,21],  near:[15,35,8],   trunk:'#2a0e04', trunkNear:'#140602' },
+};
+function floraColor(base, hr, lr) { return `hsl(${base[0]+hr*25},${base[1]}%,${base[2]+lr*10}%)`; }
+function currentFlora() { return THEME_FLORA[shopEquipped['theme']] || THEME_FLORA.default; }
+
 function initBackground() {
   const w = canvas.width;
-  // Bergen — minder dan voorheen
+  // Bergen — minder dan voorheen (hr/lr = random kleur-offsets, thema-kleur bij tekenen)
   for (let i=0; i<12; i++) {
     bgMountains.push({ x: w/6*i+Math.random()*80, w:150+Math.random()*200, h:80+Math.random()*120,
-      color:`hsl(${130+Math.random()*30},${30+Math.random()*15}%,${18+Math.random()*12}%)` });
+      hr:Math.random(), lr:Math.random() });
   }
   // Bomen — minder voor betere performance
   for (let i=0; i<16; i++) {
     bgTreesFar.push({ x:w/8*i+Math.random()*60, th:30+Math.random()*25, tw:7,
-      cr:18+Math.random()*14, color:`hsl(${120+Math.random()*35},38%,${22+Math.random()*10}%)` });
+      cr:18+Math.random()*14, hr:Math.random(), lr:Math.random() });
   }
   for (let i=0; i<12; i++) {
     bgTreesMid.push({ x:w/6*i+Math.random()*80, th:50+Math.random()*35, tw:11,
-      cr:28+Math.random()*18, color:`hsl(${115+Math.random()*35},48%,${28+Math.random()*12}%)` });
+      cr:28+Math.random()*18, hr:Math.random(), lr:Math.random() });
   }
   for (let i=0; i<10; i++) {
     bgTreesNear.push({ x:w/5*i+Math.random()*100, th:70+Math.random()*50, tw:16,
-      cr:42+Math.random()*24, color:`hsl(${110+Math.random()*30},20%,12%)` });
+      cr:42+Math.random()*24, hr:Math.random(), lr:Math.random() });
   }
 }
 initBackground();
@@ -441,6 +467,63 @@ const birds = Array.from({length:3}, () => ({
   x: Math.random()*canvas.width, y:80+Math.random()*100,
   spd:1.5+Math.random()*2, phase:Math.random()*Math.PI*2, sz:3+Math.random()*4
 }));
+
+// Wolken — zachte parallax-laag
+const bgClouds = Array.from({length:5}, (_, i) => ({
+  x: Math.random()*2000, y: 70+Math.random()*130,
+  w: 80+Math.random()*120, spd: 0.10+Math.random()*0.18, a: 0.5+Math.random()*0.5
+}));
+// Verre heuvels — extra diepte-laag achter de bergen
+const bgHills = Array.from({length:7}, (_, i) => ({
+  x: i*260+Math.random()*120, w: 320+Math.random()*260, h: 40+Math.random()*55
+}));
+let hillOffset = 0;
+
+function drawClouds() {
+  const theme = shopEquipped['theme'] || 'default';
+  if (theme === 'space' || theme === 'ocean') return;
+  const TINT = { default:'240,255,235', winter:'255,255,255', volcano:'60,25,10' };
+  const tint = TINT[theme] || TINT.default;
+  const baseA = theme === 'volcano' ? 0.22 : 0.045;
+  const w = canvas.width;
+  bgClouds.forEach(c => {
+    c.x -= c.spd * gameSpeed * 0.5 * slowMoFactor * S;
+    const dx = ((c.x % (w+400)) + w+400) % (w+400) - 200;
+    ctx.save();
+    ctx.fillStyle = `rgba(${tint},${baseA*c.a})`;
+    ctx.beginPath();
+    ctx.ellipse(dx, c.y, c.w, c.w*0.32, 0, 0, Math.PI*2);
+    ctx.ellipse(dx-c.w*0.45, c.y+c.w*0.10, c.w*0.55, c.w*0.22, 0, 0, Math.PI*2);
+    ctx.ellipse(dx+c.w*0.5, c.y+c.w*0.08, c.w*0.6, c.w*0.25, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+  });
+}
+
+function drawHills() {
+  const w = canvas.width, floorY = FLOOR_Y();
+  const theme = shopEquipped['theme'] || 'default';
+  const COL = { default:'rgba(10,28,10,0.85)', space:'rgba(8,8,24,0.9)', ocean:'rgba(0,18,36,0.9)', winter:'rgba(120,150,185,0.5)', volcano:'rgba(30,6,0,0.9)' };
+  hillOffset += gameSpeed*0.04*slowMoFactor*S;
+  ctx.fillStyle = COL[theme] || COL.default;
+  bgHills.forEach(hl => {
+    const dx = ((hl.x - hillOffset) % (w+700) + w+700) % (w+700) - 350;
+    ctx.beginPath();
+    ctx.moveTo(dx-hl.w/2, floorY);
+    ctx.quadraticCurveTo(dx, floorY-hl.h*2, dx+hl.w/2, floorY);
+    ctx.closePath(); ctx.fill();
+  });
+}
+
+// Vignette — gecachet per resize (subtiele donkere randen = meer sfeer/focus)
+let vignetteGrad = null;
+function makeVignette() {
+  const w = canvas.width, h = canvas.height;
+  vignetteGrad = ctx.createRadialGradient(w/2, h/2, Math.min(w,h)*0.45, w/2, h/2, Math.max(w,h)*0.75);
+  vignetteGrad.addColorStop(0, 'rgba(0,0,0,0)');
+  vignetteGrad.addColorStop(1, 'rgba(0,0,0,0.34)');
+}
+makeVignette();
 
 function drawBackground() {
   const w = canvas.width, h = canvas.height;
@@ -524,8 +607,24 @@ function drawBackground() {
   }
   ctx.restore();
 
-  // Vogels (niet in space/ocean/volcano)
-  if (theme === 'space' || theme === 'ocean' || theme === 'volcano') {
+  // Vogels (bos/winter) · vissen (oceaan) · niets (space/vulkaan)
+  if (theme === 'ocean') {
+    birds.forEach(b => {
+      b.x -= b.spd*slowMoFactor; b.phase += 0.1*slowMoFactor;
+      if (b.x < -30) { b.x = w+30; b.y = 80+Math.random()*(floorY-200); }
+      const fy = b.y + Math.sin(b.phase)*4;
+      const hue = 180 + b.sz*30;
+      ctx.save();
+      ctx.fillStyle = `hsl(${hue},60%,55%)`;
+      ctx.beginPath(); ctx.ellipse(b.x, fy, b.sz*2.2, b.sz*1.2, 0, 0, Math.PI*2); ctx.fill();
+      // Staart
+      ctx.beginPath(); ctx.moveTo(b.x+b.sz*2, fy); ctx.lineTo(b.x+b.sz*3.4, fy-b.sz*1.1); ctx.lineTo(b.x+b.sz*3.4, fy+b.sz*1.1); ctx.closePath(); ctx.fill();
+      // Oog
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(b.x-b.sz*1.1, fy-b.sz*0.3, b.sz*0.35, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(b.x-b.sz*1.2, fy-b.sz*0.3, b.sz*0.18, 0, Math.PI*2); ctx.fill();
+      ctx.restore();
+    });
+  } else if (theme === 'space' || theme === 'volcano') {
     birds.forEach(b => { b.x -= b.spd*slowMoFactor; if(b.x<-20) b.x=w+20; });
   } else birds.forEach(b => {
     b.x -= b.spd*slowMoFactor; b.phase += 0.12*slowMoFactor;
@@ -537,51 +636,200 @@ function drawBackground() {
     ctx.stroke(); ctx.restore();
   });
 
-  // Bergen
+  // Wolken (zachte parallax) + verre heuvels (extra diepte)
+  drawClouds();
+  drawHills();
+
+  // Bergen (kleur + details per thema)
+  const flora = currentFlora();
   bgOffsets.mount += gameSpeed*0.08*slowMoFactor*S;
   bgMountains.forEach(m => {
     const dx = ((m.x - bgOffsets.mount) % (w+400) + w+400) % (w+400) - 200;
-    ctx.fillStyle=m.color; ctx.beginPath();
+    ctx.fillStyle=floraColor(flora.mount, m.hr, m.lr); ctx.beginPath();
     ctx.moveTo(dx-m.w/2,floorY); ctx.lineTo(dx,floorY-m.h); ctx.lineTo(dx+m.w/2,floorY); ctx.closePath(); ctx.fill();
+    if (theme === 'winter') {
+      // Sneeuwtop
+      ctx.fillStyle = 'rgba(240,248,255,0.85)'; ctx.beginPath();
+      ctx.moveTo(dx, floorY-m.h); ctx.lineTo(dx-m.w*0.13, floorY-m.h*0.68); ctx.lineTo(dx+m.w*0.13, floorY-m.h*0.68); ctx.closePath(); ctx.fill();
+    } else if (theme === 'volcano' && m.hr > 0.45) {
+      // Gloeiende krater op de top
+      const g = ctx.createRadialGradient(dx, floorY-m.h, 1, dx, floorY-m.h, m.w*0.22);
+      g.addColorStop(0, 'rgba(255,130,20,0.9)'); g.addColorStop(1, 'rgba(255,60,0,0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(dx, floorY-m.h, m.w*0.22, 0, Math.PI*2); ctx.fill();
+    }
   });
 
-  // Bomen ver
+  // Decor ver + midden (per thema: bomen / planeten / koraal / iglo's / vulkanen)
   bgOffsets.far += gameSpeed*0.2*slowMoFactor*S;
-  drawTreeSet(bgTreesFar, bgOffsets.far, 0.55, w);
-
-  // Bomen midden
+  drawPropSet(bgTreesFar, bgOffsets.far, 0.55, 'far');
   bgOffsets.mid += gameSpeed*0.35*slowMoFactor*S;
-  drawTreeSet(bgTreesMid, bgOffsets.mid, 0.78, w);
+  drawPropSet(bgTreesMid, bgOffsets.mid, 0.78, 'mid');
 }
 
-function drawTreeSet(trees, offset, alpha, w) {
-  const floorY = FLOOR_Y();
-  trees.forEach(t => {
-    const dx = ((t.x - offset) % (w+600) + w+600) % (w+600) - 300;
+function drawPropSet(objs, offset, alpha, layer) {
+  const w = canvas.width, floorY = FLOOR_Y();
+  const theme = shopEquipped['theme'] || 'default';
+  const flora = currentFlora();
+  const wrap = layer === 'near' ? 800 : 600, half = wrap/2;
+  objs.forEach(t => {
+    const dx = ((t.x - offset) % (w+wrap) + w+wrap) % (w+wrap) - half;
     ctx.save(); ctx.globalAlpha = alpha;
-    ctx.fillStyle = '#3a2010';
-    ctx.fillRect(dx-t.tw/2, floorY-t.th, t.tw, t.th);
-    ctx.fillStyle = t.color;
-    ctx.beginPath(); ctx.arc(dx, floorY-t.th-t.cr*0.6, t.cr, 0, Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(dx-t.cr*0.5, floorY-t.th-t.cr*0.25, t.cr*0.72, 0, Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(dx+t.cr*0.5, floorY-t.th-t.cr*0.25, t.cr*0.72, 0, Math.PI*2); ctx.fill();
+    drawThemeProp(theme, flora, t, dx, floorY, layer);
     ctx.restore();
   });
 }
 
 function drawForegroundTrees() {
   bgOffsets.near += gameSpeed*0.6*slowMoFactor*S;
-  const w = canvas.width, floorY = FLOOR_Y();
-  bgTreesNear.forEach(t => {
-    const dx = ((t.x - bgOffsets.near) % (w+800) + w+800) % (w+800) - 400;
-    ctx.save(); ctx.globalAlpha=0.95;
-    ctx.fillStyle='#150800'; ctx.fillRect(dx-t.tw/2, floorY-t.th, t.tw, t.th);
-    ctx.fillStyle=t.color;
+  drawPropSet(bgTreesNear, bgOffsets.near, 0.95, 'near');
+}
+
+// ── Decor-objecten per thema ──
+function drawThemeProp(theme, flora, t, dx, floorY, layer) {
+  const trunk = layer === 'near' ? flora.trunkNear : flora.trunk;
+  const kind = t.hr;   // stabiele random per object → bepaalt het soort prop
+
+  if (theme === 'winter') {
+    if (kind < 0.5) {
+      // Besneeuwde spar
+      ctx.fillStyle = trunk; ctx.fillRect(dx-2, floorY-t.th*0.35, 4, t.th*0.35);
+      const H = t.th + t.cr, W = t.cr*1.7;
+      ctx.fillStyle = `hsl(158,28%,${16+t.lr*10}%)`;
+      ctx.beginPath(); ctx.moveTo(dx, floorY-H); ctx.lineTo(dx-W/2, floorY-t.th*0.25); ctx.lineTo(dx+W/2, floorY-t.th*0.25); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = 'rgba(240,248,255,0.92)';
+      ctx.beginPath(); ctx.moveTo(dx, floorY-H); ctx.lineTo(dx-W*0.30, floorY-H+t.cr*0.95); ctx.lineTo(dx+W*0.30, floorY-H+t.cr*0.95); ctx.closePath(); ctx.fill();
+    } else if (kind < 0.78) {
+      // Iglo
+      const r = t.cr*1.15;
+      ctx.fillStyle = '#e9f3fb'; ctx.beginPath(); ctx.arc(dx, floorY, r, Math.PI, 0); ctx.fill();
+      ctx.strokeStyle = 'rgba(150,180,210,0.55)'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(dx, floorY, r*0.62, Math.PI, 0); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(dx-r, floorY); ctx.lineTo(dx+r, floorY); ctx.stroke();
+      ctx.fillStyle = '#a8c0d4'; ctx.beginPath(); ctx.arc(dx+r*0.72, floorY, r*0.34, Math.PI, 0); ctx.fill();
+      ctx.fillStyle = '#33506a'; ctx.beginPath(); ctx.arc(dx+r*0.72, floorY, r*0.20, Math.PI, 0); ctx.fill();
+    } else if (kind < 0.92 || layer !== 'near') {
+      // Sneeuwpop
+      const s = t.cr*0.5;
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath(); ctx.arc(dx, floorY-s*0.8, s, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(dx, floorY-s*2.05, s*0.68, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#222';
+      ctx.beginPath(); ctx.arc(dx-s*0.2, floorY-s*2.2, 1.6, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(dx+s*0.2, floorY-s*2.2, 1.6, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#ff8c1a';
+      ctx.beginPath(); ctx.moveTo(dx, floorY-s*2.05); ctx.lineTo(dx+s*0.55, floorY-s*1.98); ctx.lineTo(dx, floorY-s*1.9); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#1a1a2a'; ctx.fillRect(dx-s*0.45, floorY-s*2.75, s*0.9, s*0.22);
+      ctx.fillRect(dx-s*0.3, floorY-s*3.1, s*0.6, s*0.4);
+    } else {
+      // Pinguïn (alleen dichtbij)
+      const s = t.cr*0.42;
+      ctx.fillStyle = '#16202c';
+      ctx.beginPath(); ctx.ellipse(dx, floorY-s, s*0.7, s, 0, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#f2f7fb';
+      ctx.beginPath(); ctx.ellipse(dx, floorY-s*0.85, s*0.42, s*0.7, 0, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#ffa020';
+      ctx.beginPath(); ctx.moveTo(dx, floorY-s*1.55); ctx.lineTo(dx+s*0.42, floorY-s*1.45); ctx.lineTo(dx, floorY-s*1.32); ctx.closePath(); ctx.fill();
+      ctx.fillRect(dx-s*0.42, floorY-2, s*0.34, 2.5); ctx.fillRect(dx+s*0.08, floorY-2, s*0.34, 2.5);
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(dx-s*0.18, floorY-s*1.68, 1.8, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(dx-s*0.18, floorY-s*1.68, 0.9, 0, Math.PI*2); ctx.fill();
+    }
+
+  } else if (theme === 'volcano') {
+    if (kind < 0.42) {
+      // Verbrande kale boom
+      ctx.strokeStyle = trunk; ctx.lineWidth = Math.max(2, t.tw*0.5); ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(dx, floorY); ctx.lineTo(dx, floorY-t.th); ctx.stroke();
+      ctx.lineWidth = Math.max(1.4, t.tw*0.26);
+      ctx.beginPath(); ctx.moveTo(dx, floorY-t.th*0.55); ctx.lineTo(dx-t.cr*0.7, floorY-t.th*0.95); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(dx, floorY-t.th*0.75); ctx.lineTo(dx+t.cr*0.6, floorY-t.th*1.15); ctx.stroke();
+    } else if (kind < 0.72) {
+      // Donkere rotsen
+      ctx.fillStyle = `hsl(12,25%,${9+t.lr*7}%)`;
+      ctx.beginPath(); ctx.arc(dx, floorY, t.cr*0.75, Math.PI, 0); ctx.fill();
+      ctx.beginPath(); ctx.arc(dx+t.cr*0.6, floorY, t.cr*0.45, Math.PI, 0); ctx.fill();
+    } else {
+      // Mini-vulkaan met gloeiende krater
+      const H = t.th + t.cr, W = t.cr*2.4;
+      ctx.fillStyle = `hsl(10,30%,${11+t.lr*6}%)`;
+      ctx.beginPath(); ctx.moveTo(dx-W/2, floorY); ctx.lineTo(dx-W*0.13, floorY-H); ctx.lineTo(dx+W*0.13, floorY-H); ctx.lineTo(dx+W/2, floorY); ctx.closePath(); ctx.fill();
+      const g = ctx.createRadialGradient(dx, floorY-H, 1, dx, floorY-H, W*0.4);
+      g.addColorStop(0, 'rgba(255,140,20,0.95)'); g.addColorStop(0.5, 'rgba(255,60,0,0.35)'); g.addColorStop(1, 'rgba(255,60,0,0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(dx, floorY-H, W*0.4, 0, Math.PI*2); ctx.fill();
+      ctx.strokeStyle = 'rgba(255,90,10,0.8)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(dx-W*0.06, floorY-H); ctx.quadraticCurveTo(dx-W*0.18, floorY-H*0.55, dx-W*0.10, floorY-H*0.3); ctx.stroke();
+    }
+
+  } else if (theme === 'space') {
+    if (layer === 'near') {
+      // Maanrotsen met kraters
+      ctx.fillStyle = `hsl(240,12%,${16+t.lr*8}%)`;
+      ctx.beginPath(); ctx.arc(dx, floorY, t.cr*0.8, Math.PI, 0); ctx.fill();
+      ctx.fillStyle = 'rgba(10,10,25,0.5)';
+      ctx.beginPath(); ctx.ellipse(dx-t.cr*0.25, floorY-t.cr*0.35, t.cr*0.16, t.cr*0.10, 0, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(dx+t.cr*0.3, floorY-t.cr*0.2, t.cr*0.12, t.cr*0.08, 0, 0, Math.PI*2); ctx.fill();
+    } else {
+      // Zwevende planeten (+ ring bij sommige)
+      const py = CEIL_Y + 50 + t.lr*(floorY - CEIL_Y - 180);
+      const r = t.cr*(layer === 'far' ? 0.5 : 0.75);
+      const hue = Math.floor(kind*360);
+      const g = ctx.createRadialGradient(dx-r*0.35, py-r*0.35, r*0.15, dx, py, r);
+      g.addColorStop(0, `hsl(${hue},55%,62%)`); g.addColorStop(1, `hsl(${hue},50%,26%)`);
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(dx, py, r, 0, Math.PI*2); ctx.fill();
+      if (kind > 0.55) {
+        ctx.strokeStyle = `hsla(${(hue+40)%360},60%,70%,0.75)`; ctx.lineWidth = Math.max(1.5, r*0.14);
+        ctx.beginPath(); ctx.ellipse(dx, py, r*1.6, r*0.42, -0.35, 0, Math.PI*2); ctx.stroke();
+      }
+    }
+
+  } else if (theme === 'ocean') {
+    if (kind < 0.45) {
+      // Wuivend zeewier (2-3 slierten)
+      const sway = Math.sin(frameCount*0.02 + t.hr*7) * t.cr*0.35;
+      ctx.strokeStyle = `hsl(155,55%,${20+t.lr*10}%)`; ctx.lineCap = 'round';
+      for (let i = -1; i <= 1; i++) {
+        ctx.lineWidth = Math.max(2.5, t.tw*0.4);
+        ctx.beginPath(); ctx.moveTo(dx+i*t.tw*0.8, floorY);
+        ctx.quadraticCurveTo(dx+i*t.tw*0.8 + sway, floorY-t.th*0.8, dx+i*t.tw*0.5 + sway*1.6, floorY-t.th*1.3-i*8);
+        ctx.stroke();
+      }
+    } else if (kind < 0.78) {
+      // Vertakt koraal (roze/oranje)
+      const hue = 335 + t.lr*55;
+      ctx.strokeStyle = `hsl(${hue},60%,52%)`; ctx.lineCap = 'round';
+      ctx.lineWidth = Math.max(3, t.tw*0.55);
+      ctx.beginPath(); ctx.moveTo(dx, floorY); ctx.lineTo(dx, floorY-t.th*0.7); ctx.stroke();
+      ctx.lineWidth = Math.max(2, t.tw*0.35);
+      ctx.beginPath(); ctx.moveTo(dx, floorY-t.th*0.42); ctx.lineTo(dx-t.cr*0.6, floorY-t.th*0.95); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(dx, floorY-t.th*0.55); ctx.lineTo(dx+t.cr*0.55, floorY-t.th*1.05); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(dx-t.cr*0.6, floorY-t.th*0.95); ctx.lineTo(dx-t.cr*0.85, floorY-t.th*1.25); ctx.stroke();
+    } else {
+      // Bol-koraal + zeester
+      const hue = 15 + t.lr*40;
+      ctx.fillStyle = `hsl(${hue},65%,48%)`;
+      ctx.beginPath(); ctx.arc(dx, floorY, t.cr*0.65, Math.PI, 0); ctx.fill();
+      ctx.fillStyle = `hsla(${hue},70%,65%,0.5)`;
+      for (let i = 0; i < 4; i++) { ctx.beginPath(); ctx.arc(dx-t.cr*0.4+i*t.cr*0.27, floorY-t.cr*0.35-((i%2)*t.cr*0.14), t.cr*0.09, 0, Math.PI*2); ctx.fill(); }
+      if (layer === 'near') {
+        ctx.fillStyle = '#ffb020'; ctx.save(); ctx.translate(dx+t.cr*1.1, floorY-5);
+        drawStar(ctx, 0, 0, 5, 9, 4); ctx.fill(); ctx.restore();
+      }
+    }
+
+  } else {
+    // Standaard bos-boom
+    ctx.fillStyle = trunk;
+    ctx.fillRect(dx-t.tw/2, floorY-t.th, t.tw, t.th);
+    ctx.fillStyle = floraColor(layer === 'near' ? flora.near : layer === 'mid' ? flora.mid : flora.far, t.hr, t.lr);
     ctx.beginPath(); ctx.arc(dx, floorY-t.th-t.cr*0.6, t.cr, 0, Math.PI*2); ctx.fill();
     ctx.beginPath(); ctx.arc(dx-t.cr*0.5, floorY-t.th-t.cr*0.25, t.cr*0.72, 0, Math.PI*2); ctx.fill();
     ctx.beginPath(); ctx.arc(dx+t.cr*0.5, floorY-t.th-t.cr*0.25, t.cr*0.72, 0, Math.PI*2); ctx.fill();
-    ctx.restore();
-  });
+    if (layer !== 'near') {
+      // Zon-highlight op de kruin (subtiel, geeft diepte)
+      ctx.globalAlpha *= 0.35;
+      ctx.fillStyle = 'rgba(255,240,160,0.5)';
+      ctx.beginPath(); ctx.arc(dx+t.cr*0.3, floorY-t.th-t.cr*0.85, t.cr*0.4, 0, Math.PI*2); ctx.fill();
+    }
+  }
 }
 
 function drawFloorCeil() {
@@ -724,25 +972,68 @@ function drawThemeParticles() {
 
 // ===== ZAPPERS =====
 let zappers = [];
+let lastGapCenter = null;   // opening van de vorige laser (voor haalbare spawns)
 function spawnZapper() {
   // Alle laser-maten schalen met SIZE (= schermhoogte), zodat de moeilijkheid
   // op telefoon hetzelfde is als op iPad/pc en gaten niet groter zijn dan het veld.
   const Z = SIZE;
-  const floorY=FLOOR_Y(), roll=Math.random();
-  if (roll < 0.4) {
-    const gs=(280+Math.random()*80)*Z, gy=CEIL_Y+40*Z+Math.random()*Math.max(20,(floorY-CEIL_Y-80*Z-gs));
+  const floorY = FLOOR_Y();
+
+  // ── Slimmere spawning 1: genoeg horizontale ruimte tussen lasers ──
+  const lastX = zappers.length ? Math.max(...zappers.map(z => z.x + (z.length ? z.length/2 : z.len ? z.len/2 : 30))) : -9999;
+  const minSpace = (280 + gameSpeed*40) * Z;
+  if (canvas.width + 50 - lastX < minSpace) return;   // te dichtbij — volgende tick opnieuw
+
+  // ── Type-keuze: nieuwe types pas verderop, zodat het begin rustig blijft ──
+  const pool = ['vertical','vertical','horizontal','horizontal'];
+  if (distance > 120) pool.push('diagonal','diagonal');
+  if (distance > 250) pool.push('moving','moving','moving');
+  if (distance > 400) pool.push('blink','blink','blink');
+  const type = pool[Math.floor(Math.random()*pool.length)];
+
+  // ── Slimmere spawning 2: nieuwe opening haalbaar vanaf de vorige ──
+  const reach = lastGapCenter == null ? 99999 : Math.max(140*Z, (minSpace / Math.max(1,gameSpeed)) * 1.7);
+  const clampGap = (c) => lastGapCenter == null ? c : Math.max(lastGapCenter - reach, Math.min(lastGapCenter + reach, c));
+
+  if (type === 'vertical') {
+    const gs = (280+Math.random()*80)*Z;
+    let gy = CEIL_Y+40*Z+Math.random()*Math.max(20,(floorY-CEIL_Y-80*Z-gs));
+    gy = Math.max(CEIL_Y+30*Z, Math.min(floorY-30*Z-gs, clampGap(gy+gs/2)-gs/2));
     zappers.push({ type:'vertical', x:canvas.width+50, gapY:gy, gapSize:gs, width:20*Z, glowPhase:Math.random()*Math.PI*2 });
-  } else if (roll < 0.7) {
+    lastGapCenter = gy + gs/2;
+  } else if (type === 'horizontal') {
     const gs  = (270 + Math.random() * 80) * Z;
     const len = (220 + Math.random() * 120) * Z;
-    // y is het midden van de laser, gewoon een vaste hoogte in het speelveld
-    const y = CEIL_Y + 100*Z + Math.random() * Math.max(20,(floorY - CEIL_Y - 200*Z));
+    let y = CEIL_Y + 100*Z + Math.random() * Math.max(20,(floorY - CEIL_Y - 200*Z));
+    y = Math.max(CEIL_Y+60*Z, Math.min(floorY-60*Z, clampGap(y)));
     zappers.push({ type:'horizontal', x:canvas.width + len/2 + 50, y, gapSize:gs, height:20*Z, length:len, glowPhase:Math.random()*Math.PI*2 });
-  } else {
+    lastGapCenter = y;
+  } else if (type === 'diagonal') {
     const angle=(Math.random()>0.5?1:-1)*(25+Math.random()*25)*Math.PI/180;
-    const cy=CEIL_Y+80*Z+Math.random()*Math.max(20,(floorY-CEIL_Y-200*Z));
+    let cy=CEIL_Y+80*Z+Math.random()*Math.max(20,(floorY-CEIL_Y-200*Z));
+    cy = Math.max(CEIL_Y+70*Z, Math.min(floorY-70*Z, clampGap(cy)));
     zappers.push({ type:'diagonal', x:canvas.width+60, y:cy, angle, len:(200+Math.random()*100)*Z, gap:(160+Math.random()*60)*Z, width:18*Z, glowPhase:Math.random()*Math.PI*2 });
+    lastGapCenter = cy;
+  } else if (type === 'moving') {
+    // Verticale laser waarvan de opening langzaam op en neer beweegt
+    const gs = (300+Math.random()*70)*Z;
+    const amp = (55+Math.random()*55)*Z;
+    const lo = CEIL_Y + amp + gs/2 + 30*Z, hi = floorY - amp - gs/2 - 30*Z;
+    const mid = hi > lo ? lo + Math.random()*(hi-lo) : (CEIL_Y+floorY)/2;   // mid = centrum van de opening
+    zappers.push({ type:'moving', x:canvas.width+50, baseGapY:mid, gapY:mid-gs/2, gapSize:gs, amp, phase:Math.random()*Math.PI*2, spd:0.018+Math.random()*0.014, width:20*Z, glowPhase:Math.random()*Math.PI*2 });
+    lastGapCenter = mid;
+  } else {
+    // Knipper-laser: volledige balk die aan/uit gaat — timing is de truc
+    zappers.push({ type:'blink', x:canvas.width+50, width:22*Z, cycle:Math.random()*240, glowPhase:Math.random()*Math.PI*2 });
+    // opening blijft onbepaald: volgende laser mag overal (blink laat je overal door)
+    lastGapCenter = null;
   }
+}
+
+// Knipper-laser cyclus: 110 frames aan → 40 waarschuwen → 90 uit
+function blinkState(z) {
+  const c = z.cycle % 240;
+  return c < 110 ? 'on' : c < 150 ? 'warn' : 'off';
 }
 
 // ===== LASER HELPER FUNCTIES =====
@@ -870,10 +1161,42 @@ function drawZappers() {
       vertical:   { outer:'rgba(255,50,50,1)',   mid:'rgba(255,120,50,1)',  core:'rgba(255,200,100,1)' },
       horizontal: { outer:'rgba(180,0,255,1)',   mid:'rgba(220,80,255,1)',  core:'rgba(240,180,255,1)' },
       diagonal:   { outer:'rgba(0,220,255,1)',   mid:'rgba(50,255,200,1)',  core:'rgba(200,255,255,1)' },
+      moving:     { outer:'rgba(255,160,0,1)',   mid:'rgba(255,210,60,1)',  core:'rgba(255,245,180,1)' },
+      blink:      { outer:'rgba(0,255,120,1)',   mid:'rgba(120,255,170,1)', core:'rgba(220,255,235,1)' },
     };
     const color = colors[z.type];
 
-    if (z.type === 'vertical') {
+    if (z.type === 'blink') {
+      // Volledige balk die aan/uit knippert — waarschuwt voor hij aan gaat
+      const eW = 28, eH = 16, floorY = FLOOR_Y();
+      const st = blinkState(z);
+      drawLaserEmitter(z.x - eW/2, CEIL_Y, eW, eH, glow, color);
+      drawLaserEmitter(z.x - eW/2, floorY - eH, eW, eH, glow, color);
+      if (st === 'on') {
+        drawLaserBeam(z.x, CEIL_Y + eH, z.x, floorY - eH, glow, color);
+      } else if (st === 'warn') {
+        // Flikkerende waarschuwing: laser laadt op
+        if (Math.floor(z.cycle / 6) % 2 === 0) {
+          ctx.save(); ctx.globalAlpha = 0.3;
+          ctx.setLineDash([8, 12]);
+          ctx.strokeStyle = color.mid; ctx.lineWidth = 3;
+          ctx.beginPath(); ctx.moveTo(z.x, CEIL_Y+eH); ctx.lineTo(z.x, floorY-eH); ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.restore();
+        }
+      } else {
+        // Uit: vage stippellijn zodat je weet waar hij zit
+        ctx.save(); ctx.globalAlpha = 0.12;
+        ctx.setLineDash([4, 16]);
+        ctx.strokeStyle = color.mid; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(z.x, CEIL_Y+eH); ctx.lineTo(z.x, floorY-eH); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
+      }
+      return;
+    }
+
+    if (z.type === 'vertical' || z.type === 'moving') {
       const eW = 28, eH = 16;
       const floorY = FLOOR_Y();
 
@@ -938,17 +1261,20 @@ function updateZappers() {
   zappers = zappers.filter(z => {
     const prevZx = z.x; // positie voor beweging (sweep test)
     z.x -= gameSpeed*slowMoFactor*S;
+    // Bewegende opening / knipper-cyclus bijwerken
+    if (z.type === 'moving') { z.phase += z.spd*slowMoFactor*S; z.gapY = z.baseGapY + Math.sin(z.phase)*z.amp - z.gapSize/2; }
+    if (z.type === 'blink')  { z.cycle += slowMoFactor*S; }
     // Kogel raakt laser → laser kapot (sweep-gebaseerde detectie)
     if (bullet.active) {
       const prevBx = bullet.x - bullet.vx * slowMoFactor * S; // vorige kogelpositie
       let hit = false;
-      if (z.type === 'vertical') {
+      if (z.type === 'vertical' || z.type === 'moving' || z.type === 'blink') {
         // Sweep: heeft kogel de laser-x overgestoken deze frame?
         const crossed = (prevBx <= prevZx && bullet.x >= z.x) ||
                         (prevBx >= prevZx && bullet.x <= z.x) ||
                         Math.abs(bullet.x - z.x) < 28;
         // Y-bereik check: kogel moet binnen de laser-opening vallen
-        const inBeam = bullet.y < z.gapY || bullet.y > z.gapY + z.gapSize;
+        const inBeam = z.type === 'blink' ? true : (bullet.y < z.gapY || bullet.y > z.gapY + z.gapSize);
         hit = crossed && inBeam;
       } else if (z.type === 'horizontal') {
         hit = Math.abs(bullet.y - z.y) < 22 &&
@@ -956,16 +1282,27 @@ function updateZappers() {
       } else if (z.type === 'diagonal') {
         hit = Math.hypot(bullet.x - z.x, bullet.y - z.y) < 90;
       }
-      if (hit) { bullet.active = false; return false; }
+      if (hit) {
+        bullet.active = false;
+        // Beloning + effect voor het kapotschieten
+        coins += 3;
+        spawnFloatText(bullet.x, bullet.y - 20, '+3 🪙', '#7ef0a0', 20);
+        spawnRing(bullet.x, bullet.y, 'rgba(150,255,180,', 80);
+        spawnSparks(bullet.x, bullet.y, '#88ffbb', 10);
+        missionEvent('lasers', 1);
+        return false;
+      }
     }
     return true;
   });
   zappers.forEach(z => {
     if (!player.alive || player.invincible || rocketActive) return;
     const px=player.x+28, py=player.y+15, pw=player.width-56, ph=player.height-FOOT_OFF()-20;
-    if (z.type==='vertical') {
+    if (z.type==='vertical' || z.type==='moving') {
       if (px+pw>z.x-z.width/2 && px<z.x+z.width/2)
         if (py<z.gapY || py+ph>z.gapY+z.gapSize) endGame();
+    } else if (z.type==='blink') {
+      if (blinkState(z) === 'on' && px+pw>z.x-z.width/2 && px<z.x+z.width/2) endGame();
     } else if (z.type==='horizontal') {
       const inGap = px+pw/2>z.x-z.gapSize/2 && px+pw/2<z.x+z.gapSize/2;
       if (!inGap && px+pw>z.x-z.length/2 && px<z.x+z.length/2 && py+ph>z.y-z.height/2 && py<z.y+z.height/2) endGame();
@@ -982,6 +1319,88 @@ function updateZappers() {
   zappers = zappers.filter(z=>z.x>-300);
 }
 
+// ===== VIJANDELIJKE RAKETTEN =====
+// Waarschuwing (⚠ knippert op jouw hoogte) → raket vliegt snel binnen.
+let missiles = [];
+let missileTimer = 0;
+
+function updateMissiles() {
+  if (distance > 250 && player.alive) {
+    missileTimer += S;
+    const interval = Math.max(280, 620 - distance/3);
+    if (missileTimer >= interval) {
+      missileTimer = 0;
+      missiles.push({ y: player.y + player.height/2, warn: 150, x: canvas.width + 40, active: false });
+    }
+  }
+  missiles.forEach(m => {
+    if (m.warn > 0) { m.warn -= slowMoFactor*S; if (m.warn <= 0) m.active = true; return; }
+    m.x -= (gameSpeed*2.2 + 7) * slowMoFactor * S;
+    // Rook-spoor
+    if (Math.random() < 0.5) fxSparks.push({ x:m.x+30, y:m.y+(Math.random()-0.5)*6, vx:1+Math.random(), vy:(Math.random()-0.5)*0.6, life:0.7, color:'rgba(200,200,200,0.7)', size:2.5+Math.random()*2 });
+    // Kogel kan de raket neerschieten
+    if (bullet.active && Math.hypot(bullet.x-m.x, bullet.y-m.y) < 30) {
+      bullet.active = false; m.dead = true;
+      coins += 5;
+      spawnFloatText(m.x, m.y-24, 'RAKET NEER! +5 🪙', '#ffcc44', 22);
+      spawnRing(m.x, m.y, 'rgba(255,180,80,', 100);
+      spawnSparks(m.x, m.y, '#ffaa33', 14);
+      screenFlash = Math.max(screenFlash, 0.15);
+      missionEvent('rockets', 1);
+      return;
+    }
+    // Botsing met speler
+    if (player.alive && !player.invincible && !rocketActive) {
+      const px = player.x+28, py = player.y+15, pw = player.width-56, ph = player.height-FOOT_OFF()-20;
+      if (m.x > px && m.x < px+pw+20 && m.y > py-8 && m.y < py+ph+8) { m.dead = true; endGame(); }
+    }
+  });
+  missiles = missiles.filter(m => !m.dead && m.x > -80);
+}
+
+function drawMissiles() {
+  missiles.forEach(m => {
+    if (m.warn > 0) {
+      // Knipperend waarschuwingsbord aan de rechterrand
+      if (Math.floor(m.warn / 9) % 2 === 0) {
+        const wx = canvas.width - 34, wy = m.y;
+        ctx.save();
+        ctx.fillStyle = 'rgba(255,40,40,0.92)';
+        ctx.beginPath(); ctx.roundRect ? ctx.roundRect(wx-22, wy-22, 44, 44, 9) : ctx.rect(wx-22, wy-22, 44, 44); ctx.fill();
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 2.5; ctx.stroke();
+        ctx.fillStyle = '#fff'; ctx.font = '900 27px Arial';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('!', wx, wy+1);
+        ctx.restore();
+      }
+      return;
+    }
+    // Raket zelf: romp + neus + vinnen + felle vlam
+    ctx.save();
+    ctx.translate(m.x, m.y);
+    const g = ctx.createLinearGradient(0, -9, 0, 9);
+    g.addColorStop(0, '#e8e8f0'); g.addColorStop(0.5, '#b8b8c8'); g.addColorStop(1, '#787888');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.roundRect ? ctx.roundRect(-18, -8, 40, 16, 8) : ctx.rect(-18, -8, 40, 16); ctx.fill();
+    // Neuskegel
+    ctx.fillStyle = '#ff4433';
+    ctx.beginPath(); ctx.moveTo(-18, -8); ctx.quadraticCurveTo(-32, 0, -18, 8); ctx.closePath(); ctx.fill();
+    // Vinnen
+    ctx.fillStyle = '#ff4433';
+    ctx.beginPath(); ctx.moveTo(14, -8); ctx.lineTo(26, -16); ctx.lineTo(22, -2); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(14, 8); ctx.lineTo(26, 16); ctx.lineTo(22, 2); ctx.closePath(); ctx.fill();
+    // Venster
+    ctx.fillStyle = '#66ccff'; ctx.beginPath(); ctx.arc(-6, 0, 4, 0, Math.PI*2); ctx.fill();
+    // Vlam (flikkert)
+    const fl = 14 + Math.random()*12;
+    const fg = ctx.createLinearGradient(22, 0, 22+fl, 0);
+    fg.addColorStop(0, 'rgba(255,240,150,0.95)'); fg.addColorStop(0.5, 'rgba(255,140,30,0.8)'); fg.addColorStop(1, 'rgba(255,60,0,0)');
+    ctx.fillStyle = fg;
+    ctx.beginPath(); ctx.moveTo(22, -6); ctx.lineTo(22+fl, 0); ctx.lineTo(22, 6); ctx.closePath(); ctx.fill();
+    ctx.restore();
+  });
+}
+
 // ===== MUNTEN =====
 let coinObjects = [];
 // ===== LASER COLLISION CHECK VOOR COINS =====
@@ -991,6 +1410,15 @@ function isCoinInLaser(cx, cy) {
       if (Math.abs(cx - z.x) < 30) {
         if (cy < z.gapY || cy > z.gapY + z.gapSize) return true;
       }
+    } else if (z.type === 'moving') {
+      if (Math.abs(cx - z.x) < 30) {
+        // Alleen veilig waar de opening ALTIJD is (opening beweegt met amp op/neer)
+        const safeTop = z.baseGapY - z.gapSize/2 + z.amp;
+        const safeBot = z.baseGapY + z.gapSize/2 - z.amp;
+        if (cy < safeTop || cy > safeBot) return true;
+      }
+    } else if (z.type === 'blink') {
+      if (Math.abs(cx - z.x) < 30) return true;   // hele balk vermijden
     } else if (z.type === 'horizontal') {
       if (Math.abs(cy - z.y) < 30) {
         const inGap = cx > z.x - z.gapSize/2 && cx < z.x + z.gapSize/2;
@@ -1102,7 +1530,7 @@ function updateCoins() {
     if (isCoinInLaser(c.x, c.y)) { c.collected = true; return; }
     if (!c.collected && player.alive) {
       const dx = c.x-(player.x+player.width/2), dy = c.y-(player.y+player.height/2);
-      if (Math.sqrt(dx*dx+dy*dy) < c.r+30) { c.collected=true; coins++; showCoinPopup(c.x,c.y); }
+      if (Math.sqrt(dx*dx+dy*dy) < c.r+30) { c.collected=true; coins++; showCoinPopup(c.x,c.y); onCoinCollected(c.x,c.y); }
     }
   });
   coinObjects = coinObjects.filter(c => c.x > -30 && !c.collected);
@@ -1113,6 +1541,80 @@ function showCoinPopup(x,y) {
   el.className = 'coin-popup'; el.textContent = '+1 🪙';
   el.style.left = x+'px'; el.style.top = y+'px';
   document.body.appendChild(el); setTimeout(()=>el.remove(), 800);
+}
+
+// ===== FX SYSTEEM (popups / schokgolven / vonken / flits) =====
+let floatTexts = [];   // zwevende teksten op het canvas
+let fxRings    = [];   // schokgolf-ringen
+let fxSparks   = [];   // vonk-deeltjes
+let screenFlash = 0;   // korte witte flits (0..1)
+
+function spawnFloatText(x, y, txt, color, size) {
+  floatTexts.push({ x, y, txt, color: color||'#ffe08a', size: size||20, life: 1, vy: -1.2 });
+}
+function spawnRing(x, y, color, maxR) {
+  fxRings.push({ x, y, r: 6, maxR: maxR||90, life: 1, color: color||'rgba(255,220,120,' });
+}
+function spawnSparks(x, y, color, n) {
+  for (let i = 0; i < (n||6); i++) {
+    const a = Math.random()*Math.PI*2, sp = 1.5+Math.random()*3.5;
+    fxSparks.push({ x, y, vx: Math.cos(a)*sp, vy: Math.sin(a)*sp-1, life: 1, color: color||'#ffd700', size: 1.5+Math.random()*2 });
+  }
+}
+function updateFX() {
+  floatTexts.forEach(t => { t.y += t.vy*slowMoFactor*S; t.life -= 0.022*S; });
+  floatTexts = floatTexts.filter(t => t.life > 0);
+  fxRings.forEach(r => { r.r += (r.maxR-r.r)*0.12*S; r.life -= 0.035*S; });
+  fxRings = fxRings.filter(r => r.life > 0);
+  fxSparks.forEach(p => { p.x += p.vx*slowMoFactor*S; p.y += p.vy*slowMoFactor*S; p.vy += 0.12*S; p.life -= 0.03*S; });
+  fxSparks = fxSparks.filter(p => p.life > 0);
+  if (screenFlash > 0) screenFlash = Math.max(0, screenFlash - 0.05*S);
+}
+function drawFX() {
+  fxRings.forEach(r => {
+    ctx.save(); ctx.globalAlpha = r.life*0.8;
+    ctx.strokeStyle = r.color + (r.life*0.9) + ')';
+    ctx.lineWidth = 3 + r.life*3;
+    ctx.beginPath(); ctx.arc(r.x, r.y, r.r, 0, Math.PI*2); ctx.stroke();
+    ctx.restore();
+  });
+  fxSparks.forEach(p => {
+    ctx.save(); ctx.globalAlpha = p.life;
+    ctx.fillStyle = p.color; ctx.shadowColor = p.color; ctx.shadowBlur = 5;
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.size*p.life, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+  });
+  floatTexts.forEach(t => {
+    ctx.save(); ctx.globalAlpha = Math.min(1, t.life*1.4);
+    ctx.font = `900 ${t.size}px Arial`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.strokeStyle = 'rgba(0,0,0,0.6)'; ctx.lineWidth = 4;
+    ctx.strokeText(t.txt, t.x, t.y);
+    ctx.fillStyle = t.color; ctx.fillText(t.txt, t.x, t.y);
+    ctx.restore();
+  });
+  if (screenFlash > 0) {
+    ctx.save(); ctx.globalAlpha = screenFlash*0.55;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(-30, -30, canvas.width+60, canvas.height+60);
+    ctx.restore();
+  }
+}
+
+// ===== COMBO SYSTEEM =====
+let comboStreak = 0;
+let comboTimer  = 0;   // frames resterend om de combo vast te houden
+function onCoinCollected(x, y) {
+  comboStreak++; comboTimer = 110;
+  spawnSparks(x, y, '#ffd700', 5);
+  // Bonus-drempels: hoe langer de reeks, hoe groter de beloning
+  if (comboStreak === 8)       { coins += 3;  spawnFloatText(x, y-24, 'COMBO! +3 🪙', '#7ef0a0', 22); spawnRing(x, y, 'rgba(126,240,160,', 60); }
+  else if (comboStreak === 16) { coins += 6;  spawnFloatText(x, y-24, 'SUPER COMBO! +6 🪙', '#66ccff', 24); spawnRing(x, y, 'rgba(102,204,255,', 80); }
+  else if (comboStreak === 24) { coins += 12; spawnFloatText(x, y-24, 'MEGA COMBO! +12 🪙', '#ff8af0', 28); spawnRing(x, y, 'rgba(255,138,240,', 110); screenFlash = Math.max(screenFlash, 0.25); }
+  else if (comboStreak > 24 && comboStreak % 12 === 0) { coins += 12; spawnFloatText(x, y-24, 'MEGA COMBO! +12 🪙', '#ff8af0', 28); }
+}
+function updateCombo() {
+  if (comboTimer > 0) { comboTimer -= slowMoFactor*S; if (comboTimer <= 0) comboStreak = 0; }
 }
 
 // ===== TRAIL SYSTEEM =====
@@ -1583,7 +2085,7 @@ function updatePowerupObjects() {
     p.x -= gameSpeed*slowMoFactor*S;
     if (!player.alive||player.invincible) return;
     const dx=p.x-(player.x+player.width/2), dy=p.y-(player.y+player.height/2);
-    if (Math.sqrt(dx*dx+dy*dy)<p.r+30) { activatePowerup(p.type); p.collected=true; }
+    if (Math.sqrt(dx*dx+dy*dy)<p.r+30) { activatePowerup(p.type); p.collected=true; missionEvent('powerups', 1); spawnSparks(p.x, p.y, '#aaddff', 8); }
   });
   powerupObjects = powerupObjects.filter(p=>p.x>-50&&!p.collected);
 }
@@ -1760,10 +2262,20 @@ const SHOP_ITEMS = {
     { id:'coin_lava',    name:'Lava Munten',      icon:'🔥', desc:'Gloeiend hete lava munten — gevaarlijk mooi.',      price:160, type:'coin_skin', value:'lava' },
   ],
   themes: [
-    { id:'theme_space',   name:'Ruimte',   icon:'🌌', desc:'Vlieg door de sterrennacht — planeten, maan en meteoren.', price:350, type:'theme', value:'space' },
-    { id:'theme_ocean',   name:'Oceaan',   icon:'🌊', desc:'Onderwater avontuur met bellen en zeeblauw licht.',        price:300, type:'theme', value:'ocean' },
-    { id:'theme_winter',  name:'Winter',   icon:'❄️', desc:'IJzige sneeuwwereld met vallende vlokken.',                price:280, type:'theme', value:'winter' },
-    { id:'theme_volcano', name:'Vulkaan',  icon:'🌋', desc:'Vlieg langs een actieve vulkaan — lava en vuur overal.',   price:320, type:'theme', value:'volcano' },
+    { id:'theme_space',   name:'Ruimte',   icon:'🌌', desc:'Vlieg door de sterrennacht — planeten, maan en meteoren.', price:2500, type:'theme', value:'space' },
+    { id:'theme_ocean',   name:'Oceaan',   icon:'🌊', desc:'Onderwater avontuur met bellen en zeeblauw licht.',        price:2000, type:'theme', value:'ocean' },
+    { id:'theme_winter',  name:'Winter',   icon:'❄️', desc:'IJzige sneeuwwereld met vallende vlokken.',                price:1800, type:'theme', value:'winter' },
+    { id:'theme_volcano', name:'Vulkaan',  icon:'🌋', desc:'Vlieg langs een actieve vulkaan — lava en vuur overal.',   price:2200, type:'theme', value:'volcano' },
+  ],
+  colors: [
+    { id:'color_blue',    name:'Blauw Pak',     icon:'🔵', desc:'Verf je pak en helm koel blauw.',           price:500,    type:'suit_color', value:'blue'    },
+    { id:'color_red',     name:'Rood Pak',      icon:'🔴', desc:'Fel rood pak — niet te missen.',            price:600,    type:'suit_color', value:'red'     },
+    { id:'color_green',   name:'Groen Pak',     icon:'🟢', desc:'Fris groen pak voor de natuurliefhebber.',  price:600,    type:'suit_color', value:'green'   },
+    { id:'color_orange',  name:'Oranje Pak',    icon:'🟠', desc:'Knal-oranje pak — Hollands trots.',         price:700,    type:'suit_color', value:'orange'  },
+    { id:'color_pink',    name:'Roze Pak',      icon:'🩷', desc:'Vrolijk roze pak dat opvalt.',              price:700,    type:'suit_color', value:'pink'    },
+    { id:'color_purple',  name:'Paars Pak',     icon:'🟣', desc:'Mysterieus paars pak — stijlvol.',          price:800,    type:'suit_color', value:'purple'  },
+    { id:'color_rainbow', name:'Regenboog Pak', icon:'🌈', desc:'Alle kleuren over je hele pak — zeldzaam!',  price:100000, type:'suit_color', value:'rainbow' },
+    { id:'color_gold',    name:'Gouden Pak',    icon:'✨', desc:'Puur goud pak — het allermooiste dat er is.', price:10000,  type:'suit_color', value:'gold'    },
   ],
   upgrades: [
     {
@@ -1786,17 +2298,6 @@ const SHOP_ITEMS = {
         { level:2, desc:'Overleef twee lasers per potje.',        price:380,  effect:{ shieldHits:2    } },
         { level:3, desc:'Schild herlaadt na 25 seconden.',        price:600,  effect:{ shieldHits:2, shieldRegen:25 } },
         { level:4, desc:'Herlaadt na 12 seconden — onkwetsbaar.', price:900,  effect:{ shieldHits:3, shieldRegen:12 } },
-      ]
-    },
-    {
-      id: 'slowmo',
-      name: 'Slow-mo Duur',
-      icon: '🐢',
-      levels: [
-        { level:1, desc:'Slow-mo duurt 3 seconden langer.',       price:120,  effect:{ slowmoDuration:540  } },
-        { level:2, desc:'Slow-mo duurt 6 seconden langer.',       price:240,  effect:{ slowmoDuration:720  } },
-        { level:3, desc:'Slow-mo duurt 10 seconden langer.',      price:400,  effect:{ slowmoDuration:960  } },
-        { level:4, desc:'Slow-mo duurt onbeperkt lang!',          price:700,  effect:{ slowmoDuration:9999 } },
       ]
     },
     {
@@ -1843,17 +2344,6 @@ const SHOP_ITEMS = {
         { level:4, desc:'Powerups spawnen 75% vaker — onstopbaar!', price:750, effect:{ powerupRate:225 } },
       ]
     },
-    {
-      id: 'speed_ramp',
-      name: 'Soepele Start',
-      icon: '🐌',
-      levels: [
-        { level:1, desc:'Snelheid stijgt iets langzamer.',        price:120,  effect:{ speedIncrement:0.11 } },
-        { level:2, desc:'Snelheid stijgt duidelijk langzamer.',   price:240,  effect:{ speedIncrement:0.08 } },
-        { level:3, desc:'Snelheid stijgt veel langzamer.',        price:400,  effect:{ speedIncrement:0.05 } },
-        { level:4, desc:'Snelheid stijgt nauwelijks — voor altijd snel!', price:700, effect:{ speedIncrement:0.02 } },
-      ]
-    },
   ],
   starters: [
     { id:'start_200',    name:'Head Start 200m', icon:'💨', desc:'Begin elk potje al 200m verder.',             price:200, type:'starter', value:'headstart_200', repeatable:true },
@@ -1869,6 +2359,16 @@ let shopEquipped   = JSON.parse(localStorage.getItem('jj_equipped') || '{}');
 let activeStarters = JSON.parse(localStorage.getItem('jj_starters') || '[]');
 let upgradeLevels  = JSON.parse(localStorage.getItem('jj_upgradelevels') || '{}');
 let disabledUpgrades = JSON.parse(localStorage.getItem('jj_disabled') || '[]'); // upgrades tijdelijk uit
+
+// Eenmalige reset: thema's zijn vernieuwd (achtergrond verandert nu mee) en
+// duurder geworden — eerder gekochte thema's vervallen, iedereen koopt opnieuw.
+if (!localStorage.getItem('jj_theme_reset1')) {
+  shopOwned = shopOwned.filter(id => !id.startsWith('theme_'));
+  delete shopEquipped['theme'];
+  localStorage.setItem('jj_owned', JSON.stringify(shopOwned));
+  localStorage.setItem('jj_equipped', JSON.stringify(shopEquipped));
+  localStorage.setItem('jj_theme_reset1', '1');
+}
 
 function saveShop() {
   localStorage.setItem('jj_owned',         JSON.stringify(shopOwned));
@@ -2074,6 +2574,7 @@ function buyItem(id, type, value, tab) {
   totalCoins -= item.price;
   shopOwned.push(id);
   if (type !== 'upgrade') shopEquipped[type] = value;
+  if (type === 'suit_color') applySuitColor(value);
   saveShop();
   document.getElementById('shopCoins').textContent = totalCoins;
   showShopFeedback(`✅ ${item.name} gekocht!`);
@@ -2115,6 +2616,7 @@ function applyUpgradeLevel(upgId, level) {
 
 function equipItem(id, type, value, tab) {
   shopEquipped[type] = value;
+  if (type === 'suit_color') applySuitColor(value);
   saveShop();
   showShopFeedback(`✨ ${id} aangezet!`);
   renderShopTab(tab);
@@ -2148,6 +2650,7 @@ function toggleStarter(id, tab) {
 
 function unequipItem(type, tab) {
   delete shopEquipped[type];
+  if (type === 'suit_color') applySuitColor(null);
   saveShop();
   showShopFeedback(`⏸️ Uitgezet`);
   renderShopTab(tab);
@@ -2178,6 +2681,7 @@ function loadUpgrades() {
   });
 }
 loadUpgrades();
+if (shopEquipped.suit_color) applySuitColor(shopEquipped.suit_color);
 
 // Expose shop-functies als globals (nodig voor inline onclick handlers in dynamische HTML)
 window.buyItem         = buyItem;
@@ -2207,9 +2711,92 @@ canvas.addEventListener('touchstart',e=>{
   if(isShootBtnArea(t.clientX,t.clientY)) handleShoot(); else handlePress();
 },{passive:false});
 canvas.addEventListener('touchend',  handleRelease);
-document.addEventListener('keydown',e=>{ if(e.code==='KeyF'||e.code==='KeyX') handleShoot(); });
+document.addEventListener('keydown',e=>{ if(e.code==='KeyF'||e.code==='KeyX'||e.code==='KeyE') handleShoot(); });
 function handlePress()   { if(gameState==='playing'&&player.alive) player.isThrusting=true; }
 function handleRelease() { player.isThrusting=false; }
+
+// ===== MISSIES =====
+// 3 actieve missies, persistent. Voltooid ⇒ munten + nieuwe (zwaardere) missie.
+const MISSION_TEMPLATES = [
+  { type:'run_dist',   icon:'📏', desc:g=>`Vlieg ${g}m in één potje`,      goals:[300,500,800,1200,2000], reward:g=>Math.round(g/8) },
+  { type:'run_coins',  icon:'🪙', desc:g=>`Pak ${g} munten in één potje`,  goals:[25,50,80,120,180],      reward:g=>g*2 },
+  { type:'total_dist', icon:'🌍', desc:g=>`Vlieg in totaal ${g}m`,          goals:[1500,4000,8000,15000],  reward:g=>Math.round(g/12), cum:true },
+  { type:'lasers',     icon:'⚡', desc:g=>`Schiet ${g} lasers kapot`,       goals:[2,5,12,25],             reward:g=>g*20, cum:true },
+  { type:'rockets',    icon:'🚀', desc:g=>`Schiet ${g} raketten neer`,      goals:[1,3,8],                 reward:g=>g*35, cum:true },
+  { type:'powerups',   icon:'💊', desc:g=>`Pak ${g} powerups`,              goals:[3,8,20],                reward:g=>g*15, cum:true },
+  { type:'job',        icon:'🔤', desc:g=>`Maak ${g}x J-O-B compleet`,      goals:[1,3,6],                 reward:g=>g*120, cum:true },
+];
+let missions   = JSON.parse(localStorage.getItem('jj_missions')   || 'null') || [];
+let missionLvl = JSON.parse(localStorage.getItem('jj_missionlvl') || '{}');
+function saveMissions() {
+  localStorage.setItem('jj_missions', JSON.stringify(missions));
+  localStorage.setItem('jj_missionlvl', JSON.stringify(missionLvl));
+}
+function makeMission(excludeTypes) {
+  const opts = MISSION_TEMPLATES.filter(t => !excludeTypes.includes(t.type));
+  const t = opts[Math.floor(Math.random()*opts.length)];
+  const lvl = Math.min(missionLvl[t.type] || 0, t.goals.length - 1);
+  const goal = t.goals[lvl];
+  return { type:t.type, goal, prog:0, reward:t.reward(goal), done:false };
+}
+function ensureMissions() {
+  while (missions.length < 3) missions.push(makeMission(missions.map(m => m.type)));
+  saveMissions();
+}
+ensureMissions();
+function missionTemplate(type) { return MISSION_TEMPLATES.find(t => t.type === type); }
+
+// Cumulatieve gebeurtenissen (lasers/raketten/powerups/job) tellen direct mee
+function missionEvent(type, amt) {
+  let changed = false;
+  missions.forEach(m => {
+    if (m.type === type && !m.done) {
+      m.prog += amt; changed = true;
+      if (m.prog >= m.goal) {
+        m.done = true;
+        spawnFloatText(canvas.width/2, CEIL_Y + 90, '🎯 Missie voltooid!', '#ffe08a', 28);
+        spawnRing(canvas.width/2, CEIL_Y + 90, 'rgba(255,224,138,', 120);
+      }
+    }
+  });
+  if (changed) saveMissions();
+}
+
+// Run-gebaseerde missies bijwerken + voltooide uitbetalen (op game over)
+function settleMissions() {
+  missions.forEach(m => {
+    if (m.done) return;
+    if (m.type === 'run_dist')   { m.prog = Math.max(m.prog, distance); if (distance >= m.goal) m.done = true; }
+    if (m.type === 'run_coins')  { m.prog = Math.max(m.prog, coins);    if (coins    >= m.goal) m.done = true; }
+    if (m.type === 'total_dist') { m.prog += distance;                  if (m.prog   >= m.goal) m.done = true; }
+  });
+  const completed = missions.filter(m => m.done);
+  completed.forEach(m => {
+    totalCoins += m.reward;
+    missionLvl[m.type] = (missionLvl[m.type] || 0) + 1;
+  });
+  missions = missions.filter(m => !m.done);
+  ensureMissions();
+  return completed;
+}
+
+function missionHTML(m) {
+  const t = missionTemplate(m.type);
+  const pct = Math.min(100, Math.round(m.prog / m.goal * 100));
+  return `<div class="mission-row">
+    <span class="mission-icon">${t.icon}</span>
+    <div class="mission-mid">
+      <div class="mission-desc">${t.desc(m.goal)}</div>
+      <div class="mission-bar"><div class="mission-fill" style="width:${pct}%"></div></div>
+    </div>
+    <span class="mission-reward">🪙${m.reward}</span>
+  </div>`;
+}
+function renderMissions() {
+  const box = document.getElementById('missionsBox');
+  if (box) box.innerHTML = `<div class="mission-title">🎯 MISSIES</div>` + missions.map(missionHTML).join('');
+}
+renderMissions();
 
 // ===== UI =====
 document.getElementById('startBtn').addEventListener('click',   startGame);
@@ -2227,6 +2814,9 @@ function startGame() {
   zapperTimer=0; coinTimer=0; speedUpTimer=700; letterTimer=360; powerupTimer=450;
   zappers=[]; coinObjects=[]; fireParticles=[]; powerupObjects=[];
   trailParticles=[]; themeParticles=[];
+  missiles=[]; missileTimer=0; lastGapCenter=null;
+  floatTexts=[]; fxRings=[]; fxSparks=[]; screenFlash=0;
+  comboStreak=0; comboTimer=0;
   activePowerups={}; rocketActive=false; rocketY=0; rocketVy=0;
   rocketParticles=[]; collectedLetters=[]; letterObjects=[];
   slowMo=false; slowMoFactor=1.0; slowMoTimer=0; shakeTimer=0; shakeX=0; shakeY=0;
@@ -2285,7 +2875,16 @@ function showGameOver() {
   const multi  = window._coinMulti || (window._coinDouble ? 2 : 1);
   const earned = Math.floor(coins * multi);
   totalCoins  += earned;
+  // Missies uitbetalen + tonen
+  const completedMissions = settleMissions();
   localStorage.setItem('kk_curuntie', totalCoins);
+  const goM = document.getElementById('goMissions');
+  if (goM) {
+    goM.innerHTML = completedMissions.length
+      ? completedMissions.map(m => `<div class="go-mission-done">🎯 ${missionTemplate(m.type).desc(m.goal)} — <b>+${m.reward} 🪙</b></div>`).join('')
+      : '';
+  }
+  renderMissions();
 
   document.getElementById('hud').classList.add('hidden');
   document.getElementById('finalDistance').textContent = distance + 'm';
@@ -2559,6 +3158,7 @@ function gameLoop(now) {
   drawPowerupCapsules();
   drawLetters();
   drawZappers();
+  drawMissiles();        // 🚀 Vijandelijke raketten + waarschuwing
   drawCoins();
   drawRocket();
   drawPlayer();          // Speler
@@ -2568,10 +3168,14 @@ function gameLoop(now) {
   drawShootButton();     // 🔫 Schietknop linksonder
   drawRocketFX();        // 🚀 Raket transformatie effect
   drawSlowMoOverlay();
+  drawFX();              // ✨ Popups / schokgolven / vonken / flits
   drawPowerupHUD();
   drawJobHUD();
 
   ctx.restore();
+
+  // Vignette (buiten de shake, gecachet) — subtiele donkere randen
+  if (vignetteGrad) { ctx.fillStyle = vignetteGrad; ctx.fillRect(0, 0, canvas.width, canvas.height); }
 
   document.getElementById('distanceDisplay').textContent=distance+'m';
   document.getElementById('coinDisplay').textContent=coins;
@@ -2581,7 +3185,10 @@ function gameLoop(now) {
 
   updatePlayer();
   updateZappers();
+  updateMissiles();
   updateCoins();
+  updateCombo();
+  updateFX();
   updateFireParticles();
   updateTrail();
   updateThemeParticles();

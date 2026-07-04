@@ -821,3 +821,38 @@ body {
   .go-buttons .btn-start, .go-buttons .btn-shop { padding: 9px 18px; font-size: 15px; }
   .go-tip { font-size: 11px; }
 }
+
+/* ===== MISSIES ===== */
+.missions-box {
+  width: min(420px, 88vw);
+  margin: 6px auto 2px;
+  background: rgba(0, 30, 8, 0.55);
+  border: 1px solid rgba(126, 240, 160, 0.25);
+  border-radius: 14px;
+  padding: 10px 14px;
+  backdrop-filter: blur(4px);
+}
+.mission-title {
+  font-size: 11px; font-weight: 900; letter-spacing: 3px;
+  color: #7ef0a0; text-align: center; margin-bottom: 6px;
+}
+.mission-row { display: flex; align-items: center; gap: 10px; padding: 4px 0; }
+.mission-icon { font-size: 18px; width: 24px; text-align: center; }
+.mission-mid { flex: 1; min-width: 0; }
+.mission-desc { font-size: 12px; font-weight: 700; color: #e8ffe8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mission-bar { height: 5px; border-radius: 3px; background: rgba(255,255,255,0.12); margin-top: 3px; overflow: hidden; }
+.mission-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, #45c96a, #9dffbe); transition: width .4s ease; }
+.mission-reward { font-size: 12px; font-weight: 900; color: #ffe08a; white-space: nowrap; }
+.go-missions { display: flex; flex-direction: column; gap: 5px; margin: 4px 0 2px; }
+.go-mission-done {
+  font-size: 13px; font-weight: 700; color: #d9ffe4;
+  background: rgba(60, 180, 90, 0.22);
+  border: 1px solid rgba(126, 240, 160, 0.4);
+  border-radius: 10px; padding: 6px 12px;
+  animation: missionPop .5s ease;
+}
+@keyframes missionPop { from { transform: scale(.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@media (max-height: 700px) {
+  .missions-box { padding: 6px 10px; }
+  .mission-row { padding: 2px 0; }
+}
