@@ -307,8 +307,7 @@ export default function App() {
 
       <div className="hero">
         <div className="logo-wrap">
-          <span className="logo-icon">🗃️</span>
-          <h1 className="logo-title">Kennis<span className="accent">kist</span></h1>
+          <img className="logo-img" src="/logo-rond.png" alt="Kenniskist" />
         </div>
         <p className="hero-sub">✨ Leren terwijl je speelt ✨</p>
       </div>
