@@ -2393,7 +2393,7 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
       <div className="game-screen game-screen-center hs-select">
         <div className="hs-select-head">
           <span className="hs-select-logo">🥅⚽</span>
-          <h1 className="hs-select-title">HEAD SOCCER CUP</h1>
+          <h1 className="hs-select-title">SUPERVOETBAL CUP</h1>
           <p className="hs-select-sub">Kies je land — elke beloning speel je één ronde van het toernooi!</p>
         </div>
         <div className="wk-country-grid hs-grid">
@@ -2478,7 +2478,7 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
         <button className="back-btn" onClick={onBack}>← Menu</button>
         <div className="hs-select-head">
           <span className="hs-select-logo">🥅⚽</span>
-          <h1 className="hs-select-title">HEAD SOCCER</h1>
+          <h1 className="hs-select-title">SUPERVOETBAL</h1>
           <p className="hs-select-sub">Kies jouw land — elk land heeft een eigen special move!</p>
           <span className="hs-select-count">{got} / {total} landen</span>
         </div>

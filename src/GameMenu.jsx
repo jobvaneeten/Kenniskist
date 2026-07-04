@@ -65,7 +65,7 @@ const GAMES = {
 
 const FREE_GAMES = [
   { key: 'football',      emoji: '⚽', name: 'WK Voetbal',      desc: 'Scoor tegen de computer of een vriend', rewards: ['🪙 munten'] },
-  { key: 'headsoccer',    emoji: '🥅', name: 'Head Soccer',     desc: '1-tegen-1 met landen & special moves', rewards: ['🪙 munten'] },
+  { key: 'headsoccer',    emoji: '🥅', name: 'Supervoetbal',     desc: '1-tegen-1 met landen & special moves', rewards: ['🪙 munten'] },
   { key: 'towerdefense',  emoji: '🏰', name: 'Tower Defense',   desc: 'Bouw torens & stop de vijanden' },
   { key: 'jetpack',       emoji: '🚀', name: 'Jetpack',          desc: 'Vlieg zo ver mogelijk!', rewards: ['🪙 munten'] },
   { key: 'astrokatapult', emoji: '🪐', name: 'Astro Katapult',   desc: 'Lanceer & versla de aliens in 50 levels!' },

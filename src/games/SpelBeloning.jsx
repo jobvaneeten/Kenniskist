@@ -25,7 +25,7 @@ function IframeEmbed({ src, title, doneType, hint, onDone }) {
 }
 
 const SPELLEN = [
-  { key: 'headsoccer', emoji: '🥅', name: 'Head Soccer',   desc: 'Speel een ronde van het toernooi', img: '/scenes/games/headsoccer.png' },
+  { key: 'headsoccer', emoji: '🥅', name: 'Supervoetbal',   desc: 'Speel een ronde van het toernooi', img: '/scenes/games/headsoccer.png' },
   { key: 'voetbal',    emoji: '⚽', name: '1v1 Voetbal',    desc: 'Jij tegen de computer',            img: '/scenes/games/football.png' },
   { key: 'jetpack',    emoji: '🚀', name: 'Jetpack',        desc: 'Vlieg zo ver mogelijk!',           img: '/scenes/games/jetpack.png' },
   { key: 'astro',      emoji: '🪐', name: 'Astro Katapult', desc: 'Speel 1 level',                    img: '/scenes/games/astrokatapult.png' },

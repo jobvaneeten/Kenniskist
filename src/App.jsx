@@ -13,8 +13,8 @@ import { COUNTRIES, DEFAULT_UNLOCKED } from './games/countries'
 const CODES = { pabo: 100000 }
 const BRIEF_CODES = { start: 800 }   // eenmalige briefgeld-codes
 const UNLOCK_ALL_CODE = 'joop'
-const UNLOCK_COUNTRIES_CODE = 'frans'   // ontgrendelt alle Head Soccer-landen
-const UNLOCK_SOMALIA_CODE = '124'       // ontgrendelt direct Somalië in Head Soccer
+const UNLOCK_COUNTRIES_CODE = 'frans'   // ontgrendelt alle Supervoetbal-landen
+const UNLOCK_SOMALIA_CODE = '124'       // ontgrendelt direct Somalië in Supervoetbal
 const UNLOCK_TARA_CODE = 'tara'         // ontgrendelt de Tara Pet
 const UNLOCK_NINA_CODE = 'nina'         // ontgrendelt de Nina Pet
 const UNLOCK_PIM_CODE = 'pim'           // ontgrendelt de Pim Pet
@@ -55,11 +55,11 @@ function CodeModal({ onClose, onRedeem, onRedeemBrief, onUnlockAll, onUnlockCoun
       setOk(true)
     } else if (key === UNLOCK_COUNTRIES_CODE) {
       onUnlockCountries()
-      setMsg('🎉 Alle Head Soccer-landen ontgrendeld!')
+      setMsg('🎉 Alle Supervoetbal-landen ontgrendeld!')
       setOk(true)
     } else if (key === UNLOCK_SOMALIA_CODE) {
       onUnlockSomalia()
-      setMsg('⭐ Somalië ontgrendeld in Head Soccer!')
+      setMsg('⭐ Somalië ontgrendeld in Supervoetbal!')
       setOk(true)
     } else if (key === UNLOCK_TARA_CODE) {
       onUnlockTara()
@@ -317,7 +317,7 @@ export default function App() {
           <div className="btn-text">
             <span className="btn-label">🎮 Speel Game</span>
             <span className="btn-desc">Oefen rekenen, taal, spelling & meer — verdien 🪙 en 💵</span>
-            <span className="btn-examples">⚽ Voetbal · 🥅 Head Soccer · 🚀 Jetpack · 🌉 Brug Bouwen · 🏰 Tower Defense</span>
+            <span className="btn-examples">⚽ Voetbal · 🥅 Supervoetbal · 🚀 Jetpack · 🌉 Brug Bouwen · 🏰 Tower Defense</span>
           </div>
           <span className="btn-arrow">→</span>
         </button>
