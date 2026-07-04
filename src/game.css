@@ -2,7 +2,7 @@
 .game-screen {
   width: 100vw;
   min-height: 100vh;
-  background: #0d0d1a;
+  background: #0d0d1a url('/achtergrond.png') center / cover no-repeat fixed;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -19,11 +19,10 @@
   position: fixed;
   inset: -20%;
   background:
-    radial-gradient(ellipse 50% 42% at 14% 14%, rgba(232,67,147,0.20) 0%, transparent 58%),
-    radial-gradient(ellipse 46% 40% at 86% 18%, rgba(124,58,237,0.20) 0%, transparent 58%),
-    radial-gradient(ellipse 52% 46% at 84% 86%, rgba(6,214,160,0.15) 0%, transparent 58%),
-    radial-gradient(ellipse 48% 42% at 12% 86%, rgba(56,189,248,0.15) 0%, transparent 58%),
-    linear-gradient(160deg, #0c0c1c 0%, #111128 42%, #0a1426 100%);
+    radial-gradient(ellipse 50% 42% at 14% 14%, rgba(232,67,147,0.12) 0%, transparent 58%),
+    radial-gradient(ellipse 46% 40% at 86% 18%, rgba(124,58,237,0.12) 0%, transparent 58%),
+    radial-gradient(ellipse 52% 46% at 84% 86%, rgba(6,214,160,0.09) 0%, transparent 58%),
+    radial-gradient(ellipse 48% 42% at 12% 86%, rgba(56,189,248,0.09) 0%, transparent 58%);
   z-index: 0;
   pointer-events: none;
   animation: gs-aurora 20s ease-in-out infinite alternate;
@@ -40,7 +39,7 @@
   inset: 0;
   background-image: radial-gradient(rgba(255,255,255,0.5) 1px, transparent 1px);
   background-size: 44px 44px;
-  opacity: 0.05;
+  opacity: 0.03;   /* de pixel-achtergrond heeft al sterren */
   z-index: 0;
   pointer-events: none;
 }
@@ -88,7 +87,7 @@
 @keyframes gs-shine { to { background-position: 220% center; } }
 .game-header-sub {
   font-size: 0.9rem;
-  color: rgba(255,255,255,0.38);
+  color: rgba(255,255,255,0.6);   /* beter leesbaar (contrast) */
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -123,7 +122,17 @@
   transition: transform 0.18s cubic-bezier(.34,1.56,.64,1), box-shadow 0.18s, border-color 0.18s;
   overflow: hidden;
   position: relative;
+  opacity: 0;
+  transform: translateY(16px);
+  animation: gs-cardIn 0.45s cubic-bezier(.34,1.56,.64,1) forwards;
 }
+/* Stagger: kaarten verschijnen na elkaar */
+.year-card:nth-child(1) { animation-delay: 0.04s; }
+.year-card:nth-child(2) { animation-delay: 0.09s; }
+.year-card:nth-child(3) { animation-delay: 0.14s; }
+.year-card:nth-child(4) { animation-delay: 0.19s; }
+.year-card:nth-child(5) { animation-delay: 0.24s; }
+@keyframes gs-cardIn { to { opacity: 1; transform: translateY(0); } }
 
 /* colour stripe on left */
 .year-card::before {
@@ -225,7 +234,16 @@
   transition: transform 0.18s cubic-bezier(.34,1.56,.64,1), box-shadow 0.18s, border-color 0.18s;
   position: relative;
   overflow: hidden;
+  opacity: 0;
+  transform: translateY(16px);
+  animation: gs-cardIn 0.45s cubic-bezier(.34,1.56,.64,1) forwards;
 }
+.subject-card:nth-child(1) { animation-delay: 0.04s; }
+.subject-card:nth-child(2) { animation-delay: 0.09s; }
+.subject-card:nth-child(3) { animation-delay: 0.14s; }
+.subject-card:nth-child(4) { animation-delay: 0.19s; }
+.subject-card:nth-child(5) { animation-delay: 0.24s; }
+.subject-card:nth-child(6) { animation-delay: 0.29s; }
 .subject-card::before {
   content: '';
   position: absolute;
@@ -601,4 +619,16 @@
   .game-placeholder { padding: 36px 24px; }
   .gp-emoji { font-size: 3rem; }
   .gp-title { font-size: 1.5rem; }
+}
+
+/* ── Focus-ringen voor toetsenbord-navigatie ── */
+.year-card:focus-visible, .subject-card:focus-visible, .mode-card:focus-visible, .back-btn:focus-visible {
+  outline: 3px solid #FFD23F;
+  outline-offset: 3px;
+}
+
+/* ── Rustige modus ── */
+@media (prefers-reduced-motion: reduce) {
+  .game-screen::before, .game-header-icon, .game-header-title { animation: none !important; }
+  .year-card, .subject-card { animation-duration: 0.01s !important; }
 }
