@@ -565,7 +565,7 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
         <div className="free-games-grid">
           {FREE_GAMES.map(g => (
             <button key={g.key} className="free-game-card" onClick={() => setDirectGame(g.key)}>
-              <MenuScene name={g.key} />
+              <img className="fg-img" src={`/scenes/games/${g.key}.png`} alt="" />
               <span className="free-game-name">{g.emoji} {g.name}</span>
               <span className="free-game-desc">{g.desc}</span>
               <RewardChips rewards={g.rewards} />

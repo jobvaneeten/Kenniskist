@@ -25,13 +25,13 @@ function IframeEmbed({ src, title, doneType, hint, onDone }) {
 }
 
 const SPELLEN = [
-  { key: 'headsoccer', emoji: '🥅', name: 'Head Soccer',   desc: 'Speel een ronde van het toernooi' },
-  { key: 'voetbal',    emoji: '⚽', name: '1v1 Voetbal',    desc: 'Jij tegen de computer' },
-  { key: 'jetpack',    emoji: '🚀', name: 'Jetpack',        desc: 'Vlieg zo ver mogelijk!' },
-  { key: 'astro',      emoji: '🪐', name: 'Astro Katapult', desc: 'Speel 1 level' },
-  { key: 'space',      emoji: '🛸', name: 'Spacerunner',    desc: 'Vlieg door de ruimte!' },
-  { key: 'tower',      emoji: '🏰', name: 'Tower Defense',  desc: 'Verdedig je toren!' },
-  { key: 'brug',       emoji: '🌉', name: 'Brug Bouwen',    desc: 'Bouw 3 bruggen' },
+  { key: 'headsoccer', emoji: '🥅', name: 'Head Soccer',   desc: 'Speel een ronde van het toernooi', img: '/scenes/games/headsoccer.png' },
+  { key: 'voetbal',    emoji: '⚽', name: '1v1 Voetbal',    desc: 'Jij tegen de computer',            img: '/scenes/games/football.png' },
+  { key: 'jetpack',    emoji: '🚀', name: 'Jetpack',        desc: 'Vlieg zo ver mogelijk!',           img: '/scenes/games/jetpack.png' },
+  { key: 'astro',      emoji: '🪐', name: 'Astro Katapult', desc: 'Speel 1 level',                    img: '/scenes/games/astrokatapult.png' },
+  { key: 'space',      emoji: '🛸', name: 'Spacerunner',    desc: 'Vlieg door de ruimte!',            img: '/scenes/games/sterrenstroom.png' },
+  { key: 'tower',      emoji: '🏰', name: 'Tower Defense',  desc: 'Verdedig je toren!',               img: '/scenes/games/towerdefense.png' },
+  { key: 'brug',       emoji: '🌉', name: 'Brug Bouwen',    desc: 'Bouw 3 bruggen',                   img: '/scenes/games/brug.png' },
 ]
 
 export default function SpelBeloning({ title, sub, geld, addCuruntie, onDone }) {
@@ -59,8 +59,8 @@ export default function SpelBeloning({ title, sub, geld, addCuruntie, onDone }) 
       <div className="sb-grid">
         {SPELLEN.map(g => (
           <button key={g.key} className="sb-card" onClick={() => setPicked(g.key)}>
-            <span className="sb-emoji">{g.emoji}</span>
-            <span className="sb-name">{g.name}</span>
+            <img className="sb-img" src={g.img} alt="" />
+            <span className="sb-name">{g.emoji} {g.name}</span>
             <span className="sb-desc">{g.desc}</span>
           </button>
         ))}

@@ -632,3 +632,16 @@
   .game-screen::before, .game-header-icon, .game-header-title { animation: none !important; }
   .year-card, .subject-card { animation-duration: 0.01s !important; }
 }
+
+/* ── Game-thumbnails (pixel-art scenes) ── */
+.fg-img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1.5px solid rgba(255,255,255,0.15);
+  box-shadow: 0 3px 12px rgba(0,0,0,0.35);
+  transition: transform 0.2s cubic-bezier(.34,1.56,.64,1);
+}
+.free-game-card:hover .fg-img { transform: scale(1.05) rotate(-1deg); }

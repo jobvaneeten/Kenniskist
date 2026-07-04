@@ -108,3 +108,16 @@
   font-size: 14px;
   font-family: inherit;
 }
+
+/* ── Spel-thumbnails (pixel-art scenes) ── */
+.sb-img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1.5px solid rgba(255,255,255,0.18);
+  box-shadow: 0 3px 10px rgba(0,0,0,0.35);
+  transition: transform 0.2s cubic-bezier(.34,1.56,.64,1);
+}
+.sb-card:hover .sb-img { transform: scale(1.05); }
