@@ -363,6 +363,17 @@ body::after {
   border-radius: 14px;
 }
 .btn-scene .ms-wrap { border-radius: 14px; }
+.scene-img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 14px;
+  border: 1.5px solid rgba(255,255,255,0.22);
+  box-shadow: 0 3px 12px rgba(0,0,0,0.35);
+  transition: transform 0.2s cubic-bezier(.34,1.56,.64,1);
+}
+.menu-btn:hover .scene-img { transform: scale(1.06) rotate(-1deg); }
 
 .btn-examples {
   font-size: 0.68rem;

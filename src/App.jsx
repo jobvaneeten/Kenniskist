@@ -7,7 +7,6 @@ import RocketGame      from './games/RocketGame'
 import PaintballGame   from './games/PaintballGame'
 import KartGame        from './games/KartGame'
 import BotsenGame      from './games/BotsenGame'
-import MenuScene       from './MenuScenes'
 import { allUnlockedMap } from './itemsCatalog'
 import { COUNTRIES, DEFAULT_UNLOCKED } from './games/countries'
 
@@ -314,27 +313,27 @@ export default function App() {
 
       <div className="menu">
         <button className="menu-btn btn-game" onClick={() => setScreen('game')}>
-          <div className="btn-scene"><MenuScene name="game" /></div>
+          <div className="btn-scene"><img className="scene-img" src="/scenes/game.png" alt="" /></div>
           <div className="btn-text">
             <span className="btn-label">🎮 Speel Game</span>
-            <span className="btn-desc">Oefen rekenen, taal & spelling — verdien 🪙 en 💵</span>
-            <span className="btn-examples">⚽ Voetbal · 🏰 Tower Defense · 🚀 Jetpack · 🪐 Astro</span>
+            <span className="btn-desc">Oefen rekenen, taal, spelling & meer — verdien 🪙 en 💵</span>
+            <span className="btn-examples">⚽ Voetbal · 🥅 Head Soccer · 🚀 Jetpack · 🌉 Brug Bouwen · 🏰 Tower Defense</span>
           </div>
           <span className="btn-arrow">→</span>
         </button>
 
         <button className="menu-btn btn-wardrobe" onClick={() => setScreen('wardrobe')}>
-          <div className="btn-scene"><MenuScene name="wardrobe" /></div>
+          <div className="btn-scene"><img className="scene-img" src="/scenes/kledingkast.png" alt="" /></div>
           <div className="btn-text">
             <span className="btn-label">👗 Kledingkast</span>
             <span className="btn-desc">Pas je poppetje aan in 3D</span>
-            <span className="btn-examples">🏎️ Kart · 🎯 Paintball · 🚀 Raket spelen</span>
+            <span className="btn-examples">🏎️ Racen · 🎯 Paintball · 💥 Botsen · ⚽ Voetbal</span>
           </div>
           <span className="btn-arrow">→</span>
         </button>
 
         <button className="menu-btn btn-shop" onClick={() => setScreen('shop')}>
-          <div className="btn-scene"><MenuScene name="shop" /></div>
+          <div className="btn-scene"><img className="scene-img" src="/scenes/winkel.png" alt="" /></div>
           <div className="btn-text">
             <span className="btn-label">🛒 Winkel</span>
             <span className="btn-desc">Koop nieuwe kleding met je 🪙 munten en 💵 briefgeld</span>
