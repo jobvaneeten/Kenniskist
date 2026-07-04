@@ -3,7 +3,8 @@
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 
-const MODEL = "gemini-2.5-flash-image";
+const modelFlag = process.argv.indexOf("--model");
+const MODEL = modelFlag !== -1 ? process.argv[modelFlag + 1] : "gemini-2.5-flash-image";
 
 function loadKey() {
   if (process.env.GEMINI_API_KEY) return process.env.GEMINI_API_KEY;
