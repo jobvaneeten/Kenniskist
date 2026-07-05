@@ -236,6 +236,7 @@ export default function App() {
         onPlayPaintball={() => setScreen('paintball')}
         onPlayKart={() => setScreen('kart')}
         onPlayBotsen={() => setScreen('botsen')}
+        onGoShop={() => setScreen('shop')}
         unlockedColors={unlockedColors}
       />
     </>

@@ -10,7 +10,19 @@ import { SceneLoader } from '@babylonjs/core/Loading/sceneLoader'
 import '@babylonjs/loaders/glTF'
 import { getCatalog, findItem, swatchStyle, emojiUrl } from './itemsCatalog'
 import { applyItemToMesh, loadClothingDonor, usesDonor, loadHeadItem } from './applyClothing'
+import { RARITIES, CRATE_ACCENTS } from './data'
+import { CategoryGlyph } from './categoryIcons'
 import './wardrobe.css'
+
+// Category tabs — same accent colours and icons as the shop's lootboxes.
+const TABS = [
+  { key: 'shirt',    label: 'Shirt',    ...CRATE_ACCENTS.shirt },
+  { key: 'broek',    label: 'Broek',    ...CRATE_ACCENTS.broek },
+  { key: 'sokken',   label: 'Sokken',   ...CRATE_ACCENTS.sokken },
+  { key: 'schoenen', label: 'Schoenen', ...CRATE_ACCENTS.schoenen },
+  { key: 'hoofd',    label: 'Pet',      ...CRATE_ACCENTS.hoofd },
+]
+const RARITY_ORDER = ['ultra_legendary', 'legendary', 'epic', 'rare', 'common']
 
 const CLOTHING_MESHES = ['Shirt', 'Broek', 'Sokken', 'Schoenen']
 const FACE_MESH_NAMES = new Set([
@@ -54,15 +66,6 @@ const EMOTE_META = {
   verloren:   { emoji: '😢', label: 'Verloren'   },
 }
 
-// Neon rarity-randkleuren voor de item-tegels
-const RARITY = {
-  common:          '#7fa6c9',
-  rare:            '#27c6ff',
-  epic:            '#b06bff',
-  legendary:       '#ffcb3a',
-  ultra_legendary: '#ff4fe0',
-}
-
 // Kledingstuk-silhouetten (viewBox 0 0 100 100) → als CSS-mask, zodat de
 // tegel de vorm van het échte kledingstuk krijgt i.p.v. een rondje/emoji.
 const GARMENT_PATH = {
@@ -90,15 +93,17 @@ function appearanceStyle(item) {
 
 // Eén item als mini-preview-tegel: een kledingstuk-silhouet gevuld met de
 // echte look, met een gloeiende rariteits-rand.
-function SwatchTile({ item, slot, active, onClick }) {
-  const rar   = RARITY[item.rarity] || RARITY.common
-  const badge = item.badge || null
-  const mask  = GARMENT_MASK[slot]
+function SwatchTile({ item, slot, active, isNew, bursting, onClick }) {
+  const rarity = item.rarity || 'common'
+  const rar    = RARITIES[rarity]?.color || RARITIES.common.color
+  const badge  = item.badge || null
+  const mask   = GARMENT_MASK[slot]
+  const shimmer = rarity === 'legendary' || rarity === 'ultra_legendary'
   return (
     <button
-      className={`swatch-tile rar-${item.rarity || 'common'} ${active ? 'tile-active' : ''}`}
+      className={`swatch-tile rar-${rarity} ${active ? 'tile-active' : ''} ${shimmer ? 'tile-shimmer' : ''}`}
       style={{ '--rar': rar }}
-      title={item.label}
+      title={`${item.label} · ${RARITIES[rarity]?.label || ''}`}
       onClick={onClick}
     >
       <span
@@ -107,6 +112,14 @@ function SwatchTile({ item, slot, active, onClick }) {
       />
       {badge && <span className="tile-badge">{badge}</span>}
       {active && <span className="tile-check">✓</span>}
+      {isNew && !active && <span className="tile-new-dot" title="Nieuw!" />}
+      {bursting && (
+        <span className="tile-burst">
+          {Array.from({ length: 3 }, (_, i) => (
+            <span key={i} className="tile-burst-p" style={{ '--ba': `${i * 120}deg` }} />
+          ))}
+        </span>
+      )}
     </button>
   )
 }
@@ -184,7 +197,7 @@ function applyItem(mesh, item, scene) {
 }
 
 // ── Component ─────────────────────────────────────────────────────
-export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlayKart, onPlayBotsen, unlockedColors = {} }) {
+export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlayKart, onPlayBotsen, onGoShop, unlockedColors = {} }) {
   const canvasRef      = useRef(null)
   const sceneRef       = useRef(null)
   const skeletonRef    = useRef(null)
@@ -207,6 +220,31 @@ export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlay
   const [activeAnim, setActiveAnim] = useState(null)
   const [animsReady, setAnimsReady] = useState(false)
   const [showGames,  setShowGames]  = useState(false)
+  const [activeTab,  setActiveTab]  = useState('shirt')
+  const [rarityFilter, setRarityFilter] = useState('alle')
+  const [newItems,   setNewItems]   = useState({})
+  const [burstTile,  setBurstTile]  = useState(null)
+  const [shuffling,  setShuffling]  = useState(false)
+
+  // "Nieuw sinds laatste bezoek": vergelijk met wat er de vorige keer al
+  // ontgrendeld was, toon dat verschil deze sessie, en sla dan de huidige
+  // stand op als nieuwe baseline.
+  useEffect(() => {
+    let seen = {}
+    try { seen = JSON.parse(localStorage.getItem('kk_wardrobe_seen') || '{}') } catch {}
+    const fresh = {}
+    Object.keys(unlockedColors).forEach(slot => {
+      const seenSet = new Set(seen[slot] || [])
+      fresh[slot] = (unlockedColors[slot] || []).filter(k => !seenSet.has(k))
+    })
+    setNewItems(fresh)
+    try { localStorage.setItem('kk_wardrobe_seen', JSON.stringify(unlockedColors)) } catch {}
+  }, [])
+
+  const fireBurst = (slot, key) => {
+    setBurstTile(`${slot}:${key}`)
+    setTimeout(() => setBurstTile(cur => (cur === `${slot}:${key}` ? null : cur)), 400)
+  }
 
   useEffect(() => {
     if (shirtColor) localStorage.setItem('kk_shirt', shirtColor)
@@ -256,12 +294,14 @@ export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlay
     const next = shirtColor === key ? null : key
     setShirtColor(next)
     applySlot('shirt', next)
+    if (next) fireBurst('shirt', next)
   }
 
   const pickClothing = (itemKey, colorKey) => {
     setWearing(prev => {
       const next = prev[itemKey] === colorKey ? null : colorKey
       applySlot(itemKey, next)
+      if (next) fireBurst(itemKey, next)
       return { ...prev, [itemKey]: next }
     })
   }
@@ -290,6 +330,7 @@ export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlay
     const next = wearing.hoofd === colorKey ? null : colorKey
     applyHead(next, wearing.hoofdStance || 'normaal')
     setWearing(prev => ({ ...prev, hoofd: next }))
+    if (next) fireBurst('hoofd', next)
   }
 
   const setHeadStance = (stance) => {
@@ -298,8 +339,14 @@ export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlay
     setWearing(prev => ({ ...prev, hoofdStance: stance }))
   }
 
-  // 🎲 Verras me: trek een willekeurige outfit aan uit wat je hebt ontgrendeld.
+  // 🎲 Verras me: korte shuffle door de tegels, dan een willekeurige outfit
+  // aantrekken uit wat er ontgrendeld is.
   const surpriseMe = () => {
+    setShuffling(true)
+    setTimeout(() => { runSurprise(); setShuffling(false) }, 500)
+  }
+
+  const runSurprise = () => {
     const rnd = (arr) => arr[Math.floor(Math.random() * arr.length)]
     const unlocked = (slot) => getCatalog(slot).filter(c => (unlockedColors[slot] || []).includes(c.key))
     const sh = unlocked('shirt')
@@ -632,12 +679,41 @@ export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlay
     }
   }, [])
 
+  const activeTabMeta = TABS.find(t => t.key === activeTab) || TABS[0]
+  const rawActiveItems = getCatalog(activeTab).filter(c => (unlockedColors[activeTab] || []).includes(c.key))
+  const filteredActiveItems = rawActiveItems
+    .filter(c => rarityFilter === 'alle' || (c.rarity || 'common') === rarityFilter)
+    .slice()
+    .sort((a, b) => RARITY_ORDER.indexOf(a.rarity || 'common') - RARITY_ORDER.indexOf(b.rarity || 'common'))
+  const activeWorn = activeTab === 'shirt' ? shirtColor : wearing[activeTab]
+  const activeNew  = new Set(newItems[activeTab] || [])
+
   return (
     <div className="wardrobe-screen">
+      <div className="wd-starfield">
+        {Array.from({ length: 20 }, (_, i) => (
+          <span key={i} className="wd-star" style={{
+            left: `${(i * 41 + 6) % 100}%`,
+            top: `${(i * 59 + 9) % 100}%`,
+            width: `${2 + (i % 3)}px`,
+            height: `${2 + (i % 3)}px`,
+            animationDelay: `${(i * 0.33) % 4}s`,
+            animationDuration: `${3 + (i % 4)}s`,
+            '--o': 0.15 + (i % 5) * 0.08,
+          }} />
+        ))}
+      </div>
       <button className="back-btn" onClick={onBack}>← Menu</button>
 
       {/* ── Left: clothing ── */}
       <aside className="clothing-panel">
+        <div className="panel-header-art" aria-hidden="true">
+          <svg viewBox="0 0 60 44" width="46" height="34">
+            <rect x="6" y="4" width="20" height="34" rx="2" fill="#3a2f6e" stroke="#ff8fe0" strokeWidth="1.2" transform="rotate(-8 16 21)" />
+            <rect x="34" y="4" width="20" height="34" rx="2" fill="#453a7c" stroke="#ff8fe0" strokeWidth="1.2" transform="rotate(8 44 21)" />
+            <circle cx="30" cy="20" r="3" fill="#ff8fe0" opacity="0.85" />
+          </svg>
+        </div>
         <h2 className="panel-title">Kledingkast</h2>
         <p className="panel-sub">Klik om aan te trekken</p>
 
@@ -645,97 +721,93 @@ export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlay
           <span className="surprise-dice">🎲</span> Verras me!
         </button>
 
-        <div className="clothing-list">
-          <div className="clothing-section">
-            <div className={`clothing-header ${shirtColor ? 'clothing-on' : ''}`}>
-              <span className="clothing-emoji">👕</span>
-              <span className="clothing-label">Shirt</span>
-              {shirtColor && <span className="clothing-check">✓</span>}
-            </div>
-            {(() => {
-              const items = getCatalog('shirt').filter(c => (unlockedColors.shirt || []).includes(c.key))
-              if (!items.length) return <p className="clothing-empty">Nog niets ontgrendeld — win shirts in de 🛒 Winkel!</p>
-              return (
-                <div className="color-swatches">
-                  {items.map(c => (
-                    <SwatchTile
-                      key={c.key}
-                      item={c}
-                      slot="shirt"
-                      active={shirtColor === c.key}
-                      onClick={() => pickShirt(c.key)}
+        <div className="category-tabs">
+          {TABS.map(tab => {
+            const total = getCatalog(tab.key).length
+            const unlocked = (unlockedColors[tab.key] || []).length
+            const pct = total ? unlocked / total : 0
+            const isActive = activeTab === tab.key
+            const isWorn = tab.key === 'shirt' ? !!shirtColor : !!wearing[tab.key]
+            const circ = 2 * Math.PI * 8
+            return (
+              <button
+                key={tab.key}
+                className={`cat-tab ${isActive ? 'cat-tab-active' : ''} ${isWorn ? 'cat-tab-worn' : ''}`}
+                style={{ '--accent': tab.accent }}
+                onClick={() => setActiveTab(tab.key)}
+              >
+                <CategoryGlyph icon={tab.icon} color={isActive ? '#1a1a2e' : tab.accent} size={19} />
+                <span className="cat-tab-label">{tab.label}</span>
+                {isWorn && <span className="cat-tab-check">✓</span>}
+                <span
+                  className="cat-tab-progress"
+                  onClick={(e) => { e.stopPropagation(); onGoShop?.() }}
+                  title="Win meer in de winkel"
+                >
+                  <svg viewBox="0 0 20 20" width="18" height="18" className="cat-ring">
+                    <circle cx="10" cy="10" r="8" fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth="2.6" />
+                    <circle
+                      cx="10" cy="10" r="8" fill="none" stroke={tab.accent} strokeWidth="2.6"
+                      strokeDasharray={`${pct * circ} ${circ}`} strokeLinecap="round"
+                      transform="rotate(-90 10 10)"
                     />
-                  ))}
-                </div>
-              )
-            })()}
-          </div>
+                  </svg>
+                  <span className="cat-tab-count">{unlocked}/{total}</span>
+                </span>
+              </button>
+            )
+          })}
+        </div>
 
-          {ITEMS.map(item => (
-            <div key={item.key} className="clothing-section">
-              <div className={`clothing-header ${wearing[item.key] ? 'clothing-on' : ''}`}>
-                <span className="clothing-emoji">{item.emoji}</span>
-                <span className="clothing-label">{item.label}</span>
-                {wearing[item.key] && <span className="clothing-check">✓</span>}
-              </div>
-              {(() => {
-                const items = getCatalog(item.key).filter(c => (unlockedColors[item.key] || []).includes(c.key))
-                if (!items.length) return <p className="clothing-empty">Nog niets ontgrendeld — win {item.label.toLowerCase()} in de 🛒 Winkel!</p>
-                return (
-                  <div className="color-swatches">
-                    {items.map(c => (
-                      <SwatchTile
-                        key={c.key}
-                        item={c}
-                        slot={item.key}
-                        active={wearing[item.key] === c.key}
-                        onClick={() => pickClothing(item.key, c.key)}
-                      />
-                    ))}
-                  </div>
-                )
-              })()}
-            </div>
+        <div className="rarity-filters">
+          {['alle', ...RARITY_ORDER].map(r => (
+            <button
+              key={r}
+              className={`rf-chip ${rarityFilter === r ? 'rf-active' : ''}`}
+              style={r !== 'alle' ? { '--tc': RARITIES[r].color } : undefined}
+              onClick={() => setRarityFilter(r)}
+            >
+              {r === 'alle' ? 'Alles' : RARITIES[r].label}
+            </button>
           ))}
+        </div>
 
-          {/* ── Pet (hoofd): kleuren + normaal/achterstevoren ── */}
-          <div className="clothing-section">
-            <div className={`clothing-header ${wearing.hoofd ? 'clothing-on' : ''}`}>
-              <span className="clothing-emoji">🧢</span>
-              <span className="clothing-label">Pet</span>
-              {wearing.hoofd && <span className="clothing-check">✓</span>}
+        <div className={`tile-panel ${shuffling ? 'tile-panel-shuffling' : ''}`}>
+          {activeTab === 'hoofd' && rawActiveItems.length > 0 && (
+            <div className="head-stance">
+              <button
+                className={`head-stance-btn ${(wearing.hoofdStance || 'normaal') === 'normaal' ? 'stance-active' : ''}`}
+                onClick={() => setHeadStance('normaal')}
+              >Normaal</button>
+              <button
+                className={`head-stance-btn ${(wearing.hoofdStance || 'normaal') === 'achter' ? 'stance-active' : ''}`}
+                onClick={() => setHeadStance('achter')}
+              >Achterstevoren</button>
             </div>
-            {(() => {
-              const headStance = wearing.hoofdStance || 'normaal'
-              const items = getCatalog('hoofd').filter(c => (unlockedColors.hoofd || []).includes(c.key))
-              if (!items.length) return <p className="clothing-empty">Nog niets ontgrendeld — win petten in de 🛒 Winkel!</p>
-              return (
-                <>
-                  <div className="head-stance">
-                    <button
-                      className={`head-stance-btn ${headStance === 'normaal' ? 'stance-active' : ''}`}
-                      onClick={() => setHeadStance('normaal')}
-                    >Normaal</button>
-                    <button
-                      className={`head-stance-btn ${headStance === 'achter' ? 'stance-active' : ''}`}
-                      onClick={() => setHeadStance('achter')}
-                    >Achterstevoren</button>
-                  </div>
-                  <div className="color-swatches">
-                    {items.map(c => (
-                      <SwatchTile
-                        key={c.key}
-                        item={c}
-                        slot="hoofd"
-                        active={wearing.hoofd === c.key}
-                        onClick={() => pickHead(c.key)}
-                      />
-                    ))}
-                  </div>
-                </>
-              )
-            })()}
-          </div>
+          )}
+
+          {!rawActiveItems.length ? (
+            <p className="clothing-empty">Nog niets ontgrendeld — win {activeTabMeta.label.toLowerCase()} in de 🛒 Winkel!</p>
+          ) : (
+            <div className="color-swatches">
+              {filteredActiveItems.map(c => {
+                const key = activeTab === 'shirt' ? () => pickShirt(c.key)
+                  : activeTab === 'hoofd' ? () => pickHead(c.key)
+                  : () => pickClothing(activeTab, c.key)
+                return (
+                  <SwatchTile
+                    key={c.key}
+                    item={c}
+                    slot={activeTab}
+                    active={activeWorn === c.key}
+                    isNew={activeNew.has(c.key)}
+                    bursting={burstTile === `${activeTab}:${c.key}`}
+                    onClick={key}
+                  />
+                )
+              })}
+            </div>
+          )}
         </div>
       </aside>
 

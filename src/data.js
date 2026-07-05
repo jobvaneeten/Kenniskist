@@ -1,9 +1,19 @@
 export const RARITIES = {
-  common:          { label: 'Gewoon',              color: '#a0aec0' },
-  rare:            { label: 'Zeldzaam',             color: '#4fc3f7' },
-  epic:            { label: 'Episch',               color: '#ce93d8' },
-  legendary:       { label: 'Legendarisch',         color: '#ffd700' },
-  ultra_legendary: { label: 'Ultra Legendarisch',   color: '#ff6600' },
+  common:          { label: 'Gewoon',              color: '#9aa3b2' },
+  rare:            { label: 'Zeldzaam',             color: '#38bdf8' },
+  epic:            { label: 'Episch',               color: '#c084fc' },
+  legendary:       { label: 'Legendarisch',         color: '#facc15' },
+  ultra_legendary: { label: 'Ultra Legendarisch',   color: '#fb7185' },
+}
+
+// Accent colour + procedural icon per lootbox category (used by the shop's
+// crate artwork and detail panel).
+export const CRATE_ACCENTS = {
+  shirt:    { accent: '#4ade80', icon: 'shirt' },
+  broek:    { accent: '#60a5fa', icon: 'broek' },
+  sokken:   { accent: '#fbbf24', icon: 'sokken' },
+  schoenen: { accent: '#e879f9', icon: 'schoenen' },
+  hoofd:    { accent: '#facc15', icon: 'pet' },
 }
 
 export const SHIRT_COLORS = [

@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
-import { CLOTHING_ITEMS, LOOTBOX_COST, RARITIES } from './data'
+import { CLOTHING_ITEMS, LOOTBOX_COST, RARITIES, CRATE_ACCENTS } from './data'
 import { getCatalog, swatchStyle, swatchEmoji, swatchBadge } from './itemsCatalog'
+import CrateArtwork from './CrateArtwork'
+import { playTierSound, isMuted, setMuted } from './lootboxSound'
 import './shop.css'
 
 // Generic visual for any item (colour / pattern / print / model)
@@ -77,45 +79,17 @@ function fmtPct(p) {
   return p < 1 ? p.toFixed(1).replace('.', ',') : String(Math.round(p))
 }
 
-// ── Lootbox card: drop chances as a stacked bar + labelled chips ──
-function RarityOdds({ pool }) {
-  const odds = rarityOdds(pool)
-  return (
-    <div className="lb-odds">
-      <div className="lb-odds-bar">
-        {odds.map(o => (
-          <div
-            key={o.key}
-            className="lb-odds-seg"
-            style={{ width: `${o.pct}%`, background: RARITIES[o.key].color }}
-            title={`${RARITIES[o.key].label}: ${fmtPct(o.pct)}%`}
-          />
-        ))}
-      </div>
-      <div className="lb-odds-chips">
-        {odds.map(o => (
-          <span key={o.key} className="lb-odds-chip">
-            <span className="lb-odds-dot" style={{ background: RARITIES[o.key].color }} />
-            <span className="lb-odds-name">{RARITIES[o.key].label.split(' ')[0]}</span>
-            <b style={{ color: RARITIES[o.key].color }}>{fmtPct(o.pct)}%</b>
-          </span>
-        ))}
-      </div>
-    </div>
-  )
-}
-
 export default function Shop({ curuntie, briefgeld, addBriefgeld, onExchange, unlockedColors, onUnlock, onBack }) {
   const [overlay,   setOverlay]   = useState(null)
   const [boxState,  setBoxState]  = useState('idle')
-  const [particles, setParticles] = useState([])
   const [reelCards, setReelCards] = useState([])
   const [reelWinIdx, setReelWinIdx] = useState(40)
   const [reelX,     setReelX]     = useState(0)
   const [confetti,  setConfetti]  = useState([])
   const [fireworks, setFireworks] = useState([])
   const [showEnd,   setShowEnd]   = useState(false)
-  const [preview,   setPreview]   = useState(null)   // item key whose reward list is open
+  const [muted,     setMutedState] = useState(() => isMuted())
+  const [selectedKey, setSelectedKey] = useState(null)   // item key whose detail panel is open
 
   const rafRef    = useRef(null)
   const startRef  = useRef(null)
@@ -125,6 +99,14 @@ export default function Shop({ curuntie, briefgeld, addBriefgeld, onExchange, un
     rafRef.current && cancelAnimationFrame(rafRef.current)
     fwTimers.current.forEach(clearTimeout)
   }, [])
+
+  // Close the detail panel on Escape
+  useEffect(() => {
+    if (!selectedKey) return
+    const onKey = (e) => { if (e.key === 'Escape') setSelectedKey(null) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [selectedKey])
 
   // Confetti for epic/legendary/ultra
   useEffect(() => {
@@ -214,7 +196,6 @@ export default function Shop({ curuntie, briefgeld, addBriefgeld, onExchange, un
     setReelWinIdx(winIdx)
     setReelX(0)
     setBoxState('idle')
-    setParticles([])
     setShowEnd(false)
     setFireworks([])
     setOverlay({
@@ -230,21 +211,17 @@ export default function Shop({ curuntie, briefgeld, addBriefgeld, onExchange, un
   const tapBox = () => {
     if (boxState !== 'idle') return
     setBoxState('shake')
-    setParticles(Array.from({ length: 22 }, (_, i) => ({
-      id: i, angle: (i / 22) * 360,
-      color: CONFETTI[i % CONFETTI.length],
-    })))
 
     setTimeout(() => setBoxState('explode'), 580)
 
     setTimeout(() => {
       setBoxState('idle')
-      setParticles([])
       setOverlay(o => o ? { ...o, phase: 'spin' } : null)
 
       const winCenter = reelWinIdx * SLOT_W + CARD_W / 2
       const targetX   = WIN_W / 2 - winCenter
       startRef.current = null
+      const wonRarity  = overlay?.wonItem?.rarity
 
       const spin = (ts) => {
         if (!startRef.current) startRef.current = ts
@@ -254,7 +231,8 @@ export default function Shop({ curuntie, briefgeld, addBriefgeld, onExchange, un
           rafRef.current = requestAnimationFrame(spin)
         } else {
           setOverlay(o => o ? { ...o, phase: 'reveal' } : null)
-          setTimeout(() => setShowEnd(true), overlay?.wonItem?.rarity === 'ultra_legendary' ? 600 : 900)
+          if (wonRarity && wonRarity !== 'common') playTierSound(wonRarity)
+          setTimeout(() => setShowEnd(true), wonRarity === 'ultra_legendary' ? 600 : 900)
         }
       }
       rafRef.current = requestAnimationFrame(spin)
@@ -265,7 +243,6 @@ export default function Shop({ curuntie, briefgeld, addBriefgeld, onExchange, un
     rafRef.current && cancelAnimationFrame(rafRef.current)
     fwTimers.current.forEach(clearTimeout)
     setOverlay(null)
-    setParticles([])
     setConfetti([])
     setFireworks([])
     setShowEnd(false)
@@ -273,86 +250,137 @@ export default function Shop({ curuntie, briefgeld, addBriefgeld, onExchange, un
 
   return (
     <div className="shop-screen">
+      <div className="shop-nebula" />
+      <div className="shop-starfield">
+        {Array.from({ length: 26 }, (_, i) => (
+          <span key={i} className="shop-star" style={{
+            left: `${(i * 37 + 5) % 100}%`,
+            top: `${(i * 53 + 7) % 100}%`,
+            width: `${2 + (i % 3)}px`,
+            height: `${2 + (i % 3)}px`,
+            animationDelay: `${(i * 0.37) % 4}s`,
+            animationDuration: `${3 + (i % 4)}s`,
+            '--o': 0.15 + (i % 5) * 0.08,
+          }} />
+        ))}
+        <span className="shop-shootingstar" style={{ left: '75%', top: '12%', animationDelay: '0s' }} />
+        <span className="shop-shootingstar" style={{ left: '30%', top: '55%', animationDelay: '3.2s' }} />
+      </div>
       <button className="back-btn" onClick={onBack}>← Terug</button>
-      <h2 className="shop-title">🛒 Winkel</h2>
-      <p className="shop-sub">Open een lootbox en win een kleur — of iets legendarisch!</p>
+      <button
+        className="mute-btn"
+        onClick={() => { const next = !muted; setMuted(next); setMutedState(next) }}
+        title={muted ? 'Geluid aan' : 'Geluid uit'}
+      >
+        {muted ? '🔇' : '🔊'}
+      </button>
+      <div className="shop-title-wrap">
+        <span className="shop-title-sparkle">✦</span>
+        <h2 className="shop-title">Winkel</h2>
+      </div>
 
-      <div className="lootbox-grid">
+      <div className="shop-grid">
         {CLOTHING_ITEMS.map(item => {
           const pool      = getPool(item.key)
           const unlocked  = (unlockedColors[item.key] || []).length
           const total     = pool.length
-          const allDone   = unlocked >= total
-          const canAfford = briefgeld >= LOOTBOX_COST
+          const { accent, icon } = CRATE_ACCENTS[item.key] || CRATE_ACCENTS.shirt
+          const isSelected = selectedKey === item.key
 
           return (
             <div
               key={item.key}
-              className={`lootbox-card ${allDone ? 'lb-card-done' : ''} ${item.hasFeatured ? 'lb-card-featured' : ''}`}
+              className={`shopcard ${isSelected ? 'shopcard-selected' : ''}`}
+              style={{ '--accent': accent }}
+              onClick={() => setSelectedKey(isSelected ? null : item.key)}
             >
-              {item.hasFeatured && (
-                <div className="lb-featured-badge">⚡ ULTRA KANS ⚡</div>
-              )}
-              <div className="lb-card-emoji lb-card-emoji-float">{item.emoji}</div>
-              <div className="lb-card-name">{item.label}</div>
-
-              <RarityOdds pool={pool} />
-
-              <button
-                className="lb-preview-toggle"
-                onClick={() => setPreview(preview === item.key ? null : item.key)}
-              >
-                {preview === item.key ? '▲ Verberg prijzen' : '🔎 Wat kan ik winnen?'}
-              </button>
-
-              {preview === item.key && (
-                <div className="lb-preview">
-                  {rarityOdds(pool).map(o => {
-                    const rewards = pool.filter(c => c.rarity === o.key)
-                    if (!rewards.length) return null
-                    return (
-                      <div key={o.key} className="lb-preview-group">
-                        <div className="lb-preview-head" style={{ color: RARITIES[o.key].color }}>
-                          {RARITIES[o.key].label} · {fmtPct(o.pct)}%
-                        </div>
-                        <div className="lb-preview-items">
-                          {rewards.map(c => {
-                            const owned = (unlockedColors[item.key] || []).includes(c.key)
-                            return (
-                              <ItemSwatch key={c.key} item={c} title={c.label}
-                                className={`lb-preview-item ${owned ? '' : 'lb-locked'}`} />
-                            )
-                          })}
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
-
-              <div className="lb-dots">
-                {pool.map(c => {
-                  const owned = (unlockedColors[item.key] || []).includes(c.key)
-                  return (
-                    <ItemSwatch key={c.key} item={c} title={c.label}
-                      className={`lb-dot2 ${owned ? '' : 'lb-locked'}`} />
-                  )
-                })}
-              </div>
-
-              <div className="lb-progress">{unlocked}/{total} gewonnen</div>
-
-              <button
-                className={`lb-open-btn ${allDone ? 'lb-btn-done' : !canAfford ? 'lb-btn-broke' : ''}`}
-                onClick={() => openLootbox(item)}
-                disabled={allDone || !canAfford}
-              >
-                {allDone ? '✓ Compleet!' : !canAfford ? 'Te weinig 💵' : `💵 ${fmt(LOOTBOX_COST)} Openen`}
-              </button>
+              <div className="shopcard-shine" />
+              {item.hasFeatured && <div className="shopcard-ultra-badge">ULTRA KANS</div>}
+              <CrateArtwork itemKey={item.key} iconKey={icon} accent={accent} size={150} />
+              <div className="shopcard-name">{item.label}</div>
+              <div className="shopcard-meta">{unlocked}/{total} · 💵 {fmt(LOOTBOX_COST)}</div>
             </div>
           )
         })}
       </div>
+
+      {/* ── Detail panel ── */}
+      {selectedKey && (() => {
+        const item      = CLOTHING_ITEMS.find(i => i.key === selectedKey)
+        const pool      = getPool(item.key)
+        const unlocked  = (unlockedColors[item.key] || []).length
+        const total     = pool.length
+        const allDone   = unlocked >= total
+        const canAfford = briefgeld >= LOOTBOX_COST
+        const odds      = rarityOdds(pool)
+        const { accent, icon } = CRATE_ACCENTS[item.key] || CRATE_ACCENTS.shirt
+
+        return (
+          <>
+            <div className="shop-detail-backdrop" onClick={() => setSelectedKey(null)} />
+            <div className="shop-detail-panel" style={{ '--accent': accent }}>
+              <button className="shop-detail-close" onClick={() => setSelectedKey(null)}>✕</button>
+
+              <div className="shop-detail-left">
+                <div className="shop-detail-rays" />
+                <div className="shop-detail-crate-float">
+                  <CrateArtwork itemKey={item.key} iconKey={icon} accent={accent} size={190} big />
+                </div>
+              </div>
+
+              <div className="shop-detail-right">
+                <div className="shop-detail-title-row">
+                  <h3 className="shop-detail-title">{item.label} lootbox</h3>
+                  {item.hasFeatured && <span className="shopcard-ultra-badge shop-detail-ultra-badge">ULTRA KANS</span>}
+                </div>
+                <p className="shop-detail-sub">Open en win een nieuwe kleur — of iets legendarisch!</p>
+
+                <div className="shop-detail-oddsbar">
+                  {odds.map(o => (
+                    <div key={o.key} className="shop-detail-odds-seg" style={{ width: `${o.pct}%`, '--tc': RARITIES[o.key].color }} />
+                  ))}
+                </div>
+                <div className="shop-detail-pills">
+                  {odds.map(o => (
+                    <span key={o.key} className="shop-detail-pill" style={{ '--tc': RARITIES[o.key].color }}>
+                      {RARITIES[o.key].label} · {fmtPct(o.pct)}%
+                    </span>
+                  ))}
+                </div>
+
+                <div className="shop-detail-collection-head">
+                  COLLECTIE · <b style={{ color: accent }}>{unlocked}/{total}</b> GEWONNEN
+                </div>
+                <div className="shop-detail-grid">
+                  {pool.map(c => {
+                    const owned = (unlockedColors[item.key] || []).includes(c.key)
+                    return owned ? (
+                      <div
+                        key={c.key}
+                        className="shop-marble"
+                        title={c.label}
+                        style={{ ...swatchStyle(c), '--rc': RARITIES[c.rarity].color }}
+                      >
+                        {swatchEmoji(c) && <span className="item-swatch-emoji">{swatchEmoji(c)}</span>}
+                      </div>
+                    ) : (
+                      <div key={c.key} className="shop-marble shop-marble-locked" title="Nog niet gewonnen" />
+                    )
+                  })}
+                </div>
+
+                <button
+                  className={`shop-detail-open-btn ${allDone ? 'lb-btn-done' : !canAfford ? 'lb-btn-broke' : ''}`}
+                  onClick={() => openLootbox(item)}
+                  disabled={allDone || !canAfford}
+                >
+                  {allDone ? '✓ Compleet!' : !canAfford ? 'Te weinig 💵' : `💵 ${fmt(LOOTBOX_COST)} · Openen`}
+                </button>
+              </div>
+            </div>
+          </>
+        )
+      })()}
 
       {/* ── Overlay ── */}
       {overlay && (() => {
@@ -389,17 +417,29 @@ export default function Shop({ curuntie, briefgeld, addBriefgeld, onExchange, un
                 <div className="lb-box-phase">
                   <p className="lb-box-label">{overlay.itemEmoji} {overlay.itemLabel} lootbox</p>
                   <div className={`lb-open-box lb-box-${boxState}`} onClick={tapBox}>
+                    <div className="lb-box-beam" />
                     <div className="lb-box-glow" />
-                    <span className="lb-box-emoji">📦</span>
-                    {boxState !== 'idle' && <div className="lb-burst-ring" />}
-                    {boxState !== 'idle' && <div className="lb-burst-ring lb-burst-ring-2" />}
-                    {particles.map(p => (
-                      <div
-                        key={p.id}
-                        className="lb-particle"
-                        style={{ '--angle': `${p.angle}deg`, background: p.color }}
-                      />
+                    {boxState === 'idle' && Array.from({ length: 6 }, (_, i) => (
+                      <span key={i} className="lb-box-orbit" style={{ '--oi': i, animationDelay: `${i * 0.55}s` }}>✦</span>
                     ))}
+                    <CrateArtwork
+                      itemKey={overlay.itemKey}
+                      iconKey={(CRATE_ACCENTS[overlay.itemKey] || CRATE_ACCENTS.shirt).icon}
+                      accent="#FFD23F"
+                      size={190}
+                      big
+                      animState={boxState}
+                    />
+                    {boxState === 'explode' && (
+                      <>
+                        <div className="lb-flash-overlay" />
+                        <div className="lb-crate-burst">
+                          {Array.from({ length: 16 }, (_, i) => (
+                            <span key={i} className="lb-crate-burst-p" style={{ '--ang': `${i * 22.5}deg`, animationDelay: `${(i % 4) * 0.03}s` }} />
+                          ))}
+                        </div>
+                      </>
+                    )}
                   </div>
                   {boxState === 'idle' && <p className="lb-tap-text">✦ TAP OM TE OPENEN ✦</p>}
                   <div className="lb-box-hint">
@@ -410,33 +450,44 @@ export default function Shop({ curuntie, briefgeld, addBriefgeld, onExchange, un
               )}
 
               {/* ── Phase 2: Spin ── */}
-              {overlay.phase === 'spin' && (
-                <div className="lb-spin-phase">
-                  <p className="lb-spin-label">{overlay.itemEmoji} {overlay.itemLabel}</p>
-                  <div className="lb-ptr-wrap">
-                    <div className="lb-ptr" />
-                  </div>
-                  <div className="lb-slot-win">
-                    <div className="lb-slot-fade-l" />
-                    <div className="lb-slot-fade-r" />
-                    <div className="lb-slot-center-line" />
-                    <div
-                      className="lb-slot-reel"
-                      style={{ transform: `translateX(${reelX}px)` }}
-                    >
-                      {reelCards.map((c, i) => (
-                        <div key={i} className={`lb-reel-card lb-rc-${c.rarity}`}>
-                          <ReelIcon item={c} />
-                          <div className="lb-rc-name">{c.label}</div>
-                          <div className={`lb-rc-badge lb-rb-${c.rarity}`}>
-                            {RARITIES[c.rarity].label.split(' ')[0]}
+              {overlay.phase === 'spin' && (() => {
+                const centerIdx  = Math.round((WIN_W / 2 - reelX - CARD_W / 2) / SLOT_W)
+                const targetX    = WIN_W / 2 - (reelWinIdx * SLOT_W + CARD_W / 2)
+                const nearLand   = Math.abs(reelX - targetX) < SLOT_W * 2.5
+                const bigWin     = ['epic', 'legendary', 'ultra_legendary'].includes(overlay.wonItem.rarity)
+                const buildColor = RARITIES[overlay.wonItem.rarity]?.color
+
+                return (
+                  <div className="lb-spin-phase">
+                    {nearLand && bigWin && (
+                      <div className="lb-spin-buildup" style={{ '--bc': buildColor }} />
+                    )}
+                    <p className="lb-spin-label">{overlay.itemEmoji} {overlay.itemLabel}</p>
+                    <div className="lb-ptr-wrap">
+                      <div key={centerIdx} className="lb-ptr lb-ptr-tick" />
+                    </div>
+                    <div className="lb-slot-win">
+                      <div className="lb-slot-fade-l" />
+                      <div className="lb-slot-fade-r" />
+                      <div className="lb-slot-center-line" />
+                      <div
+                        className="lb-slot-reel"
+                        style={{ transform: `translateX(${reelX}px)` }}
+                      >
+                        {reelCards.map((c, i) => (
+                          <div key={i} className={`lb-reel-card lb-rc-${c.rarity} ${i === centerIdx ? 'lb-rc-tick' : ''}`}>
+                            <ReelIcon item={c} />
+                            <div className="lb-rc-name">{c.label}</div>
+                            <div className={`lb-rc-badge lb-rb-${c.rarity}`}>
+                              {RARITIES[c.rarity].label.split(' ')[0]}
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
+                )
+              })()}
 
               {/* ── Phase 3: Reveal ── */}
               {overlay.phase === 'reveal' && (
@@ -465,8 +516,21 @@ export default function Shop({ curuntie, briefgeld, addBriefgeld, onExchange, un
                     <div className="lb-ptr lb-ptr-lit" style={{ '--rc': rc }} />
                   </div>
 
-                  <div className={`lb-win-card lb-wc-${overlay.wonItem.rarity}`}>
-                    {isUltra && <div className="lb-wc-ultra-rays" />}
+                  <div className="lb-shockwave" style={{ '--rc': rc }} />
+                  {(r === 'legendary' || isUltra) && (
+                    <div className="lb-embers">
+                      {Array.from({ length: 16 }, (_, i) => (
+                        <span key={i} className="lb-ember" style={{
+                          left: `${(i * 61) % 100}%`,
+                          animationDelay: `${(i * 0.37) % 3}s`,
+                          '--ec': isUltra ? (i % 2 ? '#FFD700' : '#ff6600') : '#ffd700',
+                        }} />
+                      ))}
+                    </div>
+                  )}
+                  <div className={`lb-win-card lb-wc-${overlay.wonItem.rarity} ${r === 'legendary' || isUltra ? 'lb-wc-flip' : ''} ${isUltra ? 'lb-wc-chroma' : ''}`}>
+                    {(r === 'legendary' || isUltra) && <div className="lb-wc-ultra-rays" />}
+                    {r === 'epic' && <div className="lb-wc-epic-rays" />}
                     <WinIcon item={overlay.wonItem} rarity={overlay.wonItem.rarity} />
                     <div className="lb-wc-name">{overlay.wonItem.label}</div>
 
