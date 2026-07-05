@@ -1,8 +1,16 @@
-// Procedural SVG treasure-chest artwork per clothing category.
-// Approved fallback style (no image-gen tool available in this environment):
-// dark-purple chest body, gold rivet bands, glowing seam + emblem in the
-// category's accent colour, floor glow + twinkle stars around it.
+// Treasure-chest artwork per clothing category.
+// Shirt/Broek/Sokken/Schoenen use real Nano Banana Pro illustrations (see
+// public/crates/); Pet and the animated lootbox-open modal (which needs a
+// separate lid layer to pop open) fall back to the procedural SVG version.
 import { ICON_PATHS } from './categoryIcons'
+
+const CRATE_IMAGES = {
+  shirt:    '/crates/crate_shirt.webp',
+  broek:    '/crates/crate_broek.webp',
+  sokken:   '/crates/crate_sokken.webp',
+  schoenen: '/crates/crate_schoenen.webp',
+  hoofd:    '/crates/crate_hoofd.webp',
+}
 
 const TWINKLE_OFFSETS = [
   { x: 18,  y: 20, s: 6,  delay: 0 },
@@ -22,13 +30,39 @@ function Star({ x, y, s, color, delay }) {
   )
 }
 
+// Static photo variant — used in the overview cards and detail panel.
+function CratePhoto({ itemKey, accent, size, big }) {
+  return (
+    <div className={`crate-art-photo ${big ? 'crate-art-photo-big' : ''}`} style={{ width: size, height: size }}>
+      <div className="crate-art-floorglow" style={{ '--accent': accent }} />
+      {TWINKLE_OFFSETS.map((t, i) => (
+        <span
+          key={i}
+          className="crate-art-twinkle"
+          style={{
+            left: `${(t.x / 160) * 100}%`,
+            top: `${(t.y / 160) * 100}%`,
+            animationDelay: `${t.delay}s`,
+            color: i % 2 ? accent : '#fff',
+          }}
+        >✦</span>
+      ))}
+      <img src={CRATE_IMAGES[itemKey]} alt="" loading="lazy" className="crate-art-img" />
+    </div>
+  )
+}
+
 // animState (optional): 'idle' | 'shake' | 'explode' — used by the lootbox-open
 // modal to bob/shake the whole crate and pop the lid open. Overview/detail
-// usages omit it and get a static illustration (only hover effects via CSS).
+// usages omit it and get the static illustration (only hover effects via CSS).
 export default function CrateArtwork({ itemKey, iconKey, accent, size = 130, big = false, animState = null }) {
   const uid = `${itemKey}`
   const iconPath = ICON_PATHS[iconKey] || ICON_PATHS.shirt
   const animClass = animState ? `crate-anim-${animState}` : ''
+
+  if (!animState && CRATE_IMAGES[itemKey]) {
+    return <CratePhoto itemKey={itemKey} accent={accent} size={size} big={big} />
+  }
 
   return (
     <svg

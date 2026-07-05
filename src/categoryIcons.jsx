@@ -8,12 +8,3 @@ export const ICON_PATHS = {
   schoenen: 'M-8,-6 H-2 V-2 H4 V0 H8 V2 H9 V5 H-9 V2 H-8 Z',
   pet:      'M-8.5,-4.5 H3.5 V-1.5 H6.5 V1.5 H-11.5 V-1.5 H-8.5 Z M6.5,1.5 H11.5 V3.5 H6.5 Z',
 }
-
-// Small flat glyph (no chest/emblem chrome) — used for wardrobe category tabs.
-export function CategoryGlyph({ icon, color, size = 22 }) {
-  return (
-    <svg viewBox="-13 -13 26 26" width={size} height={size}>
-      <path d={ICON_PATHS[icon] || ICON_PATHS.shirt} fill={color} />
-    </svg>
-  )
-}

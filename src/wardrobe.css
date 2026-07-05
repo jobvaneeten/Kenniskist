@@ -91,6 +91,8 @@
 }
 
 .panel-header-art { margin-bottom: 4px; filter: drop-shadow(0 0 8px rgba(255,143,224,0.4)); }
+.panel-header-art img { display: block; width: 64px; height: auto; }
+.cat-tab-icon { width: 19px; height: 19px; object-fit: contain; flex-shrink: 0; }
 
 .panel-title {
   font-size: 1.55rem;

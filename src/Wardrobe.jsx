@@ -11,10 +11,17 @@ import '@babylonjs/loaders/glTF'
 import { getCatalog, findItem, swatchStyle, emojiUrl } from './itemsCatalog'
 import { applyItemToMesh, loadClothingDonor, usesDonor, loadHeadItem } from './applyClothing'
 import { RARITIES, CRATE_ACCENTS } from './data'
-import { CategoryGlyph } from './categoryIcons'
 import './wardrobe.css'
 
-// Category tabs — same accent colours and icons as the shop's lootboxes.
+// Category tabs — same accent colours as the shop's lootboxes. Icons are
+// real Nano Banana Pro illustrations (public/icons/).
+const TAB_ICON_IMAGES = {
+  shirt:    '/icons/icon_shirt.webp',
+  broek:    '/icons/icon_broek.webp',
+  sokken:   '/icons/icon_sokken.webp',
+  schoenen: '/icons/icon_schoenen.webp',
+  pet:      '/icons/icon_pet.webp',
+}
 const TABS = [
   { key: 'shirt',    label: 'Shirt',    ...CRATE_ACCENTS.shirt },
   { key: 'broek',    label: 'Broek',    ...CRATE_ACCENTS.broek },
@@ -708,11 +715,7 @@ export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlay
       {/* ── Left: clothing ── */}
       <aside className="clothing-panel">
         <div className="panel-header-art" aria-hidden="true">
-          <svg viewBox="0 0 60 44" width="46" height="34">
-            <rect x="6" y="4" width="20" height="34" rx="2" fill="#3a2f6e" stroke="#ff8fe0" strokeWidth="1.2" transform="rotate(-8 16 21)" />
-            <rect x="34" y="4" width="20" height="34" rx="2" fill="#453a7c" stroke="#ff8fe0" strokeWidth="1.2" transform="rotate(8 44 21)" />
-            <circle cx="30" cy="20" r="3" fill="#ff8fe0" opacity="0.85" />
-          </svg>
+          <img src="/icons/wardrobe_header.webp" alt="" loading="lazy" />
         </div>
         <h2 className="panel-title">Kledingkast</h2>
         <p className="panel-sub">Klik om aan te trekken</p>
@@ -736,7 +739,7 @@ export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlay
                 style={{ '--accent': tab.accent }}
                 onClick={() => setActiveTab(tab.key)}
               >
-                <CategoryGlyph icon={tab.icon} color={isActive ? '#1a1a2e' : tab.accent} size={19} />
+                <img src={TAB_ICON_IMAGES[tab.icon]} alt="" loading="lazy" className="cat-tab-icon" />
                 <span className="cat-tab-label">{tab.label}</span>
                 {isWorn && <span className="cat-tab-check">✓</span>}
                 <span

@@ -311,6 +311,43 @@
   50%      { box-shadow: 0 2px 20px rgba(249,115,22,0.85); }
 }
 
+/* Crate photo artwork (Nano Banana Pro illustrations) + twinkles */
+.crate-art-photo {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.crate-art-floorglow {
+  position: absolute;
+  left: 50%; bottom: 6%;
+  width: 65%; height: 16%;
+  transform: translateX(-50%);
+  background: radial-gradient(ellipse, color-mix(in srgb, var(--accent) 55%, transparent) 0%, transparent 75%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.crate-art-twinkle {
+  position: absolute;
+  font-size: 0.9em;
+  transform: translate(-50%, -50%);
+  animation: crateTwinklePulse 1.8s ease-in-out infinite;
+  pointer-events: none;
+}
+.crate-art-img {
+  position: relative;
+  width: 82%;
+  height: 82%;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 14px rgba(0,0,0,0.4));
+  animation: cratePhotoFloat 3s ease-in-out infinite;
+}
+.crate-art-photo-big .crate-art-img { animation-duration: 3.4s; }
+@keyframes cratePhotoFloat {
+  0%,100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+
 /* Crate SVG artwork + twinkles */
 .crate-art { display: block; filter: drop-shadow(0 6px 14px rgba(0,0,0,0.35)); }
 .crate-twinkle {
@@ -1329,7 +1366,8 @@
   .lb-ember, .lb-shockwave, .lb-modal-card, .lb-wc-ultra-rays, .lb-firework,
   .crate-twinkle, .shopcard-ultra-badge, .shop-detail-rays, .shop-detail-crate-float,
   .shop-detail-panel, .shop-nebula::before, .shop-nebula::after, .shop-shootingstar,
-  .crate-anim-idle, .crate-anim-shake, .crate-lid-group {
+  .crate-anim-idle, .crate-anim-shake, .crate-lid-group,
+  .crate-art-img, .crate-art-twinkle {
     animation: none !important;
   }
 }
