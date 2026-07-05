@@ -1,21 +1,35 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Landing from './Landing'
 import TeacherPortal from './TeacherPortal'
 import App from './App'
 
-// Voordeur van de site: kies eerst een portaal voordat je in Kenniskist
-// zelf terechtkomt. De keuze geldt voor het huidige tabblad/sessie.
+const ROUTES = {
+  '/leerlingportaal':     'student',
+  '/leerkrachtenportaal': 'teacher',
+}
+const PATH_FOR = { student: '/leerlingportaal', teacher: '/leerkrachtenportaal' }
+
+function portalForPath(pathname) {
+  return ROUTES[pathname] || null
+}
+
+// Voordeur van de site met echte URL's: kenniskist.nl toont de landingspagina,
+// kenniskist.nl/leerlingportaal en /leerkrachtenportaal tonen de bijbehorende
+// weergave. Lichte, dependency-vrije routing via de History API (de
+// Cloudflare-assets zijn al ingesteld op SPA-fallback voor onbekende paden).
 export default function Root() {
-  const [portal, setPortal] = useState(() => {
-    try { return sessionStorage.getItem('kk_portal') } catch { return null }
-  })
+  const [portal, setPortal] = useState(() => portalForPath(window.location.pathname))
+
+  useEffect(() => {
+    const onPop = () => setPortal(portalForPath(window.location.pathname))
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
+  }, [])
 
   const choose = (next) => {
+    const path = next ? PATH_FOR[next] : '/'
+    window.history.pushState(null, '', path)
     setPortal(next)
-    try {
-      if (next) sessionStorage.setItem('kk_portal', next)
-      else sessionStorage.removeItem('kk_portal')
-    } catch {}
   }
 
   if (portal === 'student') return <App />
