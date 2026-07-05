@@ -19,6 +19,13 @@ const SUBJECTS = [
   { emoji: '🌍', label: 'Wereldoriëntatie' },
 ]
 
+const STATS = [
+  { value: '8+',    label: 'minigames' },
+  { value: '240+',  label: 'items te winnen' },
+  { value: '4',     label: 'vakgebieden' },
+  { value: '4–8',   label: 'voor groep' },
+]
+
 const STEPS = [
   { emoji: '📝', title: '1. Opgaves maken', desc: 'Je kiest een oefening — rekenen, taal, spelling of begrijpend lezen — en maakt een rondje opgaves.' },
   { emoji: '🎮', title: '2. Tussendoor spelen', desc: 'Na een paar goede antwoorden krijg je een kort, leuk spelletje als afwisseling — een minigame zoals Voetbal of Jetpack.' },
@@ -49,6 +56,12 @@ const SHOWCASE = [
   },
 ]
 
+const AUDIENCE = [
+  { emoji: '🏠', title: 'Thuis', desc: 'Zelfstandig extra oefenen op een leuke manier — zonder account, gewoon openen en beginnen.' },
+  { emoji: '🏫', title: 'In de klas', desc: 'Als los oefenmoment, keuzewerk of beloning na afgerond werk, op chromebook of tablet.' },
+  { emoji: '🎒', title: 'Groep 4 t/m 8', desc: 'Oefeningen sluiten aan bij de basisschoolstof, van tafels en spelling tot begrijpend lezen.' },
+]
+
 export default function Landing({ onChoose }) {
   const [openCard, setOpenCard] = useState(null)
 
@@ -66,15 +79,22 @@ export default function Landing({ onChoose }) {
         ))}
       </div>
 
-      <header className="landing-hero">
-        <img className="landing-logo" src="/logo-rond.png" alt="Kenniskist" />
-        <h1 className="landing-title">Kenniskist</h1>
-        <p className="landing-tagline">✨ Leren terwijl je speelt ✨</p>
-        <p className="landing-intro">
-          Kenniskist is een leerplatform voor groep 4 t/m 8 waarin kinderen rekenen, taal en spelling
-          oefenen via korte, speelse minigames. Voor elk goed antwoord verdien je munten en briefgeld,
-          waarmee je een eigen 3D-poppetje aankleedt en lootboxen opent in de winkel.
-        </p>
+      {/* ── Hero met Nano Banana-artwork ── */}
+      <header className="landing-hero-banner">
+        <img className="hero-art" src="/branding/hero.webp" alt="" aria-hidden="true" />
+        <div className="hero-art-fade" aria-hidden="true" />
+        <div className="landing-hero">
+          <div className="landing-logo-ring">
+            <img className="landing-logo" src="/logo-rond.png" alt="Kenniskist" />
+          </div>
+          <h1 className="landing-title">Kenniskist</h1>
+          <p className="landing-tagline">✨ Leren terwijl je speelt ✨</p>
+          <p className="landing-intro">
+            Kenniskist is een leerplatform voor groep 4 t/m 8 waarin kinderen rekenen, taal en spelling
+            oefenen via korte, speelse minigames. Voor elk goed antwoord verdien je munten en briefgeld,
+            waarmee je een eigen 3D-poppetje aankleedt en lootboxen opent in de winkel.
+          </p>
+        </div>
       </header>
 
       <section className="portal-choice portal-choice-top">
@@ -93,6 +113,15 @@ export default function Landing({ onChoose }) {
             <span className="portal-arrow">Bekijk →</span>
           </button>
         </div>
+      </section>
+
+      <section className="landing-stats" aria-label="Kenniskist in cijfers">
+        {STATS.map(s => (
+          <div key={s.label} className="stat-card">
+            <span className="stat-value">{s.value}</span>
+            <span className="stat-label">{s.label}</span>
+          </div>
+        ))}
       </section>
 
       <section className="landing-subjects" aria-label="Vakken">
@@ -137,6 +166,19 @@ export default function Landing({ onChoose }) {
         </div>
       </section>
 
+      <section className="landing-audience" aria-label="Voor wie is Kenniskist">
+        <h2 className="landing-section-title">Voor wie is Kenniskist?</h2>
+        <div className="audience-row">
+          {AUDIENCE.map(a => (
+            <div key={a.title} className="audience-card">
+              <span className="audience-emoji">{a.emoji}</span>
+              <h3 className="audience-title">{a.title}</h3>
+              <p className="audience-desc">{a.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
       <section className="landing-games" aria-label="Beschikbare spellen">
         <h2 className="landing-section-title">Wat zit er allemaal in?</h2>
         <div className="landing-games-grid">
@@ -144,6 +186,13 @@ export default function Landing({ onChoose }) {
             <span key={g.label} className="landing-game-chip">{g.emoji} {g.label}</span>
           ))}
         </div>
+      </section>
+
+      <section className="landing-cta">
+        <h2 className="landing-cta-title">Klaar om te beginnen?</h2>
+        <button className="landing-cta-btn" onClick={() => onChoose('student')}>
+          🎒 Open het leerlingen portaal →
+        </button>
       </section>
 
       <footer className="landing-footer">Kenniskist · gemaakt om leren leuk te maken</footer>
