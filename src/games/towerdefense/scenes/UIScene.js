@@ -108,7 +108,7 @@ export default class UIScene extends Phaser.Scene {
       const td  = TOWERS[key]
       const gc  = i % COLS
       const gr  = Math.floor(i / COLS)
-      const bx  = (i === 9) ? PX + PW / 2 : PX + 6 + gc * CELL_W + CELL_W / 2
+      const bx  = PX + 6 + gc * CELL_W + CELL_W / 2
       const by  = GRID_Y + gr * CELL_H + CELL_H / 2
 
       const btn = this.add.graphics()
@@ -163,7 +163,8 @@ export default class UIScene extends Phaser.Scene {
     })
 
     // ── Next wave button (prominent, pulsing) ────────────────────
-    const waveY = GRID_Y + 4 * CELL_H + 24
+    const gridRows = Math.ceil(TOWER_ORDER.length / COLS)
+    const waveY = GRID_Y + gridRows * CELL_H + 24
     this.nextWaveBtnData = this._btn(PX + PW / 2, waveY, PW - 20, 42, '▶▶  Volgende golf', 0x1f7a33, () => {
       this.events.emit('next_wave')
     }, true)

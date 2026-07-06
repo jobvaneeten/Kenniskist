@@ -4,226 +4,118 @@ export const MAP_ROWS    = 20
 export const PANEL_WIDTH = 256
 
 // Cel-codes:
-//  0 = bouwbaar terrein        2 = decoratie (ook bouwbaar, visuele deco)
-// 11 = pad horizontaal boven  12 = pad horizontaal onder
-// 13 = pad verticaal links    14 = pad verticaal rechts
-// 19 = volledig pad (hoeken)
+//  0 = bouwbaar terrein (land)
+//  2 = decoratie (ook bouwbaar)
+//  3 = water — alleen watertorens (vis, krokodil) plaatsbaar
+// 19 = pad
 
-// ── Sparse deco helper rows (≈15-20% coverage, no big clusters) ────────────
-// These are used as-is or sliced into sections for non-path rows.
-// Row width = 32.
-const D0 = [0,0,2,0,0,0,0,2,0,0,0,2,0,0,0,0,2,0,0,0,2,0,0,0,0,2,0,0,0,0,2,0]
-const D1 = [0,2,0,0,0,2,0,0,0,0,2,0,0,0,2,0,0,0,0,0,2,0,0,0,2,0,0,0,0,2,0,0]
-const D2 = [2,0,0,0,2,0,0,0,0,2,0,0,0,0,2,0,0,0,2,0,0,0,0,2,0,0,0,2,0,0,0,0]
-const D3 = [0,0,0,2,0,0,0,0,2,0,0,0,2,0,0,0,0,2,0,0,0,0,2,0,0,0,0,0,2,0,0,0]
-const D4 = [0,0,0,0,2,0,0,2,0,0,0,0,0,2,0,0,0,2,0,0,0,0,0,2,0,0,2,0,0,0,0,2]
+// ── Programmatische gridbouw ────────────────────────────────────────
+// Routes zijn lijsten van hoekpunten [col,row]; het pad is 2 cellen
+// breed (rows r..r+1 horizontaal, cols c..c+1 verticaal). col -1 = start
+// buiten beeld links, col 32 = exit buiten beeld rechts.
+function carveRoute(grid, anchors) {
+  const clampC = c => Math.max(0, Math.min(MAP_COLS - 1, c))
+  const clampR = r => Math.max(0, Math.min(MAP_ROWS - 1, r))
+  for (let i = 0; i < anchors.length - 1; i++) {
+    const [c1, r1] = anchors[i]
+    const [c2, r2] = anchors[i + 1]
+    if (r1 === r2) {
+      // horizontaal segment (incl. 2x2 hoekblokken op beide uiteinden)
+      const a = clampC(Math.min(c1, c2)), b = clampC(Math.max(c1, c2) + 1)
+      for (let c = a; c <= b; c++) for (let dr = 0; dr <= 1; dr++) grid[clampR(r1 + dr)][c] = 19
+    } else {
+      const a = clampR(Math.min(r1, r2)), b = clampR(Math.max(r1, r2) + 1)
+      for (let r = a; r <= b; r++) for (let dc = 0; dc <= 1; dc++) grid[r][clampC(c1 + dc)] = 19
+    }
+  }
+}
 
-export const MAPS = [
-  // ── Map 1 – Savanne ───────────────────────────────────────────────────────
-  //   Route: S-bocht met 4 bochten
-  //   H1 rows 1-2  →  corner col 22-23
-  //   V1 rows 3-6  ↓  col 22-23
-  //   H2 rows 7-8  ←  col 6-23  (corners beiden kanten)
-  //   V2 rows 9-12 ↓  col 6-7
-  //   H3 rows 13-14 → exit rechts
+function routeWaypoints(anchors) {
+  return anchors.map(([c, r]) => ({
+    x: c < 0 ? -32 : c > MAP_COLS - 1 ? MAP_COLS * TILE_SIZE + 32 : (c + 1) * TILE_SIZE,
+    y: (r + 1) * TILE_SIZE,
+  }))
+}
+
+function buildGrid({ routes, waters = [], decoDensity = 8 }) {
+  const grid = Array.from({ length: MAP_ROWS }, () => new Array(MAP_COLS).fill(0))
+  routes.forEach(r => carveRoute(grid, r))
+  waters.forEach(({ c1, r1, c2, r2 }) => {
+    for (let r = r1; r <= r2; r++) for (let c = c1; c <= c2; c++) {
+      if (grid[r]?.[c] === 0) grid[r][c] = 3
+    }
+  })
+  // Deterministische deco-strooiing op vrije landcellen
+  for (let r = 0; r < MAP_ROWS; r++) for (let c = 0; c < MAP_COLS; c++) {
+    if (grid[r][c] === 0 && ((c * 53 + r * 97) % 100) % decoDensity === 0) grid[r][c] = 2
+  }
+  return grid
+}
+
+// ── Map-definities ──────────────────────────────────────────────────
+const DEFS = [
   {
     id: 1, name: 'Savanne', emoji: '🌿',
-    description: 'Vier bochten door de savanne',
+    description: 'S-bocht met twee vijvers voor je watertorens',
     difficulty: 1, unlocked: true,
-    tileset: {
-      0:    'gras_vol',
-      11:   'gras_h_top',
-      12:   'gras_h_bot',
-      13:   'gras_v_left',
-      14:   'gras_v_right',
-      19:   'gras_full',
-      deco: ['boom1','boom2','boom3'],
-    },
-    grid: [
-      // Row 0 – open top
-      D0,
-      // Rows 1-2 – H1: ingang links → bocht col 22-23
-      [11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,19,19, 0, 0, 2, 0, 0, 0, 2, 0],
-      [12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,19,19, 0, 2, 0, 0, 0, 0, 0, 2],
-      // Rows 3-6 – V1: neer langs col 22-23
-      [ 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0,13,14, 0, 0, 0, 2, 0, 0, 0, 0],
-      [ 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 0,13,14, 0, 2, 0, 0, 0, 0, 2, 0],
-      [ 2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0,13,14, 0, 0, 0, 0, 2, 0, 0, 0],
-      [ 0, 0, 0, 2, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0,13,14, 0, 0, 2, 0, 0, 0, 0, 2],
-      // Rows 7-8 – H2: bocht col 6-7 en col 22-23, horizontaal tussenin
-      [ 0, 0, 0, 2, 0, 0,19,19,11,11,11,11,11,11,11,11,11,11,11,11,11,11,19,19, 0, 0, 0, 2, 0, 0, 0, 0],
-      [ 0, 2, 0, 0, 0, 0,19,19,12,12,12,12,12,12,12,12,12,12,12,12,12,12,19,19, 0, 0, 2, 0, 0, 0, 0, 2],
-      // Rows 9-12 – V2: neer langs col 6-7
-      [ 0, 0, 0, 2, 0, 0,13,14, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0],
-      [ 2, 0, 0, 0, 0, 0,13,14, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0],
-      [ 0, 0, 2, 0, 0, 0,13,14, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 2, 0],
-      [ 0, 2, 0, 0, 2, 0,13,14, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0],
-      // Rows 13-14 – H3: uitgang rechts
-      [ 0, 0, 0, 2, 0, 0,19,19,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11],
-      [ 0, 2, 0, 0, 0, 0,19,19,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12],
-      // Rows 15-19 – open bouwzone onder
-      D1,
-      D2,
-      D3,
-      D0,
-      D4,
+    deco: ['boom1', 'boom2', 'boom3'],
+    routes: [
+      [[-1, 1], [22, 1], [22, 7], [6, 7], [6, 13], [32, 13]],
     ],
-    waypoints: [
-      { x:  -32, y:  96 },
-      { x: 1104, y:  96 },
-      { x: 1104, y: 384 },
-      { x:  336, y: 384 },
-      { x:  336, y: 672 },
-      { x: 1568, y: 672 },
+    waters: [
+      { c1: 26, r1: 3,  c2: 30, r2: 6 },    // vijver rechtsboven
+      { c1: 1,  r1: 16, c2: 5,  r2: 18 },   // vijver linksonder
     ],
-    spawnRow: 1, exitRow: 13,
   },
-
-  // ── Map 2 – Steen "Het Eiland" ────────────────────────────────────────────
-  //   Grote U-vorm: pad loopt om een open centraal eiland heen.
-  //   Vijanden omcirkelen de bebouwbare kern — torens kunnen meerdere
-  //   segmenten tegelijk bestrijken!
-  //
-  //   H1 rows 1-2  → rechts tot col 28-29
-  //   V1 rows 3-11 ↓ langs col 28-29  (9 rijen – lange rechterkant)
-  //   H2 rows 12-13 ← terug links tot col 2-3
-  //   V2 rows 14-15 ↓ col 2-3
-  //   H3 rows 16-17 → exit rechts
   {
     id: 2, name: 'Steen', emoji: '🪨',
-    description: 'Het eiland: omcirkel de kern!',
+    description: 'Twee paden! Vijanden komen via boven én onder',
     difficulty: 2, unlocked: true,
-    tileset: {
-      0:    'steen_vol',
-      11:   'steen_h_top',
-      12:   'steen_h_bot',
-      13:   'steen_v_left',
-      14:   'steen_v_right',
-      19:   'steen_full',
-      deco: ['steen1','steen2','steen3'],
-    },
-    grid: [
-      // Row 0
-      D3,
-      // Rows 1-2 – H1: ingang → col 28-29
-      [11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,19,19, 0, 0],
-      [12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,19,19, 0, 2],
-      // Rows 3-11 – V1: neer langs col 28-29 (9 rijen – vijanden zakken volledig af)
-      [ 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0,13,14, 0, 0],
-      [ 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0,13,14, 0, 0],
-      [ 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0,13,14, 0, 0],
-      [ 2, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0,13,14, 0, 0],
-      [ 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0,13,14, 0, 0],
-      [ 0, 0, 2, 0, 0, 2, 0, 0, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 2, 0,13,14, 0, 0],
-      [ 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0,13,14, 0, 0],
-      [ 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0,13,14, 0, 0],
-      [ 2, 0, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 0,13,14, 0, 0],
-      // Rows 12-13 – H2: ← terug van col 28-29 naar col 2-3
-      [ 0, 0,19,19,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,19,19, 0, 0],
-      [ 0, 0,19,19,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,19,19, 0, 0],
-      // Rows 14-15 – V2: neer langs col 2-3
-      [ 0, 0,13,14, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0],
-      [ 0, 0,13,14, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0],
-      // Rows 16-17 – H3: exit rechts
-      [ 0, 0,19,19,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11],
-      [ 0, 0,19,19,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12],
-      // Rows 18-19 – open zone
-      D1,
-      D4,
+    deco: ['steen1', 'steen2', 'steen3'],
+    routes: [
+      [[-1, 2], [26, 2], [26, 9], [12, 9], [12, 16], [32, 16]],
+      [[-1, 12], [6, 12], [6, 16], [32, 16]],
     ],
-    waypoints: [
-      { x:  -32, y:  96 },
-      { x: 1392, y:  96 },
-      { x: 1392, y: 624 },
-      { x:  144, y: 624 },
-      { x:  144, y: 816 },
-      { x: 1568, y: 816 },
+    waters: [
+      { c1: 16, r1: 11, c2: 24, r2: 15 },   // bergmeer in het midden
     ],
-    spawnRow: 1, exitRow: 16,
   },
-
-  // ── Map 3 – Woestijn "De Spiraal" ────────────────────────────────────────
-  //   8 bochten, zigzag-spiraal door de woestijn.
-  //   Het pad zigzagt van boven naar beneden, elke keer smaller inkomend.
-  //
-  //   H1 rows 1-2  → col 26-27
-  //   V1 rows 3-4  ↓ col 26-27
-  //   H2 rows 5-6  ← col 2-26 (ver links)
-  //   V2 rows 7-9  ↓ col 2-3
-  //   H3 rows 10-11 → col 22-23
-  //   V3 rows 12-13 ↓ col 22-23
-  //   H4 rows 14-15 ← col 8-22
-  //   V4 rows 16-17 ↓ col 8-9
-  //   H5 rows 18-19 → exit rechts
   {
     id: 3, name: 'Woestijn', emoji: '🏜️',
-    description: 'Acht bochten spiraal door de woestijn',
+    description: 'Spiraal met oase en een verraderlijke zij-ingang',
     difficulty: 3, unlocked: true,
-    tileset: {
-      0:    'sand_vol',
-      11:   'sand_h_top',
-      12:   'sand_h_bot',
-      13:   'sand_v_left',
-      14:   'sand_v_right',
-      19:   'sand_full',
-      deco: ['cactus1','cactus2'],
-    },
-    grid: [
-      // Row 0
-      D2,
-      // Rows 1-2 – H1: ingang → col 26-27
-      [11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,19,19, 0, 0, 0, 2],
-      [12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,19,19, 0, 0, 2, 0],
-      // Rows 3-4 – V1: neer langs col 26-27
-      [ 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 2, 0,13,14, 0, 0, 0, 0],
-      [ 0, 2, 0, 0, 0, 0, 0, 2, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0,13,14, 0, 0, 0, 0],
-      // Rows 5-6 – H2: bocht col 2-3 ← col 26-27
-      [ 0, 0,19,19,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,19,19, 0, 0, 2, 0],
-      [ 0, 0,19,19,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,19,19, 0, 2, 0, 0],
-      // Rows 7-9 – V2: neer langs col 2-3
-      [ 0, 0,13,14, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0],
-      [ 0, 0,13,14, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2],
-      [ 2, 0,13,14, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0],
-      // Rows 10-11 – H3: bocht col 2-3 → col 22-23
-      [ 0, 0,19,19,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,19,19, 0, 0, 0, 0, 2, 0, 0, 0],
-      [ 0, 0,19,19,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,19,19, 0, 0, 0, 2, 0, 0, 0, 0],
-      // Rows 12-13 – V3: neer langs col 22-23
-      [ 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 2, 0, 0,13,14, 0, 0, 0, 0, 0, 2, 0, 0],
-      [ 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0,13,14, 0, 0, 0, 0, 2, 0, 0, 0],
-      // Rows 14-15 – H4: bocht col 8-9 ← col 22-23
-      [ 0, 0, 0, 2, 0, 0, 0, 2,19,19,11,11,11,11,11,11,11,11,11,11,11,11,19,19, 0, 0, 0, 0, 0, 2, 0, 0],
-      [ 0, 0, 0, 0, 0, 2, 0, 0,19,19,12,12,12,12,12,12,12,12,12,12,12,12,19,19, 0, 0, 0, 2, 0, 0, 0, 2],
-      // Rows 16-17 – V4: neer langs col 8-9
-      [ 0, 0, 0, 2, 0, 0, 0, 0,13,14, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0],
-      [ 0, 0, 0, 0, 2, 0, 0, 0,13,14, 0, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 2],
-      // Rows 18-19 – H5: exit rechts
-      [ 0, 0, 0, 2, 0, 0, 0, 0,19,19,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11],
-      [ 0, 0, 0, 0, 0, 2, 0, 0,19,19,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12],
+    deco: ['cactus1', 'cactus2'],
+    routes: [
+      [[-1, 1], [26, 1], [26, 4], [2, 4], [2, 9], [22, 9], [22, 13], [8, 13], [8, 17], [32, 17]],
+      [[-1, 9], [22, 9], [22, 13], [8, 13], [8, 17], [32, 17]],
     ],
-    waypoints: [
-      { x:  -32, y:  96 },
-      { x: 1296, y:  96 },
-      { x: 1296, y: 288 },
-      { x:  144, y: 288 },
-      { x:  144, y: 528 },
-      { x: 1104, y: 528 },
-      { x: 1104, y: 720 },
-      { x:  432, y: 720 },
-      { x:  432, y: 912 },
-      { x: 1568, y: 912 },
+    waters: [
+      { c1: 27, r1: 8, c2: 31, r2: 12 },    // oase rechts
     ],
-    spawnRow: 1, exitRow: 18,
   },
 ]
 
+export const MAPS = DEFS.map(def => ({
+  ...def,
+  grid:   buildGrid(def),
+  routes: def.routes.map(routeWaypoints),
+  // compat: sommige code verwacht 'waypoints' (eerste route)
+  waypoints: routeWaypoints(def.routes[0]),
+  tileset: { deco: def.deco },
+}))
+
 export function isPath(grid, col, row) {
   if (row < 0 || row >= MAP_ROWS || col < 0 || col >= MAP_COLS) return false
+  return grid[row][col] === 19
+}
+
+// Land-torens op gras/deco; watertorens (aquatic) alléén op water.
+export function isBuildableFor(grid, col, row, aquatic = false) {
+  if (row < 0 || row >= MAP_ROWS || col < 0 || col >= MAP_COLS) return false
   const c = grid[row][col]
-  return c === 1 || (c >= 11 && c <= 19)
+  return aquatic ? c === 3 : (c === 0 || c === 2)
 }
 
 export function isBuildable(grid, col, row) {
-  if (row < 0 || row >= MAP_ROWS || col < 0 || col >= MAP_COLS) return false
-  const c = grid[row][col]
-  return c === 0 || c === 2   // bouwbaar terrein én decoratie-tiles
+  return isBuildableFor(grid, col, row, false)
 }

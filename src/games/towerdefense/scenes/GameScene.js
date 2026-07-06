@@ -1,5 +1,5 @@
 import Phaser from 'phaser'
-import { MAPS, TILE_SIZE, MAP_COLS, MAP_ROWS, isBuildable } from '../data/MapData.js'
+import { MAPS, TILE_SIZE, MAP_COLS, MAP_ROWS, isBuildableFor } from '../data/MapData.js'
 import { TOWERS, TOWER_ORDER } from '../data/TowerData.js'
 import { ENEMIES, LAYERS } from '../data/EnemyData.js'
 import { WAVES } from '../data/WaveData.js'
@@ -336,9 +336,9 @@ class Projectile {
     this.pierced = new Set()
 
     const td = tower.data
-    const r  = this.special === 'chomp' ? 0 : 7
+    const r  = 7
 
-    if (this.special === 'chomp') {
+    if (this.special === 'chomp' || this.special === 'roar') {
       // Instant AOE — no flying projectile
       this._applyChomp()
       this.done = true
@@ -381,18 +381,37 @@ class Projectile {
   }
 
   _applyChomp() {
-    const r = this.tower.data.chompRadius * (1 + (this.tower.level-1)*0.15)
+    const td   = this.tower.data
+    const roar = this.special === 'roar'
+    const base = roar ? (this.tower.level > 1 ? td.upgradeStats[this.tower.level-2]?.roarRadius : null) ?? td.roarRadius
+                      : td.chompRadius * (1 + (this.tower.level-1)*0.15)
     this.scene.enemies.forEach(e => {
       if (e.dead) return
       const dx = e.container.x - this.tower.x
       const dy = e.container.y - this.tower.y
-      if (Math.sqrt(dx*dx + dy*dy) <= r) {
+      if (Math.sqrt(dx*dx + dy*dy) <= base) {
         e.takeDamage(this.damage, this.special)
+        if (roar) {
+          const slow = (this.tower.level > 1 ? td.upgradeStats[this.tower.level-2]?.roarSlow : null) ?? td.roarSlow
+          e.applySlow(td.roarDuration, slow)
+        }
       }
     })
-    // Big hit explosion
-    this.scene.spawnParticles(this.tower.x, this.tower.y, 'explosion', 0xFF4444)
-    this.scene.cameras.main.shake(250, 0.015)
+    if (roar) {
+      // Brul: uitdijende gouden schokgolf
+      this.scene.spawnParticles(this.tower.x, this.tower.y, 'explosion', 0xFFB347)
+      const ring = this.scene.add.circle(this.tower.x, this.tower.y, 20)
+        .setStrokeStyle(5, 0xFFB347, 0.9).setDepth(9)
+      this.scene.tweens.add({
+        targets: ring, radius: base, alpha: 0, duration: 350,
+        onUpdate: () => ring.setStrokeStyle(5, 0xFFB347, ring.alpha),
+        onComplete: () => ring.destroy(),
+      })
+      this.scene.cameras.main.shake(160, 0.008)
+    } else {
+      this.scene.spawnParticles(this.tower.x, this.tower.y, 'explosion', 0xFF4444)
+      this.scene.cameras.main.shake(250, 0.015)
+    }
   }
 
   update(delta) {
@@ -492,6 +511,13 @@ class Projectile {
         enemy.applyPoison(this.tower.data.venomDps, this.tower.data.venomDuration)
         this.scene.spawnParticles(enemy.container.x, enemy.container.y, 'poison', 0x00FF44)
         break
+      case 'bubble': {
+        const td2 = this.tower.data
+        const slow = (this.tower.level > 1 ? td2.upgradeStats[this.tower.level-2]?.bubbleSlow : null) ?? td2.bubbleSlow
+        enemy.applySlow(td2.bubbleDuration, slow)
+        this.scene.spawnParticles(enemy.container.x, enemy.container.y, 'ice', 0x66DDFF)
+        break
+      }
       case 'chain': {
         let last = enemy
         for (let c = 1; c < this.tower.data.chainCount; c++) {
@@ -548,14 +574,22 @@ class Tower {
       .setDisplaySize(54, 54).setDepth(6)
     this._spriteScale = this.sprite.scaleX
 
-    // Platform under tower: schaduw + houten ring-podium
+    // Platform under tower: houten podium op land, drijvend vlot op water
     this.platform = scene.add.graphics().setDepth(5)
     this.platform.setPosition(this.x, this.y)
-    this.platform.fillStyle(0x000000, 0.30); this.platform.fillEllipse(0, 8, 52, 20)
-    this.platform.fillStyle(0x6b4a2a, 1);    this.platform.fillEllipse(0, 4, 48, 22)
-    this.platform.fillStyle(0x8a6238, 1);    this.platform.fillEllipse(0, 0, 48, 22)
-    this.platform.fillStyle(0xa87c4a, 0.55); this.platform.fillEllipse(0, -2, 36, 14)
-    this.platform.lineStyle(2, 0x4a3018, 0.9); this.platform.strokeEllipse(0, 0, 48, 22)
+    if (this.data.aquatic) {
+      this.platform.fillStyle(0x0a3550, 0.45);   this.platform.fillEllipse(0, 6, 56, 22)
+      this.platform.fillStyle(0x1a6a94, 1);      this.platform.fillEllipse(0, 2, 50, 22)
+      this.platform.fillStyle(0x2e93c4, 1);      this.platform.fillEllipse(0, 0, 48, 20)
+      this.platform.fillStyle(0x7fd4f0, 0.5);    this.platform.fillEllipse(0, -2, 34, 12)
+      this.platform.lineStyle(2, 0x0f4a68, 0.9); this.platform.strokeEllipse(0, 0, 48, 20)
+    } else {
+      this.platform.fillStyle(0x000000, 0.30);   this.platform.fillEllipse(0, 8, 52, 20)
+      this.platform.fillStyle(0x6b4a2a, 1);      this.platform.fillEllipse(0, 4, 48, 22)
+      this.platform.fillStyle(0x8a6238, 1);      this.platform.fillEllipse(0, 0, 48, 22)
+      this.platform.fillStyle(0xa87c4a, 0.55);   this.platform.fillEllipse(0, -2, 36, 14)
+      this.platform.lineStyle(2, 0x4a3018, 0.9); this.platform.strokeEllipse(0, 0, 48, 22)
+    }
 
     // Range circle (hidden)
     this.rangeCircle = scene.add.circle(this.x, this.y, this.getRange())
@@ -815,20 +849,21 @@ export default class GameScene extends Phaser.Scene {
     }
 
     // ── Grid-overlay op bouwbare cellen (subtiel) ─────────────────
-    const overlay = this.add.graphics().setDepth(2).setAlpha(0.07)
+    const overlay = this.add.graphics().setDepth(2).setAlpha(0.09)
     for (let row = 0; row < MAP_ROWS; row++) {
       for (let col = 0; col < MAP_COLS; col++) {
-        if (grid[row][col] === 0) {
-          overlay.lineStyle(1, 0xffffff, 1)
+        const cell = grid[row][col]
+        if (cell === 0) {
+          overlay.lineStyle(1, 0xffffff, 0.8)
+          overlay.strokeRect(col * TILE_SIZE + 1, row * TILE_SIZE + 1, TILE_SIZE - 2, TILE_SIZE - 2)
+        } else if (cell === 3) {
+          overlay.lineStyle(1, 0x66ddff, 1)
           overlay.strokeRect(col * TILE_SIZE + 1, row * TILE_SIZE + 1, TILE_SIZE - 2, TILE_SIZE - 2)
         }
       }
     }
 
-    // ── Spawn- & exit-markeringen ──────────────────────────────────
-    const wp = this.mapData.waypoints
-    const spawnY = wp[0].y
-    const exitY  = wp[wp.length - 1].y
+    // ── Spawn- & exit-markeringen (één per route-ingang) ──────────
     const marker = (x, y, emoji, color) => {
       const g = this.add.graphics().setDepth(3)
       g.fillStyle(0x000000, 0.35); g.fillCircle(x, y + 2, 20)
@@ -837,8 +872,9 @@ export default class GameScene extends Phaser.Scene {
       this.add.text(x, y, emoji, { fontSize: '20px' }).setOrigin(0.5).setDepth(4)
       this.tweens.add({ targets: g, alpha: { from: 0.75, to: 1 }, duration: 800, yoyo: true, repeat: -1 })
     }
-    marker(26, spawnY, '▶', 0x2e8b3a)
-    marker(mapW - 26, exitY, '🏁', 0xb03030)
+    this.mapData.routes.forEach(wp => marker(26, wp[0].y, '▶', 0x2e8b3a))
+    const exitWp = this.mapData.routes[0]
+    marker(mapW - 26, exitWp[exitWp.length - 1].y, '🏁', 0xb03030)
   }
 
   // ── Wave system ────────────────────────────────────────────────────
@@ -880,7 +916,11 @@ export default class GameScene extends Phaser.Scene {
   }
 
   _spawnEnemy(type) {
-    const wp = this.mapData.waypoints
+    // Round-robin over alle routes: bij meerdere paden komen vijanden
+    // afwisselend via elke ingang.
+    const routes = this.mapData.routes
+    this._routeIdx = ((this._routeIdx ?? -1) + 1) % routes.length
+    const wp = routes[this._routeIdx]
     const flyStart = { x: wp[0].x, y: wp[0].y }
     const flyEnd   = { x: wp[wp.length - 1].x, y: wp[wp.length - 1].y }
     const e = new Enemy(this, type, wp, flyStart, flyEnd)
@@ -1001,7 +1041,7 @@ export default class GameScene extends Phaser.Scene {
     this.ghost.setPosition(cx, cy)
     this.ghostRange.setPosition(cx, cy)
     if (this.ghostImg) this.ghostImg.setPosition(cx, cy)
-    const ok = isBuildable(this.mapData.grid, col, row) &&
+    const ok = isBuildableFor(this.mapData.grid, col, row, !!TOWERS[this.selectedTower]?.aquatic) &&
                !this.towers.find(t => t.col === col && t.row === row)
     this.ghost.setAlpha(ok ? 0.75 : 0.3)
     this.ghost.list[0].setFillStyle(ok ? 0x44ff44 : 0xff4444, 0.3)
@@ -1031,7 +1071,7 @@ export default class GameScene extends Phaser.Scene {
     }
 
     if (this.selectedTower) {
-      if (!isBuildable(this.mapData.grid, col, row)) return
+      if (!isBuildableFor(this.mapData.grid, col, row, !!TOWERS[this.selectedTower]?.aquatic)) return
       if (existing) return
       const cost = TOWERS[this.selectedTower].cost
       if (this.gold < cost) {

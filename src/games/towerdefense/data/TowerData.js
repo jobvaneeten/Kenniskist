@@ -129,9 +129,52 @@ export const TOWERS = {
       { damage: 190, stompRadius: 185 },
     ],
   },
+
+  // ── Watertorens: alléén plaatsbaar op water ──────────────────────
+  fish: {
+    key: 'fish', name: 'Vis', emoji: '🐟', aquatic: true,
+    cost: 90, range: 165, damage: 14, fireRate: 650, projectileSpeed: 380,
+    special: 'bubble',         // bellen: schade + korte vertraging
+    bubbleSlow: 0.35, bubbleDuration: 1600,
+    description: 'Watertoren! Bellen: snel, met korte vertraging',
+    projectileColor: 0x66DDFF,
+    upgradeCost: [45, 68],
+    upgradeStats: [
+      { damage: 20, fireRate: 560 },
+      { damage: 29, fireRate: 470, bubbleSlow: 0.45 },
+    ],
+  },
+  crocodile: {
+    key: 'crocodile', name: 'Krokodil', emoji: '🐊', aquatic: true,
+    cost: 200, range: 155, damage: 70, fireRate: 1500, projectileSpeed: 460,
+    special: 'snap',           // zware enkele beet
+    description: 'Watertoren! Beet: enorme schade op één doel',
+    projectileColor: 0x2E8B57,
+    upgradeCost: [100, 150],
+    upgradeStats: [
+      { damage: 105 },
+      { damage: 155, range: 175 },
+    ],
+  },
+
+  // ── Landtoren ─────────────────────────────────────────────────────
+  lion: {
+    key: 'lion', name: 'Leeuw', emoji: '🦁',
+    cost: 275, range: 135, damage: 32, fireRate: 2200, projectileSpeed: 0,
+    special: 'roar',           // brul: AOE-schade + vertraging rondom
+    roarRadius: 135, roarSlow: 0.35, roarDuration: 1600,
+    description: 'Brul: raakt en vertraagt ALLES in de buurt',
+    projectileColor: 0xFFB347,
+    upgradeCost: [138, 205],
+    upgradeStats: [
+      { damage: 46, roarRadius: 155 },
+      { damage: 66, roarRadius: 175, roarSlow: 0.45 },
+    ],
+  },
 }
 
 export const TOWER_ORDER = [
   'rabbit','monkey','parrot','snake','pig',
   'penguin','panda','giraffe','hippo','elephant',
+  'fish','crocodile','lion',
 ]

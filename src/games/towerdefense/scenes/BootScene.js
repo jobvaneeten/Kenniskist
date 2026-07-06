@@ -28,7 +28,8 @@ export default class BootScene extends Phaser.Scene {
     this.load.image('blimp',   `${TD}blimp.png`)
 
     // ── Animal towers ─────────────────────────────────────────────
-    const animals = ['elephant','giraffe','hippo','monkey','panda','parrot','penguin','pig','rabbit','snake']
+    const animals = ['elephant','giraffe','hippo','monkey','panda','parrot','penguin','pig','rabbit','snake',
+                     'fish','crocodile','lion']
     animals.forEach(a => this.load.image(a, `${TD}Dieren/${a}.png`))
 
     // ── Particle textures ─────────────────────────────────────────
