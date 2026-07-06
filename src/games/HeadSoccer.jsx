@@ -28,9 +28,9 @@ const AI_SPD_BY_DIFF = { 1: 120, 2: 145, 3: 170, 4: 195, 5: 225 }
 // Per niveau: spd = snelheidsfactor, err = mik-fout (hoger = slechter mikken),
 // kick/jump/special = kans-factoren (lager = minder vaak).
 const LEVEL_TUNE = {
-  hard:   { spd: 1.0,  err: 1.0, kick: 1.0,  jump: 1.0,  special: 1.0 },
-  medium: { spd: 0.85, err: 1.6, kick: 0.78, jump: 0.8,  special: 0.7 },
-  easy:   { spd: 0.66, err: 2.4, kick: 0.5,  jump: 0.55, special: 0.4 },
+  hard:   { spd: 1.25, err: 0.55, kick: 1.35, jump: 1.4,  special: 1.35 },
+  medium: { spd: 0.85, err: 1.6,  kick: 0.78, jump: 0.8,  special: 0.7 },
+  easy:   { spd: 0.66, err: 2.4,  kick: 0.5,  jump: 0.55, special: 0.4 },
 }
 
 const DEFAULT_UNLOCKED = ['nl', 'de', 'br', 'fr']
@@ -572,82 +572,29 @@ function drawGoal(ctx, side) {
   ctx.restore()
 }
 
-function drawArena(ctx, ph) {
-  // ── avond-lucht met sterren en een warme gloed onderaan het stadion ──
-  const sky = ctx.createLinearGradient(0, 0, 0, GROUND_Y)
-  sky.addColorStop(0, '#0a1428'); sky.addColorStop(0.55, '#122a4d'); sky.addColorStop(1, '#1d4a6e')
-  ctx.fillStyle = sky; ctx.fillRect(0, 0, W, GROUND_Y)
-  // sterren (vast patroon, subtiel twinkelend)
-  const now = Date.now()
-  for (let i = 0; i < 40; i++) {
-    const sx = (i * 197 + 30) % W, sy = 20 + (i * 89) % 120
-    ctx.globalAlpha = 0.3 + 0.35 * (0.5 + 0.5 * Math.sin(now / 600 + i))
-    ctx.fillStyle = '#dfeaff'; ctx.beginPath(); ctx.arc(sx, sy, 1.2, 0, Math.PI * 2); ctx.fill()
+// Achtergrondfoto's per niveau (Nano Banana 2 Lite-illustraties, zie
+// scripts/generate-field-bg.mjs) — simpel veldje op makkelijk, een normaal
+// stadion op gemiddeld, een heel vet uitverkocht stadion met vuurwerk op
+// moeilijk. Eén keer per niveau geladen en hergebruikt.
+const FIELD_BG_SRC = { easy: '/fields/field_easy.webp', medium: '/fields/field_medium.webp', hard: '/fields/field_hard.webp' }
+const fieldBgCache = {}
+function getFieldBg(level) {
+  const key = FIELD_BG_SRC[level] ? level : 'medium'
+  if (!fieldBgCache[key]) {
+    const img = new Image()
+    img.src = FIELD_BG_SRC[key]
+    fieldBgCache[key] = img
   }
-  ctx.globalAlpha = 1
+  return fieldBgCache[key]
+}
 
-  // ── stadion-tribunes: twee schuine dekken met rij-lijnen ──
-  const standTop = 30, standBot = 150
-  const standGrad = ctx.createLinearGradient(0, standTop, 0, standBot)
-  standGrad.addColorStop(0, '#1a2436'); standGrad.addColorStop(1, '#2b3a52')
-  ctx.fillStyle = standGrad; ctx.fillRect(0, standTop, W, standBot - standTop)
-  // rij-lijnen in de tribune
-  ctx.strokeStyle = 'rgba(0,0,0,0.25)'; ctx.lineWidth = 1
-  for (let ry = standTop + 12; ry < standBot; ry += 14) { ctx.beginPath(); ctx.moveTo(0, ry); ctx.lineTo(W, ry); ctx.stroke() }
-  // publiek: gekleurde stippen in rijen (dichter = verder weg bovenin)
-  for (let row = 0; row < 8; row++) {
-    const ry = standTop + 10 + row * 14
-    for (let cx = 8; cx < W; cx += 13) {
-      const seed = (row * 131 + cx * 17)
-      ctx.fillStyle = `hsl(${(seed * 47) % 360},60%,${58 + (seed % 3) * 6}%)`
-      ctx.globalAlpha = 0.55 + (seed % 4) * 0.1
-      const bob = Math.sin(now / 500 + seed) * 0.8
-      ctx.beginPath(); ctx.arc(cx + (row % 2) * 6, ry + bob, 2.4, 0, Math.PI * 2); ctx.fill()
-    }
-  }
-  ctx.globalAlpha = 1
-  // reclameboarding onder de tribune
-  ctx.fillStyle = '#0e1a2a'; ctx.fillRect(0, standBot, W, 14)
-  for (let bx = 0; bx < W; bx += 90) {
-    ctx.fillStyle = bx / 90 % 2 === 0 ? 'rgba(80,180,255,0.25)' : 'rgba(255,210,80,0.22)'
-    ctx.fillRect(bx + 3, standBot + 3, 84, 8)
-  }
-
-  // ── floodlight-masten met lichtbundels ──
-  ;[110, W - 110].forEach(lx => {
-    // mast
-    ctx.strokeStyle = '#0a1420'; ctx.lineWidth = 4
-    ctx.beginPath(); ctx.moveTo(lx, 8); ctx.lineTo(lx, 28); ctx.stroke()
-    // lampenpaneel
-    ctx.fillStyle = '#1a2636'; ctx.fillRect(lx - 16, 2, 32, 10)
-    for (let li = 0; li < 6; li++) { ctx.fillStyle = '#fff6d8'; ctx.beginPath(); ctx.arc(lx - 12 + li * 5, 7, 1.8, 0, Math.PI * 2); ctx.fill() }
-    // lichtbundel omlaag over het veld
-    const beam = ctx.createLinearGradient(lx, 12, lx, GROUND_Y)
-    beam.addColorStop(0, 'rgba(255,244,214,0.14)'); beam.addColorStop(1, 'rgba(255,244,214,0)')
-    ctx.fillStyle = beam
-    ctx.beginPath(); ctx.moveTo(lx - 14, 12); ctx.lineTo(lx + 14, 12); ctx.lineTo(lx + 150, GROUND_Y); ctx.lineTo(lx - 150, GROUND_Y); ctx.closePath(); ctx.fill()
-  })
-
-  // ── grasmat: verlopende groentint + gemaaide banen + glans ──
-  const pitch = ctx.createLinearGradient(0, GROUND_Y, 0, H)
-  pitch.addColorStop(0, '#3aa049'); pitch.addColorStop(1, '#218035')
-  ctx.fillStyle = pitch; ctx.fillRect(0, GROUND_Y, W, H - GROUND_Y)
-  for (let x = 0; x < W; x += 110) { ctx.fillStyle = Math.floor(x / 110) % 2 === 0 ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)'; ctx.fillRect(x, GROUND_Y, 110, H - GROUND_Y) }
-  // lichtglans vlak achter de grondlijn
-  const shine = ctx.createLinearGradient(0, GROUND_Y, 0, GROUND_Y + 26)
-  shine.addColorStop(0, 'rgba(255,255,255,0.18)'); shine.addColorStop(1, 'rgba(255,255,255,0)')
-  ctx.fillStyle = shine; ctx.fillRect(0, GROUND_Y, W, 26)
-  // grondlijn
-  ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 3
-  ctx.beginPath(); ctx.moveTo(GOAL_W, GROUND_Y); ctx.lineTo(W - GOAL_W, GROUND_Y); ctx.stroke()
-  // strafschopgebieden (halve bogen aan beide kanten)
-  ctx.strokeStyle = 'rgba(255,255,255,0.28)'; ctx.lineWidth = 2
-  ctx.beginPath(); ctx.arc(GOAL_W, GROUND_Y, 70, -Math.PI / 2.6, Math.PI / 2.6); ctx.stroke()
-  ctx.beginPath(); ctx.arc(W - GOAL_W, GROUND_Y, 70, Math.PI - Math.PI / 2.6, Math.PI + Math.PI / 2.6); ctx.stroke()
-  // center line + middenstip
-  ctx.setLineDash([6, 8]); ctx.strokeStyle = 'rgba(255,255,255,0.22)'
-  ctx.beginPath(); ctx.moveTo(W / 2, CEIL); ctx.lineTo(W / 2, GROUND_Y); ctx.stroke(); ctx.setLineDash([])
-  ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.beginPath(); ctx.arc(W / 2, GROUND_Y, 4, 0, Math.PI * 2); ctx.fill()
+function drawArena(ctx, ph, level = 'medium') {
+  // ── achtergrondfoto (veld/stadion + grondlijn + belijning zit al in de foto
+  // zelf, gegenereerd op exact 80% hoogte = GROUND_Y) — de code zet er alleen
+  // nog de goals (vaste fysieke positie) en eventuele schilden overheen ──
+  const bg = getFieldBg(level)
+  if (bg.complete && bg.naturalWidth > 0) ctx.drawImage(bg, 0, 0, W, H)
+  else { ctx.fillStyle = '#2f8f45'; ctx.fillRect(0, 0, W, H) }   // groene placeholder tot de foto geladen is
 
   drawGoal(ctx, 'L'); drawGoal(ctx, 'R')
 
@@ -1949,7 +1896,13 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
         // ── AI (R) ──
         const R = S.R
         if (R.dizzy <= 0) {
-          const aspd = aiSpd * R.frozenFactor
+          // op hard: tegenstander die je met achteruit-lopen + dash/sprong voorbij probeert
+          // te glippen (klassieke "erover heen dashen" truc) wordt genadeloos afgestraft —
+          // de AI sprint met een boost direct terug naar de doellijn i.p.v. de bal lateraal
+          // te blijven volgen, zodat er geen leeg doel overblijft.
+          const isHard = level === 'hard'
+          const gotPast = isHard && S.L.x > R.x + 4
+          const aspd = aiSpd * R.frozenFactor * (gotPast ? 1.35 : 1)
           // spookbal: AI ziet de bal slecht → mikt met grote fout
           const ghostErr = S.ball.ghostT > 0 ? (Math.sin(now / 140) * 120) : 0
           // mik-fout: groter bij minder sterren én op een lager niveau
@@ -1963,7 +1916,8 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
           const superThreat = S.ball.held || (S.superSeq && S.superSeq.p === S.L)
           const lobOverHead = S.ball.vy < -80 && predictedX > R.x + 20
           let target = ballSide
-          if (superThreat) target = Math.min(W - GOAL_W - 60, Math.max(W * 0.7, predictedX))
+          if (gotPast) target = W - GOAL_W - 34   // dek eerst de doellijn af, laatste linie
+          else if (superThreat) target = Math.min(W - GOAL_W - 60, Math.max(W * 0.7, predictedX))
           else if (lobOverHead || (S.ball.x > W * 0.55 && S.ball.vx > 0)) target = Math.max(W * 0.58, Math.min(predictedX, W - GOAL_W - 20))
           const dxr = target - R.x
           // voodoolink: gedwongen om de bewegingen van de tegenstander te kopiëren
@@ -2228,7 +2182,7 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
       ctx.clearRect(0, 0, W, H)
       ctx.save()
       if (S.shake.t > 0) { const k = S.shake.t / (S.shake.dur || 0.3), m = S.shake.mag * k; ctx.translate((Math.random() - 0.5) * m * 2, (Math.random() - 0.5) * m * 2) }
-      drawArena(ctx, S)
+      drawArena(ctx, S, level)
       drawShockwaves(ctx, S.shockwaves)
       for (const pt of S.particles) { ctx.globalAlpha = Math.max(0, pt.life * 1.4); ctx.fillStyle = pt.color; ctx.beginPath(); ctx.arc(pt.x, pt.y, pt.r || 3, 0, Math.PI * 2); ctx.fill() }
       ctx.globalAlpha = 1

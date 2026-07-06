@@ -484,3 +484,60 @@
   background: rgba(0,0,0,.18); border: 1px solid rgba(255,255,255,.14);
   font-size: 14px; line-height: 1.45; text-align: left; max-width: 460px;
 }
+
+/* ── Onderwerp markeren ── */
+.ws-catsel-onderwerp-btn {
+  align-self: center;
+  margin-top: 4px;
+  background: rgba(255,255,255,0.1);
+  border: 1.5px solid rgba(255,255,255,0.25);
+  border-radius: 14px;
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 700;
+  padding: 12px 26px;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.15s;
+}
+.ws-catsel-onderwerp-btn:hover { background: rgba(255,255,255,0.18); transform: translateY(-2px); }
+
+.ws-ond-marker {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 8px 0 4px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: rgba(0,0,0,0.18);
+  border: 1px solid rgba(255,255,255,0.14);
+}
+.ws-ond-compact { padding: 12px 14px; }
+.ws-ond-vraag { margin: 0; font-weight: 700; font-size: 14px; color: #e9d5ff; }
+.ws-ond-zin { line-height: 1.9; font-size: 1.05rem; }
+.ws-ond-word {
+  display: inline-block;
+  cursor: pointer;
+  padding: 2px 4px;
+  margin: 0 1px;
+  border-radius: 6px;
+  transition: background 0.12s, color 0.12s;
+}
+.ws-ond-word:hover { background: rgba(255,255,255,0.14); }
+.ws-ond-sel  { background: rgba(168,85,247,0.4); color: #fff; }
+.ws-ond-goed { background: rgba(52,211,153,0.35); color: #d1fae5; }
+.ws-ond-fout { background: rgba(248,113,113,0.35); color: #fee2e2; }
+.ws-ond-check-btn {
+  align-self: flex-start;
+  background: linear-gradient(135deg, #a855f7, #7c3aed);
+  border: none;
+  border-radius: 12px;
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 8px 18px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.ws-ond-check-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.ws-ond-check-btn:hover:not(:disabled) { opacity: 0.9; }
+.ws-ond-feedback { font-size: 14px; font-weight: 700; }

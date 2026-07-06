@@ -126,19 +126,19 @@ function maakOefeningen() {
     const hulpMv = w.hulp === 'heeft' ? 'hebben' : 'zijn'
 
     // Tegenwoordige tijd — ik (stam, GEEN t)
-    lijst.push({ zin:`Ik ___ ${w.ctx}.`,                       inf:w.inf, type:w.type, tijdKey:'tt', tijd:'tegenwoordige tijd', antwoord:w.ik })
+    lijst.push({ zin:`Ik ___ ${w.ctx}.`,                       inf:w.inf, type:w.type, tijdKey:'tt', tijd:'tegenwoordige tijd', antwoord:w.ik, onderwerp:'Ik' })
     // Tegenwoordige tijd — enkelvoud (stam + t)
-    lijst.push({ zin:`${ev.begin} ___ ${w.ctx}.`,              inf:w.inf, type:w.type, tijdKey:'tt', tijd:'tegenwoordige tijd', antwoord:w.hij })
+    lijst.push({ zin:`${ev.begin} ___ ${w.ctx}.`,              inf:w.inf, type:w.type, tijdKey:'tt', tijd:'tegenwoordige tijd', antwoord:w.hij, onderwerp:ev.begin })
     // Tegenwoordige tijd — meervoud (hele werkwoord)
-    lijst.push({ zin:`${mv.begin} ___ ${w.ctx}.`,              inf:w.inf, type:w.type, tijdKey:'tt', tijd:'tegenwoordige tijd', antwoord:w.inf })
+    lijst.push({ zin:`${mv.begin} ___ ${w.ctx}.`,              inf:w.inf, type:w.type, tijdKey:'tt', tijd:'tegenwoordige tijd', antwoord:w.inf, onderwerp:mv.begin })
     // Verleden tijd — enkelvoud (inversie na tijdmarker)
-    lijst.push({ zin:`${mk} ___ ${ev2.mid} ${w.ctx}.`,         inf:w.inf, type:w.type, tijdKey:'vt', tijd:'verleden tijd', antwoord:w.vtev })
+    lijst.push({ zin:`${mk} ___ ${ev2.mid} ${w.ctx}.`,         inf:w.inf, type:w.type, tijdKey:'vt', tijd:'verleden tijd', antwoord:w.vtev, onderwerp:ev2.mid })
     // Verleden tijd — meervoud
-    lijst.push({ zin:`${mk2} ___ ${mv2.mid} ${w.ctx}.`,        inf:w.inf, type:w.type, tijdKey:'vt', tijd:'verleden tijd', antwoord:w.vtmv })
+    lijst.push({ zin:`${mk2} ___ ${mv2.mid} ${w.ctx}.`,        inf:w.inf, type:w.type, tijdKey:'vt', tijd:'verleden tijd', antwoord:w.vtmv, onderwerp:mv2.mid })
     // Voltooid deelwoord — enkelvoud
-    lijst.push({ zin:`${ev.begin} ${hulpBij(w.hulp, ev.begin)} ${w.ctx} ___.`, inf:w.inf, type:w.type, tijdKey:'vd', tijd:'voltooid deelwoord', antwoord:w.vd })
+    lijst.push({ zin:`${ev.begin} ${hulpBij(w.hulp, ev.begin)} ${w.ctx} ___.`, inf:w.inf, type:w.type, tijdKey:'vd', tijd:'voltooid deelwoord', antwoord:w.vd, onderwerp:ev.begin })
     // Voltooid deelwoord — meervoud
-    lijst.push({ zin:`${mv.begin} ${hulpMv} ${w.ctx} ___.`,    inf:w.inf, type:w.type, tijdKey:'vd', tijd:'voltooid deelwoord', antwoord:w.vd })
+    lijst.push({ zin:`${mv.begin} ${hulpMv} ${w.ctx} ___.`,    inf:w.inf, type:w.type, tijdKey:'vd', tijd:'voltooid deelwoord', antwoord:w.vd, onderwerp:mv.begin })
   })
   return lijst
 }
@@ -170,6 +170,27 @@ export function shuffleGefilterd(cats) {
 export function checkAntwoord(invoer, juist) {
   const norm = (s) => String(s).toLowerCase().replace(/\s+/g, ' ').trim()
   return norm(invoer) === norm(juist)
+}
+
+// ── Onderwerp markeren: zin in klikbare woorden opdelen + juiste woord-indices vinden ──
+const normWoord = (w) => w.toLowerCase().replace(/[.,!?;:]+$/, '')
+
+export function tokeniseerZin(zin) {
+  return zin.split(' ')
+}
+
+// Vindt de aaneengesloten woord-indices die het onderwerp vormen (leeg als niet gevonden)
+export function onderwerpIndices(zin, onderwerp) {
+  const woorden = tokeniseerZin(zin).map(normWoord)
+  const subj = onderwerp.trim().split(' ').map(normWoord)
+  for (let i = 0; i <= woorden.length - subj.length; i++) {
+    let match = true
+    for (let j = 0; j < subj.length; j++) {
+      if (woorden[i + j] !== subj[j]) { match = false; break }
+    }
+    if (match) return Array.from({ length: subj.length }, (_, k) => i + k)
+  }
+  return []
 }
 
 // ── Uitleg: waarom is dit het juiste antwoord / hoe schrijf je het ─────

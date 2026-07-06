@@ -154,7 +154,7 @@ const POWERUP_TYPES = {
   shield: { emoji:'🛡️', color:'#44aaff', label:'Schild',   duration:0   },
   slowmo: { emoji:'🐢', color:'#aaffaa', label:'Slow-mo',  duration:360 },
   extrabullet: { emoji:'🔫', color:'#e74c3c', label:'+1 Kogel', duration:0 },
-  rocket: { emoji:'🚀', color:'#ff6600', label:'Raket',    duration:900 }, // langer: 900 frames (~15 sec)
+  rocket: { emoji:'🚀', color:'#ff6600', label:'Raket',    duration:600 }, // 600 frames (~10 sec)
 };
 let activePowerups = {};
 let powerupObjects = [];
@@ -1023,10 +1023,12 @@ function spawnZapper() {
     zappers.push({ type:'moving', x:canvas.width+50, baseGapY:mid, gapY:mid-gs/2, gapSize:gs, amp, phase:Math.random()*Math.PI*2, spd:0.018+Math.random()*0.014, width:20*Z, glowPhase:Math.random()*Math.PI*2 });
     lastGapCenter = mid;
   } else {
-    // Knipper-laser: volledige balk die aan/uit gaat — timing is de truc
-    zappers.push({ type:'blink', x:canvas.width+50, width:22*Z, cycle:Math.random()*240, glowPhase:Math.random()*Math.PI*2 });
-    // opening blijft onbepaald: volgende laser mag overal (blink laat je overal door)
-    lastGapCenter = null;
+    // Knipper-laser: balk die aan/uit gaat, met een vaste opening om doorheen te vliegen
+    const gs = (280+Math.random()*80)*Z;
+    let gy = CEIL_Y+40*Z+Math.random()*Math.max(20,(floorY-CEIL_Y-80*Z-gs));
+    gy = Math.max(CEIL_Y+30*Z, Math.min(floorY-30*Z-gs, clampGap(gy+gs/2)-gs/2));
+    zappers.push({ type:'blink', x:canvas.width+50, gapY:gy, gapSize:gs, width:22*Z, cycle:Math.random()*240, glowPhase:Math.random()*Math.PI*2 });
+    lastGapCenter = gy + gs/2;
   }
 }
 
@@ -1173,7 +1175,10 @@ function drawZappers() {
       drawLaserEmitter(z.x - eW/2, CEIL_Y, eW, eH, glow, color);
       drawLaserEmitter(z.x - eW/2, floorY - eH, eW, eH, glow, color);
       if (st === 'on') {
-        drawLaserBeam(z.x, CEIL_Y + eH, z.x, floorY - eH, glow, color);
+        drawLaserBeam(z.x, CEIL_Y + eH, z.x, z.gapY, glow, color);
+        drawLaserNode(z.x, z.gapY, glow, color);
+        drawLaserBeam(z.x, z.gapY + z.gapSize, z.x, floorY - eH, glow, color);
+        drawLaserNode(z.x, z.gapY + z.gapSize, glow, color);
       } else if (st === 'warn') {
         // Flikkerende waarschuwing: laser laadt op
         if (Math.floor(z.cycle / 6) % 2 === 0) {
@@ -1274,7 +1279,7 @@ function updateZappers() {
                         (prevBx >= prevZx && bullet.x <= z.x) ||
                         Math.abs(bullet.x - z.x) < 28;
         // Y-bereik check: kogel moet binnen de laser-opening vallen
-        const inBeam = z.type === 'blink' ? true : (bullet.y < z.gapY || bullet.y > z.gapY + z.gapSize);
+        const inBeam = bullet.y < z.gapY || bullet.y > z.gapY + z.gapSize;
         hit = crossed && inBeam;
       } else if (z.type === 'horizontal') {
         hit = Math.abs(bullet.y - z.y) < 22 &&
@@ -1302,7 +1307,8 @@ function updateZappers() {
       if (px+pw>z.x-z.width/2 && px<z.x+z.width/2)
         if (py<z.gapY || py+ph>z.gapY+z.gapSize) endGame();
     } else if (z.type==='blink') {
-      if (blinkState(z) === 'on' && px+pw>z.x-z.width/2 && px<z.x+z.width/2) endGame();
+      if (blinkState(z) === 'on' && px+pw>z.x-z.width/2 && px<z.x+z.width/2)
+        if (py<z.gapY || py+ph>z.gapY+z.gapSize) endGame();
     } else if (z.type==='horizontal') {
       const inGap = px+pw/2>z.x-z.gapSize/2 && px+pw/2<z.x+z.gapSize/2;
       if (!inGap && px+pw>z.x-z.length/2 && px<z.x+z.length/2 && py+ph>z.y-z.height/2 && py<z.y+z.height/2) endGame();
@@ -2307,8 +2313,8 @@ const SHOP_ITEMS = {
       levels: [
         { level:1, desc:'Verdien 1.5x zoveel munten.',            price:200,  effect:{ coinMulti:1.5 } },
         { level:2, desc:'Verdien 2x zoveel munten.',              price:380,  effect:{ coinMulti:2   } },
-        { level:3, desc:'Verdien 3x zoveel munten.',              price:600,  effect:{ coinMulti:3   } },
-        { level:4, desc:'Verdien 5x zoveel munten — jackpot!',    price:1000, effect:{ coinMulti:5   } },
+        { level:3, desc:'Verdien 2.5x zoveel munten.',            price:600,  effect:{ coinMulti:2.5 } },
+        { level:4, desc:'Verdien 3x zoveel munten — max bonus!',  price:850,  effect:{ coinMulti:3   } },
       ]
     },
     {
@@ -2327,10 +2333,10 @@ const SHOP_ITEMS = {
       name: 'Raket Duur',
       icon: '🚀',
       levels: [
-        { level:1, desc:'Raket duurt 20 seconden (was 15).',      price:180,  effect:{ rocketDuration:1200 } },
-        { level:2, desc:'Raket duurt 25 seconden.',               price:360,  effect:{ rocketDuration:1500 } },
-        { level:3, desc:'Raket duurt 35 seconden.',               price:580,  effect:{ rocketDuration:2100 } },
-        { level:4, desc:'Raket duurt 50 seconden — mega boost!',  price:900,  effect:{ rocketDuration:3000 } },
+        { level:1, desc:'Raket duurt 12 seconden (was 10).',      price:180,  effect:{ rocketDuration:720 } },
+        { level:2, desc:'Raket duurt 14 seconden.',               price:360,  effect:{ rocketDuration:840 } },
+        { level:3, desc:'Raket duurt 16 seconden.',               price:580,  effect:{ rocketDuration:960 } },
+        { level:4, desc:'Raket duurt 18 seconden — mega boost!',  price:900,  effect:{ rocketDuration:1080 } },
       ]
     },
     {
@@ -2563,7 +2569,7 @@ function resetUpgradeEffect(upgId) {
   if (upgId === 'slowmo')      POWERUP_TYPES.slowmo.duration = 360;
   if (upgId === 'coins')       window._coinMulti      = 1;
   if (upgId === 'speed')       { POWERUP_TYPES.speed.duration = 300; window._speedMult = 1.8; }
-  if (upgId === 'rocket_dur')  POWERUP_TYPES.rocket.duration  = 900;
+  if (upgId === 'rocket_dur')  POWERUP_TYPES.rocket.duration  = 600;
   if (upgId === 'powerup_rate') window._powerupRate   = 900;
   if (upgId === 'speed_ramp')  window._speedIncrement = 0.15;
 }

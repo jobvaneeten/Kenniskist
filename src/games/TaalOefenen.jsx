@@ -15,13 +15,25 @@ function shuffle(arr) {
   return a
 }
 
+// vraagWoord mag een los woord zijn, een aaneengesloten frase (bijv. "heeft gekocht"),
+// of een uit elkaar getrokken werkwoordelijk gezegde (bijv. "mogen ... spelen" in
+// "Wij mogen buiten spelen") — de woorden worden dan in volgorde gezocht, niet per se naast elkaar.
 function renderZin(zin, vraagWoord) {
   const words = zin.split(' ')
-  let found = false
+  const clean = (w) => w.replace(/[.,!?;:]$/, '')
+  const vraagWoorden = vraagWoord.split(' ')
+
+  const matched = new Set()
+  let ti = 0
+  for (let i = 0; i < words.length && ti < vraagWoorden.length; i++) {
+    if (clean(words[i]) === vraagWoorden[ti] || words[i] === vraagWoorden[ti]) {
+      matched.add(i)
+      ti++
+    }
+  }
+
   return words.map((word, i) => {
-    const clean = word.replace(/[.,!?;:]$/, '')
-    const isMatch = !found && (clean === vraagWoord || word === vraagWoord)
-    if (isMatch) found = true
+    const isMatch = matched.has(i)
     return (
       <span key={i}>
         {isMatch
@@ -127,7 +139,7 @@ export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie }) {
   if (screen === 'oefening') {
     const q = pool[poolIdx]
     const field = mode === 'woordsoorten' ? 'woordsoort' : 'zinsdeel'
-    const answerLabel = mode === 'woordsoorten' ? 'Wat voor woordsoort is het gekleurde woord?' : 'Wat is het zinsdeel van het gekleurde woord?'
+    const answerLabel = mode === 'woordsoorten' ? 'Wat voor woordsoort is het gekleurde woord?' : 'Wat is het zinsdeel van het gekleurde deel?'
     return (
       <div className="tv-screen">
         <div className="tv-top-bar">
@@ -216,7 +228,7 @@ export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie }) {
           <button className="tv-mode-card" onClick={() => { setMode('zinsdelen'); setScreen('filter') }}>
             <span className="tv-mode-emoji">🔍</span>
             <span className="tv-mode-name">Zinsdelen</span>
-            <span className="tv-mode-desc">Onderwerp · Persoonsvorm · Lijdend voorwerp · Bepaling</span>
+            <span className="tv-mode-desc">Onderwerp · Persoonsvorm · Gezegde · Lijdend/meewerkend voorwerp · Bepaling</span>
           </button>
           <button className="tv-mode-card" onClick={() => { setMode('woordsoorten'); setScreen('filter') }}>
             <span className="tv-mode-emoji">📚</span>

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import FootballGame from './FootballGame'
 import TowerDefenseGame from './TowerDefenseGame'
-import { shuffleOefeningen, shuffleGefilterd, checkAntwoord, uitlegVoor } from './werkwoorden'
+import { shuffleOefeningen, shuffleGefilterd, checkAntwoord, uitlegVoor, tokeniseerZin, onderwerpIndices } from './werkwoorden'
 import { BeloningKeuze, JetpackBeloning, AstroBeloning, SpacerunnerBeloning, BRIEFGELD } from './Beloning'
 import SpelBeloning from './SpelBeloning'
 import './werkwoord-spelling.css'
@@ -34,6 +34,86 @@ function catVan(oef) {
   if (oef.tijdKey === 'tt') return 'tt'
   if (oef.tijdKey === 'vd') return 'vd'
   return oef.type === 'sterk' ? 'vtSterk' : 'vtZwak'
+}
+
+// ── Onderwerp markeren: los oefenbankje met volledige zinnen ────────────
+const ONDERWERP_ZINNEN = [
+  { zin: 'De kleine hond blaft naar de postbode.',            onderwerp: 'De kleine hond' },
+  { zin: 'Mijn broer en ik voetballen elke zaterdag.',        onderwerp: 'Mijn broer en ik' },
+  { zin: 'De juf legt de nieuwe les rustig uit.',              onderwerp: 'De juf' },
+  { zin: 'Een grote groep kinderen wacht bij het hek.',       onderwerp: 'Een grote groep kinderen' },
+  { zin: 'Hij fietst iedere dag naar school.',                 onderwerp: 'Hij' },
+  { zin: 'De rode auto rijdt hard over de weg.',              onderwerp: 'De rode auto' },
+  { zin: 'Wij hebben gisteren een taart gebakken.',           onderwerp: 'Wij' },
+  { zin: 'Mijn opa en oma komen dit weekend op bezoek.',      onderwerp: 'Mijn opa en oma' },
+  { zin: 'De kat slaapt de hele dag op de bank.',             onderwerp: 'De kat' },
+  { zin: 'Sam en zijn vrienden spelen buiten in de tuin.',    onderwerp: 'Sam en zijn vrienden' },
+]
+
+// Klikbare woorden om het onderwerp in een zin te markeren, met controle/feedback.
+function OnderwerpMarker({ zin, onderwerp, compact }) {
+  const [selected, setSelected] = useState(new Set())
+  const [phase, setPhase] = useState('answering') // answering | good | bad
+
+  useEffect(() => { setSelected(new Set()); setPhase('answering') }, [zin, onderwerp])
+
+  const woorden = tokeniseerZin(zin)
+  const juisteIdx = onderwerpIndices(zin, onderwerp)
+
+  const toggle = (i) => {
+    if (phase !== 'answering') return
+    setSelected(prev => {
+      const s = new Set(prev)
+      if (s.has(i)) s.delete(i); else s.add(i)
+      return s
+    })
+  }
+
+  const check = () => {
+    const gekozen = [...selected].sort((a, b) => a - b)
+    const goed = gekozen.length === juisteIdx.length && gekozen.every((v, i) => v === juisteIdx[i])
+    setPhase(goed ? 'good' : 'bad')
+  }
+
+  return (
+    <div className={`ws-ond-marker ${compact ? 'ws-ond-compact' : ''}`}>
+      {!compact && <p className="ws-ond-vraag">🎯 Klik op het onderwerp van de zin:</p>}
+      <div className="ws-ond-zin">
+        {woorden.map((w, i) => {
+          const isSel = selected.has(i)
+          const isJuist = juisteIdx.includes(i)
+          const cls = phase === 'answering'
+            ? (isSel ? 'ws-ond-sel' : '')
+            : (isJuist ? 'ws-ond-goed' : (isSel ? 'ws-ond-fout' : ''))
+          return (
+            <span key={i} className={`ws-ond-word ${cls}`} onClick={() => toggle(i)}>{w}</span>
+          )
+        })}
+      </div>
+      {phase === 'answering'
+        ? <button className="ws-ond-check-btn" onClick={check} disabled={selected.size === 0}>Controleer onderwerp →</button>
+        : <div className={`ws-ond-feedback ${phase === 'good' ? 'ws-goed' : 'ws-fout'}`}>
+            {phase === 'good' ? '✅ Goed! Dat is het onderwerp.' : `❌ Niet helemaal. Het onderwerp is "${onderwerp}".`}
+          </div>}
+    </div>
+  )
+}
+
+function OnderwerpOefenScherm({ onBack }) {
+  const [idx, setIdx] = useState(0)
+  const item = ONDERWERP_ZINNEN[idx % ONDERWERP_ZINNEN.length]
+  return (
+    <div className="ws-catsel">
+      <button className="ws-back-btn ws-catsel-back" onClick={onBack}>← Terug</button>
+      <div className="ws-catsel-header">
+        <span className="ws-icon">🎯</span>
+        <h1 className="ws-title">Onderwerp markeren</h1>
+        <p className="ws-sub">Klik het onderwerp van de zin aan</p>
+      </div>
+      <OnderwerpMarker key={idx} zin={item.zin} onderwerp={item.onderwerp} />
+      <button className="ws-ov-verder-btn" onClick={() => setIdx(i => i + 1)}>Volgende zin →</button>
+    </div>
+  )
 }
 
 // ── Vraagkaart ───────────────────────────────────────────────────────────
@@ -85,6 +165,7 @@ function VraagKaart({ oef, onNext }) {
         <div className="ws-feedback ws-goed">
           <span>🎉 Goed!</span>
           <div className="ws-uitleg">💡 {uitlegVoor(oef)}</div>
+          {oef.onderwerp && <OnderwerpMarker zin={oef.zin.replace('___', oef.antwoord)} onderwerp={oef.onderwerp} compact />}
           <button className="ws-verder-btn" onClick={() => onNext(true, input)}>Verder →</button>
         </div>
       )}
@@ -93,6 +174,7 @@ function VraagKaart({ oef, onNext }) {
         <div className="ws-feedback ws-fout">
           <span>❌ Niet goed. Het juiste antwoord is <b>{oef.antwoord}</b>.</span>
           <div className="ws-uitleg">💡 {uitlegVoor(oef)}</div>
+          {oef.onderwerp && <OnderwerpMarker zin={oef.zin.replace('___', oef.antwoord)} onderwerp={oef.onderwerp} compact />}
           <button className="ws-verder-btn" onClick={() => onNext(false, input)}>Volgende →</button>
         </div>
       )}
@@ -157,7 +239,7 @@ const CAT_INFO = {
   vd:      { label: 'Voltooid deelwoord',   vb: 'hij heeft gewerkt · is gelopen', cls: 'ws-tijd-vd' },
 }
 
-function CatSelectie({ groep, onStart, onBack }) {
+function CatSelectie({ groep, onStart, onBack, onOnderwerp }) {
   const [gekozen, setGekozen] = useState(new Set(ALLE_CATS))
 
   const toggle = (key) => setGekozen(prev => {
@@ -199,6 +281,9 @@ function CatSelectie({ groep, onStart, onBack }) {
       <button className="ws-ov-verder-btn" onClick={() => onStart(gekozen)}>
         Start! (€ {gekozen.size * 10} per spel) →
       </button>
+      <button className="ws-catsel-onderwerp-btn" onClick={onOnderwerp}>
+        🎯 Onderwerp markeren oefenen →
+      </button>
     </div>
   )
 }
@@ -213,6 +298,7 @@ export default function WerkwoordSpelling({ groep, onBack, addBriefgeld }) {
   const [phase, setPhase]   = useState('play')  // play | keuze | overzicht | football | ...
   const [footballBracket, setFootballBracket] = useState(null)  // toernooi blijft bewaard
   const [tdStarted, setTdStarted] = useState(false)  // TD ooit gestart in deze sessie?
+  const [onderwerpActief, setOnderwerpActief] = useState(false)
 
   // Overzicht-tracking (per 20 opgaven)
   const [gemaakt, setGemaakt] = useState(0)            // beantwoorde opgaven (0..20)
@@ -273,8 +359,11 @@ export default function WerkwoordSpelling({ groep, onBack, addBriefgeld }) {
   }, [addBriefgeld, beloning])
 
   // ── Early return voor cat-selectie (pas ná alle hooks) ──
+  if (onderwerpActief) {
+    return <div className="ws-catsel-screen"><OnderwerpOefenScherm onBack={() => setOnderwerpActief(false)} /></div>
+  }
   if (gekozenCats === null) {
-    return <div className="ws-catsel-screen"><CatSelectie groep={groep} onStart={startMetCats} onBack={onBack} /></div>
+    return <div className="ws-catsel-screen"><CatSelectie groep={groep} onStart={startMetCats} onBack={onBack} onOnderwerp={() => setOnderwerpActief(true)} /></div>
   }
 
   const totaalGoed = CATEGORIEEN.reduce((sum, c) => sum + stats[c.key].goed, 0)

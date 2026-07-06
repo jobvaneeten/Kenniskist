@@ -431,7 +431,9 @@
 .viewer-panel > .play3d-btn {
   padding: 15px 34px;
   font-size: 17px;
-  animation: playBtnIdlePulse 2.4s ease-in-out infinite;
+}
+.viewer-panel > .play3d-btn:hover {
+  animation: playBtnIdlePulse 1.1s ease-in-out infinite;
 }
 .viewer-panel > .play3d-btn::after {
   content: '';

@@ -170,6 +170,7 @@ export default function Shop({ curuntie, briefgeld, addBriefgeld, onExchange, un
 
   const openLootbox = (item) => {
     if (briefgeld < LOOTBOX_COST) return
+    setSelectedKey(null)
 
     const pool    = getPool(item.key)
     const already = unlockedColors[item.key] || []

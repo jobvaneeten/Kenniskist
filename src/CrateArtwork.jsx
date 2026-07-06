@@ -1,7 +1,7 @@
 // Treasure-chest artwork per clothing category.
-// Shirt/Broek/Sokken/Schoenen use real Nano Banana Pro illustrations (see
-// public/crates/); Pet and the animated lootbox-open modal (which needs a
-// separate lid layer to pop open) fall back to the procedural SVG version.
+// Shirt/Broek/Sokken/Schoenen/Pet use real Nano Banana Pro illustrations (see
+// public/crates/), including in the animated lootbox-open modal. Only
+// categories without a photo fall back to the procedural SVG version.
 import { ICON_PATHS } from './categoryIcons'
 
 const CRATE_IMAGES = {
@@ -30,10 +30,12 @@ function Star({ x, y, s, color, delay }) {
   )
 }
 
-// Static photo variant — used in the overview cards and detail panel.
-function CratePhoto({ itemKey, accent, size, big }) {
+// Photo variant — used in the overview cards, detail panel, and the
+// lootbox-open modal (animState drives the bob/shake/explode classes there).
+function CratePhoto({ itemKey, accent, size, big, animState }) {
+  const animClass = animState ? `crate-anim-${animState}` : ''
   return (
-    <div className={`crate-art-photo ${big ? 'crate-art-photo-big' : ''}`} style={{ width: size, height: size }}>
+    <div className={`crate-art-photo ${big ? 'crate-art-photo-big' : ''} ${animClass}`} style={{ width: size, height: size }}>
       <div className="crate-art-floorglow" style={{ '--accent': accent }} />
       {TWINKLE_OFFSETS.map((t, i) => (
         <span
@@ -60,8 +62,8 @@ export default function CrateArtwork({ itemKey, iconKey, accent, size = 130, big
   const iconPath = ICON_PATHS[iconKey] || ICON_PATHS.shirt
   const animClass = animState ? `crate-anim-${animState}` : ''
 
-  if (!animState && CRATE_IMAGES[itemKey]) {
-    return <CratePhoto itemKey={itemKey} accent={accent} size={size} big={big} />
+  if (CRATE_IMAGES[itemKey]) {
+    return <CratePhoto itemKey={itemKey} accent={accent} size={size} big={big} animState={animState} />
   }
 
   return (
