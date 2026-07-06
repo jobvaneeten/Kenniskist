@@ -822,11 +822,16 @@ export default class GameScene extends Phaser.Scene {
     const mapW = MAP_COLS * TILE_SIZE
     const mapH = MAP_ROWS * TILE_SIZE
 
-    // Geschilderde achtergrond (terrein, geen pad — dat tekenen we
-    // hieronder programmatisch zodat het altijd exact op de looproute
-    // van de vijanden aansluit)
+    // Geschilderde achtergrond (alleen terrein — geen pad en geen water,
+    // die tekenen we hieronder programmatisch zodat ze altijd exact op
+    // het grid aansluiten en nooit door elkaar heen lopen)
     this.add.image(mapW / 2, mapH / 2, `bg_map${this.mapId}`)
       .setDisplaySize(mapW, mapH).setDepth(0)
+
+    // ── Water tekenen vóór het pad: het grid garandeert dat een cel
+    // nooit tegelijk pad én water is, dus deze twee kunnen elkaar nooit
+    // overlappen ──────────────────────────────────────────────────────
+    this._drawWater(grid)
 
     // ── Pad tekenen op basis van het grid (garandeert dat het exact
     // overeenkomt met de waypoints waar de vijanden overheen lopen) ──
@@ -881,6 +886,79 @@ export default class GameScene extends Phaser.Scene {
     this.mapData.routes.forEach(wp => marker(26, wp[0].y, '▶', 0x2e8b3a))
     const exitWp = this.mapData.routes[0]
     marker(mapW - 26, exitWp[exitWp.length - 1].y, '🏁', 0xb03030)
+  }
+
+  // ── Water-tekening: exact op het grid (cel-type 3), dus altijd
+  // gelijk aan waar watertorens geplaatst mogen worden en nooit
+  // afhankelijk van hoe precies de geschilderde achtergrond een vijver
+  // suggereert ────────────────────────────────────────────────────────
+  _drawWater(grid) {
+    const isWaterCell = (c, r) => r >= 0 && r < MAP_ROWS && c >= 0 && c < MAP_COLS && grid[r][c] === 3
+
+    const g = this.add.graphics().setDepth(1)
+
+    // Zandige oever rond elke vijver (net iets groter dan de watercellen)
+    g.fillStyle(0xe4d3a0, 0.9)
+    for (let row = 0; row < MAP_ROWS; row++) {
+      for (let col = 0; col < MAP_COLS; col++) {
+        if (!isWaterCell(col, row)) continue
+        g.fillRoundedRect(col * TILE_SIZE - 4, row * TILE_SIZE - 4, TILE_SIZE + 8, TILE_SIZE + 8, 10)
+      }
+    }
+
+    // Dieper watervlak met verloop (donkerder onder, lichter boven)
+    for (let row = 0; row < MAP_ROWS; row++) {
+      for (let col = 0; col < MAP_COLS; col++) {
+        if (!isWaterCell(col, row)) continue
+        const x = col * TILE_SIZE, y = row * TILE_SIZE
+        g.fillGradientStyle(0x2e93c4, 0x2e93c4, 0x0f4a6a, 0x0f4a6a, 1)
+        g.fillRect(x, y, TILE_SIZE, TILE_SIZE)
+      }
+    }
+
+    // Randlijn + lichte glans waar water grenst aan niet-water (oever)
+    g.lineStyle(3, 0x1a6a94, 0.9)
+    for (let row = 0; row < MAP_ROWS; row++) {
+      for (let col = 0; col < MAP_COLS; col++) {
+        if (!isWaterCell(col, row)) continue
+        const x = col * TILE_SIZE, y = row * TILE_SIZE
+        if (!isWaterCell(col, row - 1)) g.lineBetween(x, y, x + TILE_SIZE, y)
+        if (!isWaterCell(col, row + 1)) g.lineBetween(x, y + TILE_SIZE, x + TILE_SIZE, y + TILE_SIZE)
+        if (!isWaterCell(col - 1, row)) g.lineBetween(x, y, x, y + TILE_SIZE)
+        if (!isWaterCell(col + 1, row)) g.lineBetween(x + TILE_SIZE, y, x + TILE_SIZE, y + TILE_SIZE)
+      }
+    }
+
+    // Deterministische glinstering/rimpels (zelfde cel → zelfde patroon)
+    for (let row = 0; row < MAP_ROWS; row++) {
+      for (let col = 0; col < MAP_COLS; col++) {
+        if (!isWaterCell(col, row)) continue
+        const h = (col * 73 + row * 149) % 100
+        if (h % 3 !== 0) continue
+        const wx = col * TILE_SIZE + 10 + (h % 5) * 6
+        const wy = row * TILE_SIZE + 10 + (h % 4) * 7
+        g.lineStyle(2, 0x9fe0ff, 0.5)
+        g.lineBetween(wx, wy, wx + 12, wy)
+      }
+    }
+
+    // Zachte bewegende glinstering (animatie) bovenop het water
+    const shimmer = this.add.graphics().setDepth(1).setAlpha(0.25)
+    this.tweens.add({
+      targets: shimmer, alpha: { from: 0.15, to: 0.35 },
+      duration: 1400, yoyo: true, repeat: -1, ease: 'Sine.InOut',
+    })
+    for (let row = 0; row < MAP_ROWS; row++) {
+      for (let col = 0; col < MAP_COLS; col++) {
+        if (!isWaterCell(col, row)) continue
+        const h = (col * 41 + row * 67) % 100
+        if (h % 4 !== 0) continue
+        const wx = col * TILE_SIZE + 6 + (h % 6) * 6
+        const wy = row * TILE_SIZE + 6 + (h % 5) * 7
+        shimmer.fillStyle(0xffffff, 1)
+        shimmer.fillEllipse(wx, wy, 14, 4)
+      }
+    }
   }
 
   // ── Pad-tekening: exact op het grid, dus altijd gelijk aan de route
