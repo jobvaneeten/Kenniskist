@@ -33,6 +33,7 @@ export function createGame(parent, { onBack, onRoundDone }) {
   }
 
   const game = new Phaser.Game(config)
+  if (typeof window !== 'undefined') window.__tdGame = game   // debug/test-hook
 
   // Propagate back event from Phaser → React
   game.events.on('back', () => {

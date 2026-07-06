@@ -40,13 +40,14 @@ class Enemy {
     this.container = scene.add.container(x, y).setDepth(5)
 
     // Visuele elementen (worden bijgewerkt door _rebuildVisuals)
-    this._gfx = scene.add.graphics()
+    this._gfx  = scene.add.graphics()
+    this._body = scene.add.image(0, 0, 'balloon')   // getint per laag; blimp voor MOAB
     this._hpBg  = scene.add.rectangle(0, 0, 36, 5, 0x220000).setOrigin(0.5)
     this._hpBar = scene.add.rectangle(0, 0, 36, 5, 0x22dd22).setOrigin(0.5)
     this._layerLabel = scene.add.text(0, 0, '', {
       fontSize: '10px', fontFamily: 'Arial Black', color: '#ffffff',
     }).setOrigin(0.5)
-    this.container.add([this._gfx, this._hpBg, this._hpBar, this._layerLabel])
+    this.container.add([this._gfx, this._body, this._hpBg, this._hpBar, this._layerLabel])
 
     this._rebuildVisuals()
 
@@ -72,6 +73,7 @@ class Enemy {
     this._gfx.clear()
     const r    = this.data.size
     const def  = this._layerDef
+    const isMoab = def === LAYERS.moab
     const remaining = this._layers.length - this._layerIdx
 
     // Onderste lagen als vage ringen zichtbaar
@@ -85,17 +87,11 @@ class Enemy {
     this._gfx.fillStyle(def.glow || def.color, 0.18)
     this._gfx.fillCircle(0, 0, r + 5)
 
-    // Hoofd-lichaam
-    this._gfx.fillStyle(def.color, 1)
-    this._gfx.fillCircle(0, 0, r)
-
-    // Rand
-    this._gfx.lineStyle(2.5, def.border, 1)
-    this._gfx.strokeCircle(0, 0, r)
-
-    // Ballon-highlight (wit vlekje linksboven)
-    this._gfx.fillStyle(0xffffff, 0.35)
-    this._gfx.fillCircle(-r * 0.38, -r * 0.38, r * 0.28)
+    // Lichaam: ballon-sprite getint in de laagkleur (blimp voor de MOAB)
+    this._body.setTexture(isMoab ? 'blimp' : 'balloon')
+    const s = isMoab ? r * 3.1 : r * 2.5
+    this._body.setDisplaySize(s, s)
+    this._body.setTint(def.color)
 
     // Immuun-icoontje
     const immune = def.immune || []
@@ -111,7 +107,7 @@ class Enemy {
     this._updateHpBar()
 
     // MOAB: extra schildring
-    if (this._layerDef === LAYERS.moab) {
+    if (isMoab) {
       this._gfx.lineStyle(4, 0x4466FF, 0.7)
       this._gfx.strokeCircle(0, 0, r + 8)
       this._gfx.lineStyle(2, 0xAABBFF, 0.4)
@@ -136,7 +132,7 @@ class Enemy {
     // Bevroren
     if (this.frozen > 0) {
       this.frozen -= delta
-      this._gfx.setTint?.(0xADD8E6)
+      this._body.setTint(0x99ccee)
       this.container.setAlpha(0.8)
       if (!this._frozenOverlay) {
         this._frozenOverlay = this.scene.add.graphics().setDepth(6)
@@ -149,7 +145,10 @@ class Enemy {
       this._frozenOverlay.fillCircle(this.container.x, this.container.y, r + 6)
       return
     }
-    if (this._frozenOverlay) { this._frozenOverlay.destroy(); this._frozenOverlay = null }
+    if (this._frozenOverlay) {
+      this._frozenOverlay.destroy(); this._frozenOverlay = null
+      this._body.setTint(this._layerDef.color)   // ijs-tint terugdraaien
+    }
     this.container.setAlpha(1)
 
     // Gif-tick
@@ -349,19 +348,27 @@ class Projectile {
     this.x = tower.x
     this.y = tower.y
 
-    // Visual
+    // Visual: zachte particle-textures met tint i.p.v. platte cirkels
     const color = td.projectileColor
     if (this.special === 'stomp' || this.special === 'mud' || this.special === 'ice') {
-      this.gfx = scene.add.circle(this.x, this.y, 10, color).setDepth(7)
-      scene.tweens.add({ targets: this.gfx, scale: { from: 0.6, to: 1 }, duration: 100 })
+      this.gfx = scene.add.image(this.x, this.y, 'circle_03')
+        .setDisplaySize(30, 30).setTint(color).setDepth(7)
+      scene.tweens.add({ targets: this.gfx, scale: { from: this.gfx.scaleX * 0.6, to: this.gfx.scaleX }, duration: 100 })
     } else if (this.special === 'pierce') {
-      this.gfx = scene.add.triangle(this.x, this.y, 0, -10, 8, 8, -8, 8, color).setDepth(7)
+      this.gfx = scene.add.image(this.x, this.y, 'trace_01')
+        .setDisplaySize(16, 34).setTint(color).setDepth(7)
+      const ang = Math.atan2(target.container.y - tower.y, target.container.x - tower.x)
+      this.gfx.setRotation(ang + Math.PI / 2)
     } else {
-      this.gfx = scene.add.circle(this.x, this.y, r, color).setDepth(7)
+      this.gfx = scene.add.image(this.x, this.y, 'circle_05')
+        .setDisplaySize(r * 2.6, r * 2.6).setTint(color).setDepth(7)
     }
+    this.gfx.setBlendMode(Phaser.BlendModes.ADD)
 
     // Glow effect
-    this.glow = scene.add.circle(this.x, this.y, r + 4, color, 0.3).setDepth(6)
+    this.glow = scene.add.image(this.x, this.y, 'light_01')
+      .setDisplaySize(r * 5, r * 5).setTint(color).setAlpha(0.5)
+      .setBlendMode(Phaser.BlendModes.ADD).setDepth(6)
 
     // Angle offset for triple shot
     if (angleOffset !== 0) {
@@ -537,12 +544,18 @@ class Tower {
     this.target = null
 
     // Sprite — save scale after setDisplaySize so tweens can respect it
-    this.sprite = scene.add.image(this.x, this.y, key)
-      .setDisplaySize(52, 52).setDepth(6)
+    this.sprite = scene.add.image(this.x, this.y - 4, key)
+      .setDisplaySize(54, 54).setDepth(6)
     this._spriteScale = this.sprite.scaleX
 
-    // Platform under tower
-    this.platform = scene.add.circle(this.x, this.y, 30, 0x224422, 0.7).setDepth(5)
+    // Platform under tower: schaduw + houten ring-podium
+    this.platform = scene.add.graphics().setDepth(5)
+    this.platform.setPosition(this.x, this.y)
+    this.platform.fillStyle(0x000000, 0.30); this.platform.fillEllipse(0, 8, 52, 20)
+    this.platform.fillStyle(0x6b4a2a, 1);    this.platform.fillEllipse(0, 4, 48, 22)
+    this.platform.fillStyle(0x8a6238, 1);    this.platform.fillEllipse(0, 0, 48, 22)
+    this.platform.fillStyle(0xa87c4a, 0.55); this.platform.fillEllipse(0, -2, 36, 14)
+    this.platform.lineStyle(2, 0x4a3018, 0.9); this.platform.strokeEllipse(0, 0, 48, 22)
 
     // Range circle (hidden)
     this.rangeCircle = scene.add.circle(this.x, this.y, this.getRange())
@@ -772,54 +785,60 @@ export default class GameScene extends Phaser.Scene {
   _buildMap() {
     const grid = this.mapData.grid
     const ts   = this.mapData.tileset
+    const mapW = MAP_COLS * TILE_SIZE
+    const mapH = MAP_ROWS * TILE_SIZE
 
-    for (let row = 0; row < MAP_ROWS; row++) {
-      for (let col = 0; col < MAP_COLS; col++) {
-        const cell = grid[row][col]
-        const cx = col * TILE_SIZE + TILE_SIZE / 2
-        const cy = row * TILE_SIZE + TILE_SIZE / 2
+    // Geschilderde achtergrond (terrein + pad in één beeld)
+    this.add.image(mapW / 2, mapH / 2, `bg_map${this.mapId}`)
+      .setDisplaySize(mapW, mapH).setDepth(0)
 
-        // Altijd achtergrond-tegel leggen
-        this.add.image(cx, cy, ts[0]).setDisplaySize(TILE_SIZE, TILE_SIZE).setDepth(0)
-
-        if (cell >= 11 && ts[cell]) {
-          // Pad-tegel (randen/hoeken)
-          this.add.image(cx, cy, ts[cell]).setDisplaySize(TILE_SIZE, TILE_SIZE).setDepth(1)
-        } else if (cell === 2 && ts.deco && ts.deco.length > 0) {
-          // Willekeurige deco-tegel
-          const key = ts.deco[Math.floor(Math.random() * ts.deco.length)]
-          this.add.image(cx, cy, key)
-            .setDisplaySize(TILE_SIZE, TILE_SIZE)
-            .setDepth(1)
+    // Deco-sprites op de deco-cellen: groter dan één tegel, met een
+    // vaste pseudo-random keuze zodat de map er elke keer hetzelfde
+    // uitziet, en gesorteerd op y voor een nette overlap.
+    if (ts.deco && ts.deco.length > 0) {
+      for (let row = 0; row < MAP_ROWS; row++) {
+        for (let col = 0; col < MAP_COLS; col++) {
+          if (grid[row][col] !== 2) continue
+          // deterministisch: zelfde cel → zelfde sprite/variatie
+          const h    = (col * 73 + row * 149) % 100
+          if (h % 2 === 0) continue                    // helft overslaan: rustiger beeld
+          const key  = ts.deco[h % ts.deco.length]
+          const size = 38 + (h % 4) * 7                // 38-59 px
+          const cx   = col * TILE_SIZE + TILE_SIZE / 2 + ((h % 7) - 3)
+          const cy   = row * TILE_SIZE + TILE_SIZE / 2
+          this.add.image(cx, cy + TILE_SIZE * 0.28, key)
+            .setDisplaySize(size, size)
+            .setOrigin(0.5, 0.82)                      // voet op de cel
+            .setDepth(1 + row * 0.001)
         }
       }
     }
 
-    // ── Grid-overlay op bouwbare cellen ───────────────────────────
-    const gridColor = ts ? 0xffee88 : 0x88ff88
-    const overlay = this.add.graphics().setDepth(2).setAlpha(0.10)
+    // ── Grid-overlay op bouwbare cellen (subtiel) ─────────────────
+    const overlay = this.add.graphics().setDepth(2).setAlpha(0.07)
     for (let row = 0; row < MAP_ROWS; row++) {
       for (let col = 0; col < MAP_COLS; col++) {
         if (grid[row][col] === 0) {
-          overlay.lineStyle(1, gridColor, 1)
-          overlay.strokeRect(col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE)
+          overlay.lineStyle(1, 0xffffff, 1)
+          overlay.strokeRect(col * TILE_SIZE + 1, row * TILE_SIZE + 1, TILE_SIZE - 2, TILE_SIZE - 2)
         }
       }
     }
 
     // ── Spawn- & exit-markeringen ──────────────────────────────────
-    let spawnY, exitY
-    if (ts) {
-      // Midden van het 2-brede pad: gebruik eerste/laatste waypoint
-      const wp = this.mapData.waypoints
-      spawnY = wp[0].y - 13
-      exitY  = wp[wp.length - 1].y - 13
-    } else {
-      spawnY = this.mapData.spawnRow * TILE_SIZE + TILE_SIZE / 2 - 13
-      exitY  = this.mapData.exitRow  * TILE_SIZE + TILE_SIZE / 2 - 13
+    const wp = this.mapData.waypoints
+    const spawnY = wp[0].y
+    const exitY  = wp[wp.length - 1].y
+    const marker = (x, y, emoji, color) => {
+      const g = this.add.graphics().setDepth(3)
+      g.fillStyle(0x000000, 0.35); g.fillCircle(x, y + 2, 20)
+      g.fillStyle(color, 0.9);     g.fillCircle(x, y, 19)
+      g.lineStyle(3, 0xffffff, 0.85); g.strokeCircle(x, y, 19)
+      this.add.text(x, y, emoji, { fontSize: '20px' }).setOrigin(0.5).setDepth(4)
+      this.tweens.add({ targets: g, alpha: { from: 0.75, to: 1 }, duration: 800, yoyo: true, repeat: -1 })
     }
-    this.add.text(4, spawnY, '▶', { fontSize: '26px' }).setDepth(3)
-    this.add.text(MAP_COLS * TILE_SIZE - 38, exitY, '🏁', { fontSize: '26px' }).setDepth(3)
+    marker(26, spawnY, '▶', 0x2e8b3a)
+    marker(mapW - 26, exitY, '🏁', 0xb03030)
   }
 
   // ── Wave system ────────────────────────────────────────────────────

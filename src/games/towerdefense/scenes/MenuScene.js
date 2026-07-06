@@ -14,16 +14,17 @@ export default class MenuScene extends Phaser.Scene {
     const W = this.scale.width, H = this.scale.height
     this.progress = loadProgress()
 
-    // ── Background gradient ────────────────────────────────────────
-    const bg = this.add.graphics()
-    bg.fillGradientStyle(0x0d2b0a, 0x0d2b0a, 0x1a4d0f, 0x1a4d0f, 1)
-    bg.fillRect(0, 0, W, H)
-
-    // Subtle grid pattern
-    const grid = this.add.graphics()
-    grid.lineStyle(1, 0x1e5c15, 0.3)
-    for (let x = 0; x < W; x += 40) { grid.lineBetween(x, 0, x, H) }
-    for (let y = 0; y < H; y += 40) { grid.lineBetween(0, y, W, y) }
+    // ── Background: geschilderde savanne-map, gedimd ───────────────
+    const bgImg = this.add.image(W / 2, H / 2, 'bg_map1')
+    const cover = Math.max(W / bgImg.width, H / bgImg.height)
+    bgImg.setScale(cover)
+    const dim = this.add.graphics()
+    dim.fillStyle(0x061206, 0.78); dim.fillRect(0, 0, W, H)
+    // zachte vignette-randen
+    dim.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0.5, 0.5, 0, 0)
+    dim.fillRect(0, 0, W, H * 0.25)
+    dim.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0, 0, 0.5, 0.5)
+    dim.fillRect(0, H * 0.75, W, H * 0.25)
 
     // ── Title ──────────────────────────────────────────────────────
     this.add.text(W/2, 60, '🏰 Tower Defence', {
@@ -61,25 +62,39 @@ export default class MenuScene extends Phaser.Scene {
       card.strokeRoundedRect(rx, ry, cardW, cardH, 18)
       if (unlocked) { card.lineStyle(1, 0x88ff88, 0.25); card.strokeRoundedRect(rx - 2, ry - 2, cardW + 4, cardH + 4, 20) }
 
-      // Map emoji
-      this.add.text(cx, cardY - 120, map.emoji, {
-        fontSize: '72px',
-      }).setOrigin(0.5).setAlpha(unlocked ? 1 : 0.3)
+      // Map-preview: uitsnede van de echte geschilderde map
+      const pvW = cardW - 24, pvH = 118
+      const pv = this.add.image(cx, cardY - 105, `bg_map${map.id}`)
+      const pvScale = Math.max(pvW / pv.width, pvH / pv.height)
+      pv.setScale(pvScale)
+      pv.setCrop(
+        (pv.width  - pvW / pvScale) / 2,
+        (pv.height - pvH / pvScale) / 2,
+        pvW / pvScale, pvH / pvScale,
+      )
+      pv.setAlpha(unlocked ? 1 : 0.25)
+      const pvFrame = this.add.graphics()
+      pvFrame.lineStyle(2, unlocked ? 0x88dd88 : 0x444444, 0.9)
+      pvFrame.strokeRoundedRect(cx - pvW / 2, cardY - 105 - pvH / 2, pvW, pvH, 8)
+      // klein emoji-badge in de hoek van de preview
+      this.add.text(cx - pvW / 2 + 16, cardY - 105 - pvH / 2 + 14, map.emoji, {
+        fontSize: '22px',
+      }).setOrigin(0.5).setAlpha(unlocked ? 1 : 0.4)
 
       // Map name
-      this.add.text(cx, cardY - 50, map.name, {
+      this.add.text(cx, cardY - 28, map.name, {
         fontSize: '28px', fontFamily: 'Arial Black, Arial',
         color: unlocked ? '#ffffff' : '#666666',
       }).setOrigin(0.5)
 
       // Difficulty stars
       const stars = '⭐'.repeat(map.difficulty) + '☆'.repeat(3 - map.difficulty)
-      this.add.text(cx, cardY - 15, stars, {
-        fontSize: '22px',
+      this.add.text(cx, cardY + 6, stars, {
+        fontSize: '20px',
       }).setOrigin(0.5).setAlpha(unlocked ? 1 : 0.4)
 
       // Description
-      this.add.text(cx, cardY + 22, map.description, {
+      this.add.text(cx, cardY + 38, map.description, {
         fontSize: '14px', fontFamily: 'Arial',
         color: unlocked ? '#99cc88' : '#555555',
         wordWrap: { width: cardW - 20 }, align: 'center',
