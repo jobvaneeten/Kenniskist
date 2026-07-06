@@ -822,9 +822,15 @@ export default class GameScene extends Phaser.Scene {
     const mapW = MAP_COLS * TILE_SIZE
     const mapH = MAP_ROWS * TILE_SIZE
 
-    // Geschilderde achtergrond (terrein + pad in één beeld)
+    // Geschilderde achtergrond (terrein, geen pad — dat tekenen we
+    // hieronder programmatisch zodat het altijd exact op de looproute
+    // van de vijanden aansluit)
     this.add.image(mapW / 2, mapH / 2, `bg_map${this.mapId}`)
       .setDisplaySize(mapW, mapH).setDepth(0)
+
+    // ── Pad tekenen op basis van het grid (garandeert dat het exact
+    // overeenkomt met de waypoints waar de vijanden overheen lopen) ──
+    this._drawPath(grid)
 
     // Deco-sprites op de deco-cellen: groter dan één tegel, met een
     // vaste pseudo-random keuze zodat de map er elke keer hetzelfde
@@ -875,6 +881,50 @@ export default class GameScene extends Phaser.Scene {
     this.mapData.routes.forEach(wp => marker(26, wp[0].y, '▶', 0x2e8b3a))
     const exitWp = this.mapData.routes[0]
     marker(mapW - 26, exitWp[exitWp.length - 1].y, '🏁', 0xb03030)
+  }
+
+  // ── Pad-tekening: exact op het grid, dus altijd gelijk aan de route
+  // die vijanden lopen (onafhankelijk van hoe precies de geschilderde
+  // achtergrond een pad suggereert) ─────────────────────────────────
+  _drawPath(grid) {
+    const theme = this.mapData.pathTheme || { base: 0xd9bb7e, edge: 0xa9884f, fleck: 0xc2a05f }
+    const isPathCell = (c, r) => r >= 0 && r < MAP_ROWS && c >= 0 && c < MAP_COLS && grid[r][c] === 19
+
+    const g = this.add.graphics().setDepth(1)
+
+    // Basisvlak per padcel
+    g.fillStyle(theme.base, 1)
+    for (let row = 0; row < MAP_ROWS; row++) {
+      for (let col = 0; col < MAP_COLS; col++) {
+        if (grid[row][col] === 19) g.fillRect(col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE)
+      }
+    }
+
+    // Randlijn waar het pad grenst aan niet-pad (buitenrand van de route)
+    g.lineStyle(3, theme.edge, 0.8)
+    for (let row = 0; row < MAP_ROWS; row++) {
+      for (let col = 0; col < MAP_COLS; col++) {
+        if (!isPathCell(col, row)) continue
+        const x = col * TILE_SIZE, y = row * TILE_SIZE
+        if (!isPathCell(col, row - 1)) g.lineBetween(x, y, x + TILE_SIZE, y)
+        if (!isPathCell(col, row + 1)) g.lineBetween(x, y + TILE_SIZE, x + TILE_SIZE, y + TILE_SIZE)
+        if (!isPathCell(col - 1, row)) g.lineBetween(x, y, x, y + TILE_SIZE)
+        if (!isPathCell(col + 1, row)) g.lineBetween(x + TILE_SIZE, y, x + TILE_SIZE, y + TILE_SIZE)
+      }
+    }
+
+    // Deterministische textuur-spikkels (zelfde cel → zelfde patroon)
+    g.fillStyle(theme.fleck, 0.35)
+    for (let row = 0; row < MAP_ROWS; row++) {
+      for (let col = 0; col < MAP_COLS; col++) {
+        if (grid[row][col] !== 19) continue
+        const h = (col * 73 + row * 149) % 100
+        if (h % 3 !== 0) continue
+        const fx = col * TILE_SIZE + 8 + (h % 5) * 7
+        const fy = row * TILE_SIZE + 8 + (h % 4) * 8
+        g.fillCircle(fx, fy, 2.5)
+      }
+    }
   }
 
   // ── Wave system ────────────────────────────────────────────────────
