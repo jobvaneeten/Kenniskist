@@ -2,6 +2,7 @@ import Phaser from 'phaser'
 import { MAPS } from '../data/MapData.js'
 
 const SAVE_KEY = 'td_progress'
+const MAX_DIFFICULTY = Math.max(...MAPS.map(m => m.difficulty))
 
 function loadProgress() {
   try { return JSON.parse(localStorage.getItem(SAVE_KEY) || '{}') } catch { return {} }
@@ -19,7 +20,7 @@ export default class MenuScene extends Phaser.Scene {
     const cover = Math.max(W / bgImg.width, H / bgImg.height)
     bgImg.setScale(cover)
     const dim = this.add.graphics()
-    dim.fillStyle(0x061206, 0.78); dim.fillRect(0, 0, W, H)
+    dim.fillStyle(0x160e06, 0.78); dim.fillRect(0, 0, W, H)
     // zachte vignette-randen
     dim.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0.5, 0.5, 0, 0)
     dim.fillRect(0, 0, W, H * 0.25)
@@ -29,12 +30,12 @@ export default class MenuScene extends Phaser.Scene {
     // ── Title ──────────────────────────────────────────────────────
     this.add.text(W/2, 60, '🏰 Tower Defence', {
       fontSize: '48px', fontFamily: 'Arial Black, Arial',
-      color: '#ffffff', stroke: '#1a5c0a', strokeThickness: 6,
+      color: '#ffffff', stroke: '#7a4a14', strokeThickness: 6,
       shadow: { offsetX: 3, offsetY: 3, color: '#000', blur: 8, fill: true },
     }).setOrigin(0.5)
 
     this.add.text(W/2, 115, 'Bescherm je basis! Kies een level:', {
-      fontSize: '20px', fontFamily: 'Arial', color: '#a0e890',
+      fontSize: '20px', fontFamily: 'Arial', color: '#f0cf9b',
     }).setOrigin(0.5)
 
     // ── Map cards ─────────────────────────────────────────────────
@@ -53,14 +54,14 @@ export default class MenuScene extends Phaser.Scene {
       const card = this.add.graphics()
       const rx = cx - cardW/2, ry = cardY - cardH/2
       card.fillStyle(0x000000, 0.4); card.fillRoundedRect(rx, ry + 8, cardW, cardH, 18)
-      if (unlocked) card.fillGradientStyle(0x216a10, 0x216a10, 0x0c2e06, 0x0c2e06, 1)
+      if (unlocked) card.fillGradientStyle(0x4a3018, 0x4a3018, 0x241408, 0x241408, 1)
       else          card.fillGradientStyle(0x222222, 0x222222, 0x141414, 0x141414, 0.9)
       card.fillRoundedRect(rx, ry, cardW, cardH, 18)
       card.fillStyle(0xffffff, unlocked ? 0.08 : 0.03)
       card.fillRoundedRect(rx + 3, ry + 3, cardW - 6, cardH * 0.3, 15)
-      card.lineStyle(3, unlocked ? 0x55dd55 : 0x444444, 1)
+      card.lineStyle(3, unlocked ? 0xd9a05a : 0x444444, 1)
       card.strokeRoundedRect(rx, ry, cardW, cardH, 18)
-      if (unlocked) { card.lineStyle(1, 0x88ff88, 0.25); card.strokeRoundedRect(rx - 2, ry - 2, cardW + 4, cardH + 4, 20) }
+      if (unlocked) { card.lineStyle(1, 0xffd9a0, 0.3); card.strokeRoundedRect(rx - 2, ry - 2, cardW + 4, cardH + 4, 20) }
 
       // Map-preview: uitsnede van de echte geschilderde map
       const pvW = cardW - 24, pvH = 118
@@ -74,7 +75,7 @@ export default class MenuScene extends Phaser.Scene {
       )
       pv.setAlpha(unlocked ? 1 : 0.25)
       const pvFrame = this.add.graphics()
-      pvFrame.lineStyle(2, unlocked ? 0x88dd88 : 0x444444, 0.9)
+      pvFrame.lineStyle(2, unlocked ? 0xd9a05a : 0x444444, 0.9)
       pvFrame.strokeRoundedRect(cx - pvW / 2, cardY - 105 - pvH / 2, pvW, pvH, 8)
       // klein emoji-badge in de hoek van de preview
       this.add.text(cx - pvW / 2 + 16, cardY - 105 - pvH / 2 + 14, map.emoji, {
@@ -88,7 +89,7 @@ export default class MenuScene extends Phaser.Scene {
       }).setOrigin(0.5)
 
       // Difficulty stars
-      const stars = '⭐'.repeat(map.difficulty) + '☆'.repeat(3 - map.difficulty)
+      const stars = '⭐'.repeat(map.difficulty) + '☆'.repeat(MAX_DIFFICULTY - map.difficulty)
       this.add.text(cx, cardY + 6, stars, {
         fontSize: '20px',
       }).setOrigin(0.5).setAlpha(unlocked ? 1 : 0.4)
@@ -96,7 +97,7 @@ export default class MenuScene extends Phaser.Scene {
       // Description
       this.add.text(cx, cardY + 38, map.description, {
         fontSize: '14px', fontFamily: 'Arial',
-        color: unlocked ? '#99cc88' : '#555555',
+        color: unlocked ? '#d9b98a' : '#555555',
         wordWrap: { width: cardW - 20 }, align: 'center',
       }).setOrigin(0.5)
 
@@ -110,7 +111,7 @@ export default class MenuScene extends Phaser.Scene {
       // Play / Lock button
       const btnY = cardY + 130
       if (unlocked) {
-        this._makeButton(cx, btnY, 180, 46, '▶  Spelen', 0x22aa44, 0x44ff66, () => {
+        this._makeButton(cx, btnY, 180, 46, '▶  Spelen', 0xc9801f, 0xffb84a, () => {
           this.scene.start('Game', { mapId: map.id })
         })
       } else {
@@ -171,7 +172,7 @@ export default class MenuScene extends Phaser.Scene {
       lifespan: { min: 4000, max: 8000 },
       quantity: 1,
       frequency: 300,
-      tint: [0x44ff44, 0x88ff88, 0xffdd44, 0xffffff],
+      tint: [0xffb347, 0xffd9a0, 0xffdd44, 0xffffff],
     })
     emitter.setDepth(-1)
   }

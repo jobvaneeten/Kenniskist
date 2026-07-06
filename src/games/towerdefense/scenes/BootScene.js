@@ -9,8 +9,8 @@ export default class BootScene extends Phaser.Scene {
     const W = this.scale.width, H = this.scale.height
 
     // ── Loading bar ────────────────────────────────────────────────
-    const barBg = this.add.rectangle(W/2, H/2, 400, 20, 0x333333).setOrigin(0.5)
-    const bar   = this.add.rectangle(W/2 - 200, H/2, 0, 16, 0x44cc44).setOrigin(0, 0.5)
+    const barBg = this.add.rectangle(W/2, H/2, 400, 20, 0x33241a).setOrigin(0.5)
+    const bar   = this.add.rectangle(W/2 - 200, H/2, 0, 16, 0xffb347).setOrigin(0, 0.5)
     this.add.text(W/2, H/2 - 40, 'Laden…', {
       fontSize: '22px', color: '#ffffff', fontFamily: 'Arial',
     }).setOrigin(0.5)
@@ -22,6 +22,8 @@ export default class BootScene extends Phaser.Scene {
     this.load.image('bg_map1', `${TD}Map/bg_map1.webp`)
     this.load.image('bg_map2', `${TD}Map/bg_map2.webp`)
     this.load.image('bg_map3', `${TD}Map/bg_map3.webp`)
+    this.load.image('bg_map4', `${TD}Map/bg_map4.webp`)
+    this.load.image('bg_map5', `${TD}Map/bg_map5.webp`)
 
     // ── Vijand-sprites (ballon getint per laag, blimp voor de MOAB) ──
     this.load.image('balloon', `${TD}balloon.png`)

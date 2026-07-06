@@ -133,7 +133,7 @@ export const TOWERS = {
   // ── Watertorens: alléén plaatsbaar op water ──────────────────────
   fish: {
     key: 'fish', name: 'Vis', emoji: '🐟', aquatic: true,
-    cost: 90, range: 165, damage: 14, fireRate: 650, projectileSpeed: 380,
+    cost: 90, range: 300, damage: 14, fireRate: 650, projectileSpeed: 380,
     special: 'bubble',         // bellen: schade + korte vertraging
     bubbleSlow: 0.35, bubbleDuration: 1600,
     description: 'Watertoren! Bellen: snel, met korte vertraging',
@@ -146,14 +146,14 @@ export const TOWERS = {
   },
   crocodile: {
     key: 'crocodile', name: 'Krokodil', emoji: '🐊', aquatic: true,
-    cost: 200, range: 155, damage: 70, fireRate: 1500, projectileSpeed: 460,
+    cost: 200, range: 280, damage: 70, fireRate: 1500, projectileSpeed: 460,
     special: 'snap',           // zware enkele beet
     description: 'Watertoren! Beet: enorme schade op één doel',
     projectileColor: 0x2E8B57,
     upgradeCost: [100, 150],
     upgradeStats: [
-      { damage: 105 },
-      { damage: 155, range: 175 },
+      { damage: 105, range: 320 },
+      { damage: 155, range: 360 },
     ],
   },
 

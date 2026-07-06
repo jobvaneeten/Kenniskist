@@ -93,6 +93,34 @@ const DEFS = [
       { c1: 27, r1: 8, c2: 31, r2: 12 },    // oase rechts
     ],
   },
+  {
+    id: 4, name: 'Oerwoud', emoji: '🌴',
+    description: 'Een lange jungle-rivier volgt bijna de hele baan',
+    difficulty: 4, unlocked: false,
+    deco: ['boom1', 'boom2', 'boom3'],
+    routes: [
+      [[-1, 3], [10, 3], [10, 10], [24, 10], [24, 15], [4, 15], [4, 18], [32, 18]],
+    ],
+    waters: [
+      { c1: 0,  r1: 5,  c2: 9,  r2: 9  },   // linkermeer bovenaan
+      { c1: 11, r1: 12, c2: 23, r2: 14 },   // middenrivier
+      { c1: 6,  r1: 16, c2: 23, r2: 17 },   // rivier onderaan
+    ],
+  },
+  {
+    id: 5, name: 'Poolijs', emoji: '❄️',
+    description: 'Kort en razendsnel pad op een smalle ijsvlakte',
+    difficulty: 5, unlocked: false,
+    deco: ['steen1', 'steen2'],
+    routes: [
+      [[-1, 7], [16, 7], [16, 13], [32, 13]],
+    ],
+    waters: [
+      { c1: 0,  r1: 0,  c2: 31, r2: 4  },   // bevroren meer bovenaan
+      { c1: 0,  r1: 9,  c2: 14, r2: 19 },   // ijsveld linksonder
+      { c1: 18, r1: 15, c2: 31, r2: 19 },   // ijsveld rechtsonder
+    ],
+  },
 ]
 
 export const MAPS = DEFS.map(def => ({

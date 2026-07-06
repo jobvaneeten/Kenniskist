@@ -6,7 +6,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #0d2b0a;
+  background: radial-gradient(ellipse at center, #2b1c10 0%, #1a1008 55%, #0f0903 100%);
   overflow: hidden;
   z-index: 999;
 }

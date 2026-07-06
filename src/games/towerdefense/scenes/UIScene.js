@@ -9,12 +9,12 @@ const CH = MAP_ROWS * TILE_SIZE   // canvas height
 
 // ── Palette ──────────────────────────────────────────────────────────
 const C = {
-  panelTop:   0x0a2012,
-  panelBot:   0x05140a,
-  accent:     0x3ad36a,
-  accentDim:  0x2a6a2a,
-  chip:       0x0f2a18,
-  chipLine:   0x255a35,
+  panelTop:   0x3a2916,
+  panelBot:   0x201207,
+  accent:     0xffb347,
+  accentDim:  0x8a6238,
+  chip:       0x2b1c0e,
+  chipLine:   0x9a7648,
   gold:       0xffd23f,
   goldHex:    '#ffd23f',
   red:        '#ff6b6b',
@@ -49,22 +49,22 @@ export default class UIScene extends Phaser.Scene {
 
     // ── Header bar (Menu + Pause) ────────────────────────────────
     const headG = this.add.graphics()
-    headG.fillGradientStyle(0x123a1e, 0x123a1e, 0x0a2614, 0x0a2614, 1)
+    headG.fillGradientStyle(0x4a3520, 0x4a3520, 0x2b1c0f, 0x2b1c0f, 1)
     headG.fillRect(PX + 3, 0, PW - 3, 44)
     headG.lineStyle(1, C.accentDim, 0.7); headG.lineBetween(PX + 8, 44, PX + PW - 8, 44)
 
     this._menuBtn  = this._btn(PX + 60,  22, 100, 32, '← Menu',   0x243a5a, () => this.events.emit('back_menu'))
-    this._pauseBtn = this._btn(PX + 196, 22,  96, 32, '⏸ Pauze', 0x2a4a18, () => this.events.emit('pause_toggle'))
+    this._pauseBtn = this._btn(PX + 196, 22,  96, 32, '⏸ Pauze', 0x6a4a22, () => this.events.emit('pause_toggle'))
 
     // ── Speed row ────────────────────────────────────────────────
     this.add.text(PX + 12, 56, 'SNELHEID', {
-      fontSize: '10px', fontFamily: 'Arial Black', color: '#5fae5f',
+      fontSize: '10px', fontFamily: 'Arial Black', color: '#c9a06a',
     }).setShadow(0, 1, '#000', 1)
     const sW = 52, sH = 26, sY = 76
-    this._speed1Btn = this._btn(PX + 40,  sY, sW, sH, '1×', 0x1a3220, () => this._setSpeed(1))
-    this._speed2Btn = this._btn(PX + 98,  sY, sW, sH, '2×', 0x1a3220, () => this._setSpeed(2))
-    this._speed3Btn = this._btn(PX + 156, sY, sW, sH, '3×', 0x1a3220, () => this._setSpeed(3))
-    this._speed5Btn = this._btn(PX + 214, sY, sW, sH, '5×', 0x1a3220, () => this._setSpeed(5))
+    this._speed1Btn = this._btn(PX + 40,  sY, sW, sH, '1×', 0x3a2a18, () => this._setSpeed(1))
+    this._speed2Btn = this._btn(PX + 98,  sY, sW, sH, '2×', 0x3a2a18, () => this._setSpeed(2))
+    this._speed3Btn = this._btn(PX + 156, sY, sW, sH, '3×', 0x3a2a18, () => this._setSpeed(3))
+    this._speed5Btn = this._btn(PX + 214, sY, sW, sH, '5×', 0x3a2a18, () => this._setSpeed(5))
     this._refreshSpeedBtns()
 
     // ── Stat chips: Gold + Lives ─────────────────────────────────
@@ -93,8 +93,8 @@ export default class UIScene extends Phaser.Scene {
     // ── Shop label ───────────────────────────────────────────────
     const shopLabelY = this._waveBarY + 18
     this.add.text(PX + PW / 2, shopLabelY, '⚔ KIES JE TOREN ⚔', {
-      fontSize: '11px', fontFamily: 'Arial Black', color: '#7fe07f',
-      stroke: '#08200c', strokeThickness: 3,
+      fontSize: '11px', fontFamily: 'Arial Black', color: '#ffcf87',
+      stroke: '#3a2510', strokeThickness: 3,
     }).setOrigin(0.5)
 
     // ── Tower grid: 3 cols × 4 rows ──────────────────────────────
@@ -118,17 +118,17 @@ export default class UIScene extends Phaser.Scene {
         // shadow
         btn.fillStyle(0x000000, 0.3); btn.fillRoundedRect(rx, ry + 2, rw, rh, 10)
         // body gradient
-        const t = active ? 0x2f7a36 : canAfford ? 0x15301c : 0x251212
-        const b = active ? 0x1c4a22 : canAfford ? 0x0c1c12 : 0x160a0a
+        const t = active ? 0xb8742a : canAfford ? 0x3a2a18 : 0x2a1414
+        const b = active ? 0x7a4a14 : canAfford ? 0x241608 : 0x180b0b
         btn.fillGradientStyle(t, t, b, b, 1)
         btn.fillRoundedRect(rx, ry, rw, rh, 10)
         // top highlight
-        btn.fillStyle(0xffffff, active ? 0.12 : 0.06)
+        btn.fillStyle(0xffffff, active ? 0.14 : 0.06)
         btn.fillRoundedRect(rx + 2, ry + 2, rw - 4, rh * 0.45, 8)
         // border
-        btn.lineStyle(2, active ? 0x9bff9b : canAfford ? 0x357a35 : 0x7a2222, active ? 1 : 0.85)
+        btn.lineStyle(2, active ? 0xffd9a0 : canAfford ? 0x8a6238 : 0x7a2222, active ? 1 : 0.85)
         btn.strokeRoundedRect(rx, ry, rw, rh, 10)
-        if (active) { btn.lineStyle(1, 0x66ff66, 0.35); btn.strokeRoundedRect(rx - 2, ry - 2, rw + 4, rh + 4, 12) }
+        if (active) { btn.lineStyle(1, 0xffcf87, 0.4); btn.strokeRoundedRect(rx - 2, ry - 2, rw + 4, rh + 4, 12) }
       }
       drawBtn(false, true)
 
@@ -165,7 +165,7 @@ export default class UIScene extends Phaser.Scene {
     // ── Next wave button (prominent, pulsing) ────────────────────
     const gridRows = Math.ceil(TOWER_ORDER.length / COLS)
     const waveY = GRID_Y + gridRows * CELL_H + 24
-    this.nextWaveBtnData = this._btn(PX + PW / 2, waveY, PW - 20, 42, '▶▶  Volgende golf', 0x1f7a33, () => {
+    this.nextWaveBtnData = this._btn(PX + PW / 2, waveY, PW - 20, 42, '▶▶  Volgende golf', 0xc9801f, () => {
       this.events.emit('next_wave')
     }, true)
     this.tweens.add({
@@ -191,7 +191,7 @@ export default class UIScene extends Phaser.Scene {
     this.events.on('not_enough_gold', () => this._shakeGold())
     this.events.on('tower_panel_show', d => this._showTowerPanel(d))
     this.events.on('tower_panel_hide', () => this._hideTowerPanel())
-    this.events.on('wave_complete',   () => this._showNotif('✅ Golf voorbij! Bonus goud!', 0x44FF44))
+    this.events.on('wave_complete',   () => this._showNotif('✅ Golf voorbij! Bonus goud!', 0xffd76a))
     this.events.on('show_bonus',      v => this._showNotif(`+${v} 🪙 bonus!`, 0xFFD700))
     this.events.on('game_over',       d => this._showGameOver(d))
     this.events.on('victory',         d => this._showVictory(d))
@@ -249,12 +249,12 @@ export default class UIScene extends Phaser.Scene {
       const x = btn._x, y = btn._y, w = btn._w, h = btn._h
       btn.gfx.clear()
       btn.gfx.fillStyle(0x000000, 0.3); btn.gfx.fillRoundedRect(x - w/2, y - h/2 + 2, w, h, 9)
-      const t = active ? 0x2f8a3a : 0x1c3a24, b = active ? 0x1c5a26 : 0x0e2014
+      const t = active ? 0xb8742a : 0x3a2a18, b = active ? 0x8a4f16 : 0x241608
       btn.gfx.fillGradientStyle(t, t, b, b, 1); btn.gfx.fillRoundedRect(x - w/2, y - h/2, w, h, 9)
       btn.gfx.fillStyle(0xffffff, active ? 0.14 : 0.05); btn.gfx.fillRoundedRect(x - w/2 + 2, y - h/2 + 2, w - 4, h * 0.45, 7)
-      btn.gfx.lineStyle(2, active ? 0x9bff9b : 0x357a35, active ? 1 : 0.7)
+      btn.gfx.lineStyle(2, active ? 0xffd9a0 : 0x8a6238, active ? 1 : 0.7)
       btn.gfx.strokeRoundedRect(x - w/2, y - h/2, w, h, 9)
-      btn.txt.setColor(active ? '#d6ffd6' : '#9fbf9f')
+      btn.txt.setColor(active ? '#fff3dd' : '#c9a982')
     })
   }
 
@@ -265,7 +265,7 @@ export default class UIScene extends Phaser.Scene {
       fontSize: '14px', fontFamily: 'Arial Black', color: '#ffffff',
     }).setOrigin(0.5).setDepth(5).setShadow(0, 1, '#000', 2)
     this._hoverDesc = this.add.text(PX + PW / 2, y + 34, '', {
-      fontSize: '11px', fontFamily: 'Arial', color: '#9fde9f',
+      fontSize: '11px', fontFamily: 'Arial', color: '#e8c9a0',
       wordWrap: { width: PW - 24 }, align: 'center',
     }).setOrigin(0.5).setDepth(5)
 
@@ -274,10 +274,10 @@ export default class UIScene extends Phaser.Scene {
       fontSize: '14px', fontFamily: 'Arial Black', color: '#ffffff',
     }).setOrigin(0.5).setDepth(6).setShadow(0, 1, '#000', 2)
     this._panelStats  = this.add.text(PX + PW / 2, y + 34, '', {
-      fontSize: '11px', fontFamily: 'Arial', color: '#bfffbf',
+      fontSize: '11px', fontFamily: 'Arial', color: '#f0d9b8',
       wordWrap: { width: PW - 24 }, align: 'center',
     }).setOrigin(0.5).setDepth(6)
-    this._upgradeBtn  = this._btn(PX + PW / 2, y + 74, PW - 24, 36, 'Upgraden', 0x1f6a2a, () => {
+    this._upgradeBtn  = this._btn(PX + PW / 2, y + 74, PW - 24, 36, 'Upgraden', 0xb8742a, () => {
       this.events.emit('upgrade_tower')
     })
     this._sellBtn     = this._btn(PX + PW / 2, y + 118, PW - 24, 34, 'Verkopen', 0x6a2222, () => {
@@ -306,7 +306,7 @@ export default class UIScene extends Phaser.Scene {
     const y = this._infoY
     this._panelBg.clear()
     this._panelBg.fillStyle(0x000000, 0.4); this._panelBg.fillRoundedRect(PX + 4, y + 3, PW - 8, 152, 10)
-    this._panelBg.fillGradientStyle(0x0e2a14, 0x0e2a14, 0x081a0c, 0x081a0c, 1)
+    this._panelBg.fillGradientStyle(0x33220f, 0x33220f, 0x1f1207, 0x1f1207, 1)
     this._panelBg.fillRoundedRect(PX + 4, y + 1, PW - 8, 152, 10)
     this._panelBg.lineStyle(1.5, C.chipLine, 1)
     this._panelBg.strokeRoundedRect(PX + 4, y + 1, PW - 8, 152, 10)
@@ -393,15 +393,15 @@ export default class UIScene extends Phaser.Scene {
       g.fillGradientStyle(t, t, b, b, 1); g.fillRoundedRect(x - w/2, y - h/2, w, h, 11)
       g.fillStyle(0xffffff, 0.10); g.fillRoundedRect(x - w/2 + 2, y - h/2 + 2, w - 4, h * 0.42, 9)
       g.lineStyle(glow ? 2 : 1.5, border, 0.9); g.strokeRoundedRect(x - w/2, y - h/2, w, h, 11)
-      if (glow) { g.lineStyle(1, 0x88ff88, 0.3); g.strokeRoundedRect(x - w/2 - 2, y - h/2 - 2, w + 4, h + 4, 13) }
+      if (glow) { g.lineStyle(1, 0xffd9a0, 0.35); g.strokeRoundedRect(x - w/2 - 2, y - h/2 - 2, w + 4, h + 4, 13) }
     }
-    const borderCol = glow ? 0x9bff9b : 0x4a8a4a
+    const borderCol = glow ? 0xffe2b0 : 0x8a6238
     draw(topC, botC, borderCol, false)
     const t = this.add.text(x, y, label, {
-      fontSize: glow ? '15px' : '13px', fontFamily: 'Arial Black', color: '#eaffea',
+      fontSize: glow ? '15px' : '13px', fontFamily: 'Arial Black', color: '#fff3e2',
     }).setOrigin(0.5).setShadow(0, 1, '#000', 2)
     const z = this.add.zone(x, y, w, h).setInteractive({ useHandCursor: true })
-    z.on('pointerover', () => { draw(base.clone().brighten(38).color, base.clone().brighten(6).color, 0xbfffbf, true); if (!glow) this.tweens.add({ targets: t, scale: 1.05, duration: 80 }) })
+    z.on('pointerover', () => { draw(base.clone().brighten(38).color, base.clone().brighten(6).color, 0xffe2b0, true); if (!glow) this.tweens.add({ targets: t, scale: 1.05, duration: 80 }) })
     z.on('pointerout',  () => { draw(topC, botC, borderCol, false); if (!glow) this.tweens.add({ targets: t, scale: 1, duration: 80 }) })
     z.on('pointerup', cb)
     return { gfx: g, txt: t, zone: z, _x: x, _y: y, _w: w, _h: h }
@@ -426,7 +426,7 @@ export default class UIScene extends Phaser.Scene {
   }
 
   _showVictory(data) {
-    this._showOverlay('🏆 GEWONNEN!', `Alle ${TOTAL_WAVES} golven overleefd!`, 0x0a3a14, '#7dff8a')
+    this._showOverlay('🏆 GEWONNEN!', `Alle ${TOTAL_WAVES} golven overleefd!`, 0x3a2a08, '#ffd76a')
   }
 
   _showOverlay(title, sub, bgColor, titleColor) {
@@ -452,7 +452,7 @@ export default class UIScene extends Phaser.Scene {
       fontSize: '19px', fontFamily: 'Arial', color: '#e8e8e8',
     }).setOrigin(0.5).setDepth(61)
 
-    this._overlayBtn(W/2 - 105, H/2 + 76, '🔄 Opnieuw', 0x247a2a, () => {
+    this._overlayBtn(W/2 - 105, H/2 + 76, '🔄 Opnieuw', 0xb8742a, () => {
       this.scene.stop('UI'); this.scene.start('Game', { mapId: this.mapId })
     })
     this._overlayBtn(W/2 + 105, H/2 + 76, '🗺 Levels', 0x245a8a, () => {

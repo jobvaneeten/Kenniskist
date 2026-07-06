@@ -571,24 +571,24 @@ class Tower {
 
     // Sprite — save scale after setDisplaySize so tweens can respect it
     this.sprite = scene.add.image(this.x, this.y - 4, key)
-      .setDisplaySize(54, 54).setDepth(6)
+      .setDisplaySize(72, 72).setDepth(6)
     this._spriteScale = this.sprite.scaleX
 
     // Platform under tower: houten podium op land, drijvend vlot op water
     this.platform = scene.add.graphics().setDepth(5)
     this.platform.setPosition(this.x, this.y)
     if (this.data.aquatic) {
-      this.platform.fillStyle(0x0a3550, 0.45);   this.platform.fillEllipse(0, 6, 56, 22)
-      this.platform.fillStyle(0x1a6a94, 1);      this.platform.fillEllipse(0, 2, 50, 22)
-      this.platform.fillStyle(0x2e93c4, 1);      this.platform.fillEllipse(0, 0, 48, 20)
-      this.platform.fillStyle(0x7fd4f0, 0.5);    this.platform.fillEllipse(0, -2, 34, 12)
-      this.platform.lineStyle(2, 0x0f4a68, 0.9); this.platform.strokeEllipse(0, 0, 48, 20)
+      this.platform.fillStyle(0x0a3550, 0.45);   this.platform.fillEllipse(0, 8, 73, 29)
+      this.platform.fillStyle(0x1a6a94, 1);      this.platform.fillEllipse(0, 3, 65, 29)
+      this.platform.fillStyle(0x2e93c4, 1);      this.platform.fillEllipse(0, 0, 62, 26)
+      this.platform.fillStyle(0x7fd4f0, 0.5);    this.platform.fillEllipse(0, -3, 44, 16)
+      this.platform.lineStyle(2, 0x0f4a68, 0.9); this.platform.strokeEllipse(0, 0, 62, 26)
     } else {
-      this.platform.fillStyle(0x000000, 0.30);   this.platform.fillEllipse(0, 8, 52, 20)
-      this.platform.fillStyle(0x6b4a2a, 1);      this.platform.fillEllipse(0, 4, 48, 22)
-      this.platform.fillStyle(0x8a6238, 1);      this.platform.fillEllipse(0, 0, 48, 22)
-      this.platform.fillStyle(0xa87c4a, 0.55);   this.platform.fillEllipse(0, -2, 36, 14)
-      this.platform.lineStyle(2, 0x4a3018, 0.9); this.platform.strokeEllipse(0, 0, 48, 22)
+      this.platform.fillStyle(0x000000, 0.30);   this.platform.fillEllipse(0, 10, 68, 26)
+      this.platform.fillStyle(0x6b4a2a, 1);      this.platform.fillEllipse(0, 5, 62, 29)
+      this.platform.fillStyle(0x8a6238, 1);      this.platform.fillEllipse(0, 0, 62, 29)
+      this.platform.fillStyle(0xa87c4a, 0.55);   this.platform.fillEllipse(0, -3, 47, 18)
+      this.platform.lineStyle(2, 0x4a3018, 0.9); this.platform.strokeEllipse(0, 0, 62, 29)
     }
 
     // Range circle (hidden)
@@ -597,9 +597,9 @@ class Tower {
     this.rangeCircle.setVisible(false)
 
     // Level badge
-    this.levelBadge = scene.add.text(this.x + 18, this.y - 18, '', {
+    this.levelBadge = scene.add.text(this.x + 24, this.y - 26, '', {
       fontSize: '12px', fontFamily: 'Arial Black', color: '#ffffff',
-      backgroundColor: '#225522', padding: { x: 3, y: 1 },
+      backgroundColor: '#8a5a1e', padding: { x: 3, y: 1 },
     }).setDepth(9).setOrigin(0.5)
 
     // Spawn pop animation — tween to saved scale, not 1.0
@@ -1010,7 +1010,7 @@ export default class GameScene extends Phaser.Scene {
     this.selectedTower = key
     // Update ghost image
     if (this.ghostImg) { this.ghostImg.destroy(); this.ghostImg = null }
-    this.ghostImg = this.add.image(0, 0, key).setDisplaySize(48, 48).setDepth(21)
+    this.ghostImg = this.add.image(0, 0, key).setDisplaySize(72, 72).setDepth(21)
     this.ghost.setVisible(true)
     this.ghostRange.setRadius(TOWERS[key].range).setVisible(true)
   }

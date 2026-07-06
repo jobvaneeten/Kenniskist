@@ -14,7 +14,7 @@ export function createGame(parent, { onBack, onRoundDone }) {
     width:  W,
     height: H,
     parent,
-    backgroundColor: '#0d2b0a',
+    backgroundColor: '#1a1008',
     scale: {
       mode:            Phaser.Scale.FIT,
       autoCenter:      Phaser.Scale.CENTER_BOTH,
