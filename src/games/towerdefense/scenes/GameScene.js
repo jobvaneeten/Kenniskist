@@ -894,6 +894,7 @@ export default class GameScene extends Phaser.Scene {
   // suggereert ────────────────────────────────────────────────────────
   _drawWater(grid) {
     const isWaterCell = (c, r) => r >= 0 && r < MAP_ROWS && c >= 0 && c < MAP_COLS && grid[r][c] === 3
+    const mapW = MAP_COLS * TILE_SIZE, mapH = MAP_ROWS * TILE_SIZE
 
     const g = this.add.graphics().setDepth(1)
 
@@ -906,15 +907,20 @@ export default class GameScene extends Phaser.Scene {
       }
     }
 
-    // Dieper watervlak met verloop (donkerder onder, lichter boven)
+    // Watertextuur (Nano Banana 2 Lite), gemaskeerd op exact de watercellen
+    // van het grid — de vorm van de mask komt 1-op-1 uit dezelfde grid-check
+    // als isBuildableFor(aquatic), dus torens staan altijd op zichtbaar water.
+    const maskShape = this.make.graphics({ x: 0, y: 0, add: false })
+    maskShape.fillStyle(0xffffff)
     for (let row = 0; row < MAP_ROWS; row++) {
       for (let col = 0; col < MAP_COLS; col++) {
-        if (!isWaterCell(col, row)) continue
-        const x = col * TILE_SIZE, y = row * TILE_SIZE
-        g.fillGradientStyle(0x2e93c4, 0x2e93c4, 0x0f4a6a, 0x0f4a6a, 1)
-        g.fillRect(x, y, TILE_SIZE, TILE_SIZE)
+        if (isWaterCell(col, row)) maskShape.fillRect(col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE)
       }
     }
+    const waterTex = this.add.tileSprite(mapW / 2, mapH / 2, mapW, mapH, this.mapData.waterTexture || 'water')
+      .setDepth(1).setTileScale(0.15, 0.15)
+    waterTex.enableFilters()
+    waterTex.filters.external.addMask(maskShape, false, this.cameras.main, 'world')
 
     // Randlijn + lichte glans waar water grenst aan niet-water (oever)
     g.lineStyle(3, 0x1a6a94, 0.9)
@@ -965,18 +971,26 @@ export default class GameScene extends Phaser.Scene {
   // die vijanden lopen (onafhankelijk van hoe precies de geschilderde
   // achtergrond een pad suggereert) ─────────────────────────────────
   _drawPath(grid) {
-    const theme = this.mapData.pathTheme || { base: 0xd9bb7e, edge: 0xa9884f, fleck: 0xc2a05f }
+    const theme = this.mapData.pathTheme || { base: 0xd9bb7e, edge: 0xa9884f, fleck: 0xc2a05f, texture: 'path_savanne' }
     const isPathCell = (c, r) => r >= 0 && r < MAP_ROWS && c >= 0 && c < MAP_COLS && grid[r][c] === 19
+    const mapW = MAP_COLS * TILE_SIZE, mapH = MAP_ROWS * TILE_SIZE
 
-    const g = this.add.graphics().setDepth(1)
-
-    // Basisvlak per padcel
-    g.fillStyle(theme.base, 1)
+    // Padtextuur (Nano Banana 2 Lite), gemaskeerd op exact de padcellen van
+    // het grid — dezelfde grid-check die de vijanden-waypoints bepaalt, dus
+    // het zichtbare pad kan nooit afwijken van waar vijanden echt lopen.
+    const maskShape = this.make.graphics({ x: 0, y: 0, add: false })
+    maskShape.fillStyle(0xffffff)
     for (let row = 0; row < MAP_ROWS; row++) {
       for (let col = 0; col < MAP_COLS; col++) {
-        if (grid[row][col] === 19) g.fillRect(col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE)
+        if (grid[row][col] === 19) maskShape.fillRect(col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE)
       }
     }
+    const pathTex = this.add.tileSprite(mapW / 2, mapH / 2, mapW, mapH, theme.texture || 'path_savanne')
+      .setDepth(1).setTileScale(0.15, 0.15)
+    pathTex.enableFilters()
+    pathTex.filters.external.addMask(maskShape, false, this.cameras.main, 'world')
+
+    const g = this.add.graphics().setDepth(1)
 
     // Randlijn waar het pad grenst aan niet-pad (buitenrand van de route)
     g.lineStyle(3, theme.edge, 0.8)
@@ -991,18 +1005,6 @@ export default class GameScene extends Phaser.Scene {
       }
     }
 
-    // Deterministische textuur-spikkels (zelfde cel → zelfde patroon)
-    g.fillStyle(theme.fleck, 0.35)
-    for (let row = 0; row < MAP_ROWS; row++) {
-      for (let col = 0; col < MAP_COLS; col++) {
-        if (grid[row][col] !== 19) continue
-        const h = (col * 73 + row * 149) % 100
-        if (h % 3 !== 0) continue
-        const fx = col * TILE_SIZE + 8 + (h % 5) * 7
-        const fy = row * TILE_SIZE + 8 + (h % 4) * 8
-        g.fillCircle(fx, fy, 2.5)
-      }
-    }
   }
 
   // ── Wave system ────────────────────────────────────────────────────

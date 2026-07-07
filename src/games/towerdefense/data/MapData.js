@@ -59,7 +59,8 @@ const DEFS = [
     description: 'S-bocht met twee vijvers voor je watertorens',
     difficulty: 1, unlocked: true,
     deco: ['boom1', 'boom2', 'boom3'],
-    pathTheme: { base: 0xd9bb7e, edge: 0xa9884f, fleck: 0xc2a05f },
+    pathTheme: { base: 0xd9bb7e, edge: 0xa9884f, fleck: 0xc2a05f, texture: 'path_savanne' },
+    waterTexture: 'water',
     routes: [
       [[-1, 1], [22, 1], [22, 7], [6, 7], [6, 13], [32, 13]],
     ],
@@ -73,7 +74,8 @@ const DEFS = [
     description: 'Twee paden! Vijanden komen via boven én onder',
     difficulty: 2, unlocked: true,
     deco: ['steen1', 'steen2', 'steen3'],
-    pathTheme: { base: 0x9a9a92, edge: 0x6e6e66, fleck: 0x828278 },
+    pathTheme: { base: 0x9a9a92, edge: 0x6e6e66, fleck: 0x828278, texture: 'path_steen' },
+    waterTexture: 'water',
     routes: [
       [[-1, 2], [26, 2], [26, 9], [12, 9], [12, 16], [32, 16]],
       [[-1, 12], [6, 12], [6, 16], [32, 16]],
@@ -87,7 +89,8 @@ const DEFS = [
     description: 'Spiraal met oase en een verraderlijke zij-ingang',
     difficulty: 3, unlocked: true,
     deco: ['cactus1', 'cactus2'],
-    pathTheme: { base: 0xe8cf8f, edge: 0xc2a565, fleck: 0xd4b878 },
+    pathTheme: { base: 0xe8cf8f, edge: 0xc2a565, fleck: 0xd4b878, texture: 'path_woestijn' },
+    waterTexture: 'water',
     routes: [
       [[-1, 1], [26, 1], [26, 4], [2, 4], [2, 9], [22, 9], [22, 13], [8, 13], [8, 17], [32, 17]],
       [[-1, 9], [22, 9], [22, 13], [8, 13], [8, 17], [32, 17]],
@@ -101,7 +104,8 @@ const DEFS = [
     description: 'Een lange jungle-rivier volgt bijna de hele baan',
     difficulty: 4, unlocked: false,
     deco: ['boom1', 'boom2', 'boom3'],
-    pathTheme: { base: 0x8a6238, edge: 0x5c4023, fleck: 0x71502c },
+    pathTheme: { base: 0x8a6238, edge: 0x5c4023, fleck: 0x71502c, texture: 'path_oerwoud' },
+    waterTexture: 'water',
     routes: [
       [[-1, 3], [10, 3], [10, 10], [24, 10], [24, 15], [4, 15], [4, 18], [32, 18]],
     ],
@@ -116,7 +120,8 @@ const DEFS = [
     description: 'Kort en razendsnel pad op een smalle ijsvlakte',
     difficulty: 5, unlocked: false,
     deco: ['steen1', 'steen2'],
-    pathTheme: { base: 0xdbe9f5, edge: 0xb7d0e8, fleck: 0xc9def0 },
+    pathTheme: { base: 0xdbe9f5, edge: 0xb7d0e8, fleck: 0xc9def0, texture: 'path_poolijs' },
+    waterTexture: 'water_ice',
     routes: [
       [[-1, 7], [16, 7], [16, 13], [32, 13]],
     ],

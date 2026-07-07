@@ -25,6 +25,16 @@ export default class BootScene extends Phaser.Scene {
     this.load.image('bg_map4', `${TD}Map/bg_map4.webp`)
     this.load.image('bg_map5', `${TD}Map/bg_map5.webp`)
 
+    // ── Pad- en water-texturen (Nano Banana 2 Lite), naadloos herhaald
+    // over exact de grid-cellen die het pad/water zijn ─────────────────
+    this.load.image('path_savanne', `${TD}Map/tiles/path_savanne.webp`)
+    this.load.image('path_steen',   `${TD}Map/tiles/path_steen.webp`)
+    this.load.image('path_woestijn',`${TD}Map/tiles/path_woestijn.webp`)
+    this.load.image('path_oerwoud', `${TD}Map/tiles/path_oerwoud.webp`)
+    this.load.image('path_poolijs', `${TD}Map/tiles/path_poolijs.webp`)
+    this.load.image('water',        `${TD}Map/tiles/water.webp`)
+    this.load.image('water_ice',    `${TD}Map/tiles/water_ice.webp`)
+
     // ── Vijand-sprites (ballon getint per laag, blimp voor de MOAB) ──
     this.load.image('balloon', `${TD}balloon.png`)
     this.load.image('blimp',   `${TD}blimp.png`)
