@@ -367,12 +367,19 @@
   z-index: 40;
   animation: fadeUp 0.2s ease-out;
 }
+/* Fixed & gecentreerd i.p.v. in de normale pagina-flow: anders verschijnt het
+   paneel pas ná de winkel-grid en moet je (op een lange, gescrolde pagina)
+   naar beneden scrollen om het te zien. Zo staat het altijd meteen in beeld. */
 .shop-detail-panel {
-  position: relative;
+  position: fixed;
+  inset: 0;
+  margin: auto;
   z-index: 41;
-  width: 100%;
+  width: calc(100% - 32px);
   max-width: 980px;
-  margin-top: 18px;
+  height: fit-content;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
   border-radius: 20px;
   background:
     linear-gradient(168deg, rgba(255,255,255,0.09), rgba(255,255,255,0.02)),
@@ -526,6 +533,8 @@
     position: fixed;
     inset: 0;
     margin: 0;
+    height: auto;
+    max-height: none;
     border-radius: 0;
     flex-direction: column;
     overflow-y: auto;
