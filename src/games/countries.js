@@ -55,7 +55,68 @@ export const COUNTRIES = [
   { key: 'so', name: 'Somalië',    flag: '🇸🇴', c1: '#4189DD', c2: '#FFFFFF', pattern: 'circle', diff: 3, abbr: 'SO' },
 ]
 
-export const getCountry = key => COUNTRIES.find(c => c.key === key)
+// ── Groep 7: klasgenoten i.p.v. landen, ontgrendeld via de code "groep7" ──
+export const CLASS_COUNTRIES = [
+  { key: 'dani',     name: 'Dani',         flag: '🏎️', c1: '#1a1a1a', c2: '#FFFFFF', c3: '#E2001A', pattern: 'h3', diff: 3, abbr: 'DA' },
+  { key: 'bas',      name: 'Bas',          flag: '⚡',  c1: '#E2001A', c2: '#FFFFFF', c3: '#1a1a1a', pattern: 'v3', diff: 3, abbr: 'BA' },
+  { key: 'liam',     name: 'Liam',         flag: '👑',  c1: '#E2001A', c2: '#1A9E4A', c3: '#1a1a1a', pattern: 'h3', diff: 3, abbr: 'LI' },
+  { key: 'thamal',   name: 'Thamal',       flag: '💥',  c1: '#FF8200', c2: '#1D6FA4', c3: '#FFFFFF', pattern: 'v3', diff: 3, abbr: 'TH' },
+  { key: 'floor',    name: 'Floor',        flag: '🦩',  c1: '#FF8200', c2: '#1a1a1a', c3: '#FFFFFF', pattern: 'h3', diff: 3, abbr: 'FL' },
+  { key: 'abdiali',  name: 'Abdi Ali',     flag: '⭐',  c1: '#1a1a1a', c2: '#1A9E4A', pattern: 'v2', diff: 3, abbr: 'AB' },
+  { key: 'ila',      name: 'Ila',          flag: '🧊',  c1: '#5BC0F8', c2: '#FFFFFF', pattern: 'h2', diff: 3, abbr: 'IL' },
+  { key: 'zeno',     name: 'Zeno',         flag: '🥈',  c1: '#C0C0C0', c2: '#FF8200', c3: '#E2001A', pattern: 'h3', diff: 3, abbr: 'ZE' },
+  { key: 'roel',     name: 'Roel',         flag: '🪨',  c1: '#1a1a1a', c2: '#7B2D8B', c3: '#1A9E4A', pattern: 'v3', diff: 3, abbr: 'RO' },
+  // Meester Job en Meester Luuk zijn de baas-tegenstanders van het klas-toernooi
+  // (halve finale/finale) — diff 6 is bewust hoger dan alle andere klasgenoten (max 5),
+  // zodat hun AI perfect mikt en veel vaker een superschot gebruikt (zie HeadSoccer.jsx).
+  { key: 'mjob',     name: 'Meester Job',  flag: '🎂',  c1: '#1a1a1a', c2: '#D4AF37', pattern: 'circle2', diff: 6, abbr: 'MJ' },
+  { key: 'mluuk',    name: 'Meester Luuk', flag: '😂',  c1: '#1A9E4A', c2: '#1D6FA4', c3: '#1a1a1a', pattern: 'h3', diff: 6, abbr: 'ML' },
+  { key: 'pim',      name: 'Pim',          flag: '🧠',  c1: '#1a1a1a', c2: '#1D6FA4', c3: '#1A9E4A', pattern: 'v3', diff: 3, abbr: 'PI' },
+  { key: 'kayleigh', name: 'Kayleigh',     flag: '🎀',  c1: '#8BD17C', c2: '#FFC0DA', pattern: 'h2', diff: 3, abbr: 'KA' },
+  { key: 'tara',     name: 'Tara',         flag: '🍰',  c1: '#1A5C33', c2: '#0D2F6B', pattern: 'v2', diff: 3, abbr: 'TA' },
+  { key: 'bardo',    name: 'Bardo',        flag: '🤡',  c1: '#C9A3E0', c2: '#FFFFFF', c3: '#FF6FB5', pattern: 'h3', diff: 3, abbr: 'BD' },
+  { key: 'vince',    name: 'Vince',        flag: '🛡️', c1: '#E2001A', c2: '#FFFFFF', c3: '#1a1a1a', pattern: 'v3', diff: 3, abbr: 'VI' },
+  { key: 'hailey',   name: 'Hailey',       flag: '🌪️', c1: '#5BC0F8', c2: '#0D2F6B', c3: '#FFFFFF', pattern: 'h3', diff: 3, abbr: 'HA' },
+  { key: 'lou',      name: 'Lou',          flag: '🐄',  c1: '#5BC0F8', c2: '#E2001A', c3: '#FFFFFF', pattern: 'v3', diff: 3, abbr: 'LO' },
+  { key: 'bruno',    name: 'Bruno',        flag: '🌩️', c1: '#1A9E4A', c2: '#1D6FA4', c3: '#1a1a1a', pattern: 'h3', diff: 3, abbr: 'BR' },
+  { key: 'nina',     name: 'Nina',         flag: '💨',  c1: '#8A8F98', c2: '#E2001A', pattern: 'h2', diff: 3, abbr: 'NI' },
+  { key: 'elia',     name: 'Elia',         flag: '👼',  c1: '#8A8F98', c2: '#1D6FA4', c3: '#1a1a1a', pattern: 'v3', diff: 3, abbr: 'EL' },
+  { key: 'vinn',     name: 'Vinn',         flag: '🚀',  c1: '#1D6FA4', c2: '#FF8200', c3: '#1a1a1a', pattern: 'h3', diff: 3, abbr: 'VN' },
+  { key: 'suze',     name: 'Suze',         flag: '☀️',  c1: '#E2001A', c2: '#FFFFFF', c3: '#1D6FA4', pattern: 'v3', diff: 3, abbr: 'SU' },
+]
+export const CLASS_KEYS = CLASS_COUNTRIES.map(c => c.key)
+
+// Bewust NIET in COUNTRIES gemengd: Groep 7 is een apart menu (zie HeadSoccer.jsx),
+// geen extra vergrendelde vlaggen tussen de echte landen. getCountry kent ze wel
+// allebei, zodat gameplay-code (super/move-lookup) overal blijft werken.
+export const getCountry = key => COUNTRIES.find(c => c.key === key) || CLASS_COUNTRIES.find(c => c.key === key)
+
+// Klas-toernooi (Groep 7): 2 willekeurige klasgenoten, dan ALTIJD Meester Luuk in de
+// halve finale en ALTIJD Meester Job in de finale — de twee zware baas-tegenstanders.
+export function generateClassBracket(playerKey) {
+  const rand = arr => arr[Math.floor(Math.random() * arr.length)]
+  const others = CLASS_COUNTRIES.filter(c => c.key !== playerKey).map(c => c.key)
+  const early = others.filter(k => k !== 'mluuk' && k !== 'mjob')
+  const o1 = rand(early)
+  const o2 = rand(early.filter(k => k !== o1))
+  // Ben je zelf Meester Luuk/Job, dan kan die ronde uiteraard niet tegen jezelf —
+  // dan komt er een andere pittige klasgenoot (hoogste diff) voor in de plaats.
+  const toughFallback = (exclude) => {
+    const pool = others.filter(k => !exclude.includes(k))
+    const maxDiff = Math.max(...pool.map(k => getCountry(k).diff))
+    return rand(pool.filter(k => getCountry(k).diff === maxDiff))
+  }
+  // sluit de finale-tegenstander uit van de halve-finale-fallback (en andersom),
+  // anders sta je als Meester Luuk twee keer tegen Meester Job
+  const semi = playerKey === 'mluuk' ? toughFallback([o1, o2, 'mjob']) : 'mluuk'
+  const final = playerKey === 'mjob' ? toughFallback([o1, o2, semi]) : 'mjob'
+  return {
+    playerKey, currentRound: 0, isClass: true,
+    roundNames: ['Ronde 1', 'Ronde 2', 'Halve finale', 'Finale'],
+    opponents: [o1, o2, semi, final],
+    results: [],
+  }
+}
 
 // Standaard ontgrendeld: 10 bekende landen. De overige 39 WK-landen ontgrendel je
 // door toernooien te winnen (willekeurig land uit dezelfde niveau-groep).

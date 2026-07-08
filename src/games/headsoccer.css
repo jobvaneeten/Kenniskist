@@ -98,6 +98,49 @@
 .hs-br-name { font-size: 0.82rem; font-weight: 700; color: #fff; }
 .hs-br-stars { font-size: 0.6rem; color: #FFD23F; letter-spacing: -1px; }
 
+/* ── Toernooiboom (16 deelnemers, WK-stijl) ── */
+.hs-tree-wrap { width: min(1020px, 96vw); overflow-x: auto; margin: 4px 0 16px; padding-bottom: 6px; }
+.hs-tree {
+  display: flex; align-items: stretch; gap: 14px; justify-content: center;
+  min-width: 860px; min-height: 360px;
+  background: linear-gradient(180deg, rgba(20,60,35,0.55), rgba(10,40,22,0.55));
+  border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 16px 14px;
+}
+.hs-tcol { display: flex; flex-direction: column; justify-content: space-around; gap: 8px; }
+.hs-tmatch { display: flex; flex-direction: column; gap: 3px; position: relative; padding: 4px; border-radius: 10px; border: 1px solid transparent; }
+.hs-tmatch.cur { border-color: rgba(80,200,255,0.65); background: rgba(40,90,130,0.3); box-shadow: 0 0 14px rgba(80,200,255,0.3); animation: hsTreePulse 1.4s ease-in-out infinite; }
+@keyframes hsTreePulse { 0%,100% { box-shadow: 0 0 8px rgba(80,200,255,0.25); } 50% { box-shadow: 0 0 18px rgba(80,200,255,0.5); } }
+/* connector-streepjes richting het midden */
+.hs-tmatch.L::after, .hs-tmatch.R::after {
+  content: ''; position: absolute; top: 50%; width: 12px; height: 2px;
+  background: rgba(255,255,255,0.22); border-radius: 1px;
+}
+.hs-tmatch.L::after { right: -13px; }
+.hs-tmatch.R::after { left: -13px; }
+.hs-tslot {
+  display: flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 8px;
+  background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1);
+  min-width: 108px; max-width: 128px;
+}
+.hs-tslot-flag { font-size: 1.15rem; line-height: 1; flex-shrink: 0; }
+.hs-tslot-name { font-size: 0.68rem; font-weight: 800; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hs-tslot.me {
+  background: linear-gradient(90deg, rgba(255,210,63,0.28), rgba(255,210,63,0.12));
+  border-color: rgba(255,210,63,0.85); box-shadow: 0 0 12px rgba(255,210,63,0.45);
+}
+.hs-tslot.me .hs-tslot-name { color: #FFD23F; }
+.hs-tslot.out { opacity: 0.38; filter: saturate(0.4); }
+.hs-tslot-unknown {
+  justify-content: center; color: rgba(255,255,255,0.35); font-weight: 900;
+  background: rgba(255,255,255,0.03); border-style: dashed;
+}
+.hs-tslot.big { min-width: 120px; padding: 7px 10px; }
+.hs-tslot.big .hs-tslot-flag { font-size: 1.5rem; }
+.hs-tslot.big .hs-tslot-name { font-size: 0.78rem; }
+.hs-tfinal { justify-content: center; align-items: center; gap: 5px; padding: 0 4px; }
+.hs-tcup { font-size: 1.9rem; line-height: 1; filter: drop-shadow(0 0 8px rgba(255,210,63,0.5)); margin-bottom: 2px; }
+.hs-tvs { font-size: 0.7rem; font-weight: 900; color: rgba(255,255,255,0.5); }
+
 @media (max-width: 560px) {
   .hs-preview { gap: 14px; }
   .hs-demo-canvas { width: 240px; height: 150px; }

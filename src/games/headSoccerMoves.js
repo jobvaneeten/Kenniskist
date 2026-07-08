@@ -69,6 +69,32 @@ export const MOVES = {
   iq: { name: 'Duinramp',          emoji: '🏺', mascot: '🏺', effect: 'charge', color: '#CE1126', charge: 24, desc: 'De bal raast over een duin en schiet steil de lucht in', params: {} },
   no: { name: 'Aurora-sabotage',   emoji: '🌌', mascot: '🌌', effect: 'charge', color: '#002868', charge: 24, desc: 'Een noorderlicht verwart je tegenstander: zijn volgende trap gaat de verkeerde kant op', params: {} },
   so: { name: 'Abdi-Bal!',         emoji: '⭐', mascot: '⭐', effect: 'air', color: '#4189DD', charge: 24, desc: 'Raak de bal en schiet hem recht de lucht in — er vallen heel veel ballen naar beneden, maar er is er maar 1 echt!', params: {} },
+  // ── Groep 7: klasgenoten. Elke bijnaam wordt de naam van het superschot.
+  //    Elke bijnaam heeft een EIGEN, gloednieuwe mechaniek (zie SUPERS/HeadSoccer.jsx
+  //    voor de behavior-implementatie) — geen enkele is een kopie van een bestaand land.
+  dani:     { name: 'Dani Drift',            emoji: '🏎️', mascot: '🏎️', effect: 'charge', color: '#1a1a1a', charge: 20, desc: 'Een lage, giergladde glijschot die de tegenstander zijwaarts een spin-out injaagt', params: {} },
+  bas:      { name: 'Bliksem Bas',           emoji: '⚡', mascot: '⚡', effect: 'charge', color: '#E2001A', charge: 22, desc: 'Drie bliksemschichten laden de bal steeds verder op onderweg naar het doel', params: {} },
+  liam:     { name: 'Liam Legende',          emoji: '👑', mascot: '👑', effect: 'charge', color: '#FFD700', charge: 24, desc: 'Een koninklijk bevel vertraagt de tegenstander terwijl jij er als een vorst vandoor stormt', params: {} },
+  thamal:   { name: 'Thamal Knal',           emoji: '💥', mascot: '💥', effect: 'charge', color: '#FF8200', charge: 22, desc: 'Een megaknal die bij inslag ontploft — en na een paar tellen nóg een keer, nog groter', params: {} },
+  floor:    { name: 'Flamingo Floor',        emoji: '🦩', mascot: '🦩', effect: 'charge', color: '#FF8200', charge: 18, desc: 'Een spectaculaire reuzensprong met een wolk veren, eindigend in een zwierige draaiende omhaal', params: {} },
+  abdiali:  { name: 'Abdi Ali Arab',         emoji: '⭐', mascot: '⭐', effect: 'charge', color: '#1A9E4A', charge: 24, desc: 'Een volledige sterrenkrans draait mee om de bal naar het doel', params: {} },
+  ila:      { name: 'Ila Ice',               emoji: '🧊', mascot: '🧊', effect: 'charge', color: '#5BC0F8', charge: 24, desc: 'Een ijzige bal die kort bevriest en daarna een spekgladde nasleep achterlaat', params: {} },
+  zeno:     { name: 'Zilveren Zeno',         emoji: '🥈', mascot: '🥈', effect: 'charge', color: '#C0C0C0', charge: 22, desc: 'Een zilveren spiegelbal vliegt in het exact tegenovergestelde pad mee', params: {} },
+  roel:     { name: 'Roel de Rots',          emoji: '🪨', mascot: '🪨', effect: 'charge', color: '#7B2D8B', charge: 22, desc: 'Een complete rotslawine dendert mee naar het doel en bedelft de tegenstander onder het gesteente', params: {} },
+  mjob:     { name: 'Jarige Job',            emoji: '🎂', mascot: '🎂', ballEmoji: '🎂', effect: 'charge', color: '#D4AF37', charge: 24, desc: 'Vliegt lang de lucht in en hangt daar, dan een reuzentaart-bal die van bovenaf feestelijk uit elkaar knalt — het beste schot van de klas, mist bijna nooit!', params: {} },
+  mluuk:    { name: 'Lachende Luuk',         emoji: '😂', mascot: '😂', effect: 'charge', color: '#1A9E4A', charge: 18, desc: 'Drie giechelschokjes laten de tegenstander struikelen van het lachen', params: {} },
+  pim:      { name: 'Pim Slim',              emoji: '🧠', mascot: '🧠', effect: 'charge', color: '#1D6FA4', charge: 20, desc: 'Berekent slim hoe ver de bal moet skippen om precies langs de tegenstander te glippen', params: {} },
+  kayleigh: { name: 'Kleine Kayleigh',       emoji: '🎀', mascot: '🎀', effect: 'charge', color: '#FFC0DA', charge: 20, desc: 'Een piepklein, vrolijk stuiterend balletje dat lastig te blokkeren is', params: {} },
+  tara:     { name: 'Tara Taart',            emoji: '🍰', mascot: '🍰', effect: 'charge', color: '#1A5C33', charge: 22, desc: 'Een brede stroom minisprinkels regent over het hele doel', params: {} },
+  bardo:    { name: 'Bardo Doo Pipo',        emoji: '🤡', mascot: '🤡', effect: 'charge', color: '#C9A3E0', charge: 18, desc: 'Een clowneske toeter wisselt jullie plekken in één klap om', params: {} },
+  vince:    { name: 'Veldbaas Vince',        emoji: '🛡️', mascot: '🛡️', effect: 'charge', color: '#E2001A', charge: 24, desc: 'Bouwt een verdedigingsmuur pal voor zijn eigen doel', params: {} },
+  hailey:   { name: 'Hoces Foces Hailey',    emoji: '🌪️', mascot: '🌪️', effect: 'charge', color: '#5BC0F8', charge: 24, desc: 'Een wervelwind daalt recht neer bovenop de tegenstander', params: {} },
+  lou:      { name: 'Lou de Koe',            emoji: '🐄', mascot: '🐄', effect: 'charge', color: '#5BC0F8', charge: 22, desc: 'Een trage maar onstuitbare charge met een reuzenkop', params: {} },
+  bruno:    { name: 'Bliksem Bruno',         emoji: '🌩️', mascot: '🌩️', effect: 'charge', color: '#1A9E4A', charge: 24, desc: 'Een stormfront trekt over het hele veld richting het doel', params: {} },
+  nina:     { name: 'Nina Stormina',         emoji: '💨', mascot: '💨', effect: 'charge', color: '#8A8F98', charge: 20, desc: 'Een complete cycloon grijpt de tegenstander en slingert hem in het rond', params: {} },
+  elia:     { name: 'Engel Elia',            emoji: '👼', mascot: '👼', ballEmoji: '🕊️', effect: 'charge', color: '#FFF8D6', charge: 26, desc: 'Zuivert zichzelf en stijgt onraakbaar op als een engel, dan een lichtbundel met dalende veren van bovenaf', params: {} },
+  vinn:     { name: 'Vinnige Vinn',          emoji: '🚀', mascot: '🚀', effect: 'charge', color: '#1D6FA4', charge: 22, desc: 'Bliksemsnelle dash gecombineerd met een messcherpe homing-knal', params: {} },
+  suze:     { name: 'Sunny Suze',            emoji: '☀️', mascot: '☀️', effect: 'charge', color: '#FFE066', charge: 22, desc: 'Een felle flits verblindt én verwart de tegenstander even', params: {} },
 }
 
 // ── Authentieke Head Soccer power-shot per land ──────────────────────
@@ -141,6 +167,30 @@ export const SUPERS = {
   iq: { behavior: 'duneramp',        color: '#e0a45c', figure: '🏺' }, // vertraagde lancering
   no: { behavior: 'auroraflip',      color: '#7fd6ff', figure: '🌌' }, // volgende trap verkeerd om
   so: { behavior: 'multidrop',       color: '#4189DD', figure: '⭐' }, // bal schiet recht omhoog, splitst in een regen van ballen — 1 is echt
+  // ── Groep 7: klasgenoten — elk EEN GLOEDNIEUWE mechaniek (zie HeadSoccer.jsx) ──
+  dani:     { behavior: 'driftspin',     color: '#1a1a1a', figure: '🏎️' },  // lage glijschot, spint de tegenstander opzij
+  bas:      { behavior: 'chainbolt',     color: '#E2001A', figure: '⚡' },  // 3 bliksemschichten laden de bal op
+  liam:     { behavior: 'royaldecree',   color: '#FFD700', figure: '👑' },  // vertraagt tegenstander + koninklijke dash
+  thamal:   { behavior: 'blastram',      color: '#FF8200', figure: '💥' },  // dubbele explosie: eerst een knal, dan nóg een grotere
+  floor:    { behavior: 'hopdance',      color: '#FF8200', figure: '🦩' },  // reuzensprong met verendecoy + draaiende omhaal
+  abdiali:  { behavior: 'starorbit',     color: '#1A9E4A', figure: '⭐' },  // volledige sterrenkrans om de bal
+  ila:      { behavior: 'frostbite',     color: '#5BC0F8', figure: '🧊' },  // korte bevriezing → gladde nasleep
+  zeno:     { behavior: 'mirrorstrike',  color: '#C0C0C0', figure: '🥈' },  // spiegelbal in tegengesteld pad
+  roel:     { behavior: 'rockslide',     color: '#7B2D8B', figure: '🪨' },  // complete rotslawine met meerdere rollende keien
+  mjob:     { behavior: 'birthdayblast', color: '#D4AF37', figure: '🎂' },  // reuzentaart-bal ontploft vertraagd
+  mluuk:    { behavior: 'jokebomb',      color: '#1A9E4A', figure: '😂' },  // 3 giechelschokjes, instant
+  pim:      { behavior: 'smartskip',     color: '#1D6FA4', figure: '🧠' },  // berekende skip-afstand
+  kayleigh: { behavior: 'ribbonhop',     color: '#FFC0DA', figure: '🎀' },  // piepklein stuiterballetje
+  tara:     { behavior: 'sprinklerain',  color: '#1A5C33', figure: '🍰' },  // brede sprinkelregen over het hele doel
+  bardo:    { behavior: 'honkswap',      color: '#C9A3E0', figure: '🤡' },  // ruilt snelheid om, instant
+  vince:    { behavior: 'goalwall',      color: '#E2001A', figure: '🛡️' }, // muur voor eigen doel, instant
+  hailey:   { behavior: 'skytwister',    color: '#5BC0F8', figure: '🌪️' }, // wervelwind daalt op tegenstander neer
+  lou:      { behavior: 'stampede',      color: '#5BC0F8', figure: '🐄' },  // trage onstuitbare reuzenkop-charge
+  bruno:    { behavior: 'stormsurge',    color: '#1A9E4A', figure: '🌩️' }, // stormfront over het hele veld
+  nina:     { behavior: 'windgust',      color: '#8A8F98', figure: '💨' },  // echte cycloon zuigt de tegenstander mee, instant
+  elia:     { behavior: 'guardianwing',  color: '#FFF8D6', figure: '👼' },  // stijgt op, daalt neer met een lichtbundel + verenregen
+  vinn:     { behavior: 'turboboost',    color: '#1D6FA4', figure: '🚀' },  // dash + messcherpe homing-knal
+  suze:     { behavior: 'sunflare',      color: '#FFE066', figure: '☀️' }, // felle flits verblindt + verwart
 }
 export const getSuper = key => SUPERS[key] || { behavior: 'power', color: (MOVES[key] || MOVES.nl).color }
 
@@ -151,6 +201,8 @@ export const getSuper = key => SUPERS[key] || { behavior: 'power', color: (MOVES
 export const INSTANT_BEHAVIORS = new Set([
   'lowgravity', 'reversecontrols', 'rootvines', 'hornlock', 'sandwall',
   'silkleash', 'voodoolink', 'auroraflip', 'tidewave', 'hakapulse',
+  // Groep 7
+  'jokebomb', 'honkswap', 'goalwall', 'windgust',
 ])
 
 // Korte uitleg per mechaniek (getoond op keuze-/intro-scherm, los van de land-naam)
@@ -205,6 +257,30 @@ export const SUPER_DESC = {
   hakapulse:       'Dreunende schokgolven stampen de bal steeds weer omhoog',
   duneramp:        'De bal raast over een duin en schiet steil de lucht in',
   auroraflip:      'Verwart je tegenstander: zijn volgende trap gaat de verkeerde kant op',
+  // ── Groep 7: 23 gloednieuwe mechanieken ──
+  driftspin:     'Een lage, snelle glijschot die bij inslag de tegenstander zijwaarts een spin-out injaagt',
+  chainbolt:     'Drie bliksemschichten laden de bal steeds verder op onderweg naar het doel',
+  royaldecree:   'Vertraagt de tegenstander met een koninklijk bevel terwijl jij er met de bal vandoor stormt',
+  blastram:      'Een dubbele megaknal: eerst een explosie bij inslag, dan na een paar tellen nóg een grotere',
+  hopdance:      'Een reuzensprong met een wolk veren, eindigend in een zwierige draaiende omhaal',
+  starorbit:     'Een volledige sterrenkrans draait mee om de bal naar het doel',
+  frostbite:     'Een ijzige bal die kort bevriest en daarna een spekgladde nasleep achterlaat',
+  mirrorstrike:  'Een spiegelbal vliegt mee in het exact tegenovergestelde pad — welke is echt?',
+  rockslide:     'Een complete rotslawine dendert mee naar het doel en bedelft de tegenstander onder het gesteente',
+  birthdayblast: 'Vliegt lang de lucht in en hangt daar, dan knalt een reuzentaart-bal van bovenaf uit elkaar — bijna niet te missen',
+  jokebomb:      'Drie giechelschokjes laten de tegenstander struikelen van het lachen',
+  smartskip:     'Berekent slim hoe ver de bal moet skippen om precies langs de tegenstander te glippen',
+  ribbonhop:     'Een piepklein, vrolijk stuiterend balletje dat lastig te blokkeren is',
+  sprinklerain:  'Een brede stroom minisprinkels regent over het hele doel',
+  honkswap:      'Een clowneske toeter wisselt jullie plekken in één klap om',
+  goalwall:      'Bouwt een verdedigingsmuur pal voor je eigen doel',
+  skytwister:    'Een wervelwind daalt recht neer bovenop de tegenstander',
+  stampede:      'Een trage maar onstuitbare charge met een reuzenkop',
+  stormsurge:    'Een stormfront trekt over het hele veld richting het doel',
+  windgust:      'Een complete cycloon grijpt de tegenstander en slingert hem in het rond',
+  guardianwing:  'Zuivert jezelf en stijgt onraakbaar op als een engel — dan een lichtbundel met dalende veren van bovenaf',
+  turboboost:    'Bliksemsnelle dash gecombineerd met een messcherpe homing-knal',
+  sunflare:      'Een felle flits verblindt én verwart de tegenstander even',
 }
 export const superDescOf = key => SUPER_DESC[getSuper(key).behavior] || SUPER_DESC.power
 

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { COUNTRIES, getCountry, generateBracket, UNLOCK_TIERS, LEVELS } from './countries'
+import { COUNTRIES, CLASS_COUNTRIES, getCountry, generateBracket, generateClassBracket, UNLOCK_TIERS, LEVELS } from './countries'
 import { getMove, getSuper, superDescOf, INSTANT_BEHAVIORS } from './headSoccerMoves'
 import OrientationGate from '../OrientationGate'
 import './football.css'
@@ -24,7 +24,9 @@ const KICK_ANIM = 0.24       // iets langere schop-animatie (zwaarder gevoel)
 const MATCH_TIME = 60        // 1 minuut per potje
 const KICK_POWER = 340       // zwakker, rustiger basis-schot
 // Basis-AI = "hard" (de sterke AI van vóór). Per niveau wordt dit geschaald.
-const AI_SPD_BY_DIFF = { 1: 120, 2: 145, 3: 170, 4: 195, 5: 225 }
+// diff 6 = de baas-tegenstanders van het klas-toernooi (Meester Luuk/Job): extra
+// snel, en via de aim-fout-formule (6 - diff) mikken zij daardoor perfect (fout = 0).
+const AI_SPD_BY_DIFF = { 1: 120, 2: 145, 3: 170, 4: 195, 5: 225, 6: 260 }
 // Per niveau: spd = snelheidsfactor, err = mik-fout (hoger = slechter mikken),
 // kick/jump/special = kans-factoren (lager = minder vaak).
 const LEVEL_TUNE = {
@@ -894,6 +896,101 @@ function SpecialDemo({ countryKey }) {
         case 'voodoolink': burst(dummy.x, dummy.y - PR, col, 16); break
         case 'hakapulse': pulseSeq = { t: 3.0, next: 0, interval: 0.5, x: p.x, col }; break
         case 'auroraflip': burst(dummy.x, dummy.y - PR, col, 16); break
+        // ── Groep 7: 23 gloednieuwe mechanieken (zelfde behaviors als de echte match) ──
+        case 'driftspin':
+          ball.vx = dir * 1200; ball.vy = -60; ball.bouncyT = 2.2; ball.spin = dir * 2200
+          ball.superKind = 'driftspin'; ball.fx = { t: 1.4, type: 'electric', color: col }; ball.superColor = col
+          burst(p.x, G - 4, col, 10); break
+        case 'chainbolt':
+          air(1000, 900, 3); ball.superColor = col
+          for (let i = 0; i < 3; i++) bolts.push({ x: p.x + dir * (60 + i * 60), t: 0.35 + i * 0.12, dur: 0.35, color: col, delay: i * 0.12 })
+          ball.boostT = 0.5; ball.boostFx = 'speed'; break
+        case 'royaldecree':
+          dummy.frozenFactor = 0.45; dummy.t.frozen = 2.0
+          air(1050, 950, 4); ball.superColor = '#FFD700'
+          burst(dummy.x, dummy.y - PR * 0.5, '#FFD700', 16); break
+        case 'blastram':
+          ball.vx = dir * 1300; ball.vy = -80; ball.superKind = 'blastram'; ball.dark = true; ball.fx = { t: 1.4, type: 'flame', color: col }
+          ball.boostT = 0.9; ball.boostFx = 'megablast'; break
+        case 'hopdance':
+          leap(950)
+          for (let i = 0; i < 3; i++) shocks.push({ x: p.x, y: G - 6, color: col, r0: 6, maxR: 100 + i * 40, t: 0.3 + i * 0.2, dur: 0.3 + i * 0.2 })
+          burst(p.x, G - 20, col, 20)
+          aimAtGoal(1250); ball.homing = dir; ball.homingStr = 5; ball.superColor = col; ball.spin = dir * 1800
+          decoys.push({ x: ball.x, y: ball.y, vx: ball.vx * 0.85, vy: ball.vy * 1.1, angle: 0, life: 1.5, color: col })
+          break
+        case 'starorbit':
+          air(950, 880, 3); ball.superColor = col
+          for (let i = 0; i < 6; i++) { const a = (i / 6) * Math.PI * 2; decoys.push({ x: ball.x, y: ball.y, vx: ball.vx * Math.cos(a) - ball.vy * Math.sin(a), vy: ball.vx * Math.sin(a) + ball.vy * Math.cos(a), angle: 0, life: 2.4, color: col }) }
+          break
+        case 'frostbite':
+          air(900, 820, 4); ball.superColor = '#bfe8ff'
+          ball.superKind = 'frostbite'; ball.fx = { t: 1.4, type: 'energy', color: '#bfe8ff' }; break
+        case 'mirrorstrike':
+          air(950, 880, 4); ball.superColor = '#C0C0C0'
+          decoys.push({ x: ball.x, y: ball.y, vx: ball.vx, vy: -ball.vy, angle: 0, life: 2.0, color: '#C0C0C0' }); break
+        case 'rockslide':
+          ball.vx = dir * 900; ball.vy = 20; ball.dark = true; ball.superKind = 'rockslide'; ball.fx = { t: 1.4, type: 'energy', color: '#7B2D8B' }
+          for (let i = 0; i < 4; i++) decoys.push({ x: p.x - dir * (30 + i * 40), y: G - BR, vx: dir * (700 + i * 60), vy: -40 - Math.random() * 60, angle: 0, life: 1.6, color: '#7B2D8B' })
+          burst(p.x, G - 4, '#7B2D8B', 16)
+          break
+        case 'guardianwing':
+          for (const k in p.t) p.t[k] = 0
+          startSeq(1300, 1.3, 0.75, strikeDown(500, 900, 8, () => {
+            ball.superColor = '#fff8d6'; ball.superKind = 'guardianwing'; ball.fx = { t: 1.4, type: 'electric', color: '#fff8d6' }
+          })); break
+        case 'birthdayblast':
+          ball.scale = 2.2; ball.scaleT = 2.8
+          startSeq(1150, 1.5, 0.85, strikeDown(520, 850, 9, () => {
+            ball.superColor = '#D4AF37'; ball.homeT = 3.0; ball.boostT = 1.1; ball.boostFx = 'birthday'
+          })); break
+        case 'jokebomb':
+          for (let i = 0; i < 3; i++) { dummy.vx += (Math.random() - 0.5) * 200; shocks.push({ x: dummy.x, y: dummy.y - PR * (0.3 + i * 0.15), color: col, r0: 6, maxR: 60 + i * 20, t: 0.25 + i * 0.15, dur: 0.25 + i * 0.15 }) }
+          dummy.dizzy = 0.5; break
+        case 'smartskip': {
+          const oldX = ball.x
+          const skip = Math.max(90, Math.min(220, Math.abs(dummy.x - DGX) * 0.4))
+          ball.x = Math.min(DGX - 20, ball.x + dir * skip)
+          burst(oldX, ball.y, col, 8); burst(ball.x, ball.y, col, 8); air(950, 900, 4)
+          break
+        }
+        case 'ribbonhop':
+          ball.scale = 0.5; ball.scaleT = 2.4; ball.bouncyT = 2.4
+          ball.vx = dir * 880; ball.vy = -320; ball.superColor = '#FFC0DA'; burst(ball.x, ball.y, '#FFC0DA', 16); break
+        case 'sprinklerain':
+          air(900, 820, 3)
+          for (let i = 0; i < 8; i++) { const rx = gx + (Math.random() - 0.5) * 130; rockets.push({ x: rx, y: VY - 20 - Math.random() * 120, vx: 0, vy: 380 + Math.random() * 200, color: i % 2 ? '#1A5C33' : '#0D2F6B', life: 2.0, owner: 'L', delay: 0.15 + i * 0.04 }) }
+          break
+        case 'honkswap': {
+          const tx = p.x, ty = p.y
+          p.x = dummy.x; p.y = Math.min(dummy.y, G - PR); dummy.x = tx; dummy.y = Math.min(ty, G - PR)
+          burst(p.x, p.y - PR, col, 10); burst(dummy.x, dummy.y - PR, col, 10); break
+        }
+        case 'goalwall': {
+          const gxw = VX + 40
+          wall = { x: gxw, w: 50, h: 150, t: 4.5, col }
+          burst(gxw, G - 70, col, 16); break
+        }
+        case 'windgust':
+          tornado = { x: dummy.x, y: G, vx: 0, t: 2.2, pull: 3600, dir, color: col }
+          dummy.vx += dir * 520; dummy.vy -= 160; p.vx += dir * 280
+          burst(dummy.x, dummy.y - PR, col, 20); break
+        case 'skytwister':
+          tornado = { x: dummy.x, y: G, vx: 0, t: 2.6, pull: 3000, dir, color: col }
+          air(900, 820, 3); burst(dummy.x, G, col, 12); break
+        case 'stampede':
+          p.t.bighead = 2.0; p.bigScale = 1.8; leap(100)
+          ball.vx = dir * 700; ball.vy = -80; ball.fx = { t: 1.4, type: 'energy', color: col }; ball.superColor = col; break
+        case 'stormsurge':
+          air(950, 880, 3); ball.superColor = col
+          for (let i = 0; i < 7; i++) bolts.push({ x: p.x + dir * (i / 6) * 300, t: 0.5, dur: 0.5, color: col, delay: i * 0.06 })
+          dummy.dizzy = 0.8; break
+        case 'turboboost':
+          air(1100, 1000, 7); ball.superColor = col; ball.fx = { t: 1.4, type: 'electric', color: col }; break
+        case 'sunflare':
+          air(1000, 900, 5); ball.superColor = '#FFE066'
+          ball.fx = { t: 1.4, type: 'electric', color: '#FFE066' }
+          burst(ball.x, ball.y, '#FFE066', 20); break
         default:           // krachtige rechte knal
           aimAtGoal(1180); ball.homing = dir; ball.homingStr = 4
       }
@@ -921,7 +1018,7 @@ function SpecialDemo({ countryKey }) {
         if (pulseSeq.next <= 0) { pulseSeq.next = pulseSeq.interval; shocks.push({ x: pulseSeq.x, y: G, color: pulseSeq.col, r0: 6, maxR: 130, t: 0.4, dur: 0.4 }); if (Math.hypot(ball.x - pulseSeq.x, ball.y - G) < 110) { ball.vy -= 360; ball.vx += 60 } }
         if (pulseSeq.t <= 0) pulseSeq = null
       }
-      if (ball.boostT > 0) { ball.boostT -= dt; if (ball.boostT <= 0) { if (ball.boostFx === 'speed') ball.vx *= 2.0; else if (ball.boostFx === 'ramp') ball.vy -= 850; ball.boostFx = null } }
+      if (ball.boostT > 0) { ball.boostT -= dt; if (ball.boostT <= 0) { if (ball.boostFx === 'speed') ball.vx *= 2.0; else if (ball.boostFx === 'ramp') ball.vy -= 850; else if (ball.boostFx === 'birthday') { ball.vx *= 1.8; ball.vy -= 260; burst(ball.x, ball.y, '#D4AF37', 20) } else if (ball.boostFx === 'megablast') { ball.vx *= 1.6; ball.vy -= 200; burst(ball.x, ball.y, '#FF8200', 26) } ball.boostFx = null } }
       if (ball.chaosT > 0) ball.chaosT -= dt
       if (ball.scaleT > 0) { ball.scaleT -= dt; if (ball.scaleT <= 0) ball.scale = 1 }
       if (ball.ghostT > 0) ball.ghostT -= dt
@@ -978,6 +1075,11 @@ function SpecialDemo({ countryKey }) {
         const fxCol = ball.fx.color
         if (ball.superKind === 'goalram') { dummy.dizzy = 1.4; dummy.vx = 900; dummy.vy = -240; dummy.onGround = false; ball.x = dummy.x; ball.vx = 1000; ball.vy = -120 }
         else if (ball.superKind === 'groundspike') { dummy.dizzy = 1.8; dummy.buried = 1.4; dummy.vx = 0; dummy.vy = 0; dummy.y = G - PR; dummy.onGround = true; ball.vy = -240; ball.vx *= 0.2; burst(dummy.x, G, '#8a6a4a', 18) }
+        else if (ball.superKind === 'driftspin') { dummy.vx = -900; dummy.vy = -160; dummy.onGround = false; dummy.dizzy = 0.9; ball.x = dummy.x; ball.vx = 900; ball.vy = -140 }
+        else if (ball.superKind === 'blastram') { dummy.dizzy = 1.3; dummy.vx = 0; dummy.vy = -600; dummy.onGround = false; ball.vx = -700; ball.vy = -320 }
+        else if (ball.superKind === 'frostbite') { dummy.frozenFactor = 0.25; dummy.t.frozen = 1.1; dummy.dizzy = 0.6; burst(dummy.x, dummy.y - PR * 0.5, '#bde0ff', 14) }
+        else if (ball.superKind === 'rockslide') { dummy.vx = 0; dummy.vy = 0; dummy.buried = 1.2; dummy.dizzy = 1.4; dummy.y = G - PR; dummy.onGround = true; ball.vy = -160; ball.vx *= 0.3; burst(dummy.x, G, '#7B2D8B', 20) }
+        else if (ball.superKind === 'guardianwing') { dummy.dizzy = 1.0; dummy.vy = -260; dummy.onGround = false; burst(dummy.x, dummy.y - PR, '#fff8d6', 18) }
         shocks.push({ x: dummy.x, y: dummy.y - PR * 0.4, color: fxCol, r0: 6, maxR: 160, t: 0.5, dur: 0.5 })
         ball.superKind = null
       }
@@ -1030,27 +1132,85 @@ function SpecialDemo({ countryKey }) {
 }
 
 // ── Toernooi-bracket ──────────────────────────────────────────────
-function Bracket({ bracket, playerKey }) {
-  const me = getCountry(playerKey)
+// ── Volledige 16-deelnemers toernooiboom (zoals een echt WK-schema) ─────
+// De 4 echte tegenstanders van de speler krijgen hun vaste plek in de boom;
+// de overige 11 plekken worden gevuld met andere landen/klasgenoten. De
+// uitslagen van die "andere" wedstrijden worden deterministisch gesimuleerd
+// (seeded op de bracket), zodat de boom er elke render hetzelfde uitziet.
+function hashSeed(str) { let h = 2166136261; for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619) } return h >>> 0 }
+function mulberry32(a) { return function () { a |= 0; a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296 } }
+
+function buildBracketTree(bracket, playerKey) {
+  const rng = mulberry32(hashSeed(playerKey + '|' + bracket.opponents.join(',')))
+  const pool = (bracket.isClass ? CLASS_COUNTRIES : COUNTRIES)
+    .map(c => c.key).filter(k => k !== playerKey && !bracket.opponents.includes(k))
+  for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]] }
+  const f = pool.slice(0, 11)
+  const [o0, o1, o2, o3] = bracket.opponents
+  // R16: links (speler-helft) wedstrijden 0-3, rechts 4-7. De echte tegen-
+  // standers staan zó dat ze de speler precies in de juiste ronde treffen.
+  const r16 = [
+    [playerKey, o0], [o1, f[0]], [o2, f[1]], [f[2], f[3]],
+    [o3, f[4]], [f[5], f[6]], [f[7], f[8]], [f[9], f[10]],
+  ]
+  const pick = m => m[rng() < 0.5 ? 0 : 1]
+  const w16 = [playerKey, o1, o2, pick(r16[3]), o3, pick(r16[5]), pick(r16[6]), pick(r16[7])]
+  const qf  = [[w16[0], w16[1]], [w16[2], w16[3]], [w16[4], w16[5]], [w16[6], w16[7]]]
+  const wqf = [playerKey, o2, o3, pick(qf[3])]
+  const sf  = [[wqf[0], wqf[1]], [wqf[2], wqf[3]]]
+  const wsf = [playerKey, o3]
+  return { r16, w16, qf, wqf, sf, wsf, fin: [wsf[0], wsf[1]] }
+}
+
+function TSlot({ k, playerKey, out, unknown, big }) {
+  if (unknown || !k) return <div className={`hs-tslot hs-tslot-unknown${big ? ' big' : ''}`}>?</div>
+  const c = getCountry(k)
+  const me = k === playerKey
   return (
-    <div className="hs-bracket">
-      {bracket.opponents.map((ok, i) => {
-        const opp = getCountry(ok)
-        const res = bracket.results[i]
-        const cur = i === bracket.currentRound && res === undefined
-        return (
-          <div key={i} className={`hs-br-row${cur ? ' cur' : ''}${res ? ' ' + res : ''}`}>
-            <span className="hs-br-round">{bracket.roundNames[i]}</span>
-            <span className="hs-br-match">
-              <span className="hs-br-flag">{me.flag}</span>
-              <span className="hs-br-mid">{res === 'win' ? '✅' : res === 'lose' ? '❌' : 'vs'}</span>
-              <span className="hs-br-flag">{opp.flag}</span>
-              <span className="hs-br-name">{opp.name}</span>
-              <span className="hs-br-stars">{'★'.repeat(opp.diff)}</span>
-            </span>
-          </div>
-        )
-      })}
+    <div className={`hs-tslot${me ? ' me' : ''}${out ? ' out' : ''}${big ? ' big' : ''}`} title={c.name}>
+      <span className="hs-tslot-flag">{c.flag}</span>
+      <span className="hs-tslot-name">{c.name}</span>
+    </div>
+  )
+}
+
+function Bracket({ bracket, playerKey }) {
+  const tree = buildBracketTree(bracket, playerKey)
+  const done = bracket.currentRound          // aantal gespeelde (gewonnen) rondes
+  // wedstrijd in ronde r: beslist als r < done; deelnemers pas bekend als de
+  // voedende wedstrijden (ronde r-1) beslist zijn.
+  const known = r => r === 0 || r <= done
+  const winnerOf = (r, mi) => r === 0 ? tree.w16[mi] : r === 1 ? tree.wqf[mi] : tree.wsf[mi]
+  const Match = ({ r, mi, pair, side }) => {
+    const decided = r < done
+    const show = known(r)
+    const win = decided ? winnerOf(r, mi) : null
+    const isCur = r === done && show && pair.includes(playerKey)
+    return (
+      <div className={`hs-tmatch ${side}${isCur ? ' cur' : ''}`}>
+        <TSlot k={show ? pair[0] : null} unknown={!show} playerKey={playerKey} out={decided && win !== pair[0]} />
+        <TSlot k={show ? pair[1] : null} unknown={!show} playerKey={playerKey} out={decided && win !== pair[1]} />
+      </div>
+    )
+  }
+  const finShow = known(3)
+  const finDecided = done >= 4
+  return (
+    <div className="hs-tree-wrap">
+      <div className="hs-tree">
+        <div className="hs-tcol">{[0, 1, 2, 3].map(i => <Match key={i} r={0} mi={i} pair={tree.r16[i]} side="L" />)}</div>
+        <div className="hs-tcol">{[0, 1].map(i => <Match key={i} r={1} mi={i} pair={tree.qf[i]} side="L" />)}</div>
+        <div className="hs-tcol"><Match r={2} mi={0} pair={tree.sf[0]} side="L" /></div>
+        <div className="hs-tcol hs-tfinal">
+          <span className="hs-tcup">🏆</span>
+          <TSlot k={finShow ? tree.fin[0] : null} unknown={!finShow} playerKey={playerKey} out={finDecided && tree.fin[0] !== playerKey} big />
+          <span className="hs-tvs">vs</span>
+          <TSlot k={finShow ? tree.fin[1] : null} unknown={!finShow} playerKey={playerKey} out={finDecided && tree.fin[1] !== playerKey} big />
+        </div>
+        <div className="hs-tcol"><Match r={2} mi={1} pair={tree.sf[1]} side="R" /></div>
+        <div className="hs-tcol">{[2, 3].map(i => <Match key={i} r={1} mi={i} pair={tree.qf[i]} side="R" />)}</div>
+        <div className="hs-tcol">{[4, 5, 6, 7].map(i => <Match key={i} r={0} mi={i} pair={tree.r16[i]} side="R" />)}</div>
+      </div>
     </div>
   )
 }
@@ -1060,6 +1220,13 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
   const rewardTour = reward ? loadRewardTour() : null
   const [unlocked, setUnlocked] = useState(loadUnlocked)
   const [phase, setPhase]   = useState(reward ? (rewardTour ? 'reward_round' : 'reward_select') : 'select')
+  // Groep 7: apart menu met alleen klasgenoten (code "groep7" in het hoofdmenu), geen
+  // vergrendel-progressie — als de code is ingevoerd staat de hele klas meteen open.
+  const [groep7Open] = useState(() => { try { return localStorage.getItem('kk_hs_groep7') === 'true' } catch { return false } })
+  // Meester Job & Meester Luuk zijn (als eindbazen van het toernooi) altijd speelbaar
+  // door de AI, maar pas door de leerling zelf te KIEZEN na de "pabo1"-code.
+  const [teachersOpen] = useState(() => { try { return localStorage.getItem('kk_hs_teachers') === 'true' } catch { return false } })
+  const [classMode, setClassMode] = useState(false)
   const [playerKey, setPlayerKey] = useState(rewardTour?.playerKey || null)
   const [oppKey, setOppKey] = useState(null)
   const [bracket, setBracket] = useState(rewardTour?.bracket || null)  // {playerKey, currentRound, opponents[], roundNames[], results[]}
@@ -1083,13 +1250,19 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
   // ── selection ──
   const choosePlayer = key => { setPlayerKey(key); setPhase('mode') }
   const startQuick = () => {
-    const pool = COUNTRIES.filter(c => c.key !== playerKey)
+    const source = classMode ? CLASS_COUNTRIES : COUNTRIES
+    const pool = source.filter(c => c.key !== playerKey)
     const opp = pool[Math.floor(Math.random() * pool.length)].key
     setOppKey(opp); setBracket(null); setCoinsEarned(0); setPhase('match')
   }
   const chooseLevel = (l) => {
     setLevel(l)
     const b = generateBracket(playerKey)
+    setBracket(b); setOppKey(b.opponents[0]); setCoinsEarned(0); setPhase('wk_bracket')
+  }
+  // Groep 7-toernooi: geen niveaukeuze, altijd 2 klasgenoten → Meester Luuk → Meester Job.
+  const startClassTournament = () => {
+    const b = generateClassBracket(playerKey)
     setBracket(b); setOppKey(b.opponents[0]); setCoinsEarned(0); setPhase('wk_bracket')
   }
 
@@ -1140,6 +1313,11 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
     if (!won) { setBracket(b => ({ ...b, results })); setPhase('wk_lost'); return }
     if (bracket.currentRound >= 3) {
       setBracket(b => ({ ...b, results }))
+      if (bracket.isClass) {
+        // klas-toernooi: geen landen-mysterybox, gewoon kampioen van Groep 7
+        setMysteryReveal(null)
+        setPhase('wk_won'); return
+      }
       // mysterybox: ontgrendel een nog-vergrendeld land van DIT niveau
       const pool = (UNLOCK_TIERS[level] || []).filter(k => !unlocked.includes(k))
       if (pool.length) {
@@ -1273,6 +1451,13 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
       sandwall: 'rise', silkleash: 'strike', heatblink: 'sky', canalboost: 'spin',
       coralfield: 'swarm', voodoolink: 'strike', hakapulse: 'charge', duneramp: 'sky',
       auroraflip: 'strike',
+      // Groep 7: 23 nieuwe mechanieken
+      driftspin: 'charge', chainbolt: 'strike', royaldecree: 'rise', blastram: 'charge',
+      hopdance: 'spin', starorbit: 'swarm', frostbite: 'strike', mirrorstrike: 'spin',
+      rockslide: 'charge', birthdayblast: 'swarm', jokebomb: 'strike', smartskip: 'sky',
+      ribbonhop: 'spin', sprinklerain: 'sky', honkswap: 'strike', goalwall: 'rise',
+      skytwister: 'sky', stampede: 'charge', stormsurge: 'strike', windgust: 'rise',
+      guardianwing: 'rise', turboboost: 'charge', sunflare: 'sky',
     }
     // CINEMATISCHE entree: een groot themed figuur (e) komt het veld op.
     const bigEntrance = (p, e, col, type, tx) => {
@@ -1372,6 +1557,39 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
           opp.t.kickFlip = 5.0
           addShock(opp.x, opp.y - PR * 0.5, col, 170, 0.5)
           break
+        // ── Groep 7: 5 instant-mechanieken (geen bal nodig) ──
+        case 'jokebomb': // LACHENDE LUUK: drie giechelschokjes laten de tegenstander struikelen
+          for (let i = 0; i < 3; i++) {
+            opp.vx += (Math.random() - 0.5) * 280
+            addShock(opp.x, opp.y - PR * (0.3 + i * 0.15), col, 70 + i * 25, 0.25 + i * 0.15)
+          }
+          opp.dizzy = 0.5
+          p.t.dash = 0.3; p.dashVx = dir * 400
+          addParticles(opp.x, opp.y - PR, col, 16, 260)
+          break
+        case 'honkswap': { // BARDO DOO PIPO: een clowneske toeter wisselt jullie plekken in één klap om
+          const tx = p.x, ty = p.y
+          p.x = opp.x; p.y = Math.min(opp.y, GROUND_Y - PR)
+          opp.x = tx; opp.y = Math.min(ty, GROUND_Y - PR)
+          addParticles(p.x, p.y - PR, col, 14, 260); addParticles(opp.x, opp.y - PR, col, 14, 260)
+          addShock(p.x, p.y - PR * 0.4, col, 130, 0.4); addShock(opp.x, opp.y - PR * 0.4, col, 130, 0.4)
+          break
+        }
+        case 'goalwall': { // VELDBAAS VINCE: bouwt een verdedigingsmuur pal voor zijn EIGEN doel
+          const gx = dir > 0 ? GOAL_W + 70 : W - GOAL_W - 70
+          S.wall = { x: gx, w: 50, h: 170, t: 4.5, col }
+          addShock(gx, GROUND_Y - 70, col, 190, 0.55)
+          addParticles(gx, GROUND_Y - 70, col, 20, 300)
+          break
+        }
+        case 'windgust': { // NINA STORMINA: een complete cycloon grijpt de tegenstander en slingert hem in het rond
+          S.tornado = { x: opp.x, y: GROUND_Y, vx: 0, t: 2.2, pull: 3600, dir, color: col, suckPlayer: true }
+          opp.vx += dir * 520; opp.vy -= 160
+          p.vx += dir * 280
+          addShock(opp.x, opp.y - PR * 0.4, col, 190, 0.55)
+          addParticles(opp.x, opp.y - PR, col, 26, 380); addParticles(p.x, p.y - PR, col, 14, 260)
+          break
+        }
       }
       flash(`${m.name}!`)
     }
@@ -1639,6 +1857,125 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
           S.ball.vx = dir * 700; S.ball.vy = 40
           setBallFx(col, 'flame'); S.ball.superColor = col
           break
+        // ── Groep 7: 18 gloednieuwe superschoten (ball-contact) ──
+        case 'driftspin': // DANI DRIFT: lage, snelle glijschot die tegenstanders zijwaarts een spin-out injaagt
+          S.ball.vx = dir * 1200; S.ball.vy = -60; S.ball.bouncyT = 2.2; S.ball.spin = dir * 2200
+          S.ball.superKind = 'driftspin'; setBallFx(col, 'electric'); S.ball.superColor = col
+          for (let i = 0; i < 10; i++) S.particles.push({ x: p.x - dir * i * 14, y: GROUND_Y - 4, vx: -dir * (60 + Math.random() * 40), vy: -20 - Math.random() * 30, life: 0.5, color: i % 2 ? '#fff' : col, r: 2 + Math.random() * 2 })
+          break
+        case 'chainbolt': // BLIKSEM BAS: springt op en drie bliksemschichten laden de bal op tijdens de vlucht
+          air(1000, 900, 3); S.ball.superColor = col
+          for (let i = 0; i < 3; i++) S.bolts.push({ x: p.x + dir * (100 + i * 130), t: 0.35 + i * 0.12, dur: 0.35, color: col, delay: i * 0.12 })
+          S.ball.boostT = 0.5; S.ball.boostFx = 'speed'
+          if (Math.abs(opp.x - p.x) < 260) { opp.dizzy = 0.7; opp.vx += (opp.x < p.x ? -1 : 1) * 200 }
+          addShake(10, 0.3); break
+        case 'royaldecree': // LIAM LEGENDE: springt koninklijk op, vertraagt de tegenstander en schiet vanuit de lucht
+          opp.frozenFactor = 0.45; opp.t.frozen = 2.0
+          air(1050, 950, 4); S.ball.superColor = '#FFD700'
+          addShock(opp.x, opp.y - PR * 0.4, '#FFD700', 160, 0.5)
+          for (let i = 0; i < 16; i++) { const a = Math.random() * Math.PI * 2, v = 140 + Math.random() * 160; S.particles.push({ x: opp.x, y: opp.y - PR * 0.5, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 60, life: 0.8, color: i % 2 ? '#FFD700' : '#fff', r: 2 + Math.random() * 3 }) }
+          break
+        case 'blastram': // THAMAL KNAL: een megaknal die bij inslag ontploft — en na een paar tellen nóg een keer, groter
+          S.ball.vx = dir * 1300; S.ball.vy = -80; S.ball.superKind = 'blastram'; S.ball.dark = true; setBallFx(col, 'flame')
+          S.ball.boostT = 0.9; S.ball.boostFx = 'megablast'
+          break
+        case 'hopdance': // FLAMINGO FLOOR: een reuzensprong met een wolk veren, eindigend in een draaiende omhaal
+          leap(950)
+          for (let i = 0; i < 3; i++) addShock(p.x, GROUND_Y - 6, col, 100 + i * 40, 0.3 + i * 0.2)
+          for (let i = 0; i < 24; i++) { const a = Math.random() * Math.PI * 2, v = 140 + Math.random() * 220; S.particles.push({ x: p.x, y: GROUND_Y - 20, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 180, life: 0.9, color: i % 2 ? '#FF8200' : '#fff', r: 2 + Math.random() * 3 }) }
+          aimAtGoal(p, 1250); S.ball.homing = dir; S.ball.homingStr = 5; S.ball.superColor = col; S.ball.spin = dir * 1800
+          S.decoys.push({ x: S.ball.x, y: S.ball.y, vx: S.ball.vx * 0.85, vy: S.ball.vy * 1.1, angle: 0, life: 1.5, color: col })
+          addShake(12, 0.4)
+          break
+        case 'starorbit': // ABDI ALI ARAB: springt op, een volledige sterrenkrans draait mee de lucht in naar het doel
+          air(950, 880, 3); S.ball.superColor = col
+          for (let i = 0; i < 6; i++) { const a = (i / 6) * Math.PI * 2; S.decoys.push({ x: S.ball.x, y: S.ball.y, vx: S.ball.vx * Math.cos(a) - S.ball.vy * Math.sin(a), vy: S.ball.vx * Math.sin(a) + S.ball.vy * Math.cos(a), angle: 0, life: 2.4, color: col }) }
+          break
+        case 'frostbite': // ILA ICE: springt op, een ijzige bal die vanuit de lucht kort bevriest en spekglad nasleep laat
+          air(900, 820, 4); S.ball.superColor = '#bfe8ff'
+          S.ball.superKind = 'frostbite'; setBallFx('#bfe8ff', 'energy'); break
+        case 'mirrorstrike': // ZILVEREN ZENO: springt op, een spiegelbal vliegt vanuit de lucht in exact tegengesteld pad mee
+          air(950, 880, 4); S.ball.superColor = '#C0C0C0'
+          S.decoys.push({ x: S.ball.x, y: S.ball.y, vx: S.ball.vx, vy: -S.ball.vy, angle: 0, life: 2.0, color: '#C0C0C0' })
+          break
+        case 'rockslide': // ROEL DE ROTS: een complete rotslawine dendert mee naar de goal
+          S.ball.vx = dir * 900; S.ball.vy = 20; S.ball.dark = true; S.ball.superKind = 'rockslide'; setBallFx('#7B2D8B', 'energy')
+          for (let i = 0; i < 4; i++) S.decoys.push({ x: p.x - dir * (30 + i * 40), y: GROUND_Y - BR, vx: dir * (700 + i * 60), vy: -40 - Math.random() * 60, angle: 0, life: 1.6, color: '#7B2D8B' })
+          for (let i = 0; i < 20; i++) S.particles.push({ x: p.x, y: GROUND_Y - 4, vx: -dir * (40 + Math.random() * 120), vy: -40 - Math.random() * 100, life: 0.8, color: i % 2 ? '#8a6a4a' : '#7B2D8B', r: 3 + Math.random() * 5 })
+          addShake(14, 0.4)
+          break
+        case 'guardianwing': // ENGEL ELIA: zuivert zichzelf, stijgt onraakbaar op, en daalt neer met een lichtbundel + veren
+          p.dizzy = 0; p.buried = 0; p.frozenFactor = 1
+          p.t.frozen = 0; p.t.reversed = 0; p.t.rooted = 0; p.t.mirrored = 0; p.t.slippery = 0
+          p.t.noJump = 0; p.t.leash = 0; p.t.chargeLock = 0; p.t.kickFlip = 0
+          p.t.immune = 3.4
+          startSeq(1300, 1.3, 0.75, strikeDown(500, 900, 8, () => {
+            S.ball.superColor = '#fff8d6'; S.ball.superKind = 'guardianwing'; setBallFx('#fff8d6', 'electric')
+            for (let i = 0; i < 7; i++) S.rockets.push({ x: S.ball.x + (Math.random() - 0.5) * 90, y: CEIL - 20 - Math.random() * 110, vx: 0, vy: 380 + Math.random() * 180, color: '#fff8d6', life: 1.8, owner: p.side, delay: i * 0.05, emoji: '🕊️' })
+          }))
+          break
+        case 'birthdayblast': // JARIGE JOB: vliegt lang de lucht in, hangt daar, en schiet dan van bovenaf —
+          // zelfde zweef-mechaniek als Abdi-Bal! (Somalië), maar met een extreem sterke, langdurige
+          // homing zodat dit het beste schot van de klas is en vrijwel altijd raak.
+          S.ball.scale = 2.2; S.ball.scaleT = 2.8
+          startSeq(1150, 1.5, 0.85, strikeDown(520, 850, 9, () => {
+            S.ball.superColor = '#D4AF37'; S.ball.homeT = 3.0
+            S.ball.boostT = 1.1; S.ball.boostFx = 'birthday'
+            addParticles(S.ball.x, S.ball.y, '#D4AF37', 20, 300)
+          }))
+          break
+        case 'smartskip': { // PIM SLIM: berekent slim een skip-afstand, springt daarna op en schiet vanuit de lucht
+          const oldX = S.ball.x
+          const goalXp = dir > 0 ? W - GOAL_W - 20 : GOAL_W + 20
+          const skip = Math.max(90, Math.min(280, Math.abs(opp.x - goalXp) * 0.4))
+          S.ball.x = Math.max(GOAL_W + 20, Math.min(W - GOAL_W - 20, S.ball.x + dir * skip))
+          addParticles(oldX, S.ball.y, col, 14, 240); addParticles(S.ball.x, S.ball.y, col, 14, 240)
+          air(950, 900, 4)
+          break
+        }
+        case 'ribbonhop': // KLEINE KAYLEIGH: een piepklein, vrolijk stuiterend balletje is lastig te blokkeren
+          S.ball.scale = 0.5; S.ball.scaleT = 2.4; S.ball.bouncyT = 2.4
+          S.ball.vx = dir * 880; S.ball.vy = -320; S.ball.superColor = '#FFC0DA'
+          for (let i = 0; i < 20; i++) { const a = Math.random() * Math.PI * 2, v = 120 + Math.random() * 200; S.particles.push({ x: S.ball.x, y: S.ball.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 60, life: 0.7, color: i % 2 ? '#FFC0DA' : '#8BD17C', r: 2 + Math.random() * 3 }) }
+          break
+        case 'sprinklerain': { // TARA TAART: springt op en een brede stroom minisprinkels regent over het HELE doel
+          air(900, 820, 3)
+          const goalXt = dir > 0 ? W - GOAL_W - 20 : GOAL_W + 20
+          for (let i = 0; i < 10; i++) { const rx = goalXt + (Math.random() - 0.5) * GOAL_W * 2.3; S.rockets.push({ x: rx, y: CEIL - 20 - Math.random() * 130, vx: 0, vy: 380 + Math.random() * 200, color: i % 2 ? '#1A5C33' : '#0D2F6B', life: 2.0, owner: p.side, delay: 0.15 + i * 0.04 }) }
+          break
+        }
+        case 'skytwister': // HOCES FOCES HAILEY: springt op terwijl een wervelwind recht op de tegenstander neerdaalt
+          S.tornado = { x: opp.x, y: GROUND_Y, vx: 0, t: 2.6, pull: 3000, dir, color: col, suckPlayer: true }
+          air(900, 820, 3)
+          addShock(opp.x, GROUND_Y, col, 160, 0.5)
+          break
+        case 'stampede': // LOU DE KOE: een trage maar onstuitbare charge met een reuzenkop
+          p.t.dash = 0.6; p.dashVx = dir * 650; p.ram = true; p.ramKnock = 900; p.ramStun = 1.6
+          p.t.bighead = 2.0; p.bigScale = 1.8
+          p.vy = -100; p.onGround = false
+          S.ball.vx = dir * 700; S.ball.vy = -80; setBallFx(col, 'energy'); S.ball.superColor = col
+          addShock(p.x, p.y - PR * 1.2, col, 180, 0.55)
+          break
+        case 'stormsurge': { // BLIKSEM BRUNO: springt op terwijl een stormfront over het hele veld richting het doel trekt
+          air(950, 880, 3); S.ball.superColor = col
+          for (let i = 0; i < 7; i++) S.bolts.push({ x: p.x + dir * (i / 6) * (W * 0.6), t: 0.5, dur: 0.5, color: col, delay: i * 0.06 })
+          opp.dizzy = 0.8
+          addShake(12, 0.35)
+          break
+        }
+        case 'turboboost': // VINNIGE VINN: bliksemsnelle sprong gecombineerd met een messcherpe homing-knal uit de lucht
+          p.t.dash = 0.5; p.dashVx = dir * 1100
+          air(1100, 1000, 7); S.ball.superColor = col
+          setBallFx(col, 'electric')
+          addShock(p.x, p.y - PR * 0.4, col, 150, 0.45)
+          break
+        case 'sunflare': // SUNNY SUZE: springt de zon tegemoet, een felle flits verblindt én verwart de tegenstander
+          air(1000, 900, 5); S.ball.superColor = '#FFE066'
+          setBallFx('#FFE066', 'electric')
+          opp.t.noJump = 1.8; opp.t.reversed = 1.0
+          addShock(S.ball.x, S.ball.y, '#FFE066', 220, 0.6); addShake(14, 0.4)
+          addParticles(S.ball.x, S.ball.y, '#FFE066', 26, 420)
+          break
         default:           // krachtige rechte knal
           aimAtGoal(p, 1180); S.ball.homing = dir; S.ball.homingStr = 4
       }
@@ -1719,6 +2056,30 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
             S.ball.vy = -240; S.ball.vx *= 0.2
             addShock(p.x, GROUND_Y, fxCol, 240, 0.6); addShake(22, 0.55)
             for (let i = 0; i < 24; i++) { const a = Math.PI + Math.random() * Math.PI; const v = 220 + Math.random() * 220; S.particles.push({ x: p.x + (Math.random() - 0.5) * 60, y: GROUND_Y - 5, vx: Math.cos(a) * v * 0.6, vy: Math.sin(a) * v - 120, life: 0.9, color: i % 2 ? '#8a6a4a' : fxCol, r: 3 + Math.random() * 4 }) }
+          } else if (S.ball.superKind === 'driftspin') { // DANI DRIFT: zijwaartse spin-out i.p.v. recht naar achteren
+            const perp = kdir > 0 ? -1 : 1
+            p.vx = perp * 620; p.vy = -160; p.onGround = false; p.dizzy = 0.9; p.t.reversed = 1.0
+            S.ball.x = p.x; S.ball.vx = kdir * 900; S.ball.vy = -140
+            addShock(p.x, p.y - PR * 0.4, fxCol, 170, 0.5); addShake(14, 0.4)
+            addParticles(p.x, p.y - PR, fxCol, 20, 360)
+          } else if (S.ball.superKind === 'blastram') { // THAMAL KNAL: ontploft omhoog, bal stuitert terug naar de schutter
+            p.dizzy = 1.3; p.vx = 0; p.vy = -600; p.onGround = false
+            S.ball.vx = -kdir * 700; S.ball.vy = -320
+            addShock(p.x, p.y - PR * 0.4, fxCol, 230, 0.6); addShake(20, 0.5)
+            for (let i = 0; i < 26; i++) { const a = Math.random() * Math.PI * 2, v = 200 + Math.random() * 260; S.particles.push({ x: p.x, y: p.y - PR * 0.5, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 100, life: 0.9, color: i % 2 ? fxCol : '#fff', r: 3 + Math.random() * 4 }) }
+          } else if (S.ball.superKind === 'frostbite') { // ILA ICE: korte bevriezing die overgaat in gladheid
+            p.frozenFactor = 0.25; p.t.frozen = 1.1; p.t.slippery = 2.0; p.dizzy = 0.6
+            addShock(p.x, p.y - PR * 0.4, '#bde0ff', 150, 0.5)
+            for (let i = 0; i < 16; i++) S.particles.push({ x: p.x, y: p.y - PR * 0.5, vx: (Math.random() - 0.5) * 220, vy: (Math.random() - 0.5) * 220 - 60, life: 0.8, color: i % 2 ? '#bde0ff' : '#fff', r: 2 + Math.random() * 3 })
+          } else if (S.ball.superKind === 'rockslide') { // ROEL DE ROTS: bedolven onder een complete rotslawine
+            p.t.rooted = 2.0; p.dizzy = 1.4; p.buried = 1.2; p.vx = 0; p.vy = 0; p.y = GROUND_Y - PR; p.onGround = true
+            S.ball.vy = -160; S.ball.vx *= 0.3
+            addShock(p.x, GROUND_Y, '#7B2D8B', 240, 0.6); addShake(18, 0.5)
+            for (let i = 0; i < 26; i++) { const a = Math.PI + Math.random() * Math.PI; const v = 200 + Math.random() * 220; S.particles.push({ x: p.x + (Math.random() - 0.5) * 70, y: GROUND_Y - 5, vx: Math.cos(a) * v * 0.6, vy: Math.sin(a) * v - 120, life: 1.0, color: i % 2 ? '#8a6a4a' : '#7B2D8B', r: 3 + Math.random() * 5 }) }
+          } else if (S.ball.superKind === 'guardianwing') { // ENGEL ELIA: een lichtbundel tilt de tegenstander even op
+            p.dizzy = 1.0; p.vy = -260; p.onGround = false
+            addShock(p.x, p.y - PR * 0.5, '#fff8d6', 200, 0.55)
+            for (let i = 0; i < 20; i++) { const a = Math.random() * Math.PI * 2, v = 160 + Math.random() * 220; S.particles.push({ x: p.x, y: p.y - PR, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 120, life: 0.9, color: i % 2 ? '#fff8d6' : '#fff', r: 2 + Math.random() * 3 }) }
           }
           S.ball.superKind = null
           gainCharge(p, 0.05)
@@ -1844,6 +2205,14 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
         if (S.ball.boostT <= 0) {
           if (S.ball.boostFx === 'speed') { S.ball.vx *= 2.2; addShake(10, 0.3) }
           else if (S.ball.boostFx === 'ramp') { S.ball.vy -= 950; addShake(12, 0.35) }
+          else if (S.ball.boostFx === 'birthday') { // JARIGE JOB: feestelijke confetti-ontploffing
+            S.ball.vx *= 1.8; S.ball.vy -= 260; addShake(16, 0.45); addShock(S.ball.x, S.ball.y, '#D4AF37', 200, 0.6)
+            for (let i = 0; i < 24; i++) { const a = Math.random() * Math.PI * 2, v = 200 + Math.random() * 260; S.particles.push({ x: S.ball.x, y: S.ball.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 100, life: 1.0, color: i % 3 === 0 ? '#D4AF37' : (i % 3 === 1 ? '#fff' : '#ff6fb5'), r: 2 + Math.random() * 3 }) }
+          } else if (S.ball.boostFx === 'megablast') { // THAMAL KNAL: een tweede, nóg grotere explosie
+            addShake(20, 0.55); addShock(S.ball.x, S.ball.y, '#FF8200', 260, 0.65); addShock(S.ball.x, S.ball.y, '#ffffff', 180, 0.5)
+            for (let i = 0; i < 30; i++) { const a = Math.random() * Math.PI * 2, v = 260 + Math.random() * 300; S.particles.push({ x: S.ball.x, y: S.ball.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 120, life: 1.0, color: i % 2 ? '#FF8200' : '#fff', r: 3 + Math.random() * 4 }) }
+            S.ball.vx *= 1.6; S.ball.vy -= 200
+          }
           S.ball.boostFx = null
         }
       }
@@ -1896,13 +2265,14 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
         // ── AI (R) ──
         const R = S.R
         if (R.dizzy <= 0) {
-          // op hard: tegenstander die je met achteruit-lopen + dash/sprong voorbij probeert
-          // te glippen (klassieke "erover heen dashen" truc) wordt genadeloos afgestraft —
-          // de AI sprint met een boost direct terug naar de doellijn i.p.v. de bal lateraal
-          // te blijven volgen, zodat er geen leeg doel overblijft.
-          const isHard = level === 'hard'
-          const gotPast = isHard && S.L.x > R.x + 4
-          const aspd = aiSpd * R.frozenFactor * (gotPast ? 1.35 : 1)
+          // Verdediging tegen de klassieke "achteruit lokken en eroverheen wippen"-truc:
+          // op ELK niveau. gotPast = speler is al voorbij; vaulting = speler hangt in de
+          // lucht en beweegt over/langs de AI richting de goal. In beide gevallen sprint
+          // de AI direct terug naar de doellijn i.p.v. de bal lateraal te blijven volgen.
+          const gotPast = S.L.x > R.x + 4
+          const vaulting = !S.L.onGround && S.L.vx > 60 && S.L.x > R.x - PR * 2.5
+          const retreat = gotPast || vaulting
+          const aspd = aiSpd * R.frozenFactor * (retreat ? 1.15 + oppDiff * 0.05 : 1)
           // spookbal: AI ziet de bal slecht → mikt met grote fout
           const ghostErr = S.ball.ghostT > 0 ? (Math.sin(now / 140) * 120) : 0
           // mik-fout: groter bij minder sterren én op een lager niveau
@@ -1915,10 +2285,15 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
           // doel i.p.v. recht onder de springende speler te blijven staan.
           const superThreat = S.ball.held || (S.superSeq && S.superSeq.p === S.L)
           const lobOverHead = S.ball.vy < -80 && predictedX > R.x + 20
-          let target = ballSide
-          if (gotPast) target = W - GOAL_W - 34   // dek eerst de doellijn af, laatste linie
+          // slimmer positioneren bij hogere diff: blijf iets aan de DOELKANT van de bal
+          // staan (tussen bal en eigen goal), zodat een simpele wip er niet langs kan.
+          const goalBias = (oppDiff - 2) * 9
+          // topspelers (diff 5+, de meesters) anticiperen op waar de bal LANDT i.p.v.
+          // waar hij nu is — die achtervolgen niet, die staan er al.
+          let target = (oppDiff >= 5 ? predictedX : ballSide) + goalBias
+          if (retreat) target = W - GOAL_W - 34   // dek eerst de doellijn af, laatste linie
           else if (superThreat) target = Math.min(W - GOAL_W - 60, Math.max(W * 0.7, predictedX))
-          else if (lobOverHead || (S.ball.x > W * 0.55 && S.ball.vx > 0)) target = Math.max(W * 0.58, Math.min(predictedX, W - GOAL_W - 20))
+          else if (lobOverHead || (S.ball.x > W * 0.55 && S.ball.vx > 0)) target = Math.max(W * 0.58, Math.min(predictedX + goalBias, W - GOAL_W - 20))
           const dxr = target - R.x
           // voodoolink: gedwongen om de bewegingen van de tegenstander te kopiëren
           if (R.t.mirrored > 0) { R.vx = S.L.vx; R.facing = S.L.facing }
@@ -1939,6 +2314,9 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
           if (R.t.dash > 0) R.vx = R.dashVx * R.frozenFactor
           // springt voor hoge ballen (minder vaak op een lager niveau)
           if (R.onGround && R.t.noJump <= 0 && S.ball.y < GROUND_Y - 130 && Math.abs(S.ball.x - R.x) < 80 && S.ball.vy > -50 && Math.random() < (0.12 + oppDiff * 0.04) * LV.jump) { R.vy = -JUMP_FORCE; R.onGround = false }
+          // blokkeer-sprong: de speler probeert er bovenlangs te wippen → spring mee
+          // om hem in de lucht te onderscheppen (vaker naarmate de AI slimmer is)
+          if (vaulting && !gotPast && R.onGround && R.t.noJump <= 0 && S.L.y < R.y - PR * 0.8 && Math.abs(S.L.x - R.x) < PR * 3 && Math.random() < (0.08 + oppDiff * 0.05) * LV.jump) { R.vy = -JUMP_FORCE; R.onGround = false }
           // schiet als de bal binnen bereik is (minder vaak op een lager niveau)
           if (Math.hypot(S.ball.x - R.x, S.ball.y - (R.y - PR * 0.3)) < KICK_RANGE && Math.random() < (0.2 + oppDiff * 0.09) * LV.kick) doKick(R)
           if (Math.abs(S.L.x - R.x) < PR * 2.1 && Math.random() < (0.06 + oppDiff * 0.02) * LV.kick) meleeHit(R, S.L)
@@ -2425,6 +2803,36 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
     )
   }
 
+  if (phase === 'select' && classMode) {
+    return (
+      <div className="game-screen game-screen-center hs-select">
+        <button className="back-btn" onClick={() => setClassMode(false)}>← Landen</button>
+        <div className="hs-select-head">
+          <span className="hs-select-logo">👥⚽</span>
+          <h1 className="hs-select-title">GROEP 7</h1>
+          <p className="hs-select-sub">Kies jezelf (of een klasgenoot) — iedereen heeft een eigen superschot!</p>
+        </div>
+        <div className="wk-country-grid hs-grid">
+          {CLASS_COUNTRIES.map(c => {
+            const isTeacher = c.key === 'mjob' || c.key === 'mluuk'
+            const open = !isTeacher || teachersOpen
+            const m = getMove(c.key)
+            return (
+              <button key={c.key} className={`wk-country-card hs-card${open ? '' : ' hs-locked'}`} disabled={!open}
+                style={open ? { '--mv': m.color } : undefined}
+                onClick={() => open && choosePlayer(c.key)} title={open ? `${m.name}: ${m.desc}` : 'Alleen te kiezen met een geheime meester-code'}>
+                <span className="wk-country-flag">{open ? c.flag : '🔒'}</span>
+                <span className="wk-country-name">{open ? c.name : '???'}</span>
+                <span className="hs-move">{open ? `${m.emoji} ${m.name}` : '🔒 vergrendeld'}</span>
+              </button>
+            )
+          })}
+        </div>
+        <p className="hs-hint">Kies je eigen naam en speel tegen een klasgenoot (computer)! Meester Job en Meester Luuk zijn de eindbazen van het toernooi — zelf kiezen kan alleen met een geheime code.</p>
+      </div>
+    )
+  }
+
   if (phase === 'select') {
     const total = COUNTRIES.length, got = unlocked.length
     return (
@@ -2439,6 +2847,11 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
         {loadRewardTour() && (
           <button className="mode-card hs-go" style={{ marginBottom: 14 }} onClick={resumeRewardTour}>
             🏆 Verder met je toernooi
+          </button>
+        )}
+        {groep7Open && (
+          <button className="mode-card hs-go" style={{ marginBottom: 14 }} onClick={() => setClassMode(true)}>
+            👥 Groep 7 — speel met je klasgenoten!
           </button>
         )}
         <div className="wk-country-grid hs-grid">
@@ -2482,13 +2895,21 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
           <button className="mode-card hs-go" onClick={startQuick}>
             <span style={{ fontSize: '2rem' }}>⚽</span>
             <span className="mode-name">Start wedstrijd</span>
-            <span className="mode-desc">1 potje tegen een willekeurig land</span>
+            <span className="mode-desc">{classMode ? '1 potje tegen een willekeurige klasgenoot' : '1 potje tegen een willekeurig land'}</span>
           </button>
-          <button className="mode-card" onClick={() => setPhase('wk_level')}>
-            <span style={{ fontSize: '2rem' }}>🏆</span>
-            <span className="mode-name">Speel Cup</span>
-            <span className="mode-desc">Kies een niveau → win 4 rondes → nieuw land</span>
-          </button>
+          {classMode ? (
+            <button className="mode-card" onClick={startClassTournament}>
+              <span style={{ fontSize: '2rem' }}>🏆</span>
+              <span className="mode-name">Toernooi</span>
+              <span className="mode-desc">2 klasgenoten → Meester Luuk → Meester Job. Heel pittig!</span>
+            </button>
+          ) : (
+            <button className="mode-card" onClick={() => setPhase('wk_level')}>
+              <span style={{ fontSize: '2rem' }}>🏆</span>
+              <span className="mode-name">Speel Cup</span>
+              <span className="mode-desc">Kies een niveau → win 4 rondes → nieuw land</span>
+            </button>
+          )}
         </div>
       </div>
     )
@@ -2528,11 +2949,13 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
   if (phase === 'wk_bracket') {
     return (
       <div className="game-screen game-screen-center">
-        <button className="back-btn" onClick={() => { setBracket(null); setPhase('wk_level') }}>← Terug</button>
+        <button className="back-btn" onClick={() => { setBracket(null); setPhase(bracket.isClass ? 'mode' : 'wk_level') }}>← Terug</button>
         <div className="wk-header">
           <span className="wk-trophy">🏆</span>
-          <h1 className="wk-title">WK Toernooi</h1>
-          <p className="wk-sub">{playerCountry.flag} {playerCountry.name} — {(LEVELS.find(l => l.key === level) || {}).emoji} {(LEVELS.find(l => l.key === level) || {}).label} — versla 4 landen!</p>
+          <h1 className="wk-title">{bracket.isClass ? 'Groep 7-toernooi' : 'WK Toernooi'}</h1>
+          {bracket.isClass
+            ? <p className="wk-sub">{playerCountry.flag} {playerCountry.name} — halve finale tegen {getCountry(bracket.opponents[2]).name}, finale tegen {getCountry(bracket.opponents[3]).name}. Succes!</p>
+            : <p className="wk-sub">{playerCountry.flag} {playerCountry.name} — {(LEVELS.find(l => l.key === level) || {}).emoji} {(LEVELS.find(l => l.key === level) || {}).label} — versla 4 landen!</p>}
         </div>
         <Bracket bracket={bracket} playerKey={playerKey} />
         <button className="mode-card hs-go" onClick={() => setPhase('vs_intro')}>▶ Start toernooi</button>
@@ -2566,7 +2989,7 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
         </div>
         <div className="mode-grid">
           <button className="mode-card hs-go" onClick={() => { setBracket(null); setPhase('mode') }}>Opnieuw</button>
-          <button className="mode-card" onClick={() => setPhase('select')}>Ander land</button>
+          <button className="mode-card" onClick={() => setPhase('select')}>{classMode ? 'Andere klasgenoot' : 'Ander land'}</button>
         </div>
       </div>
     )
@@ -2574,27 +2997,30 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
 
   if (phase === 'wk_won') {
     const revealC = mysteryReveal ? getCountry(mysteryReveal) : null
+    const isClass = bracket?.isClass
     return (
       <div className="game-screen game-screen-center">
         <div className="wk-champion-card">
           <span className="wk-champ-trophy">🏆</span>
-          <h1 className="wk-champ-title">Wereldkampioen!</h1>
-          <p className="wk-champ-sub">{playerCountry.flag} {playerCountry.name} wint het WK!</p>
+          <h1 className="wk-champ-title">{isClass ? 'Kampioen van Groep 7!' : 'Wereldkampioen!'}</h1>
+          <p className="wk-champ-sub">{playerCountry.flag} {playerCountry.name} {isClass ? 'verslaat zelfs Meester Luuk én Meester Job!' : 'wint het WK!'}</p>
           {coinsEarned > 0 && <p className="wk-champ-sub">🪙 +{coinsEarned} curuntie</p>}
         </div>
-        <div className="hs-mystery">
-          {revealC ? (
-            <>
-              <div className="hs-box">🎁</div>
-              <p className="wk-champ-sub">Mysterybox: <b>{revealC.flag} {revealC.name}</b> ontgrendeld!</p>
-              <p className="hs-move">{getMove(revealC.key).emoji} {getMove(revealC.key).name}</p>
-            </>
-          ) : (
-            <p className="wk-champ-sub">Je hebt alle landen al! 🪙 Extra bonus toegevoegd.</p>
-          )}
-        </div>
+        {!isClass && (
+          <div className="hs-mystery">
+            {revealC ? (
+              <>
+                <div className="hs-box">🎁</div>
+                <p className="wk-champ-sub">Mysterybox: <b>{revealC.flag} {revealC.name}</b> ontgrendeld!</p>
+                <p className="hs-move">{getMove(revealC.key).emoji} {getMove(revealC.key).name}</p>
+              </>
+            ) : (
+              <p className="wk-champ-sub">Je hebt alle landen al! 🪙 Extra bonus toegevoegd.</p>
+            )}
+          </div>
+        )}
         <div className="mode-grid">
-          <button className="mode-card hs-go" onClick={() => { setBracket(null); setMysteryReveal(null); setPhase('select') }}>Naar landen</button>
+          <button className="mode-card hs-go" onClick={() => { setBracket(null); setMysteryReveal(null); setPhase('select') }}>{isClass ? 'Naar Groep 7' : 'Naar landen'}</button>
           <button className="mode-card" onClick={onBack}>← Menu</button>
         </div>
       </div>
@@ -2608,7 +3034,7 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
         <div className="wk-header">
           <span className="wk-trophy">{oppCountry.flag}</span>
           <h1 className="wk-title">{oppCountry.name}</h1>
-          <p className="wk-sub">Jouw volgende tegenstander — {'★'.repeat(oppCountry.diff)}{'☆'.repeat(5 - oppCountry.diff)}</p>
+          <p className="wk-sub">Jouw volgende tegenstander — {'★'.repeat(oppCountry.diff)}{'☆'.repeat(Math.max(0, 5 - oppCountry.diff))}</p>
         </div>
         <div className="hs-preview">
           <div className="hs-demo-box"><SpecialDemo countryKey={oppKey} /></div>

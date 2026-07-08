@@ -79,6 +79,7 @@ export const CATALOG = {
     print('aarde_sh',   'Aarde',                'legendary', '🌍',     '#06203a'),
     model('ajax',       'Ajax Shirt',           '/ajaxshirt.glb', '/logo_ajax.svg'),
     model('psv',        'PSV Shirt',            '/psvshirt.glb',  '/logo_psv.svg'),
+    model('rb',         'RB Shirt',             '/rbshirt.glb',   '/rbshirt_texture.png'),
   ],
   broek: [
     ...BASE(),

@@ -101,6 +101,8 @@ export function loadClothingDonor(scene, mesh, skeleton, type, item, onReady) {
       g.position           = new Vector3(0, 0, 0)
       g.rotationQuaternion = null
       g.scaling            = new Vector3(1, 1, 1)
+      const srcSkel = srcSkels?.[0]
+      if (srcSkel) remapBoneIndices(g, srcSkel, skeleton)
       g.skeleton           = skeleton
       if (item.kind === 'texmodel') {
         // donor mesh + a custom designed texture image (its UV matches the file)

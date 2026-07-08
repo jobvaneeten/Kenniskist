@@ -19,6 +19,9 @@ const UNLOCK_TARA_CODE = 'tara'         // ontgrendelt de Tara Pet
 const UNLOCK_NINA_CODE = 'nina'         // ontgrendelt de Nina Pet
 const UNLOCK_PIM_CODE = 'pim'           // ontgrendelt de Pim Pet
 const UNLOCK_VINN_CODE = 'vinn'         // ontgrendelt de Vinn Pet
+const UNLOCK_RB_CODE = 'teun'           // ontgrendelt het RB Shirt
+const UNLOCK_GROEP7_CODE = 'groep7'     // ontgrendelt de klas als Supervoetbal-spelers
+const UNLOCK_TEACHERS_CODE = 'pabo1'    // ontgrendelt Meester Job & Meester Luuk als speelbare Groep 7-spelers
 const ESCAPE_CODE = 'vrijdag'           // opent de GLITCH-escaperoom
 
 function fmt(n) { return n.toLocaleString('nl-NL') }
@@ -40,7 +43,7 @@ function CurrencyBadge({ munten, briefgeld, hideMunten }) {
   )
 }
 
-function CodeModal({ onClose, onRedeem, onRedeemBrief, onUnlockAll, onUnlockCountries, onUnlockSomalia, onUnlockTara, onUnlockNina, onUnlockPim, onUnlockVinn, onEscape, usedCodes }) {
+function CodeModal({ onClose, onRedeem, onRedeemBrief, onUnlockAll, onUnlockCountries, onUnlockSomalia, onUnlockTara, onUnlockNina, onUnlockPim, onUnlockVinn, onUnlockRb, onUnlockGroep7, onUnlockTeachers, onEscape, usedCodes }) {
   const [code, setCode] = useState('')
   const [msg,  setMsg]  = useState(null)
   const [ok,   setOk]   = useState(false)
@@ -76,6 +79,18 @@ function CodeModal({ onClose, onRedeem, onRedeemBrief, onUnlockAll, onUnlockCoun
     } else if (key === UNLOCK_VINN_CODE) {
       onUnlockVinn()
       setMsg('🧢 Vinn Pet ontgrendeld!')
+      setOk(true)
+    } else if (key === UNLOCK_RB_CODE) {
+      onUnlockRb()
+      setMsg('👕 RB Shirt ontgrendeld!')
+      setOk(true)
+    } else if (key === UNLOCK_GROEP7_CODE) {
+      onUnlockGroep7()
+      setMsg('🎉 Groep 7 ontgrendeld in Supervoetbal!')
+      setOk(true)
+    } else if (key === UNLOCK_TEACHERS_CODE) {
+      onUnlockTeachers()
+      setMsg('🍎 Meester Job & Meester Luuk zijn nu speelbaar!')
       setOk(true)
     } else if (BRIEF_CODES[key] !== undefined) {
       if (usedCodes.includes(key)) {
@@ -211,6 +226,19 @@ export default function App() {
 
   // "vinn" code → ontgrendel de Vinn Pet
   const unlockVinn = () => unlockColor('hoofd', 'petvinn')
+
+  // "teun" code → ontgrendel het RB Shirt
+  const unlockRb = () => unlockColor('shirt', 'rb')
+
+  // "groep7" code → opent het aparte Groep 7-menu in Supervoetbal (alleen klasgenoten)
+  const unlockGroep7 = () => {
+    localStorage.setItem('kk_hs_groep7', 'true')
+  }
+
+  // "pabo1" code → Meester Job & Meester Luuk worden zelf ook speelbaar in Groep 7
+  const unlockTeachers = () => {
+    localStorage.setItem('kk_hs_teachers', 'true')
+  }
 
   // Re-read the wallet from localStorage (games update it directly) so the
   // home badge always matches — call when returning to a React screen.
@@ -360,6 +388,9 @@ export default function App() {
           onUnlockNina={unlockNina}
           onUnlockPim={unlockPim}
           onUnlockVinn={unlockVinn}
+          onUnlockRb={unlockRb}
+          onUnlockGroep7={unlockGroep7}
+          onUnlockTeachers={unlockTeachers}
           onEscape={() => { setShowCode(false); setScreen('escaperoom') }}
           usedCodes={usedCodes}
         />
