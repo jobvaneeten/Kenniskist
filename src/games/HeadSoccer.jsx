@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { COUNTRIES, CLASS_COUNTRIES, getCountry, generateBracket, generateClassBracket, UNLOCK_TIERS, LEVELS } from './countries'
 import { getMove, getSuper, superDescOf, INSTANT_BEHAVIORS } from './headSoccerMoves'
+import { emojiUrl } from '../itemsCatalog'
 import OrientationGate from '../OrientationGate'
 import './football.css'
 import './headsoccer.css'
@@ -1162,13 +1163,22 @@ function buildBracketTree(bracket, playerKey) {
   return { r16, w16, qf, wqf, sf, wsf, fin: [wsf[0], wsf[1]] }
 }
 
+// Vlag als Twemoji-afbeelding: op Windows worden vlag-emoji's als letterparen
+// ("NL") getoond, dus we tekenen het echte plaatje; valt terug op de emoji-tekst
+// als het plaatje ontbreekt.
+function FlagIcon({ emoji, className }) {
+  const [err, setErr] = useState(false)
+  if (err) return <span className={className}>{emoji}</span>
+  return <img className={`hs-flag-img ${className || ''}`} src={emojiUrl(emoji)} alt="" draggable={false} onError={() => setErr(true)} />
+}
+
 function TSlot({ k, playerKey, out, unknown, big }) {
   if (unknown || !k) return <div className={`hs-tslot hs-tslot-unknown${big ? ' big' : ''}`}>?</div>
   const c = getCountry(k)
   const me = k === playerKey
   return (
     <div className={`hs-tslot${me ? ' me' : ''}${out ? ' out' : ''}${big ? ' big' : ''}`} title={c.name}>
-      <span className="hs-tslot-flag">{c.flag}</span>
+      <FlagIcon emoji={c.flag} className="hs-tslot-flag" />
       <span className="hs-tslot-name">{c.name}</span>
     </div>
   )
@@ -1345,7 +1355,10 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
     if (!canvas) return
     const ctx = canvas.getContext('2d')
     const pMove = getMove(playerKey), oMove = getMove(oppKey)
-    const oppDiff = oppCountry?.diff || 3
+    // In het landen-WK-toernooi zijn tegenstanders een tikje sterker dan in een
+    // los potje: +1 diff (sneller, scherper mikken, vaker supers). Het Groep
+    // 7-toernooi heeft z'n eigen balans (meesters staan al op 6).
+    const oppDiff = Math.min(6, (oppCountry?.diff || 3) + (bracket && !bracket.isClass ? 1 : 0))
     const LV = LEVEL_TUNE[level] || LEVEL_TUNE.medium    // toernooi-niveau (easy/medium/hard)
     const aiSpd = (AI_SPD_BY_DIFF[oppDiff] || 240) * LV.spd
 
@@ -2736,7 +2749,7 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
               <button key={c.key} className={`wk-country-card hs-card${open ? '' : ' hs-locked'}`} disabled={!open}
                 style={open ? { '--mv': m.color } : undefined}
                 onClick={() => open && rewardChoosePlayer(c.key)} title={open ? `${m.name}: ${m.desc}` : 'Vergrendeld'}>
-                <span className="wk-country-flag">{open ? c.flag : '🔒'}</span>
+                <span className="wk-country-flag">{open ? <FlagIcon emoji={c.flag} /> : '🔒'}</span>
                 <span className="wk-country-name">{open ? c.name : '???'}</span>
                 <span className="hs-move">{open ? `${m.emoji} ${m.name}` : '🔒 vergrendeld'}</span>
               </button>
@@ -2754,7 +2767,7 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
         <div className="wk-header">
           <span className="wk-trophy">🏆</span>
           <h1 className="wk-title">{bracket.roundNames[bracket.currentRound]}</h1>
-          <p className="wk-sub">{playerCountry.flag} {playerCountry.name} — speel deze ronde!</p>
+          <p className="wk-sub"><FlagIcon emoji={playerCountry.flag} /> {playerCountry.name} — speel deze ronde!</p>
         </div>
         <Bracket bracket={bracket} playerKey={playerKey} />
         <button className="mode-card hs-go" onClick={rewardStartRound}>▶ Start ronde</button>
@@ -2770,7 +2783,7 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
         <div className="wk-champion-card">
           <span className="wk-champ-trophy">{won ? '🎉' : '💪'}</span>
           <h1 className="wk-champ-title">{won ? 'Ronde gewonnen!' : 'Helaas verloren'}</h1>
-          <p className="wk-champ-sub">{playerCountry.flag} {score.L} — {score.R} {oppCountry.flag}</p>
+          <p className="wk-champ-sub"><FlagIcon emoji={playerCountry.flag} /> {score.L} — {score.R} <FlagIcon emoji={oppCountry.flag} /></p>
           <p className="wk-champ-sub">{menuTour
             ? (won ? 'Door naar de volgende ronde!' : 'Je speelt deze ronde opnieuw.')
             : (won ? 'Geef weer 5 goede antwoorden voor de volgende ronde!' : 'Volgende keer speel je deze ronde opnieuw.')}</p>
@@ -2790,12 +2803,12 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
         <div className="wk-champion-card">
           <span className="wk-champ-trophy">🏆</span>
           <h1 className="wk-champ-title">Wereldkampioen!</h1>
-          <p className="wk-champ-sub">{playerCountry.flag} {playerCountry.name} wint het toernooi!</p>
+          <p className="wk-champ-sub"><FlagIcon emoji={playerCountry.flag} /> {playerCountry.name} wint het toernooi!</p>
           {coinsEarned > 0 && <p className="wk-champ-sub">🪙 +{coinsEarned} curuntie</p>}
         </div>
         <div className="hs-mystery">
           {revealC
-            ? <><div className="hs-box">🎁</div><p className="wk-champ-sub">Mysterybox: <b>{revealC.flag} {revealC.name}</b> ontgrendeld!</p></>
+            ? <><div className="hs-box">🎁</div><p className="wk-champ-sub">Mysterybox: <b><FlagIcon emoji={revealC.flag} /> {revealC.name}</b> ontgrendeld!</p></>
             : <p className="wk-champ-sub">Je hebt alle landen al! 🪙 Extra bonus.</p>}
         </div>
         <button className="mode-card hs-go" onClick={onBack}>{menuTour ? '← Menu' : '← En weer terug naar het leren!'}</button>
@@ -2821,7 +2834,7 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
               <button key={c.key} className={`wk-country-card hs-card${open ? '' : ' hs-locked'}`} disabled={!open}
                 style={open ? { '--mv': m.color } : undefined}
                 onClick={() => open && choosePlayer(c.key)} title={open ? `${m.name}: ${m.desc}` : 'Alleen te kiezen met een geheime meester-code'}>
-                <span className="wk-country-flag">{open ? c.flag : '🔒'}</span>
+                <span className="wk-country-flag">{open ? <FlagIcon emoji={c.flag} /> : '🔒'}</span>
                 <span className="wk-country-name">{open ? c.name : '???'}</span>
                 <span className="hs-move">{open ? `${m.emoji} ${m.name}` : '🔒 vergrendeld'}</span>
               </button>
@@ -2862,7 +2875,7 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
               <button key={c.key} className={`wk-country-card hs-card${open ? '' : ' hs-locked'}`} disabled={!open}
                 style={open ? { '--mv': m.color } : undefined}
                 onClick={() => open && choosePlayer(c.key)} title={open ? `${m.name}: ${m.desc}` : 'Win de Cup om te ontgrendelen'}>
-                <span className="wk-country-flag">{open ? c.flag : '🔒'}</span>
+                <span className="wk-country-flag">{open ? <FlagIcon emoji={c.flag} /> : '🔒'}</span>
                 <span className="wk-country-name">{open ? c.name : '???'}</span>
                 <span className="hs-move">{open ? `${m.emoji} ${m.name}` : '🔒 vergrendeld'}</span>
               </button>
@@ -2880,7 +2893,7 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
       <div className="game-screen game-screen-center">
         <button className="back-btn" onClick={() => setPhase('select')}>← Terug</button>
         <div className="wk-header">
-          <span className="wk-trophy">{playerCountry.flag}</span>
+          <span className="wk-trophy"><FlagIcon emoji={playerCountry.flag} /></span>
           <h1 className="wk-title">{playerCountry.name}</h1>
         </div>
         <div className="hs-preview">
@@ -2935,7 +2948,7 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
                 <span className="hs-level-prizes">
                   {tier.map(k => {
                     const c = getCountry(k), owned = unlocked.includes(k)
-                    return <span key={k} className="hs-level-prize" style={owned ? { opacity: 0.35 } : undefined} title={owned ? `${c.name} (al ontgrendeld)` : c.name}>{owned ? '✓' : c.flag}</span>
+                    return <span key={k} className="hs-level-prize" style={owned ? { opacity: 0.35 } : undefined} title={owned ? `${c.name} (al ontgrendeld)` : c.name}>{owned ? '✓' : <FlagIcon emoji={c.flag} />}</span>
                   })}
                 </span>
               </button>
@@ -2954,8 +2967,8 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
           <span className="wk-trophy">🏆</span>
           <h1 className="wk-title">{bracket.isClass ? 'Groep 7-toernooi' : 'WK Toernooi'}</h1>
           {bracket.isClass
-            ? <p className="wk-sub">{playerCountry.flag} {playerCountry.name} — halve finale tegen {getCountry(bracket.opponents[2]).name}, finale tegen {getCountry(bracket.opponents[3]).name}. Succes!</p>
-            : <p className="wk-sub">{playerCountry.flag} {playerCountry.name} — {(LEVELS.find(l => l.key === level) || {}).emoji} {(LEVELS.find(l => l.key === level) || {}).label} — versla 4 landen!</p>}
+            ? <p className="wk-sub"><FlagIcon emoji={playerCountry.flag} /> {playerCountry.name} — halve finale tegen {getCountry(bracket.opponents[2]).name}, finale tegen {getCountry(bracket.opponents[3]).name}. Succes!</p>
+            : <p className="wk-sub"><FlagIcon emoji={playerCountry.flag} /> {playerCountry.name} — {(LEVELS.find(l => l.key === level) || {}).emoji} {(LEVELS.find(l => l.key === level) || {}).label} — versla 4 landen!</p>}
         </div>
         <Bracket bracket={bracket} playerKey={playerKey} />
         <button className="mode-card hs-go" onClick={() => setPhase('vs_intro')}>▶ Start toernooi</button>
@@ -2969,7 +2982,7 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
         <div className="wk-header">
           <span className="wk-trophy">🏆</span>
           <h1 className="wk-title">{bracket.roundNames[bracket.currentRound]}</h1>
-          <p className="wk-sub">Volgende: {oppCountry.flag} {oppCountry.name}</p>
+          <p className="wk-sub">Volgende: <FlagIcon emoji={oppCountry.flag} /> {oppCountry.name}</p>
         </div>
         <Bracket bracket={bracket} playerKey={playerKey} />
         <button className="mode-card hs-go" onClick={nextWKMatch}>▶ Start wedstrijd</button>
@@ -2984,7 +2997,7 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
         <div className="wk-champion-card">
           <span className="wk-champ-trophy">{won ? '🎉' : '😢'}</span>
           <h1 className="wk-champ-title">{won ? 'Gewonnen!' : 'Verloren'}</h1>
-          <p className="wk-champ-sub">{playerCountry.flag} {score.L} — {score.R} {oppCountry.flag}</p>
+          <p className="wk-champ-sub"><FlagIcon emoji={playerCountry.flag} /> {score.L} — {score.R} <FlagIcon emoji={oppCountry.flag} /></p>
           {coinsEarned > 0 && <p className="wk-champ-sub">🪙 +{coinsEarned} curuntie</p>}
         </div>
         <div className="mode-grid">
@@ -3003,7 +3016,7 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
         <div className="wk-champion-card">
           <span className="wk-champ-trophy">🏆</span>
           <h1 className="wk-champ-title">{isClass ? 'Kampioen van Groep 7!' : 'Wereldkampioen!'}</h1>
-          <p className="wk-champ-sub">{playerCountry.flag} {playerCountry.name} {isClass ? 'verslaat zelfs Meester Luuk én Meester Job!' : 'wint het WK!'}</p>
+          <p className="wk-champ-sub"><FlagIcon emoji={playerCountry.flag} /> {playerCountry.name} {isClass ? 'verslaat zelfs Meester Luuk én Meester Job!' : 'wint het WK!'}</p>
           {coinsEarned > 0 && <p className="wk-champ-sub">🪙 +{coinsEarned} curuntie</p>}
         </div>
         {!isClass && (
@@ -3011,7 +3024,7 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
             {revealC ? (
               <>
                 <div className="hs-box">🎁</div>
-                <p className="wk-champ-sub">Mysterybox: <b>{revealC.flag} {revealC.name}</b> ontgrendeld!</p>
+                <p className="wk-champ-sub">Mysterybox: <b><FlagIcon emoji={revealC.flag} /> {revealC.name}</b> ontgrendeld!</p>
                 <p className="hs-move">{getMove(revealC.key).emoji} {getMove(revealC.key).name}</p>
               </>
             ) : (
@@ -3032,7 +3045,7 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
     return (
       <div className="game-screen game-screen-center">
         <div className="wk-header">
-          <span className="wk-trophy">{oppCountry.flag}</span>
+          <span className="wk-trophy"><FlagIcon emoji={oppCountry.flag} /></span>
           <h1 className="wk-title">{oppCountry.name}</h1>
           <p className="wk-sub">Jouw volgende tegenstander — {'★'.repeat(oppCountry.diff)}{'☆'.repeat(Math.max(0, 5 - oppCountry.diff))}</p>
         </div>
@@ -3055,7 +3068,7 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
       <button className="back-btn" onClick={onBack}>← Menu</button>
       <div className="hs-hud">
         <div className="hs-hud-team">
-          <span>{playerCountry.flag}</span>
+          <span><FlagIcon emoji={playerCountry.flag} /></span>
           <div className={`hs-charge${hud.L >= 1 ? ' hs-charge-full' : ''}`} style={{ '--chg': getMove(playerKey).color }}>
             <div className="hs-charge-fill" style={{ width: `${hud.L * 100}%`, background: getMove(playerKey).color }} />
             <span className="hs-charge-label">{hud.L >= 1 ? '⚡ SUPER!' : 'SUPER'}</span>
@@ -3063,7 +3076,7 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
         </div>
         <div className="hs-scoreboard">{hud.sL} <span className="hs-time">{hud.time}s</span> {hud.sR}</div>
         <div className="hs-hud-team hs-hud-right">
-          <span>{oppCountry.flag}</span>
+          <span><FlagIcon emoji={oppCountry.flag} /></span>
           <div className={`hs-charge${hud.R >= 1 ? ' hs-charge-full' : ''}`} style={{ '--chg': getMove(oppKey).color }}>
             <div className="hs-charge-fill" style={{ width: `${hud.R * 100}%`, background: getMove(oppKey).color }} />
             <span className="hs-charge-label">{hud.R >= 1 ? '⚡ SUPER!' : 'SUPER'}</span>
