@@ -3,6 +3,14 @@
 // (grip met de grond doet de rest); in de lucht kantelt gas/rem het
 // chassis zelf (voor flips/stunts).
 
+// Reactiekoppel-tuning: de eerste GENADE_TIJD seconden van één ononder-
+// broken druk kosten niets (tikken blijft altijd veilig, ongeacht hoe vaak).
+// Daarna bouwt het koppel kwadratisch op met de duur van DIE druk — laat je
+// los, dan telt de teller direct opnieuw vanaf 0. Zo hangt gevaar alleen af
+// van "hoe lang houd je 'm nu al ingedrukt", niet van het ritme daarvoor.
+const GENADE_TIJD = 0.55   // seconden gratis per druk
+const WHEELIE_RAMP = 1.4   // opbouwsnelheid ná de genadetijd
+
 export class Vehicle {
   constructor(scene, x, y, stats) {
     this.scene = scene
@@ -12,6 +20,8 @@ export class Vehicle {
     // tegelijk raken en het verlaten van één slab betekent niet "in de lucht".
     this.contactsL = 0
     this.contactsR = 0
+    this._holdTime = 0        // seconden dat de HUIDIGE druk al duurt
+    this._holdSign = 0        // richting van die druk (1 gas, -1 rem, 0 los)
 
     const M = scene.matter
     // Spawn de wielen exact op rustlengte van de vering — een mismatch geeft
@@ -60,6 +70,14 @@ export class Vehicle {
   _applyPhysicsStep() {
     const Body = this.scene.matter.body
     const t = this.throttle
+    const dt = 1 / 60
+
+    // Duur van de HUIDIGE ononderbroken druk bijhouden. Andere richting of
+    // loslaten (t=0) reset hem meteen — alleen dit maakt "te lang volhouden"
+    // gevaarlijk, ongeacht hoe druk je verder op de knop tikt.
+    const sign = Math.sign(t)
+    this._holdTime = sign !== 0 && sign === this._holdSign ? this._holdTime + dt : 0
+    this._holdSign = sign
 
     if (t !== 0) {
       if (this.grounded) {
@@ -71,6 +89,17 @@ export class Vehicle {
           let av = w.angularVelocity + accel * t
           av = Math.max(-maxSpin, Math.min(maxSpin, av))
           Body.setAngularVelocity(w, av)
+        }
+        // Reactiekoppel van de aandrijving: net als in Hill Climb Racing
+        // duwt aanhoudend gas de neus omhoog (rem de neus omlaag). Pas ná de
+        // genadetijd van déze druk, en dan kwadratisch oplopend — dus tikken
+        // blijft altijd veilig, maar vasthouden wordt snel link.
+        const over = Math.max(0, this._holdTime - GENADE_TIJD)
+        if (over > 0) {
+          const pitchCap = 0.6
+          let pav = this.chassis.angularVelocity - this.stats.power * sign * over * over * WHEELIE_RAMP
+          pav = Math.max(-pitchCap, Math.min(pitchCap, pav))
+          Body.setAngularVelocity(this.chassis, pav)
         }
       } else {
         // Luchtcontrole: gas = neus omhoog (backflip), rem = neus omlaag —

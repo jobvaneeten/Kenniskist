@@ -120,31 +120,37 @@ const LEVEL_CARD = {
 }
 
 // Carrosserieën ZONDER wielen: de wielen zijn aparte sprites die in het spel
-// op de physics-posities draaien.
+// op de physics-posities draaien. De "geen wielen"-instructie moet zeer
+// expliciet en herhaald zijn — anders tekent het model gewoon wielen erbij
+// (gebeurde bij alle 7 nieuwe voertuigen in de eerste poging).
+const GEEN_WIELEN = 'Dit is GEEN gewone autofoto maar een los game-onderdeel: alléén de carrosserie, bedoeld om later apart met wielsprites gecombineerd te worden. Als er wielen, banden of velgen in de afbeelding staan is het resultaat ONBRUIKBAAR. BELANGRIJK: teken NERGENS in de afbeelding een wiel, band of velg — geen enkel rond zwart object onderaan, zelfs geen kleine asdop of naaf. Het voertuig staat op een garagelift met de wielen er letterlijk afgehaald; waar normaal de wielen zitten zie je alleen een lege wielkast-uitsparing of een kale as die in het niets eindigt, met NIETS rond eromheen.'
 const VEHICLES = {
-  jeep: 'Zijaanzicht van de carrosserie van een vrolijke groene safari-jeep, ZONDER wielen: lege donkere halfronde wielkasten linksonder en rechtsonder waar de wielen horen. Met cabine, voorruit en koplamp, voorkant naar rechts.',
-  motor: 'Zijaanzicht van het frame van een snelle rode crossmotor, ZONDER wielen: alleen frame, tank, zadel, stuur en voorvork, open ruimtes waar de wielen horen. Voorkant naar rechts.',
-  monstertruck: 'Zijaanzicht van de carrosserie van een stoere blauwe monstertruck pick-up, ZONDER wielen: hoog chassis met lege donkere halfronde wielkasten linksonder en rechtsonder. Met cabine en voorruit, voorkant naar rechts.',
-  quad: 'Zijaanzicht van het frame van een oranje quad (vierwieler-ATV), ZONDER wielen: frame, zadel, stuur en spatborden, open ruimtes waar de wielen horen. Voorkant naar rechts.',
-  tractor: 'Zijaanzicht van de carrosserie van een groene boerderijtractor met open bestuurdersstoel en schoorsteentje, ZONDER wielen: lege donkere wielkasten waar de wielen horen. Voorkant naar rechts.',
-  raceauto: 'Zijaanzicht van de carrosserie van een lage rode Formule 1-racewagen met grote achtervleugel en open cockpit, ZONDER wielen: open ruimtes waar de wielen horen. Voorkant naar rechts.',
-  politie: 'Zijaanzicht van de carrosserie van een witte Nederlandse politieauto met blauw-oranje striping en een zwaailicht op het dak, ZONDER wielen: lege donkere halfronde wielkasten linksonder en rechtsonder. Voorkant naar rechts.',
-  brandweer: 'Zijaanzicht van de carrosserie van een rode brandweerwagen met zilveren ladder op het dak en cabine aan de voorkant, ZONDER wielen: lege donkere wielkasten linksonder en rechtsonder. Voorkant naar rechts.',
-  schoolbus: 'Zijaanzicht van de carrosserie van een gele schoolbus met rijen raampjes en de bestuurdersplek voorin, ZONDER wielen: lege donkere wielkasten linksonder en rechtsonder. Voorkant naar rechts.',
-  maanbuggy: 'Zijaanzicht van het frame van een zilveren maanrover-buggy met antennes, zonnepaneel en open bestuurdersstoel, ZONDER wielen: open buizenframe met ruimtes waar de wielen horen. Voorkant naar rechts.',
+  jeep: `Zijaanzicht van de carrosserie van een vrolijke groene safari-jeep. ${GEEN_WIELEN} Met cabine, voorruit en koplamp, voorkant naar rechts.`,
+  motor: `Zijaanzicht van het frame van een snelle rode crossmotor. ${GEEN_WIELEN} Alleen frame, tank, zadel, stuur en voorvork. Voorkant naar rechts.`,
+  monstertruck: `Zijaanzicht van de carrosserie van een stoere blauwe monstertruck pick-up. ${GEEN_WIELEN} Hoog chassis met cabine en voorruit. Voorkant naar rechts.`,
+  quad: `Zijaanzicht van het frame van een oranje quad (vierwieler-ATV). ${GEEN_WIELEN} Alleen frame, zadel, stuur en spatborden. Voorkant naar rechts.`,
+  tractor: `Zijaanzicht van de carrosserie van een groene boerderijtractor met open bestuurdersstoel en schoorsteentje. ${GEEN_WIELEN} Voorkant naar rechts.`,
+  raceauto: `Zijaanzicht van de carrosserie van een lage rode Formule 1-racewagen met grote achtervleugel en open cockpit. ${GEEN_WIELEN} Voorkant naar rechts.`,
+  politie: `Zijaanzicht van de carrosserie van een witte Nederlandse politieauto met blauw-oranje striping en een zwaailicht op het dak. ${GEEN_WIELEN} Voorkant naar rechts.`,
+  brandweer: `Zijaanzicht van de carrosserie van een rode brandweerwagen met zilveren ladder op het dak en cabine aan de voorkant. ${GEEN_WIELEN} Voorkant naar rechts.`,
+  schoolbus: `Zijaanzicht van de carrosserie van een gele schoolbus met rijen raampjes en de bestuurdersplek voorin. ${GEEN_WIELEN} Voorkant naar rechts.`,
+  maanbuggy: `Zijaanzicht van het buizenframe van een zilveren maanrover-buggy met antennes, zonnepaneel en open bestuurdersstoel. ${GEEN_WIELEN} Voorkant naar rechts.`,
 }
 
+// Alle wielen strak vlak van opzij (perfecte cirkel, geen perspectief) —
+// anders lijkt het wiel bij rotatie in het spel te "hobbelen".
+const VAN_OPZIJ = 'STRAK VAN OPZIJ gezien als een perfecte cirkel, geen 3/4-hoek of perspectief, plat 2D-zijaanzicht zoals een klok, volledig symmetrisch rondom het middelpunt.'
 const WHEELS = {
-  jeep: 'Rond autowiel, zwarte band met een groen-witte velg, cartoonstijl, van opzij.',
-  motor: 'Rond motorwiel, zwarte band met een rood-zilveren velg, cartoonstijl, van opzij.',
-  monstertruck: 'Groot rond monstertruckwiel, dikke geribbelde zwarte band met een blauwe velg, cartoonstijl, van opzij.',
-  quad: 'Rond quadwiel, dikke zwarte ballonband met een oranje velg, cartoonstijl, van opzij.',
-  tractor: 'Groot rond tractorwiel, zwarte band met diepe schuine profielblokken en een gele velg, cartoonstijl, van opzij.',
-  raceauto: 'Rond racewiel, gladde zwarte slick-band met een gouden velg met dunne spaken, cartoonstijl, van opzij.',
-  politie: 'Rond autowiel, zwarte band met een zilveren velg met vijf spaken, cartoonstijl, van opzij.',
-  brandweer: 'Rond vrachtwagenwiel, zwarte band met een rode stalen velg met boutjes, cartoonstijl, van opzij.',
-  schoolbus: 'Rond buswiel, zwarte band met een gele stalen velg, cartoonstijl, van opzij.',
-  maanbuggy: 'Rond maanrover-wiel, zilvergrijze metalen band met gaas-structuur en fijne ribbels, cartoonstijl, van opzij.',
+  jeep: `Rond autowiel, zwarte band met een groen-witte velg, cartoonstijl. ${VAN_OPZIJ}`,
+  motor: `Rond motorwiel, zwarte band met een rood-zilveren velg, cartoonstijl. ${VAN_OPZIJ}`,
+  monstertruck: `Groot rond monstertruckwiel, dikke geribbelde zwarte band met een blauwe velg, cartoonstijl. ${VAN_OPZIJ}`,
+  quad: `Rond quadwiel, dikke zwarte ballonband met een oranje velg, cartoonstijl. ${VAN_OPZIJ}`,
+  tractor: `Groot rond tractorwiel, zwarte band met symmetrische rechte profielblokken rondom en een gele velg met vijf bouten, cartoonstijl. ${VAN_OPZIJ}`,
+  raceauto: `Rond racewiel, gladde zwarte slick-band met een gouden velg met dunne spaken, cartoonstijl. ${VAN_OPZIJ}`,
+  politie: `Rond autowiel, zwarte band met een zilveren velg met vijf spaken, cartoonstijl. ${VAN_OPZIJ}`,
+  brandweer: `Rond vrachtwagenwiel, zwarte band met een rode stalen velg met boutjes, cartoonstijl. ${VAN_OPZIJ}`,
+  schoolbus: `Rond buswiel, zwarte band met een gele stalen velg, cartoonstijl. ${VAN_OPZIJ}`,
+  maanbuggy: `Rond maanrover-wiel, zilvergrijze metalen band met gaas-structuur en fijne ribbels, cartoonstijl. ${VAN_OPZIJ}`,
 }
 
 const ASSETS = []

@@ -42,13 +42,11 @@ export default class LevelSelectScene extends Phaser.Scene {
     const g = this.add.graphics().setDepth(2)
     drawPanel(g, x, y, CARD_W, CARD_H, { border: unlocked ? COL.rand : 0x3a4152 })
 
+    // Phaser 4 ondersteunt setMask() niet meer onder WebGL (spamt een
+    // console-warning zonder effect) — vierkante hoeken binnen het ronde
+    // paneel is een prima alternatief.
     const img = this.add.image(x + CARD_W / 2, y + 74, `hc_card_${id}`)
       .setDisplaySize(CARD_W - 20, 118).setDepth(3)
-    // afgeronde uitsnede voor de level-afbeelding
-    const maskG = this.make.graphics({ add: false })
-    maskG.fillStyle(0xffffff)
-    maskG.fillRoundedRect(x + 10, y + 15, CARD_W - 20, 118, 10)
-    img.setMask(maskG.createGeometryMask())
 
     this.add.text(x + CARD_W / 2, y + 152, `${lvl.emoji} ${lvl.name}`, {
       fontSize: '17px', fontFamily: 'Arial Black', color: '#ffffff',

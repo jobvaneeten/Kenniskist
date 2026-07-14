@@ -103,16 +103,23 @@ export default class UIScene extends Phaser.Scene {
       fontSize: '18px', fontFamily: 'Arial Black', color: '#ffd23f',
     }).setOrigin(0.5).setDepth(61)
 
+    // Belangrijk: HCGame expliciet stoppen bij Levels/Home. Bij "Opnieuw"
+    // valt dit niet op (start('HCGame',…) vervangt de actieve HCGame vanzelf),
+    // maar zonder dit bleef HCGame op de achtergrond doorrenderen en het
+    // nieuwe scherm volledig aan het zicht onttrekken — leek alsof de knop
+    // niets deed, terwijl de sceneswissel wél degelijk gebeurde.
     this._overlayBtn(W / 2 - 150, H / 2 + 70, '🔄 Opnieuw', 0xb8742a, () => {
       this.scene.stop('HCUI')
       this.scene.start('HCGame', { vehicleId: this.gameScene.vehicleId, levelId: this.levelId })
     }, 170)
     this._overlayBtn(W / 2 + 40, H / 2 + 70, '🗺 Levels', 0x245a8a, () => {
       this.scene.stop('HCUI')
+      this.scene.stop('HCGame')
       this.scene.start('HCLevelSelect')
     }, 170)
     this._overlayBtn(W / 2 + 190, H / 2 + 70, '🏠', 0x37415a, () => {
       this.scene.stop('HCUI')
+      this.scene.stop('HCGame')
       this.scene.start('HCHome')
     }, 66)
   }
