@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import FootballGame, { loadToernooi } from './games/FootballGame'
 import TowerDefenseGame from './games/TowerDefenseGame'
+import HillClimbGame from './games/HillClimbGame'
 import JetpackGame from './games/JetpackGame'
 import HeadSoccer from './games/HeadSoccer'
 import AstroKatapultGame from './games/AstroKatapultGame'
@@ -71,6 +72,7 @@ const FREE_GAMES = [
   { key: 'astrokatapult', emoji: '🪐', name: 'Astro Katapult',   desc: 'Lanceer & versla de aliens in 50 levels!' },
   { key: 'sterrenstroom', emoji: '🛸', name: 'Spacerunner',     desc: 'Ontwijk de asteroïden in de ruimte!' },
   { key: 'brug',          emoji: '🌉', name: 'Brug Bouwen',     desc: 'Bouw bruggen in 22 levels — hout, weg, metaal & touw!' },
+  { key: 'hillclimb',     emoji: '🚗', name: 'Hill Climb',      desc: 'Race over heuvels, verzamel munten en upgrade je auto!' },
 ]
 
 function RewardChips({ rewards }) {
@@ -140,6 +142,10 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
 
   if (directGame === 'brug') {
     return <BrugBouwen onBack={onBack} />
+  }
+
+  if (directGame === 'hillclimb') {
+    return <HillClimbGame onBack={onBack} />
   }
 
 

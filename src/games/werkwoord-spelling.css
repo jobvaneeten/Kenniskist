@@ -206,6 +206,8 @@
 .ws-catsel-rij.ws-tijd-tt .ws-catsel-check { color: #38bdf8; }
 .ws-catsel-rij.ws-tijd-vt .ws-catsel-check { color: #fb923c; }
 .ws-catsel-rij.ws-tijd-vd .ws-catsel-check { color: #34d399; }
+.ws-catsel-rij.aan.ws-ond-row { border-color: #e879f9; background: rgba(232,121,249,0.16); }
+.ws-catsel-rij.ws-ond-row .ws-catsel-check { color: #e879f9; }
 .ws-catsel-check { font-size: 26px; line-height: 1; flex-shrink: 0; color: rgba(255,255,255,0.5); }
 .ws-catsel-tekst { flex: 1; display: flex; flex-direction: column; gap: 2px; }
 .ws-catsel-label { font-size: 15px; font-weight: 800; color: #f5f3ff; }

@@ -51,7 +51,8 @@ const ONDERWERP_ZINNEN = [
 ]
 
 // Klikbare woorden om het onderwerp in een zin te markeren, met controle/feedback.
-function OnderwerpMarker({ zin, onderwerp, compact }) {
+// onKlaar(goed) wordt aangeroepen zodra de leerling gecontroleerd heeft.
+function OnderwerpMarker({ zin, onderwerp, compact, onKlaar }) {
   const [selected, setSelected] = useState(new Set())
   const [phase, setPhase] = useState('answering') // answering | good | bad
 
@@ -73,6 +74,7 @@ function OnderwerpMarker({ zin, onderwerp, compact }) {
     const gekozen = [...selected].sort((a, b) => a - b)
     const goed = gekozen.length === juisteIdx.length && gekozen.every((v, i) => v === juisteIdx[i])
     setPhase(goed ? 'good' : 'bad')
+    onKlaar?.(goed)
   }
 
   return (
@@ -117,12 +119,24 @@ function OnderwerpOefenScherm({ onBack }) {
 }
 
 // ── Vraagkaart ───────────────────────────────────────────────────────────
-function VraagKaart({ oef, onNext }) {
+// eerstOnderwerp: dan moet bij elke opgave eerst het onderwerp gemarkeerd
+// worden voordat het invulveld verschijnt.
+function VraagKaart({ oef, onNext, eerstOnderwerp }) {
+  const moetMarkeren = !!(eerstOnderwerp && oef.onderwerp)
   const [input, setInput] = useState('')
   const [phase, setPhase] = useState('answering')
+  const [ondKlaar, setOndKlaar] = useState(!moetMarkeren)
   const inputRef = useRef(null)
 
-  useEffect(() => { setInput(''); setPhase('answering'); setTimeout(() => inputRef.current?.focus(), 50) }, [oef])
+  useEffect(() => {
+    setInput(''); setPhase('answering'); setOndKlaar(!moetMarkeren)
+    if (!moetMarkeren) setTimeout(() => inputRef.current?.focus(), 50)
+  }, [oef, moetMarkeren])
+
+  const onderwerpGedaan = (goed) => {
+    // even de feedback laten lezen, dan door naar het invullen
+    setTimeout(() => { setOndKlaar(true); setTimeout(() => inputRef.current?.focus(), 50) }, goed ? 600 : 1800)
+  }
 
   const check = () => { if (input.trim()) setPhase(checkAntwoord(input, oef.antwoord) ? 'good' : 'bad') }
 
@@ -137,46 +151,50 @@ function VraagKaart({ oef, onNext }) {
         <span className="ws-tijd-tag">{tijd.label}</span>
       </div>
 
-      <div className="ws-zin">
-        <span>{voor}</span>
-        <span className="ws-gat">{phase === 'answering' ? '_____' : (phase === 'good' ? oef.antwoord : input || '—')}</span>
-        <span>{na}</span>
-      </div>
+      {!ondKlaar ? (
+        <OnderwerpMarker zin={oef.zin.replace('___', '…')} onderwerp={oef.onderwerp} onKlaar={onderwerpGedaan} />
+      ) : (
+        <>
+          <div className="ws-zin">
+            <span>{voor}</span>
+            <span className="ws-gat">{phase === 'answering' ? '_____' : (phase === 'good' ? oef.antwoord : input || '—')}</span>
+            <span>{na}</span>
+          </div>
 
-      {phase === 'answering' && (
-        <div className="ws-antwoord-row">
-          <input
-            ref={inputRef}
-            className="ws-input"
-            type="text"
-            autoComplete="off"
-            autoCorrect="off"
-            spellCheck="false"
-            placeholder="Typ de juiste vorm…"
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && check()}
-          />
-          <button className="ws-check-btn" onClick={check}>Controleer →</button>
-        </div>
-      )}
+          {phase === 'answering' && (
+            <div className="ws-antwoord-row">
+              <input
+                ref={inputRef}
+                className="ws-input"
+                type="text"
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck="false"
+                placeholder="Typ de juiste vorm…"
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && check()}
+              />
+              <button className="ws-check-btn" onClick={check}>Controleer →</button>
+            </div>
+          )}
 
-      {phase === 'good' && (
-        <div className="ws-feedback ws-goed">
-          <span>🎉 Goed!</span>
-          <div className="ws-uitleg">💡 {uitlegVoor(oef)}</div>
-          {oef.onderwerp && <OnderwerpMarker zin={oef.zin.replace('___', oef.antwoord)} onderwerp={oef.onderwerp} compact />}
-          <button className="ws-verder-btn" onClick={() => onNext(true, input)}>Verder →</button>
-        </div>
-      )}
+          {phase === 'good' && (
+            <div className="ws-feedback ws-goed">
+              <span>🎉 Goed!</span>
+              <div className="ws-uitleg">💡 {uitlegVoor(oef)}</div>
+              <button className="ws-verder-btn" onClick={() => onNext(true, input)}>Verder →</button>
+            </div>
+          )}
 
-      {phase === 'bad' && (
-        <div className="ws-feedback ws-fout">
-          <span>❌ Niet goed. Het juiste antwoord is <b>{oef.antwoord}</b>.</span>
-          <div className="ws-uitleg">💡 {uitlegVoor(oef)}</div>
-          {oef.onderwerp && <OnderwerpMarker zin={oef.zin.replace('___', oef.antwoord)} onderwerp={oef.onderwerp} compact />}
-          <button className="ws-verder-btn" onClick={() => onNext(false, input)}>Volgende →</button>
-        </div>
+          {phase === 'bad' && (
+            <div className="ws-feedback ws-fout">
+              <span>❌ Niet goed. Het juiste antwoord is <b>{oef.antwoord}</b>.</span>
+              <div className="ws-uitleg">💡 {uitlegVoor(oef)}</div>
+              <button className="ws-verder-btn" onClick={() => onNext(false, input)}>Volgende →</button>
+            </div>
+          )}
+        </>
       )}
     </div>
   )
@@ -241,6 +259,7 @@ const CAT_INFO = {
 
 function CatSelectie({ groep, onStart, onBack, onOnderwerp }) {
   const [gekozen, setGekozen] = useState(new Set(ALLE_CATS))
+  const [metOnderwerp, setMetOnderwerp] = useState(false)
 
   const toggle = (key) => setGekozen(prev => {
     const s = new Set(prev)
@@ -276,9 +295,19 @@ function CatSelectie({ groep, onStart, onBack, onOnderwerp }) {
             </button>
           )
         })}
+        <button
+          className={`ws-catsel-rij ws-ond-row${metOnderwerp ? ' aan' : ''}`}
+          onClick={() => setMetOnderwerp(v => !v)}
+        >
+          <span className="ws-catsel-check">{metOnderwerp ? '☑' : '☐'}</span>
+          <span className="ws-catsel-tekst">
+            <span className="ws-catsel-label">🎯 Onderwerp markeren</span>
+            <span className="ws-catsel-vb">klik bij elke zin eerst het onderwerp aan vóór je invult</span>
+          </span>
+        </button>
       </div>
       <p className="ws-catsel-uitleg">Je verdient € 10 per onderdeel dat je aanvinkt bij elk spelletje 🎮</p>
-      <button className="ws-ov-verder-btn" onClick={() => onStart(gekozen)}>
+      <button className="ws-ov-verder-btn" onClick={() => onStart(gekozen, metOnderwerp)}>
         Start! (€ {gekozen.size * 10} per spel) →
       </button>
       <button className="ws-catsel-onderwerp-btn" onClick={onOnderwerp}>
@@ -299,6 +328,7 @@ export default function WerkwoordSpelling({ groep, onBack, addBriefgeld }) {
   const [footballBracket, setFootballBracket] = useState(null)  // toernooi blijft bewaard
   const [tdStarted, setTdStarted] = useState(false)  // TD ooit gestart in deze sessie?
   const [onderwerpActief, setOnderwerpActief] = useState(false)
+  const [metOnderwerp, setMetOnderwerp] = useState(false)  // eerst onderwerp markeren per opgave
 
   // Overzicht-tracking (per 20 opgaven)
   const [gemaakt, setGemaakt] = useState(0)            // beantwoorde opgaven (0..20)
@@ -342,8 +372,9 @@ export default function WerkwoordSpelling({ groep, onBack, addBriefgeld }) {
     setGekozenCats(null); setPhase('play')
   }, [])
 
-  const startMetCats = useCallback((cats) => {
+  const startMetCats = useCallback((cats, ond) => {
     setGekozenCats(cats)
+    setMetOnderwerp(!!ond)
     setOefeningen(shuffleGefilterd(cats))
     setIdx(0); setSinds(0); setGemaakt(0); setStats(legeStats()); setFouten([])
   }, [])
@@ -444,7 +475,7 @@ export default function WerkwoordSpelling({ groep, onBack, addBriefgeld }) {
               <span className="ws-opgave-teller">Opgave {gemaakt + 1} / {PER_OVERZICHT}</span>
             </div>
 
-            <VraagKaart key={idx} oef={oef} onNext={volgende} />
+            <VraagKaart key={idx} oef={oef} onNext={volgende} eerstOnderwerp={metOnderwerp} />
           </div>
         </div>
       )}
