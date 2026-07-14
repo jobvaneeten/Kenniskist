@@ -103,18 +103,22 @@ export default class UIScene extends Phaser.Scene {
       fontSize: '18px', fontFamily: 'Arial Black', color: '#ffd23f',
     }).setOrigin(0.5).setDepth(61)
 
-    this._overlayBtn(W / 2 - 110, H / 2 + 70, '🔄 Opnieuw', 0xb8742a, () => {
+    this._overlayBtn(W / 2 - 150, H / 2 + 70, '🔄 Opnieuw', 0xb8742a, () => {
       this.scene.stop('HCUI')
       this.scene.start('HCGame', { vehicleId: this.gameScene.vehicleId, levelId: this.levelId })
-    })
-    this._overlayBtn(W / 2 + 110, H / 2 + 70, '🚗 Garage', 0x245a8a, () => {
+    }, 170)
+    this._overlayBtn(W / 2 + 40, H / 2 + 70, '🗺 Levels', 0x245a8a, () => {
       this.scene.stop('HCUI')
-      this.scene.start('HCGarage')
-    })
+      this.scene.start('HCLevelSelect')
+    }, 170)
+    this._overlayBtn(W / 2 + 190, H / 2 + 70, '🏠', 0x37415a, () => {
+      this.scene.stop('HCUI')
+      this.scene.start('HCHome')
+    }, 66)
   }
 
-  _overlayBtn(x, y, label, color, cb) {
-    const w = 190, h = 50
+  _overlayBtn(x, y, label, color, cb, w = 190) {
+    const h = 50
     const g = this.add.graphics().setDepth(62)
     const top = Phaser.Display.Color.ValueToColor(color).clone().brighten(22).color
     const bot = Phaser.Display.Color.ValueToColor(color).clone().darken(12).color

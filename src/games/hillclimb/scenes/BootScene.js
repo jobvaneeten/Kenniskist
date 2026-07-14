@@ -1,5 +1,6 @@
 import Phaser from 'phaser'
 import { LEVEL_ORDER, LEVELS } from '../data/LevelData.js'
+import { VEHICLE_ORDER } from '../data/VehicleData.js'
 
 const HC = '/Hillclimb/'
 
@@ -7,6 +8,9 @@ export default class BootScene extends Phaser.Scene {
   constructor() { super('HCBoot') }
 
   preload() {
+    // Meer dan 32 assets: alles direct dispatchen, anders blijft de rest in
+    // de wachtrij hangen wanneer de tab op de achtergrond staat.
+    this.load.maxParallelDownloads = 64
     const W = this.scale.width, H = this.scale.height
 
     const barBg = this.add.rectangle(W / 2, H / 2, 420, 22, 0x1a2a1a).setOrigin(0.5)
@@ -18,8 +22,8 @@ export default class BootScene extends Phaser.Scene {
     this.load.on('complete', () => { barBg.destroy(); bar.destroy() })
 
     // Parallax-achtergronden, levelkaartjes en voertuig-sprites (Nano Banana);
-    // bestuurder en terrein worden programmatisch getekend.
-    ;['jeep', 'motor', 'monstertruck'].forEach(id => {
+    // het terrein wordt programmatisch getekend.
+    VEHICLE_ORDER.forEach(id => {
       this.load.image(`hc_body_${id}`, `${HC}Voertuigen/${id}.png`)
       this.load.image(`hc_wiel_${id}`, `${HC}Voertuigen/wiel_${id}.png`)
     })
@@ -42,6 +46,6 @@ export default class BootScene extends Phaser.Scene {
   }
 
   create() {
-    this.scene.start('HCGarage')
+    this.scene.start('HCHome')
   }
 }

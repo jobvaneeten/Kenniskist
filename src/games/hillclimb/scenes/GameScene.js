@@ -62,12 +62,15 @@ export default class GameScene extends Phaser.Scene {
     const wd = this.stats.wheelRadius * 2
     this.wheelLImg  = this.add.image(0, 0, `hc_wiel_${this.vehicleId}`).setDepth(10).setDisplaySize(wd, wd)
     this.wheelRImg  = this.add.image(0, 0, `hc_wiel_${this.vehicleId}`).setDepth(10).setDisplaySize(wd, wd)
+    // Bestuurder-positie per voertuig (bus/brandweer voorin, motor er bovenop,
+    // raceauto laag in de cockpit) — zie driver-config in VehicleData.
+    const drv = this.stats.driver || { x: -0.06, lift: 0.46, scale: 1.7 }
     this.driverImg  = this.add.image(0, 0, 'hc_bestuurder').setDepth(8.5)
-    const dh = this.stats.chassisH * 1.7
+    const dh = this.stats.chassisH * drv.scale
     const dAspect = this.driverImg.width / this.driverImg.height
     this.driverImg.setDisplaySize(dh * dAspect, dh)
-    // zo hoog dat helm + gezicht boven de cabine uitsteken (romp erachter)
-    this._driverLift = this.stats.chassisH / 2 + dh * 0.46
+    this._driverLift = this.stats.chassisH / 2 + dh * drv.lift
+    this._driverX = this.stats.chassisW * drv.x
 
     this.propChunks = new Map()
     this._ensureProps(START_X - 400, START_X + 1600)
@@ -319,10 +322,10 @@ export default class GameScene extends Phaser.Scene {
     this.chassisImg.setPosition(v.chassis.position.x, v.chassis.position.y).setRotation(v.chassis.angle)
     this.wheelLImg.setPosition(v.wheelL.position.x, v.wheelL.position.y).setRotation(v.wheelL.angle)
     this.wheelRImg.setPosition(v.wheelR.position.x, v.wheelR.position.y).setRotation(v.wheelR.angle)
-    // bestuurder iets achter het midden, hoog genoeg dat het gezicht boven
-    // de cabine uitkomt — meegedraaid met het chassis
+    // bestuurder op zijn eigen plek per voertuig, hoog genoeg dat het gezicht
+    // boven de carrosserie uitkomt — meegedraaid met het chassis
     const a = v.chassis.angle
-    const lx = -this.stats.chassisW * 0.06, ly = -this._driverLift
+    const lx = this._driverX, ly = -this._driverLift
     this.driverImg.setPosition(
       v.chassis.position.x + lx * Math.cos(a) - ly * Math.sin(a),
       v.chassis.position.y + lx * Math.sin(a) + ly * Math.cos(a),

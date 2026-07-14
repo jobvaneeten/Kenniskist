@@ -1,6 +1,9 @@
 import Phaser from 'phaser'
 import BootScene from './scenes/BootScene.js'
-import GarageScene from './scenes/GarageScene.js'
+import HomeScene from './scenes/HomeScene.js'
+import VehicleSelectScene from './scenes/VehicleSelectScene.js'
+import LevelSelectScene from './scenes/LevelSelectScene.js'
+import ShopScene from './scenes/ShopScene.js'
 import GameScene from './scenes/GameScene.js'
 import UIScene from './scenes/UIScene.js'
 
@@ -24,7 +27,7 @@ export function createGame(parent, { onBack }) {
       default: 'matter',
       matter: { gravity: { y: 1 }, debug: false },
     },
-    scene: [BootScene, GarageScene, GameScene, UIScene],
+    scene: [BootScene, HomeScene, VehicleSelectScene, LevelSelectScene, ShopScene, GameScene, UIScene],
     disableContextMenu: true,
     input: {
       mouse: { preventDefaultWheel: false },

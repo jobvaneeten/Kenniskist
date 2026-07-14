@@ -125,12 +125,26 @@ const VEHICLES = {
   jeep: 'Zijaanzicht van de carrosserie van een vrolijke groene safari-jeep, ZONDER wielen: lege donkere halfronde wielkasten linksonder en rechtsonder waar de wielen horen. Met cabine, voorruit en koplamp, voorkant naar rechts.',
   motor: 'Zijaanzicht van het frame van een snelle rode crossmotor, ZONDER wielen: alleen frame, tank, zadel, stuur en voorvork, open ruimtes waar de wielen horen. Voorkant naar rechts.',
   monstertruck: 'Zijaanzicht van de carrosserie van een stoere blauwe monstertruck pick-up, ZONDER wielen: hoog chassis met lege donkere halfronde wielkasten linksonder en rechtsonder. Met cabine en voorruit, voorkant naar rechts.',
+  quad: 'Zijaanzicht van het frame van een oranje quad (vierwieler-ATV), ZONDER wielen: frame, zadel, stuur en spatborden, open ruimtes waar de wielen horen. Voorkant naar rechts.',
+  tractor: 'Zijaanzicht van de carrosserie van een groene boerderijtractor met open bestuurdersstoel en schoorsteentje, ZONDER wielen: lege donkere wielkasten waar de wielen horen. Voorkant naar rechts.',
+  raceauto: 'Zijaanzicht van de carrosserie van een lage rode Formule 1-racewagen met grote achtervleugel en open cockpit, ZONDER wielen: open ruimtes waar de wielen horen. Voorkant naar rechts.',
+  politie: 'Zijaanzicht van de carrosserie van een witte Nederlandse politieauto met blauw-oranje striping en een zwaailicht op het dak, ZONDER wielen: lege donkere halfronde wielkasten linksonder en rechtsonder. Voorkant naar rechts.',
+  brandweer: 'Zijaanzicht van de carrosserie van een rode brandweerwagen met zilveren ladder op het dak en cabine aan de voorkant, ZONDER wielen: lege donkere wielkasten linksonder en rechtsonder. Voorkant naar rechts.',
+  schoolbus: 'Zijaanzicht van de carrosserie van een gele schoolbus met rijen raampjes en de bestuurdersplek voorin, ZONDER wielen: lege donkere wielkasten linksonder en rechtsonder. Voorkant naar rechts.',
+  maanbuggy: 'Zijaanzicht van het frame van een zilveren maanrover-buggy met antennes, zonnepaneel en open bestuurdersstoel, ZONDER wielen: open buizenframe met ruimtes waar de wielen horen. Voorkant naar rechts.',
 }
 
 const WHEELS = {
   jeep: 'Rond autowiel, zwarte band met een groen-witte velg, cartoonstijl, van opzij.',
   motor: 'Rond motorwiel, zwarte band met een rood-zilveren velg, cartoonstijl, van opzij.',
   monstertruck: 'Groot rond monstertruckwiel, dikke geribbelde zwarte band met een blauwe velg, cartoonstijl, van opzij.',
+  quad: 'Rond quadwiel, dikke zwarte ballonband met een oranje velg, cartoonstijl, van opzij.',
+  tractor: 'Groot rond tractorwiel, zwarte band met diepe schuine profielblokken en een gele velg, cartoonstijl, van opzij.',
+  raceauto: 'Rond racewiel, gladde zwarte slick-band met een gouden velg met dunne spaken, cartoonstijl, van opzij.',
+  politie: 'Rond autowiel, zwarte band met een zilveren velg met vijf spaken, cartoonstijl, van opzij.',
+  brandweer: 'Rond vrachtwagenwiel, zwarte band met een rode stalen velg met boutjes, cartoonstijl, van opzij.',
+  schoolbus: 'Rond buswiel, zwarte band met een gele stalen velg, cartoonstijl, van opzij.',
+  maanbuggy: 'Rond maanrover-wiel, zilvergrijze metalen band met gaas-structuur en fijne ribbels, cartoonstijl, van opzij.',
 }
 
 const ASSETS = []
