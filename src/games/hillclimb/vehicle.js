@@ -28,37 +28,52 @@ export class Vehicle {
     // de constraint-solver een grote initiële uitwijking (energie-explosie).
     const wheelY = y + stats.chassisH / 2 + stats.suspensionLength
 
+    // Eigen (negatieve) collision-group: chassis en wielen botsen nooit op
+    // elkaar, zodat de wielen dicht tegen/onder de carrosserie kunnen zitten
+    // zoals in de art (korte vering) zonder physics-explosies.
+    const group = M.body.nextGroup(true)
+
     this.chassis = M.add.rectangle(x, y, stats.chassisW, stats.chassisH, {
       density: 0.0022 * stats.mass, friction: 0.3, frictionAir: 0.018,
-      chamfer: { radius: 8 }, label: 'chassis',
+      chamfer: { radius: 8 }, label: 'chassis', collisionFilter: { group },
     })
+    // De aandrijfkracht loopt via de draai-traagheid van het wiel (spin →
+    // frictie-impuls op de grond). Traagheid ∝ r⁴, dus kleine art-getrouwe
+    // wielen zouden nauwelijks kracht leveren — schaal de dichtheid mee
+    // (genormaliseerd op r=28) zodat de acceleratie gelijk blijft. Alleen
+    // omhoog: grote wielen (monstertruck) houden hun eigen gevoel.
+    const wheelDensity = 0.0028 * stats.mass * Math.min(10, Math.max(1, (28 / stats.wheelRadius) ** 4))
     this.wheelL = M.add.circle(x - stats.wheelOffsetX, wheelY, stats.wheelRadius, {
-      density: 0.0028 * stats.mass, friction: stats.grip, frictionAir: 0.01,
-      label: 'wheel',
+      density: wheelDensity, friction: stats.grip, frictionAir: 0.01,
+      label: 'wheel', collisionFilter: { group },
     })
     this.wheelR = M.add.circle(x + stats.wheelOffsetX, wheelY, stats.wheelRadius, {
-      density: 0.0028 * stats.mass, friction: stats.grip, frictionAir: 0.01,
-      label: 'wheel',
+      density: wheelDensity, friction: stats.grip, frictionAir: 0.01,
+      label: 'wheel', collisionFilter: { group },
     })
 
-    // Driehoeks-ophanging: twee veren per wiel (anker vóór en achter het
-    // wiel op de chassis-onderkant). Verticaal inveren rekt beide veren
-    // symmetrisch (mag), horizontaal zwaaien rekt ze asymmetrisch en wordt
-    // dus tegengehouden — wielen kunnen niet meer naar elkaar toe slingeren.
-    const brace = Math.min(26, stats.wheelOffsetX * 0.55)
-    const restLen = Math.hypot(brace, stats.suspensionLength)
-    const spring = (wheel, offX, sideX) => M.add.constraint(this.chassis, wheel, restLen, stats.suspensionStiffness, {
-      pointA: { x: offX + sideX, y: stats.chassisH / 2 }, damping: stats.suspensionDamping,
+    // Ophanging per wiel: één verticale draagveer (anker recht boven het
+    // wiel op de chassis-onderkant — draagt het volle gewicht, ook bij een
+    // korte veerlengte) plus één stijve arm naar het chassis-midden die de
+    // voor/achter-positie vasthoudt. Diagonale veren werkten hier niet: bij
+    // korte vering staan ze bijna horizontaal en is de verticale kracht ~0,
+    // waardoor de wielen dwars door de carrosserie omhoog zakten.
+    const veerStiff = Math.min(0.3, stats.suspensionStiffness * 7.5)
+    const veer = (wheel, offX) => M.add.constraint(this.chassis, wheel, stats.suspensionLength, veerStiff, {
+      pointA: { x: offX, y: stats.chassisH / 2 }, damping: stats.suspensionDamping * 1.7,
+    })
+    const armLen = Math.hypot(stats.wheelOffsetX, stats.chassisH / 2 + stats.suspensionLength)
+    const arm = (wheel) => M.add.constraint(this.chassis, wheel, armLen, 0.85, {
+      pointA: { x: 0, y: 0 }, damping: 0.02,
     })
     this.springs = [
-      spring(this.wheelL, -stats.wheelOffsetX, -brace),
-      spring(this.wheelL, -stats.wheelOffsetX,  brace),
-      spring(this.wheelR,  stats.wheelOffsetX, -brace),
-      spring(this.wheelR,  stats.wheelOffsetX,  brace),
+      veer(this.wheelL, -stats.wheelOffsetX),
+      veer(this.wheelR,  stats.wheelOffsetX),
+      arm(this.wheelL),
+      arm(this.wheelR),
     ]
     // Starre as tussen de wielen: onderlinge afstand ligt vast, zodat ze
-    // nooit naar elkaar toe of van elkaar af bewegen. De diagonale veren
-    // blijven het op-en-neer veren doen.
+    // nooit naar elkaar toe of van elkaar af bewegen.
     this.springs.push(M.add.constraint(this.wheelL, this.wheelR, stats.wheelOffsetX * 2, 0.95))
 
     this._onBeforeUpdate = () => this._applyPhysicsStep()
@@ -81,14 +96,29 @@ export class Vehicle {
 
     if (t !== 0) {
       if (this.grounded) {
-        // Draaisnelheid-gestuurde aandrijving: ramp de wiel-spin naar een
-        // maximum. Veel stabieler dan torque (geen oneindige opbouw).
+        // Draaisnelheid-gestuurde wiel-spin (visueel + grip op hellingen).
         const maxSpin = this.stats.power * 12          // rad per physics-step
         const accel = this.stats.power * 0.55
         for (const w of [this.wheelL, this.wheelR]) {
           let av = w.angularVelocity + accel * t
           av = Math.max(-maxSpin, Math.min(maxSpin, av))
           Body.setAngularVelocity(w, av)
+        }
+        // Aandrijving: stuur de chassis-snelheid langs de helling richting
+        // het doeltempo. Vroeger kwam de kracht uit spinnende wielen die
+        // tegen de chassis-onderkant wreven; dat contact bestaat niet meer
+        // (wielen en chassis botsen bewust niet meer op elkaar), dus de
+        // snelheids-assist is nu het echte aandrijfpad. Alleen versnellen
+        // richting doel — bergaf uitrollen wordt nooit afgeremd.
+        const slope = this.groundSlope || 0
+        const dirX = Math.cos(slope), dirY = Math.sin(slope)
+        const vel = this.chassis.velocity
+        const along = vel.x * dirX + vel.y * dirY
+        const doel = this.stats.power * 260 * t
+        if ((t > 0 && along < doel) || (t < 0 && along > doel)) {
+          const k = 0.028
+          const diff = doel - along
+          Body.setVelocity(this.chassis, { x: vel.x + diff * k * dirX, y: vel.y + diff * k * dirY })
         }
         // Reactiekoppel van de aandrijving: net als in Hill Climb Racing
         // duwt aanhoudend gas de neus omhoog (rem de neus omlaag). Pas ná de

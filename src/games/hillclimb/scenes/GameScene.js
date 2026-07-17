@@ -58,10 +58,19 @@ export default class GameScene extends Phaser.Scene {
     this.chassisImg = this.add.image(0, 0, `hc_body_${this.vehicleId}`).setDepth(9)
     const aspect = this.chassisImg.width / this.chassisImg.height
     const dw = this.stats.chassisW * 1.35
-    this.chassisImg.setDisplaySize(dw, dw / aspect).setOrigin(0.5, 0.62)
-    const wd = this.stats.wheelRadius * 2
-    this.wheelLImg  = this.add.image(0, 0, `hc_wiel_${this.vehicleId}`).setDepth(10).setDisplaySize(wd, wd)
-    this.wheelRImg  = this.add.image(0, 0, `hc_wiel_${this.vehicleId}`).setDepth(10).setDisplaySize(wd, wd)
+    // origin per voertuig (uit VehicleData.art): lijnt de wielgaten in de
+    // carrosserie-art uit met de physics-wielposities — originX omdat het
+    // wielpaar-midden in de tekening niet altijd op het beeldmidden ligt.
+    this.chassisImg.setDisplaySize(dw, dw / aspect)
+      .setOrigin(this.stats.art?.originX ?? 0.5, this.stats.art?.originY ?? 0.62)
+    // Weergavestraal per kant (art.dispL/dispR of art.disp): iets groter dan
+    // de physics-straal zodat het weggewiste wielgat in de carrosserie altijd
+    // bedekt blijft; tractor heeft bewust een groter achter- dan voorwiel.
+    const art = this.stats.art || {}
+    const wdL = (art.dispL ?? art.disp ?? this.stats.wheelRadius) * 2
+    const wdR = (art.dispR ?? art.disp ?? this.stats.wheelRadius) * 2
+    this.wheelLImg  = this.add.image(0, 0, `hc_wiel_${this.vehicleId}`).setDepth(10).setDisplaySize(wdL, wdL)
+    this.wheelRImg  = this.add.image(0, 0, `hc_wiel_${this.vehicleId}`).setDepth(10).setDisplaySize(wdR, wdR)
     // Bestuurder-positie per voertuig (bus/brandweer voorin, motor er bovenop,
     // raceauto laag in de cockpit) — zie driver-config in VehicleData.
     const drv = this.stats.driver || { x: -0.06, lift: 0.46, scale: 1.7 }
@@ -71,6 +80,17 @@ export default class GameScene extends Phaser.Scene {
     this.driverImg.setDisplaySize(dh * dAspect, dh)
     this._driverLift = this.stats.chassisH / 2 + dh * drv.lift
     this._driverX = this.stats.chassisW * drv.x
+
+    this._buildDustTexture()
+    this.dustEmitter = this.add.particles(0, 0, 'hc_dust', {
+      speed: { min: 40, max: 150 },
+      angle: { min: 200, max: 340 },
+      scale: { start: 1, end: 0 },
+      alpha: { start: 0.75, end: 0 },
+      lifespan: { min: 250, max: 450 },
+      tint: 0x9c7a52,
+      emitting: false,
+    }).setDepth(9.5)
 
     this.propChunks = new Map()
     this._ensureProps(START_X - 400, START_X + 1600)
@@ -118,6 +138,20 @@ export default class GameScene extends Phaser.Scene {
       img._factor = factor
       return img
     })
+  }
+
+  _buildDustTexture() {
+    if (this.textures.exists('hc_dust')) return
+    const g = this.make.graphics({ x: 0, y: 0 }, false)
+    g.fillStyle(0xffffff, 1)
+    g.fillCircle(8, 8, 8)
+    g.generateTexture('hc_dust', 16, 16)
+    g.destroy()
+  }
+
+  // Stofwolkje bij een wiel — grotere burst bij hardere inslag/meer gas.
+  _spawnDust(x, y, intensity = 1) {
+    this.dustEmitter.emitParticleAt(x, y, Math.round(3 + intensity * 9))
   }
 
   _setupInput() {
@@ -242,6 +276,18 @@ export default class GameScene extends Phaser.Scene {
 
     const grounded = this.vehicle.grounded
     const angle = this.vehicle.angle
+
+    if (grounded && dir !== 0) {
+      this._dustTimer = (this._dustTimer || 0) + dt
+      if (this._dustTimer > 0.06) {
+        this._dustTimer = 0
+        this._spawnDust(this.vehicle.wheelL.position.x, this.vehicle.wheelL.position.y, 0.3)
+        this._spawnDust(this.vehicle.wheelR.position.x, this.vehicle.wheelR.position.y, 0.3)
+      }
+    } else {
+      this._dustTimer = 0
+    }
+
     if (!grounded) {
       if (this._airborneSince == null) { this._airborneSince = time; this._spinAccum = 0 }
       let dA = angle - this._lastAngle
@@ -253,6 +299,11 @@ export default class GameScene extends Phaser.Scene {
       const flips = Math.floor(this._spinAccum / (Math.PI * 2))
       if (flips > 0) { this.addCoins(flips * 8); this.toast(`🤸 Flip ×${flips}! +${flips * 8}`) }
       else if (airT > 1.0) { const b = Math.floor(airT * 3); this.addCoins(b); this.toast(`✈️ Airtime! +${b}`) }
+      const impact = Math.min(1, this.vehicle.speed / 14)
+      if (impact > 0.15) {
+        this._spawnDust(this.vehicle.wheelL.position.x, this.vehicle.wheelL.position.y, impact)
+        this._spawnDust(this.vehicle.wheelR.position.x, this.vehicle.wheelR.position.y, impact)
+      }
       this._airborneSince = null
       this._spinAccum = 0
     }

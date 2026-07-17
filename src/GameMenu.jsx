@@ -7,7 +7,6 @@ import HeadSoccer from './games/HeadSoccer'
 import AstroKatapultGame from './games/AstroKatapultGame'
 import SterrenstroompGame from './games/SterrenstroompGame'
 import BrugBouwen from './games/BrugBouwen'
-import BlokOefenen from './games/BlokOefenen'
 import ProcentenBreuken from './games/ProcentenBreuken'
 import VerhaaltjesSommen from './games/VerhaaltjesSommen'
 import BreukenPlaatjes from './games/BreukenPlaatjes'
@@ -72,7 +71,7 @@ const FREE_GAMES = [
   { key: 'astrokatapult', emoji: '🪐', name: 'Astro Katapult',   desc: 'Lanceer & versla de aliens in 50 levels!' },
   { key: 'sterrenstroom', emoji: '🛸', name: 'Spacerunner',     desc: 'Ontwijk de asteroïden in de ruimte!' },
   { key: 'brug',          emoji: '🌉', name: 'Brug Bouwen',     desc: 'Bouw bruggen in 22 levels — hout, weg, metaal & touw!' },
-  { key: 'hillclimb',     emoji: '🚗', name: 'Hill Climb',      desc: 'Race over heuvels, verzamel munten en upgrade je auto!' },
+  { key: 'hillclimb',     emoji: '🚗', name: 'Bergrijden',      desc: 'Race over heuvels, verzamel munten en upgrade je auto!', rewards: ['🪙 munten'] },
 ]
 
 function RewardChips({ rewards }) {
@@ -91,7 +90,7 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
   const [subject,    setSubject]    = useState(null)
   const [directGame, setDirectGame] = useState(null)
   const [gameMode,   setGameMode]   = useState(null)
-  const [rekenKeuze,    setRekenKeuze]    = useState(null)   // null | 'verhaal' | 'blok9'
+  const [rekenKeuze,    setRekenKeuze]    = useState(null)   // null | 'verhaal' | 'tafels' | …
   const [spellingKeuze, setSpellingKeuze] = useState(null)   // null | 'werkwoord' | 'dictee'
   const [taSoonBlok,    setTaSoonBlok]    = useState(null)   // blok-nr met "komt binnenkort"
   const [dicteeNr,      setDicteeNr]      = useState(8)      // gekozen dictee-blok (7 of 8)
@@ -232,9 +231,6 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
     }
 
     if (GAMES[gameId] === 'iep') {
-      if (rekenKeuze === 'blok9') {
-        return <BlokOefenen onBack={() => { clearGate('blok9'); setRekenKeuze(null) }} addBriefgeld={makeGated('blok9', addBriefgeld)} addCuruntie={makeGated('blok9', addCuruntie)} />
-      }
       if (rekenKeuze === 'procenten') {
         return <ProcentenBreuken onBack={() => setRekenKeuze(null)} addBriefgeld={addBriefgeld} />
       }
@@ -278,15 +274,6 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
                 <RewardChips rewards={['💵 briefgeld']} />
               </button>
             )}
-            {year === 7 && (
-              <button className="mode-card" onClick={() => setRekenKeuze('blok9')}>
-                <MenuScene name="blok9" />
-                <span className="mode-name">📘 Oefenen blok 9 &amp; 10</span>
-                <span className="mode-desc">FS en S+ werkbladen</span>
-                <span className="vb-line">"5825 : 23 = ?" en "7 × €3,70 = ?"</span>
-                <RewardChips rewards={['🪙 munten', '💵 briefgeld']} />
-              </button>
-            )}
             {(year === 6 || year === 7) && (
               <button className="mode-card" onClick={() => setRekenKeuze('maten')}>
                 <MenuScene name="blok9" />
@@ -309,7 +296,7 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
               <MenuScene name="taal" />
               <span className="mode-name">📖 Verhaaltjessommen</span>
               <span className="mode-desc">Redactiesommen op jouw niveau{year >= 6 ? ' (FS of S+)' : ''}</span>
-              <span className="vb-line">Kies de blokken die je al gehad hebt</span>
+              <span className="vb-line">Oefen per doel uit de leerlijn</span>
               <RewardChips rewards={['💵 briefgeld']} />
             </button>
           </div>

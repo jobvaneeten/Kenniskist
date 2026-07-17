@@ -1,5 +1,6 @@
 import Phaser from 'phaser'
 import { LEVELS } from '../data/LevelData.js'
+import { drawPanel } from '../ui.js'
 
 export default class UIScene extends Phaser.Scene {
   constructor() { super('HCUI') }
@@ -12,11 +13,12 @@ export default class UIScene extends Phaser.Scene {
 
     // ── HUD-balk linksboven ──────────────────────────────────────
     const hudG = this.add.graphics()
-    hudG.fillStyle(0x000000, 0.4); hudG.fillRoundedRect(14, 14, 260, 90, 14)
+    drawPanel(hudG, 14, 14, 260, 90, { radius: 14, borderAlpha: 0.5 })
 
     this.add.text(28, 24, '⛽', { fontSize: '20px' })
     this._fuelBarBg = this.add.graphics()
-    this._fuelBarBg.fillStyle(0x1a1a1a, 1); this._fuelBarBg.fillRoundedRect(58, 26, 190, 16, 8)
+    this._fuelBarBg.fillStyle(0x000000, 0.55); this._fuelBarBg.fillRoundedRect(58, 26, 190, 16, 8)
+    this._fuelBarBg.lineStyle(1.5, 0x55617a, 0.8); this._fuelBarBg.strokeRoundedRect(58, 26, 190, 16, 8)
     this._fuelBar = this.add.graphics()
 
     this.add.text(28, 50, '📏', { fontSize: '18px' })
@@ -52,18 +54,22 @@ export default class UIScene extends Phaser.Scene {
   }
 
   _makeTouchBtn(cx, cy, r, color, iconKey, dir) {
-    const g = this.add.graphics()
-    const draw = (pressed) => {
-      g.clear()
-      g.fillStyle(0x000000, 0.35); g.fillCircle(cx, cy + 3, r)
-      g.fillStyle(color, pressed ? 1 : 0.78); g.fillCircle(cx, cy, r)
-      g.lineStyle(3, 0xffffff, pressed ? 0.8 : 0.4); g.strokeCircle(cx, cy, r)
+    // De gas/rem-sprites zíjn al complete knoppen — geen geverfde cirkel
+    // eronder (oogde dubbel), alleen een zachte schaduw + druk-feedback.
+    const shadow = this.add.graphics()
+    shadow.fillStyle(0x000000, 0.3); shadow.fillCircle(cx, cy + 5, r * 0.96)
+    const img = this.add.image(cx, cy, iconKey).setDisplaySize(r * 2, r * 2).setAlpha(0.92)
+    const zone = this.add.zone(cx, cy, r * 2.2, r * 2.2).setInteractive({ useHandCursor: true })
+    const press = () => {
+      img.setAlpha(1)
+      this.tweens.add({ targets: img, displayWidth: r * 1.84, displayHeight: r * 1.84, duration: 60 })
+      this.gameScene.setTouchThrottle(dir, true)
     }
-    draw(false)
-    this.add.image(cx, cy, iconKey).setDisplaySize(r * 1.1, r * 1.1)
-    const zone = this.add.zone(cx, cy, r * 2, r * 2).setInteractive({ useHandCursor: true })
-    const press = () => { draw(true); this.gameScene.setTouchThrottle(dir, true) }
-    const release = () => { draw(false); this.gameScene.setTouchThrottle(dir, false) }
+    const release = () => {
+      img.setAlpha(0.92)
+      this.tweens.add({ targets: img, displayWidth: r * 2, displayHeight: r * 2, duration: 90 })
+      this.gameScene.setTouchThrottle(dir, false)
+    }
     zone.on('pointerdown', press)
     zone.on('pointerup', release)
     zone.on('pointerout', release)

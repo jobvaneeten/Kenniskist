@@ -5,9 +5,23 @@
 //   print   : tiled emoji print         { kind:'print',   emoji, bg }
 //   model   : GLB shirt (Ajax/PSV)      { kind:'model',   file, preview }
 
-const color   = (key, label, rarity, hex)               => ({ key, label, rarity, kind: 'color', hex })
-const pat     = (key, label, rarity, pattern, c1, c2)   => ({ key, label, rarity, kind: 'pattern', pattern, c1, c2 })
-const print   = (key, label, rarity, emoji, bg)         => ({ key, label, rarity, kind: 'print', emoji, bg })
+// ── Zeldzaamheid: centraal bepaald door het SOORT item, niet per regel ──
+//   kleur (1 egale kleur)            → common
+//   patroon (strepen/stippen/…)      → rare   (regenboogprint → ultra)
+//   emoji-print                      → epic   (premium emoji → legendary,
+//                                              🦄/🌈 → ultra_legendary)
+//   model/texmodel (echte 3D-skins)  → ultra_legendary
+// De rarity-parameter in de item-regels hieronder wordt bewust genegeerd —
+// zo blijft de verdeling overal logisch en consistent.
+const PREMIUM_EMOJI = ['👑', '💎', '🐲', '🔥', '💀', '🏆', '🛡']
+const ULTRA_EMOJI   = ['🦄', '🌈']
+const printRarity = (emoji) =>
+  ULTRA_EMOJI.some(e => emoji.startsWith(e)) ? 'ultra_legendary'
+  : PREMIUM_EMOJI.some(e => emoji.startsWith(e)) ? 'legendary'
+  : 'epic'
+const color   = (key, label, _rarity, hex)              => ({ key, label, rarity: 'common', kind: 'color', hex })
+const pat     = (key, label, _rarity, pattern, c1, c2)  => ({ key, label, rarity: pattern === 'rainbow' ? 'ultra_legendary' : 'rare', kind: 'pattern', pattern, c1, c2 })
+const print   = (key, label, _rarity, emoji, bg)        => ({ key, label, rarity: printRarity(emoji), kind: 'print', emoji, bg })
 const model   = (key, label, file, preview)             => ({ key, label, rarity: 'ultra_legendary', kind: 'model', file, preview })
 // Donor GLB with a custom baked texture image (a designed clothing skin)
 const texmodel = (key, label, file, texture, preview)  => ({ key, label, rarity: 'ultra_legendary', kind: 'texmodel', file, texture, preview })
@@ -77,6 +91,26 @@ export const CATALOG = {
     print('alien_sh',   'Aliens',               'epic',      '👽',     '#0a2a10'),
     print('leeuw_sh',   'Leeuwen',              'legendary', '🦁',     '#3a2a00'),
     print('aarde_sh',   'Aarde',                'legendary', '🌍',     '#06203a'),
+    // ── extra shirts (batch 3) ──
+    color('parelwit',   'Parelwit',             'common',    '#f6f1e7'),
+    color('chocolade',  'Chocolade',            'common',    '#6b4226'),
+    color('smaragd',    'Smaragd',              'rare',      '#0f9b6c'),
+    color('framboos',   'Framboos',             'rare',      '#c72c48'),
+    color('nachtblauw', 'Nachtblauw',           'epic',      '#0b1440'),
+    color('neongroen',  'Neongroen',            'epic',      '#39ff14'),
+    pat  ('strepen_og', 'Oranje-geel gestreept','common',    'stripes', '#f77f00', '#f4c430'),
+    pat  ('stippen_mint','Mint stippen',        'common',    'dots',    '#f0f0f0', '#3ddc97'),
+    pat  ('verloop_paars_sh','Paarsverloop',    'rare',      'gradient','#7b2d8b', '#d6336c'),
+    pat  ('camo_nacht', 'Nacht-camo',           'rare',      'camo',    '#1b2a52', '#0b1440'),
+    pat  ('ruit_geel',  'Geel ruitje',          'epic',      'checker', '#f4c430', '#222222'),
+    print('zon_sh',     'Zonnetjes',            'rare',      '☀',      '#2a2600'),
+    print('sneeuw_sh',  'Sneeuwvlokken',        'rare',      '❄',      '#0a2038'),
+    print('taart_sh',   'Taartjes',             'rare',      '🍰',     '#3a1a2a'),
+    print('race_sh',    'Racewagens',           'epic',      '🏎',     '#101820'),
+    print('knal_sh',    'Knallers',             'epic',      '💥',     '#2a1000'),
+    print('brein_sh',   'Breinen',              'epic',      '🧠',     '#2a1030'),
+    print('flamingo_sh','Flamingos',            'legendary', '🦩',     '#0a2a2a'),
+    print('clown_sh',   'Clowns',               'legendary', '🤡',     '#202038'),
     model('ajax',       'Ajax Shirt',           '/ajaxshirt.glb', '/logo_ajax.svg'),
     model('psv',        'PSV Shirt',            '/psvshirt.glb',  '/logo_psv.svg'),
     model('rb',         'RB Shirt',             '/rbshirt.glb',   '/rbshirt_texture.png'),
@@ -133,6 +167,24 @@ export const CATALOG = {
     print('robot_b',    'Robots',               'epic',      '🤖',     '#10202a'),
     print('skull_b',    'Skulls',               'legendary', '💀',     '#1a1a1a'),
     print('planeet_b',  'Planeten',             'legendary', '🪐',     '#0a0a2a'),
+    // ── extra broeken (batch 3) ──
+    color('zand',       'Zandkleur',            'common',    '#d9c49a'),
+    color('chocolade_br','Chocolade',           'common',    '#6b4226'),
+    color('parel_br',   'Parelwit',             'rare',      '#f6f1e7'),
+    color('smaragd_br', 'Smaragd',              'rare',      '#0f9b6c'),
+    color('nachtblauw_br','Nachtblauw',         'epic',      '#0b1440'),
+    pat  ('strepen_ow', 'Oranje-wit gestreept', 'common',    'stripes', '#f77f00', '#f0f0f0'),
+    pat  ('stippen_wit_br','Witte stippen',     'common',    'dots',    '#1b2a52', '#ffffff'),
+    pat  ('verloop_nacht_br','Nachtverloop',    'rare',      'gradient','#1b2a52', '#0b1440'),
+    pat  ('camo_bruin', 'Bruine camo',          'rare',      'camo',    '#6b4226', '#3a2410'),
+    pat  ('ruit_oranje','Oranje ruitje',        'epic',      'checker', '#f77f00', '#222222'),
+    print('zon_br',     'Zonnetjes',            'rare',      '☀',      '#2a2600'),
+    print('lach_br',    'Lachebekjes',          'rare',      '😂',     '#1a1a30'),
+    print('ijsblok_br', 'IJsblokjes',           'rare',      '🧊',     '#062a3a'),
+    print('wind_br',    'Windvlagen',           'epic',      '💨',     '#0a2030'),
+    print('race_br',    'Racewagens',           'epic',      '🏎',     '#101820'),
+    print('schild_br',  'Schilden',             'legendary', '🛡',     '#1a1030'),
+    print('engel_br',   'Engeltjes',            'legendary', '👼',     '#1a2a3a'),
     texmodel('ajaxbroek', 'Ajax Broek', '/test/nieuwebroektest.glb', '/Broekjes/ajaxbroek.png', '/logo_ajax.svg'),
     texmodel('psvbroek',  'PSV Broek',  '/test/nieuwebroektest.glb', '/Broekjes/psvbroek.png',  '/logo_psv.svg'),
   ],
@@ -187,6 +239,25 @@ export const CATALOG = {
     print('uil_s',      'Uilen',                'epic',      '🦉',     '#2a1a00'),
     print('dino_s',     'Dinos',                'legendary', '🦖',     '#0a2a10'),
     print('spook_s',    'Spookjes',             'legendary', '👻',     '#10102a'),
+    // ── extra sokken (batch 3) ──
+    color('zand_s',     'Zandkleur',            'common',    '#d9c49a'),
+    color('chocolade_s','Chocolade',            'common',    '#6b4226'),
+    color('smaragd_s',  'Smaragd',              'rare',      '#0f9b6c'),
+    color('neongroen_s','Neongroen',            'epic',      '#39ff14'),
+    color('nachtblauw_s','Nachtblauw',          'epic',      '#0b1440'),
+    pat  ('strepen_gz', 'Geel-zwart gestreept', 'common',    'stripes', '#f4c430', '#222222'),
+    pat  ('stippen_or_s','Oranje stippen',      'common',    'dots',    '#f0f0f0', '#f77f00'),
+    pat  ('verloop_roze_s','Rozeverloop',       'rare',      'gradient','#ff6fb5', '#d6336c'),
+    pat  ('camo_mint_s','Mint-camo',            'rare',      'camo',    '#3ddc97', '#00a86b'),
+    pat  ('ruit_paars_s','Paars ruitje',        'epic',      'checker', '#7b2d8b', '#222222'),
+    print('zon_s',      'Zonnetjes',            'rare',      '☀',      '#2a2600'),
+    print('sneeuw_s',   'Sneeuwvlokken',        'rare',      '❄',      '#0a2038'),
+    print('snoep_s',    'Lolly’s',         'rare',      '🍭',     '#2a0a2a'),
+    print('koe_s',      'Koetjes',              'rare',      '🐄',     '#2a2016'),
+    print('strik_s',    'Strikjes',             'epic',      '🎀',     '#3a0a20'),
+    print('ijs_s',      'IJsblokjes',           'epic',      '🧊',     '#062a3a'),
+    print('flamingo_s', 'Flamingos',            'legendary', '🦩',     '#0a2a2a'),
+    print('taart_s',    'Taartjes',             'legendary', '🍰',     '#3a1a2a'),
   ],
   schoenen: [
     ...BASE(),
@@ -239,6 +310,25 @@ export const CATALOG = {
     print('ster_glow_sch','Sterren',            'epic',      '🌟',     '#1a2a55'),
     print('bloem_sch',  'Bloemen',              'epic',      '🌸',     '#2a0a1a'),
     print('ufo_sch',    'Invaders',             'legendary', '👾',     '#10102a'),
+    // ── extra schoenen (batch 3) ──
+    color('zand_sch',   'Zandkleur',            'common',    '#d9c49a'),
+    color('chocolade_sch','Chocolade',          'common',    '#6b4226'),
+    color('smaragd_sch','Smaragd',              'rare',      '#0f9b6c'),
+    color('framboos_sch','Framboos',            'rare',      '#c72c48'),
+    color('neon_sch',   'Neongroen',            'epic',      '#39ff14'),
+    color('nachtblauw_sch','Nachtblauw',        'epic',      '#0b1440'),
+    pat  ('strepen_bw_sch','Blauw-wit gestreept','common',   'stripes', '#1d6fa4', '#f0f0f0'),
+    pat  ('stippen_rood_sch','Rode stippen',    'common',    'dots',    '#f0f0f0', '#e63946'),
+    pat  ('verloop_goud_sch','Goudverloop',     'rare',      'gradient','#d4af37', '#f4c430'),
+    pat  ('camo_roze_sch','Roze camo',          'rare',      'camo',    '#ff6fb5', '#b3477e'),
+    pat  ('ruit_geel_sch','Geel ruitje',        'epic',      'checker', '#f4c430', '#222222'),
+    print('zon_sch',    'Zonnetjes',            'rare',      '☀',      '#2a2600'),
+    print('rots_sch',   'Rotsblokken',          'rare',      '🪨',     '#20242a'),
+    print('knal_sch',   'Knallers',             'epic',      '💥',     '#2a1000'),
+    print('wind_sch',   'Windvlagen',           'epic',      '💨',     '#0a2030'),
+    print('race_sch',   'Racewagens',           'epic',      '🏎',     '#101820'),
+    print('medaille_sch','Medailles',           'legendary', '🥈',     '#20202a'),
+    print('schild_sch', 'Schilden',             'legendary', '🛡',     '#1a1030'),
   ],
   // Hoofd = pet (één GLB-model, normaal/achterstevoren te dragen) getint naar
   // de gekozen kleur. Alleen kleur-items: het 3D-model wordt gekleurd, net als
@@ -252,6 +342,25 @@ export const CATALOG = {
     color('magentakl',  'Magenta',              'epic',      '#d6336c'),
     color('zilver',     'Zilver',               'epic',      '#c4cdd6'),
     color('goud_h',     'Goud',                 'legendary', '#d4af37'),
+    // ── extra petten: kleuren + patronen/prints (gebakken op de pet-UV) ──
+    color('hemelsblauw_h','Hemelsblauw',        'common',    '#56ccf2'),
+    color('koraal_h',   'Koraal',               'common',    '#ff6f5e'),
+    color('smaragd_h',  'Smaragd',              'rare',      '#0f9b6c'),
+    color('chocolade_h','Chocolade',            'rare',      '#6b4226'),
+    color('nachtblauw_h','Nachtblauw',          'epic',      '#0b1440'),
+    pat  ('strepen_rw_h','Rood-wit gestreept',  'common',    'stripes', '#e63946', '#f0f0f0'),
+    pat  ('stippen_zw_h','Zwarte stippen',      'common',    'dots',    '#f4c430', '#222222'),
+    pat  ('verloop_zon_h','Zonsverloop',        'rare',      'gradient','#f77f00', '#f4c430'),
+    pat  ('camo_groen_h','Camouflage',          'rare',      'camo',    '#4a5d23', '#2d3a16'),
+    pat  ('ruit_blauw_h','Blauw ruitje',        'epic',      'checker', '#1d6fa4', '#f0f0f0'),
+    print('voetbal_h',  'Voetbal',              'rare',      '⚽',      '#0d8a3e'),
+    print('ster_h',     'Sterren',              'rare',      '⭐',      '#1a2a55'),
+    print('bliksem_h',  'Bliksem',              'epic',      '⚡',      '#1b1b2f'),
+    print('vuur_h',     'Vuur',                 'epic',      '🔥',      '#2a0a00'),
+    print('kroon_h',    'Kroon',                'legendary', '👑',      '#2a1f00'),
+    print('draak_h',    'Draken',               'legendary', '🐲',      '#06250f'),
+    print('eenhoorn_h', 'Eenhoorn',             'ultra_legendary', '🦄', '#2a0a3a'),
+    pat  ('regenboog_pat_h','Regenboogprint',   'ultra_legendary', 'rainbow', '#e63946', '#7b2d8b'),
     // Ultra legendary: pet met een eigen UV-design (petny.png op het pet-model).
     // badge 'NY' wordt in het swatch-rondje getoond i.p.v. de zware UV-afbeelding.
     { ...texmodel('petny', 'Toffe Pet', '/Pet/petnormaal.glb', '/Pet/petny.png', '/Pet/petny.png'), badge: 'NY' },

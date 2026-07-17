@@ -6,7 +6,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(ellipse at center, #2a4a2a 0%, #16281a 55%, #0a140c 100%);
+  background: #0d0d1a url('/achtergrond.png') center / cover no-repeat fixed;
   overflow: hidden;
   z-index: 999;
 }

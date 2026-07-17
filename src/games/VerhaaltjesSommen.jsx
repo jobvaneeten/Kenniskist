@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { onderdelenVan, maakOpgaveUit, maakToets, GROEPEN, HEEFT_ROUTE, checkAntwoord, checkSom, checkTijd, GROEP_DOELEN, doelKey } from './redactiesommen'
+import { onderdelenVan, maakOpgaveUit, maakToets, GROEPEN, HEEFT_ROUTE, checkAntwoord, checkSom, checkTijd, GROEP_DOELEN, doelKey, LEERLIJN_LABEL, LEERLIJN_VOLGORDE } from './redactiesommen'
 import SpelBeloning from './SpelBeloning'
 import './verhaaltjes-sommen.css'
 
@@ -277,13 +277,16 @@ function VraagKaart({ opgave, onNext }) {
 }
 
 // ── Doel-balkje (gebruikt in het overzicht) ──
-function DoelBalk({ groep, doel, stats }) {
+function DoelBalk({ groep, doel, badge, stats }) {
   const s = stats[doelKey(groep, doel)] || { goed: 0, fout: 0 }
   const totaal = s.goed + s.fout
   const pctG = totaal ? (s.goed / totaal) * 100 : 0
   return (
     <div className="rs-ov-rij">
-      <div className="rs-ov-kop"><span className="rs-ov-doel">{doel}</span></div>
+      <div className="rs-ov-kop">
+        <span className="rs-ov-doel">{doel}</span>
+        {badge && <span className="rs-doel-badge">{badge}</span>}
+      </div>
       {totaal === 0 ? (
         <div className="rs-ov-nieuw">Nog niet gemaakt</div>
       ) : (
@@ -303,20 +306,34 @@ function DoelBalk({ groep, doel, stats }) {
   )
 }
 
-// ── Overzicht: per groep (klikbaar), alle doelen incl. niet-gemaakte ──
+// ── Overzicht: groep-tabs bovenaan, doelen per leerlijn of per blok ──
 function Overzicht({ stats, terugLabel, onTerug, onWis }) {
-  const [open, setOpen] = useState(() => new Set())
+  const [groepTab, setGroepTab] = useState(GROEP_DOELEN[0]?.groep ?? 5)
+  const [mode, setMode] = useState('leerlijn')
   const [bevestig, setBevestig] = useState(false)
-  const toggle = (g) => setOpen(p => { const s = new Set(p); s.has(g) ? s.delete(g) : s.add(g); return s })
+
+  const info = GROEP_DOELEN.find(g => g.groep === groepTab) || GROEP_DOELEN[0]
 
   const groepCijfers = (groep, doelen) => {
     let goed = 0, fout = 0, geoefend = 0
     for (const d of doelen) {
-      const s = stats[doelKey(groep, d)]
+      const s = stats[doelKey(groep, d.doel)]
       if (s && (s.goed + s.fout) > 0) { goed += s.goed; fout += s.fout; geoefend++ }
     }
     return { goed, fout, totaal: goed + fout, geoefend }
   }
+
+  const secties = mode === 'blok'
+    ? [...new Set(info.doelen.map(d => d.blok))].sort((a, b) => a - b).map(nr => ({
+        key: 'b' + nr, label: nr === 0 ? '📍 Instap' : 'Blok ' + nr,
+        doelen: info.doelen.filter(d => d.blok === nr),
+      }))
+    : LEERLIJN_VOLGORDE.map(k => ({
+        key: k, label: LEERLIJN_LABEL[k],
+        doelen: info.doelen.filter(d => d.lijn === k),
+      })).filter(s => s.doelen.length)
+
+  const c = groepCijfers(groepTab, info.doelen)
 
   return (
     <div className="rs-screen">
@@ -324,32 +341,38 @@ function Overzicht({ stats, terugLabel, onTerug, onWis }) {
       <div className="rs-header">
         <span className="rs-icon">📊</span>
         <h1 className="rs-title">Mijn overzicht</h1>
-        <p className="rs-sub">Klik op een groep om alle doelen te zien</p>
+        <p className="rs-sub">Een rood balkje betekent: dit doel vind je nog lastig. Oefen die nog eens extra! 💪</p>
       </div>
 
-      <p className="rs-ov-tip">Een rood balkje betekent: dit doel vind je nog lastig. Oefen die nog eens extra! 💪</p>
+      <div className="rs-tabs">
+        {GROEP_DOELEN.map(({ groep }) => (
+          <button key={groep} className={`rs-tab${groep === groepTab ? ' actief' : ''}`} onClick={() => setGroepTab(groep)}>
+            Groep {groep}
+          </button>
+        ))}
+      </div>
+
+      <div className="rs-mode-toggle">
+        <button className={`rs-mode-btn${mode === 'leerlijn' ? ' actief' : ''}`} onClick={() => setMode('leerlijn')}>📚 Per leerlijn</button>
+        <button className={`rs-mode-btn${mode === 'blok' ? ' actief' : ''}`} onClick={() => setMode('blok')}>🧱 Per blok</button>
+      </div>
+
+      <p className="rs-ov-tip">
+        {c.totaal > 0 ? `${c.totaal} opgaven gemaakt · ✅ ${c.goed} · ❌ ${c.fout} · ${c.geoefend}/${info.doelen.length} doelen geoefend` : 'Nog niet geoefend in deze groep'}
+      </p>
 
       <div className="rs-ov-groepen">
-        {GROEP_DOELEN.map(({ groep, doelen }) => {
-          const c = groepCijfers(groep, doelen)
-          const isOpen = open.has(groep)
-          return (
-            <div key={groep} className="rs-ov-groep">
-              <button className={`rs-ov-groep-kop${isOpen ? ' open' : ''}`} onClick={() => toggle(groep)}>
-                <span className="rs-ov-groep-naam">{isOpen ? '▾' : '▸'} Groep {groep}</span>
-                <span className="rs-ov-groep-sub">
-                  {c.totaal > 0 ? `${c.totaal} opgaven · ✅ ${c.goed} · ❌ ${c.fout}` : 'nog niet geoefend'}
-                  <span className="rs-ov-groep-doelen"> · {c.geoefend}/{doelen.length} doelen</span>
-                </span>
-              </button>
-              {isOpen && (
-                <div className="rs-ov-lijst">
-                  {doelen.map(d => <DoelBalk key={d} groep={groep} doel={d} stats={stats} />)}
-                </div>
-              )}
+        {secties.map(s => (
+          <div key={s.key} className="rs-ov-groep">
+            <div className="rs-ov-sectie-kop">{s.label}</div>
+            <div className="rs-ov-lijst">
+              {s.doelen.map(d => (
+                <DoelBalk key={d.doel} groep={groepTab} doel={d.doel} stats={stats}
+                  badge={mode === 'leerlijn' ? (d.blok === 0 ? 'instap' : 'blok ' + d.blok) : LEERLIJN_LABEL[d.lijn]} />
+              ))}
             </div>
-          )
-        })}
+          </div>
+        ))}
       </div>
 
       {!bevestig ? (
@@ -368,16 +391,18 @@ function Overzicht({ stats, terugLabel, onTerug, onWis }) {
 }
 
 const GROEP_INFO = {
-  5: { icon: '🌱', desc: 'Alle doelen · blok 1 t/m 10' },
-  6: { icon: '🌿', desc: 'Alle doelen · blok 1 t/m 10 · FS & S+' },
-  7: { icon: '⭐', desc: 'Alle doelen · blok 1 t/m 10 · FS & S+' },
-  8: { icon: '🚀', desc: 'Alle doelen · blok 1 t/m 10 · FS & S+' },
+  5: { icon: '🌱', desc: 'Doelen per leerlijn' },
+  6: { icon: '🌿', desc: 'Doelen per leerlijn · FS & S+' },
+  7: { icon: '⭐', desc: 'Doelen per leerlijn · FS & S+' },
+  8: { icon: '🚀', desc: 'Doelen per leerlijn · FS & S+' },
 }
 
 export default function VerhaaltjesSommen({ groep: eigenGroep = 7, onBack, addBriefgeld, addCuruntie }) {
   const [klas, setKlas]     = useState(null)        // null | 5 | 6 | 7 | 8
   const [route, setRoute]   = useState(null)        // null | 'FS' | 'S+'
-  const [gekozen, setGekozen] = useState(new Set()) // onderdeel-keys
+  const [gekozen, setGekozen] = useState(new Set()) // doel-keys (stabiel over beide weergaven)
+  const [kiesMode, setKiesMode] = useState('leerlijn')  // 'leerlijn' | 'blok'
+  const [kiesTab, setKiesTab]   = useState(null)        // actieve tab-key
   const [screen, setScreen]   = useState('groep')   // groep | route | kies | oefen | overzicht
   const [opgave, setOpgave]   = useState(null)
   const [sinds, setSinds]     = useState(0)
@@ -409,8 +434,10 @@ export default function VerhaaltjesSommen({ groep: eigenGroep = 7, onBack, addBr
     maakOpgaveUit([{ gens: onderdelenVan(k, r).flatMap(o => o.gens).filter(g => sel.has(g.key)) }])
 
   const naarKies = (k, r) => {
-    // standaard alle doelen van de gewone blokken aan, herhaal-onderdelen uit
-    setGekozen(new Set(onderdelenVan(k, r).filter(o => !o.herhaling).flatMap(o => o.gens.map(g => g.key))))
+    // standaard alle doelen van de eigen groep aan, herhaal-doelen uit
+    setGekozen(new Set(onderdelenVan(k, r).flatMap(o => o.gens.filter(g => !g.herhaling).map(g => g.key))))
+    setKiesMode('leerlijn')
+    setKiesTab(null)
     setScreen('kies')
   }
   const kiesGroep = (g) => { setKlas(g); if (HEEFT_ROUTE(g)) { setRoute(null); setScreen('route') } else { setRoute(null); naarKies(g, null) } }
@@ -589,45 +616,60 @@ export default function VerhaaltjesSommen({ groep: eigenGroep = 7, onBack, addBr
     )
   }
 
-  // ── 3. Onderdeel-keuze (blokken voor groep 7, doelen voor de rest) ──
+  // ── 3. Doel-keuze: tabs bovenaan, per leerlijn of per blok ──
   if (screen === 'kies') {
-    const onderdelen = onderdelenVan(klas, route)
+    const onderdelen = onderdelenVan(klas, route, kiesMode)
+    const actief = onderdelen.find(o => o.key === kiesTab) || onderdelen[0]
     const titel = `Groep ${klas}${route ? ' · ' + route : ''}`
+    const wisselMode = (m) => { setKiesMode(m); setKiesTab(null) }
+    const keys = actief.gens.map(g => g.key)
+    const aantalAan = keys.filter(k => gekozen.has(k)).length
+    const tabVink = aantalAan === keys.length ? '☑' : aantalAan > 0 ? '◪' : '☐'
     return (
       <div className="rs-screen">
         <button className="rs-back" onClick={() => setScreen(HEEFT_ROUTE(klas) ? 'route' : 'groep')}>← Terug</button>
         <div className="rs-header">
           <span className="rs-icon">{GROEP_INFO[klas].icon}</span>
           <h1 className="rs-title">{titel}</h1>
-          <p className="rs-sub">Vink aan wat je wilt oefenen</p>
+          <p className="rs-sub">Vink aan wat je wilt oefenen — achter elk doel zie je jaar en blok. Doelen van eerdere groepen staan er (uitgevinkt) tussen.</p>
+        </div>
+
+        <div className="rs-mode-toggle">
+          <button className={`rs-mode-btn${kiesMode === 'leerlijn' ? ' actief' : ''}`} onClick={() => wisselMode('leerlijn')}>📚 Per leerlijn</button>
+          <button className={`rs-mode-btn${kiesMode === 'blok' ? ' actief' : ''}`} onClick={() => wisselMode('blok')}>🧱 Per blok</button>
+        </div>
+
+        <div className="rs-tabs">
+          {onderdelen.map(o => {
+            const n = o.gens.filter(g => gekozen.has(g.key)).length
+            return (
+              <button key={o.key} className={`rs-tab${o.key === actief.key ? ' actief' : ''}`} onClick={() => setKiesTab(o.key)}>
+                {o.label}{n > 0 && <span className="rs-tab-count">{n}</span>}
+              </button>
+            )
+          })}
         </div>
 
         <div className="rs-blok-lijst">
-          {onderdelen.map(o => {
-            const keys = o.gens.map(g => g.key)
-            const aantalAan = keys.filter(k => gekozen.has(k)).length
-            const allesAan = aantalAan === keys.length
-            const blokVink = allesAan ? '☑' : aantalAan > 0 ? '◪' : '☐'
-            return (
-              <div key={o.key} className={`rs-blok-groep${o.herhaling ? ' rs-blok-herh' : ''}`}>
-                <button className={`rs-blok-kop${aantalAan ? ' aan' : ''}`} onClick={() => toggleBlok(o)}>
-                  <span className="rs-blok-check">{blokVink}</span>
-                  <span className="rs-blok-naam">{o.label}</span>
-                </button>
-                <div className="rs-doel-lijst">
-                  {o.gens.map((g, i) => {
-                    const aan = gekozen.has(g.key)
-                    return (
-                      <button key={g.key} className={`rs-doel-rij${aan ? ' aan' : ''}`} onClick={() => toggleKeuze(g.key)}>
-                        <span className="rs-doel-check">{aan ? '☑' : '☐'}</span>
-                        <span className="rs-doel-tekst">{g.doel || `Doel ${i + 1}`}</span>
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-            )
-          })}
+          <div className="rs-blok-groep">
+            <button className={`rs-blok-kop${aantalAan ? ' aan' : ''}`} onClick={() => toggleBlok(actief)}>
+              <span className="rs-blok-check">{tabVink}</span>
+              <span className="rs-blok-naam">{actief.label} — alles aan/uit</span>
+            </button>
+            <div className="rs-doel-lijst">
+              {actief.gens.map((g, i) => {
+                const aan = gekozen.has(g.key)
+                const badge = `Groep ${g.groep} · ${g.blok === 0 ? 'instap' : 'blok ' + g.blok}`
+                return (
+                  <button key={g.key} className={`rs-doel-rij${aan ? ' aan' : ''}${g.herhaling ? ' rs-doel-herh' : ''}`} onClick={() => toggleKeuze(g.key)}>
+                    <span className="rs-doel-check">{aan ? '☑' : '☐'}</span>
+                    <span className="rs-doel-tekst">{g.doel || `Doel ${i + 1}`}</span>
+                    <span className={`rs-doel-badge${g.herhaling ? ' herh' : ''}`}>{badge}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
         </div>
 
         <button className="rs-start-btn" onClick={start} disabled={!gekozen.size}>

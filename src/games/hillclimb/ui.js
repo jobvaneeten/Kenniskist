@@ -105,11 +105,14 @@ export function addVehiclePreview(scene, id, cx, cy, maxW, maxH, depth = 4) {
   const bodyW = v.chassisW * 1.35 * s
   // chassis-middelpunt zo dat body + wielen samen gecentreerd staan in de box
   const midY = cy - (v.chassisH / 2 + v.suspensionLength) * s * 0.25
-  body.setPosition(cx, midY).setDisplaySize(bodyW, bodyW / aspect).setOrigin(0.5, 0.62)
+  body.setPosition(cx, midY).setDisplaySize(bodyW, bodyW / aspect)
+    .setOrigin(v.art?.originX ?? 0.5, v.art?.originY ?? 0.62)
   imgs.push(body)
   const wy = midY + (v.chassisH / 2 + v.suspensionLength) * s
-  const wd = v.wheelRadius * 2 * s
+  const art = v.art || {}
   ;[-1, 1].forEach(k => {
+    const r = (k < 0 ? art.dispL : art.dispR) ?? art.disp ?? v.wheelRadius
+    const wd = r * 2 * s
     imgs.push(scene.add.image(cx + k * v.wheelOffsetX * s, wy, `hc_wiel_${id}`).setDisplaySize(wd, wd).setDepth(depth + 2))
   })
   return imgs

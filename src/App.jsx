@@ -22,6 +22,7 @@ const UNLOCK_VINN_CODE = 'vinn'         // ontgrendelt de Vinn Pet
 const UNLOCK_RB_CODE = 'teun'           // ontgrendelt het RB Shirt
 const UNLOCK_GROEP7_CODE = 'groep7'     // ontgrendelt de klas als Supervoetbal-spelers
 const UNLOCK_TEACHERS_CODE = 'pabo1'    // ontgrendelt Meester Job & Meester Luuk als speelbare Groep 7-spelers
+const UNLOCK_HILLCLIMB_CODE = 'auto1'   // ontgrendelt alle Bergrijden-auto's
 const ESCAPE_CODE = 'vrijdag'           // opent de GLITCH-escaperoom
 
 function fmt(n) { return n.toLocaleString('nl-NL') }
@@ -43,7 +44,7 @@ function CurrencyBadge({ munten, briefgeld, hideMunten }) {
   )
 }
 
-function CodeModal({ onClose, onRedeem, onRedeemBrief, onUnlockAll, onUnlockCountries, onUnlockSomalia, onUnlockTara, onUnlockNina, onUnlockPim, onUnlockVinn, onUnlockRb, onUnlockGroep7, onUnlockTeachers, onEscape, usedCodes }) {
+function CodeModal({ onClose, onRedeem, onRedeemBrief, onUnlockAll, onUnlockCountries, onUnlockSomalia, onUnlockTara, onUnlockNina, onUnlockPim, onUnlockVinn, onUnlockRb, onUnlockGroep7, onUnlockTeachers, onUnlockHillclimb, onEscape, usedCodes }) {
   const [code, setCode] = useState('')
   const [msg,  setMsg]  = useState(null)
   const [ok,   setOk]   = useState(false)
@@ -91,6 +92,10 @@ function CodeModal({ onClose, onRedeem, onRedeemBrief, onUnlockAll, onUnlockCoun
     } else if (key === UNLOCK_TEACHERS_CODE) {
       onUnlockTeachers()
       setMsg('🍎 Meester Job & Meester Luuk zijn nu speelbaar!')
+      setOk(true)
+    } else if (key === UNLOCK_HILLCLIMB_CODE) {
+      onUnlockHillclimb()
+      setMsg("🚗 Alle Bergrijden-auto's ontgrendeld!")
       setOk(true)
     } else if (BRIEF_CODES[key] !== undefined) {
       if (usedCodes.includes(key)) {
@@ -238,6 +243,15 @@ export default function App() {
   // "pabo1" code → Meester Job & Meester Luuk worden zelf ook speelbaar in Groep 7
   const unlockTeachers = () => {
     localStorage.setItem('kk_hs_teachers', 'true')
+  }
+
+  // "auto1" code → alle Bergrijden-auto's ontgrendeld (zelfde sleutel als
+  // VehicleData.loadUnlockedVehicles leest)
+  const unlockHillclimbAutos = () => {
+    localStorage.setItem('kk_hillclimb_vehicles', JSON.stringify([
+      'jeep', 'quad', 'motor', 'tractor', 'raceauto',
+      'politie', 'monstertruck', 'brandweer', 'schoolbus', 'maanbuggy',
+    ]))
   }
 
   // Re-read the wallet from localStorage (games update it directly) so the
@@ -391,6 +405,7 @@ export default function App() {
           onUnlockRb={unlockRb}
           onUnlockGroep7={unlockGroep7}
           onUnlockTeachers={unlockTeachers}
+          onUnlockHillclimb={unlockHillclimbAutos}
           onEscape={() => { setShowCode(false); setScreen('escaperoom') }}
           usedCodes={usedCodes}
         />

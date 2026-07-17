@@ -11,7 +11,7 @@ export default class HomeScene extends Phaser.Scene {
     makeCuruntieChip(this)
 
     // Titel met binnenkomer-animatie
-    const titel = this.add.text(W / 2, H * 0.24, '🚗 HILL CLIMB', {
+    const titel = this.add.text(W / 2, H * 0.24, '🚗 BERGRIJDEN', {
       fontSize: '72px', fontFamily: 'Arial Black', color: '#ffffff',
       stroke: '#1a2030', strokeThickness: 12,
     }).setOrigin(0.5).setDepth(5).setShadow(0, 6, '#000', 10).setScale(0.6).setAlpha(0)

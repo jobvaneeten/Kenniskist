@@ -174,6 +174,19 @@ export function loadHeadItem(scene, parentNode, skeleton, item, stance, onReady)
       applyTexture(g, new Texture(item.texture, scene, false, false))
     } else if (item.kind === 'color') {
       applyColor(g, item.hex)
+    } else if (item.kind === 'pattern' || item.kind === 'print') {
+      // Patroon-/print-petten: zelfde canvas-textures als de kleding, gebakken
+      // op de pet-UV. Prints laden eerst de Twemoji-afbeelding (iOS-proof).
+      const toTex = (img) => applyTexture(g, new Texture(buildTextureCanvas(item, img).toDataURL(), scene, false, false))
+      if (item.kind === 'print') {
+        const img = new Image()
+        img.crossOrigin = 'anonymous'
+        img.onload  = () => toTex(img)
+        img.onerror = () => toTex(null)
+        img.src = emojiUrl(item.emoji)
+      } else {
+        toTex(null)
+      }
     }
 
     // The pet is rigid (100% Head bone). Skinning onto Poppetje's skeleton is

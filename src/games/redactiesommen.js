@@ -753,22 +753,93 @@ const flatGens = (blokken, groep) => {
 export const GROEPEN = [5, 6, 7, 8]
 export const HEEFT_ROUTE = (groep) => groep !== 5   // groep 5 heeft geen FS/S+
 
-// Aanvinkbare onderdelen van een groep (per blok). Groep 7 krijgt extra
-// herhaal-onderdelen voor groep 5 en 6, zodat je alles door elkaar kunt oefenen.
-export function onderdelenVan(groep, route) {
-  const blokken = blokkenVan(groep, route)
-  const maakItem = (key, label, gens, herhaling) => ({
-    key, label, herhaling,
-    // elk doel krijgt een eigen, stabiele sleutel zodat je losse doelen kunt aanvinken
-    gens: gens.map((g, i) => ({ key: `${key}#${i}`, ...g })),
-  })
-  const items = Object.keys(blokken).map(nr =>
-    maakItem('blok-' + nr, nr === '0' ? '📍 Instap' : 'Blok ' + nr,
-      blokken[nr].map(g => ({ groep, blok: +nr, doel: g.doel, gen: g.gen })), false))
+// ── Leerlijn-domeinen ────────────────────────────────────────────────
+// De doelen worden niet per blok maar per leerlijn gegroepeerd (zoals de
+// rekenleerlijnen op de basisschool). Elk doel houdt zijn groep + blok als
+// label. DOMEINEN = de secties op het kiesscherm (in deze volgorde);
+// REGELS worden van boven naar beneden geprobeerd — de eerste die past,
+// wint (zo winnen specifieke termen van algemene).
+const LEERLIJN_DOMEINEN = [
+  { key: 'getal',      label: '🔢 Getallen & getalbegrip' },
+  { key: 'plusmin',    label: '➕ Optellen & aftrekken' },
+  { key: 'keerdeel',   label: '✖️ Keer- & deelsommen' },
+  { key: 'breuk',      label: '🍕 Breuken' },
+  { key: 'komma',      label: '💶 Kommagetallen & geld' },
+  { key: 'procent',    label: '💯 Procenten' },
+  { key: 'verhouding', label: '⚖️ Verhoudingen, schaal & snelheid' },
+  { key: 'meten',      label: '📏 Meten & meetkunde' },
+  { key: 'tijd',       label: '🕐 Tijd & kalender' },
+  { key: 'diagram',    label: '📊 Diagrammen & data' },
+  { key: 'schatten',   label: '🧮 Schatten & rekenmachine' },
+  { key: 'overig',     label: '🎲 Overige doelen' },
+]
+const LEERLIJN_REGELS = [
+  { key: 'procent',    re: /procent|percentage|korting|%/i },
+  { key: 'verhouding', re: /verhouding|schaal|snelheid|valuta|samengestelde|gemiddelde/i },
+  { key: 'breuk',      re: /breuk|\d+\/\d+/i },
+  { key: 'diagram',    re: /diagram|grafiek|enquête|patroon|combinatie|nieuws/i },
+  { key: 'tijd',       re: /klok|tijd|kalender|datum|jaartallen|seconde|weeknotatie/i },
+  { key: 'komma',      re: /kommagetal|wisselgeld|spaarrekening/i },
+  { key: 'meten',      re: /omtrek|oppervlakte|inhoud|maten|meten|lengte|gewicht|liter|meter|millimeter|cirkel|balk|kaart|windrichting|route|rooster|kilogram|standpunt|figuren|uitslag/i },
+  { key: 'schatten',   re: /schat|rekenmachine|welke volgorde/i },
+  { key: 'keerdeel',   re: /vermenigvuldig|verdubbel|staartdel|delen|deelsom|deelverhaal|keersom|kleine som|tafelsom/i },
+  { key: 'breuk',      re: /deel van een geheel/i },
+  { key: 'getal',      re: /getallen|miljoen|miljard|afronden|getallenlijn|romeins|negatiev|priem|kwadra|wortel|deelbaar|waarde|tellen/i },
+  { key: 'keerdeel',   re: /keer|×|:\s/i },
+  { key: 'plusmin',    re: /optel|aftrek|rijgen|aanvullen|\+|handig rekenen/i },
+  { key: 'komma',      re: /prijs|betaalt|terugkrijgt|euro|geld/i },
+  { key: 'overig',     re: /./ },
+]
+const leerlijnVan = (doel) => LEERLIJN_REGELS.find(l => l.re.test(doel)).key
+
+// Alle doelen van een groep (eigen + herhaling uit eerdere groepen) als
+// platte lijst. De sleutel is stabiel per doel (groep+blok+index), zodat de
+// selectie bewaard blijft als je wisselt tussen blok- en leerlijnweergave.
+function alleDoelen(groep, route) {
+  const alles = []
+  const voeg = (g, blokken, herhaling) => {
+    for (const nr of Object.keys(blokken)) {
+      blokken[nr].forEach((item, i) => {
+        alles.push({ key: `g${g}b${nr}i${i}`, groep: g, blok: +nr, doel: item.doel, gen: item.gen, herhaling })
+      })
+    }
+  }
+  voeg(groep, blokkenVan(groep, route), false)
   const vorige = { 6: [5], 7: [5, 6], 8: [5, 6, 7] }[groep] || []
-  for (const v of vorige) {
-    const bl = v === 5 ? CURR[5].single : blokkenVan(v, route)
-    items.push(maakItem('herh-' + v, '🔁 Herhaling groep ' + v, flatGens(bl, v), true))
+  for (const v of vorige) voeg(v, v === 5 ? CURR[5].single : blokkenVan(v, route), true)
+  return alles
+}
+
+// Aanvinkbare onderdelen van een groep, gegroepeerd per leerlijn-domein
+// (mode 'leerlijn') of per blok (mode 'blok'). Zelfde doelen en sleutels,
+// alleen anders geordend.
+export function onderdelenVan(groep, route, mode = 'leerlijn') {
+  const alles = alleDoelen(groep, route)
+
+  if (mode === 'blok') {
+    const items = []
+    const eigen = alles.filter(a => !a.herhaling)
+    const blokNrs = [...new Set(eigen.map(a => a.blok))].sort((x, y) => x - y)
+    for (const nr of blokNrs) {
+      items.push({ key: 'blok-' + nr, label: nr === 0 ? '📍 Instap' : 'Blok ' + nr, gens: eigen.filter(a => a.blok === nr) })
+    }
+    const vorige = [...new Set(alles.filter(a => a.herhaling).map(a => a.groep))].sort()
+    for (const v of vorige) {
+      items.push({ key: 'herh-' + v, label: '🔁 Groep ' + v, gens: alles.filter(a => a.herhaling && a.groep === v) })
+    }
+    return items
+  }
+
+  // groepeer per leerlijn; binnen een domein: eigen groep eerst, dan per blok
+  const perLijn = new Map(LEERLIJN_DOMEINEN.map(l => [l.key, []]))
+  for (const item of alles) perLijn.get(leerlijnVan(item.doel)).push(item)
+
+  const items = []
+  for (const lijn of LEERLIJN_DOMEINEN) {
+    const gens = perLijn.get(lijn.key)
+    if (!gens.length) continue
+    gens.sort((a, b) => (a.herhaling - b.herhaling) || (a.groep - b.groep) || (a.blok - b.blok))
+    items.push({ key: 'll-' + lijn.key, label: lijn.label, gens })
   }
   return items
 }
@@ -797,16 +868,23 @@ export function maakToets(jaren) {
 }
 
 // Volledige doelen-catalogus per groep (voor het overzicht; ook niet-gemaakte).
+// Elk doel kent zijn blok en leerlijn-domein, zodat het overzicht per blok
+// óf per leerlijn gegroepeerd kan worden.
 function bouwCatalogus() {
-  const uniq = (arr) => [...new Set(arr)]
   return GROEPEN.map(groep => {
     const blokken = blokkenVan(groep, 'FS')
-    const doelen = []
-    for (const nr of Object.keys(blokken)) for (const g of blokken[nr]) doelen.push(g.doel)
-    return { groep, doelen: uniq(doelen) }
+    const doelen = [], seen = new Set()
+    for (const nr of Object.keys(blokken)) for (const g of blokken[nr]) {
+      if (seen.has(g.doel)) continue
+      seen.add(g.doel)
+      doelen.push({ doel: g.doel, blok: +nr, lijn: leerlijnVan(g.doel) })
+    }
+    return { groep, doelen }
   })
 }
 export const GROEP_DOELEN = bouwCatalogus()
+export const LEERLIJN_LABEL = Object.fromEntries(LEERLIJN_DOMEINEN.map(l => [l.key, l.label]))
+export const LEERLIJN_VOLGORDE = LEERLIJN_DOMEINEN.map(l => l.key)
 export const doelKey = (groep, doel) => `g${groep}::${doel}`
 
 // Evalueer de ingevulde som (bijv. "5000 + 923" of "12 × 8 = 96").
