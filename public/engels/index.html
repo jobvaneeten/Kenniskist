@@ -184,6 +184,7 @@
 
   .foot{text-align:center;color:var(--ink-soft);font-size:12.5px;margin-top:28px}
 </style>
+<script src="/kenniskist-login.js"></script>
 </head>
 <body>
 <div class="wrap">
@@ -245,6 +246,7 @@
       <div class="actions" id="actions"></div>
     </div>
     <p class="foot">Gemaakt voor kenniskist.nl</p>
+    <p class="foot" id="kkStatus"></p>
   </section>
 
 </div>
@@ -609,6 +611,11 @@ function showResults(){
   d.textContent='Terug naar alle songs';
   d.onclick=()=>show('home');
   actions.appendChild(d);
+
+  window.KennisKist?.slaResultaatOp?.(`engels-${song.key}-${level}`, correctCount, total, {
+    gemist: uniqMissed.map(m => ({ prompt: m.prompt, antwoord: m.answer })),
+  });
+  window.KennisKist?.toonInlogstatus?.(document.getElementById('kkStatus'));
 }
 
 /* ---------------- Navigatie ---------------- */

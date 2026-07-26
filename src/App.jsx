@@ -9,6 +9,7 @@ import KartGame        from './games/KartGame'
 import BotsenGame      from './games/BotsenGame'
 import { allUnlockedMap } from './itemsCatalog'
 import { COUNTRIES, DEFAULT_UNLOCKED } from './games/countries'
+import { useSessie } from './lib/sessie.jsx'
 
 const CODES = { pabo: 100000 }
 const BRIEF_CODES = { start: 800 }   // eenmalige briefgeld-codes
@@ -138,7 +139,8 @@ function CodeModal({ onClose, onRedeem, onRedeemBrief, onUnlockAll, onUnlockCoun
   )
 }
 
-export default function App() {
+export default function App({ gast = false }) {
+  const { uitloggen } = useSessie()
   const [screen, setScreen] = useState('menu')
 
   const [curuntie, setCuruntie] = useState(() => {
@@ -334,6 +336,7 @@ export default function App() {
 
   return (
     <div className="screen">
+      <button className="uitloggen-btn" onClick={uitloggen}>{gast ? 'Stoppen met oefenen' : 'Uitloggen'}</button>
       {/* Spectaculaire achtergrond-lagen */}
       <div className="bg-orbs" aria-hidden="true">
         <span className="orb orb-1" />

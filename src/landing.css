@@ -47,6 +47,23 @@
 }
 .landing-back-btn:hover { background: rgba(255,255,255,0.22); }
 
+.landing-uitloggen-btn {
+  position: fixed;
+  top: 18px; right: 18px;
+  z-index: 20;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 800;
+  padding: 8px 18px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.landing-uitloggen-btn:hover { background: rgba(255,255,255,0.22); }
+
 /* ── Hero-banner met artwork ───────────────────────────── */
 .landing-hero-banner {
   position: relative;

@@ -398,6 +398,23 @@ body::after {
   align-items: flex-end;
   gap: 8px;
 }
+.uitloggen-btn {
+  position: fixed;
+  top: 18px;
+  right: 18px;
+  z-index: 100;
+  background: rgba(10, 10, 30, 0.75);
+  border: 1.5px solid rgba(255,255,255,0.2);
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 800;
+  padding: 8px 18px;
+  border-radius: 999px;
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+}
+.uitloggen-btn:hover { background: rgba(20, 20, 45, 0.85); }
 .curuntie-badge {
   display: flex;
   align-items: center;

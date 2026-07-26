@@ -147,5 +147,8 @@
       "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('top mcpServers:', list\\(d.get\\('mcpServers',{}\\).keys\\(\\)\\)\\); print\\('projects:', list\\(d.get\\('projects',{}\\).keys\\(\\)\\)[:5]\\)\")",
       "Bash(node -e \"const d=require\\(process.env.USERPROFILE+'/.claude.json'\\); console.log\\(JSON.stringify\\(d.enabledPlugins||{},null,0\\)\\); console.log\\('extensionMcp?', Object.keys\\(d\\).filter\\(k=>/mcp|plugin|extension/i.test\\(k\\)\\)\\)\")"
     ]
-  }
+  },
+  "enabledMcpjsonServers": [
+    "supabase"
+  ]
 }

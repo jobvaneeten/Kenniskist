@@ -247,6 +247,7 @@
   @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 <style>.order-item,.drag-item{touch-action:none}.order-item.dragging,.drag-item.dragging{opacity:.6}</style>
+<script src="/kenniskist-login.js"></script>
 </head>
 <body>
 
@@ -284,6 +285,7 @@
   <div class="score-big" id="finish-score">0/0</div>
   <p id="finish-msg"></p>
   <div id="finish-overview"></div>
+  <p class="eyebrow" id="kkStatus"></p>
   <button class="btn btn-primary" onclick="restartQuiz()">Opnieuw proberen</button>
 </div>
 
@@ -950,6 +952,9 @@ function showFinish() {
   document.getElementById('finish-overview').innerHTML =
     `<div class="ov-title">${goed} van ${questions.length} vragen goed</div>` + rows;
   show('finish-screen');
+  const opgaven = questions.map((q,i) => ({ vraag: q.question.replace(/<[^>]*>/g,''), puntenBehaald: scores[i], puntenMax: q.points }));
+  window.KennisKist?.slaResultaatOp?.('reisrondewereld-les3', score, total, { opgaven });
+  window.KennisKist?.toonInlogstatus?.(document.getElementById('kkStatus'));
 }
 
 function restartQuiz() {

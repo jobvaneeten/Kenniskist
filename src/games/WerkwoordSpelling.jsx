@@ -335,6 +335,15 @@ export default function WerkwoordSpelling({ groep, onBack, addBriefgeld }) {
   const [stats, setStats]     = useState(legeStats)    // goed/fout per categorie
   const [fouten, setFouten]   = useState([])           // lijst foute opgaven
 
+  // Alle 20 antwoorden van de huidige ronde, voor KennisKist.slaResultaatOp.
+  // Een ref i.p.v. state: anders wordt volgende() bij elk antwoord opnieuw
+  // aangemaakt (zie de deps hieronder), en state zou hier toch niet gelezen
+  // hoeven worden vóór de volgende render.
+  const opgavenRef = useRef([])
+  // Eén keer gecheckt bij mount: een nieuwe login herlaadt sowieso de hele
+  // pagina (zie src/lib/sessie.jsx), dus dit hoeft niet reactief te zijn.
+  const [ingelogd] = useState(() => !!window.KennisKist?.getLeerling())
+
   const oef = oefeningen[idx]
   const beloning = gekozenCats ? gekozenCats.size * 10 : BRIEFGELD
 
@@ -345,6 +354,7 @@ export default function WerkwoordSpelling({ groep, onBack, addBriefgeld }) {
     if (!correct) {
       setFouten(f => [...f, { inf: oef.inf, antwoord: oef.antwoord, jouw: jouwInput, cat }])
     }
+    opgavenRef.current.push({ werkwoord: oef.inf, antwoord: jouwInput, juist: oef.antwoord, goed: correct, cat })
 
     // volgende opgave
     const nieuwIdx = idx + 1
@@ -362,8 +372,15 @@ export default function WerkwoordSpelling({ groep, onBack, addBriefgeld }) {
       setSinds(nieuwSinds)
     }
 
-    // na precies 20 opgaven het overzicht
-    if (overzichtNu) { setPhase('overzicht') }
+    // na precies 20 opgaven het overzicht — score komt uit de ref, niet uit
+    // stats (die loopt door de functionele setState hierboven één antwoord
+    // achter op dit punt).
+    if (overzichtNu) {
+      const opgaven = opgavenRef.current
+      const goedAantal = opgaven.filter(o => o.goed).length
+      window.KennisKist?.slaResultaatOp?.('werkwoordspelling', goedAantal, PER_OVERZICHT, { opgaven })
+      setPhase('overzicht')
+    }
   }, [idx, sinds, gemaakt, oef, oefeningen.length, gekozenCats])
 
   // Nieuwe ronde: terug naar cat-selectie
@@ -377,6 +394,7 @@ export default function WerkwoordSpelling({ groep, onBack, addBriefgeld }) {
     setMetOnderwerp(!!ond)
     setOefeningen(shuffleGefilterd(cats))
     setIdx(0); setSinds(0); setGemaakt(0); setStats(legeStats()); setFouten([])
+    opgavenRef.current = []
   }, [])
 
   const astroKlaar   = useCallback(() => setPhase('play'), [])
@@ -466,6 +484,11 @@ export default function WerkwoordSpelling({ groep, onBack, addBriefgeld }) {
               <div className="ws-header-title">Werkwoordspelling · Groep {groep}</div>
               <span className="ws-verdiend">💵 € {verdiend}</span>
             </div>
+            {!ingelogd && (
+              <p className="ws-niet-ingelogd">
+                Niet ingelogd — resultaten worden niet opgeslagen. <a href="/leerlingportaal" target="_top">Inloggen</a>
+              </p>
+            )}
 
             <div className="ws-progress-wrap">
               <div className="ws-progress-bar" style={{ width: `${(sinds / PER_BELONING) * 100}%` }} />

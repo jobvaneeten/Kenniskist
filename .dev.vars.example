@@ -1,0 +1,4 @@
+# Kopieer naar .dev.vars voor lokale Worker-ontwikkeling (npm run dev).
+# NOOIT met VITE_-prefix — dat zou hem in de browserbundle trekken.
+# In productie: wrangler secret put SUPABASE_SERVICE_ROLE_KEY
+SUPABASE_SERVICE_ROLE_KEY=

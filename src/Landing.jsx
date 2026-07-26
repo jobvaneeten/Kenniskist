@@ -62,11 +62,31 @@ const AUDIENCE = [
   { emoji: '🎒', title: 'Groep 4 t/m 8', desc: 'Oefeningen sluiten aan bij de basisschoolstof, van tafels en spelling tot begrijpend lezen.' },
 ]
 
-export default function Landing({ onChoose }) {
+const VOOR_LEERKRACHTEN = [
+  {
+    title: '📚 Welke vaardigheden komen aan bod?',
+    body: 'Rekenen (sommen, tafels), taal & spelling (dictees, werkwoordspelling), begrijpend lezen, en wereldoriëntatie via verschillende minigames en thema\'s. Nieuwe oefeningen en spellen worden regelmatig toegevoegd.',
+  },
+  {
+    title: '🕹️ Hoe motiveert het spelen?',
+    body: 'Elke oefensessie geeft een directe, tastbare beloning: munten voor de winkel, briefgeld voor lootboxen. Kinderen bouwen zo een eigen verzameling kleding en accessoires op voor hun personage — een lichte, speelse motivatieprikkel naast het oefenen zelf.',
+  },
+  {
+    title: '🔒 Privacy & inzage',
+    body: 'Van leerlingen slaan we alleen voornaam + eerste letter achternaam, gebruikersnaam en klas op — geen e-mail, geen geboortedatum. Leerlingen loggen in met een account dat de leerkracht voor hen aanmaakt, nooit zelf. Resultaten van de leertools zijn zichtbaar in het leerkrachtenportaal; wat een kind aan het personage of in de winkel doet, blijft privé.',
+  },
+  {
+    title: '🏫 Inzetten in de klas',
+    body: 'Geschikt als losse oefenmomenten, keuzewerk, of beloning na afgerond werk. Werkt op een gedeeld klasapparaat of chromebook per leerling.',
+  },
+]
+
+export default function Landing({ onChoose, ingelogd, onUitloggen }) {
   const [openCard, setOpenCard] = useState(null)
 
   return (
     <div className="landing-screen">
+      {ingelogd && <button className="landing-uitloggen-btn" onClick={onUitloggen}>Uitloggen</button>}
       <div className="landing-stars" aria-hidden="true">
         {Array.from({ length: 30 }, (_, i) => (
           <span key={i} className="landing-star" style={{
@@ -174,6 +194,18 @@ export default function Landing({ onChoose }) {
               <span className="audience-emoji">{a.emoji}</span>
               <h3 className="audience-title">{a.title}</h3>
               <p className="audience-desc">{a.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="landing-showcase-wrap" aria-label="Voor leerkrachten">
+        <h2 className="landing-section-title">Voor leerkrachten</h2>
+        <div className="landing-showcase" style={{ maxWidth: 780, margin: '0 auto', gridTemplateColumns: '1fr' }}>
+          {VOOR_LEERKRACHTEN.map(s => (
+            <div key={s.title} className="showcase-card" style={{ padding: '4px 0' }}>
+              <h3 className="showcase-title" style={{ marginTop: 18 }}>{s.title}</h3>
+              <p className="showcase-desc" style={{ fontSize: '0.88rem' }}>{s.body}</p>
             </div>
           ))}
         </div>

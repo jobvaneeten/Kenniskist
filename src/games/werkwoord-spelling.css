@@ -146,6 +146,13 @@
   text-align: center;
 }
 .ws-verdiend { color: #fde68a; font-weight: 800; font-size: 0.9rem; white-space: nowrap; }
+.ws-niet-ingelogd {
+  margin: 6px 0 0;
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.6);
+  text-align: center;
+}
+.ws-niet-ingelogd a { color: #d8b4fe; font-weight: 700; }
 
 .ws-progress-wrap {
   height: 8px;

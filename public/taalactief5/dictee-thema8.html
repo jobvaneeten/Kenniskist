@@ -258,6 +258,7 @@
   }
   @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
+<script src="/kenniskist-login.js"></script>
 </head>
 <body>
 <div class="wrap">
@@ -332,6 +333,7 @@
     <h1 id="endTitle">Goed gedaan</h1>
     <div class="ring-score"><b id="finalScore">0</b><span id="finalTotal">/ 0</span></div>
     <div class="sub-scores"><span id="spellScore"></span><span id="animalScore"></span></div>
+    <p class="footnote" id="kkStatus"></p>
     <button class="big-btn" id="restartBtn">Opnieuw beginnen</button>
   </section>
 
@@ -639,6 +641,8 @@ function finish(){
   $('animalScore').textContent=`\ud83d\udc3e dieren ${animalPts}/${total}`;
   const r=pts/max;
   $('endTitle').textContent=r>=.9?'Topspeller!':r>=.7?'Knap gedaan':r>=.5?'Goed bezig':'Blijf oefenen';
+  window.KennisKist?.slaResultaatOp?.('dictee-thema8', pts, max, null);
+  window.KennisKist?.toonInlogstatus?.(document.getElementById('kkStatus'));
 }
 
 /* ===== KNOPPEN ===== */

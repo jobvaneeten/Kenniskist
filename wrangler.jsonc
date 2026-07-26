@@ -1,14 +1,21 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "kenniskist",
+  "main": "src/worker.js",
   "compatibility_date": "2026-05-22",
   "observability": {
     "enabled": true
   },
   "assets": {
-    "not_found_handling": "single-page-application"
+    "not_found_handling": "single-page-application",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"]
   },
   "compatibility_flags": [
     "nodejs_compat"
-  ]
+  ],
+  "vars": {
+    "SUPABASE_URL": "https://vbvtkzieyvdctlighgoj.supabase.co",
+    "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZidnRremlleXZkY3RsaWdoZ29qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5NTQwNjUsImV4cCI6MjEwMDUzMDA2NX0.S_hAftcczB64X6kdjRnJTqBd_i7pbvefSaSB3RvAES4"
+  }
 }

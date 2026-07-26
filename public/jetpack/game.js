@@ -2280,8 +2280,15 @@ const SHOP_ITEMS = {
     { id:'color_orange',  name:'Oranje Pak',    icon:'🟠', desc:'Knal-oranje pak — Hollands trots.',         price:700,    type:'suit_color', value:'orange'  },
     { id:'color_pink',    name:'Roze Pak',      icon:'🩷', desc:'Vrolijk roze pak dat opvalt.',              price:700,    type:'suit_color', value:'pink'    },
     { id:'color_purple',  name:'Paars Pak',     icon:'🟣', desc:'Mysterieus paars pak — stijlvol.',          price:800,    type:'suit_color', value:'purple'  },
-    { id:'color_rainbow', name:'Regenboog Pak', icon:'🌈', desc:'Alle kleuren over je hele pak — zeldzaam!',  price:100000, type:'suit_color', value:'rainbow' },
+    { id:'color_turkoois',name:'Turkoois Pak',  icon:'🩵', desc:'Fris turkoois pak — koel en snel.',          price:800,    type:'suit_color', value:'turkoois' },
+    { id:'color_lime',    name:'Lime Pak',      icon:'🍏', desc:'Knalgroen lime pak — giftig fel.',           price:800,    type:'suit_color', value:'lime'    },
+    { id:'color_zwart',   name:'Stealth Pak',   icon:'🥷', desc:'Nachtzwart stealth-pak — bijna onzichtbaar.', price:1500,  type:'suit_color', value:'zwart'   },
+    { id:'skin_ijs',      name:'IJs Pak',       icon:'❄️', desc:'Bevroren pak met een ijsblauwe gloed.',      price:2500,   type:'suit_color', value:'ijs'     },
+    { id:'skin_lava',     name:'Lava Pak',      icon:'🌋', desc:'Gesmolten pak van gloeiend magma — van donkerrood naar geel.', price:5000, type:'suit_color', value:'lava' },
+    { id:'skin_neon',     name:'Neon Pak',      icon:'🪩', desc:'Cyber-pak met een verloop van neonroze naar cyaan.', price:5000, type:'suit_color', value:'neon' },
+    { id:'skin_galaxy',   name:'Galaxy Pak',    icon:'🌌', desc:'Een heel sterrenstelsel op je pak — met échte sterretjes!', price:25000, type:'suit_color', value:'galaxy' },
     { id:'color_gold',    name:'Gouden Pak',    icon:'✨', desc:'Puur goud pak — het allermooiste dat er is.', price:10000,  type:'suit_color', value:'gold'    },
+    { id:'color_rainbow', name:'Regenboog Pak', icon:'🌈', desc:'Alle kleuren over je hele pak — zeldzaam!',  price:100000, type:'suit_color', value:'rainbow' },
   ],
   upgrades: [
     {

@@ -1,0 +1,24 @@
+name: Supabase keep-alive
+
+# Voorkomt dat het gratis Supabase-project pauzeert na 7 dagen inactiviteit
+# (bv. tijdens een schoolvakantie). 3x per week i.p.v. 2x: één overgeslagen
+# run (GitHub slaat cron-jobs weleens over onder drukte) mag nooit meteen
+# een gat van >7 dagen opleveren. workflow_dispatch staat erbij om de sleutels
+# handmatig te kunnen testen.
+on:
+  schedule:
+    - cron: '0 6 * * 1,3,5'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase REST-API
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          curl -sf "$SUPABASE_URL/rest/v1/scholen?select=id&limit=1" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY"
