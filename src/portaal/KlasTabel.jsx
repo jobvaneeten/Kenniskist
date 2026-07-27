@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase.js'
+import { toolLabel } from '../lib/tools.js'
 
 function scoreKlasse(score, maxScore) {
   const pct = maxScore > 0 ? (score / maxScore) * 100 : 0
@@ -71,7 +72,7 @@ export default function KlasTabel({ klas, alleKlassen, onKiesLeerling }) {
               <tr>
                 <th></th>
                 <th>Leerling</th>
-                {toolIds.map(t => <th key={t}>{t}</th>)}
+                {toolIds.map(t => <th key={t}>{toolLabel(t)}</th>)}
               </tr>
             </thead>
             <tbody>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase.js'
+import { toolLabel } from '../lib/tools.js'
 
 export default function VakOverzicht({ onKiesVak }) {
   const [vakken, setVakken] = useState(null)
@@ -22,7 +23,7 @@ export default function VakOverzicht({ onKiesVak }) {
       {vakken?.length === 0 && <p className="portaal-leeg">Nog geen resultaten binnengekomen.</p>}
       <div className="portaal-grid">
         {vakken?.map(v => (
-          <button key={v} className="portaal-vak-chip" onClick={() => onKiesVak(v)}>{v}</button>
+          <button key={v} className="portaal-vak-chip" onClick={() => onKiesVak(v)}>{toolLabel(v)}</button>
         ))}
       </div>
     </div>

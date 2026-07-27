@@ -463,6 +463,30 @@ body::after {
   border-color: rgba(255,255,255,0.25);
 }
 
+/* ── Weektaak knop (klein, rechtsonder) ──── */
+.weektaak-btn {
+  position: fixed;
+  bottom: 22px;
+  right: 22px;
+  z-index: 90;
+  background: rgba(37,99,235,0.18);
+  border: 1.5px solid rgba(150,180,255,0.35);
+  color: rgba(255,255,255,0.85);
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 9px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+.weektaak-btn:hover {
+  background: rgba(37,99,235,0.32);
+  color: #fff;
+  border-color: rgba(150,180,255,0.55);
+}
+
 /* ── Code modal ──────────────────────────── */
 .modal-overlay {
   position: fixed;
@@ -553,6 +577,7 @@ body::after {
   .curuntie-icon  { font-size: 1rem; }
   .curuntie-amount { font-size: 0.85rem; }
   .code-btn   { bottom: 14px; left: 14px; font-size: 0.75rem; padding: 8px 14px; }
+  .weektaak-btn { bottom: 14px; right: 14px; font-size: 0.75rem; padding: 8px 14px; }
   .modal-box  { margin: 0 16px; padding: 28px 20px; }
 }
 

@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { WOORDSOORTEN, ZINSDELEN, VRAGEN } from './taalData.js'
 import SpelBeloning from './SpelBeloning'
+import { useGebruikOpdracht } from './gebruikOpdracht.js'
+import OpdrachtKlaarScherm from './OpdrachtKlaarScherm.jsx'
 import './taal-oefenen.css'
 
 const BRIEFGELD_PER_AANGEVINKT = 5 // € per aangevinkt onderdeel, per beloning
@@ -45,7 +47,10 @@ function renderZin(zin, vraagWoord) {
   })
 }
 
-export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie }) {
+// aantal/config: alleen gezet vanuit een weektaak-opdracht (toolRender.jsx).
+// config = { mode: 'woordsoorten'|'zinsdelen', soorten?, zinsdelen? } — slaat
+// de menu/taalverkennen/filter-schermen over en start direct in de oefening.
+export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie, aantal, config }) {
   const [screen, setScreen] = useState('menu')
   const [mode, setMode] = useState(null)
   const [checked, setChecked] = useState({})
@@ -55,17 +60,44 @@ export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie }) {
   const [feedback, setFeedback] = useState(null) // { correct, uitleg, juistAntwoord }
   const [showReward, setShowReward] = useState(false)
 
+  const toolId = mode === 'woordsoorten' ? 'taal-woordsoorten' : 'taal-zinsdelen'
+  const opdracht = useGebruikOpdracht({ toolId, aantal })
+
   const types = mode === 'woordsoorten' ? WOORDSOORTEN : ZINSDELEN
 
-  // Initialize checkboxes when mode is set
+  // Initialize checkboxes when mode is set (vrij-oefen-pad — bij config
+  // hieronder wordt mode al met de juiste checked-set gezet)
   useEffect(() => {
-    if (mode) {
+    if (mode && !config) {
       const init = {}
       const list = mode === 'woordsoorten' ? WOORDSOORTEN : ZINSDELEN
       list.forEach(t => { init[t.label] = true })
       setChecked(init)
     }
-  }, [mode])
+  }, [mode, config])
+
+  // Vanuit een weektaak-opdracht: menu/taalverkennen/filter overslaan en
+  // direct de gekozen soorten oefenen. Rechtstreeks de pool berekenen i.p.v.
+  // op de checked-state te vertrouwen — die is hier bij mount nog leeg en
+  // een state-update is niet synchroon binnen dit effect.
+  useEffect(() => {
+    if (!config) return
+    const field = config.mode === 'woordsoorten' ? 'woordsoort' : 'zinsdeel'
+    const alleLabels = (config.mode === 'woordsoorten' ? WOORDSOORTEN : ZINSDELEN).map(t => t.label)
+    const gekozenLabels = (config.mode === 'woordsoorten' ? config.soorten : config.zinsdelen)?.length
+      ? (config.mode === 'woordsoorten' ? config.soorten : config.zinsdelen)
+      : alleLabels
+    const init = {}
+    gekozenLabels.forEach(l => { init[l] = true })
+    setMode(config.mode)
+    setChecked(init)
+    setPool(shuffle(VRAGEN.filter(q => q[field] !== null && gekozenLabels.includes(q[field]))))
+    setPoolIdx(0)
+    setCorrectCount(0)
+    setFeedback(null)
+    setScreen('oefening')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const checkedLabels = Object.entries(checked).filter(([, v]) => v).map(([k]) => k)
   const beloning = checkedLabels.length * BRIEFGELD_PER_AANGEVINKT
@@ -93,6 +125,20 @@ export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie }) {
     const uitlegField = mode === 'woordsoorten' ? 'uitleg_ws' : 'uitleg_zd'
     const correct = label === q[field]
     setFeedback({ correct, uitleg: q[uitlegField], juistAntwoord: q[field] })
+
+    // Laatste opgave van de opdracht: eerst de feedback laten zien, dan pas
+    // registreren (en dus rapporteren) — geen tussentijdse beloning meer,
+    // net als bij WerkwoordSpelling.jsx.
+    const zalKlaarZijn = opdracht.aantal != null && (opdracht.gedaan + 1) >= opdracht.aantal
+    if (zalKlaarZijn) {
+      setTimeout(() => {
+        setFeedback(null)
+        opdracht.registreer(correct, { vraag: q.zin, antwoord: label, juist: q[field] })
+      }, 1400)
+      return
+    }
+    opdracht.registreer(correct, { vraag: q.zin, antwoord: label, juist: q[field] })
+
     if (correct) {
       const newCount = correctCount + 1
       setCorrectCount(newCount)
@@ -132,6 +178,15 @@ export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie }) {
         geld={beloning}
         addCuruntie={addCuruntie}
         onDone={afterReward}
+      />
+    )
+  }
+
+  if (opdracht.klaar) {
+    return (
+      <OpdrachtKlaarScherm
+        goed={opdracht.goed} aantal={opdracht.aantal}
+        opslaanMislukt={opdracht.opslaanMislukt} onBack={onBack}
       />
     )
   }

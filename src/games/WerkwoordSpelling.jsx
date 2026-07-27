@@ -200,14 +200,22 @@ function VraagKaart({ oef, onNext, eerstOnderwerp }) {
   )
 }
 
-// ── Overzichtsscherm (na 20 opgaven) ─────────────────────────────────────
-function Overzicht({ stats, totaalGoed, fouten, onVerder }) {
+// ── Overzichtsscherm (na `doel` opgaven) ──────────────────────────────────
+// weektaakTerug: alleen gezet als deze ronde uit een weektaak-opdracht komt
+// (config-prop op de hoofdcomponent) — toont een extra knop terug naar de
+// weektaak i.p.v. alleen "verder oefenen".
+function Overzicht({ stats, totaalGoed, doel, fouten, onVerder, weektaakTerug, opslaanMislukt }) {
   return (
     <div className="ws-overzicht">
       <div className="ws-ov-banner">📋 Laat dit aan de meester zien!</div>
+      {opslaanMislukt && (
+        <div className="ws-ov-banner" style={{ background: '#fca5a5', color: '#7f1d1d' }}>
+          ⚠️ Je resultaat kon niet worden opgeslagen — laat dit scherm aan de juf of meester zien.
+        </div>
+      )}
 
       <div className="ws-ov-score">
-        <span className="ws-ov-score-groot">{totaalGoed} / {PER_OVERZICHT}</span>
+        <span className="ws-ov-score-groot">{totaalGoed} / {doel}</span>
         <span className="ws-ov-score-label">goed beantwoord</span>
       </div>
 
@@ -245,6 +253,9 @@ function Overzicht({ stats, totaalGoed, fouten, onVerder }) {
       )}
 
       <button className="ws-ov-verder-btn" onClick={onVerder}>Verder oefenen →</button>
+      {weektaakTerug && (
+        <button className="ws-ov-verder-btn" onClick={weektaakTerug} style={{ marginTop: 8 }}>← Terug naar weektaak</button>
+      )}
     </div>
   )
 }
@@ -318,7 +329,11 @@ function CatSelectie({ groep, onStart, onBack, onOnderwerp }) {
 }
 
 // ── Hoofdcomponent ───────────────────────────────────────────────────────
-export default function WerkwoordSpelling({ groep, onBack, addBriefgeld }) {
+// aantal/config: alleen gezet als dit vanuit een weektaak-opdracht gestart
+// wordt (zie src/games/toolRender.jsx). aantal vervangt dan PER_OVERZICHT als
+// doel; config = { categorieen, metOnderwerp } slaat de cat-selectie over.
+export default function WerkwoordSpelling({ groep, onBack, addBriefgeld, aantal, config }) {
+  const doel = aantal ?? PER_OVERZICHT
   const [gekozenCats, setGekozenCats] = useState(null)   // null = nog niet gekozen
   const [oefeningen, setOefeningen]   = useState([])
   const [idx, setIdx]       = useState(0)
@@ -334,6 +349,7 @@ export default function WerkwoordSpelling({ groep, onBack, addBriefgeld }) {
   const [gemaakt, setGemaakt] = useState(0)            // beantwoorde opgaven (0..20)
   const [stats, setStats]     = useState(legeStats)    // goed/fout per categorie
   const [fouten, setFouten]   = useState([])           // lijst foute opgaven
+  const [opslaanMislukt, setOpslaanMislukt] = useState(false)
 
   // Alle 20 antwoorden van de huidige ronde, voor KennisKist.slaResultaatOp.
   // Een ref i.p.v. state: anders wordt volgende() bij elk antwoord opnieuw
@@ -354,7 +370,8 @@ export default function WerkwoordSpelling({ groep, onBack, addBriefgeld }) {
     if (!correct) {
       setFouten(f => [...f, { inf: oef.inf, antwoord: oef.antwoord, jouw: jouwInput, cat }])
     }
-    opgavenRef.current.push({ werkwoord: oef.inf, antwoord: jouwInput, juist: oef.antwoord, goed: correct, cat })
+    const opgaveDetail = { werkwoord: oef.inf, antwoord: jouwInput, juist: oef.antwoord, goed: correct, cat }
+    opgavenRef.current.push(opgaveDetail)
 
     // volgende opgave
     const nieuwIdx = idx + 1
@@ -362,26 +379,38 @@ export default function WerkwoordSpelling({ groep, onBack, addBriefgeld }) {
     else setIdx(nieuwIdx)
 
     const nieuwGemaakt = gemaakt + 1
-    setGemaakt(Math.min(nieuwGemaakt, PER_OVERZICHT))
-    const overzichtNu = nieuwGemaakt >= PER_OVERZICHT
+    setGemaakt(Math.min(nieuwGemaakt, doel))
+    const overzichtNu = nieuwGemaakt >= doel
 
-    // na 5 goede een spelletje — maar op de 20e opgave gaat het eindoverzicht vóór
+    // Weektaak: elke opgave apart opslaan (score 0/1, max 1) zodat er niets
+    // verloren gaat als de leerling halverwege stopt — weektaak_voortgang
+    // telt de losse rijtjes toch bij elkaar op. Vrij oefenen (geen config)
+    // blijft de oude eind-batch, zie hieronder.
+    if (config) {
+      const opslaan = window.KennisKist?.slaResultaatOp?.('werkwoordspelling', correct ? 1 : 0, 1, { opgaven: [opgaveDetail] })
+      opslaan?.then(res => { if (!res?.ok) setOpslaanMislukt(true) })
+    }
+
+    // na 5 goede een spelletje — maar op de laatste opgave gaat het eindoverzicht vóór
     if (correct) {
       const nieuwSinds = sinds + 1
       if (!overzichtNu && nieuwSinds >= PER_BELONING) { setSinds(0); setPhase('keuze'); return }
       setSinds(nieuwSinds)
     }
 
-    // na precies 20 opgaven het overzicht — score komt uit de ref, niet uit
-    // stats (die loopt door de functionele setState hierboven één antwoord
-    // achter op dit punt).
+    // na precies `doel` opgaven het overzicht — score komt uit de ref, niet
+    // uit stats (die loopt door de functionele setState hierboven één
+    // antwoord achter op dit punt).
     if (overzichtNu) {
-      const opgaven = opgavenRef.current
-      const goedAantal = opgaven.filter(o => o.goed).length
-      window.KennisKist?.slaResultaatOp?.('werkwoordspelling', goedAantal, PER_OVERZICHT, { opgaven })
+      if (!config) {
+        const opgaven = opgavenRef.current
+        const goedAantal = opgaven.filter(o => o.goed).length
+        const opslaan = window.KennisKist?.slaResultaatOp?.('werkwoordspelling', goedAantal, doel, { opgaven })
+        opslaan?.then(res => { if (!res?.ok) setOpslaanMislukt(true) })
+      }
       setPhase('overzicht')
     }
-  }, [idx, sinds, gemaakt, oef, oefeningen.length, gekozenCats])
+  }, [idx, sinds, gemaakt, oef, oefeningen.length, gekozenCats, doel, config])
 
   // Nieuwe ronde: terug naar cat-selectie
   const nieuweRonde = useCallback(() => {
@@ -393,8 +422,19 @@ export default function WerkwoordSpelling({ groep, onBack, addBriefgeld }) {
     setGekozenCats(cats)
     setMetOnderwerp(!!ond)
     setOefeningen(shuffleGefilterd(cats))
-    setIdx(0); setSinds(0); setGemaakt(0); setStats(legeStats()); setFouten([])
+    setIdx(0); setSinds(0); setGemaakt(0); setStats(legeStats()); setFouten([]); setOpslaanMislukt(false)
     opgavenRef.current = []
+  }, [])
+
+  // Vanuit een weektaak-opdracht: cat-selectiescherm overslaan en direct
+  // starten met de door de leerkracht gekozen categorieën. Eenmalig bij
+  // mount — een nieuwe opdracht betekent sowieso een nieuwe mount (andere
+  // key hogerop, zie toolRender.jsx), dus dit hoeft niet reactief te zijn.
+  useEffect(() => {
+    if (!config) return
+    const cats = config.categorieen?.length ? new Set(config.categorieen) : new Set(ALLE_CATS)
+    startMetCats(cats, config.metOnderwerp)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const astroKlaar   = useCallback(() => setPhase('play'), [])
@@ -448,7 +488,11 @@ export default function WerkwoordSpelling({ groep, onBack, addBriefgeld }) {
   if (phase === 'overzicht') {
     return (
       <div className="ws-wrap">
-        <Overzicht stats={stats} totaalGoed={totaalGoed} fouten={fouten} onVerder={nieuweRonde} />
+        <Overzicht
+          stats={stats} totaalGoed={totaalGoed} doel={doel} fouten={fouten}
+          onVerder={nieuweRonde} weektaakTerug={config ? onBack : undefined}
+          opslaanMislukt={opslaanMislukt}
+        />
       </div>
     )
   }
@@ -481,7 +525,7 @@ export default function WerkwoordSpelling({ groep, onBack, addBriefgeld }) {
           <div className="ws-oefen">
             <div className="ws-header">
               <button className="ws-back-btn" onClick={onBack}>← Terug</button>
-              <div className="ws-header-title">Werkwoordspelling · Groep {groep}</div>
+              <div className="ws-header-title">Werkwoordspelling{groep ? ` · Groep ${groep}` : ''}</div>
               <span className="ws-verdiend">💵 € {verdiend}</span>
             </div>
             {!ingelogd && (
@@ -495,7 +539,7 @@ export default function WerkwoordSpelling({ groep, onBack, addBriefgeld }) {
             </div>
             <div className="ws-progress-label">
               <span>{PER_BELONING - sinds} goede tot een spelletje 🎮</span>
-              <span className="ws-opgave-teller">Opgave {gemaakt + 1} / {PER_OVERZICHT}</span>
+              <span className="ws-opgave-teller">Opgave {gemaakt + 1} / {doel}</span>
             </div>
 
             <VraagKaart key={idx} oef={oef} onNext={volgende} eerstOnderwerp={metOnderwerp} />

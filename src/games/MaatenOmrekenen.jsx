@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import SpelBeloning from './SpelBeloning'
+import { useGebruikOpdracht } from './gebruikOpdracht.js'
+import OpdrachtKlaarScherm from './OpdrachtKlaarScherm.jsx'
 import './verhaaltjes-sommen.css'
 import './maten-omrekenen.css'
 
@@ -171,7 +173,10 @@ const LEVELS = [
   { n: 3, icon: '🔴', naam: 'Level 3 — komma',      desc: 'Komma plaatsen of weglaten', vb: '2,5 m = … cm' },
 ]
 
-export default function MaatenOmrekenen({ onBack, addBriefgeld, addCuruntie }) {
+// aantal/config: alleen gezet vanuit een weektaak-opdracht (toolRender.jsx).
+// config = { level } — slaat het levelscherm over.
+export default function MaatenOmrekenen({ onBack, addBriefgeld, addCuruntie, aantal, config }) {
+  const opdracht = useGebruikOpdracht({ toolId: 'maten-omrekenen', aantal })
   const [level, setLevel] = useState(null)
   const [opgave, setOpgave] = useState(null)
   const [sinds, setSinds] = useState(0)
@@ -180,14 +185,28 @@ export default function MaatenOmrekenen({ onBack, addBriefgeld, addCuruntie }) {
 
   const start = (n) => { setLevel(n); setSinds(0); setOpgave(maakOpgave(n)) }
 
+  // Vanuit een weektaak-opdracht: levelscherm overslaan.
+  useEffect(() => {
+    if (!config) return
+    const n = Number(config.level) || 1
+    setLevel(n); setSinds(0); setOpgave(maakOpgave(n))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const volgende = useCallback((correct) => {
+    const zalKlaarZijn = opdracht.aantal != null && (opdracht.gedaan + 1) >= opdracht.aantal
+    opdracht.registreer(correct, {
+      vraag: opgave ? `${opgave.value} ${opgave.from} = ? ${opgave.to}` : null,
+      juist: opgave ? `${opgave.answer} ${opgave.to}` : null,
+    })
+    if (zalKlaarZijn) return
     if (correct) {
       const ns = sinds + 1
       if (ns >= PER_BELONING) { setSinds(0); setShowReward(true); return }
       setSinds(ns)
     }
     setOpgave(maakOpgave(level))
-  }, [sinds, level])
+  }, [sinds, level, opgave, opdracht])
 
   const naBeloning = () => {
     setShowReward(false)
@@ -198,6 +217,15 @@ export default function MaatenOmrekenen({ onBack, addBriefgeld, addCuruntie }) {
 
   if (showReward) {
     return <SpelBeloning title="5 goed!" geld={BELONING} addCuruntie={addCuruntie} onDone={naBeloning} />
+  }
+
+  if (opdracht.klaar) {
+    return (
+      <OpdrachtKlaarScherm
+        goed={opdracht.goed} aantal={opdracht.aantal}
+        opslaanMislukt={opdracht.opslaanMislukt} onBack={onBack}
+      />
+    )
   }
 
   if (level === null) {

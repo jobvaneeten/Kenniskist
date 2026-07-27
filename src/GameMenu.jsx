@@ -38,8 +38,8 @@ const SUBJECTS = [
 
 // Beloningen per spel-type (chips op de kaarten)
 const REWARDS = {
-  taal:      ['🪙 munten', '💵 briefgeld'],
-  iep:       ['🪙 munten', '💵 briefgeld'],
+  taal:      ['💵 briefgeld'],
+  iep:       ['💵 briefgeld'],
   werkwoord: ['💵 briefgeld'],
   tafels:    ['💵 briefgeld'],
 }
@@ -64,14 +64,14 @@ const GAMES = {
 }
 
 const FREE_GAMES = [
-  { key: 'football',      emoji: '⚽', name: 'WK Voetbal',      desc: 'Scoor tegen de computer of een vriend', rewards: ['🪙 munten'] },
-  { key: 'headsoccer',    emoji: '🥅', name: 'Supervoetbal',     desc: '1-tegen-1 met landen & special moves', rewards: ['🪙 munten'] },
+  { key: 'football',      emoji: '⚽', name: 'WK Voetbal',      desc: 'Scoor tegen de computer of een vriend' },
+  { key: 'headsoccer',    emoji: '🥅', name: 'Supervoetbal',     desc: '1-tegen-1 met landen & special moves' },
   { key: 'towerdefense',  emoji: '🏰', name: 'Tower Defense',   desc: 'Bouw torens & stop de vijanden' },
-  { key: 'jetpack',       emoji: '🚀', name: 'Jetpack',          desc: 'Vlieg zo ver mogelijk!', rewards: ['🪙 munten'] },
+  { key: 'jetpack',       emoji: '🚀', name: 'Jetpack',          desc: 'Vlieg zo ver mogelijk!' },
   { key: 'astrokatapult', emoji: '🪐', name: 'Astro Katapult',   desc: 'Lanceer & versla de aliens in 50 levels!' },
   { key: 'sterrenstroom', emoji: '🛸', name: 'Spacerunner',     desc: 'Ontwijk de asteroïden in de ruimte!' },
   { key: 'brug',          emoji: '🌉', name: 'Brug Bouwen',     desc: 'Bouw bruggen in 22 levels — hout, weg, metaal & touw!' },
-  { key: 'hillclimb',     emoji: '🚗', name: 'Bergrijden',      desc: 'Race over heuvels, verzamel munten en upgrade je auto!', rewards: ['🪙 munten'] },
+  { key: 'hillclimb',     emoji: '🚗', name: 'Bergrijden',      desc: 'Race over heuvels, verzamel munten en upgrade je auto!' },
 ]
 
 function RewardChips({ rewards }) {
@@ -85,7 +85,7 @@ function RewardChips({ rewards }) {
   )
 }
 
-export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
+export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestaneGroepen }) {
   const [year,       setYear]       = useState(null)
   const [subject,    setSubject]    = useState(null)
   const [directGame, setDirectGame] = useState(null)
@@ -95,6 +95,9 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
   const [taSoonBlok,    setTaSoonBlok]    = useState(null)   // blok-nr met "komt binnenkort"
   const [dicteeNr,      setDicteeNr]      = useState(8)      // gekozen dictee-blok (7 of 8)
   const [taalActive,    setTaalActive]    = useState(false)
+
+  // Leeg/undefined = geen beperking (gast, leerkracht-weergave, klas zonder groepen)
+  const zichtbareJaren = toegestaneGroepen?.length ? YEARS.filter(y => toegestaneGroepen.includes(y.num)) : YEARS
 
   // Eenmalig-verdienen: alle spellen geven maar 1x geld, behalve de oefen-
   // activiteiten (heel spelling, breuken/procenten/komma, zinsontleding +
@@ -192,13 +195,11 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
             <MenuScene name="solo" />
             <span className="mode-name">🧑 1 Speler</span>
             <span className="mode-desc">Jij tegen de computer</span>
-            <RewardChips rewards={['🪙 munten']} />
           </button>
           <button className="mode-card" onClick={() => setGameMode('2player')}>
             <MenuScene name="duo" />
             <span className="mode-name">👥 2 Spelers</span>
             <span className="mode-desc">Pijltjes vs WASD</span>
-            <RewardChips rewards={['🪙 munten']} />
           </button>
         </div>
       </div>
@@ -529,7 +530,7 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld }) {
         <p className="game-header-sub">Kies jouw groep</p>
       </div>
       <div className="year-grid">
-        {YEARS.map(y => {
+        {zichtbareJaren.map(y => {
           const tags = SUBJECTS
             .filter(s => GAMES[`${y.num}-${s.key}`])
             .map(s => `${s.emoji} ${s.label}`)

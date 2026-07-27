@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase.js'
 import DatumFilter from './DatumFilter.jsx'
 import { berekenBereik } from './datumBereik.js'
 import LeerlingUitklap from './LeerlingUitklap.jsx'
+import { toolLabel } from '../lib/tools.js'
 
 function scoreKlasse(pct) {
   if (pct >= 80) return 'portaal-score-goed'
@@ -50,7 +51,7 @@ export default function VakTabel({ klasId, vak, onTerug, onKiesLeerling }) {
         <button className="portaal-terug" onClick={onTerug} style={{ padding: 0 }}>← Andere vak kiezen</button>
         <DatumFilter waarde={bereik} onChange={setBereik} />
       </div>
-      <h2 style={{ marginTop: 0 }}>{vak}</h2>
+      <h2 style={{ marginTop: 0 }}>{toolLabel(vak)}</h2>
       {rijen === null && <p className="portaal-leeg">Laden…</p>}
       {rijen?.length === 0 && <p className="portaal-leeg">Nog geen leerlingen in deze klas.</p>}
       {rijen?.length > 0 && (

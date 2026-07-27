@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { onderdelenVan, maakOpgaveUit, maakToets, GROEPEN, HEEFT_ROUTE, checkAntwoord, checkSom, checkTijd, GROEP_DOELEN, doelKey, LEERLIJN_LABEL, LEERLIJN_VOLGORDE } from './redactiesommen'
 import SpelBeloning from './SpelBeloning'
+import { useGebruikOpdracht } from './gebruikOpdracht.js'
+import OpdrachtKlaarScherm from './OpdrachtKlaarScherm.jsx'
 import './verhaaltjes-sommen.css'
 
 const PER_BELONING = 5
@@ -397,7 +399,11 @@ const GROEP_INFO = {
   8: { icon: '🚀', desc: 'Doelen per leerlijn · FS & S+' },
 }
 
-export default function VerhaaltjesSommen({ groep: eigenGroep = 7, onBack, addBriefgeld, addCuruntie }) {
+// aantal/config: alleen gezet vanuit een weektaak-opdracht (toolRender.jsx).
+// config = { groep, route } — slaat groep/route/kies-schermen over en start
+// direct in het oefenscherm met alle niet-herhaaldoelen van die groep/route.
+export default function VerhaaltjesSommen({ groep: eigenGroep = 7, onBack, addBriefgeld, addCuruntie, aantal, config }) {
+  const opdracht = useGebruikOpdracht({ toolId: 'verhaaltjessommen', aantal })
   const [klas, setKlas]     = useState(null)        // null | 5 | 6 | 7 | 8
   const [route, setRoute]   = useState(null)        // null | 'FS' | 'S+'
   const [gekozen, setGekozen] = useState(new Set()) // doel-keys (stabiel over beide weergaven)
@@ -443,6 +449,26 @@ export default function VerhaaltjesSommen({ groep: eigenGroep = 7, onBack, addBr
   const kiesGroep = (g) => { setKlas(g); if (HEEFT_ROUTE(g)) { setRoute(null); setScreen('route') } else { setRoute(null); naarKies(g, null) } }
   const kiesRoute = (r) => { setRoute(r); naarKies(klas, r) }
 
+  // Vanuit een weektaak-opdracht: groep/route/kies-schermen overslaan.
+  // config.doelen (door de leerkracht aangevinkte doelen, zie
+  // VerhaaltjesSommenConfig.jsx) heeft voorrang; zonder specifieke keuze
+  // vallen we terug op alle niet-herhaaldoelen van de groep/route. Expliciete
+  // argumenten aan nieuweOpgave i.p.v. op klas/route/gekozen-state te
+  // vertrouwen — die zijn hier bij mount nog leeg (state-updates zijn niet
+  // synchroon).
+  useEffect(() => {
+    if (!config) return
+    const g = Number(config.groep) || eigenGroep
+    const r = HEEFT_ROUTE(g) ? (config.route || 'FS') : null
+    const sel = config.doelen?.length
+      ? new Set(config.doelen)
+      : new Set(onderdelenVan(g, r).flatMap(o => o.gens.filter(gg => !gg.herhaling).map(gg => gg.key)))
+    setKlas(g); setRoute(r); setGekozen(sel); setSinds(0)
+    setOpgave(nieuweOpgave(g, r, sel))
+    setScreen('oefen')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const start = () => {
     if (!gekozen.size) return
     setSinds(0); setOpgave(nieuweOpgave()); setScreen('oefen')
@@ -480,13 +506,21 @@ export default function VerhaaltjesSommen({ groep: eigenGroep = 7, onBack, addBr
 
   const volgende = useCallback((correct) => {
     if (opgave) recordStat(opgave, correct)
+    const zalKlaarZijn = opdracht.aantal != null && (opdracht.gedaan + 1) >= opdracht.aantal
+    opdracht.registreer(correct, {
+      vraag: opgave?.vraag,
+      juist: opgave ? toonAntwoord(opgave) : null,
+      cat: opgave ? doelKey(opgave.groep, opgave.doel) : undefined,
+      catLabel: opgave?.doel,
+    })
+    if (zalKlaarZijn) return
     if (correct) {
       const ns = sinds + 1
       if (ns >= PER_BELONING) { setSinds(0); setRewardVan('oefen'); setShowReward(true); return }
       setSinds(ns)
     }
     setOpgave(nieuweOpgave())
-  }, [sinds, klas, route, gekozen, opgave])
+  }, [sinds, klas, route, gekozen, opgave, opdracht])
 
   const naBeloning = () => {
     setShowReward(false)
@@ -497,6 +531,15 @@ export default function VerhaaltjesSommen({ groep: eigenGroep = 7, onBack, addBr
 
   if (showReward) {
     return <SpelBeloning title="5 sommen goed!" geld={BELONING} addCuruntie={addCuruntie} onDone={naBeloning} />
+  }
+
+  if (opdracht.klaar) {
+    return (
+      <OpdrachtKlaarScherm
+        goed={opdracht.goed} aantal={opdracht.aantal}
+        opslaanMislukt={opdracht.opslaanMislukt} onBack={onBack}
+      />
+    )
   }
 
   // ── 1. Groep-keuze ──

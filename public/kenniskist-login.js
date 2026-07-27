@@ -60,28 +60,56 @@
     return verversToken(sessie)
   }
 
+  // Weektaak-koppeling: Weektaak.jsx zet kk_actieve_opdracht vlak vóór het
+  // renderen van een tool en wist hem weer bij het verlaten. De toolId moet
+  // matchen — anders zou een kind dat een weektaak-opdracht start, terug-
+  // klikt en vrij een andere tool opent, dát resultaat aan de oude opdracht
+  // hangen (RLS vangt dat niet af, want de toewijzing bestáát wel). Ouder
+  // dan 4 uur tellen we ook als "niet meer actief" (vergeten tabblad open).
+  var OPDRACHT_TTL_MS = 4 * 60 * 60 * 1000
+
+  function actieveOpdrachtVoor(toolId) {
+    var actief = leesJson('kk_actieve_opdracht')
+    if (!actief || actief.toolId !== toolId) return null
+    if (!actief.gezetOp || Date.now() - actief.gezetOp > OPDRACHT_TTL_MS) return null
+    return actief.opdrachtId || null
+  }
+
+  function insertResultaat(token, profiel, toolId, score, maxScore, detailsJson, opdrachtId) {
+    var body = {
+      leerling_id: profiel.id,
+      tool_id: toolId,
+      score: score,
+      max_score: maxScore,
+      details_json: detailsJson,
+    }
+    if (opdrachtId) body.opdracht_id = opdrachtId
+    return fetch(SUPABASE_URL + '/rest/v1/resultaten', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: ANON_KEY,
+        Authorization: 'Bearer ' + token,
+        Prefer: 'return=minimal',
+      },
+      body: JSON.stringify(body),
+    })
+  }
+
   function slaResultaatOp(toolId, score, maxScore, detailsJson) {
     var profiel = leesJson('kk_profiel_cache')
     if (!profiel) return Promise.resolve({ ok: false, reden: 'niet-ingelogd' })
 
     return geldigToken().then(function (token) {
       if (!token) return { ok: false, reden: 'niet-ingelogd' }
-      return fetch(SUPABASE_URL + '/rest/v1/resultaten', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          apikey: ANON_KEY,
-          Authorization: 'Bearer ' + token,
-          Prefer: 'return=minimal',
-        },
-        body: JSON.stringify({
-          leerling_id: profiel.id,
-          tool_id: toolId,
-          score: score,
-          max_score: maxScore,
-          details_json: detailsJson,
-        }),
-      }).then(function (res) { return { ok: res.ok } })
+      var opdrachtId = actieveOpdrachtVoor(toolId)
+      return insertResultaat(token, profiel, toolId, score, maxScore, detailsJson, opdrachtId).then(function (res) {
+        if (res.ok || !opdrachtId) return { ok: res.ok }
+        // Ongeldige/verlopen koppeling mag het resultaat nooit laten
+        // verdwijnen — één keer opnieuw proberen, dan zonder opdracht_id.
+        return insertResultaat(token, profiel, toolId, score, maxScore, detailsJson, null)
+          .then(function (res2) { return { ok: res2.ok } })
+      })
     }).catch(function () {
       // Opslaan mag nooit een oefensessie breken — stil falen.
       return { ok: false, reden: 'netwerkfout' }

@@ -59,6 +59,7 @@ export default function WachtwoordResetten() {
                   required
                   minLength={6}
                   autoFocus
+                  autoComplete="new-password"
                 />
               </label>
               {fout && <p className="login-fout">⚠️ {fout}</p>}

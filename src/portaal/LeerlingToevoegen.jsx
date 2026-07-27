@@ -43,7 +43,7 @@ export default function LeerlingToevoegen({ klassen, onKlaar }) {
           <input value={gebruikersnaam} onChange={e => setGebruikersnaam(e.target.value)} required pattern="[a-z0-9]{3,30}" title="3-30 kleine letters of cijfers" />
         </label>
         <label>Wachtwoord
-          <input type="password" value={wachtwoord} onChange={e => setWachtwoord(e.target.value)} required minLength={6} />
+          <input type="password" value={wachtwoord} onChange={e => setWachtwoord(e.target.value)} required minLength={6} autoComplete="new-password" />
         </label>
         {klassen.length > 0 ? (
           <label>Klas

@@ -83,7 +83,7 @@ export default function AdminScholen() {
               <input type="email" value={icterEmail} onChange={e => setIcterEmail(e.target.value)} required />
             </label>
             <label>Wachtwoord icter
-              <input type="password" value={icterWachtwoord} onChange={e => setIcterWachtwoord(e.target.value)} required minLength={6} />
+              <input type="password" value={icterWachtwoord} onChange={e => setIcterWachtwoord(e.target.value)} required minLength={6} autoComplete="new-password" />
             </label>
             {fout && <p className="portaal-fout">{fout}</p>}
             {succes && <p className="portaal-succes">{succes}</p>}

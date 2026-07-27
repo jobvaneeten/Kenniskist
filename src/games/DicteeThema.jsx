@@ -7,8 +7,14 @@ import FootballGame from './FootballGame'
 import HeadSoccer from './HeadSoccer'
 import './dictee-thema.css'
 
-export default function DicteeThema({ onBack, addCuruntie, addBriefgeld, thema = 8, file }) {
-  const src = file || `taalactief5/dictee-thema${thema}.html`
+// cats: alleen gezet vanuit een weektaak-opdracht voor dictee-categorie (zie
+// toolRender.jsx) — welke spellingcategorieën de leerkracht heeft aangevinkt.
+// Gaat als ?cats=... mee in de iframe-src; dictee-categorie.html leest die
+// query-param zelf uit om het categoriescherm over te slaan (zie aldaar).
+export default function DicteeThema({ onBack, addCuruntie, addBriefgeld, thema = 8, file, cats }) {
+  const basis = file || `taalactief5/dictee-thema${thema}.html`
+  const query = cats?.length ? `?cats=${cats.map(encodeURIComponent).join(',')}` : ''
+  const src = `${basis}${query}`
   const frameRef   = useRef(null)
   const wavesRef   = useRef(0)
   const [game, setGame]       = useState(null)

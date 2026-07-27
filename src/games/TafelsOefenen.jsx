@@ -100,7 +100,10 @@ function TafelSelectie({ groep, soort, onStart }) {
 }
 
 // ── Oefenspel ────────────────────────────────────────────────────────────
-function Oefenspel({ tafels, soort, onKlaar }) {
+// weektaakModus/onOpslaanMislukt: elk antwoord wordt los gerapporteerd (i.p.v.
+// pas als de 2 minuten om zijn), zodat niets verloren gaat als de leerling
+// halverwege stopt.
+function Oefenspel({ tafels, soort, onKlaar, weektaakModus, onOpslaanMislukt }) {
   const [highscore] = useState(() => leesHighscore())
   const [vragen]   = useState(() => maakVragen(tafels, soort))
   const [idx, setIdx]   = useState(0)
@@ -132,6 +135,10 @@ function Oefenspel({ tafels, soort, onKlaar }) {
     const goed = jouw === vraag.antwoord
     const res = { tafel: vraag.tafel, links: vraag.links, sym: vraag.sym, rechts: vraag.rechts, antwoord: vraag.antwoord, jouw, goed }
     setResultaten(prev => [...prev, res])
+    if (weektaakModus) {
+      const opslaan = window.KennisKist?.slaResultaatOp?.('tafels', goed ? 1 : 0, 1, { opgaven: [res] })
+      opslaan?.then(r => { if (!r?.ok) onOpslaanMislukt?.() })
+    }
     setFlash(goed ? 'goed' : 'fout')
     setInput('')
     setTimeout(() => { setFlash(null); setIdx(i => i + 1) }, 280)
@@ -252,7 +259,11 @@ function Overzicht({ tafels, resultaten, onSpelletje }) {
 }
 
 // ── Hoofdcomponent ────────────────────────────────────────────────────────
-export default function TafelsOefenen({ groep, onBack, addBriefgeld, addCuruntie }) {
+// config: alleen gezet vanuit een weektaak-opdracht (toolRender.jsx) —
+// { soort, tafels } slaat de type/tafel-keuzeschermen over. `aantal` bestaat
+// in de registry (altijd 1, het is een tijdrace) maar wordt hier niet
+// gebruikt: elk antwoord rapporteert apart, zie Oefenspel/check hierboven.
+export default function TafelsOefenen({ groep, onBack, addBriefgeld, addCuruntie, config }) {
   const [fase, setFase] = useState('type')   // type | selectie | spel | overzicht | keuze | <game>
   const [soort, setSoort] = useState(null)   // 'keer' | 'deel'
   const [tafels, setTafels] = useState([])
@@ -260,7 +271,19 @@ export default function TafelsOefenen({ groep, onBack, addBriefgeld, addCuruntie
   const [footballBracket, setFootballBracket] = useState(null)
   const [tdStarted, setTdStarted] = useState(false)
   const [verdiend, setVerdiend] = useState(0)
+  const [opslaanMislukt, setOpslaanMislukt] = useState(false)
 
+  useEffect(() => {
+    if (!config) return
+    setSoort(config.soort || 'keer')
+    setTafels(config.tafels?.length ? config.tafels.map(Number) : [...ALLE_TAFELS])
+    setFase('spel')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Rapportage gebeurt nu per antwoord (zie Oefenspel/check hierboven), niet
+  // meer hier als eindbatch — dus niets verloren als de leerling halverwege
+  // de 2 minuten stopt via "← Stop".
   const spelKlaar = useCallback((res) => {
     setResultaten(res)
     setFase('overzicht')
@@ -341,13 +364,23 @@ export default function TafelsOefenen({ groep, onBack, addBriefgeld, addCuruntie
       {fase === 'spel' && (
         <div className="to-outer">
           <button className="to-back-btn" onClick={() => setFase('selectie')}>← Stop</button>
-          <Oefenspel tafels={tafels} soort={soort} onKlaar={spelKlaar} />
+          <Oefenspel
+            tafels={tafels} soort={soort} onKlaar={spelKlaar}
+            weektaakModus={!!config} onOpslaanMislukt={() => setOpslaanMislukt(true)}
+          />
         </div>
       )}
 
       {fase === 'overzicht' && (
         <div className="to-outer">
-          <button className="to-back-btn" onClick={() => setFase('type')}>← Opnieuw</button>
+          <button className="to-back-btn" onClick={() => config ? onBack() : setFase('type')}>
+            {config ? '← Terug naar weektaak' : '← Opnieuw'}
+          </button>
+          {opslaanMislukt && (
+            <p style={{ color: '#fca5a5', fontWeight: 700, textAlign: 'center' }}>
+              ⚠️ Je resultaat kon niet worden opgeslagen — laat dit scherm zien.
+            </p>
+          )}
           <Overzicht
             tafels={tafels}
             resultaten={resultaten}

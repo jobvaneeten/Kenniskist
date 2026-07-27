@@ -27,6 +27,7 @@ function schrijfSessieSpiegel(session) {
 export function SessieProvider({ children }) {
   const [sessie, setSessie] = useState(null)
   const [profiel, setProfiel] = useState(null)
+  const [toegestaneGroepen, setToegestaneGroepen] = useState(null)
   const [laden, setLaden] = useState(true)
 
   const haalProfiel = useCallback(async (uid) => {
@@ -35,6 +36,14 @@ export function SessieProvider({ children }) {
     setLaden(false)
     if (data) localStorage.setItem('kk_profiel_cache', JSON.stringify({ id: data.id, weergavenaam: data.weergavenaam }))
     else localStorage.removeItem('kk_profiel_cache')
+
+    // Leeg (of geen klas) betekent geen beperking — zie 0006_klas_leeftijdsgroepen.sql
+    if (data?.rol === 'leerling' && data.klas_id) {
+      const { data: klas } = await supabase.from('klassen').select('groepen').eq('id', data.klas_id).single()
+      setToegestaneGroepen(klas?.groepen?.length ? klas.groepen : null)
+    } else {
+      setToegestaneGroepen(null)
+    }
   }, [])
 
   useEffect(() => {
@@ -94,7 +103,7 @@ export function SessieProvider({ children }) {
   }, [])
 
   return (
-    <SessieContext.Provider value={{ sessie, profiel, laden, inloggenLeerling, inloggenLeerkracht, wachtwoordVergeten, uitloggen }}>
+    <SessieContext.Provider value={{ sessie, profiel, toegestaneGroepen, laden, inloggenLeerling, inloggenLeerkracht, wachtwoordVergeten, uitloggen }}>
       {children}
     </SessieContext.Provider>
   )

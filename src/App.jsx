@@ -3,6 +3,7 @@ import './App.css'
 import Wardrobe        from './Wardrobe'
 import Shop            from './Shop'
 import GameMenu        from './GameMenu'
+import Weektaak        from './Weektaak'
 import RocketGame      from './games/RocketGame'
 import PaintballGame   from './games/PaintballGame'
 import KartGame        from './games/KartGame'
@@ -140,7 +141,7 @@ function CodeModal({ onClose, onRedeem, onRedeemBrief, onUnlockAll, onUnlockCoun
 }
 
 export default function App({ gast = false }) {
-  const { uitloggen } = useSessie()
+  const { profiel, uitloggen, toegestaneGroepen } = useSessie()
   const [screen, setScreen] = useState('menu')
 
   const [curuntie, setCuruntie] = useState(() => {
@@ -267,7 +268,14 @@ export default function App({ gast = false }) {
   if (screen === 'game') return (
     <>
       <CurrencyBadge munten={curuntie} briefgeld={briefgeld} hideMunten />
-      <GameMenu onBack={goMenu} addCuruntie={addCuruntie} addBriefgeld={addBriefgeld} />
+      <GameMenu onBack={goMenu} addCuruntie={addCuruntie} addBriefgeld={addBriefgeld} toegestaneGroepen={toegestaneGroepen} />
+    </>
+  )
+
+  if (screen === 'weektaak') return (
+    <>
+      <CurrencyBadge munten={curuntie} briefgeld={briefgeld} hideMunten />
+      <Weektaak onBack={goMenu} addCuruntie={addCuruntie} addBriefgeld={addBriefgeld} />
     </>
   )
 
@@ -392,6 +400,12 @@ export default function App({ gast = false }) {
       <button className="code-btn" onClick={() => setShowCode(true)}>
         🎟️ Code invoeren
       </button>
+
+      {profiel?.rol === 'leerling' && (
+        <button className="weektaak-btn" onClick={() => setScreen('weektaak')}>
+          📋 Mijn weektaak
+        </button>
+      )}
 
       {showCode && (
         <CodeModal

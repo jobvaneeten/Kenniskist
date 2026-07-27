@@ -4,6 +4,7 @@ import FootballGame from './FootballGame'
 import TowerDefenseGame from './TowerDefenseGame'
 import { BeloningKeuze, JetpackBeloning, AstroBeloning, SpacerunnerBeloning, BRIEFGELD } from './Beloning'
 import SpelBeloning from './SpelBeloning'
+import OpdrachtKlaarScherm from './OpdrachtKlaarScherm.jsx'
 import './procenten.css'
 
 const PER_ROUND    = 4   // aantal vakjes (percentages) per ronde
@@ -22,11 +23,18 @@ function buildRound(pool) {
   return { boxes, chips: shuffle(chips) }
 }
 
-export default function ProcentenBreuken({ onBack, addBriefgeld }) {
+// aantal: alleen gezet vanuit een weektaak-opdracht (toolRender.jsx) — hoeveel
+// rondes de leerling moet oplossen. Geen fout-antwoord mogelijk in deze tool
+// (chips weigeren simpelweg te vallen op de verkeerde plek), dus score = aantal
+// zodra klaar (eenheid 'sessies' in de registry, geen percentage-kleurcode).
+export default function ProcentenBreuken({ onBack, addBriefgeld, aantal }) {
   const [round, setRound]   = useState(() => buildRound(PROCENT_SETS))
   const [placed, setPlaced] = useState({})     // chipId -> true
   const [roundNo, setRoundNo] = useState(1)
   const [sinds, setSinds]     = useState(0)    // opgeloste rondes sinds laatste beloning
+  const [rondesGedaan, setRondesGedaan] = useState(0)
+  const [klaar, setKlaar] = useState(false)
+  const [opslaanMislukt, setOpslaanMislukt] = useState(false)
   const [verdiend, setVerdiend] = useState(0)  // briefgeld deze sessie
   const [drag, setDrag]       = useState(null) // { id, value, kind, x, y }
   const [wrongId, setWrongId] = useState(null)
@@ -45,18 +53,30 @@ export default function ProcentenBreuken({ onBack, addBriefgeld }) {
     setPlaced({}); setRound(buildRound(PROCENT_SETS)); setRoundNo(n => n + 1); setPhase('play')
   }, [])
 
-  // Ronde opgelost → vieren, dan beloning (elke 5) of volgende ronde
+  // Ronde opgelost → vieren, dan beloning (elke 5) of volgende ronde. Elke
+  // ronde wordt los gerapporteerd (score 1, max 1) i.p.v. pas bij de laatste
+  // ronde — zo gaat er niets verloren als de leerling halverwege stopt.
   useEffect(() => {
     if (!roundDone || phase !== 'play') return
     setCelebrate(true)
     const t = setTimeout(() => {
       setCelebrate(false)
+      const nieuwRondesGedaan = rondesGedaan + 1
+      setRondesGedaan(nieuwRondesGedaan)
+      if (aantal != null) {
+        const opslaan = window.KennisKist?.slaResultaatOp?.('procenten-breuken', 1, 1, {})
+        opslaan?.then(r => { if (!r?.ok) setOpslaanMislukt(true) })
+      }
+      if (aantal != null && nieuwRondesGedaan >= aantal) {
+        setKlaar(true)
+        return
+      }
       const n = sinds + 1
       if (n >= PER_BELONING) { setSinds(0); setPhase('keuze') }
       else { setSinds(n); nieuweRonde() }
     }, 1400)
     return () => clearTimeout(t)
-  }, [roundDone, phase])
+  }, [roundDone, phase, rondesGedaan, aantal])
 
   // ── Drag-mechaniek (pointer; muis + touch) ──
   const startDrag = (e, chip) => {
@@ -105,6 +125,10 @@ export default function ProcentenBreuken({ onBack, addBriefgeld }) {
   if (phase === 'jetpack')       return <JetpackBeloning onDone={jetpackKlaar} />
   if (phase === 'astrokatapult') return <AstroBeloning onDone={astroKlaar} />
   if (phase === 'spacerunner')   return <SpacerunnerBeloning onDone={jetpackKlaar} />
+
+  if (klaar) {
+    return <OpdrachtKlaarScherm goed={aantal} aantal={aantal} opslaanMislukt={opslaanMislukt} onBack={onBack} />
+  }
 
   return (
     <>

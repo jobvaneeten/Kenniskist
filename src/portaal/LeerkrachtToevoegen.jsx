@@ -41,7 +41,7 @@ export default function LeerkrachtToevoegen({ onKlaar }) {
           <input type="email" value={email} onChange={e => setEmail(e.target.value)} required />
         </label>
         <label>Wachtwoord
-          <input type="password" value={wachtwoord} onChange={e => setWachtwoord(e.target.value)} required minLength={6} />
+          <input type="password" value={wachtwoord} onChange={e => setWachtwoord(e.target.value)} required minLength={6} autoComplete="new-password" />
         </label>
         {fout && <p className="portaal-fout">{fout}</p>}
         {succes && <p className="portaal-succes">{succes}</p>}

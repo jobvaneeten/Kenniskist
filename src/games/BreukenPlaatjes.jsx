@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import SpelBeloning from './SpelBeloning'
+import { useGebruikOpdracht } from './gebruikOpdracht.js'
+import OpdrachtKlaarScherm from './OpdrachtKlaarScherm.jsx'
 import './breuken-plaatjes.css'
 
 const PER_BELONING = 5
@@ -42,7 +44,10 @@ function maakVraag() {
   return { shape, m, n }
 }
 
-export default function BreukenPlaatjes({ onBack, addBriefgeld, addCuruntie }) {
+// aantal: alleen gezet vanuit een weektaak-opdracht (toolRender.jsx). Geen
+// config nodig — deze tool heeft geen keuzescherm.
+export default function BreukenPlaatjes({ onBack, addBriefgeld, addCuruntie, aantal }) {
+  const opdracht = useGebruikOpdracht({ toolId: 'breuken-plaatjes', aantal })
   const [vraag, setVraag] = useState(maakVraag)
   const [phase, setPhase] = useState('vraag')   // vraag | goed | fout
   const [teller, setTeller] = useState('')
@@ -62,7 +67,10 @@ export default function BreukenPlaatjes({ onBack, addBriefgeld, addCuruntie }) {
 
   const verder = () => {
     const wasGoed = phase === 'goed'
+    const zalKlaarZijn = opdracht.aantal != null && (opdracht.gedaan + 1) >= opdracht.aantal
+    opdracht.registreer(wasGoed, { vraag: `${vraag.m}/${vraag.n}`, juist: `${vraag.m}/${vraag.n}` })
     setTeller(''); setNoemer(''); setPhase('vraag')
+    if (zalKlaarZijn) return
     if (wasGoed) {
       const ns = sinds + 1
       if (ns >= PER_BELONING) { setSinds(0); setReward(true); return }
@@ -79,6 +87,15 @@ export default function BreukenPlaatjes({ onBack, addBriefgeld, addCuruntie }) {
   }
 
   if (reward) return <SpelBeloning title="5 goed!" geld={BELONING} addCuruntie={addCuruntie} onDone={naBeloning} />
+
+  if (opdracht.klaar) {
+    return (
+      <OpdrachtKlaarScherm
+        goed={opdracht.goed} aantal={opdracht.aantal}
+        opslaanMislukt={opdracht.opslaanMislukt} onBack={onBack}
+      />
+    )
+  }
 
   const { shape, m, n } = vraag
 

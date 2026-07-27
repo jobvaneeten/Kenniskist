@@ -7,18 +7,25 @@ import LeerlingToevoegen from './LeerlingToevoegen.jsx'
 import LeerkrachtToevoegen from './LeerkrachtToevoegen.jsx'
 import './portaal.css'
 
+const LEEFTIJDSGROEPEN = [4, 5, 6, 7, 8]
+
 function KlasToevoegen({ schoolId, onKlaar }) {
   const [naam, setNaam] = useState('')
   const [schooljaar, setSchooljaar] = useState('')
   const [code, setCode] = useState('')
+  const [groepen, setGroepen] = useState([])
   const [fout, setFout] = useState('')
   const [bezig, setBezig] = useState(false)
+
+  const toggelGroep = (g) => setGroepen(prev =>
+    prev.includes(g) ? prev.filter(x => x !== g) : [...prev, g].sort()
+  )
 
   const submit = async (e) => {
     e.preventDefault()
     setFout(''); setBezig(true)
     const { error } = await supabase.from('klassen').insert({
-      naam, schooljaar: schooljaar || null, school_id: schoolId, code: code.trim().toLowerCase(),
+      naam, schooljaar: schooljaar || null, school_id: schoolId, code: code.trim().toLowerCase(), groepen,
     })
     setBezig(false)
     if (error) { setFout('Kon klas niet aanmaken (bestaat deze naam of klascode al?)'); return }
@@ -41,6 +48,16 @@ function KlasToevoegen({ schoolId, onKlaar }) {
             pattern="[a-z0-9]{2,20}" title="2-20 kleine letters of cijfers"
             placeholder="bv. linde7 of vliertuin7b"
           />
+        </label>
+        <label>Leeftijdsgroepen (leeg = geen beperking)
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            {LEEFTIJDSGROEPEN.map(g => (
+              <label key={g} style={{ display: 'flex', alignItems: 'center', gap: 4, fontWeight: 400 }}>
+                <input type="checkbox" checked={groepen.includes(g)} onChange={() => toggelGroep(g)} />
+                Groep {g}
+              </label>
+            ))}
+          </div>
         </label>
         {fout && <p className="portaal-fout">{fout}</p>}
         <div style={{ display: 'flex', gap: 8 }}>
@@ -68,6 +85,7 @@ function KlasOverzicht({ profiel, klassen, isIcter, onKiesKlas, onKlassenGewijzi
               {k.naam}
               {k.schooljaar && <span>{k.schooljaar}</span>}
               <span>inlogcode: {k.code}</span>
+              <span>{k.groepen?.length ? `groep ${k.groepen.join(', ')}` : 'alle groepen'}</span>
             </button>
           ))}
         </div>
@@ -103,7 +121,7 @@ export default function Portaal() {
   const [alsLeerkracht, setAlsLeerkracht] = useState(false)
 
   const laadKlassen = useCallback(async () => {
-    const { data } = await supabase.from('klassen').select('id, naam, schooljaar, code').order('naam')
+    const { data } = await supabase.from('klassen').select('id, school_id, naam, schooljaar, code, groepen').order('naam')
     setKlassen(data ?? [])
   }, [])
 

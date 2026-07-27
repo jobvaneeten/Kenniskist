@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase.js'
 import { roepWorkerAan } from '../lib/worker.js'
+import { toolLabel } from '../lib/tools.js'
 import DatumFilter from './DatumFilter.jsx'
 import { berekenBereik } from './datumBereik.js'
 
@@ -20,13 +21,13 @@ function scoreKlasse(pct) {
 function OpgavenTabel({ opgaven }) {
   return (
     <table className="portaal-tabel">
-      <thead><tr><th>Werkwoord</th><th>Antwoord</th><th>Juist</th><th>Goed</th></tr></thead>
+      <thead><tr><th>Opgave</th><th>Antwoord</th><th>Juist</th><th>Goed</th></tr></thead>
       <tbody>
         {opgaven.map((o, i) => (
           <tr key={i}>
-            <td>{o.werkwoord}</td>
-            <td>{o.antwoord}</td>
-            <td>{o.juist ?? o.antwoord}</td>
+            <td>{o.werkwoord ?? o.vraag ?? '—'}</td>
+            <td>{o.antwoord ?? '—'}</td>
+            <td>{o.juist ?? o.antwoord ?? '—'}</td>
             <td>{o.goed ? '✅' : '❌'}</td>
           </tr>
         ))}
@@ -42,45 +43,55 @@ function Details({ detailsJson }) {
 }
 
 // Telt goed/fout per categorie over alle geladen resultaten (die al op het
-// datumfilter zijn gefilterd). Alleen tools die een `cat` per opgave loggen
-// (nu: werkwoordspelling) leveren hier iets op — andere resultaten worden
-// genegeerd i.p.v. een lege rij te tonen.
+// datumfilter zijn gefilterd), per tool_id gegroepeerd. Alleen tools die een
+// `cat` per opgave loggen (werkwoordspelling: cat is een vast label uit
+// CATEGORIE_LABELS; verhaaltjessommen: cat is een doelKey met de volle
+// doeltekst in `catLabel`) leveren hier iets op.
 function FoutenPerCategorie({ resultaten }) {
-  const tellingen = {}
+  const perTool = {}
   for (const r of resultaten) {
     const opgaven = r.details_json?.opgaven
     if (!Array.isArray(opgaven)) continue
     for (const o of opgaven) {
       if (!o.cat) continue
-      if (!tellingen[o.cat]) tellingen[o.cat] = { goed: 0, fout: 0 }
+      const tellingen = perTool[r.tool_id] ?? (perTool[r.tool_id] = {})
+      if (!tellingen[o.cat]) tellingen[o.cat] = { goed: 0, fout: 0, label: o.catLabel }
       tellingen[o.cat][o.goed ? 'goed' : 'fout']++
     }
   }
-  const categorieen = Object.keys(tellingen)
-  if (categorieen.length === 0) return null
+  const toolIds = Object.keys(perTool)
+  if (toolIds.length === 0) return null
 
   return (
-    <div className="portaal-kaart" style={{ marginBottom: 16 }}>
-      <h2>Fouten per categorie</h2>
-      <table className="portaal-tabel">
-        <thead><tr><th>Categorie</th><th>Goed</th><th>Fout</th><th>Percentage</th></tr></thead>
-        <tbody>
-          {categorieen.map(cat => {
-            const { goed, fout } = tellingen[cat]
-            const totaal = goed + fout
-            const pct = totaal ? Math.round((goed / totaal) * 100) : 0
-            return (
-              <tr key={cat}>
-                <td>{CATEGORIE_LABELS[cat] ?? cat}</td>
-                <td>{goed}</td>
-                <td>{fout}</td>
-                <td><span className={scoreKlasse(pct)}>{pct}%</span></td>
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
-    </div>
+    <>
+      {toolIds.map(toolId => {
+        const tellingen = perTool[toolId]
+        const categorieen = Object.keys(tellingen)
+        return (
+          <div className="portaal-kaart" style={{ marginBottom: 16 }} key={toolId}>
+            <h2>Fouten per categorie — {toolLabel(toolId)}</h2>
+            <table className="portaal-tabel">
+              <thead><tr><th>Categorie</th><th>Goed</th><th>Fout</th><th>Percentage</th></tr></thead>
+              <tbody>
+                {categorieen.map(cat => {
+                  const { goed, fout, label } = tellingen[cat]
+                  const totaal = goed + fout
+                  const pct = totaal ? Math.round((goed / totaal) * 100) : 0
+                  return (
+                    <tr key={cat}>
+                      <td>{label ?? CATEGORIE_LABELS[cat] ?? cat}</td>
+                      <td>{goed}</td>
+                      <td>{fout}</td>
+                      <td><span className={scoreKlasse(pct)}>{pct}%</span></td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        )
+      })}
+    </>
   )
 }
 
@@ -112,7 +123,7 @@ function WachtwoordResetten({ leerlingId }) {
   return (
     <form className="portaal-form" onSubmit={submit} style={{ margin: 0 }}>
       <label>Nieuw wachtwoord
-        <input type="password" value={wachtwoord} onChange={e => setWachtwoord(e.target.value)} required minLength={6} autoFocus />
+        <input type="password" value={wachtwoord} onChange={e => setWachtwoord(e.target.value)} required minLength={6} autoFocus autoComplete="new-password" />
       </label>
       {fout && <p className="portaal-fout">{fout}</p>}
       {succes && <p className="portaal-succes">{succes}</p>}
@@ -184,7 +195,8 @@ export default function LeerlingDetail({ leerlingId, onBack }) {
                 onClick={() => setOpen(isOpen ? null : r.id)}
                 style={{ background: 'none', border: 'none', color: '#fff', font: 'inherit', cursor: 'pointer', textAlign: 'left', width: '100%' }}
               >
-                <strong>{r.tool_id}</strong> — {r.score}/{r.max_score} ({pct}%) · {new Date(r.aangemaakt_op).toLocaleString('nl-NL')}
+                <strong>{toolLabel(r.tool_id)}</strong> — {r.score}/{r.max_score} ({pct}%) · {new Date(r.aangemaakt_op).toLocaleString('nl-NL')}
+                {r.opdracht_id && <span title="Gemaakt als weektaak-opdracht"> 📋</span>}
                 {' '}{isOpen ? '▲' : '▼'}
               </button>
               {isOpen && (

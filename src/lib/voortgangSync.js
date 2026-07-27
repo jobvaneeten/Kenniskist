@@ -17,6 +17,8 @@ const NIET_SYNCEN = new Set([
   'kk_actieve_leerling',
   'kk_sessie',         // auth-spiegel voor kenniskist-login.js — geen speldata,
   'kk_profiel_cache',  // en zeker geen tokens die in game_voortgang mogen belanden
+  'kk_actieve_opdracht', // welke weektaak-opdracht nu loopt — apparaat-lokaal,
+                         // hoort niet in game_voortgang (leerkracht mag daar nooit bij)
 ])
 
 function moetSyncen(key) {
@@ -136,6 +138,10 @@ function wisSleutels() {
       if (moetSyncen(key)) localStorage.removeItem(key)
     }
     localStorage.removeItem('kk_actieve_leerling')
+    // Zit in NIET_SYNCEN, dus overleeft anders dit wissen — op een gedeeld
+    // apparaat (Chromebook) zou het volgende kind dan de opdracht van het
+    // vorige kind erven.
+    localStorage.removeItem('kk_actieve_opdracht')
   })
 }
 
