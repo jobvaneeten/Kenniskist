@@ -19,6 +19,15 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
-          curl -sf "$SUPABASE_URL/rest/v1/scholen?select=id&limit=1" \
+          # Doel is alleen dat Supabase verkeer ziet (voorkomt auto-pause) —
+          # een 401/404 door RLS telt net zo goed als activiteit. Alleen een
+          # mislukte verbinding (geen HTTP-status, curl-exit != 0) is een
+          # echte fout.
+          status=$(curl -s -o /dev/null -w "%{http_code}" "$SUPABASE_URL/rest/v1/" \
             -H "apikey: $SUPABASE_ANON_KEY" \
-            -H "Authorization: Bearer $SUPABASE_ANON_KEY"
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY")
+          echo "HTTP status: $status"
+          if [ "$status" = "000" ]; then
+            echo "Geen verbinding met Supabase gekregen." >&2
+            exit 1
+          fi
