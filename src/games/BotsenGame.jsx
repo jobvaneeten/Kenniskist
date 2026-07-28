@@ -9,6 +9,7 @@ import {
 import * as Colyseus from '@colyseus/sdk'
 import OrientationGate from '../OrientationGate'
 import { KART_COLORS, AV_Y, AV_Z, buildKart, loadAvatar, safeJSON } from './kartShared'
+import { SET, nachtOmgeving, glowLaag, nachtLucht, pbrMat, neonMat, gelaktMat } from './neonOmgeving'
 import './botsen-game.css'
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -37,10 +38,12 @@ const OFF        = PLAT_SIZE / 2 + CORRIDOR / 2   // 21 — afstand vanaf midden
 const RAMP_LEN   = 14
 // Elk platform: kleur + welke kant (x-richting) de buiten-helling op wijst.
 const QUADRANTS = [
-  { key: 'nw', x: -OFF, z: -OFF, body: '#2f6fed', top: '#8fbaff', rail: '#d6ebff', name: 'Blauw',  rampDir: -1 },
-  { key: 'ne', x: OFF, z: -OFF, body: '#e63946', top: '#ff9b96', rail: '#ffd9d6', name: 'Rood',   rampDir: 1 },
-  { key: 'sw', x: -OFF, z: OFF, body: '#2a9d5a', top: '#8fe3a8', rail: '#d6f5e0', name: 'Groen',  rampDir: -1 },
-  { key: 'se', x: OFF, z: OFF, body: '#f2c11d', top: '#ffe27a', rail: '#fff3c2', name: 'Geel',   rampDir: 1 },
+  // body/top zijn tints op een betontextuur — donker houden, anders wordt het
+  // weer een vlak gekleurd blok. De teamkleur zit in `rail`, het neon.
+  { key: 'nw', x: -OFF, z: -OFF, body: '#4a7fd4', top: '#6b7893', rail: '#19e6ff', name: 'Blauw',  rampDir: -1 },
+  { key: 'ne', x: OFF, z: -OFF, body: '#d1454f', top: '#94707c', rail: '#ff2f6e', name: 'Rood',   rampDir: 1 },
+  { key: 'sw', x: -OFF, z: OFF, body: '#3fbe78', top: '#6e8f7e', rail: '#39ff88', name: 'Groen',  rampDir: -1 },
+  { key: 'se', x: OFF, z: OFF, body: '#e0ae2e', top: '#94875f', rail: '#ffc21a', name: 'Geel',   rampDir: 1 },
 ]
 // Decoratieve dekking in de open grond-ring rond de vier platforms (in de
 // diagonale hoeken, ver van de platforms/bruggen zelf).
@@ -155,7 +158,10 @@ function makeNameTag(scene, name) {
   c.fillText((name || 'Speler').slice(0, 14), 128, 33)
   tex.update(); tex.hasAlpha = true
   const m = new StandardMaterial('bnametagMat', scene)
-  m.diffuseTexture = tex; m.emissiveColor = new Color3(1, 1, 1); m.specularColor = Color3.Black()
+  // Emissive via de textuur, niet als vlakke witte kleur — anders licht het
+  // hele kaartje op als één wit blok in plaats van alleen de letters.
+  m.diffuseTexture = tex; m.emissiveTexture = tex; m.emissiveColor = new Color3(1, 1, 1)
+  m.disableLighting = true; m.specularColor = Color3.Black()
   m.diffuseTexture.hasAlpha = true; m.useAlphaFromDiffuseTexture = true; m.backFaceCulling = false
   plane.material = m
   plane.position.y = 3.3
@@ -324,8 +330,10 @@ function hexRgb(hex) { const c = Color3.FromHexString(hex); return [c.r, c.g, c.
 //    af zonder de arena zelf drukker te maken. ──
 function buildClouds(scene) {
   const mat = new StandardMaterial('bcloudMat', scene)
-  mat.diffuseColor = new Color3(1, 1, 1); mat.emissiveColor = new Color3(0.85, 0.9, 0.97)
-  mat.specularColor = Color3.Black(); mat.alpha = 0.9
+  // Nachtwolken: donkere silhouetten met een violette onderkant-gloed van de
+  // stad eronder — witte wolken zouden 's nachts als gaten in de lucht staan.
+  mat.diffuseColor = Color3.Black(); mat.emissiveColor = new Color3(0.14, 0.07, 0.26)
+  mat.specularColor = Color3.Black(); mat.alpha = 0.55
   const spots = [
     { x: -70, z: -30, y: 34 }, { x: 60, z: -55, y: 40 }, { x: -55, z: 60, y: 30 },
     { x: 75, z: 25, y: 44 }, { x: -20, z: -90, y: 38 }, { x: 30, z: 85, y: 36 },
@@ -351,77 +359,53 @@ function buildClouds(scene) {
 //    zachtjes in de lucht verdwijnen zodat het een zwevend eiland lijkt. ──
 function buildArena(scene, sg) {
   const half = ARENA_HALF
-  const skyTop = '#5fb0ff', skyBot = '#d8f0ff'
+  // Mistkleur = de horizonband van de nachtlucht. Daardoor loopt de vloerrand
+  // naadloos over in de lucht in plaats van als zwart gat te eindigen.
+  const nachtBodem = '#3a2168'
 
-  // Skydome met verticale gradient
-  const sky = MeshBuilder.CreateSphere('bsky', { diameter: (half + 160) * 2, segments: 16 }, scene)
-  const skyTex = new DynamicTexture('bskyTex', { width: 8, height: 256 }, scene, false)
-  const sx = skyTex.getContext()
-  const grad = sx.createLinearGradient(0, 0, 0, 256)
-  grad.addColorStop(0, skyTop); grad.addColorStop(1, skyBot)
-  sx.fillStyle = grad; sx.fillRect(0, 0, 8, 256); skyTex.update()
-  const skyMat = new StandardMaterial('bskyMat', scene)
-  skyMat.emissiveTexture = skyTex; skyMat.disableLighting = true; skyMat.backFaceCulling = false
-  skyMat.diffuseColor = Color3.Black(); skyMat.specularColor = Color3.Black()
-  sky.material = skyMat; sky.isPickable = false
-  scene.clearColor = new Color4(...hexRgb(skyBot), 1)
+  // Nachtelijke hemel: diep indigo met een magenta stadsgloed op de horizon.
+  nachtLucht(scene, half + 160)
+  scene.clearColor = new Color4(...hexRgb(nachtBodem), 1)
   // Mist vlak achter de speelgrens: de vloer "verdwijnt" in de lucht i.p.v.
   // een harde rand — er is verder geen grond, dus je ziet er gewoon lucht.
-  scene.fogMode = Scene.FOGMODE_LINEAR; scene.fogStart = half - 6; scene.fogEnd = half + 22
-  scene.fogColor = new Color3(...hexRgb(skyBot))
+  scene.fogMode = Scene.FOGMODE_LINEAR; scene.fogStart = half - 12; scene.fogEnd = half + 38
+  scene.fogColor = new Color3(...hexRgb(nachtBodem))
 
-  // Checker-tegelvloer: lichtblauw/wit schaakbordpatroon met een klein
-  // accent-tegeltje in elke tegel en zachte voegen (meer detail dan vlak).
-  const floorTex = new DynamicTexture('bfloorTex', { width: 512, height: 512 }, scene, false)
-  const fx = floorTex.getContext()
-  const tileN = 8, tileS = 512 / tileN
-  for (let ty = 0; ty < tileN; ty++) for (let tx = 0; tx < tileN; tx++) {
-    const even = (tx + ty) % 2 === 0
-    // subtiele verticale verloop-glans per tegel
-    const g = fx.createLinearGradient(tx * tileS, ty * tileS, tx * tileS, ty * tileS + tileS)
-    g.addColorStop(0, even ? '#e2eef6' : '#cfe1ee')
-    g.addColorStop(1, even ? '#d0e2ee' : '#bcd6e6')
-    fx.fillStyle = g; fx.fillRect(tx * tileS, ty * tileS, tileS, tileS)
-    // klein afgerond accent-tegeltje in het midden
-    fx.fillStyle = even ? 'rgba(255,255,255,0.35)' : 'rgba(120,160,190,0.22)'
-    const m = tileS * 0.26
-    fx.fillRect(tx * tileS + m, ty * tileS + m, tileS - m * 2, tileS - m * 2)
-  }
-  fx.strokeStyle = 'rgba(150,182,205,0.55)'; fx.lineWidth = 3
-  for (let i = 0; i <= tileN; i++) { fx.beginPath(); fx.moveTo(i * tileS, 0); fx.lineTo(i * tileS, 512); fx.stroke(); fx.beginPath(); fx.moveTo(0, i * tileS); fx.lineTo(512, i * tileS); fx.stroke() }
-  floorTex.update(); floorTex.wrapU = floorTex.wrapV = 1; floorTex.uScale = floorTex.vScale = half / 4
+  // Vloer: echt versleten beton (albedo + normal + AO/rough/metal) i.p.v. het
+  // lichtblauwe schaakbord. Geen emissive raster erover: dat waste over de
+  // hele vloer uit tot een egale gloed zodra je er schuin overheen keek.
   const floor = MeshBuilder.CreateGround('bfloor', { width: half * 2, height: half * 2 }, scene)
-  const fMat = new StandardMaterial('bfloorMat', scene)
-  fMat.diffuseTexture = floorTex; fMat.specularColor = new Color3(0.2, 0.22, 0.26); fMat.specularPower = 32
+  const fMat = pbrMat(scene, 'bfloorMat', SET.vloer, { uv: half / 3, tint: '#8f97a6', ruw: 0.85, metaal: 0.1 })
   floor.material = fMat; floor.receiveShadows = true; floor.position.y = -0.015
 
-  // Rand rond de hele arena: een houten/gevlochten boord (zoals het voorbeeld)
-  const borderTex = new DynamicTexture('bborderTex', { width: 256, height: 32 }, scene, false)
-  const bx = borderTex.getContext()
-  bx.fillStyle = '#a9743a'; bx.fillRect(0, 0, 256, 32)
-  for (let i = 0; i < 16; i++) { bx.fillStyle = i % 2 ? '#8f5f2a' : '#b98548'; bx.fillRect(i * 16, 0, 16, 32) }
-  bx.fillStyle = 'rgba(0,0,0,0.18)'; bx.fillRect(0, 0, 256, 4); bx.fillRect(0, 28, 256, 4)
-  borderTex.update(); borderTex.wrapU = 1; borderTex.uScale = half / 2.5
-  const borderMat = new StandardMaterial('bborderMat', scene)
-  borderMat.diffuseTexture = borderTex; borderMat.specularColor = Color3.Black()
+  // Rand rond de hele arena: donkere metaalplaat met een oplichtende neon-lijst
+  // erbovenop, in plaats van het houten boord.
+  const borderMat = pbrMat(scene, 'bborderMat', SET.plaat, { uv: half / 6, tint: '#5a6472', ruw: 0.45, metaal: 0.9 })
+  const borderNeon = neonMat(scene, 'bborderNeon', '#ff2f8e', { kracht: 1.0 })
   const borderH = 1.6, borderT = 2.2
+  const neonLijst = (naam, w, d, x, z) => {
+    const strip = MeshBuilder.CreateBox(naam, { width: w, height: 0.18, depth: d }, scene)
+    strip.position.set(x, borderH - 0.3, z); strip.material = borderNeon; strip.isPickable = false
+  }
   ;[[0, -half - borderT / 2, half * 2 + borderT * 2, borderT], [0, half + borderT / 2, half * 2 + borderT * 2, borderT]].forEach(([, zc, w, d], i) => {
     const seg = MeshBuilder.CreateBox('bborderZ' + i, { width: w, height: borderH, depth: d }, scene)
     seg.position.set(0, borderH / 2 - 0.3, zc); seg.material = borderMat; seg.receiveShadows = true; sg.addShadowCaster(seg)
+    neonLijst('bborderZneon' + i, w * 0.995, d * 0.55, 0, zc)
   })
   ;[[-half - borderT / 2, 0, borderT, half * 2 + borderT * 2], [half + borderT / 2, 0, borderT, half * 2 + borderT * 2]].forEach(([xc, , w, d], i) => {
     const seg = MeshBuilder.CreateBox('bborderX' + i, { width: w, height: borderH, depth: d }, scene)
     seg.position.set(xc, borderH / 2 - 0.3, 0); seg.material = borderMat; seg.receiveShadows = true; sg.addShadowCaster(seg)
+    neonLijst('bborderXneon' + i, w * 0.55, d * 0.995, xc, 0)
   })
 
   // ── Vier gekleurde platforms + hun buiten-helling naar de grond, elk met
   //    een gekleurde rand bovenop (zoals het voorbeeld-plaatje) ───────────
   function buildQuadrant(q) {
     const hp = PLAT_SIZE / 2
-    const bodyMat = new StandardMaterial('bplatMat' + q.key, scene)
-    bodyMat.diffuseColor = Color3.FromHexString(q.body); bodyMat.specularColor = new Color3(0.2, 0.2, 0.2)
-    const topMat = new StandardMaterial('bplatTopMat' + q.key, scene)
-    topMat.diffuseColor = Color3.FromHexString(q.top); topMat.specularColor = Color3.Black()
+    // Flank = betonblokken in de teamkleur, dek = beton met een matte
+    // teamtint. Geen platte diffuseColor meer, dus je ziet het oppervlak.
+    const bodyMat = pbrMat(scene, 'bplatMat' + q.key, SET.muur, { uv: 2.5, tint: q.body, ruw: 0.9, metaal: 0.05 })
+    const topMat = pbrMat(scene, 'bplatTopMat' + q.key, SET.vloer, { uv: 3, tint: q.top, ruw: 0.8, metaal: 0.08 })
     const body = MeshBuilder.CreateBox('bplateau' + q.key, { width: PLAT_SIZE, height: PLAT_H, depth: PLAT_SIZE }, scene)
     body.position.set(q.x, PLAT_H / 2, q.z); body.material = bodyMat
     body.receiveShadows = true; sg.addShadowCaster(body)
@@ -433,9 +417,7 @@ function buildArena(scene, sg) {
     // NIET als los, doorlopend vierkant — anders zou de rand ook over de
     // helling- en brug-opening heen lopen terwijl de botsing daar juist
     // openstaat (dat gaf het "balken over de opening"-effect).
-    const rimMat = new StandardMaterial('bplatRimMat' + q.key, scene)
-    rimMat.diffuseColor = Color3.FromHexString(q.rail)
-    rimMat.emissiveColor = Color3.FromHexString(q.rail).scale(0.3); rimMat.specularColor = Color3.Black()
+    const rimMat = neonMat(scene, 'bplatRimMat' + q.key, q.rail, { kracht: 1.5 })
 
     // helling naar de grond (buitenkant, in de x-richting van rampDir)
     const rampX0 = q.x + q.rampDir * hp
@@ -460,10 +442,8 @@ function buildArena(scene, sg) {
   // ── Vier korte, SMALLE bruggen tussen de platforms — smaller dan de hele
   //    opening (BRIDGE_W < CORRIDOR), met steunpoten, zodat duidelijk te
   //    zien is dat je aan weerszijden op de grond eronderdoor kunt rijden ──
-  const bridgeMat = new StandardMaterial('bbridgeMat', scene)
-  bridgeMat.diffuseColor = new Color3(0.72, 0.75, 0.8); bridgeMat.specularColor = Color3.Black()
-  const bridgeRailMat = new StandardMaterial('bbridgeRailMat', scene)
-  bridgeRailMat.diffuseColor = new Color3(0.5, 0.53, 0.6); bridgeRailMat.specularColor = Color3.Black()
+  const bridgeMat = pbrMat(scene, 'bbridgeMat', SET.plaat, { uv: 3, tint: '#8d97a6', ruw: 0.4, metaal: 1 })
+  const bridgeRailMat = gelaktMat(scene, 'bbridgeRailMat', '#4a5162', { ruw: 0.4 })
   const hc = CORRIDOR / 2, hb = BRIDGE_W / 2
   const BRIDGES = [
     { x: 0, z: -OFF, horizontal: true }, { x: 0, z: OFF, horizontal: true },
@@ -495,14 +475,11 @@ function buildArena(scene, sg) {
   const boxes = []
   OBSTACLES.forEach((o, i) => {
     const h = 2.6
-    const col = Color3.FromHexString(o.color)
-    const bodyMat = new StandardMaterial('bobsMat' + i, scene)
-    bodyMat.diffuseColor = col; bodyMat.specularColor = new Color3(0.6, 0.6, 0.65); bodyMat.specularPower = 48
-    bodyMat.emissiveColor = col.scale(0.12)
-    const capMat = new StandardMaterial('bobsCapMat' + i, scene)
-    capMat.diffuseColor = col.scale(1.2); capMat.emissiveColor = col.scale(0.3); capMat.specularColor = new Color3(1, 1, 1); capMat.specularPower = 96
-    const footMat = new StandardMaterial('bobsFootMat' + i, scene)
-    footMat.diffuseColor = col.scale(0.5); footMat.specularColor = new Color3(0.3, 0.3, 0.35)
+    // Body = gelakt metaal in de obstakelkleur, dop = datzelfde neon (die dus
+    // echt gloeit), voet = donkere metaalplaat. Vervangt de speelgoed-glans.
+    const bodyMat = gelaktMat(scene, 'bobsMat' + i, o.color, { ruw: 0.3, metaal: 0.8 })
+    const capMat = neonMat(scene, 'bobsCapMat' + i, o.color, { kracht: 1.5 })
+    const footMat = pbrMat(scene, 'bobsFootMat' + i, SET.plaat, { uv: 1.2, tint: '#3d4350', ruw: 0.5, metaal: 1 })
     // afgeronde body (cilinder als het vierkant is, anders een box met dop)
     const round = Math.abs(o.w - o.d) < 0.5
     let body
@@ -589,11 +566,26 @@ function BotsenMatch({ onBack, room, sessionId, joinCode, myNameProp, myColorPro
     const engine = new Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true })
     const scene = new Scene(engine)
 
+    // Nachtbelichting: het meeste licht komt uit de HDRI-omgeving en het neon
+    // zelf. De "zon" is hier koel maanlicht dat alleen de vormen leest.
+    nachtOmgeving(scene, { intensiteit: 1.0, contrast: 1.15, belichting: 1.15 })
+    glowLaag(scene, 0.25)
     const hemi = new HemisphericLight('h', new Vector3(0, 1, 0), scene)
-    hemi.intensity = 0.9
+    hemi.intensity = 1.0
+    hemi.diffuse = new Color3(0.55, 0.62, 0.95)
+    hemi.groundColor = new Color3(0.20, 0.06, 0.28)
     const sun = new DirectionalLight('s', new Vector3(-0.4, -1, -0.3), scene)
-    sun.position = new Vector3(30, 50, 20); sun.intensity = 1.05
+    sun.position = new Vector3(30, 50, 20); sun.intensity = 2.2
+    sun.diffuse = new Color3(0.72, 0.80, 1.0)
+    // Zonder expliciete grenzen rekt Babylon het schaduw-frustum op tot álles
+    // in de scene past — inclusief de sky-sphere van ~220 units. Eén 1024-map
+    // over dat gebied betekende dat de hele arena in schaduw viel.
+    sun.autoUpdateExtends = false
+    sun.orthoLeft = -ARENA_HALF * 1.3; sun.orthoRight = ARENA_HALF * 1.3
+    sun.orthoBottom = -ARENA_HALF * 1.3; sun.orthoTop = ARENA_HALF * 1.3
+    sun.shadowMinZ = 1; sun.shadowMaxZ = 160
     const sg = new ShadowGenerator(1024, sun); sg.useBlurExponentialShadowMap = true
+    sg.blurKernel = 24; sg.setDarkness(0.45)
 
     const arena = buildArena(scene, sg)
     const fireTex = makeFireTexture(scene)
@@ -624,16 +616,19 @@ function BotsenMatch({ onBack, room, sessionId, joinCode, myNameProp, myColorPro
     cam.radius = 9; cam.heightOffset = 3.4; cam.rotationOffset = 180
     cam.cameraAcceleration = 0.06; cam.maxCameraSpeed = 40
 
-    // ── Subtiele beeldkwaliteit-boost: zachte gloed op felle kleuren +
-    //    net iets scherpere randen, zonder de speelse look te overdrijven ──
+    // ── Beeldbewerking: bloom pakt alleen het neon (drempel boven de gewone
+    //    materialen), vignet duwt de aandacht naar het midden. Contrast en
+    //    tonemapping staan al op de scene via nachtOmgeving. ──
     const pipeline = new DefaultRenderingPipeline('bpipeline', true, scene, [cam])
     pipeline.fxaaEnabled = true
+    pipeline.samples = 4
     pipeline.bloomEnabled = true
-    pipeline.bloomThreshold = 0.7; pipeline.bloomWeight = 0.35; pipeline.bloomKernel = 48
+    pipeline.bloomThreshold = 0.88; pipeline.bloomWeight = 0.4; pipeline.bloomKernel = 48; pipeline.bloomScale = 0.5
     pipeline.sharpenEnabled = true
-    pipeline.sharpen.edgeAmount = 0.25
-    pipeline.imageProcessing.contrast = 1.08
-    pipeline.imageProcessing.exposure = 1.05
+    pipeline.sharpen.edgeAmount = 0.3
+    pipeline.imageProcessing.vignetteEnabled = true
+    pipeline.imageProcessing.vignetteWeight = 2.6
+    pipeline.imageProcessing.vignetteColor = new Color4(0.04, 0.01, 0.10, 1)
 
     // ── Slip-vonken (Shift + sturen): puur visuele feedback tijdens het driften ──
     const driftPs = new ParticleSystem('driftPs', 60, scene)

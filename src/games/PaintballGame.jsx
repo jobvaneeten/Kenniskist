@@ -4,14 +4,15 @@ import {
   Engine, Scene, FreeCamera,
   Color3, Color4, Vector3, Quaternion, Ray,
   HemisphericLight, DirectionalLight, ShadowGenerator,
-  MeshBuilder, StandardMaterial, DynamicTexture, Texture,
-  DefaultRenderingPipeline, ParticleSystem,
+  MeshBuilder, StandardMaterial, PBRMaterial, DynamicTexture, Texture,
+  DefaultRenderingPipeline, ParticleSystem, VertexBuffer,
 } from '@babylonjs/core'
 import { SceneLoader } from '@babylonjs/core/Loading/sceneLoader'
 import '@babylonjs/loaders/glTF'
 import { findItem } from '../itemsCatalog'
 import { applyItemToMesh, loadClothingDonor, usesDonor, loadHeadItem } from '../applyClothing'
 import OrientationGate from '../OrientationGate'
+import { SET, nachtOmgeving, glowLaag, nachtLucht, pbrMat } from './neonOmgeving'
 import './rocket-game.css'
 import './paintball.css'
 
@@ -21,18 +22,24 @@ const SERVER_URL = 'wss://kenniskist-server.onrender.com'
 let ARENA_X = 24    // wordt per map gezet
 let ARENA_Z = 24
 const MAPS = {
+  // Nacht-varianten: donkere hemel, mist in de kleur van de horizongloed en
+  // PBR-texturesets (albedo + normal + AO/rough/metal) i.p.v. losse PNG's.
+  // `neon` is de accentkleur die de kaart z'n eigen sfeer geeft.
   dorp: { label: 'Dorp', glb: 'map.glb', ax: 24, az: 24,
-    clear: [0.55, 0.75, 0.96], fog: [0.70, 0.82, 0.96], fogD: 0.006,
-    sky: ['#4a86c8', '#bcd0e0', '#e6d9b8'],
-    tex: { ground: '/zand.png', stone: '/zandsteen.png', scale: 9, stoneScale: 3 } },
+    clear: [0.13, 0.07, 0.24], fog: [0.16, 0.09, 0.28], fogD: 0.0075,
+    sky: ['#05030f', '#150a30', '#3a1d55'], neon: '#ff9d2f',
+    tex: { ground: SET.zand, stone: SET.muur, scale: 9, stoneScale: 3 } },
   bos:  { label: 'Bos', glb: 'bos.glb', ax: 40, az: 40,
-    clear: [0.58, 0.74, 0.62], fog: [0.72, 0.82, 0.70], fogD: 0.0045,
-    sky: ['#6a93c4', '#bcd8c4', '#dcebd2'],
-    tex: { ground: '/gras.png', stone: '/plankenhuis.png', scale: 22, stoneScale: 2 } },
+    clear: [0.06, 0.11, 0.14], fog: [0.08, 0.14, 0.17], fogD: 0.0055,
+    sky: ['#03070c', '#0a1a22', '#16414a'], neon: '#39ff88',
+    tex: { ground: SET.gras, stone: SET.muur, scale: 22, stoneScale: 2 } },
   stad: { label: 'Industrieterrein', glb: 'stad.glb', ax: 25, az: 50,
-    clear: [0.55, 0.75, 0.96], fog: [0.70, 0.82, 0.96], fogD: 0.004,
-    sky: ['#4a86c8', '#bcd0e0', '#e6d9b8'],
-    tex: { ground: '/stenen.jpg', stone: '/stenenhuis.jpg', scale: 12, brickSize: 1.5 } },
+    clear: [0.10, 0.06, 0.18], fog: [0.13, 0.08, 0.22], fogD: 0.005,
+    sky: ['#04030c', '#120a2c', '#42124f'], neon: '#19e6ff',
+    // Bewust beton en geen metaalplaat: de stad-kaart classificeert ook grote
+    // vloervlakken als "stone", en een echt metallic materiaal spiegelt daar
+    // de HDRI in — dat gaf een bruine plas in plaats van een vloer.
+    tex: { ground: SET.asfalt, stone: SET.muur, scale: 12, brickSize: 1.5 } },
 }
 const PLAYER_RADIUS  = 0.6
 const PLAYER_SPEED   = 5.2
@@ -366,21 +373,23 @@ class PlayerInstance {
   }
 }
 
-// ── Sky-decor: zonnegloed + zachte wolken (statisch, GPU-goedkoop) ──────
+// ── Sky-decor: maan + nachtwolken (statisch, GPU-goedkoop) ─────────────
 function addSkyDecor(scene, mapCfg) {
-  // Zon-gloed in de richting van het zonlicht
-  const sunPos = new Vector3(-0.5, -1.05, -0.4).normalize().scale(-130)
-  const glowTex = new DynamicTexture('sunGlow', { width: 128, height: 128 }, scene)
+  // Maan waar eerst de zon stond — koele, kleine schijf met een strakke halo
+  // in plaats van de brede warme zonnegloed.
+  const maanPos = new Vector3(-0.5, -1.05, -0.4).normalize().scale(-130)
+  const glowTex = new DynamicTexture('maanGloed', { width: 128, height: 128 }, scene)
   const gc = glowTex.getContext()
-  const gg = gc.createRadialGradient(64, 64, 3, 64, 64, 62)
-  gg.addColorStop(0, 'rgba(255,253,238,1)'); gg.addColorStop(0.22, 'rgba(255,246,205,0.8)'); gg.addColorStop(1, 'rgba(255,240,190,0)')
+  const gg = gc.createRadialGradient(64, 64, 2, 64, 64, 62)
+  gg.addColorStop(0, 'rgba(244,248,255,1)'); gg.addColorStop(0.12, 'rgba(226,236,255,0.95)')
+  gg.addColorStop(0.2, 'rgba(150,175,230,0.35)'); gg.addColorStop(1, 'rgba(120,150,220,0)')
   gc.fillStyle = gg; gc.fillRect(0, 0, 128, 128); glowTex.update(); glowTex.hasAlpha = true
-  const sunMat = new StandardMaterial('sunGlowMat', scene)
-  sunMat.diffuseTexture = glowTex; sunMat.useAlphaFromDiffuseTexture = true
-  sunMat.emissiveColor = Color3.White(); sunMat.disableLighting = true; sunMat.backFaceCulling = false
-  const sunDisc = MeshBuilder.CreatePlane('sunDisc', { size: 80 }, scene)
-  sunDisc.position = sunPos; sunDisc.billboardMode = 7; sunDisc.isPickable = false
-  sunDisc.material = sunMat; sunDisc.applyFog = false
+  const maanMat = new StandardMaterial('maanMat', scene)
+  maanMat.diffuseTexture = glowTex; maanMat.useAlphaFromDiffuseTexture = true
+  maanMat.emissiveColor = Color3.White(); maanMat.disableLighting = true; maanMat.backFaceCulling = false
+  const maan = MeshBuilder.CreatePlane('maan', { size: 60 }, scene)
+  maan.position = maanPos; maan.billboardMode = 7; maan.isPickable = false
+  maan.material = maanMat; maan.applyFog = false
 
   // Geen wolken in het bos (dicht bladerdak)
   if (mapCfg.glb === 'bos.glb') return
@@ -394,9 +403,12 @@ function addSkyDecor(scene, mapCfg) {
     cc.fillStyle = cg; cc.beginPath(); cc.arc(x, y, r, 0, Math.PI * 2); cc.fill()
   }
   cloudTex.update(); cloudTex.hasAlpha = true
+  // Donkere wolken met een zweem van de accentkleur eronder — witte wolken
+  // zouden 's nachts als gaten in de lucht staan.
   const cloudMat = new StandardMaterial('cloudMat', scene)
   cloudMat.diffuseTexture = cloudTex; cloudMat.useAlphaFromDiffuseTexture = true
-  cloudMat.emissiveColor = new Color3(0.96, 0.97, 1); cloudMat.disableLighting = true; cloudMat.backFaceCulling = false
+  cloudMat.emissiveColor = Color3.FromHexString(mapCfg.neon).scale(0.18)
+  cloudMat.disableLighting = true; cloudMat.backFaceCulling = false; cloudMat.alpha = 0.65
   for (let i = 0; i < 6; i++) {
     const cl = MeshBuilder.CreatePlane('cloud' + i, { width: 64, height: 30 }, scene)
     const ang = (i / 6) * Math.PI * 2 + Math.random()
@@ -458,21 +470,29 @@ function addMapDecor(scene, mapCfg) {
   const rnd  = (a, b) => a + Math.random() * (b - a)
   const pick = (arr) => arr[Math.floor(Math.random() * arr.length)]
 
+  // PBR i.p.v. StandardMaterial: het decor vangt nu hetzelfde maanlicht en
+  // dezelfde omgevingsreflectie als de arena. Nachtpalet, want het staat
+  // buiten het bereik van de lampen — anders zweeft er een helder
+  // daglicht-landschap rond een donkere arena.
   const mkMat = (hex, emiss = 0) => {
-    const m = new StandardMaterial('dm' + Math.random(), scene)
+    const m = new PBRMaterial('dm' + Math.random(), scene)
     const c = Color3.FromHexString(hex)
-    m.diffuseColor = c; m.specularColor = Color3.Black()
+    m.albedoColor = c
+    m.metallic = 0
+    m.roughness = 0.92
     if (emiss) m.emissiveColor = c.scale(emiss)
     return m
   }
   const done = (m) => { m.isPickable = false; try { m.freezeWorldMatrix() } catch {} }
 
-  // Grote omgevingsvloer — geen lege void meer achter de arenarand
-  const groundHex = isBos ? '#27431f' : isStad ? '#3c4046' : '#cdb377'
+  // Grote omgevingsvloer — geen lege void achter de arenarand. Zelfde
+  // textuurset als de arenagrond, zodat de overgang niet als plaat opvalt.
   const bigGround = MeshBuilder.CreateDisc('decoGround', { radius: 220, tessellation: 48 }, scene)
   bigGround.rotation.x = Math.PI / 2
   bigGround.position.y = -0.08
-  bigGround.material = mkMat(groundHex)
+  bigGround.material = mapCfg.tex?.ground
+    ? pbrMat(scene, 'decoGroundMat', mapCfg.tex.ground, { uv: 90, tint: '#787878', ruw: 1, metaal: 1 })
+    : mkMat(isBos ? '#0e1a0c' : isStad ? '#15171c' : '#241d12')
   done(bigGround)
 
   // Verre decor-ring: RUIM buiten de map-geometrie, zodat niets clipt of bereikbaar is.
@@ -485,13 +505,13 @@ function addMapDecor(scene, mapCfg) {
 
   const mkTree = (x, z, s, leafHex) => {
     const trunk = MeshBuilder.CreateCylinder('dTr', { height: 2.2 * s, diameter: 0.5 * s, tessellation: 6 }, scene)
-    trunk.material = mkMat('#6b4a2a'); trunk.position.set(x, 1.1 * s, z); done(trunk)
+    trunk.material = mkMat('#241a10'); trunk.position.set(x, 1.1 * s, z); done(trunk)
     const top = MeshBuilder.CreateCylinder('dLf', { height: 3.6 * s, diameterTop: 0, diameterBottom: 2.9 * s, tessellation: 7 }, scene)
     top.material = mkMat(leafHex); top.position.set(x, 2.2 * s + 1.6 * s, z); done(top)
   }
   const mkRock = (x, z, s) => {
     const r = MeshBuilder.CreatePolyhedron('dRk', { type: Math.floor(Math.random() * 4), size: s }, scene)
-    r.material = mkMat(pick(['#8d8a82', '#7c7a74', '#9a958a']))
+    r.material = mkMat(pick(['#2e2d29', '#26251f', '#33312b']))
     r.position.set(x, s * 0.45, z)
     r.rotation.set(Math.random(), Math.random() * 6, Math.random())
     done(r)
@@ -499,27 +519,27 @@ function addMapDecor(scene, mapCfg) {
   const mkBuilding = (x, z) => {
     const w = rnd(5, 10), h = rnd(8, 26), d = rnd(5, 10)
     const b = MeshBuilder.CreateBox('dBld', { width: w, height: h, depth: d }, scene)
-    b.material = mkMat(pick(['#3a3f4a', '#454b56', '#2f343d', '#525a6b', '#3f4654']))
+    b.material = mkMat(pick(['#13161c', '#191d24', '#0f1218', '#1c212a', '#161a21']))
     b.position.set(x, h / 2, z); b.rotation.y = rnd(0, Math.PI * 2); done(b)
   }
   const mkHouse = (x, z) => {
     const w = rnd(4, 6), h = rnd(2.6, 3.4), d = rnd(3.5, 5)
     const body = MeshBuilder.CreateBox('dHs', { width: w, height: h, depth: d }, scene)
-    body.material = mkMat(pick(['#e8d9b8', '#d9c4a0', '#e3cfae'])); body.position.set(x, h / 2, z)
+    body.material = mkMat(pick(['#3b3324', '#332c20', '#39311f'])); body.position.set(x, h / 2, z)
     body.rotation.y = rnd(0, Math.PI * 2); done(body)
     const roof = MeshBuilder.CreateCylinder('dRf', { height: rnd(1.4, 1.9), diameterTop: 0, diameterBottom: Math.max(w, d) * 1.3, tessellation: 4 }, scene)
-    roof.material = mkMat(pick(['#b0563a', '#9c4a30', '#bd6a48'])); roof.position.set(x, h + 0.8, z)
+    roof.material = mkMat(pick(['#3a1c13', '#33170f', '#40251a'])); roof.position.set(x, h + 0.8, z)
     roof.rotation.y = body.rotation.y + Math.PI / 4; done(roof)
   }
 
   if (isBos) {
-    for (let i = 0; i < 110; i++) { const p = ringSpot(); mkTree(p.x, p.z, rnd(1.0, 2.4), pick(['#2d6b35', '#1f5429', '#357840', '#2a6030'])) }
+    for (let i = 0; i < 110; i++) { const p = ringSpot(); mkTree(p.x, p.z, rnd(1.0, 2.4), pick(['#0f2415', '#0b1c10', '#132b18', '#0d2013'])) }
     for (let i = 0; i < 22; i++)  { const p = ringSpot(); mkRock(p.x, p.z, rnd(1.0, 2.6)) }
   } else if (isStad) {
     for (let i = 0; i < 46; i++) { const p = ringSpot(); mkBuilding(p.x, p.z) }
-    for (let i = 0; i < 16; i++) { const p = ringSpot(); mkTree(p.x, p.z, rnd(0.9, 1.6), pick(['#3f7a40', '#357040'])) }
+    for (let i = 0; i < 16; i++) { const p = ringSpot(); mkTree(p.x, p.z, rnd(0.9, 1.6), pick(['#132a16', '#102513'])) }
   } else {
-    for (let i = 0; i < 70; i++) { const p = ringSpot(); mkTree(p.x, p.z, rnd(0.9, 1.9), pick(['#3f8a4a', '#4a9a55', '#357a40'])) }
+    for (let i = 0; i < 70; i++) { const p = ringSpot(); mkTree(p.x, p.z, rnd(0.9, 1.9), pick(['#142d18', '#18351d', '#112611'])) }
     for (let i = 0; i < 16; i++) { const p = ringSpot(); mkRock(p.x, p.z, rnd(0.8, 1.9)) }
     for (let i = 0; i < 8;  i++) { const p = ringSpot(); mkHouse(p.x, p.z) }
   }
@@ -561,66 +581,73 @@ function buildWorld(scene, mapCfg, onObstacles) {
   scene.fogDensity = mapCfg.fogD
   scene.collisionsEnabled = true   // real mesh collision against the GLB map
 
+  // HDRI-omgeving: zonder dit blijven PBR-materialen dof, want ze hebben
+  // niets om te spiegelen. Doet 's nachts het meeste werk.
+  nachtOmgeving(scene, { intensiteit: 1.4, contrast: 1.1, belichting: 1.6 })
+  glowLaag(scene, 0.3)
+
   const ambient = new HemisphericLight('hemi', new Vector3(0, 1, 0), scene)
-  ambient.intensity = 0.72
-  ambient.groundColor = new Color3(0.20, 0.24, 0.22)
-  ambient.diffuse = new Color3(0.92, 0.96, 1.0)
-  ambient.specular = new Color3(0.12, 0.12, 0.14)
+  ambient.intensity = 1.1
+  ambient.groundColor = new Color3(0.10, 0.05, 0.16)
+  ambient.diffuse = new Color3(0.52, 0.60, 0.92)
+  ambient.specular = new Color3(0.10, 0.10, 0.14)
 
-  // Warme zon (key light) met zachte schaduwen
+  // Maanlicht (key light) met zachte schaduwen
   const sun = new DirectionalLight('sun', new Vector3(-0.5, -1.05, -0.4), scene)
-  sun.position = new Vector3(40, 70, 35); sun.intensity = 2.0
-  sun.diffuse = new Color3(1.0, 0.96, 0.86); sun.specular = new Color3(1.0, 0.94, 0.82)
-  sun.shadowMinZ = 1; sun.shadowMaxZ = 170
+  sun.position = new Vector3(40, 70, 35); sun.intensity = 3.2
+  sun.diffuse = new Color3(0.70, 0.79, 1.0); sun.specular = new Color3(0.78, 0.85, 1.0)
+  // Expliciete grenzen: anders rekt Babylon het schaduw-frustum op tot de
+  // sky-sphere van 280 units en valt de hele kaart in schaduw.
+  sun.autoUpdateExtends = false
+  const so = Math.max(mapCfg.ax, mapCfg.az) * 1.4
+  sun.orthoLeft = -so; sun.orthoRight = so; sun.orthoBottom = -so; sun.orthoTop = so
+  sun.shadowMinZ = 1; sun.shadowMaxZ = 200
   const sg = new ShadowGenerator(1024, sun)
-  sg.useBlurExponentialShadowMap = true; sg.blurKernel = 24; sg.bias = 0.0009; sg.setDarkness(0.38)
+  sg.useBlurExponentialShadowMap = true; sg.blurKernel = 24; sg.bias = 0.0009; sg.setDarkness(0.45)
 
-  // Koel invullicht voor diepte (geen schaduw → goedkoop)
+  // Neon invullicht in de accentkleur van de kaart — vervangt het koele
+  // daglicht-invullicht en geeft de schaduwzijde kleur.
   const fill = new DirectionalLight('fill', new Vector3(0.55, -0.35, 0.7), scene)
-  fill.intensity = 0.32; fill.diffuse = new Color3(0.62, 0.74, 0.96); fill.specular = Color3.Black()
+  fill.intensity = 1.0
+  fill.diffuse = Color3.FromHexString(mapCfg.neon).scale(0.75)
+  fill.specular = Color3.Black()
 
-  // Sky dome (vertical gradient, follows the camera)
-  const sky = MeshBuilder.CreateSphere('sky', { diameter: 280, segments: 16 }, scene)
-  sky.infiniteDistance = true; sky.isPickable = false
-  const skyMat = new StandardMaterial('skyMat', scene)
-  skyMat.backFaceCulling = false; skyMat.disableLighting = true; skyMat.diffuseColor = Color3.Black()
-  const skyTex = new DynamicTexture('skyTex', { width: 16, height: 512 }, scene)
-  const skc = skyTex.getContext()
-  const sgrad = skc.createLinearGradient(0, 0, 0, 512)
-  sgrad.addColorStop(0,    mapCfg.sky[0])
-  sgrad.addColorStop(0.42, mapCfg.sky[1])
-  sgrad.addColorStop(0.78, mapCfg.sky[2])
-  sgrad.addColorStop(1,    mapCfg.sky[2])
-  skc.fillStyle = sgrad; skc.fillRect(0, 0, 16, 512)
-  // zachte heldere band rond de horizon
-  const haze = skc.createLinearGradient(0, 360, 0, 470)
-  haze.addColorStop(0, 'rgba(255,255,255,0)'); haze.addColorStop(1, 'rgba(255,255,255,0.18)')
-  skc.fillStyle = haze; skc.fillRect(0, 360, 16, 110)
-  skyTex.update()
-  skyMat.emissiveTexture = skyTex; sky.material = skyMat
+  // Nachthemel met sterren en een gekleurde gloed op de horizon.
+  nachtLucht(scene, 140, { boven: mapCfg.sky[0], midden: mapCfg.sky[1], horizon: mapCfg.sky[2], gloed: mapCfg.neon })
 
   addSkyDecor(scene, mapCfg)
   try { addMapDecor(scene, mapCfg) } catch (e) { console.warn('map-decor overgeslagen:', e) }
 
-  // Optionele texturen voor deze map: grond + gebouwen.
-  let groundTex = null, stoneBaseTex = null
-  if (mapCfg.tex) {
-    const s = mapCfg.tex.scale || 9
-    groundTex    = new Texture(mapCfg.tex.ground, scene); groundTex.uScale = s; groundTex.vScale = s; groundTex.hasAlpha = false
-    stoneBaseTex = new Texture(mapCfg.tex.stone,  scene); stoneBaseTex.hasAlpha = false
+  // Elke mesh krijgt een eigen PBR-materiaal uit de set van deze kaart: albedo
+  // + normal + AO/rough/metal, met een UV-schaal per mesh. Dat vervangt de
+  // oude aanpak (één platte diffuse-PNG op het bestaande GLB-materiaal), waar
+  // niets aan reflecteerde en elk oppervlak er vlak uitzag.
+  //
+  // De UV-schaal wordt uit de geometrie afgeleid i.p.v. uit een vast getal per
+  // kaart: de GLB's gebruiken verschillende UV-conventies (dorp/bos ~0-1 per
+  // vlak, stad al op wereldschaal), dus één vaste factor gaf op de ene kaart
+  // een bruikbare tegel en op de andere 300 tegels over een vloer — die
+  // middelde de mipmap weg tot één egale kleur.
+  const TEGEL_M = 2.5   // ~2,5 meter per textuur-tegel
+  const uvSchaal = (mesh, valU, valV) => {
+    const uvs = mesh.getVerticesData(VertexBuffer.UVKind)
+    if (!uvs || uvs.length < 4) return [valU, valV]
+    let minU = Infinity, maxU = -Infinity, minV = Infinity, maxV = -Infinity
+    for (let i = 0; i < uvs.length; i += 2) {
+      if (uvs[i] < minU) minU = uvs[i]; if (uvs[i] > maxU) maxU = uvs[i]
+      if (uvs[i + 1] < minV) minV = uvs[i + 1]; if (uvs[i + 1] > maxV) maxV = uvs[i + 1]
+    }
+    const du = maxU - minU, dv = maxV - minV
+    if (!(du > 0.001) || !(dv > 0.001)) return [valU, valV]
+    const bb = mesh.getBoundingInfo().boundingBox
+    const s = bb.maximumWorld.subtract(bb.minimumWorld)
+    // de twee grootste afmetingen zijn het vlak dat de textuur draagt
+    const [wu, wv] = [s.x, s.y, s.z].sort((a, b) => b - a)
+    return [(wu / TEGEL_M) / du, (wv / TEGEL_M) / dv]
   }
-  // Clone material + texture per mesh — prevents shared-material contamination
-  // and lets us set per-mesh UV scale/rotation independently.
-  const applyTex = (mesh, baseTex, uS, vS, wAng = 0) => {
-    if (!mesh || !baseTex) return
-    const orig = mesh.material
-    if (!orig) return
-    const t = baseTex.clone()      // shares WebGL texture, independent UV settings
-    t.uScale = uS; t.vScale = vS; t.wAng = wAng
-    const mat = orig.clone(mesh.name + '_mat')
-    mesh.material = mat
-    if (mat.albedoTexture  !== undefined) { mat.albedoTexture  = t; mat.albedoColor  = Color3.White() }
-    else if (mat.diffuseTexture !== undefined) { mat.diffuseTexture = t; mat.diffuseColor = Color3.White() }
+  const applyPbr = (mesh, set, uS, vS) => {
+    if (!mesh || !set) return
+    mesh.material = pbrMat(scene, mesh.name + '_pbr', set, { uv: uvSchaal(mesh, uS, vS), ruw: 1, metaal: 1 })
   }
 
   // The chosen GLB map. Real mesh collision drives walking + the shoot-raycast.
@@ -654,7 +681,7 @@ function buildWorld(scene, mapCfg, onObstacles) {
 
           const isGround = matn.includes('ground') || matn.includes('grass') || mn === 'floor' || mn.includes('floor')
           if (isGround) {
-            applyTex(m, groundTex, cfg.scale || 9, cfg.scale || 9)
+            applyPbr(m, cfg.ground, cfg.scale || 9, cfg.scale || 9)
           } else if (matn.includes('sand') || matn.includes('wall') || matn.includes('roof') || matn.includes('wood') ||
                      mn.includes('house') || mn.includes('cover') || mn.includes('big') || mn.includes('cube') ||
                      mn.includes('cylinder') || mn.includes('object') || mn.includes('jump')) {
@@ -668,7 +695,17 @@ function buildWorld(scene, mapCfg, onObstacles) {
               const ss = cfg.stoneScale || 3
               uS = ss; vS = ss
             }
-            applyTex(m, stoneBaseTex, uS, vS, 0)
+            applyPbr(m, cfg.stone, uS, vS)
+          } else {
+            // Alles wat geen van beide filters raakt hield zijn kale GLB-
+            // materiaal: grote effen platen die in een donkere scene juist
+            // opvallen. Die krijgen dezelfde steenset, maar met hun eigen
+            // kleur als tint — teamkleuren en markeringen blijven dus leesbaar.
+            const oud = m.material
+            const eigen = oud?.albedoColor || oud?.diffuseColor
+            const tint = eigen ? eigen.scale(0.85).toHexString() : '#8a8a8a'
+            applyPbr(m, cfg.stone, cfg.stoneScale || 3, cfg.stoneScale || 3)
+            if (m.material) m.material.albedoColor = Color3.FromHexString(tint)
           }
         }
         try { m.freezeWorldMatrix() } catch {}
@@ -747,14 +784,17 @@ function initScene(canvas, { localSessionId, getRoomState, sendState, sendShoot,
   const sg = buildWorld(scene, mapCfg, (obstacles) => sendObstacles?.(packObstacles(obstacles)))
   try {
     const pipe = new DefaultRenderingPipeline('pipe', true, scene, [camera])   // HDR → mooiere bloom
-    pipe.imageProcessingEnabled = true; pipe.imageProcessing.contrast = 1.12; pipe.imageProcessing.exposure = 1.12
+    // Contrast/exposure/tonemapping staan al op de scene via nachtOmgeving —
+    // hier alleen bloom (pakt neon en muzzle flashes) en vignet.
+    pipe.imageProcessingEnabled = true
     pipe.fxaaEnabled = true            // gladde randen (smoother)
     pipe.samples = 4                   // MSAA tegen kartelranden
-    pipe.bloomEnabled = true; pipe.bloomThreshold = 0.82; pipe.bloomWeight = 0.18; pipe.bloomScale = 0.5
-    // Subtiele vignette voor meer sfeer/diepte
+    pipe.bloomEnabled = true; pipe.bloomThreshold = 0.85; pipe.bloomWeight = 0.35; pipe.bloomScale = 0.5
+    // Vignet in de accentkleur: duwt de aandacht naar het midden zonder de
+    // hoeken dood te maken.
     pipe.imageProcessing.vignetteEnabled = true
-    pipe.imageProcessing.vignetteWeight = 2.2
-    pipe.imageProcessing.vignetteColor = new Color4(0, 0, 0, 0)
+    pipe.imageProcessing.vignetteWeight = 2.6
+    pipe.imageProcessing.vignetteColor = new Color4(0.03, 0.01, 0.08, 1)
   } catch {}
 
   const players = new Map()
