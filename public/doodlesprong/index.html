@@ -32,7 +32,22 @@
   #hud{position:absolute;inset:0;z-index:4;display:none;pointer-events:none;}
   #hud.on{display:block;}
   .hud-top{position:absolute;top:max(12px,env(safe-area-inset-top));left:0;right:0;
-    display:flex;justify-content:space-between;align-items:flex-start;padding:0 14px;}
+    display:flex;justify-content:space-between;align-items:flex-start;padding:0 14px 0 118px;}
+
+  /* terug-knop van Kenniskist zelf — linksboven, boven alle schermen */
+  #bTerug{position:absolute;top:max(12px,env(safe-area-inset-top));left:12px;z-index:12;
+    display:none;align-items:center;gap:7px;
+    background:var(--panel);border:1px solid var(--line);border-radius:13px;
+    padding:11px 16px;color:var(--ink);font-family:var(--body);font-weight:800;font-size:14.5px;
+    cursor:pointer;backdrop-filter:blur(8px);box-shadow:0 6px 18px rgba(0,0,0,.55);}
+  #bTerug.on{display:flex;}
+  #bTerug span{font-size:17px;line-height:1;}
+  #bTerug:active{transform:translateY(2px);}
+  @media (max-width:520px){
+    .hud-top{padding:0 10px 0 100px;}
+    #bTerug{padding:9px 12px;font-size:13px;left:9px;}
+    #bTerug span{font-size:15px;}
+  }
   .hud-pill{background:var(--panel);border:1px solid var(--line);border-radius:13px;
     padding:7px 14px;display:flex;align-items:center;gap:8px;backdrop-filter:blur(8px);
     box-shadow:0 6px 20px rgba(0,0,0,.45);}
@@ -172,6 +187,8 @@
 <body>
 <div id="game">
   <canvas id="c"></canvas>
+
+  <button id="bTerug"><span>←</span> Menu</button>
 
   <div id="hud">
     <div class="hud-top">
@@ -593,7 +610,21 @@ const hud = document.getElementById('hud');
 const elH = document.getElementById('hHeight'), elC = document.getElementById('hCoins');
 const elStatus = document.getElementById('hudStatus'), elMile = document.getElementById('milestone');
 
-function show(name){ Object.entries(SCREENS).forEach(([k,el]) => el.classList.toggle('on', k===name)); }
+// De Kenniskist-wrapper laadt dit spel met ?terug=1 en luistert dan naar het
+// bericht van deze knop. In de beloningsmodus staat er al een eigen "← Klaar",
+// dus daar tonen we hem niet.
+const TERUG_AAN = new URLSearchParams(location.search).has('terug');
+const elTerug = document.getElementById('bTerug');
+if (TERUG_AAN){
+  elTerug.classList.add('on');
+  elTerug.onclick = () => { try { parent.postMessage({ type:'doodlesprong-terug' }, '*'); } catch(e){} };
+}
+
+function show(name){
+  Object.entries(SCREENS).forEach(([k,el]) => el.classList.toggle('on', k===name));
+  // de shop heeft zijn eigen ← linksboven; twee pijlen naast elkaar is verwarrend
+  if (TERUG_AAN) elTerug.classList.toggle('on', name !== 'shop');
+}
 function refreshLabels(){
   const c = getCoins();
   document.getElementById('sCoins').textContent = c;

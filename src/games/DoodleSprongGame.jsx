@@ -1,20 +1,20 @@
+import { useEffect } from 'react'
+
+// Het spel tekent zijn eigen "← Menu" knop (via ?terug=1) zodat die niet
+// achter de HUD verdwijnt en meeschaalt met de rest van de spel-UI; hij meldt
+// zich terug via postMessage. In de beloningsmodus (SpelBeloning) wordt de
+// parameter niet meegegeven — daar staat al een eigen "← Klaar" knop.
 export default function DoodleSprongGame({ onBack }) {
+  useEffect(() => {
+    const h = (e) => { if (e.data?.type === 'doodlesprong-terug') onBack?.() }
+    window.addEventListener('message', h)
+    return () => window.removeEventListener('message', h)
+  }, [onBack])
+
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: '#000' }}>
-      <button
-        onClick={onBack}
-        style={{
-          position: 'absolute', top: 12, left: 12, zIndex: 200,
-          background: 'rgba(0,0,0,0.75)', color: '#fff',
-          border: '1px solid rgba(255,255,255,0.25)',
-          borderRadius: 8, padding: '6px 16px', cursor: 'pointer',
-          fontSize: 14, fontFamily: 'inherit',
-        }}
-      >
-        ← Menu
-      </button>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: '#05060f' }}>
       <iframe
-        src="/doodlesprong/"
+        src="/doodlesprong/?terug=1"
         style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
         title="Doodle Sprong"
       />
