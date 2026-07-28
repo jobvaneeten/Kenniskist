@@ -451,8 +451,6 @@
 .play-rocket-btn:hover { box-shadow: 0 7px 22px rgba(124,58,237,0.6), 0 0 28px rgba(192,38,211,0.7); }
 .play-paintball-btn { bottom: 124px; background: linear-gradient(135deg, #ff5a7a, #d61f44); box-shadow: 0 4px 18px rgba(214,31,68,0.45), 0 0 18px rgba(255,90,122,0.5); }
 .play-paintball-btn:hover { box-shadow: 0 7px 22px rgba(214,31,68,0.6), 0 0 28px rgba(255,90,122,0.7); }
-.play-kart-btn      { background: linear-gradient(135deg, #ffa23f, #e76f51); box-shadow: 0 4px 18px rgba(231,111,81,0.45), 0 0 18px rgba(255,162,63,0.5); }
-.play-kart-btn:hover { box-shadow: 0 7px 22px rgba(231,111,81,0.6), 0 0 28px rgba(255,162,63,0.7); }
 .play-botsen-btn    { background: linear-gradient(135deg, #ff4d6d, #a8206a); box-shadow: 0 4px 18px rgba(168,32,106,0.45), 0 0 18px rgba(255,77,109,0.5); }
 .play-botsen-btn:hover { box-shadow: 0 7px 22px rgba(168,32,106,0.6), 0 0 28px rgba(255,77,109,0.7); }
 

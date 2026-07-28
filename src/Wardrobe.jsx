@@ -204,7 +204,7 @@ function applyItem(mesh, item, scene) {
 }
 
 // ── Component ─────────────────────────────────────────────────────
-export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlayKart, onPlayBotsen, onGoShop, unlockedColors = {} }) {
+export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlayBotsen, onGoShop, unlockedColors = {} }) {
   const canvasRef      = useRef(null)
   const sceneRef       = useRef(null)
   const skeletonRef    = useRef(null)
@@ -827,11 +827,8 @@ export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlay
               <button className="play3d-btn play-paintball-btn" onClick={onPlayPaintball}>
                 🎯 Paintball
               </button>
-              <button className="play3d-btn play-kart-btn" onClick={onPlayKart}>
-                🏎️ Racen
-              </button>
               <button className="play3d-btn play-botsen-btn" onClick={onPlayBotsen}>
-                💥 Botsen
+                🎈 Ballonnengevecht
               </button>
               <button className="play3d-btn wd-game-close" onClick={() => setShowGames(false)}>
                 ✕ Sluiten

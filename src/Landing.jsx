@@ -7,9 +7,8 @@ const GAMES = [
   { emoji: '🚀', label: 'Jetpack' },
   { emoji: '🌉', label: 'Brug Bouwen' },
   { emoji: '🏰', label: 'Tower Defense' },
-  { emoji: '🏎️', label: 'Racen' },
   { emoji: '🎯', label: 'Paintball' },
-  { emoji: '💥', label: 'Botsen' },
+  { emoji: '🎈', label: 'Ballonnengevecht' },
 ]
 
 const SUBJECTS = [

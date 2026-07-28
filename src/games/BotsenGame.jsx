@@ -1075,9 +1075,9 @@ export default function BotsenGame({ onBack }) {
     <div className="botsen-menu">
       <button className="botsen-exit" onClick={onBack}>← Kledingkast</button>
       <div className="botsen-menu-box">
-        <div className="botsen-menu-icon">💥</div>
-        <h1 className="botsen-menu-title">Botsen</h1>
-        <p className="botsen-menu-sub">Ballon-gevecht in de arena — laatste kart wint!</p>
+        <div className="botsen-menu-icon">🎈</div>
+        <h1 className="botsen-menu-title">Ballonnengevecht</h1>
+        <p className="botsen-menu-sub">Knal ballonnen in de arena — de laatste met ballonnen wint!</p>
         <button className="botsen-menu-btn online" onClick={() => setScreen('lobby')}>🌍 Online — knal ballonnen (of tegen bots)</button>
       </div>
     </div>
@@ -1111,7 +1111,7 @@ function BotsenLobby({ onBack, onJoined }) {
       <button className="botsen-exit" onClick={onBack}>← Terug</button>
       <div className="botsen-menu-box">
         <div className="botsen-menu-icon">🌍</div>
-        <h1 className="botsen-menu-title">Online botsen</h1>
+        <h1 className="botsen-menu-title">Online ballonnengevecht</h1>
         <div className="botsen-lobby-field">
           <label>Jouw naam</label>
           <input className="botsen-input" placeholder="Speler" value={name} maxLength={12} onChange={e => setName(e.target.value)} />

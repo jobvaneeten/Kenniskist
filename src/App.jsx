@@ -6,7 +6,6 @@ import GameMenu        from './GameMenu'
 import Weektaak        from './Weektaak'
 import RocketGame      from './games/RocketGame'
 import PaintballGame   from './games/PaintballGame'
-import KartGame        from './games/KartGame'
 import BotsenGame      from './games/BotsenGame'
 import { allUnlockedMap } from './itemsCatalog'
 import { COUNTRIES, DEFAULT_UNLOCKED } from './games/countries'
@@ -310,7 +309,6 @@ export default function App({ gast = false }) {
         onBack={goMenu}
         onPlayRocket={() => setScreen('rocket')}
         onPlayPaintball={() => setScreen('paintball')}
-        onPlayKart={() => setScreen('kart')}
         onPlayBotsen={() => setScreen('botsen')}
         onGoShop={() => setScreen('shop')}
         unlockedColors={unlockedColors}
@@ -320,10 +318,6 @@ export default function App({ gast = false }) {
 
   if (screen === 'rocket') return (
     <RocketGame onBack={() => setScreen('wardrobe')} />
-  )
-
-  if (screen === 'kart') return (
-    <KartGame onBack={() => setScreen('wardrobe')} />
   )
 
   if (screen === 'botsen') return (
@@ -405,7 +399,7 @@ export default function App({ gast = false }) {
           <div className="btn-text">
             <span className="btn-label">👗 Kledingkast</span>
             <span className="btn-desc">Pas je poppetje aan in 3D</span>
-            <span className="btn-examples">🏎️ Racen · 🎯 Paintball · 💥 Botsen · ⚽ Voetbal</span>
+            <span className="btn-examples">🎯 Paintball · 🎈 Ballonnengevecht · ⚽ Voetbal</span>
           </div>
           <span className="btn-arrow">→</span>
         </button>
