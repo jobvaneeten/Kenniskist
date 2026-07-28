@@ -3,7 +3,7 @@ import { createGame } from './hillclimb/GameEngine.js'
 import OrientationGate from '../OrientationGate'
 import './hillclimb/hillclimb.css'
 
-export default function HillClimbGame({ onBack }) {
+export default function HillClimbGame({ onBack, reward = false }) {
   const containerRef = useRef(null)
   const gameRef = useRef(null)
 
@@ -15,14 +15,14 @@ export default function HillClimbGame({ onBack }) {
 
   useEffect(() => {
     if (!containerRef.current || gameRef.current) return
-    gameRef.current = createGame(containerRef.current, { onBack })
+    gameRef.current = createGame(containerRef.current, { onBack, reward })
     return () => {
       if (gameRef.current) {
         try { gameRef.current.destroy(true) } catch { /* al opgeruimd */ }
         gameRef.current = null
       }
     }
-  }, [onBack])
+  }, [onBack, reward])
 
   return (
     <div className="hc-wrapper">

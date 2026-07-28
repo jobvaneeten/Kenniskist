@@ -10,7 +10,9 @@ import UIScene from './scenes/UIScene.js'
 const W = 1152
 const H = 648
 
-export function createGame(parent, { onBack }) {
+// `reward` = beloningsmodus: je speelt één potje tot je crasht en gaat daarna
+// automatisch terug naar de oefening (geen Opnieuw/Levels/Home-knoppen).
+export function createGame(parent, { onBack, reward = false }) {
   const config = {
     type: Phaser.AUTO,
     width: W,
@@ -36,6 +38,7 @@ export function createGame(parent, { onBack }) {
   }
 
   const game = new Phaser.Game(config)
+  game.registry.set('hcReward', !!reward)
   if (typeof window !== 'undefined') window.__hcGame = game
 
   game.events.on('back', () => {

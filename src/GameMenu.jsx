@@ -6,6 +6,8 @@ import JetpackGame from './games/JetpackGame'
 import HeadSoccer from './games/HeadSoccer'
 import AstroKatapultGame from './games/AstroKatapultGame'
 import SterrenstroompGame from './games/SterrenstroompGame'
+import DoodleSprongGame from './games/DoodleSprongGame'
+import DierEvolutieGame from './games/DierEvolutieGame'
 import BrugBouwen from './games/BrugBouwen'
 import ProcentenBreuken from './games/ProcentenBreuken'
 import VerhaaltjesSommen from './games/VerhaaltjesSommen'
@@ -70,6 +72,8 @@ const FREE_GAMES = [
   { key: 'jetpack',       emoji: '🚀', name: 'Jetpack',          desc: 'Vlieg zo ver mogelijk!' },
   { key: 'astrokatapult', emoji: '🪐', name: 'Astro Katapult',   desc: 'Lanceer & versla de aliens in 50 levels!' },
   { key: 'sterrenstroom', emoji: '🛸', name: 'Spacerunner',     desc: 'Ontwijk de asteroïden in de ruimte!' },
+  { key: 'doodlesprong',  emoji: '🦘', name: 'Doodle Sprong',   desc: 'Spring zo hoog mogelijk en shop nieuwe personages!' },
+  { key: 'evolutie',      emoji: '🐨', name: 'Dier Evolutie',   desc: 'Voeg dieren samen en ontdek 24 evoluties per soort!' },
   { key: 'brug',          emoji: '🌉', name: 'Brug Bouwen',     desc: 'Bouw bruggen in 22 levels — hout, weg, metaal & touw!' },
   { key: 'hillclimb',     emoji: '🚗', name: 'Bergrijden',      desc: 'Race over heuvels, verzamel munten en upgrade je auto!' },
 ]
@@ -140,6 +144,14 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
 
   if (directGame === 'sterrenstroom') {
     return <SterrenstroompGame onBack={onBack} />
+  }
+
+  if (directGame === 'doodlesprong') {
+    return <DoodleSprongGame onBack={onBack} />
+  }
+
+  if (directGame === 'evolutie') {
+    return <DierEvolutieGame onBack={onBack} />
   }
 
   if (directGame === 'brug') {

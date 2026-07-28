@@ -109,6 +109,16 @@ export default class UIScene extends Phaser.Scene {
       fontSize: '18px', fontFamily: 'Arial Black', color: '#ffd23f',
     }).setOrigin(0.5).setDepth(61)
 
+    // Beloningsmodus: één potje tot je crasht. Even je score laten lezen en dan
+    // terug naar de oefening — geen Opnieuw-knop, anders speel je eindeloos door.
+    if (this.registry.get('hcReward')) {
+      this.add.text(W / 2, H / 2 + 46, 'Je gaat automatisch verder met oefenen…', {
+        fontSize: '17px', fontFamily: 'Arial', color: '#cfd6e6',
+      }).setOrigin(0.5).setDepth(61)
+      this.time.delayedCall(2600, () => { this.game.events.emit('back') })
+      return
+    }
+
     // Belangrijk: HCGame expliciet stoppen bij Levels/Home. Bij "Opnieuw"
     // valt dit niet op (start('HCGame',…) vervangt de actieve HCGame vanzelf),
     // maar zonder dit bleef HCGame op de achtergrond doorrenderen en het

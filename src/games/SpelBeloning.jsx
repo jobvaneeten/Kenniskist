@@ -1,23 +1,62 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import FootballGame from './FootballGame'
 import HeadSoccer from './HeadSoccer'
 import TowerDefenseGame from './TowerDefenseGame'
 import BrugBouwen from './BrugBouwen'
+import HillClimbGame from './HillClimbGame'
 import './spel-beloning.css'
 
-// ── Gedeeld beloning-systeem: na 5 goede antwoorden mag je 1 van de 6 games
+// ── Gedeeld beloning-systeem: na 5 goede antwoorden mag je één van de games
 // spelen (in "reward-modus": één potje/ronde/level, dan automatisch terug).
 // Wordt overal gebruikt (sommen, woorden, begrijpend lezen, spelling, …).
 
-function IframeEmbed({ src, title, doneType, hint, onDone }) {
+// `seconds` zet een aftelklok: spellen zonder duidelijk einde (zoals het
+// idle-spel Dier Evolutie) gaan daarmee na de afgesproken tijd vanzelf terug
+// naar de oefening.
+function IframeEmbed({ src, title, doneType, hint, onDone, seconds }) {
+  const [over, setOver] = useState(seconds ?? null)
+  const doneRef = useRef(false)
+  const finish = useRef(onDone)
+  finish.current = onDone
+
   useEffect(() => {
-    const h = (e) => { if (e.data?.type === doneType) setTimeout(onDone, 1800) }
+    const h = (e) => {
+      if (e.data?.type === doneType && !doneRef.current) {
+        doneRef.current = true
+        setTimeout(() => finish.current?.(), 1800)
+      }
+    }
     window.addEventListener('message', h)
     return () => window.removeEventListener('message', h)
-  }, [onDone, doneType])
+  }, [doneType])
+
+  useEffect(() => {
+    if (!seconds) return
+    const id = setInterval(() => {
+      setOver(s => {
+        if (s <= 1) {
+          clearInterval(id)
+          if (!doneRef.current) { doneRef.current = true; setTimeout(() => finish.current?.(), 900) }
+          return 0
+        }
+        return s - 1
+      })
+    }, 1000)
+    return () => clearInterval(id)
+  }, [seconds])
+
+  const mmss = over == null ? null
+    : `${Math.floor(over / 60)}:${String(over % 60).padStart(2, '0')}`
+  const urgent = over != null && over <= 10
+
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: '#000', display: 'flex', flexDirection: 'column' }}>
       <button className="sb-game-back" onClick={onDone}>← Klaar</button>
+      {mmss && (
+        <div className={`sb-timer${urgent ? ' sb-timer-urgent' : ''}`}>
+          ⏱ {over === 0 ? 'Tijd voorbij!' : mmss}
+        </div>
+      )}
       <iframe src={src} title={title} allow="autoplay" style={{ flex: 1, border: 'none' }} />
       <div style={{ textAlign: 'center', color: '#aaa', padding: '8px', fontSize: '0.85rem' }}>{hint}</div>
     </div>
@@ -30,8 +69,11 @@ const SPELLEN = [
   { key: 'jetpack',    emoji: '🚀', name: 'Jetpack',        desc: 'Vlieg zo ver mogelijk!',           img: '/scenes/games/jetpack.png' },
   { key: 'astro',      emoji: '🪐', name: 'Astro Katapult', desc: 'Speel 1 level',                    img: '/scenes/games/astrokatapult.png' },
   { key: 'space',      emoji: '🛸', name: 'Spacerunner',    desc: 'Vlieg door de ruimte!',            img: '/scenes/games/sterrenstroom.png' },
+  { key: 'doodle',     emoji: '🦘', name: 'Doodle Sprong',  desc: 'Spring zo hoog mogelijk!',          img: '/scenes/games/doodlesprong.png' },
+  { key: 'evolutie',   emoji: '🐨', name: 'Dier Evolutie',  desc: 'Voeg dieren samen',                 img: '/scenes/games/evolutie.png' },
   { key: 'tower',      emoji: '🏰', name: 'Tower Defense',  desc: 'Verdedig je toren!',               img: '/scenes/games/towerdefense.png' },
   { key: 'brug',       emoji: '🌉', name: 'Brug Bouwen',    desc: 'Bouw 3 bruggen',                   img: '/scenes/games/brug.png' },
+  { key: 'hillclimb',  emoji: '🚗', name: 'Bergrijden',     desc: 'Rij tot je crasht',                img: '/scenes/games/hillclimb.png' },
 ]
 
 export default function SpelBeloning({ title, sub, geld, addCuruntie, onDone }) {
@@ -46,8 +88,13 @@ export default function SpelBeloning({ title, sub, geld, addCuruntie, onDone }) 
   if (picked === 'jetpack')    return <IframeEmbed src="/jetpack/index.html" title="Jetpack" doneType="jetpack-gameover" hint="Je gaat automatisch verder na het spel ✈️" onDone={onDone} />
   if (picked === 'astro')      return <IframeEmbed src="/astrokatapult/?reward=1" title="Astro Katapult" doneType="astrokatapult-leveldone" hint="Speel 1 level — daarna ga je verder 🪐" onDone={onDone} />
   if (picked === 'space')      return <IframeEmbed src="/sterrenstroom/" title="Spacerunner" doneType="spacerunner-gameover" hint="Je gaat automatisch verder na het spel 🛸" onDone={onDone} />
+  if (picked === 'doodle')     return <IframeEmbed src="/doodlesprong/" title="Doodle Sprong" doneType="doodlesprong-gameover" hint="Je gaat automatisch verder na het spel 🦘" onDone={onDone} />
+  // Evolutie is een idle-spel zonder eigen 'potje', dus hier bepaalt de klok het
+  // einde: 1 minuut spelen en dan automatisch terug naar de oefening.
+  if (picked === 'evolutie')   return <IframeEmbed src="/evolutie/" title="Dier Evolutie" doneType="evolutie-klaar" seconds={60} hint="Tik op de dieren en raap poep — na 1 minuut ga je verder 🐨" onDone={onDone} />
   if (picked === 'tower')      return wrap(<TowerDefenseGame onBack={onDone} />)
   if (picked === 'brug')       return wrap(<BrugBouwen reward onBack={onDone} />)
+  if (picked === 'hillclimb')  return wrap(<HillClimbGame reward onBack={onDone} />)
 
   return (
     <div className="sb-screen">

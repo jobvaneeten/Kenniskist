@@ -109,6 +109,33 @@
   font-family: inherit;
 }
 
+/* ── Aftelklok voor spellen zonder eigen einde (Dier Evolutie) ── */
+.sb-timer {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 200;
+  background: rgba(0,0,0,0.78);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.28);
+  border-radius: 10px;
+  padding: 7px 15px;
+  font-size: 15px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  font-family: inherit;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.5);
+}
+.sb-timer-urgent {
+  border-color: rgba(255,110,90,0.85);
+  color: #ffd9d2;
+  animation: sb-timer-pulse 1s ease-in-out infinite;
+}
+@keyframes sb-timer-pulse {
+  50% { background: rgba(150,30,20,0.85); transform: scale(1.06); }
+}
+
 /* ── Spel-thumbnails (pixel-art scenes) ── */
 .sb-img {
   display: block;

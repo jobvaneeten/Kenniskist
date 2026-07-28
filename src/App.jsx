@@ -25,6 +25,8 @@ const UNLOCK_RB_CODE = 'teun'           // ontgrendelt het RB Shirt
 const UNLOCK_GROEP7_CODE = 'groep7'     // ontgrendelt de klas als Supervoetbal-spelers
 const UNLOCK_TEACHERS_CODE = 'pabo1'    // ontgrendelt Meester Job & Meester Luuk als speelbare Groep 7-spelers
 const UNLOCK_HILLCLIMB_CODE = 'auto1'   // ontgrendelt alle Bergrijden-auto's
+const EVO_CODE = 'pieter'               // 100.000 miljoen blaadjes in Dier Evolutie
+const EVO_BONUS = 1e11
 const ESCAPE_CODE = 'vrijdag'           // opent de GLITCH-escaperoom
 
 function fmt(n) { return n.toLocaleString('nl-NL') }
@@ -46,7 +48,7 @@ function CurrencyBadge({ munten, briefgeld, hideMunten }) {
   )
 }
 
-function CodeModal({ onClose, onRedeem, onRedeemBrief, onUnlockAll, onUnlockCountries, onUnlockSomalia, onUnlockTara, onUnlockNina, onUnlockPim, onUnlockVinn, onUnlockRb, onUnlockGroep7, onUnlockTeachers, onUnlockHillclimb, onEscape, usedCodes }) {
+function CodeModal({ onClose, onRedeem, onRedeemBrief, onUnlockAll, onUnlockCountries, onUnlockSomalia, onUnlockTara, onUnlockNina, onUnlockPim, onUnlockVinn, onUnlockRb, onUnlockGroep7, onUnlockTeachers, onUnlockHillclimb, onUnlockEvo, onEscape, usedCodes }) {
   const [code, setCode] = useState('')
   const [msg,  setMsg]  = useState(null)
   const [ok,   setOk]   = useState(false)
@@ -98,6 +100,10 @@ function CodeModal({ onClose, onRedeem, onRedeemBrief, onUnlockAll, onUnlockCoun
     } else if (key === UNLOCK_HILLCLIMB_CODE) {
       onUnlockHillclimb()
       setMsg("🚗 Alle Bergrijden-auto's ontgrendeld!")
+      setOk(true)
+    } else if (key === EVO_CODE) {
+      onUnlockEvo()
+      setMsg('🐨 100.000 miljoen blaadjes + alle 24 dieren van je huidige soort!')
       setOk(true)
     } else if (BRIEF_CODES[key] !== undefined) {
       if (usedCodes.includes(key)) {
@@ -255,6 +261,24 @@ export default function App({ gast = false }) {
       'jeep', 'quad', 'motor', 'tractor', 'raceauto',
       'politie', 'monstertruck', 'brandweer', 'schoolbus', 'maanbuggy',
     ]))
+  }
+
+  // "pieter" code → blaadjes in Dier Evolutie (eigen munt in kk_evo_state) plus
+  // alle 24 evoluties van de soort waar je nu in zit. Werkt ook als het spel nog
+  // nooit geopend is: dan zetten we een geldige beginstand neer.
+  const EVO_MAXLV = 24   // moet gelijk blijven aan THEMES.length in public/evolutie
+  const unlockEvoGeld = () => {
+    let s = null
+    try { s = JSON.parse(localStorage.getItem('kk_evo_state') || 'null') } catch { s = null }
+    if (!s || !Array.isArray(s.animals)) {
+      s = { sp: 0, money: 0, bought: 0, up: {}, seen: [[], [], []], mult: 1,
+            last: Date.now(), helped: false, animals: [], poop: [] }
+    }
+    if (!Array.isArray(s.seen) || s.seen.length !== 3) s.seen = [[], [], []]
+    const sp = Math.min(2, Math.max(0, s.sp | 0))
+    s.seen[sp] = Array.from({ length: EVO_MAXLV }, (_, i) => i + 1)
+    s.money = (Number(s.money) || 0) + EVO_BONUS
+    localStorage.setItem('kk_evo_state', JSON.stringify(s))
   }
 
   // Re-read the wallet from localStorage (games update it directly) so the
@@ -423,6 +447,7 @@ export default function App({ gast = false }) {
           onUnlockGroep7={unlockGroep7}
           onUnlockTeachers={unlockTeachers}
           onUnlockHillclimb={unlockHillclimbAutos}
+          onUnlockEvo={unlockEvoGeld}
           onEscape={() => { setShowCode(false); setScreen('escaperoom') }}
           usedCodes={usedCodes}
         />
