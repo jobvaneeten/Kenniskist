@@ -119,6 +119,34 @@ function platformWalls(q) {
     { x: innerX, z: q.z + flankOff, hw: 0.4, hd: flankLen / 2 },
   ]
 }
+// Zijwanden van de vier bruggen, exact onder de zichtbare leuningen. Deze
+// gelden alléén als je bovenop rijdt — op de grond moet je er juist onderdoor
+// kunnen. Zonder deze wanden kon je zijwaarts van een brug af rijden terwijl
+// er wel een leuning stond.
+function bridgeWalls() {
+  const hc = CORRIDOR / 2, hb = BRIDGE_W / 2
+  const bruggen = [
+    { x: 0, z: -OFF, horizontaal: true }, { x: 0, z: OFF, horizontaal: true },
+    { x: -OFF, z: 0, horizontaal: false }, { x: OFF, z: 0, horizontaal: false },
+  ]
+  return bruggen.flatMap(b => b.horizontaal
+    ? [{ x: b.x, z: b.z - hb, hw: hc, hd: 0.35 }, { x: b.x, z: b.z + hb, hw: hc, hd: 0.35 }]
+    : [{ x: b.x - hb, z: b.z, hw: 0.35, hd: hc }, { x: b.x + hb, z: b.z, hw: 0.35, hd: hc }])
+}
+// Massieve voetafdruk per platform. Vanaf de grond gezien is een platform een
+// dicht blok; de randen-met-openingen uit platformWalls() gelden pas als je
+// erbovenop staat. Zonder dit reed je via een brug-opening zo de voetafdruk
+// binnen en stond je middenin de pilaar.
+function platformFootprints() {
+  const hp = PLAT_SIZE / 2
+  return QUADRANTS.map(q => ({ x: q.x, z: q.z, hw: hp, hd: hp }))
+}
+// Vanaf deze hoogte gelden de wanden van het bovendek i.p.v. die van de grond.
+// Ruim onder PLAT_H, zodat je bovenaan de helling al op de dek-regels zit: pal
+// voor de platformrand duwde de voetafdruk je anders elke frame een halve
+// meter terug de helling af.
+const DEK_Y = PLAT_H - 1.2
+
 const ITEM_INFO = {
   schild:  { emoji: '🛡️', label: 'Schild' },
   bom:     { emoji: '💣', label: 'Bom' },
@@ -514,8 +542,14 @@ function buildArena(scene, sg) {
 
   buildClouds(scene)
 
-  const platWalls = QUADRANTS.flatMap(platformWalls)
-  return { boxes: boxes.concat(invisWalls, platWalls) }
+  // Twee botsingssets: welke geldt hangt af van je hoogte. Op de grond zijn de
+  // platforms dichte blokken en bestaan de bruggen niet; op het bovendek gelden
+  // de platformranden (met hun openingen) plus de brugleuningen.
+  const gemeen = boxes.concat(invisWalls)
+  return {
+    boxesGrond: gemeen.concat(platformFootprints()),
+    boxesBoven: gemeen.concat(QUADRANTS.flatMap(platformWalls), bridgeWalls()),
+  }
 }
 
 // Cirkel-vs-AABB botsing: duwt een punt (met straal r) uit een blok.
@@ -854,8 +888,11 @@ function BotsenMatch({ onBack, room, sessionId, joinCode, myNameProp, myColorPro
         const fwd = new Vector3(Math.sin(phys.heading), 0, Math.cos(phys.heading))
         outer.position.addInPlace(fwd.scale(phys.vel * dt))
 
-        // Arena-grenzen + obstakels
-        collideBoxes(outer.position, CAR_RADIUS, arena.boxes)
+        // Arena-grenzen + obstakels. Welke wanden gelden hangt af van je
+        // hoogte: op de grond zijn de platforms dicht en bestaan de bruggen
+        // niet, op het dek gelden de randen en de brugleuningen.
+        const opDek = outer.position.y > DEK_Y
+        collideBoxes(outer.position, CAR_RADIUS, opDek ? arena.boxesBoven : arena.boxesGrond)
         // Alleen omhoog via een helling (zie clampHeightStep), zo kun je onder
         // een brug door rijden i.p.v. dat je er per ongeluk op glitcht. Stijgen
         // gebeurt direct (de helling zelf is al geleidelijk — extra smoothing
