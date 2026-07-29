@@ -1,6 +1,6 @@
 import Phaser from 'phaser'
 import { MAPS, TILE_SIZE, MAP_COLS, MAP_ROWS, isBuildableFor } from '../data/MapData.js'
-import { TOWERS, TOWER_ORDER } from '../data/TowerData.js'
+import { TOWERS } from '../data/TowerData.js'
 import { ENEMIES, LAYERS } from '../data/EnemyData.js'
 import { WAVES } from '../data/WaveData.js'
 

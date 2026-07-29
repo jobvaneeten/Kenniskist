@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import FootballGame from './FootballGame'
 import TowerDefenseGame from './TowerDefenseGame'
-import { BeloningKeuze, JetpackBeloning, AstroBeloning, SpacerunnerBeloning, BRIEFGELD } from './Beloning'
+import { JetpackBeloning, AstroBeloning, SpacerunnerBeloning, BRIEFGELD } from './Beloning'
 import SpelBeloning from './SpelBeloning'
 import './tafels-oefenen.css'
 
@@ -288,12 +288,6 @@ export default function TafelsOefenen({ groep, onBack, addBriefgeld, addCuruntie
     setResultaten(res)
     setFase('overzicht')
   }, [])
-
-  const kiesBeloning = (key) => {
-    if (key === 'towerdefense') setTdStarted(true)
-    if (key === 'astrokatapult') { addBriefgeld?.(BRIEFGELD); setVerdiend(v => v + BRIEFGELD) }
-    setFase(key)
-  }
 
   const voetbalKlaar = useCallback((won, nextBracket, played) => {
     setFootballBracket(nextBracket || null)

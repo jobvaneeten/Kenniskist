@@ -4,7 +4,7 @@ import {
   Engine, Scene, FreeCamera,
   Color3, Color4, Vector3, Quaternion, Ray,
   HemisphericLight, DirectionalLight, ShadowGenerator,
-  MeshBuilder, StandardMaterial, PBRMaterial, DynamicTexture, Texture,
+  MeshBuilder, StandardMaterial, PBRMaterial, DynamicTexture,
   DefaultRenderingPipeline, ParticleSystem, VertexBuffer,
 } from '@babylonjs/core'
 import { SceneLoader } from '@babylonjs/core/Loading/sceneLoader'
@@ -41,58 +41,8 @@ const MAPS = {
     // de HDRI in — dat gaf een bruine plas in plaats van een vloer.
     tex: { ground: SET.asfalt, stone: SET.muur, scale: 12, brickSize: 1.5 } },
 }
-const PLAYER_RADIUS  = 0.6
 const PLAYER_SPEED   = 5.2
-const PROJ_RADIUS    = 0.18
-const MATCH_TIME     = 120
-const STEP_UP = 0.3
-// Collision boxes from public/map.glb — MUST match the server OBSTACLES list.
-const OBSTACLES = [
-  { x: 0, z: -42.6, hw: 4.1, hd: 2.7, top: 3 },
-  { x: -9.1, z: 37.7, hw: 1.3, hd: 1.3, top: 2.8 },
-  { x: 13.6, z: -33.3, hw: 7.9, hd: 5.2, top: 6.4 },
-  { x: 0, z: 24.4, hw: 1.7, hd: 1.7, top: 3.5 },
-  { x: -18.6, z: 24.4, hw: 1.7, hd: 2.7, top: 3.6 },
-  { x: 18.6, z: -24.4, hw: 1.7, hd: 2.7, top: 3.6 },
-  { x: 18.6, z: 0, hw: 0.8, hd: 18.9, top: 3.7 },
-  { x: -5.8, z: -30, hw: 3.2, hd: 0.8, top: 2.8 },
-  { x: -4.1, z: 30, hw: 2.4, hd: 0.8, top: 2.8 },
-  { x: 7, z: 30, hw: 3.2, hd: 0.8, top: 2.8 },
-  { x: 4.1, z: -30, hw: 2.4, hd: 0.8, top: 2.8 },
-  { x: 20.6, z: -16.3, hw: 1.3, hd: 1.3, top: 2.8 },
-  { x: -20.6, z: 16.3, hw: 1.3, hd: 1.3, top: 2.8 },
-  { x: -23.6, z: -16.3, hw: 1.3, hd: 1.3, top: 2.8 },
-  { x: 23.6, z: 16.3, hw: 1.3, hd: 1.3, top: 2.8 },
-  { x: 0, z: 0, hw: 13.6, hd: 8.1, top: 5.2 },
-  { x: -6.3, z: -4.3, hw: 1, hd: 1, top: 2.7 },
-  { x: 0, z: 42.6, hw: 4.1, hd: 2.7, top: 3 },
-  { x: 0, z: -24.4, hw: 1.7, hd: 1.7, top: 3.5 },
-  { x: 6.3, z: 4.3, hw: 1, hd: 1, top: 2.7 },
-  { x: 9.1, z: -37.7, hw: 1.3, hd: 1.3, top: 2.8 },
-  { x: -13.6, z: 33.3, hw: 7.9, hd: 5.2, top: 6.4 },
-  { x: -14, z: -30, hw: 5, hd: 2, top: 4.5 },
-  { x: 14.5, z: 30, hw: 5, hd: 2, top: 4.5 },
-  { x: -18.6, z: 0, hw: 0.8, hd: 18.9, top: 3.7 },
-]
 const TEAM_HEX = ['#e63946', '#1d6fd0']   // 0 rood, 1 blauw
-
-function resolvePos(cx, cz, rad, feetY = 0) {
-  const lx = ARENA_X - rad, lz = ARENA_Z - rad
-  let x = Math.max(-lx, Math.min(lx, cx))
-  let z = Math.max(-lz, Math.min(lz, cz))
-  for (const o of OBSTACLES) {
-    if (o.top <= feetY + 0.15) continue   // standing on/above it → no wall
-    const minx = o.x - o.hw - rad, maxx = o.x + o.hw + rad
-    const minz = o.z - o.hd - rad, maxz = o.z + o.hd + rad
-    if (x > minx && x < maxx && z > minz && z < maxz) {
-      const dl = x - minx, dr = maxx - x, dt = z - minz, db = maxz - z
-      const m = Math.min(dl, dr, dt, db)
-      if (m === dl) x = minx; else if (m === dr) x = maxx
-      else if (m === dt) z = minz; else z = maxz
-    }
-  }
-  return { x, z }
-}
 
 const RETARGET_BONES = new Set([
   'Root','Hips','Spine','Spine1','Neck','Head',

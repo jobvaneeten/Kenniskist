@@ -79,7 +79,7 @@ function fmtPct(p) {
   return p < 1 ? p.toFixed(1).replace('.', ',') : String(Math.round(p))
 }
 
-export default function Shop({ curuntie, briefgeld, addBriefgeld, onExchange, unlockedColors, onUnlock, onBack }) {
+export default function Shop({ briefgeld, addBriefgeld, unlockedColors, onUnlock, onBack }) {
   const [overlay,   setOverlay]   = useState(null)
   const [boxState,  setBoxState]  = useState('idle')
   const [reelCards, setReelCards] = useState([])

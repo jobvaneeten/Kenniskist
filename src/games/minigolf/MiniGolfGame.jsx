@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { createMiniGolf, scoreName } from './GameEngine.js'
+import { createMiniGolf } from './GameEngine.js'
 import { HOLES } from './data/CourseData.js'
 import './minigolf.css'
 

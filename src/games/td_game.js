@@ -1,10 +1,8 @@
 // ── Tower Defense PixiJS game engine helpers ───────────────────────────
 import * as PIXI from 'pixi.js'
 import Matter from 'matter-js'
-import { gsap } from 'gsap'
 import {
-  TOWERS, TOWER_MAP, LVL_DMG, LVL_RATE, LVL_RANGE,
-  upgradeCost, ENEMY_TYPES, generateWave
+  TOWER_MAP, LVL_DMG, LVL_RATE, LVL_RANGE, ENEMY_TYPES,
 } from './td_data'
 import { drawAnimal } from './td_sprites'
 

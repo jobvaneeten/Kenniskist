@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import FootballGame from './FootballGame'
 import TowerDefenseGame from './TowerDefenseGame'
-import { shuffleOefeningen, shuffleGefilterd, checkAntwoord, uitlegVoor, tokeniseerZin, onderwerpIndices } from './werkwoorden'
-import { BeloningKeuze, JetpackBeloning, AstroBeloning, SpacerunnerBeloning, BRIEFGELD } from './Beloning'
+import { shuffleGefilterd, checkAntwoord, uitlegVoor, tokeniseerZin, onderwerpIndices } from './werkwoorden'
+import { JetpackBeloning, AstroBeloning, SpacerunnerBeloning, BRIEFGELD } from './Beloning'
 import SpelBeloning from './SpelBeloning'
 import './werkwoord-spelling.css'
 
@@ -456,12 +456,6 @@ export default function WerkwoordSpelling({ groep, onBack, addBriefgeld, aantal,
   }
 
   const totaalGoed = CATEGORIEEN.reduce((sum, c) => sum + stats[c.key].goed, 0)
-
-  const kiesBeloning = (key) => {
-    if (key === 'towerdefense') setTdStarted(true)
-    if (key === 'astrokatapult') { addBriefgeld?.(beloning); setVerdiend(v => v + beloning) }
-    setPhase(key)
-  }
 
   // ── Niet-persistente spellen (volledig unmounten na gebruik) ──
   if (phase === 'football') {

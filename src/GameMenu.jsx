@@ -98,7 +98,6 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
   const [spellingKeuze, setSpellingKeuze] = useState(null)   // null | 'werkwoord' | 'dictee'
   const [taSoonBlok,    setTaSoonBlok]    = useState(null)   // blok-nr met "komt binnenkort"
   const [dicteeNr,      setDicteeNr]      = useState(8)      // gekozen dictee-blok (7 of 8)
-  const [taalActive,    setTaalActive]    = useState(false)
 
   // Leeg/undefined = geen beperking (gast, leerkracht-weergave, klas zonder groepen)
   const zichtbareJaren = toegestaneGroepen?.length ? YEARS.filter(y => toegestaneGroepen.includes(y.num)) : YEARS
@@ -225,7 +224,7 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
     if (GAMES[gameId] === 'taal') {
       return (
         <TaalOefenen
-          onBack={() => { setTaalActive(false); setSubject(null) }}
+          onBack={() => setSubject(null)}
           addBriefgeld={addBriefgeld}
           addCuruntie={addCuruntie}
         />

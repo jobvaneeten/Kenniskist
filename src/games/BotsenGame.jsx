@@ -13,7 +13,7 @@ import { SET, nachtOmgeving, glowLaag, nachtLucht, pbrMat, neonMat, gelaktMat } 
 import './botsen-game.css'
 
 // ═══════════════════════════════════════════════════════════════════════
-//  BOTSEN — eigen ballon-gevecht-modus (los van Racen), zelfde kart +
+//  BALLONNENGEVECHT (intern "botsen", moet matchen met de server) — kart +
 //  poppetje + besturing, maar in een kleine gesloten arena i.p.v. een baan.
 //  Elke kart heeft 3 ballonnen; geraakt worden door een schild-projectiel
 //  laat er één knappen. Bij 0 ballonnen lig je eruit. Laatste kart wint.
@@ -55,8 +55,8 @@ const OBSTACLES = [
   { x: DIAG, z: DIAG, w: 6, d: 6, color: '#ff6b9d' },
 ]
 const BALLOON_COLORS = ['#ff4d6d', '#ffd23f', '#4dd2ff']
-// Item-boxen: één op elk platform (MOET kloppen met de server BotsenRoom.ts).
-const BOX_SPOTS = QUADRANTS.map(q => ({ x: q.x, z: q.z }))
+// (De item-boxen staan op elk platformmidden; de server stuurt hun posities
+// mee in de state, dus de client heeft er geen eigen lijst van nodig.)
 
 // Hoogte van de grond op (x,z). De vier platforms liggen op PLAT_H. De vier
 // bruggen ertussen zijn SMALLER dan de volledige opening (BRIDGE_W < CORRIDOR)
@@ -301,7 +301,6 @@ function makeExplosion(scene, x, y, z, radius, fireTex) {
 }
 function stepExplosion(ex, dt) {
   ex.t += dt
-  const p = Math.min(1, ex.t / ex.dur)
   ex.rings.forEach(r => {
     const rp = Math.min(1, Math.max(0, (ex.t - r.delay) / (ex.dur - r.delay)))
     const d = 0.6 + rp * (ex.radius * 2 - 0.6)
@@ -472,7 +471,7 @@ function buildArena(scene, sg) {
   //    zien is dat je aan weerszijden op de grond eronderdoor kunt rijden ──
   const bridgeMat = pbrMat(scene, 'bbridgeMat', SET.plaat, { uv: 3, tint: '#8d97a6', ruw: 0.4, metaal: 1 })
   const bridgeRailMat = gelaktMat(scene, 'bbridgeRailMat', '#4a5162', { ruw: 0.4 })
-  const hc = CORRIDOR / 2, hb = BRIDGE_W / 2
+  const hb = BRIDGE_W / 2
   const BRIDGES = [
     { x: 0, z: -OFF, horizontal: true }, { x: 0, z: OFF, horizontal: true },
     { x: -OFF, z: 0, horizontal: false }, { x: OFF, z: 0, horizontal: false },
@@ -589,7 +588,6 @@ function BotsenMatch({ onBack, room, sessionId, joinCode, myNameProp, myColorPro
   const [heldCount, setHeldCount] = useState(0)
   const [winnerName, setWinnerName] = useState('')
   const [players, setPlayers] = useState([])
-  const [botDiff, setBotDiff] = useState('normaal')
   const stateRef = useRef({})
   const useItemRef = useRef(() => {})
 
@@ -1028,7 +1026,7 @@ function BotsenMatch({ onBack, room, sessionId, joinCode, myNameProp, myColorPro
             {players.map(p => <li key={p.sid} className={p.me ? 'me' : ''}>{p.me ? '⭐ ' : (p.bot ? '🤖 ' : '💥 ')}{p.name}</li>)}
           </ul>
           <div className="botsen-bot-row">
-            <button className="botsen-bot-btn" onClick={() => room.send('addBot', botDiff)}>🤖 Bot erbij</button>
+            <button className="botsen-bot-btn" onClick={() => room.send('addBot')}>🤖 Bot erbij</button>
             <button className="botsen-bot-btn" onClick={() => room.send('removeBot')}>➖ Bot eraf</button>
           </div>
           <button className="botsen-start-btn" onClick={startMatch}>Start! ({players.length})</button>

@@ -1,26 +1,34 @@
 import { useState } from 'react'
 import './landing.css'
 
+// Moet kloppen met FREE_GAMES in GameMenu.jsx plus de drie 3D-spellen die je
+// vanuit de Kledingkast start (Voetbal, Paintball, Ballonnengevecht).
 const GAMES = [
   { emoji: '⚽', label: 'Voetbal' },
   { emoji: '🥅', label: 'Supervoetbal' },
   { emoji: '🚀', label: 'Jetpack' },
+  { emoji: '🪐', label: 'Astro Katapult' },
+  { emoji: '🛸', label: 'Spacerunner' },
+  { emoji: '🦘', label: 'Doodle Sprong' },
+  { emoji: '🐨', label: 'Dier Evolutie' },
   { emoji: '🌉', label: 'Brug Bouwen' },
   { emoji: '🏰', label: 'Tower Defense' },
+  { emoji: '🚗', label: 'Bergrijden' },
   { emoji: '🎯', label: 'Paintball' },
   { emoji: '🎈', label: 'Ballonnengevecht' },
 ]
 
+// Moet kloppen met VAKKEN in src/lib/tools.js en MODES in GameMenu.jsx.
 const SUBJECTS = [
   { emoji: '🔢', label: 'Rekenen' },
   { emoji: '✏️', label: 'Taal & Spelling' },
   { emoji: '📚', label: 'Begrijpend lezen' },
-  { emoji: '🌍', label: 'Wereldoriëntatie' },
+  { emoji: '🇬🇧', label: 'Engels' },
 ]
 
 const STATS = [
-  { value: '8+',    label: 'minigames' },
-  { value: '240+',  label: 'items te winnen' },
+  { value: '13',    label: 'minigames' },
+  { value: '300+',  label: 'items te winnen' },
   { value: '4',     label: 'vakgebieden' },
   { value: '4–8',   label: 'voor groep' },
 ]
@@ -64,7 +72,7 @@ const AUDIENCE = [
 const VOOR_LEERKRACHTEN = [
   {
     title: '📚 Welke vaardigheden komen aan bod?',
-    body: 'Rekenen (sommen, tafels), taal & spelling (dictees, werkwoordspelling), begrijpend lezen, en wereldoriëntatie via verschillende minigames en thema\'s. Nieuwe oefeningen en spellen worden regelmatig toegevoegd.',
+    body: 'Rekenen (sommen, tafels), taal & spelling (dictees, werkwoordspelling), begrijpend lezen en Engels, via verschillende minigames en thema\'s. Nieuwe oefeningen en spellen worden regelmatig toegevoegd.',
   },
   {
     title: '🕹️ Hoe motiveert het spelen?',

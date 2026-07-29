@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { WOORDSOORTEN, ZINSDELEN, VRAGEN } from './taalData.js'
 import SpelBeloning from './SpelBeloning'
 import { useGebruikOpdracht } from './gebruikOpdracht.js'

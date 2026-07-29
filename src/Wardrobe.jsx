@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import {
   Engine, Scene, ArcRotateCamera,
   HemisphericLight, DirectionalLight, SpotLight,
-  Vector3, Color3, Color4, Texture, Plane,
-  MeshBuilder, StandardMaterial, Quaternion, Mesh,
+  Vector3, Color3, Color4, Plane,
+  MeshBuilder, StandardMaterial, Quaternion,
   MirrorTexture, TransformNode,
 } from '@babylonjs/core'
 import { SceneLoader } from '@babylonjs/core/Loading/sceneLoader'
@@ -131,77 +131,6 @@ function SwatchTile({ item, slot, active, isNew, bursting, onClick }) {
   )
 }
 
-// ── Remap shirt bone indices to match Poppetje's skeleton ─────────
-function remapAndAttach(mesh, srcSkel, dstSkel) {
-  const dstMap = {}
-  dstSkel.bones.forEach((b, i) => { dstMap[b.name] = i })
-  const remap = srcSkel.bones.map(b => dstMap[b.name] ?? 0)
-  ;['matricesIndices', 'matricesIndicesExtra'].forEach(kind => {
-    const data = mesh.getVerticesData(kind)
-    if (!data) return
-    const out = new Float32Array(data.length)
-    for (let i = 0; i < data.length; i++) {
-      const idx = Math.round(data[i])
-      out[i] = (idx >= 0 && idx < remap.length) ? remap[idx] : 0
-    }
-    mesh.updateVerticesData(kind, out)
-  })
-  mesh.skeleton = dstSkel
-}
-
-// ── Material helpers ──────────────────────────────────────────────
-function walkMeshes(node, fn) {
-  fn(node)
-  ;(node.getChildMeshes ? node.getChildMeshes(false) : []).forEach(fn)
-}
-
-function applyColor(mesh, hex) {
-  const col = Color3.FromHexString(hex)
-  walkMeshes(mesh, m => {
-    if (!m.material) return
-    const mat = m.material.clone(m.material.name + '_col')
-    m.material = mat
-    if (mat.albedoColor !== undefined) {
-      mat.albedoTexture = null
-      mat.albedoColor   = col
-      mat.metallic      = 0
-      mat.roughness     = 0.8
-      mat.unlit         = false
-    } else if (mat.diffuseColor !== undefined) {
-      mat.diffuseTexture = null
-      mat.diffuseColor   = col
-    }
-  })
-}
-
-function applyTexture(mesh, texture) {
-  walkMeshes(mesh, m => {
-    if (!m.material) return
-    const mat = m.material.clone(m.material.name + '_tex')
-    m.material = mat
-    if (mat.albedoColor !== undefined) {
-      mat.albedoTexture = texture
-      mat.albedoColor   = Color3.White()
-      mat.metallic      = 0
-      mat.roughness     = 0.8
-    } else if (mat.diffuseColor !== undefined) {
-      mat.diffuseTexture = texture
-      mat.diffuseColor   = Color3.White()
-    }
-  })
-}
-
-// Apply any catalog item (colour / pattern / print) onto a clothing mesh.
-// 'model' items (Ajax/PSV GLB) are handled separately in pickShirt.
-function applyItem(mesh, item, scene) {
-  if (!mesh || !item) return
-  if (item.kind === 'color') { applyColor(mesh, item.hex); return }
-  if (item.kind === 'pattern' || item.kind === 'print') {
-    const url = buildTextureCanvas(item).toDataURL()
-    const tex = new Texture(url, scene, false, false)
-    applyTexture(mesh, tex)   // applies now; Babylon updates it once the image is ready
-  }
-}
 
 // ── Component ─────────────────────────────────────────────────────
 export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlayBotsen, onGoShop, unlockedColors = {} }) {
@@ -213,7 +142,6 @@ export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlay
   const headRef        = useRef(null) // loaded pet mesh (hoofd slot)
   const headGenRef     = useRef(0)    // guards against stale/duplicate pet loads
   const animGroupsRef  = useRef({})
-  const restPoseRef    = useRef({})   // bone name → { node, rot, pos } captured at T-pose
   const podiumRef      = useRef(null) // draaiend showpodium
   const positionStageRef = useRef(null) // herpositioneert podium op de echte zool-hoogte
 
@@ -366,14 +294,6 @@ export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlay
     const hd = unlocked('hoofd')
     if (hd.length) { const k = rnd(hd).key; applyHead(k, wearing.hoofdStance || 'normaal'); next.hoofd = k }
     if (Object.keys(next).length) setWearing(prev => ({ ...prev, ...next }))
-  }
-
-  const resetToTPose = () => {
-    Object.values(restPoseRef.current).forEach(({ node, rot, pos }) => {
-      if (node.rotationQuaternion) node.rotationQuaternion.copyFrom(rot)
-      else node.rotationQuaternion = rot.clone()
-      node.position.copyFrom(pos)
-    })
   }
 
   const playRust = (groups) => {
@@ -567,7 +487,7 @@ export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlay
 
       setLoading(false)
 
-      // ── Build Poppetje node map + capture T-pose for reset ──
+      // ── Build Poppetje node map + rust-rotaties voor de retargeting ──
       const nodeMap = {}
       const dstRestRots = {}
       scene.transformNodes.forEach(n => {
@@ -576,11 +496,6 @@ export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlay
           dstRestRots[n.name] = n.rotationQuaternion
             ? n.rotationQuaternion.clone()
             : Quaternion.Identity()
-          restPoseRef.current[n.name] = {
-            node: n,
-            rot:  n.rotationQuaternion ? n.rotationQuaternion.clone() : Quaternion.Identity(),
-            pos:  n.position.clone(),
-          }
         }
       })
       scene.meshes.forEach(m2 => { if (!nodeMap[m2.name]) nodeMap[m2.name] = m2 })

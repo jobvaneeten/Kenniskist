@@ -267,7 +267,7 @@ export default function App({ gast = false }) {
   // nooit geopend is: dan zetten we een geldige beginstand neer.
   const EVO_MAXLV = 24   // moet gelijk blijven aan THEMES.length in public/evolutie
   const unlockEvoGeld = () => {
-    let s = null
+    let s
     try { s = JSON.parse(localStorage.getItem('kk_evo_state') || 'null') } catch { s = null }
     if (!s || !Array.isArray(s.animals)) {
       s = { sp: 0, money: 0, bought: 0, up: {}, seen: [[], [], []], mult: 1,
@@ -350,7 +350,6 @@ export default function App({ gast = false }) {
     <>
       <CurrencyBadge munten={curuntie} briefgeld={briefgeld} />
       <Shop
-        curuntie={curuntie}
         briefgeld={briefgeld}
         addBriefgeld={addBriefgeld}
         unlockedColors={unlockedColors}

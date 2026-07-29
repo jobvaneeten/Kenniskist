@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { PROCENT_SETS, shuffle } from './procentenData'
 import FootballGame from './FootballGame'
 import TowerDefenseGame from './TowerDefenseGame'
-import { BeloningKeuze, JetpackBeloning, AstroBeloning, SpacerunnerBeloning, BRIEFGELD } from './Beloning'
+import { JetpackBeloning, AstroBeloning, SpacerunnerBeloning, BRIEFGELD } from './Beloning'
 import SpelBeloning from './SpelBeloning'
 import OpdrachtKlaarScherm from './OpdrachtKlaarScherm.jsx'
 import './procenten.css'
@@ -102,11 +102,6 @@ export default function ProcentenBreuken({ onBack, addBriefgeld, aantal }) {
   }, [drag])
 
   // ── Beloning-flow (zoals werkwoordspelling) ──
-  const kiesBeloning = (key) => {
-    if (key === 'towerdefense') setTdStarted(true)
-    if (key === 'astrokatapult') { addBriefgeld?.(BRIEFGELD); setVerdiend(v => v + BRIEFGELD) }
-    setPhase(key)
-  }
   const astroKlaar   = useCallback(() => nieuweRonde(), [nieuweRonde])
   const jetpackKlaar = useCallback(() => nieuweRonde(), [nieuweRonde])
   const tdKlaar = useCallback(() => { addBriefgeld?.(BRIEFGELD); setVerdiend(v => v + BRIEFGELD); nieuweRonde() }, [addBriefgeld, nieuweRonde])

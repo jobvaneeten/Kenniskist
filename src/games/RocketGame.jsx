@@ -5,7 +5,7 @@ import {
   Color3, Color4, Vector3, Quaternion,
   HemisphericLight, DirectionalLight, ShadowGenerator,
   MeshBuilder, StandardMaterial, DynamicTexture,
-  DefaultRenderingPipeline, Mesh,
+  DefaultRenderingPipeline,
 } from '@babylonjs/core'
 import { SceneLoader } from '@babylonjs/core/Loading/sceneLoader'
 import '@babylonjs/loaders/glTF'
@@ -69,25 +69,6 @@ const RETARGET_BONES = new Set([
 ])
 const CLOTHING_NAMES = new Set(['Shirt','Broek','Sokken','Schoenen'])
 const FACE_NAMES     = new Set(['Gezicht','Face','Ogen','Eyes','Wenkbrauwen','Eyebrows','Mond','Mouth','Neus','Nose'])
-const SHIRT_GLB_KEYS = new Set(['ajax','psv'])
-
-// ── Shirt helper ───────────────────────────────────────────────────────
-function applyShirtGLB(scene, glbFile, poppetjeShirtMesh, poppetjeSkel) {
-  SceneLoader.ImportMesh('', '/', glbFile, scene, (loadedMeshes, _ps, srcSkels) => {
-    const glbShirt = loadedMeshes.find(lm => (lm.getTotalVertices?.() ?? 0) > 0)
-    if (glbShirt && poppetjeSkel && poppetjeShirtMesh) {
-      glbShirt.parent             = poppetjeShirtMesh.parent
-      glbShirt.position           = Vector3.Zero()
-      glbShirt.rotationQuaternion = null
-      glbShirt.scaling            = Vector3.One()
-      glbShirt.skeleton           = poppetjeSkel
-      glbShirt.setEnabled(true)
-    }
-    loadedMeshes.forEach(lm => { if (lm !== glbShirt) { try { lm.dispose() } catch {} } })
-    srcSkels?.[0]?.dispose()
-  })
-}
-
 // ── Crowd cheer (same as FootballScene3D) ──────────────────────────────
 function playCrowdCheer() {
   try {
