@@ -27,8 +27,10 @@ You are a senior engineer. Follow these rules strictly to minimize token usage:
 ## Project context
 - App: Kenniskist — Dutch educational game platform for kids (groep 4-8)
 - Stack: React + Vite, Babylon.js (3D), localStorage for state
-- Key files: src/App.jsx, src/GameMenu.jsx, src/Wardrobe.jsx, src/games/FootballScene3D.jsx, src/games/IepOefenen.jsx
-- 3D character: Poppetje.glb with skeleton (44 bones). Ajax/PSV shirts loaded via ajaxshirt.glb / psvshirt.glb — correct approach is to load GLB mesh, detach from __root__ (parent=null) before disposing container, assign Poppetje's skeleton, then parent to charRoot in FootballScene3D
+- Key files: src/App.jsx (schermen + munten), src/GameMenu.jsx (vakken + FREE_GAMES), src/Wardrobe.jsx, src/Landing.jsx (voorpagina — spellijst en vakken moeten kloppen met GameMenu/tools.js), src/applyClothing.js, src/itemsCatalog.js
+- 3D-spellen: src/games/RocketGame.jsx (voetbal), PaintballGame.jsx, BotsenGame.jsx (heet in de UI Ballonnengevecht). Gedeelde nacht/neon-look via src/games/neonOmgeving.js; multiplayer draait op Colyseus (repo kenniskist-server, wss://kenniskist-server.onrender.com)
+- 3D character: Poppetje.glb with skeleton (44 bones). Ajax/PSV shirts loaded via ajaxshirt.glb / psvshirt.glb — correct approach is to load GLB mesh, detach from __root__ (parent=null) before disposing container, assign Poppetje's skeleton, then parent to the character root. Zie applyClothing.js
 - Currency: "curuntie" stored in kk_curuntie localStorage
 - Unlocked items: kk_unlocked (object), kk_shirt (string), kk_wearing (object)
 - Dev server: npm run dev (port 5173), launch.json configured for Preview MCP
+- Deploy: `npm run deploy` (vite build + wrangler deploy naar Cloudflare). Een push naar GitHub triggert daarnaast een eigen Cloudflare-build. Die CI-build heeft geen .env.local, daarom valt src/lib/supabase.js terug op de publieke project-URL + anon key
