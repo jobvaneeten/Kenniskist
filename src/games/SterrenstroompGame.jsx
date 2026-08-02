@@ -1,4 +1,18 @@
+import { useEffect } from 'react'
+
 export default function SterrenstroompGame({ onBack }) {
+  // Het spel zelf heeft op het game-over-scherm een "terug naar menu"-knop; die
+  // zit in de iframe en kan onBack niet rechtstreeks aanroepen.
+  useEffect(() => {
+    const onBericht = (e) => {
+      // De iframe komt van onze eigen site; berichten van elders negeren we.
+      if (e.origin !== window.location.origin) return
+      if (e.data?.kenniskist === 'terug-naar-menu') onBack()
+    }
+    window.addEventListener('message', onBericht)
+    return () => window.removeEventListener('message', onBericht)
+  }, [onBack])
+
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: '#000' }}>
       <button
