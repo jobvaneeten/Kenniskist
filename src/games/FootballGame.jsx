@@ -23,14 +23,29 @@ const AI_SPD_BY_DIFF = { 1: 155, 2: 180, 3: 215, 4: 248, 5: 272 }
 const GAME_TIME_NORMAL   = 60
 const GAME_TIME_TWOPLAYER = 60
 
-// Pre-generated crowd dots for the stands (stable across frames)
-const CROWD = Array.from({ length: 340 }, (_, i) => ({
-  x: (i * 73 + 17) % FIELD_W,
-  y: 8 + (i * 31 + 5) % 40,
-  c: `hsl(${(i * 137) % 360},55%,58%)`,
+// ── Stadion-indeling (van boven naar beneden) ─────────────────────
+// De bal kan tot bovenin het beeld vliegen, dus de bovenste helft blijft
+// rustige nachtlucht; de tribune is een smalle band vlak achter het veld.
+const SKY_H     = 196          // nachtlucht met sterren, boven het dak uit
+const ROOF_Y    = 196          // dak van de tribune
+const STAND_Y   = 222          // begin van de vakken met publiek
+const BOARD_Y   = 332          // LED-reclameborden voor de tribune
+// (GROUND_Y = 370 = grasmat)
+
+// Sterren: vast patroon dat met een lichte parallax meeschuift.
+const STARS = Array.from({ length: 90 }, (_, i) => ({
+  x: (i * 137 + 23) % (W + 60),
+  y: (i * 53 + 11) % (SKY_H - 12),
+  r: 0.6 + ((i * 7) % 5) * 0.24,
+  a: 0.25 + ((i * 11) % 6) * 0.11,
+  tw: (i % 7) * 0.9,           // twinkel-fase
 }))
 
-// ── Shirt pattern drawing ─────────────────────────────────────────
+// Lichtmasten staan op vaste plekken in het veld (niet in beeld), zodat ze
+// langsschuiven als de camera meebeweegt — dat geeft pas diepte.
+const PYLONS = [360, 1200, 2040]
+
+// ── Kleurhulpjes ──────────────────────────────────────────────────
 function isLight(hex) {
   const r = parseInt(hex.slice(1, 3), 16)
   const g = parseInt(hex.slice(3, 5), 16)
@@ -38,350 +53,685 @@ function isLight(hex) {
   return 0.299 * r + 0.587 * g + 0.114 * b > 140
 }
 
-function drawShirt(ctx, x, y, country, r = PR) {
+// amt < 0 donkerder, amt > 0 lichter
+function shade(hex, amt) {
+  const n = parseInt(hex.slice(1), 16)
+  const p = (c) => Math.round(amt < 0 ? c * (1 + amt) : c + (255 - c) * amt)
+  return `rgb(${p((n >> 16) & 255)},${p((n >> 8) & 255)},${p(n & 255)})`
+}
+
+function hash(s) {
+  let h = 0
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0
+  return Math.abs(h)
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  const rr = Math.min(r, w / 2, h / 2)
+  ctx.beginPath()
+  ctx.moveTo(x + rr, y)
+  ctx.arcTo(x + w, y, x + w, y + h, rr)
+  ctx.arcTo(x + w, y + h, x, y + h, rr)
+  ctx.arcTo(x, y + h, x, y, rr)
+  ctx.arcTo(x, y, x + w, y, rr)
+  ctx.closePath()
+}
+
+// ── Shirt pattern drawing ─────────────────────────────────────────
+// Vult een rechthoek met het landspatroon; de aanroeper clipt eerst op de
+// vorm van het shirt (romp, mouw of het rondje in de UI-preview).
+function drawShirt(ctx, cx, cy, w, h, country) {
   const { c1, c2, c3, pattern } = country
-  const d = r * 2
-  ctx.save()
-  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.clip()
+  const x = cx - w / 2, y = cy - h / 2
 
   switch (pattern) {
     case 'v2':
-      ctx.fillStyle = c1; ctx.fillRect(x - r, y - r, r, d)
-      ctx.fillStyle = c2; ctx.fillRect(x, y - r, r, d)
+      ctx.fillStyle = c1; ctx.fillRect(x, y, w / 2, h)
+      ctx.fillStyle = c2; ctx.fillRect(cx, y, w / 2, h)
       break
     case 'v3': {
-      const bw = d / 3
-      ctx.fillStyle = c1; ctx.fillRect(x - r, y - r, bw, d)
-      ctx.fillStyle = c2; ctx.fillRect(x - r + bw, y - r, bw, d)
-      ctx.fillStyle = c3 || c1; ctx.fillRect(x - r + 2 * bw, y - r, bw, d)
+      const bw = w / 3
+      ctx.fillStyle = c1; ctx.fillRect(x, y, bw, h)
+      ctx.fillStyle = c2; ctx.fillRect(x + bw, y, bw, h)
+      ctx.fillStyle = c3 || c1; ctx.fillRect(x + 2 * bw, y, bw, h)
       break
     }
     case 'h2':
-      ctx.fillStyle = c1; ctx.fillRect(x - r, y - r, d, r)
-      ctx.fillStyle = c2; ctx.fillRect(x - r, y, d, r)
+      ctx.fillStyle = c1; ctx.fillRect(x, y, w, h / 2)
+      ctx.fillStyle = c2; ctx.fillRect(x, cy, w, h / 2)
       break
     case 'h3': {
-      const bh = d / 3
-      ctx.fillStyle = c1; ctx.fillRect(x - r, y - r, d, bh)
-      ctx.fillStyle = c2; ctx.fillRect(x - r, y - r + bh, d, bh)
-      ctx.fillStyle = c3 || c1; ctx.fillRect(x - r, y - r + 2 * bh, d, bh)
+      const bh = h / 3
+      ctx.fillStyle = c1; ctx.fillRect(x, y, w, bh)
+      ctx.fillStyle = c2; ctx.fillRect(x, y + bh, w, bh)
+      ctx.fillStyle = c3 || c1; ctx.fillRect(x, y + 2 * bh, w, bh)
       break
     }
     case 'cross':
-      ctx.fillStyle = c1; ctx.fillRect(x - r, y - r, d, d)
+      ctx.fillStyle = c1; ctx.fillRect(x, y, w, h)
       ctx.fillStyle = c2
-      ctx.fillRect(x - d * 0.09, y - r, d * 0.18, d)
-      ctx.fillRect(x - r, y - d * 0.09, d, d * 0.18)
+      ctx.fillRect(cx - w * 0.09, y, w * 0.18, h)
+      ctx.fillRect(x, cy - h * 0.09, w, h * 0.18)
       if (c3) {
         ctx.fillStyle = c3
-        ctx.fillRect(x - d * 0.045, y - r, d * 0.09, d)
-        ctx.fillRect(x - r, y - d * 0.045, d, d * 0.09)
+        ctx.fillRect(cx - w * 0.045, y, w * 0.09, h)
+        ctx.fillRect(x, cy - h * 0.045, w, h * 0.09)
       }
       break
     case 'circle':
-      ctx.fillStyle = c1; ctx.fillRect(x - r, y - r, d, d)
+      ctx.fillStyle = c1; ctx.fillRect(x, y, w, h)
       ctx.fillStyle = c2
-      ctx.beginPath(); ctx.arc(x, y, r * 0.55, 0, Math.PI * 2); ctx.fill()
+      ctx.beginPath(); ctx.arc(cx, cy, Math.min(w, h) * 0.3, 0, Math.PI * 2); ctx.fill()
       break
     case 'circle2':
-      ctx.fillStyle = c1; ctx.fillRect(x - r, y - r, d, d)
-      ctx.save(); ctx.beginPath(); ctx.arc(x, y, r * 0.55, 0, Math.PI * 2); ctx.clip()
-      ctx.fillStyle = c2; ctx.fillRect(x - r, y - r, d, r)
-      ctx.fillStyle = c3 || c2; ctx.fillRect(x - r, y, d, r)
+      ctx.fillStyle = c1; ctx.fillRect(x, y, w, h)
+      ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, Math.min(w, h) * 0.3, 0, Math.PI * 2); ctx.clip()
+      ctx.fillStyle = c2; ctx.fillRect(x, y, w, h / 2)
+      ctx.fillStyle = c3 || c2; ctx.fillRect(x, cy, w, h / 2)
       ctx.restore()
       break
     case 'usa': {
-      const bands = 7, bh = d / bands
-      for (let i = 0; i < bands; i++) { ctx.fillStyle = i % 2 === 0 ? c1 : c2; ctx.fillRect(x - r, y - r + i * bh, d, bh) }
+      const bands = 7, bh = h / bands
+      for (let i = 0; i < bands; i++) { ctx.fillStyle = i % 2 === 0 ? c1 : c2; ctx.fillRect(x, y + i * bh, w, bh) }
       ctx.fillStyle = c3 || '#3C3B6E'
-      ctx.fillRect(x - r, y - r, d * 0.5, d * 0.5)
+      ctx.fillRect(x, y, w * 0.5, h * 0.5)
       break
     }
     case 'quarters':
-      ctx.fillStyle = c1; ctx.fillRect(x - r, y - r, r, r)
-      ctx.fillStyle = c2; ctx.fillRect(x, y - r, r, r)
-      ctx.fillStyle = c3 || c2; ctx.fillRect(x - r, y, r, r)
-      ctx.fillStyle = c1; ctx.fillRect(x, y, r, r)
+      ctx.fillStyle = c1; ctx.fillRect(x, y, w / 2, h / 2)
+      ctx.fillStyle = c2; ctx.fillRect(cx, y, w / 2, h / 2)
+      ctx.fillStyle = c3 || c2; ctx.fillRect(x, cy, w / 2, h / 2)
+      ctx.fillStyle = c1; ctx.fillRect(cx, cy, w / 2, h / 2)
       break
     default:
-      ctx.fillStyle = c1; ctx.fillRect(x - r, y - r, d, d)
+      ctx.fillStyle = c1; ctx.fillRect(x, y, w, h)
   }
-  ctx.restore()
 }
 
 // ── Player drawing ────────────────────────────────────────────────
 const VR = 28   // visual body radius (bigger than physics PR=20)
 const HR = 22   // head radius (nearly as big as body)
 
-function drawPlayer(ctx, x, y, country, dizzy = 0, vx = 0, onGround = true) {
-  const now = Date.now()
-  const moving = Math.abs(vx) > 10
-  const swing  = onGround && moving ? Math.sin(now / 120) * 0.52 : 0
+// Elk land krijgt een eigen speler: huidskleur, haarkleur en kapsel liggen
+// vast per land (hash van de key), zodat je tegenstander er elke wedstrijd
+// hetzelfde uitziet en de twee poppetjes duidelijk verschillen.
+const SKINS = ['#F7D3B0', '#EFC098', '#DDA271', '#B77C4E', '#8A5A34', '#69422a']
+const HAIRS = ['#221610', '#3E2417', '#5A3825', '#101014', '#8C5A2B', '#C9A24B', '#6E2E1B']
 
-  // Ground shadow
-  ctx.fillStyle = 'rgba(0,0,0,0.2)'
-  ctx.beginPath(); ctx.ellipse(x, GROUND_Y + 5, VR * 1.1, 7, 0, 0, Math.PI * 2); ctx.fill()
+function drawPlayer(ctx, p, country, nummer = 10) {
+  const x = p.x, y = p.y
+  const dir      = p.facingRight === false ? -1 : 1
+  const dizzy    = p.dizzy || 0
+  const onGround = p.onGround
+  const moving   = Math.abs(p.vx) > 10
+  const now      = Date.now()
+  // Pasfase loopt op met de afgelegde afstand, niet met de klok: hoe sneller
+  // hij rent, hoe sneller de benen gaan.
+  const swing = onGround && moving ? Math.sin((p.stride || 0) / 12) : 0
 
-  // Feet: touch ground when standing, follow body when jumping
-  const airSpread = onGround ? 0 : 0.35
-  const lFx   = x + Math.sin(-swing - airSpread) * 12 - 3
-  const rFx   = x + Math.sin( swing + airSpread) * 12 + 3
-  const footY = onGround ? GROUND_Y - 1 : y + VR * 0.85
+  const seed  = hash(String(country.key ?? country.abbr ?? 'x'))
+  const skin  = SKINS[seed % SKINS.length]
+  const hair  = HAIRS[(seed >> 3) % HAIRS.length]
+  const kapsel = (seed >> 6) % 5
+  const donker = shade(skin, -0.22)
 
-  ctx.fillStyle = '#111'
-  ctx.beginPath(); ctx.ellipse(lFx, footY, 9, 5, 0, 0, Math.PI * 2); ctx.fill()
-  ctx.beginPath(); ctx.ellipse(rFx, footY, 9, 5, 0, 0, Math.PI * 2); ctx.fill()
+  const c1 = country.c1
+  const c2 = country.c2 || shade(country.c1, -0.35)
+  const sok = c1
+  const broek = isLight(c1) ? shade(c1, -0.55) : shade(c1, -0.3)
 
-  // Legs
-  const legTopY = y + VR * 0.45
-  ctx.strokeStyle = '#2a2a2a'; ctx.lineWidth = 7; ctx.lineCap = 'round'
-  ctx.beginPath(); ctx.moveTo(x - 4, legTopY); ctx.lineTo(lFx, footY); ctx.stroke()
-  ctx.beginPath(); ctx.moveTo(x + 4, legTopY); ctx.lineTo(rFx, footY); ctx.stroke()
+  // ── Schaduw: kleiner en lichter naarmate hij hoger springt ──
+  const hoogte = Math.max(0, GROUND_Y - (y + PR))
+  const s = Math.max(0.35, 1 - hoogte / 260)
+  ctx.fillStyle = `rgba(0,0,0,${0.34 * s})`
+  ctx.beginPath(); ctx.ellipse(x, GROUND_Y + 4, VR * 1.05 * s, 6.5 * s, 0, 0, Math.PI * 2); ctx.fill()
 
-  // Arms
-  const armSwing = onGround && moving ? -swing * 0.7 : 0
-  const armY = y - VR * 0.15
-  ctx.strokeStyle = '#F0B07A'; ctx.lineWidth = 6; ctx.lineCap = 'round'
-  ctx.beginPath(); ctx.moveTo(x - VR * 0.85, armY)
-  ctx.lineTo(x - VR * 0.85 - 12 + Math.sin(armSwing) * 7, armY + 15); ctx.stroke()
-  ctx.beginPath(); ctx.moveTo(x + VR * 0.85, armY)
-  ctx.lineTo(x + VR * 0.85 + 12 - Math.sin(armSwing) * 7, armY + 15); ctx.stroke()
-
-  // Body shirt
-  drawShirt(ctx, x, y, country, VR)
-  ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 2
-  ctx.beginPath(); ctx.arc(x, y, VR, 0, Math.PI * 2); ctx.stroke()
-
-  // Country abbr
-  ctx.fillStyle = isLight(country.c1) ? '#222' : '#fff'
-  ctx.font = 'bold 12px Arial'
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
-  ctx.fillText(country.abbr, x, y + 7)
-
-  // Head — big, overlaps slightly with top of body
-  const hy = y - VR - HR * 0.6
-
-  // Skin
-  ctx.fillStyle = '#F5C89A'
-  ctx.beginPath(); ctx.arc(x, hy, HR, 0, Math.PI * 2); ctx.fill()
-
-  // Hair cap: covers top ~40% of head, clipped to head shape
   ctx.save()
-  ctx.beginPath(); ctx.arc(x, hy, HR, 0, Math.PI * 2); ctx.clip()
-  ctx.fillStyle = '#5A3825'
-  ctx.fillRect(x - HR, hy - HR, HR * 2, HR * 0.8)   // 40% of diameter from top
+  ctx.translate(x, 0); ctx.scale(dir, 1); ctx.translate(-x, 0)
+
+  const footY   = onGround ? GROUND_Y : y + 22
+  const heupY   = y + 8
+  const schoudY = y - 20
+
+  // ── Benen (achterste eerst) ──
+  const been = (offset, voor) => {
+    const fx = x + offset * 12 + (voor ? 2 : -2)
+    const fy = onGround ? footY - Math.max(0, offset) * 5 : footY - (voor ? 5 : 0)
+    // dijbeen in huidskleur, sok in teamkleur
+    ctx.lineCap = 'round'
+    ctx.strokeStyle = voor ? skin : donker
+    ctx.lineWidth = 9
+    ctx.beginPath(); ctx.moveTo(x + offset * 3, heupY); ctx.lineTo(fx, fy - 10); ctx.stroke()
+    ctx.strokeStyle = voor ? sok : shade(sok, -0.35)
+    ctx.lineWidth = 8.5
+    ctx.beginPath(); ctx.moveTo(fx, fy - 11); ctx.lineTo(fx, fy - 4); ctx.stroke()
+    ctx.strokeStyle = voor ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.25)'
+    ctx.lineWidth = 2
+    ctx.beginPath(); ctx.moveTo(fx - 4, fy - 9.5); ctx.lineTo(fx + 4, fy - 9.5); ctx.stroke()
+    // schoen
+    ctx.fillStyle = voor ? '#17171f' : '#0e0e13'
+    roundRect(ctx, fx - 7, fy - 5.5, 16, 7, 3.5); ctx.fill()
+    ctx.fillStyle = c2
+    ctx.fillRect(fx - 6, fy - 5, 14, 1.8)
+  }
+  been(-swing, false)
+  been(swing, true)
+
+  // ── Achterste arm ──
+  const armSwing = onGround && moving ? -swing : (onGround ? 0 : -0.9)
+  const arm = (side, voor) => {
+    const sx = x + side * 19
+    const hx = sx + side * 5 + Math.sin(armSwing * side) * 9
+    const hy = onGround ? y + 2 + Math.cos(armSwing) * 2 : y - 20
+    ctx.strokeStyle = voor ? skin : donker
+    ctx.lineWidth = 7; ctx.lineCap = 'round'
+    ctx.beginPath(); ctx.moveTo(sx, schoudY + 2); ctx.lineTo(hx, hy); ctx.stroke()
+    ctx.fillStyle = voor ? skin : donker
+    ctx.beginPath(); ctx.arc(hx, hy, 4.2, 0, Math.PI * 2); ctx.fill()
+  }
+  arm(-1, false)
+
+  // ── Broekje ──
+  ctx.fillStyle = broek
+  roundRect(ctx, x - 20, y - 4, 40, 15, 6); ctx.fill()
+  ctx.fillStyle = 'rgba(0,0,0,0.25)'
+  ctx.fillRect(x - 2, y - 2, 3, 12)
+
+  // ── Romp met shirtpatroon ──
+  ctx.save()
+  roundRect(ctx, x - 23, y - 32, 46, 34, 14); ctx.clip()
+  drawShirt(ctx, x, y - 15, 46, 34, country)
+  // stofplooi: licht bovenaan, schaduw onderaan
+  const sg = ctx.createLinearGradient(0, y - 32, 0, y + 2)
+  sg.addColorStop(0, 'rgba(255,255,255,0.18)')
+  sg.addColorStop(0.55, 'rgba(255,255,255,0)')
+  sg.addColorStop(1, 'rgba(0,0,0,0.32)')
+  ctx.fillStyle = sg; ctx.fillRect(x - 24, y - 33, 48, 36)
   ctx.restore()
+  ctx.strokeStyle = 'rgba(0,0,0,0.35)'; ctx.lineWidth = 1.6
+  roundRect(ctx, x - 23, y - 32, 46, 34, 14); ctx.stroke()
 
-  ctx.strokeStyle = 'rgba(0,0,0,0.15)'; ctx.lineWidth = 1.5
-  ctx.beginPath(); ctx.arc(x, hy, HR, 0, Math.PI * 2); ctx.stroke()
+  // Mouwtjes
+  ;[-1, 1].forEach(side => {
+    ctx.save()
+    roundRect(ctx, x + side * 19 - 7, schoudY - 6, 14, 15, 6); ctx.clip()
+    drawShirt(ctx, x + side * 19, schoudY + 1, 16, 16, country)
+    ctx.fillStyle = 'rgba(0,0,0,0.22)'; ctx.fillRect(x + side * 19 - 8, schoudY - 7, 16, 17)
+    ctx.restore()
+  })
 
-  // ── Face ─────────────────────────────────────────────────────────
-  const eyeOX = HR * 0.37
-  const eyeOY = hy - HR * 0.1
-  const eyeR  = HR * 0.26
-  const pupR  = HR * 0.14
-  const pupOX = vx > 10 ? pupR * 0.4 : vx < -10 ? -pupR * 0.4 : 0
+  // Kraagje
+  ctx.strokeStyle = isLight(c1) ? 'rgba(0,0,0,0.35)' : 'rgba(255,255,255,0.5)'
+  ctx.lineWidth = 2.4
+  ctx.beginPath(); ctx.arc(x, y - 33, 8, 0.15 * Math.PI, 0.85 * Math.PI); ctx.stroke()
 
-  if (!dizzy) {
-    // White of eyes
-    ctx.fillStyle = '#fff'
-    ctx.beginPath(); ctx.arc(x - eyeOX, eyeOY, eyeR, 0, Math.PI * 2); ctx.fill()
-    ctx.beginPath(); ctx.arc(x + eyeOX, eyeOY, eyeR, 0, Math.PI * 2); ctx.fill()
-    // Pupils
-    ctx.fillStyle = '#1a1a1a'
-    ctx.beginPath(); ctx.arc(x - eyeOX + pupOX, eyeOY + pupR * 0.2, pupR, 0, Math.PI * 2); ctx.fill()
-    ctx.beginPath(); ctx.arc(x + eyeOX + pupOX, eyeOY + pupR * 0.2, pupR, 0, Math.PI * 2); ctx.fill()
-    // Eye shine
-    ctx.fillStyle = 'rgba(255,255,255,0.9)'
-    ctx.beginPath(); ctx.arc(x - eyeOX + pupOX + pupR * 0.3, eyeOY - pupR * 0.2, pupR * 0.32, 0, Math.PI * 2); ctx.fill()
-    ctx.beginPath(); ctx.arc(x + eyeOX + pupOX + pupR * 0.3, eyeOY - pupR * 0.2, pupR * 0.32, 0, Math.PI * 2); ctx.fill()
-    // Nose
-    ctx.fillStyle = '#C8845A'
-    ctx.beginPath(); ctx.arc(x, hy + HR * 0.12, HR * 0.1, 0, Math.PI * 2); ctx.fill()
-    // Smile
-    ctx.strokeStyle = '#8B4513'; ctx.lineWidth = 2; ctx.lineCap = 'round'
-    ctx.beginPath(); ctx.arc(x, hy + HR * 0.22, HR * 0.24, 0.18 * Math.PI, 0.82 * Math.PI); ctx.stroke()
-  } else {
-    // Dizzy X eyes
-    ctx.strokeStyle = '#FF3333'; ctx.lineWidth = 2.5; ctx.lineCap = 'round'
-    const xSz = eyeR * 0.8
-    ;[[-1, 1], [1, 1]].forEach(([sign]) => {
-      const ex2 = x + sign * eyeOX
-      ctx.beginPath(); ctx.moveTo(ex2 - xSz, eyeOY - xSz); ctx.lineTo(ex2 + xSz, eyeOY + xSz); ctx.stroke()
-      ctx.beginPath(); ctx.moveTo(ex2 + xSz, eyeOY - xSz); ctx.lineTo(ex2 - xSz, eyeOY + xSz); ctx.stroke()
-    })
-    // Wavy mouth
-    ctx.beginPath(); ctx.moveTo(x - HR * 0.3, hy + HR * 0.4)
-    ctx.quadraticCurveTo(x - HR * 0.1, hy + HR * 0.3, x, hy + HR * 0.45)
-    ctx.quadraticCurveTo(x + HR * 0.1, hy + HR * 0.6, x + HR * 0.3, hy + HR * 0.4)
-    ctx.strokeStyle = '#8B4513'; ctx.lineWidth = 2; ctx.stroke()
+  // ── Voorste arm ──
+  arm(1, true)
 
-    // Spinning stars
-    const t = now / 200
-    for (let i = 0; i < 4; i++) {
-      const a = t + (i / 4) * Math.PI * 2
-      const sx = x + Math.cos(a) * (HR + 12)
-      const sy = hy + Math.sin(a) * 10
-      ctx.fillStyle = '#FFD23F'
-      ctx.font = 'bold 13px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
-      ctx.fillText('★', sx, sy)
+  // ── Nek ──
+  ctx.fillStyle = donker
+  ctx.fillRect(x - 6, y - 38, 12, 9)
+
+  // ── Hoofd ──
+  const hy = y - VR - HR * 0.6
+  ctx.fillStyle = skin
+  ctx.beginPath(); ctx.ellipse(x, hy, HR * 0.95, HR, 0, 0, Math.PI * 2); ctx.fill()
+  // oor
+  ctx.fillStyle = donker
+  ctx.beginPath(); ctx.ellipse(x - HR * 0.9, hy + 2, 3.4, 4.6, 0, 0, Math.PI * 2); ctx.fill()
+  // zachte schaduw langs de rand
+  ctx.save()
+  ctx.beginPath(); ctx.ellipse(x, hy, HR * 0.95, HR, 0, 0, Math.PI * 2); ctx.clip()
+  const hg = ctx.createRadialGradient(x - 6, hy - 8, 2, x, hy, HR * 1.3)
+  hg.addColorStop(0, 'rgba(255,255,255,0.22)')
+  hg.addColorStop(0.6, 'rgba(255,255,255,0)')
+  hg.addColorStop(1, 'rgba(0,0,0,0.28)')
+  ctx.fillStyle = hg; ctx.fillRect(x - HR, hy - HR, HR * 2, HR * 2)
+
+  // ── Kapsel (geclipt op het hoofd, behalve wat er bovenuit steekt) ──
+  ctx.fillStyle = hair
+  if (kapsel === 0) {                       // korte coupe
+    ctx.fillRect(x - HR, hy - HR, HR * 2, HR * 0.72)
+    ctx.beginPath(); ctx.ellipse(x, hy - HR * 0.28, HR * 0.95, HR * 0.5, 0, 0, Math.PI * 2); ctx.fill()
+  } else if (kapsel === 1) {                 // krullen
+    for (let i = 0; i < 9; i++) {
+      const a = Math.PI + (i / 8) * Math.PI
+      ctx.beginPath(); ctx.arc(x + Math.cos(a) * HR * 0.8, hy + Math.sin(a) * HR * 0.8, 7, 0, Math.PI * 2); ctx.fill()
+    }
+  } else if (kapsel === 2) {                 // scheiding opzij
+    ctx.beginPath()
+    ctx.moveTo(x - HR, hy - HR * 0.1)
+    ctx.quadraticCurveTo(x - HR * 0.6, hy - HR * 1.15, x + HR * 0.35, hy - HR * 0.95)
+    ctx.quadraticCurveTo(x + HR, hy - HR * 0.8, x + HR * 0.95, hy - HR * 0.1)
+    ctx.quadraticCurveTo(x + HR * 0.3, hy - HR * 0.55, x - HR, hy - HR * 0.1)
+    ctx.fill()
+  } else if (kapsel === 3) {                 // hoofdband, kort haar
+    ctx.fillRect(x - HR, hy - HR, HR * 2, HR * 0.55)
+    ctx.fillStyle = c2
+    ctx.fillRect(x - HR, hy - HR * 0.62, HR * 2, 5)
+  } else {                                   // stekeltjes
+    ctx.fillRect(x - HR, hy - HR * 0.55, HR * 2, HR * 0.5)
+    for (let i = -2; i <= 2; i++) {
+      ctx.beginPath()
+      ctx.moveTo(x + i * 8 - 5, hy - HR * 0.5)
+      ctx.lineTo(x + i * 8, hy - HR * 1.25)
+      ctx.lineTo(x + i * 8 + 5, hy - HR * 0.5)
+      ctx.fill()
     }
   }
+  ctx.restore()
+
+  ctx.strokeStyle = 'rgba(0,0,0,0.22)'; ctx.lineWidth = 1.4
+  ctx.beginPath(); ctx.ellipse(x, hy, HR * 0.95, HR, 0, 0, Math.PI * 2); ctx.stroke()
+
+  // ── Gezicht ──────────────────────────────────────────────────────
+  const eyeOX = HR * 0.34
+  const eyeOY = hy + HR * 0.02
+  const eyeR  = HR * 0.24
+  const pupR  = HR * 0.13
+  const knipper = (now % 4200) < 120
+
+  if (!dizzy) {
+    if (knipper) {
+      ctx.strokeStyle = '#3a2418'; ctx.lineWidth = 2; ctx.lineCap = 'round'
+      ;[-1, 1].forEach(sgn => {
+        ctx.beginPath()
+        ctx.arc(x + sgn * eyeOX, eyeOY, eyeR, 1.1 * Math.PI, 1.9 * Math.PI)
+        ctx.stroke()
+      })
+    } else {
+      const pupOX = moving ? pupR * 0.7 : 0
+      ctx.fillStyle = '#fff'
+      ctx.beginPath(); ctx.ellipse(x - eyeOX, eyeOY, eyeR * 0.85, eyeR, 0, 0, Math.PI * 2); ctx.fill()
+      ctx.beginPath(); ctx.ellipse(x + eyeOX, eyeOY, eyeR * 0.85, eyeR, 0, 0, Math.PI * 2); ctx.fill()
+      ctx.fillStyle = '#20242e'
+      ctx.beginPath(); ctx.arc(x - eyeOX + pupOX, eyeOY + pupR * 0.15, pupR, 0, Math.PI * 2); ctx.fill()
+      ctx.beginPath(); ctx.arc(x + eyeOX + pupOX, eyeOY + pupR * 0.15, pupR, 0, Math.PI * 2); ctx.fill()
+      ctx.fillStyle = 'rgba(255,255,255,0.95)'
+      ctx.beginPath(); ctx.arc(x - eyeOX + pupOX + pupR * 0.35, eyeOY - pupR * 0.3, pupR * 0.34, 0, Math.PI * 2); ctx.fill()
+      ctx.beginPath(); ctx.arc(x + eyeOX + pupOX + pupR * 0.35, eyeOY - pupR * 0.3, pupR * 0.34, 0, Math.PI * 2); ctx.fill()
+    }
+
+    // Wenkbrauwen — omhoog bij springen, gefronst bij rennen
+    ctx.strokeStyle = hair; ctx.lineWidth = 2.6; ctx.lineCap = 'round'
+    const brw = onGround ? (moving ? 1.5 : 0) : -2
+    ;[-1, 1].forEach(sgn => {
+      ctx.beginPath()
+      ctx.moveTo(x + sgn * eyeOX - eyeR * 0.9, eyeOY - eyeR * 1.5 + (sgn < 0 ? brw : brw * 0.4))
+      ctx.lineTo(x + sgn * eyeOX + eyeR * 0.9, eyeOY - eyeR * 1.9)
+      ctx.stroke()
+    })
+
+    // Neus + mond
+    ctx.fillStyle = shade(skin, -0.3)
+    ctx.beginPath(); ctx.ellipse(x + 2, hy + HR * 0.18, 2.4, 1.8, 0, 0, Math.PI * 2); ctx.fill()
+    ctx.strokeStyle = '#7a3b26'; ctx.lineWidth = 2.2; ctx.lineCap = 'round'
+    if (!onGround) {
+      ctx.fillStyle = '#7a3b26'
+      ctx.beginPath(); ctx.ellipse(x, hy + HR * 0.46, 4.2, 5, 0, 0, Math.PI * 2); ctx.fill()
+    } else {
+      ctx.beginPath(); ctx.arc(x, hy + HR * 0.26, HR * 0.28, 0.15 * Math.PI, 0.85 * Math.PI); ctx.stroke()
+    }
+    // Blosjes
+    ctx.fillStyle = 'rgba(230,110,110,0.28)'
+    ctx.beginPath(); ctx.ellipse(x - HR * 0.6, hy + HR * 0.34, 4.5, 3, 0, 0, Math.PI * 2); ctx.fill()
+    ctx.beginPath(); ctx.ellipse(x + HR * 0.6, hy + HR * 0.34, 4.5, 3, 0, 0, Math.PI * 2); ctx.fill()
+  } else {
+    // Duizelig: kruisogen, golvende mond en tollende sterren
+    ctx.strokeStyle = '#FF3B3B'; ctx.lineWidth = 2.6; ctx.lineCap = 'round'
+    const xSz = eyeR * 0.85
+    ;[-1, 1].forEach(sgn => {
+      const ex = x + sgn * eyeOX
+      ctx.beginPath(); ctx.moveTo(ex - xSz, eyeOY - xSz); ctx.lineTo(ex + xSz, eyeOY + xSz); ctx.stroke()
+      ctx.beginPath(); ctx.moveTo(ex + xSz, eyeOY - xSz); ctx.lineTo(ex - xSz, eyeOY + xSz); ctx.stroke()
+    })
+    ctx.strokeStyle = '#7a3b26'; ctx.lineWidth = 2
+    ctx.beginPath(); ctx.moveTo(x - HR * 0.3, hy + HR * 0.42)
+    ctx.quadraticCurveTo(x - HR * 0.1, hy + HR * 0.3, x, hy + HR * 0.46)
+    ctx.quadraticCurveTo(x + HR * 0.1, hy + HR * 0.62, x + HR * 0.3, hy + HR * 0.42)
+    ctx.stroke()
+    const tt = now / 200
+    for (let i = 0; i < 4; i++) {
+      const a = tt + (i / 4) * Math.PI * 2
+      ctx.fillStyle = '#FFD23F'
+      ctx.font = 'bold 13px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
+      ctx.fillText('★', x + Math.cos(a) * (HR + 12), hy - HR * 0.4 + Math.sin(a) * 9)
+    }
+  }
+
+  ctx.restore()
+
+  // Rugnummer buiten de spiegeling, anders staat het achterstevoren
+  ctx.fillStyle = isLight(c1) ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.78)'
+  ctx.font = 'bold 15px Nunito, Arial'
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
+  ctx.fillText(String(nummer), x, y - 14)
 }
 
 // ── Ball drawing with rotation ────────────────────────────────────
-function drawBall(ctx, x, y, angle = 0) {
+// De vlakken worden naar de rand toe platgedrukt (foreshortening), zodat de
+// bal als een bol draait in plaats van als een platte sticker.
+function drawBall(ctx, x, y, angle = 0, speed = 0) {
   const ss = Math.max(0.3, 1 - Math.max(0, GROUND_Y - y - BR) / 250)
 
-  // Shadow
-  ctx.fillStyle = `rgba(0,0,0,${0.22 * ss})`
-  ctx.beginPath(); ctx.ellipse(x, GROUND_Y + 4, BR * ss, 4 * ss, 0, 0, Math.PI * 2); ctx.fill()
+  // Schaduw
+  ctx.fillStyle = `rgba(0,0,0,${0.3 * ss})`
+  ctx.beginPath(); ctx.ellipse(x, GROUND_Y + 4, BR * 1.05 * ss, 4.5 * ss, 0, 0, Math.PI * 2); ctx.fill()
 
-  // Gradient sphere
-  const g = ctx.createRadialGradient(x - BR * 0.35, y - BR * 0.35, 1, x, y, BR)
+  // Gloed bij een harde bal
+  if (speed > 420) {
+    const glow = Math.min(1, (speed - 420) / 700)
+    const gg = ctx.createRadialGradient(x, y, BR * 0.5, x, y, BR * 2.6)
+    gg.addColorStop(0, `rgba(255,214,63,${0.32 * glow})`)
+    gg.addColorStop(1, 'rgba(255,214,63,0)')
+    ctx.fillStyle = gg
+    ctx.beginPath(); ctx.arc(x, y, BR * 2.6, 0, Math.PI * 2); ctx.fill()
+  }
+
+  // Bol
+  const g = ctx.createRadialGradient(x - BR * 0.38, y - BR * 0.42, 1, x, y, BR * 1.05)
   g.addColorStop(0, '#ffffff')
-  g.addColorStop(0.55, '#eeeeee')
-  g.addColorStop(1, '#cccccc')
+  g.addColorStop(0.5, '#f2f4f7')
+  g.addColorStop(0.85, '#cdd3da')
+  g.addColorStop(1, '#9aa3ae')
   ctx.fillStyle = g
   ctx.beginPath(); ctx.arc(x, y, BR, 0, Math.PI * 2); ctx.fill()
 
-  // Black soccer patches (clip to ball)
   ctx.save()
   ctx.beginPath(); ctx.arc(x, y, BR, 0, Math.PI * 2); ctx.clip()
-  ctx.fillStyle = '#1a1a1a'
 
-  // Center pentagon
+  // Middenvlak
+  ctx.fillStyle = '#1b1d24'
   ctx.beginPath()
   for (let i = 0; i < 5; i++) {
     const a = angle + (i / 5) * Math.PI * 2 - Math.PI / 2
-    const r = BR * 0.38
-    i === 0 ? ctx.moveTo(x + Math.cos(a) * r, y + Math.sin(a) * r)
-            : ctx.lineTo(x + Math.cos(a) * r, y + Math.sin(a) * r)
+    const r = BR * 0.36
+    const px = x + Math.cos(a) * r, py = y + Math.sin(a) * r
+    i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py)
   }
   ctx.closePath(); ctx.fill()
 
-  // 5 outer patches
+  // Vijf vlakken eromheen, platgedrukt richting de rand
   for (let p = 0; p < 5; p++) {
     const pa = angle + (p / 5) * Math.PI * 2
-    const cx2 = x + Math.cos(pa) * BR * 0.75
-    const cy2 = y + Math.sin(pa) * BR * 0.75
+    const d  = 0.74
+    const cx2 = x + Math.cos(pa) * BR * d
+    const cy2 = y + Math.sin(pa) * BR * d
+    const squash = Math.sqrt(Math.max(0.05, 1 - d * d)) + 0.25
+    ctx.save()
+    ctx.translate(cx2, cy2); ctx.rotate(pa); ctx.scale(squash, 1)
+    ctx.fillStyle = '#1b1d24'
     ctx.beginPath()
     for (let i = 0; i < 5; i++) {
-      const a = pa + (i / 5) * Math.PI * 2 - Math.PI / 2
-      const r = BR * 0.28
-      i === 0 ? ctx.moveTo(cx2 + Math.cos(a) * r, cy2 + Math.sin(a) * r)
-              : ctx.lineTo(cx2 + Math.cos(a) * r, cy2 + Math.sin(a) * r)
+      const a = (i / 5) * Math.PI * 2 - Math.PI / 2
+      const r = BR * 0.3
+      i === 0 ? ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r) : ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r)
     }
     ctx.closePath(); ctx.fill()
+    ctx.restore()
   }
+
+  // Schaduw langs de onderrand — maakt het bol
+  const rim = ctx.createRadialGradient(x - BR * 0.3, y - BR * 0.3, BR * 0.2, x, y, BR)
+  rim.addColorStop(0, 'rgba(0,0,0,0)')
+  rim.addColorStop(0.72, 'rgba(0,0,0,0)')
+  rim.addColorStop(1, 'rgba(0,0,0,0.4)')
+  ctx.fillStyle = rim
+  ctx.fillRect(x - BR, y - BR, BR * 2, BR * 2)
   ctx.restore()
 
-  // Edge
-  ctx.strokeStyle = 'rgba(0,0,0,0.25)'; ctx.lineWidth = 1
+  // Rand + glanspunt
+  ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 1
   ctx.beginPath(); ctx.arc(x, y, BR, 0, Math.PI * 2); ctx.stroke()
+  ctx.fillStyle = 'rgba(255,255,255,0.9)'
+  ctx.beginPath(); ctx.ellipse(x - BR * 0.34, y - BR * 0.38, BR * 0.26, BR * 0.19, -0.7, 0, Math.PI * 2); ctx.fill()
+}
 
-  // Specular highlight
-  ctx.fillStyle = 'rgba(255,255,255,0.85)'
-  ctx.beginPath(); ctx.arc(x - BR * 0.32, y - BR * 0.32, BR * 0.22, 0, Math.PI * 2); ctx.fill()
+// ── Tribune ───────────────────────────────────────────────────────
+// Duizenden toeschouwers elke frame tekenen is zonde: het publiek staat stil,
+// dus het gaat één keer op een los canvas dat daarna als één plaatje met
+// parallax voorbijschuift. De sfeer komt van de lichtsweep eroverheen.
+const TRIBUNE_W = 1600
+let tribuneCanvas = null
+
+function maakTribune() {
+  const c = document.createElement('canvas')
+  c.width = TRIBUNE_W; c.height = BOARD_Y - STAND_Y
+  const g = c.getContext('2d')
+  const h = c.height
+
+  // Vakken: donkere banken, per rij iets lichter naar boven toe
+  const bg = g.createLinearGradient(0, 0, 0, h)
+  bg.addColorStop(0, '#131a2b'); bg.addColorStop(1, '#080c16')
+  g.fillStyle = bg; g.fillRect(0, 0, TRIBUNE_W, h)
+
+  // Trappen tussen de vakken
+  g.fillStyle = 'rgba(255,255,255,0.045)'
+  for (let x = 0; x < TRIBUNE_W; x += 200) g.fillRect(x, 0, 7, h)
+
+  // Publiek: het moet lezen als een donkere massa met wat kleurspikkels — niet
+  // als confetti, anders verdwijnen de bal en de spelers ertussen.
+  let i = 0
+  for (let ry = 6; ry < h - 10; ry += 13) {
+    const rij = Math.floor((ry - 6) / 13)
+    const schaal = 0.6 + rij * 0.035           // verderweg = kleiner
+    for (let rx = (rij % 2) * 6; rx < TRIBUNE_W; rx += 12) {
+      i++
+      if (i % 9 === 0) continue                // hier en daar een leeg stoeltje
+      const hue = (i * 47) % 360
+      g.fillStyle = `hsl(${hue},${14 + (i % 4) * 7}%,${11 + (i % 5) * 3}%)`
+      g.fillRect(rx, ry, 5 * schaal + 2, 4.5 * schaal + 2)
+      if (i % 4 === 0) {                       // een enkel hoofdje vangt licht
+        g.fillStyle = 'rgba(255,235,215,0.07)'
+        g.fillRect(rx + 1.5, ry - 2, 3, 2.5)
+      }
+    }
+    g.fillStyle = 'rgba(0,0,0,0.34)'
+    g.fillRect(0, ry + 8, TRIBUNE_W, 3)
+  }
+
+  // Diepte: bovenin donkerder, onderin vangt de eerste ring wat veldlicht
+  const dim = g.createLinearGradient(0, 0, 0, h)
+  dim.addColorStop(0, 'rgba(3,5,12,0.75)')
+  dim.addColorStop(0.55, 'rgba(3,5,12,0.35)')
+  dim.addColorStop(1, 'rgba(3,5,12,0.12)')
+  g.fillStyle = dim; g.fillRect(0, 0, TRIBUNE_W, h)
+
+  // Balustrade onderaan
+  g.fillStyle = 'rgba(0,0,0,0.55)'; g.fillRect(0, h - 7, TRIBUNE_W, 7)
+  return c
 }
 
 // ── Field drawing ─────────────────────────────────────────────────
-function drawField(ctx, cam) {
-  const sky = ctx.createLinearGradient(0, 0, 0, GROUND_Y)
-  sky.addColorStop(0, '#0a1a2e'); sky.addColorStop(1, '#1a4060')
-  ctx.fillStyle = sky; ctx.fillRect(cam, 0, W, GROUND_Y)
+function drawField(ctx, cam, t) {
+  // ── Alles wat ver weg staat: in schermruimte, met eigen parallax ──
+  ctx.save()
+  ctx.translate(cam, 0)
 
-  // ── Stands / crowd ───────────────────────────────────────────────
-  ctx.fillStyle = 'rgba(5,10,20,0.72)'
-  ctx.fillRect(cam, 0, W, 60)
-  CROWD.forEach(c => {
-    if (c.x < cam - 4 || c.x > cam + W + 4) return
-    ctx.fillStyle = c.c
-    ctx.globalAlpha = 0.75
-    ctx.beginPath(); ctx.arc(c.x, c.y, 2.8, 0, Math.PI * 2); ctx.fill()
-  })
-  ctx.globalAlpha = 1
-  // Stands shadow blending into field
-  const sg = ctx.createLinearGradient(cam, 54, cam, 78)
-  sg.addColorStop(0, 'rgba(0,0,0,0.55)'); sg.addColorStop(1, 'rgba(0,0,0,0)')
-  ctx.fillStyle = sg; ctx.fillRect(cam, 54, W, 24)
+  const sky = ctx.__sky || (ctx.__sky = (() => {
+    const s = ctx.createLinearGradient(0, 0, 0, STAND_Y)
+    s.addColorStop(0, '#070b1c'); s.addColorStop(0.55, '#0d1836'); s.addColorStop(1, '#16224a')
+    return s
+  })())
+  ctx.fillStyle = sky; ctx.fillRect(0, 0, W, STAND_Y)
 
-  // ── Floodlights ──────────────────────────────────────────────────
-  const lightX = [cam + 80, cam + W - 80]
-  lightX.forEach(lx => {
-    const lg = ctx.createRadialGradient(lx, 62, 2, lx, 62, 90)
-    lg.addColorStop(0, 'rgba(255,240,200,0.18)')
-    lg.addColorStop(1, 'rgba(255,240,200,0)')
-    ctx.fillStyle = lg
-    ctx.beginPath(); ctx.arc(lx, 62, 90, 0, Math.PI * 2); ctx.fill()
-    ctx.fillStyle = '#ffe8b0'
-    ctx.beginPath(); ctx.arc(lx, 62, 5, 0, Math.PI * 2); ctx.fill()
+  // Sterren (langzaamste laag)
+  const sterOff = (cam * 0.06) % (W + 60)
+  STARS.forEach(st => {
+    let sx = st.x - sterOff
+    if (sx < -20) sx += W + 60
+    const tw = 0.65 + 0.35 * Math.sin(t * 1.6 + st.tw)
+    ctx.fillStyle = `rgba(255,255,255,${st.a * tw})`
+    ctx.beginPath(); ctx.arc(sx, st.y, st.r, 0, Math.PI * 2); ctx.fill()
   })
 
-  ctx.fillStyle = '#267a32'; ctx.fillRect(cam, GROUND_Y, W, H - GROUND_Y)
-  ctx.fillStyle = '#1f6b2a'; ctx.fillRect(cam, GROUND_Y + 14, W, H - GROUND_Y - 14)
-
-  // Scrolling grass stripes
-  const sw = 120
-  const sx = Math.floor(cam / sw) * sw
-  for (let x = sx; x < cam + W; x += sw) {
-    ctx.fillStyle = Math.floor(x / sw) % 2 === 0 ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.025)'
-    ctx.fillRect(x, GROUND_Y, sw, H - GROUND_Y)
+  // Maan met halo
+  const mx = 660 - (cam * 0.06) % (W + 400)
+  if (mx > -60 && mx < W + 60) {
+    const halo = ctx.createRadialGradient(mx, 44, 4, mx, 44, 54)
+    halo.addColorStop(0, 'rgba(210,225,255,0.22)')
+    halo.addColorStop(1, 'rgba(210,225,255,0)')
+    ctx.fillStyle = halo
+    ctx.beginPath(); ctx.arc(mx, 44, 54, 0, Math.PI * 2); ctx.fill()
+    ctx.fillStyle = '#e8eeff'
+    ctx.beginPath(); ctx.arc(mx, 44, 17, 0, Math.PI * 2); ctx.fill()
+    ctx.fillStyle = 'rgba(190,205,235,0.55)'
+    ctx.beginPath(); ctx.arc(mx - 5, 40, 4, 0, Math.PI * 2); ctx.fill()
+    ctx.beginPath(); ctx.arc(mx + 6, 49, 2.6, 0, Math.PI * 2); ctx.fill()
   }
 
-  // Ground line
-  ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 2
-  ctx.beginPath(); ctx.moveTo(FIELD_L, GROUND_Y); ctx.lineTo(FIELD_R, GROUND_Y); ctx.stroke()
+  // Tribune
+  if (!tribuneCanvas) tribuneCanvas = maakTribune()
+  const trOff = -((cam * 0.4) % TRIBUNE_W)
+  ctx.drawImage(tribuneCanvas, trOff, STAND_Y)
+  ctx.drawImage(tribuneCanvas, trOff + TRIBUNE_W, STAND_Y)
 
-  // Corner flags
-  ;[[FIELD_L, 1], [FIELD_R, -1]].forEach(([fx, dir]) => {
-    ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = 2.5; ctx.lineCap = 'round'
-    ctx.beginPath(); ctx.moveTo(fx, GROUND_Y); ctx.lineTo(fx, GROUND_Y - 30); ctx.stroke()
-    ctx.fillStyle = '#FF6B35'
-    ctx.beginPath(); ctx.moveTo(fx, GROUND_Y - 30)
-    ctx.lineTo(fx + dir * 14, GROUND_Y - 21); ctx.lineTo(fx, GROUND_Y - 12); ctx.fill()
+  // Lichtsweep over het publiek — geeft leven zonder duizenden tekeningen
+  const sweepX = ((t * 110) % (W + 700)) - 350
+  const sw = ctx.createLinearGradient(sweepX - 150, 0, sweepX + 150, 0)
+  sw.addColorStop(0, 'rgba(255,240,200,0)')
+  sw.addColorStop(0.5, 'rgba(255,240,200,0.07)')
+  sw.addColorStop(1, 'rgba(255,240,200,0)')
+  ctx.fillStyle = sw; ctx.fillRect(sweepX - 150, STAND_Y, 300, BOARD_Y - STAND_Y)
+
+  // Dak boven de tribune
+  ctx.fillStyle = '#05070f'
+  ctx.fillRect(0, ROOF_Y, W, STAND_Y - ROOF_Y)
+  ctx.fillStyle = 'rgba(120,160,255,0.10)'
+  ctx.fillRect(0, STAND_Y - 3, W, 3)
+  // Lampenrij onder het dak
+  for (let lx = 20 - (cam * 0.4) % 90; lx < W; lx += 90) {
+    ctx.fillStyle = 'rgba(255,240,190,0.5)'
+    ctx.fillRect(lx, STAND_Y - 6, 16, 3)
+    const lg = ctx.createRadialGradient(lx + 8, STAND_Y - 2, 1, lx + 8, STAND_Y - 2, 34)
+    lg.addColorStop(0, 'rgba(255,240,190,0.10)'); lg.addColorStop(1, 'rgba(255,240,190,0)')
+    ctx.fillStyle = lg; ctx.fillRect(lx - 26, STAND_Y - 6, 68, 40)
+  }
+
+  // Donkere band tussen tribune en veld (schaduw van de eerste ring)
+  const bandG = ctx.createLinearGradient(0, BOARD_Y - 16, 0, BOARD_Y)
+  bandG.addColorStop(0, 'rgba(0,0,0,0)'); bandG.addColorStop(1, 'rgba(0,0,0,0.6)')
+  ctx.fillStyle = bandG; ctx.fillRect(0, BOARD_Y - 16, W, 16)
+
+  ctx.restore()
+
+  // ── Lichtmasten (wereldruimte, schuiven dus echt mee) ──
+  PYLONS.forEach(px => {
+    if (px < cam - 120 || px > cam + W + 120) return
+    ctx.strokeStyle = '#0b1020'; ctx.lineWidth = 6
+    ctx.beginPath(); ctx.moveTo(px, STAND_Y + 10); ctx.lineTo(px, 62); ctx.stroke()
+    ctx.fillStyle = '#0b1020'
+    roundRect(ctx, px - 34, 34, 68, 26, 5); ctx.fill()
+    for (let i = 0; i < 6; i++) {
+      const lx = px - 27 + (i % 3) * 27
+      const ly = 41 + Math.floor(i / 3) * 12
+      ctx.fillStyle = '#fff8dc'
+      ctx.beginPath(); ctx.arc(lx, ly, 4.2, 0, Math.PI * 2); ctx.fill()
+    }
+    const glow = ctx.createRadialGradient(px, 48, 4, px, 48, 120)
+    glow.addColorStop(0, 'rgba(255,244,205,0.3)')
+    glow.addColorStop(1, 'rgba(255,244,205,0)')
+    ctx.fillStyle = glow
+    ctx.beginPath(); ctx.arc(px, 48, 120, 0, Math.PI * 2); ctx.fill()
+    // Lichtbundel naar het gras
+    const cone = ctx.createLinearGradient(px, 60, px, GROUND_Y)
+    cone.addColorStop(0, 'rgba(255,246,214,0.13)')
+    cone.addColorStop(1, 'rgba(255,246,214,0)')
+    ctx.fillStyle = cone
+    ctx.beginPath()
+    ctx.moveTo(px - 26, 58); ctx.lineTo(px + 26, 58)
+    ctx.lineTo(px + 230, GROUND_Y + 60); ctx.lineTo(px - 230, GROUND_Y + 60)
+    ctx.closePath(); ctx.fill()
   })
 
-  // Halfway line
-  ctx.setLineDash([8, 8]); ctx.strokeStyle = 'rgba(255,255,255,0.22)'
-  ctx.beginPath(); ctx.moveTo(FIELD_MID, 6); ctx.lineTo(FIELD_MID, GROUND_Y); ctx.stroke()
-  ctx.setLineDash([])
-
-  // Center arc
-  ctx.beginPath(); ctx.arc(FIELD_MID, GROUND_Y, 60, Math.PI, 0); ctx.stroke()
-
-  // Penalty boxes
-  ctx.strokeStyle = 'rgba(255,255,255,0.18)'; ctx.lineWidth = 1.5
-  ctx.strokeRect(FIELD_L, GROUND_Y - 110, 140, 110)
-  ctx.strokeRect(FIELD_R - 140, GROUND_Y - 110, 140, 110)
-
-  // Left goal
-  ctx.fillStyle = 'rgba(200,220,255,0.07)'
-  ctx.fillRect(0, G_TOP, GOAL_NET, GOAL_H)
-  ctx.strokeStyle = 'rgba(255,255,255,0.12)'; ctx.lineWidth = 1
-  for (let y = G_TOP + 22; y < GROUND_Y; y += 22) {
-    ctx.beginPath(); ctx.moveTo(2, y); ctx.lineTo(GOAL_NET - 4, y); ctx.stroke()
+  // ── Reclameborden langs het veld ──
+  ctx.fillStyle = '#070a14'
+  ctx.fillRect(cam, BOARD_Y, W, GROUND_Y - BOARD_Y)
+  const bordBreedte = 200
+  const eerste = Math.floor(cam / bordBreedte) * bordBreedte
+  for (let bx = eerste; bx < cam + W; bx += bordBreedte) {
+    const idx = Math.floor(bx / bordBreedte)
+    const hue = (idx * 47 + t * 26) % 360
+    const bg2 = ctx.createLinearGradient(0, BOARD_Y + 4, 0, GROUND_Y - 6)
+    bg2.addColorStop(0, `hsla(${hue},70%,52%,0.32)`)
+    bg2.addColorStop(1, `hsla(${hue},70%,32%,0.14)`)
+    ctx.fillStyle = bg2
+    ctx.fillRect(bx + 4, BOARD_Y + 5, bordBreedte - 8, GROUND_Y - BOARD_Y - 11)
+    ctx.fillStyle = `hsla(${hue},80%,74%,0.34)`
+    ctx.font = 'bold 14px Nunito, Arial'
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
+    ctx.fillText(idx % 2 === 0 ? 'KENNISKIST' : '⚽ 1 TEGEN 1', bx + bordBreedte / 2, BOARD_Y + 17)
   }
-  for (let x = 16; x < GOAL_NET - 4; x += 16) {
-    ctx.beginPath(); ctx.moveTo(x, G_TOP + 2); ctx.lineTo(x, GROUND_Y); ctx.stroke()
-  }
-  ctx.fillStyle = '#fff'
-  ctx.fillRect(GOAL_NET - 5, G_TOP, 5, GOAL_H)
-  ctx.fillRect(0, G_TOP - 6, GOAL_NET, 6)
+  ctx.fillStyle = 'rgba(0,0,0,0.55)'
+  ctx.fillRect(cam, GROUND_Y - 6, W, 6)
 
-  // Right goal
-  ctx.fillStyle = 'rgba(200,220,255,0.07)'
-  ctx.fillRect(FIELD_R, G_TOP, GOAL_NET, GOAL_H)
-  ctx.strokeStyle = 'rgba(255,255,255,0.12)'; ctx.lineWidth = 1
-  for (let y = G_TOP + 22; y < GROUND_Y; y += 22) {
-    ctx.beginPath(); ctx.moveTo(FIELD_R + 4, y); ctx.lineTo(FIELD_W - 2, y); ctx.stroke()
+  // ── Grasmat ──
+  const gras = ctx.__gras || (ctx.__gras = (() => {
+    const g2 = ctx.createLinearGradient(0, GROUND_Y, 0, H)
+    g2.addColorStop(0, '#237038'); g2.addColorStop(0.4, '#1a5a2c'); g2.addColorStop(1, '#0e3a1d')
+    return g2
+  })())
+  ctx.fillStyle = gras; ctx.fillRect(cam, GROUND_Y, W, H - GROUND_Y)
+
+  // Maaibanen
+  const sw2 = 110
+  const sx2 = Math.floor(cam / sw2) * sw2
+  for (let x = sx2; x < cam + W; x += sw2) {
+    ctx.fillStyle = Math.floor(x / sw2) % 2 === 0 ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.07)'
+    ctx.fillRect(x, GROUND_Y, sw2, H - GROUND_Y)
   }
-  for (let x = FIELD_R + 16; x < FIELD_W - 2; x += 16) {
-    ctx.beginPath(); ctx.moveTo(x, G_TOP + 2); ctx.lineTo(x, GROUND_Y); ctx.stroke()
+
+  // Lichtplekken van de masten op het gras
+  PYLONS.forEach(px => {
+    if (px < cam - 400 || px > cam + W + 400) return
+    const lp = ctx.createRadialGradient(px, GROUND_Y + 30, 10, px, GROUND_Y + 30, 300)
+    lp.addColorStop(0, 'rgba(255,246,214,0.16)')
+    lp.addColorStop(1, 'rgba(255,246,214,0)')
+    ctx.fillStyle = lp
+    ctx.beginPath(); ctx.ellipse(px, GROUND_Y + 30, 300, 60, 0, 0, Math.PI * 2); ctx.fill()
+  })
+
+  // Randlijn waar het gras het licht vangt
+  ctx.fillStyle = 'rgba(255,255,255,0.09)'
+  ctx.fillRect(cam, GROUND_Y, W, 2)
+
+  // ── Belijning ──
+  // Alleen de zijlijn: middenlijn, middencirkel en de 16-meterlijnen stonden
+  // in dit zij-aanzicht dwars door het speelveld en maakten het beeld onrustig.
+  ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 2.5
+  ctx.beginPath(); ctx.moveTo(FIELD_L, GROUND_Y + 2); ctx.lineTo(FIELD_R, GROUND_Y + 2); ctx.stroke()
+
+  // ── Doelen ──
+  const doel = (kant) => {
+    const links = kant === 'L'
+    const x0 = links ? 0 : FIELD_R
+    const paalX = links ? GOAL_NET : FIELD_R
+
+    // Net
+    ctx.save()
+    ctx.beginPath(); ctx.rect(x0, G_TOP, GOAL_NET, GOAL_H); ctx.clip()
+    const net = ctx.createLinearGradient(x0, G_TOP, x0, GROUND_Y)
+    net.addColorStop(0, 'rgba(190,215,255,0.13)')
+    net.addColorStop(1, 'rgba(150,180,230,0.05)')
+    ctx.fillStyle = net; ctx.fillRect(x0, G_TOP, GOAL_NET, GOAL_H)
+    ctx.strokeStyle = 'rgba(255,255,255,0.17)'; ctx.lineWidth = 1
+    for (let d = -GOAL_H; d < GOAL_NET + GOAL_H; d += 12) {
+      ctx.beginPath(); ctx.moveTo(x0 + d, G_TOP); ctx.lineTo(x0 + d + GOAL_H, GROUND_Y); ctx.stroke()
+      ctx.beginPath(); ctx.moveTo(x0 + d, GROUND_Y); ctx.lineTo(x0 + d + GOAL_H, G_TOP); ctx.stroke()
+    }
+    ctx.restore()
+
+    // Paal + lat met een streepje glans
+    const paal = ctx.createLinearGradient(paalX, 0, paalX + 6, 0)
+    paal.addColorStop(0, '#ffffff'); paal.addColorStop(1, '#b9c4d6')
+    ctx.fillStyle = paal
+    ctx.fillRect(links ? paalX - 6 : paalX, G_TOP - 6, 6, GOAL_H + 6)
+    ctx.fillStyle = '#eef2f8'
+    ctx.fillRect(x0, G_TOP - 6, GOAL_NET, 6)
+    ctx.fillStyle = 'rgba(0,0,0,0.25)'
+    ctx.fillRect(x0, G_TOP, GOAL_NET, 1.5)
   }
-  ctx.fillStyle = '#fff'
-  ctx.fillRect(FIELD_R, G_TOP, 5, GOAL_H)
-  ctx.fillRect(FIELD_R, G_TOP - 6, GOAL_NET, 6)
+  doel('L'); doel('R')
 }
 
 // ── Minimap ───────────────────────────────────────────────────────
@@ -522,7 +872,7 @@ function saveToernooi(b) {
 }
 function clearToernooi() { try { localStorage.removeItem(TOERNOOI_KEY) } catch { /* ignore */ } }
 
-// Ontgrendelde landen: standaard 10, rest ontgrendel je door het WK te winnen.
+// Ontgrendelde landen: standaard 10, rest ontgrendel je door het toernooi te winnen.
 const UNLOCK_KEY = 'kk_wk_unlocked'
 function loadUnlocked() {
   try { const v = JSON.parse(localStorage.getItem(UNLOCK_KEY)); if (Array.isArray(v) && v.length) return v } catch { /* ignore */ }
@@ -694,6 +1044,8 @@ export default function FootballGame({ year, onBack, addCuruntie, noQuiz = false
         state.player.vy += GRAVITY * dt
         state.player.x  += pvx * dt
         state.player.y  += state.player.vy * dt
+        // Pasfase voor de loopanimatie: telt afgelegde afstand, niet tijd
+        state.player.stride = (state.player.stride || 0) + Math.abs(pvx) * dt
         if (state.player.y + PR >= GROUND_Y) { state.player.y = GROUND_Y - PR; state.player.vy = 0; state.player.onGround = true }
         if (state.player.y - PR < 0)          { state.player.y = PR;            state.player.vy = 0 }
         state.player.x = Math.max(FIELD_L + PR, Math.min(FIELD_R - PR, state.player.x))
@@ -743,9 +1095,11 @@ export default function FootballGame({ year, onBack, addCuruntie, noQuiz = false
           }
         }
         state.ai.vx = avx
+        if (!twoPlayer && Math.abs(avx) > 10) state.ai.facingRight = avx > 0
         state.ai.vy += GRAVITY * dt
         state.ai.x  += avx * dt
         state.ai.y  += state.ai.vy * dt
+        state.ai.stride = (state.ai.stride || 0) + Math.abs(avx) * dt
         if (state.ai.y + PR >= GROUND_Y) { state.ai.y = GROUND_Y - PR; state.ai.vy = 0; state.ai.onGround = true }
         if (state.ai.y - PR < 0)          { state.ai.y = PR;            state.ai.vy = 0 }
         state.ai.x = Math.max(FIELD_L + PR, Math.min(FIELD_R - PR, state.ai.x))
@@ -861,24 +1215,25 @@ export default function FootballGame({ year, onBack, addCuruntie, noQuiz = false
       const cam = Math.round(state.camera)
 
       // ── Draw ──
+      const klok = ts / 1000
       ctx.save(); ctx.translate(-cam, 0)
-      drawField(ctx, cam)
-      drawPlayer(ctx, state.player.x, state.player.y, playerCountry, state.player.dizzy, state.player.vx, state.player.onGround)
-      drawPlayer(ctx, state.ai.x,     state.ai.y,     currentOpponent, state.ai.dizzy,   state.ai.vx,     state.ai.onGround)
+      drawField(ctx, cam, klok)
+      drawPlayer(ctx, state.player, playerCountry, 10)
+      drawPlayer(ctx, state.ai,     currentOpponent, 7)
 
       // Ball trail
       const spd = Math.sqrt(state.ball.vx ** 2 + state.ball.vy ** 2)
       if (spd > 80) {
         state.trail.forEach((pt, i) => {
           const t = (i + 1) / state.trail.length
-          ctx.globalAlpha = t * 0.28
+          ctx.globalAlpha = t * 0.3
           ctx.fillStyle = spd > 400 ? '#FFD23F' : '#fff'
-          ctx.beginPath(); ctx.arc(pt.x, pt.y, BR * (0.25 + t * 0.55), 0, Math.PI * 2); ctx.fill()
+          ctx.beginPath(); ctx.arc(pt.x, pt.y, BR * (0.25 + t * 0.6), 0, Math.PI * 2); ctx.fill()
         })
         ctx.globalAlpha = 1
       }
 
-      drawBall(ctx,   state.ball.x,   state.ball.y, state.ball.angle)
+      drawBall(ctx, state.ball.x, state.ball.y, state.ball.angle, spd)
 
       // Particles
       state.particles.forEach(p => {
@@ -889,6 +1244,14 @@ export default function FootballGame({ year, onBack, addCuruntie, noQuiz = false
       ctx.globalAlpha = 1
 
       ctx.restore()
+
+      // Vignet: houdt de aandacht in het midden en dempt de tribune aan de rand
+      const vig = ctx.__vig || (ctx.__vig = (() => {
+        const v = ctx.createRadialGradient(W / 2, H / 2, H * 0.45, W / 2, H / 2, W * 0.72)
+        v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,0.5)')
+        return v
+      })())
+      ctx.fillStyle = vig; ctx.fillRect(0, 0, W, H)
 
       if (state.subPhase === 'goal_kick') {
         const kickTeam = state.goalKickTeam === 'player' ? playerCountry : currentOpponent
@@ -1000,7 +1363,7 @@ export default function FootballGame({ year, onBack, addCuruntie, noQuiz = false
       <button className="back-btn" onClick={onBack}>← Menu</button>
       <div className="wk-header">
         <span className="wk-trophy">{twoPlayer ? '🎮' : '🏆'}</span>
-        <h1 className="wk-title">{twoPlayer ? '2 Spelers' : 'WK 2026'}</h1>
+        <h1 className="wk-title">{twoPlayer ? '2 Spelers' : '1 tegen 1 voetbal'}</h1>
         <p className="wk-sub">{twoPlayer ? 'Pijltjes — kies jouw land (P1)' : 'Kies jouw land'}</p>
       </div>
       <div className="wk-country-grid">
@@ -1008,7 +1371,7 @@ export default function FootballGame({ year, onBack, addCuruntie, noQuiz = false
           const open = unlocked.includes(c.key)
           return (
             <button key={c.key} className={`wk-country-card${open ? '' : ' wk-locked'}`} disabled={!open}
-              onClick={() => open && pickCountry(c.key)} title={open ? undefined : 'Win het WK om dit land te ontgrendelen'}>
+              onClick={() => open && pickCountry(c.key)} title={open ? undefined : 'Win het toernooi om dit land te ontgrendelen'}>
               {!open && <span className="wk-lock-badge">🔒</span>}
               <span className="wk-country-flag">{c.flag}</span>
               <JerseyCircle country={c} size={30} />
@@ -1261,7 +1624,7 @@ export default function FootballGame({ year, onBack, addCuruntie, noQuiz = false
             )}
             {(won || draw) && !next && (
               <button className="fb-end-btn fb-end-btn-again" onClick={() => advanceRound(true)}>
-                🏆 Claim de WK titel!
+                🏆 Claim de beker!
               </button>
             )}
             {!won && !draw && (
@@ -1284,9 +1647,9 @@ export default function FootballGame({ year, onBack, addCuruntie, noQuiz = false
     <div className="fb-screen">
       <div className="wk-champion-card">
         <div className="wk-champ-trophy">🏆</div>
-        <h1 className="wk-champ-title">WERELDKAMPIOEN!</h1>
+        <h1 className="wk-champ-title">TOERNOOI GEWONNEN!</h1>
         <div className="wk-champ-flag">{playerCountry?.flag}</div>
-        <p className="wk-champ-sub">{playerCountry?.name} heeft het WK 2026 gewonnen!</p>
+        <p className="wk-champ-sub">{playerCountry?.name} wint alle vier de duels!</p>
         {newUnlock && (
           <p className="wk-champ-unlock">🔓 Nieuw land ontgrendeld: {getCountry(newUnlock)?.flag} {getCountry(newUnlock)?.name}!</p>
         )}

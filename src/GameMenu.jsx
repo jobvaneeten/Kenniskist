@@ -66,7 +66,7 @@ const GAMES = {
 }
 
 const FREE_GAMES = [
-  { key: 'football',      emoji: '⚽', name: 'WK Voetbal',      desc: 'Scoor tegen de computer of een vriend' },
+  { key: 'football',      emoji: '⚽', name: '1 tegen 1 voetbal', desc: 'Scoor tegen de computer of een vriend' },
   { key: 'headsoccer',    emoji: '🥅', name: 'Supervoetbal',     desc: '1-tegen-1 met landen & special moves' },
   { key: 'towerdefense',  emoji: '🏰', name: 'Tower Defense',   desc: 'Bouw torens & stop de vijanden' },
   { key: 'jetpack',       emoji: '🚀', name: 'Jetpack',          desc: 'Vlieg zo ver mogelijk!' },
@@ -192,7 +192,7 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
         <button className="back-btn" onClick={() => setDirectGame(null)}>← Menu</button>
         <div className="game-header">
           <span className="game-header-icon">⚽</span>
-          <h1 className="game-header-title">WK Voetbal</h1>
+          <h1 className="game-header-title">1 tegen 1 voetbal</h1>
           <p className="game-header-sub">Kies een modus</p>
         </div>
         {loadToernooi() && (

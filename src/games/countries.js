@@ -122,7 +122,7 @@ export function generateClassBracket(playerKey) {
 // door toernooien te winnen (willekeurig land uit dezelfde niveau-groep).
 export const DEFAULT_UNLOCKED = ['nl', 'de', 'fr', 'en', 'es', 'it', 'br', 'ar', 'us', 'mx']
 
-// Let op: NIET filteren op DEFAULT_UNLOCKED hier — elk spel (WK Voetbal, Head
+// Let op: NIET filteren op DEFAULT_UNLOCKED hier — elk spel (1 tegen 1 voetbal, Head
 // Soccer) heeft zijn eigen standaard-ontgrendelde set en filtert bij het
 // toekennen van een beloning zelf al op zijn eigen `unlocked`-lijst. Als we
 // hier ook al zouden filteren, vallen landen die in dat andere spel nog
