@@ -234,7 +234,17 @@ export default function Landing({ onChoose, ingelogd, onUitloggen }) {
         </button>
       </section>
 
-      <footer className="landing-footer">Kenniskist · gemaakt om leren leuk te maken</footer>
+      {/* Twemoji staat onder CC-BY 4.0: commercieel gebruik mag, maar
+          naamsvermelding is verplicht. Kenney-spelart en de Poly Haven-
+          texturen zijn CC0 en hoeven het niet, maar staan er netjes bij. */}
+      <footer className="landing-footer">
+        Kenniskist · gemaakt om leren leuk te maken
+        <span className="landing-credits">
+          Emoji-graphics: <a href="https://github.com/twitter/twemoji" target="_blank" rel="noreferrer">Twemoji</a> (CC-BY 4.0) ·
+          spelart: <a href="https://kenney.nl" target="_blank" rel="noreferrer">Kenney</a> ·
+          texturen: <a href="https://polyhaven.com" target="_blank" rel="noreferrer">Poly Haven</a> (CC0)
+        </span>
+      </footer>
     </div>
   )
 }

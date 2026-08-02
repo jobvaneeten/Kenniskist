@@ -27,11 +27,6 @@ export const VAKKEN = [
 // Eén entry per tool-familie. Families met varianten (dictee, engels,
 // reisrondewereld) hebben een `varianten`-lijst; die leveren elk hun eigen
 // concrete tool_id op via VARIANTEN hieronder.
-//
-// IepOefenen.jsx bestaat wel als component maar wordt nergens gemount (ook
-// niet vanuit GameMenu.jsx) — bewust niet in deze registry, anders zou een
-// leerkracht 'm kunnen kiezen voor een weektaak terwijl de tool zelf
-// onbereikbaar is.
 export const TOOL_FAMILIES = [
   {
     familie: 'taal-woordsoorten', toolId: 'taal-woordsoorten', label: 'Woordsoorten',
