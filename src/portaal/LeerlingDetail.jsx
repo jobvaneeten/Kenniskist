@@ -2,8 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase.js'
 import { roepWorkerAan } from '../lib/worker.js'
 import { toolLabel } from '../lib/tools.js'
-import DatumFilter from './DatumFilter.jsx'
-import HerkomstFilter from './HerkomstFilter.jsx'
 import FoutenLijst from './FoutenLijst.jsx'
 import { berekenBereik } from './datumBereik.js'
 import { groepeerSessies, filterHerkomst, scoreKlasse, kortMoment } from './resultaatHelpers.js'
@@ -166,13 +164,12 @@ function WachtwoordResetten({ leerlingId }) {
   )
 }
 
-// Embeddable: geen eigen .portaal-wrapper — wordt gerenderd binnen
-// KlasScherm, met een eigen terug-knop naar de tab van waaruit je kwam.
-export default function LeerlingDetail({ leerlingId, onBack }) {
+// Embeddable: geen eigen .portaal-wrapper en geen eigen filters — periode en
+// herkomst komen van KlasScherm, zodat dit scherm hetzelfde laat zien als de
+// lijst waar je vandaan klikte. Terug gaat via de kruimelbalk daarboven.
+export default function LeerlingDetail({ leerlingId, bereik, herkomst }) {
   const [leerling, setLeerling] = useState(null)
   const [resultaten, setResultaten] = useState(null)
-  const [bereik, setBereik] = useState('week')
-  const [herkomst, setHerkomst] = useState('alles')
 
   useEffect(() => {
     let actief = true
@@ -199,23 +196,17 @@ export default function LeerlingDetail({ leerlingId, onBack }) {
 
   return (
     <>
-      <button className="portaal-terug" onClick={onBack}>← Terug</button>
-
       <div className="portaal-kaart">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
+        <div className="portaal-sectiekop">
           <div>
             <h2 style={{ margin: 0 }}>{leerling?.weergavenaam ?? '…'}</h2>
             {leerling && (
-              <p style={{ margin: '4px 0 0', color: 'rgba(255,255,255,0.65)', fontSize: '0.85rem' }}>
+              <p className="portaal-zacht" style={{ margin: '4px 0 0' }}>
                 Inloggen met: klas <strong>{leerling.klassen?.code}</strong>, gebruikersnaam <strong>{leerling.gebruikersnaam}</strong>
               </p>
             )}
           </div>
           {leerling && <WachtwoordResetten leerlingId={leerlingId} />}
-        </div>
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 14 }}>
-          <DatumFilter waarde={bereik} onChange={setBereik} />
-          <HerkomstFilter waarde={herkomst} onChange={setHerkomst} />
         </div>
       </div>
 

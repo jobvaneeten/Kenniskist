@@ -69,7 +69,7 @@ function KlasToevoegen({ schoolId, onKlaar }) {
   )
 }
 
-function KlasOverzicht({ profiel, klassen, isIcter, onKiesKlas, onKlassenGewijzigd }) {
+function KlasOverzicht({ profiel, klassen, aantallen, isIcter, onKiesKlas, onKlassenGewijzigd }) {
   const [toonLeerlingForm, setToonLeerlingForm] = useState(false)
   const [toonLeerkrachtForm, setToonLeerkrachtForm] = useState(false)
   const [toonKlasForm, setToonKlasForm] = useState(false)
@@ -77,34 +77,31 @@ function KlasOverzicht({ profiel, klassen, isIcter, onKiesKlas, onKlassenGewijzi
   return (
     <div className="portaal-inhoud">
       <div className="portaal-kaart">
-        <h2>Klassen</h2>
+        <div className="portaal-sectiekop">
+          <h2>Kies een klas</h2>
+          <span className="portaal-zacht">daarna zie je het overzicht van die klas</span>
+        </div>
         {klassen.length === 0 && <p className="portaal-leeg">Nog geen klassen.</p>}
         <div className="portaal-grid">
           {klassen.map(k => (
             <button key={k.id} className="portaal-klaskaart" onClick={() => onKiesKlas(k)}>
               {k.naam}
-              {k.schooljaar && <span>{k.schooljaar}</span>}
+              <span>{aantallen[k.id] ?? 0} leerlingen{k.schooljaar ? ` · ${k.schooljaar}` : ''}</span>
               <span>inlogcode: {k.code}</span>
               <span>{k.groepen?.length ? `groep ${k.groepen.join(', ')}` : 'alle groepen'}</span>
             </button>
           ))}
         </div>
-        {isIcter && (
-          toonKlasForm
-            ? <div style={{ marginTop: 16 }}><KlasToevoegen schoolId={profiel.school_id} onKlaar={() => { setToonKlasForm(false); onKlassenGewijzigd() }} /></div>
-            : <button className="portaal-knop portaal-knop-subtiel" style={{ marginTop: 16 }} onClick={() => setToonKlasForm(true)}>+ Klas toevoegen</button>
-        )}
-      </div>
 
-      <div className="portaal-kaart">
-        <h2>Accounts</h2>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <button className="portaal-knop" onClick={() => setToonLeerlingForm(v => !v)}>+ Leerling toevoegen</button>
-          {isIcter && <button className="portaal-knop" onClick={() => setToonLeerkrachtForm(v => !v)}>+ Leerkracht toevoegen</button>}
+        <div className="portaal-actiebalk">
+          <button className="portaal-knop portaal-knop-subtiel" onClick={() => setToonLeerlingForm(v => !v)}>+ Leerling</button>
+          {isIcter && <button className="portaal-knop portaal-knop-subtiel" onClick={() => setToonLeerkrachtForm(v => !v)}>+ Leerkracht</button>}
+          {isIcter && <button className="portaal-knop portaal-knop-subtiel" onClick={() => setToonKlasForm(v => !v)}>+ Klas</button>}
         </div>
       </div>
 
-      {toonLeerlingForm && <LeerlingToevoegen klassen={klassen} onKlaar={() => setToonLeerlingForm(false)} />}
+      {toonKlasForm && <KlasToevoegen schoolId={profiel.school_id} onKlaar={() => { setToonKlasForm(false); onKlassenGewijzigd() }} />}
+      {toonLeerlingForm && <LeerlingToevoegen klassen={klassen} onKlaar={() => { setToonLeerlingForm(false); onKlassenGewijzigd() }} />}
       {toonLeerkrachtForm && <LeerkrachtToevoegen onKlaar={() => setToonLeerkrachtForm(false)} />}
     </div>
   )
@@ -113,6 +110,7 @@ function KlasOverzicht({ profiel, klassen, isIcter, onKiesKlas, onKlassenGewijzi
 export default function Portaal() {
   const { profiel, uitloggen } = useSessie()
   const [klassen, setKlassen] = useState([])
+  const [aantallen, setAantallen] = useState({})
   const [gekozenKlas, setGekozenKlas] = useState(null)
   // Puur een weergave-schakelaar: icter heeft via RLS altijd alle rechten
   // van een leerkracht (en meer). Sommige icters geven zelf ook les aan een
@@ -121,8 +119,12 @@ export default function Portaal() {
   const [alsLeerkracht, setAlsLeerkracht] = useState(false)
 
   const laadKlassen = useCallback(async () => {
-    const { data } = await supabase.from('klassen').select('id, school_id, naam, schooljaar, code, groepen').order('naam')
+    const [{ data }, { data: lln }] = await Promise.all([
+      supabase.from('klassen').select('id, school_id, naam, schooljaar, code, groepen').order('naam'),
+      supabase.from('profielen').select('klas_id').eq('rol', 'leerling'),
+    ])
     setKlassen(data ?? [])
+    setAantallen((lln ?? []).reduce((acc, p) => ({ ...acc, [p.klas_id]: (acc[p.klas_id] ?? 0) + 1 }), {}))
   }, [])
 
   useEffect(() => { if (profiel && profiel.rol !== 'admin') laadKlassen() }, [profiel, laadKlassen])
@@ -153,6 +155,7 @@ export default function Portaal() {
       <KlasOverzicht
         profiel={profiel}
         klassen={klassen}
+        aantallen={aantallen}
         isIcter={isIcter}
         onKiesKlas={setGekozenKlas}
         onKlassenGewijzigd={laadKlassen}

@@ -91,6 +91,37 @@ export function verzamelFouten(rijen) {
   return fouten.sort((a, b) => b.tijd - a.tijd)
 }
 
+// Zelfde fouten, maar opgeteld: dezelfde opgave door meerdere leerlingen fout
+// is één regel met een aantal erbij. Dit is de klas-versie van verzamelFouten —
+// een leerkracht wil niet 60 losse regels, maar "hier struikelt de halve klas
+// over". `antwoorden` houdt bij wat er dan wél ingevuld werd, meest gegeven
+// eerst.
+export function groepeerFouten(rijen) {
+  const groepen = new Map()
+  for (const r of rijen) {
+    for (const o of normaliseerOpgaven(r.details_json)) {
+      if (o.goed) continue
+      const sleutel = `${r.tool_id}|${o.vraag ?? ''}|${o.juist ?? ''}`
+      const g = groepen.get(sleutel) ?? {
+        sleutel, toolId: r.tool_id, vraag: o.vraag, juist: o.juist,
+        aantal: 0, leerlingen: new Set(), antwoorden: new Map(), laatste: 0,
+      }
+      g.aantal++
+      g.leerlingen.add(r.leerling_id)
+      if (o.antwoord) g.antwoorden.set(o.antwoord, (g.antwoorden.get(o.antwoord) ?? 0) + 1)
+      g.laatste = Math.max(g.laatste, new Date(r.aangemaakt_op).getTime())
+      groepen.set(sleutel, g)
+    }
+  }
+  return [...groepen.values()]
+    .map(g => ({
+      ...g,
+      leerlingenAantal: g.leerlingen.size,
+      vaakstFout: [...g.antwoorden.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null,
+    }))
+    .sort((a, b) => b.leerlingenAantal - a.leerlingenAantal || b.aantal - a.aantal)
+}
+
 // Filter op herkomst: alles, alleen weektaakwerk, of alleen vrij oefenen.
 // `opdracht_id` is gevuld zodra een tool vanuit een weektaak draait.
 export function filterHerkomst(rijen, herkomst) {

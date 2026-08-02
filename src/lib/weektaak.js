@@ -53,16 +53,22 @@ export async function haalMijnWeektaak(profielId, klasId) {
   if (!opdrachten?.length) return []
 
   const opdrachtIds = opdrachten.map(o => o.id)
-  const { data: voortgang } = await supabase
-    .from('weektaak_voortgang').select('opdracht_id, doel_aantal, som_score, som_max, pogingen')
-    .eq('leerling_id', profielId)
-    .in('opdracht_id', opdrachtIds)
+  // De status staat niet in weektaak_voortgang, dus apart erbij: een opdracht
+  // die de leerkracht heeft vrijgesteld ("hoeft niet") hoort niet meer in het
+  // lijstje van de leerling te staan.
+  const [{ data: voortgang }, { data: toewijzingen }] = await Promise.all([
+    supabase.from('weektaak_voortgang').select('opdracht_id, doel_aantal, som_score, som_max, pogingen')
+      .eq('leerling_id', profielId).in('opdracht_id', opdrachtIds),
+    supabase.from('toewijzingen').select('opdracht_id, status')
+      .eq('leerling_id', profielId).in('opdracht_id', opdrachtIds),
+  ])
 
   const weektaakBij = new Map(weektaken.map(w => [w.id, w]))
   const voortgangBij = new Map((voortgang ?? []).map(v => [v.opdracht_id, v]))
+  const vrijgesteld = new Set((toewijzingen ?? []).filter(t => t.status === 'vrijgesteld').map(t => t.opdracht_id))
 
   return opdrachten
-    .filter(o => voortgangBij.has(o.id))
+    .filter(o => voortgangBij.has(o.id) && !vrijgesteld.has(o.id))
     .map(o => {
       const v = voortgangBij.get(o.id)
       const doel = v.doel_aantal ?? null

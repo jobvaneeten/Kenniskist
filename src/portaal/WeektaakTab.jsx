@@ -27,6 +27,7 @@ export default function WeektaakTab({ klas, onKiesLeerling }) {
   const [weergave, setWeergave] = useState('lijst') // lijst | nieuw | bewerken | voortgang | differentiatie
   const [gekozen, setGekozen] = useState(null)
   const [gekozenOpdrachten, setGekozenOpdrachten] = useState(null)
+  const [alleenNietAf, setAlleenNietAf] = useState(false)
 
   useEffect(() => {
     let actief = true
@@ -34,7 +35,7 @@ export default function WeektaakTab({ klas, onKiesLeerling }) {
     return () => { actief = false }
   }, [klas.id])
 
-  const kiesWeektaak = (wt) => { setGekozen(wt); setWeergave('voortgang') }
+  const kiesWeektaak = (wt) => { setGekozen(wt); setWeergave('voortgang'); setAlleenNietAf(false) }
 
   const haalOpdrachten = async () => {
     const { data } = await supabase
@@ -87,12 +88,19 @@ export default function WeektaakTab({ klas, onKiesLeerling }) {
             <h2 style={{ margin: '4px 0 0' }}>{gekozen.titel}</h2>
             <p className="portaal-leeg" style={{ margin: 0 }}>{gekozen.start_op} t/m {gekozen.eind_op}</p>
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <button
+              className={alleenNietAf ? 'portaal-knop' : 'portaal-knop portaal-knop-subtiel'}
+              onClick={() => setAlleenNietAf(v => !v)}
+            >{alleenNietAf ? 'Toon iedereen' : 'Alleen niet af'}</button>
             <button className="portaal-knop portaal-knop-subtiel" onClick={differentieren}>Differentiëren</button>
             <button className="portaal-knop portaal-knop-subtiel" onClick={bewerken}>Bewerken</button>
           </div>
         </div>
-        <WeektaakVoortgang weektaak={gekozen} klasId={klas.id} onKiesLeerling={onKiesLeerling} />
+        <WeektaakVoortgang
+          weektaak={gekozen} klasId={klas.id}
+          alleenNietAf={alleenNietAf} onKiesLeerling={onKiesLeerling}
+        />
       </div>
     )
   }
