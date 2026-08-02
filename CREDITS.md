@@ -14,22 +14,20 @@ en wat de licentie toestaat. Bedoeld als checklist bij commercieel gebruik.
 | React, Phaser, Colyseus, Supabase-client, Vite, Wrangler | npm | MIT | Licentietekst meeleveren in de bundel |
 | Babylon.js (core + loaders), sharp | npm | Apache-2.0 | Licentietekst en NOTICE meeleveren |
 
+## Door de eigenaar bevestigd
+
+- `public/Hillclimb/` — AI-gegenereerd.
+- `public/Pet/`, `public/Broekjes/`, `public/Schoenen/`, `Poppetje.glb` en
+  `public/jetpack/` — eigenaar bevestigt dat deze gebruikt mogen worden.
+
 ## Nog te bevestigen door de eigenaar
 
-Van deze bestanden is de herkomst niet uit het bestand zelf af te leiden. Check
-per pack de licentie voordat er geld met de site verdiend wordt.
-
-- `public/jetpack/` — spriteset met namen in CraftPix/GameArt2D-stijl. Die packs
-  staan commercieel gebruik meestal toe, maar verbieden het doorgeven van de
-  losse assets en vragen soms naamsvermelding.
-- `public/Hillclimb/`, `public/Pet/`, `public/Broekjes/`, `public/Schoenen/`,
-  `public/GLB format/` — 3D-modellen, herkomst onbekend.
 - `public/Towerdefence/Map/` achtergronden en `Dieren/` — waarschijnlijk ook
   Kenney, maar niet met zekerheid uit de bestandsnamen af te leiden.
-- `Poppetje.glb` en de animaties (`emote*.glb`, `rust.glb`,
-  `hip_hop_dancing.glb`, `Restpose.fbx`, `rijden.fbx`) — de namen wijzen op
-  Mixamo (Adobe). Mixamo staat royaltyvrij commercieel gebruik in een game toe,
-  maar niet het los doorverkopen van de animatiebestanden zelf.
+- De animaties bij Poppetje (`emote*.glb`, `rust.glb`, `hip_hop_dancing.glb`,
+  `Restpose.fbx`, `rijden.fbx`) — de namen wijzen op Mixamo (Adobe). Dat staat
+  royaltyvrij commercieel gebruik in een game toe, maar niet het los
+  doorverkopen van de animatiebestanden zelf.
 - `map.glb`, `bos.glb`, `stad.glb` — de paintball-kaarten.
 - `public/scenes/`, `public/branding/`, `public/fields/`, `public/crates/`,
   `mapshot_*.png` — AI-gegenereerd beeld. Commercieel gebruik is bij de meeste
@@ -38,17 +36,17 @@ per pack de licentie voordat er geld met de site verdiend wordt.
 
 ## Niet gebruiken zonder licentie
 
-- **Clubtenues.** `ajaxshirt.glb`, `psvshirt.glb`, `rbshirt.glb` met hun
-  textures, `ajax_check.png`, `psv_check.png`, `Broekjes/ajaxbroek.png`,
-  `Broekjes/psvbroek.png`, `test/uvmapajaxbroek.png`, `test/uvmappsvbroek.png`.
-  Clubnamen, clublogo's en sponsoruitingen zijn merken van AFC Ajax, PSV en Red
-  Bull. Ze weggeven in een gratis app is al risicovol; ze als te winnen item
-  aanbieden in een betaalde dienst is merkinbreuk.
-- **Lesmethode-materiaal.** Woordenlijsten en oefeningen die één op één uit een
-  methode komen. In deze repo speelt dat bij `public/taalactief5/` (Taal Actief,
-  Malmberg) en `public/engels/` (RONDÉ). Losse woorden zijn niet beschermd, maar
-  de selectie en volgorde uit een methode kan dat wel zijn, en de merknaam mag
-  je sowieso niet voeren.
+- **Clubtenues en clubpetten.** Clubnamen, clublogo's en sponsoruitingen zijn
+  merken van hun eigenaars; hetzelfde geldt voor het NY-monogram van de New York
+  Yankees (MLB). Ze als te winnen item aanbieden in een betaalde dienst is
+  merkinbreuk. Zie hieronder: alles wat hieronder viel is verwijderd.
+- **Lesmethode-materiaal.** Oefeningen en werkbladen die één op één uit een
+  methode komen. Losse woorden zijn niet beschermd, maar een selectie en
+  volgorde uit een methode kan dat wel zijn, en de merknaam mag je sowieso niet
+  voeren. De methodenamen zijn daarom overal uit de app gehaald; de
+  woordenlijsten zelf zijn ongewijzigd gebleven op verzoek van de eigenaar.
+  Dat dekt het merkenrecht af, maar niet de vraag of de selectie zelf
+  beschermd is — laat dat nakijken als de site betaald wordt.
 
 ## Al verwijderd om deze reden
 
@@ -59,3 +57,13 @@ per pack de licentie voordat er geld met de site verdiend wordt.
 - `public/iep_img/` en `src/games/IepOefenen.jsx` — vraagafbeeldingen uit de IEP
   Eindtoets (Bureau ICE). De tool was al onbereikbaar.
 - `public/blok10/` en `src/games/blok10.js` — werkbladscreenshots uit Pluspunt.
+- De clubtenues (`ajaxshirt.glb`, `psvshirt.glb`, `rbshirt.glb` met hun
+  textures, `ajax_check.png`, `psv_check.png`, `logo_ajax.svg`, `logo_psv.svg`,
+  `Broekjes/ajaxbroek.png`, `Broekjes/psvbroek.png`, `test/uvmapajaxbroek.png`,
+  `test/uvmappsvbroek.png`) en de Yankees-pet (`Pet/petny.png`). De items in de
+  kledingkast bestaan nog wél, onder dezelfde sleutels, maar nu als eigen
+  ontwerp — wie ze al gewonnen had, houdt ze dus.
+- Het basis-shirtmodel `public/shirtmodel.glb` is afgeleid van het oude
+  clubshirt: dezelfde geometrie en rig (nodig omdat élk print- en patroonshirt
+  dit model gebruikt), maar de ingebakken clubtextuur is eruit gestript. Het
+  bestand ging daarmee van 1,27 MB naar 53 kB.

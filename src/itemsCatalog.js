@@ -25,6 +25,9 @@ const print   = (key, label, _rarity, emoji, bg)        => ({ key, label, rarity
 const model   = (key, label, file, preview)             => ({ key, label, rarity: 'ultra_legendary', kind: 'model', file, preview })
 // Donor GLB with a custom baked texture image (a designed clothing skin)
 const texmodel = (key, label, file, texture, preview)  => ({ key, label, rarity: 'ultra_legendary', kind: 'texmodel', file, texture, preview })
+// Ultra legendary zonder eigen 3D-skin: een gewoon patroon/print-item dat toch
+// in de hoogste zeldzaamheid valt.
+const ultra   = (key, label, kind, rest)               => ({ key, label, rarity: 'ultra_legendary', kind, ...rest })
 
 // Base colours shared by every clothing type (keeps existing saved unlocks)
 const BASE = () => [
@@ -111,9 +114,12 @@ export const CATALOG = {
     print('brein_sh',   'Breinen',              'epic',      '🧠',     '#2a1030'),
     print('flamingo_sh','Flamingos',            'legendary', '🦩',     '#0a2a2a'),
     print('clown_sh',   'Clowns',               'legendary', '🤡',     '#202038'),
-    model('ajax',       'Ajax Shirt',           '/ajaxshirt.glb', '/logo_ajax.svg'),
-    model('psv',        'PSV Shirt',            '/psvshirt.glb',  '/logo_psv.svg'),
-    model('rb',         'RB Shirt',             '/rbshirt.glb',   '/rbshirt_texture.png'),
+    // Eigen teamshirts. Waren clubtenues (Ajax/PSV/Red Bull); die zijn eruit
+    // omdat clubnamen, logo's en sponsoruitingen merken van anderen zijn. De
+    // sleutels blijven gelijk, zodat wie ze al ontgrendeld had ze houdt.
+    ultra('ajax', 'Rood-Wit Teamshirt',   'pattern', { pattern: 'stripes', c1: '#c8102e', c2: '#f4f4f4' }),
+    ultra('psv',  'Rood-Zwart Teamshirt', 'pattern', { pattern: 'stripes', c1: '#cc2222', c2: '#141414' }),
+    ultra('rb',   'Navy-Zilver Teamshirt','pattern', { pattern: 'stripes', c1: '#14224a', c2: '#c9d2dc' }),
   ],
   broek: [
     ...BASE(),
@@ -185,8 +191,9 @@ export const CATALOG = {
     print('race_br',    'Racewagens',           'epic',      '🏎',     '#101820'),
     print('schild_br',  'Schilden',             'legendary', '🛡',     '#1a1030'),
     print('engel_br',   'Engeltjes',            'legendary', '👼',     '#1a2a3a'),
-    texmodel('ajaxbroek', 'Ajax Broek', '/test/nieuwebroektest.glb', '/Broekjes/ajaxbroek.png', '/logo_ajax.svg'),
-    texmodel('psvbroek',  'PSV Broek',  '/test/nieuwebroektest.glb', '/Broekjes/psvbroek.png',  '/logo_psv.svg'),
+    // Eigen sportbroeken in plaats van de clubbroekjes (zie shirt hierboven).
+    ultra('ajaxbroek', 'Wit Sportbroekje',  'pattern', { pattern: 'stripes', c1: '#f4f4f4', c2: '#c8102e' }),
+    ultra('psvbroek',  'Zwart Sportbroekje','pattern', { pattern: 'stripes', c1: '#141414', c2: '#cc2222' }),
   ],
   sokken: [
     ...BASE(),
@@ -361,9 +368,11 @@ export const CATALOG = {
     print('draak_h',    'Draken',               'legendary', '🐲',      '#06250f'),
     print('eenhoorn_h', 'Eenhoorn',             'ultra_legendary', '🦄', '#2a0a3a'),
     pat  ('regenboog_pat_h','Regenboogprint',   'ultra_legendary', 'rainbow', '#e63946', '#7b2d8b'),
-    // Ultra legendary: pet met een eigen UV-design (petny.png op het pet-model).
-    // badge 'NY' wordt in het swatch-rondje getoond i.p.v. de zware UV-afbeelding.
-    { ...texmodel('petny', 'Toffe Pet', '/Pet/petnormaal.glb', '/Pet/petny.png', '/Pet/petny.png'), badge: 'NY' },
+    // Was een pet met het NY-monogram van de Yankees — dat is een merk van
+    // MLB, dus vervangen door een eigen ontwerp. Sleutel blijft gelijk, zodat
+    // wie 'm al ontgrendeld had 'm houdt. De andere petten hieronder hebben
+    // wel een eigen UV-design; hun badge staat in het swatch-rondje.
+    ultra('petny', 'Marine Baseballpet', 'pattern', { pattern: 'stripes', c1: '#14224a', c2: '#f4f4f4' }),
     { ...texmodel('petgiraffe', 'Giraffe Pet', '/Pet/petnormaal.glb', '/Pet/petgiraffe.png', '/Pet/petgiraffe.png'), badge: '🦒' },
     { ...texmodel('pettara', 'Tara Pet', '/Pet/petnormaal.glb', '/Pet/pettara.png', '/Pet/pettara.png'), badge: '🌈' },
     { ...texmodel('petnina', 'Nina Pet', '/Pet/petnormaal.glb', '/Pet/ninapet.png', '/Pet/ninapet.png'), badge: '💖' },

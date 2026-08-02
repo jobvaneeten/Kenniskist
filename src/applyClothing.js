@@ -71,6 +71,9 @@ export function applyItemToMesh(scene, mesh, item) {
 
 // Donor GLBs with a proper UV unwrap, used to show prints/patterns on the
 // clothing meshes (Poppetje's own clothing UV is collapsed to a point).
+// Basis-shirtmodel voor alle prints/patronen: zelfde geometrie en rig als het
+// oude clubshirt, maar met de ingebakken clubtextuur eruit gestript.
+const SHIRT_DONOR = '/shirtmodel.glb'
 const DONOR = {
   broek:    '/test/nieuwebroektest.glb',   // Meshy broek with a clean 0–1 UV
   sokken:   '/sokken.glb',
@@ -92,7 +95,7 @@ export function usesDonor(type, item) {
 export function loadClothingDonor(scene, mesh, skeleton, type, item, onReady) {
   const file = (item.kind === 'model' || item.kind === 'texmodel')
     ? item.file
-    : (type === 'shirt' ? '/ajaxshirt.glb' : (DONOR[type] || '/ajaxshirt.glb'))
+    : (type === 'shirt' ? SHIRT_DONOR : (DONOR[type] || SHIRT_DONOR))
   mesh.setEnabled(false)
   SceneLoader.ImportMesh('', '/', file.replace(/^\//, ''), scene, (loaded, _ps, srcSkels) => {
     const g = loaded.find(lm => (lm.getTotalVertices?.() ?? 0) > 0)

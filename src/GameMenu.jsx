@@ -35,7 +35,7 @@ const SUBJECTS = [
   { key: 'spelling',   label: 'Spelling',         emoji: '✏️', color: '#CE93D8', dark: '#8e3fa8', scene: 'spelling',   vb: 'ik loop → hij ...?' },
   { key: 'rekenen',    label: 'Rekenen',          emoji: '🔢', color: '#FFD23F', dark: '#c09800', scene: 'rekenen',    vb: '23 × 4 = ?' },
   { key: 'begrijpend', label: 'Begrijpend Lezen', emoji: '📚', color: '#06D6A0', dark: '#04a077', scene: 'begrijpend', vb: 'Lees de tekst & beantwoord de vragen' },
-  { key: 'engels',     label: 'Engels',           emoji: '🇬🇧', color: '#8b6bff', dark: '#5a3fd6', scene: 'taal',       vb: '"phone" → telefoon · RONDÉ Song 7, 8 & 9' },
+  { key: 'engels',     label: 'Engels',           emoji: '🇬🇧', color: '#8b6bff', dark: '#5a3fd6', scene: 'taal',       vb: '"phone" → telefoon · blok 7, 8 & 9' },
 ]
 
 // Beloningen per spel-type (chips op de kaarten)
@@ -335,7 +335,7 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
         return <DicteeThema thema={dicteeNr} onBack={() => setSpellingKeuze('blokken')} addCuruntie={addCuruntie} addBriefgeld={addBriefgeld} />
       }
       if (spellingKeuze === 'categorie') {
-        return <DicteeThema file="taalactief5/dictee-categorie.html" onBack={() => setSpellingKeuze('nietww')} addCuruntie={addCuruntie} addBriefgeld={addBriefgeld} />
+        return <DicteeThema file="dictees/dictee-categorie.html" onBack={() => setSpellingKeuze('nietww')} addCuruntie={addCuruntie} addBriefgeld={addBriefgeld} />
       }
       if (spellingKeuze === 'werkwoord') {
         return (
@@ -352,7 +352,7 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
             <button className="back-btn" onClick={() => setTaSoonBlok(null)}>← Terug</button>
             <div className="game-placeholder">
               <span className="gp-emoji">✏️</span>
-              <h2 className="gp-title" style={{ color: '#CE93D8' }}>Taal Actief 5 — Blok {taSoonBlok}</h2>
+              <h2 className="gp-title" style={{ color: '#CE93D8' }}>Spellingblok {taSoonBlok}</h2>
               <p className="gp-sub">Groep {year}</p>
               <div className="gp-soon-badge">🚧 Komt binnenkort 🚧</div>
               <p className="gp-desc">Dit blok is nog in aanbouw.<br />Check snel weer terug!</p>
@@ -377,7 +377,7 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
               <button className="mode-card" onClick={() => setSpellingKeuze('blokken')}>
                 <MenuScene name="spelling" />
                 <span className="mode-name">📕 Per blok oefenen</span>
-                <span className="mode-desc">Oefen de woorden van een blok uit Taal Actief 5</span>
+                <span className="mode-desc">Oefen de woorden van een spellingblok</span>
                 <span className="vb-line">Blok 1 t/m 8 — dictee + dieren</span>
                 <RewardChips rewards={['💵 briefgeld']} />
               </button>
@@ -401,7 +401,7 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
             <div className="game-header">
               <span className="game-header-icon" style={{ color: '#CE93D8' }}>📕</span>
               <h1 className="game-header-title">Per blok oefenen</h1>
-              <p className="game-header-sub">Taal Actief 5 — kies een blok</p>
+              <p className="game-header-sub">Kies een spellingblok</p>
             </div>
             <div className="blok-grid">
               {[1, 2, 3, 4, 5, 6, 7, 8].map(b => {
@@ -446,7 +446,7 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
               <MenuScene name="taal" />
               <span className="mode-name">📝 Niet-werkwoordspelling</span>
               <span className="mode-desc">Per blok of per categorie oefenen</span>
-              <span className="vb-line">Taal Actief 5 blokken of een spellingregel</span>
+              <span className="vb-line">Spellingblokken of een spellingregel</span>
               <RewardChips rewards={['💵 briefgeld']} />
             </button>
           </div>
@@ -512,7 +512,7 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
                     : game === 'iep'
                     ? '🚀 Verhaaltjessommen + blok 9 & 10'
                     : s.key === 'spelling'
-                    ? (game === 'werkwoord' ? '✒️ Werkwoord + Taal Actief 5' : '📕 Taal Actief 5')
+                    ? (game === 'werkwoord' ? '✒️ Werkwoord + spellingblok' : '📕 Spellingblokken')
                     : game === 'taal'
                     ? '📖 Taalverkennen + toets'
                     : game === 'begrijpend'

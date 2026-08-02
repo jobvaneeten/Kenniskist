@@ -12,7 +12,7 @@ import './dictee-thema.css'
 // Gaat als ?cats=... mee in de iframe-src; dictee-categorie.html leest die
 // query-param zelf uit om het categoriescherm over te slaan (zie aldaar).
 export default function DicteeThema({ onBack, addCuruntie, addBriefgeld, thema = 8, file, cats }) {
-  const basis = file || `taalactief5/dictee-thema${thema}.html`
+  const basis = file || `dictees/dictee-thema${thema}.html`
   const query = cats?.length ? `?cats=${cats.map(encodeURIComponent).join(',')}` : ''
   const src = `${basis}${query}`
   const frameRef   = useRef(null)
@@ -63,7 +63,7 @@ export default function DicteeThema({ onBack, addCuruntie, addBriefgeld, thema =
           ref={frameRef}
           className="dictee-frame"
           src={`${import.meta.env.BASE_URL}${src}`}
-          title={file ? 'Spelling per categorie' : `Taal Actief 5 — Dictee thema ${thema}`}
+          title={file ? 'Spelling per categorie' : `Dictee thema ${thema}`}
         />
       </div>
       {overlay}

@@ -1,5 +1,5 @@
 export default function EngelsOefenen({ onBack }) {
-  // Engelse woordjes (RONDÉ Song 7, 8 & 9). Volledige quiz draait in /engels/,
+  // Engelse woordjes (blok 7, 8 & 9). Volledige quiz draait in /engels/,
   // gestyld in het Kenniskist-thema. Voortgang is per sessie (geen opslag nodig).
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: '#0d0d1a' }}>

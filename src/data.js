@@ -27,24 +27,6 @@ export const SHIRT_COLORS = [
   { key: 'zwart',  hex: '#222222', label: 'Zwart',  rarity: 'legendary' },
 ]
 
-// Ultra legendary shirt models — only available in the shirt lootbox
-export const SHIRT_SPECIALS = [
-  {
-    key:        'ajax',
-    label:      'Ajax Shirt',
-    rarity:     'ultra_legendary',
-    logo:       '/logo_ajax.svg',
-    teamColors: ['#C8102E', '#ffffff'],
-  },
-  {
-    key:        'psv',
-    label:      'PSV Shirt',
-    rarity:     'ultra_legendary',
-    logo:       '/logo_psv.svg',
-    teamColors: ['#CC0000', '#111111', '#ffffff', '#FFD700'],
-  },
-]
-
 export const CLOTHING_ITEMS = [
   { key: 'shirt',    label: 'Shirt',    emoji: '👕', hasFeatured: true },
   { key: 'broek',    label: 'Broek',    emoji: '👖' },
