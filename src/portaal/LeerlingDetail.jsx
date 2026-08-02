@@ -1,9 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase.js'
 import { roepWorkerAan } from '../lib/worker.js'
 import { toolLabel } from '../lib/tools.js'
 import DatumFilter from './DatumFilter.jsx'
+import HerkomstFilter from './HerkomstFilter.jsx'
+import FoutenLijst from './FoutenLijst.jsx'
 import { berekenBereik } from './datumBereik.js'
+import { groepeerSessies, filterHerkomst, scoreKlasse, kortMoment } from './resultaatHelpers.js'
 
 const CATEGORIE_LABELS = {
   tt: 'Tegenwoordige tijd',
@@ -12,41 +15,10 @@ const CATEGORIE_LABELS = {
   vd: 'Voltooid deelwoord',
 }
 
-function scoreKlasse(pct) {
-  if (pct >= 80) return 'portaal-score-goed'
-  if (pct >= 50) return 'portaal-score-matig'
-  return 'portaal-score-slecht'
-}
-
-function OpgavenTabel({ opgaven }) {
-  return (
-    <table className="portaal-tabel">
-      <thead><tr><th>Opgave</th><th>Antwoord</th><th>Juist</th><th>Goed</th></tr></thead>
-      <tbody>
-        {opgaven.map((o, i) => (
-          <tr key={i}>
-            <td>{o.werkwoord ?? o.vraag ?? '—'}</td>
-            <td>{o.antwoord ?? '—'}</td>
-            <td>{o.juist ?? o.antwoord ?? '—'}</td>
-            <td>{o.goed ? '✅' : '❌'}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  )
-}
-
-function Details({ detailsJson }) {
-  if (!detailsJson) return null
-  if (Array.isArray(detailsJson.opgaven)) return <OpgavenTabel opgaven={detailsJson.opgaven} />
-  return <pre>{JSON.stringify(detailsJson, null, 2)}</pre>
-}
-
-// Telt goed/fout per categorie over alle geladen resultaten (die al op het
-// datumfilter zijn gefilterd), per tool_id gegroepeerd. Alleen tools die een
-// `cat` per opgave loggen (werkwoordspelling: cat is een vast label uit
-// CATEGORIE_LABELS; verhaaltjessommen: cat is een doelKey met de volle
-// doeltekst in `catLabel`) leveren hier iets op.
+// Samenvatting per spellingregel/doel. Alleen tools die een `cat` per opgave
+// loggen leveren hier iets op (werkwoordspelling; verhaaltjessommen via
+// catLabel). Staat bewust ónder de foutenlijst: dit toont patronen, niet de
+// losse fouten waar je mee begint.
 function FoutenPerCategorie({ resultaten }) {
   const perTool = {}
   for (const r of resultaten) {
@@ -63,17 +35,17 @@ function FoutenPerCategorie({ resultaten }) {
   if (toolIds.length === 0) return null
 
   return (
-    <>
+    <div className="portaal-kaart">
+      <h2>Fouten per categorie</h2>
       {toolIds.map(toolId => {
         const tellingen = perTool[toolId]
-        const categorieen = Object.keys(tellingen)
         return (
-          <div className="portaal-kaart" style={{ marginBottom: 16 }} key={toolId}>
-            <h2>Fouten per categorie — {toolLabel(toolId)}</h2>
+          <div key={toolId} style={{ marginBottom: 18 }}>
+            <h3 style={{ margin: '0 0 8px', fontSize: '0.95rem' }}>{toolLabel(toolId)}</h3>
             <table className="portaal-tabel">
               <thead><tr><th>Categorie</th><th>Goed</th><th>Fout</th><th>Percentage</th></tr></thead>
               <tbody>
-                {categorieen.map(cat => {
+                {Object.keys(tellingen).map(cat => {
                   const { goed, fout, label } = tellingen[cat]
                   const totaal = goed + fout
                   const pct = totaal ? Math.round((goed / totaal) * 100) : 0
@@ -91,7 +63,66 @@ function FoutenPerCategorie({ resultaten }) {
           </div>
         )
       })}
-    </>
+    </div>
+  )
+}
+
+// Losse opgave-rijen gebundeld tot één regel per oefensessie. Uitklappen toont
+// alle opgaven van die sessie, fout bovenaan gemarkeerd.
+function Sessies({ sessies }) {
+  const [open, setOpen] = useState(null)
+
+  if (sessies.length === 0) return <p className="portaal-leeg">Niets gemaakt in deze periode.</p>
+
+  return (
+    <table className="portaal-tabel">
+      <thead>
+        <tr><th>Wanneer</th><th>Oefening</th><th>Gemaakt</th><th>Goed</th><th></th></tr>
+      </thead>
+      <tbody>
+        {sessies.map(s => {
+          const pct = s.maxScore > 0 ? Math.round((s.score / s.maxScore) * 100) : 0
+          const isOpen = open === s.id
+          return (
+            <tr key={s.id} className={isOpen ? 'portaal-rij-open' : undefined}>
+              <td>{kortMoment(s.laatste)}</td>
+              <td>
+                {toolLabel(s.toolId)}
+                {s.weektaak
+                  ? <span title="Weektaak-opdracht"> 📋</span>
+                  : <span className="portaal-vrij-label"> vrij</span>}
+              </td>
+              <td>{s.maxScore}</td>
+              <td><span className={scoreKlasse(pct)}>{pct}%</span></td>
+              <td>
+                {s.opgaven.length > 0 && (
+                  <button className="portaal-terug" style={{ padding: 0 }} onClick={() => setOpen(isOpen ? null : s.id)}>
+                    {isOpen ? '▲ sluiten' : '▼ opgaven'}
+                  </button>
+                )}
+                {isOpen && (
+                  <div className="portaal-uitklap">
+                    <table className="portaal-tabel">
+                      <thead><tr><th>Opgave</th><th>Ingevuld</th><th>Juist</th><th></th></tr></thead>
+                      <tbody>
+                        {s.opgaven.map((o, i) => (
+                          <tr key={i}>
+                            <td>{o.vraag ?? '—'}</td>
+                            <td>{o.antwoord ?? '—'}</td>
+                            <td>{o.juist ?? '—'}</td>
+                            <td>{o.goed ? '✅' : '❌'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </td>
+            </tr>
+          )
+        })}
+      </tbody>
+    </table>
   )
 }
 
@@ -140,8 +171,8 @@ function WachtwoordResetten({ leerlingId }) {
 export default function LeerlingDetail({ leerlingId, onBack }) {
   const [leerling, setLeerling] = useState(null)
   const [resultaten, setResultaten] = useState(null)
-  const [open, setOpen] = useState(null)
-  const [bereik, setBereik] = useState('altijd')
+  const [bereik, setBereik] = useState('week')
+  const [herkomst, setHerkomst] = useState('alles')
 
   useEffect(() => {
     let actief = true
@@ -163,12 +194,15 @@ export default function LeerlingDetail({ leerlingId, onBack }) {
     return () => { actief = false }
   }, [leerlingId, bereik])
 
+  const gefilterd = useMemo(() => filterHerkomst(resultaten ?? [], herkomst), [resultaten, herkomst])
+  const sessies = useMemo(() => groepeerSessies(gefilterd), [gefilterd])
+
   return (
     <>
       <button className="portaal-terug" onClick={onBack}>← Terug</button>
-      {resultaten && <FoutenPerCategorie resultaten={resultaten} />}
+
       <div className="portaal-kaart">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12, marginBottom: 14 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
           <div>
             <h2 style={{ margin: 0 }}>{leerling?.weergavenaam ?? '…'}</h2>
             {leerling && (
@@ -179,35 +213,29 @@ export default function LeerlingDetail({ leerlingId, onBack }) {
           </div>
           {leerling && <WachtwoordResetten leerlingId={leerlingId} />}
         </div>
-        <div style={{ marginBottom: 14 }}>
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 14 }}>
           <DatumFilter waarde={bereik} onChange={setBereik} />
+          <HerkomstFilter waarde={herkomst} onChange={setHerkomst} />
         </div>
-        {resultaten === null && <p className="portaal-leeg">Laden…</p>}
-        {resultaten?.length === 0 && (
-          <p className="portaal-leeg">{bereik === 'altijd' ? 'Nog geen resultaten.' : 'Geen resultaten in deze periode.'}</p>
-        )}
-        {resultaten?.map(r => {
-          const pct = Math.round((r.score / r.max_score) * 100)
-          const isOpen = open === r.id
-          return (
-            <div key={r.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.12)', padding: '10px 0' }}>
-              <button
-                onClick={() => setOpen(isOpen ? null : r.id)}
-                style={{ background: 'none', border: 'none', color: '#fff', font: 'inherit', cursor: 'pointer', textAlign: 'left', width: '100%' }}
-              >
-                <strong>{toolLabel(r.tool_id)}</strong> — {r.score}/{r.max_score} ({pct}%) · {new Date(r.aangemaakt_op).toLocaleString('nl-NL')}
-                {r.opdracht_id && <span title="Gemaakt als weektaak-opdracht"> 📋</span>}
-                {' '}{isOpen ? '▲' : '▼'}
-              </button>
-              {isOpen && (
-                <div className="portaal-uitklap">
-                  <Details detailsJson={r.details_json} />
-                </div>
-              )}
-            </div>
-          )
-        })}
       </div>
+
+      {resultaten === null && <p className="portaal-leeg">Laden…</p>}
+
+      {resultaten !== null && (
+        <>
+          <div className="portaal-kaart">
+            <h2>Wat ging er fout?</h2>
+            <FoutenLijst rijen={gefilterd} />
+          </div>
+
+          <div className="portaal-kaart">
+            <h2>Wat is er gemaakt?</h2>
+            <Sessies sessies={sessies} />
+          </div>
+
+          <FoutenPerCategorie resultaten={gefilterd} />
+        </>
+      )}
     </>
   )
 }

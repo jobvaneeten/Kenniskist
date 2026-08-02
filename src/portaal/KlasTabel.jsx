@@ -1,19 +1,26 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase.js'
 import { toolLabel } from '../lib/tools.js'
+import DatumFilter from './DatumFilter.jsx'
+import HerkomstFilter from './HerkomstFilter.jsx'
+import { berekenBereik } from './datumBereik.js'
+import { filterHerkomst, scoreKlasse, kortMoment } from './resultaatHelpers.js'
 
-function scoreKlasse(score, maxScore) {
-  const pct = maxScore > 0 ? (score / maxScore) * 100 : 0
-  if (pct >= 80) return 'portaal-score-goed'
-  if (pct >= 50) return 'portaal-score-matig'
-  return 'portaal-score-slecht'
-}
-
-// Embeddable: geen eigen .portaal-wrapper of terug-knop — die horen bij
-// KlasScherm, dat dit rendert als de "Per leerling"-tab.
-export default function KlasTabel({ klas, alleKlassen, onKiesLeerling }) {
+// Startscherm van een klas: wie heeft gewerkt en hoe ging het.
+//
+// Eén tabel, leerlingen × oefeningen, met alleen de oefeningen die déze klas
+// in de gekozen periode gemaakt heeft. Per cel het percentage goed over die
+// periode en hoeveel opgaven eronder liggen. Vooraan twee kolommen die de
+// eigenlijke vraag beantwoorden: wanneer was iemand voor het laatst bezig, en
+// hoeveel heeft hij gedaan.
+//
+// Klik op een naam → leerlingdetail. Klik op een kolomkop → die ene oefening
+// voor de hele klas (VakTabel).
+export default function KlasTabel({ klas, alleKlassen, onKiesLeerling, onKiesOefening }) {
   const [leerlingen, setLeerlingen] = useState(null)
-  const [resultaten, setResultaten] = useState([])
+  const [rijen, setRijen] = useState([])
+  const [bereik, setBereik] = useState('week')
+  const [herkomst, setHerkomst] = useState('alles')
   const [geselecteerd, setGeselecteerd] = useState(new Set())
   const [doelKlasId, setDoelKlasId] = useState('')
   const [bezig, setBezig] = useState(false)
@@ -28,21 +35,38 @@ export default function KlasTabel({ klas, alleKlassen, onKiesLeerling }) {
       if (!actief) return
       setLeerlingen(lln ?? [])
       setGeselecteerd(new Set())
-      if (lln?.length) {
-        const { data: res } = await supabase
-          .from('laatste_resultaten').select('leerling_id, tool_id, score, max_score, aangemaakt_op')
-          .in('leerling_id', lln.map(l => l.id))
-        if (actief) setResultaten(res ?? [])
-      } else {
-        setResultaten([])
-      }
+      if (!lln?.length) { setRijen([]); return }
+
+      const { vanaf, tot } = berekenBereik(bereik)
+      let query = supabase
+        .from('resultaten').select('leerling_id, tool_id, score, max_score, opdracht_id, aangemaakt_op')
+        .in('leerling_id', lln.map(l => l.id))
+      if (vanaf) query = query.gte('aangemaakt_op', vanaf.toISOString())
+      if (tot) query = query.lt('aangemaakt_op', tot.toISOString())
+      const { data: res } = await query
+      if (actief) setRijen(res ?? [])
     }
     laad()
     return () => { actief = false }
-  }, [klas.id])
+  }, [klas.id, bereik])
 
-  const toolIds = [...new Set(resultaten.map(r => r.tool_id))].sort()
-  const vind = (leerlingId, toolId) => resultaten.find(r => r.leerling_id === leerlingId && r.tool_id === toolId)
+  const gefilterd = useMemo(() => filterHerkomst(rijen, herkomst), [rijen, herkomst])
+
+  // Per leerling per oefening optellen; los daarvan per leerling het totaal en
+  // het laatste moment. Eén pass over de rijen.
+  const { perLeerling, toolIds } = useMemo(() => {
+    const acc = {}
+    const tools = new Set()
+    for (const r of gefilterd) {
+      tools.add(r.tool_id)
+      const l = acc[r.leerling_id] ?? (acc[r.leerling_id] = { totaalMax: 0, laatste: 0, perTool: {} })
+      const t = l.perTool[r.tool_id] ?? (l.perTool[r.tool_id] = { score: 0, max: 0 })
+      t.score += Number(r.score); t.max += Number(r.max_score)
+      l.totaalMax += Number(r.max_score)
+      l.laatste = Math.max(l.laatste, new Date(r.aangemaakt_op).getTime())
+    }
+    return { perLeerling: acc, toolIds: [...tools].sort() }
+  }, [gefilterd])
 
   const toggel = (id) => setGeselecteerd(prev => {
     const next = new Set(prev)
@@ -63,44 +87,67 @@ export default function KlasTabel({ klas, alleKlassen, onKiesLeerling }) {
 
   return (
     <div className="portaal-kaart">
+      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 14 }}>
+        <DatumFilter waarde={bereik} onChange={setBereik} />
+        <HerkomstFilter waarde={herkomst} onChange={setHerkomst} />
+      </div>
+
       {leerlingen === null && <p className="portaal-leeg">Laden…</p>}
       {leerlingen?.length === 0 && <p className="portaal-leeg">Nog geen leerlingen in deze klas.</p>}
       {leerlingen?.length > 0 && (
         <>
-          <table className="portaal-tabel">
-            <thead>
-              <tr>
-                <th></th>
-                <th>Leerling</th>
-                {toolIds.map(t => <th key={t}>{toolLabel(t)}</th>)}
-              </tr>
-            </thead>
-            <tbody>
-              {leerlingen.map(l => (
-                <tr key={l.id}>
-                  <td><input type="checkbox" checked={geselecteerd.has(l.id)} onChange={() => toggel(l.id)} /></td>
-                  <td>
-                    <button className="portaal-leerlingnaam" onClick={() => onKiesLeerling(l.id)}>{l.weergavenaam}</button>
-                    <br /><span style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.78rem' }}>{l.gebruikersnaam}</span>
-                  </td>
-                  {toolIds.map(t => {
-                    const r = vind(l.id, t)
-                    if (!r) return <td key={t}>—</td>
-                    const pct = Math.round((r.score / r.max_score) * 100)
-                    return (
-                      <td key={t}>
-                        <span className={scoreKlasse(r.score, r.max_score)}>{pct}%</span>
-                        {' '}<span style={{ color: 'rgba(255,255,255,0.55)' }}>{new Date(r.aangemaakt_op).toLocaleDateString('nl-NL')}</span>
-                      </td>
-                    )
-                  })}
+          {toolIds.length === 0 && (
+            <p className="portaal-leeg">Niemand heeft in deze periode geoefend.</p>
+          )}
+          <div className="portaal-tabel-scroll">
+            <table className="portaal-tabel">
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>Leerling</th>
+                  <th>Laatst actief</th>
+                  <th>Gemaakt</th>
+                  {toolIds.map(t => (
+                    <th key={t}>
+                      <button className="portaal-kolomkop" onClick={() => onKiesOefening(t)} title="Bekijk deze oefening voor de hele klas">
+                        {toolLabel(t)}
+                      </button>
+                    </th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {leerlingen.map(l => {
+                  const g = perLeerling[l.id]
+                  return (
+                    <tr key={l.id}>
+                      <td><input type="checkbox" checked={geselecteerd.has(l.id)} onChange={() => toggel(l.id)} /></td>
+                      <td>
+                        <button className="portaal-leerlingnaam" onClick={() => onKiesLeerling(l.id)}>{l.weergavenaam}</button>
+                        <br /><span style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.78rem' }}>{l.gebruikersnaam}</span>
+                      </td>
+                      <td>{g ? kortMoment(g.laatste) : <span className="portaal-score-slecht">niets</span>}</td>
+                      <td>{g ? g.totaalMax : 0}</td>
+                      {toolIds.map(t => {
+                        const cel = g?.perTool[t]
+                        if (!cel) return <td key={t}>—</td>
+                        const pct = cel.max > 0 ? Math.round((cel.score / cel.max) * 100) : 0
+                        return (
+                          <td key={t}>
+                            <span className={scoreKlasse(pct)}>{pct}%</span>
+                            {' '}<span style={{ color: 'rgba(255,255,255,0.55)' }}>({cel.max})</span>
+                          </td>
+                        )
+                      })}
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
 
           {alleKlassen.length > 1 && (
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 16 }}>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 16, flexWrap: 'wrap' }}>
               <select value={doelKlasId} onChange={e => setDoelKlasId(e.target.value)}>
                 <option value="">Verplaats geselecteerden naar…</option>
                 {alleKlassen.filter(k => k.id !== klas.id).map(k => (

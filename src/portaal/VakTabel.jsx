@@ -11,8 +11,9 @@ function scoreKlasse(pct) {
   return 'portaal-score-slecht'
 }
 
-// Embeddable, altijd geschaald op één klas: geen eigen wrapper/terug-knop
-// (die horen bij KlasScherm) en geen Klas-kolom (overbodig binnen één klas).
+// Eén oefening voor de hele klas — de drill-down achter een kolomkop in het
+// klasoverzicht. Embeddable: geen eigen wrapper (die hoort bij KlasScherm) en
+// geen Klas-kolom, want dit is altijd binnen één klas.
 export default function VakTabel({ klasId, vak, onTerug, onKiesLeerling }) {
   const [bereik, setBereik] = useState('altijd')
   const [rijen, setRijen] = useState(null)
@@ -48,7 +49,7 @@ export default function VakTabel({ klasId, vak, onTerug, onKiesLeerling }) {
   return (
     <div className="portaal-kaart">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12, marginBottom: 14 }}>
-        <button className="portaal-terug" onClick={onTerug} style={{ padding: 0 }}>← Andere vak kiezen</button>
+        <button className="portaal-terug" onClick={onTerug} style={{ padding: 0 }}>← Terug naar overzicht</button>
         <DatumFilter waarde={bereik} onChange={setBereik} />
       </div>
       <h2 style={{ marginTop: 0 }}>{toolLabel(vak)}</h2>

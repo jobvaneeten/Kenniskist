@@ -132,3 +132,22 @@
 .portaal-uitklap pre { white-space: pre-wrap; word-break: break-word; margin: 6px 0 0; font-size: 0.78rem; }
 
 .portaal-leeg { color: rgba(255,255,255,0.6); font-size: 0.88rem; }
+
+/* Het klasoverzicht krijgt een kolom per oefening; bij een klas die veel
+   verschillende dingen doet past dat niet meer. Alleen de tabel schuift, de
+   pagina zelf niet. */
+.portaal-tabel-scroll { overflow-x: auto; }
+
+/* Kolomkop die doorklikt naar die ene oefening voor de hele klas. */
+.portaal-kolomkop {
+  background: none; border: none; padding: 0; cursor: pointer;
+  font: inherit; color: inherit; text-transform: inherit; letter-spacing: inherit;
+  text-decoration: underline dotted rgba(255,255,255,0.35); text-underline-offset: 3px;
+}
+.portaal-kolomkop:hover { color: #c7d2fe; }
+
+/* Vrij geoefend, dus zonder weektaak-opdracht. Bewust rustiger dan het
+   📋-icoon van weektaakwerk. */
+.portaal-vrij-label { color: rgba(255,255,255,0.45); font-size: 0.75rem; font-weight: 600; }
+
+.portaal-rij-open td { background: rgba(255,255,255,0.05); vertical-align: top; }

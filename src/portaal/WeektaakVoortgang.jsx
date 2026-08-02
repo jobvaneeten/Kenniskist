@@ -64,12 +64,23 @@ export default function WeektaakVoortgang({ weektaak, klasId, onKiesLeerling }) 
                   if (!v || !v.doel_aantal) return <td key={o.id}>—</td>
                   const gemaakt = Math.min(v.som_max, v.doel_aantal)
                   const pct = v.som_max > 0 ? Math.round((v.som_score / v.som_max) * 100) : 0
+                  const fout = v.som_max - v.som_score
                   return (
                     <td key={o.id}>
                       <strong>{gemaakt}/{v.doel_aantal}</strong>
                       {v.som_max > 0 && (
                         <>
                           {' '}<span className={scoreKlasse(pct)}>{pct}%</span>
+                          {fout > 0 && (
+                            <>
+                              <br />
+                              <button
+                                className="portaal-terug" style={{ padding: 0, fontSize: '0.78rem' }}
+                                onClick={() => onKiesLeerling(l.id)}
+                                title="Open het leerlingprofiel met de foutenlijst"
+                              >{Math.round(fout)} fout →</button>
+                            </>
+                          )}
                         </>
                       )}
                     </td>
