@@ -83,6 +83,21 @@ function RootInhoud() {
 
   if (portal === 'reset') return <WachtwoordResetten />
 
+  // Wel een sessie, geen profiel: het account is verwijderd, of de sessie is
+  // niet meer geldig (bv. na een lange onderbreking) waardoor de profielquery
+  // niets teruggeeft. Zonder deze afvang rendert Portaal `null` en App weinig
+  // beters: een leeg scherm waar je niet uit komt, want ook de uitlogknop
+  // staat pas ín die schermen.
+  if (!laden && sessie && !profiel && (portal === 'teacher' || portal === 'student')) {
+    return (
+      <AndereRol
+        boodschap="We konden je account niet laden. Waarschijnlijk is je sessie verlopen — log opnieuw in."
+        label="Opnieuw inloggen"
+        onGaNaar={uitloggen}
+      />
+    )
+  }
+
   if (portal === 'student') {
     if (gastmodus && !sessie) return <App gast />
     if (laden) return <Laadscherm />
