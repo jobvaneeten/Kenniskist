@@ -11,10 +11,15 @@ import './dictee-thema.css'
 // toolRender.jsx) — welke spellingcategorieën de leerkracht heeft aangevinkt.
 // Gaat als ?cats=... mee in de iframe-src; dictee-categorie.html leest die
 // query-param zelf uit om het categoriescherm over te slaan (zie aldaar).
-export default function DicteeThema({ onBack, addCuruntie, addBriefgeld, thema = 8, file, cats }) {
+export default function DicteeThema({ onBack, addCuruntie, addBriefgeld, thema = 8, file, cats, woorden }) {
   const basis = file || `dictees/dictee-thema${thema}.html`
-  const query = cats?.length ? `?cats=${cats.map(encodeURIComponent).join(',')}` : ''
-  const src = `${basis}${query}`
+  const params = new URLSearchParams()
+  if (cats?.length) params.set('cats', cats.join(','))
+  // woorden: door de leerkracht ingesteld aantal woorden voor deze opdracht.
+  // Zonder deze parameter draait het dictee gewoon de hele lijst af.
+  if (woorden > 0) params.set('woorden', String(woorden))
+  const query = params.toString()
+  const src = query ? `${basis}?${query}` : basis
   const frameRef   = useRef(null)
   const wavesRef   = useRef(0)
   const [game, setGame]       = useState(null)

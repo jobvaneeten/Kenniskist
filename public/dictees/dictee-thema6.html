@@ -548,6 +548,10 @@ const speakerEl=$('speaker'),answerEl=$('answer'),grid=$('animalGrid');
 /* ===== STATE ===== */
 let queue=[],idx=0,spellPts=0,animalPts=0,goodAnswers=0,lastBreakAt=0,spellOk=false,animalOk=false,selected=new Set(),locked=false;
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+// Weektaak-opdracht kan het dictee inkorten: ?woorden=15 laat de leerling er
+// 15 doen in plaats van de hele lijst. Zonder de parameter verandert er niets.
+const KK_WOORDEN=(()=>{const n=parseInt(new URLSearchParams(location.search).get('woorden'),10);return Number.isFinite(n)&&n>0?n:null;})();
+function kkBeperk(lijst){return KK_WOORDEN?lijst.slice(0,KK_WOORDEN):lijst;}
 
 function buildGrid(){
   grid.innerHTML='';
@@ -563,7 +567,7 @@ function buildGrid(){
 }
 
 function startGame(){
-  queue=shuffle(WORDS);idx=0;spellPts=0;animalPts=0;goodAnswers=0;lastBreakAt=0;spellOk=false;animalOk=false;
+  queue=kkBeperk(shuffle(WORDS));idx=0;spellPts=0;animalPts=0;goodAnswers=0;lastBreakAt=0;spellOk=false;animalOk=false;
   screenStart.classList.add('hide');screenEnd.classList.add('hide');screenGame.classList.remove('hide');
   buildGrid();showWord();
 }

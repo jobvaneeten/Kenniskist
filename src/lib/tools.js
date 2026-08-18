@@ -59,7 +59,14 @@ export const TOOL_FAMILIES = [
   },
   {
     familie: 'dictee-thema', label: 'Dictee', vak: 'spelling', groepen: [7],
-    aantalInstelbaar: false, standaardAantal: 1, eenheid: 'sessies', configVelden: [],
+    aantalInstelbaar: false, standaardAantal: 1, eenheid: 'sessies',
+    // Niet via `aantal`: dat telt in de weektaak hoe váák een sessie-tool
+    // gemaakt moet worden. Het aantal woorden is een instelling van het dictee
+    // zelf en gaat als ?woorden= mee naar het dictee-bestand.
+    configVelden: [
+      { key: 'woorden', type: 'getal', label: 'Aantal woorden', min: 1, max: 60,
+        placeholder: 'hele lijst', hint: 'Leeg laten = alle woorden van dit blok.' },
+    ],
     varianten: Array.from({ length: 8 }, (_, i) => ({
       toolId: `dictee-thema${i + 1}`, label: `Dictee blok ${i + 1}`, thema: i + 1,
     })),
@@ -68,6 +75,8 @@ export const TOOL_FAMILIES = [
     familie: 'dictee-categorie', toolId: 'dictee-categorie', label: 'Spelling per categorie',
     vak: 'spelling', groepen: [7], aantalInstelbaar: false, standaardAantal: 1, eenheid: 'sessies',
     configVelden: [
+      { key: 'woorden', type: 'getal', label: 'Aantal woorden', min: 1, max: 60,
+        placeholder: 'hele lijst', hint: 'Leeg laten = alle woorden uit de gekozen categorieën.' },
       { key: 'cats', type: 'checkboxes', label: 'Categorieën (leeg = allemaal door elkaar)', min: 0, opties: [
         { value: 'slang', label: 'slang — ng' },
         { value: 'stinkdier', label: 'stinkdier — nk' },
