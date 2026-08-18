@@ -19,30 +19,42 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
-          # Zonder secrets terugvallen op de publieke project-URL + anon key.
-          # Diezelfde waarden staan al in wrangler.jsonc en in src/lib/supabase.js
-          # (ze zitten sowieso in elke browserbundel), dus dat geeft niets — en
-          # zo blijft de keep-alive werken als iemand de secrets vergeet.
-          url="${SUPABASE_URL:-https://vbvtkzieyvdctlighgoj.supabase.co}"
-          key="${SUPABASE_ANON_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZidnRremlleXZkY3RsaWdoZ29qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5NTQwNjUsImV4cCI6MjEwMDUzMDA2NX0.S_hAftcczB64X6kdjRnJTqBd_i7pbvefSaSB3RvAES4}"
-          url="${url%/}"
-          case "$url" in https://*|http://*) ;; *) url="https://$url" ;; esac
-          [ -n "$SUPABASE_URL" ] || echo "::warning::Secret SUPABASE_URL ontbreekt — publieke fallback gebruikt."
+          # De publieke project-URL + anon key als vangnet. Diezelfde waarden
+          # staan al in wrangler.jsonc en in src/lib/supabase.js (ze zitten
+          # sowieso in elke browserbundel), dus dat geeft niets.
+          PUBLIEK_URL="https://vbvtkzieyvdctlighgoj.supabase.co"
+          PUBLIEK_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZidnRremlleXZkY3RsaWdoZ29qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5NTQwNjUsImV4cCI6MjEwMDUzMDA2NX0.S_hAftcczB64X6kdjRnJTqBd_i7pbvefSaSB3RvAES4"
 
           # Doel is alleen dat Supabase verkeer ziet (voorkomt auto-pause) —
           # een 401/404 door RLS telt net zo goed als activiteit. Alleen als er
           # helemaal geen HTTP-status terugkomt is er echt iets mis. De `||`
-          # is nodig omdat GitHub `bash -e` gebruikt: zonder die vangnet stopt
-          # een curl-fout (DNS-hik) de step vóór de controle hieronder.
-          for poging in 1 2 3; do
-            status=$(curl -s -o /dev/null -w "%{http_code}" --max-time 20 "$url/rest/v1/" \
-              -H "apikey: $key" \
-              -H "Authorization: Bearer $key") || status="000"
-            echo "Poging $poging — HTTP status: $status"
-            if [ "$status" != "000" ]; then
-              exit 0
-            fi
-            sleep 10
-          done
-          echo "::error::Geen verbinding met Supabase gekregen na 3 pogingen." >&2
+          # is nodig omdat GitHub `bash -e` gebruikt: zonder dat vangnet stopt
+          # een curl-fout (DNS) de step vóór de controle eronder.
+          probeer() {
+            u="${1%/}"
+            case "$u" in https://*|http://*) ;; *) u="https://$u" ;; esac
+            for poging in 1 2 3; do
+              status=$(curl -s -o /dev/null -w "%{http_code}" --max-time 20 "$u/rest/v1/" \
+                -H "apikey: $2" -H "Authorization: Bearer $2") || status="000"
+              echo "  poging $poging → HTTP $status"
+              if [ "$status" != "000" ]; then return 0; fi
+              sleep 5
+            done
+            return 1
+          }
+
+          # Eerst de secrets, daarna pas het vangnet: een secret die naar een
+          # verwijderd project wijst (subdomein bestaat niet meer → curl 6) mag
+          # de keep-alive niet slopen, maar moet wel opvallen.
+          if [ -n "$SUPABASE_URL" ]; then
+            echo "Ping via secret SUPABASE_URL"
+            if probeer "$SUPABASE_URL" "${SUPABASE_ANON_KEY:-$PUBLIEK_KEY}"; then exit 0; fi
+            echo "::warning::De URL uit de secrets reageert niet. Wijst SUPABASE_URL nog naar het juiste project?"
+          else
+            echo "::warning::Secret SUPABASE_URL ontbreekt — publieke project-URL gebruikt."
+          fi
+
+          echo "Ping via publieke project-URL"
+          if probeer "$PUBLIEK_URL" "$PUBLIEK_KEY"; then exit 0; fi
+          echo "::error::Geen verbinding met Supabase gekregen." >&2
           exit 1
