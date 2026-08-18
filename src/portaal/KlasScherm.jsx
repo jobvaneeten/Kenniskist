@@ -3,9 +3,10 @@ import DatumFilter from './DatumFilter.jsx'
 import HerkomstFilter from './HerkomstFilter.jsx'
 import { useKlasGegevens, vatKlasSamen } from './klasGegevens.js'
 import { filterHerkomst } from './resultaatHelpers.js'
-import { toolLabel, toolVak } from '../lib/tools.js'
+import { VAKKEN, toolLabel, toolVak } from '../lib/tools.js'
 import KlasDashboard from './KlasDashboard.jsx'
 import LeerlingLijst from './LeerlingLijst.jsx'
+import VakLijst from './VakLijst.jsx'
 import OefeningLijst from './OefeningLijst.jsx'
 import OefeningDetail from './OefeningDetail.jsx'
 import LeerlingDetail from './LeerlingDetail.jsx'
@@ -98,12 +99,15 @@ export default function KlasScherm({ klas, alleKlassen, onBack }) {
   const detail = pad[pad.length - 1] ?? null
   const kiesLeerling = (id) => setPad([{ soort: 'leerling', id }])
   const kiesOefening = (id) => setPad([{ soort: 'oefening', id }])
+  const kiesVak = (key) => setPad([{ soort: 'vak', id: key }])
   const openVanuitDetail = (stap) => setPad(p => [...p, stap])
   const naarTab = (key) => { setTab(key); setPad([]) }
 
-  const kruimelNaam = (stap) => stap.soort === 'leerling'
-    ? samenvatting.lijst.find(l => l.id === stap.id)?.weergavenaam ?? '…'
-    : toolLabel(stap.id)
+  const kruimelNaam = (stap) => {
+    if (stap.soort === 'leerling') return samenvatting.lijst.find(l => l.id === stap.id)?.weergavenaam ?? '…'
+    if (stap.soort === 'vak') return VAKKEN.find(v => v.key === stap.id)?.label ?? 'Overig'
+    return toolLabel(stap.id)
+  }
 
   const toontFilters = tab !== 'weektaak'
   const laden = leerlingen === null
@@ -174,6 +178,13 @@ export default function KlasScherm({ klas, alleKlassen, onBack }) {
           <LeerlingDetail leerlingId={detail.id} bereik={bereik} herkomst={herkomst} />
         )}
 
+        {!laden && leerlingen.length > 0 && detail?.soort === 'vak' && (
+          <OefeningLijst
+            vak={detail.id} samenvatting={samenvatting}
+            onKiesOefening={(id) => openVanuitDetail({ soort: 'oefening', id })}
+          />
+        )}
+
         {!laden && leerlingen.length > 0 && detail?.soort === 'oefening' && (
           <OefeningDetail
             toolId={detail.id} samenvatting={samenvatting} rijen={gefilterd}
@@ -192,12 +203,12 @@ export default function KlasScherm({ klas, alleKlassen, onBack }) {
         {!laden && leerlingen.length > 0 && !detail && tab === 'leerlingen' && (
           <LeerlingLijst
             klas={klas} alleKlassen={alleKlassen} samenvatting={samenvatting}
-            onKiesLeerling={kiesLeerling} onKiesOefening={kiesOefening} onGewijzigd={herlaad}
+            onKiesLeerling={kiesLeerling} onGewijzigd={herlaad}
           />
         )}
 
         {!laden && leerlingen.length > 0 && !detail && tab === 'oefeningen' && (
-          <OefeningLijst samenvatting={samenvatting} onKiesOefening={kiesOefening} />
+          <VakLijst samenvatting={samenvatting} onKiesVak={kiesVak} />
         )}
 
         {!detail && tab === 'weektaak' && <WeektaakTab klas={klas} onKiesLeerling={kiesLeerling} />}

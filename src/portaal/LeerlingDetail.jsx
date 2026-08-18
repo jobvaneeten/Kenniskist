@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase.js'
 import { roepWorkerAan } from '../lib/worker.js'
 import { toolLabel } from '../lib/tools.js'
 import FoutenLijst from './FoutenLijst.jsx'
+import Balk from './Balk.jsx'
 import { berekenBereik } from './datumBereik.js'
 import { groepeerSessies, filterHerkomst, scoreKlasse, kortMoment } from './resultaatHelpers.js'
 
@@ -62,6 +63,74 @@ function FoutenPerCategorie({ resultaten }) {
         )
       })}
     </div>
+  )
+}
+
+// Kop met de cijfers van deze leerling. Stond eerst in de leerlingenlijst,
+// maar die is nu een keuzelijst met alleen namen — dus hoort het hier, bij het
+// kind zelf: hoeveel, hoe goed, wanneer voor het laatst, en per oefening.
+function LeerlingCijfers({ rijen }) {
+  const perTool = {}
+  let opgaven = 0, goed = 0, laatste = 0
+  for (const r of rijen) {
+    const max = Number(r.max_score), score = Number(r.score)
+    opgaven += max; goed += score
+    laatste = Math.max(laatste, new Date(r.aangemaakt_op).getTime())
+    const t = perTool[r.tool_id] ?? (perTool[r.tool_id] = { opgaven: 0, goed: 0 })
+    t.opgaven += max; t.goed += score
+  }
+  const pct = opgaven > 0 ? Math.round((goed / opgaven) * 100) : null
+  const tools = Object.entries(perTool)
+    .map(([toolId, t]) => ({ toolId, ...t, pct: Math.round((t.goed / t.opgaven) * 100) }))
+    .sort((a, b) => a.pct - b.pct)
+
+  if (opgaven === 0) {
+    return <div className="portaal-kaart"><p className="portaal-leeg">Deze leerling heeft in deze periode niets gemaakt.</p></div>
+  }
+
+  return (
+    <>
+      <div className="portaal-tegels">
+        <div className="portaal-tegel">
+          <span className="portaal-tegel-getal">{opgaven}</span>
+          <span className="portaal-tegel-label">Opgaven gemaakt</span>
+        </div>
+        <div className="portaal-tegel">
+          <span className={`portaal-tegel-getal ${scoreKlasse(pct)}`}>{pct}%</span>
+          <span className="portaal-tegel-label">Goed</span>
+        </div>
+        <div className="portaal-tegel">
+          <span className="portaal-tegel-getal portaal-score-slecht">{opgaven - goed}</span>
+          <span className="portaal-tegel-label">Fout</span>
+        </div>
+        <div className="portaal-tegel">
+          <span className="portaal-tegel-getal" style={{ fontSize: '1.15rem' }}>{kortMoment(laatste)}</span>
+          <span className="portaal-tegel-label">Laatst actief</span>
+        </div>
+      </div>
+
+      <div className="portaal-kaart">
+        <h2>Per oefening</h2>
+        <table className="portaal-tabel">
+          <thead><tr><th>Oefening</th><th>Gemaakt</th><th>Fout</th><th>Goed</th></tr></thead>
+          <tbody>
+            {tools.map(t => (
+              <tr key={t.toolId}>
+                <td>{toolLabel(t.toolId)}</td>
+                <td>{t.opgaven}</td>
+                <td>{t.opgaven - t.goed}</td>
+                <td>
+                  <span className="portaal-scorecel">
+                    <Balk pct={t.pct} />
+                    <span className={scoreKlasse(t.pct)}>{t.pct}%</span>
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
   )
 }
 
@@ -214,6 +283,8 @@ export default function LeerlingDetail({ leerlingId, bereik, herkomst }) {
 
       {resultaten !== null && (
         <>
+          <LeerlingCijfers rijen={gefilterd} />
+
           <div className="portaal-kaart">
             <h2>Wat ging er fout?</h2>
             <FoutenLijst rijen={gefilterd} />

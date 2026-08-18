@@ -2,42 +2,45 @@ import { VAKKEN, toolLabel, toolVak } from '../lib/tools.js'
 import { scoreKlasse, kortMoment } from './resultaatHelpers.js'
 import Balk from './Balk.jsx'
 
-// Wat is er in deze periode geoefend, gebundeld per vak. Antwoord op "hoe
-// staat de klas ervoor bij spelling" zonder eerst door een raster te hoeven
-// lezen. Klik = die ene oefening voor de hele klas.
-export default function OefeningLijst({ samenvatting, onKiesOefening }) {
-  const { tools } = samenvatting
+// De oefeningen binnen één vak, mét cijfers — dit is het scherm ná de keuze
+// van een vak, dus hier mág het een overzicht zijn. Klik = die ene oefening
+// voor de hele klas.
+export default function OefeningLijst({ vak, samenvatting, onKiesOefening }) {
+  const eigen = samenvatting.tools.filter(t => (toolVak(t.toolId) ?? 'overig') === vak)
+  const label = VAKKEN.find(v => v.key === vak)?.label ?? 'Overig'
 
-  if (tools.length === 0) {
-    return <div className="portaal-kaart"><p className="portaal-leeg">Er is in deze periode niet geoefend.</p></div>
+  if (eigen.length === 0) {
+    return <div className="portaal-kaart"><p className="portaal-leeg">Er is in deze periode niets geoefend bij {label}.</p></div>
   }
 
-  const perVak = [...VAKKEN, { key: null, label: 'Overig' }]
-    .map(v => ({ ...v, tools: tools.filter(t => (toolVak(t.toolId) ?? null) === v.key) }))
-    .filter(v => v.tools.length > 0)
+  const opgaven = eigen.reduce((s, t) => s + t.opgaven, 0)
+  const goed = eigen.reduce((s, t) => s + t.goed, 0)
+  const pct = opgaven > 0 ? Math.round((goed / opgaven) * 100) : null
 
   return (
-    <>
-      {perVak.map(vak => (
-        <div className="portaal-kaart" key={vak.key ?? 'overig'}>
-          <h2>{vak.label}</h2>
-          <div className="portaal-oefenkaarten">
-            {vak.tools.map(t => (
-              <button key={t.toolId} className="portaal-oefenkaart" onClick={() => onKiesOefening(t.toolId)}>
-                <span className="portaal-oefenkaart-naam">{toolLabel(t.toolId)}</span>
-                <span className="portaal-oefenkaart-cijfer">
-                  <span className={scoreKlasse(t.pct)}>{t.pct}%</span> goed
-                </span>
-                <Balk pct={t.pct} />
-                <span className="portaal-zacht">
-                  {t.leerlingen.size} leerlingen · {t.opgaven} opgaven · {t.fout} fout
-                </span>
-                <span className="portaal-zacht">laatst: {kortMoment(t.laatste)}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      ))}
-    </>
+    <div className="portaal-kaart">
+      <div className="portaal-sectiekop">
+        <h2 style={{ margin: 0 }}>{label}</h2>
+        <span className="portaal-zacht">
+          {eigen.length} {eigen.length === 1 ? 'oefening' : 'oefeningen'} · {opgaven} opgaven ·{' '}
+          <span className={scoreKlasse(pct)}>{pct}% goed</span>
+        </span>
+      </div>
+      <div className="portaal-oefenkaarten">
+        {eigen.map(t => (
+          <button key={t.toolId} className="portaal-oefenkaart" onClick={() => onKiesOefening(t.toolId)}>
+            <span className="portaal-oefenkaart-naam">{toolLabel(t.toolId)}</span>
+            <span className="portaal-oefenkaart-cijfer">
+              <span className={scoreKlasse(t.pct)}>{t.pct}%</span> goed
+            </span>
+            <Balk pct={t.pct} />
+            <span className="portaal-zacht">
+              {t.leerlingen.size} leerlingen · {t.opgaven} opgaven · {t.fout} fout
+            </span>
+            <span className="portaal-zacht">laatst: {kortMoment(t.laatste)}</span>
+          </button>
+        ))}
+      </div>
+    </div>
   )
 }

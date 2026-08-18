@@ -1,16 +1,5 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase.js'
-import { toolLabel } from '../lib/tools.js'
-import { scoreKlasse, kortMoment } from './resultaatHelpers.js'
-import Balk from './Balk.jsx'
-import KlasTabel from './KlasTabel.jsx'
-
-const SORTERINGEN = {
-  naam: (a, b) => a.weergavenaam.localeCompare(b.weergavenaam),
-  laatst: (a, b) => b.laatste - a.laatste,
-  gemaakt: (a, b) => b.opgaven - a.opgaven,
-  score: (a, b) => (a.pct ?? 999) - (b.pct ?? 999),
-}
 
 function Verplaatsen({ klas, alleKlassen, geselecteerd, onKlaar }) {
   const [doelKlasId, setDoelKlasId] = useState('')
@@ -43,17 +32,17 @@ function Verplaatsen({ klas, alleKlassen, geselecteerd, onKlaar }) {
   )
 }
 
-// Alle leerlingen, standaard als leesbare lijst: één regel per kind met de
-// dingen waarop je sorteert (wanneer, hoeveel, hoe goed) en waar het misgaat.
-// Het volledige raster leerling × oefening staat achter de schakelaar — dat is
-// compleet, maar bij twaalf kinderen en acht oefeningen niet iets waar je een
-// klas mee opent.
-export default function LeerlingLijst({ klas, alleKlassen, samenvatting, onKiesLeerling, onKiesOefening, onGewijzigd }) {
-  const [sortering, setSortering] = useState('naam')
-  const [weergave, setWeergave] = useState('lijst')
+// Alleen de namen. Dit scherm is een keuzelijst, geen rapport: je klikt een
+// kind aan en ziet dáár alles. Eerder stond hier een tabel met scores, maar
+// dan zit je al te lezen voordat je gekozen hebt wie je zoekt.
+//
+// Verplaatsen naar een andere klas zit achter een schakelaar, zodat de
+// vinkjes de lijst niet onnodig vol maken.
+export default function LeerlingLijst({ klas, alleKlassen, samenvatting, onKiesLeerling, onGewijzigd }) {
+  const [verplaatsModus, setVerplaatsModus] = useState(false)
   const [geselecteerd, setGeselecteerd] = useState(new Set())
 
-  const rijen = [...samenvatting.lijst].sort(SORTERINGEN[sortering])
+  const leerlingen = [...samenvatting.lijst].sort((a, b) => a.weergavenaam.localeCompare(b.weergavenaam))
   const kanVerplaatsen = alleKlassen.length > 1
 
   const toggel = (id) => setGeselecteerd(prev => {
@@ -62,78 +51,33 @@ export default function LeerlingLijst({ klas, alleKlassen, samenvatting, onKiesL
     return next
   })
 
-  const kop = (key, label) => (
-    <th>
-      <button className={sortering === key ? 'portaal-sorteer actief' : 'portaal-sorteer'} onClick={() => setSortering(key)}>
-        {label}{sortering === key ? ' ▾' : ''}
-      </button>
-    </th>
-  )
-
   return (
     <div className="portaal-kaart">
       <div className="portaal-sectiekop">
-        <h2>{rijen.length} leerlingen</h2>
-        <div className="portaal-schakel">
-          <button className={weergave === 'lijst' ? 'actief' : ''} onClick={() => setWeergave('lijst')}>Lijst</button>
-          <button className={weergave === 'raster' ? 'actief' : ''} onClick={() => setWeergave('raster')}>Raster per oefening</button>
-        </div>
+        <h2>{leerlingen.length} leerlingen</h2>
+        {kanVerplaatsen && (
+          <button
+            className="portaal-terug" style={{ padding: 0 }}
+            onClick={() => { setVerplaatsModus(v => !v); setGeselecteerd(new Set()) }}
+          >{verplaatsModus ? 'klaar met verplaatsen' : 'leerlingen verplaatsen'}</button>
+        )}
       </div>
 
-      {weergave === 'raster'
-        ? <KlasTabel samenvatting={samenvatting} onKiesLeerling={onKiesLeerling} onKiesOefening={onKiesOefening} />
-        : (
-          <div className="portaal-tabel-scroll">
-            <table className="portaal-tabel">
-              <thead>
-                <tr>
-                  {kanVerplaatsen && <th></th>}
-                  {kop('naam', 'Leerling')}
-                  {kop('laatst', 'Laatst actief')}
-                  {kop('gemaakt', 'Gemaakt')}
-                  {kop('score', 'Goed')}
-                  <th>Waar het misgaat</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {rijen.map(l => (
-                  <tr key={l.id}>
-                    {kanVerplaatsen && (
-                      <td><input type="checkbox" checked={geselecteerd.has(l.id)} onChange={() => toggel(l.id)} /></td>
-                    )}
-                    <td>
-                      <button className="portaal-leerlingnaam" onClick={() => onKiesLeerling(l.id)}>{l.weergavenaam}</button>
-                      <br /><span className="portaal-zacht">{l.gebruikersnaam}</span>
-                    </td>
-                    <td>{l.laatste ? kortMoment(l.laatste) : <span className="portaal-score-slecht">niets</span>}</td>
-                    <td>{l.opgaven || '—'}</td>
-                    <td>
-                      {l.pct === null ? '—' : (
-                        <span className="portaal-scorecel">
-                          <Balk pct={l.pct} />
-                          <span className={scoreKlasse(l.pct)}>{l.pct}%</span>
-                        </span>
-                      )}
-                    </td>
-                    <td>
-                      {l.zwakstePunt
-                        ? <>{toolLabel(l.zwakstePunt.toolId)} <span className={scoreKlasse(l.zwakstePunt.pct)}>{l.zwakstePunt.pct}%</span></>
-                        : <span className="portaal-zacht">{l.opgaven ? 'niets opvallends' : '—'}</span>}
-                    </td>
-                    <td>
-                      <button className="portaal-terug" style={{ padding: 0 }} onClick={() => onKiesLeerling(l.id)}>
-                        {l.fout > 0 ? `${l.fout} fout →` : 'bekijk →'}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      <div className="portaal-naamlijst">
+        {leerlingen.map(l => (
+          <div key={l.id} className="portaal-naamrij">
+            {verplaatsModus && (
+              <input type="checkbox" checked={geselecteerd.has(l.id)} onChange={() => toggel(l.id)} />
+            )}
+            <button className="portaal-naamknop" onClick={() => onKiesLeerling(l.id)}>
+              <span className="portaal-naamknop-naam">{l.weergavenaam}</span>
+              <span className="portaal-zacht">{l.gebruikersnaam}</span>
+            </button>
           </div>
-        )}
+        ))}
+      </div>
 
-      {kanVerplaatsen && geselecteerd.size > 0 && (
+      {verplaatsModus && geselecteerd.size > 0 && (
         <Verplaatsen
           klas={klas} alleKlassen={alleKlassen} geselecteerd={geselecteerd}
           onKlaar={() => { setGeselecteerd(new Set()); onGewijzigd() }}

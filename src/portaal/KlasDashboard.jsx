@@ -1,7 +1,8 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { toolLabel } from '../lib/tools.js'
 import { groepeerFouten, scoreKlasse, kortMoment } from './resultaatHelpers.js'
 import Balk from './Balk.jsx'
+import KlasTabel from './KlasTabel.jsx'
 
 function Tegel({ getal, label, sub, klasse }) {
   return (
@@ -22,6 +23,7 @@ function Tegel({ getal, label, sub, klasse }) {
 export default function KlasDashboard({ samenvatting, rijen, onKiesLeerling, onKiesOefening, onNaarLeerlingen }) {
   const { lijst, tools, totaal } = samenvatting
   const fouten = useMemo(() => groepeerFouten(rijen), [rijen])
+  const [toonRaster, setToonRaster] = useState(false)
 
   const stil = lijst.filter(l => l.opgaven === 0)
   const zwak = lijst
@@ -136,6 +138,23 @@ export default function KlasDashboard({ samenvatting, rijen, onKiesLeerling, onK
           ))}
         </ul>
       </div>
+
+      {/* Het volledige raster hoort bij het groepsoverzicht, niet bij de
+          leerlingenlijst: dat is inmiddels een keuzelijst zonder cijfers.
+          Dichtgeklapt, want het is breed en je hebt het niet elke keer nodig. */}
+      {tools.length > 0 && (
+        <div className="portaal-kaart">
+          <div className="portaal-sectiekop">
+            <h2>Alles in één raster</h2>
+            <button className="portaal-terug" style={{ padding: 0 }} onClick={() => setToonRaster(v => !v)}>
+              {toonRaster ? 'verbergen' : 'tonen'}
+            </button>
+          </div>
+          {toonRaster
+            ? <KlasTabel samenvatting={samenvatting} onKiesLeerling={onKiesLeerling} onKiesOefening={onKiesOefening} />
+            : <p className="portaal-leeg" style={{ margin: 0 }}>Elke leerling tegen elke oefening, met het percentage per cel.</p>}
+        </div>
+      )}
     </>
   )
 }
