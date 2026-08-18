@@ -70,7 +70,7 @@ function KlasToevoegen({ schoolId, onKlaar }) {
   )
 }
 
-function KlasOverzicht({ profiel, klassen, aantallen, isIcter, onKiesKlas, onKiesInstellingen, onKlassenGewijzigd }) {
+function KlasOverzicht({ profiel, klassen, aantallen, leerkrachten, isIcter, onKiesKlas, onKiesInstellingen, onKlassenGewijzigd }) {
   const [toonLeerlingForm, setToonLeerlingForm] = useState(false)
   const [toonLeerkrachtForm, setToonLeerkrachtForm] = useState(false)
   const [toonKlasForm, setToonKlasForm] = useState(false)
@@ -91,6 +91,7 @@ function KlasOverzicht({ profiel, klassen, aantallen, isIcter, onKiesKlas, onKie
                 <span>{aantallen[k.id] ?? 0} leerlingen{k.schooljaar ? ` · ${k.schooljaar}` : ''}</span>
                 <span>inlogcode: {k.code}</span>
                 <span>{k.groepen?.length ? `groep ${k.groepen.join(', ')}` : 'alle groepen'}</span>
+                {leerkrachten[k.id]?.length > 0 && <span>{leerkrachten[k.id].join(', ')}</span>}
               </button>
               {/* Naast de kaart en niet erin: een knop in een knop mag niet. */}
               {isIcter && (
@@ -123,6 +124,7 @@ export default function Portaal() {
   const { profiel, uitloggen } = useSessie()
   const [klassen, setKlassen] = useState([])
   const [aantallen, setAantallen] = useState({})
+  const [leerkrachten, setLeerkrachten] = useState({})   // klas_id → [naam]
   const [gekozenKlas, setGekozenKlas] = useState(null)
   const [instellingenKlas, setInstellingenKlas] = useState(null)
   // Puur een weergave-schakelaar: icter heeft via RLS altijd alle rechten
@@ -132,12 +134,16 @@ export default function Portaal() {
   const [alsLeerkracht, setAlsLeerkracht] = useState(false)
 
   const laadKlassen = useCallback(async () => {
-    const [{ data }, { data: lln }] = await Promise.all([
+    const [{ data }, { data: lln }, { data: pers }] = await Promise.all([
       supabase.from('klassen').select('id, school_id, naam, schooljaar, code, groepen').order('naam'),
       supabase.from('profielen').select('klas_id').eq('rol', 'leerling'),
+      supabase.from('profielen').select('weergavenaam, klas_id').in('rol', ['leerkracht', 'icter']).not('klas_id', 'is', null),
     ])
     setKlassen(data ?? [])
     setAantallen((lln ?? []).reduce((acc, p) => ({ ...acc, [p.klas_id]: (acc[p.klas_id] ?? 0) + 1 }), {}))
+    setLeerkrachten((pers ?? []).reduce((acc, p) => ({
+      ...acc, [p.klas_id]: [...(acc[p.klas_id] ?? []), p.weergavenaam],
+    }), {}))
   }, [])
 
   useEffect(() => { if (profiel && profiel.rol !== 'admin') laadKlassen() }, [profiel, laadKlassen])
@@ -164,7 +170,6 @@ export default function Portaal() {
           <KlasInstellingen
             klas={actueel}
             alleKlassen={klassen}
-            aantalLeerlingen={aantallen[actueel.id] ?? 0}
             onGewijzigd={laadKlassen}
             onVerwijderd={() => { setInstellingenKlas(null); laadKlassen() }}
           />
@@ -193,6 +198,7 @@ export default function Portaal() {
         profiel={profiel}
         klassen={klassen}
         aantallen={aantallen}
+        leerkrachten={leerkrachten}
         isIcter={isIcter}
         onKiesKlas={setGekozenKlas}
         onKiesInstellingen={setInstellingenKlas}

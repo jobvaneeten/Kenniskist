@@ -180,6 +180,24 @@
 }
 .portaal-tandwiel:hover { background: rgba(255,255,255,0.2); color: #fff; border-color: #a5b4fc; }
 
+/* Klein knopje aan het eind van een naamrij (verwijderen, loskoppelen).
+   Bewust niet .portaal-tandwiel: die is absoluut gepositioneerd voor de
+   hoek van een klaskaart en schiet hier naar de rand van het scherm. */
+.portaal-rijknop {
+  flex-shrink: 0; width: 30px; height: 30px; border-radius: 8px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid rgba(248,113,113,0.4); background: rgba(248,113,113,0.1);
+  color: #fca5a5; font-family: inherit; font-size: 0.85rem; line-height: 1;
+}
+.portaal-rijknop:hover:not(:disabled) { background: rgba(248,113,113,0.25); color: #fff; }
+.portaal-rijknop:disabled { opacity: 0.5; cursor: default; }
+
+/* Bevestiging van iets onomkeerbaars, binnen de kaart waar je op klikte. */
+.portaal-waarschuwing {
+  margin-top: 14px; padding: 14px 16px; border-radius: 12px;
+  border: 1px solid rgba(248,113,113,0.4); background: rgba(248,113,113,0.1);
+}
+
 .portaal-knop-gevaar { background: #dc2626; }
 .portaal-knop-gevaar:hover { background: #b91c1c; }
 

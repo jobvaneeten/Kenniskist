@@ -215,6 +215,34 @@ async function wachtwoordReset(request, env) {
   return json({ ok: true })
 }
 
+// ── POST /api/leerling-verwijderen (leerkracht/icter/admin) ────────────
+// Verwijdert het auth-account; profielen hangt daaraan met ON DELETE CASCADE,
+// en resultaten/game_voortgang/toewijzingen weer aan profielen. Het gemaakte
+// werk van deze leerling gaat er dus mee — de UI waarschuwt daarvoor.
+//
+// Alleen leerlingen: dezelfde rangcontrole als bij wachtwoord-reset zorgt dat
+// een leerkracht geen icter kan wegpoetsen.
+async function leerlingVerwijderen(request, env) {
+  const profiel = await huidigProfiel(request, env)
+  if (!profiel || ROL_RANG[profiel.rol] < ROL_RANG.leerkracht) return json({ fout: 'Geen toegang' }, 403)
+
+  const { leerlingId } = await request.json()
+  if (!leerlingId) return json({ fout: 'Gegevens ontbreken' }, 400)
+
+  const doelRes = await serviceFetch(env, `/rest/v1/profielen?id=eq.${leerlingId}&select=id,school_id,rol`)
+  const [doel] = doelRes.ok ? await doelRes.json() : []
+  if (!doel) return json({ fout: 'Leerling niet gevonden' }, 404)
+  if (doel.rol !== 'leerling') return json({ fout: 'Dit is geen leerling' }, 400)
+
+  const zelfdeSchool = profiel.rol === 'admin' || doel.school_id === profiel.school_id
+  if (!zelfdeSchool) return json({ fout: 'Geen toegang' }, 403)
+
+  const res = await serviceFetch(env, `/auth/v1/admin/users/${leerlingId}`, { method: 'DELETE' })
+  if (!res.ok) return json({ fout: 'Kon leerling niet verwijderen' }, 400)
+
+  return json({ ok: true })
+}
+
 export default {
   async fetch(request, env) {
     if (request.method !== 'POST') return json({ fout: 'Methode niet toegestaan' }, 405)
@@ -226,6 +254,7 @@ export default {
         case '/api/leerkracht-aanmaken': return await leerkrachtAanmaken(request, env)
         case '/api/leerling-aanmaken': return await leerlingAanmaken(request, env)
         case '/api/wachtwoord-reset': return await wachtwoordReset(request, env)
+        case '/api/leerling-verwijderen': return await leerlingVerwijderen(request, env)
         default: return json({ fout: 'Onbekend endpoint' }, 404)
       }
     } catch {
