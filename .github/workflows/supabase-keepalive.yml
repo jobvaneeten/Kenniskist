@@ -25,16 +25,22 @@ jobs:
           PUBLIEK_URL="https://vbvtkzieyvdctlighgoj.supabase.co"
           PUBLIEK_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZidnRremlleXZkY3RsaWdoZ29qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5NTQwNjUsImV4cCI6MjEwMDUzMDA2NX0.S_hAftcczB64X6kdjRnJTqBd_i7pbvefSaSB3RvAES4"
 
-          # Doel is alleen dat Supabase verkeer ziet (voorkomt auto-pause) —
-          # een 401/404 door RLS telt net zo goed als activiteit. Alleen als er
-          # helemaal geen HTTP-status terugkomt is er echt iets mis. De `||`
-          # is nodig omdat GitHub `bash -e` gebruikt: zonder dat vangnet stopt
-          # een curl-fout (DNS) de step vóór de controle eronder.
+          # Bewust een échte tabelquery en niet /rest/v1/ (de OpenAPI-beschrijving):
+          # die laatste komt uit de cache van PostgREST en raakt Postgres niet aan.
+          # Daardoor waren de runs van 3, 5 en 7 augustus 2026 groen terwijl het
+          # project tóch pauzeerde. Deze query gaat wél door RLS naar de database;
+          # een lege lijst of een 401 is prima, het gaat om de aanraking.
+          #
+          # Alleen als er helemaal geen HTTP-status terugkomt is er echt iets mis
+          # (dan bestaat het subdomein niet meer — precies wat je ziet bij een
+          # gepauzeerd project). De `||` is nodig omdat GitHub `bash -e` gebruikt:
+          # zonder dat vangnet stopt een curl-fout de step vóór de controle eronder.
           probeer() {
             u="${1%/}"
             case "$u" in https://*|http://*) ;; *) u="https://$u" ;; esac
             for poging in 1 2 3; do
-              status=$(curl -s -o /dev/null -w "%{http_code}" --max-time 20 "$u/rest/v1/" \
+              status=$(curl -s -o /dev/null -w "%{http_code}" --max-time 20 \
+                "$u/rest/v1/klassen?select=id&limit=1" \
                 -H "apikey: $2" -H "Authorization: Bearer $2") || status="000"
               echo "  poging $poging → HTTP $status"
               if [ "$status" != "000" ]; then return 0; fi
