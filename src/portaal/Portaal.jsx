@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase.js'
 import { useSessie } from '../lib/sessie.jsx'
 import AdminScholen from './AdminScholen.jsx'
 import KlasScherm from './KlasScherm.jsx'
+import KlasInstellingen from './KlasInstellingen.jsx'
 import LeerlingToevoegen from './LeerlingToevoegen.jsx'
 import LeerkrachtToevoegen from './LeerkrachtToevoegen.jsx'
 import './portaal.css'
@@ -69,7 +70,7 @@ function KlasToevoegen({ schoolId, onKlaar }) {
   )
 }
 
-function KlasOverzicht({ profiel, klassen, aantallen, isIcter, onKiesKlas, onKlassenGewijzigd }) {
+function KlasOverzicht({ profiel, klassen, aantallen, isIcter, onKiesKlas, onKiesInstellingen, onKlassenGewijzigd }) {
   const [toonLeerlingForm, setToonLeerlingForm] = useState(false)
   const [toonLeerkrachtForm, setToonLeerkrachtForm] = useState(false)
   const [toonKlasForm, setToonKlasForm] = useState(false)
@@ -84,12 +85,23 @@ function KlasOverzicht({ profiel, klassen, aantallen, isIcter, onKiesKlas, onKla
         {klassen.length === 0 && <p className="portaal-leeg">Nog geen klassen.</p>}
         <div className="portaal-grid">
           {klassen.map(k => (
-            <button key={k.id} className="portaal-klaskaart" onClick={() => onKiesKlas(k)}>
-              {k.naam}
-              <span>{aantallen[k.id] ?? 0} leerlingen{k.schooljaar ? ` · ${k.schooljaar}` : ''}</span>
-              <span>inlogcode: {k.code}</span>
-              <span>{k.groepen?.length ? `groep ${k.groepen.join(', ')}` : 'alle groepen'}</span>
-            </button>
+            <div key={k.id} className="portaal-klaskaart-wrap">
+              <button className="portaal-klaskaart" onClick={() => onKiesKlas(k)}>
+                {k.naam}
+                <span>{aantallen[k.id] ?? 0} leerlingen{k.schooljaar ? ` · ${k.schooljaar}` : ''}</span>
+                <span>inlogcode: {k.code}</span>
+                <span>{k.groepen?.length ? `groep ${k.groepen.join(', ')}` : 'alle groepen'}</span>
+              </button>
+              {/* Naast de kaart en niet erin: een knop in een knop mag niet. */}
+              {isIcter && (
+                <button
+                  className="portaal-tandwiel"
+                  title={`Instellingen van ${k.naam}`}
+                  aria-label={`Instellingen van ${k.naam}`}
+                  onClick={() => onKiesInstellingen(k)}
+                >⚙</button>
+              )}
+            </div>
           ))}
         </div>
 
@@ -112,6 +124,7 @@ export default function Portaal() {
   const [klassen, setKlassen] = useState([])
   const [aantallen, setAantallen] = useState({})
   const [gekozenKlas, setGekozenKlas] = useState(null)
+  const [instellingenKlas, setInstellingenKlas] = useState(null)
   // Puur een weergave-schakelaar: icter heeft via RLS altijd alle rechten
   // van een leerkracht (en meer). Sommige icters geven zelf ook les aan een
   // klas — deze knop verbergt dan gewoon de icter-only knoppen (klas/
@@ -136,6 +149,30 @@ export default function Portaal() {
     return <KlasScherm klas={gekozenKlas} alleKlassen={klassen} onBack={() => setGekozenKlas(null)} />
   }
 
+  if (instellingenKlas) {
+    const actueel = klassen.find(k => k.id === instellingenKlas.id) ?? instellingenKlas
+    return (
+      <div className="portaal">
+        <div className="portaal-inhoud">
+          <button className="portaal-terug" onClick={() => setInstellingenKlas(null)}>← Alle klassen</button>
+          <div className="portaal-klaskop">
+            <div>
+              <h1>{actueel.naam}</h1>
+              <p className="portaal-zacht">Instellingen van deze klas</p>
+            </div>
+          </div>
+          <KlasInstellingen
+            klas={actueel}
+            alleKlassen={klassen}
+            aantalLeerlingen={aantallen[actueel.id] ?? 0}
+            onGewijzigd={laadKlassen}
+            onVerwijderd={() => { setInstellingenKlas(null); laadKlassen() }}
+          />
+        </div>
+      </div>
+    )
+  }
+
   const isIcter = profiel.rol === 'icter' && !alsLeerkracht
 
   return (
@@ -158,6 +195,7 @@ export default function Portaal() {
         aantallen={aantallen}
         isIcter={isIcter}
         onKiesKlas={setGekozenKlas}
+        onKiesInstellingen={setInstellingenKlas}
         onKlassenGewijzigd={laadKlassen}
       />
     </div>

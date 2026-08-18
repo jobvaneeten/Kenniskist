@@ -166,6 +166,23 @@
 .portaal-klaskaart:hover { border-color: #a5b4fc; background: rgba(255,255,255,0.1); }
 .portaal-klaskaart span { display: block; font-weight: 600; font-size: 0.8rem; color: rgba(255,255,255,0.6); }
 
+/* Tandwieltje rechtsboven op een klaskaart (alleen voor de icter). Los van de
+   kaartknop, want een knop in een knop mag niet — vandaar de extra ruimte
+   rechts in .portaal-klaskaart-wrap .portaal-klaskaart. */
+.portaal-klaskaart-wrap { position: relative; display: flex; }
+.portaal-klaskaart-wrap .portaal-klaskaart { flex: 1; padding-right: 44px; }
+.portaal-tandwiel {
+  position: absolute; top: 8px; right: 8px;
+  width: 30px; height: 30px; border-radius: 8px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid rgba(255,255,255,0.16); background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.75); font-size: 0.95rem; line-height: 1;
+}
+.portaal-tandwiel:hover { background: rgba(255,255,255,0.2); color: #fff; border-color: #a5b4fc; }
+
+.portaal-knop-gevaar { background: #dc2626; }
+.portaal-knop-gevaar:hover { background: #b91c1c; }
+
 .portaal-tabel { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
 .portaal-tabel th, .portaal-tabel td { text-align: left; padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.12); }
 .portaal-tabel th { color: rgba(255,255,255,0.6); font-weight: 800; font-size: 0.75rem; text-transform: uppercase; }
