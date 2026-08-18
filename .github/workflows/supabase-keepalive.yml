@@ -19,15 +19,30 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
+          # Zonder secrets terugvallen op de publieke project-URL + anon key.
+          # Diezelfde waarden staan al in wrangler.jsonc en in src/lib/supabase.js
+          # (ze zitten sowieso in elke browserbundel), dus dat geeft niets — en
+          # zo blijft de keep-alive werken als iemand de secrets vergeet.
+          url="${SUPABASE_URL:-https://vbvtkzieyvdctlighgoj.supabase.co}"
+          key="${SUPABASE_ANON_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZidnRremlleXZkY3RsaWdoZ29qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5NTQwNjUsImV4cCI6MjEwMDUzMDA2NX0.S_hAftcczB64X6kdjRnJTqBd_i7pbvefSaSB3RvAES4}"
+          url="${url%/}"
+          case "$url" in https://*|http://*) ;; *) url="https://$url" ;; esac
+          [ -n "$SUPABASE_URL" ] || echo "::warning::Secret SUPABASE_URL ontbreekt — publieke fallback gebruikt."
+
           # Doel is alleen dat Supabase verkeer ziet (voorkomt auto-pause) —
-          # een 401/404 door RLS telt net zo goed als activiteit. Alleen een
-          # mislukte verbinding (geen HTTP-status, curl-exit != 0) is een
-          # echte fout.
-          status=$(curl -s -o /dev/null -w "%{http_code}" "$SUPABASE_URL/rest/v1/" \
-            -H "apikey: $SUPABASE_ANON_KEY" \
-            -H "Authorization: Bearer $SUPABASE_ANON_KEY")
-          echo "HTTP status: $status"
-          if [ "$status" = "000" ]; then
-            echo "Geen verbinding met Supabase gekregen." >&2
-            exit 1
-          fi
+          # een 401/404 door RLS telt net zo goed als activiteit. Alleen als er
+          # helemaal geen HTTP-status terugkomt is er echt iets mis. De `||`
+          # is nodig omdat GitHub `bash -e` gebruikt: zonder die vangnet stopt
+          # een curl-fout (DNS-hik) de step vóór de controle hieronder.
+          for poging in 1 2 3; do
+            status=$(curl -s -o /dev/null -w "%{http_code}" --max-time 20 "$url/rest/v1/" \
+              -H "apikey: $key" \
+              -H "Authorization: Bearer $key") || status="000"
+            echo "Poging $poging — HTTP status: $status"
+            if [ "$status" != "000" ]; then
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::Geen verbinding met Supabase gekregen na 3 pogingen." >&2
+          exit 1
