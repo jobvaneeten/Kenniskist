@@ -388,7 +388,7 @@ export default function App({ gast = false }) {
           <div className="btn-text">
             <span className="btn-label">🎮 Speel Game</span>
             <span className="btn-desc">Oefen rekenen, taal, spelling & meer — verdien 🪙 en 💵</span>
-            <span className="btn-examples">⚽ Voetbal · 🥅 Supervoetbal · 🚀 Jetpack · 🌉 Brug Bouwen · 🏰 Tower Defense</span>
+            <span className="btn-examples">⚽ 1 tegen 1 voetbal · 🥅 Supervoetbal · 🚀 Jetpack · 🌉 Brug Bouwen · 🏰 Tower Defense</span>
           </div>
           <span className="btn-arrow">→</span>
         </button>
