@@ -8,8 +8,9 @@
 // document, dus een hoge z-index is genoeg).
 //
 // Twee soorten geluid, allebei een gewone keuze:
-//   radio — instrumentale streams van SomaFM. Geen beeld, geen advertenties,
-//           geen inloggen. Kost wel bandbreedte: reken op ~64 kbit/s per kind.
+//   radio — gewone radiozenders (hardstyle, house, top 40, Nederlandstalig).
+//           Geen beeld en geen inloggen, wel reclame en dj-praat. Kost
+//           bandbreedte: 96 tot 192 kbit/s per kind.
 //   focus — regen, ruis, haard, rumoer. Hier ter plekke gemaakt met gefilterde
 //           ruis, dus nul bestanden en nul netwerk. Melodie namaken klinkt
 //           goedkoop, sfeergeluid niet.
@@ -19,29 +20,53 @@
   var SLEUTEL = 'kk_muziek'
   var STANDAARD_VOLUME = 0.35
 
-  // SomaFM draait op donaties en staat direct afspelen toe; de 64k-aac-streams
-  // halveren het verbruik ten opzichte van 128k-mp3. Vandaar ook de credit
-  // onderin het paneeltje.
+  // Vier zenders in de genres die de kinderen vroegen. De adressen komen uit de
+  // open radiodatabase radio-browser.info en zijn stuk voor stuk https - een
+  // http-stream weigert de browser op een https-site.
   //
-  // De adressen komen uit de .pls-playlists van SomaFM zelf (api.somafm.com/
-  // <zender>64.pls). Elke zender heeft drie spiegels; ligt er één plat, dan
-  // schakelt de speler door naar de volgende.
-  var SPIEGELS = ['ice2', 'ice6', 'ice5']
-  function streams(zender) {
-    return SPIEGELS.map(function (s) { return 'https://' + s + '.somafm.com/' + zender + '-64-aac' })
-  }
+  // Twee dingen om te weten: dit zijn gewone commerciele zenders, dus er zitten
+  // reclame en dj-praat tussen, en er wordt gezongen. Voor concentratie is het
+  // focusgeluid hiernaast rustiger. En het kost bandbreedte: reken op 96 tot 192
+  // kbit/s per kind, dus met dertig kinderen tegelijk enkele megabits per
+  // seconde. Waar een lichtere variant bestaat staat die vooraan.
   var ZENDERS = [
-    { id: 'groovesalad', naam: 'Chill',   omschrijving: 'rustige beats',        urls: streams('groovesalad') },
-    { id: 'fluid',       naam: 'Lo-fi',   omschrijving: 'instrumentale hiphop', urls: streams('fluid') },
-    { id: 'dronezone',   naam: 'Ambient', omschrijving: 'zweverig en rustig',   urls: streams('dronezone') },
-    { id: 'beatblender', naam: 'Beats',   omschrijving: 'iets meer tempo',      urls: streams('beatblender') }
+    {
+      id: 'hardstyle', naam: 'Hardstyle', omschrijving: 'Q-dance',
+      urls: [
+        'https://playerservices.streamtheworld.com/api/livestream-redirect/Q_DANCEAAC.aac',
+        'https://playerservices.streamtheworld.com/api/livestream-redirect/Q_DANCE.mp3'
+      ]
+    },
+    {
+      id: 'house', naam: 'House', omschrijving: 'dance, de hele dag',
+      urls: ['https://dancewave.online/dance.mp3']
+    },
+    {
+      id: 'top40', naam: 'Top 40', omschrijving: 'Qmusic',
+      urls: [
+        'https://icecast-qmusicnl-cdp.triple-it.nl/Qmusic_nl_live_96.mp3',
+        'https://playerservices.streamtheworld.com/api/livestream-redirect/SRGSTR01.mp3'
+      ]
+    },
+    {
+      id: 'nl', naam: 'Nederlands', omschrijving: 'NPO Radio 5',
+      urls: ['https://icecast.omroep.nl/radio5-bb-mp3']
+    }
   ]
 
+  // Zeven sfeergeluiden. Ze worden niet "live gefilterd" maar sample voor
+  // sample uitgerekend in een lus van veertien seconden, met een crossfade zodat
+  // je het herhalen niet hoort. Dat scheelt: regen bestaat uit losse druppels en
+  // een haardvuur uit korte knapjes, en dat krijg je met een ruisfilter alleen
+  // nooit overtuigend.
   var FOCUS = [
-    { id: 'regen', naam: 'Regen',  omschrijving: 'tikkend op het raam' },
-    { id: 'ruis',  naam: 'Ruis',   omschrijving: 'dempt de klas' },
-    { id: 'haard', naam: 'Haard',  omschrijving: 'knappend vuur' },
-    { id: 'cafe',  naam: 'Rumoer', omschrijving: 'zacht geroezemoes' }
+    { id: 'regen',  naam: 'Regen',       omschrijving: 'op een tent' },
+    { id: 'zee',    naam: 'Golven',      omschrijving: 'zee op het strand' },
+    { id: 'wind',   naam: 'Wind',        omschrijving: 'om het huis' },
+    { id: 'haard',  naam: 'Haardvuur',   omschrijving: 'knappend hout' },
+    { id: 'rumoer', naam: 'Rumoer',      omschrijving: 'stemmen in een cafe' },
+    { id: 'bruin',  naam: 'Bruine ruis', omschrijving: 'diep en warm' },
+    { id: 'wit',    naam: 'Witte ruis',  omschrijving: 'scherp, dempt alles' }
   ]
 
   function leesInstelling() {
@@ -94,28 +119,182 @@
     audio.load()
   }
 
-  // -- Focusgeluid (Web Audio) ------------------------------------------
-  var ac = null, focusGain = null, focusKnopen = [], krakenTimer = null
+  // -- Focusgeluid: zelf uitgerekend ------------------------------------
+  var ac = null, focusGain = null, focusBron = null, buffers = {}
 
-  function ruisBuffer(bruin) {
-    var lengte = ac.sampleRate * 4
-    var buf = ac.createBuffer(1, lengte, ac.sampleRate)
-    var d = buf.getChannelData(0)
-    var vorige = 0
-    for (var i = 0; i < lengte; i++) {
-      var wit = Math.random() * 2 - 1
-      if (bruin) { vorige = (vorige + 0.02 * wit) / 1.02; d[i] = vorige * 3.5 }
-      else d[i] = wit
+  // Toestandsvariabelen-filter: geeft een resonerende band terug. Per druppel
+  // of knapje eentje; dat bepaalt de "toon" ervan.
+  function resonator(f0, q, sr) {
+    var F = 2 * Math.sin(Math.PI * Math.min(f0, sr * 0.45) / sr)
+    var Q = 1 / q
+    var laag = 0, band = 0
+    return function (x) {
+      laag += F * band
+      var hoog = x - laag - Q * band
+      band += F * hoog
+      return band
     }
+  }
+
+  // Eenpolig laagdoorlaat, voor de bedding onder een geluid.
+  function laagdoorlaat(f0, sr) {
+    var a = Math.exp(-2 * Math.PI * f0 / sr)
+    var y = 0
+    return function (x) { y = (1 - a) * x + a * y; return y }
+  }
+
+  // Zet een korrel (druppel, knapje, tik) op positie start in de buffer.
+  function korrel(d, start, duur, sr, f0, q, piek) {
+    var n = Math.floor(duur * sr)
+    var res = resonator(f0, q, sr)
+    for (var k = 0; k < n && start + k < d.length; k++) {
+      var env = Math.exp(-5 * k / n)
+      d[start + k] += res((Math.random() * 2 - 1) * env) * piek
+    }
+  }
+
+  function maakBuffer(id) {
+    var sr = ac.sampleRate
+    var duurSec = 14
+    var n = Math.floor(sr * duurSec)
+    var buf = ac.createBuffer(1, n, sr)
+    var d = buf.getChannelData(0)
+    var i, k
+
+    if (id === 'wit' || id === 'bruin') {
+      var vorige = 0
+      var lp = laagdoorlaat(id === 'bruin' ? 500 : 9000, sr)
+      for (i = 0; i < n; i++) {
+        var wit = Math.random() * 2 - 1
+        if (id === 'bruin') { vorige = (vorige + 0.02 * wit) / 1.02; d[i] = lp(vorige * 3.2) }
+        else d[i] = lp(wit) * 0.5
+      }
+
+    } else if (id === 'regen') {
+      // Bedding: het zachte ruisen van water op afstand. Daaroverheen de tikken
+      // op het tentdoek - dof en laag, dat is wat het herkenbaar maakt.
+      var lpBed = laagdoorlaat(600, sr)
+      for (i = 0; i < n; i++) d[i] = lpBed(Math.random() * 2 - 1) * 0.14
+      var perSec = 80
+      for (k = 0; k < duurSec * perSec; k++) {
+        // Doek dempt de hoge tonen weg; daarom laag en met weinig naklank.
+        korrel(d, Math.floor(Math.random() * n), 0.008 + Math.random() * 0.012, sr,
+               380 + Math.random() * 950, 2.5 + Math.random() * 3, 0.05 + Math.random() * 0.06)
+      }
+
+    } else if (id === 'zee') {
+      // Golven: brede ruis met een trage ademhaling eroverheen, plus schuim op
+      // het hoogtepunt van elke golf.
+      var lpZee = laagdoorlaat(700, sr)
+      var hpSchuim = resonator(2200, 1.2, sr)
+      var golfDuur = 7
+      for (i = 0; i < n; i++) {
+        var fase = ((i / sr) % golfDuur) / golfDuur
+        var env = fase < 0.28 ? Math.pow(fase / 0.28, 1.6) : Math.pow(1 - (fase - 0.28) / 0.72, 1.8)
+        var ruis = Math.random() * 2 - 1
+        d[i] = lpZee(ruis) * (0.10 + 0.42 * env) + hpSchuim(ruis) * 0.05 * Math.max(0, env - 0.55)
+      }
+
+    } else if (id === 'wind') {
+      // Wind is ruis waarvan de toonhoogte langzaam wandelt; twee banden door
+      // elkaar klinkt voller dan een.
+      var doel1 = 420, nu1 = 420, doel2 = 900, nu2 = 900
+      var r1 = resonator(nu1, 2.2, sr), r2 = resonator(nu2, 3.0, sr), teller = 0
+      for (i = 0; i < n; i++) {
+        if (teller-- <= 0) {
+          teller = Math.floor(sr * 0.05)
+          nu1 += (doel1 - nu1) * 0.08
+          nu2 += (doel2 - nu2) * 0.06
+          if (Math.random() < 0.02) doel1 = 260 + Math.random() * 500
+          if (Math.random() < 0.02) doel2 = 700 + Math.random() * 900
+          r1 = resonator(nu1, 2.2, sr)
+          r2 = resonator(nu2, 3.0, sr)
+        }
+        var w = Math.random() * 2 - 1
+        d[i] = r1(w) * 0.28 + r2(w) * 0.16
+      }
+
+    } else if (id === 'haard') {
+      // Diep gerommel van het vuur, en dan de knapjes: kort, scherp en in
+      // onregelmatige trosjes. Losse gelijkmatige tikjes klinken nergens naar.
+      var lpVuur = laagdoorlaat(160, sr)
+      var vor = 0
+      for (i = 0; i < n; i++) {
+        var wv = Math.random() * 2 - 1
+        vor = (vor + 0.02 * wv) / 1.02
+        d[i] = lpVuur(vor * 3.2) * 0.55
+      }
+      var tijd = 0
+      while (tijd < duurSec) {
+        tijd += 0.15 + Math.random() * 0.9
+        var tros = 1 + Math.floor(Math.random() * 5)
+        for (k = 0; k < tros; k++) {
+          var t2 = tijd + k * (0.01 + Math.random() * 0.05)
+          if (t2 >= duurSec) break
+          korrel(d, Math.floor(t2 * sr), 0.004 + Math.random() * 0.012, sr,
+                 1200 + Math.random() * 3200, 6 + Math.random() * 10, 0.25 + Math.random() * 0.45)
+        }
+        if (Math.random() < 0.25) {
+          korrel(d, Math.floor(tijd * sr), 0.05 + Math.random() * 0.06, sr, 180 + Math.random() * 160, 3, 0.3)
+        }
+      }
+
+    } else {
+      // Rumoer: geen ruis maar gepraat zonder woorden. Vier banden in het
+      // stembereik, elk met een eigen lettergreepritme, en af en toe een tik van
+      // bestek. Daardoor klinkt het duidelijk anders dan bruine ruis.
+      var banden = [270, 430, 660, 980]
+      for (var b = 0; b < banden.length; b++) {
+        var res2 = resonator(banden[b] * (0.9 + Math.random() * 0.2), 6, sr)
+        var env2 = 0, doelEnv = 0, telr = 0
+        var sterkte = 0.5 + Math.random() * 0.5
+        for (i = 0; i < n; i++) {
+          if (telr-- <= 0) {
+            telr = Math.floor(sr * (0.06 + Math.random() * 0.14))
+            doelEnv = Math.random() < 0.45 ? 0 : Math.random()
+          }
+          env2 += (doelEnv - env2) * 0.0016
+          d[i] += res2(Math.random() * 2 - 1) * env2 * 0.24 * sterkte
+        }
+      }
+      var lpZaal = laagdoorlaat(320, sr)
+      for (i = 0; i < n; i++) d[i] = lpZaal(d[i] + (Math.random() * 2 - 1) * 0.03)
+      var tijd2 = 0
+      while (tijd2 < duurSec) {
+        tijd2 += 1.5 + Math.random() * 4
+        if (tijd2 < duurSec) korrel(d, Math.floor(tijd2 * sr), 0.05, sr, 2600 + Math.random() * 2000, 14, 0.10)
+      }
+    }
+
+    // Naadloos maken: het staartje overvloeien in het begin, anders hoor je elke
+    // veertien seconden een klik.
+    var fade = Math.floor(sr * 0.6)
+    for (k = 0; k < fade; k++) {
+      var m = k / fade
+      d[k] = d[k] * m + d[n - fade + k] * (1 - m)
+    }
+
+    // Normaliseren op luidheid (rms), niet op de piek. Op de piek normaliseren
+    // maakt juist de geluiden met harde uitschieters - het haardvuur - veel te
+    // zacht, want dan drukt een enkel knapje de rest omlaag. De uitschieters
+    // vangen we daarna zacht af, zodat er niets hoorbaar afgekapt wordt.
+    var somQ = 0
+    for (i = 0; i < n; i++) somQ += d[i] * d[i]
+    var rms = Math.sqrt(somQ / n)
+    if (rms > 0) {
+      var f = 0.09 / rms
+      for (i = 0; i < n; i++) {
+        var v = d[i] * f
+        var a = Math.abs(v)
+        d[i] = a < 0.7 ? v : (v < 0 ? -1 : 1) * (0.7 + 0.3 * Math.tanh((a - 0.7) / 0.3))
+      }
+    }
+
     return buf
   }
 
   function focusStop() {
-    if (krakenTimer) { clearTimeout(krakenTimer); krakenTimer = null }
-    for (var i = 0; i < focusKnopen.length; i++) {
-      try { focusKnopen[i].stop ? focusKnopen[i].stop() : focusKnopen[i].disconnect() } catch (e) {}
-    }
-    focusKnopen = []
+    if (focusBron) { try { focusBron.stop() } catch (e) {} focusBron = null }
   }
 
   function focusSpeel(id) {
@@ -124,60 +303,13 @@
     focusStop()
     if (!focusGain) { focusGain = ac.createGain(); focusGain.connect(ac.destination) }
     focusGain.gain.value = staat.gedempt ? 0 : staat.volume * 0.6
-
-    var bron = ac.createBufferSource()
-    bron.buffer = ruisBuffer(id !== 'regen')
-    bron.loop = true
-
-    var filter = ac.createBiquadFilter()
-    if (id === 'regen') { filter.type = 'bandpass'; filter.frequency.value = 1400; filter.Q.value = 0.5 }
-    else if (id === 'ruis') { filter.type = 'lowpass'; filter.frequency.value = 900 }
-    else if (id === 'haard') { filter.type = 'lowpass'; filter.frequency.value = 420 }
-    else { filter.type = 'lowpass'; filter.frequency.value = 300 }
-
-    bron.connect(filter)
-    filter.connect(focusGain)
-    bron.start()
-    focusKnopen.push(bron, filter)
-
-    // Een egale ruislus verraadt zichzelf; daarom leeft de klank een beetje.
-    var lfo = ac.createOscillator(), lfoGain = ac.createGain()
-    lfo.frequency.value = id === 'cafe' ? 0.15 : 0.08
-    lfoGain.gain.value = id === 'regen' ? 320 : 60
-    lfo.connect(lfoGain)
-    lfoGain.connect(filter.frequency)
-    lfo.start()
-    focusKnopen.push(lfo, lfoGain)
-
-    if (id === 'haard' || id === 'cafe') plantKraak(id)
+    if (!buffers[id]) buffers[id] = maakBuffer(id)
+    focusBron = ac.createBufferSource()
+    focusBron.buffer = buffers[id]
+    focusBron.loop = true
+    focusBron.connect(focusGain)
+    focusBron.start()
   }
-
-  // Losse knapjes (haard) of gedempte stemgeluiden (rumoer), op willekeurige
-  // momenten - dat maakt het verschil tussen "ruis" en "een plek".
-  function plantKraak(id) {
-    var wacht = id === 'haard' ? 120 + Math.random() * 900 : 400 + Math.random() * 1800
-    krakenTimer = setTimeout(function () {
-      if (!ac || !focusGain) return
-      var b = ac.createBufferSource()
-      b.buffer = ruisBuffer(id === 'cafe')
-      var f = ac.createBiquadFilter()
-      f.type = id === 'haard' ? 'highpass' : 'bandpass'
-      f.frequency.value = id === 'haard' ? 1800 : 500
-      var g = ac.createGain()
-      var duur = id === 'haard' ? 0.05 + Math.random() * 0.08 : 0.3 + Math.random() * 0.5
-      var piek = (id === 'haard' ? 0.5 : 0.22) * (staat.gedempt ? 0 : 1)
-      g.gain.setValueAtTime(0, ac.currentTime)
-      g.gain.linearRampToValueAtTime(piek, ac.currentTime + duur * 0.2)
-      g.gain.linearRampToValueAtTime(0, ac.currentTime + duur)
-      b.connect(f)
-      f.connect(g)
-      g.connect(focusGain)
-      b.start()
-      b.stop(ac.currentTime + duur)
-      plantKraak(id)
-    }, wacht)
-  }
-
   // -- Aansturing --------------------------------------------------------
   function kies(bron) {
     staat.bron = bron
@@ -338,15 +470,7 @@
 
     var credit = document.createElement('p')
     stijl(credit, { margin: '10px 0 0', fontSize: '11px', opacity: '.5' })
-    var link = document.createElement('a')
-    link.href = 'https://somafm.com'
-    link.target = '_blank'
-    link.rel = 'noopener'
-    link.textContent = 'SomaFM'
-    link.style.color = '#a5b4fc'
-    credit.appendChild(document.createTextNode('Radio via '))
-    credit.appendChild(link)
-    credit.appendChild(document.createTextNode(' · focusgeluid maakt de app zelf'))
+    credit.appendChild(document.createTextNode('Radio speelt de zender rechtstreeks af · focusgeluid maakt de app zelf'))
     paneel.appendChild(credit)
 
     document.body.appendChild(paneel)
