@@ -12,6 +12,9 @@
     <!-- Plain script, geen module/defer: window.KennisKist moet al bestaan
          vóórdat main.jsx (en WerkwoordSpelling.jsx daarin) draait. -->
     <script src="/kenniskist-login.js"></script>
+    <!-- Muziekspeler: alleen in het hoofddocument, buiten React, zodat hij
+         blijft spelen als je van oefening naar spel klikt. Zie het bestand. -->
+    <script src="/kenniskist-muziek.js" defer></script>
   </head>
   <body>
     <div id="root">

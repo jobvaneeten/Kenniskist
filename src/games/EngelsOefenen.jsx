@@ -1,4 +1,11 @@
+import { useEffect } from 'react'
+
 export default function EngelsOefenen({ onBack }) {
+  // Tweede slot op het dempen: de pagina in het iframe zet de muziek zelf uit
+  // en bij pagehide weer aan. Blijft dat event ooit uit, dan zou de muziek
+  // stil blijven staan; bij het sluiten van dit scherm dus sowieso weer aan.
+  useEffect(() => () => window.KennisKistMuziek?.demp(false), [])
+
   // Engelse woordjes (blok 7, 8 & 9). Volledige quiz draait in /engels/,
   // gestyld in het Kenniskist-thema. Voortgang is per sessie (geen opslag nodig).
   return (

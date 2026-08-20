@@ -12,6 +12,11 @@ import './dictee-thema.css'
 // Gaat als ?cats=... mee in de iframe-src; dictee-categorie.html leest die
 // query-param zelf uit om het categoriescherm over te slaan (zie aldaar).
 export default function DicteeThema({ onBack, addCuruntie, addBriefgeld, thema = 8, file, cats, woorden }) {
+  // Tweede slot op het dempen: de pagina in het iframe zet de muziek zelf uit
+  // en bij pagehide weer aan. Blijft dat event ooit uit, dan zou de muziek
+  // stil blijven staan; bij het sluiten van dit scherm dus sowieso weer aan.
+  useEffect(() => () => window.KennisKistMuziek?.demp(false), [])
+
   const basis = file || `dictees/dictee-thema${thema}.html`
   const params = new URLSearchParams()
   if (cats?.length) params.set('cats', cats.join(','))

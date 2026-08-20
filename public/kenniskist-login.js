@@ -147,6 +147,12 @@
     })
   }
 
+  // Oefeningen met spraak (dictee, Engels) draaien in een iframe; de speler
+  // hangt in het hoofddocument. Same-origin, dus dat is gewoon te bereiken.
+  function muziekDemp(aan) {
+    try { window.top.KennisKistMuziek && window.top.KennisKistMuziek.demp(aan) } catch (e) {}
+  }
+
   function toonInlogstatus(el) {
     if (!el) return
     if (getLeerling()) { el.style.display = 'none'; return }
@@ -163,6 +169,7 @@
     getLeerling: getLeerling,
     slaResultaatOp: slaResultaatOp,
     startOefening: startOefening,
+    muziekDemp: muziekDemp,
     toonInlogstatus: toonInlogstatus,
   }
 })()

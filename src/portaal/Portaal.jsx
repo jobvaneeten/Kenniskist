@@ -122,6 +122,11 @@ function KlasOverzicht({ profiel, klassen, aantallen, leerkrachten, isIcter, onK
 
 export default function Portaal() {
   const { profiel, uitloggen } = useSessie()
+  // Muziekknop weg zolang je in het portaal zit (zie kenniskist-muziek.js).
+  useEffect(() => {
+    window.KennisKistMuziek?.toon(false)
+    return () => window.KennisKistMuziek?.toon(true)
+  }, [])
   const [klassen, setKlassen] = useState([])
   const [aantallen, setAantallen] = useState({})
   const [leerkrachten, setLeerkrachten] = useState({})   // klas_id → [naam]

@@ -633,5 +633,13 @@ document.getElementById('homeBtn2').onclick=()=>show('home');
 
 renderHome();
 </script>
+<script>
+// Achtergrondmuziek dempen zolang deze oefening open staat: hier wordt
+// gepraat, en daar hoort niets onder te spelen. Zie kenniskist-muziek.js.
+window.KennisKist && window.KennisKist.muziekDemp(true);
+window.addEventListener('pagehide', function () {
+  window.KennisKist && window.KennisKist.muziekDemp(false);
+});
+</script>
 </body>
 </html>

@@ -805,5 +805,13 @@ var KLANK={"beweging":["be","we","ging"],"kachel":["ka","chel"],"vermoeid":["ver
 })();
 
 </script>
+<script>
+// Achtergrondmuziek dempen zolang deze oefening open staat: hier wordt
+// gepraat, en daar hoort niets onder te spelen. Zie kenniskist-muziek.js.
+window.KennisKist && window.KennisKist.muziekDemp(true);
+window.addEventListener('pagehide', function () {
+  window.KennisKist && window.KennisKist.muziekDemp(false);
+});
+</script>
 </body>
 </html>
