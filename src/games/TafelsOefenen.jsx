@@ -264,6 +264,9 @@ function Overzicht({ tafels, resultaten, onSpelletje }) {
 // in de registry (altijd 1, het is een tijdrace) maar wordt hier niet
 // gebruikt: elk antwoord rapporteert apart, zie Oefenspel/check hierboven.
 export default function TafelsOefenen({ groep, onBack, addBriefgeld, addCuruntie, config }) {
+  // Startsein voor de tijdmeting in kenniskist-login.js.
+  useEffect(() => { window.KennisKist?.startOefening?.('tafels') }, [])
+
   const [fase, setFase] = useState('type')   // type | selectie | spel | overzicht | keuze | <game>
   const [soort, setSoort] = useState(null)   // 'keer' | 'deel'
   const [tafels, setTafels] = useState([])

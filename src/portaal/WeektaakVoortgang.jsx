@@ -5,6 +5,18 @@ import { scoreKlasse } from './resultaatHelpers.js'
 
 const sleutel = (opdrachtId, leerlingId) => `${opdrachtId}:${leerlingId}`
 
+// Tijd die een leerling aan een opdracht besteedde (som_ms uit de view, zie
+// migratie 0009). Leeg bij werk van vóór die meting — dan tonen we niets in
+// plaats van een misleidende 0.
+function kortTijd(ms) {
+  if (!ms || ms < 1000) return null
+  const sec = Math.round(ms / 1000)
+  if (sec < 60) return `${sec} sec`
+  const min = Math.round(sec / 60)
+  if (min < 60) return `${min} min`
+  return `${Math.floor(min / 60)}u ${String(min % 60).padStart(2, '0')}`
+}
+
 // Matrix leerling × opdracht voor één weektaak. `som_max`/`doel_aantal` komen
 // uit de view weektaak_voortgang (migratie 0007): "gemaakt" is de weergave-
 // cap (min(som_max, doel)), zodat een leerling die vaker oefent dan gevraagd
@@ -35,7 +47,7 @@ export default function WeektaakVoortgang({ weektaak, klasId, alleenNietAf, onKi
       const [{ data: lln }, { data: vg }, { data: tw }] = await Promise.all([
         supabase.from('profielen').select('id, weergavenaam')
           .eq('klas_id', klasId).eq('rol', 'leerling').order('weergavenaam'),
-        supabase.from('weektaak_voortgang').select('opdracht_id, leerling_id, doel_aantal, som_score, som_max')
+        supabase.from('weektaak_voortgang').select('opdracht_id, leerling_id, doel_aantal, som_score, som_max, som_ms')
           .eq('weektaak_id', weektaak.id),
         opdrachtIds.length
           ? supabase.from('toewijzingen').select('opdracht_id, leerling_id, status').in('opdracht_id', opdrachtIds)
@@ -207,12 +219,14 @@ export default function WeektaakVoortgang({ weektaak, klasId, alleenNietAf, onKi
                   const gemaakt = Math.min(v.som_max, v.doel_aantal)
                   const pct = v.som_max > 0 ? Math.round((v.som_score / v.som_max) * 100) : 0
                   const foutAantal = v.som_max - v.som_score
+                  const tijd = kortTijd(Number(v.som_ms))
                   return (
                     <td key={o.id}>
                       <strong>{gemaakt}/{v.doel_aantal}</strong>
                       {v.som_max > 0 && (
                         <>
                           {' '}<span className={scoreKlasse(pct)}>{pct}%</span>
+                          {tijd && <><br /><span className="portaal-zacht">⏱ {tijd}</span></>}
                           {foutAantal > 0 && (
                             <>
                               <br />

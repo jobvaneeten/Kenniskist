@@ -333,6 +333,9 @@ function CatSelectie({ groep, onStart, onBack, onOnderwerp }) {
 // wordt (zie src/games/toolRender.jsx). aantal vervangt dan PER_OVERZICHT als
 // doel; config = { categorieen, metOnderwerp } slaat de cat-selectie over.
 export default function WerkwoordSpelling({ groep, onBack, addBriefgeld, aantal, config }) {
+  // Startsein voor de tijdmeting in kenniskist-login.js.
+  useEffect(() => { window.KennisKist?.startOefening?.('werkwoordspelling') }, [])
+
   const doel = aantal ?? PER_OVERZICHT
   const [gekozenCats, setGekozenCats] = useState(null)   // null = nog niet gekozen
   const [oefeningen, setOefeningen]   = useState([])

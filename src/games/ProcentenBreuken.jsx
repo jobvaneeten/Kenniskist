@@ -28,6 +28,9 @@ function buildRound(pool) {
 // (chips weigeren simpelweg te vallen op de verkeerde plek), dus score = aantal
 // zodra klaar (eenheid 'sessies' in de registry, geen percentage-kleurcode).
 export default function ProcentenBreuken({ onBack, addBriefgeld, aantal }) {
+  // Startsein voor de tijdmeting in kenniskist-login.js.
+  useEffect(() => { window.KennisKist?.startOefening?.('procenten-breuken') }, [])
+
   const [round, setRound]   = useState(() => buildRound(PROCENT_SETS))
   const [placed, setPlaced] = useState({})     // chipId -> true
   const [roundNo, setRoundNo] = useState(1)

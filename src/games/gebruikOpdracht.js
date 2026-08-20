@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 // Gedeelde teller/rapportage-hook voor tools die vanuit een weektaak-opdracht
 // óf vrij draaien (zie src/games/toolRender.jsx).
@@ -18,6 +18,11 @@ export function useGebruikOpdracht({ toolId, aantal }) {
   const [goed, setGoed] = useState(0)
   const [klaar, setKlaar] = useState(false)
   const [opslaanMislukt, setOpslaanMislukt] = useState(false)
+
+  // Startsein voor de tijdmeting (zie kenniskist-login.js): zonder dit weet
+  // die niet wanneer de leerling begon, want in de React-shell is het laden
+  // van de pagina niet het openen van de oefening.
+  useEffect(() => { window.KennisKist?.startOefening?.(toolId) }, [toolId])
 
   const registreer = useCallback((correct, detail) => {
     if (klaar) return

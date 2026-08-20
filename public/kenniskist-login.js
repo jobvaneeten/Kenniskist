@@ -15,6 +15,35 @@
   // de anon key is per ontwerp publiek, RLS is de echte grens.
   var ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZidnRremlleXZkY3RsaWdoZ29qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5NTQwNjUsImV4cCI6MjEwMDUzMDA2NX0.S_hAftcczB64X6kdjRnJTqBd_i7pbvefSaSB3RvAES4'
 
+  // ── Tijdmeting ───────────────────────────────────────────────────────
+  // `ms` per resultaatregel: bij tools die per opgave opslaan de tijd sinds de
+  // vorige opgave, bij tools die één keer opslaan de tijd sinds het openen.
+  // Optellen geeft de totale tijd van een opdracht (zie migratie 0009).
+  var MAX_MS = 30 * 60 * 1000        // langer stil = kind liet het tabblad open
+  var paginaStart = Date.now()
+  var laatsteMeting = {}             // toolId -> tijdstip van de vorige opslag
+  var startMeting = {}               // toolId -> expliciet gemeld startmoment
+  // Een losse toolpagina (dictee, Engels, Reis rond de wereld) begint bij het
+  // laden van de pagina. De React-shell niet: die staat soms al een uur open
+  // voordat een kind een oefening kiest, dus daar moet startOefening() het
+  // startsein geven. Het verschil is te zien aan #root, dat alleen de shell
+  // heeft — lui opgevraagd, want dit script draait al in de <head>.
+  function losseToolPagina() { return !document.getElementById('root') }
+
+  // Aangeroepen door React-tools zodra de leerling de oefening opent; losse
+  // HTML-tools hebben dat niet nodig, daar is het laden van de pagina de start.
+  function startOefening(toolId) {
+    startMeting[toolId] = Date.now()
+    delete laatsteMeting[toolId]
+  }
+
+  function meetMs(toolId) {
+    var vorige = laatsteMeting[toolId] || startMeting[toolId] || (losseToolPagina() ? paginaStart : null)
+    laatsteMeting[toolId] = Date.now()
+    if (!vorige) return null
+    return Math.max(0, Math.min(MAX_MS, Date.now() - vorige))
+  }
+
   function leesJson(sleutel) {
     try { return JSON.parse(localStorage.getItem(sleutel) || 'null') } catch (e) { return null }
   }
@@ -75,7 +104,7 @@
     return actief.opdrachtId || null
   }
 
-  function insertResultaat(token, profiel, toolId, score, maxScore, detailsJson, opdrachtId) {
+  function insertResultaat(token, profiel, toolId, score, maxScore, detailsJson, opdrachtId, ms) {
     var body = {
       leerling_id: profiel.id,
       tool_id: toolId,
@@ -84,6 +113,7 @@
       details_json: detailsJson,
     }
     if (opdrachtId) body.opdracht_id = opdrachtId
+    if (ms !== null && ms !== undefined) body.ms = ms
     return fetch(SUPABASE_URL + '/rest/v1/resultaten', {
       method: 'POST',
       headers: {
@@ -97,17 +127,18 @@
   }
 
   function slaResultaatOp(toolId, score, maxScore, detailsJson) {
+    var ms = meetMs(toolId)
     var profiel = leesJson('kk_profiel_cache')
     if (!profiel) return Promise.resolve({ ok: false, reden: 'niet-ingelogd' })
 
     return geldigToken().then(function (token) {
       if (!token) return { ok: false, reden: 'niet-ingelogd' }
       var opdrachtId = actieveOpdrachtVoor(toolId)
-      return insertResultaat(token, profiel, toolId, score, maxScore, detailsJson, opdrachtId).then(function (res) {
+      return insertResultaat(token, profiel, toolId, score, maxScore, detailsJson, opdrachtId, ms).then(function (res) {
         if (res.ok || !opdrachtId) return { ok: res.ok }
         // Ongeldige/verlopen koppeling mag het resultaat nooit laten
         // verdwijnen — één keer opnieuw proberen, dan zonder opdracht_id.
-        return insertResultaat(token, profiel, toolId, score, maxScore, detailsJson, null)
+        return insertResultaat(token, profiel, toolId, score, maxScore, detailsJson, null, ms)
           .then(function (res2) { return { ok: res2.ok } })
       })
     }).catch(function () {
@@ -131,6 +162,7 @@
   window.KennisKist = {
     getLeerling: getLeerling,
     slaResultaatOp: slaResultaatOp,
+    startOefening: startOefening,
     toonInlogstatus: toonInlogstatus,
   }
 })()
