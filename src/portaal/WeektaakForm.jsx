@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase.js'
 import { TOOL_BY_ID } from '../lib/tools.js'
 import ToolKiezer from './ToolKiezer.jsx'
@@ -49,6 +49,42 @@ export default function WeektaakForm({ klas, bestaand, onKlaar, onAnnuleren }) {
   const [fout, setFout] = useState('')
   const [bezig, setBezig] = useState(false)
 
+  // Wie krijgt deze weektaak. Standaard de hele klas; bij bewerken de
+  // leerlingen die er nu al een toewijzing voor hebben.
+  const [leerlingen, setLeerlingen] = useState([])
+  const [gekozen, setGekozen] = useState(null)   // null = nog aan het laden
+  const opdrachtSleutel = (bestaand?.opdrachten ?? []).map(o => o.id).filter(Boolean).join(',')
+
+  useEffect(() => {
+    let actief = true
+    async function laad() {
+      const { data: lln } = await supabase
+        .from('profielen').select('id, weergavenaam')
+        .eq('klas_id', klas.id).eq('rol', 'leerling').order('weergavenaam')
+      if (!actief) return
+      setLeerlingen(lln ?? [])
+
+      const ids = opdrachtSleutel ? opdrachtSleutel.split(',') : []
+      if (ids.length) {
+        const { data: tw } = await supabase
+          .from('toewijzingen').select('leerling_id').in('opdracht_id', ids)
+        if (!actief) return
+        const bezet = new Set((tw ?? []).map(t => t.leerling_id))
+        setGekozen(bezet.size ? bezet : new Set((lln ?? []).map(l => l.id)))
+      } else {
+        setGekozen(new Set((lln ?? []).map(l => l.id)))
+      }
+    }
+    laad()
+    return () => { actief = false }
+  }, [klas.id, opdrachtSleutel])
+
+  const toggelLeerling = (id) => setGekozen(prev => {
+    const next = new Set(prev)
+    next.has(id) ? next.delete(id) : next.add(id)
+    return next
+  })
+
   const voegToe = ({ toolId }) => {
     const info = TOOL_BY_ID[toolId]
     setOpdrachten(prev => [...prev, { toolId, aantal: info?.standaardAantal ?? 1, config: {} }])
@@ -65,16 +101,14 @@ export default function WeektaakForm({ klas, bestaand, onKlaar, onAnnuleren }) {
     if (eindOp < startOp) { setFout('De einddatum kan niet vóór de startdatum liggen.'); return }
     const configFout = controleerOpdrachten(opdrachten)
     if (configFout) { setFout(configFout); return }
+    if (!gekozen || gekozen.size === 0) { setFout('Kies minstens één leerling die deze weektaak krijgt.'); return }
     setBezig(true)
     try {
-      const { data: leerlingen, error: leerlingFout } = await supabase
-        .from('profielen').select('id').eq('klas_id', klas.id).eq('rol', 'leerling')
-      if (leerlingFout) throw leerlingFout
       await slaWeektaakOp({
         weektaakId: bestaand?.id ?? null,
         schoolId: klas.school_id, klasId: klas.id,
         titel: titel.trim() || 'Weektaak', startOp, eindOp,
-        opdrachten, leerlingIds: (leerlingen ?? []).map(l => l.id),
+        opdrachten, leerlingIds: [...gekozen],
       })
       onKlaar()
     } catch {
@@ -150,11 +184,46 @@ export default function WeektaakForm({ klas, bestaand, onKlaar, onAnnuleren }) {
         <div className="portaal-stap">
           <span className="portaal-stap-nr">3</span>
           <div className="portaal-stap-inhoud">
+            <h3>Voor wie?</h3>
+            <p className="portaal-zacht">
+              Standaard krijgt de hele klas hem. Vink uit wie hem niet hoeft te maken —
+              bijvoorbeeld een kind dat aan iets anders werkt.
+            </p>
+            {gekozen === null && <p className="portaal-leeg">Laden…</p>}
+            {gekozen !== null && leerlingen.length === 0 && (
+              <p className="portaal-leeg">Er zitten nog geen leerlingen in deze klas.</p>
+            )}
+            {gekozen !== null && leerlingen.length > 0 && (
+              <>
+                <div className="portaal-veld-kop">
+                  <span className="portaal-zacht">{gekozen.size} van {leerlingen.length} geselecteerd</span>
+                  <span className="portaal-zacht">
+                    <button type="button" className="portaal-minilink" onClick={() => setGekozen(new Set(leerlingen.map(l => l.id)))}>allemaal</button>
+                    {' · '}
+                    <button type="button" className="portaal-minilink" onClick={() => setGekozen(new Set())}>niemand</button>
+                  </span>
+                </div>
+                <div className="portaal-keuzevakjes">
+                  {leerlingen.map(l => (
+                    <label key={l.id} className={gekozen.has(l.id) ? 'portaal-vakje aan' : 'portaal-vakje'}>
+                      <input type="checkbox" checked={gekozen.has(l.id)} onChange={() => toggelLeerling(l.id)} />
+                      {l.weergavenaam}
+                    </label>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        <div className="portaal-stap">
+          <span className="portaal-stap-nr">4</span>
+          <div className="portaal-stap-inhoud">
             <h3>Klaarzetten</h3>
             <p className="portaal-zacht">
-              Bij opslaan krijgt <strong>iedereen in {klas.naam}</strong> alle opdrachten. Daarna kun je via
-              Differentiëren per leerling een opdracht weghalen of het aantal aanpassen, en via
-              "Alleen niet af" iemand vrijstellen.
+              Bij opslaan krijgt <strong>{gekozen?.size === 1 ? '1 aangevinkte leerling' : `${gekozen?.size ?? 0} aangevinkte leerlingen`}</strong> alle opdrachten.
+              Daarna kun je via Differentiëren per leerling een losse opdracht weghalen of het aantal
+              aanpassen, en via "Alleen niet af" iemand vrijstellen.
             </p>
             {fout && <p className="portaal-fout">{fout}</p>}
             <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>

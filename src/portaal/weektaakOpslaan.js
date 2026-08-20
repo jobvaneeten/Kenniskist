@@ -5,9 +5,10 @@ import { supabase } from '../lib/supabase.js'
 // halve mislukking (bv. netwerkfout tussen twee stappen) is de toestand
 // consistent genoeg om gewoon opnieuw op te slaan.
 //
-// leerlingIds: alle leerlingen van de klas. Fase 1 wijst de hele klas toe
-// zonder differentiatie (zie WeektaakDifferentiatie.jsx) — elke leerling
-// krijgt dezelfde opdrachten met hetzelfde aantal.
+// leerlingIds: de leerlingen die deze weektaak krijgen (standaard de hele
+// klas, aan te vinken in WeektaakForm). Iedereen in die lijst krijgt dezelfde
+// opdrachten met hetzelfde aantal; per leerling afwijken doe je daarna in
+// WeektaakDifferentiatie.jsx.
 export async function slaWeektaakOp({ weektaakId, schoolId, klasId, titel, startOp, eindOp, opdrachten, leerlingIds }) {
   const weektaakRij = { school_id: schoolId, klas_id: klasId, titel, start_op: startOp, eind_op: eindOp }
 
@@ -61,6 +62,17 @@ export async function slaWeektaakOp({ weektaakId, schoolId, klasId, titel, start
     const { error } = await supabase
       .from('toewijzingen')
       .upsert(gewenst, { onConflict: 'opdracht_id,leerling_id', ignoreDuplicates: true })
+    if (error) throw error
+  }
+
+  // Uitgevinkte leerlingen weer losmaken. Zonder deze stap zou een leerling
+  // die je bij het bewerken weghaalt de weektaak gewoon houden, want de upsert
+  // hierboven voegt alleen toe.
+  const opdrachtIds = [...behoudenIds]
+  if (opdrachtIds.length) {
+    let query = supabase.from('toewijzingen').delete().in('opdracht_id', opdrachtIds)
+    if (leerlingIds.length) query = query.not('leerling_id', 'in', `(${leerlingIds.join(',')})`)
+    const { error } = await query
     if (error) throw error
   }
 

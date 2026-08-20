@@ -28,6 +28,9 @@ export default function WeektaakTab({ klas, onKiesLeerling }) {
   const [gekozen, setGekozen] = useState(null)
   const [gekozenOpdrachten, setGekozenOpdrachten] = useState(null)
   const [alleenNietAf, setAlleenNietAf] = useState(false)
+  const [toonVerwijder, setToonVerwijder] = useState(false)
+  const [verwijderBezig, setVerwijderBezig] = useState(false)
+  const [verwijderFout, setVerwijderFout] = useState('')
 
   useEffect(() => {
     let actief = true
@@ -35,7 +38,19 @@ export default function WeektaakTab({ klas, onKiesLeerling }) {
     return () => { actief = false }
   }, [klas.id])
 
-  const kiesWeektaak = (wt) => { setGekozen(wt); setWeergave('voortgang'); setAlleenNietAf(false) }
+  const kiesWeektaak = (wt) => { setGekozen(wt); setWeergave('voortgang'); setAlleenNietAf(false); setToonVerwijder(false) }
+
+  // De opdrachten en toewijzingen gaan mee (cascade), maar het gemaakte werk
+  // niet: resultaten.opdracht_id staat op SET NULL, dus die regels blijven
+  // bestaan en tellen voortaan als vrij oefenen.
+  const verwijderWeektaak = async () => {
+    setVerwijderBezig(true); setVerwijderFout('')
+    const { error } = await supabase.from('weektaken').delete().eq('id', gekozen.id)
+    setVerwijderBezig(false)
+    if (error) { setVerwijderFout('Verwijderen mislukt — heb je hier rechten voor?'); return }
+    setToonVerwijder(false)
+    naOpslaan()
+  }
 
   const haalOpdrachten = async () => {
     const { data } = await supabase
@@ -95,8 +110,27 @@ export default function WeektaakTab({ klas, onKiesLeerling }) {
             >{alleenNietAf ? 'Toon iedereen' : 'Alleen niet af'}</button>
             <button className="portaal-knop portaal-knop-subtiel" onClick={differentieren}>Differentiëren</button>
             <button className="portaal-knop portaal-knop-subtiel" onClick={bewerken}>Bewerken</button>
+            <button className="portaal-knop portaal-knop-subtiel" onClick={() => setToonVerwijder(v => !v)}>Verwijderen</button>
           </div>
         </div>
+        {toonVerwijder && (
+          <div className="portaal-waarschuwing">
+            <p className="portaal-zacht" style={{ margin: 0 }}>
+              <strong>{gekozen.titel}</strong> verwijderen? De opdrachten en de voortgang van deze weektaak
+              verdwijnen. <strong>Het gemaakte werk blijft gewoon staan</strong> — het telt daarna mee als
+              vrij oefenen in plaats van als weektaakwerk, dus je vindt het terug in het groepsoverzicht en
+              bij de leerling zelf. Dit kan niet ongedaan gemaakt worden.
+            </p>
+            {verwijderFout && <p className="portaal-fout">{verwijderFout}</p>}
+            <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+              <button className="portaal-knop portaal-knop-gevaar" disabled={verwijderBezig} onClick={verwijderWeektaak}>
+                {verwijderBezig ? 'Bezig…' : 'Definitief verwijderen'}
+              </button>
+              <button className="portaal-knop portaal-knop-subtiel" onClick={() => setToonVerwijder(false)}>Annuleren</button>
+            </div>
+          </div>
+        )}
+
         <WeektaakVoortgang
           weektaak={gekozen} klasId={klas.id}
           alleenNietAf={alleenNietAf} onKiesLeerling={onKiesLeerling}
