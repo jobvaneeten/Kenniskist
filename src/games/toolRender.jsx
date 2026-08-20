@@ -101,14 +101,14 @@ export default function RenderTool({ opdracht, groep, onBack, addBriefgeld, addC
       return (
         <DicteeThema
           onBack={onBack} addBriefgeld={addBriefgeld} addCuruntie={addCuruntie}
-          thema={info.variant.thema} woorden={config?.woorden}
+          thema={info.variant.thema} woorden={aantal}
         />
       )
     case 'dictee-categorie':
       return (
         <DicteeThema
           onBack={onBack} addBriefgeld={addBriefgeld} addCuruntie={addCuruntie}
-          file="dictees/dictee-categorie.html" cats={config?.cats} woorden={config?.woorden}
+          file="dictees/dictee-categorie.html" cats={config?.cats} woorden={aantal}
         />
       )
     case 'reisrondewereld':

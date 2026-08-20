@@ -18,8 +18,8 @@ export default function ToolKiezer({ klasGroepen, onKies, onSluiten }) {
 
   const omschrijving = (fam) => {
     const groepen = fam.groepen?.length ? `groep ${fam.groepen.join(', ')}` : 'alle groepen'
-    const hoeveel = fam.eenheid === 'opgaven'
-      ? `${fam.standaardAantal} opgaven (aan te passen)`
+    const hoeveel = fam.eenheid === 'opgaven' ? `${fam.standaardAantal} opgaven (aan te passen)`
+      : fam.eenheid === 'woorden' ? `${fam.standaardAantal} woorden (aan te passen)`
       : 'vaste oefening, 1 keer maken'
     return `${groepen} · ${hoeveel}`
   }

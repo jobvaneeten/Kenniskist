@@ -1035,7 +1035,10 @@ function finish(){
   $('animalScore').textContent=`\ud83d\udc3e dieren ${animalPts}/${total}`;
   const r=pts/max;
   $('endTitle').textContent=r>=.9?'Topspeller!':r>=.7?'Knap gedaan':r>=.5?'Goed bezig':'Blijf oefenen';
-  window.KennisKist?.slaResultaatOp?.('dictee-categorie', pts, max, null);
+  // Naar het portaal gaat het aantal woorden, niet de punten: de weektaak
+  // telt in woorden ("8/12"), en het scherm hierboven blijft de punten
+  // tonen inclusief het dierenspel.
+  window.KennisKist?.slaResultaatOp?.('dictee-categorie', spellPts, total, null);
   window.KennisKist?.toonInlogstatus?.(document.getElementById('kkStatus'));
 }
 

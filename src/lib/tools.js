@@ -15,6 +15,9 @@
 //   'sessies' — max_score is punten of tijd (de tool draait een vaste
 //               woorden-/vragenlijst tot het eind); `aantal` betekent hoe
 //               vaak de tool gemaakt moet worden, niet hoeveel opgaven.
+//   'woorden' — als 'opgaven', maar dan woorden (dictee). Aparte naam puur
+//               zodat de leerkracht "12 woorden" leest in plaats van
+//               "12 opgaven"; de voortgang telt precies zo.
 
 export const VAKKEN = [
   { key: 'taal',       label: 'Taal' },
@@ -59,24 +62,19 @@ export const TOOL_FAMILIES = [
   },
   {
     familie: 'dictee-thema', label: 'Dictee', vak: 'spelling', groepen: [7],
-    aantalInstelbaar: false, standaardAantal: 1, eenheid: 'sessies',
-    // Niet via `aantal`: dat telt in de weektaak hoe váák een sessie-tool
-    // gemaakt moet worden. Het aantal woorden is een instelling van het dictee
-    // zelf en gaat als ?woorden= mee naar het dictee-bestand.
-    configVelden: [
-      { key: 'woorden', type: 'getal', label: 'Aantal woorden', min: 1, max: 60,
-        placeholder: 'hele lijst', hint: 'Leeg laten = alle woorden van dit blok.' },
-    ],
+    // `aantal` is hier het aantal woorden: het dictee stopt erna en rapporteert
+    // één regel per sessie met max_score = het aantal gemaakte woorden. Zo telt
+    // de weektaak "0/12" in plaats van "0/1 keer gemaakt".
+    aantalInstelbaar: true, standaardAantal: 12, eenheid: 'woorden',
+    configVelden: [],
     varianten: Array.from({ length: 8 }, (_, i) => ({
       toolId: `dictee-thema${i + 1}`, label: `Dictee blok ${i + 1}`, thema: i + 1,
     })),
   },
   {
     familie: 'dictee-categorie', toolId: 'dictee-categorie', label: 'Spelling per categorie',
-    vak: 'spelling', groepen: [7], aantalInstelbaar: false, standaardAantal: 1, eenheid: 'sessies',
+    vak: 'spelling', groepen: [7], aantalInstelbaar: true, standaardAantal: 12, eenheid: 'woorden',
     configVelden: [
-      { key: 'woorden', type: 'getal', label: 'Aantal woorden', min: 1, max: 60,
-        placeholder: 'hele lijst', hint: 'Leeg laten = alle woorden uit de gekozen categorieën.' },
       { key: 'cats', type: 'checkboxes', label: 'Categorieën (leeg = allemaal door elkaar)', min: 0, opties: [
         { value: 'slang', label: 'slang — ng' },
         { value: 'stinkdier', label: 'stinkdier — nk' },

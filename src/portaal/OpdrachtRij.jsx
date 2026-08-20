@@ -27,8 +27,9 @@ export default function OpdrachtRij({ opdracht, nummer, onWijzig, onVerwijder })
   }
 
   // Wat de leerling straks te zien krijgt, in gewone taal.
-  const samenvatting = info.eenheid === 'opgaven'
-    ? `${aantal} opgaven`
+  const eenheidNaam = info.eenheid === 'opgaven' ? 'opgaven' : info.eenheid === 'woorden' ? 'woorden' : null
+  const samenvatting = eenheidNaam
+    ? `${aantal} ${eenheidNaam}`
     : aantal > 1 ? `${aantal} keer maken` : '1 keer maken'
 
   return (
@@ -45,10 +46,10 @@ export default function OpdrachtRij({ opdracht, nummer, onWijzig, onVerwijder })
       <div className="portaal-opdracht-velden">
         {info.aantalInstelbaar && (
           <label className="portaal-veld">
-            <span className="portaal-veld-label">{info.eenheid === 'opgaven' ? 'Aantal opgaven' : 'Hoe vaak maken'}</span>
+            <span className="portaal-veld-label">{eenheidNaam ? `Aantal ${eenheidNaam}` : 'Hoe vaak maken'}</span>
             <input type="number" min={1} value={aantal} onChange={e => zetAantal(e.target.value)} />
             <span className="portaal-veld-hint">
-              {info.eenheid === 'opgaven'
+              {eenheidNaam
                 ? 'De oefening stopt vanzelf na dit aantal.'
                 : 'Zo vaak moet de leerling deze oefening doen.'}
             </span>
