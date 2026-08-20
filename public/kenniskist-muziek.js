@@ -11,9 +11,10 @@
 //   radio — gewone radiozenders (hardstyle, house, top 40, Nederlandstalig).
 //           Geen beeld en geen inloggen, wel reclame en dj-praat. Kost
 //           bandbreedte: 96 tot 192 kbit/s per kind.
-//   focus — regen, ruis, haard, rumoer. Hier ter plekke gemaakt met gefilterde
-//           ruis, dus nul bestanden en nul netwerk. Melodie namaken klinkt
-//           goedkoop, sfeergeluid niet.
+//   focus — regen, golven, wind, haardvuur en twee soorten ruis. Grotendeels
+//           hier ter plekke gemaakt, dus nul bestanden en nul netwerk; melodie
+//           namaken klinkt goedkoop, sfeergeluid niet. Waar namaak tekortschiet
+//           gebruiken we een echte opname (zie `bestand` in FOCUS).
 (function () {
   if (window.top !== window) return          // in een iframe: niets doen
 
@@ -49,22 +50,21 @@
       ]
     },
     {
-      id: 'nl', naam: 'Nederlands', omschrijving: 'NPO Radio 5',
-      urls: ['https://icecast.omroep.nl/radio5-bb-mp3']
+      id: 'nl', naam: 'Nederlands', omschrijving: 'RADIONL',
+      urls: ['https://stream.radionl.fm/radionl']
     }
   ]
 
-  // Zeven sfeergeluiden. Ze worden niet "live gefilterd" maar sample voor
+  // Zes sfeergeluiden. Ze worden niet "live gefilterd" maar sample voor
   // sample uitgerekend in een lus van veertien seconden, met een crossfade zodat
   // je het herhalen niet hoort. Dat scheelt: regen bestaat uit losse druppels en
   // een haardvuur uit korte knapjes, en dat krijg je met een ruisfilter alleen
   // nooit overtuigend.
   var FOCUS = [
-    { id: 'regen',  naam: 'Regen',       omschrijving: 'op een tent' },
+    { id: 'regen',  naam: 'Regen',       omschrijving: 'op een tent', bestand: '/muziek/regen.mp3' },
     { id: 'zee',    naam: 'Golven',      omschrijving: 'zee op het strand' },
-    { id: 'wind',   naam: 'Wind',        omschrijving: 'om het huis' },
-    { id: 'haard',  naam: 'Haardvuur',   omschrijving: 'knappend hout' },
-    { id: 'rumoer', naam: 'Rumoer',      omschrijving: 'stemmen in een cafe' },
+    { id: 'wind',   naam: 'Wind',        omschrijving: 'om het huis', bestand: '/muziek/wind.mp3' },
+    { id: 'haard',  naam: 'Haardvuur',   omschrijving: 'knappend hout', bestand: '/muziek/haard.mp3' },
     { id: 'bruin',  naam: 'Bruine ruis', omschrijving: 'diep en warm' },
     { id: 'wit',    naam: 'Witte ruis',  omschrijving: 'scherp, dempt alles' }
   ]
@@ -161,7 +161,8 @@
     var d = buf.getChannelData(0)
     var i, k
 
-    if (id === 'wit' || id === 'bruin') {
+    // wit, bruin en alles wat we verder niet kennen
+    if (id !== 'regen' && id !== 'zee' && id !== 'wind' && id !== 'haard') {
       var vorige = 0
       var lp = laagdoorlaat(id === 'bruin' ? 500 : 9000, sr)
       for (i = 0; i < n; i++) {
@@ -239,31 +240,6 @@
         }
       }
 
-    } else {
-      // Rumoer: geen ruis maar gepraat zonder woorden. Vier banden in het
-      // stembereik, elk met een eigen lettergreepritme, en af en toe een tik van
-      // bestek. Daardoor klinkt het duidelijk anders dan bruine ruis.
-      var banden = [270, 430, 660, 980]
-      for (var b = 0; b < banden.length; b++) {
-        var res2 = resonator(banden[b] * (0.9 + Math.random() * 0.2), 6, sr)
-        var env2 = 0, doelEnv = 0, telr = 0
-        var sterkte = 0.5 + Math.random() * 0.5
-        for (i = 0; i < n; i++) {
-          if (telr-- <= 0) {
-            telr = Math.floor(sr * (0.06 + Math.random() * 0.14))
-            doelEnv = Math.random() < 0.45 ? 0 : Math.random()
-          }
-          env2 += (doelEnv - env2) * 0.0016
-          d[i] += res2(Math.random() * 2 - 1) * env2 * 0.24 * sterkte
-        }
-      }
-      var lpZaal = laagdoorlaat(320, sr)
-      for (i = 0; i < n; i++) d[i] = lpZaal(d[i] + (Math.random() * 2 - 1) * 0.03)
-      var tijd2 = 0
-      while (tijd2 < duurSec) {
-        tijd2 += 1.5 + Math.random() * 4
-        if (tijd2 < duurSec) korrel(d, Math.floor(tijd2 * sr), 0.05, sr, 2600 + Math.random() * 2000, 14, 0.10)
-      }
     }
 
     // Naadloos maken: het staartje overvloeien in het begin, anders hoor je elke
@@ -297,18 +273,84 @@
     if (focusBron) { try { focusBron.stop() } catch (e) {} focusBron = null }
   }
 
+  function speelBuffer(buf) {
+    focusStop()
+    focusBron = ac.createBufferSource()
+    focusBron.buffer = buf
+    focusBron.loop = true
+    focusBron.connect(focusGain)
+    focusBron.start()
+  }
+
+  // Een aangeleverd geluidsbestand (zie `bestand` in FOCUS) krijgt dezelfde
+  // behandeling als een zelfgemaakt geluid: naadloos maken en op dezelfde
+  // luidheid zetten, zodat het niet ineens veel harder is dan de rest.
+  function bewerkOpname(buf) {
+    var sr = buf.sampleRate
+    var fade = Math.min(Math.floor(sr * 0.4), Math.floor(buf.length / 3))
+    for (var c = 0; c < buf.numberOfChannels; c++) {
+      var d = buf.getChannelData(c)
+      var n = d.length
+      if (n > sr * 3) {
+        for (var k = 0; k < fade; k++) {
+          var m = k / fade
+          d[k] = d[k] * m + d[n - fade + k] * (1 - m)
+        }
+      }
+      // Op luidheid brengen, maar niet ten koste van de tikken en knapjes.
+      // Een opname is vaak zacht opgenomen met scherpe pieken erin; puur op
+      // rms optrekken duwt die pieken door de begrenzer en dan klinkt regen
+      // als geknepen ruis. Daarom ook naar de pieken kijken en de zachtste
+      // van de twee versterkingen nemen.
+      var somQ = 0
+      for (var i = 0; i < n; i++) somQ += d[i] * d[i]
+      var rms = Math.sqrt(somQ / n)
+      var proef = []
+      for (i = 0; i < n; i += 37) proef.push(Math.abs(d[i]))
+      proef.sort(function (x, y) { return x - y })
+      var p995 = proef[Math.floor(proef.length * 0.995)] || 1
+      if (rms > 0) {
+        var f = Math.min(0.09 / rms, 0.9 / p995)
+        for (i = 0; i < n; i++) {
+          var v = d[i] * f, a = Math.abs(v)
+          d[i] = a < 0.7 ? v : (v < 0 ? -1 : 1) * (0.7 + 0.3 * Math.tanh((a - 0.7) / 0.3))
+        }
+      }
+    }
+    return buf
+  }
+
   function focusSpeel(id) {
     if (!ac) ac = new (window.AudioContext || window.webkitAudioContext)()
     if (ac.state === 'suspended') ac.resume()
     focusStop()
     if (!focusGain) { focusGain = ac.createGain(); focusGain.connect(ac.destination) }
     focusGain.gain.value = staat.gedempt ? 0 : staat.volume * 0.6
-    if (!buffers[id]) buffers[id] = maakBuffer(id)
-    focusBron = ac.createBufferSource()
-    focusBron.buffer = buffers[id]
-    focusBron.loop = true
-    focusBron.connect(focusGain)
-    focusBron.start()
+
+    if (buffers[id]) { speelBuffer(buffers[id]); return }
+
+    var entry = null
+    for (var i = 0; i < FOCUS.length; i++) if (FOCUS[i].id === id) entry = FOCUS[i]
+
+    var maakZelf = function () {
+      buffers[id] = maakBuffer(id)
+      if (staat.bron === 'focus:' + id) speelBuffer(buffers[id])
+    }
+
+    // Staat er een opname klaar, dan wint die het van het namaakgeluid. Staat
+    // hij er niet (of is hij stuk), dan merkt het kind daar niets van.
+    if (entry && entry.bestand && window.fetch) {
+      fetch(entry.bestand)
+        .then(function (r) { if (!r.ok) throw new Error('geen bestand'); return r.arrayBuffer() })
+        .then(function (ab) { return ac.decodeAudioData(ab) })
+        .then(function (buf) {
+          buffers[id] = bewerkOpname(buf)
+          if (staat.bron === 'focus:' + id) speelBuffer(buffers[id])
+        })
+        .catch(maakZelf)
+      return
+    }
+    maakZelf()
   }
   // -- Aansturing --------------------------------------------------------
   function kies(bron) {

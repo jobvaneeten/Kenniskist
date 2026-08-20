@@ -16,6 +16,12 @@ en wat de licentie toestaat. Bedoeld als checklist bij commercieel gebruik.
 
 ## Door de eigenaar bevestigd
 
+- `public/muziek/` — de sfeergeluiden bij het oefenen: `regen.mp3`,
+  `wind.mp3` en `haard.mp3`, door de eigenaar aangeleverd. De bestandsnamen
+  wijzen op Pixabay (`dragon-studio`, `freesound_community`); dat is
+  royaltyvrij te gebruiken, ook commercieel, en zonder naamsvermelding. Bewaar
+  de downloadlinks voor als iemand ernaar vraagt. De overige focusgeluiden
+  (golven, bruine en witte ruis) rekent de app zelf uit — daar rust niets op.
 - `public/Hillclimb/` — AI-gegenereerd.
 - `public/Pet/`, `public/Broekjes/`, `public/Schoenen/`, `Poppetje.glb` en
   `public/jetpack/` — eigenaar bevestigt dat deze gebruikt mogen worden.
