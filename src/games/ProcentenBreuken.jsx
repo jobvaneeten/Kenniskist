@@ -1,9 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { PROCENT_SETS, shuffle } from './procentenData'
-import FootballGame from './FootballGame'
-import TowerDefenseGame from './TowerDefenseGame'
-import { JetpackBeloning, AstroBeloning, SpacerunnerBeloning, BRIEFGELD } from './Beloning'
-import SpelBeloning from './SpelBeloning'
+import SpelBeloning, { BRIEFGELD } from './SpelBeloning'
 import OpdrachtKlaarScherm from './OpdrachtKlaarScherm.jsx'
 import './procenten.css'
 
@@ -42,9 +39,7 @@ export default function ProcentenBreuken({ onBack, addBriefgeld, aantal }) {
   const [drag, setDrag]       = useState(null) // { id, value, kind, x, y }
   const [wrongId, setWrongId] = useState(null)
   const [celebrate, setCelebrate] = useState(false)
-  const [phase, setPhase]     = useState('play')  // play | keuze | football | towerdefense | jetpack | astrokatapult | spacerunner
-  const [footballBracket, setFootballBracket] = useState(null)
-  const [tdStarted, setTdStarted] = useState(false)
+  const [phase, setPhase]     = useState('play')  // play | keuze
   const dragRef = useRef(null)
 
   const isFilled = (setId, kind) => round.chips.some(c => c.setId === setId && c.kind === kind && placed[c.id])
@@ -104,37 +99,12 @@ export default function ProcentenBreuken({ onBack, addBriefgeld, aantal }) {
     return () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up) }
   }, [drag])
 
-  // ── Beloning-flow (zoals werkwoordspelling) ──
-  const astroKlaar   = useCallback(() => nieuweRonde(), [nieuweRonde])
-  const jetpackKlaar = useCallback(() => nieuweRonde(), [nieuweRonde])
-  const tdKlaar = useCallback(() => { addBriefgeld?.(BRIEFGELD); setVerdiend(v => v + BRIEFGELD); nieuweRonde() }, [addBriefgeld, nieuweRonde])
-  const tdTerug = useCallback(() => { setTdStarted(false); nieuweRonde() }, [nieuweRonde])
-  const voetbalKlaar = useCallback((won, nextBracket, played) => {
-    setFootballBracket(nextBracket || null)
-    if (played) { addBriefgeld?.(BRIEFGELD); setVerdiend(v => v + BRIEFGELD) }
-    nieuweRonde()
-  }, [addBriefgeld, nieuweRonde])
-
-  // ── Volledig-unmountende beloningsspellen ──
-  if (phase === 'football') {
-    return <FootballGame rewardMode noQuiz initialBracket={footballBracket}
-      onMatchDone={voetbalKlaar} onBack={nieuweRonde} addCuruntie={() => {}} />
-  }
-  if (phase === 'jetpack')       return <JetpackBeloning onDone={jetpackKlaar} />
-  if (phase === 'astrokatapult') return <AstroBeloning onDone={astroKlaar} />
-  if (phase === 'spacerunner')   return <SpacerunnerBeloning onDone={jetpackKlaar} />
-
   if (klaar) {
     return <OpdrachtKlaarScherm goed={aantal} aantal={aantal} opslaanMislukt={opslaanMislukt} onBack={onBack} />
   }
 
   return (
     <>
-      {/* Tower Defense: persistent gemount, zichtbaar via prop */}
-      {tdStarted && (
-        <TowerDefenseGame visible={phase === 'towerdefense'} onBack={tdTerug} onRoundDone={tdKlaar} />
-      )}
-
       {phase === 'keuze' && (
         <SpelBeloning
           title="5 rondes opgelost!"

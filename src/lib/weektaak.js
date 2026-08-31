@@ -57,7 +57,7 @@ export async function haalMijnWeektaak(profielId, klasId) {
   // die de leerkracht heeft vrijgesteld ("hoeft niet") hoort niet meer in het
   // lijstje van de leerling te staan.
   const [{ data: voortgang }, { data: toewijzingen }] = await Promise.all([
-    supabase.from('weektaak_voortgang').select('opdracht_id, doel_aantal, som_score, som_max, pogingen')
+    supabase.from('weektaak_voortgang').select('opdracht_id, doel_aantal, som_score, som_max, pogingen, herkansingen')
       .eq('leerling_id', profielId).in('opdracht_id', opdrachtIds),
     supabase.from('toewijzingen').select('opdracht_id, status')
       .eq('leerling_id', profielId).in('opdracht_id', opdrachtIds),
@@ -82,6 +82,10 @@ export async function haalMijnWeektaak(profielId, klasId) {
         somMax: v.som_max,
         somScore: v.som_score,
         pogingen: v.pogingen,
+        // > 0 = de opdracht is opnieuw gezet (door de leerkracht, of
+        // automatisch na minder dan 50% goed, zie migratie 0010). De telling
+        // hierboven loopt dan al vanaf die streep, dus 0 = echt weer opnieuw.
+        herkansingen: v.herkansingen ?? 0,
         // Cap op de weergave, niet op de data: een leerling die de opdracht
         // vaker doet dan gevraagd komt boven 100%, dat is prima — hij heeft
         // 'm dan allang gehaald.

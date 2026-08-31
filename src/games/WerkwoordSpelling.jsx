@@ -1,9 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import FootballGame from './FootballGame'
-import TowerDefenseGame from './TowerDefenseGame'
 import { shuffleGefilterd, checkAntwoord, uitlegVoor, tokeniseerZin, onderwerpIndices } from './werkwoorden'
-import { JetpackBeloning, AstroBeloning, SpacerunnerBeloning, BRIEFGELD } from './Beloning'
-import SpelBeloning from './SpelBeloning'
+import SpelBeloning, { BRIEFGELD } from './SpelBeloning'
 import './werkwoord-spelling.css'
 
 const PER_BELONING = 5     // na elke 5 goede antwoorden een spel kiezen
@@ -342,9 +339,7 @@ export default function WerkwoordSpelling({ groep, onBack, addBriefgeld, aantal,
   const [idx, setIdx]       = useState(0)
   const [sinds, setSinds]   = useState(0)       // correcte antwoorden sinds laatste beloning
   const [verdiend, setVerdiend] = useState(0)
-  const [phase, setPhase]   = useState('play')  // play | keuze | overzicht | football | ...
-  const [footballBracket, setFootballBracket] = useState(null)  // toernooi blijft bewaard
-  const [tdStarted, setTdStarted] = useState(false)  // TD ooit gestart in deze sessie?
+  const [phase, setPhase]   = useState('play')  // play | keuze | overzicht
   const [onderwerpActief, setOnderwerpActief] = useState(false)
   const [metOnderwerp, setMetOnderwerp] = useState(false)  // eerst onderwerp markeren per opgave
 
@@ -440,16 +435,6 @@ export default function WerkwoordSpelling({ groep, onBack, addBriefgeld, aantal,
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const astroKlaar   = useCallback(() => setPhase('play'), [])
-  const tdKlaar      = useCallback(() => { addBriefgeld?.(beloning); setVerdiend(v => v + beloning); setPhase('play') }, [addBriefgeld, beloning])
-  const tdTerug      = useCallback(() => { setTdStarted(false); setPhase('play') }, [])
-  const jetpackKlaar = useCallback(() => setPhase('play'), [])
-  const voetbalKlaar = useCallback((won, nextBracket, played) => {
-    setFootballBracket(nextBracket || null)
-    if (played) { addBriefgeld?.(beloning); setVerdiend(v => v + beloning) }
-    setPhase('play')
-  }, [addBriefgeld, beloning])
-
   // ── Early return voor cat-selectie (pas ná alle hooks) ──
   if (onderwerpActief) {
     return <div className="ws-catsel-screen"><OnderwerpOefenScherm onBack={() => setOnderwerpActief(false)} /></div>
@@ -460,28 +445,6 @@ export default function WerkwoordSpelling({ groep, onBack, addBriefgeld, aantal,
 
   const totaalGoed = CATEGORIEEN.reduce((sum, c) => sum + stats[c.key].goed, 0)
 
-  // ── Niet-persistente spellen (volledig unmounten na gebruik) ──
-  if (phase === 'football') {
-    return (
-      <FootballGame
-        rewardMode
-        noQuiz
-        initialBracket={footballBracket}
-        onMatchDone={voetbalKlaar}
-        onBack={() => setPhase('play')}
-        addCuruntie={() => {}}
-      />
-    )
-  }
-  if (phase === 'jetpack') {
-    return <JetpackBeloning onDone={jetpackKlaar} />
-  }
-  if (phase === 'astrokatapult') {
-    return <AstroBeloning onDone={astroKlaar} />
-  }
-  if (phase === 'spacerunner') {
-    return <SpacerunnerBeloning onDone={jetpackKlaar} />
-  }
   if (phase === 'overzicht') {
     return (
       <div className="ws-wrap">
@@ -494,19 +457,10 @@ export default function WerkwoordSpelling({ groep, onBack, addBriefgeld, aantal,
     )
   }
 
-  // ── Hoofd-render (ook als TD actief is, TD wordt er bovenop gelegd) ──
+  // ── Hoofd-render (het oefenscherm blijft gemount onder de beloning) ──
   return (
     <>
-      {/* Tower Defense: persistent gemount, zichtbaar via prop */}
-      {tdStarted && (
-        <TowerDefenseGame
-          visible={phase === 'towerdefense'}
-          onBack={tdTerug}
-          onRoundDone={tdKlaar}
-        />
-      )}
-
-      {/* Beloningkeuze — gedeeld reward-systeem met alle 6 games */}
+      {/* Beloningkeuze — gedeeld reward-systeem met alle spellen */}
       {phase === 'keuze' && (
         <SpelBeloning
           title="5 goed gedaan!"
@@ -516,7 +470,7 @@ export default function WerkwoordSpelling({ groep, onBack, addBriefgeld, aantal,
         />
       )}
 
-      {/* Oefenscherm (altijd gemount als niet football/jetpack) */}
+      {/* Oefenscherm (blijft gemount, verborgen tijdens de beloning) */}
       {(phase === 'play' || phase === 'keuze') && (
         <div className="ws-wrap" style={{ display: phase === 'play' ? 'flex' : 'none' }}>
           <div className="ws-oefen">

@@ -233,6 +233,7 @@
   .break-title{font-family:'Baloo 2',sans-serif;font-size:1.9rem;font-weight:800;margin:4px 0;color:#fff}
   .break-sub{color:rgba(255,255,255,.55);margin:0 0 20px;font-size:.9rem}
   .break-games{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+  .break-games-one{grid-template-columns:1fr}
   .break-game{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 6px;
     border-radius:14px;border:1.5px solid rgba(155,77,202,.35);background:rgba(155,77,202,.08);
     color:#fff;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:.8rem;cursor:pointer;
@@ -255,6 +256,7 @@
     .animal .rl{display:none}
     .animal .pic,.animal .pic img{height:42px;max-height:42px}
     .break-games{grid-template-columns:repeat(3,1fr)}
+    .break-games-one{grid-template-columns:1fr}
   }
   @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
@@ -345,24 +347,9 @@
     <p class="kicker">Pauze verdiend!</p>
     <h2 class="break-title" id="breakTitle">5 goede antwoorden!</h2>
     <p class="break-sub">Kies een spelletje. Daarna ga je verder met de spelling.</p>
-    <div class="break-games">
-      <button class="break-game" data-game="jetpack">
-        <span class="break-game-emoji">🚀</span>Jetpack
-      </button>
-      <button class="break-game" data-game="sterrenstroom">
-        <span class="break-game-emoji">🛸</span>Spacerunner
-      </button>
-      <button class="break-game" data-game="astrokatapult">
-        <span class="break-game-emoji">🪐</span>Astro Katapult
-      </button>
-      <button class="break-game" data-game="towerdefense">
-        <span class="break-game-emoji">🏰</span>Tower Defense
-      </button>
-      <button class="break-game" data-game="football">
-        <span class="break-game-emoji">⚽</span>Voetbal
-      </button>
-      <button class="break-game" data-game="headsoccer">
-        <span class="break-game-emoji">🥅</span>Supervoetbal
+    <div class="break-games break-games-one">
+      <button class="break-game" data-game="kies">
+        <span class="break-game-emoji">🎮</span>Kies een spelletje
       </button>
     </div>
     <button class="break-skip" id="breakSkip">Doorgaan zonder spelletje →</button>

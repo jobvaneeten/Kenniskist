@@ -1576,14 +1576,14 @@ export default function FootballGame({ year, onBack, addCuruntie, noQuiz = false
           </h2>
           <p style={{ color:'rgba(255,255,255,0.7)', fontSize:'0.9rem', margin:'4px 0' }}>
             {won
-              ? (next ? 'Top! Na 5 sommen speel je de volgende ronde 🏆' : '🎉 Je hebt het hele toernooi gewonnen!')
+              ? (next ? 'Top! Na 5 goede antwoorden speel je de volgende ronde 🏆' : '🎉 Je hebt het hele toernooi gewonnen!')
               : 'Volgende keer een nieuw toernooi 💪'}
           </p>
           <div className="fb-end-coins"><span>💵</span><span>+ € 50 briefgeld!</span></div>
           <div className="fb-end-btns">
             <button className="fb-end-btn fb-end-btn-again" style={{ background:'#FFD23F' }}
               onClick={() => onMatchDone?.(won, next, true)}>
-              ✏️ Verder met spelling →
+              ✏️ Verder met oefenen →
             </button>
           </div>
           <p style={{ color:'rgba(255,255,255,0.4)', fontSize:'0.75rem', marginTop:6 }}>Je gaat zo automatisch verder…</p>

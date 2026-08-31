@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import FootballGame from './FootballGame'
+import FootballGame, { loadToernooi } from './FootballGame'
 import HeadSoccer from './HeadSoccer'
 import TowerDefenseGame from './TowerDefenseGame'
 import BrugBouwen from './BrugBouwen'
@@ -63,6 +63,9 @@ function IframeEmbed({ src, title, doneType, hint, onDone, seconds }) {
   )
 }
 
+// Standaard briefgeld per beloning (oefeningen die geen eigen bedrag hebben).
+export const BRIEFGELD = 50
+
 const SPELLEN = [
   { key: 'headsoccer', emoji: '🥅', name: 'Supervoetbal',   desc: 'Speel een ronde van het toernooi', img: '/scenes/games/headsoccer.png' },
   { key: 'voetbal',    emoji: '⚽', name: '1v1 Voetbal',    desc: 'Jij tegen de computer',            img: '/scenes/games/football.png' },
@@ -84,7 +87,9 @@ export default function SpelBeloning({ title, sub, geld, addCuruntie, onDone }) 
   // (nog gemounte) oefenscherm valt en kliks goed opvangt.
   const wrap = (el) => <div className="sb-gamewrap">{el}</div>
   if (picked === 'headsoccer') return wrap(<HeadSoccer reward onBack={onDone} addCuruntie={addCuruntie} />)
-  if (picked === 'voetbal')    return wrap(<FootballGame noQuiz twoPlayer={false} onBack={onDone} addCuruntie={addCuruntie} />)
+  // rewardMode: precies één wedstrijd, dan (na de eindstand) automatisch terug.
+  // initialBracket houdt het toernooi vast tussen beloningen door.
+  if (picked === 'voetbal')    return wrap(<FootballGame rewardMode noQuiz initialBracket={loadToernooi()} onMatchDone={() => onDone()} onBack={onDone} addCuruntie={addCuruntie} />)
   if (picked === 'jetpack')    return <IframeEmbed src="/jetpack/index.html" title="Jetpack" doneType="jetpack-gameover" hint="Je gaat automatisch verder na het spel ✈️" onDone={onDone} />
   if (picked === 'astro')      return <IframeEmbed src="/astrokatapult/?reward=1" title="Astro Katapult" doneType="astrokatapult-leveldone" hint="Speel 1 level — daarna ga je verder 🪐" onDone={onDone} />
   if (picked === 'space')      return <IframeEmbed src="/sterrenstroom/" title="Spacerunner" doneType="spacerunner-gameover" hint="Je gaat automatisch verder na het spel 🛸" onDone={onDone} />
@@ -92,7 +97,7 @@ export default function SpelBeloning({ title, sub, geld, addCuruntie, onDone }) 
   // Evolutie is een idle-spel zonder eigen 'potje', dus hier bepaalt de klok het
   // einde: 1 minuut spelen en dan automatisch terug naar de oefening.
   if (picked === 'evolutie')   return <IframeEmbed src="/evolutie/" title="Dier Evolutie" doneType="evolutie-klaar" seconds={60} hint="Tik op de dieren en raap poep — na 1 minuut ga je verder 🐨" onDone={onDone} />
-  if (picked === 'tower')      return wrap(<TowerDefenseGame onBack={onDone} />)
+  if (picked === 'tower')      return wrap(<TowerDefenseGame onBack={onDone} onRoundDone={onDone} />)
   if (picked === 'brug')       return wrap(<BrugBouwen reward onBack={onDone} />)
   if (picked === 'hillclimb')  return wrap(<HillClimbGame reward onBack={onDone} />)
 

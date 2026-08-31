@@ -634,6 +634,54 @@ document.getElementById('homeBtn2').onclick=()=>show('home');
 renderHome();
 </script>
 <script>
+/* Spelletje na elke 5 goede antwoorden — zelfde beloningssysteem als de
+   dictees en begrijpend lezen: de keuze uit de spellen staat in de app
+   (SpelBeloning), hier zit alleen de pauzeknop. */
+(function(){
+  var streak = 0, pending = false, ov = null;
+  var st = document.createElement('style');
+  st.textContent = '.en-break-ov{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(8,10,18,.82);backdrop-filter:blur(6px)}.en-break-ov.hide{display:none}.en-break-card{background:#11131f;border:1.5px solid rgba(139,107,255,.45);border-radius:22px;box-shadow:0 24px 60px -16px rgba(0,0,0,.7);padding:28px 24px;max-width:420px;width:100%;text-align:center;font-family:inherit}.en-break-stars{font-size:1.6rem;letter-spacing:3px}.en-break-title{font-size:1.6rem;margin:8px 0 4px;color:#fff}.en-break-sub{color:rgba(255,255,255,.6);margin:0 0 18px;font-size:.95rem}.en-break-game{display:flex;flex-direction:column;align-items:center;gap:6px;width:100%;padding:16px 10px;border-radius:14px;border:1.5px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#fff;font-weight:700;font-size:.95rem;cursor:pointer;font-family:inherit;transition:.15s}.en-break-game:hover{transform:translateY(-3px);background:rgba(139,107,255,.2);border-color:rgba(139,107,255,.75)}.en-break-game span{font-size:1.9rem}.en-break-skip{margin-top:12px;background:none;border:none;color:rgba(255,255,255,.55);font-size:.9rem;cursor:pointer;font-family:inherit;text-decoration:underline}';
+  document.head.appendChild(st);
+
+  function build(){
+    if(ov) return;
+    ov = document.createElement('div');
+    ov.className = 'en-break-ov hide';
+    ov.innerHTML = '<div class="en-break-card"><div class="en-break-stars">⭐⭐⭐⭐⭐</div><h2 class="en-break-title">5 goede antwoorden!</h2><p class="en-break-sub">Kies een spelletje. Daarna ga je verder met Engels.</p><button class="en-break-game" id="en-break-play"><span>🎮</span>Kies een spelletje</button><button class="en-break-skip" id="en-break-skip">Doorgaan zonder spelletje →</button></div>';
+    document.body.appendChild(ov);
+    document.getElementById('en-break-play').onclick = function(){
+      try { window.parent.postMessage({ type: 'engels-game' }, '*'); } catch(e) {}
+    };
+    document.getElementById('en-break-skip').onclick = resume;
+  }
+  function resume(){
+    if(ov) ov.classList.add('hide');
+    pending = false;
+    nextQuestion();
+  }
+
+  // `choose` is een globale functie uit het script hierboven; hier tellen we
+  // er de reeks goede antwoorden bij op zonder die functie te wijzigen.
+  var origChoose = window.choose;
+  window.choose = function(btn, chosen, q){
+    var voor = correctCount;
+    origChoose(btn, chosen, q);
+    if (correctCount > voor && ++streak >= 5) { streak = 0; pending = true; }
+  };
+
+  // De pauze komt pas als de leerling op "Volgende" tikt, zodat hij het
+  // nagekeken antwoord nog rustig ziet staan.
+  document.getElementById('nextBtn').onclick = function(){
+    if (pending) { build(); ov.classList.remove('hide'); return; }
+    nextQuestion();
+  };
+
+  window.addEventListener('message', function(e){
+    if (e.data && e.data.type === 'engels-resume') resume();
+  });
+})();
+</script>
+<script>
 // Achtergrondmuziek dempen zolang deze oefening open staat: hier wordt
 // gepraat, en daar hoort niets onder te spelen. Zie kenniskist-muziek.js.
 window.KennisKist && window.KennisKist.muziekDemp(true);

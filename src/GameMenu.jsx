@@ -317,7 +317,7 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
     }
 
     if (GAMES[gameId] === 'engels') {
-      return <EngelsOefenen onBack={() => setSubject(null)} />
+      return <EngelsOefenen onBack={() => setSubject(null)} addBriefgeld={addBriefgeld} addCuruntie={addCuruntie} />
     }
 
     if (GAMES[gameId] === 'begrijpend') {

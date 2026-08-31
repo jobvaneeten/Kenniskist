@@ -1,8 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import FootballGame from './FootballGame'
-import TowerDefenseGame from './TowerDefenseGame'
-import { JetpackBeloning, AstroBeloning, SpacerunnerBeloning, BRIEFGELD } from './Beloning'
-import SpelBeloning from './SpelBeloning'
+import SpelBeloning, { BRIEFGELD } from './SpelBeloning'
 import './tafels-oefenen.css'
 
 const ALLE_TAFELS = [2, 3, 4, 5, 6, 7, 8, 9, 10]
@@ -267,12 +264,10 @@ export default function TafelsOefenen({ groep, onBack, addBriefgeld, addCuruntie
   // Startsein voor de tijdmeting in kenniskist-login.js.
   useEffect(() => { window.KennisKist?.startOefening?.('tafels') }, [])
 
-  const [fase, setFase] = useState('type')   // type | selectie | spel | overzicht | keuze | <game>
+  const [fase, setFase] = useState('type')   // type | selectie | spel | overzicht | keuze
   const [soort, setSoort] = useState(null)   // 'keer' | 'deel'
   const [tafels, setTafels] = useState([])
   const [resultaten, setResultaten] = useState([])
-  const [footballBracket, setFootballBracket] = useState(null)
-  const [tdStarted, setTdStarted] = useState(false)
   const [verdiend, setVerdiend] = useState(0)
   const [opslaanMislukt, setOpslaanMislukt] = useState(false)
 
@@ -292,45 +287,8 @@ export default function TafelsOefenen({ groep, onBack, addBriefgeld, addCuruntie
     setFase('overzicht')
   }, [])
 
-  const voetbalKlaar = useCallback((won, nextBracket, played) => {
-    setFootballBracket(nextBracket || null)
-    if (played) { addBriefgeld?.(BRIEFGELD); setVerdiend(v => v + BRIEFGELD) }
-    setFase('type')
-  }, [addBriefgeld])
-
-  const tdKlaar = useCallback(() => {
-    addBriefgeld?.(BRIEFGELD); setVerdiend(v => v + BRIEFGELD)
-    setFase('type')
-  }, [addBriefgeld])
-
-  const tdTerug = useCallback(() => { setTdStarted(false); setFase('type') }, [])
-  const gameKlaar = useCallback(() => setFase('type'), [])
-
-  if (fase === 'football') {
-    return (
-      <FootballGame
-        rewardMode noQuiz
-        initialBracket={footballBracket}
-        onMatchDone={voetbalKlaar}
-        onBack={() => setFase('selectie')}
-        addCuruntie={() => {}}
-      />
-    )
-  }
-  if (fase === 'jetpack')      return <JetpackBeloning onDone={gameKlaar} />
-  if (fase === 'astrokatapult') return <AstroBeloning  onDone={gameKlaar} />
-  if (fase === 'spacerunner')  return <SpacerunnerBeloning onDone={gameKlaar} />
-
   return (
     <>
-      {tdStarted && (
-        <TowerDefenseGame
-          visible={fase === 'towerdefense'}
-          onBack={tdTerug}
-          onRoundDone={tdKlaar}
-        />
-      )}
-
       {fase === 'keuze' && (
         <SpelBeloning
           title="Goed gedaan!"

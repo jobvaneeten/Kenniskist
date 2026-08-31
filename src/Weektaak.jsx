@@ -77,6 +77,11 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie }) {
                   ? `${Math.min(o.somMax, o.doel)} / ${o.doel} gemaakt`
                   : `${o.pogingen}× gemaakt`}
               </span>
+              {/* Opnieuw gezet: door de juf of meester, of automatisch omdat er
+                  minder dan de helft goed was. De teller staat dan weer op 0. */}
+              {o.herkansingen > 0 && !o.klaar && (
+                <span className="wt-opnieuw">↺ Opnieuw maken · poging {o.herkansingen + 1}</span>
+              )}
             </button>
           ))}
         </div>

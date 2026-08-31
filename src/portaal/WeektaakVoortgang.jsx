@@ -33,6 +33,7 @@ export default function WeektaakVoortgang({ weektaak, klasId, alleenNietAf, onKi
   const [statussen, setStatussen] = useState(new Map())
   const [aangeraakt, setAangeraakt] = useState(new Set())
   const [sortering, setSortering] = useState({ kolom: 'naam', omgekeerd: false })
+  const [opnieuwBezig, setOpnieuwBezig] = useState(null)  // cel die om bevestiging vraagt
   const [fout, setFout] = useState('')
 
   useEffect(() => {
@@ -47,7 +48,7 @@ export default function WeektaakVoortgang({ weektaak, klasId, alleenNietAf, onKi
       const [{ data: lln }, { data: vg }, { data: tw }] = await Promise.all([
         supabase.from('profielen').select('id, weergavenaam')
           .eq('klas_id', klasId).eq('rol', 'leerling').order('weergavenaam'),
-        supabase.from('weektaak_voortgang').select('opdracht_id, leerling_id, doel_aantal, som_score, som_max, som_ms')
+        supabase.from('weektaak_voortgang').select('opdracht_id, leerling_id, doel_aantal, som_score, som_max, som_ms, herkansingen')
           .eq('weektaak_id', weektaak.id),
         opdrachtIds.length
           ? supabase.from('toewijzingen').select('opdracht_id, leerling_id, status').in('opdracht_id', opdrachtIds)
@@ -59,6 +60,7 @@ export default function WeektaakVoortgang({ weektaak, klasId, alleenNietAf, onKi
       setVoortgang(vg ?? [])
       setStatussen(new Map((tw ?? []).map(t => [sleutel(t.opdracht_id, t.leerling_id), t.status])))
       setAangeraakt(new Set())
+      setOpnieuwBezig(null)
     }
     laad()
     return () => { actief = false }
@@ -117,6 +119,25 @@ export default function WeektaakVoortgang({ weektaak, klasId, alleenNietAf, onKi
     return omgekeerd ? lijst.reverse() : lijst
   }, [leerlingen, sortering, vind, statusVan])
 
+  // Opnieuw laten maken: alles wat tot nu toe gemaakt is telt niet meer mee
+  // voor het doel (herkansing_vanaf, zie migratie 0010). De resultaten zelf
+  // blijven staan — de foutenlijst van de leerling verandert dus niet.
+  const zetOpnieuw = async (opdrachtId, leerlingId) => {
+    const vg = vind(leerlingId, opdrachtId)
+    if (!vg) return
+    setOpnieuwBezig(null)
+    setFout('')
+    const { error } = await supabase.from('toewijzingen')
+      .update({ herkansing_vanaf: new Date().toISOString(), herkansingen: (vg.herkansingen ?? 0) + 1 })
+      .eq('opdracht_id', opdrachtId).eq('leerling_id', leerlingId)
+    if (error) { setFout('Opnieuw zetten mislukt — probeer het nog eens.'); return }
+    setVoortgang(prev => prev.map(v => (
+      v.opdracht_id === opdrachtId && v.leerling_id === leerlingId
+        ? { ...v, som_score: 0, som_max: 0, som_ms: 0, herkansingen: (v.herkansingen ?? 0) + 1 }
+        : v
+    )))
+  }
+
   const zetVrijstelling = async (opdrachtId, leerlingId, vrij) => {
     const k = sleutel(opdrachtId, leerlingId)
     const vorige = statussen.get(k)
@@ -163,7 +184,11 @@ export default function WeektaakVoortgang({ weektaak, klasId, alleenNietAf, onKi
                     <td>{toolLabel(opdracht.tool_id)}</td>
                     <td>
                       <strong>{Math.min(Number(vg.som_max), vg.doel_aantal)}/{vg.doel_aantal}</strong>
-                      {Number(vg.som_max) === 0 && <span className="portaal-score-slecht"> nog niet begonnen</span>}
+                      {Number(vg.som_max) === 0 && (
+                        <span className="portaal-score-slecht">
+                          {vg.herkansingen > 0 ? ` opnieuw beginnen (poging ${vg.herkansingen + 1})` : ' nog niet begonnen'}
+                        </span>
+                      )}
                     </td>
                     <td>
                       <label className="portaal-vinkje">
@@ -220,9 +245,11 @@ export default function WeektaakVoortgang({ weektaak, klasId, alleenNietAf, onKi
                   const pct = v.som_max > 0 ? Math.round((v.som_score / v.som_max) * 100) : 0
                   const foutAantal = v.som_max - v.som_score
                   const tijd = kortTijd(Number(v.som_ms))
+                  const cel = sleutel(o.id, l.id)
                   return (
                     <td key={o.id}>
                       <strong>{gemaakt}/{v.doel_aantal}</strong>
+                      {v.herkansingen > 0 && <> <span className="portaal-zacht">poging {v.herkansingen + 1}</span></>}
                       {v.som_max > 0 && (
                         <>
                           {' '}<span className={scoreKlasse(pct)}>{pct}%</span>
@@ -236,6 +263,25 @@ export default function WeektaakVoortgang({ weektaak, klasId, alleenNietAf, onKi
                                 title="Open het leerlingprofiel met de foutenlijst"
                               >{Math.round(foutAantal)} fout →</button>
                             </>
+                          )}
+                        </>
+                      )}
+                      {/* Twee tikken: een misklik in dit raster is zo gebeurd en
+                          de teller terugzetten kun je niet ongedaan maken. */}
+                      {v.som_max > 0 && (
+                        <>
+                          <br />
+                          {opnieuwBezig === cel ? (
+                            <>
+                              <button className="portaal-minilink" onClick={() => zetOpnieuw(o.id, l.id)}>ja, opnieuw</button>
+                              {' · '}
+                              <button className="portaal-minilink" onClick={() => setOpnieuwBezig(null)}>nee</button>
+                            </>
+                          ) : (
+                            <button
+                              className="portaal-minilink" onClick={() => setOpnieuwBezig(cel)}
+                              title="Zet de teller op 0: de leerling maakt deze opdracht opnieuw. Het gemaakte werk blijft bewaard."
+                            >↺ opnieuw laten maken</button>
                           )}
                         </>
                       )}

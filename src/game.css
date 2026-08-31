@@ -315,6 +315,18 @@
 .mode-emoji { font-size: 3rem; line-height: 1; }
 .mode-name  { font-family: var(--kk-head); font-size: 1.15rem; font-weight: 700; text-align: center; max-width: 100%; line-height: 1.15; overflow-wrap: break-word; word-break: break-word; }
 .mode-desc  { font-size: 0.78rem; color: var(--kk-text-soft); font-weight: 600; text-align: center; }
+/* Weektaak-opdracht die opnieuw gemaakt moet worden (zie migratie 0010) */
+.wt-opnieuw {
+  margin-top: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(255,110,90,0.16);
+  border: 1px solid rgba(255,110,90,0.55);
+  color: #ffd0c6;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-align: center;
+}
 
 /* ── Begrijpend Lezen: thema-kaarten ─────── */
 .bl-thema-grid { flex-wrap: wrap; justify-content: center; }

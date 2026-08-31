@@ -282,6 +282,71 @@ mark.tv-highlight {
   margin: 0;
 }
 
+/* ── Zinsdelen: het zinsdeel in de zin aanklikken ── */
+.tv-zin-klik {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 2px;
+}
+.tv-woord {
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  padding: 2px 6px;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, color 0.12s, transform 0.1s;
+}
+.tv-woord:hover:not(:disabled) {
+  background: rgba(79,195,247,0.16);
+  border-color: rgba(79,195,247,0.5);
+}
+.tv-woord:disabled { cursor: default; }
+.tv-woord-aan {
+  background: linear-gradient(135deg, #4FC3F7, #7c3aed);
+  border-color: #4FC3F7;
+  color: #fff;
+  font-weight: 900;
+}
+/* Na het nakijken: groen = het juiste zinsdeel, rood = fout aangeklikt */
+.tv-woord-juist {
+  background: linear-gradient(135deg, #06d6a0, #04a077);
+  border-color: #06d6a0;
+  color: #06251c;
+  font-weight: 900;
+}
+.tv-woord-mis {
+  background: rgba(255,107,107,0.2);
+  border-color: #ff6b6b;
+  color: #ffd0c6;
+  text-decoration: line-through;
+}
+
+.tv-answers-klik { align-items: center; }
+.tv-nakijk-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+  transform: none;
+}
+.tv-nakijk-btn:disabled:hover {
+  background: linear-gradient(160deg, rgba(255,255,255,0.12), rgba(255,255,255,0.05));
+  border-color: rgba(255,255,255,0.18);
+  transform: none;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.22);
+}
+.tv-wis-btn {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.55);
+  font-family: inherit;
+  font-size: 0.85rem;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 8px;
+}
+
 /* ── Answer buttons ── */
 .tv-answers {
   display: flex;
