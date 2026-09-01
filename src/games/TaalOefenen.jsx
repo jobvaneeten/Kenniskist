@@ -1,23 +1,14 @@
 import { useState, useEffect } from 'react'
-import { WOORDSOORTEN, ZINSDELEN, VRAGEN } from './taalData.js'
+import { WOORDSOORTEN, ZINSDELEN, VRAGEN, TIP_WOORDSOORT, splitZin, woordIndexen } from './taalData.js'
 import SpelBeloning from './SpelBeloning'
+import Woordenschat from './Woordenschat.jsx'
+import Zinsdelen from './Zinsdelen.jsx'
 import { useGebruikOpdracht } from './gebruikOpdracht.js'
 import OpdrachtKlaarScherm from './OpdrachtKlaarScherm.jsx'
 import './taal-oefenen.css'
 
-// "Klik op de persoonsvorm" / "Klik op het onderwerp" — puur voor een zin die
-// loopt; alles wat hier niet in staat krijgt "het".
-const LIDWOORD = {
-  'onderwerp': 'het',
-  'persoonsvorm': 'de',
-  'gezegde': 'het',
-  'lijdend voorwerp': 'het',
-  'meewerkend voorwerp': 'het',
-  'bepaling': 'de',
-}
-
 const BRIEFGELD_PER_AANGEVINKT = 5 // € per aangevinkt onderdeel, per beloning
-const CORRECT_VOOR_REWARD = 5
+const CORRECT_VOOR_REWARD = 10
 
 function shuffle(arr) {
   const a = [...arr]
@@ -27,32 +18,6 @@ function shuffle(arr) {
   }
   return a
 }
-
-const splitZin = (zin) => zin.split(' ')
-const cleanWoord = (w) => w.replace(/[.,!?;:]$/, '')
-
-// De frase mag een los woord zijn, een aaneengesloten stuk (bijv. "een appel"),
-// of een uit elkaar getrokken werkwoordelijk gezegde (bijv. "mogen ... spelen"
-// in "Wij mogen buiten spelen") — de woorden worden in volgorde gezocht, niet
-// per se naast elkaar. Hoofdletters tellen mee, zodat "de kinderen" niet aan
-// het "De" aan het zinsbegin blijft plakken.
-function woordIndexen(zin, frase) {
-  const words = splitZin(zin)
-  const doel = frase.split(' ')
-  const matched = new Set()
-  let ti = 0
-  for (let i = 0; i < words.length && ti < doel.length; i++) {
-    if (cleanWoord(words[i]) === doel[ti] || words[i] === doel[ti]) {
-      matched.add(i)
-      ti++
-    }
-  }
-  return matched
-}
-
-// Welke woorden hóren bij het zinsdeel: het volledige zinsdeel ("De hond"),
-// niet alleen het kernwoord ("hond") dat de woordsoorten-modus gebruikt.
-const zinsdeelFrase = (q) => q.zinsdeelWoorden || q.vraagWoord
 
 function renderZin(zin, vraagWoord) {
   const words = splitZin(zin)
@@ -71,49 +36,25 @@ function renderZin(zin, vraagWoord) {
   })
 }
 
-const zelfdeSet = (a, b) => a.size === b.size && [...a].every(i => b.has(i))
-
-// Bij zinsdelen klik je het zinsdeel in de zin aan. Dezelfde zin kan meerdere
-// geldige antwoorden hebben (twee bepalingen bijvoorbeeld), en die staan als
-// losse rijen in de data — als vráág is dat één en dezelfde opgave, dus houden
-// we per zin+zinsdeel één rij over en gelden de andere als goed alternatief.
-function filterVragen(mode, labels) {
-  const field = mode === 'woordsoorten' ? 'woordsoort' : 'zinsdeel'
-  const gefilterd = VRAGEN.filter(q => q[field] !== null && labels.includes(q[field]))
-  if (mode === 'woordsoorten') return gefilterd
-  const gezien = new Set()
-  return gefilterd.filter(q => {
-    const k = `${q.zin}|${q.zinsdeel}`
-    if (gezien.has(k)) return false
-    gezien.add(k)
-    return true
-  })
-}
-
-// Alle goedgekeurde woordgroepen voor deze vraag: het eigen zinsdeel plus de
-// alternatieven uit dezelfde zin met hetzelfde zinsdeel.
-function goedeSets(q) {
-  return VRAGEN
-    .filter(a => a.zin === q.zin && a.zinsdeel === q.zinsdeel)
-    .map(a => woordIndexen(q.zin, zinsdeelFrase(a)))
-}
-
 // aantal/config: alleen gezet vanuit een weektaak-opdracht (toolRender.jsx).
 // config = { mode: 'woordsoorten'|'zinsdelen', soorten?, zinsdelen? } — slaat
 // de menu/taalverkennen/filter-schermen over en start direct in de oefening.
-export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie, aantal, config }) {
+export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie, aantal, config, groep }) {
   const [screen, setScreen] = useState('menu')
   const [mode, setMode] = useState(null)
   const [checked, setChecked] = useState({})
   const [pool, setPool] = useState([])
   const [poolIdx, setPoolIdx] = useState(0)
   const [correctCount, setCorrectCount] = useState(0)
-  const [feedback, setFeedback] = useState(null) // { correct, uitleg, juistAntwoord, juisteWoorden? }
-  const [gekozenWoorden, setGekozenWoorden] = useState(new Set()) // zinsdelen: aangeklikte woordindexen
+  const [feedback, setFeedback] = useState(null) // { correct, gekozen, uitleg, juistAntwoord }
   const [showReward, setShowReward] = useState(false)
+  const [samengesteld, setSamengesteld] = useState(false) // zinsdelen: ook zinnen met twee deelzinnen
+  const [tipOpen, setTipOpen] = useState(false)
 
-  const toolId = mode === 'woordsoorten' ? 'taal-woordsoorten' : 'taal-zinsdelen'
-  const opdracht = useGebruikOpdracht({ toolId, aantal })
+  const toolId = mode === 'zinsdelen' ? 'taal-zinsdelen' : 'taal-woordsoorten'
+  // Zinsdelen draait in een eigen component met een eigen teller; deze hook
+  // telt hier alleen de woordsoorten-opgaven.
+  const opdracht = useGebruikOpdracht({ toolId, aantal: mode === 'zinsdelen' ? null : aantal })
 
   const types = mode === 'woordsoorten' ? WOORDSOORTEN : ZINSDELEN
 
@@ -142,7 +83,12 @@ export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
     gekozenLabels.forEach(l => { init[l] = true })
     setMode(config.mode)
     setChecked(init)
-    setPool(shuffle(filterVragen(config.mode, gekozenLabels)))
+    if (config.mode === 'zinsdelen') {
+      setSamengesteld(!!config.samengesteld)
+      setScreen('zinsdelen')
+      return
+    }
+    setPool(shuffle(filterVragen(gekozenLabels)))
     setPoolIdx(0)
     setCorrectCount(0)
     setFeedback(null)
@@ -154,10 +100,14 @@ export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
   const beloning = checkedLabels.length * BRIEFGELD_PER_AANGEVINKT
 
   function buildPool() {
-    return shuffle(filterVragen(mode, checkedLabels))
+    return shuffle(filterVragen(checkedLabels))
   }
 
   function startOefening() {
+    if (mode === 'zinsdelen') {
+      setScreen('zinsdelen')
+      return
+    }
     const p = buildPool()
     if (p.length === 0) return
     setPool(p)
@@ -167,20 +117,11 @@ export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
     setScreen('oefening')
   }
 
-  // Woordsoorten: `label` is de aangeklikte knop. Zinsdelen: de leerling heeft
-  // woorden in de zin aangeklikt en `label` is de tekst daarvan.
-  function handleAnswer(label, correctOverride) {
+  function handleAnswer(label) {
     if (feedback) return
     const q = pool[poolIdx]
-    const field = mode === 'woordsoorten' ? 'woordsoort' : 'zinsdeel'
-    const uitlegField = mode === 'woordsoorten' ? 'uitleg_ws' : 'uitleg_zd'
-    const correct = correctOverride ?? (label === q[field])
-    setFeedback({
-      correct,
-      uitleg: q[uitlegField],
-      juistAntwoord: mode === 'woordsoorten' ? q[field] : zinsdeelFrase(q),
-      juisteWoorden: mode === 'woordsoorten' ? null : woordIndexen(q.zin, zinsdeelFrase(q)),
-    })
+    const correct = label === q.woordsoort
+    setFeedback({ correct, gekozen: label, uitleg: q.uitleg_ws, juistAntwoord: q.woordsoort })
 
     // Laatste opgave van de opdracht: eerst de feedback laten zien, dan pas
     // registreren (en dus rapporteren) — geen tussentijdse beloning meer,
@@ -189,11 +130,11 @@ export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
     if (zalKlaarZijn) {
       setTimeout(() => {
         setFeedback(null)
-        opdracht.registreer(correct, { vraag: q.zin, antwoord: label, juist: q[field] })
+        opdracht.registreer(correct, { vraag: q.zin, antwoord: label, juist: q.woordsoort })
       }, 1400)
       return
     }
-    opdracht.registreer(correct, { vraag: q.zin, antwoord: label, juist: q[field] })
+    opdracht.registreer(correct, { vraag: q.zin, antwoord: label, juist: q.woordsoort })
 
     if (correct) {
       const newCount = correctCount + 1
@@ -206,12 +147,11 @@ export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
         return
       }
     }
-    setTimeout(() => advanceQuestion(), 1400)
+    setTimeout(() => advanceQuestion(), correct ? 1400 : 2400)
   }
 
   function advanceQuestion() {
     setFeedback(null)
-    setGekozenWoorden(new Set())
     const next = poolIdx + 1
     if (next >= pool.length) {
       const newPool = buildPool()
@@ -220,16 +160,6 @@ export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
     } else {
       setPoolIdx(next)
     }
-  }
-
-  // Nakijken van een zinsdelen-vraag: goed als de aangeklikte woorden precies
-  // één van de geldige zinsdelen in deze zin vormen.
-  function checkZinsdeel() {
-    if (feedback || gekozenWoorden.size === 0) return
-    const q = pool[poolIdx]
-    const words = splitZin(q.zin)
-    const gekozenTekst = [...gekozenWoorden].sort((a, b) => a - b).map(i => words[i]).join(' ')
-    handleAnswer(gekozenTekst, goedeSets(q).some(set => zelfdeSet(set, gekozenWoorden)))
   }
 
   function afterReward() {
@@ -241,7 +171,7 @@ export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
   if (showReward) {
     return (
       <SpelBeloning
-        title="Geweldig — 5 zinnen goed!"
+        title={`Geweldig — ${CORRECT_VOOR_REWARD} keer goed!`}
         geld={beloning}
         addCuruntie={addCuruntie}
         onDone={afterReward}
@@ -258,98 +188,118 @@ export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
     )
   }
 
+  if (screen === 'woordenschat') {
+    return (
+      <Woordenschat
+        onBack={() => setScreen('menu')}
+        addBriefgeld={addBriefgeld} addCuruntie={addCuruntie}
+      />
+    )
+  }
+
+  if (screen === 'zinsdelen') {
+    return (
+      <Zinsdelen
+        labels={checkedLabels}
+        metSamengesteld={samengesteld}
+        beloning={beloning}
+        onBack={() => setScreen(config ? 'menu' : 'filter')}
+        addBriefgeld={addBriefgeld} addCuruntie={addCuruntie}
+        aantal={aantal}
+      />
+    )
+  }
+
   if (screen === 'oefening') {
     const q = pool[poolIdx]
-    const zoeken = mode === 'zinsdelen'
-    const answerLabel = zoeken
-      ? `Klik op ${q.zinsdeel === 'gezegde' ? 'het' : LIDWOORD[q.zinsdeel] ?? 'het'} ${q.zinsdeel} in de zin`
-      : 'Wat voor woordsoort is het gekleurde woord?'
     return (
       <div className="tv-screen">
         <div className="tv-top-bar">
           <button className="tv-back" onClick={() => setScreen('filter')}>← Stop</button>
           <div className="tv-progress">
             <span className="tv-score-badge">✓ {correctCount}</span>
-            <span className="tv-next-reward">nog {CORRECT_VOOR_REWARD - (correctCount % CORRECT_VOOR_REWARD)} voor 🚀</span>
+            <span className="tv-reward-meter">
+              <span className="tv-reward-track">
+                <span
+                  className="tv-reward-fill"
+                  style={{ width: `${((correctCount % CORRECT_VOOR_REWARD) / CORRECT_VOOR_REWARD) * 100}%` }}
+                />
+              </span>
+              <span className="tv-reward-tekst">nog {CORRECT_VOOR_REWARD - (correctCount % CORRECT_VOOR_REWARD)} 🚀</span>
+            </span>
           </div>
         </div>
 
-        <div className={`tv-card ${feedback ? (feedback.correct ? 'tv-card-correct' : 'tv-card-wrong') : ''}`}>
-          <p className="tv-mode-label">{zoeken ? '🔍 Zinsdelen' : '📚 Woordsoorten'}</p>
-          {zoeken ? (
-            // Zoekmodus: elk woord is aanklikbaar. Een zinsdeel kan uit
-            // meerdere woorden bestaan ("De hond", "aan de kinderen"), dus je
-            // klikt er net zoveel aan als nodig en kijkt daarna na.
-            <div className="tv-zin tv-zin-klik">
-              {splitZin(q.zin).map((woord, i) => {
-                const aan = gekozenWoorden.has(i)
-                const juist = feedback?.juisteWoorden?.has(i)
-                const klasse = feedback
-                  ? `tv-woord${juist ? ' tv-woord-juist' : ''}${aan && !juist ? ' tv-woord-mis' : ''}`
-                  : `tv-woord${aan ? ' tv-woord-aan' : ''}`
-                return (
-                  <button
-                    key={i} type="button" className={klasse} disabled={!!feedback}
-                    onClick={() => setGekozenWoorden(prev => {
-                      const next = new Set(prev)
-                      next.has(i) ? next.delete(i) : next.add(i)
-                      return next
-                    })}
-                  >{woord}</button>
-                )
-              })}
-            </div>
-          ) : (
+        <div className="tv-werk">
+          <div className={`tv-card ${feedback ? (feedback.correct ? 'tv-card-correct' : 'tv-card-wrong') : ''}`}>
+            <p className="tv-mode-label">📚 Woordsoorten</p>
             <div className="tv-zin">{renderZin(q.zin, q.vraagWoord)}</div>
-          )}
-          <p className="tv-vraag">{answerLabel}</p>
-        </div>
+            <p className="tv-vraag">Wat voor woordsoort is het gekleurde woord?</p>
+          </div>
 
-        {feedback ? (
-          <div className={`tv-feedback ${feedback.correct ? 'tv-feedback-correct' : 'tv-feedback-wrong'}`}>
-            <span className="tv-feedback-icon">{feedback.correct ? '✓' : '✗'}</span>
-            <div>
-              {!feedback.correct && <p className="tv-feedback-antwoord">Juist: <strong>{feedback.juistAntwoord}</strong></p>}
-              <p className="tv-feedback-uitleg">{feedback.uitleg}</p>
-            </div>
-          </div>
-        ) : zoeken ? (
-          <div className="tv-answers tv-answers-klik">
-            <button
-              className="tv-answer-btn tv-nakijk-btn"
-              disabled={gekozenWoorden.size === 0}
-              onClick={checkZinsdeel}
-            >Nakijken ✓</button>
-            {gekozenWoorden.size > 0 && (
-              <button className="tv-wis-btn" onClick={() => setGekozenWoorden(new Set())}>wissen</button>
-            )}
-          </div>
-        ) : (
+          {/* Na het antwoorden blijven de knoppen staan: groen = de juiste
+              woordsoort, rood = wat je koos, de rest vervaagt. */}
           <div className="tv-answers">
-            {checkedLabels.map(label => (
-              <button
-                key={label}
-                className="tv-answer-btn"
-                onClick={() => handleAnswer(label)}
-              >
-                {label}
-              </button>
-            ))}
+            {checkedLabels.map(label => {
+              const staat = !feedback ? ''
+                : label === feedback.juistAntwoord ? ' tv-answer-goed'
+                : label === feedback.gekozen ? ' tv-answer-fout'
+                : ' tv-answer-dim'
+              return (
+                <button
+                  key={label}
+                  className={`tv-answer-btn${staat}`}
+                  disabled={!!feedback}
+                  onClick={() => handleAnswer(label)}
+                >
+                  {label}
+                </button>
+              )
+            })}
           </div>
-        )}
+
+          {/* Hulp: hoe herken je de soorten die je oefent? Geen antwoord op
+              deze vraag, wel de trucjes. */}
+          {!feedback && (
+            <div className="tv-tip-rij">
+              <button className="tv-tip-knop" onClick={() => setTipOpen(o => !o)}>
+                {tipOpen ? '💡 Tip verbergen' : '💡 Hoe herken ik ze?'}
+              </button>
+            </div>
+          )}
+          {!feedback && tipOpen && (
+            <div className="tv-tip">
+              <span className="tv-tip-icon">💡</span>
+              <div>
+                {checkedLabels.map(l => (
+                  <p key={l}><strong>{l}</strong> — {TIP_WOORDSOORT[l]}</p>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {feedback && (
+            <div className={`tv-feedback ${feedback.correct ? 'tv-feedback-correct' : 'tv-feedback-wrong'}`}>
+              <span className="tv-feedback-icon">{feedback.correct ? '✓' : '✗'}</span>
+              <div>
+                <p className="tv-feedback-uitleg">{feedback.uitleg}</p>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     )
   }
 
   if (screen === 'filter') {
-    const canStart = checkedLabels.length >= 2
+    const canStart = mode === 'zinsdelen' ? checkedLabels.length >= 1 : checkedLabels.length >= 2
     return (
       <div className="tv-screen tv-screen-center">
         <button className="tv-back" onClick={() => setScreen('taalverkennen')}>← Terug</button>
         <div className="tv-header">
           <span className="tv-header-icon">{mode === 'woordsoorten' ? '📚' : '🔍'}</span>
           <h1>{mode === 'woordsoorten' ? 'Woordsoorten' : 'Zinsdelen'}</h1>
-          <p>Kies wat je wilt oefenen</p>
+          <p>{mode === 'woordsoorten' ? 'Kies wat je wilt oefenen' : 'Deze onderdelen ga je in de zin aanwijzen'}</p>
         </div>
         <div className="tv-filter-list">
           {types.map(t => (
@@ -363,7 +313,24 @@ export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
             </label>
           ))}
         </div>
-        {!canStart && <p className="tv-filter-warn">Kies minstens 2 soorten</p>}
+        {mode === 'zinsdelen' && (
+          <label className="tv-filter-item tv-filter-extra">
+            <input
+              type="checkbox"
+              checked={samengesteld}
+              onChange={e => setSamengesteld(e.target.checked)}
+            />
+            <span className="tv-filter-label">
+              Ook samengestelde zinnen
+              <span className="tv-filter-hint">zinnen met twee stukjes — dus twee keer een onderwerp en een persoonsvorm</span>
+            </span>
+          </label>
+        )}
+        {!canStart && (
+          <p className="tv-filter-warn">
+            {mode === 'zinsdelen' ? 'Kies minstens 1 onderdeel' : 'Kies minstens 2 soorten'}
+          </p>
+        )}
         <button
           className="tv-btn tv-btn-primary"
           disabled={!canStart}
@@ -388,7 +355,7 @@ export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
           <button className="tv-mode-card" onClick={() => { setMode('zinsdelen'); setScreen('filter') }}>
             <span className="tv-mode-emoji">🔍</span>
             <span className="tv-mode-name">Zinsdelen</span>
-            <span className="tv-mode-desc">Onderwerp · Persoonsvorm · Gezegde · Lijdend/meewerkend voorwerp · Bepaling</span>
+            <span className="tv-mode-desc">Sleep onderwerp, persoonsvorm, gezegde, voorwerpen en bepalingen naar de juiste woorden</span>
           </button>
           <button className="tv-mode-card" onClick={() => { setMode('woordsoorten'); setScreen('filter') }}>
             <span className="tv-mode-emoji">📚</span>
@@ -415,12 +382,21 @@ export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
           <span className="tv-mode-name">Taalverkennen</span>
           <span className="tv-mode-desc">Zinsdelen en woordsoorten oefenen</span>
         </button>
-        <button className="tv-mode-card tv-mode-card-disabled">
-          <span className="tv-mode-emoji">📓</span>
-          <span className="tv-mode-name">Woordenschat</span>
-          <span className="tv-mode-desc">🚧 Komt binnenkort</span>
-        </button>
+        {/* Alleen groep 7: de woordenlijst is die van thema 1 uit de
+            groep 7-methode. */}
+        {groep === 7 && (
+          <button className="tv-mode-card" onClick={() => setScreen('woordenschat')}>
+            <span className="tv-mode-emoji">📓</span>
+            <span className="tv-mode-name">Woordenschat</span>
+            <span className="tv-mode-desc">Blok 1 — thema 1 "Ik ontmoet" · 45 woorden uit les 2, 7 en 12</span>
+          </button>
+        )}
       </div>
     </div>
   )
+}
+
+// Woordsoorten-vragen voor de aangevinkte soorten.
+function filterVragen(labels) {
+  return VRAGEN.filter(q => q.woordsoort !== null && labels.includes(q.woordsoort))
 }

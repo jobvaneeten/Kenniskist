@@ -2,12 +2,13 @@
   width: 100vw;
   min-height: 100vh;
   background:
-    radial-gradient(ellipse 60% 50% at 15% 12%, rgba(79,195,247,0.22) 0%, transparent 60%),
-    radial-gradient(ellipse 55% 45% at 85% 18%, rgba(124,58,237,0.22) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 55% at 80% 90%, rgba(6,214,160,0.18) 0%, transparent 60%),
-    linear-gradient(160deg, #141430 0%, #142a4a 55%, #0d2440 100%);
-  background-size: 200% 200%, 200% 200%, 200% 200%, 100% 100%;
-  animation: tv-bg 16s ease-in-out infinite alternate;
+    radial-gradient(ellipse 55% 42% at 10% 4%, rgba(79,195,247,0.2) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 90% 10%, rgba(168,85,247,0.22) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 45% at 80% 98%, rgba(6,214,160,0.14) 0%, transparent 60%),
+    radial-gradient(ellipse 45% 38% at 14% 94%, rgba(59,130,246,0.14) 0%, transparent 58%),
+    linear-gradient(165deg, #06061a 0%, #0a1230 48%, #061426 100%);
+  background-size: 200% 200%, 200% 200%, 200% 200%, 200% 200%, 100% 100%;
+  animation: tv-bg 22s ease-in-out infinite alternate;
   color: #fff;
   display: flex;
   flex-direction: column;
@@ -20,8 +21,38 @@
   isolation: isolate;       /* voorkomt compositing-glitch (inhoud onzichtbaar) */
 }
 @keyframes tv-bg {
-  0%   { background-position: 0% 0%, 100% 0%, 100% 100%, 0 0; }
-  100% { background-position: 30% 20%, 70% 20%, 60% 80%, 0 0; }
+  0%   { background-position: 0% 0%, 100% 0%, 100% 100%, 0% 100%, 0 0; }
+  100% { background-position: 34% 22%, 66% 24%, 58% 78%, 30% 74%, 0 0; }
+}
+
+/* Sterrenlaag: vier tegels met stipjes die langzaam oplichten. */
+.tv-screen::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(1.7px 1.7px at 42px 58px, rgba(255,255,255,0.85), transparent 60%),
+    radial-gradient(1.5px 1.5px at 168px 196px, rgba(159,214,255,0.7), transparent 60%),
+    radial-gradient(1.2px 1.2px at 268px 96px, rgba(255,255,255,0.6), transparent 60%),
+    radial-gradient(1.4px 1.4px at 336px 268px, rgba(196,181,253,0.65), transparent 60%);
+  background-size: 400px 320px;
+  animation: tv-twinkle 7s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+@keyframes tv-twinkle {
+  0%   { opacity: 0.35; }
+  100% { opacity: 0.75; }
+}
+
+/* Neongloed langs de onderrand — dezelfde horizon als in de 3D-spellen. */
+.tv-screen::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 42%;
+  background:
+    linear-gradient(to top, rgba(124,58,237,0.28) 0%, rgba(79,195,247,0.09) 45%, transparent 100%);
+  pointer-events: none;
 }
 
 /* Forceer eigen paint-laag zodat in-flow content altijd schildert */
@@ -29,24 +60,46 @@
 
 .tv-screen-center {
   align-items: center;
+  justify-content: center;
   padding-top: 24px;
   text-align: center;
+}
+
+/* Werkgebied van een oefening: op een breed scherm geen randloze kaarten maar
+   één kolom in het midden, verticaal gecentreerd zodat er geen gat onder de
+   vraag valt. */
+.tv-werk {
+  flex: 1;
+  width: 100%;
+  max-width: 780px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 18px;
+  padding-bottom: 28px;
 }
 
 /* ── Back button ── */
 .tv-back {
   align-self: flex-start;
-  background: rgba(255,255,255,0.1);
-  color: #fff;
-  border: 1px solid rgba(255,255,255,0.2);
-  border-radius: 8px;
-  padding: 6px 14px;
+  background: rgba(255,255,255,0.07);
+  color: #dbe6f5;
+  border: 1px solid rgba(255,255,255,0.16);
+  border-radius: 999px;
+  padding: 7px 16px;
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
+  font-weight: 700;
   font-family: inherit;
-  transition: background 0.15s;
+  backdrop-filter: blur(6px);
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
-.tv-back:hover { background: rgba(255,255,255,0.2); }
+.tv-back:hover {
+  background: rgba(79,195,247,0.18);
+  border-color: rgba(79,195,247,0.55);
+  color: #fff;
+}
 
 /* ── Header ── */
 .tv-header {
@@ -131,9 +184,27 @@
   cursor: not-allowed;
   pointer-events: none;
 }
-.tv-mode-emoji  { font-size: 2.2rem; }
-.tv-mode-name   { font-size: 1.15rem; font-weight: 700; }
-.tv-mode-desc   { font-size: 0.82rem; color: #aaa; }
+.tv-mode-emoji  {
+  font-size: 2rem;
+  width: 62px;
+  height: 62px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 35%, rgba(79,195,247,0.28), rgba(124,58,237,0.16));
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.14), 0 0 26px rgba(79,195,247,0.28);
+}
+.tv-mode-name   {
+  font-size: 1.22rem;
+  font-weight: 900;
+  letter-spacing: -0.2px;
+}
+.tv-mode-desc   {
+  font-size: 0.84rem;
+  color: #9fb0c6;
+  line-height: 1.45;
+  max-width: 30ch;
+}
 
 /* ── Filter screen ── */
 .tv-filter-list {
@@ -156,7 +227,17 @@
   cursor: pointer;
   transition: background 0.12s;
 }
-.tv-filter-item:hover { background: rgba(255,255,255,0.12); }
+.tv-filter-item {
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.tv-filter-item:hover {
+  background: rgba(255,255,255,0.12);
+  border-color: rgba(79,195,247,0.4);
+}
+.tv-filter-item:has(input:checked) {
+  background: linear-gradient(100deg, rgba(79,195,247,0.2), rgba(124,58,237,0.12));
+  border-color: rgba(79,195,247,0.55);
+}
 .tv-filter-item input[type="checkbox"] {
   width: 20px; height: 20px;
   accent-color: #4FC3F7;
@@ -193,9 +274,11 @@
 .tv-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
 .tv-btn-primary {
-  background: linear-gradient(135deg, #4FC3F7, #0288d1);
+  background: linear-gradient(135deg, #4FC3F7, #7c3aed);
   color: #fff;
+  box-shadow: 0 10px 28px rgba(79,195,247,0.32);
 }
+.tv-btn-primary:hover:not(:disabled) { box-shadow: 0 14px 34px rgba(124,58,237,0.4); }
 .tv-btn-skip {
   background: rgba(255,255,255,0.08);
   color: #aaa;
@@ -205,9 +288,13 @@
 /* ── Exercise screen ── */
 .tv-top-bar {
   display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 16px;
+  /* ruimte voor de vaste munten-/briefgeldbadge rechtsboven */
+  padding-right: 104px;
 }
 
 .tv-progress {
@@ -216,26 +303,63 @@
   gap: 10px;
 }
 .tv-score-badge {
-  background: #22c55e;
-  color: #fff;
-  border-radius: 20px;
-  padding: 4px 12px;
+  background: linear-gradient(135deg, #22c55e, #06d6a0);
+  color: #05251b;
+  border-radius: 999px;
+  padding: 5px 14px;
   font-size: 0.9rem;
-  font-weight: 700;
+  font-weight: 900;
+  box-shadow: 0 4px 16px rgba(6,214,160,0.35);
 }
-.tv-next-reward {
-  color: #aaa;
-  font-size: 0.8rem;
+/* Hoe ver nog tot het volgende spelletje */
+.tv-reward-meter {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 999px;
+  padding: 5px 13px 5px 9px;
+}
+.tv-reward-track {
+  width: 92px;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.13);
+  overflow: hidden;
+}
+.tv-reward-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #4FC3F7, #a855f7);
+  box-shadow: 0 0 12px rgba(124,58,237,0.7);
+  transition: width 0.35s ease;
+}
+.tv-reward-tekst {
+  color: #b9c6da;
+  font-size: 0.78rem;
+  font-weight: 800;
+  white-space: nowrap;
 }
 
 .tv-card {
-  background: linear-gradient(160deg, rgba(255,255,255,0.1), rgba(255,255,255,0.04));
-  border: 2px solid rgba(255,255,255,0.12);
-  border-radius: 22px;
-  padding: 26px 22px 22px;
-  margin-bottom: 20px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.28);
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(160deg, rgba(255,255,255,0.11), rgba(255,255,255,0.035));
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 26px;
+  padding: 28px 30px 26px;
+  box-shadow: 0 18px 44px rgba(0,0,0,0.34), inset 0 1px 0 rgba(255,255,255,0.08);
   transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+}
+/* neonlijn langs de bovenkant van de kaart */
+.tv-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 12%; right: 12%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #4FC3F7, #a855f7, transparent);
 }
 .tv-card-correct {
   border-color: #22c55e;
@@ -247,11 +371,17 @@
 }
 
 .tv-mode-label {
-  font-size: 0.78rem;
-  color: #4FC3F7;
+  display: inline-block;
+  background: rgba(79,195,247,0.13);
+  border: 1px solid rgba(79,195,247,0.32);
+  border-radius: 999px;
+  padding: 4px 13px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #7fdcff;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin: 0 0 12px;
+  letter-spacing: 0.07em;
+  margin: 0 0 16px;
 }
 
 .tv-zin {
@@ -286,16 +416,16 @@ mark.tv-highlight {
 .tv-zin-klik {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
-  gap: 4px 2px;
+  justify-content: flex-start;
+  gap: 6px 3px;
 }
 .tv-woord {
   font: inherit;
   color: inherit;
-  background: transparent;
-  border: 2px solid transparent;
-  border-radius: 8px;
-  padding: 2px 6px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  padding: 3px 9px;
   cursor: pointer;
   transition: background 0.12s, border-color 0.12s, color 0.12s, transform 0.1s;
 }
@@ -356,17 +486,17 @@ mark.tv-highlight {
 }
 
 .tv-answer-btn {
-  background: linear-gradient(160deg, rgba(255,255,255,0.12), rgba(255,255,255,0.05));
-  border: 2px solid rgba(255,255,255,0.18);
-  border-radius: 14px;
+  background: linear-gradient(160deg, rgba(255,255,255,0.12), rgba(255,255,255,0.045));
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 16px;
   color: #fff;
   font-family: inherit;
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-weight: 700;
-  padding: 13px 20px;
+  padding: 15px 22px;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.22);
-  transition: background 0.14s, border-color 0.14s, transform 0.1s, box-shadow 0.14s;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.24);
+  transition: background 0.14s, border-color 0.14s, transform 0.1s, box-shadow 0.14s, opacity 0.14s;
 }
 .tv-answer-btn:hover {
   background: linear-gradient(160deg, rgba(79,195,247,0.28), rgba(124,58,237,0.16));
@@ -380,9 +510,9 @@ mark.tv-highlight {
 .tv-feedback {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  border-radius: 14px;
-  padding: 14px 18px;
+  gap: 14px;
+  border-radius: 18px;
+  padding: 16px 20px;
   animation: tv-slide-in 0.2s ease;
 }
 @keyframes tv-slide-in {
@@ -390,18 +520,25 @@ mark.tv-highlight {
   to   { opacity: 1; transform: translateY(0); }
 }
 .tv-feedback-correct {
-  background: rgba(34,197,94,0.15);
-  border: 2px solid #22c55e;
+  background: linear-gradient(100deg, rgba(6,214,160,0.2), rgba(6,214,160,0.07));
+  border: 1px solid rgba(6,214,160,0.55);
+  box-shadow: 0 10px 30px rgba(6,214,160,0.16);
 }
 .tv-feedback-wrong {
-  background: rgba(239,68,68,0.15);
-  border: 2px solid #ef4444;
+  background: linear-gradient(100deg, rgba(255,107,107,0.2), rgba(255,107,107,0.07));
+  border: 1px solid rgba(255,107,107,0.55);
+  box-shadow: 0 10px 30px rgba(255,107,107,0.14);
 }
 .tv-feedback-icon {
-  font-size: 1.4rem;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 1.05rem;
   font-weight: 900;
-  line-height: 1.3;
   flex-shrink: 0;
+  background: rgba(255,255,255,0.1);
 }
 .tv-feedback-correct .tv-feedback-icon { color: #22c55e; }
 .tv-feedback-wrong   .tv-feedback-icon { color: #ef4444; }
@@ -455,3 +592,278 @@ mark.tv-highlight {
   color: #f59e0b !important;
   font-weight: 700;
 }
+
+/* ── Woordenschat ── */
+.tv-ws-kop {
+  font-size: 1.62rem;
+  font-weight: 900;
+  line-height: 1.4;
+  letter-spacing: -0.3px;
+  margin-bottom: 16px;
+  color: #f4f8ff;
+  text-shadow: 0 2px 20px rgba(79,195,247,0.22);
+}
+/* Eén begrip in beeld mag groter dan een hele uitleg-zin */
+.tv-ws-kop.tv-ws-begrip { font-size: 2.1rem; }
+.tv-gat {
+  color: #7fdcff;
+  letter-spacing: 0.06em;
+  font-weight: 900;
+  text-shadow: 0 0 16px rgba(79,195,247,0.6);
+}
+.tv-answers-kolom {
+  flex-direction: column;
+  align-items: stretch;
+}
+.tv-answers-kolom .tv-answer-btn {
+  box-sizing: border-box;
+  text-align: left;
+  font-weight: 600;
+  line-height: 1.35;
+}
+/* schermbrede knop: niet opschalen bij hover, dat duwt 'm buiten het scherm */
+.tv-answers-kolom .tv-answer-btn:hover { transform: translateY(-2px); }
+
+/* Na het antwoorden blijven de knoppen staan: groen = juist, rood = gekozen
+   en fout, de rest vervaagt. */
+.tv-answers .tv-answer-btn:disabled { cursor: default; transform: none; }
+.tv-answers .tv-answer-btn.tv-answer-dim { opacity: 0.4; }
+.tv-answers .tv-answer-btn.tv-answer-goed,
+.tv-answers .tv-answer-btn.tv-answer-goed:hover {
+  background: linear-gradient(160deg, rgba(6,214,160,0.42), rgba(6,214,160,0.16));
+  border-color: #06d6a0;
+  box-shadow: 0 10px 28px rgba(6,214,160,0.28);
+  transform: none;
+}
+.tv-answers .tv-answer-btn.tv-answer-fout,
+.tv-answers .tv-answer-btn.tv-answer-fout:hover {
+  background: linear-gradient(160deg, rgba(255,107,107,0.4), rgba(255,107,107,0.14));
+  border-color: #ff6b6b;
+  box-shadow: 0 10px 28px rgba(255,107,107,0.22);
+  transform: none;
+}
+
+/* ── Kleine schermen ── */
+@media (max-width: 640px) {
+  .tv-screen { padding: 12px; }
+  .tv-card { padding: 22px 18px 20px; border-radius: 22px; }
+  .tv-ws-kop { font-size: 1.3rem; }
+  .tv-ws-kop.tv-ws-begrip { font-size: 1.7rem; }
+  .tv-zin { font-size: 1.15rem; }
+  .tv-answer-btn { font-size: 0.94rem; padding: 13px 16px; }
+  .tv-reward-track { width: 60px; }
+  .tv-werk { justify-content: flex-start; gap: 14px; }
+}
+
+/* ── Zinsdelen: onderdelen naar de woordgroep slepen ── */
+.zd-zin {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 5px;
+  margin-bottom: 18px;
+}
+.zd-kolom {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+}
+/* De zin staat al in woordgroepen: elke groep is één vak om op te leggen. */
+.zd-groep {
+  font-family: inherit;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #fff;
+  background: rgba(255,255,255,0.06);
+  border: 2px dashed rgba(255,255,255,0.26);
+  border-radius: 12px;
+  padding: 7px 13px;
+  cursor: pointer;
+  transition: background 0.14s, border-color 0.14s, transform 0.1s;
+}
+.zd-groep:hover:not(:disabled) {
+  background: rgba(79,195,247,0.16);
+  border-color: rgba(79,195,247,0.6);
+}
+.zd-groep:disabled { cursor: default; }
+/* Zodra je een kaartje vasthebt, laten de lege groepen zien dat je hier mag
+   loslaten. */
+.zd-groep-doel:not(.zd-groep-vol) {
+  border-color: rgba(79,195,247,0.55);
+  background: rgba(79,195,247,0.1);
+}
+.zd-groep-vol {
+  border-style: solid;
+  border-color: rgba(255,255,255,0.16);
+  background: rgba(255,255,255,0.09);
+}
+.zd-groep-mis {
+  border-color: #ff6b6b !important;
+  background: rgba(255,107,107,0.25) !important;
+  animation: zd-schud 0.4s ease;
+}
+@keyframes zd-schud {
+  0%, 100% { transform: translateX(0); }
+  25%      { transform: translateX(-4px); }
+  75%      { transform: translateX(4px); }
+}
+
+/* Eén baan per gelegd onderdeel; naast elkaar vormen ze de streep onder de
+   woordgroep, met het label aan het begin. */
+/* Elke gelegde plek krijgt een eigen baan van 22px: bovenin de streep onder
+   de groep, daaronder het labeltje. Zo botsen de labels van twee plekken die
+   elkaar overlappen (persoonsvorm in het gezegde) nooit. */
+.zd-baan {
+  position: relative;
+  height: 22px;
+}
+.zd-baan-aan::before {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; top: 0;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--zd-kleur);
+  box-shadow: 0 3px 12px rgba(0,0,0,0.35);
+}
+/* Loopt de groep door naar de volgende woordgroep? Dan het gaatje ertussen
+   dichtlopen, zodat het één streep wordt. */
+.zd-baan-vervolg::before {
+  left: -5px;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+.zd-baan-label {
+  position: absolute;
+  left: 0;
+  top: 8px;
+  height: 14px;
+  line-height: 14px;
+  padding: 0 7px;
+  border-radius: 5px;
+  background: var(--zd-kleur);
+  font-size: 0.64rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  color: #08131f;
+  white-space: nowrap;
+  z-index: 2;
+}
+
+.zd-tray {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+.zd-kaartje {
+  --zd-kleur: #4FC3F7;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(160deg, rgba(255,255,255,0.12), rgba(255,255,255,0.04));
+  border: 2px solid var(--zd-kleur);
+  border-radius: 999px;
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 800;
+  padding: 11px 18px;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.3);
+  transition: transform 0.12s, background 0.14s, box-shadow 0.14s;
+}
+.zd-kaartje::before {
+  content: '';
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--zd-kleur);
+  box-shadow: 0 0 10px var(--zd-kleur);
+}
+.zd-kaartje:hover { transform: translateY(-2px); }
+.zd-kaartje-actief {
+  background: var(--zd-kleur);
+  color: #08131f;
+  transform: translateY(-3px);
+  box-shadow: 0 10px 26px rgba(0,0,0,0.4);
+}
+.zd-kaartje-mis { animation: zd-schud 0.4s ease; }
+/* Het kaartje dat onder je vinger meebeweegt */
+.zd-kaartje-zweef {
+  position: fixed;
+  transform: translate(-50%, -140%);
+  pointer-events: none;
+  z-index: 400;
+  background: var(--zd-kleur);
+  color: #08131f;
+  opacity: 0.95;
+}
+
+@media (max-width: 640px) {
+  .zd-groep { font-size: 1.1rem; }
+  .zd-kaartje { font-size: 0.86rem; padding: 9px 14px; }
+}
+
+/* Extra keuze onder de lijst (zinsdelen: ook samengestelde zinnen) */
+.tv-filter-extra {
+  width: 100%;
+  max-width: 340px;
+  margin: -8px 0 18px;
+  align-items: flex-start;
+}
+.tv-filter-extra .tv-filter-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+}
+.tv-filter-hint {
+  font-size: 0.76rem;
+  font-weight: 500;
+  color: #9fb0c6;
+  line-height: 1.35;
+}
+
+/* ── Hulpknop met een tip ── */
+.tv-tip-rij {
+  display: flex;
+  justify-content: center;
+}
+.tv-tip-knop {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.16);
+  border-radius: 999px;
+  color: #cdd9ec;
+  font-family: inherit;
+  font-size: 0.86rem;
+  font-weight: 700;
+  padding: 9px 18px;
+  cursor: pointer;
+  transition: background 0.14s, border-color 0.14s, color 0.14s;
+}
+.tv-tip-knop:hover {
+  background: rgba(255,210,63,0.16);
+  border-color: rgba(255,210,63,0.5);
+  color: #fff;
+}
+.tv-tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: linear-gradient(100deg, rgba(255,210,63,0.14), rgba(255,210,63,0.05));
+  border: 1px solid rgba(255,210,63,0.45);
+  border-radius: 18px;
+  padding: 14px 18px;
+  animation: tv-slide-in 0.2s ease;
+}
+.tv-tip-icon { font-size: 1.2rem; line-height: 1.3; }
+.tv-tip p {
+  margin: 0 0 6px;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: #f0e6cd;
+}
+.tv-tip p:last-child { margin-bottom: 0; }

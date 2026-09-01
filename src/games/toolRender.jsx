@@ -12,6 +12,7 @@
 import { TOOL_BY_ID } from '../lib/tools.js'
 import WerkwoordSpelling from './WerkwoordSpelling.jsx'
 import TaalOefenen from './TaalOefenen.jsx'
+import Woordenschat from './Woordenschat.jsx'
 import VerhaaltjesSommen from './VerhaaltjesSommen.jsx'
 import TafelsOefenen from './TafelsOefenen.jsx'
 import BreukenPlaatjes from './BreukenPlaatjes.jsx'
@@ -65,7 +66,15 @@ export default function RenderTool({ opdracht, groep, onBack, addBriefgeld, addC
       return (
         <TaalOefenen
           onBack={onBack} addBriefgeld={addBriefgeld} addCuruntie={addCuruntie}
-          aantal={aantal} config={{ mode: 'zinsdelen', zinsdelen: config?.zinsdelen }}
+          aantal={aantal}
+          config={{ mode: 'zinsdelen', zinsdelen: config?.zinsdelen, samengesteld: config?.samengesteld }}
+        />
+      )
+    case 'woordenschat':
+      return (
+        <Woordenschat
+          onBack={onBack} addBriefgeld={addBriefgeld} addCuruntie={addCuruntie}
+          aantal={aantal}
         />
       )
     case 'verhaaltjessommen':

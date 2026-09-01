@@ -48,7 +48,16 @@ export const TOOL_FAMILIES = [
       { key: 'zinsdelen', type: 'checkboxes', label: 'Zinsdelen', min: 2, opties: [
         'onderwerp', 'persoonsvorm', 'gezegde', 'lijdend voorwerp', 'meewerkend voorwerp', 'bepaling',
       ] },
+      { key: 'samengesteld', type: 'bool', label: 'Ook samengestelde zinnen' },
     ],
+  },
+  {
+    // Blok 1 = thema 1 "Ik ontmoet", les 2/7/12 (zie
+    // src/games/woordenschatData.js). Komt er een blok bij, dan wordt dit een
+    // familie met `varianten` zoals bij het dictee.
+    familie: 'woordenschat', toolId: 'woordenschat-blok1', label: 'Woordenschat blok 1',
+    vak: 'taal', groepen: [7],
+    aantalInstelbaar: true, standaardAantal: 20, eenheid: 'opgaven', configVelden: [],
   },
   {
     familie: 'werkwoordspelling', toolId: 'werkwoordspelling', label: 'Werkwoordspelling',

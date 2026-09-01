@@ -224,6 +224,7 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
     if (GAMES[gameId] === 'taal') {
       return (
         <TaalOefenen
+          groep={year}
           onBack={() => setSubject(null)}
           addBriefgeld={addBriefgeld}
           addCuruntie={addCuruntie}
@@ -514,7 +515,7 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
                     : s.key === 'spelling'
                     ? (game === 'werkwoord' ? '✒️ Werkwoord + spellingblok' : '📕 Spellingblokken')
                     : game === 'taal'
-                    ? '📖 Taalverkennen + toets'
+                    ? (year === 7 ? '📖 Taalverkennen + woordenschat' : '📖 Taalverkennen + toets')
                     : game === 'begrijpend'
                     ? '🧭 Reis rond de wereld'
                     : game === 'engels'
