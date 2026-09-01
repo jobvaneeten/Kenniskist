@@ -21,7 +21,8 @@ function normaliseerOpgaven(detailsJson) {
       catLabel: o.catLabel ?? null,
     }))
   }
-  // Engels (public/engels/index.html) logt alleen wat er gemist is.
+  // Oude Engels-resultaten logden alleen wat er gemist is; het vak is weg,
+  // de al opgeslagen resultaten blijven leesbaar.
   if (Array.isArray(detailsJson.gemist)) {
     return detailsJson.gemist.map(m => ({
       vraag: m.prompt ?? null,

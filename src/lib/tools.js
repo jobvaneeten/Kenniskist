@@ -24,11 +24,11 @@ export const VAKKEN = [
   { key: 'spelling',   label: 'Spelling' },
   { key: 'rekenen',    label: 'Rekenen' },
   { key: 'begrijpend', label: 'Begrijpend lezen' },
-  { key: 'engels',     label: 'Engels' },
+  { key: 'topo',       label: 'Topografie' },
 ]
 
-// Eén entry per tool-familie. Families met varianten (dictee, engels,
-// reisrondewereld) hebben een `varianten`-lijst; die leveren elk hun eigen
+// Eén entry per tool-familie. Families met varianten (dictee, spullen)
+// hebben een `varianten`-lijst; die leveren elk hun eigen
 // concrete tool_id op via VARIANTEN hieronder.
 export const TOOL_FAMILIES = [
   {
@@ -170,18 +170,35 @@ export const TOOL_FAMILIES = [
     configVelden: [],
   },
   {
-    familie: 'reisrondewereld', label: 'Reis rond de wereld', vak: 'begrijpend', groepen: [7, 8],
+    familie: 'spullen', label: 'Duurzaam design', vak: 'begrijpend', groepen: [7, 8],
     aantalInstelbaar: false, standaardAantal: 1, eenheid: 'sessies', configVelden: [],
-    varianten: Array.from({ length: 4 }, (_, i) => ({
-      toolId: `reisrondewereld-les${i + 1}`, label: `Reis rond de wereld — les ${i + 1}`, les: i + 1,
-    })),
+    varianten: [
+      'Coole constructies', 'De beste materialen', 'Leve de fabriek?',
+      'Kinderen aan het werk', 'Mobiel binnenstebuiten',
+    ].map((naam, i) => ({ toolId: `spullen-les${i + 1}`, label: `Les ${i + 1} — ${naam}`, les: i + 1 })),
   },
   {
-    familie: 'engels', label: 'Engels', vak: 'engels', groepen: [7],
-    aantalInstelbaar: false, standaardAantal: 1, eenheid: 'sessies', configVelden: [],
-    varianten: [7, 8, 9].flatMap(song => [1, 2, 3].map(level => ({
-      toolId: `engels-${song}-${level}`, label: `Engels Song ${song} — level ${level}`, song, level,
-    }))),
+    // TopoMaster Europa kaart A: landen, hoofdsteden, zeeën, rivieren en
+    // gebergtes. `soorten` bepaalt welke daarvan gevraagd worden, `modus` of de
+    // leerling aanwijst of sleept.
+    familie: 'topo', label: 'Topografie Europa', vak: 'topo', groepen: [7, 8],
+    aantalInstelbaar: true, standaardAantal: 20, eenheid: 'opgaven',
+    configVelden: [
+      { key: 'soorten', type: 'checkboxes', label: 'Wat vragen we? (leeg = alles van die kaart)', min: 0, opties: [
+        { value: 'landen', label: 'Landen' },
+        { value: 'hoofdsteden', label: 'Hoofdsteden' },
+        { value: 'steden', label: 'Steden (kaart B)' },
+        { value: 'regios', label: "Regio's (kaart B)" },
+        { value: 'wateren', label: 'Zeeën' },
+        { value: 'rivieren', label: 'Rivieren' },
+        { value: 'gebergtes', label: 'Gebergtes' },
+      ] },
+      { key: 'modus', type: 'keuze', label: 'Manier', opties: ['klik', 'sleep'] },
+    ],
+    varianten: [
+      { toolId: 'topo-europa-a', label: 'Kaart A — heel Europa', kaart: 'europa-a' },
+      { toolId: 'topo-europa-b', label: 'Kaart B — Noordwest-Europa', kaart: 'europa-b' },
+    ],
   },
 ]
 

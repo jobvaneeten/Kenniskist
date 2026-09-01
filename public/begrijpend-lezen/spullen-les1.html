@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Begrijpend Lezen – De Eerste Wereldreizigers</title>
+<title>Begrijpend Lezen – Coole constructies</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -252,9 +252,9 @@
 <body>
 
 <header>
-  <p class="eyebrow">Begrijpend lezen · Groep 7</p>
-  <h1>De Eerste Wereldreizigers</h1>
-  <p>Bron: Blink Wereld – Reis de wereld rond</p>
+  <p class="eyebrow">Begrijpend lezen · Groep 7 · Les 1</p>
+  <h1>Coole constructies</h1>
+  <p>Thema: Duurzaam design</p>
 </header>
 <div id="progress-bar-wrap"><div id="progress-bar"></div></div>
 <div id="score-badge">⭐ <span id="score-num">0</span> pt</div>
@@ -262,9 +262,9 @@
 <main>
 
 <div id="intro-screen" class="screen active">
-  <div class="compass">🧭</div>
-  <h2>Klaar voor de ontdekkingsreis?</h2>
-  <p>Je leest teksten over de eerste wereldreizigers en beantwoordt vragen. Bij <strong>letterlijke vragen</strong> markeer je het antwoord <em>in de tekst zelf</em>. Klik woorden aan om ze te selecteren.</p>
+  <div class="compass">🏗️</div>
+  <h2>Klaar om te bouwen?</h2>
+  <p>Je leest teksten over constructies en krachten, en beantwoordt tien vragen. Bij <strong>letterlijke vragen</strong> markeer je het antwoord <em>in de tekst zelf</em>. Klik woorden aan om ze te selecteren.</p>
   <div class="legend">
     <span style="background:#d0e8ff;color:#0a3a6e;">🔍 Letterlijk – markeer in de tekst</span>
     <span style="background:#fde8c0;color:#7a3d00;">💡 Afleidend</span>
@@ -281,7 +281,7 @@
 
 <div id="finish-screen" class="screen">
   <div class="medal" id="finish-medal">🏅</div>
-  <h2>Goed gedaan, ontdekkingsreiziger!</h2>
+  <h2>Goed gedaan, bouwmeester!</h2>
   <div class="score-big" id="finish-score">0/0</div>
   <p id="finish-msg"></p>
   <div id="finish-overview"></div>
@@ -307,174 +307,139 @@
 
 const questions = [
 
-  // ── Q1  Letterlijk → markeren
   {
     type: 'mark',
     qtype: 'literal',
     label: '🔍 Letterlijk',
     labelClass: 'label-literal',
-    question: 'Markeer in de tekst waarom Ibn Battuta in 1325 vertrok op reis.',
-    passage: 'Bij grote ontdekkingsreizen denken we vaak aan Christoffel Columbus, Willem Barentsz en Abel Tasman. Maar ook vóór de tijd van de bekende ontdekkers waren er al avonturiers die de wereld verkenden. Ibn Battuta vertrok in 1325 vanuit de Marokkaanse stad Tanger. De reden van zijn vertrek was de Hadj: een bedevaartstocht naar de heilige stad Mekka die moslims één keer in hun leven moeten maken. Hij reisde langs de kust van Afrika, over de Nijl en de Rode Zee. Vanwege een opstand kon hij Mekka aanvankelijk niet bereiken, maar Ibn Battuta bleef reizen — door het Midden-Oosten, Afrika en Azië — tot hij in 1354 terugkeerde.',
-    // "de Hadj: een bedevaartstocht naar de heilige stad Mekka die moslims één keer in hun leven moeten maken."
-    correctSpan: { start: 47, end: 64 },
-    // kernwoorden: minimaal deze moeten geselecteerd zijn voor gedeeltelijk goed
-    coreWords: [48, 50, 55], // Hadj:, bedevaartstocht, Mekka
-    feedback: 'Het antwoord staat in de zin: "De reden van zijn vertrek was de Hadj: een bedevaartstocht naar de heilige stad Mekka die moslims één keer in hun leven moeten maken." Tanger is de vertrekplaats, niet de reden.',
+    question: "Markeer in de tekst wat een constructie precies is.",
+    passage: "Kijk eens om je heen. De stoel waar je op zit, de brug die je elke dag oversteekt en het dak boven je hoofd hebben iets gemeen. Een constructie is een bouwwerk van twee of meer delen die aan elkaar vastzitten. Bij een stoel zijn dat de poten, de zitting en de rugleuning. Bij een brug zijn dat de pilaren en de platen. Hoe die delen aan elkaar zitten, bepaalt of het bouwwerk blijft staan. Een goede constructie verdeelt het gewicht over alle delen, zodat er nergens te veel druk op één plek komt.",
+    correctSpan: { start: 30, end: 40 },
+    coreWords: [31, 36, 40],
+    feedback: "Het antwoord staat in de zin: \"Een constructie is een bouwwerk van twee of meer delen die aan elkaar vastzitten.\" De stoel en de brug zijn voorbeelden, geen uitleg.",
     points: 2
   },
 
-  // ── Q2  Letterlijk → markeren
   {
     type: 'mark',
     qtype: 'literal',
     label: '🔍 Letterlijk',
     labelClass: 'label-literal',
-    question: 'Markeer in de tekst wat Marco Polo deed toen hij gevangen zat in de gevangenis.',
-    passage: 'Marco Polo werd geboren in Venetië in 1254. Als zoon van een koopman reisde hij mee op handelstochten naar verre landen. Hij bezocht Bagdad, Perzië, Mongolië, China, India en Constantinopel en keerde pas in 1293 terug naar huis. Zijn reisverslag heet Il Milione, wat "De wonderen van de Oriënt" betekent. Op weg naar huis werd Marco Polo gevangen genomen door de Genuezen. In de gevangenis dicteerde hij zijn verhalen aan een medegevangene, die alles zorgvuldig opschreef. Zo bleef zijn kennis van de wereld bewaard voor het nageslacht. Zonder die gelukkige samenloop van omstandigheden hadden we zijn verhalen nooit gekend.',
-    // "dicteerde hij zijn verhalen aan een medegevangene, die alles zorgvuldig opschreef."
-    correctSpan: { start: 65, end: 75 },
-    coreWords: [65, 68, 71], // dicteerde, verhalen, medegevangene
-    feedback: 'Het antwoord staat in de zin: "In de gevangenis dicteerde hij zijn verhalen aan een medegevangene, die alles zorgvuldig opschreef." Dat is de handeling die Marco Polo deed terwijl hij gevangen zat.',
+    question: "Markeer in de tekst wat zwaartekracht doet.",
+    passage: "Een kracht is een duw of een trek op een voorwerp. Door een kracht kan de snelheid, de richting of de vorm van dat voorwerp veranderen. Er zijn verschillende soorten. Zwaartekracht trekt alles naar de aarde toe. Duwkracht ontstaat als je ergens tegenaan leunt of duwt. Trekkracht ontstaat als er ergens aan getrokken wordt, bijvoorbeeld aan een touw. Buigkracht zie je als iets doorbuigt, zoals de plank van een boekenplank die krom trekt onder een stapel zware boeken. Elke constructie moet sterk genoeg zijn om deze krachten op te vangen.",
+    correctSpan: { start: 30, end: 36 },
+    coreWords: [30, 31, 35],
+    feedback: "Het antwoord staat in de zin: \"Zwaartekracht trekt alles naar de aarde toe.\" De andere zinnen gaan over duw-, trek- en buigkracht.",
     points: 2
   },
 
-  // ── Q3  Letterlijk → markeren
   {
     type: 'mark',
     qtype: 'literal',
     label: '🔍 Letterlijk',
     labelClass: 'label-literal',
-    question: 'Markeer in de tekst wat Piet Hein in 1628 buitmaakte bij de Spaanse vloot.',
-    passage: 'In de zestiende en zeventiende eeuw was de zee een gevaarlijke plek. Piraten lagen op de loer om rijke handelschepen te kapen. De Nederlandse kapitein Piet Hein was zo\'n piraat, maar hij werkte met toestemming van de Nederlandse regering. In 1628 kaapte hij vijftien schepen van een Spaanse zilvervloot. De buit was enorm: 177.000 pond zilver en duizend parels. Dat was uiterst welkom, want Nederland zat midden in een lange en dure oorlog met Spanje. Met dit geld kon de oorlog worden betaald. Piet Hein werd daarna in Nederland gevierd als een held.',
-    // "177.000 pond zilver en duizend parels."
-    correctSpan: { start: 53, end: 58 },
-    coreWords: [53, 55, 57, 58], // 177.000, zilver, duizend, parels
-    feedback: 'Het antwoord staat in de zin: "De buit was enorm: 177.000 pond zilver en duizend parels." Dat is precies wat Piet Hein buitmaakte.',
+    question: "Markeer in de tekst waardoor een driehoek zo sterk is.",
+    passage: "Wie iets stevigs wil bouwen, gebruikt vaak een driehoek. Je maakt er een met drie stevige stokken of buizen. Een driehoek verandert niet van vorm als er kracht op komt, want de zijkanten steunen op elkaar en verdelen de kracht. Een vierkant doet dat niet: duw je tegen de bovenkant, dan zakt het scheef in elkaar. Daarom zie je driehoeken terug in de balken van bruggen en in de spanten van een dak. Je kunt het zelf testen met satéprikkers en klei.",
+    correctSpan: { start: 31, end: 39 },
+    coreWords: [32, 33, 37],
+    feedback: "Het antwoord staat in de zin: \"Een driehoek verandert niet van vorm als er kracht op komt, want de zijkanten steunen op elkaar en verdelen de kracht.\"",
     points: 2
   },
 
-  // ── Q4  Letterlijk → markeren
   {
     type: 'mark',
     qtype: 'literal',
     label: '🔍 Letterlijk',
     labelClass: 'label-literal',
-    question: 'Markeer in de tekst wat er met het schip van Willem Barentsz gebeurde tijdens zijn derde reis.',
-    passage: 'Willem Barentsz was een Nederlandse ontdekkingsreiziger die op zoek ging naar een nieuwe route naar Azië langs het noorden van Europa. Tijdens zijn eerste tochten ontdekte hij nieuwe eilanden boven Rusland. Zijn tweede reis mislukte ook. Tijdens de derde reis zat zijn schip zo vast in het ijs dat de hele bemanning de winter op Nova Zembla moest doorbrengen. Ze bouwden daar een houten huis dat ze "het Behouden Huys" noemden. Ze overleefden de ijskoude winter op brood, bier en vlees van ijsberen. Op de terugweg van die barre tocht stierf Barentsz. Zijn reizen waren gevaarlijk maar leverden veel nieuwe kennis op over het hoge noorden.',
-    // "Tijdens de derde reis zat zijn schip zo vast in het ijs dat de hele bemanning de winter op Nova Zembla moest doorbrengen."
-    correctSpan: { start: 36, end: 58 },
-    coreWords: [42, 44, 47, 55, 56], // schip, vast, ijs, Nova, Zembla
-    feedback: 'Het antwoord staat in de zin: "Tijdens de derde reis zat zijn schip zo vast in het ijs dat de hele bemanning de winter op Nova Zembla moest doorbrengen."',
+    question: "Markeer in de tekst waardoor een rol of buis veel gewicht kan dragen.",
+    passage: "Rol een vel papier op tot een strakke koker en zet hem rechtop. Je zult versteld staan van hoeveel boeken erop kunnen voordat de koker knikt. Dat komt doordat een rol of buis de druk rondom verdeelt, in plaats van op één punt. Daarom bestaan de mast van een windmolen, de poten van een tafel en de stang van je fietsstuur uit buizen. Een buis is bovendien lichter dan een massieve staaf, want het midden is hol. Zo bespaar je materiaal én gewicht.",
+    correctSpan: { start: 29, end: 42 },
+    coreWords: [34, 35, 36],
+    feedback: "Het antwoord staat in de zin: \"Dat komt doordat een rol of buis de druk rondom verdeelt, in plaats van op één punt.\"",
     points: 2
   },
 
-  // ── Q5  Afleidend MC
   {
     type: 'mc',
-    qtype: 'inferring',
-    label: '💡 Afleidend',
-    labelClass: 'label-inferring',
-    question: 'Zheng He reisde in opdracht van de Chinese keizer. Wat zegt dat over de macht van de keizer in die tijd?',
-    passage: 'Zheng He werd geboren in 1373 in Kunyang, China. In opdracht van de Chinese keizer moest hij naar verschillende gebieden reizen om daar geld en dure producten op te eisen. Hij leidde enorme vloten: zijn schip was maar liefst vijf keer groter dan het schip waarmee Columbus later Amerika ontdekte. Zheng He bezocht Java, Thailand, India, Oost-Afrika, Mekka en de Malediven. Hij schreef verslagen van zijn expedities, waarvan er veel bewaard zijn gebleven. In 1433 stierf hij tijdens zijn laatste expeditie. Zijn reizen lieten zien hoe ver de Chinese invloed zich uitstrekte.',
-    options: [
-      'De keizer was arm en moest geld ophalen in andere landen',
-      'De keizer had genoeg macht om grote vloten uit te sturen en rijkdom op te eisen in verre landen',
-      'De keizer was bang voor aanvallen en stuurde Zheng He om vijanden te verslaan',
-      'De keizer wilde vriendschappen sluiten met andere landen'
-    ],
+    qtype: "inferring",
+    label: "💡 Afleidend",
+    labelClass: "label-inferring",
+    question: "Waarom kiezen bouwers voor een buis in plaats van een massieve staaf?",
+    passage: "Een buis is hol vanbinnen. Toch kan een buis bijna evenveel gewicht dragen als een massieve staaf van hetzelfde materiaal, omdat de druk aan de buitenkant wordt opgevangen. Een massieve staaf is wel veel zwaarder en er is meer staal voor nodig. Bij een hoge windmolen telt dat dubbel: hoe zwaarder de mast, hoe steviger het fundament moet zijn en hoe duurder de bouw wordt.",
+    options: ["Een buis is mooier om naar te kijken dan een staaf", "Een buis is bijna even sterk, maar lichter en er is minder materiaal voor nodig", "Een buis kan alleen krachten van boven opvangen en een staaf niet", "Een buis is de enige vorm die je van staal kunt maken"],
     correct: 1,
-    feedback: 'Zheng He leidde enorme vloten en kon namens de keizer rijkdom opeisen in landen ver weg. Dat is alleen mogelijk als de keizer heel veel macht en middelen heeft.',
+    feedback: "De tekst zegt dat een buis bijna evenveel draagt, maar lichter is en minder materiaal kost. Bij een windmolen scheelt dat ook in het fundament en in de prijs.",
     points: 1
   },
 
-  // ── Q6  Afleidend MC (langere passage)
   {
     type: 'mc',
-    qtype: 'inferring',
-    label: '💡 Afleidend',
-    labelClass: 'label-inferring',
-    question: 'De tekst zegt dat Europese ontdekkingsreizigers ook naar goud en zilver zochten omdat ze daarmee oorlogen konden betalen. Wat kun je daaruit afleiden over Europa in die tijd?',
-    passage: 'Europese ontdekkingsreizigers gingen om verschillende redenen op wereldreis. Een belangrijke reden was het verspreiden van het christelijke geloof. Ze wilden nieuwe volken bekeren tot het christendom. Maar ook de zoektocht naar goud en zilver speelde een grote rol. Met het goud en zilver dat ze vonden, werden oorlogen betaald. Daarnaast zochten ze nieuwe handelsroutes, zodat ze goedkoper bijzondere producten konden kopen. In die tijd waren er bijna voortdurend oorlogen in Europa. Landen als Spanje, Portugal en Nederland streden om macht en grondgebied. Een lege schatkist betekende dat je geen soldaten kon betalen — en dus de strijd moest opgeven. De zucht naar avontuur en nieuwe dingen willen leren, hebben de reizigers waarschijnlijk allemaal gehad.',
-    options: [
-      'Europa was rijk en had goud en zilver als hobby verzameld',
-      'In Europa waren bijna voortdurend oorlogen, waarvoor geld nodig was',
-      'Europese landen werkten samen om de wereld te veroveren',
-      'Europese landen waren alleen geïnteresseerd in het geloof, niet in geld'
-    ],
+    qtype: "inferring",
+    label: "💡 Afleidend",
+    labelClass: "label-inferring",
+    question: "Waarom zitten er kruizen achterop een boekenkast en aan de zijkant van een tribune?",
+    passage: "Een kruisconstructie is een X van twee stevige latten of buizen. Zonder kruis kan een rechthoekig frame scheef zakken, zoals een kartonnen doos die je opzij duwt. Het kruis verdeelt de kracht naar twee kanten en houdt het frame in balans. Daarom vind je die dunne metalen kruizen achterop een boekenkast en zie je ze in het stalen frame van een tribune. Ze wegen weinig, maar houden de hele constructie recht.",
+    options: ["Om de kast of tribune zwaarder te maken zodat hij niet wegwaait", "Om te voorkomen dat het rechthoekige frame scheef zakt", "Om er meer boeken of mensen op te kunnen zetten", "Omdat een kruis mooier staat dan een driehoek"],
     correct: 1,
-    feedback: 'De tekst zegt dat goud en zilver dienden om oorlogen te betalen én dat er bijna voortdurend strijd was in Europa. Dat is de directe aanleiding voor de zoektocht naar rijkdom.',
+    feedback: "De tekst legt uit dat een rechthoek zonder kruis scheef kan zakken. Het kruis verdeelt de kracht naar twee kanten en houdt het frame recht.",
     points: 1
   },
 
-  // ── Q7  Letterlijk → markeren
   {
     type: 'mark',
     qtype: 'literal',
     label: '🔍 Letterlijk',
     labelClass: 'label-literal',
-    question: 'Markeer in de tekst hoe Magdalena Moons de stad Leiden hielp.',
-    passage: 'In 1574 was de stad Leiden door de Spanjaarden omsingeld. Er kon geen voedsel meer van het platteland naar de stad worden gebracht, en de inwoners van Leiden hadden ernstig honger. De Spanjaarden stonden op het punt de stad in te nemen. Maar Francisco de Valdez, een belangrijke Spaanse officier, was verliefd op het Nederlandse meisje Magdalena Moons. Zij smeekte hem om de aanval nog even uit te stellen. De nacht voor de aanval zou plaatsvinden, brak er een zware storm uit. Omdat de omgeving van Leiden onder water was gezet, waren de Spanjaarden bang dat ze zouden verdrinken. Ze vluchtten weg en de bevolking van Leiden werd bevrijd. Magdalena trouwde later met Valdez en ze kregen twee kinderen.',
-    // "Zij smeekte hem om de aanval nog even uit te stellen."
-    correctSpan: { start: 58, end: 68 },
-    coreWords: [59, 63, 68], // smeekte, aanval, stellen
-    feedback: 'Het antwoord staat in de zin: "Zij smeekte hem om de aanval nog even uit te stellen." Daarmee gaf ze de stad de tijd om gered te worden door de storm.',
+    question: "Markeer in de tekst wat er gebeurt als een constructie de krachten niet kan opvangen.",
+    passage: "Bouwers rekenen precies uit hoeveel gewicht een constructie moet dragen. Ze tellen daarbij niet alleen het gewicht van de mensen mee, maar ook dat van sneeuw, wind en het bouwwerk zelf. Is de constructie te zwak, dan zakt het bouwwerk door of stort het in. Daarom worden bruggen en daken streng gekeurd voordat ze in gebruik worden genomen. Ook worden ze om de zoveel jaar opnieuw gecontroleerd, want roest en scheurtjes maken een constructie langzaam zwakker.",
+    correctSpan: { start: 36, end: 44 },
+    coreWords: [37, 40, 42],
+    feedback: "Het antwoord staat in de zin: \"Is de constructie te zwak, dan zakt het bouwwerk door of stort het in.\"",
     points: 2
   },
 
-  // ── Q8  Afleidend drag naar categorie
   {
     type: 'drag',
     qtype: 'inferring',
     label: '💡 Afleidend – Sorteren',
     labelClass: 'label-inferring',
-    question: 'Welke reden had elke reiziger voor zijn reis? Lees de omschrijvingen en sleep de namen naar de juiste categorie.',
-    passage: 'Ibn Battuta maakte de Hadj, een bedevaartstocht voor zijn geloof. Marco Polo reisde vanuit de machtige handelsstad Venetië om bijzondere producten te kopen. Zheng He werd door de Chinese keizer uitgestuurd om geld en producten op te eisen. Willem van Rubroeck kreeg van de paus opdracht om de Mongolen te bekeren tot het christendom.',
-    categories: ['Geloof', 'Handel', 'Opdracht vorst of kerk'],
+    question: "Bij welke constructie hoort elk voorbeeld? Sleep ze naar de juiste soort.",
+    passage: "Een driehoekconstructie zie je in de balken van een brug en in de spanten van een dak. Een kruisconstructie zit achterop een boekenkast en in het frame van een tribune. Een rol- of buisconstructie herken je aan de mast van een windmolen en aan de poten van een tafel.",
+    categories: ["Driehoek", "Kruis", "Rol of buis"],
     items: [
-      { id: 'ibn',   text: 'Ibn Battuta',          correct: 'Geloof' },
-      { id: 'marco', text: 'Marco Polo',            correct: 'Handel' },
-      { id: 'zheng', text: 'Zheng He',              correct: 'Opdracht vorst of kerk' },
-      { id: 'willem',text: 'Willem van Rubroeck',   correct: 'Opdracht vorst of kerk' }
+      { id: "i0", text: "Spanten van een dak", correct: "Driehoek" },
+      { id: "i1", text: "Achterkant van een boekenkast", correct: "Kruis" },
+      { id: "i2", text: "Mast van een windmolen", correct: "Rol of buis" },
+      { id: "i3", text: "Balken van een brug", correct: "Driehoek" },
+      { id: "i4", text: "Poten van een tafel", correct: "Rol of buis" }
     ],
-    feedback: 'Ibn Battuta → geloof (Hadj). Marco Polo → handel (Venetiaanse kooplieden). Zheng He en Willem van Rubroeck → opdracht van de keizer respectievelijk de paus.',
+    feedback: "Dak en brug → driehoek. Boekenkast → kruis. Windmolenmast en tafelpoten → rol of buis.",
     points: 2
   },
 
-  // ── Q9  Evaluerend MC
   {
     type: 'mc',
-    qtype: 'evaluating',
-    label: '💬 Evaluerend',
-    labelClass: 'label-evaluating',
-    question: 'De tekst noemt Barentsz, Piet Hein én Magdalena Moons allemaal "stoere zestiende-eeuwers". Welk antwoord is het best onderbouwd?',
-    passage: 'Wie waren de helden van de zestiende eeuw? Dat waren mensen die naar de andere kant van de wereld durfden te varen en thuiskwamen met grote schatten — maar ook mensen die durfden op te komen tegen de machtige katholieke kerk. Stoere zestiende-eeuwers kwamen op voor hun eigen mening of kwamen in verzet tegen de macht. Magdalena Moons was stoer omdat ze haar Spaanse geliefde vroeg om de aanval op Leiden uit te stellen en zo de stad redde. Piet Hein was een piraat die met toestemming van de regering vijftien Spaanse schepen kaapte en een enorme zilverschat buitmaakte. Willem Barentsz waagde zijn leven op ijskoude zeeën op zoek naar nieuwe routes. Elk op hun manier durfden ze iets te doen wat de meeste mensen niet aandurfden.',
-    options: [
-      'Nee, want Magdalena deed alleen iets voor haar geliefde en niet voor de stad',
-      'Ja, want ze durfden allemaal iets moeilijks of gevaarlijks, elk op hun eigen manier',
-      'Nee, want Piet Hein was een piraat en piraterij is een misdaad, geen heldendaad',
-      'Ja, maar eigenlijk zijn alleen Barentsz en Piet Hein stoer, want zij reisden'
-    ],
+    qtype: "evaluating",
+    label: "💬 Evaluerend",
+    labelClass: "label-evaluating",
+    question: "Iemand zegt: \"Een sterke constructie is gewoon een constructie van heel veel materiaal.\" Wat is daarop het beste antwoord?",
+    passage: "Sterk bouwen is niet hetzelfde als veel materiaal gebruiken. Een driehoek van drie dunne latten is sterker dan een vierkant van vier dikke latten, omdat de vorm de kracht beter verdeelt. Een holle buis draagt bijna net zoveel als een massieve staaf. Slimme bouwers kiezen dus eerst de juiste vorm en pas daarna het materiaal. Dat scheelt gewicht, geld en grondstoffen.",
+    options: ["Klopt, want hoe dikker de latten, hoe sterker het bouwwerk altijd is", "Klopt niet, want de vorm bepaalt vooral hoe de kracht verdeeld wordt", "Klopt niet, want materiaal maakt helemaal niets uit voor de sterkte", "Klopt, want een driehoek van dunne latten zakt altijd in elkaar"],
     correct: 1,
-    feedback: 'De tekst beschrijft drie soorten moed: gevaarlijk reizen (Barentsz), slim ingrijpen in een oorlog (Magdalena) en een gedurfde aanval (Piet Hein). De tekst zegt zelf dat ze elk op hun manier iets deden wat anderen niet aandurfden.',
+    feedback: "De tekst geeft twee voorbeelden waarin de vorm belangrijker is dan de hoeveelheid materiaal: de driehoek van dunne latten en de holle buis. Materiaal doet er wel toe, maar de vorm bepaalt hoe de kracht verdeeld wordt.",
     points: 1
   },
 
-  // ── Q10  Evaluerend MC
   {
     type: 'mc',
-    qtype: 'evaluating',
-    label: '💬 Evaluerend',
-    labelClass: 'label-evaluating',
-    question: 'De tekst eindigt met: "De zucht naar avontuur en nieuwe dingen willen leren, hebben ze waarschijnlijk allemaal gehad." Waarom staat er "waarschijnlijk" en niet "zeker"?',
-    passage: 'Europese ontdekkingsreizigers hadden verschillende redenen voor hun reizen: geloof, handel, opdrachten van koningen of de paus. Maar naast die officiële redenen speelde ook persoonlijke nieuwsgierigheid een rol. Ibn Battuta bezocht culturen ver buiten zijn opdracht. Marco Polo schreef uitgebreid over de wonderen die hij zag. Willem van Rubroeck beschreef de landen waar hij doorheen trok in detail. Was dat alleen plicht, of ook echte interesse in de wereld? De zucht naar avontuur en nieuwe dingen willen leren, hebben ze waarschijnlijk allemaal gehad. We kunnen immers niet met zekerheid weten wat er in hun hoofd omging.',
-    options: [
-      'Omdat de schrijver het niet zeker weet — we kunnen niet in hun hoofd kijken',
-      'Omdat sommige reizigers helemaal geen avontuur wilden maar gedwongen werden',
-      'Omdat "waarschijnlijk" beleefder klinkt in een tekst dan "zeker"',
-      'Omdat de reizigers zelf schreven dat ze geen avontuur zochten'
-    ],
+    qtype: "evaluating",
+    label: "💬 Evaluerend",
+    labelClass: "label-evaluating",
+    question: "In de tekst staat: \"Je zult versteld staan van hoeveel boeken erop kunnen.\" Waarom schrijft de maker dat zo?",
+    passage: "Rol een vel papier op tot een koker en zet er boeken op. Je zult versteld staan van hoeveel boeken erop kunnen. Zulke zinnen gebruiken schrijvers om je nieuwsgierig te maken, zodat je de proef zelf gaat doen. Hoeveel boeken het precies zijn, hangt af van het papier, de dikte van de rol en hoe recht je hem neerzet. Het is dus geen exact getal, maar een uitnodiging om te proberen.",
+    options: ["Om je nieuwsgierig te maken zodat je de proef zelf gaat doen", "Omdat de schrijver het precieze aantal boeken vergeten is op te zoeken", "Om te bewijzen dat papier sterker is dan staal", "Omdat er in een proef nooit iets te meten valt"],
     correct: 0,
-    feedback: '"Waarschijnlijk" is een signaalwoord dat laat zien dat het om een mening of aanname gaat, geen bewezen feit. De tekst zegt zelf: "We kunnen immers niet met zekerheid weten wat er in hun hoofd omging." Als kritisch lezer herken je dit soort woorden.',
+    feedback: "De tekst zegt het zelf: zulke zinnen maken je nieuwsgierig, zodat je het gaat proberen. Het precieze aantal hangt van te veel dingen af om op te schrijven.",
     points: 1
   }
 
@@ -952,7 +917,7 @@ function showFinish() {
     `<div class="ov-title">${goed} van ${questions.length} vragen goed</div>` + rows;
   show('finish-screen');
   const opgaven = questions.map((q,i) => ({ vraag: q.question.replace(/<[^>]*>/g,''), puntenBehaald: scores[i], puntenMax: q.points }));
-  window.KennisKist?.slaResultaatOp?.('reisrondewereld-les1', score, total, { opgaven });
+  window.KennisKist?.slaResultaatOp?.('spullen-les1', score, total, { opgaven });
   window.KennisKist?.toonInlogstatus?.(document.getElementById('kkStatus'));
 }
 
@@ -961,7 +926,7 @@ function restartQuiz() {
   scores   = new Array(questions.length).fill(0);
   answered = new Array(questions.length).fill(false);
   markState= questions.map(() => new Set());
-  localStorage.removeItem('bl_wereld_v2');
+  localStorage.removeItem('bl_spullen_les1');
   document.getElementById('score-num').textContent = 0;
   show('quiz-screen');
   renderQuestion();

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Begrijpend Lezen – De Eerste Wereldreizigers</title>
+<title>Begrijpend Lezen – Mobiel binnenstebuiten</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -252,9 +252,9 @@
 <body>
 
 <header>
-  <p class="eyebrow">Begrijpend lezen · Groep 7-8</p>
-  <h1>Allemaal op de foto</h1>
-  <p>Bron: Blink Wereld – Reis de wereld rond</p>
+  <p class="eyebrow">Begrijpend lezen · Groep 7 · Les 5</p>
+  <h1>Mobiel binnenstebuiten</h1>
+  <p>Thema: Duurzaam design</p>
 </header>
 <div id="progress-bar-wrap"><div id="progress-bar"></div></div>
 <div id="score-badge">⭐ <span id="score-num">0</span> pt</div>
@@ -262,9 +262,9 @@
 <main>
 
 <div id="intro-screen" class="screen active">
-  <div class="compass">📷</div>
-  <h2>Klaar voor de eerste foto's?</h2>
-  <p>Je leest teksten over de uitvinding van de fotografie en beantwoordt vragen. Bij <strong>letterlijke vragen</strong> markeer je het antwoord <em>in de tekst zelf</em>. Klik woorden aan om ze te selecteren.</p>
+  <div class="compass">📱</div>
+  <h2>Wat zit er in je telefoon?</h2>
+  <p>Je leest teksten over de grondstoffen in een telefoon en waar ze vandaan komen, en beantwoordt tien vragen. Bij <strong>letterlijke vragen</strong> markeer je het antwoord <em>in de tekst zelf</em>. Klik woorden aan om ze te selecteren.</p>
   <div class="legend">
     <span style="background:#d0e8ff;color:#0a3a6e;">🔍 Letterlijk – markeer in de tekst</span>
     <span style="background:#fde8c0;color:#7a3d00;">💡 Afleidend</span>
@@ -281,7 +281,7 @@
 
 <div id="finish-screen" class="screen">
   <div class="medal" id="finish-medal">🏅</div>
-  <h2>Goed gedaan, ontdekkingsreiziger!</h2>
+  <h2>Goed gedaan, techniekexpert!</h2>
   <div class="score-big" id="finish-score">0/0</div>
   <p id="finish-msg"></p>
   <div id="finish-overview"></div>
@@ -307,175 +307,138 @@
 
 const questions = [
 
-  // ── Q1  Letterlijk → markeren  (Niépce, span geverifieerd 25-40)
   {
     type: 'mark',
     qtype: 'literal',
     label: '🔍 Letterlijk',
     labelClass: 'label-literal',
-    question: 'Markeer in de tekst hoe Joseph Niépce ervoor zorgde dat er een afbeelding op de achterwand ontstond.',
-    passage: 'In 1816 maakte de Fransman Joseph Niépce een heel klein gaatje in een doos. Op de achterwand van de doos plakte hij een lichtgevoelige plaat. Door het gaatje een aantal uren open te houden ontstond er op de achterwand een afbeelding. Zo maakte hij de eerste echte foto met het uitzicht vanuit een dakraam.',
-    // "Door het gaatje een aantal uren open te houden ontstond er op de achterwand een afbeelding."
-    correctSpan: { start: 25, end: 40 },
-    coreWords: [30, 31, 40], // uren, open, afbeelding.
-    feedback: 'Het antwoord staat in de zin: "Door het gaatje een aantal uren open te houden ontstond er op de achterwand een afbeelding." Door het gaatje lang open te laten, kon het licht een beeld vormen.',
+    question: "Markeer in de tekst waarvan de buitenkant van een telefoon gemaakt wordt.",
+    passage: "Een telefoon lijkt één ding, maar bestaat uit tientallen onderdelen met elk hun eigen grondstof. In de behuizing, de buitenkant, zit aluminium. Aluminium wordt gemaakt van het gesteente bauxiet. In het glas van je touchscreen zit tin, in de bedrading zit koper en in de printplaat en de chip zit silicium. De camera bevat een klein beetje goud, de trilmotor bevat staal en in de luidspreker en de microfoon zit nikkel. De batterij ten slotte bevat kobalt.",
+    correctSpan: { start: 15, end: 21 },
+    coreWords: [17, 21],
+    feedback: "Het antwoord staat in de zin: \"In de behuizing, de buitenkant, zit aluminium.\" Daarna volgt waar aluminium zelf van gemaakt wordt: bauxiet.",
     points: 2
   },
 
-  // ── Q2  Letterlijk → markeren  (Daguerre, span geverifieerd 57-66)
   {
     type: 'mark',
     qtype: 'literal',
     label: '🔍 Letterlijk',
     labelClass: 'label-literal',
-    question: 'Markeer in de tekst wat je op de allereerste foto van een mens kunt zien.',
-    passage: 'Na deze uitvinding gingen allerlei mensen verder met het experimenteren om de fotografie te verbeteren. De Fransman Louis Daguerre maakte de eerste foto van een mens. Het duurde tien minuten om de foto op een boulevard in Parijs te maken. Het verkeer bewoog, dus dat is niet te zien. Maar als je goed kijkt naar de foto, zit een man de schoenen van een klant te poetsen. Deze onbekende mannen zijn de eerste mensen die ooit zijn gefotografeerd.',
-    // "zit een man de schoenen van een klant te poetsen."
-    correctSpan: { start: 57, end: 66 },
-    coreWords: [59, 61, 66], // man, schoenen, poetsen.
-    feedback: 'Het antwoord staat in de zin: "...zit een man de schoenen van een klant te poetsen." Omdat die mannen tien minuten stil bleven staan, zijn ze wél vastgelegd; het bewegende verkeer niet.',
+    question: "Markeer in de tekst hoe silicium gewonnen wordt.",
+    passage: "Niet elke grondstof komt uit een mijn. Silicium is een halfmetaal dat met een chemisch proces uit zand wordt gehaald. Goud, nikkel en tin zitten juist in gesteente en worden door mijnbouw uit de aarde gehaald. Kobalt komt meestal uit ondergrondse mijnen. Voor bauxiet en ijzererts wordt de bovenste laag van grote stukken land afgegraven. Elke manier van winnen heeft gevolgen voor de natuur en voor de mensen die er werken.",
+    correctSpan: { start: 12, end: 19 },
+    coreWords: [14, 17, 19],
+    feedback: "Het antwoord staat in de zin: \"Silicium is een halfmetaal dat met een chemisch proces uit zand wordt gehaald.\" De andere zinnen gaan over mijnbouw en afgraven.",
     points: 2
   },
 
-  // ── Q3  Letterlijk → markeren  (Draper/maan, span geverifieerd 70-75)
   {
     type: 'mark',
     qtype: 'literal',
     label: '🔍 Letterlijk',
     labelClass: 'label-literal',
-    question: 'Markeer in de tekst waarvan John Draper als eerste een gedetailleerde foto wist te maken.',
-    passage: 'De Amerikaan Robert Cornelius was de eerste die in 1839 zichzelf op de foto zette. Zijn haar zat een beetje in de war, maar het lukte wel. In hetzelfde jaar maakte een andere enthousiaste fotograaf, de Amerikaan John Draper, een foto van zijn zus Dorothy. Zij was de eerste vrouw die op de foto werd gezet. John Draper was trouwens ook de eerste die een gedetailleerde foto wist te maken van het oppervlak van de maan.',
-    // "van het oppervlak van de maan."
-    correctSpan: { start: 70, end: 75 },
-    coreWords: [72, 75], // oppervlak, maan.
-    feedback: 'Het antwoord staat in de zin: "...een gedetailleerde foto wist te maken van het oppervlak van de maan."',
+    question: "Markeer in de tekst wat er met het land gebeurt om bauxiet te winnen.",
+    passage: "Bauxiet is een gesteente waar aluminium van gemaakt wordt. Om bauxiet te krijgen, wordt de bovenste laag van grote stukken land afgegraven. Bossen verdwijnen daardoor en dieren verliezen hun leefgebied. Ook bij ijzererts gaat het zo. Guinee, Australië en Brazilië zijn de grootste producenten van bauxiet. Na het graven wordt het gesteente met schepen naar fabrieken over de hele wereld gebracht.",
+    correctSpan: { start: 13, end: 21 },
+    coreWords: [15, 16, 21],
+    feedback: "Het antwoord staat in de zin: \"Om bauxiet te krijgen, wordt de bovenste laag van grote stukken land afgegraven.\" Dat bossen verdwijnen, is het gevolg daarvan.",
     points: 2
   },
 
-  // ── Q4  Letterlijk → markeren  (Maxwell, span geverifieerd 14-41)
-  {
-    type: 'mark',
-    qtype: 'literal',
-    label: '🔍 Letterlijk',
-    labelClass: 'label-literal',
-    question: 'Markeer in de tekst hoe James Maxwell in 1861 de eerste kleurenfoto maakte.',
-    passage: 'In 1861 lukte het de Schot James Maxwell om de eerste kleurenfoto te maken. Hij nam drie foto\'s van een gekleurd lintje. Hij gebruikte een groen, blauw en rood filter voor de camera. Daarna legde hij die drie foto\'s over elkaar heen. Ingewikkeld, maar het lukte. Fotograferen in kleur was lastig. Lang lukte het niet om de kleur rood goed vast te leggen.',
-    // "Hij nam drie foto's ... Daarna legde hij die drie foto's over elkaar heen."
-    correctSpan: { start: 14, end: 41 },
-    coreWords: [16, 29, 40], // drie, filter, elkaar
-    feedback: 'Het antwoord staat in de zinnen: "Hij nam drie foto\'s van een gekleurd lintje. Hij gebruikte een groen, blauw en rood filter voor de camera. Daarna legde hij die drie foto\'s over elkaar heen."',
-    points: 2
-  },
-
-  // ── Q5  Afleidend MC
   {
     type: 'mc',
-    qtype: 'inferring',
-    label: '💡 Afleidend',
-    labelClass: 'label-inferring',
-    question: 'In een fotostudio werden soms wel vijfhonderd foto\'s per dag gemaakt. Wat kun je daaruit afleiden?',
-    passage: 'Voor 1850 moest je alles wat je wilde vastleggen, laten tekenen of schilderen. En dat konden natuurlijk alleen rijke mensen betalen. Maar toen de fotografie werd uitgevonden, ontdekte de westerse wereld de mogelijkheden ervan. Een portret van jezelf of je gezin, gemaakt in een paar minuten. Dat wilde iedereen wel! In allerlei steden kwamen fotostudio\'s. Soms werden er in zo\'n studio wel vijfhonderd foto\'s per dag gemaakt.',
-    options: [
-      'Fotostudio\'s stonden meestal leeg, want niemand wilde op de foto',
-      'Heel veel gewone mensen wilden op de foto, niet langer alleen rijke mensen',
-      'Er was maar één fotostudio in heel Europa',
-      'Eén foto maken duurde nog steeds een hele dag'
-    ],
+    qtype: "inferring",
+    label: "💡 Afleidend",
+    labelClass: "label-inferring",
+    question: "Waarom noemt de tekst een telefoon een \"wereldproduct\"?",
+    passage: "Voor één telefoon zijn grondstoffen uit heel veel landen nodig. Kobalt komt vooral uit de Democratische Republiek Congo, tin uit Indonesië en China, nikkel uit Indonesië en de Filipijnen, koper uit Chili en Peru, bauxiet uit Guinee en Australië. Die grondstoffen worden verscheept naar fabrieken in weer andere landen, waar de onderdelen gemaakt en in elkaar gezet worden. Pas daarna ligt het toestel in de winkel bij jou in de buurt.",
+    options: ["Omdat je er over de hele wereld mee kunt bellen", "Omdat de grondstoffen en onderdelen uit veel verschillende landen komen", "Omdat telefoons in elk land dezelfde prijs hebben", "Omdat de fabrieken allemaal in één land staan"],
     correct: 1,
-    feedback: 'Vóór 1850 kon alleen wie rijk was zich een geschilderd portret veroorloven. Door de fotografie wilde "iedereen wel" op de foto — en er werden soms vijfhonderd foto\'s per dag gemaakt. Dat kan alleen als heel veel gewone mensen meedoen.',
+    feedback: "De tekst somt landen op waar de grondstoffen vandaan komen en vertelt dat de onderdelen in weer andere landen gemaakt worden. Daarom is een telefoon een wereldproduct.",
     points: 1
   },
 
-  // ── Q6  Afleidend MC
-  {
-    type: 'mc',
-    qtype: 'inferring',
-    label: '💡 Afleidend',
-    labelClass: 'label-inferring',
-    question: 'De tekst zegt dat veel kinderen in de fabriek gingen werken "omdat het geld hard nodig was". Wat kun je daaruit afleiden over veel gezinnen in die tijd?',
-    passage: 'De uitvinding van de stoommachine veranderde veel in het leven van mensen. Zo ging reizen ineens veel sneller door de stoomtrein. Ook kwamen er veel fabrieken, waardoor mensen niet meer thuiswerkten, maar de stad in trokken. Omdat het geld hard nodig was, gingen veel kinderen in de fabriek werken. Langzaamaan kregen steeds meer mensen door dat het beter is als kinderen niet werken en naar school gaan. Met de leerplichtwet in 1901 werd een einde gemaakt aan de kinderarbeid.',
-    options: [
-      'De meeste gezinnen waren rijk en lieten hun kinderen voor de lol werken',
-      'Veel gezinnen waren arm en hadden het geld van hun werkende kinderen nodig',
-      'Kinderen vonden fabriekswerk leuker dan naar school gaan',
-      'Er waren te weinig volwassenen om in de fabrieken te werken'
-    ],
-    correct: 1,
-    feedback: 'Als het geld zó hard nodig was dat zelfs kinderen moesten werken, betekent dat dat veel gezinnen arm waren en het inkomen van hun kinderen nodig hadden. Pas met de leerplichtwet van 1901 kwam er een einde aan de kinderarbeid.',
-    points: 1
-  },
-
-  // ── Q7  Letterlijk → markeren  (Vriesendorp, span geverifieerd 25-28)
   {
     type: 'mark',
     qtype: 'literal',
     label: '🔍 Letterlijk',
     labelClass: 'label-literal',
-    question: 'Markeer in de tekst wie waarschijnlijk de allereerste Nederlander was die zélf op de foto ging.',
-    passage: 'Willem Hallegraeff uit Zutphen maakte als eerste Nederlander een foto. Hij fotografeerde een prent in 1839 die hij gebruikte in een soort vriendenboekje. Waarschijnlijk is Henri Vriesendorp uit Dordrecht de allereerste Nederlander die op de foto ging. Er kwam een rondreizende Franse fotograaf naar Nederland en Henri greep zijn kans.',
-    // "Henri Vriesendorp uit Dordrecht"
-    correctSpan: { start: 25, end: 28 },
-    coreWords: [25, 26, 28], // Henri, Vriesendorp, Dordrecht
-    feedback: 'Het antwoord staat in de zin: "Waarschijnlijk is Henri Vriesendorp uit Dordrecht de allereerste Nederlander die op de foto ging." Let op: Willem Hallegraeff was de eerste die zélf een foto máákte — Vriesendorp was de eerste die er zelf op stond.',
+    question: "Markeer in de tekst waar het kobalt in je batterij meestal vandaan komt.",
+    passage: "In de batterij van bijna elke telefoon zit kobalt. Verreweg het meeste kobalt komt uit de Democratische Republiek Congo. Het wordt daar uit ondergrondse mijnen gehaald. In sommige van die mijnen werken mensen onder gevaarlijke omstandigheden en met eenvoudig gereedschap. Daarom letten steeds meer bedrijven erop waar hun kobalt vandaan komt, en zoeken onderzoekers naar batterijen die minder of geen kobalt nodig hebben.",
+    correctSpan: { start: 9, end: 18 },
+    coreWords: [12, 16, 18],
+    feedback: "Het antwoord staat in de zin: \"Verreweg het meeste kobalt komt uit de Democratische Republiek Congo.\"",
     points: 2
   },
 
-  // ── Q8  Afleidend drag naar categorie
+  {
+    type: 'mc',
+    qtype: "inferring",
+    label: "💡 Afleidend",
+    labelClass: "label-inferring",
+    question: "Waarom zoeken onderzoekers naar batterijen zonder kobalt?",
+    passage: "Kobalt is lastig te winnen. Het komt uit diepe mijnen en in sommige mijnen werken mensen onder gevaarlijke omstandigheden. Bovendien komt het grootste deel uit één land, dus als de handel daar stilvalt, zit de hele wereld zonder. Daarom werken onderzoekers aan batterijen die minder of geen kobalt nodig hebben.",
+    options: ["Omdat kobalt niet genoeg stroom kan opslaan", "Omdat het winnen gevaarlijk is en bijna alles uit één land komt", "Omdat kobalt in Nederland verboden is", "Omdat batterijen zonder kobalt lichter zijn"],
+    correct: 1,
+    feedback: "De tekst noemt twee redenen: de gevaarlijke omstandigheden in sommige mijnen én de afhankelijkheid van één land.",
+    points: 1
+  },
+
+  {
+    type: 'mark',
+    qtype: 'literal',
+    label: '🔍 Letterlijk',
+    labelClass: 'label-literal',
+    question: "Markeer in de tekst wat er gebeurt als je je oude telefoon inlevert.",
+    passage: "De meeste mensen kopen elke paar jaar een nieuwe telefoon. Oude toestellen belanden vaak in een la, terwijl er kostbare grondstoffen in zitten. Lever je je telefoon in, dan worden de metalen eruit gehaald en opnieuw gebruikt in nieuwe apparaten. Dat heet urban mining: mijnbouw in de stad in plaats van in de natuur. Uit een ton oude telefoons haal je meer goud dan uit een ton goudgesteente uit een mijn.",
+    correctSpan: { start: 28, end: 39 },
+    coreWords: [31, 35, 39],
+    feedback: "Het antwoord staat in de zin: \"Lever je je telefoon in, dan worden de metalen eruit gehaald en opnieuw gebruikt in nieuwe apparaten.\"",
+    points: 2
+  },
+
   {
     type: 'drag',
     qtype: 'inferring',
     label: '💡 Afleidend – Sorteren',
     labelClass: 'label-inferring',
-    question: 'Uit welk land kwam elke uitvinder of fotograaf? Lees de tekst en sleep de namen naar het juiste land.',
-    passage: 'Joseph Niépce en Louis Daguerre waren allebei een Fransman. De Amerikaan Robert Cornelius maakte de eerste selfie en zijn landgenoot John Draper fotografeerde als eerste een vrouw. Willem Hallegraeff uit Zutphen en Henri Vriesendorp uit Dordrecht waren allebei een Nederlander.',
-    categories: ['Fransman', 'Amerikaan', 'Nederlander'],
+    question: "In welk onderdeel zit welke grondstof? Sleep de grondstoffen naar het juiste onderdeel.",
+    passage: "In de behuizing zit aluminium, dat van bauxiet gemaakt wordt. In het glas van het touchscreen zit tin. In de bedrading zit koper. In de batterij zit kobalt. In de printplaat en de chip zit silicium.",
+    categories: ["Behuizing", "Touchscreen", "Bedrading", "Batterij"],
     items: [
-      { id: 'niepce',     text: 'Joseph Niépce',      correct: 'Fransman' },
-      { id: 'daguerre',   text: 'Louis Daguerre',     correct: 'Fransman' },
-      { id: 'cornelius',  text: 'Robert Cornelius',   correct: 'Amerikaan' },
-      { id: 'draper',     text: 'John Draper',        correct: 'Amerikaan' },
-      { id: 'hallegraeff',text: 'Willem Hallegraeff', correct: 'Nederlander' },
-      { id: 'vriesendorp',text: 'Henri Vriesendorp',  correct: 'Nederlander' }
+      { id: "i0", text: "Aluminium", correct: "Behuizing" },
+      { id: "i1", text: "Tin", correct: "Touchscreen" },
+      { id: "i2", text: "Koper", correct: "Bedrading" },
+      { id: "i3", text: "Kobalt", correct: "Batterij" }
     ],
-    feedback: 'Joseph Niépce en Louis Daguerre waren Fransen. Robert Cornelius en John Draper waren Amerikanen. Willem Hallegraeff en Henri Vriesendorp waren Nederlanders.',
+    feedback: "Aluminium zit in de buitenkant, tin in het glas van het scherm, koper in de draadjes en kobalt in de batterij.",
     points: 2
   },
 
-  // ── Q9  Evaluerend MC
   {
     type: 'mc',
-    qtype: 'evaluating',
-    label: '💬 Evaluerend',
-    labelClass: 'label-evaluating',
-    question: 'Aan het einde legt de tekst uit waarom deze periode "de tijd van burgers en stoommachines" heet. Welk antwoord wordt het best door de tekst onderbouwd?',
-    passage: 'De uitvinding van de stoommachine veranderde veel in het leven van mensen. Reizen ging sneller door de stoomtrein en er kwamen veel fabrieken. Rond 1870 begon de eerste feministische golf: steeds meer vrouwen wilden emancipatie en dezelfde rechten als mannen. Omdat burgers meer rechten en macht kregen en stoommachines het leven ingrijpend veranderden, heet deze tijd ook wel de tijd van burgers en stoommachines.',
-    options: [
-      'Omdat alleen de stoommachines belangrijk waren en de burgers niet',
-      'Omdat burgers meer rechten en macht kregen én stoommachines het leven sterk veranderden',
-      'Omdat iedereen in die tijd een eigen stoommachine bezat',
-      'Omdat de burgers zelf de stoommachine hadden uitgevonden'
-    ],
+    qtype: "evaluating",
+    label: "💬 Evaluerend",
+    labelClass: "label-evaluating",
+    question: "Iemand zegt: \"Recyclen van telefoons heeft geen zin, want er zit maar een klein beetje goud in.\" Wat is daarop het beste antwoord?",
+    passage: "In één telefoon zit maar een paar milligram goud. Toch loont recyclen: uit een ton oude telefoons komt meer goud dan uit een ton gesteente uit een goudmijn. Bovendien gaat het niet alleen om goud, maar ook om koper, kobalt, nikkel en tin. Elke kilo die je hergebruikt, hoeft niet uit de grond gehaald te worden.",
+    options: ["Klopt, want een paar milligram is te weinig om iets mee te doen", "Klopt niet, want samen leveren veel telefoons meer goud op dan gesteente uit een mijn, én er zitten nog andere metalen in", "Klopt niet, want er zit juist heel veel goud in één telefoon", "Klopt, want goud is het enige metaal dat je kunt recyclen"],
     correct: 1,
-    feedback: 'De tekst noemt twee oorzaken samen: burgers kregen meer rechten en macht én de stoommachines veranderden het leven ingrijpend. Daarom heet het de tijd van burgers én stoommachines — niet om één van de twee alleen.',
+    feedback: "De tekst geeft twee tegenargumenten: een ton oude telefoons levert meer goud op dan een ton gesteente, en er zitten ook koper, kobalt, nikkel en tin in.",
     points: 1
   },
 
-  // ── Q10  Evaluerend MC (signaalwoord)
   {
     type: 'mc',
-    qtype: 'evaluating',
-    label: '💬 Evaluerend',
-    labelClass: 'label-evaluating',
-    question: 'In de tekst staat: "Waarschijnlijk is Henri Vriesendorp de allereerste Nederlander die op de foto ging." Waarom staat hier "waarschijnlijk" en niet "zeker"?',
-    passage: 'Willem Hallegraeff uit Zutphen maakte als eerste Nederlander een foto. Waarschijnlijk is Henri Vriesendorp uit Dordrecht de allereerste Nederlander die zelf op de foto ging. Er kwam een rondreizende Franse fotograaf naar Nederland en Henri greep zijn kans.',
-    options: [
-      'Omdat de schrijver het niet zeker weet — het is niet met 100% bewijs vast te stellen',
-      'Omdat Henri Vriesendorp eigenlijk geen Nederlander was',
-      'Omdat "waarschijnlijk" altijd netter klinkt dan "zeker"',
-      'Omdat er foto\'s bestaan van veel eerdere Nederlanders'
-    ],
-    correct: 0,
-    feedback: '"Waarschijnlijk" is een signaalwoord. Het laat zien dat de schrijver niet helemaal zeker is: misschien ging er nog een eerdere Nederlander op de foto die we niet kennen. Een kritische lezer herkent zulke woorden.',
+    qtype: "evaluating",
+    label: "💬 Evaluerend",
+    labelClass: "label-evaluating",
+    question: "Waarom is het handig om te weten waar de grondstoffen van je telefoon vandaan komen?",
+    passage: "Als je weet dat het kobalt in je batterij uit diepe mijnen komt en dat er bos verdwijnt voor bauxiet, kijk je anders naar je toestel. Je kunt er dan voor kiezen om je telefoon langer te gebruiken, hem te laten repareren of hem in te leveren voor recycling. Sommige bedrijven laten zien waar hun grondstoffen vandaan komen; als koper kun je daar rekening mee houden.",
+    options: ["Dan weet je precies hoeveel je telefoon waard is bij verkoop", "Dan kun je bewuster kiezen: langer gebruiken, laten repareren, inleveren of letten op het merk", "Dan hoef je nooit meer een telefoon te kopen", "Dan kun je zelf een telefoon maken van zand en gesteente"],
+    correct: 1,
+    feedback: "De tekst noemt precies die keuzes: langer gebruiken, laten repareren, inleveren voor recycling en letten op bedrijven die laten zien waar hun grondstoffen vandaan komen.",
     points: 1
   }
 
@@ -497,12 +460,12 @@ let markState = questions.map(() => new Set());
 // PERSISTENCE
 // ─────────────────────────────────────────────────────────────────────────────
 let paidSet = new Set();
-function loadPaid() { try { const s = localStorage.getItem('bl_wereld_les2_paid'); if (s) paidSet = new Set(JSON.parse(s)); } catch(e){} }
-function savePaid() { try { localStorage.setItem('bl_wereld_les2_paid', JSON.stringify([...paidSet])); } catch(e){} }
+function loadPaid() { try { const s = localStorage.getItem('bl_wereld_v2_paid'); if (s) paidSet = new Set(JSON.parse(s)); } catch(e){} }
+function savePaid() { try { localStorage.setItem('bl_wereld_v2_paid', JSON.stringify([...paidSet])); } catch(e){} }
 function loadProgress() {
   loadPaid();
   try {
-    const saved = localStorage.getItem('bl_wereld_les2');
+    const saved = localStorage.getItem('bl_wereld_v2');
     if (saved) {
       const d = JSON.parse(saved);
       scores   = d.scores   || scores;
@@ -514,7 +477,7 @@ function loadProgress() {
 
 function saveProgress() {
   try {
-    localStorage.setItem('bl_wereld_les2', JSON.stringify({ scores, answered }));
+    localStorage.setItem('bl_wereld_v2', JSON.stringify({ scores, answered }));
   } catch(e){}
 }
 
@@ -953,7 +916,7 @@ function showFinish() {
     `<div class="ov-title">${goed} van ${questions.length} vragen goed</div>` + rows;
   show('finish-screen');
   const opgaven = questions.map((q,i) => ({ vraag: q.question.replace(/<[^>]*>/g,''), puntenBehaald: scores[i], puntenMax: q.points }));
-  window.KennisKist?.slaResultaatOp?.('reisrondewereld-les2', score, total, { opgaven });
+  window.KennisKist?.slaResultaatOp?.('spullen-les5', score, total, { opgaven });
   window.KennisKist?.toonInlogstatus?.(document.getElementById('kkStatus'));
 }
 
@@ -962,7 +925,7 @@ function restartQuiz() {
   scores   = new Array(questions.length).fill(0);
   answered = new Array(questions.length).fill(false);
   markState= questions.map(() => new Set());
-  localStorage.removeItem('bl_wereld_les2');
+  localStorage.removeItem('bl_spullen_les5');
   document.getElementById('score-num').textContent = 0;
   show('quiz-screen');
   renderQuestion();

@@ -23,7 +23,7 @@ const SUBJECTS = [
   { emoji: '🔢', label: 'Rekenen' },
   { emoji: '✏️', label: 'Taal & Spelling' },
   { emoji: '📚', label: 'Begrijpend lezen' },
-  { emoji: '🇬🇧', label: 'Engels' },
+  { emoji: '🗺️', label: 'Topografie' },
 ]
 
 const STATS = [
@@ -72,7 +72,7 @@ const AUDIENCE = [
 const VOOR_LEERKRACHTEN = [
   {
     title: '📚 Welke vaardigheden komen aan bod?',
-    body: 'Rekenen (sommen, tafels), taal & spelling (dictees, werkwoordspelling), begrijpend lezen en Engels, via verschillende minigames en thema\'s. Nieuwe oefeningen en spellen worden regelmatig toegevoegd.',
+    body: 'Rekenen (sommen, tafels), taal & spelling (dictees, werkwoordspelling, woordenschat, zinsontleding) en begrijpend lezen, via verschillende minigames en thema\'s. Nieuwe oefeningen en spellen worden regelmatig toegevoegd.',
   },
   {
     title: '🕹️ Hoe motiveert het spelen?',

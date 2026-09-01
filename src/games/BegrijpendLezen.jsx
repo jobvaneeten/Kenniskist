@@ -5,8 +5,8 @@ import MenuScene from '../MenuScenes'
 import './dictee-thema.css'
 
 // startLes: alleen gezet vanuit een weektaak-opdracht (toolRender.jsx) — het
-// lesnummer (1-4) binnen het enige thema "reisrondewereld". Springt direct
-// naar die les, de thema/les-kiesschermen overslaand.
+// lesnummer (1-5) binnen het enige thema "spullen". Springt direct naar die
+// les, de thema/les-kiesschermen overslaand.
 export default function BegrijpendLezen({ onBack, addBriefgeld, addCuruntie, startLes }) {
   const [thema, setThema] = useState(() => startLes ? THEMAS[0] : null)
   const [les, setLes]     = useState(() => startLes ? THEMAS[0].lessen[startLes - 1] : null)

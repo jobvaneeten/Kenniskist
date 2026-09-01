@@ -2,8 +2,8 @@ import { useState } from 'react'
 import { VAKKEN, toolsVoorGroepen } from '../lib/tools.js'
 
 // Kiest een concrete tool_id voor een nieuwe opdracht, in stapjes: eerst een
-// vak, dan een oefening, en bij families met varianten (dictee, Engels, Reis
-// rond de wereld) nog welk blok of level. Eerder stonden alle ~14 families
+// vak, dan een oefening, en bij families met varianten (dictee, Duurzaam
+// design) nog welk blok of welke les. Eerder stonden alle ~14 families
 // onder elkaar met de varianten in uitklappertjes; dat is prima als je de
 // tools kent, maar niet als je dit voor het eerst doet.
 //

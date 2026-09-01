@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Begrijpend Lezen – De Eerste Wereldreizigers</title>
+<title>Begrijpend Lezen – Kinderen aan het werk</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -252,9 +252,9 @@
 <body>
 
 <header>
-  <p class="eyebrow">Begrijpend lezen · Groep 7-8</p>
-  <h1>Ieder dier zijn eigen plekje</h1>
-  <p>Bron: Blink Wereld – Reis de wereld rond</p>
+  <p class="eyebrow">Begrijpend lezen · Groep 7 · Les 4</p>
+  <h1>Kinderen aan het werk</h1>
+  <p>Thema: Duurzaam design</p>
 </header>
 <div id="progress-bar-wrap"><div id="progress-bar"></div></div>
 <div id="score-badge">⭐ <span id="score-num">0</span> pt</div>
@@ -262,9 +262,9 @@
 <main>
 
 <div id="intro-screen" class="screen active">
-  <div class="compass">🌍</div>
-  <h2>Klaar voor een reis langs de klimaten?</h2>
-  <p>Je leest teksten over klimaten en hoe dieren en planten zich aanpassen, en beantwoordt vragen. Bij <strong>letterlijke vragen</strong> markeer je het antwoord <em>in de tekst zelf</em>. Klik woorden aan om ze te selecteren.</p>
+  <div class="compass">🧒</div>
+  <h2>Werken in plaats van naar school</h2>
+  <p>Je leest teksten over kinderarbeid in de negentiende eeuw en de wetten daartegen, en beantwoordt tien vragen. Bij <strong>letterlijke vragen</strong> markeer je het antwoord <em>in de tekst zelf</em>. Klik woorden aan om ze te selecteren.</p>
   <div class="legend">
     <span style="background:#d0e8ff;color:#0a3a6e;">🔍 Letterlijk – markeer in de tekst</span>
     <span style="background:#fde8c0;color:#7a3d00;">💡 Afleidend</span>
@@ -281,7 +281,7 @@
 
 <div id="finish-screen" class="screen">
   <div class="medal" id="finish-medal">🏅</div>
-  <h2>Goed gedaan, ontdekkingsreiziger!</h2>
+  <h2>Goed gedaan, onderzoeker!</h2>
   <div class="score-big" id="finish-score">0/0</div>
   <p id="finish-msg"></p>
   <div id="finish-overview"></div>
@@ -307,175 +307,139 @@
 
 const questions = [
 
-  // ── Q1  Letterlijk → markeren  (klimaat, span geverifieerd 13-25)
   {
     type: 'mark',
     qtype: 'literal',
     label: '🔍 Letterlijk',
     labelClass: 'label-literal',
-    question: 'Markeer in de tekst wat "klimaat" betekent.',
-    passage: 'Temperatuur, neerslag, wind en zon bepalen het weer. Het weer verandert per dag. Het klimaat is het gemiddelde weer over een lange periode: minstens dertig jaar. In Nederland hebben we een gematigd klimaat. Het is hier gemiddeld niet extreem koud of warm en het regent zo\'n 800 millimeter per jaar.',
-    // "Het klimaat is het gemiddelde weer over een lange periode: minstens dertig jaar."
-    correctSpan: { start: 13, end: 25 },
-    coreWords: [17, 21, 24], // gemiddelde, lange, dertig
-    feedback: 'Het antwoord staat in de zin: "Het klimaat is het gemiddelde weer over een lange periode: minstens dertig jaar." Het weer verandert per dag, maar het klimaat gaat over een lange tijd.',
+    question: "Markeer in de tekst waarom kinderen in de negentiende eeuw moesten werken.",
+    passage: "Stel je voor: je bent elf jaar en in plaats van naar school gaan, werk je elke dag. Voor veel kinderen in de negentiende eeuw was dat gewoon. Gezinnen waren groot en de ouders verdienden te weinig geld om al die monden te voeden, dus moesten de kinderen meeverdienen. Op het platteland hielpen ze met aardappelen poten, onkruid wieden en koeien melken. In de stad gingen ze naar de fabriek. Van spelen, lezen of voetballen kwam weinig terecht.",
+    correctSpan: { start: 32, end: 48 },
+    coreWords: [36, 37, 48],
+    feedback: "Het antwoord staat in de zin: \"Gezinnen waren groot en de ouders verdienden te weinig geld om al die monden te voeden, dus moesten de kinderen meeverdienen.\"",
     points: 2
   },
 
-  // ── Q2  Letterlijk → markeren  (eekhoorn, span geverifieerd 18-28)
   {
     type: 'mark',
     qtype: 'literal',
     label: '🔍 Letterlijk',
     labelClass: 'label-literal',
-    question: 'Markeer in de tekst waarom de eekhoorn in de herfst een voorraad voedsel aanlegt.',
-    passage: 'Zijn mooie pluimstaart gebruikt de eekhoorn op warme dagen als parasol en als het koud is als dekentje! Omdat er in de winter minder voedsel in de bossen is, legt de eekhoorn in de herfst een voorraad voedsel aan.',
-    // "Omdat er in de winter minder voedsel in de bossen is,"
-    correctSpan: { start: 18, end: 28 },
-    coreWords: [22, 23, 27], // winter, minder, bossen
-    feedback: 'Het antwoord staat in de zin: "Omdat er in de winter minder voedsel in de bossen is, legt de eekhoorn in de herfst een voorraad voedsel aan."',
+    question: "Markeer in de tekst waarom kinderen vaak het fijne priegelwerk deden.",
+    passage: "Niet alle kinderen werkten op het land of in de fabriek. In sommige streken maakten hele gezinnen thuis producten die ze daarna verkochten. Kinderen hielpen met het spinnen van draden, het weven van lappen stof of het vlechten van manden. Volwassenen zetten kinderen graag in voor dit fijne priegelwerk, omdat ze met hun kleine handen en vingers beter bij de draadjes konden. Soms hielpen kinderen van vijf jaar al mee met kleine klusjes.",
+    correctSpan: { start: 49, end: 61 },
+    coreWords: [53, 54, 56],
+    feedback: "Het antwoord staat in de zin: \"Volwassenen zetten kinderen graag in voor dit fijne priegelwerk, omdat ze met hun kleine handen en vingers beter bij de draadjes konden.\"",
     points: 2
   },
 
-  // ── Q3  Letterlijk → markeren  (kameel, span geverifieerd 0-12)
   {
     type: 'mark',
     qtype: 'literal',
     label: '🔍 Letterlijk',
     labelClass: 'label-literal',
-    question: 'Markeer in de tekst hoe kamelen ervoor zorgen dat er geen zand in hun neus komt.',
-    passage: 'Kamelen kunnen hun neusvleugels dichtklappen, zodat er geen zand in hun neus komt. De lange wimpers van een kameel beschermen zijn ogen tegen zandkorreltjes. In de woestijn is bijna geen eten en drinken te vinden voor kamelen. Ze slaan vet op in hun bulten als reserve-energie.',
-    // "Kamelen kunnen hun neusvleugels dichtklappen, zodat er geen zand in hun neus komt."
-    correctSpan: { start: 0, end: 12 },
-    coreWords: [3, 8, 12], // neusvleugels, zand, komt.
-    feedback: 'Het antwoord staat in de zin: "Kamelen kunnen hun neusvleugels dichtklappen, zodat er geen zand in hun neus komt." De lange wimpers beschermen daarnaast hun ogen.',
+    question: "Markeer in de tekst waarom fabrieksdirecteuren blij waren met kinderen.",
+    passage: "In de loop van de negentiende eeuw kwamen er steeds meer fabrieken met machines. In plaats van thuis te werken, gingen mensen naar de fabriek. De lonen waren laag, dus hielpen kinderen mee. Sommigen begonnen al op hun zevende. Fabrieksdirecteuren waren blij met die kinderen, want zij hoefden hen veel minder te betalen dan volwassenen. Zo hielden de directeuren meer geld over. Het werk zelf was zwaar: werkdagen van soms veertien uur, zes dagen per week.",
+    correctSpan: { start: 45, end: 54 },
+    coreWords: [50, 52, 54],
+    feedback: "Het antwoord staat in de zin: \"Fabrieksdirecteuren waren blij met die kinderen, want zij hoefden hen veel minder te betalen dan volwassenen.\"",
     points: 2
   },
 
-  // ── Q4  Letterlijk → markeren  (evenaar, span geverifieerd 35-48)
   {
     type: 'mark',
     qtype: 'literal',
     label: '🔍 Letterlijk',
     labelClass: 'label-literal',
-    question: 'Markeer in de tekst wat het verband is tussen de ligging bij de evenaar en hoe warm het klimaat is.',
-    passage: 'Op de wereld zijn verschillende klimaatzones. De zones gaan vloeiend in elkaar over, het zijn geen grenzen zoals bij een land. Er zijn verschillende invloeden die het klimaat bepalen. De ligging op de aarde bijvoorbeeld: hoe dichter een gebied bij de evenaar ligt, hoe warmer het klimaat daar is. Ook de aanwezigheid van zeeën, oceanen en bergen heeft invloed op het klimaat.',
-    // "hoe dichter een gebied bij de evenaar ligt, hoe warmer het klimaat daar is."
-    correctSpan: { start: 35, end: 48 },
-    coreWords: [36, 41, 44], // dichter, evenaar, warmer
-    feedback: 'Het antwoord staat in de zin: "...hoe dichter een gebied bij de evenaar ligt, hoe warmer het klimaat daar is."',
+    question: "Markeer in de tekst waarom het werk in de fabriek gevaarlijk was voor kinderen.",
+    passage: "Kinderen werkten ook ’s nachts, want de machines draaiden dag en nacht door. Door het harde werk en het gebrek aan slaap raakten veel kinderen uitgeput of werden ze ziek. Soms vielen ze tijdens het werk in slaap. Bovendien moesten kinderen vaak werken op plekken waar volwassenen niet bij konden, vlak bij draaiende tandwielen en riemen. Wie daar met een mouw of een haarlok in kwam, raakte zwaargewond. Beschermkappen om de machines waren er nog niet.",
+    correctSpan: { start: 40, end: 55 },
+    coreWords: [44, 52, 53],
+    feedback: "Het antwoord staat in de zin: \"Bovendien moesten kinderen vaak werken op plekken waar volwassenen niet bij konden, vlak bij draaiende tandwielen en riemen.\"",
     points: 2
   },
 
-  // ── Q5  Afleidend MC
   {
     type: 'mc',
-    qtype: 'inferring',
-    label: '💡 Afleidend',
-    labelClass: 'label-inferring',
-    question: 'Waarom hebben dieren in koude gebieden vaak kleine oren?',
-    passage: 'Een dier past zich aan aan het weer en het klimaat waarin het leeft. Dieren in koude gebieden hebben vaak kleine oren. Uitstekende delen kunnen namelijk gemakkelijk bevriezen in de winter.',
-    options: [
-      'Kleine oren staan schattiger',
-      'Uitstekende delen zoals grote oren kunnen in de winter gemakkelijk bevriezen',
-      'Met kleine oren kunnen ze beter horen in de sneeuw',
-      'Grote oren bestaan niet bij dieren'
-    ],
+    qtype: "inferring",
+    label: "💡 Afleidend",
+    labelClass: "label-inferring",
+    question: "Waarom zaten de klassen in de oogsttijd vaak leeg?",
+    passage: "Op het platteland hielpen kinderen mee op het land van hun ouders of van de boer. Vooral in de zomer was er veel te doen: dan moest alles tegelijk geoogst worden voordat het weer omsloeg. In die periode gingen kinderen meestal niet naar school. Tijdens de oogst waren de klassen dan ook vaak helemaal leeg. School was in die tijd nog niet verplicht.",
+    options: ["Omdat de scholen in de zomer gesloten waren voor onderhoud", "Omdat kinderen op het land moesten helpen met de oogst en school nog niet verplicht was", "Omdat de meesters zelf in de fabriek werkten", "Omdat kinderen in de zomer bij familie logeerden"],
     correct: 1,
-    feedback: 'De tekst zegt dat uitstekende delen gemakkelijk bevriezen in de winter. Kleine oren steken minder uit en bevriezen dus minder snel — handig in een koud gebied.',
+    feedback: "De tekst noemt twee dingen die samen het antwoord vormen: in de oogsttijd was er veel werk op het land, en school was toen nog niet verplicht.",
     points: 1
   },
 
-  // ── Q6  Afleidend MC
-  {
-    type: 'mc',
-    qtype: 'inferring',
-    label: '💡 Afleidend',
-    labelClass: 'label-inferring',
-    question: 'Waarom groeien sommige planten in het tropisch regenwoud zo enorm hoog?',
-    passage: 'In het tropisch regenwoud hebben planten het heerlijk. De temperatuur is goed en de grond vruchtbaar. Er is maar één ding waar ze voor moeten vechten: het licht van de zon. Om die race te winnen, groeien sommige planten enorm hoog: er zijn bomen zo hoog als een gebouw van 28 verdiepingen! Zij spreiden hun enorme bladeren uit om zoveel mogelijk licht te vangen.',
-    options: [
-      'Omdat de grond te nat is om laag te blijven',
-      'Om zo veel mogelijk licht van de zon te vangen, want daar moeten ze om vechten',
-      'Omdat er geen dieren zijn die de planten opeten',
-      'Omdat het er nooit regent'
-    ],
-    correct: 1,
-    feedback: 'In het regenwoud is alles er wel, behalve genoeg licht onderin. Door hoog te groeien en hun bladeren uit te spreiden, vangen planten zo veel mogelijk zonlicht. Dat is de "race" waar de tekst over spreekt.',
-    points: 1
-  },
-
-  // ── Q7  Letterlijk → markeren  (pinguïn, span geverifieerd 0-6)
   {
     type: 'mark',
     qtype: 'literal',
     label: '🔍 Letterlijk',
     labelClass: 'label-literal',
-    question: 'Markeer in de tekst waardoor een pinguïn het niet koud krijgt in het water.',
-    passage: 'Het verenjasje van de pinguïn is waterdicht. Zo krijgt de vogel het niet koud in het water. Eronder zit een dikke laag isolerend vet. De spieren van pinguïnpoten zitten aan de bovenkant van de voet. Zo bevriezen ze niet zo snel op het ijs.',
-    // "Het verenjasje van de pinguïn is waterdicht."
-    correctSpan: { start: 0, end: 6 },
-    coreWords: [1, 6], // verenjasje, waterdicht.
-    feedback: 'Het antwoord staat in de zin: "Het verenjasje van de pinguïn is waterdicht." Daardoor en door de dikke laag isolerend vet eronder krijgt de vogel het niet koud in het water.',
+    question: "Markeer in de tekst waarom Samuel van Houten kinderarbeid wilde verbieden.",
+    passage: "Niet iedereen vond kinderarbeid normaal. De politicus Samuel van Houten vond het onverstandig dat jonge kinderen moesten werken. Volgens hem had de samenleving, en zelfs de fabriekseigenaar zelf, veel meer aan kinderen met een opleiding. Daarom schreef hij een wet om kinderarbeid te verbieden. Veel mensen steunden hem: zij vonden de werkomstandigheden veel te zwaar voor kinderen. Na vijf dagen discussie in de Tweede Kamer werd de wet op 19 september 1874 aangenomen.",
+    correctSpan: { start: 21, end: 34 },
+    coreWords: [22, 31, 34],
+    feedback: "Het antwoord staat in de zin: \"Volgens hem had de samenleving, en zelfs de fabriekseigenaar zelf, veel meer aan kinderen met een opleiding.\"",
     points: 2
   },
 
-  // ── Q8  Afleidend drag naar categorie
+  {
+    type: 'mc',
+    qtype: "inferring",
+    label: "💡 Afleidend",
+    labelClass: "label-inferring",
+    question: "Waarom waren sommige ouders tegen de wet tegen kinderarbeid?",
+    passage: "Er waren ook tegenstanders van de nieuwe wet. Fabriekseigenaren wilden hun goedkope arbeidskrachten niet kwijt. Ouders waren bang dat ze zonder het loon van hun kinderen te weinig geld zouden overhouden voor eten en huur. Sommige tegenstanders stelden voor om de kinderen dan maar les te geven ín de fabriek, zodat ze konden blijven werken én iets leerden.",
+    options: ["Omdat ze vonden dat school te moeilijk was voor hun kinderen", "Omdat ze bang waren te weinig geld over te houden zonder het loon van hun kinderen", "Omdat ze zelf in de fabriek wilden werken", "Omdat ze het niet eens waren met Samuel van Houten als persoon"],
+    correct: 1,
+    feedback: "De tekst zegt: \"Ouders waren bang dat ze zonder het loon van hun kinderen te weinig geld zouden overhouden voor eten en huur.\"",
+    points: 1
+  },
+
   {
     type: 'drag',
     qtype: 'inferring',
     label: '💡 Afleidend – Sorteren',
     labelClass: 'label-inferring',
-    question: 'Bij welk klimaat hoort elk kenmerk? Lees de tekst en sleep elk kenmerk naar het juiste klimaat.',
-    passage: 'Woestijnklimaat: Overdag tussen de 25 en 45 graden, neerslag bijna niks (0 tot 200 millimeter per jaar). Tropisch regenwoudklimaat: nat, bijna iedere dag een bui, en er groeien bomen zo hoog als een gebouw. Sneeuw-en-ijsklimaat: altijd koud, de grond is bedekt met ijs en sneeuw, en in de winter is het op de polen bijna de hele dag donker.',
-    categories: ['Woestijnklimaat', 'Tropisch regenwoudklimaat', 'Sneeuw-en-ijsklimaat'],
+    question: "Wat stond er wél en wat stond er níét in het Kinderwetje van Van Houten uit 1874? Sleep de zinnen naar de juiste groep.",
+    passage: "In het Kinderwetje van Van Houten stond dat kinderen onder de twaalf jaar niet meer in fabrieken mochten werken. Thuis werken, werken in de verzorging en werken op het land mocht nog wel. De wet zei niets over naar school gaan. Pas in 1901 kwam de Leerplichtwet, die alle kinderen van zes tot twaalf jaar verplichtte naar school te gaan.",
+    categories: ["Stond in het Kinderwetje", "Stond er niet in"],
     items: [
-      { id: 'w1', text: '0 tot 200 millimeter regen per jaar', correct: 'Woestijnklimaat' },
-      { id: 'w2', text: 'Overdag tussen de 25 en 45 graden',  correct: 'Woestijnklimaat' },
-      { id: 'r1', text: 'Bijna iedere dag een bui',           correct: 'Tropisch regenwoudklimaat' },
-      { id: 'r2', text: 'Bomen zo hoog als een gebouw',       correct: 'Tropisch regenwoudklimaat' },
-      { id: 's1', text: 'De grond is bedekt met ijs en sneeuw', correct: 'Sneeuw-en-ijsklimaat' },
-      { id: 's2', text: 'In de winter de hele dag donker',    correct: 'Sneeuw-en-ijsklimaat' }
+      { id: "i0", text: "Onder de twaalf niet in de fabriek", correct: "Stond in het Kinderwetje" },
+      { id: "i1", text: "Werken op het land mocht nog wel", correct: "Stond in het Kinderwetje" },
+      { id: "i2", text: "Alle kinderen moeten naar school", correct: "Stond er niet in" },
+      { id: "i3", text: "Thuis werken mocht nog wel", correct: "Stond in het Kinderwetje" },
+      { id: "i4", text: "Kinderen mogen helemaal niet meer werken", correct: "Stond er niet in" }
     ],
-    feedback: 'Woestijnklimaat → heel weinig regen en grote hitte overdag. Tropisch regenwoud → nat met dagelijkse buien en hoge bomen. Sneeuw-en-ijsklimaat → altijd koud, ijs en sneeuw, en donkere poolwinters.',
+    feedback: "Het Kinderwetje verbood alleen fabriekswerk onder de twaalf. Thuis, in de verzorging en op het land mocht nog wel. De schoolplicht kwam pas met de Leerplichtwet van 1901.",
     points: 2
   },
 
-  // ── Q9  Evaluerend MC
   {
     type: 'mc',
-    qtype: 'evaluating',
-    label: '💬 Evaluerend',
-    labelClass: 'label-evaluating',
-    question: 'Waarom komen dezelfde klimaatzones op verschillende plekken in de wereld voor? Welk antwoord wordt het best door de tekst onderbouwd?',
-    passage: 'Op de wereld zijn verschillende klimaatzones. Dezelfde klimaatzones komen op verschillende plekken in de wereld voor. Er zijn verschillende invloeden die het klimaat bepalen, zoals de ligging op de aarde: hoe dichter bij de evenaar, hoe warmer. Ook de aanwezigheid van zeeën, oceanen en bergen heeft invloed op het klimaat.',
-    options: [
-      'Omdat het klimaat overal op aarde precies hetzelfde is',
-      'Omdat plekken die even ver van de evenaar liggen en dezelfde invloeden hebben, op elkaar lijken',
-      'Omdat landen grenzen hebben getrokken om de klimaten heen',
-      'Omdat de zon elke dag op een andere plek schijnt'
-    ],
+    qtype: "evaluating",
+    label: "💬 Evaluerend",
+    labelClass: "label-evaluating",
+    question: "Waarom veranderde er in het begin weinig na het Kinderwetje van 1874?",
+    passage: "In het begin hielden veel fabriekseigenaren zich niet aan de nieuwe wet. Er werd namelijk niet gecontroleerd, dus liepen ze weinig risico. Dat veranderde toen er arbeidsinspecteurs kwamen. Zij gingen in de fabrieken kijken of er nog jonge kinderen aan het werk waren. Was dat zo, dan kreeg de baas een hoge boete en soms moest hij zelfs de gevangenis in. Zo werd het steeds moeilijker om de wet te negeren.",
+    options: ["Omdat de wet pas in 1901 werd opgeschreven", "Omdat er niemand controleerde of de fabrieken zich aan de wet hielden", "Omdat de kinderen zelf graag in de fabriek bleven werken", "Omdat de boetes te laag waren om te innen"],
     correct: 1,
-    feedback: 'De tekst zegt dat dezelfde invloeden (zoals de afstand tot de evenaar, en zeeën of bergen) het klimaat bepalen. Plekken met dezelfde invloeden krijgen daardoor dezelfde klimaatzone, ook al liggen ze ver uit elkaar.',
+    feedback: "De tekst legt uit dat er in het begin niet werd gecontroleerd. Pas met de arbeidsinspecteurs, boetes en zelfs gevangenisstraf werd het moeilijk om de wet te negeren.",
     points: 1
   },
 
-  // ── Q10  Evaluerend MC
   {
     type: 'mc',
-    qtype: 'evaluating',
-    label: '💬 Evaluerend',
-    labelClass: 'label-evaluating',
-    question: 'Waarom is het volgens de tekst juist om over het "klimaat" van een gebied te praten en niet over het "weer" van één dag?',
-    passage: 'Temperatuur, neerslag, wind en zon bepalen het weer. Het weer verandert per dag. Het klimaat is het gemiddelde weer over een lange periode: minstens dertig jaar. In het tropisch regenwoud valt wel 2000 millimeter regen per jaar. Daarom heet het ook regenwoud.',
-    options: [
-      'Omdat het weer nooit verandert',
-      'Omdat het klimaat het gemiddelde weer over een lange tijd (minstens dertig jaar) is, en één dag te kort is',
-      'Omdat weer en klimaat precies hetzelfde betekenen',
-      'Omdat alleen het regenwoud een klimaat heeft'
-    ],
+    qtype: "evaluating",
+    label: "💬 Evaluerend",
+    labelClass: "label-evaluating",
+    question: "Waarom hielp de Leerplichtwet van 1901 beter tegen kinderarbeid dan het Kinderwetje van 1874?",
+    passage: "Het Kinderwetje verbood alleen werk in de fabriek. Kinderen konden dus nog steeds de hele dag op het land of thuis werken. De Leerplichtwet van 1901 pakte het anders aan: alle kinderen van zes tot twaalf moesten naar school. Wie op school zit, kan niet tegelijk de hele dag werken. Daardoor verdween kinderarbeid langzaam uit alle soorten werk, niet alleen uit de fabriek.",
+    options: ["Omdat de Leerplichtwet hogere boetes gaf aan fabriekseigenaren", "Omdat kinderen die verplicht naar school gaan, niet tegelijk de hele dag kunnen werken", "Omdat de Leerplichtwet fabrieken helemaal verbood", "Omdat kinderen op school geld verdienden"],
     correct: 1,
-    feedback: 'Het weer verandert per dag, dus één dag zegt weinig over een gebied. Het klimaat is het gemiddelde weer over minstens dertig jaar — dat geeft pas een goed beeld van hoe een gebied echt is.',
+    feedback: "De tekst redeneert zo: het Kinderwetje gold alleen voor fabrieken, maar wie verplicht op school zit, kan nergens de hele dag werken. Daardoor verdween kinderarbeid uit álle soorten werk.",
     points: 1
   }
 
@@ -497,12 +461,12 @@ let markState = questions.map(() => new Set());
 // PERSISTENCE
 // ─────────────────────────────────────────────────────────────────────────────
 let paidSet = new Set();
-function loadPaid() { try { const s = localStorage.getItem('bl_wereld_les4_paid'); if (s) paidSet = new Set(JSON.parse(s)); } catch(e){} }
-function savePaid() { try { localStorage.setItem('bl_wereld_les4_paid', JSON.stringify([...paidSet])); } catch(e){} }
+function loadPaid() { try { const s = localStorage.getItem('bl_wereld_v2_paid'); if (s) paidSet = new Set(JSON.parse(s)); } catch(e){} }
+function savePaid() { try { localStorage.setItem('bl_wereld_v2_paid', JSON.stringify([...paidSet])); } catch(e){} }
 function loadProgress() {
   loadPaid();
   try {
-    const saved = localStorage.getItem('bl_wereld_les4');
+    const saved = localStorage.getItem('bl_wereld_v2');
     if (saved) {
       const d = JSON.parse(saved);
       scores   = d.scores   || scores;
@@ -514,7 +478,7 @@ function loadProgress() {
 
 function saveProgress() {
   try {
-    localStorage.setItem('bl_wereld_les4', JSON.stringify({ scores, answered }));
+    localStorage.setItem('bl_wereld_v2', JSON.stringify({ scores, answered }));
   } catch(e){}
 }
 
@@ -953,7 +917,7 @@ function showFinish() {
     `<div class="ov-title">${goed} van ${questions.length} vragen goed</div>` + rows;
   show('finish-screen');
   const opgaven = questions.map((q,i) => ({ vraag: q.question.replace(/<[^>]*>/g,''), puntenBehaald: scores[i], puntenMax: q.points }));
-  window.KennisKist?.slaResultaatOp?.('reisrondewereld-les4', score, total, { opgaven });
+  window.KennisKist?.slaResultaatOp?.('spullen-les4', score, total, { opgaven });
   window.KennisKist?.toonInlogstatus?.(document.getElementById('kkStatus'));
 }
 
@@ -962,7 +926,7 @@ function restartQuiz() {
   scores   = new Array(questions.length).fill(0);
   answered = new Array(questions.length).fill(false);
   markState= questions.map(() => new Set());
-  localStorage.removeItem('bl_wereld_les4');
+  localStorage.removeItem('bl_spullen_les4');
   document.getElementById('score-num').textContent = 0;
   show('quiz-screen');
   renderQuestion();

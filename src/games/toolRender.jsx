@@ -20,6 +20,7 @@ import MaatenOmrekenen from './MaatenOmrekenen.jsx'
 import ProcentenBreuken from './ProcentenBreuken.jsx'
 import DicteeThema from './DicteeThema.jsx'
 import BegrijpendLezen from './BegrijpendLezen.jsx'
+import TopoOefenen from './TopoOefenen.jsx'
 import '../game.css'
 
 function NogNietBeschikbaar({ label, onBack }) {
@@ -120,7 +121,15 @@ export default function RenderTool({ opdracht, groep, onBack, addBriefgeld, addC
           file="dictees/dictee-categorie.html" cats={config?.cats} woorden={aantal}
         />
       )
-    case 'reisrondewereld':
+    case 'topo':
+      return (
+        <TopoOefenen
+          onBack={onBack} addBriefgeld={addBriefgeld} addCuruntie={addCuruntie}
+          aantal={aantal}
+          config={{ kaart: info.variant.kaart, soorten: config?.soorten, modus: config?.modus }}
+        />
+      )
+    case 'spullen':
       return (
         <BegrijpendLezen
           onBack={onBack} addBriefgeld={addBriefgeld} addCuruntie={addCuruntie}

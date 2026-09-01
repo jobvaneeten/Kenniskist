@@ -1,0 +1,328 @@
+/* Topografie — donkere nachtlucht zoals de rest van de app, met daarin een
+   lichte atlaskaart: het water blijft licht zodat de kaart leest als een echte
+   schoolkaart. */
+.topo-screen {
+  width: 100vw;
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  color: #eaf2fb;
+  font-family: inherit;
+  position: relative;
+  z-index: 1;
+  isolation: isolate;
+  overflow-y: auto;
+  background:
+    radial-gradient(ellipse 55% 42% at 10% 4%, rgba(79,195,247,0.2) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 90% 10%, rgba(168,85,247,0.22) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 45% at 80% 98%, rgba(6,214,160,0.14) 0%, transparent 60%),
+    linear-gradient(165deg, #06061a 0%, #0a1230 48%, #061426 100%);
+}
+.topo-screen > * { position: relative; z-index: 1; }
+.topo-screen-center { align-items: center; justify-content: center; text-align: center; }
+
+.topo-back {
+  align-self: flex-start;
+  background: rgba(255,255,255,0.07);
+  color: #dbe6f5;
+  border: 1px solid rgba(255,255,255,0.16);
+  border-radius: 999px;
+  padding: 8px 17px;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 800;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  transition: background 0.14s, border-color 0.14s, color 0.14s;
+}
+.topo-back:hover { background: rgba(79,195,247,0.18); border-color: rgba(79,195,247,0.55); color: #fff; }
+
+.topo-header { margin: 10px 0 6px; }
+.topo-header-icon {
+  font-size: 3.1rem;
+  display: block;
+  filter: drop-shadow(0 0 22px rgba(79,195,247,0.5));
+}
+.topo-header h1 {
+  margin: 8px 0 4px;
+  font-size: 2.2rem;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  background: linear-gradient(100deg, #7fdcff, #fff 55%, #b69bff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.topo-header p { margin: 0; color: #9fb0c6; font-weight: 700; }
+
+/* ── Keuzescherm ── */
+.topo-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  max-width: 580px;
+  margin: 8px 0 4px;
+}
+.topo-filter-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  background: rgba(255,255,255,0.06);
+  border: 1.5px solid rgba(255,255,255,0.12);
+  border-radius: 999px;
+  padding: 9px 16px;
+  cursor: pointer;
+  font-weight: 800;
+  font-size: 0.92rem;
+  transition: border-color 0.14s, background 0.14s, transform 0.1s;
+}
+.topo-filter-item:hover { transform: translateY(-1px); }
+.topo-filter-item input { width: 18px; height: 18px; accent-color: #4FC3F7; cursor: pointer; }
+.topo-filter-item span { color: var(--topo-kleur, #fff); }
+.topo-filter-item em { color: #8fa0b6; font-style: normal; font-weight: 700; font-size: 0.85em; }
+.topo-filter-item:has(input:checked) {
+  border-color: var(--topo-kleur, #4FC3F7);
+  background: rgba(255,255,255,0.12);
+}
+
+.topo-modus { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin: 10px 0 4px; }
+.topo-modus-knop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 210px;
+  padding: 16px 14px;
+  border-radius: 20px;
+  border: 2px solid rgba(255,255,255,0.14);
+  background: linear-gradient(160deg, rgba(255,255,255,0.09), rgba(255,255,255,0.03));
+  color: #fff;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, transform 0.1s;
+}
+.topo-modus-knop span { font-size: 1.9rem; }
+.topo-modus-knop em { font-style: normal; font-weight: 700; font-size: 0.78rem; color: #9fb0c6; }
+.topo-modus-knop:hover { transform: translateY(-3px); }
+.topo-modus-knop.aan {
+  border-color: #4FC3F7;
+  background: linear-gradient(160deg, rgba(79,195,247,0.24), rgba(124,58,237,0.12));
+  box-shadow: 0 12px 26px rgba(79,195,247,0.25);
+}
+
+.topo-start {
+  margin-top: 12px;
+  padding: 15px 30px;
+  border: none;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #38bdf8, #6366f1);
+  color: #fff;
+  font: inherit;
+  font-size: 1.05rem;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 12px 26px rgba(56,189,248,0.4);
+  transition: transform 0.1s, box-shadow 0.15s;
+}
+.topo-start:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 16px 32px rgba(99,102,241,0.4); }
+.topo-start:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
+
+/* ── Oefenscherm ── */
+.topo-top-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  padding-right: 104px;   /* ruimte voor de muntenbadge rechtsboven */
+}
+.topo-progress { display: flex; align-items: center; gap: 10px; }
+.topo-score {
+  background: linear-gradient(135deg, #22c55e, #06d6a0);
+  color: #04301f;
+  border-radius: 999px;
+  padding: 6px 15px;
+  font-size: 0.9rem;
+  font-weight: 900;
+  box-shadow: 0 4px 12px rgba(6,214,160,0.32);
+}
+.topo-meter {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 999px;
+  padding: 5px 13px 5px 9px;
+}
+.topo-meter-track { width: 92px; height: 8px; border-radius: 999px; background: rgba(255,255,255,0.13); overflow: hidden; }
+.topo-meter-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #38bdf8, #6366f1);
+  transition: width 0.35s ease;
+}
+.topo-meter-tekst { color: #b9c6da; font-size: 0.78rem; font-weight: 800; white-space: nowrap; }
+
+.topo-vraag {
+  margin: 0;
+  text-align: center;
+  font-size: 1.4rem;
+  font-weight: 900;
+  letter-spacing: -0.2px;
+  color: #f2f7ff;
+}
+.topo-vraag.goed { color: #34d399; }
+.topo-vraag.fout { color: #ffa591; }
+
+.topo-kaartwrap {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 0;
+}
+.topo-kaart {
+  width: 100%;
+  max-width: 920px;
+  max-height: calc(100vh - 215px);
+  border-radius: 22px;
+  border: 1px solid rgba(255,255,255,0.18);
+  box-shadow: 0 22px 50px rgba(0,0,0,0.5);
+  background: #dff1fb;
+  touch-action: manipulation;
+}
+
+/* ── Kaartlagen ── */
+.topo-graticule polyline {
+  fill: none;
+  stroke: rgba(23,50,77,0.09);
+  stroke-width: 0.8;
+}
+/* zachte witte gloed langs de kust, zoals de randen in een atlas */
+.topo-kustgloed path {
+  fill: none;
+  stroke: rgba(255,255,255,0.9);
+  stroke-width: 7;
+}
+.topo-land {
+  stroke: #8a9a76;
+  stroke-width: 0.9;
+  cursor: pointer;
+  transition: filter 0.12s;
+}
+.topo-land:hover { filter: brightness(1.05) drop-shadow(0 0 9px rgba(250,204,21,0.95)); }
+
+.topo-rivier {
+  fill: none;
+  stroke: #1f8fd6;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.topo-gebergte {
+  fill: none;
+  stroke: #c8a06a;
+  stroke-width: 13;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.85;
+}
+.topo-stadgroep { pointer-events: none; }
+.topo-stad-ring { fill: rgba(23,50,77,0.12); }
+.topo-stad { fill: #17324d; stroke: #fff; stroke-width: 1.2; }
+
+/* Fout geklikt? Dan licht de juiste plek op. */
+.topo-aanwijzen { fill: #34d399 !important; stroke: #047857 !important; }
+.topo-aanwijzen-lijn { stroke: #059669 !important; opacity: 1; }
+.topo-aanwijzen-punt { fill: rgba(52,211,153,0.5); stroke: #047857; stroke-width: 3; }
+
+.topo-legenda rect:first-child {
+  fill: rgba(255,255,255,0.92);
+  stroke: rgba(23,50,77,0.14);
+  stroke-width: 1;
+}
+.topo-legenda text {
+  fill: #2c4a66;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 800;
+}
+.topo-legenda-stad { fill: #17324d; stroke: #fff; stroke-width: 1.2; }
+.topo-legenda-rivier { stroke: #1f8fd6; stroke-width: 2.6; stroke-linecap: round; }
+.topo-legenda-berg { stroke: #c8a06a; stroke-width: 6; stroke-linecap: round; opacity: 0.9; }
+.topo-label text {
+  fill: #0f172a;
+  font-family: inherit;
+  font-size: 17px;
+  font-weight: 900;
+  paint-order: stroke;
+  stroke: #fff;
+  stroke-width: 4.5;
+  stroke-linejoin: round;
+}
+
+/* ── Sleepkaartjes ── */
+.topo-tray { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+.topo-kaartje {
+  --topo-kleur: #4FC3F7;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(160deg, rgba(255,255,255,0.14), rgba(255,255,255,0.05));
+  border: 2px solid var(--topo-kleur);
+  border-radius: 999px;
+  color: #fff;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 800;
+  padding: 11px 18px;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.32);
+  transition: transform 0.12s, box-shadow 0.14s;
+}
+.topo-kaartje:hover { transform: translateY(-2px); }
+.topo-kaartje.aan {
+  background: var(--topo-kleur);
+  color: #08131f;
+  transform: translateY(-3px);
+  box-shadow: 0 10px 22px rgba(2,132,199,0.35);
+}
+.topo-kaartje-zweef {
+  position: fixed;
+  transform: translate(-50%, -140%);
+  pointer-events: none;
+  z-index: 400;
+  background: #4FC3F7;
+  color: #08131f;
+}
+
+@media (max-width: 640px) {
+  .topo-vraag { font-size: 1.12rem; }
+  .topo-modus-knop { width: 160px; }
+  .topo-kaart { max-height: calc(100vh - 200px); }
+}
+
+/* Regio's (kaart B): een gekleurd vlak over het land heen */
+.topo-regio {
+  /* geen rand: anders zie je alle provinciegrenzen waaruit een regio bestaat */
+  fill: rgba(168,85,247,0.17);
+  stroke: none;
+  cursor: pointer;
+}
+.topo-regio:hover { fill: rgba(168,85,247,0.32); }
+.topo-aanwijzen-regio {
+  fill: rgba(52,211,153,0.45) !important;
+  stroke: #047857 !important;
+  stroke-dasharray: none;
+}
+/* Gewone steden: rondje in plaats van het vierkantje van een hoofdstad */
+.topo-plaats { fill: #17324d; stroke: #fff; stroke-width: 1; }
