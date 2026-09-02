@@ -299,7 +299,9 @@ export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
         <div className="tv-header">
           <span className="tv-header-icon">{mode === 'woordsoorten' ? '📚' : '🔍'}</span>
           <h1>{mode === 'woordsoorten' ? 'Woordsoorten' : 'Zinsdelen'}</h1>
-          <p>{mode === 'woordsoorten' ? 'Kies wat je wilt oefenen' : 'Deze onderdelen ga je in de zin aanwijzen'}</p>
+          <p>{mode === 'woordsoorten'
+            ? 'Kies wat je wilt oefenen'
+            : 'Je krijgt ze per zin één voor één, in deze volgorde'}</p>
         </div>
         <div className="tv-filter-list">
           {types.map(t => (

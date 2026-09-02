@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
+import { useState, useMemo } from 'react'
 import {
   VRAGEN, ZINSDELEN, SAMENGESTELDE_ZINNEN, TIP_ZINSDEEL, splitZin, woordIndexen, zinsdeelFrase,
 } from './taalData.js'
@@ -7,20 +7,26 @@ import { useGebruikOpdracht } from './gebruikOpdracht.js'
 import OpdrachtKlaarScherm from './OpdrachtKlaarScherm.jsx'
 import './taal-oefenen.css'
 
-// Zinsdelen ontleden door te slepen. De zin staat al in woordgroepen op het
-// scherm ("De juf" · "leest" · "de kinderen" · …); je sleept elk onderdeel naar
-// de groep waar het bij hoort — niet naar losse woorden. Eén zin is één
-// opgave: hij telt pas als álle onderdelen liggen, en alleen als goed als er
-// geen misser bij zat. Tikken werkt ook (eerst het kaartje, dan de groep),
-// zodat het op een tablet net zo goed gaat als met een muis.
+// Zinsdelen ontleden door aan te klikken. De zin staat al in woordgroepen op
+// het scherm ("De juf" · "leest" · "de kinderen" · …); je klikt de groep aan
+// die bij het gevraagde onderdeel hoort — niet losse woorden.
 //
-// Bij een samengestelde zin heeft elke deelzin een eigen onderwerp en
-// persoonsvorm; die kaartjes liggen dan dus twee keer in het bakje.
+// Eén zin gaat stap voor stap: eerst het onderwerp, dan de persoonsvorm, dan
+// het gezegde, het lijdend voorwerp, het meewerkend voorwerp en als laatste de
+// bepaling. Wat je al goed hebt blijft staan, dus de ontleding groeit onder de
+// zin. Er wordt pas nagekeken als je op "Verder" klikt — aanklikken alleen is
+// nog geen antwoord, je kunt een groep eerst weer uitklikken.
+//
+// Nergens staat hoevéél groepen er bij een stap horen: dat moet de leerling
+// zelf zien. Een gezegde dat uit elkaar staat ("De juf leest … voor") of een
+// samengestelde zin met twee onderwerpen vraagt dus om meerdere kliks.
+//
+// Een zin telt als één opgave: goed als er bij geen enkele stap een misser was.
+// Na 5 goede zinnen volgt een spelletje.
 
-const GOED_VOOR_REWARD = 10
-const SLEEP_MARGE = 6 // px: minder verplaatsing telt als "tikken", niet slepen
+const GOED_VOOR_REWARD = 5
 
-// Vaste kleur per zinsdeel, zodat een groep in de zin en zijn kaartje dezelfde
+// Vaste kleur per zinsdeel, zodat de vraag en de streep onder de zin dezelfde
 // kleur hebben.
 const KLEUR = {
   'onderwerp':            '#4FC3F7',
@@ -31,7 +37,30 @@ const KLEUR = {
   'bepaling':             '#7f8cff',
 }
 
+// De vaste leervolgorde — precies de volgorde waarin ZINSDELEN staat.
 const VOLGORDE = ZINSDELEN.map(z => z.label)
+
+// Onder de zin is weinig plek: daar staat de schoolafkorting op de streep, met
+// de hele naam in de vraag, in de stappenrij en in de uitleg.
+const AFK = {
+  'onderwerp':            'ond',
+  'persoonsvorm':         'pv',
+  'gezegde':              'gez',
+  'lijdend voorwerp':     'lv',
+  'meewerkend voorwerp':  'mv',
+  'bepaling':             'bep',
+}
+
+// Hoe de vraag per stap luidt. Nooit een aantal noemen — dat zou het antwoord
+// half weggeven.
+const VRAAG = {
+  'onderwerp':            'Klik op het onderwerp',
+  'persoonsvorm':         'Klik op de persoonsvorm',
+  'gezegde':              'Klik op het gezegde — alle werkwoorden',
+  'lijdend voorwerp':     'Klik op het lijdend voorwerp',
+  'meewerkend voorwerp':  'Klik op het meewerkend voorwerp',
+  'bepaling':             'Klik op de bepaling',
+}
 
 function shuffle(arr) {
   const a = [...arr]
@@ -49,7 +78,7 @@ function shuffle(arr) {
 //
 // Het knippen gebeurt op álle zinsdelen die de zin heeft, ook die de leerling
 // niet hoeft te benoemen: die vakken staan er dus gewoon, je kunt er alleen
-// niets goeds op leggen. `plekIds` bevat alleen de te benoemen plekken.
+// niets goeds aanklikken. `plekIds` bevat alleen de te benoemen plekken.
 function maakSegmenten(zin, alleGroepen, plekken) {
   const segmenten = []
   let vorigeSleutel = null
@@ -65,9 +94,13 @@ function maakSegmenten(zin, alleGroepen, plekken) {
   return segmenten
 }
 
-// Per zin alle plekken die gelegd moeten worden. Twee bepalingen in dezelfde
-// zin (of twee onderwerpen in een samengestelde zin) zijn twee losse plekken,
-// dus het kaartje ligt dan ook twee keer in het bakje.
+// Per zin alle plekken die aangewezen moeten worden. Twee bepalingen in
+// dezelfde zin (of twee onderwerpen in een samengestelde zin) zijn twee losse
+// plekken.
+//
+// Elke plek wordt daarna nog opgeknipt in doelen: één per woordgroep waar de
+// plek overheen loopt. Een gezegde als "heeft … gekocht" staat in twee groepen
+// en is dus twee doelen — beide stukken moeten aangeklikt worden.
 function bouwZinnen(labels, metSamengesteld) {
   const perZin = new Map()
   for (const r of VRAGEN) {
@@ -85,13 +118,28 @@ function bouwZinnen(labels, metSamengesteld) {
     .map(([zin, groepen]) => {
       const alle = [...groepen].sort((a, b) => Math.min(...a.indexen) - Math.min(...b.indexen))
       const plekken = alle.filter(g => labels.includes(g.zinsdeel))
-      return { zin, plekken, segmenten: maakSegmenten(zin, alle, plekken) }
+      const segmenten = maakSegmenten(zin, alle, plekken)
+      const doelen = []
+      plekken.forEach(p => {
+        segmenten.forEach((seg, segIdx) => {
+          if (seg.plekIds.includes(p.id)) {
+            doelen.push({ id: `${p.id}@${segIdx}`, plekId: p.id, zinsdeel: p.zinsdeel, segIdx })
+          }
+        })
+      })
+      // De stappen: de aangevinkte onderdelen in vaste volgorde, en alleen die
+      // ook echt in deze zin zitten.
+      const stappen = VOLGORDE
+        .filter(l => labels.includes(l))
+        .map(zinsdeel => ({ zinsdeel, doelen: doelen.filter(d => d.zinsdeel === zinsdeel) }))
+        .filter(s => s.doelen.length > 0)
+      return { zin, plekken, segmenten, doelen, stappen }
     })
     // Zinnen zonder één van de aangevinkte onderdelen hebben niets te doen.
-    .filter(z => z.plekken.length > 0)
+    .filter(z => z.stappen.length > 0)
 }
 
-// Elke gelegde plek krijgt een eigen baan onder de zin; plekken die elkaar
+// Elke aangewezen plek krijgt een eigen baan onder de zin; plekken die elkaar
 // overlappen (de persoonsvorm zit ín het gezegde) schuiven een baan lager.
 function verdeelBanen(plekken) {
   const banen = []
@@ -114,32 +162,37 @@ export default function Zinsdelen({
   const zinnen = useMemo(() => bouwZinnen(labels, metSamengesteld), [labels, metSamengesteld])
   const [pool, setPool] = useState(() => shuffle(zinnen))
   const [poolIdx, setPoolIdx] = useState(0)
-  const [gelegd, setGelegd] = useState({})             // plekId → true
+  const [stapIdx, setStapIdx] = useState(0)
+  const [gedaan, setGedaan] = useState({})             // doelId → true (nagekeken en goed)
+  const [gekozen, setGekozen] = useState([])           // welke woordgroepen nu aanstaan
+  const [stapFout, setStapFout] = useState(false)      // laatste keer "Verder" was mis
   const [misgeklikt, setMisgeklikt] = useState(new Set()) // zinsdelen waarbij het misging
-  const [flits, setFlits] = useState(null)             // { segment, label } korte foutmelding
   const [zinKlaar, setZinKlaar] = useState(false)
+  const [zinGoed, setZinGoed] = useState(false)
   const [correctCount, setCorrectCount] = useState(0)
   const [showReward, setShowReward] = useState(false)
-  const [actief, setActief] = useState(null)           // opgepakt of aangetikt kaartje: plekId
-  const [zweef, setZweef] = useState(null)             // { label, x, y } tijdens het slepen
   const [tipOpen, setTipOpen] = useState(false)
+  const [wachtOpAfronden, setWachtOpAfronden] = useState(null) // laatste opgave van een weektaak
 
   const opdracht = useGebruikOpdracht({ toolId: 'taal-zinsdelen', aantal })
   const huidig = pool[poolIdx]
+  const stap = huidig && !zinKlaar ? huidig.stappen[stapIdx] : null
+  const goedeSegmenten = stap ? stap.doelen.map(d => d.segIdx) : []
 
-  const gelegdePlekken = huidig ? huidig.plekken.filter(p => gelegd[p.id]) : []
-  const banen = verdeelBanen(gelegdePlekken)
-  const tray = huidig ? huidig.plekken.filter(p => !gelegd[p.id]) : []
-  const actiefLabel = tray.find(p => p.id === actief)?.zinsdeel ?? null
-  // Waar de hulptip over gaat: het kaartje dat je vasthebt, anders het eerste
-  // dat nog moet.
-  const tipLabel = actiefLabel ?? tray[0]?.zinsdeel ?? null
+  const gedaanPlekken = huidig
+    ? huidig.plekken.filter(p => huidig.doelen.some(d => d.plekId === p.id && gedaan[d.id]))
+    : []
+  const banen = verdeelBanen(gedaanPlekken)
 
   function volgendeZin() {
-    setGelegd({})
+    setGedaan({})
+    setGekozen([])
+    setStapIdx(0)
+    setStapFout(false)
     setMisgeklikt(new Set())
     setZinKlaar(false)
-    setActief(null)
+    setZinGoed(false)
+    setTipOpen(false)
     const next = poolIdx + 1
     if (next >= pool.length) {
       setPool(shuffle(zinnen))
@@ -149,94 +202,65 @@ export default function Zinsdelen({
     }
   }
 
-  // Alles ligt: de zin telt als één opgave, goed als er geen misser bij zat.
-  function rondAf(fouten) {
-    setZinKlaar(true)
-    const correct = fouten.size === 0
-    const zalKlaarZijn = opdracht.aantal != null && (opdracht.gedaan + 1) >= opdracht.aantal
-    if (zalKlaarZijn) {
-      setTimeout(() => opdracht.registreer(correct, { vraag: huidig.zin, goedInEenKeer: correct }), 2600)
-      return
-    }
-    opdracht.registreer(correct, { vraag: huidig.zin, goedInEenKeer: correct })
-
-    if (correct) {
-      const nieuw = correctCount + 1
-      setCorrectCount(nieuw)
-      if (nieuw % GOED_VOOR_REWARD === 0) {
-        setTimeout(() => setShowReward(true), 2600)
-        return
-      }
-    }
-    setTimeout(() => volgendeZin(), 2600)
+  // Een woordgroep aan- of uitklikken — nog niet nakijken.
+  function kies(segIdx) {
+    if (!stap) return
+    setGekozen(prev => (prev.includes(segIdx) ? prev.filter(s => s !== segIdx) : [...prev, segIdx]))
+    setStapFout(false)
   }
 
-  // Een kaartje op een groep leggen: goed als deze groep bij een nog lege plek
-  // van dat onderdeel hoort.
-  const legNeer = useCallback((plekId, segIdx) => {
-    if (zinKlaar) return
-    const kaartje = huidig.plekken.find(p => p.id === plekId)
-    if (!kaartje || gelegd[plekId]) return
-    const segment = huidig.segmenten[segIdx]
-    const doel = huidig.plekken.find(p =>
-      p.zinsdeel === kaartje.zinsdeel && !gelegd[p.id] && segment.plekIds.includes(p.id))
-    if (!doel) {
-      setFlits({ segment: segIdx, label: kaartje.zinsdeel })
-      setTimeout(() => setFlits(null), 800)
-      setMisgeklikt(prev => new Set(prev).add(kaartje.zinsdeel))
+  // "Verder": pas hier wordt de stap nagekeken.
+  function kijkStapNa() {
+    const mijn = [...gekozen].sort((a, b) => a - b)
+    const verwacht = [...goedeSegmenten].sort((a, b) => a - b)
+    const goed = mijn.length === verwacht.length && mijn.every((s, i) => s === verwacht[i])
+    if (!goed) {
+      setStapFout(true)
+      setMisgeklikt(prev => new Set(prev).add(stap.zinsdeel))
       return
     }
-    const nieuw = { ...gelegd, [doel.id]: true }
-    setGelegd(nieuw)
-    setActief(null)
-    if (Object.keys(nieuw).length === huidig.plekken.length) rondAf(misgeklikt)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [zinKlaar, gelegd, huidig, misgeklikt, correctCount, poolIdx])
+    const nieuw = { ...gedaan }
+    stap.doelen.forEach(d => { nieuw[d.id] = true })
+    setGedaan(nieuw)
+    setGekozen([])
+    setStapFout(false)
+    setTipOpen(false)
+    if (stapIdx + 1 < huidig.stappen.length) setStapIdx(stapIdx + 1)
+    else rondAf()
+  }
 
-  // Slepen met muis én vinger: bij pointerup kijken we welke groep er onder de
-  // cursor zit. Nauwelijks bewogen = tikken, dan blijft het kaartje
-  // geselecteerd en kies je daarna de groep.
-  const sleepRef = useRef(null)
-  const legNeerRef = useRef(legNeer)
-  legNeerRef.current = legNeer
+  // Alle stappen gedaan: de zin telt als één opgave, goed als er nergens een
+  // misser zat.
+  function rondAf() {
+    const correct = misgeklikt.size === 0
+    setZinKlaar(true)
+    setZinGoed(correct)
+    if (correct) setCorrectCount(c => c + 1)
+    const zalKlaarZijn = opdracht.aantal != null && (opdracht.gedaan + 1) >= opdracht.aantal
+    // Bij de laatste opgave van een weektaak pas registreren als de leerling
+    // de uitleg gelezen heeft en op "Verder" klikt — anders klapt het
+    // klaar-scherm er meteen overheen.
+    if (zalKlaarZijn) setWachtOpAfronden({ correct })
+    else opdracht.registreer(correct, { vraag: huidig.zin, goedInEenKeer: correct })
+  }
 
-  useEffect(() => {
-    function move(e) {
-      const s = sleepRef.current
-      if (!s) return
-      if (Math.abs(e.clientX - s.startX) > SLEEP_MARGE || Math.abs(e.clientY - s.startY) > SLEEP_MARGE) s.bewogen = true
-      if (s.bewogen) setZweef({ label: s.label, x: e.clientX, y: e.clientY })
+  function naZin() {
+    if (wachtOpAfronden) {
+      opdracht.registreer(wachtOpAfronden.correct, { vraag: huidig.zin, goedInEenKeer: wachtOpAfronden.correct })
+      setWachtOpAfronden(null)
+      return
     }
-    function up(e) {
-      const s = sleepRef.current
-      if (!s) return
-      sleepRef.current = null
-      setZweef(null)
-      if (!s.bewogen) return // tikken: blijft geselecteerd voor de tweede tik
-      const doel = document.elementFromPoint(e.clientX, e.clientY)?.closest('[data-segment]')
-      if (doel) legNeerRef.current(s.plekId, Number(doel.dataset.segment))
-      else setActief(null)
+    if (zinGoed && correctCount > 0 && correctCount % GOED_VOOR_REWARD === 0) {
+      setShowReward(true)
+      return
     }
-    window.addEventListener('pointermove', move)
-    window.addEventListener('pointerup', up)
-    window.addEventListener('pointercancel', up)
-    return () => {
-      window.removeEventListener('pointermove', move)
-      window.removeEventListener('pointerup', up)
-      window.removeEventListener('pointercancel', up)
-    }
-  }, [])
-
-  function pak(e, plek) {
-    if (zinKlaar) return
-    sleepRef.current = { plekId: plek.id, label: plek.zinsdeel, startX: e.clientX, startY: e.clientY, bewogen: false }
-    setActief(prev => (prev === plek.id ? null : plek.id))
+    volgendeZin()
   }
 
   if (showReward) {
     return (
       <SpelBeloning
-        title={`Knap — ${GOED_VOOR_REWARD} zinnen goed!`}
+        title={`Knap — ${GOED_VOOR_REWARD} zinnen helemaal ontleed!`}
         geld={beloning}
         addCuruntie={addCuruntie}
         onDone={() => { setShowReward(false); addBriefgeld?.(beloning); volgendeZin() }}
@@ -264,6 +288,7 @@ export default function Zinsdelen({
 
   const woorden = splitZin(huidig.zin)
   const naarBeloning = correctCount % GOED_VOOR_REWARD
+  const kleurNu = stap ? KLEUR[stap.zinsdeel] : null
 
   return (
     <div className="tv-screen">
@@ -281,79 +306,110 @@ export default function Zinsdelen({
       </div>
 
       <div className="tv-werk">
-        <div className={`tv-card ${zinKlaar ? (misgeklikt.size === 0 ? 'tv-card-correct' : 'tv-card-wrong') : ''}`}>
+        <div className={`tv-card ${zinKlaar ? (zinGoed ? 'tv-card-correct' : 'tv-card-wrong') : ''}`}>
           <p className="tv-mode-label">
             🔍 Zinsdelen{SAMENGESTELDE_ZINNEN.has(huidig.zin) ? ' · samengestelde zin' : ''}
           </p>
+
+          {/* De stappenrij: wat je al hebt, waar je nu bent en wat er nog komt. */}
+          <div className="zd-stappen">
+            {huidig.stappen.map((s, i) => (
+              <span
+                key={s.zinsdeel}
+                className={`zd-stap${i < stapIdx || zinKlaar ? ' zd-stap-klaar' : ''}${!zinKlaar && i === stapIdx ? ' zd-stap-nu' : ''}`}
+                style={{ '--zd-kleur': KLEUR[s.zinsdeel] }}
+              >{i < stapIdx || zinKlaar ? '✓ ' : ''}{s.zinsdeel}</span>
+            ))}
+          </div>
+
           <div className="zd-zin">
             {huidig.segmenten.map((seg, segIdx) => {
               const tekst = seg.woorden.map(i => woorden[i]).join(' ')
-              const vol = seg.plekIds.some(id => gelegd[id])
+              const aan = gekozen.includes(segIdx)
+              const vol = seg.plekIds.some(id => gedaan[`${id}@${segIdx}`])
               return (
                 <span key={segIdx} className="zd-kolom">
                   <button
                     type="button"
                     data-segment={segIdx}
-                    className={`zd-groep${vol ? ' zd-groep-vol' : ''}${flits?.segment === segIdx ? ' zd-groep-mis' : ''}${actief ? ' zd-groep-doel' : ''}`}
+                    className={`zd-groep${vol ? ' zd-groep-vol' : ''}${aan ? ' zd-groep-gekozen' : ''}${stapFout && aan ? ' zd-groep-mis' : ''}`}
+                    style={aan ? { '--zd-kleur': kleurNu } : undefined}
                     disabled={zinKlaar}
-                    onClick={() => actief && legNeer(actief, segIdx)}
+                    onClick={() => kies(segIdx)}
                   >{tekst}</button>
-                  {/* Onder de groep een baan per gelegd onderdeel, in dezelfde
-                      kleur als het kaartje. */}
+
+                  {/* Onder de groep een baan per goedgekeurd onderdeel, in
+                      dezelfde kleur als de vraag. */}
                   {banen.map((baan, l) => {
-                    const plek = baan.find(p => seg.plekIds.includes(p.id))
+                    const plek = baan.find(p => gedaan[`${p.id}@${segIdx}`])
                     // Loopt dezelfde plek door vanaf de vorige groep? Dan geen
                     // nieuw labeltje, maar de streep doortrekken.
-                    const vervolg = !!plek && segIdx > 0 && huidig.segmenten[segIdx - 1].plekIds.includes(plek.id)
-                    const eerste = !!plek && !vervolg
+                    const vervolg = !!plek && segIdx > 0 && !!gedaan[`${plek.id}@${segIdx - 1}`]
                     return (
                       <span
                         key={l}
                         className={`zd-baan${plek ? ' zd-baan-aan' : ''}${vervolg ? ' zd-baan-vervolg' : ''}`}
                         style={plek ? { '--zd-kleur': KLEUR[plek.zinsdeel] } : undefined}
                       >
-                        {eerste && <span className="zd-baan-label">{plek.zinsdeel}</span>}
+                        {plek && !vervolg && (
+                          <span className="zd-baan-label" title={plek.zinsdeel}>{AFK[plek.zinsdeel]}</span>
+                        )}
                       </span>
                     )
                   })}
+
+                  {/* De baan van de stap waar je nú mee bezig bent: gestippeld,
+                      want er is nog niets nagekeken. */}
+                  {stap && (
+                    <span
+                      className={`zd-baan${aan ? ' zd-baan-aan zd-baan-nu' : ''}${stapFout && aan ? ' zd-baan-fout' : ''}`}
+                      style={aan ? { '--zd-kleur': kleurNu } : undefined}
+                    >
+                      {aan && <span className="zd-baan-label" title={stap.zinsdeel}>{AFK[stap.zinsdeel]}</span>}
+                    </span>
+                  )}
                 </span>
               )
             })}
           </div>
-          <p className="tv-vraag">
-            {zinKlaar
-              ? (misgeklikt.size === 0 ? 'Alles goed — helemaal zelf ontleed!' : 'Klaar! Kijk hieronder wat waar hoort.')
-              : `Sleep ${actiefLabel ? `"${actiefLabel}"` : 'elk onderdeel'} naar de juiste woordgroep`}
-          </p>
+
+          {!zinKlaar && stap && (
+            <p className={`tv-vraag${stapFout ? ' tv-vraag-fout' : ''}`}>
+              {stapFout
+                ? 'Nog niet goed — klik een woordgroep uit of juist aan en probeer het opnieuw.'
+                : (
+                  <>
+                    <strong style={{ color: kleurNu }}>{VRAAG[stap.zinsdeel]}</strong>
+                    <span className="tv-vraag-extra"> — je mag ook meer dan één woordgroep aanklikken.</span>
+                  </>
+                )}
+            </p>
+          )}
+          {zinKlaar && (
+            <p className="tv-vraag">
+              {zinGoed ? 'Helemaal zelf ontleed!' : 'Klaar! Kijk hieronder nog even wat waar hoort.'}
+            </p>
+          )}
         </div>
 
-        {!zinKlaar && (
+        {!zinKlaar && stap && (
           <>
-            <div className="zd-tray">
-              {tray.map(plek => (
-                <button
-                  key={plek.id}
-                  type="button"
-                  className={`zd-kaartje${actief === plek.id ? ' zd-kaartje-actief' : ''}${flits?.label === plek.zinsdeel ? ' zd-kaartje-mis' : ''}`}
-                  style={{ '--zd-kleur': KLEUR[plek.zinsdeel] }}
-                  onPointerDown={e => pak(e, plek)}
-                >{plek.zinsdeel}</button>
-              ))}
-            </div>
+            <button className="zd-verder" disabled={gekozen.length === 0} onClick={kijkStapNa}>
+              {gekozen.length === 0 ? 'Klik eerst in de zin' : 'Verder →'}
+            </button>
 
             {/* Hulp: geen antwoord, maar de truc om het onderdeel zelf te
-                vinden. De tip hoort bij het kaartje dat je vast hebt — pak een
-                ander kaartje en de tip verandert mee. */}
+                vinden. De tip hoort bij de stap waar je nu mee bezig bent. */}
             <div className="tv-tip-rij">
               <button className="tv-tip-knop" onClick={() => setTipOpen(o => !o)}>
                 {tipOpen ? '💡 Tip verbergen' : '💡 Hoe vind ik dit?'}
               </button>
             </div>
-            {tipOpen && tipLabel && (
+            {tipOpen && (
               <div className="tv-tip">
                 <span className="tv-tip-icon">💡</span>
                 <p>
-                  <strong style={{ color: KLEUR[tipLabel] }}>{tipLabel}</strong> — {TIP_ZINSDEEL[tipLabel]}
+                  <strong style={{ color: kleurNu }}>{stap.zinsdeel}</strong> — {TIP_ZINSDEEL[stap.zinsdeel]}
                 </p>
               </div>
             )}
@@ -361,26 +417,24 @@ export default function Zinsdelen({
         )}
 
         {zinKlaar && (
-          <div className={`tv-feedback ${misgeklikt.size === 0 ? 'tv-feedback-correct' : 'tv-feedback-wrong'}`}>
-            <span className="tv-feedback-icon">{misgeklikt.size === 0 ? '✓' : '✗'}</span>
-            <div>
-              {huidig.plekken.map(p => (
-                <p key={p.id} className="tv-feedback-uitleg">
-                  <strong style={{ color: KLEUR[p.zinsdeel] }}>{p.zinsdeel}</strong> — {p.uitleg}
-                </p>
-              ))}
+          <>
+            <div className={`tv-feedback ${zinGoed ? 'tv-feedback-correct' : 'tv-feedback-wrong'}`}>
+              <span className="tv-feedback-icon">{zinGoed ? '✓' : '✗'}</span>
+              <div>
+                {huidig.stappen
+                  .flatMap(s => [...new Set(s.doelen.map(d => d.plekId))])
+                  .map(id => huidig.plekken.find(p => p.id === id))
+                  .map(plek => (
+                    <p key={plek.id} className="tv-feedback-uitleg">
+                      <strong style={{ color: KLEUR[plek.zinsdeel] }}>{plek.zinsdeel}</strong> — {plek.uitleg}
+                    </p>
+                  ))}
+              </div>
             </div>
-          </div>
+            <button className="zd-verder" onClick={naZin}>Volgende zin →</button>
+          </>
         )}
       </div>
-
-      {/* Het kaartje dat met je vinger/muis meebeweegt tijdens het slepen */}
-      {zweef && (
-        <span
-          className="zd-kaartje zd-kaartje-zweef"
-          style={{ '--zd-kleur': KLEUR[zweef.label], left: zweef.x, top: zweef.y }}
-        >{zweef.label}</span>
-      )}
     </div>
   )
 }

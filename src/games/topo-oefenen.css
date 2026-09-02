@@ -326,3 +326,67 @@
 }
 /* Gewone steden: rondje in plaats van het vierkantje van een hoofdstad */
 .topo-plaats { fill: #17324d; stroke: #fff; stroke-width: 1; }
+
+/* ── Zoomen ── */
+/* De knoppen staan in de hoek van het kaartvlak; de kaart zelf houdt een marge
+   zodat er geen land onder de knoppen verdwijnt. */
+.topo-kaartwrap { position: relative; }
+.topo-kaart { touch-action: none; }
+
+.topo-zoom {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 5px;
+  border-radius: 12px;
+  background: rgba(8, 19, 31, 0.72);
+  border: 1px solid rgba(255,255,255,0.16);
+  backdrop-filter: blur(8px);
+  z-index: 3;
+}
+.topo-zoom button {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  font-family: inherit;
+  font-size: 1.15rem;
+  font-weight: 900;
+  line-height: 1;
+  color: #dbe6f5;
+  background: rgba(255,255,255,0.09);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 9px;
+  cursor: pointer;
+  transition: background 0.14s, border-color 0.14s, transform 0.1s;
+}
+.topo-zoom button:hover:not(:disabled) {
+  background: rgba(79,195,247,0.24);
+  border-color: rgba(79,195,247,0.6);
+  transform: translateY(-1px);
+}
+.topo-zoom button:disabled { opacity: 0.35; cursor: default; }
+.topo-zoom-heel { font-size: 0.95rem !important; }
+.topo-zoom-stand {
+  font-size: 0.66rem;
+  font-weight: 800;
+  color: #9fb0c6;
+  letter-spacing: 0.02em;
+}
+
+.topo-tip {
+  margin: 8px 0 0;
+  text-align: center;
+  font-size: 0.78rem;
+  color: #8fa1b8;
+}
+
+@media (max-width: 640px) {
+  .topo-zoom { top: 6px; right: 6px; padding: 4px; }
+  .topo-zoom button { width: 28px; height: 28px; font-size: 1rem; }
+  .topo-tip { font-size: 0.72rem; }
+}

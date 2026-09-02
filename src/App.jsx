@@ -10,6 +10,7 @@ import BotsenGame      from './games/BotsenGame'
 import { allUnlockedMap } from './itemsCatalog'
 import { COUNTRIES, DEFAULT_UNLOCKED } from './games/countries'
 import { useSessie } from './lib/sessie.jsx'
+import VrijSpelenBadge from './VrijSpelenBadge.jsx'
 
 const CODES = { pabo: 100000 }
 const BRIEF_CODES = { start: 800 }   // eenmalige briefgeld-codes
@@ -316,16 +317,18 @@ export default function App({ gast = false }) {
     </>
   )
 
+  // De spellen uit de kledingkast en de escaperoom zijn ook vrij spelen: geen
+  // oefening eraan vooraf, dus het merkteken erbij.
   if (screen === 'rocket') return (
-    <RocketGame onBack={() => setScreen('wardrobe')} />
+    <><RocketGame onBack={() => setScreen('wardrobe')} /><VrijSpelenBadge /></>
   )
 
   if (screen === 'botsen') return (
-    <BotsenGame onBack={() => setScreen('wardrobe')} />
+    <><BotsenGame onBack={() => setScreen('wardrobe')} /><VrijSpelenBadge /></>
   )
 
   if (screen === 'paintball') return (
-    <PaintballGame onBack={() => setScreen('wardrobe')} />
+    <><PaintballGame onBack={() => setScreen('wardrobe')} /><VrijSpelenBadge /></>
   )
 
   if (screen === 'escaperoom') return (
@@ -343,6 +346,7 @@ export default function App({ gast = false }) {
       >
         ← Terug
       </button>
+      <VrijSpelenBadge />
     </div>
   )
 

@@ -686,11 +686,13 @@ mark.tv-highlight {
   border-color: rgba(79,195,247,0.6);
 }
 .zd-groep:disabled { cursor: default; }
-/* Zodra je een kaartje vasthebt, laten de lege groepen zien dat je hier mag
-   loslaten. */
-.zd-groep-doel:not(.zd-groep-vol) {
-  border-color: rgba(79,195,247,0.55);
-  background: rgba(79,195,247,0.1);
+/* Aangeklikt, maar nog niet nagekeken: de kleur van het onderdeel waar je nu
+   mee bezig bent. Nog een keer klikken maakt de groep weer leeg. */
+.zd-groep-gekozen {
+  border-style: solid;
+  border-color: var(--zd-kleur);
+  background: rgba(255,255,255,0.12);
+  box-shadow: 0 0 18px -6px var(--zd-kleur);
 }
 .zd-groep-vol {
   border-style: solid;
@@ -750,61 +752,81 @@ mark.tv-highlight {
   z-index: 2;
 }
 
-.zd-tray {
+/* De stappenrij boven de zin: onderwerp → persoonsvorm → gezegde → … Wat af is
+   krijgt zijn eigen kleur, de stap waar je nu mee bezig bent licht op. */
+.zd-stappen {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 6px;
   justify-content: center;
+  margin: -4px 0 18px;
 }
-.zd-kaartje {
+.zd-stap {
   --zd-kleur: #4FC3F7;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: linear-gradient(160deg, rgba(255,255,255,0.12), rgba(255,255,255,0.04));
-  border: 2px solid var(--zd-kleur);
-  border-radius: 999px;
-  color: #fff;
-  font-family: inherit;
-  font-size: 0.95rem;
+  font-size: 0.7rem;
   font-weight: 800;
-  padding: 11px 18px;
-  cursor: grab;
-  touch-action: none;
-  user-select: none;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.3);
-  transition: transform 0.12s, background 0.14s, box-shadow 0.14s;
+  letter-spacing: 0.02em;
+  padding: 4px 11px;
+  border-radius: 999px;
+  color: #7d8ea6;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
 }
-.zd-kaartje::before {
-  content: '';
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--zd-kleur);
-  box-shadow: 0 0 10px var(--zd-kleur);
+.zd-stap-klaar {
+  color: var(--zd-kleur);
+  border-color: currentColor;
+  background: rgba(255,255,255,0.07);
 }
-.zd-kaartje:hover { transform: translateY(-2px); }
-.zd-kaartje-actief {
-  background: var(--zd-kleur);
+.zd-stap-nu {
   color: #08131f;
-  transform: translateY(-3px);
-  box-shadow: 0 10px 26px rgba(0,0,0,0.4);
-}
-.zd-kaartje-mis { animation: zd-schud 0.4s ease; }
-/* Het kaartje dat onder je vinger meebeweegt */
-.zd-kaartje-zweef {
-  position: fixed;
-  transform: translate(-50%, -140%);
-  pointer-events: none;
-  z-index: 400;
   background: var(--zd-kleur);
-  color: #08131f;
-  opacity: 0.95;
+  border-color: var(--zd-kleur);
+  box-shadow: 0 0 18px -3px var(--zd-kleur);
 }
+
+/* De baan van de stap waar je nu mee bezig bent: gestippeld, want er is nog
+   niets nagekeken. */
+.zd-baan-nu::before {
+  background: repeating-linear-gradient(90deg, var(--zd-kleur) 0 9px, rgba(255,255,255,0.08) 9px 15px);
+  box-shadow: none;
+}
+.zd-baan-nu .zd-baan-label { opacity: 0.92; }
+.zd-baan-fout::before {
+  background: #ff6b6b !important;
+  animation: zd-schud 0.4s ease;
+}
+.zd-baan-fout .zd-baan-label { background: #ff6b6b; }
+
+/* Nakijken gebeurt pas als je hierop klikt. */
+.zd-verder {
+  align-self: center;
+  min-width: 220px;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 800;
+  padding: 12px 30px;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #4FC3F7, #7f8cff);
+  color: #08131f;
+  cursor: pointer;
+  box-shadow: 0 8px 22px rgba(79,195,247,0.28);
+  transition: transform 0.12s, box-shadow 0.14s;
+}
+.zd-verder:hover:not(:disabled) { transform: translateY(-2px); }
+.zd-verder:disabled {
+  background: rgba(255,255,255,0.06);
+  color: #7d8ea6;
+  box-shadow: none;
+  cursor: default;
+}
+
+.tv-vraag-fout { color: #ff9d9d; font-weight: 700; }
+.tv-vraag-extra { color: #9fb0c6; }
 
 @media (max-width: 640px) {
   .zd-groep { font-size: 1.1rem; }
-  .zd-kaartje { font-size: 0.86rem; padding: 9px 14px; }
+  .zd-stap { font-size: 0.64rem; padding: 3px 8px; }
 }
 
 /* Extra keuze onder de lijst (zinsdelen: ook samengestelde zinnen) */

@@ -18,6 +18,11 @@ import './topo-oefenen.css'
 const GOED_VOOR_REWARD = 10
 const SLEEP_MARGE = 6
 const TREFAFSTAND = 26   // px in kaartcoördinaten: hoe dicht je moet klikken
+const MIN_ZOOM = 1
+const MAX_ZOOM = 6
+const ZOOM_STAP = 1.6
+
+const klem = (v, a, b) => Math.min(Math.max(v, a), b)
 
 function shuffle(arr) {
   const a = [...arr]
@@ -57,6 +62,18 @@ function afstandTotLijn(px, py, punten) {
   return best
 }
 
+// Waar een onderdeel op de kaart ligt: gebruikt voor het naamlabel na een
+// misser en om er dan naartoe te schuiven als het buiten beeld valt.
+function puntVan(soort, naam) {
+  if (soort === 'landen') return KAART.middelpunten[naam]
+  if (soort === 'regios') return KAART.regioMidden[naam]
+  if (soort === 'hoofdsteden') return KAART.hoofdsteden[naam].punt
+  if (soort === 'steden') return KAART.steden[naam].punt
+  if (soort === 'wateren') return KAART.wateren[naam]
+  const lijn = soort === 'rivieren' ? KAART.rivieren[naam] : KAART.gebergtes[naam]
+  return lijn[Math.floor(lijn.length / 2)]
+}
+
 export default function TopoOefenen({ onBack, addBriefgeld, addCuruntie, aantal, config }) {
   const [kaartKey, setKaartKey] = useState(() => config?.kaart || KAARTEN[0].key)
   const kaart = KAARTEN.find(k => k.key === kaartKey) || KAARTEN[0]
@@ -78,6 +95,55 @@ export default function TopoOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
   const opdracht = useGebruikOpdracht({ toolId: kaart.toolId, aantal })
   const svgRef = useRef(null)
 
+  // ── Zoomen en schuiven ──
+  // Kleine landen (Luxemburg, Nederland) en steden zijn op de hele kaart lastig
+  // precies aan te klikken. Daarom kun je inzoomen: met de knoppen, met de
+  // scrollknop of met twee vingers. Daarna schuif je door de kaart te slepen;
+  // een klik zonder slepen blijft gewoon een antwoord.
+  const basisVenster = KAART.vensters[kaart.key]
+  const [zoom, setZoom] = useState(1)
+  const [centrum, setCentrum] = useState(() => [
+    basisVenster[0] + basisVenster[2] / 2,
+    basisVenster[1] + basisVenster[3] / 2,
+  ])
+
+  const venster = useMemo(() => {
+    const [bx, by, bb, bh] = KAART.vensters[kaartKey]
+    const w = bb / zoom
+    const h = bh / zoom
+    return [
+      klem(centrum[0] - w / 2, bx, bx + bb - w),
+      klem(centrum[1] - h / 2, by, by + bh - h),
+      w, h,
+    ]
+  }, [kaartKey, zoom, centrum])
+
+  const vensterRef = useRef(venster); vensterRef.current = venster
+  const zoomRef = useRef(zoom); zoomRef.current = zoom
+  const centrumRef = useRef(centrum); centrumRef.current = centrum
+
+  // Inzoomen rond een punt op de kaart: dat punt blijft onder je muis of vinger.
+  const zoomOm = useCallback((factor, mx, my) => {
+    const oud = zoomRef.current
+    const nieuw = klem(oud * factor, MIN_ZOOM, MAX_ZOOM)
+    const f = nieuw / oud
+    if (f === 1) return
+    const [cx, cy] = centrumRef.current
+    setZoom(nieuw)
+    setCentrum([mx + (cx - mx) / f, my + (cy - my) / f])
+  }, [])
+
+  const zoomKnop = (factor) => {
+    const [vx, vy, vb, vh] = vensterRef.current
+    zoomOm(factor, vx + vb / 2, vy + vh / 2)
+  }
+
+  const heleKaart = () => {
+    const [bx, by, bb, bh] = KAART.vensters[kaartKey]
+    setZoom(1)
+    setCentrum([bx + bb / 2, by + bh / 2])
+  }
+
   useEffect(() => {
     if (scherm !== 'oefening') return
     setPool(prev => (prev.length ? prev : shuffle(bouwOpgaven(kaart, soorten))))
@@ -96,6 +162,10 @@ export default function TopoOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
   function volgende() {
     setFeedback(null)
     setActief(null)
+    // Elke nieuwe vraag begint weer op de hele kaart. Zou de zoom blijven staan,
+    // dan zit het antwoord soms buiten beeld — en zou het feit dat iets wel in
+    // beeld staat al een hint zijn.
+    heleKaart()
     const next = poolIdx + 1
     if (next >= pool.length) {
       setPool(shuffle(bouwOpgaven(kaart, soorten)))
@@ -107,6 +177,17 @@ export default function TopoOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
 
   const registreer = useCallback((correct) => {
     setFeedback({ correct })
+    // Fout? Dan laten we zien waar het wel ligt — ook als je zo ver ingezoomd
+    // zit dat die plek buiten beeld valt.
+    if (!correct && huidig) {
+      const doel = puntVan(huidig.soort, huidig.naam)
+      const [vx, vy, vb, vh] = vensterRef.current
+      const rand = 0.12
+      if (doel && (doel[0] < vx + vb * rand || doel[0] > vx + vb * (1 - rand)
+                || doel[1] < vy + vh * rand || doel[1] > vy + vh * (1 - rand))) {
+        setCentrum([doel[0], doel[1]])
+      }
+    }
     const zalKlaarZijn = opdracht.aantal != null && (opdracht.gedaan + 1) >= opdracht.aantal
     if (zalKlaarZijn) {
       setTimeout(() => opdracht.registreer(correct, { vraag: huidig.naam, juist: huidig.naam }), 1600)
@@ -125,10 +206,11 @@ export default function TopoOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [huidig, correctCount, poolIdx, pool, opdracht])
 
-  // Van schermpositie naar kaartcoördinaten (het venster verschilt per kaart).
+  // Van schermpositie naar kaartcoördinaten (het venster verschuift en
+  // verkleint als je inzoomt).
   function naarKaart(clientX, clientY) {
     const rect = svgRef.current.getBoundingClientRect()
-    const [vx, vy, vb, vh] = KAART.vensters[kaart.key]
+    const [vx, vy, vb, vh] = vensterRef.current
     return [
       vx + ((clientX - rect.left) / rect.width) * vb,
       vy + ((clientY - rect.top) / rect.height) * vh,
@@ -142,13 +224,27 @@ export default function TopoOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
       .some(el => el?.dataset?.[attribuut] === naam)
   }
 
+  // Piepkleine landjes (Luxemburg is nog geen 10 bij 12 op de kaart) raak je
+  // zelfs ingezoomd bijna nooit precies. Klik je er vlak naast, dan telt dat
+  // ook. Grote vlakken houden gewoon hun eigen grens.
+  function dichtbijVlak(attribuut, naam, x, y) {
+    const el = svgRef.current?.querySelector(`[data-${attribuut}="${naam}"]`)
+    if (!el?.getBBox) return false
+    let bb
+    try { bb = el.getBBox() } catch { return false }
+    if (Math.max(bb.width, bb.height) > 40) return false
+    const marge = 9
+    return x >= bb.x - marge && x <= bb.x + bb.width + marge
+        && y >= bb.y - marge && y <= bb.y + bb.height + marge
+  }
+
   function controleer(clientX, clientY) {
     if (!huidig) return
     const [x, y] = naarKaart(clientX, clientY)
     const { soort, naam } = huidig
     let goed = false
-    if (soort === 'landen') goed = raakVlak(clientX, clientY, 'land', naam)
-    else if (soort === 'regios') goed = raakVlak(clientX, clientY, 'regio', naam)
+    if (soort === 'landen') goed = raakVlak(clientX, clientY, 'land', naam) || dichtbijVlak('land', naam, x, y)
+    else if (soort === 'regios') goed = raakVlak(clientX, clientY, 'regio', naam) || dichtbijVlak('regio', naam, x, y)
     else if (soort === 'hoofdsteden') {
       const p = KAART.hoofdsteden[naam].punt
       goed = Math.hypot(x - p[0], y - p[1]) <= TREFAFSTAND
@@ -167,6 +263,8 @@ export default function TopoOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
   }
 
   function kaartKlik(e) {
+    // Net geschoven of gezoomd? Dan was dit geen antwoord.
+    if (geenKlikRef.current) { geenKlikRef.current = false; return }
     if (feedback) return
     if (modus === 'sleep') {
       if (!actief) return
@@ -174,6 +272,76 @@ export default function TopoOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
     }
     controleer(e.clientX, e.clientY)
   }
+
+  // ── Slepen om te schuiven en knijpen om te zoomen ──
+  const puntersRef = useRef(new Map())
+  const panRef = useRef(null)
+  const knijpRef = useRef(null)
+  const geenKlikRef = useRef(false)
+
+  function svgDown(e) {
+    puntersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+    if (puntersRef.current.size === 1) {
+      geenKlikRef.current = false
+      panRef.current = { startX: e.clientX, startY: e.clientY, centrum: centrumRef.current, bewogen: false }
+    } else if (puntersRef.current.size === 2) {
+      const [a, b] = [...puntersRef.current.values()]
+      panRef.current = null
+      knijpRef.current = { afstand: Math.hypot(a.x - b.x, a.y - b.y) || 1 }
+    }
+  }
+
+  function svgMove(e) {
+    const punters = puntersRef.current
+    if (!punters.has(e.pointerId)) return
+    punters.set(e.pointerId, { x: e.clientX, y: e.clientY })
+
+    if (punters.size >= 2) {
+      const [a, b] = [...punters.values()]
+      const d = Math.hypot(a.x - b.x, a.y - b.y)
+      const k = knijpRef.current
+      if (k && d > 0 && Math.abs(d / k.afstand - 1) > 0.02) {
+        const [mx, my] = naarKaart((a.x + b.x) / 2, (a.y + b.y) / 2)
+        zoomOm(d / k.afstand, mx, my)
+        k.afstand = d
+        geenKlikRef.current = true
+      }
+      return
+    }
+
+    const p = panRef.current
+    if (!p) return
+    const dx = e.clientX - p.startX
+    const dy = e.clientY - p.startY
+    if (!p.bewogen && Math.hypot(dx, dy) < SLEEP_MARGE) return
+    p.bewogen = true
+    geenKlikRef.current = true
+    const rect = svgRef.current.getBoundingClientRect()
+    const [, , vb, vh] = vensterRef.current
+    setCentrum([p.centrum[0] - (dx / rect.width) * vb, p.centrum[1] - (dy / rect.height) * vh])
+  }
+
+  function svgUp(e) {
+    puntersRef.current.delete(e.pointerId)
+    if (puntersRef.current.size < 2) knijpRef.current = null
+    if (puntersRef.current.size === 0) panRef.current = null
+  }
+
+  // Scrollen = zoomen op de plek van de muis. Native listener, want React zet
+  // wheel standaard passief en dan mag preventDefault niet.
+  const wielRef = useRef(null)
+  wielRef.current = (e) => {
+    e.preventDefault()
+    const [mx, my] = naarKaart(e.clientX, e.clientY)
+    zoomOm(e.deltaY < 0 ? 1.22 : 1 / 1.22, mx, my)
+  }
+  useEffect(() => {
+    const svg = svgRef.current
+    if (!svg) return
+    const handler = (e) => wielRef.current(e)
+    svg.addEventListener('wheel', handler, { passive: false })
+    return () => svg.removeEventListener('wheel', handler)
+  }, [scherm])
 
   // ── Slepen (muis én vinger) ──
   const sleepRef = useRef(null)
@@ -223,6 +391,7 @@ export default function TopoOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
   }
 
   function start() {
+    heleKaart()
     setPool(shuffle(bouwOpgaven(kaart, soorten)))
     setPoolIdx(0)
     setCorrectCount(0)
@@ -265,7 +434,13 @@ export default function TopoOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
             <button
               key={k.key}
               className={`topo-modus-knop${kaartKey === k.key ? ' aan' : ''}`}
-              onClick={() => { setKaartKey(k.key); setSoorten(soortenVan(k)) }}
+              onClick={() => {
+                setKaartKey(k.key)
+                setSoorten(soortenVan(k))
+                const [bx, by, bb, bh] = KAART.vensters[k.key]
+                setZoom(1)
+                setCentrum([bx + bb / 2, by + bh / 2])
+              }}
             >
               <span>{k.key === 'europa-a' ? '🌍' : '🧭'}</span> {k.kort}
               <em>{k.naam.split('— ')[1]}</em>
@@ -310,16 +485,9 @@ export default function TopoOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
 
   const naarBeloning = correctCount % GOED_VOOR_REWARD
   const toonJuist = feedback && !feedback.correct
-  const [vx, vy, vb, vh] = KAART.vensters[kaart.key]
+  const [vx, vy, vb, vh] = venster
   const juistIs = (soort, naam) => toonJuist && huidig.soort === soort && huidig.naam === naam
-  const labelPunt = !toonJuist ? null
-    : huidig.soort === 'landen' ? KAART.middelpunten[huidig.naam]
-    : huidig.soort === 'regios' ? KAART.regioMidden[huidig.naam]
-    : huidig.soort === 'hoofdsteden' ? KAART.hoofdsteden[huidig.naam].punt
-    : huidig.soort === 'steden' ? KAART.steden[huidig.naam].punt
-    : huidig.soort === 'wateren' ? KAART.wateren[huidig.naam]
-    : huidig.soort === 'rivieren' ? KAART.rivieren[huidig.naam][Math.floor(KAART.rivieren[huidig.naam].length / 2)]
-    : KAART.gebergtes[huidig.naam][Math.floor(KAART.gebergtes[huidig.naam].length / 2)]
+  const labelPunt = toonJuist ? puntVan(huidig.soort, huidig.naam) : null
   const metRegios = !!kaart.onderdelen.regios
 
   return (
@@ -351,6 +519,10 @@ export default function TopoOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
           viewBox={`${vx} ${vy} ${vb} ${vh}`}
           className="topo-kaart"
           onClick={kaartKlik}
+          onPointerDown={svgDown}
+          onPointerMove={svgMove}
+          onPointerUp={svgUp}
+          onPointerCancel={svgUp}
         >
           <defs>
             <linearGradient id="topo-zee" x1="0" y1="0" x2="0.3" y2="1">
@@ -449,14 +621,14 @@ export default function TopoOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
 
           {toonJuist && huidig.soort === 'wateren' && (
             <circle
-              cx={KAART.wateren[huidig.naam][0]} cy={KAART.wateren[huidig.naam][1]} r="18"
+              cx={KAART.wateren[huidig.naam][0]} cy={KAART.wateren[huidig.naam][1]} r={18 / zoom}
               className="topo-aanwijzen-punt"
             />
           )}
 
           {toonJuist && labelPunt && (
-            <g className="topo-label">
-              <text x={labelPunt[0]} y={labelPunt[1]} textAnchor="middle">{huidig.naam}</text>
+            <g className="topo-label" transform={`translate(${labelPunt[0]} ${labelPunt[1]}) scale(${1 / zoom})`}>
+              <text x="0" y="0" textAnchor="middle">{huidig.naam}</text>
             </g>
           )}
 
@@ -464,7 +636,7 @@ export default function TopoOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
 
           <g
             className="topo-legenda"
-            transform={`translate(${vx + 16} ${vy + vh - (metRegios ? 96 : 78)})`}
+            transform={`translate(${vx + 16 / zoom} ${vy + vh - (metRegios ? 96 : 78) / zoom}) scale(${1 / zoom})`}
             pointerEvents="none"
           >
             <rect x="0" y="0" width="150" height={metRegios ? 84 : 66} rx="10" />
@@ -482,7 +654,21 @@ export default function TopoOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
             )}
           </g>
         </svg>
+
+        {/* Zoomknoppen: staan naast de kaart, dus nooit over een land heen. */}
+        <div className="topo-zoom">
+          <button type="button" onClick={() => zoomKnop(ZOOM_STAP)} disabled={zoom >= MAX_ZOOM} title="Inzoomen">+</button>
+          <span className="topo-zoom-stand">{Math.round(zoom * 10) / 10}×</span>
+          <button type="button" onClick={() => zoomKnop(1 / ZOOM_STAP)} disabled={zoom <= MIN_ZOOM} title="Uitzoomen">−</button>
+          <button type="button" className="topo-zoom-heel" onClick={heleKaart} disabled={zoom === 1} title="Hele kaart">🗺️</button>
+        </div>
       </div>
+
+      <p className="topo-tip">
+        {zoom > 1
+          ? 'Sleep de kaart om te schuiven · 🗺️ voor de hele kaart'
+          : 'Te klein om aan te klikken? Zoom in met + (of scrollen, of twee vingers) en sleep de kaart.'}
+      </p>
 
       {modus === 'sleep' && !feedback && (
         <div className="topo-tray">

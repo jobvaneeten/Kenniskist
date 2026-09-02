@@ -398,6 +398,31 @@ body::after {
   align-items: flex-end;
   gap: 8px;
 }
+/* Merkteken voor vrij spelen — klein, in dezelfde hoek als de geldbadge. */
+.vrij-spelen-badge {
+  position: fixed;
+  /* Onder de HUD-balk die spellen bovenaan tekenen (score, munten, tijd) en
+     onder de geldbadge — zo staat het merkteken nergens voor. */
+  top: 100px;
+  right: 16px;
+  /* Boven alles: spellen zetten hun eigen laag over de app heen (de
+     geluidsknop gebruikt hetzelfde niveau). Klikken gaat er dwars doorheen. */
+  z-index: 2147483001;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  font-size: 1.05rem;
+  line-height: 1;
+  border-radius: 50%;
+  background: rgba(10, 10, 30, 0.72);
+  border: 1.5px solid rgba(255, 176, 32, 0.55);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+  backdrop-filter: blur(10px);
+  pointer-events: none;
+  user-select: none;
+}
+
 .uitloggen-btn {
   position: fixed;
   top: 18px;

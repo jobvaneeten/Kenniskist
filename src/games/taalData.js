@@ -613,7 +613,7 @@ export const VRAGEN = [
     woordsoort: null,
     zinsdeel:   'gezegde', uitleg_zd: 'Werkwoordelijk gezegde van twee woorden: "is" (persoonsvorm) + "gegaan" (voltooid deelwoord).' },
 
-  // ── Zin 28 — naamwoordelijk gezegde (koppelwerkwoord + bijvoeglijk naamwoord) ─
+  // ── Zin 28 — koppelwerkwoord: het gezegde is alleen het werkwoord ──────────
   { id: 129, zin: 'De soep is heerlijk.',
     vraagWoord: 'soep',
     zinsdeelWoorden: 'De soep',
@@ -624,15 +624,15 @@ export const VRAGEN = [
     woordsoort: 'werkwoord',             uitleg_ws: '"Is" is hier een koppelwerkwoord — dat is ook een werkwoord.',
     zinsdeel:   'persoonsvorm',          uitleg_zd: 'De persoonsvorm is "is".' },
   { id: 131, zin: 'De soep is heerlijk.',
-    vraagWoord: 'is heerlijk',
+    vraagWoord: 'is',
     woordsoort: null,
-    zinsdeel:   'gezegde', uitleg_zd: 'Naamwoordelijk gezegde: koppelwerkwoord "is" + "heerlijk", dat iets zegt over het onderwerp.' },
+    zinsdeel:   'gezegde', uitleg_zd: 'Het gezegde zijn alle werkwoorden in de zin. Hier is er maar één: "is". De persoonsvorm en het gezegde zijn dus hetzelfde woord.' },
   { id: 132, zin: 'De soep is heerlijk.',
     vraagWoord: 'heerlijk',
     woordsoort: 'bijvoeglijk naamwoord', uitleg_ws: '"Heerlijk" zegt hoe de soep is — dat is een bijvoeglijk naamwoord.',
     zinsdeel:   null },
 
-  // ── Zin 29 — naamwoordelijk gezegde met "worden" ────────────────────────────
+  // ── Zin 29 — koppelwerkwoord "worden" ──────────────────────────────────────
   { id: 133, zin: 'Mijn broer wordt boos.',
     vraagWoord: 'broer',
     zinsdeelWoorden: 'Mijn broer',
@@ -643,9 +643,9 @@ export const VRAGEN = [
     woordsoort: 'werkwoord',             uitleg_ws: '"Wordt" is hier een koppelwerkwoord — dat is een werkwoord.',
     zinsdeel:   'persoonsvorm',          uitleg_zd: 'De persoonsvorm is "wordt".' },
   { id: 135, zin: 'Mijn broer wordt boos.',
-    vraagWoord: 'wordt boos',
+    vraagWoord: 'wordt',
     woordsoort: null,
-    zinsdeel:   'gezegde', uitleg_zd: 'Naamwoordelijk gezegde: koppelwerkwoord "wordt" + "boos", dat zegt hoe het onderwerp wordt.' },
+    zinsdeel:   'gezegde', uitleg_zd: 'Het gezegde zijn alle werkwoorden in de zin. Hier is er maar één: "wordt". De persoonsvorm en het gezegde zijn dus hetzelfde woord.' },
 
   // ── Zin 30 — werkwoordelijk gezegde met hulpwerkwoord "mogen" ───────────────
   { id: 136, zin: 'Wij mogen buiten spelen.',
@@ -1447,9 +1447,9 @@ export const VRAGEN = [
     woordsoort: null,
     zinsdeel:   'persoonsvorm', uitleg_zd: 'Maak er een vraag van: "Is de juffrouw ...?" Dan springt "is" vooraan. Dat is de persoonsvorm.' },
   { id: 326, zin: 'De juffrouw is vandaag ziek.',
-    vraagWoord: 'ziek', zinsdeelWoorden: 'is ziek',
+    vraagWoord: 'is',
     woordsoort: null,
-    zinsdeel:   'gezegde', uitleg_zd: 'De werkwoorden horen bij elkaar: "is ziek" is samen het gezegde.' },
+    zinsdeel:   'gezegde', uitleg_zd: 'Het gezegde zijn alle werkwoorden in de zin. Hier is er maar één: "is". "Ziek" is geen werkwoord en hoort er dus niet bij.' },
   { id: 327, zin: 'De juffrouw is vandaag ziek.',
     vraagWoord: 'vandaag',
     woordsoort: null,
@@ -2189,9 +2189,9 @@ export const VRAGEN = [
     woordsoort: null,
     zinsdeel:   'persoonsvorm', uitleg_zd: 'Maak er een vraag van: "Wordt onze buurman ...?" Dan springt "wordt" vooraan. Dat is de persoonsvorm.' },
   { id: 502, zin: 'Onze buurman wordt volgend jaar zeventig.',
-    vraagWoord: 'zeventig', zinsdeelWoorden: 'wordt zeventig',
+    vraagWoord: 'wordt',
     woordsoort: null,
-    zinsdeel:   'gezegde', uitleg_zd: 'De werkwoorden horen bij elkaar: "wordt zeventig" is samen het gezegde.' },
+    zinsdeel:   'gezegde', uitleg_zd: 'Het gezegde zijn alle werkwoorden in de zin. Hier is er maar één: "wordt". "Zeventig" is een telwoord en hoort er dus niet bij.' },
   { id: 503, zin: 'Onze buurman wordt volgend jaar zeventig.',
     vraagWoord: 'jaar', zinsdeelWoorden: 'volgend jaar',
     woordsoort: null,
@@ -2673,7 +2673,7 @@ export const zinsdeelFrase = (q) => q.zinsdeelWoorden || q.vraagWoord
 export const TIP_ZINSDEEL = {
   'onderwerp':           'Zoek eerst de persoonsvorm. Vraag dan: wie of wat + persoonsvorm? Bij "De hond blaft hard": wie blaft? De hond — dat is het onderwerp.',
   'persoonsvorm':        'Maak er een vraagzin van: het werkwoord dat dan vooraan springt is de persoonsvorm. Werkt dat niet? Zet de zin in een andere tijd (doe alsof het gisteren gebeurde) — het werkwoord dat meeverandert is de persoonsvorm.',
-  'gezegde':             'Zoek alle werkwoorden bij elkaar. De persoonsvorm plus de andere werkwoorden vormen samen het werkwoordelijk gezegde, ook als ze uit elkaar staan: "Wij mogen buiten spelen".',
+  'gezegde':             'Het gezegde zijn álle werkwoorden in de zin. Zoek ze allemaal, ook als ze ver uit elkaar staan: "Wij mogen buiten spelen", "De juf leest de kinderen een verhaal voor". Is er maar één werkwoord? Dan is dat ene woord het hele gezegde.',
   'lijdend voorwerp':    'Vraag: wie of wat + persoonsvorm + onderwerp? Bij "Papa koopt twee broden": wat koopt papa? Twee broden — dat is het lijdend voorwerp.',
   'meewerkend voorwerp': 'Vraag: aan wie of voor wie gebeurt het? Je kunt er meestal "aan" voor zetten: (aan) de kinderen.',
   'bepaling':            'Een bepaling vertelt waar, wanneer, hoe, hoe lang of waarmee iets gebeurt. Wat overblijft naast het onderwerp, de persoonsvorm en de voorwerpen is meestal een bepaling.',

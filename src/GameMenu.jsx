@@ -20,6 +20,7 @@ import TaalOefenen from './games/TaalOefenen'
 import BegrijpendLezen from './games/BegrijpendLezen'
 import TopoOefenen from './games/TopoOefenen'
 import MenuScene from './MenuScenes'
+import VrijSpelenBadge from './VrijSpelenBadge.jsx'
 import './game.css'
 
 const YEARS = [
@@ -125,47 +126,51 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
   }
   const clearGate = (key) => { delete gateRef.current[key] }
 
+  // Vrij spelen: hieronder start een spel zonder oefening, dus komt er een
+  // klein spelcomputer-merkteken in beeld (zie VrijSpelenBadge).
+  const vrij = (el) => <>{el}<VrijSpelenBadge /></>
+
   // Tower defense (no mode selection needed)
   if (directGame === 'towerdefense') {
-    return <TowerDefenseGame onBack={onBack} />
+    return vrij(<TowerDefenseGame onBack={onBack} />)
   }
 
   if (directGame === 'jetpack') {
-    return <JetpackGame onBack={onBack} addCuruntie={makeGated('jetpack', addCuruntie)} />
+    return vrij(<JetpackGame onBack={onBack} addCuruntie={makeGated('jetpack', addCuruntie)} />)
   }
 
   if (directGame === 'headsoccer') {
-    return <HeadSoccer onBack={onBack} addCuruntie={makeGated('headsoccer', addCuruntie)} />
+    return vrij(<HeadSoccer onBack={onBack} addCuruntie={makeGated('headsoccer', addCuruntie)} />)
   }
 
   if (directGame === 'astrokatapult') {
-    return <AstroKatapultGame onBack={onBack} />
+    return vrij(<AstroKatapultGame onBack={onBack} />)
   }
 
   if (directGame === 'sterrenstroom') {
-    return <SterrenstroompGame onBack={onBack} />
+    return vrij(<SterrenstroompGame onBack={onBack} />)
   }
 
   if (directGame === 'doodlesprong') {
-    return <DoodleSprongGame onBack={onBack} />
+    return vrij(<DoodleSprongGame onBack={onBack} />)
   }
 
   if (directGame === 'evolutie') {
-    return <DierEvolutieGame onBack={onBack} />
+    return vrij(<DierEvolutieGame onBack={onBack} />)
   }
 
   if (directGame === 'brug') {
-    return <BrugBouwen onBack={onBack} />
+    return vrij(<BrugBouwen onBack={onBack} />)
   }
 
   if (directGame === 'hillclimb') {
-    return <HillClimbGame onBack={onBack} />
+    return vrij(<HillClimbGame onBack={onBack} />)
   }
 
 
   // Verder met een opgeslagen toernooi (buiten de opgaves)
   if (directGame === 'football' && gameMode === 'resume') {
-    return (
+    return vrij(
       <FootballGame
         noQuiz
         resumeBracket={loadToernooi()}
@@ -177,7 +182,7 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
 
   // Direct game (no quiz)
   if (directGame === 'football' && gameMode) {
-    return (
+    return vrij(
       <FootballGame
         noQuiz
         twoPlayer={gameMode === '2player'}
