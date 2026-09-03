@@ -16,6 +16,8 @@ const GAMES = [
   { emoji: '🚗', label: 'Bergrijden' },
   { emoji: '🎯', label: 'Paintball' },
   { emoji: '🎈', label: 'Ballonnengevecht' },
+  { emoji: '🍉', label: 'Fruitsabel' },
+  { emoji: '🧱', label: 'Stuiterballen' },
 ]
 
 // Moet kloppen met VAKKEN in src/lib/tools.js en MODES in GameMenu.jsx.
@@ -27,7 +29,7 @@ const SUBJECTS = [
 ]
 
 const STATS = [
-  { value: '13',    label: 'minigames' },
+  { value: '15',    label: 'minigames' },
   { value: '300+',  label: 'items te winnen' },
   { value: '4',     label: 'vakgebieden' },
   { value: '4–8',   label: 'voor groep' },

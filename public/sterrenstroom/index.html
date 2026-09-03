@@ -322,8 +322,14 @@
   if(!shopData.selected) shopData.selected = { ship:'ufo', trail:'cyan', planet:'earth' };
   saveShop(shopData);
 
-  function getCoins(){ return parseInt(localStorage.getItem('kk_curuntie') || '0'); }
-  function setCoins(v){ localStorage.setItem('kk_curuntie', Math.max(0, v)); }
+  // Eigen muntenpotje: munten uit Spacerunner blijven in Spacerunner. Wie eerder
+  // in de gedeelde portemonnee spaarde, begint hier eenmalig met dat bedrag.
+  const MUNTKEY = 'kk_spacerunner_munten';
+  if (localStorage.getItem(MUNTKEY) === null) {
+    localStorage.setItem(MUNTKEY, localStorage.getItem('kk_curuntie') || '0');
+  }
+  function getCoins(){ return parseInt(localStorage.getItem(MUNTKEY) || '0'); }
+  function setCoins(v){ localStorage.setItem(MUNTKEY, Math.max(0, v)); }
 
   // ---- layout / projection ----
   // De camera hangt lager en verder achter het schip dan eerst: het verschil
@@ -427,11 +433,8 @@
     document.getElementById('oCry').textContent='Munten verzameld: '+crystals;
     document.getElementById('newBest').style.display = isBest?'block':'none';
     document.getElementById('hud').classList.remove('show');
-    // Munten opslaan in de gedeelde wallet (kk_curuntie)
-    if(crystals > 0){
-      const cur = parseInt(localStorage.getItem('kk_curuntie') || '0');
-      localStorage.setItem('kk_curuntie', cur + crystals);
-    }
+    // Munten opslaan in het eigen potje van dit spel
+    if(crystals > 0) setCoins(getCoins() + crystals);
     // Melding aan de parent (WerkwoordSpelling reward-mode)
     window.parent.postMessage({ type: 'spacerunner-gameover', crystals }, '*');
     setTimeout(()=>document.getElementById('overScreen').classList.remove('hidden'),520);

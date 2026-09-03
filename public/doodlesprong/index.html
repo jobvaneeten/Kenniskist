@@ -264,8 +264,12 @@ const Store = (() => {
   };
 })();
 function readJSON(k, fb){ try { const v = JSON.parse(Store.get(k) || 'null'); return v === null ? fb : v; } catch(e){ return fb; } }
-function getCoins(){ return parseInt(Store.get('kk_curuntie') || '0', 10) || 0; }
-function setCoins(v){ Store.set('kk_curuntie', String(Math.max(0, Math.round(v)))); }
+// Eigen muntenpotje: munten uit dit spel blijven in dit spel. Wie eerder in de
+// gedeelde portemonnee spaarde, begint hier eenmalig met dat bedrag.
+const MUNTKEY = 'ds_munten';
+if (Store.get(MUNTKEY) === null) Store.set(MUNTKEY, Store.get('kk_curuntie') || '0');
+function getCoins(){ return parseInt(Store.get(MUNTKEY) || '0', 10) || 0; }
+function setCoins(v){ Store.set(MUNTKEY, String(Math.max(0, Math.round(v)))); }
 
 const rand = (a,b) => a + Math.random()*(b-a);
 const pick = a => a[(Math.random()*a.length)|0];

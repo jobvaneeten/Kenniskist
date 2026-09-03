@@ -77,6 +77,8 @@ const SPELLEN = [
   { key: 'tower',      emoji: '🏰', name: 'Tower Defense',  desc: 'Verdedig je toren!',               img: '/scenes/games/towerdefense.png' },
   { key: 'brug',       emoji: '🌉', name: 'Brug Bouwen',    desc: 'Bouw 3 bruggen',                   img: '/scenes/games/brug.png' },
   { key: 'hillclimb',  emoji: '🚗', name: 'Bergrijden',     desc: 'Rij tot je crasht',                img: '/scenes/games/hillclimb.png' },
+  { key: 'fruitsabel', emoji: '🍉', name: 'Fruitsabel',     desc: 'Snijd 60 seconden fruit',          img: '/scenes/games/fruitsabel.svg' },
+  { key: 'stuiter',    emoji: '🧱', name: 'Stuiterballen',  desc: 'Schiet door de blokken',           img: '/scenes/games/stuiterballen.svg' },
 ]
 
 export default function SpelBeloning({ title, sub, geld, addCuruntie, onDone }) {
@@ -100,6 +102,10 @@ export default function SpelBeloning({ title, sub, geld, addCuruntie, onDone }) 
   if (picked === 'tower')      return wrap(<TowerDefenseGame onBack={onDone} onRoundDone={onDone} />)
   if (picked === 'brug')       return wrap(<BrugBouwen reward onBack={onDone} />)
   if (picked === 'hillclimb')  return wrap(<HillClimbGame reward onBack={onDone} />)
+  // Deze twee hebben een eigen winkeltje: na het potje mag je eerst je munten
+  // uitgeven en ga je met "Verder" zelf terug naar de oefening.
+  if (picked === 'fruitsabel') return <IframeEmbed src="/fruitsabel/" title="Fruitsabel" doneType="fruitsabel-gameover" hint="Speel 1 potje — daarna kun je upgraden en op Verder klikken 🍉" onDone={onDone} />
+  if (picked === 'stuiter')    return <IframeEmbed src="/stuiterballen/" title="Stuiterballen" doneType="stuiterballen-gameover" hint="Speel 1 potje — daarna kun je upgraden en op Verder klikken 🧱" onDone={onDone} />
 
   return (
     <div className="sb-screen">

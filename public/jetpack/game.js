@@ -68,7 +68,14 @@ const FOOT_OFF = () => player.height * 0.18;
 let gameState    = 'menu';
 let coins        = 0;
 let highScore    = parseInt(localStorage.getItem('jj_highscore') || '0');
-let totalCoins   = parseInt(localStorage.getItem('kk_curuntie') || '0'); // gespaarde munten voor shop
+// Eigen muntenpotje: wat je in Jetpack verdient blijf je ook in Jetpack
+// uitgeven. Wie al gespaard had in de vroeger gedeelde portemonnee begint hier
+// eenmalig met dat bedrag.
+const MUNTKEY = 'jj_munten';
+if (localStorage.getItem(MUNTKEY) === null) {
+  localStorage.setItem(MUNTKEY, localStorage.getItem('kk_curuntie') || '0');
+}
+let totalCoins   = parseInt(localStorage.getItem(MUNTKEY) || '0'); // gespaarde munten voor shop
 let frameCount   = 0;
 let gameSpeed    = 2.0;
 let baseSpeed    = 2.0;
@@ -2389,7 +2396,7 @@ function saveShop() {
   localStorage.setItem('jj_starters',      JSON.stringify(activeStarters));
   localStorage.setItem('jj_upgradelevels', JSON.stringify(upgradeLevels));
   localStorage.setItem('jj_disabled',      JSON.stringify(disabledUpgrades));
-  localStorage.setItem('kk_curuntie',    totalCoins);
+  localStorage.setItem(MUNTKEY,    totalCoins);
 }
 
 function openShop(fromScreen) {
@@ -2890,7 +2897,7 @@ function showGameOver() {
   totalCoins  += earned;
   // Missies uitbetalen + tonen
   const completedMissions = settleMissions();
-  localStorage.setItem('kk_curuntie', totalCoins);
+  localStorage.setItem(MUNTKEY, totalCoins);
   const goM = document.getElementById('goMissions');
   if (goM) {
     goM.innerHTML = completedMissions.length
