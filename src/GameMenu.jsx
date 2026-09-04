@@ -8,7 +8,6 @@ import AstroKatapultGame from './games/AstroKatapultGame'
 import SterrenstroompGame from './games/SterrenstroompGame'
 import DoodleSprongGame from './games/DoodleSprongGame'
 import FruitsabelGame from './games/FruitsabelGame'
-import StuiterballenGame from './games/StuiterballenGame'
 import DierEvolutieGame from './games/DierEvolutieGame'
 import BrugBouwen from './games/BrugBouwen'
 import ProcentenBreuken from './games/ProcentenBreuken'
@@ -81,7 +80,6 @@ const FREE_GAMES = [
   { key: 'brug',          emoji: '🌉', name: 'Brug Bouwen',     desc: 'Bouw bruggen in 22 levels — hout, weg, metaal & touw!' },
   { key: 'hillclimb',     emoji: '🚗', name: 'Bergrijden',      desc: 'Race over heuvels, verzamel munten en upgrade je auto!' },
   { key: 'fruitsabel',    emoji: '🍉', name: 'Fruitsabel',      desc: 'Snijd 60 seconden fruit doormidden — en koop scherpere sabels!', img: '/scenes/games/fruitsabel.svg' },
-  { key: 'stuiterballen', emoji: '🧱', name: 'Stuiterballen',   desc: 'Schiet je ballen door de blokken — elke ronde meer ballen!', img: '/scenes/games/stuiterballen.svg' },
 ]
 
 function RewardChips({ rewards }) {
@@ -173,10 +171,6 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
 
   if (directGame === 'fruitsabel') {
     return vrij(<FruitsabelGame onBack={onBack} />)
-  }
-
-  if (directGame === 'stuiterballen') {
-    return vrij(<StuiterballenGame onBack={onBack} />)
   }
 
 
