@@ -4,6 +4,7 @@
 //   /sterrenveer-dev.html                 → titelscherm
 //   /sterrenveer-dev.html?level=w1-l03    → direct dat level
 //   /sterrenveer-dev.html?level=w1-l03&alles=1 → alle levels vrijgespeeld
+//   /sterrenveer-dev.html?beloning=1      → beloningsmodus (één level, dan terug)
 //
 // window.sterrenveer geeft de tests toegang tot het spel, zodat
 // tools/screenshot-levels.js kan wachten tot een level echt geladen is.
@@ -31,7 +32,11 @@ if (params.get('alles') === '1') {
   }
 }
 
-const spel = new Spel(canvas, { onBack: () => {} })
+const beloning = params.get('beloning') === '1'
+const spel = new Spel(canvas, {
+  beloning,
+  onBack: () => { document.title = 'Sterrenveer — terug naar oefenen' },
+})
 window.sterrenveer = spel
 
 if (levelParam) {

@@ -34,12 +34,18 @@ export class ResultatenScene {
     this.saldoDoel = opslag.munten
     this.kunst = bakCharacter(characterOf(opslag.uitgerust))
 
+    // Beloningsmodus: je speelt één level, dus geen Volgende of Opnieuw — je
+    // gaat terug naar de oefening, vanzelf of met één klik.
+    this.beloning = !!spel.beloning
+    this.klaarTimer = 0
     const laatste = this.index >= LEVELS_PER_WERELD
-    this.menu = new Menu([
-      { label: TXT.menu.volgende, uit: laatste },
-      { label: TXT.menu.opnieuw },
-      { label: TXT.menu.kaart },
-    ])
+    this.menu = this.beloning
+      ? new Menu([{ label: TXT.beloning.verder }])
+      : new Menu([
+        { label: TXT.menu.volgende, uit: laatste },
+        { label: TXT.menu.opnieuw },
+        { label: TXT.menu.kaart },
+      ])
   }
 
   binnen() {
@@ -60,7 +66,7 @@ export class ResultatenScene {
           sfx.uiKiezen()
           if (this.r.nieuweSterren.includes(this.sterFase)) {
             muziek.jingle('ster', 'kaart')
-            this.spel.particles.sparkle(198 + this.sterFase * 28, 130, UI.ster)
+            this.spel.particles.sparkle(148 + this.sterFase * 92, 84, UI.ster)
           }
         }
         this.sterFase++
@@ -76,7 +82,12 @@ export class ResultatenScene {
     }
 
     const keuze = this.menu.update(this.spel.invoer)
-    if (keuze === 0) this.spel.naarVolgendLevel(this.wereldNr, this.index)
+    if (this.beloning) {
+      // Pas aftellen als de sterren en het saldo klaar zijn: eerst zien wat je
+      // verdiend hebt, dan pas terug.
+      if (this.sterFase >= 3 && this.saldoGetoond >= this.saldoDoel) this.klaarTimer += dt
+      if (keuze === 0 || this.klaarTimer > 3.5) this.spel.terugNaarOefenen()
+    } else if (keuze === 0) this.spel.naarVolgendLevel(this.wereldNr, this.index)
     else if (keuze === 1) this.spel.herstartLevel()
     else if (keuze === 2) this.spel.naarKaart()
 
@@ -98,10 +109,12 @@ export class ResultatenScene {
     tekstMidden(ctx, TXT.resultaten.gehaald, 240, 34, UI.accent, 2)
     tekstMidden(ctx, `${this.level.id.toUpperCase()} — ${this.level.naam}`, 240, 54, UI.tekstZacht)
 
-    // Sterren
+    // Sterren, elk met zijn label eronder. De drie kolommen staan 92 px uit
+    // elkaar: het breedste label is 74 px, dus zo lopen ze niet meer over
+    // elkaar heen zoals bij 42 px het geval was.
     const sterY = 84
     for (let i = 0; i < 3; i++) {
-      const x = 198 + i * 42
+      const x = 148 + i * 92
       const zichtbaar = i < this.sterFase
       const draai = i === this.sterFase ? Math.abs(Math.sin(this.sterProgressie * Math.PI)) : 1
       ster(ctx, x, sterY, zichtbaar && !!this.r.sterren[i], 1.9, zichtbaar ? 1 : draai)
@@ -110,24 +123,25 @@ export class ResultatenScene {
       }
     }
 
-    // Regels
+    // Regels. Vijf stuks in het drukste geval (munten, bonus, tijd, record,
+    // saldo); die moeten boven de knoppen op y=186 blijven, dus 118 + 4×12.
     const x0 = 128
     const w = 224
-    let y = 132
+    let y = 118
     this._regel(ctx, x0, y, w, TXT.resultaten.muntenDitLevel, `+${this.r.muntenNu}`)
-    y += 13
+    y += 12
     if (this.r.bonusNu > 0) {
       this._regel(ctx, x0, y, w, TXT.resultaten.bonus, `+${this.r.bonusNu}`)
-      y += 13
+      y += 12
     }
     const binnenTijd = this.r.tijd <= this.r.doeltijd
     this._regel(ctx, x0, y, w, TXT.resultaten.tijd,
       `${secondenFijn(this.r.tijd)} / ${secondenFijn(this.r.doeltijd)}`,
       binnenTijd ? UI.goed : UI.fout)
-    y += 13
+    y += 12
     if (this.r.persoonlijkRecord) {
       tekstMidden(ctx, TXT.resultaten.record, 240, y, UI.accent)
-      y += 13
+      y += 12
     }
     this._regel(ctx, x0, y, w, TXT.resultaten.nieuwSaldo, `${this.saldoGetoond}`)
 

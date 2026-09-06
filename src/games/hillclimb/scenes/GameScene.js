@@ -109,6 +109,10 @@ export default class GameScene extends Phaser.Scene {
     this.scene.launch('HCUI', { levelId: this.levelId })
     this._pushHud()
 
+    this.time.delayedCall(700, () => {
+      this._hint('Geef gas met ▶ — maar tik het, want te lang vasthouden laat je achterover kantelen.')
+    })
+
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, this._cleanup, this)
   }
 
@@ -261,6 +265,36 @@ export default class GameScene extends Phaser.Scene {
     this.tweens.add({ targets: t, y: 50, alpha: 0, duration: 1200, onComplete: () => t.destroy() })
   }
 
+  // Uitleg die blijft staan: langer dan een toast en lager op het scherm, zodat
+  // hij niet met de vliegende scores in de weg zit.
+  _hint(msg, duur = 3200) {
+    this._hintTekst?.destroy()
+    const t = this.add.text(this.scale.width / 2, this.scale.height - 150, msg, {
+      fontSize: '20px', fontFamily: 'Arial Black', color: '#ffffff',
+      stroke: '#000', strokeThickness: 5, align: 'center',
+      wordWrap: { width: this.scale.width - 320 },
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(100).setAlpha(0)
+    this._hintTekst = t
+    this.tweens.add({ targets: t, alpha: 1, duration: 200 })
+    this.time.delayedCall(duur, () => {
+      if (!t.active) return
+      this.tweens.add({
+        targets: t, alpha: 0, duration: 400,
+        onComplete: () => { if (this._hintTekst === t) this._hintTekst = null; t.destroy() },
+      })
+    })
+  }
+
+  // De auto kantelt achterover als je het gas te lang vasthoudt — dat is de
+  // bedoeling (zie vehicle.js), maar zonder waarschuwing snapt een kind niet
+  // waarom hij steeds op zijn dak eindigt.
+  _wheelieWaarschuwing(time) {
+    if (this.vehicle.wheelieDruk < 0.3) return
+    if (this._laatsteWaarschuwing && time - this._laatsteWaarschuwing < 2500) return
+    this._laatsteWaarschuwing = time
+    this._hint('⚠️ Laat het gas even los, anders kantel je achterover!', 1800)
+  }
+
   update(time, delta) {
     if (this.gameOver) return
     const dt = delta / 1000
@@ -276,6 +310,7 @@ export default class GameScene extends Phaser.Scene {
 
     const grounded = this.vehicle.grounded
     const angle = this.vehicle.angle
+    this._wheelieWaarschuwing(time)
 
     if (grounded && dir !== 0) {
       this._dustTimer = (this._dustTimer || 0) + dt

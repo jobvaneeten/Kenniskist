@@ -23,6 +23,35 @@ export function spendCuruntie(amount) {
   return true
 }
 
+// ── Doorklikken voorkomen ───────────────────────────────────────────────────
+// Alle knoppen reageren op pointerup, en tot nu toe startte die handler meteen
+// de volgende scène. De rest van diezelfde klik komt dan terecht op wat er op
+// die plek in het níeuwe scherm staat. Bij het kiezen van een auto stond daar
+// het levelkaartje, dus begon het level meteen — je zag het kiesscherm niet
+// eens. Vandaar: eerst de input dicht, dan pas wisselen, en het nieuwe scherm
+// luistert de eerste paar frames nog niet.
+
+// Wissel van scherm zonder de rest van de klik door te geven.
+export function naarScene(scene, sleutel, data) {
+  if (scene._hcWisselt) return
+  scene._hcWisselt = true
+  scene.input.enabled = false
+  scene.time.delayedCall(60, () => scene.scene.start(sleutel, data))
+}
+
+// Aan het begin van een scherm: de eerste klik pas aannemen als de vorige echt
+// losgelaten is. Zonder de isDown-check zou ingedrukt houden er alsnog
+// doorheen glippen.
+export function blokkeerDoorklik(scene, ms = 220) {
+  scene.input.enabled = false
+  const vrij = () => {
+    if (!scene.scene.isActive()) return
+    if (scene.input.activePointer?.isDown) { scene.time.delayedCall(50, vrij); return }
+    scene.input.enabled = true
+  }
+  scene.time.delayedCall(ms, vrij)
+}
+
 // Gedimde garage-achtergrond met vignette, voor elk menuscherm.
 export function drawBackdrop(scene, dimAlpha = 0.45) {
   const W = scene.scale.width, H = scene.scale.height
@@ -35,11 +64,27 @@ export function drawBackdrop(scene, dimAlpha = 0.45) {
   g.fillRect(0, H - 90, W, 90)
 }
 
-// Afgerond paneel met gradient, schaduw en rand.
+// Mengt twee kleuren; 0 = a, 1 = b.
+function meng(a, b, t) {
+  return Phaser.Display.Color.ObjectToColor(
+    Phaser.Display.Color.Interpolate.ColorWithColor(
+      Phaser.Display.Color.ValueToColor(a), Phaser.Display.Color.ValueToColor(b), 100, t * 100,
+    ),
+  ).color
+}
+
+// Afgerond paneel met schaduw, glans en rand.
+//
+// Bewust géén fillGradientStyle: een afgeronde rechthoek wordt door Phaser in
+// driehoeken opgedeeld en de kleuren worden per hoekpunt geïnterpoleerd, dus
+// een verloop wordt een harde diagonale naad dwars door het paneel. Dat zag je
+// het duidelijkst op het game-over-scherm. Vlakke vulling plus een lichte band
+// bovenin geeft hetzelfde effect zonder de naad.
 export function drawPanel(g, x, y, w, h, { border = COL.rand, top = COL.kaartTop, bottom = COL.kaartBot, radius = 16, borderW = 2, borderAlpha = 0.9 } = {}) {
   g.fillStyle(0x000000, 0.4); g.fillRoundedRect(x + 2, y + 4, w, h, radius)
-  g.fillGradientStyle(top, top, bottom, bottom, 1); g.fillRoundedRect(x, y, w, h, radius)
-  g.fillStyle(0xffffff, 0.05); g.fillRoundedRect(x + 3, y + 3, w - 6, h * 0.4, radius - 4)
+  g.fillStyle(meng(top, bottom, 0.55), 1); g.fillRoundedRect(x, y, w, h, radius)
+  g.fillStyle(top, 0.55); g.fillRoundedRect(x + 2, y + 2, w - 4, h * 0.45, radius - 3)
+  g.fillStyle(0xffffff, 0.06); g.fillRoundedRect(x + 3, y + 3, w - 6, h * 0.3, radius - 4)
   g.lineStyle(borderW, border, borderAlpha); g.strokeRoundedRect(x, y, w, h, radius)
 }
 
@@ -48,11 +93,13 @@ export function makeButton(scene, x, y, w, h, label, cb, { color = COL.groen, fo
   const g = scene.add.graphics().setDepth(depth)
   const base = Phaser.Display.Color.ValueToColor(color)
   const draw = (hover) => {
+    // Zie drawPanel: vlakke vulling met een lichte band, geen fillGradientStyle.
     const t = base.clone().brighten(hover ? 34 : 20).color
     const b = base.clone().darken(hover ? 2 : 14).color
     g.clear()
     g.fillStyle(0x000000, 0.4); g.fillRoundedRect(x - w / 2 + 2, y - h / 2 + 5, w, h, 16)
-    g.fillGradientStyle(t, t, b, b, 1); g.fillRoundedRect(x - w / 2, y - h / 2, w, h, 16)
+    g.fillStyle(b, 1); g.fillRoundedRect(x - w / 2, y - h / 2, w, h, 16)
+    g.fillStyle(t, 0.85); g.fillRoundedRect(x - w / 2 + 2, y - h / 2 + 2, w - 4, h * 0.5, 14)
     g.fillStyle(0xffffff, 0.14); g.fillRoundedRect(x - w / 2 + 3, y - h / 2 + 3, w - 6, h * 0.42, 12)
     g.lineStyle(2.5, hover || glow ? 0xffe9b0 : 0xffffff, hover ? 1 : 0.45)
     g.strokeRoundedRect(x - w / 2, y - h / 2, w, h, 16)

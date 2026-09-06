@@ -202,6 +202,14 @@ export class LevelScene {
 
     if (this.gameOver) {
       this.gameOverTimer += dt
+      // Beloningsmodus: één level, dus na afgaan geen nieuwe poging maar terug
+      // naar de oefening. Even wachten zodat je nog leest wat er gebeurde.
+      if (this.spel.beloning) {
+        if (this.gameOverTimer > 2.6 || (this.gameOverTimer > 0.7 && invoer.netIngedrukt('bevestig'))) {
+          this.spel.terugNaarOefenen()
+        }
+        return
+      }
       if (this.gameOverTimer > 0.7 && invoer.netIngedrukt('bevestig')) this._herstartNaGameOver()
       return
     }
@@ -824,8 +832,15 @@ export class LevelScene {
   _tekenGameOver(ctx) {
     ctx.fillStyle = 'rgba(10,7,19,0.72)'
     ctx.fillRect(0, 0, BREEDTE, HOOGTE)
-    paneel(ctx, 130, 96, 220, 78)
+    // 260 breed, niet 220: de uitlegregel is 222 px en liep er anders links en
+    // rechts overheen.
+    paneel(ctx, 110, 96, 260, 78)
     tekstMidden(ctx, TXT.gameOver.titel, 240, 108, UI.fout, 2)
+    if (this.spel.beloning) {
+      tekstMidden(ctx, TXT.beloning.uitlegAf, 240, 132, UI.tekstZacht)
+      tekstMidden(ctx, TXT.beloning.automatisch, 240, 152, UI.tekst)
+      return
+    }
     tekstMidden(ctx, TXT.gameOver.uitleg, 240, 132, UI.tekstZacht)
     tekstMidden(ctx, `${TXT.menu.opnieuw} — Enter`, 240, 152, UI.tekst)
   }

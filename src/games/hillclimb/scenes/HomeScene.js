@@ -1,5 +1,5 @@
 import Phaser from 'phaser'
-import { drawBackdrop, makeButton, makeCuruntieChip } from '../ui.js'
+import { drawBackdrop, makeButton, makeCuruntieChip, naarScene, blokkeerDoorklik } from '../ui.js'
 import { loadLevelProgress, LEVELS } from '../data/LevelData.js'
 
 export default class HomeScene extends Phaser.Scene {
@@ -7,6 +7,7 @@ export default class HomeScene extends Phaser.Scene {
 
   create() {
     const W = this.scale.width, H = this.scale.height
+    blokkeerDoorklik(this)
     drawBackdrop(this, 0.5)
     makeCuruntieChip(this)
 
@@ -32,11 +33,11 @@ export default class HomeScene extends Phaser.Scene {
     }
 
     makeButton(this, W / 2, H * 0.56, 340, 74, '🎮  Speel Game', () => {
-      this.scene.start('HCVehicleSelect')
+      naarScene(this, 'HCVehicleSelect')
     }, { color: 0x2f9e44, fontSize: 26, glow: true })
 
     makeButton(this, W / 2, H * 0.56 + 96, 340, 64, '🛒  Shop', () => {
-      this.scene.start('HCShop')
+      naarScene(this, 'HCShop')
     }, { color: 0xd9832a, fontSize: 22 })
 
     // Aantal vrijgespeelde levels als kleine teaser onderin

@@ -1,7 +1,9 @@
 import Phaser from 'phaser'
 import { LEVEL_ORDER, LEVELS, loadLevelProgress, isLevelUnlocked } from '../data/LevelData.js'
 import { VEHICLES, loadSelectedVehicle } from '../data/VehicleData.js'
-import { COL, drawBackdrop, drawPanel, makeBackButton, makeCuruntieChip } from '../ui.js'
+import {
+  COL, drawBackdrop, drawPanel, makeBackButton, makeCuruntieChip, naarScene, blokkeerDoorklik,
+} from '../ui.js'
 
 const GAP = 16
 const CARD_W = 208, CARD_H = 268
@@ -11,8 +13,9 @@ export default class LevelSelectScene extends Phaser.Scene {
 
   create() {
     const W = this.scale.width, H = this.scale.height
+    blokkeerDoorklik(this)
     drawBackdrop(this, 0.55)
-    makeBackButton(this, () => this.scene.start('HCVehicleSelect'))
+    makeBackButton(this, () => naarScene(this, 'HCVehicleSelect'))
     makeCuruntieChip(this)
 
     const vehicleId = loadSelectedVehicle()
@@ -84,7 +87,7 @@ export default class LevelSelectScene extends Phaser.Scene {
     zone.on('pointerout',  () => this.tweens.add({ targets: img, displayWidth: CARD_W - 20, displayHeight: 118, duration: 120 }))
     zone.on('pointerup', () => {
       if (!unlocked) { this.cameras.main.shake(120, 0.004); return }
-      this.scene.start('HCGame', { vehicleId, levelId: id })
+      naarScene(this, 'HCGame', { vehicleId, levelId: id })
     })
 
     const fade = [g, img]

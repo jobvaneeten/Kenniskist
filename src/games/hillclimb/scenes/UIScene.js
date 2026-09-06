@@ -1,6 +1,6 @@
 import Phaser from 'phaser'
 import { LEVELS } from '../data/LevelData.js'
-import { drawPanel } from '../ui.js'
+import { drawPanel, blokkeerDoorklik } from '../ui.js'
 
 export default class UIScene extends Phaser.Scene {
   constructor() { super('HCUI') }
@@ -89,11 +89,20 @@ export default class UIScene extends Phaser.Scene {
     const W = this.scale.width, H = this.scale.height
     const ow = 460, oh = 320
 
+    // Je crasht meestal met je vinger op het gaspedaal. Het overzicht komt dan
+    // onder die vinger tevoorschijn, en zonder pauze klikt dezelfde aanraking
+    // meteen op Opnieuw of Levels.
+    blokkeerDoorklik(this, 500)
+
     const ol = this.add.graphics().setDepth(60)
     ol.fillStyle(0x000000, 0.78); ol.fillRect(0, 0, W, H)
     ol.fillStyle(0x000000, 0.5); ol.fillRoundedRect(W / 2 - ow / 2, H / 2 - oh / 2 + 8, ow, oh, 22)
-    ol.fillGradientStyle(0x3a2a08, 0x3a2a08, 0x1f1408, 0x1f1408, 1)
+    // Vlak vullen, geen fillGradientStyle: op een afgeronde rechthoek wordt dat
+    // een harde diagonale naad dwars door het paneel (zie drawPanel in ui.js).
+    ol.fillStyle(0x2b1e08, 1)
     ol.fillRoundedRect(W / 2 - ow / 2, H / 2 - oh / 2, ow, oh, 22)
+    ol.fillStyle(0x3a2a08, 0.9)
+    ol.fillRoundedRect(W / 2 - ow / 2 + 3, H / 2 - oh / 2 + 3, ow - 6, oh * 0.45, 19)
     ol.lineStyle(3, 0xffd76a, 0.6)
     ol.strokeRoundedRect(W / 2 - ow / 2, H / 2 - oh / 2, ow, oh, 22)
 
@@ -124,20 +133,29 @@ export default class UIScene extends Phaser.Scene {
     // maar zonder dit bleef HCGame op de achtergrond doorrenderen en het
     // nieuwe scherm volledig aan het zicht onttrekken — leek alsof de knop
     // niets deed, terwijl de sceneswissel wél degelijk gebeurde.
-    this._overlayBtn(W / 2 - 150, H / 2 + 70, '🔄 Opnieuw', 0xb8742a, () => {
-      this.scene.stop('HCUI')
-      this.scene.start('HCGame', { vehicleId: this.gameScene.vehicleId, levelId: this.levelId })
-    }, 170)
-    this._overlayBtn(W / 2 + 40, H / 2 + 70, '🗺 Levels', 0x245a8a, () => {
-      this.scene.stop('HCUI')
-      this.scene.stop('HCGame')
-      this.scene.start('HCLevelSelect')
-    }, 170)
-    this._overlayBtn(W / 2 + 190, H / 2 + 70, '🏠', 0x37415a, () => {
-      this.scene.stop('HCUI')
-      this.scene.stop('HCGame')
-      this.scene.start('HCHome')
-    }, 66)
+    // scene.start() vanuit HCUI stopt HCUI zelf, dus die hoeft er niet apart
+    // bij; HCGame wel, anders blijft die achter het nieuwe scherm doorrenderen.
+    // De klik wordt een frame uitgesteld zodat hij niet doorkomt op het scherm
+    // dat erachter opent.
+    const naar = (sleutel, data, stopSpel) => {
+      this.input.enabled = false
+      this.time.delayedCall(60, () => {
+        this.scene.start(sleutel, data)
+        if (stopSpel) this.scene.stop('HCGame')
+      })
+    }
+    // Drie knoppen die samen binnen het paneel passen: 150 + 150 + 60 met 12
+    // ertussen is 384 breed in een paneel van 460. Eerder stak de linkerknop
+    // buiten de rand en plakte de huisknop tegen de rechterrand.
+    this._overlayBtn(W / 2 - 117, H / 2 + 70, '🔄 Opnieuw', 0xb8742a, () => {
+      naar('HCGame', { vehicleId: this.gameScene.vehicleId, levelId: this.levelId }, false)
+    }, 150)
+    this._overlayBtn(W / 2 + 45, H / 2 + 70, '🗺 Levels', 0x245a8a, () => {
+      naar('HCLevelSelect', undefined, true)
+    }, 150)
+    this._overlayBtn(W / 2 + 162, H / 2 + 70, '🏠', 0x37415a, () => {
+      naar('HCHome', undefined, true)
+    }, 60)
   }
 
   _overlayBtn(x, y, label, color, cb, w = 190) {
@@ -146,7 +164,8 @@ export default class UIScene extends Phaser.Scene {
     const top = Phaser.Display.Color.ValueToColor(color).clone().brighten(22).color
     const bot = Phaser.Display.Color.ValueToColor(color).clone().darken(12).color
     g.fillStyle(0x000000, 0.35); g.fillRoundedRect(x - w / 2, y - h / 2 + 3, w, h, 12)
-    g.fillGradientStyle(top, top, bot, bot, 1); g.fillRoundedRect(x - w / 2, y - h / 2, w, h, 12)
+    g.fillStyle(bot, 1); g.fillRoundedRect(x - w / 2, y - h / 2, w, h, 12)
+    g.fillStyle(top, 0.9); g.fillRoundedRect(x - w / 2 + 2, y - h / 2 + 2, w - 4, h * 0.5, 10)
     g.lineStyle(2, 0xffffff, 0.4); g.strokeRoundedRect(x - w / 2, y - h / 2, w, h, 12)
     this.add.text(x, y, label, {
       fontSize: '17px', fontFamily: 'Arial Black', color: '#ffffff',

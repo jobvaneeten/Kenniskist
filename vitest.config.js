@@ -5,6 +5,6 @@ import { defineConfig } from 'vitest/config'
 export default defineConfig({
   test: {
     environment: 'node',
-    include: ['src/game/**/*.test.js', 'tools/**/*.test.js'],
+    include: ['src/game/**/*.test.js', 'src/lib/**/*.test.js', 'tools/**/*.test.js'],
   },
 })

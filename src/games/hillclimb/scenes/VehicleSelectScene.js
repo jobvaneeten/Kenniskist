@@ -4,7 +4,7 @@ import {
 } from '../data/VehicleData.js'
 import {
   COL, drawBackdrop, drawPanel, makeBackButton, makeCuruntieChip,
-  addVehiclePreview, drawStatBar, vehicleStatFracs,
+  addVehiclePreview, drawStatBar, vehicleStatFracs, naarScene, blokkeerDoorklik,
 } from '../ui.js'
 
 const COLS = 5, GAP = 14
@@ -15,8 +15,9 @@ export default class VehicleSelectScene extends Phaser.Scene {
 
   create() {
     const W = this.scale.width
+    blokkeerDoorklik(this)
     drawBackdrop(this, 0.55)
-    makeBackButton(this, () => this.scene.start('HCHome'))
+    makeBackButton(this, () => naarScene(this, 'HCHome'))
     makeCuruntieChip(this)
 
     this.add.text(W / 2, 38, '🚗 Kies je auto', {
@@ -84,7 +85,7 @@ export default class VehicleSelectScene extends Phaser.Scene {
         return
       }
       saveSelectedVehicle(id)
-      this.scene.start('HCLevelSelect')
+      naarScene(this, 'HCLevelSelect')
     })
 
     // rustige binnenkomer

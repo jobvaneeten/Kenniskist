@@ -64,6 +64,14 @@ export const T = {
     kaart: 'Naar de kaart',
   },
 
+  // Beloningsmodus: het spel is een beloning voor het oefenen, dus na één level
+  // (gehaald of niet) ga je vanzelf terug.
+  beloning: {
+    uitlegAf: 'Je levens zijn op.',
+    verder: 'Verder met oefenen',
+    automatisch: 'Je gaat terug naar het oefenen…',
+  },
+
   instellingen: {
     titel: 'Instellingen',
     muziek: 'Muziek',

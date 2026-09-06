@@ -6,7 +6,7 @@ import {
 } from '../data/VehicleData.js'
 import {
   COL, drawBackdrop, drawPanel, makeBackButton, makeCuruntieChip,
-  addVehiclePreview, getCuruntie, spendCuruntie,
+  addVehiclePreview, getCuruntie, spendCuruntie, naarScene, blokkeerDoorklik,
 } from '../ui.js'
 
 const COLS = 5, GAP = 12
@@ -17,8 +17,9 @@ export default class ShopScene extends Phaser.Scene {
 
   create() {
     const W = this.scale.width
+    blokkeerDoorklik(this)
     drawBackdrop(this, 0.55)
-    makeBackButton(this, () => this.scene.start('HCHome'))
+    makeBackButton(this, () => naarScene(this, 'HCHome'))
     this.chip = makeCuruntieChip(this)
 
     this.add.text(W / 2, 36, '🛒 Shop', {
@@ -142,7 +143,18 @@ export default class ShopScene extends Phaser.Scene {
     })
   }
 
+  // Elke klik bouwt het hele scherm opnieuw op, inclusief de knop waar je net
+  // op drukte. Zonder korte pauze kan dezelfde klik op de nieuwe knop landen en
+  // koop je twee keer.
+  _magKlikken() {
+    const nu = this.time.now
+    if (this._laatsteKlik && nu - this._laatsteKlik < 260) return false
+    this._laatsteKlik = nu
+    return true
+  }
+
   _klikAuto(id) {
+    if (!this._magKlikken()) return
     const unlocked = loadUnlockedVehicles()
     if (unlocked.includes(id)) {
       this.gekozen = id
@@ -161,6 +173,7 @@ export default class ShopScene extends Phaser.Scene {
   }
 
   _klikUpgrade(key) {
+    if (!this._magKlikken()) return
     const levels = loadUpgrades()[this.gekozen] || {}
     const lv = levels[key] || 0
     if (lv >= MAX_UPGRADE_LEVEL) return

@@ -22,9 +22,13 @@ import { levelVan } from './data/levels/index.js'
 import { levelId, LEVELS_PER_WERELD } from './data/werelden.js'
 
 export class Spel {
-  constructor(canvas, { onBack } = {}) {
+  // beloning = het spel is een beloning voor het oefenen: je slaat het
+  // titelscherm over, speelt één level en gaat daarna vanzelf terug naar de
+  // oefening — of je nou afgaat of het level haalt.
+  constructor(canvas, { onBack, beloning = false } = {}) {
     this.canvas = canvas
     this.onBack = onBack
+    this.beloning = !!beloning
     this.ctx = canvas.getContext('2d', { alpha: false })
     this.ctx.imageSmoothingEnabled = false
 
@@ -48,7 +52,9 @@ export class Spel {
     this.fx = new Fx(opslag.instellingen)
     this.overgang = new Overgang(BREEDTE, HOOGTE)
 
-    this.scene = new TitelScene(this)
+    // In beloningsmodus meteen de wereldkaart: je hebt maar één level, dan is
+    // een titelscherm met winkel en instellingen alleen maar oponthoud.
+    this.scene = this.beloning ? new WereldkaartScene(this, 1, 1) : new TitelScene(this)
     this.overlay = null // instellingen over de huidige scène
     this.huidigLevel = null
 
@@ -133,7 +139,16 @@ export class Spel {
   }
 
   naarTitel() {
+    // In beloningsmodus is er geen titelscherm; "terug" betekent daar: klaar.
+    if (this.beloning) { this.terugNaarOefenen(); return }
     this._wissel(() => new TitelScene(this), { soort: OVERGANG.FADE })
+  }
+
+  // Beloningsmodus: één keer terug naar de oefening, wat er daarna ook gebeurt.
+  terugNaarOefenen() {
+    if (this._terugGemeld) return
+    this._terugGemeld = true
+    this.onBack?.()
   }
 
   // "Spelen" op het titelscherm: wie nog nooit iets gehaald heeft krijgt eerst

@@ -37,7 +37,9 @@ export default class BootScene extends Phaser.Scene {
     this.load.on('progress', v => {
       bar.clear()
       const w = Math.max(bh, (bw - 8) * v)
-      bar.fillGradientStyle(0xa5e878, 0xa5e878, 0x4f9e3a, 0x4f9e3a, 1)
+      // Vlak, niet met fillGradientStyle: op een afgeronde rechthoek wordt een
+      // verloop in Phaser een diagonale naad (zie drawPanel in ui.js).
+      bar.fillStyle(0x5cae44, 1)
       bar.fillRoundedRect(bx + 4, by + 4, w, bh - 8, 9)
       bar.fillStyle(0xffffff, 0.25); bar.fillRoundedRect(bx + 6, by + 6, w - 4, (bh - 8) * 0.4, 6)
       pct.setText(`${Math.round(v * 100)}%`)

@@ -4,7 +4,7 @@ import './sterrenveer.css'
 
 // Dunne wrapper om het spel. Alle logica zit in src/game/; hier alleen het
 // canvas, het dempen van de shell-muziek en een terugknop.
-export default function SterrenveerGame({ onBack }) {
+export default function SterrenveerGame({ onBack, reward = false }) {
   const canvasRef = useRef(null)
   const stopRef = useRef(null)
 
@@ -18,7 +18,7 @@ export default function SterrenveerGame({ onBack }) {
     const demp = window.KennisKist?.muziekDemp
     try { demp?.(true) } catch { /* shell-tool kan ontbreken in dev */ }
 
-    stopRef.current = startSterrenveer(canvas, { onBack })
+    stopRef.current = startSterrenveer(canvas, { onBack, beloning: reward })
 
     return () => {
       stopRef.current?.()
@@ -28,7 +28,7 @@ export default function SterrenveerGame({ onBack }) {
         try { demp?.(false) } catch { /* zie boven */ }
       }
     }
-  }, [onBack])
+  }, [onBack, reward])
 
   return (
     <div className="sterrenveer-wrap">

@@ -82,6 +82,12 @@ export class Vehicle {
 
   get grounded() { return this.contactsL > 0 || this.contactsR > 0 }
 
+  // Hoe lang deze druk al voorbij de genadetijd duurt. > 0 betekent: het
+  // reactiekoppel loopt op en de neus komt omhoog. De GameScene waarschuwt
+  // daarmee op tijd, want zonder uitleg snapt niemand waarom hij achterover
+  // klapt na een paar seconden vol gas.
+  get wheelieDruk() { return Math.max(0, this._holdTime - GENADE_TIJD) }
+
   _applyPhysicsStep() {
     const Body = this.scene.matter.body
     const t = this.throttle
