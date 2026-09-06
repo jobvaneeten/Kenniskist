@@ -714,9 +714,14 @@ export class Magmatitaan {
     if (this.onkwetsbaar > 0 || this.staat === 'dood') return false
     if (this.kwetsbaar <= 0) return false
     if (lichaam) {
+      // Alleen de bovengrens telt. De ondergrens zat er eerst ook in, en dat
+      // liet de helft van de rake stampen wegvallen: op het eerste frame dat je
+      // hem raakt staan je voeten nog net boven de kop, en dan ketste je af
+      // zonder schade te doen. De aanroeper controleert al dat je van bovenaf
+      // komt, dus verder omlaag kijken hoeft niet.
       const k = this.kopVlak
-      const raaktKop = lichaam.rechts > k.x && lichaam.links < k.x + k.w
-        && lichaam.onder > k.y - 4 && lichaam.onder < k.y + k.h
+      const raaktKop = lichaam.rechts > k.x - 3 && lichaam.links < k.x + k.w + 3
+        && lichaam.onder < k.y + k.h
       if (!raaktKop) return false
     }
     this.levens--
@@ -849,12 +854,17 @@ export class KernAI {
 
     this.timer -= dt
 
-    // Zweeft altijd; bij het openen zakt hij naar springhoogte.
-    const doelY = this.open ? this.grondY - 58 : this.thuisY
+    // Zweeft altijd; bij het openen zakt hij tot vlak boven de vloer.
+    //
+    // Springhoogte is 56 px (zie BASIS in engine/physics.js), dus alles wat
+    // hoger hangt dan dat is niet te stampen — hij zakte eerst naar 58 en was
+    // daarmee net onraakbaar. 46 laat ruim tien pixels marge, en de slinger
+    // staat tijdens het openen stil zodat het een vast doel is en geen gokwerk.
+    const doelY = this.open ? this.grondY - 46 : this.thuisY
     this.lichaam.y += (doelY - this.lichaam.y) * Math.min(1, dt * 3)
-    const zweef = Math.sin(this.tijd * 1.6) * 24
+    const zweef = this.open ? 0 : Math.sin(this.tijd * 1.6) * 24
     const midden = (this.arena.links + this.arena.rechts) / 2
-    this.lichaam.x = midden - this.lichaam.w / 2 + zweef
+    this.lichaam.x += (midden - this.lichaam.w / 2 + zweef - this.lichaam.x) * Math.min(1, dt * 4)
 
     switch (this.staat) {
       case 'intro':
@@ -997,7 +1007,10 @@ export class Verslinder {
     this.palet = palet
     this.arena = arena
     this.grondY = y + TEGEL
-    this.lichaam = new Lichaam(x - 18, this.grondY - 110, 52, 52)
+    // De sprite is 96×96, de raakbox een stuk kleiner: alleen de muil telt.
+    // 44 hoog, zodat hij bij het openen precies op de vloer komt te staan en de
+    // stamphoogte klopt (zie update).
+    this.lichaam = new Lichaam(x - 18, this.grondY - 110, 52, 44)
     this.thuisY = this.lichaam.y
 
     this.fase = 1
@@ -1047,10 +1060,14 @@ export class Verslinder {
 
     // Zweeft altijd in het midden, met een brede slinger; als de muil opengaat
     // zakt hij tot springhoogte.
+    // Zie de Kern-AI hierboven: hij hing met 70 pixels boven de vloer buiten
+    // springbereik en was dus niet te verslaan. Nu zakt hij tot 44 en staat de
+    // zwaai tijdens het openen stil, zodat de eindbaas een eerlijk doel is.
     const midden = (this.arena.links + this.arena.rechts) / 2
-    const zwaai = Math.sin(this.tijd * 1.1) * 70
-    this.lichaam.x = midden - this.lichaam.w / 2 + zwaai
-    const doelY = this.open ? this.grondY - 70 : this.thuisY
+    const zwaai = this.open ? 0 : Math.sin(this.tijd * 1.1) * 70
+    const doelX = midden - this.lichaam.w / 2 + zwaai
+    this.lichaam.x += (doelX - this.lichaam.x) * Math.min(1, dt * 3.4)
+    const doelY = this.open ? this.grondY - 44 : this.thuisY
     this.lichaam.y += (doelY - this.lichaam.y) * Math.min(1, dt * 2.6)
 
     switch (this.staat) {

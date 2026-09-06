@@ -657,3 +657,13 @@
   transition: transform 0.2s cubic-bezier(.34,1.56,.64,1);
 }
 .free-game-card:hover .fg-img { transform: scale(1.05) rotate(-1deg); }
+
+/* Weektaak als mapjes: de leerkracht zet opdrachten klaar per weektaak, dus de
+   leerling ziet eerst de weektaak en daarna pas wat erin zit. */
+.wt-map .mode-emoji { font-size: 2.6rem; }
+.wt-map-datum {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--kk-text-soft);
+  opacity: 0.75;
+}

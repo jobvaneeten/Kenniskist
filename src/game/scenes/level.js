@@ -460,10 +460,7 @@ export class LevelScene {
       const vl = vij.lichaam
       if (!(l.x < vl.x + vl.w && l.x + l.w > vl.x && l.y < vl.y + vl.h && l.y + l.h > vl.y)) continue
 
-      // Van boven komen = stampen. De marge zorgt dat je niet per ongeluk in
-      // de zijkant "valt" terwijl je duidelijk bovenop landt.
-      const vanBoven = l.vy > 0 && l.vorigeY + l.h <= vl.y + 6
-      if (vanBoven && vij.stampbaar) {
+      if (this._stampt(l, vl, 6) && vij.stampbaar) {
         const hoog = this.spel.invoer.ingedrukt('spring')
         const verslagen = vij.opStamp(this.spel.particles)
         this.speler.stamp(hoog)
@@ -562,6 +559,23 @@ export class LevelScene {
     }
   }
 
+  // Stampt de speler op dit ding, of loopt hij er tegenaan?
+  //
+  // "Van boven" is niet altijd bovenaan het scherm: met omgekeerde zwaartekracht
+  // valt de speler naar het plafond, en dan is op de kop springen juist van
+  // onderaf. Zonder dit onderscheid was in wereld 5 (en tijdens fase 2 en 3 van
+  // de Kern-AI en de Verslinder) geen enkele vijand of baas te stampen — je
+  // kreeg altijd de klap.
+  //
+  // De marge zorgt dat je niet per ongeluk in de zijkant "valt" terwijl je
+  // duidelijk bovenop landt.
+  _stampt(l, doel, marge) {
+    if (this.speler.zwaartekrachtOm) {
+      return l.vy < 0 && l.vorigeY >= doel.y + doel.h - marge
+    }
+    return l.vy > 0 && l.vorigeY + l.h <= doel.y + marge
+  }
+
   _baasBotsingen(l, fx) {
     const baas = this.baas
 
@@ -597,8 +611,7 @@ export class LevelScene {
     }
 
     if (!baas.raaktSpeler(l)) return
-    const vanBoven = l.vy > 0 && l.vorigeY + l.h <= baas.lichaam.y + 10
-    if (vanBoven) {
+    if (this._stampt(l, baas.lichaam, 10)) {
       if (baas.opStamp(this.spel.particles, fx, l)) {
         this.speler.stamp(this.spel.invoer.ingedrukt('spring'))
       } else {

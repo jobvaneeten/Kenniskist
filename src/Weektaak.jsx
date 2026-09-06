@@ -1,18 +1,51 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useSessie } from './lib/sessie.jsx'
 import { haalMijnWeektaak, zetActieveOpdracht, wisActieveOpdracht } from './lib/weektaak.js'
 import { toolLabel } from './lib/tools.js'
 import RenderTool from './games/toolRender.jsx'
 import './game.css'
 
-// Leerlingscherm: lijst met opdrachten uit de actieve weektaak van de eigen
-// klas, aantikbaar om te starten. Los van GameMenu.jsx (zie toolRender.jsx
-// voor waarom) — deze state-machine heeft maar twee standen: de lijst, of
-// één gekozen opdracht.
+// Datum als "ma 3 feb" — kort genoeg voor op een kaartje.
+const datumOpmaak = new Intl.DateTimeFormat('nl-NL', { weekday: 'short', day: 'numeric', month: 'short' })
+function korteDatum(iso) {
+  if (!iso) return ''
+  const d = new Date(`${iso}T12:00:00`)
+  return Number.isNaN(d.getTime()) ? '' : datumOpmaak.format(d)
+}
+
+// De leerkracht zet opdrachten klaar per weektaak ("Weektaak 2"), dus zo hoort
+// de leerling ze ook te zien: eerst de mapjes, daarna wat erin zit. Alles door
+// elkaar in één lijst maakte niet duidelijk welke opdracht bij welke weektaak
+// hoorde, en bij twee lopende weektaken werd het een onleesbare rij.
+function groepeer(opdrachten) {
+  const mappen = new Map()
+  for (const o of opdrachten) {
+    const wt = o.weektaak
+    const id = wt?.id ?? 'los'
+    if (!mappen.has(id)) {
+      mappen.set(id, {
+        id,
+        titel: wt?.titel || 'Weektaak',
+        startOp: wt?.start_op ?? null,
+        eindOp: wt?.eind_op ?? null,
+        opdrachten: [],
+      })
+    }
+    mappen.get(id).opdrachten.push(o)
+  }
+  // Nieuwste weektaak bovenaan, net als in het portaal van de leerkracht.
+  return [...mappen.values()].sort((a, b) => String(b.startOp ?? '').localeCompare(String(a.startOp ?? '')))
+}
+
+// Leerlingscherm: de weektaken van de eigen klas als mapjes, met daarin de
+// opdrachten die aan deze leerling zijn toegewezen. Los van GameMenu.jsx (zie
+// toolRender.jsx voor waarom) — deze state-machine heeft drie standen: de
+// mapjes, de opdrachten in één mapje, of één gekozen opdracht.
 export default function Weektaak({ onBack, addBriefgeld, addCuruntie }) {
   const { profiel, toegestaneGroepen } = useSessie()
   const [opdrachten, setOpdrachten] = useState(null)
   const [gekozen, setGekozen] = useState(null)
+  const [openMap, setOpenMap] = useState(null)
   const [ververs, setVervers] = useState(0)
 
   useEffect(() => {
@@ -25,6 +58,8 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie }) {
     laad()
     return () => { actief = false }
   }, [profiel?.id, profiel?.klas_id, ververs])
+
+  const mappen = useMemo(() => groepeer(opdrachten ?? []), [opdrachten])
 
   // Precies hier, vlak vóór het renderen van de tool, wordt kk_actieve_
   // opdracht gezet — en nergens anders. slaResultaatOp (kenniskist-login.js)
@@ -54,22 +89,27 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie }) {
     )
   }
 
-  return (
-    <div className="game-screen">
-      <button className="back-btn" onClick={onBack}>← Menu</button>
-      <div className="game-header">
-        <span className="game-header-icon">📋</span>
-        <h1 className="game-header-title">Mijn weektaak</h1>
-        <p className="game-header-sub">Opdrachten die je juf of meester voor je heeft klaargezet</p>
-      </div>
+  // Het open mapje wordt per render opnieuw opgezocht in plaats van in state
+  // bewaard: na het maken van een opdracht laadt de voortgang opnieuw, en dan
+  // moet het mapje de nieuwe cijfers tonen en niet die van een oude kopie.
+  const map = openMap ? mappen.find(m => m.id === openMap) : null
 
-      {opdrachten === null && <p className="mode-desc">Laden…</p>}
-      {opdrachten?.length === 0 && (
-        <p className="mode-desc">Nog geen weektaak — vraag het aan je juf of meester.</p>
-      )}
-      {opdrachten?.length > 0 && (
+  if (map) {
+    const af = map.opdrachten.filter(o => o.klaar).length
+    return (
+      <div className="game-screen">
+        <button className="back-btn" onClick={() => setOpenMap(null)}>← Weektaken</button>
+        <div className="game-header">
+          <span className="game-header-icon">📂</span>
+          <h1 className="game-header-title">{map.titel}</h1>
+          <p className="game-header-sub">
+            {af} van de {map.opdrachten.length} opdracht{map.opdrachten.length === 1 ? '' : 'en'} af
+            {map.eindOp ? ` · tot en met ${korteDatum(map.eindOp)}` : ''}
+          </p>
+        </div>
+
         <div className="mode-grid">
-          {opdrachten.map(o => (
+          {map.opdrachten.map(o => (
             <button key={o.opdrachtId} className="mode-card" onClick={() => start(o)}>
               <span className="mode-name">{toolLabel(o.toolId)}{o.klaar ? ' ✅' : ''}</span>
               <span className="mode-desc">
@@ -84,6 +124,42 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie }) {
               )}
             </button>
           ))}
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="game-screen">
+      <button className="back-btn" onClick={onBack}>← Menu</button>
+      <div className="game-header">
+        <span className="game-header-icon">📋</span>
+        <h1 className="game-header-title">Mijn weektaak</h1>
+        <p className="game-header-sub">Opdrachten die je juf of meester voor je heeft klaargezet</p>
+      </div>
+
+      {opdrachten === null && <p className="mode-desc">Laden…</p>}
+      {opdrachten?.length === 0 && (
+        <p className="mode-desc">Nog geen weektaak — vraag het aan je juf of meester.</p>
+      )}
+      {mappen.length > 0 && (
+        <div className="mode-grid">
+          {mappen.map(m => {
+            const af = m.opdrachten.filter(o => o.klaar).length
+            const alles = af === m.opdrachten.length
+            return (
+              <button key={m.id} className="mode-card wt-map" onClick={() => setOpenMap(m.id)}>
+                <span className="mode-emoji">{alles ? '✅' : '📂'}</span>
+                <span className="mode-name">{m.titel}</span>
+                <span className="mode-desc">
+                  {af} van de {m.opdrachten.length} af
+                </span>
+                {m.eindOp && (
+                  <span className="wt-map-datum">tot en met {korteDatum(m.eindOp)}</span>
+                )}
+              </button>
+            )
+          })}
         </div>
       )}
     </div>
