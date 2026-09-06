@@ -10,6 +10,7 @@ import { slijmBlad, spoorBlad, kwalBlad, keverBlad, SLIJM, SPOOR, KWAL, KEVER } 
 import { pinguinBlad, ijskegelBlad, kanonBlad, sneeuwbalBlad, vrieskwalBlad } from '../art/objecten2.js'
 import { spetterBlad, vleermuisBlad, krabBlad, asvliegBlad } from '../art/objecten3.js'
 import { droneBlad, torretBlad, kortsluiterBlad, patrouilleBlad } from '../art/objecten4.js'
+import { kloonBlad, zwermBlad, zwaartewezenBlad, echoslijmBlad, tekenEchoRing } from '../art/objecten5.js'
 import { sfx } from '../audio/sfx.js'
 
 class Vijand {
@@ -850,6 +851,178 @@ export class Patrouillebot extends Vijand {
   }
 }
 
+// --- Wereld 5 ---------------------------------------------------------------
+
+// Schaduwkloon: herhaalt jouw bewegingen met een seconde vertraging. Wie
+// rustig loopt heeft er geen last van; wie heen en weer springt loopt in
+// zichzelf.
+export class Kloon extends Vijand {
+  constructor(x, y) {
+    super(x + 3, y + 4, 12, 16)
+    this.blad = kloonBlad()
+    this.stampbaar = false
+    this.geschiedenis = []
+    this.vertraging = 1
+  }
+
+  update(dt, map, speler) {
+    if (!this.leeft) { this.sterfTijd += dt; return }
+    this.tijd += dt
+    if (!speler) return
+
+    this.geschiedenis.push({ t: this.tijd, x: speler.lichaam.x, y: speler.lichaam.y })
+    // Alles ouder dan de vertraging mag weg; zo blijft de lijst kort.
+    while (this.geschiedenis.length > 2 && this.geschiedenis[1].t < this.tijd - this.vertraging) {
+      this.geschiedenis.shift()
+    }
+    const doel = this.geschiedenis[0]
+    if (this.tijd > this.vertraging && doel) {
+      this.lichaam.x = doel.x + 2
+      this.lichaam.y = doel.y + 2
+    }
+  }
+
+  opStamp() { return false }
+
+  herstel() {
+    super.herstel()
+    this.geschiedenis.length = 0
+  }
+
+  teken(ctx, camX, camY) {
+    if (!this.leeft || this.tijd <= this.vertraging) return
+    const f = Math.floor(this.tijd * 6) % 4
+    ctx.globalAlpha = 0.85
+    this.blad.teken(ctx, f, Math.round(this.lichaam.x - 6 - camX), Math.round(this.lichaam.y - 6 - camY))
+    ctx.globalAlpha = 1
+  }
+}
+
+// Nanozwerm: drijft traag naar je toe en trekt de route langzaam dicht. Groter
+// en trager dan de asvlieg, dus je kunt eromheen — maar niet blijven staan.
+export class Zwerm extends Vijand {
+  constructor(x, y) {
+    super(x + 4, y + 4, 16, 16)
+    this.blad = zwermBlad()
+    this.stampbaar = false
+    this.fase = Math.random() * Math.PI * 2
+  }
+
+  update(dt, map, speler) {
+    if (!this.leeft) { this.sterfTijd += dt; return }
+    this.tijd += dt
+    if (!speler) return
+    const dx = speler.midX - this.midX
+    const dy = speler.midY - this.midY
+    const afstand = Math.hypot(dx, dy) || 1
+    const snelheid = 34
+    this.lichaam.x += (dx / afstand) * snelheid * dt + Math.sin(this.tijd * 2 + this.fase) * 12 * dt
+    this.lichaam.y += (dy / afstand) * snelheid * dt + Math.cos(this.tijd * 1.7 + this.fase) * 12 * dt
+  }
+
+  opStamp() { return false }
+
+  teken(ctx, camX, camY) {
+    if (!this.leeft) return
+    const f = Math.floor(this.tijd * 10) % 4
+    this.blad.teken(ctx, f, Math.round(this.lichaam.x - 4 - camX), Math.round(this.lichaam.y - 4 - camY))
+  }
+}
+
+// Zwaartekrachtwezen: trekt je naar zich toe zodra je in de buurt komt. Het
+// raakt je niet aan; het maakt alleen elke sprong in de omgeving lastiger.
+export class Zwaartewezen extends Vijand {
+  constructor(x, y, palet, opties = {}) {
+    super(x + 2, y + 2, 16, 16)
+    this.blad = zwaartewezenBlad()
+    this.stampbaar = false
+    this.bereik = (opties.bereik ?? 6) * TEGEL
+    this.kracht = opties.kracht ?? 210
+  }
+
+  update(dt, map, speler) {
+    if (!this.leeft) { this.sterfTijd += dt; return }
+    this.tijd += dt
+    if (!speler || speler.staat !== 'normaal') return
+    const dx = this.midX - speler.midX
+    const dy = this.midY - speler.midY
+    const afstand = Math.hypot(dx, dy)
+    if (afstand > this.bereik || afstand < 1) return
+    // Lineair afnemend: vlak bij het wezen is de trek het sterkst.
+    const sterkte = (1 - afstand / this.bereik) * this.kracht * dt
+    speler.lichaam.vx += (dx / afstand) * sterkte
+    speler.lichaam.vy += (dy / afstand) * sterkte * 0.6
+  }
+
+  opStamp() { return false }
+
+  teken(ctx, camX, camY) {
+    if (!this.leeft) return
+    const f = Math.floor(this.tijd * 8) % 4
+    this.blad.teken(ctx, f, Math.round(this.lichaam.x - 2 - camX), Math.round(this.lichaam.y - 2 - camY))
+  }
+}
+
+// Echoslijm: loopt als het slijm van wereld 1, maar komt na een paar seconden
+// terug op de plek waar je het verslagen hebt.
+export class Echoslijm extends Vijand {
+  constructor(x, y) {
+    super(x, y + 4, 14, 12)
+    this.blad = echoslijmBlad()
+    this.lichaam.vx = -30
+    this.terug = 0
+    this.terugX = 0
+    this.terugY = 0
+  }
+
+  update(dt, map) {
+    if (!this.leeft) {
+      this.sterfTijd += dt
+      this.terug -= dt
+      if (this.terug <= 0) {
+        this.leeft = true
+        this.sterfTijd = 0
+        this.lichaam.x = this.terugX
+        this.lichaam.y = this.terugY
+        this.lichaam.vx = -30
+        this.lichaam.vy = 0
+      }
+      return
+    }
+    this.tijd += dt
+    this.lichaam.vy = Math.min(this.lichaam.vy + BASIS.zwaartekrachtNeer * dt, BASIS.maxVal)
+    beweeg(this.lichaam, map, dt)
+    if (this.lichaam.opGrond && this._keerOmBijRand(map)) this.lichaam.vx *= -1
+    this.kijktRechts = this.lichaam.vx > 0
+  }
+
+  opStamp(particles) {
+    this.terugX = this.lichaam.x
+    this.terugY = this.lichaam.y
+    this.terug = 4
+    this.verslagen(particles, '#a45cff')
+    return true
+  }
+
+  herstel() {
+    super.herstel()
+    this.terug = 0
+    this.lichaam.vx = -30
+  }
+
+  teken(ctx, camX, camY) {
+    if (!this.leeft) {
+      // Aftelring op de plek waar hij terugkomt.
+      if (this.terug > 0) {
+        tekenEchoRing(ctx, this.terugX + 7 - camX, this.terugY + 6 - camY, 1 - this.terug / 4)
+      }
+      return
+    }
+    const f = Math.floor(this.tijd * 7) % 4
+    this.blad.teken(ctx, f, Math.round(this.lichaam.x - 1 - camX), Math.round(this.lichaam.y - 4 - camY), this.kijktRechts)
+  }
+}
+
 export const VIJAND_KLASSEN = {
   slijm: Slijm,
   spoor: Spoor,
@@ -867,6 +1040,10 @@ export const VIJAND_KLASSEN = {
   torret: Torret,
   kortsluiter: Kortsluiter,
   patrouille: Patrouillebot,
+  kloon: Kloon,
+  zwerm: Zwerm,
+  zwaartewezen: Zwaartewezen,
+  echoslijm: Echoslijm,
 }
 
 export function maakVijand(soort, x, y, palet, opties) {

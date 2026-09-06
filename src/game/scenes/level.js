@@ -8,7 +8,7 @@ import { Speler, STAAT } from '../entities/speler.js'
 import { maakVijand } from '../entities/vijanden.js'
 import { Munt, Veer, Checkpoint, Finish, Capsule, Hintbord, muntBlad, MUNT } from '../entities/items.js'
 import { BewegendPlatform, ValPlatform, ZinkPlatform } from '../entities/platforms.js'
-import { Geiser, StijgendeLava, Laser, Sleutel } from '../entities/gevaren.js'
+import { Geiser, StijgendeLava, Laser, Sleutel, Portaal, Zwaartekrachtplaat } from '../entities/gevaren.js'
 import { BAAS_KLASSEN } from '../entities/bazen.js'
 import { tekenLevensbalk } from '../art/bazen.js'
 import { achtergrond, tekenAchtergrond, tekenVoorgrond, tekenSfeer, updateDeeltjes } from '../art/achtergrond.js'
@@ -127,6 +127,18 @@ export class LevelScene {
     this.sleutels = this.map.entiteiten
       .filter((e) => e.type === 'sleutel')
       .map((e) => new Sleutel(e.x, e.y))
+    // Portalen: twee op volgorde vormen een paar.
+    this.portalen = this.map.entiteiten
+      .filter((e) => e.type === 'portaal')
+      .map((e, i) => new Portaal(e.x, e.y, Math.floor(i / 2)))
+    for (let i = 0; i + 1 < this.portalen.length; i += 2) {
+      this.portalen[i].partner = this.portalen[i + 1]
+      this.portalen[i + 1].partner = this.portalen[i]
+    }
+    this.zwaarteplaten = this.map.entiteiten
+      .filter((e) => e.type === 'zwaartekracht')
+      .map((e) => new Zwaartekrachtplaat(e.x, e.y, this.palet))
+
     // Zones zonder zwaartekracht, in tegels: [x0, y0, x1, y1].
     this.zeroG = (this.level.zerog ?? []).map(([x0, y0, x1, y1]) => ({
       x: x0 * TEGEL, y: y0 * TEGEL, w: (x1 - x0 + 1) * TEGEL, h: (y1 - y0 + 1) * TEGEL,
@@ -149,6 +161,8 @@ export class LevelScene {
       }
     }
 
+    this.speler.zwaartekrachtOm = !!this.level.omgekeerdStart
+    this.omkeerTimer = 0
     this.camera.spring(this.speler.midX, this.speler.midY)
   }
 
@@ -212,6 +226,7 @@ export class LevelScene {
     this.tijd += dt
     this.map.updateTegels(dt)
     this._updateWind(dt)
+    this._updateOmkeer(dt)
 
     // Platforms eerst: de speler die erop staat moet mee vóórdat hij zelf
     // beweegt, anders zakt hij er elk frame een pixel in.
@@ -221,6 +236,8 @@ export class LevelScene {
     for (const gz of this.geisers) gz.update(dt)
     for (const la of this.lasers) la.update(dt, this.map)
     for (const sl of this.sleutels) sl.update(dt)
+    for (const po of this.portalen) po.update(dt)
+    for (const zp of this.zwaarteplaten) zp.update(dt)
     this._updateZeroG()
     if (this.lava) this.lava.update(dt)
     this._draagSpeler()
@@ -305,6 +322,19 @@ export class LevelScene {
       && l.midY > z.y && l.midY < z.y + z.h)
     this.speler.zwaartekrachtSchaal = binnen ? 0.12 : 1
     this.speler.zweeft = binnen
+  }
+
+  // Levels met omkeerPeriode draaien de zwaartekracht vanzelf om, op een vaste
+  // cadans. Er is dus geen plaat nodig; het ritme is de mechanic.
+  _updateOmkeer(dt) {
+    if (!this.level.omkeerPeriode) return
+    this.omkeerTimer = (this.omkeerTimer ?? 0) + dt
+    if (this.omkeerTimer < this.level.omkeerPeriode) return
+    this.omkeerTimer -= this.level.omkeerPeriode
+    this.speler.zwaartekrachtOm = !this.speler.zwaartekrachtOm
+    this.speler.lichaam.vy = 0
+    sfx.portaal()
+    this.spel.fx.flitsScherm(this.palet.gloed, 0.12)
   }
 
   // Dun ijs onder de voeten laten barsten.
@@ -490,6 +520,37 @@ export class LevelScene {
       }
     }
 
+    // Portalen: je komt er aan de andere kant uit met dezelfde snelheid.
+    for (const po of this.portalen) {
+      if (po.koeling > 0 || !po.partner) continue
+      const v = po.vlak
+      if (l.x < v.x + v.w && l.x + l.w > v.x && l.y < v.y + v.h && l.y + l.h > v.y) {
+        po.partner.koeling = 0.6
+        po.koeling = 0.6
+        this.spel.particles.sparkle(po.midX, po.midY, UI.accent)
+        l.x = po.partner.midX - l.w / 2
+        l.y = po.partner.midY - l.h / 2
+        this.camera.spring(this.speler.midX, this.speler.midY)
+        this.spel.particles.sparkle(po.partner.midX, po.partner.midY, UI.accent)
+        sfx.portaal()
+        break
+      }
+    }
+
+    // Zwaartekrachtplaten draaien om welke kant "beneden" is.
+    for (const zp of this.zwaarteplaten) {
+      if (zp.koeling > 0) continue
+      const v = zp.vlak
+      if (l.x < v.x + v.w && l.x + l.w > v.x && l.y < v.y + v.h && l.y + l.h > v.y) {
+        zp.koeling = 0.8
+        this.speler.zwaartekrachtOm = !this.speler.zwaartekrachtOm
+        l.vy = 0
+        sfx.portaal()
+        fx.flitsScherm(this.palet.gloed, 0.14)
+        this.spel.particles.sparkle(zp.x + 8, zp.y + 8, this.palet.gloed)
+      }
+    }
+
     if (this.baas) this._baasBotsingen(l, fx)
 
     // Finish. Bij een baaslevel gaat hij pas open als de baas verslagen is.
@@ -573,6 +634,9 @@ export class LevelScene {
     for (const gz of this.geisers) gz.herstel()
     for (const la of this.lasers) la.herstel()
     for (const sl of this.sleutels) sl.herstel()
+    for (const po of this.portalen) po.herstel()
+    for (const zp of this.zwaarteplaten) zp.herstel()
+    this.speler.zwaartekrachtOm = !!this.level.omgekeerdStart
     this.map.deurenOpen = false
     this.lava?.herstel()
     // Munten die deze poging al gepakt zijn blijven weg: binnen één poging is
@@ -648,6 +712,8 @@ export class LevelScene {
     }
     for (const la of this.lasers) la.teken(ctx, camX, camY)
     for (const sl of this.sleutels) if (this.camera.zichtbaar(sl.x, sl.y, 12, 10)) sl.teken(ctx, camX, camY)
+    for (const po of this.portalen) if (this.camera.zichtbaar(po.x, po.y, 16, 32)) po.teken(ctx, camX, camY)
+    for (const zp of this.zwaarteplaten) if (this.camera.zichtbaar(zp.x, zp.y, 16, 16)) zp.teken(ctx, camX, camY)
     for (const c of this.capsules) if (this.camera.zichtbaar(c.x, c.y, 16, 16)) c.teken(ctx, camX, camY)
     for (const v of this.veren) if (this.camera.zichtbaar(v.x, v.y, 16, 16)) v.teken(ctx, camX, camY)
 

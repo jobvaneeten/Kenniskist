@@ -9,6 +9,7 @@ import {
   ijswormBlad, tekenWormSegment, tekenWormSpoor, tekenWormBarst, WORMKOP,
   titaanBlad, tekenSchokgolf, TITAAN,
   kernBlad, KERN,
+  verslinderBlad, VERSLINDER,
 } from '../art/bazen.js'
 import { Slijm } from './vijanden.js'
 import { sfx } from '../audio/sfx.js'
@@ -982,9 +983,217 @@ export class KernAI {
   }
 }
 
+// --- De Verslinder (wereld 5) -----------------------------------------------
+// De eindbaas. Elke fase leent een mechanic uit een eerdere wereld:
+//   fase 1 — springen en landen met een schokgolf, als de Slijmkoningin
+//   fase 2 — de zwaartekracht omdraaien, als de Kern-AI
+//   fase 3 — allebei, sneller, plus een spervuur
+// Na elke aanvalsronde gaat de muil open; dat is het enige moment om te raken.
+
+const VERSLINDER_LEVENS_PER_FASE = 3
+
+export class Verslinder {
+  constructor(x, y, palet, arena) {
+    this.palet = palet
+    this.arena = arena
+    this.grondY = y + TEGEL
+    this.lichaam = new Lichaam(x - 18, this.grondY - 110, 52, 52)
+    this.thuisY = this.lichaam.y
+
+    this.fase = 1
+    this.levens = VERSLINDER_LEVENS_PER_FASE
+    this.maxTotaal = VERSLINDER_LEVENS_PER_FASE * 3
+    this.geraaktTotaal = 0
+
+    this.staat = 'intro'
+    this.timer = 2.2
+    this.tijd = 0
+    this.onkwetsbaar = 0
+    this.kwetsbaar = 0
+    this.leeft = true
+    this.klaar = false
+    this.stampbaar = true
+    this.zwaartekrachtOm = false
+    this.ronde = 0
+
+    this.ballen = []
+    this.golven = []
+    this.kinderen = []
+  }
+
+  get midX() { return this.lichaam.midX }
+  get midY() { return this.lichaam.midY }
+  get deel() { return (this.maxTotaal - this.geraaktTotaal) / this.maxTotaal }
+  get open() { return this.staat === 'open' }
+
+  update(dt, map, speler, particles, fx) {
+    this.tijd += dt
+    if (this.onkwetsbaar > 0) this.onkwetsbaar -= dt
+    if (this.kwetsbaar > 0) this.kwetsbaar -= dt
+
+    for (const b of this.ballen) b.update(dt, map)
+    this.ballen = this.ballen.filter((b) => b.leeft)
+    for (const g of this.golven) g.update(dt, this.arena)
+    this.golven = this.golven.filter((g) => g.leeft)
+
+    if (this.staat === 'dood') {
+      this.timer -= dt
+      this.zwaartekrachtOm = false
+      if (this.timer <= 0) this.klaar = true
+      return
+    }
+
+    this.timer -= dt
+
+    // Zweeft altijd in het midden, met een brede slinger; als de muil opengaat
+    // zakt hij tot springhoogte.
+    const midden = (this.arena.links + this.arena.rechts) / 2
+    const zwaai = Math.sin(this.tijd * 1.1) * 70
+    this.lichaam.x = midden - this.lichaam.w / 2 + zwaai
+    const doelY = this.open ? this.grondY - 70 : this.thuisY
+    this.lichaam.y += (doelY - this.lichaam.y) * Math.min(1, dt * 2.6)
+
+    switch (this.staat) {
+      case 'intro':
+        if (this.timer <= 0) this._begin('aanval', 0.8)
+        break
+
+      case 'aanval':
+        if (this.timer <= 0) {
+          this._vuur(speler, particles, fx)
+          this.ronde++
+          const rondes = this.fase === 3 ? 4 : 3
+          if (this.ronde >= rondes) {
+            this.ronde = 0
+            this.zwaartekrachtOm = false
+            this._begin('open', this.fase === 3 ? 1.6 : 2.2)
+            this.kwetsbaar = this.timer
+            sfx.portaal()
+          } else {
+            this._begin('aanval', this.fase === 3 ? 0.75 : 1.1)
+            // Vanaf fase 2 draait hij tussen de aanvallen door de zwaartekracht
+            // om; in fase 3 gebeurt dat elke ronde.
+            if (this.fase >= 2) this.zwaartekrachtOm = !this.zwaartekrachtOm
+          }
+        }
+        break
+
+      case 'open':
+        if (this.timer <= 0) this._begin('aanval', 0.9)
+        break
+
+      case 'gewond':
+        if (this.timer <= 0) {
+          if (this.levens <= 0) this._volgendeFase(particles, fx)
+          else this._begin('aanval', 1)
+        }
+        break
+
+      default:
+        break
+    }
+  }
+
+  _begin(staat, t) { this.staat = staat; this.timer = t }
+
+  _vuur(speler, particles, fx) {
+    const doelX = speler?.midX ?? this.midX
+    // Schokgolven over de vloer (wereld 3) plus projectielen (wereld 1 en 4).
+    if (this.fase === 1 || this.fase === 3) {
+      this.golven.push(new Schokgolf(this.midX - 24, this.grondY, -1, 140))
+      this.golven.push(new Schokgolf(this.midX + 24, this.grondY, 1, 140))
+      fx.schud(4, 0.25)
+      particles.landing(this.midX, this.grondY)
+    }
+    const hoeken = this.fase === 3 ? [-1.2, -0.4, 0.4, 1.2] : this.fase === 2 ? [-0.8, 0.8] : [0]
+    for (const h of hoeken) {
+      const dx = doelX - this.midX
+      this.ballen.push(new Slijmbal(
+        this.midX, this.lichaam.onder - 8,
+        Math.max(-200, Math.min(200, dx * 1.2)) + h * 70, 30,
+        this.palet,
+      ))
+    }
+    sfx.laser()
+  }
+
+  opStamp(particles, fx) {
+    if (this.onkwetsbaar > 0 || this.staat === 'dood') return false
+    if (this.kwetsbaar <= 0 || !this.open) return false
+    this.levens--
+    this.geraaktTotaal++
+    this.onkwetsbaar = 1
+    this.staat = 'gewond'
+    this.timer = 0.7
+    this.kwetsbaar = 0
+    this.zwaartekrachtOm = false
+    sfx.baasHit()
+    fx.schud(7, 0.35)
+    fx.hitStop(0.12)
+    fx.flitsScherm('#ffffff', 0.1)
+    particles.pop(this.midX, this.midY, '#e0a8ff', 28)
+    return true
+  }
+
+  _volgendeFase(particles, fx) {
+    if (this.fase >= 3) { this._sterf(particles, fx); return }
+    this.fase++
+    this.levens = VERSLINDER_LEVENS_PER_FASE
+    this.ronde = 0
+    fx.schud(8, 0.6)
+    fx.flitsScherm('#a45cff', 0.25)
+    particles.pop(this.midX, this.midY, '#a45cff', 34)
+    this._begin('aanval', 1.2)
+  }
+
+  _sterf(particles, fx) {
+    this.staat = 'dood'
+    this.timer = 3
+    this.leeft = false
+    this.ballen.length = 0
+    this.golven.length = 0
+    fx.schud(10, 1.4)
+    sfx.vijandDood()
+    particles.pop(this.midX, this.midY, '#ffffff', 60)
+  }
+
+  raaktSpeler(lichaam) {
+    if (this.staat === 'dood') return false
+    const l = this.lichaam
+    return lichaam.x < l.x + l.w && lichaam.x + lichaam.w > l.x
+      && lichaam.y < l.y + l.h && lichaam.y + lichaam.h > l.y
+  }
+
+  _frame() {
+    if (this.staat === 'dood') return Math.min(9, 7 + Math.floor((3 - this.timer) * 1.2))
+    if (this.staat === 'gewond') return 6
+    if (this.open) return 4 + (Math.floor(this.tijd * 6) % 2)
+    return Math.floor(this.tijd * 5) % 4
+  }
+
+  teken(ctx, camX, camY) {
+    for (const g of this.golven) g.teken(ctx, camX, camY)
+    for (const b of this.ballen) b.teken(ctx, camX, camY)
+    if (this.onkwetsbaar > 0 && Math.floor(this.onkwetsbaar * 14) % 2 === 0) return
+
+    const blad = verslinderBlad(this.palet, this.fase)
+    blad.teken(ctx, this._frame(),
+      Math.round(this.midX - VERSLINDER.w / 2 - camX),
+      Math.round(this.midY - VERSLINDER.h / 2 - camY))
+
+    if (this.kwetsbaar > 0) {
+      ctx.globalAlpha = 0.3 + Math.sin(this.tijd * 22) * 0.12
+      ctx.fillStyle = '#ffffff'
+      ctx.fillRect(Math.round(this.midX - 14 - camX), Math.round(this.lichaam.y + 6 - camY), 28, 7)
+      ctx.globalAlpha = 1
+    }
+  }
+}
+
 export const BAAS_KLASSEN = {
   slijmkoningin: Slijmkoningin,
   ijsworm: IJsworm,
   magmatitaan: Magmatitaan,
   kernai: KernAI,
+  verslinder: Verslinder,
 }

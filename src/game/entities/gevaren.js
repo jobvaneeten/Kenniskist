@@ -3,6 +3,7 @@
 import { TEGEL, isVast } from '../engine/tilemap.js'
 import { geiserBlad, tekenGeiserStraal, GEISERMOND } from '../art/objecten3.js'
 import { zenderBlad, tekenLaserStraal, sleutelBlad, ZENDER, SLEUTEL } from '../art/objecten4.js'
+import { portaalBlad, schakelaarBlad, PORTAAL, SCHAKELAAR } from '../art/objecten5.js'
 import { sfx } from '../audio/sfx.js'
 
 // Geiser: schiet op een vaste cadans een straal omhoog. Wie erin staat wordt
@@ -152,6 +153,62 @@ export class Sleutel {
     if (this.gepakt) return
     const zweef = Math.round(Math.sin(this.tijd * 2.6) * 2)
     this.blad.teken(ctx, Math.floor(this.tijd * 7) % 4, Math.round(this.x - camX), Math.round(this.y + zweef - camY))
+  }
+}
+
+// Portaal. Twee portalen op volgorde vormen een paar en krijgen dezelfde
+// kleur, zodat je vóór het instappen ziet waar je uitkomt.
+export class Portaal {
+  constructor(x, y, paar) {
+    this.x = x
+    this.y = y - TEGEL // het portaal is twee tegels hoog
+    this.paar = paar
+    this.blad = portaalBlad(paar)
+    this.tijd = 0
+    this.partner = null
+    this.koeling = 0
+  }
+
+  get midX() { return this.x + PORTAAL.w / 2 }
+  get midY() { return this.y + PORTAAL.h / 2 }
+  get vlak() { return { x: this.x + 3, y: this.y + 4, w: PORTAAL.w - 6, h: PORTAAL.h - 8 } }
+
+  update(dt) {
+    this.tijd += dt
+    if (this.koeling > 0) this.koeling -= dt
+  }
+
+  herstel() { this.koeling = 0 }
+
+  teken(ctx, camX, camY) {
+    const f = Math.floor(this.tijd * 10) % 4
+    this.blad.teken(ctx, f, Math.round(this.x - camX), Math.round(this.y - camY))
+  }
+}
+
+// Schakelaar die de zwaartekracht omdraait. Raak hem aan en je valt de andere
+// kant op; hij heeft een korte koeling zodat je er niet in blijft flikkeren.
+export class Zwaartekrachtplaat {
+  constructor(x, y, palet) {
+    this.x = x
+    this.y = y
+    this.blad = schakelaarBlad(palet)
+    this.tijd = 0
+    this.koeling = 0
+  }
+
+  get vlak() { return { x: this.x, y: this.y, w: SCHAKELAAR.w, h: SCHAKELAAR.h } }
+
+  update(dt) {
+    this.tijd += dt
+    if (this.koeling > 0) this.koeling -= dt
+  }
+
+  herstel() { this.koeling = 0 }
+
+  teken(ctx, camX, camY) {
+    const f = Math.floor(this.tijd * 4) % 4
+    this.blad.teken(ctx, f, Math.round(this.x - camX), Math.round(this.y - camY))
   }
 }
 

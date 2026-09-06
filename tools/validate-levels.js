@@ -48,7 +48,7 @@ function reikwijdte(v, omhoogTegels) {
   return Math.floor(((tOp + tNeer) * SNELHEID) / TEGEL) + 1
 }
 
-const VAST = new Set(['#', 'b', 'I', 'i', '<', '>'])
+const VAST = new Set(['#', 'b', 'I', 'i', '<', '>', ':', ';', 'd'])
 const STAANBAAR = new Set([...VAST, '='])
 
 const fouten = []
@@ -118,6 +118,34 @@ function platformPlekken(level) {
   return set
 }
 
+// Plekken waar je op het PLAFOND kunt staan. Alleen relevant in levels met een
+// zwaartekrachtplaat ('@'); daar loopt de route deels ondersteboven.
+//
+// De sprongboog is dan gespiegeld maar even groot, dus we voegen deze plekken
+// gewoon toe aan de staanbare verzameling. Dat is een benadering: hij gaat
+// ervan uit dat er een plaat op de route staat, en dat controleren we door hem
+// alleen toe te passen als het level er minstens één heeft.
+function plafondPlekken(kaart) {
+  const set = new Set()
+  for (let y = 0; y < kaart.length; y++) {
+    for (let x = 0; x < kaart[y].length; x++) {
+      const boven = tekenOp(kaart, x, y - 1)
+      if (!STAANBAAR.has(boven)) continue
+      if (VAST.has(tekenOp(kaart, x, y))) continue
+      if (VAST.has(tekenOp(kaart, x, y + 1))) continue
+      set.add(`${x},${y}`)
+    }
+  }
+  return set
+}
+
+// Loopt de route in dit level (deels) ondersteboven? Dat kan via een plaat,
+// via een level dat de zwaartekracht vanzelf omdraait, of via een level dat
+// omgekeerd begint.
+const looptOndersteboven = (level) => level.kaart.some((r) => r.includes('@'))
+  || !!level.omkeerPeriode
+  || !!level.omgekeerdStart
+
 // Onzichtbare blokken worden pas vast als je ze raakt; voor de bereikbaarheid
 // tellen ze mee als staanbaar, want daar zijn ze voor bedoeld.
 function verborgenPlekken(kaart) {
@@ -152,6 +180,15 @@ function bereikbaar(level) {
   const staan = staanbarePlekken(kaart)
   for (const k of platformPlekken(level)) staan.add(k)
   for (const k of verborgenPlekken(kaart)) staan.add(k)
+  if (looptOndersteboven(level)) {
+    for (const k of plafondPlekken(kaart)) staan.add(k)
+  }
+  // Een portaalmond staat zelf op de route, ook als er geen vloer onder zit.
+  kaart.forEach((rij, y) => {
+    for (let x = 0; x < rij.length; x++) {
+      if (rij[x] === '(' || rij[x] === ')') staan.add(`${x},${y}`)
+    }
+  })
   const veren = veerPlekken(kaart)
 
   let start = null
@@ -161,6 +198,44 @@ function bereikbaar(level) {
   })
   if (!start) return null
 
+  // Portalen: elk paar (op volgorde van voorkomen) verbindt twee plekken
+  // rechtstreeks met elkaar.
+  const portalen = []
+  kaart.forEach((rij, y) => {
+    for (let x = 0; x < rij.length; x++) {
+      if (rij[x] === '(' || rij[x] === ')') portalen.push({ x, y })
+    }
+  })
+  const sprongen = new Map()
+  for (let i = 0; i + 1 < portalen.length; i += 2) {
+    const a = portalen[i]
+    const b = portalen[i + 1]
+    sprongen.set(`${a.x},${a.y}`, b)
+    sprongen.set(`${b.x},${b.y}`, a)
+  }
+
+  // Een zwaartekrachtplaat verbindt de vloer met het plafond in dezelfde
+  // kolom: raak hem aan en je valt naar de andere kant.
+  const autoOmkeer = !!level.omkeerPeriode
+  kaart.forEach((rij, y) => {
+    for (let x = 0; x < rij.length; x++) {
+      // Draait het level vanzelf om, dan telt elke staanplek als schakelpunt.
+      if (rij[x] !== '@' && !(autoOmkeer && staan.has(`${x},${y}`))) continue
+      let omhoog = null
+      for (let k = y - 1; k >= 0; k--) {
+        if (staan.has(`${x},${k}`)) { omhoog = { x, y: k }; break }
+        if (VAST.has(tekenOp(kaart, x, k))) break
+      }
+      let omlaag = null
+      for (let k = y + 1; k < kaart.length; k++) {
+        if (staan.has(`${x},${k}`)) { omlaag = { x, y: k }; break }
+        if (VAST.has(tekenOp(kaart, x, k))) break
+      }
+      if (omhoog) sprongen.set(`${x},${y}`, omhoog)
+      if (omhoog && omlaag) sprongen.set(`${omhoog.x},${omhoog.y}`, omlaag)
+    }
+  })
+
   const gezien = new Set([`${start.x},${start.y}`])
   const wachtrij = [start]
 
@@ -169,6 +244,13 @@ function bereikbaar(level) {
     const opVeer = veren.has(`${hier.x},${hier.y}`)
       || veren.has(`${hier.x - 1},${hier.y}`)
       || veren.has(`${hier.x + 1},${hier.y}`)
+    // Sta je op een portaal, dan hoort de andere kant er ook bij.
+    const uitgang = sprongen.get(`${hier.x},${hier.y}`)
+    if (uitgang && !gezien.has(`${uitgang.x},${uitgang.y}`)) {
+      gezien.add(`${uitgang.x},${uitgang.y}`)
+      wachtrij.push(uitgang)
+    }
+
     const zweeft = inZeroG(zones, hier.x, hier.y)
     const v = opVeer ? V_VEER : V_SPRONG
     const omhoog = zweeft ? ZEROG_OMHOOG : opVeer ? VEER_HOOG : SPRONG_HOOG

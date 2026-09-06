@@ -69,6 +69,23 @@ import s14 from './w4/l14.js'
 import s15 from './w4/l15.js'
 import s16 from './w4/l16.js'
 
+import n01 from './w5/l01.js'
+import n02 from './w5/l02.js'
+import n03 from './w5/l03.js'
+import n04 from './w5/l04.js'
+import n05 from './w5/l05.js'
+import n06 from './w5/l06.js'
+import n07 from './w5/l07.js'
+import n08 from './w5/l08.js'
+import n09 from './w5/l09.js'
+import n10 from './w5/l10.js'
+import n11 from './w5/l11.js'
+import n12 from './w5/l12.js'
+import n13 from './w5/l13.js'
+import n14 from './w5/l14.js'
+import n15 from './w5/l15.js'
+import n16 from './w5/l16.js'
+
 export const ALLE_LEVELS = [
   l01, l02, l03, l04, l05, l06, l07, l08,
   l09, l10, l11, l12, l13, l14, l15, l16,
@@ -78,6 +95,8 @@ export const ALLE_LEVELS = [
   v09, v10, v11, v12, v13, v14, v15, v16,
   s01, s02, s03, s04, s05, s06, s07, s08,
   s09, s10, s11, s12, s13, s14, s15, s16,
+  n01, n02, n03, n04, n05, n06, n07, n08,
+  n09, n10, n11, n12, n13, n14, n15, n16,
 ]
 
 export const LEVELS = Object.fromEntries(ALLE_LEVELS.map((l) => [l.id, l]))

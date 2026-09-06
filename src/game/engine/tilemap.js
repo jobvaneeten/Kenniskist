@@ -7,6 +7,10 @@
 
 export const TEGEL = 16 // pixels
 
+// Hoe lang een verdwijnend platform aan blijft. Lang genoeg om te zien
+// aankomen, kort genoeg om niet te kunnen wachten.
+export const PULS_DUUR = 1.5
+
 export const T = {
   LEEG: 0,
   VAST: 1,
@@ -20,9 +24,11 @@ export const T = {
   BAND_RECHTS: 9,
   BROOS: 10, // dun ijs: barst zodra je erop staat, komt later terug
   DEUR: 11,  // vast tot je de sleutelkaart hebt
+  PULS_A: 12, // verdwijnend platform, aan in de eerste helft van de cyclus
+  PULS_B: 13, // en aan in de tweede helft
 }
 
-const VAST_SET = new Set([T.VAST, T.BREEKBAAR, T.IJS, T.BAND_LINKS, T.BAND_RECHTS, T.BROOS, T.DEUR])
+const VAST_SET = new Set([T.VAST, T.BREEKBAAR, T.IJS, T.BAND_LINKS, T.BAND_RECHTS, T.BROOS, T.DEUR, T.PULS_A, T.PULS_B])
 
 export const isVast = (t) => VAST_SET.has(t)
 export const isDodelijk = (t) => t === T.STEKEL || t === T.LAVA
@@ -41,6 +47,8 @@ export const LEGENDA = {
   I: { tegel: T.IJS },
   i: { tegel: T.BROOS },
   d: { tegel: T.DEUR },
+  ':': { tegel: T.PULS_A },
+  ';': { tegel: T.PULS_B },
   '<': { tegel: T.BAND_LINKS },
   '>': { tegel: T.BAND_RECHTS },
 
@@ -67,6 +75,13 @@ export const LEGENDA = {
   j: { ent: 'laser', richting: 'v' },
   k: { ent: 'laser', richting: 'h' },
   q: { ent: 'sleutel' },
+  '@': { ent: 'zwaartekracht' },
+  '(': { ent: 'portaal' },
+  ')': { ent: 'portaal' },
+  c: { ent: 'vijand', soort: 'kloon' },
+  m: { ent: 'vijand', soort: 'zwerm' },
+  w: { ent: 'vijand', soort: 'zwaartewezen' },
+  e: { ent: 'vijand', soort: 'echoslijm' },
   X: { ent: 'vijand', soort: 'drone' },
   O: { ent: 'vijand', soort: 'torret' },
   n: { ent: 'vijand', soort: 'kortsluiter' },
@@ -138,6 +153,13 @@ export class Tilemap {
     this.broos = new Map()
     // Deuren staan open zodra alle sleutelkaarten van het level gepakt zijn.
     this.deurenOpen = false
+    // Verdwijnende platforms: fase 0 laat de A-tegels staan, fase 1 de B-tegels.
+    this.pulsFase = 0
+    this.pulsTijd = 0
+    this.pulsTegels = []
+    for (let i = 0; i < this.tegels.length; i++) {
+      if (this.tegels[i] === T.PULS_A || this.tegels[i] === T.PULS_B) this.pulsTegels.push(i)
+    }
     // Wachtrij voor de tekenlaag: welke tegels wijken af van de gebakken
     // chunk. De scène leegt hem elke frame.
     this.veranderd = []
@@ -151,6 +173,8 @@ export class Tilemap {
     if (t === T.VERBORGEN && !this.onthuld.has(i)) return T.LEEG
     if (t === T.BROOS && this.broos.get(i)?.staat === 'weg') return T.LEEG
     if (t === T.DEUR && this.deurenOpen) return T.LEEG
+    if (t === T.PULS_A && this.pulsFase === 1) return T.LEEG
+    if (t === T.PULS_B && this.pulsFase === 0) return T.LEEG
     return t
   }
 
@@ -172,6 +196,16 @@ export class Tilemap {
   }
 
   updateTegels(dt) {
+    // Verdwijnende platforms wisselen om de PULS_DUUR seconden van helft. De
+    // tekenlaag krijgt alle betrokken tegels door, zodat de chunk-cache klopt.
+    if (this.pulsTegels.length) {
+      this.pulsTijd += dt
+      if (this.pulsTijd >= PULS_DUUR) {
+        this.pulsTijd -= PULS_DUUR
+        this.pulsFase = this.pulsFase === 0 ? 1 : 0
+        for (const i of this.pulsTegels) this.veranderd.push([i % this.w, Math.floor(i / this.w)])
+      }
+    }
     if (this.broos.size === 0) return
     for (const [i, s] of this.broos) {
       s.t -= dt
@@ -222,6 +256,8 @@ export class Tilemap {
     this.onthuld.clear()
     this.broos.clear()
     this.deurenOpen = false
+    this.pulsFase = 0
+    this.pulsTijd = 0
     this.veranderd.length = 0
   }
 

@@ -466,6 +466,96 @@ export function kernBlad(palet, fase) {
   return blad
 }
 
+// --- De Verslinder (wereld 5) -----------------------------------------------
+// Een muil in het zwarte gat. Het lijf is een ring van sterrenstof; de kern
+// erin is wat je moet raken, en die is alleen zichtbaar als de muil open is.
+
+export const VERSLINDER = { w: 96, h: 96 }
+
+export function verslinderBlad(palet, fase) {
+  const sleutel = `verslinder-${palet.id}-${fase}`
+  if (cache.has(sleutel)) return cache.get(sleutel)
+
+  const ring = fase === 1 ? '#4e3690' : fase === 2 ? '#5f2bd6' : '#a45cff'
+  const binnen = '#150d2c'
+  const gloed = fase === 3 ? '#ffffff' : '#e0a8ff'
+
+  // 0-3 dicht, 4-5 open (kwetsbaar), 6 geraakt, 7-9 dood
+  const poses = [
+    { open: 0, draai: 0 }, { open: 0, draai: 1 }, { open: 0, draai: 2 }, { open: 0, draai: 3 },
+    { open: 1, draai: 0 }, { open: 1, draai: 2 },
+    { open: 1, draai: 1, stuk: 1 },
+    { open: 1, draai: 0, stuk: 2 }, { open: 0, draai: 2, stuk: 3 }, { open: 0, draai: 1, stuk: 4 },
+  ]
+
+  const blad = new Blad(VERSLINDER.w, VERSLINDER.h, poses.length)
+  poses.forEach((pose, i) => {
+    const { canvas, ctx } = nieuwCanvas(VERSLINDER.w, VERSLINDER.h)
+    const cx = 48
+    const cy = 48
+
+    // Buitenring van sterrenstof: losse blokjes op een cirkel, per frame
+    // gedraaid. Dat leest als iets dat om zichzelf heen draait.
+    for (let k = 0; k < 46; k++) {
+      const hoek = (k / 46) * Math.PI * 2 + (pose.draai * Math.PI) / 12
+      const r = 40 + Math.round(Math.sin(k * 1.7 + pose.draai) * 3)
+      const grootte = k % 5 === 0 ? 3 : 2
+      ctx.fillStyle = k % 3 === 0 ? gloed : ring
+      ctx.fillRect(
+        Math.round(cx + Math.cos(hoek) * r), Math.round(cy + Math.sin(hoek) * r),
+        grootte, grootte,
+      )
+    }
+
+    // Middenschijf
+    ellips(ctx, cx, cy, 30, 30, ring)
+    ellips(ctx, cx, cy, 26, 26, binnen)
+    omtrek(ctx, cx, cy, 30, 30, '#0a0616')
+
+    // Muil: dicht is een streep, open is een gat met tanden.
+    if (pose.open) {
+      ellips(ctx, cx, cy + 2, 17, 14, '#2c0838')
+      ellips(ctx, cx, cy + 4, 12, 9, pose.stuk ? '#7a1f3a' : gloed)
+      ctx.fillStyle = '#ffffff'
+      for (let k = 0; k < 7; k++) {
+        const x = cx - 15 + k * 5
+        ctx.fillRect(x, cy - 12, 3, 5)
+        ctx.fillRect(x + 2, cy + 12, 3, 5)
+      }
+    } else {
+      ctx.fillStyle = ring
+      ctx.fillRect(cx - 18, cy - 2, 36, 4)
+      ctx.fillStyle = gloed
+      ctx.fillRect(cx - 18, cy - 1, 36, 1)
+      // Twee ogen boven de gesloten muil
+      ctx.fillStyle = gloed
+      ctx.fillRect(cx - 14, cy - 14, 8, 5)
+      ctx.fillRect(cx + 6, cy - 14, 8, 5)
+      ctx.fillStyle = '#0a0616'
+      ctx.fillRect(cx - 12, cy - 13, 4, 3)
+      ctx.fillRect(cx + 8, cy - 13, 4, 3)
+    }
+
+    // Scheuren bij het sterven
+    if (pose.stuk) {
+      ctx.fillStyle = '#ffffff'
+      for (let k = 0; k < pose.stuk * 3; k++) {
+        const hoek = (k / 12) * Math.PI * 2
+        const r0 = 8
+        const r1 = 8 + pose.stuk * 6
+        for (let r = r0; r < r1; r++) {
+          ctx.fillRect(Math.round(cx + Math.cos(hoek) * r), Math.round(cy + Math.sin(hoek) * r), 1, 1)
+        }
+      }
+    }
+
+    blad.ctx.drawImage(canvas, i * VERSLINDER.w, 0)
+  })
+
+  cache.set(sleutel, blad)
+  return blad
+}
+
 export function slijmbalBlad(palet) {
   const sleutel = `bal-${palet.id}`
   if (cache.has(sleutel)) return cache.get(sleutel)

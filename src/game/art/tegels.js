@@ -3,7 +3,7 @@
 // variant, zodat een vlakke vloer niet uit identieke blokjes bestaat.
 
 import { Blad, nieuwCanvas, ruis } from '../core/atlas.js'
-import { donkerder, lichter } from './palet.js'
+import { UI, donkerder, lichter } from './palet.js'
 import { T } from '../engine/tilemap.js'
 
 export const TEGEL = 16
@@ -264,6 +264,22 @@ function tekenDeur(ctx, p, masker) {
   px(ctx, '#ffffff', 6, 7, 2, 1)
 }
 
+// Verdwijnend platform. De twee helften krijgen een duidelijk verschillende
+// vulling, zodat je ziet welke groep zo meteen weg is.
+function tekenPuls(ctx, p, tweede) {
+  const kleur = tweede ? p.deco[2] : p.deco[1]
+  px(ctx, UI.inkt, 0, 0, TEGEL, TEGEL)
+  px(ctx, donkerder(kleur, 0.35), 1, 1, TEGEL - 2, TEGEL - 2)
+  px(ctx, kleur, 1, 1, TEGEL - 2, 3)
+  px(ctx, lichter(kleur, 0.45), 1, 1, TEGEL - 2, 1)
+  // Merkteken: één stip voor de eerste helft, twee voor de tweede.
+  px(ctx, lichter(kleur, 0.6), 7, 8, 2, 2)
+  if (tweede) {
+    px(ctx, lichter(kleur, 0.6), 3, 8, 2, 2)
+    px(ctx, lichter(kleur, 0.6), 11, 8, 2, 2)
+  }
+}
+
 function tekenBand(ctx, p, richting, variant) {
   px(ctx, p.rots.s, 0, 0, TEGEL, TEGEL)
   px(ctx, p.rots.m, 0, 2, TEGEL, 10)
@@ -298,6 +314,8 @@ function bakSoort(p, soort) {
         case T.IJS: tekenIjs(ctx, p, masker, v); break
         case T.BROOS: tekenBroos(ctx, p, masker, v); break
         case T.DEUR: tekenDeur(ctx, p, masker); break
+        case T.PULS_A: tekenPuls(ctx, p, false); break
+        case T.PULS_B: tekenPuls(ctx, p, true); break
         case T.BAND_LINKS: tekenBand(ctx, p, -1, v + masker % 4); break
         case T.BAND_RECHTS: tekenBand(ctx, p, 1, v + masker % 4); break
         default: break
@@ -311,7 +329,7 @@ function bakSoort(p, soort) {
 export function tileset(palet) {
   if (cache.has(palet.id)) return cache.get(palet.id)
   const soorten = {}
-  for (const soort of [T.VAST, T.PLATFORM, T.STEKEL, T.BREEKBAAR, T.VERBORGEN, T.LAVA, T.IJS, T.BROOS, T.DEUR, T.BAND_LINKS, T.BAND_RECHTS]) {
+  for (const soort of [T.VAST, T.PLATFORM, T.STEKEL, T.BREEKBAAR, T.VERBORGEN, T.LAVA, T.IJS, T.BROOS, T.DEUR, T.PULS_A, T.PULS_B, T.BAND_LINKS, T.BAND_RECHTS]) {
     soorten[soort] = bakSoort(palet, soort)
   }
   const uit = { soorten, varianten: VARIANTEN }
