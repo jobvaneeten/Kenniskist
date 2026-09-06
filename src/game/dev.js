@@ -3,7 +3,7 @@
 //
 //   /sterrenveer-dev.html                 → titelscherm
 //   /sterrenveer-dev.html?level=w1-l03    → direct dat level
-//   /sterrenveer-dev.html?level=w1-l03&stil=1 → zonder audio-gate-melding
+//   /sterrenveer-dev.html?level=w1-l03&alles=1 → alle levels vrijgespeeld
 //
 // window.sterrenveer geeft de tests toegang tot het spel, zodat
 // tools/screenshot-levels.js kan wachten tot een level echt geladen is.

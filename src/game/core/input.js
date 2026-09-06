@@ -26,13 +26,19 @@ export class Invoer {
     this.nu = new Set()
     this.vorig = new Set()
     this.tekens = [] // ruwe toetsen deze frame, voor "druk op een toets"-schermen
-    this.muis = { x: 0, y: 0, neer: false, vorigNeer: false, inBeeld: false }
+    // Grendel voor aanslagen die tussen twee vaste updates in beginnen én
+    // eindigen. De update draait op 60 Hz, de browser levert events los daarvan
+    // aan: een korte tik of klik van 10 ms zou anders spoorloos verdwijnen.
+    // Wordt in eindFrame() geleegd, dus één aanslag telt precies één keer.
+    this.geraakt = new Set()
+    this.muis = { x: 0, y: 0, neer: false, vorigNeer: false, geklikt: false, inBeeld: false }
     this.eersteInteractie = false
     this._naarBeeld = null // (clientX, clientY) -> {x, y} in spelcoördinaten
 
     this._down = (e) => {
       if (e.repeat) { if (SLIK_OP.has(e.code)) e.preventDefault(); return }
       this.nu.add(e.code)
+      this.geraakt.add(e.code)
       this.tekens.push(e.code)
       this.eersteInteractie = true
       if (SLIK_OP.has(e.code)) e.preventDefault()
@@ -47,7 +53,16 @@ export class Invoer {
       this.muis.y = p.y
       this.muis.inBeeld = p.in
     }
-    this._muisNeer = (e) => { if (e.button === 0) { this.muis.neer = true; this.eersteInteractie = true } }
+    this._muisNeer = (e) => {
+      if (e.button !== 0) return
+      // Ook de positie bijwerken: een tik op een touchscreen of een klik zonder
+      // beweging ervoor levert geen mousemove, en dan zou de knop waar je op
+      // drukt niet de knop zijn die het spel ziet.
+      this._move(e)
+      this.muis.neer = true
+      this.muis.geklikt = true
+      this.eersteInteractie = true
+    }
     this._muisOp = (e) => { if (e.button === 0) this.muis.neer = false }
 
     doel.addEventListener('keydown', this._down)
@@ -81,10 +96,14 @@ export class Invoer {
     return false
   }
 
-  netIngedrukt(actie) { return this.ingedrukt(actie) && !this.wasIngedrukt(actie) }
+  netIngedrukt(actie) {
+    for (const c of BINDINGEN[actie]) if (this.geraakt.has(c)) return true
+    return this.ingedrukt(actie) && !this.wasIngedrukt(actie)
+  }
+
   netLosgelaten(actie) { return !this.ingedrukt(actie) && this.wasIngedrukt(actie) }
 
-  get muisNetNeer() { return this.muis.neer && !this.muis.vorigNeer }
+  get muisNetNeer() { return this.muis.geklikt || (this.muis.neer && !this.muis.vorigNeer) }
 
   // As van -1 tot 1; tegelijk links+rechts betekent stilstaan, niet trillen.
   get as() {
@@ -94,6 +113,8 @@ export class Invoer {
   eindFrame() {
     this.vorig = new Set(this.nu)
     this.muis.vorigNeer = this.muis.neer
+    this.muis.geklikt = false
+    this.geraakt.clear()
     this.tekens.length = 0
   }
 

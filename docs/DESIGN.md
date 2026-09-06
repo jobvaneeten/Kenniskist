@@ -18,9 +18,11 @@ Pip is een klein ruimtewezen dat met zijn schip crasht op een groene planeet. Vi
 verspreid over vijf werelden en worden elk bewaakt door een eindbaas. Na de vijfde baas is het schip
 compleet en vliegt Pip naar huis.
 
-Verteld in beeld, niet in tekst: een intro van 8 seconden bij de start, een cutscene van 5-10 seconden na
-elke baas waarin het onderdeel op zijn plek klikt, en een slotanimatie na baas 5. Alle spelerstekst staat
-in `src/game/data/texts.nl.js`.
+Verteld in beeld, niet in tekst: een intro bij de start, een cutscene na elke baas waarin het onderdeel op
+zijn plek klikt, en een slotanimatie na baas 5 waarin Pip opstijgt. Alles staat in
+`src/game/scenes/cutscene.js`; het schip wordt daar getekend met precies de onderdelen die je al hebt, dus
+je ziet je eigen voortgang terug. Eén regel tekst per scène, altijd door te klikken. Alle spelerstekst
+staat in `src/game/data/texts.nl.js`.
 
 ## 3. De vijf werelden
 
@@ -39,22 +41,32 @@ randen/hoeken/variaties, 4-5 parallaxlagen en een eigen muziekloop van 60-120 s.
 
 De belangrijkste getallen, in tiles per seconde bij 60 vaste updates:
 
-| | Waarde |
-|---|---|
-| Loopsnelheid | 7,0 t/s |
-| Rensnelheid | 11,0 t/s |
-| Acceleratie grond / lucht | 45 / 28 t/s² |
-| Wrijving grond / lucht | 60 / 12 t/s² |
-| Sprongimpuls | 15,4 t/s (≈ 3,4 tiles hoog) |
-| Zwaartekracht stijgen / vallen | 62 / 88 t/s² |
-| Max valsnelheid | 22 t/s |
-| Coyote time | 6 frames |
-| Jump buffer | 6 frames |
-| Stampbounce / vastgehouden | 10,5 / 14,0 t/s |
+| | Waarde | In `BASIS` (px/s) |
+|---|---|---|
+| Loopsnelheid | 7,0 t/s | `loop` 112 |
+| Rensnelheid | 11,0 t/s | `ren` 176 |
+| Acceleratie grond / lucht | 45 / 28 t/s² | `accelGrond` 720 / `accelLucht` 448 |
+| Wrijving grond / lucht | 60 / 12 t/s² | `wrijvingGrond` 960 / `wrijvingLucht` 192 |
+| Wrijving op ijs | 5,6 t/s² | `ijsWrijving` 90 |
+| Sprongimpuls | 20,6 t/s (≈ 3,5 tiles hoog) | `sprong` 330 |
+| Zwaartekracht stijgen / vallen | 60 / 90,6 t/s² | `zwaartekrachtOp` 960 / `zwaartekrachtNeer` 1450 |
+| Max valsnelheid | 22 t/s | `maxVal` 352 |
+| Coyote time | 6 frames | `coyote` |
+| Jump buffer | 6 frames | `buffer` |
+| Stampbounce / vastgehouden | 15,6 / 20,6 t/s | `stampBounce` 250 / `stampBounceHoog` 330 |
+| Duw van een lopende band | 3,75 t/s | `duwSnelheid` 60 |
 
-Variabele spronghoogte: bij loslaten wordt een opwaartse snelheid boven 5,5 t/s afgekapt. Ledge
-forgiveness: 3 px horizontale correctie als je met je hoofd net naast een blok omhoog springt.
-Collision is AABB per as (eerst X, dan Y) zodat je nooit in een hoek blijft haken.
+Variabele spronghoogte: bij loslaten wordt een opwaartse snelheid boven 9,4 t/s afgekapt
+(`sprongAfkap` 150). Ledge forgiveness: 3 px horizontale correctie als je met je hoofd net naast een
+blok omhoog springt. Collision is AABB per as (eerst X, dan Y) zodat je nooit in een hoek blijft haken.
+
+`tools/doeltijden.js` en `tools/validate-levels.js` lezen deze getallen rechtstreeks uit `BASIS`, zodat
+een aanpassing aan het bewegingsgevoel meteen zichtbaar wordt in de doeltijden en de bereikbaarheids-
+controle. Wie hier iets verandert, draait daarna `node tools/doeltijden.js --schrijf`.
+
+**Omgekeerde zwaartekracht** is geen truc bovenop de physics maar zit erin: `Lichaam.omgekeerd` draait
+om welk contact als "grond" telt, en `Speler._kant` (+1 of −1) draait sprong, val, animatie en het
+tekenen mee. Alleen de speler gebruikt het; vijanden lopen gewoon door.
 
 Vaste timestep van 1/60 s met accumulator; rendering interpoleert tussen twee states en snapt daarna naar
 hele pixels, zodat het vloeiend is én scherp blijft.
@@ -81,7 +93,7 @@ pending munten en komen ze niet terug. Bij game over vervallen ze en staan ze er
 gewoon weer. Al definitief gepakte munten verschijnen als grijze, doorzichtige **geest-munten**: zichtbaar
 voor de route, maar zonder geluid, zonder punten. De HUD toont `munten 12/40 (28 al verzameld)`.
 
-Geplande aantallen (in `src/game/data/worlds.js`, bewaakt door `tools/economy.js`):
+Gemeten aantallen (alle 80 levels bestaan; `tools/economy.js` telt ze uit de echte leveldata):
 
 | Wereld | Munten per level | 15 levels | Baas | Bonus 15×25 | Baasbonus |
 |---|---|---|---|---|---|
@@ -91,9 +103,9 @@ Geplande aantallen (in `src/game/data/worlds.js`, bewaakt door `tools/economy.js
 | 4 | ~42 | 630 | 20 | 375 | 100 |
 | 5 | ~46 | 690 | 20 | 375 | 100 |
 
-Totaal verdienbaar: 2 950 munten + 2 375 bonus = **5 325**. Eindig en exact.
+Totaal verdienbaar: 2 958 munten + 2 375 bonus = **5 333**. Eindig en exact.
 
-**Prijzen** (som 4 660 = 87,5 % van het totaal):
+**Prijzen** (som 4 660 = 87,4 % van het totaal):
 
 | Character | Prijs | Eigenschap | Balans |
 |---|---|---|---|
@@ -124,9 +136,9 @@ afdwingt:
 - duurste: 17-28 % van die som, en pas te betalen als je ver in wereld 5 zit;
 - het script faalt met exit 1 buiten die marges, zodat het in `npm test` meeloopt.
 
-Zolang wereld 2-5 nog niet gebouwd zijn rekent het script met de geplande aantallen uit `worlds.js` en
-vervangt het die per wereld door de echte zodra de levels bestaan. Het meldt in de uitvoer welk deel
-gepland en welk deel gemeten is.
+Het script rekent per wereld met de echte leveldata zodra die bestaat en anders met de geplande aantallen
+uit `werelden.js`; het meldt in de uitvoer welk deel gepland en welk deel gemeten is. Nu alle vijf de
+werelden af zijn, is alles gemeten.
 
 ## 7. Schermen
 
@@ -154,6 +166,17 @@ camera en sprites op hele pixels. Tiles 16×16, speler 16×24, vijanden 16-32, b
 Sprites staan als pixeldata in `src/game/art/` (strings met een paletlegenda) en worden bij het opstarten
 één keer naar offscreen canvases gebakken. Daarna alleen nog `drawImage`. Tilelagen worden per chunk van
 16×16 tiles gecached. Particles komen uit een pool. Geen allocaties in de update-loop.
+
+Elk wereldpalet in `art/palet.js` heeft een veld **`dek`** dat bepaalt wat er bovenop de grondtegels
+groeit: `begroeiing` (gras en plukjes, wereld 1, 2 en 5), `kaal` (alleen steenscherven, wereld 3) of
+`paneel` (metalen naadlijnen en boutjes, wereld 4). Dat veld bestaat omdat wereld 4 er met grasplukjes
+uitzag als een snoepwinkel in plaats van een verlaten ruimtestation.
+
+De tile-enum in `engine/tilemap.js` telt 14 soorten (vast, ijs, breekbaar, broos, one-way, stekel, lava,
+lopende band links/rechts, onzichtbaar, deur en twee pulserende groepen). Per poging houdt de tilemap
+apart bij wat er kapot is, wat onthuld is, welke deuren open staan en in welke fase de pulserende tegels
+staan; wijzigingen gaan via een `veranderd`-queue die de renderer leegtrekt en die alleen de geraakte
+chunks opnieuw bakt.
 
 Audio: eigen synth op de Web Audio API (pulse met variabele duty, triangle, saw, noise), ADSR, delay,
 drie bussen (master/muziek/sfx) en een patroon-sequencer. Start pas na de eerste toetsaanslag of klik.
