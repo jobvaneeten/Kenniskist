@@ -1,0 +1,549 @@
+// De levelscène: alles wat er tijdens het spelen gebeurt.
+
+import { Tilemap, TEGEL } from '../engine/tilemap.js'
+import { TileRenderer } from '../engine/tilerender.js'
+import { Camera } from '../core/camera.js'
+import { Speler, STAAT } from '../entities/speler.js'
+import { maakVijand } from '../entities/vijanden.js'
+import { Munt, Veer, Checkpoint, Finish, Capsule, Hintbord, muntBlad, MUNT } from '../entities/items.js'
+import { BewegendPlatform, ValPlatform } from '../entities/platforms.js'
+import { BAAS_KLASSEN } from '../entities/bazen.js'
+import { tekenLevensbalk } from '../art/bazen.js'
+import { achtergrond, tekenAchtergrond, tekenVoorgrond, tekenSfeer, updateDeeltjes } from '../art/achtergrond.js'
+import { paletVoorWereld, UI } from '../art/palet.js'
+import { tekenHud, tekenVliegers, tekenHint } from '../ui/hud.js'
+import { tekstMiddenSchaduw, tekstMidden } from '../ui/font.js'
+import { paneel, Menu } from '../ui/panelen.js'
+import { T as TXT } from '../data/texts.nl.js'
+import { ontleedLevelId } from '../data/werelden.js'
+import { muziek, sfx } from '../audio/sfx.js'
+import { opslag } from '../core/save-adapter.js'
+import { BREEDTE, HOOGTE } from '../art/achtergrond.js'
+
+const RESPAWN_VERTRAGING = 0.85
+
+export class LevelScene {
+  constructor(spel, level) {
+    this.spel = spel
+    this.level = level
+    const ontleed = ontleedLevelId(level.id)
+    this.wereldNr = ontleed?.wereld ?? 1
+    this.palet = paletVoorWereld(this.wereldNr)
+
+    this.map = new Tilemap(level)
+    this.renderer = new TileRenderer(this.map, this.palet)
+    this.ag = achtergrond(this.palet)
+    this.camera = new Camera(BREEDTE, HOOGTE)
+    this.camera.grenzen(this.map.breedtePx, this.map.hoogtePx)
+
+    this.muntBlad = muntBlad(false)
+    this.geestBlad = muntBlad(true)
+
+    this.tijd = 0
+    this.levensVerloren = 0
+    this.pauze = false
+    this.pauzeMenu = new Menu([
+      { label: TXT.pauze.verder },
+      { label: TXT.pauze.opnieuw },
+      { label: TXT.pauze.instellingen },
+      { label: TXT.pauze.kaart },
+    ])
+    this.gameOver = false
+    this.gameOverTimer = 0
+    this.respawnTimer = 0
+    this.klaar = false
+    this.klaarTimer = 0
+    this.vliegers = []
+    this.muntReeks = 0
+    this.introTimer = 0.6
+
+    this._bouw()
+  }
+
+  // --- Opbouw --------------------------------------------------------------
+
+  _bouw() {
+    opslag.startPoging(this.level.id)
+
+    this.speler = new Speler(opslag.uitgerust, this.map.start.x, this.map.start.y)
+    this.spawn = { x: this.speler.x, y: this.speler.y }
+
+    this.munten = this.map.munten.map((m) => new Munt(m.x, m.y, m.index, opslag.isGeest(this.level.id, m.index)))
+    this.muntenTotaal = this.munten.length
+    this.alVerzameld = this.munten.filter((m) => m.geest).length
+
+    this.vijanden = this.map.entiteiten
+      .filter((e) => e.type === 'vijand')
+      .map((e) => maakVijand(e.soort, e.x, e.y, this.palet, e))
+
+    this.veren = this.map.entiteiten.filter((e) => e.type === 'veer').map((e) => new Veer(e.x, e.y, this.palet))
+    this.checkpoints = this.map.checkpoints.map((c) => new Checkpoint(c.x, c.y, this.palet))
+    this.finish = new Finish(this.map.finish.x, this.map.finish.y, this.palet)
+
+    this.capsules = this.map.entiteiten
+      .filter((e) => e.type === 'capsule')
+      .map((e, i) => new Capsule(e.x, e.y, this.palet, this.level.capsules?.[i] ?? Capsule.soortVoor(i)))
+
+    this.platforms = this.map.entiteiten
+      .filter((e) => e.type === 'platform')
+      .map((e, i) => new BewegendPlatform(e.x, e.y, this.palet, {
+        richting: e.richting,
+        afstand: this.level.platformAfstand?.[i] ?? 3,
+        breedte: this.level.platformBreedte?.[i] ?? 48,
+        fase: i * 0.7,
+      }))
+    this.valplatforms = this.map.entiteiten
+      .filter((e) => e.type === 'valplatform')
+      .map((e) => new ValPlatform(e.x, e.y, this.palet, { breedte: 32 }))
+
+    this.hints = this.map.hints.map((h) => new Hintbord(h.x, h.y, h.tekst, this.palet))
+
+    // Baas: de finish blijft dicht tot ze verslagen is.
+    this.baas = null
+    const baasPlek = this.map.entiteiten.find((e) => e.type === 'baas')
+    if (this.level.baas && baasPlek) {
+      const Klasse = BAAS_KLASSEN[this.level.baas]
+      if (Klasse) {
+        this.baas = new Klasse(baasPlek.x, baasPlek.y - 14, this.palet, {
+          links: 2 * TEGEL,
+          rechts: this.map.breedtePx - 2 * TEGEL,
+        })
+      }
+    }
+
+    this.camera.spring(this.speler.midX, this.speler.midY)
+  }
+
+  binnen() {
+    muziek.speel(this.level.muziek ?? `w${this.wereldNr}`)
+  }
+
+  buiten() {
+    opslag.vergeetPoging()
+  }
+
+  // --- Update --------------------------------------------------------------
+
+  update(dt) {
+    const invoer = this.spel.invoer
+    const fx = this.spel.fx
+
+    if (this.pauze) return this._updatePauze(invoer)
+
+    if (invoer.netIngedrukt('pauze') && !this.klaar && !this.gameOver) {
+      this.pauze = true
+      this.pauzeMenu.index = 0
+      muziek.pauzeer()
+      sfx.uiKiezen()
+      return
+    }
+
+    // Hit-stop: alles staat even stil na een rake klap.
+    if (fx.stop > 0) { fx.stop -= dt; fx.update(dt); return }
+
+    if (this.introTimer > 0) this.introTimer -= dt
+
+    fx.update(dt)
+    updateDeeltjes(this.ag, dt)
+    this.spel.particles.update(dt)
+    this._updateVliegers(dt)
+
+    if (this.gameOver) {
+      this.gameOverTimer += dt
+      if (this.gameOverTimer > 0.7 && invoer.netIngedrukt('bevestig')) this._herstartNaGameOver()
+      return
+    }
+
+    if (this.klaar) {
+      this.klaarTimer += dt
+      this.speler.update(dt, invoer, this.map, this.spel.particles)
+      this.camera.doelZoom = 1
+      this.camera.volg({ x: this.speler.midX, y: this.speler.midY }, dt, 0)
+      this.finish.update(dt)
+      if (this.klaarTimer > 1.4) this._naarResultaten()
+      return
+    }
+
+    if (this.respawnTimer > 0) {
+      this.respawnTimer -= dt
+      this.speler.update(dt, invoer, this.map, this.spel.particles)
+      if (this.respawnTimer <= 0) this._respawn()
+      return
+    }
+
+    this.tijd += dt
+
+    // Platforms eerst: de speler die erop staat moet mee vóórdat hij zelf
+    // beweegt, anders zakt hij er elk frame een pixel in.
+    for (const p of this.platforms) p.update(dt)
+    for (const p of this.valplatforms) p.update(dt)
+    this._draagSpeler()
+
+    this.speler.update(dt, invoer, this.map, this.spel.particles)
+    this._blokkenGeraakt()
+    // Kapotte en onthulde blokken: de betreffende chunk opnieuw laten bakken.
+    while (this.map.veranderd.length) {
+      const [tx, ty] = this.map.veranderd.pop()
+      this.renderer.markeer(tx, ty)
+    }
+
+    for (const v of this.vijanden) v.update(dt, this.map, this.speler)
+    if (this.baas) this.baas.update(dt, this.map, this.speler, this.spel.particles, fx)
+    for (const v of this.veren) v.update(dt)
+    for (const c of this.checkpoints) c.update(dt)
+    for (const c of this.capsules) c.update(dt)
+    for (const h of this.hints) h.update(dt, this.speler)
+    this.finish.update(dt)
+
+    for (const m of this.munten) m.update(dt, this.speler, this.speler.magneetBereik)
+
+    if (this.speler.staat === STAAT.NORMAAL || this.speler.staat === STAAT.GERAAKT) {
+      this._botsingen()
+      this.speler.controleerGevaar(this.map, fx)
+      if (this.speler.lichaam.boven > this.map.hoogtePx + 40) this.speler.sterf(fx)
+    }
+
+    if (this.speler.staat === STAAT.DOOD && this.respawnTimer <= 0) {
+      this.respawnTimer = RESPAWN_VERTRAGING
+      if (this.speler.levens <= 0) this._naarGameOver()
+    }
+
+    const richting = this.speler.lichaam.vx / 120
+    this.camera.volg({ x: this.speler.midX, y: this.speler.midY }, dt, Math.max(-1, Math.min(1, richting)))
+  }
+
+  _updatePauze(invoer) {
+    const keuze = this.pauzeMenu.update(invoer)
+    if (invoer.netIngedrukt('pauze')) { this._hervat(); return }
+    if (keuze === 0) this._hervat()
+    else if (keuze === 1) this.spel.herstartLevel()
+    else if (keuze === 2) this.spel.openInstellingen(() => {})
+    else if (keuze === 3) this.spel.naarKaart()
+  }
+
+  _hervat() {
+    this.pauze = false
+    muziek.hervat()
+    this.spel.lus.hervat()
+  }
+
+  _updateVliegers(dt) {
+    for (let i = this.vliegers.length - 1; i >= 0; i--) {
+      const v = this.vliegers[i]
+      v.tijd += dt
+      if (v.tijd >= v.duur) this.vliegers.splice(i, 1)
+    }
+  }
+
+  // --- Botsingen -----------------------------------------------------------
+
+  _draagSpeler() {
+    const l = this.speler.lichaam
+    l.opPlatform = null
+    for (const p of [...this.platforms, ...this.valplatforms]) {
+      if (!p.draagt(l)) continue
+      l.y = p.bovenkant - l.h
+      l.x += p.dx
+      if (p.dy > 0) l.y += p.dy
+      l.vy = 0
+      l.opGrond = true
+      l.opPlatform = p
+      if (p.betreden) p.betreden()
+      break
+    }
+  }
+
+  _blokkenGeraakt() {
+    // Capsules van onderaf. De speler-physics meldt alleen tegels; capsules
+    // zijn entiteiten, dus die checken we hier.
+    const l = this.speler.lichaam
+    if (l.vy >= 0 || !l.tegenPlafond) return
+    for (const c of this.capsules) {
+      const v = c.vlak
+      if (l.links < v.x + v.w && l.rechts > v.x && l.boven <= v.y + v.h + 2 && l.boven > v.y) {
+        if (c.sla(this.spel.particles)) this.spel.fx.schud(2, 0.12)
+      }
+    }
+  }
+
+  _botsingen() {
+    const l = this.speler.lichaam
+    const fx = this.spel.fx
+
+    // Munten
+    for (const m of this.munten) {
+      if (!m.raakt(l)) continue
+      if (m.geest) {
+        // Geest-munt: zichtbaar, maar levert niets op en maakt geen geluid.
+        continue
+      }
+      m.gepakt = true
+      if (opslag.pakMunt(m.index)) {
+        this.muntReeks++
+        sfx.munt(this.muntReeks)
+        this.spel.particles.sparkle(m.x + MUNT.w / 2, m.y + MUNT.h / 2, UI.munt)
+        this.vliegers.push({ x0: m.x - this.camera.tekenX, y0: m.y - this.camera.tekenY, tijd: 0, duur: 0.45 })
+      }
+    }
+
+    // Veren
+    for (const v of this.veren) {
+      const vl = v.vlak
+      if (l.vy >= 0 && l.rechts > vl.x && l.links < vl.x + vl.w && l.onder >= vl.y && l.onder <= vl.y + 10) {
+        l.y = vl.y - l.h
+        v.trap()
+        this.speler.veerStuiter()
+        this.spel.particles.stof(this.speler.midX, l.onder)
+      }
+    }
+
+    // Checkpoints
+    for (const c of this.checkpoints) {
+      const v = c.vlak
+      if (l.rechts > v.x && l.links < v.x + v.w && l.onder > v.y && l.boven < v.y + v.h) {
+        if (c.activeer(this.spel.particles)) {
+          this.spawn = { x: c.x, y: c.y + 32 - l.h }
+          fx.toonTekst('checkpoint', c.x + 8, c.y - 4, UI.goed)
+        }
+      }
+    }
+
+    // Capsule-inhoud oppakken
+    for (const c of this.capsules) {
+      const v = c.itemVlak
+      if (!v) continue
+      if (l.x < v.x + v.w && l.x + l.w > v.x && l.y < v.y + v.h && l.y + l.h > v.y) {
+        this.speler.geefPowerup(c.pak())
+        this.spel.particles.sparkle(v.x + 6, v.y + 6, UI.accent)
+      }
+    }
+
+    // Vijanden
+    for (const vij of this.vijanden) {
+      if (!vij.leeft) continue
+      const vl = vij.lichaam
+      if (!(l.x < vl.x + vl.w && l.x + l.w > vl.x && l.y < vl.y + vl.h && l.y + l.h > vl.y)) continue
+
+      // Van boven komen = stampen. De marge zorgt dat je niet per ongeluk in
+      // de zijkant "valt" terwijl je duidelijk bovenop landt.
+      const vanBoven = l.vy > 0 && l.vorigeY + l.h <= vl.y + 6
+      if (vanBoven && vij.stampbaar) {
+        const hoog = this.spel.invoer.ingedrukt('spring')
+        const verslagen = vij.opStamp(this.spel.particles)
+        this.speler.stamp(hoog)
+        fx.hitStop(0.05)
+        fx.schud(2, 0.14)
+        if (verslagen) sfx.stamp()
+      } else if (this.speler.staat === STAAT.NORMAAL) {
+        this.speler.raak(vij.midX, fx)
+        if (this.speler.levens <= 0) this.speler.sterf(fx)
+      }
+    }
+
+    if (this.baas) this._baasBotsingen(l, fx)
+
+    // Finish. Bij een baaslevel gaat hij pas open als de baas verslagen is.
+    if (!this.baas || this.baas.klaar) {
+      const f = this.finish.vlak
+      if (l.x < f.x + f.w && l.x + l.w > f.x && l.y < f.y + f.h && l.y + l.h > f.y) {
+        this._haalFinish()
+      }
+    }
+  }
+
+  _baasBotsingen(l, fx) {
+    const baas = this.baas
+
+    // Kleine slijmen en slijmballen van de baas.
+    for (const k of baas.kinderen) {
+      if (!k.leeft) continue
+      const kl = k.lichaam
+      if (!(l.x < kl.x + kl.w && l.x + l.w > kl.x && l.y < kl.y + kl.h && l.y + l.h > kl.y)) continue
+      if (l.vy > 0 && l.vorigeY + l.h <= kl.y + 6) {
+        k.opStamp(this.spel.particles)
+        this.speler.stamp(this.spel.invoer.ingedrukt('spring'))
+        fx.hitStop(0.05)
+      } else {
+        this.speler.raak(k.midX, fx)
+      }
+    }
+    for (const b of baas.ballen) {
+      if (!b.leeft) continue
+      const bl = b.lichaam
+      if (l.x < bl.x + bl.w && l.x + l.w > bl.x && l.y < bl.y + bl.h && l.y + l.h > bl.y) {
+        b.leeft = false
+        this.spel.particles.pop(bl.midX, bl.midY, this.palet.deco[2], 8)
+        this.speler.raak(bl.midX, fx)
+      }
+    }
+
+    if (!baas.raaktSpeler(l)) return
+    const vanBoven = l.vy > 0 && l.vorigeY + l.h <= baas.lichaam.y + 10
+    if (vanBoven) {
+      if (baas.opStamp(this.spel.particles, fx)) {
+        this.speler.stamp(this.spel.invoer.ingedrukt('spring'))
+      } else {
+        // Buiten het kwetsbare venster stuiter je af zonder schade te doen.
+        this.speler.stamp(false)
+      }
+    } else if (baas.staat !== 'dood') {
+      this.speler.raak(baas.midX, fx)
+    }
+    if (this.speler.levens <= 0) this.speler.sterf(fx)
+  }
+
+  // --- Toestandswissels ----------------------------------------------------
+
+  _haalFinish() {
+    if (this.klaar) return
+    this.klaar = true
+    this.klaarTimer = 0
+    this.speler.win()
+    this.camera.doelZoom = 1
+    this.spel.particles.sparkle(this.speler.midX, this.speler.midY, UI.accent)
+    muziek.jingle('gehaald', null)
+  }
+
+  _respawn() {
+    this.levensVerloren++
+    this.map.herstel()
+    this.renderer.herbak()
+    for (const v of this.vijanden) v.herstel()
+    for (const p of this.platforms) p.herstel()
+    for (const p of this.valplatforms) p.herstel()
+    // Munten die deze poging al gepakt zijn blijven weg: binnen één poging is
+    // elke munt maar één keer te pakken, ook na een respawn.
+    for (const m of this.munten) {
+      if (!opslag.isPending(m.index) && !m.geest) { m.gepakt = false; m.x = m.startX; m.y = m.startY }
+    }
+    this.speler.staat = STAAT.NORMAAL
+    this.speler.staatTimer = 0
+    this.speler.onkwetsbaar = 1.2
+    this.speler.powerup = null
+    this.speler.schild = false
+    this.speler.zetPositie(this.spawn.x, this.spawn.y)
+    this.muntReeks = 0
+    this.spel.particles.wis()
+    this.camera.spring(this.speler.midX, this.speler.midY)
+  }
+
+  _naarGameOver() {
+    this.gameOver = true
+    this.gameOverTimer = 0
+    // Voorlopige munten vervallen; bij een nieuwe poging staan ze er weer.
+    opslag.vergeetPoging()
+    muziek.jingle('gameover', null)
+  }
+
+  _herstartNaGameOver() {
+    this.spel.herstartLevel()
+  }
+
+  _naarResultaten() {
+    const resultaat = opslag.voltooiLevel(this.level.id, {
+      tijd: this.tijd,
+      levensVerloren: this.levensVerloren,
+      muntenInLevel: this.muntenTotaal,
+      doeltijd: this.level.doeltijd,
+    })
+    this.spel.naarResultaten(this.level, {
+      ...resultaat,
+      tijd: this.tijd,
+      doeltijd: this.level.doeltijd,
+      muntenTotaal: this.muntenTotaal,
+    })
+  }
+
+  // --- Tekenen -------------------------------------------------------------
+
+  teken(ctx) {
+    const fxOffset = this.spel.fx.offset
+    const camX = this.camera.tekenX + fxOffset.x
+    const camY = this.camera.tekenY + fxOffset.y
+
+    // De achtergrond rekent vanaf de bodem van het level; zie tekenAchtergrond.
+    const camYbg = camY - Math.max(0, this.map.hoogtePx - HOOGTE)
+    tekenAchtergrond(ctx, this.ag, camX, camYbg, this.tijd)
+    this.renderer.teken(ctx, camX, camY, BREEDTE, HOOGTE)
+
+    for (const h of this.hints) if (this.camera.zichtbaar(h.x, h.y, 16, 16)) h.teken(ctx, camX, camY)
+    for (const c of this.checkpoints) if (this.camera.zichtbaar(c.x, c.y, 16, 32)) c.teken(ctx, camX, camY)
+    // Bij een baaslevel staat het landingsplatform er wel, maar gedoofd.
+    if (this.baas && !this.baas.klaar) ctx.globalAlpha = 0.35
+    this.finish.teken(ctx, camX, camY)
+    ctx.globalAlpha = 1
+
+    for (const p of this.platforms) if (this.camera.zichtbaar(p.x, p.y, p.w, p.h)) p.teken(ctx, camX, camY)
+    for (const p of this.valplatforms) if (this.camera.zichtbaar(p.x, p.y, p.w, p.h)) p.teken(ctx, camX, camY)
+    for (const c of this.capsules) if (this.camera.zichtbaar(c.x, c.y, 16, 16)) c.teken(ctx, camX, camY)
+    for (const v of this.veren) if (this.camera.zichtbaar(v.x, v.y, 16, 16)) v.teken(ctx, camX, camY)
+
+    for (const m of this.munten) if (this.camera.zichtbaar(m.x, m.y, MUNT.w, MUNT.h)) m.teken(ctx, camX, camY, this.muntBlad, this.geestBlad)
+    for (const v of this.vijanden) if (this.camera.zichtbaar(v.lichaam.x, v.lichaam.y, 24, 24)) v.teken(ctx, camX, camY)
+    if (this.baas) this.baas.teken(ctx, camX, camY)
+
+    this.speler.teken(ctx, camX, camY)
+    this.spel.particles.teken(ctx, camX, camY)
+
+    tekenVoorgrond(ctx, this.ag, camX, camYbg)
+    tekenSfeer(ctx, this.palet)
+
+    for (const h of this.hints) tekenHint(ctx, h, camX, camY)
+
+    // Zwevende tekstjes (checkpoint, bonussen)
+    for (const z of this.spel.fx.zwevend) {
+      ctx.globalAlpha = Math.max(0, 1 - z.tijd / z.duur)
+      tekstMiddenSchaduw(ctx, z.tekst, z.x - camX, z.y - camY, z.kleur)
+      ctx.globalAlpha = 1
+    }
+
+    tekenHud(ctx, {
+      levens: this.speler.levens,
+      maxLevens: this.speler.maxLevens,
+      muntenNu: opslag.pendingAantal(),
+      muntenTotaal: this.muntenTotaal,
+      alVerzameld: this.alVerzameld,
+      tijd: this.tijd,
+      doeltijd: this.level.doeltijd,
+      powerup: this.speler.powerup,
+      jetpack: this.speler.jetpackBrandstof / 2.2,
+    }, this.palet)
+    tekenVliegers(ctx, this.vliegers)
+
+    if (this.baas && !this.baas.klaar) {
+      tekenLevensbalk(ctx, 120, 246, 240, this.baas.deel, this.level.naam, this.baas.fase)
+      tekstMidden(ctx, this.level.naam, 240, 236, UI.tekst)
+    }
+
+    this.spel.fx.tekenFlits(ctx, BREEDTE, HOOGTE)
+
+    if (this.introTimer > 0) this._tekenIntro(ctx)
+    if (this.gameOver) this._tekenGameOver(ctx)
+    if (this.pauze) this._tekenPauze(ctx)
+  }
+
+  _tekenIntro(ctx) {
+    ctx.globalAlpha = Math.min(1, this.introTimer / 0.6)
+    paneel(ctx, 140, 108, 200, 40)
+    tekstMidden(ctx, `${this.level.id.toUpperCase()}`, 240, 116, UI.tekstZacht)
+    tekstMidden(ctx, this.level.naam, 240, 128, UI.tekst, 1)
+    ctx.globalAlpha = 1
+  }
+
+  _tekenGameOver(ctx) {
+    ctx.fillStyle = 'rgba(10,7,19,0.72)'
+    ctx.fillRect(0, 0, BREEDTE, HOOGTE)
+    paneel(ctx, 130, 96, 220, 78)
+    tekstMidden(ctx, TXT.gameOver.titel, 240, 108, UI.fout, 2)
+    tekstMidden(ctx, TXT.gameOver.uitleg, 240, 132, UI.tekstZacht)
+    tekstMidden(ctx, `${TXT.menu.opnieuw} — Enter`, 240, 152, UI.tekst)
+  }
+
+  _tekenPauze(ctx) {
+    ctx.fillStyle = 'rgba(10,7,19,0.7)'
+    ctx.fillRect(0, 0, BREEDTE, HOOGTE)
+    paneel(ctx, 160, 60, 160, 150)
+    tekstMidden(ctx, TXT.pauze.titel, 240, 72, UI.accent, 2)
+    this.pauzeMenu.teken(ctx, 176, 96, 128, 22, 6)
+  }
+}

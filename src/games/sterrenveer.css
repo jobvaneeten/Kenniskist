@@ -1,0 +1,41 @@
+/* Sterrenveer: het canvas staat gecentreerd met letterbox eromheen. De
+   opschaling is een geheel getal (main.js), dus image-rendering: pixelated
+   houdt de pixels vierkant. */
+
+.sterrenveer-wrap {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #05030c;
+  overflow: hidden;
+}
+
+.sterrenveer-canvas {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  display: block;
+  /* Geen CSS-schaal: main.js zet width/height al op een veelvoud van 480×270. */
+}
+
+.sterrenveer-terug {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 2;
+  padding: 6px 12px;
+  border: 1px solid #3d2f66;
+  border-radius: 8px;
+  background: rgba(10, 7, 19, 0.72);
+  color: #f4f0ff;
+  font: 600 14px/1 system-ui, sans-serif;
+  cursor: pointer;
+  opacity: 0.45;
+  transition: opacity 0.15s;
+}
+
+.sterrenveer-terug:hover,
+.sterrenveer-terug:focus-visible {
+  opacity: 1;
+}

@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="nl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sterrenveer — dev</title>
+    <style>
+      html, body { margin: 0; height: 100%; background: #05030c; overflow: hidden; }
+      #doel { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+      canvas { image-rendering: pixelated; display: block; }
+    </style>
+  </head>
+  <body>
+    <!--
+      Alleen voor ontwikkelen en voor tools/screenshot-levels.js. Deze pagina
+      staat niet in build.rollupOptions.input, dus hij komt niet in de
+      productiebundel terecht: Vite bouwt standaard alleen index.html.
+
+      Gebruik: /sterrenveer-dev.html?level=w1-l03  (of zonder parameter voor
+      het titelscherm).
+    -->
+    <div id="doel"></div>
+    <script type="module" src="/src/game/dev.js"></script>
+  </body>
+</html>

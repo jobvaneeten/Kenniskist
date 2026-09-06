@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200" width="320" height="200" role="img" aria-label="Sterrenveer">
+  <defs>
+    <linearGradient id="sv-lucht" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0b1f2e"/>
+      <stop offset="0.55" stop-color="#1c5566"/>
+      <stop offset="1" stop-color="#2a7d7a"/>
+    </linearGradient>
+    <radialGradient id="sv-gloed" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#7bffd4" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#7bffd4" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="320" height="200" fill="url(#sv-lucht)"/>
+
+  <g fill="#ffffff">
+    <rect x="18" y="22" width="2" height="2"/><rect x="54" y="14" width="2" height="2"/>
+    <rect x="96" y="34" width="2" height="2"/><rect x="140" y="18" width="2" height="2"/>
+    <rect x="188" y="30" width="2" height="2"/><rect x="232" y="16" width="2" height="2"/>
+    <rect x="276" y="38" width="2" height="2"/><rect x="300" y="22" width="2" height="2"/>
+    <rect x="70" y="52" width="2" height="2"/><rect x="210" y="56" width="2" height="2"/>
+  </g>
+
+  <circle cx="248" cy="44" r="20" fill="#8ef2d0" opacity="0.85"/>
+  <circle cx="254" cy="40" r="5" fill="#42d6a8" opacity="0.7"/>
+  <circle cx="242" cy="52" r="3" fill="#42d6a8" opacity="0.7"/>
+  <circle cx="286" cy="28" r="9" fill="#42d6a8" opacity="0.8"/>
+
+  <g fill="#123c44" opacity="0.9">
+    <polygon points="0,140 34,96 68,140"/>
+    <polygon points="52,140 92,84 132,140"/>
+    <polygon points="118,140 154,102 190,140"/>
+    <polygon points="176,140 220,88 264,140"/>
+    <polygon points="248,140 288,100 320,140"/>
+  </g>
+
+  <g fill="#1f8f78">
+    <polygon points="30,142 38,112 46,142"/>
+    <polygon points="204,142 212,106 220,142"/>
+    <polygon points="272,142 279,118 286,142"/>
+  </g>
+
+  <rect x="0" y="140" width="320" height="60" fill="#177a54"/>
+  <rect x="0" y="140" width="320" height="8" fill="#2fae76"/>
+  <rect x="0" y="140" width="320" height="3" fill="#6ee7a8"/>
+
+  <rect x="96" y="112" width="56" height="8" fill="#2fae76"/>
+  <rect x="96" y="112" width="56" height="3" fill="#6ee7a8"/>
+  <rect x="96" y="120" width="56" height="4" fill="#0a3d30"/>
+
+  <g>
+    <circle cx="60" cy="122" r="16" fill="url(#sv-gloed)"/>
+    <ellipse cx="60" cy="118" rx="11" ry="10" fill="#3fd39a"/>
+    <ellipse cx="60" cy="115" rx="8" ry="6" fill="#9ef7d0"/>
+    <rect x="52" y="128" width="6" height="11" fill="#3fd39a"/>
+    <rect x="62" y="128" width="6" height="11" fill="#3fd39a"/>
+    <rect x="50" y="136" width="9" height="4" fill="#0c3b2e"/>
+    <rect x="61" y="136" width="9" height="4" fill="#0c3b2e"/>
+    <rect x="55" y="113" width="3" height="4" fill="#0c3b2e"/>
+    <rect x="63" y="113" width="3" height="4" fill="#0c3b2e"/>
+    <rect x="59" y="98" width="2" height="9" fill="#0c3b2e"/>
+    <circle cx="60" cy="96" r="4" fill="#ffd23f"/>
+  </g>
+
+  <g>
+    <circle cx="180" cy="96" r="9" fill="#ffd23f"/>
+    <circle cx="180" cy="96" r="5" fill="#fff3b0"/>
+    <circle cx="212" cy="80" r="9" fill="#ffd23f"/>
+    <circle cx="212" cy="80" r="5" fill="#fff3b0"/>
+    <circle cx="244" cy="98" r="9" fill="#ffd23f"/>
+    <circle cx="244" cy="98" r="5" fill="#fff3b0"/>
+  </g>
+
+  <g>
+    <ellipse cx="132" cy="134" rx="12" ry="8" fill="#42d6a8"/>
+    <ellipse cx="132" cy="132" rx="8" ry="5" fill="#8ef2d0"/>
+    <rect x="127" y="130" width="3" height="3" fill="#ffffff"/>
+    <rect x="134" y="130" width="3" height="3" fill="#ffffff"/>
+    <rect x="128" y="131" width="2" height="2" fill="#0a3d30"/>
+    <rect x="135" y="131" width="2" height="2" fill="#0a3d30"/>
+  </g>
+</svg>

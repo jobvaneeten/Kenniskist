@@ -7,6 +7,11 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
+    "test": "vitest run && npm run validate-levels && npm run economy",
+    "test:watch": "vitest",
+    "validate-levels": "node tools/validate-levels.js",
+    "economy": "node tools/economy.js",
+    "screenshots": "playwright test tools/screenshot-levels.js",
     "preview": "npm run build && wrangler dev",
     "deploy": "npm run build && wrangler deploy"
   },
@@ -23,6 +28,7 @@
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.38.0",
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.63.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
@@ -32,6 +38,7 @@
     "globals": "^17.6.0",
     "sharp": "^0.34.5",
     "vite": "^8.0.12",
+    "vitest": "^5.0.0",
     "wrangler": "^4.94.0"
   }
 }

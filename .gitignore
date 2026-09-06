@@ -30,3 +30,6 @@ dist-ssr
 .env*
 !.env.example
 animatie_bronnen/
+screenshots/
+test-results/
+playwright-report/
