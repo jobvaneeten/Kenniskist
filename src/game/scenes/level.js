@@ -10,6 +10,8 @@ import { BewegendPlatform, ValPlatform } from '../entities/platforms.js'
 import { BAAS_KLASSEN } from '../entities/bazen.js'
 import { tekenLevensbalk } from '../art/bazen.js'
 import { achtergrond, tekenAchtergrond, tekenVoorgrond, tekenSfeer, updateDeeltjes } from '../art/achtergrond.js'
+import { tekenBarst } from '../art/tegels.js'
+import { tekenWind } from '../art/objecten2.js'
 import { paletVoorWereld, UI } from '../art/palet.js'
 import { tekenHud, tekenVliegers, tekenHint } from '../ui/hud.js'
 import { tekstMiddenSchaduw, tekstMidden } from '../ui/font.js'
@@ -56,6 +58,9 @@ export class LevelScene {
     this.vliegers = []
     this.muntReeks = 0
     this.introTimer = 0.6
+    // Wind: wisselt van richting op een vaste cadans, zodat het ritme te leren
+    // is. `kracht` is de topsnelheid van de duw in pixels per seconde.
+    this.wind = level.wind ? { kracht: 0, ...level.wind } : null
 
     this._bouw()
   }
@@ -104,7 +109,9 @@ export class LevelScene {
     if (this.level.baas && baasPlek) {
       const Klasse = BAAS_KLASSEN[this.level.baas]
       if (Klasse) {
-        this.baas = new Klasse(baasPlek.x, baasPlek.y - 14, this.palet, {
+        // De ruwe tegelpositie; elke baas lijnt zichzelf uit op het oppervlak,
+        // want de een staat erop en de ander komt eruit.
+        this.baas = new Klasse(baasPlek.x, baasPlek.y, this.palet, {
           links: 2 * TEGEL,
           rechts: this.map.breedtePx - 2 * TEGEL,
         })
@@ -172,6 +179,8 @@ export class LevelScene {
     }
 
     this.tijd += dt
+    this.map.updateTegels(dt)
+    this._updateWind(dt)
 
     // Platforms eerst: de speler die erop staat moet mee vóórdat hij zelf
     // beweegt, anders zakt hij er elk frame een pixel in.
@@ -181,6 +190,7 @@ export class LevelScene {
 
     this.speler.update(dt, invoer, this.map, this.spel.particles)
     this._blokkenGeraakt()
+    this._controleerBroos()
     // Kapotte en onthulde blokken: de betreffende chunk opnieuw laten bakken.
     while (this.map.veranderd.length) {
       const [tx, ty] = this.map.veranderd.pop()
@@ -225,6 +235,33 @@ export class LevelScene {
     this.pauze = false
     muziek.hervat()
     this.spel.lus.hervat()
+  }
+
+  // Wind duwt de speler opzij. Een sinus in plaats van een blokgolf: de vlaag
+  // zwelt hoorbaar en zichtbaar aan, zodat je hem kunt zien aankomen.
+  _updateWind(dt) {
+    if (!this.wind) return
+    const w = this.wind
+    const fase = (this.tijd / w.periode) * Math.PI * 2
+    // bias = de vaste component (-1 is altijd naar links), variatie = hoeveel
+    // de vlaag daaromheen slingert. Zo is met dezelfde code zowel een constante
+    // tegenwind als een op- en afzwellende vlaag te maken.
+    w.kracht = ((w.bias ?? 0) + Math.sin(fase) * (w.variatie ?? 1)) * w.sterkte
+    if (this.speler.staat === STAAT.NORMAAL) {
+      this.speler.lichaam.vx += w.kracht * dt * 3.2
+    }
+  }
+
+  // Dun ijs onder de voeten laten barsten.
+  _controleerBroos() {
+    const l = this.speler.lichaam
+    if (!l.opGrond) return
+    const ty = Math.floor((l.onder + 1) / TEGEL)
+    const x0 = Math.floor(l.links / TEGEL)
+    const x1 = Math.floor((l.rechts - 0.001) / TEGEL)
+    for (let tx = x0; tx <= x1; tx++) {
+      if (this.map.betreedBroos(tx, ty)) sfx.blokKapot()
+    }
   }
 
   _updateVliegers(dt) {
@@ -318,9 +355,23 @@ export class LevelScene {
       }
     }
 
+    // Projectielen van vijanden (sneeuwballen en dergelijke)
+    for (const vij of this.vijanden) {
+      if (!vij.projectielen) continue
+      for (const b of vij.projectielen) {
+        if (!b.leeft) continue
+        const bl = b.lichaam
+        if (l.x < bl.x + bl.w && l.x + l.w > bl.x && l.y < bl.y + bl.h && l.y + l.h > bl.y) {
+          b.leeft = false
+          this.spel.particles.pop(bl.midX, bl.midY, '#ffffff', 8)
+          this.speler.raak(bl.midX, fx)
+        }
+      }
+    }
+
     // Vijanden
     for (const vij of this.vijanden) {
-      if (!vij.leeft) continue
+      if (!vij.leeft || !vij.gevaarlijk) continue
       const vl = vij.lichaam
       if (!(l.x < vl.x + vl.w && l.x + l.w > vl.x && l.y < vl.y + vl.h && l.y + l.h > vl.y)) continue
 
@@ -478,6 +529,16 @@ export class LevelScene {
     for (const c of this.capsules) if (this.camera.zichtbaar(c.x, c.y, 16, 16)) c.teken(ctx, camX, camY)
     for (const v of this.veren) if (this.camera.zichtbaar(v.x, v.y, 16, 16)) v.teken(ctx, camX, camY)
 
+    // Barsten in het dunne ijs: over de gebakken chunk heen, want ze duren maar
+    // een halve seconde.
+    for (const [i, s] of this.map.broos) {
+      if (s.staat !== 'barst') continue
+      const tx = i % this.map.w
+      const ty = Math.floor(i / this.map.w)
+      if (!this.camera.zichtbaar(tx * TEGEL, ty * TEGEL, TEGEL, TEGEL)) continue
+      tekenBarst(ctx, tx * TEGEL - camX, ty * TEGEL - camY, s.t / 0.55)
+    }
+
     for (const m of this.munten) if (this.camera.zichtbaar(m.x, m.y, MUNT.w, MUNT.h)) m.teken(ctx, camX, camY, this.muntBlad, this.geestBlad)
     for (const v of this.vijanden) if (this.camera.zichtbaar(v.lichaam.x, v.lichaam.y, 24, 24)) v.teken(ctx, camX, camY)
     if (this.baas) this.baas.teken(ctx, camX, camY)
@@ -486,6 +547,8 @@ export class LevelScene {
     this.spel.particles.teken(ctx, camX, camY)
 
     tekenVoorgrond(ctx, this.ag, camX, camYbg)
+    if (this.wind) tekenWind(ctx, BREEDTE, HOOGTE, this.wind.kracht, this.tijd)
+    if (this.level.donker) this._tekenDonker(ctx, camX, camY)
     tekenSfeer(ctx, this.palet)
 
     for (const h of this.hints) tekenHint(ctx, h, camX, camY)
@@ -520,6 +583,23 @@ export class LevelScene {
     if (this.introTimer > 0) this._tekenIntro(ctx)
     if (this.gameOver) this._tekenGameOver(ctx)
     if (this.pauze) this._tekenPauze(ctx)
+  }
+
+  // Beperkt zicht: een zachte lichtcirkel rond de speler, de rest bijna zwart.
+  // De cirkel ademt licht mee zodat het scherm niet stilstaat.
+  _tekenDonker(ctx, camX, camY) {
+    const x = Math.round(this.speler.midX - camX)
+    const y = Math.round(this.speler.midY - camY)
+    const r = this.level.donker * (1 + Math.sin(this.tijd * 1.6) * 0.04)
+    const g = ctx.createRadialGradient(x, y, r * 0.45, x, y, r)
+    g.addColorStop(0, 'rgba(4,8,20,0)')
+    g.addColorStop(0.7, 'rgba(4,8,20,0.55)')
+    g.addColorStop(1, 'rgba(4,8,20,0.94)')
+    // Eén vlak volstaat: buiten r zet canvas de laatste kleurstop door, dus het
+    // hele scherm wordt gedekt. Er extra rechthoeken overheen leggen zou de
+    // alpha verdubbelen en er zou een vierkante rand omheen komen te staan.
+    ctx.fillStyle = g
+    ctx.fillRect(0, 0, BREEDTE, HOOGTE)
   }
 
   _tekenIntro(ctx) {

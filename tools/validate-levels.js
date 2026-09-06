@@ -48,7 +48,7 @@ function reikwijdte(v, omhoogTegels) {
   return Math.floor(((tOp + tNeer) * SNELHEID) / TEGEL) + 1
 }
 
-const VAST = new Set(['#', 'b', 'I', '<', '>'])
+const VAST = new Set(['#', 'b', 'I', 'i', '<', '>'])
 const STAANBAAR = new Set([...VAST, '='])
 
 const fouten = []

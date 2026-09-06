@@ -111,6 +111,101 @@ export const LIED_W1 = maakLied({
   ],
 })
 
+// --- Wereld 2: IJsmaan ------------------------------------------------------
+// D-mineur, 118 BPM. Trager en holler dan wereld 1: een lange klokachtige
+// melodie boven een dunne bas, met de drums pas in de tweede helft van elke
+// sectie. 6 secties van 8 maten ≈ 97 seconden.
+
+const W2_AKKOORDEN = ['D2', 'A#1', 'F2', 'C2', 'D2', 'G1', 'A1', 'A1']
+
+const w2Bas = () => W2_AKKOORDEN.flatMap((grond, i) => maat(i, [
+  [0, grond, 4], [6, grond, 2], [8, transponeerNoot(grond, 12), 4], [14, transponeerNoot(grond, 7), 2],
+]))
+
+const w2Pad = () => {
+  const drieklank = {
+    D2: ['D4', 'F4', 'A4'], 'A#1': ['A#3', 'D4', 'F4'], F2: ['F3', 'A3', 'C4'],
+    C2: ['C4', 'E4', 'G4'], G1: ['G3', 'A#3', 'D4'], A1: ['A3', 'C#4', 'E4'],
+  }
+  return W2_AKKOORDEN.flatMap((g, i) => (drieklank[g] ?? drieklank.D2).map((n) => [i * 16, n, 15]))
+}
+
+const w2MelodieA = maten([
+  [0, [[0, 'D5', 4], [4, 'F5', 4], [8, 'A5', 6], [14, 'G5', 2]]],
+  [1, [[0, 'F5', 6], [6, 'D5', 2], [8, 'A#4', 8]]],
+  [2, [[0, 'C5', 4], [4, 'F5', 4], [8, 'A5', 4], [12, 'C6', 4]]],
+  [3, [[0, 'A5', 6], [6, 'G5', 2], [8, 'E5', 8]]],
+  [4, [[0, 'D5', 4], [4, 'A4', 4], [8, 'D5', 4], [12, 'F5', 4]]],
+  [5, [[0, 'G5', 8], [8, 'A#5', 4], [12, 'A5', 4]]],
+  [6, [[0, 'A5', 4], [4, 'G5', 4], [8, 'F5', 4], [12, 'E5', 4]]],
+  [7, [[0, 'D5', 16]]],
+])
+
+const w2MelodieB = maten([
+  [0, [[0, 'A5', 2], [2, 'D6', 2], [4, 'C6', 4], [8, 'A5', 4], [12, 'F5', 4]]],
+  [1, [[0, 'D6', 4], [4, 'A#5', 4], [8, 'F5', 8]]],
+  [2, [[0, 'C6', 2], [2, 'E6', 2], [4, 'G6', 4], [8, 'E6', 4], [12, 'C6', 4]]],
+  [3, [[0, 'A5', 6], [6, 'E5', 2], [8, 'C5', 8]]],
+  [4, [[0, 'D6', 4], [4, 'F6', 4], [8, 'A6', 4], [12, 'F6', 4]]],
+  [5, [[0, 'D6', 8], [8, 'A#5', 8]]],
+  [6, [[0, 'C6', 4], [4, 'A5', 4], [8, 'G5', 4], [12, 'F5', 4]]],
+  [7, [[0, 'D5', 8], [8, 'A4', 8]]],
+])
+
+// Klokjes: een ijl arpeggio dat het geheel koud houdt.
+const w2Bellen = maten(
+  W2_AKKOORDEN.map((g, i) => {
+    const t = {
+      D2: ['D6', 'F6', 'A6'], 'A#1': ['A#5', 'D6', 'F6'], F2: ['F6', 'A6', 'C7'],
+      C2: ['C6', 'E6', 'G6'], G1: ['G5', 'A#5', 'D6'], A1: ['A5', 'C#6', 'E6'],
+    }[g] ?? ['D6', 'F6', 'A6']
+    const noten = []
+    for (let s = 0; s < 16; s += 4) noten.push([s, t[(s / 4) % 3], 2])
+    return [i, noten]
+  }),
+)
+
+const w2Drums = herhaal(
+  [[0, 'K', 1], [4, 'H', 1], [8, 'S', 1], [12, 'H', 1], [15, 'H', 1]],
+  4, 16,
+)
+
+export const LIED_W2 = maakLied({
+  naam: 'w2',
+  tempo: 118,
+  lengte: SECTIE * 6,
+  kanalen: [
+    {
+      type: 'pulse', duty: 0.25, volume: 0.1, release: 0.22, sustain: 0.75,
+      noten: [
+        ...w2MelodieA,
+        ...verschuif(w2MelodieA, SECTIE),
+        ...verschuif(w2MelodieB, SECTIE * 2),
+        ...verschuif(w2MelodieA, SECTIE * 3),
+        ...verschuif(w2MelodieB, SECTIE * 4),
+        ...verschuif(w2MelodieA, SECTIE * 5),
+      ],
+    },
+    {
+      type: 'triangle', volume: 0.19, sustain: 0.85, release: 0.2,
+      noten: Array.from({ length: 6 }, (_, i) => verschuif(w2Bas(), i * SECTIE)).flat(),
+    },
+    {
+      type: 'sawtooth', volume: 0.026, attack: 0.4, sustain: 0.9, release: 0.7, legato: 1,
+      noten: Array.from({ length: 6 }, (_, i) => verschuif(w2Pad(), i * SECTIE)).flat(),
+    },
+    {
+      type: 'pulse', duty: 0.12, volume: 0.03, release: 0.3,
+      noten: [1, 2, 3, 4, 5].flatMap((i) => verschuif(w2Bellen, i * SECTIE)),
+    },
+    {
+      // Drums pas in de tweede helft van elke sectie: dat geeft de loop lucht.
+      type: 'drum', volume: 0.14,
+      noten: Array.from({ length: 6 }, (_, i) => verschuif(w2Drums, i * SECTIE + 64)).flat(),
+    },
+  ],
+})
+
 // --- Titelscherm ------------------------------------------------------------
 // Trager, weidser, geen drums op het eerste deel.
 
@@ -255,6 +350,7 @@ export const LIEDJES = {
   titel: LIED_TITEL,
   kaart: LIED_KAART,
   w1: LIED_W1,
+  w2: LIED_W2,
   baas: LIED_BAAS,
 }
 

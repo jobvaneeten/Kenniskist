@@ -12,6 +12,8 @@ export const munt = (n) => 'o'.repeat(Math.max(0, n))
 export const stekel = (n) => '^'.repeat(Math.max(0, n))
 export const breek = (n) => 'b'.repeat(Math.max(0, n))
 export const ijs = (n) => 'I'.repeat(Math.max(0, n))
+export const dun = (n) => 'i'.repeat(Math.max(0, n))
+export const lava = (n) => '~'.repeat(Math.max(0, n))
 
 // Bouwt een rij uit stukken en controleert de eindbreedte.
 export function rij(breedte, ...delen) {

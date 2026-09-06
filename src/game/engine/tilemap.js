@@ -18,9 +18,10 @@ export const T = {
   IJS: 7,
   BAND_LINKS: 8,
   BAND_RECHTS: 9,
+  BROOS: 10, // dun ijs: barst zodra je erop staat, komt later terug
 }
 
-const VAST_SET = new Set([T.VAST, T.BREEKBAAR, T.IJS, T.BAND_LINKS, T.BAND_RECHTS])
+const VAST_SET = new Set([T.VAST, T.BREEKBAAR, T.IJS, T.BAND_LINKS, T.BAND_RECHTS, T.BROOS])
 
 export const isVast = (t) => VAST_SET.has(t)
 export const isDodelijk = (t) => t === T.STEKEL || t === T.LAVA
@@ -37,6 +38,7 @@ export const LEGENDA = {
   x: { tegel: T.VERBORGEN },
   '~': { tegel: T.LAVA },
   I: { tegel: T.IJS },
+  i: { tegel: T.BROOS },
   '<': { tegel: T.BAND_LINKS },
   '>': { tegel: T.BAND_RECHTS },
 
@@ -50,6 +52,11 @@ export const LEGENDA = {
   J: { ent: 'vijand', soort: 'spoor' },
   K: { ent: 'vijand', soort: 'kwal' },
   B: { ent: 'vijand', soort: 'kever' },
+  P: { ent: 'vijand', soort: 'pinguin' },
+  Y: { ent: 'vijand', soort: 'ijsstekel' },
+  W: { ent: 'vijand', soort: 'kanon' },
+  Z: { ent: 'vijand', soort: 'kanon', naarLinks: true },
+  L: { ent: 'vijand', soort: 'vrieskwal' },
   M: { ent: 'platform', richting: 'h' },
   N: { ent: 'platform', richting: 'v' },
   V: { ent: 'valplatform' },
@@ -111,6 +118,9 @@ export class Tilemap {
     // Tegels die kapot zijn geslagen deze poging; wordt bij respawn gereset.
     this.kapot = new Set()
     this.onthuld = new Set()
+    // Dun ijs: index -> { staat: 'barst' | 'weg', t }. Tegels die er niet in
+    // staan zijn heel.
+    this.broos = new Map()
     // Wachtrij voor de tekenlaag: welke tegels wijken af van de gebakken
     // chunk. De scène leegt hem elke frame.
     this.veranderd = []
@@ -122,7 +132,41 @@ export class Tilemap {
     if (this.kapot.has(i)) return T.LEEG
     const t = this.tegels[i]
     if (t === T.VERBORGEN && !this.onthuld.has(i)) return T.LEEG
+    if (t === T.BROOS && this.broos.get(i)?.staat === 'weg') return T.LEEG
     return t
+  }
+
+  // --- Dun ijs -------------------------------------------------------------
+
+  // Wordt aangeroepen zodra de speler op de tegel staat. Barsten duurt even,
+  // zodat je het ziet gebeuren en nog weg kunt springen.
+  betreedBroos(tx, ty) {
+    const i = ty * this.w + tx
+    if (this.tegels[i] !== T.BROOS || this.broos.has(i)) return false
+    this.broos.set(i, { staat: 'barst', t: 0.55 })
+    this.veranderd.push([tx, ty])
+    return true
+  }
+
+  broosStaat(tx, ty) {
+    if (tx < 0 || ty < 0 || tx >= this.w || ty >= this.h) return null
+    return this.broos.get(ty * this.w + tx) ?? null
+  }
+
+  updateTegels(dt) {
+    if (this.broos.size === 0) return
+    for (const [i, s] of this.broos) {
+      s.t -= dt
+      if (s.t > 0) continue
+      if (s.staat === 'barst') {
+        s.staat = 'weg'
+        s.t = 2.6
+        this.veranderd.push([i % this.w, Math.floor(i / this.w)])
+      } else {
+        this.broos.delete(i)
+        this.veranderd.push([i % this.w, Math.floor(i / this.w)])
+      }
+    }
   }
 
   // De ruwe tegel, zonder kapot/verborgen-correctie. Voor de tekenlaag.
@@ -158,6 +202,7 @@ export class Tilemap {
   herstel() {
     this.kapot.clear()
     this.onthuld.clear()
+    this.broos.clear()
     this.veranderd.length = 0
   }
 

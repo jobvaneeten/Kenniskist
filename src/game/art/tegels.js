@@ -185,6 +185,44 @@ function tekenIjs(ctx, p, masker, variant) {
   for (let i = 0; i < 3; i++) px(ctx, '#ffffff', 10 + i, 5 + i)
 }
 
+// Dun ijs: doorschijnend, met een paar haarscheurtjes die al zichtbaar zijn
+// vóór je erop stapt. Je moet kunnen zien dat het niet houdt.
+function tekenBroos(ctx, p, masker, variant) {
+  const boven = masker & 1
+  px(ctx, '#bfe6ff', 0, 0, TEGEL, TEGEL)
+  ctx.globalAlpha = 0.55
+  px(ctx, '#7fb6e8', 0, 0, TEGEL, TEGEL)
+  ctx.globalAlpha = 1
+  if (!boven) {
+    px(ctx, '#ffffff', 0, 0, TEGEL, 2)
+    px(ctx, '#e4f6ff', 0, 2, TEGEL, 1)
+  }
+  px(ctx, '#5f86b5', 0, 0, TEGEL, 1)
+  px(ctx, '#5f86b5', 0, TEGEL - 1, TEGEL, 1)
+  px(ctx, '#5f86b5', 0, 0, 1, TEGEL)
+  px(ctx, '#5f86b5', TEGEL - 1, 0, 1, TEGEL)
+  const naden = variant === 0
+    ? [[5, 3, 1, 6], [4, 9, 6, 1], [11, 5, 1, 7]]
+    : [[3, 4, 1, 8], [9, 2, 1, 6], [8, 8, 5, 1]]
+  for (const [x, y, w, h] of naden) px(ctx, '#8fb4d8', x, y, w, h)
+}
+
+// Scheurpatroon dat over de tegel heen komt zodra je erop staat. Wordt door de
+// levelscène getekend, niet in de chunk gebakken: het duurt maar een halve
+// seconde en zou anders de hele chunk opnieuw laten bakken.
+export function tekenBarst(ctx, x, y, deel) {
+  const stappen = Math.min(4, 1 + Math.floor((1 - deel) * 4))
+  const lijnen = [
+    [8, 2, 1, 6], [4, 5, 4, 1], [8, 8, 5, 1], [3, 9, 1, 5],
+    [12, 9, 1, 4], [6, 11, 4, 1], [2, 3, 3, 1], [10, 12, 1, 3],
+  ]
+  ctx.fillStyle = '#3f6390'
+  for (let i = 0; i < stappen * 2 && i < lijnen.length; i++) {
+    const [dx, dy, w, h] = lijnen[i]
+    ctx.fillRect(x + dx, y + dy, w, h)
+  }
+}
+
 function tekenBand(ctx, p, richting, variant) {
   px(ctx, p.rots.s, 0, 0, TEGEL, TEGEL)
   px(ctx, p.rots.m, 0, 2, TEGEL, 10)
@@ -217,6 +255,7 @@ function bakSoort(p, soort) {
         case T.VERBORGEN: tekenVerborgen(ctx, p); break
         case T.LAVA: tekenLava(ctx, p, masker, v); break
         case T.IJS: tekenIjs(ctx, p, masker, v); break
+        case T.BROOS: tekenBroos(ctx, p, masker, v); break
         case T.BAND_LINKS: tekenBand(ctx, p, -1, v + masker % 4); break
         case T.BAND_RECHTS: tekenBand(ctx, p, 1, v + masker % 4); break
         default: break
@@ -230,7 +269,7 @@ function bakSoort(p, soort) {
 export function tileset(palet) {
   if (cache.has(palet.id)) return cache.get(palet.id)
   const soorten = {}
-  for (const soort of [T.VAST, T.PLATFORM, T.STEKEL, T.BREEKBAAR, T.VERBORGEN, T.LAVA, T.IJS, T.BAND_LINKS, T.BAND_RECHTS]) {
+  for (const soort of [T.VAST, T.PLATFORM, T.STEKEL, T.BREEKBAAR, T.VERBORGEN, T.LAVA, T.IJS, T.BROOS, T.BAND_LINKS, T.BAND_RECHTS]) {
     soorten[soort] = bakSoort(palet, soort)
   }
   const uit = { soorten, varianten: VARIANTEN }

@@ -141,6 +141,135 @@ export const KON_FRAME = {
   IDLE: 0, HURK: 4, SPRONG: 5, LANDING: 6, SPUGEN: 7, GERAAKT: 8, DOOD: 9,
 }
 
+// --- IJsworm (wereld 2) -----------------------------------------------------
+// Alleen de kop is een sprite; het lijf wordt als een reeks segmenten langs de
+// baan getekend, zodat de worm elke keer een andere boog kan maken.
+
+export const WORMKOP = { w: 40, h: 40 }
+
+export function ijswormBlad(palet, fase) {
+  const sleutel = `worm-${palet.id}-${fase}`
+  if (cache.has(sleutel)) return cache.get(sleutel)
+
+  const schild = fase === 1 ? '#8fc4f0' : fase === 2 ? '#a9d4f8' : '#dceaff'
+  const donker = '#2c4160'
+  const lijn = '#16233d'
+
+  // 0-1 dicht, 2-3 open (hap), 4 geraakt, 5-7 dood
+  const poses = [
+    { open: 0, ogen: 'boos' },
+    { open: 1, ogen: 'boos' },
+    { open: 5, ogen: 'boos' },
+    { open: 7, ogen: 'boos' },
+    { open: 2, ogen: 'kruis' },
+    { open: 4, ogen: 'kruis' },
+    { open: 2, ogen: 'kruis' },
+    { open: 0, ogen: 'kruis' },
+  ]
+
+  const blad = new Blad(WORMKOP.w, WORMKOP.h, poses.length)
+  poses.forEach((pose, i) => {
+    const { canvas, ctx } = nieuwCanvas(WORMKOP.w, WORMKOP.h)
+    const cx = 20
+    const cy = 22
+
+    // Pantserplaten rond de kop
+    ellips(ctx, cx, cy, 15, 17, donker)
+    ellips(ctx, cx, cy - 2, 13, 14, schild)
+    omtrek(ctx, cx, cy, 15, 17, lijn)
+    ctx.fillStyle = donkerder(schild, 0.18)
+    for (let k = 0; k < 3; k++) ellips(ctx, cx, cy + 6 + k * 4, 13 - k * 3, 2, donkerder(schild, 0.2))
+
+    // IJspunten op de rug
+    ctx.fillStyle = '#ffffff'
+    for (const [dx, h] of [[-9, 5], [0, 8], [9, 5]]) {
+      for (let y = 0; y < h; y++) {
+        const b = Math.max(1, Math.round(3 * (1 - y / h)))
+        ctx.fillRect(cx + dx - b, cy - 16 - y, b * 2, 1)
+      }
+    }
+
+    // Bek: opent naar beneden
+    const opening = pose.open
+    ctx.fillStyle = lijn
+    ctx.fillRect(cx - 9, cy + 6, 18, 3 + opening)
+    ctx.fillStyle = '#7a1f3a'
+    if (opening > 2) ctx.fillRect(cx - 7, cy + 8, 14, opening - 2)
+    // Tanden
+    ctx.fillStyle = '#ffffff'
+    for (let k = 0; k < 5; k++) {
+      ctx.fillRect(cx - 8 + k * 4, cy + 6, 2, 2)
+      if (opening > 3) ctx.fillRect(cx - 6 + k * 4, cy + 7 + opening, 2, 2)
+    }
+
+    // Ogen
+    if (pose.ogen === 'kruis') {
+      ctx.fillStyle = lijn
+      for (const ox of [-9, 4]) {
+        for (let k = 0; k < 5; k++) {
+          ctx.fillRect(cx + ox + k, cy - 8 + k, 1, 1)
+          ctx.fillRect(cx + ox + 4 - k, cy - 8 + k, 1, 1)
+        }
+      }
+    } else {
+      ctx.fillStyle = '#ffffff'
+      ctx.fillRect(cx - 10, cy - 8, 6, 5)
+      ctx.fillRect(cx + 4, cy - 8, 6, 5)
+      ctx.fillStyle = '#ff6b6b'
+      ctx.fillRect(cx - 8, cy - 7, 3, 3)
+      ctx.fillRect(cx + 6, cy - 7, 3, 3)
+      ctx.fillStyle = lijn
+      ctx.fillRect(cx - 10, cy - 9, 6, 2)
+      ctx.fillRect(cx + 4, cy - 9, 6, 2)
+    }
+
+    blad.ctx.drawImage(canvas, i * WORMKOP.w, 0)
+  })
+
+  cache.set(sleutel, blad)
+  return blad
+}
+
+// Eén lijfsegment; de baas tekent er een handvol achter de kop aan.
+export function tekenWormSegment(ctx, x, y, r, fase) {
+  const schild = fase === 1 ? '#8fc4f0' : fase === 2 ? '#a9d4f8' : '#dceaff'
+  ellips(ctx, x, y, r, r, '#2c4160')
+  ellips(ctx, x, y - 1, r - 2, r - 2, schild)
+  omtrek(ctx, x, y, r, r, '#16233d')
+  ctx.fillStyle = '#ffffff'
+  ctx.fillRect(Math.round(x - 1), Math.round(y - r - 1), 2, 2)
+}
+
+// De bult in het ijs waar de worm onderdoor gaat, plus de barst waar hij zo
+// meteen uitkomt. Zonder die aankondiging is de baas een gokspel.
+export function tekenWormSpoor(ctx, x, y, fase, sterkte = 1) {
+  const b = Math.round(13 * sterkte)
+  // Donkere kern met een lichte rand: op een witte ijsvloer is een lichte bult
+  // niet te zien, en juist deze bult is de enige aanwijzing waar hij zit.
+  for (let i = -b; i <= b; i++) {
+    const h = Math.round(Math.cos((i / b) * (Math.PI / 2)) * 7 * sterkte)
+    ctx.fillStyle = '#2c4160'
+    ctx.fillRect(Math.round(x + i), Math.round(y - h), 1, h + 2)
+    ctx.fillStyle = fase === 3 ? '#ffffff' : '#8fc4f0'
+    ctx.fillRect(Math.round(x + i), Math.round(y - h), 1, 2)
+  }
+  // Scheurtjes die vanaf de bult uitwaaieren
+  ctx.fillStyle = '#16233d'
+  for (const dx of [-b - 3, -b - 6, b + 3, b + 6]) {
+    ctx.fillRect(Math.round(x + dx), Math.round(y), 2, 1)
+  }
+}
+
+export function tekenWormBarst(ctx, x, y, deel) {
+  ctx.fillStyle = '#16233d'
+  const n = Math.min(5, 1 + Math.floor(deel * 5))
+  const lijnen = [[0, 0, 2, 3], [-5, 2, 4, 2], [4, 2, 4, 2], [-9, 4, 5, 2], [7, 4, 5, 2]]
+  for (let i = 0; i < n; i++) {
+    const [dx, dy, w, h] = lijnen[i]
+    ctx.fillRect(Math.round(x + dx), Math.round(y + dy), w, h)
+  }
+}
+
 export function slijmbalBlad(palet) {
   const sleutel = `bal-${palet.id}`
   if (cache.has(sleutel)) return cache.get(sleutel)

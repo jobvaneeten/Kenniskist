@@ -258,13 +258,17 @@ function tekenDeeltjes(ctx, ag) {
   }
 }
 
+// Noorderlicht: drie dunne, gekleurde banden. Bewust ijl gehouden — het is
+// sfeer aan de hemel, geen tweede wolkendek.
 function tekenAurora(ctx, p, tijd) {
-  ctx.globalAlpha = 0.18
+  const kleuren = ['#5ef2b0', '#7bd8ff', '#c78bff']
   for (let i = 0; i < 3; i++) {
-    ctx.fillStyle = i === 1 ? p.deco[0] : p.gloed
+    ctx.globalAlpha = 0.1 - i * 0.02
+    ctx.fillStyle = kleuren[i]
     for (let x = 0; x < BREEDTE; x += 2) {
-      const y = 30 + i * 14 + Math.sin(x * 0.02 + tijd * 0.5 + i) * 12
-      ctx.fillRect(x, Math.round(y), 2, 16)
+      const y = 26 + i * 16 + Math.sin(x * 0.017 + tijd * 0.35 + i * 1.3) * 11
+      const hoogte = 10 + Math.sin(x * 0.03 + tijd * 0.6) * 5
+      ctx.fillRect(x, Math.round(y), 2, Math.round(hoogte))
     }
   }
   ctx.globalAlpha = 1

@@ -4,7 +4,10 @@
 
 import { Lichaam, beweeg } from '../engine/physics.js'
 import { TEGEL } from '../engine/tilemap.js'
-import { koninginBlad, slijmbalBlad, KONINGIN, SLIJMBAL, KON_FRAME } from '../art/bazen.js'
+import {
+  koninginBlad, slijmbalBlad, KONINGIN, SLIJMBAL, KON_FRAME,
+  ijswormBlad, tekenWormSegment, tekenWormSpoor, tekenWormBarst, WORMKOP,
+} from '../art/bazen.js'
 import { Slijm } from './vijanden.js'
 import { sfx } from '../audio/sfx.js'
 
@@ -45,9 +48,10 @@ export class Slijmkoningin {
   constructor(x, y, palet, arena) {
     this.palet = palet
     this.arena = arena // { links, rechts } in pixels
-    this.lichaam = new Lichaam(x, y, 46, 30)
+    // y is de tegel waarin het merkteken staat; ze staat op de vloer eronder.
+    this.lichaam = new Lichaam(x, y + TEGEL - 30, 46, 30)
     this.startX = x
-    this.startY = y
+    this.startY = this.lichaam.y
 
     this.fase = 1
     this.levens = LEVENS_PER_FASE
@@ -273,4 +277,273 @@ export class Slijmkoningin {
   }
 }
 
-export const BAAS_KLASSEN = { slijmkoningin: Slijmkoningin }
+// --- IJsworm (wereld 2) -----------------------------------------------------
+// Graaft onder het ijs door, kondigt met een barst aan waar hij omhoog komt, en
+// is alleen te raken zolang zijn kop boven staat.
+
+const WORM_LEVENS_PER_FASE = 3
+
+export class IJsworm {
+  constructor(x, y, palet, arena) {
+    this.palet = palet
+    this.arena = arena
+    // y is de tegel waarin het merkteken staat; het ijsoppervlak is de bovenkant
+    // van de tegel eronder.
+    this.grondY = y + TEGEL
+    this.lichaam = new Lichaam(x, this.grondY, 30, 34)
+
+    this.fase = 1
+    this.levens = WORM_LEVENS_PER_FASE
+    this.maxTotaal = WORM_LEVENS_PER_FASE * 3
+    this.geraaktTotaal = 0
+
+    this.staat = 'intro'
+    this.timer = 1.6
+    this.tijd = 0
+    this.onkwetsbaar = 0
+    this.kwetsbaar = 0
+    this.leeft = true
+    this.klaar = false
+    this.stampbaar = true
+
+    this.graafX = x + 15
+    this.doelX = x + 15
+    this.hoogte = 0 // 0 = helemaal onder, 1 = kop volledig boven
+    this.staart = [] // laatste posities van de kop, voor de segmenten
+    this.ballen = []
+    this.kinderen = []
+  }
+
+  get midX() { return this.lichaam.midX }
+  get midY() { return this.lichaam.midY }
+  get deel() { return (this.maxTotaal - this.geraaktTotaal) / this.maxTotaal }
+  get boven() { return this.hoogte > 0.45 }
+
+  update(dt, map, speler, particles, fx) {
+    this.tijd += dt
+    if (this.onkwetsbaar > 0) this.onkwetsbaar -= dt
+    if (this.kwetsbaar > 0) this.kwetsbaar -= dt
+
+    for (const b of this.ballen) b.update(dt, map)
+    this.ballen = this.ballen.filter((b) => b.leeft)
+
+    if (this.staat === 'dood') {
+      this.timer -= dt
+      this.hoogte = Math.max(0, this.hoogte - dt * 0.6)
+      if (this.timer <= 0) this.klaar = true
+      this._plaatsLichaam()
+      return
+    }
+
+    this.timer -= dt
+
+    switch (this.staat) {
+      case 'intro':
+        if (this.timer <= 0) this._duik(speler)
+        break
+
+      case 'graven': {
+        // Onder het ijs naar het doel toe; de bult verraadt waar hij zit.
+        const richting = Math.sign(this.doelX - this.graafX)
+        const snelheid = this.fase === 3 ? 190 : this.fase === 2 ? 150 : 120
+        this.graafX += richting * snelheid * dt
+        if (Math.abs(this.doelX - this.graafX) < 6 || this.timer <= 0) {
+          this.graafX = this.doelX
+          this.staat = 'barsten'
+          this.timer = this.fase === 3 ? 0.5 : 0.75
+        }
+        break
+      }
+
+      case 'barsten':
+        if (this.timer <= 0) {
+          this.staat = 'omhoog'
+          this.timer = 0.35
+          sfx.baasHit()
+          fx.schud(4, 0.2)
+          for (let i = 0; i < 16; i++) {
+            particles.spuit(this.graafX + (Math.random() - 0.5) * 30, this.grondY, {
+              vx: (Math.random() - 0.5) * 190, vy: -110 - Math.random() * 130,
+              duur: 0.6, kleur: Math.random() > 0.5 ? '#ffffff' : '#bfe6ff', zwaarte: 460, grootte: 2,
+            })
+          }
+        }
+        break
+
+      case 'omhoog':
+        this.hoogte = Math.min(1, this.hoogte + dt / 0.35)
+        if (this.timer <= 0) {
+          this.staat = 'uit'
+          this.timer = this.fase === 3 ? 0.85 : 1.15
+          this.kwetsbaar = this.timer
+          if (this.fase >= 2) this._spuug(speler)
+        }
+        break
+
+      case 'uit':
+        if (this.timer <= 0) { this.staat = 'omlaag'; this.timer = 0.3 }
+        break
+
+      case 'omlaag':
+        this.hoogte = Math.max(0, this.hoogte - dt / 0.3)
+        if (this.timer <= 0) this._duik(speler)
+        break
+
+      case 'gewond':
+        this.hoogte = Math.max(0, this.hoogte - dt / 0.4)
+        if (this.timer <= 0) {
+          if (this.levens <= 0) this._volgendeFase(particles, fx)
+          else this._duik(speler)
+        }
+        break
+
+      default:
+        break
+    }
+
+    this._plaatsLichaam()
+    this._bewaarStaart()
+  }
+
+  _duik(speler) {
+    this.staat = 'graven'
+    this.hoogte = 0
+
+    // Naast de speler uitkomen, nooit eronder: anders is er geen manier om de
+    // aanval te ontwijken. Klemmen op de arenarand mag die afstand niet
+    // opeten, dus we kiezen de kant waar genoeg ruimte is.
+    const spelerX = speler?.midX ?? this.graafX
+    const afstand = this.fase === 3 ? 34 : 48
+    const min = this.arena.links + 26
+    const max = this.arena.rechts - 26
+    const links = spelerX - afstand
+    const rechts = spelerX + afstand
+    const kanLinks = links >= min
+    const kanRechts = rechts <= max
+
+    let doel
+    if (kanLinks && kanRechts) doel = Math.random() < 0.5 ? links : rechts
+    else if (kanLinks) doel = links
+    else if (kanRechts) doel = rechts
+    // Allebei te krap (speler in een hoek van een smalle arena): dan zo ver
+    // mogelijk weg, maar nog steeds niet bovenop hem.
+    else doel = spelerX - min > max - spelerX ? min : max
+
+    this.doelX = Math.max(min, Math.min(max, doel))
+    this.timer = 3
+  }
+
+  _plaatsLichaam() {
+    const h = this.lichaam.h
+    this.lichaam.x = this.graafX - this.lichaam.w / 2
+    // hoogte 0 = kop precies onder het oppervlak, 1 = volledig erboven.
+    this.lichaam.y = this.grondY - h * this.hoogte
+  }
+
+  _bewaarStaart() {
+    this.staart.unshift({ x: this.graafX, y: this.lichaam.y + this.lichaam.h / 2, h: this.hoogte })
+    if (this.staart.length > 44) this.staart.length = 44
+  }
+
+  _spuug(speler) {
+    const richting = Math.sign((speler?.midX ?? 0) - this.midX) || 1
+    const hoeken = this.fase === 3 ? [-1, 0, 1] : [0]
+    for (const h of hoeken) {
+      this.ballen.push(new Slijmbal(
+        this.midX, this.lichaam.y + 4,
+        richting * 90 + h * 80, -200 - Math.abs(h) * 30,
+        this.palet,
+      ))
+    }
+    sfx.laser()
+  }
+
+  opStamp(particles, fx) {
+    if (this.onkwetsbaar > 0 || this.staat === 'dood') return false
+    if (this.kwetsbaar <= 0 || !this.boven) return false
+    this.levens--
+    this.geraaktTotaal++
+    this.onkwetsbaar = 0.8
+    this.staat = 'gewond'
+    this.timer = 0.55
+    this.kwetsbaar = 0
+    sfx.baasHit()
+    fx.schud(6, 0.3)
+    fx.hitStop(0.1)
+    fx.flitsScherm('#ffffff', 0.08)
+    particles.pop(this.midX, this.midY, '#bfe6ff', 22)
+    return true
+  }
+
+  _volgendeFase(particles, fx) {
+    if (this.fase >= 3) { this._sterf(particles, fx); return }
+    this.fase++
+    this.levens = WORM_LEVENS_PER_FASE
+    fx.schud(7, 0.5)
+    fx.flitsScherm('#dceaff', 0.2)
+    particles.pop(this.midX, this.midY, '#ffffff', 26)
+    this.staat = 'graven'
+    this.timer = 3
+    this.hoogte = 0
+  }
+
+  _sterf(particles, fx) {
+    this.staat = 'dood'
+    this.timer = 2.2
+    this.leeft = false
+    fx.schud(8, 0.8)
+    sfx.vijandDood()
+    particles.pop(this.midX, this.midY, '#ffffff', 40)
+  }
+
+  raaktSpeler(lichaam) {
+    if (this.staat === 'dood' || this.hoogte < 0.2) return false
+    const l = this.lichaam
+    return lichaam.x < l.x + l.w && lichaam.x + lichaam.w > l.x
+      && lichaam.y < l.y + l.h && lichaam.y + lichaam.h > l.y
+  }
+
+  _frame() {
+    if (this.staat === 'dood') return 5 + Math.min(2, Math.floor((2.2 - this.timer) * 1.5))
+    if (this.staat === 'gewond') return 4
+    if (this.staat === 'uit') return 2 + (Math.floor(this.tijd * 6) % 2)
+    return Math.floor(this.tijd * 4) % 2
+  }
+
+  teken(ctx, camX, camY) {
+    for (const b of this.ballen) b.teken(ctx, camX, camY)
+
+    // Onder het ijs: alleen de bult, plus de barst vlak voor hij eruit komt.
+    if (this.hoogte <= 0.02) {
+      tekenWormSpoor(ctx, this.graafX - camX, this.grondY - camY, this.fase,
+        this.staat === 'barsten' ? 1.4 : 1)
+      if (this.staat === 'barsten') {
+        tekenWormBarst(ctx, this.graafX - camX, this.grondY - camY - 2, 1 - this.timer / 0.75)
+      }
+      return
+    }
+
+    // Lijfsegmenten langs de afgelegde baan, van dun naar dik richting de kop.
+    for (let i = 5; i >= 1; i--) {
+      const punt = this.staart[i * 6]
+      if (!punt) continue
+      const r = 12 - i * 1.6
+      tekenWormSegment(ctx, punt.x - camX, Math.max(punt.y, this.grondY - 4) - camY, r, this.fase)
+    }
+
+    if (this.onkwetsbaar > 0 && Math.floor(this.onkwetsbaar * 14) % 2 === 0) return
+    const blad = ijswormBlad(this.palet, this.fase)
+    blad.teken(ctx, this._frame(),
+      Math.round(this.midX - WORMKOP.w / 2 - camX),
+      Math.round(this.lichaam.y - 4 - camY))
+
+    if (this.kwetsbaar > 0) {
+      ctx.globalAlpha = 0.25 + Math.sin(this.tijd * 22) * 0.12
+      ctx.fillStyle = '#ffffff'
+      ctx.fillRect(Math.round(this.midX - 12 - camX), Math.round(this.lichaam.y - camY), 24, 7)
+      ctx.globalAlpha = 1
+    }
+  }
+}
+
+export const BAAS_KLASSEN = { slijmkoningin: Slijmkoningin, ijsworm: IJsworm }
