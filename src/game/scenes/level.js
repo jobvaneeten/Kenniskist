@@ -8,13 +8,14 @@ import { Speler, STAAT } from '../entities/speler.js'
 import { maakVijand } from '../entities/vijanden.js'
 import { Munt, Veer, Checkpoint, Finish, Capsule, Hintbord, muntBlad, MUNT } from '../entities/items.js'
 import { BewegendPlatform, ValPlatform, ZinkPlatform } from '../entities/platforms.js'
-import { Geiser, StijgendeLava } from '../entities/gevaren.js'
+import { Geiser, StijgendeLava, Laser, Sleutel } from '../entities/gevaren.js'
 import { BAAS_KLASSEN } from '../entities/bazen.js'
 import { tekenLevensbalk } from '../art/bazen.js'
 import { achtergrond, tekenAchtergrond, tekenVoorgrond, tekenSfeer, updateDeeltjes } from '../art/achtergrond.js'
 import { tekenBarst } from '../art/tegels.js'
 import { tekenWind } from '../art/objecten2.js'
 import { tekenLavaVlak, tekenHitte } from '../art/objecten3.js'
+import { tekenZeroG } from '../art/objecten4.js'
 import { paletVoorWereld, UI } from '../art/palet.js'
 import { tekenHud, tekenVliegers, tekenHint } from '../ui/hud.js'
 import { tekstMiddenSchaduw, tekstMidden } from '../ui/font.js'
@@ -116,6 +117,20 @@ export class LevelScene {
         fase: this.level.geisers?.[i]?.fase ?? (i % 3) / 3,
       }))
     this.lava = this.level.lava ? new StijgendeLava(this.level.lava) : null
+    this.lasers = this.map.entiteiten
+      .filter((e) => e.type === 'laser')
+      .map((e, i) => new Laser(e.x, e.y, this.palet, {
+        richting: e.richting,
+        ...(this.level.lasers?.[i] ?? {}),
+        fase: this.level.lasers?.[i]?.fase ?? (i % 2) / 2,
+      }))
+    this.sleutels = this.map.entiteiten
+      .filter((e) => e.type === 'sleutel')
+      .map((e) => new Sleutel(e.x, e.y))
+    // Zones zonder zwaartekracht, in tegels: [x0, y0, x1, y1].
+    this.zeroG = (this.level.zerog ?? []).map(([x0, y0, x1, y1]) => ({
+      x: x0 * TEGEL, y: y0 * TEGEL, w: (x1 - x0 + 1) * TEGEL, h: (y1 - y0 + 1) * TEGEL,
+    }))
 
     this.hints = this.map.hints.map((h) => new Hintbord(h.x, h.y, h.tekst, this.palet))
 
@@ -204,6 +219,9 @@ export class LevelScene {
     for (const p of this.valplatforms) p.update(dt)
     for (const p of this.zinkplatforms) p.update(dt)
     for (const gz of this.geisers) gz.update(dt)
+    for (const la of this.lasers) la.update(dt, this.map)
+    for (const sl of this.sleutels) sl.update(dt)
+    this._updateZeroG()
     if (this.lava) this.lava.update(dt)
     this._draagSpeler()
 
@@ -217,7 +235,13 @@ export class LevelScene {
     }
 
     for (const v of this.vijanden) v.update(dt, this.map, this.speler)
-    if (this.baas) this.baas.update(dt, this.map, this.speler, this.spel.particles, fx)
+    if (this.baas) {
+      this.baas.update(dt, this.map, this.speler, this.spel.particles, fx)
+      // De Kern-AI keert de zwaartekracht om terwijl zijn schild dicht is.
+      if (this.baas.zwaartekrachtOm !== undefined) {
+        this.speler.zwaartekrachtOm = this.baas.zwaartekrachtOm
+      }
+    }
     for (const v of this.veren) v.update(dt)
     for (const c of this.checkpoints) c.update(dt)
     for (const c of this.capsules) c.update(dt)
@@ -270,6 +294,17 @@ export class LevelScene {
     if (this.speler.staat === STAAT.NORMAAL) {
       this.speler.lichaam.vx += w.kracht * dt * 3.2
     }
+  }
+
+  // Zero-g: binnen een zone valt de zwaartekracht bijna weg, zodat je door de
+  // ruimte zweeft in plaats van te vallen. De speler leest de schaal zelf uit.
+  _updateZeroG() {
+    if (this.zeroG.length === 0) return
+    const l = this.speler.lichaam
+    const binnen = this.zeroG.some((z) => l.midX > z.x && l.midX < z.x + z.w
+      && l.midY > z.y && l.midY < z.y + z.h)
+    this.speler.zwaartekrachtSchaal = binnen ? 0.12 : 1
+    this.speler.zweeft = binnen
   }
 
   // Dun ijs onder de voeten laten barsten.
@@ -424,6 +459,37 @@ export class LevelScene {
       }
     }
 
+    // Lasers doen schade; ze zijn niet te ontwijken door te stampen.
+    for (const la of this.lasers) {
+      if (la.raakt(l)) this.speler.raak(la.midX, fx)
+    }
+
+    // Sleutelkaarten: alle kaarten binnen = alle deuren open.
+    for (const sl of this.sleutels) {
+      if (sl.gepakt) continue
+      const v = sl.vlak
+      if (l.x < v.x + v.w && l.x + l.w > v.x && l.y < v.y + v.h && l.y + l.h > v.y) {
+        sl.gepakt = true
+        sfx.powerup()
+        this.spel.particles.sparkle(v.x + 6, v.y + 5, '#3ef0ff')
+        if (this.sleutels.every((k) => k.gepakt)) {
+          this.map.deurenOpen = true
+          this.renderer.herbak()
+          fx.toonTekst('deuren open', this.speler.midX, this.speler.midY - 20, UI.goed)
+          fx.flitsScherm('#3ef0ff', 0.12)
+        }
+      }
+    }
+
+    // De knal van een kortsluitrobot raakt verder dan zijn lijf.
+    for (const vij of this.vijanden) {
+      const kv = vij.knalVlak
+      if (!kv) continue
+      if (l.x < kv.x + kv.w && l.x + l.w > kv.x && l.y < kv.y + kv.h && l.y + l.h > kv.y) {
+        this.speler.raak(kv.x + kv.w / 2, fx)
+      }
+    }
+
     if (this.baas) this._baasBotsingen(l, fx)
 
     // Finish. Bij een baaslevel gaat hij pas open als de baas verslagen is.
@@ -505,6 +571,9 @@ export class LevelScene {
     for (const p of this.valplatforms) p.herstel()
     for (const p of this.zinkplatforms) p.herstel()
     for (const gz of this.geisers) gz.herstel()
+    for (const la of this.lasers) la.herstel()
+    for (const sl of this.sleutels) sl.herstel()
+    this.map.deurenOpen = false
     this.lava?.herstel()
     // Munten die deze poging al gepakt zijn blijven weg: binnen één poging is
     // elke munt maar één keer te pakken, ook na een respawn.
@@ -572,6 +641,13 @@ export class LevelScene {
     for (const p of this.valplatforms) if (this.camera.zichtbaar(p.x, p.y, p.w, p.h)) p.teken(ctx, camX, camY)
     for (const p of this.zinkplatforms) if (this.camera.zichtbaar(p.x, p.y, p.w, p.h)) p.teken(ctx, camX, camY)
     for (const gz of this.geisers) if (this.camera.zichtbaar(gz.x, gz.y - gz.hoogte, 16, gz.hoogte + 16)) gz.teken(ctx, camX, camY)
+    for (const zone of this.zeroG) {
+      if (this.camera.zichtbaar(zone.x, zone.y, zone.w, zone.h)) {
+        tekenZeroG(ctx, zone.x - camX, zone.y - camY, zone.w, zone.h, this.tijd)
+      }
+    }
+    for (const la of this.lasers) la.teken(ctx, camX, camY)
+    for (const sl of this.sleutels) if (this.camera.zichtbaar(sl.x, sl.y, 12, 10)) sl.teken(ctx, camX, camY)
     for (const c of this.capsules) if (this.camera.zichtbaar(c.x, c.y, 16, 16)) c.teken(ctx, camX, camY)
     for (const v of this.veren) if (this.camera.zichtbaar(v.x, v.y, 16, 16)) v.teken(ctx, camX, camY)
 

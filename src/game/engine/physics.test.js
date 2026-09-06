@@ -120,6 +120,50 @@ describe('one-way platforms', () => {
   })
 })
 
+describe('omgekeerde zwaartekracht', () => {
+  it('laat je op het plafond landen in plaats van erdoorheen te stoten', () => {
+    const map = kaart([
+      '##########',
+      '##########',
+      '..........',
+      '..........',
+      '..........',
+      '..........',
+      '##########',
+      '##########',
+    ])
+    const l = new Lichaam(3 * TEGEL, 4 * TEGEL, 10, 20)
+    l.omgekeerd = true
+    for (let i = 0; i < 30; i++) {
+      // "Vallen" gaat omhoog: de snelheid wordt negatiever.
+      l.vy = Math.max(l.vy - BASIS.zwaartekrachtNeer / 60, -BASIS.maxVal)
+      beweeg(l, map, 1 / 60)
+    }
+    expect(l.opGrond).toBe(true)
+    expect(l.tegenPlafond).toBe(false)
+    expect(l.boven).toBeCloseTo(2 * TEGEL, 5)
+  })
+
+  it('laat one-way platforms de andere kant op vangen', () => {
+    const map = kaart([
+      '..........',
+      '..........',
+      '..==......',
+      '..........',
+      '..........',
+      '..........',
+      '##########',
+      '##########',
+    ])
+    const l = new Lichaam(2 * TEGEL, 3 * TEGEL + 5, 10, 20)
+    l.omgekeerd = true
+    l.vy = -360
+    beweeg(l, map, 1 / 60)
+    expect(l.opGrond).toBe(true)
+    expect(l.boven).toBeCloseTo(3 * TEGEL, 5)
+  })
+})
+
 describe('ledge forgiveness', () => {
   it('schuift je tot 3 px opzij als je hoofd net een blok raakt', () => {
     const map = kaart([

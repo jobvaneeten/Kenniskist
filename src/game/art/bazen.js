@@ -388,6 +388,84 @@ export function tekenSchokgolf(ctx, x, y, sterkte, tijd) {
   ctx.fillRect(Math.round(x - 6), Math.round(y - 1), 12, 2)
 }
 
+// --- Kern-AI (wereld 4) -----------------------------------------------------
+// Een zwevende kern met een schild van vier panelen. Zolang het schild dicht is
+// stuiter je eraf; als het opengaat ligt de kern bloot.
+
+export const KERN = { w: 64, h: 64 }
+
+export function kernBlad(palet, fase) {
+  const sleutel = `kern-${palet.id}-${fase}`
+  if (cache.has(sleutel)) return cache.get(sleutel)
+
+  const romp = '#333b4a'
+  const licht = '#525c6e'
+  const lijn = '#0d1017'
+  const oog = fase === 1 ? '#3ef0ff' : fase === 2 ? '#ffe14d' : '#ff3ec8'
+
+  // 0-3 dicht (draaiend), 4-5 open (kwetsbaar), 6 geraakt, 7-9 dood
+  const poses = [
+    { open: 0, draai: 0 }, { open: 0, draai: 1 }, { open: 0, draai: 2 }, { open: 0, draai: 3 },
+    { open: 1, draai: 0 }, { open: 1, draai: 2 },
+    { open: 1, draai: 1, stuk: 1 },
+    { open: 1, draai: 0, stuk: 2 }, { open: 1, draai: 2, stuk: 3 }, { open: 1, draai: 1, stuk: 4 },
+  ]
+
+  const blad = new Blad(KERN.w, KERN.h, poses.length)
+  poses.forEach((pose, i) => {
+    const { canvas, ctx } = nieuwCanvas(KERN.w, KERN.h)
+    const cx = 32
+    const cy = 32
+
+    // Schildpanelen: vier segmenten die bij het openen naar buiten schuiven.
+    const uit = pose.open ? 9 : 2
+    const hoeken = [0, 1, 2, 3].map((k) => (k * Math.PI) / 2 + (pose.draai * Math.PI) / 8)
+    for (const hoek of hoeken) {
+      const px = Math.round(cx + Math.cos(hoek) * (14 + uit))
+      const py = Math.round(cy + Math.sin(hoek) * (14 + uit))
+      ctx.fillStyle = lijn
+      ctx.fillRect(px - 8, py - 8, 16, 16)
+      ctx.fillStyle = pose.stuk ? donkerder(romp, 0.3) : romp
+      ctx.fillRect(px - 7, py - 7, 14, 14)
+      ctx.fillStyle = pose.stuk ? donkerder(licht, 0.3) : licht
+      ctx.fillRect(px - 7, py - 7, 14, 3)
+      ctx.fillStyle = pose.stuk ? '#7a1f3a' : oog
+      ctx.fillRect(px - 3, py - 2, 6, 3)
+    }
+
+    // Kern
+    ellips(ctx, cx, cy, 11, 11, lijn)
+    ellips(ctx, cx, cy, 9, 9, pose.open ? '#7a1f3a' : romp)
+    if (pose.open) {
+      ellips(ctx, cx, cy, 6, 6, oog)
+      ellips(ctx, cx, cy, 3, 3, '#ffffff')
+    } else {
+      ellips(ctx, cx, cy, 6, 6, licht)
+      ctx.fillStyle = oog
+      ctx.fillRect(cx - 5, cy - 2, 10, 4)
+      ctx.fillStyle = '#ffffff'
+      ctx.fillRect(cx - 5, cy - 2, 3, 2)
+    }
+
+    // Scheuren bij de doodsanimatie
+    if (pose.stuk) {
+      ctx.fillStyle = '#ffffff'
+      for (let k = 0; k < pose.stuk * 2; k++) {
+        const hoek = (k / 8) * Math.PI * 2
+        ctx.fillRect(
+          Math.round(cx + Math.cos(hoek) * 6), Math.round(cy + Math.sin(hoek) * 6),
+          Math.round(Math.cos(hoek) * 8) || 1, Math.round(Math.sin(hoek) * 8) || 1,
+        )
+      }
+    }
+
+    blad.ctx.drawImage(canvas, i * KERN.w, 0)
+  })
+
+  cache.set(sleutel, blad)
+  return blad
+}
+
 export function slijmbalBlad(palet) {
   const sleutel = `bal-${palet.id}`
   if (cache.has(sleutel)) return cache.get(sleutel)

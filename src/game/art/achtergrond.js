@@ -115,18 +115,24 @@ function bakMidden(p, soort) {
         }
       }
     } else if (soort === 'pilaar') {
-      // Basaltzuilen: smal, recht en met alleen een lichte kant. Horizontale
-      // banden zouden er metselwerk van maken.
+      // Basaltzuilen en stationsstructuren: smal, recht en met alleen een
+      // lichte kant. Ze krijgen de rotskleur, niet de neon-accentkleur, anders
+      // wordt een ruimtestation een suikerspin.
       const smal = Math.max(3, Math.round(b * 0.6))
-      ctx.fillStyle = kleur
+      const zuil = meng(p.lucht[3], p.rots.m, 0.55 + ruis(i, 12, 13) * 0.2)
+      ctx.fillStyle = zuil
       ctx.fillRect(x - smal, basis - h, smal * 2, h)
-      ctx.fillStyle = lichter(kleur, 0.18)
+      ctx.fillStyle = lichter(zuil, 0.16)
       ctx.fillRect(x - smal, basis - h, 2, h)
-      ctx.fillStyle = donkerder(kleur, 0.35)
+      ctx.fillStyle = donkerder(zuil, 0.35)
       ctx.fillRect(x + smal - 2, basis - h, 2, h)
-      // Afgebroken top
-      ctx.fillStyle = lichter(kleur, 0.28)
+      // Top, met een klein neonlampje voor het station.
+      ctx.fillStyle = lichter(zuil, 0.28)
       ctx.fillRect(x - smal, basis - h, smal * 2, 2)
+      if (ruis(i, 14, 13) > 0.6) {
+        ctx.fillStyle = donkerder(p.deco[0], 0.35)
+        ctx.fillRect(x - 1, basis - h - 2, 2, 2)
+      }
     } else {
       ctx.fillStyle = kleur
       for (let y = 0; y < h; y++) {

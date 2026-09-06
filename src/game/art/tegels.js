@@ -53,12 +53,20 @@ function tekenGrond(ctx, p, masker, variant) {
       if (ruis(x, 3, variant * 13) > 0.5) px(ctx, p.grond.s, x, 8)
       if (ruis(x, 9, variant * 17) > 0.72) px(ctx, p.grond.s, x, 9)
     }
-    // Sprietjes / kristalletjes op de rand.
-    for (let x = 1; x < TEGEL; x += 3) {
-      if (ruis(x, variant, 31) > 0.4) {
-        px(ctx, lichter(p.deco[0], 0.3), x, 0, 1, 1)
-        px(ctx, p.deco[0], x, 1, 1, 2)
+    // Afwerking van de bovenrand. Sprietjes horen bij een planeet, niet bij
+    // een ruimtestation; die krijgt paneelnaden en klinknagels.
+    if (p.dek === 'begroeiing') {
+      for (let x = 1; x < TEGEL; x += 3) {
+        if (ruis(x, variant, 31) > 0.4) {
+          px(ctx, lichter(p.deco[0], 0.3), x, 0, 1, 1)
+          px(ctx, p.deco[0], x, 1, 1, 2)
+        }
       }
+    } else if (p.dek === 'paneel') {
+      px(ctx, p.deco[0], 0, 1, TEGEL, 1)
+      px(ctx, p.rots.o, 0, 4, TEGEL, 1)
+      for (let x = 2; x < TEGEL; x += 6) px(ctx, lichter(p.grond.h, 0.4), x, 2, 1, 1)
+      px(ctx, p.rots.o, TEGEL - 1, 0, 1, 8)
     }
   }
 
@@ -231,6 +239,31 @@ export function tekenBarst(ctx, x, y, deel) {
   }
 }
 
+// Deur: dicht tot je de sleutelkaart hebt. Het slot in het midden is het
+// signaal dat er ergens nog een kaart ligt.
+function tekenDeur(ctx, p, masker) {
+  const boven = masker & 1
+  const onder = masker & 4
+  px(ctx, '#161b26', 0, 0, TEGEL, TEGEL)
+  px(ctx, '#3a4356', 1, 0, TEGEL - 2, TEGEL)
+  px(ctx, '#525c6e', 2, 0, 4, TEGEL)
+  px(ctx, '#2a3140', 10, 0, 4, TEGEL)
+  // Horizontale ribben
+  for (let y = 2; y < TEGEL; y += 5) px(ctx, '#161b26', 1, y, TEGEL - 2, 1)
+  if (!boven) {
+    px(ctx, '#ff3ec8', 1, 0, TEGEL - 2, 2)
+    px(ctx, '#161b26', 0, 0, TEGEL, 1)
+  }
+  if (!onder) {
+    px(ctx, '#ff3ec8', 1, TEGEL - 2, TEGEL - 2, 2)
+    px(ctx, '#161b26', 0, TEGEL - 1, TEGEL, 1)
+  }
+  // Slot
+  px(ctx, '#161b26', 5, 6, 6, 5)
+  px(ctx, '#ff3ec8', 6, 7, 4, 3)
+  px(ctx, '#ffffff', 6, 7, 2, 1)
+}
+
 function tekenBand(ctx, p, richting, variant) {
   px(ctx, p.rots.s, 0, 0, TEGEL, TEGEL)
   px(ctx, p.rots.m, 0, 2, TEGEL, 10)
@@ -264,6 +297,7 @@ function bakSoort(p, soort) {
         case T.LAVA: tekenLava(ctx, p, masker, v); break
         case T.IJS: tekenIjs(ctx, p, masker, v); break
         case T.BROOS: tekenBroos(ctx, p, masker, v); break
+        case T.DEUR: tekenDeur(ctx, p, masker); break
         case T.BAND_LINKS: tekenBand(ctx, p, -1, v + masker % 4); break
         case T.BAND_RECHTS: tekenBand(ctx, p, 1, v + masker % 4); break
         default: break
@@ -277,7 +311,7 @@ function bakSoort(p, soort) {
 export function tileset(palet) {
   if (cache.has(palet.id)) return cache.get(palet.id)
   const soorten = {}
-  for (const soort of [T.VAST, T.PLATFORM, T.STEKEL, T.BREEKBAAR, T.VERBORGEN, T.LAVA, T.IJS, T.BROOS, T.BAND_LINKS, T.BAND_RECHTS]) {
+  for (const soort of [T.VAST, T.PLATFORM, T.STEKEL, T.BREEKBAAR, T.VERBORGEN, T.LAVA, T.IJS, T.BROOS, T.DEUR, T.BAND_LINKS, T.BAND_RECHTS]) {
     soorten[soort] = bakSoort(palet, soort)
   }
   const uit = { soorten, varianten: VARIANTEN }

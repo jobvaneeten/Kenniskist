@@ -130,8 +130,25 @@ function verborgenPlekken(kaart) {
   return set
 }
 
+// Zones zonder zwaartekracht (wereld 4). Daarbinnen is de sprongboog zo groot
+// dat exact narekenen niet zinvol is; we hanteren een ruime maar begrensde
+// envelope. Dat is wat de speler in de praktijk ook ervaart: binnen de zone kom
+// je overal.
+const ZEROG_OMHOOG = 12
+const ZEROG_VER = 14
+
+function zeroGZones(level) {
+  return (level.zerog ?? []).map(([x0, y0, x1, y1]) => ({ x0, y0, x1, y1 }))
+}
+
+function inZeroG(zones, x, y) {
+  // Eén tegel marge: net buiten de zone spring je er nog met de zwaai in.
+  return zones.some((z) => x >= z.x0 - 1 && x <= z.x1 + 1 && y >= z.y0 - 1 && y <= z.y1 + 1)
+}
+
 function bereikbaar(level) {
   const kaart = level.kaart
+  const zones = zeroGZones(level)
   const staan = staanbarePlekken(kaart)
   for (const k of platformPlekken(level)) staan.add(k)
   for (const k of verborgenPlekken(kaart)) staan.add(k)
@@ -152,11 +169,12 @@ function bereikbaar(level) {
     const opVeer = veren.has(`${hier.x},${hier.y}`)
       || veren.has(`${hier.x - 1},${hier.y}`)
       || veren.has(`${hier.x + 1},${hier.y}`)
+    const zweeft = inZeroG(zones, hier.x, hier.y)
     const v = opVeer ? V_VEER : V_SPRONG
-    const omhoog = opVeer ? VEER_HOOG : SPRONG_HOOG
+    const omhoog = zweeft ? ZEROG_OMHOOG : opVeer ? VEER_HOOG : SPRONG_HOOG
 
     for (let dy = -omhoog; dy <= VAL_MAX; dy++) {
-      const ver = reikwijdte(v, -dy)
+      const ver = zweeft ? ZEROG_VER : reikwijdte(v, -dy)
       if (ver < 0) continue
       for (let dx = -ver; dx <= ver; dx++) {
         const nx = hier.x + dx
@@ -173,11 +191,12 @@ function bereikbaar(level) {
 
 // Een munt is bereikbaar als er een bereikbare staanplek is van waaruit hij
 // binnen de sprongboog ligt.
-function muntBereikbaar(mx, my, bereik, veren) {
+function muntBereikbaar(mx, my, bereik, veren, zones = []) {
   for (const sleutel of bereik) {
     const [sx, sy] = sleutel.split(',').map(Number)
     const dy = sy - my // positief = de munt ligt hoger dan de staanplek
     if (dy < -VAL_MAX) continue
+    if (inZeroG(zones, sx, sy) && dy <= ZEROG_OMHOOG && Math.abs(sx - mx) <= ZEROG_VER) return true
     const opVeer = veren.has(`${sx},${sy}`) || veren.has(`${sx - 1},${sy}`) || veren.has(`${sx + 1},${sy}`)
     // Een munt hoef je alleen aan te raken, niet erop te landen: het lichaam is
     // ruim een tegel hoog, dus één tegel extra marge omhoog.
@@ -253,6 +272,7 @@ for (const level of ALLE_LEVELS) {
   // Bereikbaarheid
   const bereik = bereikbaar(level)
   const veren = veerPlekken(kaart)
+  const zones = zeroGZones(level)
   if (!bereik) {
     fout(level, 'geen startpunt gevonden voor de bereikbaarheidscheck')
   } else {
@@ -261,7 +281,7 @@ for (const level of ALLE_LEVELS) {
     kaart.forEach((r, y) => {
       for (let x = 0; x < r.length; x++) {
         if (r[x] !== 'o') continue
-        if (!muntBereikbaar(x, y, bereik, veren)) { onbereikbaar++; plekken.push(`(${x},${y})`) }
+        if (!muntBereikbaar(x, y, bereik, veren, zones)) { onbereikbaar++; plekken.push(`(${x},${y})`) }
       }
     })
     if (onbereikbaar > 0) {
@@ -271,7 +291,7 @@ for (const level of ALLE_LEVELS) {
     // Finish bereikbaar?
     let finish = null
     kaart.forEach((r, y) => { const x = r.indexOf('F'); if (x >= 0) finish = { x, y } })
-    if (finish && !muntBereikbaar(finish.x, finish.y, bereik, veren)) {
+    if (finish && !muntBereikbaar(finish.x, finish.y, bereik, veren, zones)) {
       fout(level, `finish op (${finish.x},${finish.y}) lijkt onbereikbaar`)
     }
   }

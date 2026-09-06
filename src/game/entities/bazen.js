@@ -8,6 +8,7 @@ import {
   koninginBlad, slijmbalBlad, KONINGIN, SLIJMBAL, KON_FRAME,
   ijswormBlad, tekenWormSegment, tekenWormSpoor, tekenWormBarst, WORMKOP,
   titaanBlad, tekenSchokgolf, TITAAN,
+  kernBlad, KERN,
 } from '../art/bazen.js'
 import { Slijm } from './vijanden.js'
 import { sfx } from '../audio/sfx.js'
@@ -790,8 +791,200 @@ export class Magmatitaan {
   }
 }
 
+// --- Kern-AI (wereld 4) -----------------------------------------------------
+// Zweeft door de arena met een gesloten schild. Na elke aanvalsronde opent het
+// schild een paar seconden; dat is het enige moment waarop je hem kunt raken.
+// Vanaf fase 2 draait hij de zwaartekracht om terwijl het schild dicht is.
+
+const KERN_LEVENS_PER_FASE = 3
+
+export class KernAI {
+  constructor(x, y, palet, arena) {
+    this.palet = palet
+    this.arena = arena
+    this.grondY = y + TEGEL
+    this.lichaam = new Lichaam(x - 10, this.grondY - 96, 36, 36)
+    this.thuisY = this.lichaam.y
+
+    this.fase = 1
+    this.levens = KERN_LEVENS_PER_FASE
+    this.maxTotaal = KERN_LEVENS_PER_FASE * 3
+    this.geraaktTotaal = 0
+
+    this.staat = 'intro'
+    this.timer = 1.8
+    this.tijd = 0
+    this.onkwetsbaar = 0
+    this.kwetsbaar = 0
+    this.leeft = true
+    this.klaar = false
+    this.stampbaar = true
+    this.zwaartekrachtOm = false
+
+    this.ballen = []
+    this.kinderen = []
+    this.golven = []
+  }
+
+  get midX() { return this.lichaam.midX }
+  get midY() { return this.lichaam.midY }
+  get deel() { return (this.maxTotaal - this.geraaktTotaal) / this.maxTotaal }
+  get open() { return this.staat === 'open' }
+
+  update(dt, map, speler, particles, fx) {
+    this.tijd += dt
+    if (this.onkwetsbaar > 0) this.onkwetsbaar -= dt
+    if (this.kwetsbaar > 0) this.kwetsbaar -= dt
+
+    for (const b of this.ballen) b.update(dt, map)
+    this.ballen = this.ballen.filter((b) => b.leeft)
+
+    if (this.staat === 'dood') {
+      this.timer -= dt
+      this.lichaam.y += 30 * dt
+      if (this.timer <= 0) this.klaar = true
+      return
+    }
+
+    this.timer -= dt
+
+    // Zweeft altijd; bij het openen zakt hij naar springhoogte.
+    const doelY = this.open ? this.grondY - 58 : this.thuisY
+    this.lichaam.y += (doelY - this.lichaam.y) * Math.min(1, dt * 3)
+    const zweef = Math.sin(this.tijd * 1.6) * 24
+    const midden = (this.arena.links + this.arena.rechts) / 2
+    this.lichaam.x = midden - this.lichaam.w / 2 + zweef
+
+    switch (this.staat) {
+      case 'intro':
+        if (this.timer <= 0) this._begin('schieten', 0.6)
+        break
+
+      case 'schieten':
+        if (this.timer <= 0) {
+          this._vuur(speler)
+          this.ronde = (this.ronde ?? 0) + 1
+          if (this.ronde >= (this.fase === 3 ? 4 : 3)) {
+            this.ronde = 0
+            this._begin('open', this.fase === 3 ? 1.5 : 2.1)
+            this.kwetsbaar = this.timer
+            this.zwaartekrachtOm = false
+            sfx.portaal()
+          } else {
+            this._begin('schieten', this.fase === 3 ? 0.7 : 1)
+            // Vanaf fase 2 draait hij tussen de schoten door de zwaartekracht om.
+            if (this.fase >= 2) this.zwaartekrachtOm = !this.zwaartekrachtOm
+          }
+        }
+        break
+
+      case 'open':
+        if (this.timer <= 0) this._begin('schieten', 0.8)
+        break
+
+      case 'gewond':
+        if (this.timer <= 0) {
+          if (this.levens <= 0) this._volgendeFase(particles, fx)
+          else this._begin('schieten', 0.9)
+        }
+        break
+
+      default:
+        break
+    }
+  }
+
+  _begin(staat, t) { this.staat = staat; this.timer = t }
+
+  _vuur(speler) {
+    const doelX = speler?.midX ?? this.midX
+    const hoeken = this.fase === 3 ? [-1, 0, 1] : this.fase === 2 ? [-1, 1] : [0]
+    for (const h of hoeken) {
+      const dx = doelX - this.midX + h * 60
+      this.ballen.push(new Slijmbal(
+        this.midX, this.lichaam.onder,
+        Math.max(-190, Math.min(190, dx * 1.6)), 40,
+        this.palet,
+      ))
+    }
+    sfx.laser()
+  }
+
+  opStamp(particles, fx) {
+    if (this.onkwetsbaar > 0 || this.staat === 'dood') return false
+    if (this.kwetsbaar <= 0 || !this.open) return false
+    this.levens--
+    this.geraaktTotaal++
+    this.onkwetsbaar = 0.9
+    this.staat = 'gewond'
+    this.timer = 0.6
+    this.kwetsbaar = 0
+    this.zwaartekrachtOm = false
+    sfx.baasHit()
+    fx.schud(6, 0.3)
+    fx.hitStop(0.1)
+    fx.flitsScherm('#ffffff', 0.08)
+    particles.pop(this.midX, this.midY, '#3ef0ff', 22)
+    return true
+  }
+
+  _volgendeFase(particles, fx) {
+    if (this.fase >= 3) { this._sterf(particles, fx); return }
+    this.fase++
+    this.levens = KERN_LEVENS_PER_FASE
+    this.ronde = 0
+    fx.schud(7, 0.5)
+    fx.flitsScherm('#ff3ec8', 0.2)
+    particles.pop(this.midX, this.midY, '#ff3ec8', 28)
+    this._begin('schieten', 1)
+  }
+
+  _sterf(particles, fx) {
+    this.staat = 'dood'
+    this.timer = 2.4
+    this.leeft = false
+    this.zwaartekrachtOm = false
+    this.ballen.length = 0
+    fx.schud(9, 1)
+    sfx.vijandDood()
+    particles.pop(this.midX, this.midY, '#3ef0ff', 44)
+  }
+
+  raaktSpeler(lichaam) {
+    if (this.staat === 'dood') return false
+    const l = this.lichaam
+    return lichaam.x < l.x + l.w && lichaam.x + lichaam.w > l.x
+      && lichaam.y < l.y + l.h && lichaam.y + lichaam.h > l.y
+  }
+
+  _frame() {
+    if (this.staat === 'dood') return Math.min(9, 7 + Math.floor((2.4 - this.timer) * 1.4))
+    if (this.staat === 'gewond') return 6
+    if (this.open) return 4 + (Math.floor(this.tijd * 6) % 2)
+    return Math.floor(this.tijd * 5) % 4
+  }
+
+  teken(ctx, camX, camY) {
+    for (const b of this.ballen) b.teken(ctx, camX, camY)
+    if (this.onkwetsbaar > 0 && Math.floor(this.onkwetsbaar * 14) % 2 === 0) return
+
+    const blad = kernBlad(this.palet, this.fase)
+    blad.teken(ctx, this._frame(),
+      Math.round(this.midX - KERN.w / 2 - camX),
+      Math.round(this.midY - KERN.h / 2 - camY))
+
+    if (this.kwetsbaar > 0) {
+      ctx.globalAlpha = 0.28 + Math.sin(this.tijd * 22) * 0.12
+      ctx.fillStyle = '#ffffff'
+      ctx.fillRect(Math.round(this.midX - 10 - camX), Math.round(this.lichaam.y - camY), 20, 6)
+      ctx.globalAlpha = 1
+    }
+  }
+}
+
 export const BAAS_KLASSEN = {
   slijmkoningin: Slijmkoningin,
   ijsworm: IJsworm,
   magmatitaan: Magmatitaan,
+  kernai: KernAI,
 }

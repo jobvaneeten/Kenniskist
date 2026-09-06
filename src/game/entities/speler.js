@@ -47,7 +47,15 @@ export class Speler {
     this.schild = false
     this.jetpackBrandstof = 0
     this.spoorTimer = 0
+    // Worden door de levelscène gezet: zero-g-zones (wereld 4) en omgekeerde
+    // zwaartekracht (wereld 5 en de Kern-AI).
+    this.zwaartekrachtSchaal = 1
+    this.zweeft = false
+    this.zwaartekrachtOm = false
   }
+
+  // +1 bij normale zwaartekracht, -1 als die omgekeerd staat.
+  get _kant() { return this.zwaartekrachtOm ? -1 : 1 }
 
   get x() { return this.lichaam.x }
   get y() { return this.lichaam.y }
@@ -100,7 +108,7 @@ export class Speler {
     } else if (this.buffer > 0 && this.luchtsprongOver > 0) {
       this.luchtsprongOver--
       this.buffer = 0
-      this.lichaam.vy = -BASIS.sprong * this.mod.sprong * 0.72
+      this.lichaam.vy = this._kant * -BASIS.sprong * this.mod.sprong * 0.72
       particles.sparkle(this.midX, this.midY + 6, '#ffffff')
       sfx.spring()
     }
@@ -108,14 +116,15 @@ export class Speler {
     // Variabele spronghoogte: loslaten kapt de opwaartse snelheid af.
     if (this.springtNog && !invoer.ingedrukt('spring')) {
       this.springtNog = false
-      if (this.lichaam.vy < -BASIS.sprongAfkap) this.lichaam.vy = -BASIS.sprongAfkap
+      const omhoog = this.lichaam.vy * this._kant
+      if (omhoog < -BASIS.sprongAfkap) this.lichaam.vy = this._kant * -BASIS.sprongAfkap
     }
-    if (this.lichaam.vy >= 0) this.springtNog = false
+    if (this.lichaam.vy * this._kant >= 0) this.springtNog = false
 
     // Door een one-way platform zakken.
     if (invoer.ingedrukt('omlaag') && invoer.netIngedrukt('spring') && this.lichaam.opGrond) {
       this.lichaam.negeerPlatform = 0.2
-      this.lichaam.y += 1
+      this.lichaam.y += this._kant
     }
 
     // Jetpack: zolang je springen ingedrukt houdt en er brandstof is.
@@ -141,13 +150,13 @@ export class Speler {
   }
 
   _spring(particles) {
-    this.lichaam.vy = -BASIS.sprong * this.mod.sprong
+    this.lichaam.vy = this._kant * -BASIS.sprong * this.mod.sprong
     this.lichaam.opGrond = false
     this.lichaam.opPlatform = null
     this.coyote = 0
     this.buffer = 0
     this.springtNog = true
-    particles.stof(this.midX, this.lichaam.onder - 1)
+    particles.stof(this.midX, this.zwaartekrachtOm ? this.lichaam.boven + 1 : this.lichaam.onder - 1)
     sfx.spring()
   }
 
@@ -174,17 +183,27 @@ export class Speler {
     if (soort === T.BAND_RECHTS) l.vx += BASIS.duwSnelheid * dt * 4
     if (soort === T.BAND_LINKS) l.vx -= BASIS.duwSnelheid * dt * 4
 
-    const g = (l.vy < 0 ? BASIS.zwaartekrachtOp : BASIS.zwaartekrachtNeer * this.mod.valZwaartekracht)
-    l.vy = Math.min(l.vy + g * dt, BASIS.maxVal * this.mod.maxVal)
+    // `kant` is +1 bij normale zwaartekracht en -1 als die omgedraaid staat.
+    // Alles wat met "omhoog" en "vallen" te maken heeft rekent ermee, zodat de
+    // rest van de code niet twee keer geschreven hoeft te worden.
+    const kant = this._kant
+    l.omgekeerd = this.zwaartekrachtOm
+    const stijgt = l.vy * kant < 0
+    const g = (stijgt ? BASIS.zwaartekrachtOp : BASIS.zwaartekrachtNeer * this.mod.valZwaartekracht)
+      * this.zwaartekrachtSchaal
+    // In zero-g mag je ook trager vallen dan de normale maximumsnelheid,
+    // anders schiet je er alsnog doorheen.
+    const maxVal = BASIS.maxVal * this.mod.maxVal * (this.zweeft ? 0.35 : 1)
+    l.vy = kant * Math.min(l.vy * kant + g * dt, maxVal)
 
     const wasInLucht = !l.opGrond
-    const vorigeVy = l.vy
+    const vorigeVy = l.vy * kant
     const resultaat = beweeg(l, map, dt)
     hoekCorrectie(l, map)
 
     if (resultaat.grondGeraakt && wasInLucht && vorigeVy > 120) {
       const kracht = klem(vorigeVy / BASIS.maxVal, 0.3, 1)
-      particles.landing(this.midX, l.onder)
+      particles.landing(this.midX, this.zwaartekrachtOm ? l.boven : l.onder)
       sfx.land(kracht)
       this.landTimer = 0.14
     }
@@ -202,7 +221,7 @@ export class Speler {
   _kiesAnimatie(as, rent) {
     const l = this.lichaam
     let naam
-    if (!l.opGrond) naam = l.vy < 0 ? 'springen' : 'vallen'
+    if (!l.opGrond) naam = l.vy * this._kant < 0 ? 'springen' : 'vallen'
     else if (this.landTimer > 0) naam = 'landen'
     else if (Math.abs(l.vx) > 8) naam = rent && Math.abs(l.vx) > BASIS.loop * 0.9 ? 'rennen' : 'lopen'
     else naam = 'idle'
@@ -326,6 +345,16 @@ export class Speler {
     const frame = frameVan(anim, this.animTijd, !eenmalig)
     const x = Math.round(this.lichaam.x - BOX.dx - camX)
     const y = Math.round(this.lichaam.y - BOX.dy - camY)
+    if (this.zwaartekrachtOm) {
+      // Eén transformatie per frame; goedkoper dan een tweede, verticaal
+      // gespiegelde atlas voor twaalf characters.
+      ctx.save()
+      ctx.translate(0, y * 2 + FRAME_H)
+      ctx.scale(1, -1)
+      anim.blad.teken(ctx, frame, x, y, !this.kijktRechts)
+      ctx.restore()
+      return
+    }
     anim.blad.teken(ctx, frame, x, y, !this.kijktRechts)
   }
 

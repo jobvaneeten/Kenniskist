@@ -19,9 +19,10 @@ export const T = {
   BAND_LINKS: 8,
   BAND_RECHTS: 9,
   BROOS: 10, // dun ijs: barst zodra je erop staat, komt later terug
+  DEUR: 11,  // vast tot je de sleutelkaart hebt
 }
 
-const VAST_SET = new Set([T.VAST, T.BREEKBAAR, T.IJS, T.BAND_LINKS, T.BAND_RECHTS, T.BROOS])
+const VAST_SET = new Set([T.VAST, T.BREEKBAAR, T.IJS, T.BAND_LINKS, T.BAND_RECHTS, T.BROOS, T.DEUR])
 
 export const isVast = (t) => VAST_SET.has(t)
 export const isDodelijk = (t) => t === T.STEKEL || t === T.LAVA
@@ -39,6 +40,7 @@ export const LEGENDA = {
   '~': { tegel: T.LAVA },
   I: { tegel: T.IJS },
   i: { tegel: T.BROOS },
+  d: { tegel: T.DEUR },
   '<': { tegel: T.BAND_LINKS },
   '>': { tegel: T.BAND_RECHTS },
 
@@ -62,6 +64,13 @@ export const LEGENDA = {
   R: { ent: 'vijand', soort: 'krab' },
   D: { ent: 'vijand', soort: 'asvlieg' },
   G: { ent: 'geiser' },
+  j: { ent: 'laser', richting: 'v' },
+  k: { ent: 'laser', richting: 'h' },
+  q: { ent: 'sleutel' },
+  X: { ent: 'vijand', soort: 'drone' },
+  O: { ent: 'vijand', soort: 'torret' },
+  n: { ent: 'vijand', soort: 'kortsluiter' },
+  r: { ent: 'vijand', soort: 'patrouille' },
   z: { ent: 'zinkplatform' },
   M: { ent: 'platform', richting: 'h' },
   N: { ent: 'platform', richting: 'v' },
@@ -127,6 +136,8 @@ export class Tilemap {
     // Dun ijs: index -> { staat: 'barst' | 'weg', t }. Tegels die er niet in
     // staan zijn heel.
     this.broos = new Map()
+    // Deuren staan open zodra alle sleutelkaarten van het level gepakt zijn.
+    this.deurenOpen = false
     // Wachtrij voor de tekenlaag: welke tegels wijken af van de gebakken
     // chunk. De scène leegt hem elke frame.
     this.veranderd = []
@@ -139,6 +150,7 @@ export class Tilemap {
     const t = this.tegels[i]
     if (t === T.VERBORGEN && !this.onthuld.has(i)) return T.LEEG
     if (t === T.BROOS && this.broos.get(i)?.staat === 'weg') return T.LEEG
+    if (t === T.DEUR && this.deurenOpen) return T.LEEG
     return t
   }
 
@@ -209,6 +221,7 @@ export class Tilemap {
     this.kapot.clear()
     this.onthuld.clear()
     this.broos.clear()
+    this.deurenOpen = false
     this.veranderd.length = 0
   }
 

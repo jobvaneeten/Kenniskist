@@ -282,6 +282,93 @@ export const LIED_W3 = maakLied({
   ],
 })
 
+// --- Wereld 4: Verlaten ruimtestation ---------------------------------------
+// A-mineur, 128 BPM, maar mechanisch: een strakke zestiende-noten arpeggio als
+// motor, een korte melodie erboven en drums die op de tel blijven. 6 secties
+// van 8 maten ≈ 90 seconden.
+
+const W4_AKKOORDEN = ['A2', 'A2', 'F2', 'G2', 'A2', 'A2', 'D2', 'E2']
+
+// De motor: doorlopende zestiende noten die per maat van akkoord wisselen.
+const w4Motor = maten(
+  W4_AKKOORDEN.map((g, i) => {
+    const t = {
+      A2: ['A4', 'C5', 'E5', 'C5'], F2: ['F4', 'A4', 'C5', 'A4'],
+      G2: ['G4', 'B4', 'D5', 'B4'], D2: ['D4', 'F4', 'A4', 'F4'],
+      E2: ['E4', 'G#4', 'B4', 'G#4'],
+    }[g] ?? ['A4', 'C5', 'E5', 'C5']
+    const noten = []
+    for (let s = 0; s < 16; s++) noten.push([s, t[s % 4], 1])
+    return [i, noten]
+  }),
+)
+
+const w4Bas = () => W4_AKKOORDEN.flatMap((grond, i) => maat(i, [
+  [0, grond, 3], [4, grond, 1], [6, grond, 2], [10, transponeerNoot(grond, 7), 2], [14, grond, 2],
+]))
+
+const w4MelodieA = maten([
+  [0, [[0, 'E5', 4], [4, 'A5', 4], [8, 'G5', 2], [10, 'E5', 2], [12, 'C5', 4]]],
+  [1, [[0, 'A5', 6], [6, 'G5', 2], [8, 'E5', 8]]],
+  [2, [[0, 'F5', 4], [4, 'C6', 4], [8, 'A5', 4], [12, 'F5', 4]]],
+  [3, [[0, 'G5', 4], [4, 'D6', 4], [8, 'B5', 4], [12, 'G5', 4]]],
+  [4, [[0, 'E5', 2], [2, 'A5', 2], [4, 'C6', 4], [8, 'B5', 2], [10, 'A5', 2], [12, 'E5', 4]]],
+  [5, [[0, 'A5', 8], [8, 'C6', 4], [12, 'B5', 4]]],
+  [6, [[0, 'D6', 4], [4, 'A5', 4], [8, 'F5', 4], [12, 'D5', 4]]],
+  [7, [[0, 'E5', 8], [8, 'B4', 8]]],
+])
+
+const w4MelodieB = maten([
+  [0, [[0, 'A5', 1], [1, 'C6', 1], [2, 'E6', 2], [4, 'C6', 2], [6, 'A5', 2], [8, 'G5', 4], [12, 'E5', 4]]],
+  [1, [[0, 'C6', 2], [2, 'E6', 2], [4, 'A6', 4], [8, 'E6', 4], [12, 'C6', 4]]],
+  [2, [[0, 'F5', 1], [1, 'A5', 1], [2, 'C6', 2], [4, 'A5', 2], [6, 'F5', 2], [8, 'C6', 4], [12, 'A5', 4]]],
+  [3, [[0, 'G5', 2], [2, 'B5', 2], [4, 'D6', 4], [8, 'B5', 4], [12, 'G5', 4]]],
+  [4, [[0, 'E6', 4], [4, 'C6', 4], [8, 'A5', 4], [12, 'E5', 4]]],
+  [5, [[0, 'A5', 2], [2, 'C6', 2], [4, 'E6', 4], [8, 'A6', 8]]],
+  [6, [[0, 'D6', 2], [2, 'F6', 2], [4, 'A6', 4], [8, 'F6', 4], [12, 'D6', 4]]],
+  [7, [[0, 'E6', 4], [4, 'B5', 4], [8, 'E5', 8]]],
+])
+
+const w4Drums = herhaal(
+  [[0, 'K', 1], [4, 'S', 1], [6, 'H', 1], [8, 'K', 1], [12, 'S', 1], [14, 'H', 1], [15, 'H', 1]],
+  8, 16,
+)
+
+export const LIED_W4 = maakLied({
+  naam: 'w4',
+  tempo: 128,
+  lengte: SECTIE * 6,
+  kanalen: [
+    {
+      type: 'pulse', duty: 0.5, volume: 0.1, release: 0.1,
+      noten: [
+        ...w4MelodieA,
+        ...verschuif(w4MelodieA, SECTIE),
+        ...verschuif(w4MelodieB, SECTIE * 2),
+        ...verschuif(w4MelodieA, SECTIE * 3),
+        ...verschuif(w4MelodieB, SECTIE * 4),
+        ...verschuif(w4MelodieB, SECTIE * 5),
+      ],
+    },
+    {
+      type: 'pulse', duty: 0.12, volume: 0.038, release: 0.03, legato: 0.6,
+      noten: Array.from({ length: 6 }, (_, i) => verschuif(w4Motor, i * SECTIE)).flat(),
+    },
+    {
+      type: 'sawtooth', volume: 0.05, release: 0.05,
+      noten: Array.from({ length: 6 }, (_, i) => verschuif(w4Bas(), i * SECTIE)).flat(),
+    },
+    {
+      type: 'triangle', volume: 0.17, sustain: 0.8,
+      noten: Array.from({ length: 6 }, (_, i) => verschuif(w4Bas(), i * SECTIE)).flat(),
+    },
+    {
+      type: 'drum', volume: 0.17,
+      noten: Array.from({ length: 6 }, (_, i) => verschuif(w4Drums, i * SECTIE)).flat(),
+    },
+  ],
+})
+
 // --- Titelscherm ------------------------------------------------------------
 // Trager, weidser, geen drums op het eerste deel.
 
@@ -428,6 +515,7 @@ export const LIEDJES = {
   w1: LIED_W1,
   w2: LIED_W2,
   w3: LIED_W3,
+  w4: LIED_W4,
   baas: LIED_BAAS,
 }
 

@@ -9,6 +9,7 @@ import { TEGEL, isVast } from '../engine/tilemap.js'
 import { slijmBlad, spoorBlad, kwalBlad, keverBlad, SLIJM, SPOOR, KWAL, KEVER } from '../art/objecten.js'
 import { pinguinBlad, ijskegelBlad, kanonBlad, sneeuwbalBlad, vrieskwalBlad } from '../art/objecten2.js'
 import { spetterBlad, vleermuisBlad, krabBlad, asvliegBlad } from '../art/objecten3.js'
+import { droneBlad, torretBlad, kortsluiterBlad, patrouilleBlad } from '../art/objecten4.js'
 import { sfx } from '../audio/sfx.js'
 
 class Vijand {
@@ -626,6 +627,229 @@ export class Asvlieg extends Vijand {
   }
 }
 
+// --- Wereld 4 ---------------------------------------------------------------
+
+// Bewakingsdrone: zweeft heen en weer over een vast pad. Ziet hij je, dan
+// verkleurt zijn oog en duikt hij op je af — en dat kun je een halve seconde
+// van tevoren zien.
+export class Drone extends Vijand {
+  constructor(x, y, palet, opties = {}) {
+    super(x + 1, y + 2, 16, 10)
+    this.blad = droneBlad()
+    this.baan = (opties.baan ?? 4) * TEGEL
+    this.snelheid = 44
+    this.staat = 'patrouille'
+    this.timer = 0
+  }
+
+  update(dt, map, speler) {
+    if (!this.leeft) { this.sterfTijd += dt; return }
+    this.tijd += dt
+
+    if (this.staat === 'patrouille') {
+      this.lichaam.x = this.startX + Math.sin(this.tijd * (this.snelheid / this.baan)) * this.baan
+      this.kijktRechts = Math.cos(this.tijd * (this.snelheid / this.baan)) > 0
+      const ziet = speler
+        && Math.abs(speler.midX - this.midX) < 34
+        && speler.midY > this.midY
+        && speler.midY - this.midY < 120
+      if (ziet) { this.staat = 'gezien'; this.timer = 0.5 }
+    } else if (this.staat === 'gezien') {
+      this.timer -= dt
+      if (this.timer <= 0) { this.staat = 'duikt'; this.lichaam.vy = 240; this.timer = 1.4 }
+    } else {
+      this.timer -= dt
+      const r = beweeg(this.lichaam, map, dt)
+      if (r.grondGeraakt || this.timer <= 0) {
+        this.staat = 'terug'
+        this.lichaam.vy = -110
+        this.timer = 1.2
+      }
+      if (this.staat === 'terug') {
+        this.lichaam.vy = -110
+        if (this.lichaam.y <= this.startY || this.timer <= 0) {
+          this.lichaam.y = this.startY
+          this.lichaam.vy = 0
+          this.staat = 'patrouille'
+        }
+      }
+    }
+  }
+
+  opStamp(particles) {
+    this.verslagen(particles, '#3ef0ff')
+    return true
+  }
+
+  herstel() {
+    super.herstel()
+    this.staat = 'patrouille'
+    this.timer = 0
+  }
+
+  teken(ctx, camX, camY) {
+    if (!this.leeft) return
+    const boos = this.staat !== 'patrouille'
+    const f = boos ? 4 + (Math.floor(this.tijd * 16) % 2) : Math.floor(this.tijd * 12) % 4
+    this.blad.teken(ctx, f, Math.round(this.lichaam.x - 1 - camX), Math.round(this.lichaam.y - 2 - camY), this.kijktRechts)
+  }
+}
+
+// Torretje: staat vast, laadt zichtbaar op en schiet dan horizontaal.
+export class Torret extends Vijand {
+  constructor(x, y, palet, opties = {}) {
+    super(x, y, 14, 14)
+    this.blad = torretBlad(palet)
+    this.balBlad = sneeuwbalBlad()
+    this.stampbaar = false
+    this.periode = opties.periode ?? 2.2
+    this.timer = this.periode * ((opties.fase ?? 0))
+    this.richting = opties.naarLinks ? -1 : 1
+    this.projectielen = []
+  }
+
+  update(dt, map, speler) {
+    for (const b of this.projectielen) b.update(dt, map)
+    this.projectielen = this.projectielen.filter((b) => b.leeft)
+    if (!this.leeft) { this.sterfTijd += dt; return }
+    this.tijd += dt
+    // Draait naar de speler zodra die aan de andere kant staat.
+    if (speler) this.richting = speler.midX < this.midX ? -1 : 1
+    this.timer += dt
+    if (this.timer >= this.periode) {
+      this.timer -= this.periode
+      this.projectielen.push(new Projectiel(
+        this.midX, this.midY - 2, this.richting * 190, 0, this.balBlad,
+        { zwaarte: 0, duur: 3 },
+      ))
+      sfx.laser()
+    }
+  }
+
+  opStamp() { return false }
+
+  herstel() {
+    super.herstel()
+    this.projectielen.length = 0
+    this.timer = 0
+  }
+
+  teken(ctx, camX, camY) {
+    for (const b of this.projectielen) b.teken(ctx, camX, camY)
+    if (!this.leeft) return
+    const deel = this.timer / this.periode
+    const f = deel > 0.92 ? 3 : deel > 0.7 ? 2 : deel > 0.4 ? 1 : 0
+    this.blad.teken(ctx, f, Math.round(this.lichaam.x - 1 - camX), Math.round(this.lichaam.y - camY), this.richting > 0)
+  }
+}
+
+// Kortsluitrobot: loopt naar je toe, laadt zichtbaar op en ontploft. Stamp hem
+// voordat de vonken beginnen, of blijf op afstand.
+export class Kortsluiter extends Vijand {
+  constructor(x, y) {
+    super(x + 1, y + 2, 14, 14)
+    this.blad = kortsluiterBlad()
+    this.staat = 'loopt'
+    this.timer = 0
+    this.lichaam.vx = -40
+    this.knal = 0
+  }
+
+  update(dt, map, speler) {
+    if (!this.leeft) { this.sterfTijd += dt; return }
+    this.tijd += dt
+
+    if (this.staat === 'loopt') {
+      if (speler && Math.abs(speler.midX - this.midX) < 130) {
+        this.lichaam.vx = Math.sign(speler.midX - this.midX) * 58
+      }
+      if (speler && Math.abs(speler.midX - this.midX) < 34 && Math.abs(speler.midY - this.midY) < 30) {
+        this.staat = 'laadt'
+        this.timer = 0.9
+      }
+    } else if (this.staat === 'laadt') {
+      this.lichaam.vx = 0
+      this.timer -= dt
+      if (this.timer <= 0) { this.staat = 'knal'; this.knal = 0.35 }
+    } else {
+      this.knal -= dt
+      if (this.knal <= 0) this.leeft = false
+    }
+
+    this.lichaam.vy = Math.min(this.lichaam.vy + BASIS.zwaartekrachtNeer * dt, BASIS.maxVal)
+    beweeg(this.lichaam, map, dt)
+    if (this.staat === 'loopt' && this.lichaam.opGrond && this._keerOmBijRand(map)) this.lichaam.vx *= -1
+    if (this.lichaam.vx !== 0) this.kijktRechts = this.lichaam.vx > 0
+  }
+
+  // Tijdens de knal is hij twee tegels breed gevaarlijk; daarvoor alleen zijn
+  // eigen lijf.
+  get knalVlak() {
+    if (this.staat !== 'knal') return null
+    return { x: this.midX - 26, y: this.midY - 22, w: 52, h: 44 }
+  }
+
+  opStamp(particles) {
+    if (this.staat === 'knal') return false
+    this.verslagen(particles, '#ffe14d')
+    return true
+  }
+
+  herstel() {
+    super.herstel()
+    this.staat = 'loopt'
+    this.timer = 0
+    this.knal = 0
+    this.lichaam.vx = -40
+  }
+
+  teken(ctx, camX, camY) {
+    if (!this.leeft) return
+    if (this.staat === 'knal') {
+      const r = (1 - this.knal / 0.35) * 26
+      ctx.globalAlpha = Math.max(0, this.knal / 0.35)
+      ctx.fillStyle = '#ffe14d'
+      ctx.fillRect(Math.round(this.midX - r - camX), Math.round(this.midY - r - camY), r * 2, r * 2)
+      ctx.globalAlpha = 1
+      return
+    }
+    const f = this.staat === 'laadt'
+      ? 4 + (Math.floor(this.tijd * (this.timer < 0.35 ? 24 : 10)) % 2)
+      : Math.floor(this.tijd * 8) % 4
+    this.blad.teken(ctx, f, Math.round(this.lichaam.x - 1 - camX), Math.round(this.lichaam.y - 2 - camY), this.kijktRechts)
+  }
+}
+
+// Patrouillebot: rijdt snel heen en weer op zijn rupsbanden. Gewoon te stampen,
+// maar hij is er sneller dan je denkt.
+export class Patrouillebot extends Vijand {
+  constructor(x, y) {
+    super(x - 1, y + 2, 16, 14)
+    this.blad = patrouilleBlad()
+    this.lichaam.vx = -76
+  }
+
+  update(dt, map) {
+    if (!this.leeft) { this.sterfTijd += dt; return }
+    this.tijd += dt
+    this.lichaam.vy = Math.min(this.lichaam.vy + BASIS.zwaartekrachtNeer * dt, BASIS.maxVal)
+    beweeg(this.lichaam, map, dt)
+    if (this.lichaam.opGrond && this._keerOmBijRand(map)) this.lichaam.vx *= -1
+    this.kijktRechts = this.lichaam.vx > 0
+  }
+
+  opStamp(particles) {
+    this.verslagen(particles, '#7d8798')
+    return true
+  }
+
+  teken(ctx, camX, camY) {
+    if (!this.leeft) return
+    const f = Math.floor(this.tijd * 14) % 4
+    this.blad.teken(ctx, f, Math.round(this.lichaam.x - 1 - camX), Math.round(this.lichaam.y - 2 - camY), this.kijktRechts)
+  }
+}
+
 export const VIJAND_KLASSEN = {
   slijm: Slijm,
   spoor: Spoor,
@@ -639,6 +863,10 @@ export const VIJAND_KLASSEN = {
   vleermuis: Vleermuis,
   krab: Krab,
   asvlieg: Asvlieg,
+  drone: Drone,
+  torret: Torret,
+  kortsluiter: Kortsluiter,
+  patrouille: Patrouillebot,
 }
 
 export function maakVijand(soort, x, y, palet, opties) {

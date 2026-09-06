@@ -41,6 +41,9 @@ export class Lichaam {
     this.vorigeY = y
     this.negeerPlatform = 0 // seconden waarin je door een one-way platform valt
     this.opPlatform = null  // bewegend platform waar we op staan
+    // Omgekeerde zwaartekracht: "de grond" is dan het plafond. Alleen de speler
+    // gebruikt dit (wereld 5 en de Kern-AI); vijanden lopen gewoon door.
+    this.omgekeerd = false
   }
 
   get links() { return this.x }
@@ -97,15 +100,26 @@ export function beweeg(lichaam, map, dt) {
       const t = map.tegel(tx, ty)
       const vast = isVast(t)
       // One-way: alleen pakken als we er vorige frame nog bovenop stonden.
+      // One-way platforms vangen je alleen van boven op, en niet als de
+      // zwaartekracht omgekeerd staat — dan val je er juist vanaf.
       const eenrichting =
         t === T.PLATFORM &&
+        !lichaam.omgekeerd &&
         lichaam.negeerPlatform <= 0 &&
         lichaam.vorigeY + lichaam.h <= ty * TEGEL + 1
       if (vast || eenrichting) {
         lichaam.y = ty * TEGEL - lichaam.h
         lichaam.vy = 0
-        lichaam.opGrond = true
-        uit.grondGeraakt = true
+        // Bij omgekeerde zwaartekracht is de vloer het plafond: dan is dit een
+        // botsing met je hoofd, niet met je voeten.
+        if (lichaam.omgekeerd) {
+          lichaam.tegenPlafond = true
+          uit.plafondGeraakt = true
+          uit.koppen.push({ tx, ty })
+        } else {
+          lichaam.opGrond = true
+          uit.grondGeraakt = true
+        }
         break
       }
     }
@@ -114,12 +128,24 @@ export function beweeg(lichaam, map, dt) {
     const x0 = Math.floor(lichaam.links / TEGEL)
     const x1 = Math.floor((lichaam.rechts - 0.001) / TEGEL)
     for (let tx = x0; tx <= x1; tx++) {
-      if (isVast(map.tegel(tx, ty))) {
+      const t = map.tegel(tx, ty)
+      const eenrichting =
+        t === T.PLATFORM &&
+        lichaam.omgekeerd &&
+        lichaam.negeerPlatform <= 0 &&
+        lichaam.vorigeY >= (ty + 1) * TEGEL - 1
+      if (isVast(t) || eenrichting) {
         lichaam.y = (ty + 1) * TEGEL
         lichaam.vy = 0
-        lichaam.tegenPlafond = true
-        uit.plafondGeraakt = true
-        uit.koppen.push({ tx, ty })
+        if (lichaam.omgekeerd) {
+          lichaam.opGrond = true
+          uit.grondGeraakt = true
+        } else {
+          lichaam.tegenPlafond = true
+          uit.plafondGeraakt = true
+          uit.koppen.push({ tx, ty })
+        }
+        break
       }
     }
   }
@@ -131,7 +157,10 @@ export function beweeg(lichaam, map, dt) {
 // lopende band staan.
 export function grondSoort(lichaam, map) {
   if (!lichaam.opGrond) return T.LEEG
-  const ty = Math.floor((lichaam.onder + 1) / TEGEL)
+  // Bij omgekeerde zwaartekracht sta je op het plafond; dan is dát de grond.
+  const ty = lichaam.omgekeerd
+    ? Math.floor((lichaam.boven - 1) / TEGEL)
+    : Math.floor((lichaam.onder + 1) / TEGEL)
   const x0 = Math.floor(lichaam.links / TEGEL)
   const x1 = Math.floor((lichaam.rechts - 0.001) / TEGEL)
   for (let tx = x0; tx <= x1; tx++) {
