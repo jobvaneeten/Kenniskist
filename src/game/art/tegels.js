@@ -161,10 +161,18 @@ function tekenLava(ctx, p, masker, variant) {
       else if (r < 0.14) px(ctx, v.s, x, y)
     }
   }
+  // Bovenkant open: een gekartelde, felle kam. Zonder die kam leest een meer
+  // van dertig tegels als een oranje vlak in plaats van als iets vloeibaars.
   if (!(masker & 1)) {
-    px(ctx, v.h, 0, 0, TEGEL, 2)
-    for (let x = 0; x < TEGEL; x += 2) {
-      if (ruis(x, variant, 17) > 0.5) px(ctx, lichter(v.h, 0.5), x, 0, 2, 1)
+    for (let x = 0; x < TEGEL; x++) {
+      const golf = ruis(x, variant, 17) > 0.55 ? 1 : 0
+      px(ctx, lichter(v.h, 0.55), x, golf, 1, 2)
+      px(ctx, v.h, x, golf + 2, 1, 2)
+      px(ctx, v.m, x, golf + 4, 1, 2)
+    }
+    // Losse spatten net boven het oppervlak
+    for (let x = 1; x < TEGEL; x += 5) {
+      if (ruis(x, variant, 41) > 0.5) px(ctx, lichter(v.h, 0.7), x, 0, 1, 1)
     }
   }
 }

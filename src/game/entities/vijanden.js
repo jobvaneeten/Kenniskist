@@ -8,6 +8,7 @@ import { Lichaam, beweeg, BASIS } from '../engine/physics.js'
 import { TEGEL, isVast } from '../engine/tilemap.js'
 import { slijmBlad, spoorBlad, kwalBlad, keverBlad, SLIJM, SPOOR, KWAL, KEVER } from '../art/objecten.js'
 import { pinguinBlad, ijskegelBlad, kanonBlad, sneeuwbalBlad, vrieskwalBlad } from '../art/objecten2.js'
+import { spetterBlad, vleermuisBlad, krabBlad, asvliegBlad } from '../art/objecten3.js'
 import { sfx } from '../audio/sfx.js'
 
 class Vijand {
@@ -451,6 +452,180 @@ export class Vrieskwal extends Vijand {
   }
 }
 
+// --- Wereld 3 ---------------------------------------------------------------
+
+// Lavaspetter: springt op een vaste cadans uit de diepte omhoog en valt terug.
+// Hij komt altijd uit dezelfde plek, dus het is een timing-probleem.
+export class Spetter extends Vijand {
+  constructor(x, y, palet, opties = {}) {
+    super(x + 2, y, 8, 12)
+    this.blad = spetterBlad()
+    this.stampbaar = false
+    this.hoogte = (opties.hoogte ?? 5) * TEGEL
+    this.periode = opties.periode ?? 2.4
+    this.timer = (opties.fase ?? 0) * this.periode
+    this.bodemY = y + TEGEL
+    this.actief = false
+  }
+
+  update(dt) {
+    if (!this.leeft) { this.sterfTijd += dt; return }
+    this.tijd += dt
+    this.timer += dt
+    if (this.timer >= this.periode) {
+      this.timer -= this.periode
+      this.actief = true
+      // v = sqrt(2 g h): precies hoog genoeg voor de ingestelde hoogte.
+      this.lichaam.vy = -Math.sqrt(2 * 900 * this.hoogte)
+      this.lichaam.y = this.bodemY
+      sfx.veer()
+    }
+    if (!this.actief) return
+    this.lichaam.vy += 900 * dt
+    this.lichaam.y += this.lichaam.vy * dt
+    if (this.lichaam.y >= this.bodemY) { this.actief = false; this.lichaam.y = this.bodemY + 40 }
+  }
+
+  get gevaarlijk() { return this.leeft && this.actief }
+
+  opStamp() { return false }
+
+  herstel() {
+    super.herstel()
+    this.actief = false
+    this.timer = 0
+    this.lichaam.y = this.bodemY + 40
+  }
+
+  teken(ctx, camX, camY) {
+    if (!this.leeft || !this.actief) return
+    const f = this.lichaam.vy < 0 ? (Math.floor(this.tijd * 12) % 2) : 2 + (Math.floor(this.tijd * 12) % 2)
+    this.blad.teken(ctx, f, Math.round(this.lichaam.x - 2 - camX), Math.round(this.lichaam.y - camY))
+  }
+}
+
+// Vuurvleermuis: hangt aan het plafond tot je eronder komt, duikt dan schuin
+// naar beneden en klimt daarna weer.
+export class Vleermuis extends Vijand {
+  constructor(x, y) {
+    super(x + 2, y + 2, 12, 10)
+    this.blad = vleermuisBlad()
+    this.staat = 'hangt'
+    this.timer = 0
+  }
+
+  update(dt, map, speler) {
+    if (!this.leeft) { this.sterfTijd += dt; return }
+    this.tijd += dt
+
+    if (this.staat === 'hangt') {
+      const dichtbij = speler
+        && Math.abs(speler.midX - this.midX) < 62
+        && speler.midY > this.midY - 20
+      if (dichtbij) {
+        this.staat = 'duikt'
+        this.lichaam.vx = Math.sign(speler.midX - this.midX) * 78
+        this.lichaam.vy = 130
+        this.timer = 1.1
+      }
+    } else {
+      this.timer -= dt
+      // Eerst omlaag, dan weer omhoog: een boog waar je onderdoor kunt.
+      this.lichaam.vy += (this.timer > 0.55 ? 210 : -260) * dt
+      this.lichaam.vy = Math.max(-150, Math.min(210, this.lichaam.vy))
+      const r = beweeg(this.lichaam, map, dt)
+      if (r.muurGeraakt) this.lichaam.vx *= -1
+      if (this.timer <= 0) {
+        this.staat = 'hangt'
+        this.lichaam.y = this.startY
+        this.lichaam.vx = 0
+        this.lichaam.vy = 0
+      }
+    }
+    if (this.lichaam.vx !== 0) this.kijktRechts = this.lichaam.vx > 0
+  }
+
+  opStamp(particles) {
+    this.verslagen(particles, '#e5561f')
+    return true
+  }
+
+  herstel() {
+    super.herstel()
+    this.staat = 'hangt'
+    this.timer = 0
+  }
+
+  teken(ctx, camX, camY) {
+    if (!this.leeft) return
+    const f = this.staat === 'hangt' ? 0 : 1 + (Math.floor(this.tijd * 14) % 4)
+    this.blad.teken(ctx, f, Math.round(this.lichaam.x - 3 - camX), Math.round(this.lichaam.y - 2 - camY), this.kijktRechts)
+  }
+}
+
+// Magmakrab: pantser aan de bovenkant, dus stampen werkt niet. Loopt snel en
+// keert om bij randen.
+export class Krab extends Vijand {
+  constructor(x, y) {
+    super(x - 3, y + 2, 20, 12)
+    this.blad = krabBlad()
+    this.stampbaar = false
+    this.lichaam.vx = -54
+  }
+
+  update(dt, map) {
+    if (!this.leeft) { this.sterfTijd += dt; return }
+    this.tijd += dt
+    this.lichaam.vy = Math.min(this.lichaam.vy + BASIS.zwaartekrachtNeer * dt, BASIS.maxVal)
+    beweeg(this.lichaam, map, dt)
+    if (this.lichaam.opGrond && this._keerOmBijRand(map)) this.lichaam.vx *= -1
+    this.kijktRechts = this.lichaam.vx > 0
+  }
+
+  opStamp() { return false }
+
+  teken(ctx, camX, camY) {
+    if (!this.leeft) return
+    const f = Math.floor(this.tijd * 8) % 4
+    this.blad.teken(ctx, f, Math.round(this.lichaam.x - 1 - camX), Math.round(this.lichaam.y - 2 - camY), this.kijktRechts)
+  }
+}
+
+// Asvlieg: zweeft traag naar de speler toe. Losse exemplaren zijn te ontwijken;
+// met een paar tegelijk moet je je route kiezen.
+export class Asvlieg extends Vijand {
+  constructor(x, y) {
+    super(x + 2, y + 2, 8, 8)
+    this.blad = asvliegBlad()
+    this.stampbaar = false
+    this.fase = Math.random() * Math.PI * 2
+  }
+
+  update(dt, map, speler) {
+    if (!this.leeft) { this.sterfTijd += dt; return }
+    this.tijd += dt
+    if (!speler) return
+    const dx = speler.midX - this.midX
+    const dy = speler.midY - this.midY
+    const afstand = Math.hypot(dx, dy) || 1
+    // Traag genoeg om weg te lopen, maar hij geeft nooit op.
+    const snelheid = 26
+    this.lichaam.x += (dx / afstand) * snelheid * dt
+    this.lichaam.y += (dy / afstand) * snelheid * dt + Math.sin(this.tijd * 3 + this.fase) * 14 * dt
+  }
+
+  opStamp(particles) {
+    this.verslagen(particles, '#6b4038')
+    return true
+  }
+
+  teken(ctx, camX, camY) {
+    if (!this.leeft) return
+    const f = Math.floor(this.tijd * 16) % 4
+    this.blad.teken(ctx, f, Math.round(this.lichaam.x - 2 - camX), Math.round(this.lichaam.y - 2 - camY))
+  }
+}
+
 export const VIJAND_KLASSEN = {
   slijm: Slijm,
   spoor: Spoor,
@@ -460,6 +635,10 @@ export const VIJAND_KLASSEN = {
   ijsstekel: IJsstekel,
   kanon: Kanon,
   vrieskwal: Vrieskwal,
+  spetter: Spetter,
+  vleermuis: Vleermuis,
+  krab: Krab,
+  asvlieg: Asvlieg,
 }
 
 export function maakVijand(soort, x, y, palet, opties) {

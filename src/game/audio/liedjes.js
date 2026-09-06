@@ -206,6 +206,82 @@ export const LIED_W2 = maakLied({
   ],
 })
 
+// --- Wereld 3: Vulkaanplaneet -----------------------------------------------
+// E-mineur, 146 BPM. Dringender dan de eerste twee: een stampende bas op elke
+// tel, drums vanaf de eerste maat en een korte, herhalende melodie. 6 secties
+// van 8 maten ≈ 79 seconden.
+
+const W3_AKKOORDEN = ['E2', 'E2', 'C2', 'C2', 'G2', 'G2', 'D2', 'B1']
+
+const w3Bas = () => W3_AKKOORDEN.flatMap((grond, i) => maat(i, [
+  [0, grond, 1], [2, grond, 1], [4, grond, 1], [6, transponeerNoot(grond, 12), 1],
+  [8, grond, 1], [10, grond, 1], [12, transponeerNoot(grond, 7), 1], [14, transponeerNoot(grond, 12), 1],
+]))
+
+const w3MelodieA = maten([
+  [0, [[0, 'E5', 2], [2, 'G5', 1], [3, 'E5', 1], [4, 'B5', 4], [8, 'A5', 2], [10, 'G5', 2], [12, 'E5', 4]]],
+  [1, [[0, 'E5', 2], [2, 'G5', 1], [3, 'B5', 1], [4, 'D6', 4], [8, 'B5', 4], [12, 'G5', 4]]],
+  [2, [[0, 'C5', 2], [2, 'E5', 1], [3, 'C5', 1], [4, 'G5', 4], [8, 'E5', 4], [12, 'C5', 4]]],
+  [3, [[0, 'C5', 2], [2, 'G5', 2], [4, 'C6', 4], [8, 'G5', 2], [10, 'E5', 2], [12, 'D5', 4]]],
+  [4, [[0, 'G5', 2], [2, 'B5', 1], [3, 'G5', 1], [4, 'D6', 4], [8, 'B5', 4], [12, 'G5', 4]]],
+  [5, [[0, 'B5', 2], [2, 'D6', 2], [4, 'G6', 4], [8, 'D6', 4], [12, 'B5', 4]]],
+  [6, [[0, 'A5', 2], [2, 'F#5', 2], [4, 'D5', 4], [8, 'F#5', 4], [12, 'A5', 4]]],
+  [7, [[0, 'B5', 4], [4, 'A5', 4], [8, 'G5', 4], [12, 'F#5', 4]]],
+])
+
+const w3MelodieB = maten([
+  [0, [[0, 'B5', 1], [1, 'E6', 1], [2, 'B5', 1], [3, 'G5', 1], [4, 'E5', 4], [8, 'B5', 2], [10, 'E6', 2], [12, 'B5', 4]]],
+  [1, [[0, 'D6', 1], [1, 'B5', 1], [2, 'G5', 1], [3, 'D6', 1], [4, 'B5', 4], [8, 'G5', 4], [12, 'E5', 4]]],
+  [2, [[0, 'G5', 1], [1, 'C6', 1], [2, 'G5', 1], [3, 'E5', 1], [4, 'C5', 4], [8, 'G5', 2], [10, 'C6', 2], [12, 'G5', 4]]],
+  [3, [[0, 'E6', 2], [2, 'C6', 2], [4, 'G5', 4], [8, 'E5', 4], [12, 'D5', 4]]],
+  [4, [[0, 'D6', 1], [1, 'G6', 1], [2, 'D6', 1], [3, 'B5', 1], [4, 'G5', 4], [8, 'D6', 4], [12, 'B5', 4]]],
+  [5, [[0, 'G6', 2], [2, 'D6', 2], [4, 'B5', 4], [8, 'G6', 4], [12, 'D6', 4]]],
+  [6, [[0, 'A5', 1], [1, 'D6', 1], [2, 'A5', 1], [3, 'F#5', 1], [4, 'D5', 4], [8, 'A5', 4], [12, 'D6', 4]]],
+  [7, [[0, 'B5', 8], [8, 'E5', 8]]],
+])
+
+const w3Drums = herhaal(
+  [[0, 'K', 1], [2, 'H', 1], [4, 'S', 1], [6, 'H', 1], [7, 'K', 1],
+    [8, 'K', 1], [10, 'H', 1], [12, 'S', 1], [14, 'H', 1], [15, 'S', 1]],
+  8, 16,
+)
+
+export const LIED_W3 = maakLied({
+  naam: 'w3',
+  tempo: 146,
+  lengte: SECTIE * 6,
+  kanalen: [
+    {
+      type: 'pulse', duty: 0.5, volume: 0.105, release: 0.08,
+      noten: [
+        ...w3MelodieA,
+        ...verschuif(w3MelodieA, SECTIE),
+        ...verschuif(w3MelodieB, SECTIE * 2),
+        ...verschuif(w3MelodieA, SECTIE * 3),
+        ...verschuif(w3MelodieB, SECTIE * 4),
+        ...verschuif(w3MelodieB, SECTIE * 5),
+      ],
+    },
+    {
+      // Zaagtandlaag een octaaf lager: geeft de melodie gewicht zonder hem te
+      // verdubbelen in dezelfde klankkleur.
+      type: 'sawtooth', volume: 0.032, release: 0.06,
+      noten: [2, 3, 4, 5].flatMap((i) => verschuif(
+        (i % 2 ? w3MelodieA : w3MelodieB).map(([s, n, l]) => [s, transponeerNoot(n, -12), l]),
+        i * SECTIE,
+      )),
+    },
+    {
+      type: 'triangle', volume: 0.21, sustain: 0.8, release: 0.06,
+      noten: Array.from({ length: 6 }, (_, i) => verschuif(w3Bas(), i * SECTIE)).flat(),
+    },
+    {
+      type: 'drum', volume: 0.18,
+      noten: Array.from({ length: 6 }, (_, i) => verschuif(w3Drums, i * SECTIE)).flat(),
+    },
+  ],
+})
+
 // --- Titelscherm ------------------------------------------------------------
 // Trager, weidser, geen drums op het eerste deel.
 
@@ -351,6 +427,7 @@ export const LIEDJES = {
   kaart: LIED_KAART,
   w1: LIED_W1,
   w2: LIED_W2,
+  w3: LIED_W3,
   baas: LIED_BAAS,
 }
 

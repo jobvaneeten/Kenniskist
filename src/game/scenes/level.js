@@ -1,17 +1,20 @@
 // De levelscène: alles wat er tijdens het spelen gebeurt.
 
 import { Tilemap, TEGEL } from '../engine/tilemap.js'
+import { BASIS } from '../engine/physics.js'
 import { TileRenderer } from '../engine/tilerender.js'
 import { Camera } from '../core/camera.js'
 import { Speler, STAAT } from '../entities/speler.js'
 import { maakVijand } from '../entities/vijanden.js'
 import { Munt, Veer, Checkpoint, Finish, Capsule, Hintbord, muntBlad, MUNT } from '../entities/items.js'
-import { BewegendPlatform, ValPlatform } from '../entities/platforms.js'
+import { BewegendPlatform, ValPlatform, ZinkPlatform } from '../entities/platforms.js'
+import { Geiser, StijgendeLava } from '../entities/gevaren.js'
 import { BAAS_KLASSEN } from '../entities/bazen.js'
 import { tekenLevensbalk } from '../art/bazen.js'
 import { achtergrond, tekenAchtergrond, tekenVoorgrond, tekenSfeer, updateDeeltjes } from '../art/achtergrond.js'
 import { tekenBarst } from '../art/tegels.js'
 import { tekenWind } from '../art/objecten2.js'
+import { tekenLavaVlak, tekenHitte } from '../art/objecten3.js'
 import { paletVoorWereld, UI } from '../art/palet.js'
 import { tekenHud, tekenVliegers, tekenHint } from '../ui/hud.js'
 import { tekstMiddenSchaduw, tekstMidden } from '../ui/font.js'
@@ -100,6 +103,19 @@ export class LevelScene {
     this.valplatforms = this.map.entiteiten
       .filter((e) => e.type === 'valplatform')
       .map((e) => new ValPlatform(e.x, e.y, this.palet, { breedte: 32 }))
+    this.zinkplatforms = this.map.entiteiten
+      .filter((e) => e.type === 'zinkplatform')
+      .map((e, i) => new ZinkPlatform(e.x, e.y, this.palet, {
+        breedte: this.level.zinkBreedte?.[i] ?? 48,
+        maxDiepte: this.level.zinkDiepte?.[i] ?? 4,
+      }))
+    this.geisers = this.map.entiteiten
+      .filter((e) => e.type === 'geiser')
+      .map((e, i) => new Geiser(e.x, e.y, this.palet, {
+        ...(this.level.geisers?.[i] ?? {}),
+        fase: this.level.geisers?.[i]?.fase ?? (i % 3) / 3,
+      }))
+    this.lava = this.level.lava ? new StijgendeLava(this.level.lava) : null
 
     this.hints = this.map.hints.map((h) => new Hintbord(h.x, h.y, h.tekst, this.palet))
 
@@ -186,6 +202,9 @@ export class LevelScene {
     // beweegt, anders zakt hij er elk frame een pixel in.
     for (const p of this.platforms) p.update(dt)
     for (const p of this.valplatforms) p.update(dt)
+    for (const p of this.zinkplatforms) p.update(dt)
+    for (const gz of this.geisers) gz.update(dt)
+    if (this.lava) this.lava.update(dt)
     this._draagSpeler()
 
     this.speler.update(dt, invoer, this.map, this.spel.particles)
@@ -210,6 +229,7 @@ export class LevelScene {
     if (this.speler.staat === STAAT.NORMAAL || this.speler.staat === STAAT.GERAAKT) {
       this._botsingen()
       this.speler.controleerGevaar(this.map, fx)
+      if (this.lava?.raakt(this.speler.lichaam)) this.speler.sterf(fx)
       if (this.speler.lichaam.boven > this.map.hoogtePx + 40) this.speler.sterf(fx)
     }
 
@@ -277,7 +297,7 @@ export class LevelScene {
   _draagSpeler() {
     const l = this.speler.lichaam
     l.opPlatform = null
-    for (const p of [...this.platforms, ...this.valplatforms]) {
+    for (const p of [...this.platforms, ...this.valplatforms, ...this.zinkplatforms]) {
       if (!p.draagt(l)) continue
       l.y = p.bovenkant - l.h
       l.x += p.dx
@@ -391,6 +411,19 @@ export class LevelScene {
       }
     }
 
+    // Geisers lanceren je omhoog; ze doen geen schade.
+    for (const gz of this.geisers) {
+      if (gz.raakt(l)) {
+        // Zelfde kracht als een veer: dan hoeft de bereikbaarheidscheck maar
+        // één sprongboog te kennen in plaats van twee.
+        l.vy = Math.min(l.vy, -BASIS.sprong * 1.42)
+        this.speler.springtNog = true
+        this.spel.particles.spuit(this.speler.midX, l.onder, {
+          vx: (Math.random() - 0.5) * 40, vy: 90, duur: 0.3, kleur: '#ffd76b', zwaarte: 30,
+        })
+      }
+    }
+
     if (this.baas) this._baasBotsingen(l, fx)
 
     // Finish. Bij een baaslevel gaat hij pas open als de baas verslagen is.
@@ -418,6 +451,14 @@ export class LevelScene {
         this.speler.raak(k.midX, fx)
       }
     }
+    // Schokgolven rollen over de vloer; ze zijn niet te stampen, alleen te
+    // ontwijken door te springen.
+    for (const g of baas.golven ?? []) {
+      const gl = g.lichaam
+      if (l.x < gl.x + gl.w && l.x + l.w > gl.x && l.y < gl.y + gl.h && l.y + l.h > gl.y) {
+        this.speler.raak(gl.x, fx)
+      }
+    }
     for (const b of baas.ballen) {
       if (!b.leeft) continue
       const bl = b.lichaam
@@ -431,7 +472,7 @@ export class LevelScene {
     if (!baas.raaktSpeler(l)) return
     const vanBoven = l.vy > 0 && l.vorigeY + l.h <= baas.lichaam.y + 10
     if (vanBoven) {
-      if (baas.opStamp(this.spel.particles, fx)) {
+      if (baas.opStamp(this.spel.particles, fx, l)) {
         this.speler.stamp(this.spel.invoer.ingedrukt('spring'))
       } else {
         // Buiten het kwetsbare venster stuiter je af zonder schade te doen.
@@ -462,6 +503,9 @@ export class LevelScene {
     for (const v of this.vijanden) v.herstel()
     for (const p of this.platforms) p.herstel()
     for (const p of this.valplatforms) p.herstel()
+    for (const p of this.zinkplatforms) p.herstel()
+    for (const gz of this.geisers) gz.herstel()
+    this.lava?.herstel()
     // Munten die deze poging al gepakt zijn blijven weg: binnen één poging is
     // elke munt maar één keer te pakken, ook na een respawn.
     for (const m of this.munten) {
@@ -526,6 +570,8 @@ export class LevelScene {
 
     for (const p of this.platforms) if (this.camera.zichtbaar(p.x, p.y, p.w, p.h)) p.teken(ctx, camX, camY)
     for (const p of this.valplatforms) if (this.camera.zichtbaar(p.x, p.y, p.w, p.h)) p.teken(ctx, camX, camY)
+    for (const p of this.zinkplatforms) if (this.camera.zichtbaar(p.x, p.y, p.w, p.h)) p.teken(ctx, camX, camY)
+    for (const gz of this.geisers) if (this.camera.zichtbaar(gz.x, gz.y - gz.hoogte, 16, gz.hoogte + 16)) gz.teken(ctx, camX, camY)
     for (const c of this.capsules) if (this.camera.zichtbaar(c.x, c.y, 16, 16)) c.teken(ctx, camX, camY)
     for (const v of this.veren) if (this.camera.zichtbaar(v.x, v.y, 16, 16)) v.teken(ctx, camX, camY)
 
@@ -547,7 +593,9 @@ export class LevelScene {
     this.spel.particles.teken(ctx, camX, camY)
 
     tekenVoorgrond(ctx, this.ag, camX, camYbg)
+    if (this.lava) tekenLavaVlak(ctx, BREEDTE, this.lava.y - camY, HOOGTE, this.tijd)
     if (this.wind) tekenWind(ctx, BREEDTE, HOOGTE, this.wind.kracht, this.tijd)
+    if (this.level.hitte) tekenHitte(ctx, BREEDTE, HOOGTE, this.tijd, this.level.hitte)
     if (this.level.donker) this._tekenDonker(ctx, camX, camY)
     tekenSfeer(ctx, this.palet)
 

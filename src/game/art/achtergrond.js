@@ -115,14 +115,18 @@ function bakMidden(p, soort) {
         }
       }
     } else if (soort === 'pilaar') {
+      // Basaltzuilen: smal, recht en met alleen een lichte kant. Horizontale
+      // banden zouden er metselwerk van maken.
+      const smal = Math.max(3, Math.round(b * 0.6))
       ctx.fillStyle = kleur
-      ctx.fillRect(x - b, basis - h, b * 2, h)
-      ctx.fillStyle = donkerder(kleur, 0.3)
-      ctx.fillRect(x - b, basis - h, 2, h)
-      for (let y = 6; y < h; y += 12) {
-        ctx.fillStyle = donkerder(p.deco[0], 0.4)
-        ctx.fillRect(x - b + 2, basis - h + y, b * 2 - 4, 2)
-      }
+      ctx.fillRect(x - smal, basis - h, smal * 2, h)
+      ctx.fillStyle = lichter(kleur, 0.18)
+      ctx.fillRect(x - smal, basis - h, 2, h)
+      ctx.fillStyle = donkerder(kleur, 0.35)
+      ctx.fillRect(x + smal - 2, basis - h, 2, h)
+      // Afgebroken top
+      ctx.fillStyle = lichter(kleur, 0.28)
+      ctx.fillRect(x - smal, basis - h, smal * 2, 2)
     } else {
       ctx.fillStyle = kleur
       for (let y = 0; y < h; y++) {

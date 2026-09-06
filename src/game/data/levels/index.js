@@ -35,11 +35,30 @@ import m14 from './w2/l14.js'
 import m15 from './w2/l15.js'
 import m16 from './w2/l16.js'
 
+import v01 from './w3/l01.js'
+import v02 from './w3/l02.js'
+import v03 from './w3/l03.js'
+import v04 from './w3/l04.js'
+import v05 from './w3/l05.js'
+import v06 from './w3/l06.js'
+import v07 from './w3/l07.js'
+import v08 from './w3/l08.js'
+import v09 from './w3/l09.js'
+import v10 from './w3/l10.js'
+import v11 from './w3/l11.js'
+import v12 from './w3/l12.js'
+import v13 from './w3/l13.js'
+import v14 from './w3/l14.js'
+import v15 from './w3/l15.js'
+import v16 from './w3/l16.js'
+
 export const ALLE_LEVELS = [
   l01, l02, l03, l04, l05, l06, l07, l08,
   l09, l10, l11, l12, l13, l14, l15, l16,
   m01, m02, m03, m04, m05, m06, m07, m08,
   m09, m10, m11, m12, m13, m14, m15, m16,
+  v01, v02, v03, v04, v05, v06, v07, v08,
+  v09, v10, v11, v12, v13, v14, v15, v16,
 ]
 
 export const LEVELS = Object.fromEntries(ALLE_LEVELS.map((l) => [l.id, l]))

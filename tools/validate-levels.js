@@ -84,7 +84,10 @@ function veerPlekken(kaart) {
   const set = new Set()
   for (let y = 0; y < kaart.length; y++) {
     for (let x = 0; x < kaart[y].length; x++) {
-      if (tekenOp(kaart, x, y) === 'v') set.add(`${x},${y}`)
+      // Geisers lanceren met dezelfde kracht als een veer (zie scenes/level.js),
+      // dus voor de bereikbaarheid tellen ze hetzelfde.
+      const t = tekenOp(kaart, x, y)
+      if (t === 'v' || t === 'G') set.add(`${x},${y}`)
     }
   }
   return set
@@ -96,12 +99,19 @@ function platformPlekken(level) {
   level.kaart.forEach((rij, y) => {
     for (let x = 0; x < rij.length; x++) {
       const t = rij[x]
-      if (t !== 'M' && t !== 'N' && t !== 'V') continue
+      if (t !== 'M' && t !== 'N' && t !== 'V' && t !== 'z') continue
       const afstand = 4
       for (let d = -afstand; d <= afstand; d++) {
         if (t === 'M') { set.add(`${x + d},${y}`); set.add(`${x + d + 1},${y}`); set.add(`${x + d + 2},${y}`) }
         else if (t === 'N') { set.add(`${x},${y + d}`); set.add(`${x + 1},${y + d}`); set.add(`${x + 2},${y + d}`) }
-        else { set.add(`${x},${y}`); set.add(`${x + 1},${y}`) }
+        else if (t === 'z') {
+          // Zinkplatforms zakken alleen omlaag; hun baan loopt dus naar beneden.
+          for (let k = 0; k <= 4; k++) {
+            set.add(`${x},${y + k}`)
+            set.add(`${x + 1},${y + k}`)
+            set.add(`${x + 2},${y + k}`)
+          }
+        } else { set.add(`${x},${y}`); set.add(`${x + 1},${y}`) }
       }
     }
   })

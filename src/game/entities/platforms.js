@@ -65,6 +65,46 @@ export class BewegendPlatform {
   }
 }
 
+// Zakt langzaam weg zolang je erop staat en komt weer omhoog zodra je eraf
+// bent. Anders dan het valplatform is dit geen alles-of-niets: je kunt er even
+// op blijven staan, maar niet lang.
+export class ZinkPlatform extends BewegendPlatform {
+  constructor(x, y, palet, opties = {}) {
+    super(x, y, palet, { ...opties, afstand: 0, snelheid: 0, breedte: opties.breedte ?? 48 })
+    this.diepte = 0
+    this.maxDiepte = (opties.maxDiepte ?? 4) * 16
+    this.bezet = false
+  }
+
+  update(dt) {
+    this.dx = 0
+    const vorigeY = this.y
+    // Zakken gaat sneller dan terugkomen: haasten wordt beloond.
+    if (this.bezet) this.diepte = Math.min(this.maxDiepte, this.diepte + 34 * dt)
+    else this.diepte = Math.max(0, this.diepte - 22 * dt)
+    this.y = this.startY + this.diepte
+    this.dy = this.y - vorigeY
+    this.bezet = false
+  }
+
+  betreden() { this.bezet = true }
+
+  herstel() {
+    this.diepte = 0
+    this.bezet = false
+    this.y = this.startY
+  }
+
+  teken(ctx, camX, camY) {
+    super.teken(ctx, camX, camY)
+    // Streepje op de starthoogte: zo zie je hoe diep hij al gezakt is.
+    if (this.diepte > 2) {
+      ctx.fillStyle = 'rgba(255,255,255,0.25)'
+      ctx.fillRect(Math.round(this.x - camX), Math.round(this.startY - camY - 1), this.w, 1)
+    }
+  }
+}
+
 // Valt zodra je erop staat, komt na een paar seconden terug.
 export class ValPlatform extends BewegendPlatform {
   constructor(x, y, palet, opties = {}) {

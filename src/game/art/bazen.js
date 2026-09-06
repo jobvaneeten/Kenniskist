@@ -270,6 +270,124 @@ export function tekenWormBarst(ctx, x, y, deel) {
   }
 }
 
+// --- Magmatitaan (wereld 3) -------------------------------------------------
+// Een stenen reus met gloeiende naden. Als hij na een klap voorovergebogen
+// blijft staan, komt zijn kop binnen springbereik — dat is het enige moment
+// waarop je hem kunt raken, en dat moet je aan de houding kunnen zien.
+
+export const TITAAN = { w: 88, h: 64 }
+
+export function titaanBlad(palet, fase) {
+  const sleutel = `titaan-${palet.id}-${fase}`
+  if (cache.has(sleutel)) return cache.get(sleutel)
+
+  const steen = fase === 1 ? '#472720' : fase === 2 ? '#3a2a2e' : '#2c1613'
+  const licht = lichter(steen, 0.22)
+  const naad = fase === 1 ? '#ff8c1a' : fase === 2 ? '#ff9b3d' : '#ffd76b'
+  const lijn = '#140809'
+
+  // 0-1 staan, 2 optillen, 3 slaan, 4-5 gebogen (kwetsbaar), 6 geraakt, 7-9 dood
+  const poses = [
+    { buk: 0, arm: 0, ogen: 1 },
+    { buk: 1, arm: 0, ogen: 1 },
+    { buk: -3, arm: -12, ogen: 1 },
+    { buk: 6, arm: 10, ogen: 1 },
+    { buk: 16, arm: 12, ogen: 0.5 },
+    { buk: 15, arm: 12, ogen: 0.5 },
+    { buk: 10, arm: 6, ogen: 0 },
+    { buk: 20, arm: 14, ogen: 0 },
+    { buk: 30, arm: 16, ogen: 0 },
+    { buk: 42, arm: 18, ogen: 0 },
+  ]
+
+  const blad = new Blad(TITAAN.w, TITAAN.h, poses.length)
+  poses.forEach((pose, i) => {
+    const { canvas, ctx } = nieuwCanvas(TITAAN.w, TITAAN.h)
+    const cx = 44
+    const voetY = 62
+
+    // Benen: twee zware blokken
+    ctx.fillStyle = lijn
+    ctx.fillRect(cx - 22, voetY - 16, 16, 16)
+    ctx.fillRect(cx + 6, voetY - 16, 16, 16)
+    ctx.fillStyle = steen
+    ctx.fillRect(cx - 21, voetY - 15, 14, 14)
+    ctx.fillRect(cx + 7, voetY - 15, 14, 14)
+    ctx.fillStyle = naad
+    ctx.fillRect(cx - 18, voetY - 8, 8, 2)
+    ctx.fillRect(cx + 10, voetY - 8, 8, 2)
+
+    // Romp, zakt mee met de buiging
+    const rompY = voetY - 44 + pose.buk
+    ctx.fillStyle = lijn
+    ctx.fillRect(cx - 20, rompY, 40, 30)
+    ctx.fillStyle = steen
+    ctx.fillRect(cx - 19, rompY + 1, 38, 28)
+    ctx.fillStyle = licht
+    ctx.fillRect(cx - 19, rompY + 1, 38, 4)
+    // Gloeiende barsten in de borst
+    ctx.fillStyle = naad
+    ctx.fillRect(cx - 12, rompY + 8, 24, 3)
+    ctx.fillRect(cx - 4, rompY + 11, 3, 10)
+    ctx.fillRect(cx + 6, rompY + 12, 8, 2)
+    ctx.fillRect(cx - 14, rompY + 18, 7, 2)
+
+    // Armen: de rechterarm is de vuist waarmee hij slaat
+    const armY = rompY + 6 + pose.arm
+    ctx.fillStyle = lijn
+    ctx.fillRect(cx - 34, rompY + 4, 14, 22)
+    ctx.fillRect(cx + 20, armY, 16, 20)
+    ctx.fillStyle = steen
+    ctx.fillRect(cx - 33, rompY + 5, 12, 20)
+    ctx.fillRect(cx + 21, armY + 1, 14, 18)
+    ctx.fillStyle = naad
+    ctx.fillRect(cx + 24, armY + 8, 8, 3)
+
+    // Kop
+    const kopY = rompY - 16
+    ctx.fillStyle = lijn
+    ctx.fillRect(cx - 13, kopY, 26, 18)
+    ctx.fillStyle = steen
+    ctx.fillRect(cx - 12, kopY + 1, 24, 16)
+    ctx.fillStyle = licht
+    ctx.fillRect(cx - 12, kopY + 1, 24, 3)
+    // Hoorns
+    ctx.fillStyle = lijn
+    ctx.fillRect(cx - 16, kopY - 6, 4, 8)
+    ctx.fillRect(cx + 12, kopY - 6, 4, 8)
+    // Ogen: doven uit naarmate hij het zwaarder krijgt
+    if (pose.ogen > 0) {
+      ctx.fillStyle = pose.ogen > 0.7 ? '#ffe14d' : naad
+      ctx.fillRect(cx - 8, kopY + 6, 6, 4)
+      ctx.fillRect(cx + 2, kopY + 6, 6, 4)
+      ctx.fillStyle = lijn
+      ctx.fillRect(cx - 8, kopY + 5, 6, 2)
+      ctx.fillRect(cx + 2, kopY + 5, 6, 2)
+    } else {
+      ctx.fillStyle = lijn
+      ctx.fillRect(cx - 8, kopY + 6, 6, 4)
+      ctx.fillRect(cx + 2, kopY + 6, 6, 4)
+    }
+
+    blad.ctx.drawImage(canvas, i * TITAAN.w, 0)
+  })
+
+  cache.set(sleutel, blad)
+  return blad
+}
+
+// Schokgolf over de vloer na een klap.
+export function tekenSchokgolf(ctx, x, y, sterkte, tijd) {
+  const h = Math.round(6 * sterkte)
+  for (let i = 0; i < 5; i++) {
+    const dy = Math.round(Math.sin(tijd * 26 + i) * 2)
+    ctx.fillStyle = i < 2 ? '#ffd76b' : '#ff8c1a'
+    ctx.fillRect(Math.round(x - 5 + i * 2), Math.round(y - h + dy), 2, h)
+  }
+  ctx.fillStyle = '#a3260a'
+  ctx.fillRect(Math.round(x - 6), Math.round(y - 1), 12, 2)
+}
+
 export function slijmbalBlad(palet) {
   const sleutel = `bal-${palet.id}`
   if (cache.has(sleutel)) return cache.get(sleutel)

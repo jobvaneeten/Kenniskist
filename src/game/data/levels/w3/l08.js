@@ -1,0 +1,55 @@
+// 3-08 De schoorsteen — een schacht omhoog met de lava vlak achter je. De
+// geiser onderin geeft de eerste zet; daarna is het klimmen zonder pauze.
+import { maakLevel, p, g, plat, munt } from '../bouw.js'
+import { T } from '../../texts.nl.js'
+
+const B = 48
+
+export default maakLevel({
+  id: 'w3-l08',
+  naam: 'De schoorsteen',
+  wereld: 3,
+  index: 8,
+  doeltijd: 90,
+  hints: [T.hints.lava],
+  lava: { start: 37, snelheid: 11, wacht: 2.5, stop: 2 },
+  kaart: [
+    p(B),
+    p(B),
+    p(B),
+    p(B),
+    p(12) + munt(4) + p(2) + 'F' + p(29),
+    p(12) + plat(15) + p(21),
+    p(B),
+    p(28) + munt(4) + p(16),
+    p(26) + plat(15) + p(7),
+    p(B),
+    p(12) + munt(4) + p(4) + 'C' + p(27),
+    p(10) + plat(15) + p(23),
+    p(B),
+    p(26) + munt(4) + p(4) + 'U' + p(13),
+    p(24) + plat(15) + p(9),
+    p(B),
+    p(10) + munt(4) + p(34),
+    p(8) + plat(15) + p(25),
+    p(B),
+    p(26) + munt(4) + p(18),
+    p(24) + plat(15) + p(9),
+    p(B),
+    p(12) + munt(4) + p(4) + 'C' + p(27),
+    p(10) + plat(15) + p(23),
+    p(B),
+    p(28) + munt(4) + p(16),
+    p(26) + plat(15) + p(7),
+    p(B),
+    p(10) + munt(4) + p(34),
+    p(8) + plat(15) + p(25),
+    p(B),
+    p(B),
+    p(B),
+    p(4) + 'S' + p(3) + 'H' + p(3) + munt(4) + p(2) + 'G' + p(29),
+    g(B),
+    g(B),
+    g(B),
+  ],
+})

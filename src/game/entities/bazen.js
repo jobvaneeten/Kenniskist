@@ -7,6 +7,7 @@ import { TEGEL } from '../engine/tilemap.js'
 import {
   koninginBlad, slijmbalBlad, KONINGIN, SLIJMBAL, KON_FRAME,
   ijswormBlad, tekenWormSegment, tekenWormSpoor, tekenWormBarst, WORMKOP,
+  titaanBlad, tekenSchokgolf, TITAAN,
 } from '../art/bazen.js'
 import { Slijm } from './vijanden.js'
 import { sfx } from '../audio/sfx.js'
@@ -546,4 +547,251 @@ export class IJsworm {
   }
 }
 
-export const BAAS_KLASSEN = { slijmkoningin: Slijmkoningin, ijsworm: IJsworm }
+// --- Magmatitaan (wereld 3) -------------------------------------------------
+// Loopt langzaam heen en weer, slaat met zijn vuist op de vloer en blijft
+// daarna even voorovergebogen staan. Precies dán staat zijn kop op springhoogte.
+
+const TITAAN_LEVENS_PER_FASE = 3
+
+// De schokgolf die na een klap over de vloer rolt.
+class Schokgolf {
+  constructor(x, y, richting, snelheid) {
+    this.x = x
+    this.y = y
+    this.richting = richting
+    this.snelheid = snelheid
+    this.tijd = 0
+    this.leeft = true
+  }
+
+  get lichaam() { return { x: this.x - 6, y: this.y - 8, w: 12, h: 10 } }
+
+  update(dt, arena) {
+    this.tijd += dt
+    this.x += this.richting * this.snelheid * dt
+    if (this.x < arena.links - 20 || this.x > arena.rechts + 20 || this.tijd > 6) this.leeft = false
+  }
+
+  teken(ctx, camX, camY) {
+    tekenSchokgolf(ctx, this.x - camX, this.y - camY, Math.max(0.3, 1 - this.tijd / 4), this.tijd)
+  }
+}
+
+export class Magmatitaan {
+  constructor(x, y, palet, arena) {
+    this.palet = palet
+    this.arena = arena
+    this.grondY = y + TEGEL
+    // De collisionbox is smaller dan de sprite: alleen de romp en de kop.
+    this.lichaam = new Lichaam(x - 14, this.grondY - 52, 40, 52)
+
+    this.fase = 1
+    this.levens = TITAAN_LEVENS_PER_FASE
+    this.maxTotaal = TITAAN_LEVENS_PER_FASE * 3
+    this.geraaktTotaal = 0
+
+    this.staat = 'intro'
+    this.timer = 1.8
+    this.tijd = 0
+    this.onkwetsbaar = 0
+    this.kwetsbaar = 0
+    this.kijktRechts = false
+    this.leeft = true
+    this.klaar = false
+    this.stampbaar = true
+
+    this.golven = []
+    this.ballen = []
+    this.kinderen = []
+  }
+
+  get midX() { return this.lichaam.midX }
+  get midY() { return this.lichaam.midY }
+  get deel() { return (this.maxTotaal - this.geraaktTotaal) / this.maxTotaal }
+
+  // Waar zijn kop zit; alleen daar telt een stamp.
+  get kopVlak() {
+    const buk = this.staat === 'gebogen' ? 16 : this.staat === 'slaan' ? 6 : 0
+    return { x: this.midX - 13, y: this.grondY - 60 + buk, w: 26, h: 18 }
+  }
+
+  update(dt, map, speler, particles, fx) {
+    this.tijd += dt
+    if (this.onkwetsbaar > 0) this.onkwetsbaar -= dt
+    if (this.kwetsbaar > 0) this.kwetsbaar -= dt
+
+    for (const g of this.golven) g.update(dt, this.arena)
+    this.golven = this.golven.filter((g) => g.leeft)
+    for (const b of this.ballen) b.update(dt, map)
+    this.ballen = this.ballen.filter((b) => b.leeft)
+
+    if (this.staat === 'dood') {
+      this.timer -= dt
+      if (this.timer <= 0) this.klaar = true
+      return
+    }
+
+    this.timer -= dt
+    if (speler) this.kijktRechts = speler.midX > this.midX
+
+    switch (this.staat) {
+      case 'intro':
+        if (this.timer <= 0) this._begin('lopen', 1.4)
+        break
+
+      case 'lopen': {
+        // Traag genoeg om langs te komen, maar hij drijft je wel in het nauw.
+        const snelheid = this.fase === 3 ? 42 : this.fase === 2 ? 34 : 26
+        const richting = this.kijktRechts ? 1 : -1
+        this.lichaam.x += richting * snelheid * dt
+        this.lichaam.x = Math.max(this.arena.links, Math.min(this.arena.rechts - this.lichaam.w, this.lichaam.x))
+        if (this.timer <= 0) this._begin('optillen', 0.5)
+        break
+      }
+
+      case 'optillen':
+        if (this.timer <= 0) this._sla(particles, fx, speler)
+        break
+
+      case 'slaan':
+        if (this.timer <= 0) {
+          this.staat = 'gebogen'
+          this.timer = this.fase === 3 ? 1 : 1.4
+          this.kwetsbaar = this.timer
+        }
+        break
+
+      case 'gebogen':
+        if (this.timer <= 0) this._begin('lopen', this.fase === 3 ? 1 : 1.5)
+        break
+
+      case 'gewond':
+        if (this.timer <= 0) {
+          if (this.levens <= 0) this._volgendeFase(particles, fx)
+          else this._begin('lopen', 1.2)
+        }
+        break
+
+      default:
+        break
+    }
+  }
+
+  _begin(staat, t) { this.staat = staat; this.timer = t }
+
+  _sla(particles, fx, speler) {
+    this.staat = 'slaan'
+    this.timer = 0.35
+    const snelheid = this.fase === 3 ? 150 : 118
+    this.golven.push(new Schokgolf(this.midX - 20, this.grondY, -1, snelheid))
+    this.golven.push(new Schokgolf(this.midX + 20, this.grondY, 1, snelheid))
+    // Vanaf fase 2 gooit hij er ook brokken achteraan.
+    if (this.fase >= 2) {
+      const richting = Math.sign((speler?.midX ?? 0) - this.midX) || 1
+      const hoeken = this.fase === 3 ? [-1, 0, 1] : [0]
+      for (const h of hoeken) {
+        this.ballen.push(new Slijmbal(
+          this.midX, this.lichaam.y + 8,
+          richting * 105 + h * 75, -215 - Math.abs(h) * 35,
+          this.palet,
+        ))
+      }
+    }
+    fx.schud(6, 0.35)
+    sfx.baasHit()
+    for (let i = 0; i < 16; i++) {
+      particles.spuit(this.midX + (Math.random() - 0.5) * 60, this.grondY - 2, {
+        vx: (Math.random() - 0.5) * 240, vy: -70 - Math.random() * 120,
+        duur: 0.55, kleur: Math.random() > 0.5 ? '#ff8c1a' : '#6b4038', zwaarte: 460, grootte: 2,
+      })
+    }
+  }
+
+  // Alleen een stamp op de kop telt, en alleen terwijl hij gebogen staat.
+  opStamp(particles, fx, lichaam) {
+    if (this.onkwetsbaar > 0 || this.staat === 'dood') return false
+    if (this.kwetsbaar <= 0) return false
+    if (lichaam) {
+      const k = this.kopVlak
+      const raaktKop = lichaam.rechts > k.x && lichaam.links < k.x + k.w
+        && lichaam.onder > k.y - 4 && lichaam.onder < k.y + k.h
+      if (!raaktKop) return false
+    }
+    this.levens--
+    this.geraaktTotaal++
+    this.onkwetsbaar = 0.9
+    this.staat = 'gewond'
+    this.timer = 0.6
+    this.kwetsbaar = 0
+    sfx.baasHit()
+    fx.schud(7, 0.35)
+    fx.hitStop(0.1)
+    fx.flitsScherm('#ffffff', 0.08)
+    particles.pop(this.midX, this.lichaam.y, '#ff8c1a', 24)
+    return true
+  }
+
+  _volgendeFase(particles, fx) {
+    if (this.fase >= 3) { this._sterf(particles, fx); return }
+    this.fase++
+    this.levens = TITAAN_LEVENS_PER_FASE
+    fx.schud(8, 0.6)
+    fx.flitsScherm('#ff7a2a', 0.25)
+    particles.pop(this.midX, this.midY, '#ff8c1a', 30)
+    this._begin('lopen', 1.2)
+  }
+
+  _sterf(particles, fx) {
+    this.staat = 'dood'
+    this.timer = 2.4
+    this.leeft = false
+    this.golven.length = 0
+    fx.schud(9, 1)
+    sfx.vijandDood()
+    particles.pop(this.midX, this.midY, '#ff8c1a', 46)
+  }
+
+  raaktSpeler(lichaam) {
+    if (this.staat === 'dood') return false
+    const l = this.lichaam
+    return lichaam.x < l.x + l.w && lichaam.x + lichaam.w > l.x
+      && lichaam.y < l.y + l.h && lichaam.y + lichaam.h > l.y
+  }
+
+  _frame() {
+    switch (this.staat) {
+      case 'optillen': return 2
+      case 'slaan': return 3
+      case 'gebogen': return 4 + (Math.floor(this.tijd * 5) % 2)
+      case 'gewond': return 6
+      case 'dood': return Math.min(9, 7 + Math.floor((2.4 - this.timer) * 1.4))
+      default: return Math.floor(this.tijd * 2) % 2
+    }
+  }
+
+  teken(ctx, camX, camY) {
+    for (const g of this.golven) g.teken(ctx, camX, camY)
+    for (const b of this.ballen) b.teken(ctx, camX, camY)
+    if (this.onkwetsbaar > 0 && Math.floor(this.onkwetsbaar * 14) % 2 === 0) return
+
+    const blad = titaanBlad(this.palet, this.fase)
+    blad.teken(ctx, this._frame(),
+      Math.round(this.midX - TITAAN.w / 2 - camX),
+      Math.round(this.grondY - TITAAN.h - camY),
+      this.kijktRechts)
+
+    if (this.kwetsbaar > 0) {
+      const k = this.kopVlak
+      ctx.globalAlpha = 0.28 + Math.sin(this.tijd * 22) * 0.12
+      ctx.fillStyle = '#ffffff'
+      ctx.fillRect(Math.round(k.x - camX), Math.round(k.y - camY), k.w, 6)
+      ctx.globalAlpha = 1
+    }
+  }
+}
+
+export const BAAS_KLASSEN = {
+  slijmkoningin: Slijmkoningin,
+  ijsworm: IJsworm,
+  magmatitaan: Magmatitaan,
+}
