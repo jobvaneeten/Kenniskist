@@ -10,7 +10,7 @@ export default maakLevel({
   naam: 'Magmatitaan',
   wereld: 3,
   index: 16,
-  doeltijd: 210,
+  doeltijd: 175,
   baas: 'magmatitaan',
   muziek: 'baas',
   hitte: 1.8,

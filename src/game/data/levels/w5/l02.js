@@ -10,7 +10,7 @@ export default maakLevel({
   naam: 'Poortjes',
   wereld: 5,
   index: 2,
-  doeltijd: 100,
+  doeltijd: 70,
   hints: [T.hints.portaal],
   kaart: [
     p(B),

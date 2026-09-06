@@ -11,7 +11,7 @@ export default maakLevel({
   naam: 'Voor de titaan',
   wereld: 3,
   index: 15,
-  doeltijd: 125,
+  doeltijd: 110,
   hitte: 1.6,
   hints: [T.hints.lava],
   kaart: [

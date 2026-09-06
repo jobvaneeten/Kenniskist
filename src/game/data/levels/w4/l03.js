@@ -10,7 +10,7 @@ export default maakLevel({
   naam: 'Zwaartekracht uit',
   wereld: 4,
   index: 3,
-  doeltijd: 100,
+  doeltijd: 70,
   hints: [T.hints.zerog],
   zerog: [[26, 4, 55, 13], [74, 4, 103, 13]],
   kaart: [

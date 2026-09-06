@@ -10,7 +10,7 @@ export default maakLevel({
   naam: 'Het stijgt',
   wereld: 3,
   index: 3,
-  doeltijd: 80,
+  doeltijd: 65,
   hints: [T.hints.lava],
   lava: { start: 31, snelheid: 9, wacht: 3, stop: 2 },
   kaart: [

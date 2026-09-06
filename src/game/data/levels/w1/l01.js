@@ -10,7 +10,7 @@ export default maakLevel({
   naam: 'Zachte landing',
   wereld: 1,
   index: 1,
-  doeltijd: 60,
+  doeltijd: 80,
   achtergrond: 'kristalwoud',
   hints: [T.hints.springen, T.hints.stampen],
   kaart: [

@@ -11,7 +11,7 @@ export default maakLevel({
   naam: 'Kern-AI',
   wereld: 4,
   index: 16,
-  doeltijd: 220,
+  doeltijd: 175,
   baas: 'kernai',
   muziek: 'baas',
   hints: [T.hints.baas],

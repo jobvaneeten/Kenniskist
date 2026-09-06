@@ -15,7 +15,7 @@ export default maakLevel({
   naam: 'Noorderlicht',
   wereld: 2,
   index: 7,
-  doeltijd: 105,
+  doeltijd: 85,
   hints: [T.hints.dunIjs],
   kaart: [
     p(B),

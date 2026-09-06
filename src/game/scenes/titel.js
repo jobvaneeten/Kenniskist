@@ -51,7 +51,7 @@ export class TitelScene {
     }
 
     const keuze = this.menu.update(this.spel.invoer)
-    if (keuze === 0) this.spel.naarKaart()
+    if (keuze === 0) this.spel.naarSpelen()
     else if (keuze === 1) this.spel.naarWinkel()
     else if (keuze === 2) this.spel.openInstellingen(() => {})
   }

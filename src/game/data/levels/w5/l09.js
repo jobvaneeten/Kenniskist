@@ -10,7 +10,7 @@ export default maakLevel({
   naam: 'Echoslijm',
   wereld: 5,
   index: 9,
-  doeltijd: 110,
+  doeltijd: 80,
   hints: [T.hints.snel],
   kaart: [
     p(B),

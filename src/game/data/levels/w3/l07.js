@@ -10,7 +10,7 @@ export default maakLevel({
   naam: 'Spetterregen',
   wereld: 3,
   index: 7,
-  doeltijd: 100,
+  doeltijd: 85,
   kaart: [
     p(B),
     p(B),

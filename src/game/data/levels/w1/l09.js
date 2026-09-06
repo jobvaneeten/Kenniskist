@@ -11,7 +11,7 @@ export default maakLevel({
   naam: 'Veer na veer',
   wereld: 1,
   index: 9,
-  doeltijd: 85,
+  doeltijd: 100,
   hints: [T.hints.omhoog],
   kaart: [
     p(B),

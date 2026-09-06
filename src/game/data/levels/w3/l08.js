@@ -10,7 +10,7 @@ export default maakLevel({
   naam: 'De schoorsteen',
   wereld: 3,
   index: 8,
-  doeltijd: 90,
+  doeltijd: 80,
   hints: [T.hints.lava],
   lava: { start: 37, snelheid: 11, wacht: 2.5, stop: 2 },
   kaart: [

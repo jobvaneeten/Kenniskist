@@ -10,7 +10,7 @@ export default maakLevel({
   naam: 'Onder het ijs',
   wereld: 2,
   index: 13,
-  doeltijd: 110,
+  doeltijd: 75,
   hints: [T.hints.donker],
   donker: 74,
   kaart: [

@@ -10,7 +10,7 @@ export default maakLevel({
   naam: 'Hitteflikkering',
   wereld: 3,
   index: 11,
-  doeltijd: 105,
+  doeltijd: 90,
   hitte: 2.4,
   hints: [T.hints.lava],
   kaart: [

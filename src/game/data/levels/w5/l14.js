@@ -10,7 +10,7 @@ export default maakLevel({
   naam: 'De rand',
   wereld: 5,
   index: 14,
-  doeltijd: 135,
+  doeltijd: 80,
   hints: [T.hints.omkeren],
   omkeerPeriode: 4,
   kaart: [

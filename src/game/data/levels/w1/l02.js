@@ -11,7 +11,7 @@ export default maakLevel({
   naam: 'Over de kloof',
   wereld: 1,
   index: 2,
-  doeltijd: 65,
+  doeltijd: 80,
   hints: [T.hints.rennen],
   kaart: [
     p(B),

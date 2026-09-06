@@ -10,7 +10,7 @@ export default maakLevel({
   naam: 'Sleutelkaart',
   wereld: 4,
   index: 4,
-  doeltijd: 105,
+  doeltijd: 75,
   hints: [T.hints.sleutel],
   kaart: [
     p(B),

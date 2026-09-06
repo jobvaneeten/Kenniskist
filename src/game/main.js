@@ -17,6 +17,7 @@ import { LevelScene } from './scenes/level.js'
 import { ResultatenScene } from './scenes/resultaten.js'
 import { WinkelScene } from './scenes/winkel.js'
 import { InstellingenScene } from './scenes/instellingen.js'
+import { CutsceneScene } from './scenes/cutscene.js'
 import { levelVan } from './data/levels/index.js'
 import { levelId, LEVELS_PER_WERELD } from './data/werelden.js'
 
@@ -135,6 +136,16 @@ export class Spel {
     this._wissel(() => new TitelScene(this), { soort: OVERGANG.FADE })
   }
 
+  // "Spelen" op het titelscherm: wie nog nooit iets gehaald heeft krijgt eerst
+  // de intro te zien, daarna pas de kaart.
+  naarSpelen() {
+    if (opslag.totaalSterren() === 0 && !opslag.isVoltooid('w1-l01')) {
+      this.naarCutscene('intro', 1, () => this.naarKaart(1, 1))
+      return
+    }
+    this.naarKaart()
+  }
+
   naarKaart(wereld = null, index = null) {
     const w = wereld ?? this.laatsteWereld ?? 1
     const i = index ?? this.laatsteIndex ?? 1
@@ -175,6 +186,12 @@ export class Spel {
 
   naarResultaten(level, resultaat) {
     this._wissel(() => new ResultatenScene(this, level, resultaat), { soort: OVERGANG.FADE })
+  }
+
+  // Cutscenes: de intro bij de eerste start, het schiponderdeel na elke baas,
+  // en de eindanimatie na de vijfde.
+  naarCutscene(soort, wereld, daarna) {
+    this._wissel(() => new CutsceneScene(this, { soort, wereld, daarna }), { soort: OVERGANG.FADE })
   }
 
   openInstellingen() {

@@ -10,7 +10,7 @@ export default maakLevel({
   naam: 'Sterrenstof',
   wereld: 5,
   index: 11,
-  doeltijd: 115,
+  doeltijd: 70,
   hints: [T.hints.donker],
   donker: 70,
   kaart: [

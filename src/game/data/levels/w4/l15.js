@@ -12,7 +12,7 @@ export default maakLevel({
   naam: 'Naar de kern',
   wereld: 4,
   index: 15,
-  doeltijd: 130,
+  doeltijd: 95,
   hints: [T.hints.zerog],
   zerog: [[62, 4, 93, 13]],
   kaart: [

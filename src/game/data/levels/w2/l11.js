@@ -11,7 +11,7 @@ export default maakLevel({
   naam: 'Spiegelmeer',
   wereld: 2,
   index: 11,
-  doeltijd: 115,
+  doeltijd: 95,
   hints: [T.hints.tweeRoutes],
   kaart: [
     p(B),

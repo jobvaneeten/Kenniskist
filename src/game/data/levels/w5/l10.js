@@ -10,7 +10,7 @@ export default maakLevel({
   naam: 'Spiegelgang',
   wereld: 5,
   index: 10,
-  doeltijd: 125,
+  doeltijd: 85,
   hints: [T.hints.omkeren],
   kaart: [
     g(B),

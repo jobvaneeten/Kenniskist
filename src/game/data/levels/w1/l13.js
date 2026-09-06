@@ -10,7 +10,7 @@ export default maakLevel({
   naam: 'Verstopt',
   wereld: 1,
   index: 13,
-  doeltijd: 110,
+  doeltijd: 85,
   hints: [T.hints.geheim],
   capsules: ['jetpack'],
   kaart: [

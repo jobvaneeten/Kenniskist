@@ -10,7 +10,7 @@ export default maakLevel({
   naam: 'Asvliegen',
   wereld: 3,
   index: 9,
-  doeltijd: 105,
+  doeltijd: 90,
   hints: [T.hints.snel],
   kaart: [
     p(B),

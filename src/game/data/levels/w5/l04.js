@@ -11,7 +11,7 @@ export default maakLevel({
   naam: 'Schaduwkloon',
   wereld: 5,
   index: 4,
-  doeltijd: 110,
+  doeltijd: 75,
   hints: [T.hints.snel],
   kaart: [
     p(B),

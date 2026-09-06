@@ -10,7 +10,7 @@ export default maakLevel({
   naam: 'Glijbaan',
   wereld: 1,
   index: 12,
-  doeltijd: 80,
+  doeltijd: 100,
   hints: [T.hints.snel],
   kaart: [
     p(B),

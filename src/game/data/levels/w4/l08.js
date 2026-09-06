@@ -10,7 +10,7 @@ export default maakLevel({
   naam: 'De lus',
   wereld: 4,
   index: 8,
-  doeltijd: 110,
+  doeltijd: 75,
   hints: [T.hints.band],
   kaart: [
     p(B),

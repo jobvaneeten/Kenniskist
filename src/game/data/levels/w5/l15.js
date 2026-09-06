@@ -12,7 +12,7 @@ export default maakLevel({
   naam: 'Alles tegelijk',
   wereld: 5,
   index: 15,
-  doeltijd: 145,
+  doeltijd: 120,
   hints: [T.hints.verdwijnt],
   platformAfstand: [3],
   kaart: [

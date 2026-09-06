@@ -11,7 +11,7 @@ export default maakLevel({
   naam: 'De heenweg',
   wereld: 1,
   index: 6,
-  doeltijd: 90,
+  doeltijd: 115,
   platformAfstand: [2, 2, 2],
   kaart: [
     p(B),

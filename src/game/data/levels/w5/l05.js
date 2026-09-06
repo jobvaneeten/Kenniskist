@@ -10,7 +10,7 @@ export default maakLevel({
   naam: 'Nanozwerm',
   wereld: 5,
   index: 5,
-  doeltijd: 110,
+  doeltijd: 80,
   hints: [T.hints.snel],
   kaart: [
     p(B),

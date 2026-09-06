@@ -11,7 +11,7 @@ export default maakLevel({
   naam: 'Het weefsel',
   wereld: 5,
   index: 12,
-  doeltijd: 130,
+  doeltijd: 80,
   hints: [T.hints.portaal],
   kaart: [
     p(B),

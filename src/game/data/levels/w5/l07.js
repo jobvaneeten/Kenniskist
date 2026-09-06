@@ -10,7 +10,7 @@ export default maakLevel({
   naam: 'Zwaartekrachtwezens',
   wereld: 5,
   index: 7,
-  doeltijd: 115,
+  doeltijd: 80,
   hints: [T.hints.omkeren],
   kaart: [
     p(B),

@@ -10,7 +10,7 @@ export default maakLevel({
   naam: 'Sporenveld',
   wereld: 1,
   index: 5,
-  doeltijd: 85,
+  doeltijd: 100,
   hints: [T.hints.hoog],
   kaart: [
     p(B),

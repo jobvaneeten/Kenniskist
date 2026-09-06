@@ -11,7 +11,7 @@ export default maakLevel({
   naam: 'De Verslinder',
   wereld: 5,
   index: 16,
-  doeltijd: 240,
+  doeltijd: 175,
   baas: 'verslinder',
   muziek: 'baas',
   hints: [T.hints.baas],

@@ -13,7 +13,7 @@ export default maakLevel({
   naam: 'Snelweg van steen',
   wereld: 3,
   index: 12,
-  doeltijd: 85,
+  doeltijd: 120,
   hints: [T.hints.snel],
   zinkDiepte: Array(18).fill(5),
   kaart: [

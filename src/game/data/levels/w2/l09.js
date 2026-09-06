@@ -10,7 +10,7 @@ export default maakLevel({
   naam: 'De vrieskloof',
   wereld: 2,
   index: 9,
-  doeltijd: 110,
+  doeltijd: 95,
   hints: [T.hints.wind],
   wind: { sterkte: 58, periode: 4 },
   kaart: [

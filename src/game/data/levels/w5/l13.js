@@ -10,7 +10,7 @@ export default maakLevel({
   naam: 'Vrije val',
   wereld: 5,
   index: 13,
-  doeltijd: 100,
+  doeltijd: 65,
   hints: [T.hints.snel],
   kaart: [
     p(B),

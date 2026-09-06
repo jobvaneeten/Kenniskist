@@ -10,7 +10,7 @@ export default maakLevel({
   naam: 'Torretjes',
   wereld: 4,
   index: 6,
-  doeltijd: 100,
+  doeltijd: 85,
   hints: [T.hints.laser],
   kaart: [
     p(B),

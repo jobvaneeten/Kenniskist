@@ -11,7 +11,7 @@ export default maakLevel({
   naam: 'Dun ijs',
   wereld: 2,
   index: 3,
-  doeltijd: 90,
+  doeltijd: 80,
   hints: [T.hints.dunIjs],
   kaart: [
     p(B),

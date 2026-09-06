@@ -10,7 +10,7 @@ export default maakLevel({
   naam: 'De schacht',
   wereld: 4,
   index: 13,
-  doeltijd: 95,
+  doeltijd: 75,
   hints: [T.hints.laser],
   kaart: [
     p(B),

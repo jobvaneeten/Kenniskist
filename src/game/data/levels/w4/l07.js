@@ -10,7 +10,7 @@ export default maakLevel({
   naam: 'Kortsluiting',
   wereld: 4,
   index: 7,
-  doeltijd: 105,
+  doeltijd: 75,
   hints: [T.hints.snel],
   kaart: [
     p(B),

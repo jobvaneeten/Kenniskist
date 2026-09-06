@@ -10,7 +10,7 @@ export default maakLevel({
   naam: 'Noodverlichting',
   wereld: 4,
   index: 12,
-  doeltijd: 115,
+  doeltijd: 70,
   hints: [T.hints.donker],
   donker: 92,
   knipper: true,

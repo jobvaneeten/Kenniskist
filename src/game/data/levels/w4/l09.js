@@ -11,7 +11,7 @@ export default maakLevel({
   naam: 'Zwevend',
   wereld: 4,
   index: 9,
-  doeltijd: 115,
+  doeltijd: 80,
   hints: [T.hints.zerog],
   zerog: [[30, 3, 113, 13]],
   kaart: [

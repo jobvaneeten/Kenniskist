@@ -11,7 +11,7 @@ export default maakLevel({
   naam: 'Ondersteboven',
   wereld: 5,
   index: 1,
-  doeltijd: 95,
+  doeltijd: 70,
   hints: [T.hints.omkeren],
   kaart: [
     g(B),

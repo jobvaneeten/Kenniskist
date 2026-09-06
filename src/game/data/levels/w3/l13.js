@@ -10,7 +10,7 @@ export default maakLevel({
   naam: 'Diep in de berg',
   wereld: 3,
   index: 13,
-  doeltijd: 130,
+  doeltijd: 100,
   hints: [T.hints.grot],
   kaart: [
     g(B),

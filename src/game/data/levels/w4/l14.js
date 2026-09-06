@@ -10,7 +10,7 @@ export default maakLevel({
   naam: 'Serverhal',
   wereld: 4,
   index: 14,
-  doeltijd: 120,
+  doeltijd: 105,
   hints: [T.hints.snel],
   kaart: [
     p(B),

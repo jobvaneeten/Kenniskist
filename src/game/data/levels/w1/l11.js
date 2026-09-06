@@ -11,7 +11,7 @@ export default maakLevel({
   naam: 'Twee manen',
   wereld: 1,
   index: 11,
-  doeltijd: 105,
+  doeltijd: 90,
   hints: [T.hints.omhoog],
   kaart: [
     p(B),

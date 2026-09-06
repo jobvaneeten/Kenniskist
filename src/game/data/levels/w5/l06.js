@@ -10,7 +10,7 @@ export default maakLevel({
   naam: 'Heen en weer',
   wereld: 5,
   index: 6,
-  doeltijd: 115,
+  doeltijd: 75,
   hints: [T.hints.portaal],
   kaart: [
     g(B),

@@ -10,7 +10,7 @@ export default maakLevel({
   naam: 'IJsworm',
   wereld: 2,
   index: 16,
-  doeltijd: 200,
+  doeltijd: 175,
   baas: 'ijsworm',
   muziek: 'baas',
   hints: [T.hints.baasWorm],

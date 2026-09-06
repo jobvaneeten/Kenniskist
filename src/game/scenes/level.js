@@ -674,12 +674,20 @@ export class LevelScene {
       muntenInLevel: this.muntenTotaal,
       doeltijd: this.level.doeltijd,
     })
-    this.spel.naarResultaten(this.level, {
+    const uit = {
       ...resultaat,
       tijd: this.tijd,
       doeltijd: this.level.doeltijd,
       muntenTotaal: this.muntenTotaal,
-    })
+    }
+    // Na een baas eerst de cutscene: het schiponderdeel dat je net terug hebt,
+    // of de eindanimatie na de vijfde.
+    if (this.level.baas) {
+      const soort = this.wereldNr === 5 ? 'eind' : 'naBaas'
+      this.spel.naarCutscene(soort, this.wereldNr, () => this.spel.naarResultaten(this.level, uit))
+      return
+    }
+    this.spel.naarResultaten(this.level, uit)
   }
 
   // --- Tekenen -------------------------------------------------------------

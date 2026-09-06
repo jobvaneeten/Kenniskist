@@ -11,7 +11,7 @@ export default maakLevel({
   naam: 'Kristalkloof',
   wereld: 1,
   index: 3,
-  doeltijd: 75,
+  doeltijd: 90,
   hints: [T.hints.veer],
   kaart: [
     p(B),

@@ -10,7 +10,7 @@ export default maakLevel({
   naam: 'Magmakrabben',
   wereld: 3,
   index: 5,
-  doeltijd: 100,
+  doeltijd: 85,
   hints: [T.hints.krab],
   kaart: [
     p(B),

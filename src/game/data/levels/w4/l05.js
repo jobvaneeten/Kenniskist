@@ -10,7 +10,7 @@ export default maakLevel({
   naam: 'Drones',
   wereld: 4,
   index: 5,
-  doeltijd: 105,
+  doeltijd: 80,
   hints: [T.hints.snel],
   kaart: [
     p(B),

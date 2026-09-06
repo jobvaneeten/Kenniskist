@@ -10,7 +10,7 @@ export default maakLevel({
   naam: 'Stroom erop',
   wereld: 4,
   index: 1,
-  doeltijd: 90,
+  doeltijd: 70,
   hints: [T.hints.band],
   kaart: [
     p(B),

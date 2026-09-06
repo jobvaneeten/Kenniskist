@@ -10,7 +10,7 @@ export default maakLevel({
   naam: 'De trechter',
   wereld: 5,
   index: 8,
-  doeltijd: 105,
+  doeltijd: 70,
   hints: [T.hints.omkeren],
   kaart: [
     p(B),

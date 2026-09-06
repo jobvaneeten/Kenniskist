@@ -12,7 +12,7 @@ export default maakLevel({
   naam: 'Nu je me ziet',
   wereld: 5,
   index: 3,
-  doeltijd: 100,
+  doeltijd: 90,
   hints: [T.hints.verdwijnt],
   kaart: [
     p(B),
