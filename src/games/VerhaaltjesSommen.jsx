@@ -114,6 +114,37 @@ function Figuur({ figuur }) {
       </svg>
     )
   }
+  // Percentagestrook: honderd hokjes zijn te veel om te tellen, tien niet.
+  // Het gekleurde deel laat het percentage zien, de streepjes eronder maken de
+  // koppeling met de breuk (10 vakjes = tienden, 4 = kwarten).
+  if (figuur.type === 'strook') {
+    const W = 280, H = 34, x0 = 10, y0 = 10
+    const vakjes = figuur.pct % 25 === 0 ? 4 : figuur.pct === 5 ? 20 : 10
+    const gevuld = (figuur.pct / 100) * W
+    return (
+      <svg className="rs-figuur" viewBox={`0 0 ${W + 20} ${H + 44}`} width={W + 20} height={H + 44}>
+        <rect x={x0} y={y0} width={W} height={H} fill="rgba(255,255,255,0.06)" stroke="#ffd23f" strokeWidth="2" rx="4" />
+        <rect x={x0} y={y0} width={gevuld} height={H} fill="rgba(255,210,63,0.5)" rx="4" />
+        {Array.from({ length: vakjes - 1 }, (_, i) => (
+          <line
+            key={i}
+            x1={x0 + ((i + 1) * W) / vakjes} y1={y0}
+            x2={x0 + ((i + 1) * W) / vakjes} y2={y0 + H}
+            stroke="#ffd23f" strokeWidth="1" strokeOpacity="0.5"
+          />
+        ))}
+        {/* Bij een smalle vulling (5% of 10%) past het label er niet in; dan
+            komt het er lichtgekleurd naast te staan. */}
+        {gevuld >= 44 ? (
+          <text x={x0 + gevuld / 2} y={y0 + H / 2} textAnchor="middle" dominantBaseline="middle" fill="#3a2a08" fontSize="15" fontWeight="800">{figuur.pct}%</text>
+        ) : (
+          <text x={x0 + gevuld + 8} y={y0 + H / 2} dominantBaseline="middle" fill="#ffd23f" fontSize="15" fontWeight="800">{figuur.pct}%</text>
+        )}
+        <text x={x0} y={y0 + H + 8} dominantBaseline="hanging" fill="#fffbeb" fontSize="13" fontWeight="700">0</text>
+        <text x={x0 + W} y={y0 + H + 8} textAnchor="end" dominantBaseline="hanging" fill="#fffbeb" fontSize="13" fontWeight="700">{figuur.totaal}</text>
+      </svg>
+    )
+  }
   if (figuur.type === 'balk') {
     const max = 130, sc = max / Math.max(figuur.l, figuur.b, figuur.h)
     const w = figuur.l * sc, ht = figuur.h * sc, d = figuur.b * sc * 0.55
