@@ -316,7 +316,9 @@ export class LevelScene {
     // de vlaag daaromheen slingert. Zo is met dezelfde code zowel een constante
     // tegenwind als een op- en afzwellende vlaag te maken.
     w.kracht = ((w.bias ?? 0) + Math.sin(fase) * (w.variatie ?? 1)) * w.sterkte
-    if (this.speler.staat === STAAT.NORMAAL) {
+    // Klim (windGrip) staat er dwars doorheen; de vlaag blijft wel zichtbaar,
+    // want anders lijkt het alsof het level kapot is.
+    if (this.speler.staat === STAAT.NORMAAL && !this.speler.mod.windGrip) {
       this.speler.lichaam.vx += w.kracht * dt * 3.2
     }
   }
@@ -471,6 +473,7 @@ export class LevelScene {
       if (this._stampt(l, vl, 6) && vij.stampbaar) {
         const hoog = this.spel.invoer.ingedrukt('spring')
         const verslagen = vij.opStamp(this.spel.particles)
+        this._stampGolf(vij, fx)
         this.speler.stamp(hoog)
         fx.hitStop(0.05)
         fx.schud(2, 0.14)
@@ -485,8 +488,9 @@ export class LevelScene {
     for (const gz of this.geisers) {
       if (gz.raakt(l)) {
         // Zelfde kracht als een veer: dan hoeft de bereikbaarheidscheck maar
-        // één sprongboog te kennen in plaats van twee.
-        l.vy = Math.min(l.vy, -BASIS.sprong * 1.42)
+        // één sprongboog te kennen in plaats van twee. Pluis (veerKracht)
+        // krijgt hier dezelfde extra zet als op een veer.
+        l.vy = Math.min(l.vy, -BASIS.sprong * 1.42 * this.speler.mod.veerKracht)
         this.speler.springtNog = true
         this.spel.particles.spuit(this.speler.midX, l.onder, {
           vx: (Math.random() - 0.5) * 40, vy: 90, duur: 0.3, kleur: '#ffd76b', zwaarte: 30,
@@ -565,6 +569,26 @@ export class LevelScene {
         this._haalFinish()
       }
     }
+  }
+
+  // Donder (stampGolf): de klap plant zich voort over de grond en velt ook de
+  // vijanden die er vlak naast staan. Alleen op stampbare vijanden, zodat een
+  // kwal of een gepantserde krab er niet alsnog aan gaat.
+  _stampGolf(bron, fx) {
+    const bereik = this.speler.mod.stampGolf
+    if (!bereik) return
+    const x = bron.lichaam.midX
+    const y = bron.lichaam.midY
+    let geraakt = 0
+    for (const v of this.vijanden) {
+      if (v === bron || !v.leeft || !v.stampbaar) continue
+      if (Math.abs(v.lichaam.midX - x) > bereik) continue
+      if (Math.abs(v.lichaam.midY - y) > 28) continue
+      v.opStamp(this.spel.particles)
+      geraakt++
+    }
+    this.spel.particles.pop(x, y, '#ffe14d', 12)
+    if (geraakt > 0) { sfx.stamp(); fx.schud(3, 0.2) }
   }
 
   // Stampt de speler op dit ding, of loopt hij er tegenaan?
@@ -670,6 +694,7 @@ export class LevelScene {
     this.speler.onkwetsbaar = 1.2
     this.speler.powerup = null
     this.speler.schild = false
+    this.speler.herstelSchild()
     this.speler.zetPositie(this.spawn.x, this.spawn.y)
     this.muntReeks = 0
     this.spel.particles.wis()
@@ -809,7 +834,8 @@ export class LevelScene {
   _tekenDonker(ctx, camX, camY) {
     const x = Math.round(this.speler.midX - camX)
     const y = Math.round(this.speler.midY - camY)
-    const r = this.level.donker * (1 + Math.sin(this.tijd * 1.6) * 0.04)
+    // Lumen (zicht) draagt een lamp en ziet twee keer zo ver.
+    const r = this.level.donker * this.speler.mod.zicht * (1 + Math.sin(this.tijd * 1.6) * 0.04)
     const g = ctx.createRadialGradient(x, y, r * 0.45, x, y, r)
     g.addColorStop(0, 'rgba(4,8,20,0)')
     g.addColorStop(0.7, 'rgba(4,8,20,0.55)')

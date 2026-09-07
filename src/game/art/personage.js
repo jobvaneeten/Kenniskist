@@ -74,6 +74,24 @@ const OREN = {
   ster: { dx: 3, dy: -7, data: ['..oo..', '.oaao.', 'oaaaao', '.oaao.', '.o..o.', '......', '......'] },
   nevel: { dx: 0, dy: -5, data: ['.o..o..o..o.', 'oao.oao.oao.', '.o..o..o..o.', '............', '............'] },
   kroon: { dx: 2, dy: -5, data: ['.o..o..o..o.', 'oao.oao.oao.', 'oaaaaaaaaao.', 'ooooooooooo.', '............'] },
+  // Pluis: een zachte kuif die meeveert.
+  pluim: { dx: 3, dy: -7, data: ['...oo.', '..oaao', '.oaaao', 'oaahao', 'oaaao.', '.ooo..', '..om..'] },
+  // Bram: een helmkam. Geen gesloten helm: oren worden vóór de kop getekend,
+  // dus alles wat over het gezicht valt verdwijnt er weer achter.
+  helm: { dx: 1, dy: -4, data: ['...oooooo...', '..oaaaaaao..', '.oahhhhhhao.', 'oaammmmmmaao', 'oo........oo'] },
+  // Klim: klemmen die aan weerskanten uitsteken, alsof hij zich vastgrijpt.
+  klem: { dx: -3, dy: 1, data: ['ooo..............ooo', 'oao..............oao', 'oamo............omao', 'oao..............oao', 'ooo..............ooo'] },
+  // Spike: stekels op de kop — hij loopt er zelf gewoon overheen.
+  stekels: { dx: 0, dy: -5, data: ['.o..o..o..o.', 'oao.oao.oao.', 'omo.omo.omo.', 'oooooooooooo', '............'] },
+  // Vonk: twee kleine vleugels voor de tweede sprong.
+  vleugel: { dx: -2, dy: 1, data: ['oo........oo', 'oaao....oaao', 'ohhao..oahho', '.oao....oao.', '..o......o..'] },
+  // Lumen: een lampje dat het donker openbreekt. dy niet verder dan -7: het
+  // frame is 28 hoog en de kop begint op y=6, dus daarboven wordt geknipt.
+  lamp: { dx: 4, dy: -7, data: ['.oooo.', 'oaaaao', 'oahhao', 'oaaaao', '.oaao.', '..oo..', '..om..'] },
+  // Donder: een bliksemschicht.
+  bliksem: { dx: 3, dy: -7, data: ['...ooo.', '..oaao.', '.oaao..', 'oaaaaoo', '.oaaao.', '..oaao.', '...ooo.'] },
+  // Kwik: stroomlijnvinnen die aan weerskanten uitsteken.
+  vin: { dx: -2, dy: 1, data: ['ooo............ooo', 'oaao..........oaao', 'ommo..........ommo', '.oo............oo.'] },
 }
 
 function paletVan(k) {

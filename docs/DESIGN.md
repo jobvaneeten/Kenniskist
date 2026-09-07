@@ -105,22 +105,43 @@ Gemeten aantallen (alle 80 levels bestaan; `tools/economy.js` telt ze uit de ech
 
 Totaal verdienbaar: 2 958 munten + 2 375 bonus = **5 333**. Eindig en exact.
 
-**Prijzen** (som 4 660 = 87,4 % van het totaal):
+**Het roster: twintig characters** — één gratis, tien met munten, negen met
+sterren (som van de prijzen 5 020 = 94 % van het totaal):
 
 | Character | Prijs | Eigenschap | Balans |
 |---|---|---|---|
 | Pip | gratis | gebalanceerd | — |
 | Bolt | 320 | +12 % loopsnelheid | iets kortere sprong |
 | Luna | 390 | valt 15 % langzamer | lagere topsnelheid |
-| Rex | 460 | start met 4 levens | 8 % trager |
-| Zippy | 530 | +10 % spronghoogte | glijdt verder uit |
-| Magno | 610 | kleine muntmagneet | iets lagere sprong |
-| Frost | 700 | glijdt niet uit op ijs | trager accelereren |
-| Ember | 800 | immuun voor lavaspetters | valt sneller |
-| Echo | 850 | langere onkwetsbaarheid | 5 % trager |
-| Astra | 60 ★ | hogere bounce vanaf vijanden | — |
-| Nebula | 140 ★ | één luchtcorrectie per sprong | — |
-| Solaris | 220 ★ | goud, spoor van sterrenstof | prestige, als Pip |
+| Rex | 430 | start met 4 levens | 8 % trager |
+| Zippy | 460 | +10 % spronghoogte | glijdt verder uit |
+| Magno | 490 | kleine muntmagneet | iets lagere sprong |
+| Pluis | 520 | veren en geisers +25 % | stampt minder ver terug |
+| Frost | 550 | glijdt niet uit op ijs | trager accelereren |
+| Bram | 580 | begint elk leven met een schild | 10 % trager |
+| Ember | 620 | immuun voor lavaspetters | valt sneller |
+| Echo | 660 | langere onkwetsbaarheid | 5 % trager |
+| Astra | 25 ★ | hogere bounce vanaf vijanden | — |
+| Klim | 50 ★ | banden en wind duwen niet | 5 % lagere sprong |
+| Nebula | 75 ★ | één luchtcorrectie per sprong | — |
+| Spike | 105 ★ | stekels doen niets | 6 % lagere sprong |
+| Vonk | 135 ★ | volle dubbele sprong | valt 15 % zwaarder |
+| Lumen | 165 ★ | dubbel zo ver zicht in het donker | 5 % trager |
+| Donder | 190 ★ | stamp met schokgolf | stuitert lager |
+| Kwik | 210 ★ | tot +20 % na lang rennen | remt trager |
+| Solaris | 225 ★ | goud, spoor van sterrenstof | prestige, als Pip |
+
+**De prijzen volgen het tempo van het spel.** Er moet ongeveer elke tien levels
+een character bij betaalbaar zijn; met tien te kopen characters en tachtig
+levels komt dat neer op één per acht levels, en de prijzen zijn zo gekozen dat
+het net iets eerder kan. `tools/economy.js` rekent dat na tegen de echte
+muntentelling per level en drukt de tabel af:
+
+```
+ 1e aankoop   320 munten  totaal  320  betaalbaar vanaf level  6  (doel 8)
+ 5e aankoop   490 munten  totaal 2090  betaalbaar vanaf level 34  (doel 40)
+10e aankoop   660 munten  totaal 5020  betaalbaar vanaf level 77  (doel 80)
+```
 
 Niets is strikt beter. Elk level en elke ster blijft met elk character haalbaar; `validate-levels`
 controleert de sprongafstanden tegen het **zwakste** profiel, niet tegen Pip.
@@ -135,6 +156,13 @@ afdwingt:
 - som van de acht: 85-90 % van het totaal verdienbare;
 - duurste: 17-28 % van die som, en pas te betalen als je ver in wereld 5 zit;
 - het script faalt met exit 1 buiten die marges, zodat het in `npm test` meeloopt.
+
+**Later vervangen door een tempo-regel.** Bovenstaande marges golden voor acht
+characters en zeiden niets over het tempo waarin je ze vrijspeelt — precies wat
+er in de praktijk toe doet. Sinds het roster twintig characters telt controleert
+`economy.js` in plaats daarvan per aankoop wanneer die betaalbaar wordt: de
+k-de aankoop moet rond level 8k liggen, niet later en niet veel vroeger. De som
+mag daarbij tot 96 % van het totaal verdienbare oplopen.
 
 Het script rekent per wereld met de echte leveldata zodra die bestaat en anders met de geplande aantallen
 uit `werelden.js`; het meldt in de uitvoer welk deel gepland en welk deel gemeten is. Nu alle vijf de

@@ -44,9 +44,12 @@ export class Speler {
     this.levens = 3 + this.mod.levens
     this.maxLevens = 5
     this.powerup = null // { soort, tijd, duur }
-    this.schild = false
+    // Bram begint elk leven met een schild; zie ook _herstelSchild na een klap.
+    this.schild = !!this.mod.startSchild
     this.jetpackBrandstof = 0
     this.spoorTimer = 0
+    // Kwik bouwt snelheid op zolang hij onafgebroken dezelfde kant op rent.
+    this.rentAl = 0
     // Worden door de levelscène gezet: zero-g-zones (wereld 4) en omgekeerde
     // zwaartekracht (wereld 5 en de Kern-AI).
     this.zwaartekrachtSchaal = 1
@@ -108,7 +111,11 @@ export class Speler {
     } else if (this.buffer > 0 && this.luchtsprongOver > 0) {
       this.luchtsprongOver--
       this.buffer = 0
-      this.lichaam.vy = this._kant * -BASIS.sprong * this.mod.sprong * 0.72
+      // Nebula corrigeert alleen bij (0,72×); Vonk springt in de lucht net zo
+      // hoog als op de grond en heeft dus een echte dubbele sprong.
+      const kracht = this.mod.luchtsprongKracht ? 1 : 0.72
+      this.lichaam.vy = this._kant * -BASIS.sprong * this.mod.sprong * kracht
+      this.springtNog = true
       particles.sparkle(this.midX, this.midY + 6, '#ffffff')
       sfx.spring()
     }
@@ -166,7 +173,15 @@ export class Speler {
     const opIjs = soort === T.IJS && !this.mod.ijsGrip
 
     const speedboost = this.powerup?.soort === 'speedboots' ? 1.3 : 1
-    const top = (rent ? BASIS.ren * this.mod.ren : BASIS.loop * this.mod.loop) * speedboost
+    // Momentum (Kwik): pas na twee seconden onafgebroken dezelfde kant op rennen
+    // loopt de topsnelheid op, en één keer stoppen of omkeren zet hem terug.
+    if (this.mod.momentum > 1 && rent && as !== 0 && Math.sign(as) === Math.sign(l.vx || as)) {
+      this.rentAl = Math.min(4, this.rentAl + dt)
+    } else {
+      this.rentAl = 0
+    }
+    const vaart = 1 + (this.mod.momentum - 1) * klem((this.rentAl - 2) / 2, 0, 1)
+    const top = (rent ? BASIS.ren * this.mod.ren : BASIS.loop * this.mod.loop) * speedboost * vaart
     const accel = (l.opGrond ? BASIS.accelGrond : BASIS.accelLucht) * this.mod.acceleratie * (opIjs ? 0.35 : 1)
     const wrijving = (l.opGrond ? (opIjs ? BASIS.ijsWrijving : BASIS.wrijvingGrond) : BASIS.wrijvingLucht) * this.mod.wrijving
 
@@ -179,9 +194,11 @@ export class Speler {
       l.vx = naar(l.vx, 0, wrijving * dt)
     }
 
-    // Lopende band duwt mee.
-    if (soort === T.BAND_RECHTS) l.vx += BASIS.duwSnelheid * dt * 4
-    if (soort === T.BAND_LINKS) l.vx -= BASIS.duwSnelheid * dt * 4
+    // Lopende band duwt mee. Klim staat er met zijn klemmen op en blijft staan.
+    if (!this.mod.bandGrip) {
+      if (soort === T.BAND_RECHTS) l.vx += BASIS.duwSnelheid * dt * 4
+      if (soort === T.BAND_LINKS) l.vx -= BASIS.duwSnelheid * dt * 4
+    }
 
     // `kant` is +1 bij normale zwaartekracht en -1 als die omgedraaid staat.
     // Alles wat met "omhoog" en "vallen" te maken heeft rekent ermee, zodat de
@@ -277,8 +294,14 @@ export class Speler {
     this.coyote = 0
   }
 
+  // Bram (startSchild) krijgt zijn schild terug bij een nieuw leven, niet
+  // meteen na de klap — anders zou hij onaantastbaar zijn.
+  herstelSchild() {
+    if (this.mod.startSchild) this.schild = true
+  }
+
   veerStuiter() {
-    this.lichaam.vy = -BASIS.sprong * 1.42
+    this.lichaam.vy = -BASIS.sprong * 1.42 * this.mod.veerKracht
     this.springtNog = true
     sfx.veer()
   }
@@ -332,6 +355,8 @@ export class Speler {
     const t = raaktDodelijk(this.lichaam, map)
     if (!t) return
     if (t === T.LAVA) { this.sterf(fx); return }
+    // Spike loopt zo over de stekels heen; lava houdt hem wel tegen.
+    if (t === T.STEKEL && this.mod.immuunStekels) return
     this.raak(this.midX, fx)
   }
 

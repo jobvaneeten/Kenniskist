@@ -32,11 +32,41 @@ describe('werelden', () => {
 })
 
 describe('characters', () => {
-  it('heeft precies 1 gratis, 8 te koop en 3 op sterren', () => {
-    expect(CHARACTERS).toHaveLength(12)
-    expect(teKoop()).toHaveLength(8)
-    expect(sterrenCharacters()).toHaveLength(3)
+  it('heeft precies 1 gratis, 10 te koop en 9 op sterren', () => {
+    expect(CHARACTERS).toHaveLength(20)
+    expect(teKoop()).toHaveLength(10)
+    expect(sterrenCharacters()).toHaveLength(9)
     expect(CHARACTERS.filter((c) => c.prijs === 0 && !c.sterren)).toHaveLength(1)
+  })
+
+  it('geeft elk character een eigen id, naam en silhouet', () => {
+    const ids = new Set(CHARACTERS.map((c) => c.id))
+    const namen = new Set(CHARACTERS.map((c) => c.naam))
+    expect(ids.size).toBe(CHARACTERS.length)
+    expect(namen.size).toBe(CHARACTERS.length)
+    // Twee characters mogen hetzelfde oor delen (Bolt en Magno doen dat), maar
+    // niet meer dan twee: dan gaan ze op elkaar lijken in de winkel.
+    const perOor = {}
+    for (const c of CHARACTERS) perOor[c.vorm.oren] = (perOor[c.vorm.oren] ?? 0) + 1
+    for (const [oor, n] of Object.entries(perOor)) {
+      expect(n, `${n} characters delen het silhouet '${oor}'`).toBeLessThanOrEqual(2)
+    }
+  })
+
+  it('loopt in prijs op zonder gaten', () => {
+    const prijzen = teKoop().map((c) => c.prijs).sort((a, b) => a - b)
+    for (let i = 1; i < prijzen.length; i++) {
+      expect(prijzen[i]).toBeGreaterThan(prijzen[i - 1])
+    }
+  })
+
+  it('zet de sterrendrempels oplopend en haalbaar', () => {
+    const drempels = sterrenCharacters().map((c) => c.sterren)
+    for (let i = 1; i < drempels.length; i++) {
+      expect(drempels[i]).toBeGreaterThan(drempels[i - 1])
+    }
+    expect(drempels[0]).toBeLessThanOrEqual(40)
+    expect(drempels[drempels.length - 1]).toBeLessThan(TOTAAL_STERREN)
   })
 
   it('vraagt nooit meer sterren dan er in het spel zitten', () => {
@@ -64,7 +94,12 @@ describe('characters', () => {
     // Bij de meeste modifiers is lager slechter, maar bij valZwaartekracht is
     // hóger slechter: je valt dan sneller.
     const omgekeerd = new Set(['valZwaartekracht'])
-    const negeer = new Set(['levens', 'magneet', 'ijsGrip', 'immuunSpetters', 'luchtsprong', 'spoor', 'onkwetsbaar'])
+    const negeer = new Set([
+      'levens', 'magneet', 'ijsGrip', 'immuunSpetters', 'luchtsprong', 'spoor', 'onkwetsbaar',
+      // Voordelen van de nieuwe characters; die tellen nooit als nadeel.
+      'veerKracht', 'startSchild', 'bandGrip', 'windGrip', 'immuunStekels',
+      'luchtsprongKracht', 'zicht', 'stampGolf', 'momentum',
+    ])
     for (const c of teKoop()) {
       const heeftNadeel = Object.entries(c.mod).some(([k, v]) => {
         if (negeer.has(k)) return false
