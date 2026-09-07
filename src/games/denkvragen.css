@@ -1,0 +1,152 @@
+/* Denkvragen: blokken, lessen en het vraagscherm. Rustig gehouden — er staat
+   maar één vraag op het scherm en die moet de aandacht krijgen. */
+
+.dv-blokgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+  width: 100%;
+  max-width: 620px;
+}
+
+.dv-blok {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 10px;
+  border-radius: 16px;
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  font-family: inherit;
+  cursor: pointer;
+  transition: transform 0.16s cubic-bezier(.34, 1.56, .64, 1), border-color 0.16s, background 0.16s;
+}
+.dv-blok:hover:not(:disabled) {
+  transform: translateY(-4px);
+  border-color: rgba(255, 210, 63, 0.6);
+  background: rgba(255, 210, 63, 0.08);
+}
+.dv-blok-naam { font-family: var(--kk-head); font-weight: 700; font-size: 1.05rem; }
+.dv-blok-sub { font-size: 0.72rem; color: var(--kk-text-soft); font-weight: 600; }
+.dv-blok-uit { opacity: 0.38; cursor: not-allowed; }
+
+.dv-lesgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(84px, 1fr));
+  gap: 10px;
+  width: 100%;
+  max-width: 560px;
+}
+
+.dv-les {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 14px 8px;
+  border-radius: 14px;
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  font-family: inherit;
+  cursor: pointer;
+  transition: transform 0.16s cubic-bezier(.34, 1.56, .64, 1), border-color 0.16s, background 0.16s;
+}
+.dv-les:hover:not(:disabled) {
+  transform: translateY(-4px);
+  border-color: rgba(255, 210, 63, 0.6);
+  background: rgba(255, 210, 63, 0.08);
+}
+.dv-les-nr { font-family: var(--kk-head); font-weight: 700; font-size: 1.5rem; line-height: 1; }
+.dv-les-sub { font-size: 0.68rem; color: var(--kk-text-soft); font-weight: 600; }
+.dv-les-uit { opacity: 0.34; cursor: not-allowed; }
+
+/* ── Het vraagscherm ─────────────────────────────────────────────────── */
+
+.dv-kaart {
+  width: 100%;
+  max-width: 640px;
+  padding: 22px 24px 26px;
+  border-radius: 22px;
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 6px 28px rgba(0, 0, 0, 0.3);
+}
+
+.dv-kop {
+  margin: 0 0 10px;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--kk-text-soft);
+}
+
+.dv-doel {
+  margin: 0 0 18px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(255, 210, 63, 0.09);
+  border: 1px solid rgba(255, 210, 63, 0.32);
+  font-size: 0.86rem;
+  line-height: 1.45;
+  color: #ffe9b0;
+}
+.dv-doel-label,
+.dv-hint-label {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  opacity: 0.75;
+  margin-bottom: 3px;
+}
+
+/* De vraag houdt zijn eigen regelafbrekingen (sommen onder elkaar). */
+.dv-vraag {
+  margin: 0;
+  white-space: pre-wrap;
+  font-size: 1.12rem;
+  line-height: 1.6;
+  color: #fff;
+}
+
+.dv-hint-knop {
+  margin-top: 20px;
+  padding: 9px 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--kk-text-soft);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.dv-hint-knop:hover { background: rgba(255, 255, 255, 0.11); color: #fff; }
+
+.dv-hint {
+  margin: 18px 0 0;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(126, 217, 87, 0.1);
+  border: 1px solid rgba(126, 217, 87, 0.34);
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: #d7ffd7;
+}
+
+.dv-voet {
+  margin-top: 18px;
+  font-size: 0.8rem;
+  color: var(--kk-text-soft);
+  text-align: center;
+}
+
+@media (max-width: 560px) {
+  .dv-kaart { padding: 18px 16px 20px; }
+  .dv-vraag { font-size: 1rem; }
+}

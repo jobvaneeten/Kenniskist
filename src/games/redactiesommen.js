@@ -813,6 +813,15 @@ function alleDoelen(groep, route) {
 // Aanvinkbare onderdelen van een groep, gegroepeerd per leerlijn-domein
 // (mode 'leerlijn') of per blok (mode 'blok'). Zelfde doelen en sleutels,
 // alleen anders geordend.
+// De eigen doelen van één blok, in de volgorde van de methode. De denkvragen
+// verwijzen per les naar het doel van die les; die tekst staat hier al, dus
+// overtypen zou hem alleen maar uit de pas laten lopen.
+export function doelenVanBlok(groep, blok, route = 'FS') {
+  return alleDoelen(groep, route)
+    .filter((a) => !a.herhaling && a.blok === blok)
+    .map((a) => a.doel)
+}
+
 export function onderdelenVan(groep, route, mode = 'leerlijn') {
   const alles = alleDoelen(groep, route)
 

@@ -13,6 +13,7 @@ import DierEvolutieGame from './games/DierEvolutieGame'
 import BrugBouwen from './games/BrugBouwen'
 import ProcentenBreuken from './games/ProcentenBreuken'
 import VerhaaltjesSommen from './games/VerhaaltjesSommen'
+import Denkvragen from './games/Denkvragen'
 import BreukenPlaatjes from './games/BreukenPlaatjes'
 import MaatenOmrekenen from './games/MaatenOmrekenen'
 import TafelsOefenen from './games/TafelsOefenen'
@@ -265,6 +266,9 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
       if (rekenKeuze === 'procenten') {
         return <ProcentenBreuken onBack={() => setRekenKeuze(null)} addBriefgeld={addBriefgeld} />
       }
+      if (rekenKeuze === 'denkvragen') {
+        return <Denkvragen groep={year} onBack={() => setRekenKeuze(null)} />
+      }
       if (rekenKeuze === 'verhaal') {
         return <VerhaaltjesSommen groep={year} onBack={() => setRekenKeuze(null)} addBriefgeld={addBriefgeld} addCuruntie={addCuruntie} />
       }
@@ -312,6 +316,14 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
                 <span className="mode-desc">Lengte &amp; inhoud · 3 levels</span>
                 <span className="vb-line">"5 m = ? cm" · "2,5 m = ? cm"</span>
                 <RewardChips rewards={['💵 briefgeld']} />
+              </button>
+            )}
+            {year === 7 && (
+              <button className="mode-card" onClick={() => setRekenKeuze('denkvragen')}>
+                <MenuScene name="blok9" />
+                <span className="mode-name">💭 Denkvragen</span>
+                <span className="mode-desc">Zoek de denkvraag van je les op</span>
+                <span className="vb-line">Geen som uitrekenen — uitleggen hoe je denkt</span>
               </button>
             )}
             {(year === 7 || year === 8) && (
