@@ -132,6 +132,18 @@ function Figuur({ figuur }) {
   return null
 }
 
+// Geen '='-teken in de invoervelden. Op een Apple-toetsenbord gedraagt een veld
+// zich dan als rekenmachine: typ je "5000+923=" dan vult het apparaat het
+// antwoord zelf in en rekent het kind niets meer uit. checkSom() begrijpt een
+// som zonder '=' precies zo goed.
+//
+// Drie sloten, want een virtueel toetsenbord meldt lang niet altijd een
+// keydown: de toets tegenhouden, de invoer tegenhouden, en wat er tóch
+// doorheen komt (plakken, autocorrectie) er alsnog uit filteren.
+const zonderIsGelijk = (waarde) => String(waarde).replace(/[=＝]/g, '')
+const weigerToets = (e) => { if (e.key === '=' || e.key === '＝') e.preventDefault() }
+const weigerInvoer = (e) => { if (/[=＝]/.test(String(e.data ?? ''))) e.preventDefault() }
+
 // ── Vraagkaart: eerst de som, daaronder het antwoord (+ rest indien nodig) ──
 // Eenvoudige rekenmachine — alleen zichtbaar bij doelen waar de methode
 // het gebruik van een rekenmachine toestaat ("…met de rekenmachine").
@@ -225,7 +237,9 @@ function VraagKaart({ opgave, onNext }) {
             <label className="rs-veld-label">Hoe laat is het?</label>
             <div className="rs-antwoord-row">
               <input ref={somRef} className="rs-input" type="text" autoComplete="off" placeholder="bijv. 3:25"
-                value={antw} onChange={e => setAntw(e.target.value)} onKeyDown={e => e.key === 'Enter' && check()} />
+                value={antw} onChange={e => setAntw(zonderIsGelijk(e.target.value))}
+                onBeforeInput={weigerInvoer}
+                onKeyDown={e => { weigerToets(e); if (e.key === 'Enter') check() }} />
               <button className="rs-check-btn" onClick={check}>Controleer →</button>
             </div>
           </div>
@@ -237,18 +251,24 @@ function VraagKaart({ opgave, onNext }) {
           <div className="rs-veld">
             <label className="rs-veld-label">Wat is de som? <span className="rs-veld-opt">(hoe reken je het uit)</span></label>
             <input ref={somRef} className="rs-input" type="text" autoComplete="off" placeholder="bijv. 5000 + 923"
-              value={som} onChange={e => setSom(e.target.value)} onKeyDown={e => e.key === 'Enter' && check()} />
+              value={som} onChange={e => setSom(zonderIsGelijk(e.target.value))}
+              onBeforeInput={weigerInvoer}
+              onKeyDown={e => { weigerToets(e); if (e.key === 'Enter') check() }} />
           </div>
           <div className="rs-veld">
             <label className="rs-veld-label">Antwoord</label>
             <div className="rs-antwoord-row">
               <input className="rs-input" type="text" inputMode="decimal" autoComplete="off" placeholder="Jouw antwoord…"
-                value={antw} onChange={e => setAntw(e.target.value)} onKeyDown={e => e.key === 'Enter' && check()} />
+                value={antw} onChange={e => setAntw(zonderIsGelijk(e.target.value))}
+                onBeforeInput={weigerInvoer}
+                onKeyDown={e => { weigerToets(e); if (e.key === 'Enter') check() }} />
               {heeftRest && (
                 <div className="rs-rest-vak">
                   <span className="rs-rest-label">Rest</span>
                   <input className="rs-input rs-rest-input" type="text" inputMode="numeric" autoComplete="off" placeholder="…"
-                    value={rest} onChange={e => setRest(e.target.value)} onKeyDown={e => e.key === 'Enter' && check()} />
+                    value={rest} onChange={e => setRest(zonderIsGelijk(e.target.value))}
+                    onBeforeInput={weigerInvoer}
+                    onKeyDown={e => { weigerToets(e); if (e.key === 'Enter') check() }} />
                 </div>
               )}
               <button className="rs-check-btn" onClick={check}>Controleer →</button>

@@ -73,4 +73,19 @@ describe('Invoer', () => {
     doel.stuur('mousedown', { button: 2, clientX: 0, clientY: 0 })
     expect(invoer.muisNetNeer).toBe(false)
   })
+
+  // Menu's die zowel met de muis als met de pijltjes werken hebben dit nodig:
+  // een stilliggende cursor mag de selectie niet elke frame terugzetten.
+  it('meldt alleen beweging als de muis echt verplaatst is', () => {
+    invoer.koppelBeeld((x, y) => ({ x, y, in: true }))
+    expect(invoer.muis.bewogen).toBe(false)
+    doel.stuur('mousemove', { clientX: 40, clientY: 20 })
+    expect(invoer.muis.bewogen).toBe(true)
+    invoer.eindFrame()
+    expect(invoer.muis.bewogen).toBe(false)
+    doel.stuur('mousemove', { clientX: 40, clientY: 20 })
+    expect(invoer.muis.bewogen).toBe(false)
+    doel.stuur('mousemove', { clientX: 41, clientY: 20 })
+    expect(invoer.muis.bewogen).toBe(true)
+  })
 })

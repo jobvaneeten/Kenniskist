@@ -91,7 +91,13 @@ export class Menu {
         overIndex = i
       }
     }
-    if (overIndex >= 0 && overIndex !== this.index) { this.index = overIndex; sfx.uiNavigatie() }
+    // Alleen meelopen met de muis als die ook echt beweegt: een cursor die
+    // stilligt boven een knop zou de selectie anders elke frame terugzetten en
+    // de pijltjestoetsen onbruikbaar maken.
+    if (overIndex >= 0 && overIndex !== this.index && invoer.muis.bewogen) {
+      this.index = overIndex
+      sfx.uiNavigatie()
+    }
     if (overIndex >= 0 && invoer.muisNetNeer) { sfx.uiKiezen(); return overIndex }
 
     if (invoer.netIngedrukt('bevestig')) {

@@ -63,17 +63,21 @@ export class WinkelScene {
 
     if (this.bevestigen) return this._updateBevestigen(invoer)
 
-    if (invoer.netIngedrukt('omlaag')) this._kies(this.index + 1)
-    if (invoer.netIngedrukt('omhoog')) this._kies(this.index - 1)
+    // Toetsenbord. Ingedrukt houden herhaalt: met twintig characters is één
+    // stap per aanslag te traag om door de lijst te komen.
+    if (this._herhaal(invoer, 'omlaag', dt)) this._kies(this.index + 1)
+    if (this._herhaal(invoer, 'omhoog', dt)) this._kies(this.index - 1)
     if (invoer.netIngedrukt('bevestig')) this._activeer()
     if (invoer.netIngedrukt('terug')) { sfx.uiTerug(); this.terugNaar() }
 
-    // Muis
+    // Muis. De selectie volgt de cursor alleen als die ook echt beweegt: een
+    // stilliggende muis boven de lijst zette de selectie anders elke frame
+    // terug, en dan lijken de pijltjes het niet te doen.
     for (let i = 0; i < this.rijVakken.length; i++) {
       const v = this.rijVakken[i]
       if (!v) continue
       if (invoer.muis.x >= v.x && invoer.muis.x < v.x + v.w && invoer.muis.y >= v.y && invoer.muis.y < v.y + v.h) {
-        if (v.index !== this.index) this._kies(v.index)
+        if (v.index !== this.index && invoer.muis.bewogen) this._kies(v.index)
         if (invoer.muisNetNeer) this._activeer()
       }
     }
@@ -82,6 +86,24 @@ export class WinkelScene {
       && invoer.muis.y >= this.knopVak.y && invoer.muis.y < this.knopVak.y + this.knopVak.h) {
       this._activeer()
     }
+  }
+
+  // Eén stap bij de aanslag, daarna herhalen zolang je de toets vasthoudt:
+  // eerst een halve seconde pauze, dan acht stappen per seconde.
+  _herhaal(invoer, actie, dt) {
+    if (invoer.netIngedrukt(actie)) {
+      this._herhaalActie = actie
+      this._herhaalTijd = 0.42
+      return true
+    }
+    if (this._herhaalActie !== actie || !invoer.ingedrukt(actie)) {
+      if (this._herhaalActie === actie) this._herhaalActie = null
+      return false
+    }
+    this._herhaalTijd -= dt
+    if (this._herhaalTijd > 0) return false
+    this._herhaalTijd = 0.12
+    return true
   }
 
   _kies(nieuw) {

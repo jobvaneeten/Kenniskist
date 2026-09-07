@@ -31,7 +31,11 @@ export class Invoer {
     // aan: een korte tik of klik van 10 ms zou anders spoorloos verdwijnen.
     // Wordt in eindFrame() geleegd, dus één aanslag telt precies één keer.
     this.geraakt = new Set()
-    this.muis = { x: 0, y: 0, neer: false, vorigNeer: false, geklikt: false, inBeeld: false }
+    // `bewogen` = de muis is deze update daadwerkelijk verplaatst. Menu's die
+    // zowel met de muis als met de pijltjes te bedienen zijn hebben dat nodig:
+    // zonder die vlag zet een stilliggende cursor de selectie elke frame terug
+    // naar de rij waar hij toevallig boven hangt, en lijken de pijltjes stuk.
+    this.muis = { x: 0, y: 0, neer: false, vorigNeer: false, geklikt: false, inBeeld: false, bewogen: false }
     this.eersteInteractie = false
     this._naarBeeld = null // (clientX, clientY) -> {x, y} in spelcoördinaten
 
@@ -49,6 +53,7 @@ export class Invoer {
     this._move = (e) => {
       if (!this._naarBeeld) return
       const p = this._naarBeeld(e.clientX, e.clientY)
+      if (Math.abs(p.x - this.muis.x) > 0.5 || Math.abs(p.y - this.muis.y) > 0.5) this.muis.bewogen = true
       this.muis.x = p.x
       this.muis.y = p.y
       this.muis.inBeeld = p.in
@@ -114,6 +119,7 @@ export class Invoer {
     this.vorig = new Set(this.nu)
     this.muis.vorigNeer = this.muis.neer
     this.muis.geklikt = false
+    this.muis.bewogen = false
     this.geraakt.clear()
     this.tekens.length = 0
   }
