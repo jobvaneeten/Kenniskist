@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase.js'
+import { kopieVoorstel } from '../lib/weektaakKopie.js'
+import { kopieerWeektaak } from './weektaakOpslaan.js'
 import WeektaakForm from './WeektaakForm.jsx'
 import WeektaakVoortgang from './WeektaakVoortgang.jsx'
 import WeektaakDifferentiatie from './WeektaakDifferentiatie.jsx'
@@ -31,6 +33,10 @@ export default function WeektaakTab({ klas, onKiesLeerling }) {
   const [toonVerwijder, setToonVerwijder] = useState(false)
   const [verwijderBezig, setVerwijderBezig] = useState(false)
   const [verwijderFout, setVerwijderFout] = useState('')
+  // Kopiëren: null = dicht, anders het ingevulde voorstel voor de nieuwe week.
+  const [kopie, setKopie] = useState(null)
+  const [kopieBezig, setKopieBezig] = useState(false)
+  const [kopieFout, setKopieFout] = useState('')
 
   useEffect(() => {
     let actief = true
@@ -38,7 +44,33 @@ export default function WeektaakTab({ klas, onKiesLeerling }) {
     return () => { actief = false }
   }, [klas.id])
 
-  const kiesWeektaak = (wt) => { setGekozen(wt); setWeergave('voortgang'); setAlleenNietAf(false); setToonVerwijder(false) }
+  const kiesWeektaak = (wt) => {
+    setGekozen(wt); setWeergave('voortgang'); setAlleenNietAf(false)
+    setToonVerwijder(false); setKopie(null); setKopieFout('')
+  }
+
+  // Dezelfde weektaak nog een keer klaarzetten, standaard voor de week erna.
+  // De opdrachten en de differentiatie gaan mee; de voortgang begint opnieuw en
+  // de opgaven worden bij het spelen opnieuw gegenereerd.
+  const opslaanKopie = async () => {
+    setKopieBezig(true); setKopieFout('')
+    try {
+      await kopieerWeektaak({
+        bronId: gekozen.id,
+        schoolId: klas.school_id,
+        klasId: klas.id,
+        titel: kopie.titel.trim() || gekozen.titel,
+        startOp: kopie.startOp,
+        eindOp: kopie.eindOp,
+      })
+      setKopie(null)
+      naOpslaan()
+    } catch {
+      setKopieFout('Kopiëren mislukt — probeer opnieuw.')
+    } finally {
+      setKopieBezig(false)
+    }
+  }
 
   // De opdrachten en toewijzingen gaan mee (cascade), maar het gemaakte werk
   // niet: resultaten.opdracht_id staat op SET NULL, dus die regels blijven
@@ -109,10 +141,64 @@ export default function WeektaakTab({ klas, onKiesLeerling }) {
               onClick={() => setAlleenNietAf(v => !v)}
             >{alleenNietAf ? 'Toon iedereen' : 'Alleen niet af'}</button>
             <button className="portaal-knop portaal-knop-subtiel" onClick={differentieren}>Differentiëren</button>
+            <button
+              className="portaal-knop portaal-knop-subtiel"
+              onClick={() => {
+                setToonVerwijder(false); setKopieFout('')
+                setKopie(k => (k ? null : kopieVoorstel(gekozen)))
+              }}
+            >Kopiëren</button>
             <button className="portaal-knop portaal-knop-subtiel" onClick={bewerken}>Bewerken</button>
             <button className="portaal-knop portaal-knop-subtiel" onClick={() => setToonVerwijder(v => !v)}>Verwijderen</button>
           </div>
         </div>
+
+        {kopie && (
+          <div className="portaal-waarschuwing" style={{ borderColor: 'rgba(120,180,255,0.5)' }}>
+            <p className="portaal-zacht" style={{ margin: 0 }}>
+              <strong>{gekozen.titel}</strong> nog een keer klaarzetten. De opdrachten gaan mee, en ook wie
+              welke opdracht krijgt en met welk eigen aantal — de differentiatie blijft dus precies zoals
+              je hem hebt ingesteld. De <strong>opgaven zelf zijn nieuw</strong>: sommen, woorden en zinnen
+              worden bij het spelen gemaakt, dus je leerlingen krijgen andere opgaven van dezelfde soort.
+              De voortgang begint weer op nul.
+            </p>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 10 }}>
+              <label className="portaal-veld">
+                Titel
+                <input
+                  type="text" value={kopie.titel}
+                  onChange={e => setKopie(k => ({ ...k, titel: e.target.value }))}
+                />
+              </label>
+              <label className="portaal-veld">
+                Van
+                <input
+                  type="date" value={kopie.startOp}
+                  onChange={e => setKopie(k => ({ ...k, startOp: e.target.value }))}
+                />
+              </label>
+              <label className="portaal-veld">
+                Tot en met
+                <input
+                  type="date" value={kopie.eindOp}
+                  onChange={e => setKopie(k => ({ ...k, eindOp: e.target.value }))}
+                />
+              </label>
+            </div>
+            {kopie.eindOp < kopie.startOp && (
+              <p className="portaal-fout">De einddatum ligt vóór de startdatum.</p>
+            )}
+            {kopieFout && <p className="portaal-fout">{kopieFout}</p>}
+            <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+              <button
+                className="portaal-knop"
+                disabled={kopieBezig || kopie.eindOp < kopie.startOp}
+                onClick={opslaanKopie}
+              >{kopieBezig ? 'Bezig…' : 'Kopie klaarzetten'}</button>
+              <button className="portaal-knop portaal-knop-subtiel" onClick={() => setKopie(null)}>Annuleren</button>
+            </div>
+          </div>
+        )}
         {toonVerwijder && (
           <div className="portaal-waarschuwing">
             <p className="portaal-zacht" style={{ margin: 0 }}>

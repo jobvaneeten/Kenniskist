@@ -78,3 +78,66 @@ export async function slaWeektaakOp({ weektaakId, schoolId, klasId, titel, start
 
   return wtId
 }
+
+// Zet dezelfde weektaak nog een keer klaar, meestal voor de week erna.
+//
+// Wat mee gaat: de opdrachten (tool, aantal, config, volgorde) en de
+// differentiatie — wie welke opdracht krijgt en met welk eigen aantal. Wat níet
+// mee gaat: de voortgang, vrijstellingen en herkansingen. Dat is precies de
+// bedoeling: hetzelfde werk, schone lei.
+//
+// De opgaven zelf komen niet uit de database maar worden bij het spelen
+// gegenereerd uit tool_id + config. Een kopie levert dus vanzelf nieuwe sommen,
+// woorden of zinnen op, met dezelfde soort en hetzelfde niveau.
+export async function kopieerWeektaak({ bronId, schoolId, klasId, titel, startOp, eindOp }) {
+  const { data: bronOpdrachten, error: opdrachtFout } = await supabase
+    .from('opdrachten').select('id, tool_id, aantal, config, volgorde')
+    .eq('weektaak_id', bronId).order('volgorde')
+  if (opdrachtFout) throw opdrachtFout
+
+  const bronIds = (bronOpdrachten ?? []).map(o => o.id)
+  let bronToewijzingen = []
+  if (bronIds.length) {
+    const { data, error } = await supabase
+      .from('toewijzingen').select('opdracht_id, leerling_id, aantal_override')
+      .in('opdracht_id', bronIds)
+    if (error) throw error
+    bronToewijzingen = data ?? []
+  }
+
+  const { data: nieuweWeektaak, error: wtFout } = await supabase
+    .from('weektaken')
+    .insert({ school_id: schoolId, klas_id: klasId, titel, start_op: startOp, eind_op: eindOp })
+    .select('id').single()
+  if (wtFout) throw wtFout
+  const nieuwId = nieuweWeektaak.id
+
+  // Eén insert per opdracht, want we hebben de nieuwe id's nodig om de
+  // toewijzingen aan te hangen. Het zijn er hooguit een handvol.
+  const idKaart = new Map()
+  for (const o of bronOpdrachten ?? []) {
+    const { data, error } = await supabase.from('opdrachten').insert({
+      school_id: schoolId, klas_id: klasId, weektaak_id: nieuwId,
+      tool_id: o.tool_id, aantal: o.aantal, config: o.config ?? {}, volgorde: o.volgorde,
+    }).select('id').single()
+    if (error) throw error
+    idKaart.set(o.id, data.id)
+  }
+
+  // status blijft op de standaard 'open' en herkansingen op 0: een vrijstelling
+  // of een herkansing hoorde bij de vorige week, niet bij deze.
+  const nieuweToewijzingen = bronToewijzingen
+    .filter(t => idKaart.has(t.opdracht_id))
+    .map(t => ({
+      opdracht_id: idKaart.get(t.opdracht_id),
+      leerling_id: t.leerling_id,
+      aantal_override: t.aantal_override,
+      school_id: schoolId,
+    }))
+  if (nieuweToewijzingen.length) {
+    const { error } = await supabase.from('toewijzingen').insert(nieuweToewijzingen)
+    if (error) throw error
+  }
+
+  return { id: nieuwId, opdrachten: idKaart.size, toewijzingen: nieuweToewijzingen.length }
+}
