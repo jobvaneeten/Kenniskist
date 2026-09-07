@@ -32,72 +32,108 @@ describe('lesindeling', () => {
   })
 })
 
-describe('groep 7, instapblok', () => {
-  it('is voorlopig het enige blok dat klaar is', () => {
+describe('groep 7, alle blokken', () => {
+  it('heeft het instapblok en blok 1 tot en met 10', () => {
     expect(GROEPEN_MET_DENKVRAGEN).toEqual([7])
-    expect(heeftBlok(7, 0)).toBe(true)
-    expect(heeftBlok(7, 1)).toBe(false)
+    for (const b of BLOKKEN) expect(heeftBlok(7, b.nr), `blok ${b.nr}`).toBe(true)
     expect(heeftBlok(6, 0)).toBe(false)
   })
 
+  it('heeft in elk blok precies acht denkvragen', () => {
+    for (const b of BLOKKEN) {
+      let n = 0
+      for (let les = 1; les <= LESSEN_PER_BLOK; les++) if (denkvraag(7, b.nr, les)) n++
+      expect(n, `blok ${b.nr}`).toBe(8)
+    }
+  })
+
+  it('gebruikt nergens twee keer dezelfde vraag of hetzelfde zetje', () => {
+    const vragen = new Set()
+    const hints = new Set()
+    for (const b of BLOKKEN) {
+      for (let les = 1; les <= LESSEN_PER_BLOK; les++) {
+        const v = denkvraag(7, b.nr, les)
+        if (!v) continue
+        expect(vragen.has(v.vraag), `blok ${b.nr} les ${les}: dubbele vraag`).toBe(false)
+        expect(hints.has(v.hint), `blok ${b.nr} les ${les}: dubbel zetje`).toBe(false)
+        vragen.add(v.vraag)
+        hints.add(v.hint)
+      }
+    }
+    expect(vragen.size).toBe(88)
+  })
+
   it('heeft een denkvraag bij elke les behalve de herhalingslessen', () => {
-    for (let les = 1; les <= LESSEN_PER_BLOK; les++) {
-      const v = denkvraag(7, 0, les)
-      if (isHerhalingsles(les)) expect(v, `les ${les}`).toBeNull()
-      else expect(v, `les ${les}`).not.toBeNull()
+    for (const b of BLOKKEN) {
+      for (let les = 1; les <= LESSEN_PER_BLOK; les++) {
+        const v = denkvraag(7, b.nr, les)
+        if (isHerhalingsles(les)) expect(v, `blok ${b.nr} les ${les}`).toBeNull()
+        else expect(v, `blok ${b.nr} les ${les}`).not.toBeNull()
+      }
     }
   })
 
   it('geeft bij elke denkvraag het doel van de methode mee', () => {
-    for (let les = 1; les <= LESSEN_PER_BLOK; les++) {
-      const v = denkvraag(7, 0, les)
-      if (!v) continue
-      expect(typeof v.doel, `les ${les}`).toBe('string')
-      expect(v.doel.length, `les ${les}`).toBeGreaterThan(20)
-      expect(v.doelNr).toBe(DOEL_VAN_LES[les])
+    for (const b of BLOKKEN) {
+      for (let les = 1; les <= LESSEN_PER_BLOK; les++) {
+        const v = denkvraag(7, b.nr, les)
+        if (!v) continue
+        expect(typeof v.doel, `blok ${b.nr} les ${les}`).toBe('string')
+        expect(v.doel.length, `blok ${b.nr} les ${les}`).toBeGreaterThan(20)
+        expect(v.doelNr).toBe(DOEL_VAN_LES[les])
+      }
     }
   })
 
-  it('geeft de twee lessen van één doel niet dezelfde vraag', () => {
-    for (const [a, b] of [[1, 2], [3, 4], [6, 7], [8, 9]]) {
-      expect(denkvraag(7, 0, a).vraag).not.toBe(denkvraag(7, 0, b).vraag)
+  it('geeft de twee lessen van één doel niet dezelfde vraag, en niet hetzelfde niveau', () => {
+    for (const blok of BLOKKEN) {
+      for (const [a, b] of [[1, 2], [3, 4], [6, 7], [8, 9]]) {
+        const va = denkvraag(7, blok.nr, a)
+        const vb = denkvraag(7, blok.nr, b)
+        expect(va.vraag).not.toBe(vb.vraag)
+        // Twee lessen op hetzelfde doel moeten een andere invalshoek hebben:
+        // dezelfde niveau-combinatie twee keer is verdacht.
+        expect(va.niveau, `blok ${blok.nr} les ${a} en ${b}`).not.toBe(vb.niveau)
+      }
     }
   })
 
   it('stelt overal een open vraag met een zetje erbij', () => {
-    for (let les = 1; les <= LESSEN_PER_BLOK; les++) {
-      const v = denkvraag(7, 0, les)
+    for (const b of BLOKKEN) for (let les = 1; les <= LESSEN_PER_BLOK; les++) {
+      const v = denkvraag(7, b.nr, les)
       if (!v) continue
-      expect(v.vraag.length, `les ${les}`).toBeGreaterThan(60)
-      expect(v.hint.length, `les ${les}`).toBeGreaterThan(20)
+      expect(v.vraag.length, `blok ${b.nr} les ${les}`).toBeGreaterThan(60)
+      expect(v.hint.length, `blok ${b.nr} les ${les}`).toBeGreaterThan(20)
       // Een denkvraag vraagt om uitleggen, bedenken of beoordelen — niet om
       // één getal. Zonder zo'n werkwoord is het gewoon een som.
       // "leg ... uit" en "zoek ... uit" mogen er woorden tussen hebben
       // ("leg bij elke som uit", "zoek kolom voor kolom uit").
-      expect(v.vraag, `les ${les}`).toMatch(
-        /\b(leg|zoek)\b[^.\n]*\buit\b|bedenk|waarom|waaraan|hoe (kun|kan|had|zie)|wat vind|welke zou jij|laat zien|lukt het|wat gaat er mis/i,
+      expect(v.vraag, `blok ${b.nr} les ${les}`).toMatch(
+        /\b(leg|zoek)\b[^.\n]*\buit\b|bedenk|waarom|waaraan|hoe (kun|kan|had|zie|weet|helpt|maak|heb)|wat vind|welke .*(zou jij|kies|vind)|laat zien|lukt het|wat gaat er mis|vertel|wie heeft gelijk|klopt dat/i,
       )
     }
   })
 
   it('blijft op de bovenste drie niveaus van Bloom', () => {
     const toegestaan = ['analyseren', 'evalueren', 'creëren']
-    for (let les = 1; les <= LESSEN_PER_BLOK; les++) {
-      const v = denkvraag(7, 0, les)
+    for (const b of BLOKKEN) for (let les = 1; les <= LESSEN_PER_BLOK; les++) {
+      const v = denkvraag(7, b.nr, les)
       if (!v) continue
       const woorden = v.niveau.split(/ en /)
       for (const w of woorden) expect(toegestaan, `les ${les}: ${w}`).toContain(w)
     }
   })
 
-  it('gebruikt alle drie de niveaus over het blok heen', () => {
-    const alles = []
-    for (let les = 1; les <= LESSEN_PER_BLOK; les++) {
-      const v = denkvraag(7, 0, les)
-      if (v) alles.push(...v.niveau.split(/ en /))
-    }
-    for (const niveau of ['analyseren', 'evalueren', 'creëren']) {
-      expect(alles, niveau).toContain(niveau)
+  it('gebruikt in elk blok alle drie de niveaus', () => {
+    for (const b of BLOKKEN) {
+      const alles = []
+      for (let les = 1; les <= LESSEN_PER_BLOK; les++) {
+        const v = denkvraag(7, b.nr, les)
+        if (v) alles.push(...v.niveau.split(/ en /))
+      }
+      for (const niveau of ['analyseren', 'evalueren', 'creëren']) {
+        expect(alles, `blok ${b.nr}: ${niveau}`).toContain(niveau)
+      }
     }
   })
 })
