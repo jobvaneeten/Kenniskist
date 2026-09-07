@@ -16,7 +16,8 @@
     "screenshots": "playwright test tools/screenshot-levels.js",
     "speeltest": "playwright test tools/speeltest.js",
     "preview": "npm run build && wrangler dev",
-    "deploy": "npm run build && wrangler deploy"
+    "deploy": "npm run build && wrangler deploy",
+    "uitspeeltest": "playwright test tools/uitspeeltest.js"
   },
   "dependencies": {
     "@babylonjs/core": "^9.9.1",

@@ -48,8 +48,40 @@ function reikwijdte(v, omhoogTegels) {
   return Math.floor(((tOp + tNeer) * SNELHEID) / TEGEL) + 1
 }
 
-const VAST = new Set(['#', 'b', 'I', 'i', '<', '>', ':', ';', 'd'])
+// 'd' (sleutelkaartdeur) staat hier bewust niet bij: voor de route telt een
+// deur als open ruimte, want de kaart die hem opent ligt er altijd vóór. Dat
+// laatste wordt apart gecontroleerd (zie deurVolgorde) — als wall behandelen
+// zou elk sleutellevel ten onrechte als onneembaar gelden.
+const VAST = new Set(['#', 'b', 'I', 'i', '<', '>', ':', ';'])
 const STAANBAAR = new Set([...VAST, '='])
+
+// Deuren gaan op volgorde open: de eerste kaart opent de eerste deur van links.
+// Dus links van de k-de deur moeten minstens k kaarten liggen. Zonder die regel
+// kan een level een slot zonder sleutel worden — 4-11 was dat ook echt, want
+// daar gingen de deuren pas open bij álle kaarten terwijl de tweede kaart
+// achter de eerste deur ligt.
+function deurVolgorde(kaart) {
+  const kolommen = (teken) => {
+    const uit = new Set()
+    kaart.forEach((r) => {
+      for (let x = 0; x < r.length; x++) if (r[x] === teken) uit.add(x)
+    })
+    return [...uit].sort((a, b) => a - b)
+  }
+  const deuren = kolommen('d')
+  const kaarten = kolommen('q')
+  const fouten = []
+  deuren.forEach((dx, i) => {
+    const ervoor = kaarten.filter((kx) => kx < dx).length
+    if (ervoor < i + 1) {
+      fouten.push(`deur ${i + 1} op kolom ${dx} heeft er maar ${ervoor} sleutelkaart(en) vóór zich`)
+    }
+  })
+  if (kaarten.length < deuren.length) {
+    fouten.push(`${deuren.length} deur(en) maar ${kaarten.length} sleutelkaart(en)`)
+  }
+  return fouten
+}
 
 const fouten = []
 const waarschuwingen = []
@@ -350,6 +382,8 @@ for (const level of ALLE_LEVELS) {
   // Doeltijd
   if (!level.doeltijd || level.doeltijd < 30) fout(level, `doeltijd ${level.doeltijd} is te kort`)
   if (!level.naam) fout(level, 'geen naam')
+
+  for (const f of deurVolgorde(kaart)) fout(level, f)
 
   // Bereikbaarheid
   const bereik = bereikbaar(level)

@@ -279,7 +279,11 @@ export class LevelScene {
       this._botsingen()
       this.speler.controleerGevaar(this.map, fx)
       if (this.lava?.raakt(this.speler.lichaam)) this.speler.sterf(fx)
-      if (this.speler.lichaam.boven > this.map.hoogtePx + 40) this.speler.sterf(fx)
+      // Uit de kaart vallen. Bij omgekeerde zwaartekracht val je naar bóven,
+      // en dan bestond er geen ondergrens: je zweefde eindeloos door het niets
+      // en het level was alleen nog via het pauzemenu te verlaten.
+      const l = this.speler.lichaam
+      if (l.boven > this.map.hoogtePx + 40 || l.onder < -40) this.speler.sterf(fx)
     }
 
     if (this.speler.staat === STAAT.DOOD && this.respawnTimer <= 0) {
@@ -385,16 +389,39 @@ export class LevelScene {
     }
   }
 
+  // Vraagtekenblokken van onderaf. De speler-physics kent alleen tegels en
+  // capsules zijn entiteiten, dus dit moet hier.
+  //
+  // Het ging eerder mis op `l.tegenPlafond`: dat wordt alleen gezet als je je
+  // hoofd tegen een tégel stoot. Boven een capsule staat per definitie niets
+  // (de legenda maakt de tegel eronder leeg), dus die vlag kwam nooit omhoog en
+  // er kwam nooit iets uit een blok. Nu kijken we of de kop deze stap dwars
+  // door het blok is gegaan — dat werkt ook bij een snelle sprong, waar één
+  // frame de speler er zo doorheen schiet.
   _blokkenGeraakt() {
-    // Capsules van onderaf. De speler-physics meldt alleen tegels; capsules
-    // zijn entiteiten, dus die checken we hier.
     const l = this.speler.lichaam
-    if (l.vy >= 0 || !l.tegenPlafond) return
+    // "Omhoog" is bij omgekeerde zwaartekracht juist omlaag.
+    const kant = this.speler.zwaartekrachtOm ? -1 : 1
+    if (l.vy * kant >= 0) return
+
+    const kop = kant > 0 ? l.boven : l.onder
+    const vorigeKop = kant > 0 ? l.vorigeY : l.vorigeY + l.h
+
     for (const c of this.capsules) {
       const v = c.vlak
-      if (l.links < v.x + v.w && l.rechts > v.x && l.boven <= v.y + v.h + 2 && l.boven > v.y) {
-        if (c.sla(this.spel.particles)) this.spel.fx.schud(2, 0.12)
-      }
+      if (l.rechts <= v.x + 2 || l.links >= v.x + v.w - 2) continue
+      const grens = kant > 0 ? v.y + v.h : v.y
+      const doorheen = kant > 0
+        ? (kop <= grens && vorigeKop >= grens)
+        : (kop >= grens && vorigeKop <= grens)
+      if (!doorheen) continue
+
+      // Ook een leeg blok stopt je: je stoot je kop, er komt alleen niets uit.
+      if (c.sla(this.spel.particles)) this.spel.fx.schud(2, 0.12)
+      l.vy = 0
+      this.speler.springtNog = false
+      l.y = kant > 0 ? grens : grens - l.h
+      break
     }
   }
 
@@ -503,7 +530,10 @@ export class LevelScene {
       if (la.raakt(l)) this.speler.raak(la.midX, fx)
     }
 
-    // Sleutelkaarten: alle kaarten binnen = alle deuren open.
+    // Sleutelkaarten. Elke kaart opent één deur, van links naar rechts: de
+    // eerste kaart de eerste deur, de tweede de tweede. Vroeger gingen alle
+    // deuren pas open bij álle kaarten, waardoor 4-11 (waar de tweede kaart
+    // áchter de eerste deur ligt) niet uit te spelen was.
     for (const sl of this.sleutels) {
       if (sl.gepakt) continue
       const v = sl.vlak
@@ -511,12 +541,12 @@ export class LevelScene {
         sl.gepakt = true
         sfx.powerup()
         this.spel.particles.sparkle(v.x + 6, v.y + 5, '#3ef0ff')
-        if (this.sleutels.every((k) => k.gepakt)) {
-          this.map.deurenOpen = true
-          this.renderer.herbak()
-          fx.toonTekst('deuren open', this.speler.midX, this.speler.midY - 20, UI.goed)
-          fx.flitsScherm('#3ef0ff', 0.12)
-        }
+        this.map.sleutelsGepakt = this.sleutels.filter((k) => k.gepakt).length
+        this.renderer.herbak()
+        const nog = this.map.aantalDeuren - this.map.sleutelsGepakt
+        fx.toonTekst(nog > 0 ? 'deur open' : 'alle deuren open',
+          this.speler.midX, this.speler.midY - 20, UI.goed)
+        fx.flitsScherm('#3ef0ff', 0.12)
       }
     }
 
@@ -682,7 +712,7 @@ export class LevelScene {
     for (const po of this.portalen) po.herstel()
     for (const zp of this.zwaarteplaten) zp.herstel()
     this.speler.zwaartekrachtOm = !!this.level.omgekeerdStart
-    this.map.deurenOpen = false
+    this.map.sleutelsGepakt = 0
     this.lava?.herstel()
     // Munten die deze poging al gepakt zijn blijven weg: binnen één poging is
     // elke munt maar één keer te pakken, ook na een respawn.

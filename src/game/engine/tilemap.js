@@ -151,8 +151,27 @@ export class Tilemap {
     // Dun ijs: index -> { staat: 'barst' | 'weg', t }. Tegels die er niet in
     // staan zijn heel.
     this.broos = new Map()
-    // Deuren staan open zodra alle sleutelkaarten van het level gepakt zijn.
-    this.deurenOpen = false
+    // Deuren gaan op volgorde open: de eerste deur van links met de eerste
+    // sleutelkaart, de tweede met de tweede. Eerst gingen ze pas open als je
+    // álle kaarten had, en dat is een slot zonder uitgang zodra de tweede kaart
+    // achter de eerste deur ligt — precies de opzet van 4-11.
+    this.sleutelsGepakt = 0
+    this.deurRang = new Map() // tegelindex -> hoeveelste deur van links
+    const deuren = []
+    for (let i = 0; i < this.tegels.length; i++) {
+      if (this.tegels[i] === T.DEUR) deuren.push(i)
+    }
+    deuren.sort((a, b) => (a % this.w) - (b % this.w))
+    // Een deur die meerdere tegels hoog is, is één deur: dezelfde kolom telt
+    // maar één keer mee.
+    let rang = 0
+    let vorigeKolom = -1
+    for (const i of deuren) {
+      const kolom = i % this.w
+      if (kolom !== vorigeKolom) { rang++; vorigeKolom = kolom }
+      this.deurRang.set(i, rang)
+    }
+    this.aantalDeuren = rang
     // Verdwijnende platforms: fase 0 laat de A-tegels staan, fase 1 de B-tegels.
     this.pulsFase = 0
     this.pulsTijd = 0
@@ -172,7 +191,7 @@ export class Tilemap {
     const t = this.tegels[i]
     if (t === T.VERBORGEN && !this.onthuld.has(i)) return T.LEEG
     if (t === T.BROOS && this.broos.get(i)?.staat === 'weg') return T.LEEG
-    if (t === T.DEUR && this.deurenOpen) return T.LEEG
+    if (t === T.DEUR && this.deurRang.get(i) <= this.sleutelsGepakt) return T.LEEG
     if (t === T.PULS_A && this.pulsFase === 1) return T.LEEG
     if (t === T.PULS_B && this.pulsFase === 0) return T.LEEG
     return t
@@ -255,7 +274,7 @@ export class Tilemap {
     this.kapot.clear()
     this.onthuld.clear()
     this.broos.clear()
-    this.deurenOpen = false
+    this.sleutelsGepakt = 0
     this.pulsFase = 0
     this.pulsTijd = 0
     this.veranderd.length = 0

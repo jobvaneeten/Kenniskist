@@ -5,7 +5,7 @@ import { defineConfig } from '@playwright/test'
 // machine werkt.
 export default defineConfig({
   testDir: './tools',
-  testMatch: /(screenshot-levels|speeltest)\.js/,
+  testMatch: /(screenshot-levels|speeltest|uitspeeltest)\.js/,
   timeout: 60_000,
   fullyParallel: false,
   workers: 1,
