@@ -105,15 +105,24 @@ export default function Woordenschat({ onBack, addBriefgeld, addCuruntie, aantal
   const [correctCount, setCorrectCount] = useState(0)
   const [feedback, setFeedback] = useState(null) // { correct, gekozen }
   const [showReward, setShowReward] = useState(false)
+  const [hintOpen, setHintOpen] = useState(false)
 
   const opdracht = useGebruikOpdracht({ toolId: 'woordenschat-blok1', aantal })
   const huidig = pool[poolIdx]
   // Eén vraag per woord-beurt: opnieuw genereren bij elke render zou de
   // antwoordknoppen laten springen zodra er state verandert.
   const vraag = useMemo(() => maakVraag(huidig), [huidig])
+  // De hint: alle woorden van deze les met hun betekenis, op alfabet. Het
+  // antwoord staat er dus tussen, maar de leerling moet het er zelf uit halen.
+  const lesWoorden = useMemo(
+    () => WOORDEN.filter(w => w.les === huidig.les)
+      .sort((a, b) => kernVan(a).localeCompare(kernVan(b), 'nl')),
+    [huidig.les],
+  )
 
   function volgende() {
     setFeedback(null)
+    setHintOpen(false)
     const next = poolIdx + 1
     if (next >= pool.length) {
       setPool(shuffle(WOORDEN))
@@ -198,6 +207,33 @@ export default function Woordenschat({ onBack, addBriefgeld, addCuruntie, aantal
           </div>
           <p className="tv-vraag">{vraag.vraag}</p>
         </div>
+
+        {/* Hulp bij het zoeken: de woordenlijst van deze les met de betekenis
+            erbij. Het antwoord staat er tussen, maar je moet het er zelf
+            uithalen — daarom staat de lijst op alfabet en niet op volgorde van
+            de vraag. */}
+        {!feedback && (
+          <div className="tv-hint">
+            <button
+              className={`tv-hint-btn${hintOpen ? ' tv-hint-btn-open' : ''}`}
+              onClick={() => setHintOpen(v => !v)}
+            >
+              {hintOpen ? '💡 Hint verbergen' : `💡 Hint — woordenlijst van les ${huidig.les}`}
+            </button>
+            {hintOpen && (
+              <div className="tv-hint-lijst">
+                <p className="tv-hint-kop">
+                  Alle woorden van les {huidig.les}. Zoek zelf welk woord erbij hoort.
+                </p>
+                <ul>
+                  {lesWoorden.map(w => (
+                    <li key={w.woord}><strong>{w.woord}</strong> — {w.uitleg}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* De knoppen blijven na het antwoorden staan, met het juiste antwoord
             in het groen — zo zie je meteen wát het had moeten zijn. */}
