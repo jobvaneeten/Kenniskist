@@ -11,12 +11,14 @@ import OefeningLijst from './OefeningLijst.jsx'
 import OefeningDetail from './OefeningDetail.jsx'
 import LeerlingDetail from './LeerlingDetail.jsx'
 import WeektaakTab from './WeektaakTab.jsx'
+import LescheckTab from './LescheckTab.jsx'
 
 const TABS = [
   { key: 'overzicht', label: 'Groepsoverzicht', hint: 'de hele klas' },
   { key: 'leerlingen', label: 'Per leerling', hint: 'wie deed wat' },
   { key: 'oefeningen', label: 'Per vak', hint: 'wat is geoefend' },
   { key: 'weektaak', label: 'Weektaak', hint: 'af of niet' },
+  { key: 'lescheck', label: 'Lescheck', hint: '1 som per les' },
 ]
 
 // Keuzescherm bij het openen van een klas. Zonder deze stap landde je altijd
@@ -56,6 +58,11 @@ function KlasKeuze({ samenvatting, aantalLeerlingen, onKies }) {
       uitleg: 'Wie heeft de opdrachten af en wie nog niet?',
       stat: 'opdrachten, voortgang en vrijstellingen',
     },
+    {
+      key: 'lescheck', titel: 'Lescheck',
+      uitleg: 'Eén som over het lesdoel, aan het eind van de les.',
+      stat: 'zie meteen wie het snapte',
+    },
   ]
 
   return (
@@ -77,7 +84,7 @@ function KlasKeuze({ samenvatting, aantalLeerlingen, onKies }) {
   )
 }
 
-// Eén klas, vier invalshoeken. De filters (periode en herkomst) staan bovenaan
+// Eén klas, vijf invalshoeken. De filters (periode en herkomst) staan bovenaan
 // en gelden voor het hele scherm; daarvoor had elk tabblad zijn eigen filter en
 // zijn eigen fetch, wat betekende dat "deze week" op de ene pagina iets anders
 // kon zijn dan op de andere.
@@ -109,7 +116,7 @@ export default function KlasScherm({ klas, alleKlassen, onBack }) {
     return toolLabel(stap.id)
   }
 
-  const toontFilters = tab !== 'weektaak'
+  const toontFilters = tab !== 'weektaak' && tab !== 'lescheck'
   const laden = leerlingen === null
 
   return (
@@ -166,7 +173,7 @@ export default function KlasScherm({ klas, alleKlassen, onBack }) {
 
         {laden && <p className="portaal-leeg">Laden…</p>}
 
-        {!laden && leerlingen.length === 0 && tab !== 'weektaak' && (
+        {!laden && leerlingen.length === 0 && tab !== 'weektaak' && tab !== 'lescheck' && (
           <div className="portaal-kaart"><p className="portaal-leeg">Nog geen leerlingen in deze klas.</p></div>
         )}
 
@@ -212,6 +219,8 @@ export default function KlasScherm({ klas, alleKlassen, onBack }) {
         )}
 
         {!detail && tab === 'weektaak' && <WeektaakTab klas={klas} onKiesLeerling={kiesLeerling} />}
+
+        {!detail && tab === 'lescheck' && <LescheckTab klas={klas} />}
       </div>
     </div>
   )

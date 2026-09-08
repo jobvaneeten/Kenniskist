@@ -408,3 +408,53 @@
   font-size: 0.82rem; font-weight: 700; color: rgba(255,255,255,0.8);
 }
 .portaal-rij-vrijgesteld td { opacity: 0.45; }
+
+/* ── Lescheck: één som per rekenles ── */
+.portaal-leslijst { display: flex; flex-direction: column; gap: 4px; margin-top: 10px; }
+.portaal-lesrij {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 8px 10px; border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.03);
+}
+.portaal-lesrij.aan { background: rgba(99,102,241,0.18); border-color: rgba(165,180,252,0.45); }
+.portaal-lesvink { display: flex; align-items: center; gap: 8px; min-width: 130px; cursor: pointer; }
+.portaal-lesdoel { flex: 1; min-width: 220px; font-size: 0.85rem; }
+.portaal-lesdoel select { max-width: 100%; }
+
+.portaal-lestabs { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
+.portaal-lestab {
+  display: flex; flex-direction: column; gap: 2px; align-items: flex-start;
+  padding: 7px 12px; border-radius: 10px; cursor: pointer; font-size: 0.85rem;
+  border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.05); color: #fff;
+}
+.portaal-lestab:hover { background: rgba(255,255,255,0.1); }
+.portaal-lestab.actief { background: rgba(99,102,241,0.3); border-color: #a5b4fc; }
+
+.portaal-lesbadges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.portaal-lesbadge {
+  padding: 4px 9px; border-radius: 999px; font-size: 0.78rem; font-weight: 700;
+  border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.05);
+}
+
+.portaal-lescheck-raster {
+  display: grid; gap: 8px; margin-top: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
+}
+.portaal-lestegel {
+  display: flex; align-items: center; gap: 8px; text-align: left; cursor: pointer;
+  padding: 9px 11px; border-radius: 12px; font-size: 0.85rem; color: #fff;
+  border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.05);
+}
+.portaal-lestegel.goed { background: rgba(34,197,94,0.22); border-color: rgba(74,222,128,0.6); }
+.portaal-lestegel.fout { background: rgba(239,68,68,0.22); border-color: rgba(248,113,113,0.6); }
+.portaal-lestegel.open { outline: 2px solid #a5b4fc; }
+.portaal-lestegel-icoon { font-size: 1rem; }
+.portaal-lestegel-naam { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.portaal-lesdetail {
+  margin-top: 12px; padding: 12px 14px; border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.05);
+}
+.portaal-lesdetail p { margin: 0 0 6px; font-size: 0.9rem; }
+.portaal-lesdetail p:last-child { margin-bottom: 0; }

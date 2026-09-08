@@ -4,6 +4,7 @@ import Wardrobe        from './Wardrobe'
 import Shop            from './Shop'
 import GameMenu        from './GameMenu'
 import Weektaak        from './Weektaak'
+import { useOpenLescheck } from './lib/lescheck.js'
 import RocketGame      from './games/RocketGame'
 import PaintballGame   from './games/PaintballGame'
 import BotsenGame      from './games/BotsenGame'
@@ -149,6 +150,13 @@ function CodeModal({ onClose, onRedeem, onRedeemBrief, onUnlockAll, onUnlockCoun
 export default function App({ gast = false }) {
   const { profiel, uitloggen, toegestaneGroepen } = useSessie()
   const [screen, setScreen] = useState('menu')
+  // Staat er een lescheck klaar waarvan nog een les open is? Wordt herhaald
+  // opgehaald: de juf zet hem klaar terwijl de kinderen al op dit scherm zitten.
+  const { open: openLescheck } = useOpenLescheck(profiel)
+  // Welk mapje er open staat, apart bewaard: als het kind zijn laatste les
+  // afmaakt verdwijnt `openLescheck` bij de eerstvolgende ronde, en dan zou
+  // het eindscherm onder zijn handen wegklappen naar het menu.
+  const [lescheckMap, setLescheckMap] = useState(null)
 
   const [curuntie, setCuruntie] = useState(() => {
     try { return parseInt(localStorage.getItem('kk_curuntie') || '0', 10) } catch { return 0 }
@@ -303,6 +311,17 @@ export default function App({ gast = false }) {
     </>
   )
 
+  // Lescheck: hetzelfde weektaakscherm, maar direct in het mapje van de les.
+  if (screen === 'lescheck' && lescheckMap) return (
+    <>
+      <CurrencyBadge munten={curuntie} briefgeld={briefgeld} hideMunten />
+      <Weektaak
+        onBack={goMenu} addCuruntie={addCuruntie} addBriefgeld={addBriefgeld}
+        openMapId={lescheckMap}
+      />
+    </>
+  )
+
   if (screen === 'wardrobe') return (
     <>
       <CurrencyBadge munten={curuntie} briefgeld={briefgeld} hideMunten />
@@ -385,6 +404,13 @@ export default function App({ gast = false }) {
         </div>
         <p className="hero-sub">✨ Leren terwijl je speelt ✨</p>
       </div>
+
+      {profiel?.rol === 'leerling' && openLescheck && (
+        <button className="lescheck-btn" onClick={() => { setLescheckMap(openLescheck.id); setScreen('lescheck') }}>
+          <span className="lescheck-btn-titel">📝 {openLescheck.titel}</span>
+          <span className="lescheck-btn-sub">Kies je les en maak je som →</span>
+        </button>
+      )}
 
       <div className="menu">
         <button className="menu-btn btn-game" onClick={() => setScreen('game')}>

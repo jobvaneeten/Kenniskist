@@ -255,6 +255,11 @@ function VraagKaart({ opgave, onNext }) {
 
   useEffect(() => { setSom(''); setAntw(''); setRest(''); setPhase('answering'); setSomOk(null); setCalcOpen(false); setTimeout(() => somRef.current?.focus(), 50) }, [opgave])
 
+  // Wat de leerling opschreef, zoals het in het portaal getoond wordt. Gaat
+  // mee naar registreer(), want bij een lescheck wil de leerkracht niet alleen
+  // zien dát het fout was maar ook wát er stond.
+  const ingevuld = () => (heeftRest ? `${antw.trim()} rest ${rest.trim()}` : antw.trim())
+
   const check = () => {
     if (!antw.trim()) return
     if (heeftRest && !rest.trim()) return
@@ -337,7 +342,7 @@ function VraagKaart({ opgave, onNext }) {
           {somOk === false && <div className="rs-som-note">✏️ Je antwoord is goed. Je som klopte niet helemaal — kijk maar: {opgave.uitleg}</div>}
           {somOk === true && <div className="rs-som-note rs-som-ok">✅ En je som klopt ook!</div>}
           <div className="rs-uitleg">💡 {opgave.uitleg}</div>
-          <button className="rs-verder-btn" onClick={() => onNext(true)}>Verder →</button>
+          <button className="rs-verder-btn" onClick={() => onNext(true, ingevuld())}>Verder →</button>
         </div>
       )}
 
@@ -345,7 +350,7 @@ function VraagKaart({ opgave, onNext }) {
         <div className="rs-feedback rs-fout">
           <span>❌ Het juiste antwoord is <b>{toonAntwoord(opgave)}{heeftRest ? ` met rest ${opgave.rest}` : ''}</b>.</span>
           <div className="rs-uitleg">💡 {opgave.uitleg}</div>
-          <button className="rs-verder-btn" onClick={() => onNext(false)}>Volgende →</button>
+          <button className="rs-verder-btn" onClick={() => onNext(false, ingevuld())}>Volgende →</button>
         </div>
       )}
     </div>
@@ -578,11 +583,12 @@ export default function VerhaaltjesSommen({ groep: eigenGroep = 7, onBack, addBr
     }
   }
 
-  const volgende = useCallback((correct) => {
+  const volgende = useCallback((correct, ingevuld) => {
     if (opgave) recordStat(opgave, correct)
     const zalKlaarZijn = opdracht.aantal != null && (opdracht.gedaan + 1) >= opdracht.aantal
     opdracht.registreer(correct, {
       vraag: opgave?.vraag,
+      antwoord: ingevuld,
       juist: opgave ? toonAntwoord(opgave) : null,
       cat: opgave ? doelKey(opgave.groep, opgave.doel) : undefined,
       catLabel: opgave?.doel,

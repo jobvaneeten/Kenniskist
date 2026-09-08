@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useSessie } from './lib/sessie.jsx'
 import { haalMijnWeektaak, zetActieveOpdracht, wisActieveOpdracht } from './lib/weektaak.js'
 import { toolLabel } from './lib/tools.js'
+import { isLescheck, lesLabel } from './lib/lescheck.js'
 import { groepeer, korteDatum } from './lib/weektaakMapjes.js'
 import RenderTool from './games/toolRender.jsx'
 import './game.css'
@@ -10,11 +11,14 @@ import './game.css'
 // opdrachten die aan deze leerling zijn toegewezen. Los van GameMenu.jsx (zie
 // toolRender.jsx voor waarom) — deze state-machine heeft drie standen: de
 // mapjes, de opdrachten in één mapje, of één gekozen opdracht.
-export default function Weektaak({ onBack, addBriefgeld, addCuruntie }) {
+// openMapId: direct in dit mapje beginnen. Gebruikt door de lescheck-banner op
+// het startscherm — het kind heeft net les gehad en moet in één klik bij zijn
+// les zijn, niet eerst door de mapjes.
+export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId = null }) {
   const { profiel, toegestaneGroepen } = useSessie()
   const [opdrachten, setOpdrachten] = useState(null)
   const [gekozen, setGekozen] = useState(null)
-  const [openMap, setOpenMap] = useState(null)
+  const [openMap, setOpenMap] = useState(openMapId)
   const [ververs, setVervers] = useState(0)
 
   useEffect(() => {
@@ -65,9 +69,12 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie }) {
 
   if (map) {
     const af = map.opdrachten.filter(o => o.klaar).length
+    const direct = openMapId === map.id
     return (
       <div className="game-screen">
-        <button className="back-btn" onClick={() => setOpenMap(null)}>← Weektaken</button>
+        <button className="back-btn" onClick={() => (direct ? onBack() : setOpenMap(null))}>
+          {direct ? '← Menu' : '← Weektaken'}
+        </button>
         <div className="game-header">
           <span className="game-header-icon">📂</span>
           <h1 className="game-header-title">{map.titel}</h1>
@@ -80,11 +87,15 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie }) {
         <div className="mode-grid">
           {map.opdrachten.map(o => (
             <button key={o.opdrachtId} className="mode-card" onClick={() => start(o)}>
-              <span className="mode-name">{toolLabel(o.toolId)}{o.klaar ? ' ✅' : ''}</span>
+              <span className="mode-name">
+                {isLescheck(o) ? lesLabel(o) : toolLabel(o.toolId)}{o.klaar ? ' ✅' : ''}
+              </span>
               <span className="mode-desc">
-                {o.doel != null
-                  ? `${Math.min(o.somMax, o.doel)} / ${o.doel} gemaakt`
-                  : `${o.pogingen}× gemaakt`}
+                {isLescheck(o)
+                  ? (o.klaar ? 'Je som is gemaakt' : 'Eén som over de les van vandaag')
+                  : o.doel != null
+                    ? `${Math.min(o.somMax, o.doel)} / ${o.doel} gemaakt`
+                    : `${o.pogingen}× gemaakt`}
               </span>
               {/* Opnieuw gezet: door de juf of meester, of automatisch omdat er
                   minder dan de helft goed was. De teller staat dan weer op 0. */}
