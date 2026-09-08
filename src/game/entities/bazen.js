@@ -1,6 +1,14 @@
 // Bazen. Drie fases, elk met een eigen aanvalspatroon en een duidelijk moment
 // waarop je kunt raken — bij de Slijmkoningin is dat de landing, waarna ze even
 // plat blijft liggen.
+//
+// De vensters zijn met opzet ruim: kinderen struikelden er niet over dat ze
+// niet snápten wat ze moesten doen, maar dat ze het net niet op tijd voor
+// elkaar kregen. Elk kwetsbaar venster duurt daarom ongeveer een kwart langer
+// dan het patroon nodig heeft, de aankondiging vóór een aanval is iets langer,
+// en fase 3 is minder scherp afgesteld (tragere projectielen en golven). De
+// aantallen treffers per fase zijn niet veranderd: het gevecht blijft even
+// lang, je krijgt alleen een eerlijker moment om te slaan.
 
 import { Lichaam, beweeg } from '../engine/physics.js'
 import { TEGEL } from '../engine/tilemap.js'
@@ -103,8 +111,8 @@ export class Slijmkoningin {
         this.kijktRechts = speler.midX > this.midX
         if (this.timer <= 0) {
           // Fase 1 springt alleen; vanaf fase 2 wisselt ze af met spugen.
-          if (this.fase >= 2 && Math.random() < 0.45) this._begin('spugen', 0.5)
-          else this._begin('hurken', 0.4)
+          if (this.fase >= 2 && Math.random() < 0.4) this._begin('spugen', 0.5)
+          else this._begin('hurken', 0.5)
         }
         break
 
@@ -119,7 +127,7 @@ export class Slijmkoningin {
       case 'landing':
         // Dit is het venster waarin je haar kunt raken.
         this._physics(dt, map, particles, fx)
-        if (this.timer <= 0) this._wacht(this.fase === 3 ? 0.35 : 0.6)
+        if (this.timer <= 0) this._wacht(this.fase === 3 ? 0.45 : 0.7)
         break
 
       case 'spugen':
@@ -148,7 +156,7 @@ export class Slijmkoningin {
     const richting = Math.sign(speler.midX - this.midX) || 1
     const kracht = this.fase === 1 ? 300 : this.fase === 2 ? 350 : 400
     this.lichaam.vy = -kracht
-    this.lichaam.vx = richting * (this.fase === 3 ? 105 : 78)
+    this.lichaam.vx = richting * (this.fase === 3 ? 95 : 74)
     this.kijktRechts = richting > 0
     sfx.spring()
   }
@@ -163,7 +171,7 @@ export class Slijmkoningin {
     const r = beweeg(l, map, dt)
     if (r.grondGeraakt && this.staat === 'springen') {
       this.staat = 'landing'
-      this.timer = this.fase === 3 ? 0.75 : 1
+      this.timer = this.fase === 3 ? 0.95 : 1.25
       this.kwetsbaar = this.timer
       l.vx = 0
       fx.schud(5, 0.3)
@@ -348,12 +356,12 @@ export class IJsworm {
       case 'graven': {
         // Onder het ijs naar het doel toe; de bult verraadt waar hij zit.
         const richting = Math.sign(this.doelX - this.graafX)
-        const snelheid = this.fase === 3 ? 190 : this.fase === 2 ? 150 : 120
+        const snelheid = this.fase === 3 ? 170 : this.fase === 2 ? 140 : 115
         this.graafX += richting * snelheid * dt
         if (Math.abs(this.doelX - this.graafX) < 6 || this.timer <= 0) {
           this.graafX = this.doelX
           this.staat = 'barsten'
-          this.timer = this.fase === 3 ? 0.5 : 0.75
+          this.timer = this.fase === 3 ? 0.65 : 0.9
         }
         break
       }
@@ -377,7 +385,7 @@ export class IJsworm {
         this.hoogte = Math.min(1, this.hoogte + dt / 0.35)
         if (this.timer <= 0) {
           this.staat = 'uit'
-          this.timer = this.fase === 3 ? 0.85 : 1.15
+          this.timer = this.fase === 3 ? 1.05 : 1.4
           this.kwetsbaar = this.timer
           if (this.fase >= 2) this._spuug(speler)
         }
@@ -416,7 +424,7 @@ export class IJsworm {
     // aanval te ontwijken. Klemmen op de arenarand mag die afstand niet
     // opeten, dus we kiezen de kant waar genoeg ruimte is.
     const spelerX = speler?.midX ?? this.graafX
-    const afstand = this.fase === 3 ? 34 : 48
+    const afstand = this.fase === 3 ? 40 : 50
     const min = this.arena.links + 26
     const max = this.arena.rechts - 26
     const links = spelerX - afstand
@@ -643,11 +651,11 @@ export class Magmatitaan {
 
       case 'lopen': {
         // Traag genoeg om langs te komen, maar hij drijft je wel in het nauw.
-        const snelheid = this.fase === 3 ? 42 : this.fase === 2 ? 34 : 26
+        const snelheid = this.fase === 3 ? 38 : this.fase === 2 ? 32 : 26
         const richting = this.kijktRechts ? 1 : -1
         this.lichaam.x += richting * snelheid * dt
         this.lichaam.x = Math.max(this.arena.links, Math.min(this.arena.rechts - this.lichaam.w, this.lichaam.x))
-        if (this.timer <= 0) this._begin('optillen', 0.5)
+        if (this.timer <= 0) this._begin('optillen', 0.65)
         break
       }
 
@@ -658,7 +666,7 @@ export class Magmatitaan {
       case 'slaan':
         if (this.timer <= 0) {
           this.staat = 'gebogen'
-          this.timer = this.fase === 3 ? 1 : 1.4
+          this.timer = this.fase === 3 ? 1.25 : 1.7
           this.kwetsbaar = this.timer
         }
         break
@@ -684,7 +692,7 @@ export class Magmatitaan {
   _sla(particles, fx, speler) {
     this.staat = 'slaan'
     this.timer = 0.35
-    const snelheid = this.fase === 3 ? 150 : 118
+    const snelheid = this.fase === 3 ? 135 : 108
     this.golven.push(new Schokgolf(this.midX - 20, this.grondY, -1, snelheid))
     this.golven.push(new Schokgolf(this.midX + 20, this.grondY, 1, snelheid))
     // Vanaf fase 2 gooit hij er ook brokken achteraan.
@@ -877,12 +885,12 @@ export class KernAI {
           this.ronde = (this.ronde ?? 0) + 1
           if (this.ronde >= (this.fase === 3 ? 4 : 3)) {
             this.ronde = 0
-            this._begin('open', this.fase === 3 ? 1.5 : 2.1)
+            this._begin('open', this.fase === 3 ? 1.85 : 2.5)
             this.kwetsbaar = this.timer
             this.zwaartekrachtOm = false
             sfx.portaal()
           } else {
-            this._begin('schieten', this.fase === 3 ? 0.7 : 1)
+            this._begin('schieten', this.fase === 3 ? 0.8 : 1.05)
             // Vanaf fase 2 draait hij tussen de schoten door de zwaartekracht om.
             if (this.fase >= 2) this.zwaartekrachtOm = !this.zwaartekrachtOm
           }
@@ -914,7 +922,7 @@ export class KernAI {
       const dx = doelX - this.midX + h * 60
       this.ballen.push(new Slijmbal(
         this.midX, this.lichaam.onder,
-        Math.max(-190, Math.min(190, dx * 1.6)), 40,
+        Math.max(-175, Math.min(175, dx * 1.5)), 40,
         this.palet,
       ))
     }
@@ -1083,11 +1091,11 @@ export class Verslinder {
           if (this.ronde >= rondes) {
             this.ronde = 0
             this.zwaartekrachtOm = false
-            this._begin('open', this.fase === 3 ? 1.6 : 2.2)
+            this._begin('open', this.fase === 3 ? 2 : 2.6)
             this.kwetsbaar = this.timer
             sfx.portaal()
           } else {
-            this._begin('aanval', this.fase === 3 ? 0.75 : 1.1)
+            this._begin('aanval', this.fase === 3 ? 0.9 : 1.2)
             // Vanaf fase 2 draait hij tussen de aanvallen door de zwaartekracht
             // om; in fase 3 gebeurt dat elke ronde.
             if (this.fase >= 2) this.zwaartekrachtOm = !this.zwaartekrachtOm
@@ -1117,8 +1125,8 @@ export class Verslinder {
     const doelX = speler?.midX ?? this.midX
     // Schokgolven over de vloer (wereld 3) plus projectielen (wereld 1 en 4).
     if (this.fase === 1 || this.fase === 3) {
-      this.golven.push(new Schokgolf(this.midX - 24, this.grondY, -1, 140))
-      this.golven.push(new Schokgolf(this.midX + 24, this.grondY, 1, 140))
+      this.golven.push(new Schokgolf(this.midX - 24, this.grondY, -1, 128))
+      this.golven.push(new Schokgolf(this.midX + 24, this.grondY, 1, 128))
       fx.schud(4, 0.25)
       particles.landing(this.midX, this.grondY)
     }
@@ -1127,7 +1135,7 @@ export class Verslinder {
       const dx = doelX - this.midX
       this.ballen.push(new Slijmbal(
         this.midX, this.lichaam.onder - 8,
-        Math.max(-200, Math.min(200, dx * 1.2)) + h * 70, 30,
+        Math.max(-180, Math.min(180, dx * 1.1)) + h * 70, 30,
         this.palet,
       ))
     }
