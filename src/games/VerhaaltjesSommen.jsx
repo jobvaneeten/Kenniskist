@@ -75,6 +75,29 @@ function Figuur({ figuur }) {
       </svg>
     )
   }
+  if (figuur.type === 'cirkel') {
+    const cx = 78, cy = 82, r = 62
+    const kleuren = ['#ffd23f', '#f87171', '#60a5fa', '#4ade80', '#c084fc']
+    let hoek = -90
+    const parten = figuur.delen.map((deel, i) => {
+      const a1 = hoek, a2 = hoek + deel.pct * 3.6
+      hoek = a2
+      const punt = (a) => [cx + r * Math.cos(a * Math.PI / 180), cy + r * Math.sin(a * Math.PI / 180)]
+      const [x1, y1] = punt(a1), [x2, y2] = punt(a2)
+      return { d: `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${deel.pct > 50 ? 1 : 0} 1 ${x2} ${y2} Z`, kleur: kleuren[i % kleuren.length], ...deel }
+    })
+    return (
+      <svg className="rs-figuur" viewBox="0 0 330 168" width="330" height="168">
+        {parten.map((p, i) => <path key={i} d={p.d} fill={p.kleur} stroke="#0b1020" strokeWidth="2" />)}
+        {parten.map((p, i) => (
+          <g key={'l' + i}>
+            <rect x="160" y={22 + i * 28} width="15" height="15" rx="3" fill={p.kleur} />
+            <text x="184" y={35 + i * 28} fill="#fffbeb" fontSize="15" fontWeight="700">{p.label} — {p.pct}%</text>
+          </g>
+        ))}
+      </svg>
+    )
+  }
   if (figuur.type === 'staaf' || figuur.type === 'lijn') {
     const items = figuur.items, step = figuur.step
     const top = Math.ceil(Math.max(...items.map(i => i.waarde)) / step) * step

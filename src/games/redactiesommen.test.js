@@ -63,7 +63,10 @@ describe('verhaaltjessommen', () => {
           expect(o.antwoord, `${waar}: negatief antwoord`).toBeGreaterThanOrEqual(0)
         }
         const decimalen = String(o.antwoord).split('.')[1]?.length ?? 0
-        expect(decimalen, `${waar}: ${o.antwoord} heeft ${decimalen} decimalen`).toBeLessThanOrEqual(2)
+        // Een kommagetal dat van een getallenlijn wordt afgelezen mag drie
+        // decimalen hebben (0,242 m); verder rekent geen kind met duizendsten.
+        const maxDec = o.figuur?.type === 'getallenlijn' ? 3 : 2
+        expect(decimalen, `${waar}: ${o.antwoord} heeft ${decimalen} decimalen`).toBeLessThanOrEqual(maxDec)
       }
     }
   })
@@ -83,6 +86,43 @@ describe('verhaaltjessommen', () => {
         if (typeof o.antwoord !== 'number') continue
         expect(checkAntwoord(String(o.antwoord).replace('.', ','), o.antwoord),
           `groep ${g.groep} ${g.blok}: ${g.doel.slice(0, 40)}`).toBe(true)
+      }
+    }
+  })
+})
+
+describe('groep 7 in het bijzonder', () => {
+  const g7 = GENERATORS.filter((g) => g.groep === 7)
+
+  it('schrijft nooit hij of zij bij een naam die net zo goed een meisje kan zijn', () => {
+    for (const g of g7) {
+      for (let n = 0; n < 40; n++) {
+        expect(String(g.gen().vraag), g.doel.slice(0, 40)).not.toMatch(/\b(hij|zij|haar|hem)\b/)
+      }
+    }
+  })
+
+  it('vraagt bij het instapdoel over kommagetallen naar plaatsen en aflezen, niet naar breuk-naar-komma', () => {
+    // Breuken omzetten in kommagetallen komt pas in blok 4; in het instapblok
+    // gaat het over een getal als 0,242 op de getallenlijn.
+    const doelen = g7.filter((g) => g.blok === 0 && /kommagetallen plaatsen/.test(g.doel))
+    expect(doelen.length).toBeGreaterThan(0)
+    let opDeLijn = 0
+    for (const g of doelen) {
+      for (let n = 0; n < 60; n++) {
+        const o = g.gen()
+        expect(String(o.vraag), 'breuk omzetten hoort hier nog niet').not.toMatch(/als kommagetal/)
+        if (o.figuur?.type === 'getallenlijn') opDeLijn++
+      }
+    }
+    expect(opDeLijn, 'er hoort een kommagetal op een getallenlijn bij te zitten').toBeGreaterThan(0)
+  })
+
+  it('zet elke som in een situatie met een onderwerp, niet in een kale rekenregel', () => {
+    for (const g of g7) {
+      for (let n = 0; n < 20; n++) {
+        const vraag = String(g.gen().vraag)
+        expect(vraag.split(' ').length, `${g.doel.slice(0, 40)}: te kort voor een verhaal`).toBeGreaterThan(9)
       }
     }
   })
