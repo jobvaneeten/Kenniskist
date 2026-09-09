@@ -158,7 +158,15 @@ export function useOpenLescheck(profiel, intervalMs = 15000) {
         }
         perWeektaak.get(id).opdrachten.push(o)
       }
-      setMappen([...perWeektaak.values()])
+      // Alleen bijwerken als er echt iets veranderd is. Elke ronde blind een
+      // nieuwe array in state zetten liet App (en daarmee de hele boom, tot en
+      // met een spel dat een kind aan het spelen is) elke 15 seconden opnieuw
+      // renderen.
+      const verse = [...perWeektaak.values()]
+      const vingerafdruk = (lijst) => lijst
+        .map(m => `${m.id}:${m.opdrachten.map(o => `${o.opdrachtId}${o.klaar ? '1' : '0'}`).join(',')}`)
+        .join('|')
+      setMappen(vorige => (vingerafdruk(vorige) === vingerafdruk(verse) ? vorige : verse))
     }
     laad()
     const t = setInterval(laad, intervalMs)

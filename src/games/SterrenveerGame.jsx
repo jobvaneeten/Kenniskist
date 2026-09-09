@@ -7,6 +7,13 @@ import './sterrenveer.css'
 export default function SterrenveerGame({ onBack, reward = false }) {
   const canvasRef = useRef(null)
   const stopRef = useRef(null)
+  // onBack komt bij elke render van de ouder als een nieuwe functie binnen (de
+  // oefeningen geven een inline arrow door aan SpelBeloning). Stond die in de
+  // dependencies hieronder, dan stopte React het spel en startte het opnieuw —
+  // midden in een level, want de ouder hertekent ook tijdens het spelen.
+  // Via een ref blijft het spel draaien en roept het altijd de nieuwste versie.
+  const terug = useRef(onBack)
+  useEffect(() => { terug.current = onBack }, [onBack])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -18,7 +25,7 @@ export default function SterrenveerGame({ onBack, reward = false }) {
     const demp = window.KennisKist?.muziekDemp
     try { demp?.(true) } catch { /* shell-tool kan ontbreken in dev */ }
 
-    stopRef.current = startSterrenveer(canvas, { onBack, beloning: reward })
+    stopRef.current = startSterrenveer(canvas, { onBack: () => terug.current?.(), beloning: reward })
 
     return () => {
       stopRef.current?.()
@@ -28,7 +35,7 @@ export default function SterrenveerGame({ onBack, reward = false }) {
         try { demp?.(false) } catch { /* zie boven */ }
       }
     }
-  }, [onBack, reward])
+  }, [reward])
 
   return (
     <div className="sterrenveer-wrap">
