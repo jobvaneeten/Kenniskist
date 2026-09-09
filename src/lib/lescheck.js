@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabase.js'
 import { haalMijnWeektaak } from './weektaak.js'
-import { onderdelenVan, delenVanDoel } from '../games/redactiesommen.js'
+import { onderdelenVan, delenVanDoel, gensVoorDeel } from '../games/redactiesommen.js'
 import { DOEL_VAN_LES, DEEL_VAN_LES, LESSEN_PER_BLOK, isHerhalingsles } from '../games/denkvragenData.js'
 import { slaWeektaakOp } from '../portaal/weektaakOpslaan.js'
 
@@ -30,6 +30,13 @@ export const lesLabel = (opdracht) => {
 // Wat de som van die les toetst: het stuk van het doel dat in díe les aan bod
 // kwam ("plus en min", "keer en delen").
 export const deelLabel = (opdracht) => opdracht?.config?.lescheck?.deelLabel ?? ''
+
+// Hoeveel sommen een lesdeel oplevert. Gaat het over twee bewerkingen (plus én
+// min), dan krijgt het kind er twee — één van elk, zodat je van allebei weet of
+// het is blijven hangen.
+export function aantalSommen(groep, route, key, deelNr) {
+  return gensVoorDeel(groep, route, key, deelNr)?.length ?? 1
+}
 
 export const blokLabel = (blok) => (Number(blok) === 0 ? 'Instap' : `Blok ${blok}`)
 export const lescheckTitel = (blok) => `Lescheck ${blokLabel(blok)}`
@@ -78,10 +85,12 @@ export function bouwLesOpdracht({ groep, route, blok, les, doelNr, deelNr = 1, i
   if (!gekozen) return null
   const delen = delenVanDoel(groep, route, gekozen.key)
   const deel = delen[deelNr - 1]
+  const soorten = deel?.soorten ?? []
   return {
     id,
     toolId: LESCHECK_TOOL,
-    aantal: 1,
+    // Eén som per soort: bij "plus en min" dus twee.
+    aantal: Math.max(1, soorten.length),
     config: {
       groep, route,
       doelen: [gekozen.key],
@@ -90,7 +99,10 @@ export function bouwLesOpdracht({ groep, route, blok, les, doelNr, deelNr = 1, i
       // verhaaltje kunnen vissen.
       deel: deel ? deelNr : undefined,
       kaal: true,
-      lescheck: { blok, les, doelNr, deelNr, doel: gekozen.doel, deelLabel: deel?.label ?? null },
+      lescheck: {
+        blok, les, doelNr, deelNr, doel: gekozen.doel, deelLabel: deel?.label ?? null,
+        soorten: soorten.map(x => x.label),
+      },
     },
   }
 }
@@ -158,6 +170,7 @@ export async function haalLeschecks(klasId) {
     perBlok.get(wt.id).opdrachten.push({
       id: o.id, les: o.config?.lescheck?.les, doelNr: o.config?.lescheck?.doelNr,
       deelNr: o.config?.lescheck?.deelNr, deelLabel: o.config?.lescheck?.deelLabel,
+      soorten: o.config?.lescheck?.soorten ?? [],
       doel: o.config?.lescheck?.doel, config: o.config,
     })
   }

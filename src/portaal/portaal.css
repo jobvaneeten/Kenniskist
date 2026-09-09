@@ -460,3 +460,5 @@
 .portaal-lesdetail p:last-child { margin-bottom: 0; }
 .portaal-lesdeel { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
 .portaal-lesdeel select { max-width: 100%; }
+
+.portaal-lestegel.half { background: rgba(245,158,11,0.2); border-color: rgba(251,191,36,0.6); }

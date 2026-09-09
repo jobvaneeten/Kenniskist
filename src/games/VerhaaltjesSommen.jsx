@@ -501,6 +501,7 @@ export default function VerhaaltjesSommen({ groep: eigenGroep = 7, onBack, addBr
   // Bij een lescheck: de generator van één lesdeel, i.p.v. alles wat er is
   // aangevinkt. null = gewoon oefenen.
   const [vastDeel, setVastDeel] = useState(null)
+  const [deelIdx, setDeelIdx] = useState(0)
   const [stats, setStats]     = useState(laadStats)
   const [terugNaar, setTerugNaar] = useState('groep')
   const [toetsJaren, setToetsJaren] = useState(() => new Set([5, 6, 7, 8]))
@@ -523,8 +524,13 @@ export default function VerhaaltjesSommen({ groep: eigenGroep = 7, onBack, addBr
     return s
   })
 
-  const nieuweOpgave = (k = klas, r = route, sel = gekozen, vast = vastDeel) =>
-    maakOpgaveUit([{ gens: vast ?? onderdelenVan(k, r).flatMap(o => o.gens).filter(g => sel.has(g.key)) }])
+  // Bij een lescheck komen de sommen in vaste volgorde: eerst de plus, dan de
+  // min. Zomaar één uit de hoop pakken zou het ene kind twee plussommen geven
+  // en het andere twee minsommen.
+  const nieuweOpgave = (k = klas, r = route, sel = gekozen, vast = vastDeel, i = 0) =>
+    maakOpgaveUit(vast
+      ? [{ gens: [vast[i % vast.length]] }]
+      : [{ gens: onderdelenVan(k, r).flatMap(o => o.gens).filter(g => sel.has(g.key)) }])
 
   const naarKies = (k, r) => {
     // standaard alle doelen van de eigen groep aan, herhaal-doelen uit
@@ -556,8 +562,9 @@ export default function VerhaaltjesSommen({ groep: eigenGroep = 7, onBack, addBr
       ? gensVoorDeel(g, r, config.doelen[0], config.deel)
       : null
     setVastDeel(vast)
+    setDeelIdx(0)
     setKlas(g); setRoute(r); setGekozen(sel); setSinds(0)
-    setOpgave(nieuweOpgave(g, r, sel, vast))
+    setOpgave(nieuweOpgave(g, r, sel, vast, 0))
     setScreen('oefen')
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -613,8 +620,10 @@ export default function VerhaaltjesSommen({ groep: eigenGroep = 7, onBack, addBr
       if (ns >= PER_BELONING) { setSinds(0); setRewardVan('oefen'); setShowReward(true); return }
       setSinds(ns)
     }
-    setOpgave(nieuweOpgave())
-  }, [sinds, klas, route, gekozen, opgave, opdracht])
+    const volgendeIdx = deelIdx + 1
+    setDeelIdx(volgendeIdx)
+    setOpgave(nieuweOpgave(klas, route, gekozen, vastDeel, volgendeIdx))
+  }, [sinds, klas, route, gekozen, opgave, opdracht, vastDeel, deelIdx])
 
   const naBeloning = () => {
     setShowReward(false)

@@ -3,7 +3,7 @@ import {
   GROEPEN_MET_LESDELEN, bouwLesOpdracht, delenVoorDoel, doelenVanBlokMetKey,
   doelVoorLes, isHerhalingsles, lescheckTitel,
 } from './lescheck.js'
-import { doelenVanBlok, onderdelenVan } from '../games/redactiesommen.js'
+import { doelenVanBlok, gensVoorDeel, onderdelenVan } from '../games/redactiesommen.js'
 
 // De lescheck koppelt een les aan één doel uit de methode. Gaat die koppeling
 // schuiven, dan krijgt een kind een som over het verkeerde doel en ziet de
@@ -74,6 +74,33 @@ describe('lesdelen', () => {
         }
       }
     }
+  })
+
+  it('geeft twee sommen als een lesdeel over twee bewerkingen gaat', () => {
+    // Bij "plus en min" krijgt elk kind er één van elk: anders weet je van de
+    // helft van de les niet of het is blijven hangen.
+    const les3 = bouwLesOpdracht({ groep: 7, route: 'FS', blok: 1, les: 3, doelNr: 2, deelNr: 1 })
+    expect(les3.aantal).toBe(2)
+    expect(les3.config.lescheck.soorten).toEqual(['plus', 'min'])
+    const les4 = bouwLesOpdracht({ groep: 7, route: 'FS', blok: 1, les: 4, doelNr: 2, deelNr: 2 })
+    expect(les4.aantal).toBe(2)
+    expect(les4.config.lescheck.soorten).toEqual(['keer', 'delen'])
+  })
+
+  it('serveert die twee sommen in vaste volgorde, één per soort', () => {
+    const gens = gensVoorDeel(7, 'FS', 'g7b1i1', 1)
+    expect(gens.map(g => g.soort)).toEqual(['plus', 'min'])
+    for (let n = 0; n < 30; n++) {
+      expect(gens[0].gen().kaal).toContain('+')
+      expect(gens[1].gen().kaal).toContain('−')
+    }
+  })
+
+  it('geeft elk kind eigen getallen, ook binnen dezelfde soort', () => {
+    const gens = gensVoorDeel(7, 'FS', 'g7b1i1', 1)
+    const sommen = new Set()
+    for (let kind = 0; kind < 60; kind++) sommen.add(gens[0].gen().kaal)
+    expect(sommen.size, 'te weinig variatie: kinderen kunnen spieken').toBeGreaterThan(30)
   })
 
   it('koppelt les 3 aan het eerste deel van doel 2 en les 4 aan het tweede', () => {

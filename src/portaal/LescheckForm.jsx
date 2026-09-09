@@ -80,8 +80,9 @@ export default function LescheckForm({ klas, leerlingen, bestaand, onKlaar, onAn
         <button className="portaal-knop-subtiel portaal-knop" onClick={onAnnuleer}>Annuleren</button>
       </div>
       <p className="portaal-zacht">
-        Eén kale som per les, over het onderdeel dat in díe les is uitgelegd — geen verhaaltje, dus je meet of ze de
-        bewerking snappen. Elk kind krijgt zijn eigen getallen, dus afkijken heeft geen zin.
+        Een kale som per les, over het onderdeel dat in díe les is uitgelegd — geen verhaaltje, dus je meet of ze de
+        bewerking snappen. Gaat een les over twee bewerkingen (plus én min), dan krijgt het kind er twee: één van elk.
+        Iedereen krijgt dezelfde soort som, maar met eigen getallen, dus afkijken heeft geen zin.
       </p>
 
       <div className="portaal-veldrij" style={{ marginTop: 14 }}>
@@ -157,7 +158,13 @@ export default function LescheckForm({ klas, leerlingen, bestaand, onKlaar, onAn
                     )}
                     {delen.length > 1 && (
                       <select value={deelNr} disabled={staatVast} onChange={e => zetDeel(les, Number(e.target.value))}>
-                        {delen.map((d, i) => <option key={d.label} value={i + 1}>De som gaat over: {d.label}</option>)}
+                        {delen.map((d, i) => (
+                          <option key={d.label} value={i + 1}>
+                            {d.soorten?.length > 1
+                              ? `${d.soorten.length} sommen: ${d.soorten.map(x => x.label).join(' en ')}`
+                              : `1 som: ${d.label}`}
+                          </option>
+                        ))}
                       </select>
                     )}
                   </div>
