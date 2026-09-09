@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabase.js'
 import { haalMijnWeektaak } from './weektaak.js'
-import { onderdelenVan } from '../games/redactiesommen.js'
-import { DOEL_VAN_LES, LESSEN_PER_BLOK, isHerhalingsles } from '../games/denkvragenData.js'
+import { onderdelenVan, delenVanDoel } from '../games/redactiesommen.js'
+import { DOEL_VAN_LES, DEEL_VAN_LES, LESSEN_PER_BLOK, isHerhalingsles } from '../games/denkvragenData.js'
 import { slaWeektaakOp } from '../portaal/weektaakOpslaan.js'
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -27,6 +27,10 @@ export const lesLabel = (opdracht) => {
   return l ? `Les ${l.les}` : ''
 }
 
+// Wat de som van die les toetst: het stuk van het doel dat in díe les aan bod
+// kwam ("plus en min", "keer en delen").
+export const deelLabel = (opdracht) => opdracht?.config?.lescheck?.deelLabel ?? ''
+
 export const blokLabel = (blok) => (Number(blok) === 0 ? 'Instap' : `Blok ${blok}`)
 export const lescheckTitel = (blok) => `Lescheck ${blokLabel(blok)}`
 
@@ -50,19 +54,30 @@ export function doelenVanBlokMetKey(groep, route, blok) {
   return (item?.gens ?? []).map(g => ({ key: g.key, doel: g.doel }))
 }
 
-// Welk doel hoort bij welke les (1-2 → doel 1, 3-4 → doel 2, …). Les 5 en 10
-// zijn herhalingslessen zonder eigen doel: daar kiest de leerkracht zelf.
+// Welk doel hoort bij welke les (1-2 → doel 1, 3-4 → doel 2, …) én welk stuk
+// van dat doel. Les 5 en 10 zijn herhalingslessen zonder eigen doel: daar
+// kiest de leerkracht zelf.
 export function doelVoorLes(groep, route, blok, les) {
   const doelen = doelenVanBlokMetKey(groep, route, blok)
   const nr = DOEL_VAN_LES[les]
-  if (!nr) return null
-  return doelen[nr - 1] ? { doelNr: nr, ...doelen[nr - 1] } : null
+  if (!nr || !doelen[nr - 1]) return null
+  const deelNr = DEEL_VAN_LES[les] ?? 1
+  return { doelNr: nr, deelNr, ...doelen[nr - 1] }
 }
 
-export function bouwLesOpdracht({ groep, route, blok, les, doelNr, id }) {
+// De twee onderdelen van een doel, met hun naam — voor het keuzemenu bij het
+// klaarzetten.
+export function delenVoorDoel(groep, route, blok, doelNr) {
+  const doel = doelenVanBlokMetKey(groep, route, blok)[doelNr - 1]
+  return doel ? delenVanDoel(groep, route, doel.key) : []
+}
+
+export function bouwLesOpdracht({ groep, route, blok, les, doelNr, deelNr = 1, id }) {
   const doelen = doelenVanBlokMetKey(groep, route, blok)
   const gekozen = doelen[doelNr - 1]
   if (!gekozen) return null
+  const delen = delenVanDoel(groep, route, gekozen.key)
+  const deel = delen[deelNr - 1]
   return {
     id,
     toolId: LESCHECK_TOOL,
@@ -70,12 +85,22 @@ export function bouwLesOpdracht({ groep, route, blok, les, doelNr, id }) {
     config: {
       groep, route,
       doelen: [gekozen.key],
-      lescheck: { blok, les, doelNr, doel: gekozen.doel },
+      // deel = welk stuk van het doel; kaal = een som zonder verhaal, want de
+      // lescheck moet meten of ze de bewerking snappen, niet of ze hem uit een
+      // verhaaltje kunnen vissen.
+      deel: deel ? deelNr : undefined,
+      kaal: true,
+      lescheck: { blok, les, doelNr, deelNr, doel: gekozen.doel, deelLabel: deel?.label ?? null },
     },
   }
 }
 
 export const LESSEN = Array.from({ length: LESSEN_PER_BLOK }, (_, i) => i + 1)
+
+// Groepen waarvoor de doelen in lesdelen zijn opgeknipt (zie D() in
+// redactiesommen.js). Alleen daar kan een lescheck precies het stuk toetsen dat
+// in díe les is uitgelegd; groep 5 heeft die indeling niet.
+export const GROEPEN_MET_LESDELEN = [6, 7, 8]
 export { isHerhalingsles }
 
 // Zet de lessen van één blok klaar. Bestaande opdrachten gaan mét hun id mee,
@@ -87,7 +112,7 @@ export async function slaLescheckOp({
 }) {
   const opdrachten = [
     ...bestaandeOpdrachten,
-    ...lessen.map(l => bouwLesOpdracht({ groep, route, blok, les: l.les, doelNr: l.doelNr })),
+    ...lessen.map(l => bouwLesOpdracht({ groep, route, blok, les: l.les, doelNr: l.doelNr, deelNr: l.deelNr })),
   ].filter(Boolean)
   // Op lesnummer sorteren: slaWeektaakOp nummert `volgorde` op arrayvolgorde,
   // en zo staan de lessen bij het kind (en in het portaal) op les 1, 2, 3…
@@ -132,6 +157,7 @@ export async function haalLeschecks(klasId) {
     }
     perBlok.get(wt.id).opdrachten.push({
       id: o.id, les: o.config?.lescheck?.les, doelNr: o.config?.lescheck?.doelNr,
+      deelNr: o.config?.lescheck?.deelNr, deelLabel: o.config?.lescheck?.deelLabel,
       doel: o.config?.lescheck?.doel, config: o.config,
     })
   }

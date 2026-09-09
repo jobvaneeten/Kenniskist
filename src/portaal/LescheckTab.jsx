@@ -91,8 +91,9 @@ export default function LescheckTab({ klas }) {
               {b.opdrachten.map(o => {
                 const s = scores.get(o.id)
                 return (
-                  <span key={o.id} className="portaal-lesbadge">
+                  <span key={o.id} className="portaal-lesbadge" title={o.deelLabel ? `De som gaat over: ${o.deelLabel}` : o.doel}>
                     Les {o.les}
+                    {o.deelLabel && <span className="portaal-zacht"> · {o.deelLabel}</span>}
                     <span className="portaal-zacht">
                       {s ? ` ${s.goed}/${s.gemaakt}` : ' —'}
                     </span>

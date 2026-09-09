@@ -17,123 +17,272 @@ const getal = n => n.toLocaleString('nl-NL')   // 35.400
 const komma = n => String(n).replace('.', ',')
 
 // ── Generatoren per blok. Factory zodat S+ grotere getallen krijgt. ──
+// D(doel, delen) — een lesdoel loopt over twee lessen, en die twee lessen doen
+// vaak niet hetzelfde. "Grote getallen plus en min" op dag één, "keer en delen"
+// op dag twee, terwijl het in de methode één doel is. `delen` legt dat vast:
+// deel 1 hoort bij de eerste les van het doel, deel 2 bij de tweede (zie
+// DEEL_VAN_LES in denkvragenData.js). Waar een doel niet uit twee losse stukken
+// bestaat, is deel 2 dezelfde soort som een maatje groter.
+//
+// Voor vrij oefenen en de weektaak blijft het gewoon één doel: `gen` pakt dan
+// uit allebei de delen.
+const D = (doel, delen) => ({ doel, delen, gen: () => pick(delen).gen() })
+
 function maakBlokken(plus) {
   const M = plus ? 1 : 0   // S+ = iets grotere/lastigere getallen
 
   return {
     0: [
-      { doel: 'Je leert sommen als 1200 + 1300 en 4500 - 1200 vlot uitrekenen met de kleine som, en sommen als 30 × 40 en 1500 : 30 met de kleine som.', gen: () => { const k = rnd(1, 4); if (k === 1) return optelV(rnd(11, 80) * 100, rnd(11, 40) * 100); if (k === 2) { const a = rnd(25, 90) * 100, b = rnd(11, Math.floor(a / 100) - 5) * 100; return aftrekV(a, b) } if (k === 3) return keerV(rnd(2, 9) * 10, rnd(2, 9) * 10); return deelV(rnd(2, 9) * 10, rnd(2, 9) * 10) } },
-      { doel: 'Je leert sommen als 487 + 235 cijferend optellen, 432 - 263 cijferend aftrekken en 4 × 231 cijferend uitrekenen.', gen: () => { const k = rnd(1, 3); if (k === 1) return optelV(...metOnthouden(150, 690)); if (k === 2) return aftrekV(...metLenen(240, 920)); return keerV(rnd(3, 9), rnd(110, 590)) } },
-      { doel: 'Je leert benoemde kommagetallen plaatsen en aflezen, een deel van een geheel berekenen en berekenen wat het geheel is.', gen: () => pick([kommaLijnV, kommaLijnV, deelVanGeheelV, geheelTerugV])() },
-      { doel: 'Je leert de omtrek en de oppervlakte berekenen van een figuur met maten in centimeters of meters.', gen: () => Math.random() < 0.5 ? omtrekV(12 + M * 6, 9 + M * 5) : oppRechthoekV(12 + M * 8, 9 + M * 6) },
+      D('Je leert sommen als 1200 + 1300 en 4500 - 1200 vlot uitrekenen met de kleine som, en sommen als 30 × 40 en 1500 : 30 met de kleine som.', [
+        { label: 'plus en min', gen: () => Math.random() < 0.5
+          ? optelV(rnd(11, 80) * 100, rnd(11, 40) * 100)
+          : (() => { const a = rnd(25, 90) * 100, b = rnd(11, Math.floor(a / 100) - 5) * 100; return aftrekV(a, b) })() },
+        { label: 'keer en delen', gen: () => Math.random() < 0.5
+          ? keerV(rnd(2, 9) * 10, rnd(2, 9) * 10)
+          : deelV(rnd(2, 9) * 10, rnd(2, 9) * 10) },
+      ]),
+      D('Je leert sommen als 487 + 235 cijferend optellen, 432 - 263 cijferend aftrekken en 4 × 231 cijferend uitrekenen.', [
+        { label: 'cijferend plus en min', gen: () => Math.random() < 0.5
+          ? optelV(...metOnthouden(150, 690))
+          : aftrekV(...metLenen(240, 920)) },
+        { label: 'cijferend keer', gen: () => keerV(rnd(3, 9), rnd(110, 590)) },
+      ]),
+      D('Je leert benoemde kommagetallen plaatsen en aflezen, een deel van een geheel berekenen en berekenen wat het geheel is.', [
+        { label: 'kommagetal op de getallenlijn', gen: () => kommaLijnV() },
+        { label: 'deel van een geheel, en terug', gen: () => pick([deelVanGeheelV, geheelTerugV])() },
+      ]),
+      D('Je leert de omtrek en de oppervlakte berekenen van een figuur met maten in centimeters of meters.', [
+        { label: 'omtrek', gen: () => omtrekV(12 + M * 6, 9 + M * 5) },
+        { label: 'oppervlakte', gen: () => oppRechthoekV(12 + M * 8, 9 + M * 6) },
+      ]),
     ],
     1: [
-      { doel: 'Je leert getallen tot en met 1 miljoen in cijfers schrijven, de waarde van de cijfers benoemen, en getallen op volgorde zetten, aflezen en schattend plaatsen op een getallenlijn.', gen: () => Math.random() < 0.5 ? getallenlijnV(rnd(0, 5) * 100000, 500000) : getalSchrijvenV(999) },
-      { doel: 'Je leert sommen als 35.400 + 3500 en 56.700 - 2400 uitrekenen, en sommen als 50 × 7000 en 24.000 : 600 met de kleine som.', gen: () => {
-        const k = rnd(1, 4)
-        if (k === 1) {
-          const a = rnd(12, 89) * 1000 + rnd(1, 9) * 100, b = rnd(15, 49) * 100
-          return { vraag: `Op de spaarrekening van ${naam()} staat € ${getal(a)}. Er komt € ${getal(b)} bij. Hoeveel staat er nu op de rekening?`,
-                   antwoord: a + b, uitleg: `${getal(a)} + ${getal(b)} = ${getal(a + b)}` }
-        }
-        if (k === 2) {
+      D('Je leert getallen tot en met 1 miljoen in cijfers schrijven, de waarde van de cijfers benoemen, en getallen op volgorde zetten, aflezen en schattend plaatsen op een getallenlijn.', [
+        { label: 'in cijfers schrijven en cijferwaarde', gen: () => getalSchrijvenV(999) },
+        { label: 'plaatsen op de getallenlijn', gen: () => getallenlijnV(rnd(0, 5) * 100000, 500000) },
+      ]),
+      D('Je leert sommen als 35.400 + 3500 en 56.700 - 2400 uitrekenen, en sommen als 50 × 7000 en 24.000 : 600 met de kleine som.', [
+        { label: 'plus en min', gen: () => {
+          if (Math.random() < 0.5) {
+            const a = rnd(12, 89) * 1000 + rnd(1, 9) * 100, b = rnd(15, 49) * 100
+            return { vraag: `Op de spaarrekening van ${naam()} staat € ${getal(a)}. Er komt € ${getal(b)} bij. Hoeveel staat er nu op de rekening?`,
+                     kaal: `${getal(a)} + ${getal(b)} =`,
+                     antwoord: a + b, uitleg: `${getal(a)} + ${getal(b)} = ${getal(a + b)}` }
+          }
           const a = rnd(25, 89) * 1000 + rnd(1, 9) * 100, b = rnd(12, 24) * 100
           return { vraag: `Op de spaarrekening van ${naam()} staat € ${getal(a)}. Er gaat € ${getal(b)} af. Hoeveel staat er nu op de rekening?`,
+                   kaal: `${getal(a)} − ${getal(b)} =`,
                    antwoord: a - b, uitleg: `${getal(a)} − ${getal(b)} = ${getal(a - b)}` }
-        }
-        if (k === 3) return keerV(rnd(2, 9) * 10, rnd(2, 9) * 1000)
+        } },
         // 24.000 : 600 — deler én deeltal met nullen, zodat de kleine som helpt.
-        return deelV(rnd(2, 9) * 100, rnd(2, 9) * 10)
-      }},
-      { doel: 'Je leert helen uit de breuk halen en benoemde breuken in een rekenverhaal met elkaar vergelijken en op volgorde zetten.', gen: () => Math.random() < 0.5 ? breukHelenV() : breukVergelijkV() },
-      { doel: 'Je leert de weeknotatie op een kalender gebruiken, de tijdsduur berekenen in dagen, uren en minuten, en een begintijd of eindtijd berekenen.', gen: () => {
-        if (Math.random() < 0.5) return kalenderV()
-        const h1 = rnd(8, 12), m1 = pick([0, 5, 10, 15, 20, 25, 30, 40, 45])
-        const dur = rnd(2, 4) * 15 + rnd(0, 2) * 30
-        const tot = h1 * 60 + m1 + dur, h2 = Math.floor(tot / 60), m2 = tot % 60
-        return { vraag: `De trein vertrekt om ${h1}:${String(m1).padStart(2, '0')} uur en komt om ${h2}:${String(m2).padStart(2, '0')} uur aan. Hoeveel minuten duurt de reis?`,
-                 antwoord: dur, eenheid: 'min', uitleg: `Van ${h1}:${String(m1).padStart(2, '0')} tot ${h2}:${String(m2).padStart(2, '0')} = ${dur} minuten` }
-      }},
+        { label: 'keer en delen', gen: () => Math.random() < 0.5
+          ? keerV(rnd(2, 9) * 10, rnd(2, 9) * 1000)
+          : deelV(rnd(2, 9) * 100, rnd(2, 9) * 10) },
+      ]),
+      D('Je leert helen uit de breuk halen en benoemde breuken in een rekenverhaal met elkaar vergelijken en op volgorde zetten.', [
+        { label: 'helen uit de breuk halen', gen: () => breukHelenV() },
+        { label: 'breuken vergelijken', gen: () => breukVergelijkV() },
+      ]),
+      D('Je leert de weeknotatie op een kalender gebruiken, de tijdsduur berekenen in dagen, uren en minuten, en een begintijd of eindtijd berekenen.', [
+        { label: 'kalender en weken', gen: () => kalenderV() },
+        { label: 'tijdsduur, begin- en eindtijd', gen: () => {
+          const h1 = rnd(8, 12), m1 = pick([0, 5, 10, 15, 20, 25, 30, 40, 45])
+          const dur = rnd(2, 4) * 15 + rnd(0, 2) * 30
+          const tot = h1 * 60 + m1 + dur, h2 = Math.floor(tot / 60), m2 = tot % 60
+          return { vraag: `De trein vertrekt om ${h1}:${PAD(m1)} uur en komt om ${h2}:${PAD(m2)} uur aan. Hoeveel minuten duurt de reis?`,
+                   kaal: `Van ${h1}:${PAD(m1)} tot ${h2}:${PAD(m2)} = … minuten`,
+                   antwoord: dur, eenheid: 'min', uitleg: `Van ${h1}:${PAD(m1)} tot ${h2}:${PAD(m2)} = ${dur} minuten` }
+        } },
+      ]),
     ],
     2: [
-      { doel: 'Je leert sommen als 12 × 64 cijferend uitrekenen of met de strategie splitsen en je begrijpt wat je opschrijft.', gen: () => keerV(rnd(11, plus ? 29 : 19), rnd(21, 89)) },
-      { doel: plus ? 'Je leert sommen als 22 × 64 en 65 × 36 cijferend uitrekenen.' : 'Je leert sommen als 22 × 64 cijferend uitrekenen of met splitsen, en je herhaalt sommen als 6 × 346.', gen: () => Math.random() < 0.3 ? keerV(rnd(3, 9), rnd(110, 590)) : keerV(rnd(21, plus ? 89 : 49), rnd(21, 89)) },
-      { doel: 'Je leert hoofdrekenend optellen en aftrekken met eenvoudige benoemde kommagetallen.', gen: () => kommaHoofdrekenV(plus ? 40 : 24) },
-      { doel: 'Je leert met een schaallijntje een lengte op schaal omrekenen naar een lengte in het echt en je leert hoe je de schaal berekent.', gen: () => schaalV() },
+      D('Je leert sommen als 12 × 64 cijferend uitrekenen of met de strategie splitsen en je begrijpt wat je opschrijft.', [
+        { label: 'tiener × tweecijferig', gen: () => keerV(rnd(11, plus ? 19 : 15), rnd(21, 59)) },
+        { label: 'grotere getallen', gen: () => keerV(rnd(11, plus ? 29 : 19), rnd(41, 89)) },
+      ]),
+      D(plus ? 'Je leert sommen als 22 × 64 en 65 × 36 cijferend uitrekenen.' : 'Je leert sommen als 22 × 64 cijferend uitrekenen of met splitsen, en je herhaalt sommen als 6 × 346.', [
+        { label: '22 × 64', gen: () => keerV(rnd(21, plus ? 49 : 49), rnd(21, 89)) },
+        plus
+          ? { label: '65 × 36', gen: () => keerV(rnd(50, 89), rnd(21, 89)) }
+          : { label: 'herhaling: 6 × 346', gen: () => keerV(rnd(3, 9), rnd(110, 590)) },
+      ]),
+      D('Je leert hoofdrekenend optellen en aftrekken met eenvoudige benoemde kommagetallen.', [
+        { label: 'optellen', gen: () => kommaHoofdrekenV(plus ? 40 : 24, 'plus') },
+        { label: 'aftrekken', gen: () => kommaHoofdrekenV(plus ? 40 : 24, 'min') },
+      ]),
+      D('Je leert met een schaallijntje een lengte op schaal omrekenen naar een lengte in het echt en je leert hoe je de schaal berekent.', [
+        { label: 'kaart ↔ in het echt', gen: () => schaalV('omrekenen') },
+        { label: 'de schaal uitrekenen', gen: () => schaalV('schaal') },
+      ]),
     ],
     3: [
-      { doel: 'Je leert betekenis geven aan hele grote getallen tot in de miljarden, deze in cijfers schrijven en op volgorde zetten, aflezen en schattend plaatsen op een getallenlijn.', gen: () => Math.random() < 0.5 ? getallenlijnV(rnd(0, 5) * 1000000000, 5000000000) : grootGetalV() },
-      { doel: 'Je leert cijferend of kolomsgewijs optellen en aftrekken met benoemde kommagetallen.', gen: () => kommaCijferV(plus ? 9000 : 4000) },
-      { doel: 'Je leert welke breuken gelijkwaardig zijn en benoemde gelijknamige en ongelijknamige breuken vergelijken.', gen: () => pick([gelijkBreukV, gelijkwaardigeBreukV, breukVergelijkV])() },
-      { doel: 'Je leert maten voor lengte vergelijken, ordenen, omrekenen en optellen met hele getallen.', gen: () => maatLengteV() },
+      D('Je leert betekenis geven aan hele grote getallen tot in de miljarden, deze in cijfers schrijven en op volgorde zetten, aflezen en schattend plaatsen op een getallenlijn.', [
+        { label: 'in cijfers schrijven', gen: () => grootGetalV() },
+        { label: 'plaatsen op de getallenlijn', gen: () => getallenlijnV(rnd(0, 5) * 1000000000, 5000000000) },
+      ]),
+      D('Je leert cijferend of kolomsgewijs optellen en aftrekken met benoemde kommagetallen.', [
+        { label: 'optellen', gen: () => kommaCijferV(plus ? 9000 : 4000, 'plus') },
+        { label: 'aftrekken', gen: () => kommaCijferV(plus ? 9000 : 4000, 'min') },
+      ]),
+      D('Je leert welke breuken gelijkwaardig zijn en benoemde gelijknamige en ongelijknamige breuken vergelijken.', [
+        { label: 'gelijkwaardige breuken', gen: () => pick([gelijkBreukV, gelijkwaardigeBreukV])() },
+        { label: 'breuken vergelijken', gen: () => breukVergelijkV() },
+      ]),
+      D('Je leert maten voor lengte vergelijken, ordenen, omrekenen en optellen met hele getallen.', [
+        { label: 'omrekenen', gen: () => maatLengteV() },
+        { label: 'optellen met maten', gen: () => maatLengteOptelV() },
+      ]),
     ],
     4: [
-      { doel: 'Je leert sommen met een rekenmachine uitrekenen met eerst een passende schatting, en kiezen tussen hoofdrekenen en de rekenmachine.', gen: () => schattenV() },
-      { doel: 'Je leert eenvoudige breuken omzetten in kommagetallen en omgekeerd, met en zonder rekenmachine.', gen: () => Math.random() < 0.5 ? breukKommaV() : kommaNaarBreukV() },
-      { doel: 'Je leert percentages aflezen en inkleuren in een strook of cirkel, en percentages aan breuken koppelen en uitrekenen.',
-        gen: () => procentVanAantalV(plus ? [10, 20, 25, 50, 75] : [10, 25, 50], plus ? 9 : 6,
+      D('Je leert sommen met een rekenmachine uitrekenen met eerst een passende schatting, en kiezen tussen hoofdrekenen en de rekenmachine.', [
+        { label: 'schatten bij keersommen', gen: () => schattenV('keer') },
+        { label: 'schatten bij geld en optellen', gen: () => schattenV('geld') },
+      ]),
+      D('Je leert eenvoudige breuken omzetten in kommagetallen en omgekeerd, met en zonder rekenmachine.', [
+        { label: 'breuk → kommagetal', gen: () => breukKommaV() },
+        { label: 'kommagetal → breuk', gen: () => kommaNaarBreukV() },
+      ]),
+      D('Je leert percentages aflezen en inkleuren in een strook of cirkel, en percentages aan breuken koppelen en uitrekenen.', [
+        { label: 'percentage in een strook', gen: () => procentVanAantalV(plus ? [10, 20, 25, 50, 75] : [10, 25, 50], plus ? 9 : 6,
           'In de aula zitten', 'kinderen', 'heeft een boek bij zich') },
-      { doel: 'Je leert de gemiddelde snelheid uitrekenen in kilometer per uur en rekenen met de gemiddelde snelheid.', gen: () => {
-        if (Math.random() < 0.5) return snelheidV()
+        { label: 'percentage in een cirkel', gen: () => cirkelDiagramV(plus ? 10 : 6) },
+      ]),
+      D('Je leert de gemiddelde snelheid uitrekenen in kilometer per uur en rekenen met de gemiddelde snelheid.', [
+        { label: 'de snelheid uitrekenen', gen: () => snelheidV() },
         // Andersom: uit snelheid en tijd de afstand, want "rekenen mét de
         // gemiddelde snelheid" is meer dan hem alleen uitrekenen.
-        const v = pick([60, 70, 80, 90, 100]), t = rnd(2, plus ? 6 : 4)
-        return { vraag: `Een auto rijdt gemiddeld ${v} km per uur en doet er ${t} uur over. Hoeveel kilometer legt de auto af?`,
-                 antwoord: v * t, eenheid: 'km', uitleg: `${v} km/u × ${t} uur = ${v * t} km` }
-      }},
+        { label: 'rekenen met de snelheid', gen: () => {
+          const v = pick([60, 70, 80, 90, 100]), t = rnd(2, plus ? 6 : 4)
+          return { vraag: `Een auto rijdt gemiddeld ${v} km per uur en doet er ${t} uur over. Hoeveel kilometer legt de auto af?`,
+                   kaal: `${v} km/u × ${t} uur = … km`,
+                   antwoord: v * t, eenheid: 'km', uitleg: `${v} km/u × ${t} uur = ${v * t} km` }
+        } },
+      ]),
     ],
     5: [
-      { doel: 'Je leert kolomsgewijs delen bij sommen als 357 : 17 en 360 : 17 (met rest), in maximaal 2 stappen.', gen: () => Math.random() < 0.5 ? deelV(rnd(12, 19), rnd(11, plus ? 39 : 25)) : (() => { const deler = rnd(12, 19), quo = rnd(11, plus ? 39 : 25), rest = rnd(1, deler - 1); return deelRestV(deler, quo, rest) })() },
-      { doel: 'Je leert kolomsgewijs delen bij sommen als 3726 : 23 en 3732 : 23 (met rest), in maximaal 3 stappen.', gen: () => { const deler = rnd(13, 29); return deelRestV(deler, rnd(100, plus ? 299 : 199), rnd(1, deler - 1)) } },
-      { doel: 'Je leert rekenen met verhoudingen met een verhoudingstabel, ook in cirkeldiagrammen en met breuken.', gen: () => Math.random() < 0.75 ? verhoudingsTabelV() : cirkelDiagramV(plus ? 10 : 6) },
-      { doel: 'Je leert de oppervlakte berekenen van rechthoeken en eenvoudige figuren met maten in cm, dm of m.', gen: () => {
-        const k = rnd(1, 3)
-        if (k === 1) return oppRechthoekV(plus ? 25 : 12, plus ? 18 : 9)
-        if (k === 2) return oppDriehoekV()
+      D('Je leert kolomsgewijs delen bij sommen als 357 : 17 en 360 : 17 (met rest), in maximaal 2 stappen.', [
+        { label: 'zonder rest', gen: () => deelV(rnd(12, 19), rnd(11, plus ? 39 : 25)) },
+        { label: 'met rest', gen: () => { const deler = rnd(12, 19); return deelRestV(deler, rnd(11, plus ? 39 : 25), rnd(1, deler - 1)) } },
+      ]),
+      D('Je leert kolomsgewijs delen bij sommen als 3726 : 23 en 3732 : 23 (met rest), in maximaal 3 stappen.', [
+        { label: 'zonder rest', gen: () => deelV(rnd(13, 29), rnd(100, plus ? 299 : 199)) },
+        { label: 'met rest', gen: () => { const deler = rnd(13, 29); return deelRestV(deler, rnd(100, plus ? 299 : 199), rnd(1, deler - 1)) } },
+      ]),
+      D('Je leert rekenen met verhoudingen met een verhoudingstabel, ook in cirkeldiagrammen en met breuken.', [
+        { label: 'verhoudingstabel', gen: () => verhoudingsTabelV() },
+        { label: 'cirkeldiagram', gen: () => cirkelDiagramV(plus ? 10 : 6) },
+      ]),
+      D('Je leert de oppervlakte berekenen van rechthoeken en eenvoudige figuren met maten in cm, dm of m.', [
+        { label: 'rechthoek', gen: () => oppRechthoekV(plus ? 25 : 12, plus ? 18 : 9) },
         // L-vorm: een grote rechthoek met een hoek eruit. Twee manieren om hem
         // te verdelen, precies waar "eenvoudige figuren" over gaat.
-        const l = rnd(6, plus ? 14 : 10), b = rnd(4, plus ? 10 : 7)
-        const hl = rnd(2, l - 3), hb = rnd(2, b - 2)
-        return { vraag: `Een kamer heeft de vorm van een L. De hele rechthoek zou ${l} m bij ${b} m zijn, maar er is een hoek van ${hl} m bij ${hb} m uit weggelaten. Hoeveel m² is de kamer?`,
-                 antwoord: l * b - hl * hb, eenheid: 'm²',
-                 uitleg: `Hele rechthoek: ${l} × ${b} = ${l * b} m². Hoek eraf: ${hl} × ${hb} = ${hl * hb} m². ${l * b} − ${hl * hb} = ${l * b - hl * hb} m²` }
-      }},
+        { label: 'driehoek en L-vorm', gen: () => {
+          if (Math.random() < 0.5) return oppDriehoekV()
+          const l = rnd(6, plus ? 14 : 10), b = rnd(4, plus ? 10 : 7)
+          const hl = rnd(2, l - 3), hb = rnd(2, b - 2)
+          return { vraag: `Een kamer heeft de vorm van een L. De hele rechthoek zou ${l} m bij ${b} m zijn, maar er is een hoek van ${hl} m bij ${hb} m uit weggelaten. Hoeveel m² is de kamer?`,
+                   kaal: `Rechthoek ${l} m bij ${b} m, met een hoek van ${hl} m bij ${hb} m eruit. Hoeveel m²?`,
+                   antwoord: l * b - hl * hb, eenheid: 'm²',
+                   uitleg: `Hele rechthoek: ${l} × ${b} = ${l * b} m². Hoek eraf: ${hl} × ${hb} = ${hl * hb} m². ${l * b} − ${hl * hb} = ${l * b - hl * hb} m²` }
+        } },
+      ]),
     ],
     6: [
-      { doel: 'Je leert betekenis verlenen aan getallen tot in de miljarden, afronden op een honderdduizendtal en getallen op 2 manieren schrijven (5,2 miljoen en 5.200.000).', gen: () => miljoenV() },
-      { doel: 'Je leert een heel getal met een benoemde breuk vermenigvuldigen.', gen: () => breukMaalHeelV() },
-      { doel: 'Je leert een deel van hoeveelheden omrekenen naar 5%, 10%, 25%, 50%, 75% en 100%, en 5% of 10% koppelen aan breuken, kommagetallen en verhoudingen.',
-        gen: () => procentVanAantalV([5, 10, 25, 50, 75], plus ? 12 : 8,
+      D('Je leert betekenis verlenen aan getallen tot in de miljarden, afronden op een honderdduizendtal en getallen op 2 manieren schrijven (5,2 miljoen en 5.200.000).', [
+        { label: '5,2 miljoen in cijfers', gen: () => miljoenV('cijfers') },
+        { label: 'afronden op honderdduizendtallen', gen: () => miljoenV('afronden') },
+      ]),
+      D('Je leert een heel getal met een benoemde breuk vermenigvuldigen.', [
+        { label: 'basis', gen: () => breukMaalHeelV(false) },
+        { label: 'grotere aantallen', gen: () => breukMaalHeelV(true) },
+      ]),
+      D('Je leert een deel van hoeveelheden omrekenen naar 5%, 10%, 25%, 50%, 75% en 100%, en 5% of 10% koppelen aan breuken, kommagetallen en verhoudingen.', [
+        { label: '25%, 50% en 75%', gen: () => procentVanAantalV([25, 50, 75], plus ? 12 : 8,
           'Op het schoolplein staan', 'kinderen', 'gaat naar binnen') },
-      { doel: 'Je leert staafdiagrammen en cirkeldiagrammen aflezen, maken en gebruiken bij berekeningen.', gen: () => Math.random() < 0.5 ? diagramV('staaf', pick([5, 10]), rnd(3, 9)) : cirkelDiagramV(plus ? 12 : 8) },
+        { label: '5% en 10%', gen: () => procentVanAantalV([5, 10], plus ? 12 : 8,
+          'Op het schoolplein staan', 'kinderen', 'gaat naar binnen') },
+      ]),
+      D('Je leert staafdiagrammen en cirkeldiagrammen aflezen, maken en gebruiken bij berekeningen.', [
+        { label: 'staafdiagram', gen: () => diagramV('staaf', pick([5, 10]), rnd(3, 9)) },
+        { label: 'cirkeldiagram', gen: () => cirkelDiagramV(plus ? 12 : 8) },
+      ]),
     ],
     7: [
-      { doel: 'Je leert het gemiddelde berekenen met hoofdrekenen en met de rekenmachine.', gen: () => gemiddeldeV() },
-      { doel: 'Je leert benoemde kommagetallen vermenigvuldigen met 10, 100 en 1000 en delen door 10 en 100.', gen: () => Math.random() < 0.5 ? kommaMaal10V() : kommaDeel10V() },
-      { doel: 'Je leert rekenen met verhoudingen in allerlei situaties en rekenen met vreemde valuta.', gen: () => Math.random() < 0.5 ? verhoudingV() : valutaV() },
-      { doel: 'Je leert de inhoud van een balk berekenen in dm³ en liter, en uitrekenen hoeveel blokken van 1 dm³ er in een grotere doos passen.', gen: () => balkInhoudV(plus ? 9 : 6) },
+      D('Je leert het gemiddelde berekenen met hoofdrekenen en met de rekenmachine.', [
+        { label: 'hoofdrekenen', gen: () => gemiddeldeV(false) },
+        { label: 'met de rekenmachine', gen: () => gemiddeldeV(true) },
+      ]),
+      D('Je leert benoemde kommagetallen vermenigvuldigen met 10, 100 en 1000 en delen door 10 en 100.', [
+        { label: '× 10, 100 en 1000', gen: () => kommaMaal10V() },
+        { label: ': 10 en 100', gen: () => kommaDeel10V() },
+      ]),
+      D('Je leert rekenen met verhoudingen in allerlei situaties en rekenen met vreemde valuta.', [
+        { label: 'verhoudingen', gen: () => verhoudingV() },
+        { label: 'vreemde valuta', gen: () => valutaV() },
+      ]),
+      D('Je leert de inhoud van een balk berekenen in dm³ en liter, en uitrekenen hoeveel blokken van 1 dm³ er in een grotere doos passen.', [
+        { label: 'inhoud in liter', gen: () => balkInhoudV(plus ? 9 : 6, 'liter') },
+        { label: 'blokken van 1 dm³', gen: () => balkInhoudV(plus ? 9 : 6, 'blokken') },
+      ]),
     ],
     8: [
-      { doel: 'Je leert hoe je eenvoudige opgaven met hele getallen en kommagetallen in een verhaal op de rekenmachine kunt uitrekenen.', gen: () => boodschappenV() },
-      { doel: 'Je herhaalt het vermenigvuldigen van een heel getal met een benoemde breuk.', gen: () => breukMaalHeelV() },
-      { doel: 'Je leert de nieuwe prijs uitrekenen als je de oude prijs en het kortingspercentage weet, en percentages boven 100% uitrekenen.', gen: () => pick([nieuwePrijsV, kortingPctV, pctBoven100V])() },
-      { doel: 'Je leert gewichten omrekenen naar een andere maat, een passende maat kiezen en rekenen met prijzen en gewichten.', gen: () => maatGewichtV() },
+      D('Je leert hoe je eenvoudige opgaven met hele getallen en kommagetallen in een verhaal op de rekenmachine kunt uitrekenen.', [
+        { label: 'basis', gen: () => boodschappenV(false) },
+        { label: 'grotere bedragen', gen: () => boodschappenV(true) },
+      ]),
+      D('Je herhaalt het vermenigvuldigen van een heel getal met een benoemde breuk.', [
+        { label: 'basis', gen: () => breukMaalHeelV(false) },
+        { label: 'grotere aantallen', gen: () => breukMaalHeelV(true) },
+      ]),
+      D('Je leert de nieuwe prijs uitrekenen als je de oude prijs en het kortingspercentage weet, en percentages boven 100% uitrekenen.', [
+        { label: 'korting en nieuwe prijs', gen: () => pick([nieuwePrijsV, kortingPctV])() },
+        { label: 'boven de 100%', gen: () => pctBoven100V() },
+      ]),
+      D('Je leert gewichten omrekenen naar een andere maat, een passende maat kiezen en rekenen met prijzen en gewichten.', [
+        { label: 'gewichten omrekenen', gen: () => maatGewichtV() },
+        { label: 'prijs en gewicht', gen: () => maatGewichtV('prijs') },
+      ]),
     ],
     9: [
-      { doel: 'Je leert kolomsgewijs delen bij sommen als 5819 : 23 met en zonder rest, in maximaal 3 stappen.', gen: () => {
-        const deler = rnd(13, 29), quo = rnd(120, plus ? 399 : 250)
-        if (Math.random() < 0.5) return deelV(deler, quo)
-        return deelRestV(deler, quo, rnd(1, deler - 1))
-      }},
-      { doel: 'Je leert vermenigvuldigen en delen met benoemde kommagetallen.', gen: () => Math.random() < 0.5 ? kommaKeerV() : kommaDeelV() },
-      { doel: 'Je leert percentages uitrekenen via 1%, kiezen tussen rekenen met een breuk en via 1%, en percentages uitrekenen met de rekenmachine.', gen: () => procentVia1V() },
-      { doel: 'Je leert windrichtingen gebruiken om een standpunt aan te geven, beschrijven wat je vanuit een standpunt ziet en routes beschrijven en volgen.', gen: () => windrichtingV() },
+      D('Je leert kolomsgewijs delen bij sommen als 5819 : 23 met en zonder rest, in maximaal 3 stappen.', [
+        { label: 'zonder rest', gen: () => deelV(rnd(13, 29), rnd(120, plus ? 399 : 250)) },
+        { label: 'met rest', gen: () => { const deler = rnd(13, 29); return deelRestV(deler, rnd(120, plus ? 399 : 250), rnd(1, deler - 1)) } },
+      ]),
+      D('Je leert vermenigvuldigen en delen met benoemde kommagetallen.', [
+        { label: 'vermenigvuldigen', gen: () => kommaKeerV() },
+        { label: 'delen', gen: () => kommaDeelV() },
+      ]),
+      D('Je leert percentages uitrekenen via 1%, kiezen tussen rekenen met een breuk en via 1%, en percentages uitrekenen met de rekenmachine.', [
+        { label: 'via 1%', gen: () => procentVia1V(false) },
+        { label: 'met de rekenmachine', gen: () => procentVia1V(true) },
+      ]),
+      D('Je leert windrichtingen gebruiken om een standpunt aan te geven, beschrijven wat je vanuit een standpunt ziet en routes beschrijven en volgen.', [
+        { label: 'standpunt en draaien', gen: () => windrichtingV('draaien') },
+        { label: 'een route volgen', gen: () => windrichtingV('route') },
+      ]),
     ],
     10: [
-      { doel: 'Je leert bewerkingen schattend uitrekenen, in contexten waarbij het zinvol is om te schatten.', gen: () => schattenV() },
-      { doel: 'Je leert vermenigvuldigen met kommagetallen, bij sommen als 2,9 × 8,1 en 24 × 0,67: eerst schatten, dan zonder komma rekenen met de rekenmachine en ten slotte de komma plaatsen.', gen: () => Math.random() < 0.5 ? kommaVermV() : (() => { const a = rnd(110, 220) / 100, liter = rnd(20, plus ? 600 : 250) / 10; return { vraag: `1 liter benzine kost ${euro(a)}. Je tankt ${komma(liter)} liter. Hoeveel betaal je?`, antwoord: +(a * liter).toFixed(2), eenheid: '€', uitleg: `${komma(liter)} × ${euro(a)} = ${euro(a * liter)}` } })() },
-      { doel: 'Je leert eenvoudige breuken omzetten in kommagetallen en omgekeerd, ze vergelijken en op volgorde zetten.', gen: () => pick([breukKommaV, kommaNaarBreukV, breukVergelijkV])() },
-      { doel: 'Je leert eenvoudige lijndiagrammen en diagrammen met tijd en afstand aflezen, maken en er berekeningen mee maken.', gen: () => diagramV('lijn', pick([5, 10]), rnd(3, 9)) },
+      D('Je leert bewerkingen schattend uitrekenen, in contexten waarbij het zinvol is om te schatten.', [
+        { label: 'schatten bij keersommen', gen: () => schattenV('keer') },
+        { label: 'schatten bij geld en optellen', gen: () => schattenV('geld') },
+      ]),
+      D('Je leert vermenigvuldigen met kommagetallen, bij sommen als 2,9 × 8,1 en 24 × 0,67: eerst schatten, dan zonder komma rekenen met de rekenmachine en ten slotte de komma plaatsen.', [
+        { label: 'kommagetal × kommagetal', gen: () => kommaVermV() },
+        { label: 'heel getal × kommagetal', gen: () => {
+          const a = rnd(110, 220) / 100, liter = rnd(20, plus ? 600 : 250) / 10
+          return { vraag: `1 liter benzine kost ${euro(a)}. Je tankt ${komma(liter)} liter. Hoeveel betaal je?`,
+                   kaal: `${komma(liter)} × ${euro(a)} =`,
+                   antwoord: +(a * liter).toFixed(2), eenheid: '€', uitleg: `${komma(liter)} × ${euro(a)} = ${euro(a * liter)}` }
+        } },
+      ]),
+      D('Je leert eenvoudige breuken omzetten in kommagetallen en omgekeerd, ze vergelijken en op volgorde zetten.', [
+        { label: 'omzetten', gen: () => pick([breukKommaV, kommaNaarBreukV])() },
+        { label: 'vergelijken en ordenen', gen: () => breukVergelijkV() },
+      ]),
+      D('Je leert eenvoudige lijndiagrammen en diagrammen met tijd en afstand aflezen, maken en er berekeningen mee maken.', [
+        { label: 'aflezen', gen: () => diagramV('lijn', pick([5, 10]), rnd(3, 9), 'lees') },
+        { label: 'ermee rekenen', gen: () => diagramV('lijn', pick([5, 10]), rnd(3, 9), 'rekenen') },
+      ]),
     ],
   }
 }
@@ -146,6 +295,12 @@ function maakBlokken(plus) {
 // de hand is, dan pas de vraag. Woorden als "erbij", "eraf" en "samen" zijn er
 // zoveel mogelijk uit gehouden, zodat het kind zelf moet bedenken wat de som
 // is. Namen worden zo gebruikt dat er nooit "hij" of "zij" bij hoeft.
+//
+// Naast het verhaal geeft elke bouwer een `kaal`: dezelfde som zonder context.
+// De lescheck gebruikt die, want daar wil de leerkracht weten of het kind de
+// bewerking van de les beheerst — niet of het de som uit een verhaal kan
+// vissen. Bij opgaven met een tekening (getallenlijn, diagram, figuur) is de
+// kale vorm gewoon de korte vraag bij het plaatje.
 //
 // Elk scenario past bij de grootte van de getallen: 3400 knikkers in een
 // broekzak bestaat niet, en 45 inwoners van een stad ook niet. KLEIN = op
@@ -167,7 +322,8 @@ const OPTEL_GROOT = [
 ]
 const optelV = (a, b) => {
   const kies = Math.max(a, b) >= 1000 ? OPTEL_GROOT : OPTEL_KLEIN
-  return { vraag: pick(kies)(a, b), antwoord: a + b, uitleg: `${getal(a)} + ${getal(b)} = ${getal(a + b)}` }
+  return { vraag: pick(kies)(a, b), kaal: `${getal(a)} + ${getal(b)} =`,
+           antwoord: a + b, uitleg: `${getal(a)} + ${getal(b)} = ${getal(a + b)}` }
 }
 
 const AFTREK_KLEIN = [
@@ -185,7 +341,8 @@ const AFTREK_GROOT = [
 ]
 const aftrekV = (a, b) => {   // a >= b
   const kies = a >= 1000 ? AFTREK_GROOT : AFTREK_KLEIN
-  return { vraag: pick(kies)(a, b), antwoord: a - b, uitleg: `${getal(a)} − ${getal(b)} = ${getal(a - b)}` }
+  return { vraag: pick(kies)(a, b), kaal: `${getal(a)} − ${getal(b)} =`,
+           antwoord: a - b, uitleg: `${getal(a)} − ${getal(b)} = ${getal(a - b)}` }
 }
 
 const KEER_KLEIN = [
@@ -203,7 +360,8 @@ const KEER_GROOT = [
 ]
 const keerV = (a, b) => {   // a groepjes van b
   const kies = b >= 1000 ? KEER_GROOT : KEER_KLEIN
-  return { vraag: pick(kies)(a, b), antwoord: a * b, uitleg: `${a} × ${getal(b)} = ${getal(a * b)}` }
+  return { vraag: pick(kies)(a, b), kaal: `${a} × ${getal(b)} =`,
+           antwoord: a * b, uitleg: `${a} × ${getal(b)} = ${getal(a * b)}` }
 }
 
 // Verdelen over een klein aantal (eerlijk delen) of inpakken per groot aantal:
@@ -222,7 +380,8 @@ const DEEL_GROOT = [
 const deelV = (deler, q) => {   // exact, antwoord = q
   const totaal = deler * q, d = ding()
   const kies = deler <= 30 ? DEEL_KLEIN : DEEL_GROOT
-  return { vraag: pick(kies)(totaal, deler, d), antwoord: q, uitleg: `${getal(totaal)} : ${getal(deler)} = ${getal(q)}` }
+  return { vraag: pick(kies)(totaal, deler, d), kaal: `${getal(totaal)} : ${getal(deler)} =`,
+           antwoord: q, uitleg: `${getal(totaal)} : ${getal(deler)} = ${getal(q)}` }
 }
 const DEELREST = [
   (t, deler, d) => { const n = naam(); return `${n} doet ${getal(t)} ${d[1]} in zakjes van ${deler} stuks. Wat er niet meer in een vol zakje past, houdt ${n} over. Hoeveel volle zakjes worden het, en hoeveel ${d[1]} blijven er over?` },
@@ -233,38 +392,42 @@ const deelRestV = (deler, q, rest) => {
   const totaal = deler * q + rest, d = ding()
   return {
     vraag: pick(DEELREST)(totaal, deler, d),
+    kaal: `${getal(totaal)} : ${deler} = … met rest …`,
     antwoord: q, rest, uitleg: `${getal(totaal)} : ${deler} = ${q} met rest ${rest}`,
   }
 }
 
 // ── Extra verhaal-bouwers voor de ontbrekende groep-7-doelen ──
-const breukNoemTekst = (n) => ({ 2: 'half', 3: 'derde', 4: 'kwart', 5: 'vijfde', 6: 'zesde' }[n] || `1/${n}`)
 const gelijkBreukV = () => {   // gelijkwaardige breuken in een verhaal
   const noem = pick([2, 3, 4, 5]), tel = 1, f = pick([2, 3, 4])
   const n = naam(), d = pick(['reep chocola', 'pizza', 'taart', 'cake'])
   return { vraag: `Een ${d} is in ${noem * f} gelijke stukjes verdeeld. ${n} eet ${tel}/${noem} van de ${d}. Hoeveel van die ${noem * f} stukjes is dat?`,
+           kaal: `${tel}/${noem} = ?/${noem * f}`,
            antwoord: tel * f, eenheid: 'stukjes', uitleg: `${tel}/${noem} = ${tel * f}/${noem * f}, want ${noem} × ${f} = ${noem * f}. Dus ${tel * f} stukjes.` }
 }
 // Schattend rekenen in drie soorten context, niet alleen "rijen × stoelen":
 // het doel gaat over situaties waarin schatten zinvol is, en dat is bij geld
 // en bij optellen net zo goed als bij vermenigvuldigen.
-const schattenV = () => {
+const schattenV = (soort) => {
   const n = naam()
-  const k = rnd(1, 3)
+  const k = soort === 'keer' ? 1 : soort === 'geld' ? rnd(2, 3) : rnd(1, 3)
   if (k === 1) {
     const a = rnd(11, 89), b = rnd(11, 89), ra = Math.round(a / 10) * 10, rb = Math.round(b / 10) * 10
     return { vraag: `${n} zit in de bioscoop en kijkt rond: er zijn ${a} rijen met ${b} stoelen. Hoeveel stoelen dat ongeveer zijn wil ${n} schatten: rond ${a} en ${b} af op tientallen en vermenigvuldig. Wat is de schatting?`,
+             kaal: `Schat: ${a} × ${b} ≈ (rond af op tientallen)`,
              antwoord: ra * rb, eenheid: 'stoelen', uitleg: `${a} ≈ ${ra} en ${b} ≈ ${rb}. ${ra} × ${rb} = ${ra * rb}.` }
   }
   if (k === 2) {
     const prijs = rnd(180, 990) / 100, aantal = rnd(11, 39)
     const rp = Math.round(prijs), ra = Math.round(aantal / 10) * 10
     return { vraag: `De school bestelt ${aantal} leesboeken van ${euro(prijs)} per stuk. ${n} wil snel weten of dat binnen het budget past en schat het bedrag: rond allebei af en vermenigvuldig. Wat is de schatting (in hele euro's)?`,
+             kaal: `Schat: ${aantal} × ${euro(prijs)} ≈ (in hele euro's)`,
              antwoord: rp * ra, eenheid: '€', uitleg: `${euro(prijs)} ≈ € ${rp} en ${aantal} ≈ ${ra}. ${rp} × ${ra} = € ${rp * ra}.` }
   }
   const a = rnd(180, 890), b = rnd(180, 890), c = rnd(180, 890)
   const r = (x) => Math.round(x / 100) * 100
   return { vraag: `Het schoolmuseum houdt drie dagen open huis. Er kwamen ${a}, ${b} en ${c} bezoekers. ${n} moet voor de krant snel een aantal noemen: rond elk getal af op honderdtallen en tel op. Wat is de schatting?`,
+           kaal: `Schat: ${a} + ${b} + ${c} ≈ (rond af op honderdtallen)`,
            antwoord: r(a) + r(b) + r(c), eenheid: 'bezoekers',
            uitleg: `${a} ≈ ${r(a)}, ${b} ≈ ${r(b)}, ${c} ≈ ${r(c)}. Samen ${r(a) + r(b) + r(c)}.` }
 }
@@ -272,65 +435,78 @@ const BREUK_KOMMA = [['1/2', 0.5], ['1/4', 0.25], ['3/4', 0.75], ['1/5', 0.2], [
 const breukKommaV = () => {
   const [b, d] = pick(BREUK_KOMMA)
   const n = naam()
-  return { vraag: `${n} loopt ${b} kilometer naar school. Schrijf die afstand als kommagetal (in km).`, antwoord: d, eenheid: 'km', uitleg: `${b} km = ${komma(d)} km` }
+  return { vraag: `${n} loopt ${b} kilometer naar school. Schrijf die afstand als kommagetal (in km).`, kaal: `${b} = … (als kommagetal)`, antwoord: d, eenheid: 'km', uitleg: `${b} km = ${komma(d)} km` }
 }
-const breukMaalHeelV = () => {   // heel getal × benoemde breuk
-  const noem = pick([2, 3, 4, 5]), keer = rnd(2, 6), h = keer * noem, nm = naam()
+const breukMaalHeelV = (zwaar) => {   // heel getal × benoemde breuk
+  const noem = pick(zwaar ? [3, 4, 5, 6] : [2, 3, 4]), keer = zwaar ? rnd(4, 8) : rnd(2, 5)
+  const h = keer * noem, nm = naam()
   if (Math.random() < 0.5) {
     return { vraag: `Op het schoolfeest snijdt ${nm} elke pizza in ${noem} even grote punten. Aan het eind van de avond zijn er ${h} punten op. Hoeveel héle pizza's zijn er opgegeten?`,
+             kaal: `${h} × 1/${noem} =`,
              antwoord: keer, eenheid: "pizza's", uitleg: `${h} × 1/${noem} = ${h}/${noem} = ${keer} hele pizza's.` }
   }
   const liters = pick([2, 3, 4, 6])
   return { vraag: `${nm} schenkt limonade uit een kan van ${liters} liter. In elk glas gaat 1/${noem} liter. Hoeveel glazen kan ${nm} vullen?`,
+           kaal: `${liters} : 1/${noem} =`,
            antwoord: liters * noem, eenheid: 'glazen', uitleg: `${liters} : 1/${noem} = ${liters} × ${noem} = ${liters * noem} glazen.` }
 }
 const kommaMaal10V = () => {   // benoemd kommagetal × 10/100/1000
   const g = rnd(105, 995) / 100, f = pick([10, 100, 1000]), ant = +(g * f).toFixed(2)
   const n = naam()
-  return { vraag: `${n} helpt met de bestelling voor de schoolkantine. Eén pakje drinken kost ${euro(g)} en er gaan er ${getal(f)} in de bestelling. Hoeveel euro kost die bestelling?`, antwoord: ant, eenheid: '€', uitleg: `${getal(f)} × ${euro(g)} = ${euro(ant)}` }
+  return { vraag: `${n} helpt met de bestelling voor de schoolkantine. Eén pakje drinken kost ${euro(g)} en er gaan er ${getal(f)} in de bestelling. Hoeveel euro kost die bestelling?`, kaal: `${getal(f)} × ${euro(g)} =`, antwoord: ant, eenheid: '€', uitleg: `${getal(f)} × ${euro(g)} = ${euro(ant)}` }
 }
-const boodschappenV = () => {   // rekenmachine-verhaal met totaal
-  const n1 = rnd(2, 6), p1 = rnd(120, 350) / 100, n2 = rnd(2, 5), p2 = rnd(90, 250) / 100
+const boodschappenV = (zwaar) => {   // rekenmachine-verhaal met totaal
+  const n1 = zwaar ? rnd(6, 12) : rnd(2, 6), p1 = rnd(120, zwaar ? 950 : 350) / 100
+  const n2 = zwaar ? rnd(5, 11) : rnd(2, 5), p2 = rnd(90, zwaar ? 600 : 250) / 100
   const tot = +(n1 * p1 + n2 * p2).toFixed(2)
   return { vraag: `${naam()} doet de boodschappen voor thuis en legt ${n1} broden van ${euro(p1)} en ${n2} pakken melk van ${euro(p2)} op de band. Welk bedrag komt er straks op het kassascherm te staan?`,
+           kaal: `${n1} × ${euro(p1)} + ${n2} × ${euro(p2)} =`,
            antwoord: tot, eenheid: '€', uitleg: `${n1} × ${euro(p1)} = ${euro(n1 * p1)}, ${n2} × ${euro(p2)} = ${euro(n2 * p2)}. Samen ${euro(tot)}.` }
 }
 const kommaKeerV = () => {   // vermenigvuldigen met benoemd kommagetal
   const n = rnd(2, 8), g = rnd(120, 450) / 100, tot = +(n * g).toFixed(2)
   return { vraag: `${naam()} tilt ${n} zakken potgrond in de kar. Elke zak weegt ${komma(g)} kg. Hoeveel kilogram gaat er in de kar?`,
+           kaal: `${n} × ${komma(g)} =`,
            antwoord: tot, eenheid: 'kg', uitleg: `${n} × ${komma(g)} = ${komma(tot)} kg` }
 }
 const WINDRICHTINGEN = [['het oosten', 90], ['het zuiden', 180], ['het westen', 270], ['het zuidoosten', 135], ['het zuidwesten', 225], ['het noordoosten', 45]]
-const windrichtingV = () => {
-  const nm = naam(), k = rnd(1, 3)
+const windrichtingV = (soort) => {
+  const nm = naam()
+  const k = soort === 'route' ? rnd(1, 2) : soort === 'draaien' ? 3 : rnd(1, 3)
   if (k === 1) {
     const a = rnd(4, 9) * 100, b = rnd(1, 3) * 100
     return { vraag: `${nm} fietst vanaf huis ${getal(a)} m naar het noorden. Daar blijkt de brug dicht te zijn, dus fietst ${nm} weer ${getal(b)} m terug naar het zuiden. Hoeveel meter is ${nm} dan nog van huis vandaan?`,
+             kaal: `${getal(a)} m naar het noorden, dan ${getal(b)} m naar het zuiden. Hoeveel meter van huis?`,
              antwoord: a - b, eenheid: 'm', uitleg: `Noord en zuid zijn tegenover elkaar: ${getal(a)} − ${getal(b)} = ${getal(a - b)} m van huis.` }
   }
   if (k === 2) {
     const a = rnd(2, 9) * 100, b = rnd(2, 9) * 100
     return { vraag: `${nm} loopt een rondje om het park: eerst ${getal(a)} m naar het oosten, dan ${getal(b)} m naar het zuiden, dan ${getal(a)} m naar het westen en tenslotte ${getal(b)} m naar het noorden. Hoeveel meter loopt ${nm} in dat rondje?`,
+             kaal: `Rondje: ${getal(a)} m oost, ${getal(b)} m zuid, ${getal(a)} m west, ${getal(b)} m noord. Hoeveel meter?`,
              antwoord: 2 * (a + b), eenheid: 'm', uitleg: `Oost en west zijn even lang, noord en zuid ook: 2 × (${getal(a)} + ${getal(b)}) = ${getal(2 * (a + b))} m.` }
   }
   const [r, deg] = pick(WINDRICHTINGEN)
   return { vraag: `${nm} staat op de uitkijktoren met het gezicht naar het noorden en draait met de klok mee, tot ${nm} recht naar ${r} kijkt. Hoeveel graden heeft ${nm} gedraaid?`,
+           kaal: `Van het noorden met de klok mee naar ${r} = … graden`,
            antwoord: deg, eenheid: '°', uitleg: `Noord = 0°, oost = 90°, zuid = 180°, west = 270°. Naar ${r} is ${deg}°.` }
 }
 // Schaal: van de kaart naar het echt, van het echt naar de kaart, en de schaal
 // zelf uitrekenen — het doel noemt die laatste met zoveel woorden.
-const schaalV = () => {
+const schaalV = (soort) => {
   const N = pick([100, 500, 1000, 2500]), cm = rnd(2, 9), nm = naam(), m = cm * N / 100
-  const k = rnd(1, 3)
+  const k = soort === 'omrekenen' ? rnd(1, 2) : soort === 'schaal' ? 3 : rnd(1, 3)
   if (k === 1) {
     return { vraag: `${nm} maakt een fietsroute op een kaart met schaallijntje 1 : ${getal(N)}. Op de kaart is het stuk langs het kanaal ${cm} cm lang. Hoeveel meter fietst ${nm} daar in het echt?`,
+             kaal: `Schaal 1 : ${getal(N)}. ${cm} cm op de kaart = … m in het echt`,
              antwoord: m, eenheid: 'm', uitleg: `${cm} cm × ${getal(N)} = ${getal(cm * N)} cm = ${getal(m)} m` }
   }
   if (k === 2) {
     return { vraag: `${nm} tekent de speelplaats op schaal 1 : ${getal(N)}. In het echt is het voetbalveldje ${getal(m)} m lang. Hoeveel centimeter wordt dat op de tekening van ${nm}?`,
+             kaal: `Schaal 1 : ${getal(N)}. ${getal(m)} m in het echt = … cm op de kaart`,
              antwoord: cm, eenheid: 'cm', uitleg: `${getal(m)} m = ${getal(m * 100)} cm. ${getal(m * 100)} : ${getal(N)} = ${cm} cm` }
   }
   return { vraag: `Op de plattegrond van het park is de vijver ${cm} cm lang. In het echt is diezelfde vijver ${getal(m)} m lang. De plattegrond heeft schaal 1 : ?. Welk getal hoort op de plaats van het vraagteken?`,
+           kaal: `${cm} cm op de kaart is ${getal(m)} m in het echt. Schaal 1 : …?`,
            antwoord: N, uitleg: `${getal(m)} m = ${getal(m * 100)} cm. ${getal(m * 100)} : ${cm} = ${getal(N)}, dus schaal 1 : ${getal(N)}.` }
 }
 // ── Extra bouwers voor groep 6 en 8 (elk doel krijgt een echte som) ──
@@ -340,16 +516,18 @@ const deelVanGeheelV = () => {   // deel van een geheel: a/b van een getal
   const deel = geheel * tel / noem
   return {
     vraag: `${n} heeft ${geheel} ${d[1]} in de verzameling en spreekt met ${m} af om er ${tel}/${noem} deel van te ruilen. Hoeveel ${d[1]} gaan er naar ${m}?`,
+    kaal: `${tel}/${noem} van ${geheel} =`,
     antwoord: deel, eenheid: d[1],
     uitleg: tel === 1
       ? `1/${noem} van ${geheel}: ${geheel} : ${noem} = ${deel} ${d[1]}.`
       : `1/${noem} van ${geheel} is ${geheel} : ${noem} = ${geheel / noem}. Dan ${tel} × ${geheel / noem} = ${deel} ${d[1]}.`,
   }
 }
-const breukAanvullenV = () => {   // breuk aanvullen tot een hele
-  const noem = pick([3, 4, 5, 6, 8, 10]), tel = rnd(1, noem - 1)
+const breukAanvullenV = (zwaar) => {   // breuk aanvullen tot een hele
+  const noem = pick(zwaar ? [6, 8, 10, 12] : [3, 4, 5, 6]), tel = rnd(1, noem - 1)
   const n = naam(), d = pick(['taart', 'pizza', 'reep'])
   return { vraag: `Een ${d} is in ${noem} gelijke stukken verdeeld. ${n} heeft er al ${tel} opgegeten. Hoeveel stukken moeten er nog bij om weer een hele ${d} te hebben?`,
+           kaal: `${tel}/${noem} + ?/${noem} = 1`,
            antwoord: noem - tel, eenheid: 'stukken', uitleg: `${tel}/${noem} + ${noem - tel}/${noem} = ${noem}/${noem} = 1 hele. Dus ${noem - tel} stukken.` }
 }
 const tijdErbijV = (maxMin = 180) => {   // hoe laat is het over een bepaalde tijd
@@ -357,41 +535,46 @@ const tijdErbijV = (maxMin = 180) => {   // hoe laat is het over een bepaalde ti
   const dur = rnd(1, Math.floor(maxMin / 5)) * 5
   const tot = h1 * 60 + m1 + dur, h2 = Math.floor(tot / 60) % 24, m2 = tot % 60
   return { vraag: `Het is ${h1}:${PAD(m1)} uur. Hoe laat is het over ${dur} minuten?`,
+           kaal: `${h1}:${PAD(m1)} + ${dur} min = …`,
            antwoordType: 'tijd', tijdH: h2, tijdM: m2, antwoord: `${h2}:${PAD(m2)}`,
            uitleg: `${h1}:${PAD(m1)} + ${dur} min = ${h2}:${PAD(m2)} uur.` }
 }
-const tijdNaarSecV = () => {   // tijden omrekenen naar seconden
-  const m = rnd(1, 9), s = pick([5, 10, 15, 20, 30, 45])
+const tijdNaarSecV = (zwaar) => {   // tijden omrekenen naar seconden
+  const m = zwaar ? rnd(10, 45) : rnd(1, 9), s = zwaar ? rnd(1, 59) : pick([5, 10, 15, 20, 30, 45])
   return { vraag: `Een liedje duurt ${m} minuten en ${s} seconden. Hoeveel seconden is dat in totaal?`,
+           kaal: `${m} min ${s} sec = … seconden`,
            antwoord: m * 60 + s, eenheid: 's', uitleg: `${m} × 60 + ${s} = ${m * 60} + ${s} = ${m * 60 + s} s` }
 }
-const kaartV = () => {   // plaats/route op een kaart
-  const a = rnd(2, 6), b = rnd(2, 6), m = pick([100, 200, 500])
+const kaartV = (zwaar) => {   // plaats/route op een kaart
+  const a = rnd(2, zwaar ? 12 : 6), b = rnd(2, zwaar ? 12 : 6), m = pick(zwaar ? [250, 500, 1000] : [100, 200, 500])
   return { vraag: `Een route op de kaart gaat ${a} vakjes naar rechts en ${b} vakjes omhoog. Elk vakje is ${m} m. Hoeveel meter is de route in totaal?`,
+           kaal: `${a} vakjes + ${b} vakjes van ${m} m = … m`,
            antwoord: (a + b) * m, eenheid: 'm', uitleg: `(${a} + ${b}) × ${m} = ${a + b} × ${m} = ${(a + b) * m} m` }
 }
 const datumV = () => {   // datum: dagen verder rekenen binnen een maand
   const dag = rnd(1, 10), erbij = rnd(5, 18)
   return { vraag: `Het is de ${dag}e van de maand. Welke datum is het over ${erbij} dagen? Geef de dag van de maand.`,
+           kaal: `Dag ${dag} + ${erbij} dagen = dag …`,
            antwoord: dag + erbij, uitleg: `${dag} + ${erbij} = ${dag + erbij}` }
 }
-const volgordeV = () => {   // volgorde van bewerkingen, in een verhaal
+const volgordeV = (soort) => {   // volgorde van bewerkingen, in een verhaal
   const a = rnd(2, 9), b = rnd(2, 9), c = rnd(2, 9), n = naam(), d = ding()
-  if (pick([0, 1]) === 0) return { vraag: `${n} heeft ${a} losse ${d[1]} en ${b} zakjes met elk ${c} ${d[1]}. Hoeveel ${d[1]} heeft ${n} in totaal?`, antwoord: a + b * c, eenheid: d[1], uitleg: `Eerst ${b} × ${c} = ${b * c}, dan ${a} + ${b * c} = ${a + b * c}.` }
+  if (soort === 'plus' || (!soort && pick([0, 1]) === 0)) return { vraag: `${n} heeft ${a} losse ${d[1]} en ${b} zakjes met elk ${c} ${d[1]}. Hoeveel ${d[1]} heeft ${n} in totaal?`, kaal: `${a} + ${b} × ${c} =`, antwoord: a + b * c, eenheid: d[1], uitleg: `Eerst ${b} × ${c} = ${b * c}, dan ${a} + ${b * c} = ${a + b * c}.` }
   // Nooit meer opeten dan er zijn: a × b − c werd anders negatief, en dan
   // vraag je een kind hoeveel snoepjes er overblijven als je er meer eet dan
   // je hebt.
   const opgegeten = Math.min(c, a * b - 1)
-  return { vraag: `${n} koopt ${a} zakjes met elk ${b} ${d[1]} en eet er daarna ${opgegeten} op. Hoeveel ${d[1]} blijven er over?`, antwoord: a * b - opgegeten, eenheid: d[1], uitleg: `Eerst ${a} × ${b} = ${a * b}, dan ${a * b} − ${opgegeten} = ${a * b - opgegeten}.` }
+  return { vraag: `${n} koopt ${a} zakjes met elk ${b} ${d[1]} en eet er daarna ${opgegeten} op. Hoeveel ${d[1]} blijven er over?`, kaal: `${a} × ${b} − ${opgegeten} =`, antwoord: a * b - opgegeten, eenheid: d[1], uitleg: `Eerst ${a} × ${b} = ${a * b}, dan ${a * b} − ${opgegeten} = ${a * b - opgegeten}.` }
 }
-const restV = () => {   // deelbaarheid: rest bij delen, in een verhaal
-  const deler = pick([2, 4, 5, 10]), q = rnd(3, 19), rest = rnd(0, deler - 1), n = deler * q + rest
+const restV = (zwaar) => {   // deelbaarheid: rest bij delen, in een verhaal
+  const deler = pick(zwaar ? [3, 8, 9] : [2, 4, 5, 10]), q = rnd(3, zwaar ? 39 : 19), rest = rnd(0, deler - 1), n = deler * q + rest
   const nm = naam(), d = ding()
-  return { vraag: `${nm} heeft ${n} ${d[1]} en legt ze in groepjes van ${deler}. Hoeveel ${d[1]} houdt ${nm} over?`, antwoord: rest, eenheid: d[1], uitleg: `${n} : ${deler} = ${q} met rest ${rest}. Er blijven ${rest} ${d[1]} over.` }
+  return { vraag: `${nm} heeft ${n} ${d[1]} en legt ze in groepjes van ${deler}. Hoeveel ${d[1]} houdt ${nm} over?`, kaal: `${n} : ${deler} — hoeveel blijft er over?`, antwoord: rest, eenheid: d[1], uitleg: `${n} : ${deler} = ${q} met rest ${rest}. Er blijven ${rest} ${d[1]} over.` }
 }
-const priemV = () => {   // ontbinden in priemgetallen, in een verhaal
-  const primes = [2, 3, 5, 7], p = pick(primes), q = pick(primes), n = p * q, nm = naam()
+const priemV = (zwaar) => {   // ontbinden in priemgetallen, in een verhaal
+  const primes = zwaar ? [5, 7, 11, 13] : [2, 3, 5, 7], p = pick(primes), q = pick(primes), n = p * q, nm = naam()
   return { vraag: `${nm} legt ${n} tegels in een rechthoek. Dat lukt alleen met ${Math.min(p, q)} rijen van ${Math.max(p, q)} tegels (allebei priemgetallen). Wat is het kleinste priemgetal?`,
+           kaal: `${n} = ? × ? (twee priemgetallen). Geef het kleinste.`,
            antwoord: Math.min(p, q), uitleg: `${n} = ${Math.min(p, q)} × ${Math.max(p, q)}. Beide zijn priemgetallen.` }
 }
 const grootGetalV = () => {   // heel grote getallen in cijfers schrijven
@@ -399,29 +582,33 @@ const grootGetalV = () => {   // heel grote getallen in cijfers schrijven
   if (Math.random() < 0.5) {
     const t = rnd(1, 9)
     return { vraag: `In de krant leest ${nm} dat er ${komma(k + t / 10)} ${u[0]} mensen in een land wonen. Schrijf dat getal in cijfers.`,
+             kaal: `Schrijf in cijfers: ${komma(k + t / 10)} ${u[0]}`,
              antwoord: k * u[1] + t * (u[1] / 10),
              uitleg: `${k} ${u[0]} = ${getal(k * u[1])}. ${komma(t / 10)} ${u[0]} = ${getal(t * (u[1] / 10))}. Samen ${getal(k * u[1] + t * (u[1] / 10))}.` }
   }
-  return { vraag: `In de krant leest ${nm} dat er ${k} ${u[0]} mensen in een land wonen. Schrijf dat getal in cijfers.`, antwoord: k * u[1], uitleg: `${k} ${u[0]} = ${getal(k * u[1])}` }
+  return { vraag: `In de krant leest ${nm} dat er ${k} ${u[0]} mensen in een land wonen. Schrijf dat getal in cijfers.`, kaal: `Schrijf in cijfers: ${k} ${u[0]}`, antwoord: k * u[1], uitleg: `${k} ${u[0]} = ${getal(k * u[1])}` }
 }
 const verhoudingV = () => {   // verhoudingsproblemen
   const nm = naam()
   if (Math.random() < 0.5) {
     const stuks = pick([3, 4, 5, 6]), perStuk = rnd(3, 9) * 25 / 100, n = stuks * rnd(2, 5)
     return { vraag: `${nm} haalt broodjes voor de hele klas. Bij de bakker kosten ${stuks} broodjes samen ${euro(stuks * perStuk)}. Er zijn er ${n} nodig. Hoeveel euro kost dat?`,
+             kaal: `${stuks} stuks kosten ${euro(stuks * perStuk)}. Wat kosten er ${n}?`,
              antwoord: +(perStuk * n).toFixed(2), eenheid: '€', uitleg: `1 broodje: ${euro(stuks * perStuk)} : ${stuks} = ${euro(perStuk)}. ${n} × ${euro(perStuk)} = ${euro(perStuk * n)}.` }
   }
   const perUur = rnd(4, 9) * 100, uren = rnd(3, 8)
   return { vraag: `In de fabriek vult een machine ${getal(perUur * 2)} pakjes in 2 uur. ${nm} wil weten hoeveel dat er in ${uren} uur zijn, als de machine even snel blijft doorwerken. Hoeveel pakjes zijn dat?`,
+           kaal: `${getal(perUur * 2)} in 2 uur. Hoeveel in ${uren} uur?`,
            antwoord: perUur * uren, eenheid: 'pakjes', uitleg: `Per uur: ${getal(perUur * 2)} : 2 = ${getal(perUur)}. ${uren} × ${getal(perUur)} = ${getal(perUur * uren)}.` }
 }
-const procentVanV = () => {   // percentage van een getal, in een verhaal
-  const p = pick([5, 10, 20, 25, 50, 75]), basis = pick([20, 40, 60, 80, 100, 200])
-  return { vraag: `In de dierentuin zijn ${basis} dieren. ${p}% daarvan zijn vogels. Hoeveel vogels zijn dat?`, antwoord: basis * p / 100, eenheid: 'vogels', uitleg: `${p}% van ${basis} = ${basis} ÷ 100 × ${p} = ${basis * p / 100}` }
+const procentVanV = (zwaar) => {   // percentage van een getal, in een verhaal
+  const p = pick(zwaar ? [15, 30, 40, 60, 80] : [5, 10, 20, 25, 50, 75]), basis = pick(zwaar ? [140, 240, 360, 480] : [20, 40, 60, 80, 100, 200])
+  return { vraag: `In de dierentuin zijn ${basis} dieren. ${p}% daarvan zijn vogels. Hoeveel vogels zijn dat?`, kaal: `${p}% van ${basis} =`, antwoord: basis * p / 100, eenheid: 'vogels', uitleg: `${p}% van ${basis} = ${basis} ÷ 100 × ${p} = ${basis * p / 100}` }
 }
-const procentRedeneerV = () => {   // redeneren met percentages in een verhaal
-  const totaal = pick([200, 400, 500, 800, 1000]), p = pick([10, 20, 25, 50])
+const procentRedeneerV = (zwaar) => {   // redeneren met percentages in een verhaal
+  const totaal = pick(zwaar ? [1200, 2400, 3600, 4800] : [200, 400, 500, 800, 1000]), p = pick(zwaar ? [15, 35, 45, 60] : [10, 20, 25, 50])
   return { vraag: `In een dorp wonen ${getal(totaal)} mensen. ${p}% heeft een hond. Hoeveel mensen hebben een hond?`,
+           kaal: `${p}% van ${getal(totaal)} =`,
            antwoord: totaal * p / 100, uitleg: `${p}% van ${getal(totaal)} = ${getal(totaal * p / 100)}` }
 }
 const tijdzoneV = () => {   // tijd in een andere tijdzone
@@ -429,12 +616,14 @@ const tijdzoneV = () => {   // tijd in een andere tijdzone
   const delta = richting === 'later' ? diff : -diff
   const tot = ((h * 60 + m + delta * 60) % 1440 + 1440) % 1440, h2 = Math.floor(tot / 60), m2 = tot % 60
   return { vraag: `In Amsterdam is het ${h}:${PAD(m)} uur. In een andere stad is het ${diff} uur ${richting}. Hoe laat is het daar?`,
+           kaal: `${h}:${PAD(m)} ${richting === 'later' ? '+' : '−'} ${diff} uur = …`,
            antwoordType: 'tijd', tijdH: h2, tijdM: m2, antwoord: `${h2}:${PAD(m2)}`,
            uitleg: `${h}:${PAD(m)} ${delta > 0 ? '+' : '−'} ${diff} uur = ${h2}:${PAD(m2)} uur.` }
 }
 const kommaDeelV = () => {   // delen met benoemde kommagetallen
   const deler = rnd(2, 6), per = rnd(15, 60) / 10, totaal = +(per * deler).toFixed(1)
   return { vraag: `De klas heeft ${komma(totaal)} kg koekjes gebakken voor de fancy fair en verdeelt die eerlijk over ${deler} bakjes. Hoeveel kilogram komt er in één bakje?`,
+           kaal: `${komma(totaal)} : ${deler} =`,
            antwoord: +per.toFixed(2), eenheid: 'kg', uitleg: `${komma(totaal)} : ${deler} = ${komma(+per.toFixed(2))} kg` }
 }
 const breukOptelGelijkV = () => {   // benoemde gelijknamige breuken optellen, in een verhaal
@@ -442,9 +631,11 @@ const breukOptelGelijkV = () => {   // benoemde gelijknamige breuken optellen, i
   const n1 = naam(), n2 = naam(), d = pick(['reep', 'pizza', 'taart'])
   const st = x => `${x} stuk${x > 1 ? 'ken' : ''}`
   return { vraag: `Een ${d} is in ${noem} stukken verdeeld. ${n1} eet ${st(t1)} en ${n2} eet ${st(t2)}. Welk deel eten ze samen? Geef de teller (de noemer blijft ${noem}).`,
+           kaal: `${t1}/${noem} + ${t2}/${noem} = ?/${noem}`,
            antwoord: t1 + t2, uitleg: `${t1}/${noem} + ${t2}/${noem} = ${t1 + t2}/${noem}` }
 }
-const gemiddeldeV = () => {   // gemiddelde berekenen
+const gemiddeldeV = (zwaar) => {   // gemiddelde berekenen
+  if (zwaar) return gemiddeldeGrootV()
   for (let t = 0; t < 50; t++) {
     const k = pick([3, 4]), gem = rnd(4, 9), cijfers = []; let som = 0
     for (let i = 0; i < k - 1; i++) { const c = rnd(3, 10); cijfers.push(c); som += c }
@@ -456,7 +647,7 @@ const gemiddeldeV = () => {   // gemiddelde berekenen
         `${nm} heeft dit blok ${k} toetsen gemaakt en haalde ${cijfers.join(', ')}. Op het rapport komt het gemiddelde te staan. Welk cijfer is dat?`,
         `De juf schrijft de cijfers van ${nm} op het bord: ${cijfers.join(', ')}. ${nm} wil weten hoe hoog het gemiddelde daarvan is. Wat is het?`,
       ]
-      return { vraag: pick(vragen), antwoord: gem, uitleg: `(${cijfers.join(' + ')}) : ${k} = ${gem * k} : ${k} = ${gem}` }
+      return { vraag: pick(vragen), kaal: `Gemiddelde van ${cijfers.join(', ')} =`, antwoord: gem, uitleg: `(${cijfers.join(' + ')}) : ${k} = ${gem * k} : ${k} = ${gem}` }
     }
   }
   return { vraag: 'Wat is het gemiddelde van 6 en 8?', antwoord: 7, uitleg: '(6 + 8) ÷ 2 = 7' }
@@ -485,32 +676,33 @@ const afrondV = (max, opties) => {
   const n = rnd(1200, max), op = pick(opties)
   const nm = op === 10 ? 'tientallen' : op === 100 ? 'honderdtallen' : 'duizendtallen'
   const af = Math.round(n / op) * op
-  return { vraag: `In het stadion waren ${getal(n)} bezoekers. Rond dat aantal af op ${nm}.`, antwoord: af, eenheid: 'bezoekers', uitleg: `${getal(n)} afgerond op ${nm} = ${getal(af)}` }
+  return { vraag: `In het stadion waren ${getal(n)} bezoekers. Rond dat aantal af op ${nm}.`, kaal: `Rond af op ${nm}: ${getal(n)}`, antwoord: af, eenheid: 'bezoekers', uitleg: `${getal(n)} afgerond op ${nm} = ${getal(af)}` }
 }
 
 // ── Extra bouwers afgeleid uit de Pluspunt-doelen (lengte/inhoud/gewicht,
 //    meetkunde, procenten, breuken, kommagetallen, snelheid, valuta) ──
 const maatLengteV = () => {   // omrekenen naar de kleinste genoemde maat
   const variant = pick([
-    () => { const km = rnd(2, 9), m = rnd(50, 950); return { v: `${naam()} fietst een route van ${km} km en ${m} m naar het bos. Hoeveel meter is die route?`, a: km * 1000 + m, e: 'm', u: `${km} km = ${getal(km * 1000)} m. ${getal(km * 1000)} + ${m} = ${getal(km * 1000 + m)} m` } },
-    () => { const m = rnd(2, 9), cm = rnd(10, 90); return { v: `In de klus-hoek ligt een plank van ${m} m en ${cm} cm. ${naam()} wil de lengte in centimeters op de plank schrijven. Welk getal komt daar te staan?`, a: m * 100 + cm, e: 'cm', u: `${m} m = ${m * 100} cm. ${m * 100} + ${cm} = ${m * 100 + cm} cm` } },
-    () => { const cm = rnd(9, 20), mm = rnd(1, 9); return { v: `${naam()} meet een potlood op met de liniaal: ${cm} cm en ${mm} mm. Hoeveel millimeter is het potlood?`, a: cm * 10 + mm, e: 'mm', u: `${cm} cm = ${cm * 10} mm. ${cm * 10} + ${mm} = ${cm * 10 + mm} mm` } },
+    () => { const km = rnd(2, 9), m = rnd(50, 950); return { k: `${km} km en ${m} m = … m`, v: `${naam()} fietst een route van ${km} km en ${m} m naar het bos. Hoeveel meter is die route?`, a: km * 1000 + m, e: 'm', u: `${km} km = ${getal(km * 1000)} m. ${getal(km * 1000)} + ${m} = ${getal(km * 1000 + m)} m` } },
+    () => { const m = rnd(2, 9), cm = rnd(10, 90); return { k: `${m} m en ${cm} cm = … cm`, v: `In de klus-hoek ligt een plank van ${m} m en ${cm} cm. ${naam()} wil de lengte in centimeters op de plank schrijven. Welk getal komt daar te staan?`, a: m * 100 + cm, e: 'cm', u: `${m} m = ${m * 100} cm. ${m * 100} + ${cm} = ${m * 100 + cm} cm` } },
+    () => { const cm = rnd(9, 20), mm = rnd(1, 9); return { k: `${cm} cm en ${mm} mm = … mm`, v: `${naam()} meet een potlood op met de liniaal: ${cm} cm en ${mm} mm. Hoeveel millimeter is het potlood?`, a: cm * 10 + mm, e: 'mm', u: `${cm} cm = ${cm * 10} mm. ${cm * 10} + ${mm} = ${cm * 10 + mm} mm` } },
   ])()
-  return { vraag: variant.v, antwoord: variant.a, eenheid: variant.e, uitleg: variant.u }
+  return { vraag: variant.v, kaal: variant.k, antwoord: variant.a, eenheid: variant.e, uitleg: variant.u }
 }
 const maatInhoudV = () => {
   const variant = pick([
-    () => { const l = rnd(1, 9), dl = rnd(1, 9); return { v: `In de kan zit ${l} liter en ${dl} dl limonade. ${naam()} schenkt met een maatbeker in deciliters. Hoeveel deciliter limonade is het?`, a: l * 10 + dl, e: 'dl', u: `${l} l = ${l * 10} dl. ${l * 10} + ${dl} = ${l * 10 + dl} dl` } },
-    () => { const l = rnd(1, 5), ml = rnd(50, 950); return { v: `Op het pak sap staat: ${l} liter en ${ml} ml. ${naam()} wil weten hoeveel milliliter dat is. Hoeveel is het?`, a: l * 1000 + ml, e: 'ml', u: `${l} l = ${l * 1000} ml. ${l * 1000} + ${ml} = ${l * 1000 + ml} ml` } },
+    () => { const l = rnd(1, 9), dl = rnd(1, 9); return { k: `${l} l en ${dl} dl = … dl`, v: `In de kan zit ${l} liter en ${dl} dl limonade. ${naam()} schenkt met een maatbeker in deciliters. Hoeveel deciliter limonade is het?`, a: l * 10 + dl, e: 'dl', u: `${l} l = ${l * 10} dl. ${l * 10} + ${dl} = ${l * 10 + dl} dl` } },
+    () => { const l = rnd(1, 5), ml = rnd(50, 950); return { k: `${l} l en ${ml} ml = … ml`, v: `Op het pak sap staat: ${l} liter en ${ml} ml. ${naam()} wil weten hoeveel milliliter dat is. Hoeveel is het?`, a: l * 1000 + ml, e: 'ml', u: `${l} l = ${l * 1000} ml. ${l * 1000} + ${ml} = ${l * 1000 + ml} ml` } },
   ])()
-  return { vraag: variant.v, antwoord: variant.a, eenheid: variant.e, uitleg: variant.u }
+  return { vraag: variant.v, kaal: variant.k, antwoord: variant.a, eenheid: variant.e, uitleg: variant.u }
 }
-const maatGewichtV = () => {
+const maatGewichtV = (soort) => {
+  if (soort === 'prijs') return prijsGewichtV()
   const variant = pick([
-    () => { const kg = rnd(1, 9), g = rnd(50, 950); return { v: `${naam()} zet de schooltas op de weegschaal: ${kg} kg en ${g} g. Hoeveel gram is dat samen?`, a: kg * 1000 + g, e: 'g', u: `${kg} kg = ${getal(kg * 1000)} g. ${getal(kg * 1000)} + ${g} = ${getal(kg * 1000 + g)} g` } },
-    () => { const g = pick([250, 500, 750]), n = rnd(3, 8), tot = g * n; return { v: `Voor het bakproject haalt de klas ${n} pakken meel van ${g} gram. Hoeveel kilogram meel is dat samen?`, a: tot / 1000, e: 'kg', u: `${n} × ${g} g = ${tot} g = ${komma(tot / 1000)} kg` } },
+    () => { const kg = rnd(1, 9), g = rnd(50, 950); return { k: `${kg} kg en ${g} g = … g`, v: `${naam()} zet de schooltas op de weegschaal: ${kg} kg en ${g} g. Hoeveel gram is dat samen?`, a: kg * 1000 + g, e: 'g', u: `${kg} kg = ${getal(kg * 1000)} g. ${getal(kg * 1000)} + ${g} = ${getal(kg * 1000 + g)} g` } },
+    () => { const g = pick([250, 500, 750]), n = rnd(3, 8), tot = g * n; return { k: `${n} × ${g} g = … kg`, v: `Voor het bakproject haalt de klas ${n} pakken meel van ${g} gram. Hoeveel kilogram meel is dat samen?`, a: tot / 1000, e: 'kg', u: `${n} × ${g} g = ${tot} g = ${komma(tot / 1000)} kg` } },
   ])()
-  return { vraag: variant.v, antwoord: variant.a, eenheid: variant.e, uitleg: variant.u }
+  return { vraag: variant.v, kaal: variant.k, antwoord: variant.a, eenheid: variant.e, uitleg: variant.u }
 }
 const OPP_M = [
   (n, l, b) => `${n} legt nieuwe graszoden in de achtertuin. De tuin is ${l} m lang en ${b} m breed. Hoeveel vierkante meter gras heeft ${n} nodig?`,
@@ -525,30 +717,30 @@ const oppRechthoekV = (mL = 12, mB = 9) => {
   const l = rnd(3, mL), b = rnd(2, mB), n = naam()
   const cm = Math.random() < 0.35
   const e = cm ? 'cm' : 'm'
-  return { vraag: pick(cm ? OPP_CM : OPP_M)(n, l, b), antwoord: l * b, eenheid: e + '²', figuur: { type: 'rechthoek', l, b, eenheid: e }, uitleg: `${l} × ${b} = ${l * b} ${e}²` }
+  return { vraag: pick(cm ? OPP_CM : OPP_M)(n, l, b), kaal: `Oppervlakte van een rechthoek van ${l} ${e} bij ${b} ${e}?`, antwoord: l * b, eenheid: e + '²', figuur: { type: 'rechthoek', l, b, eenheid: e }, uitleg: `${l} × ${b} = ${l * b} ${e}²` }
 }
-const oppDriehoekV = () => { const basis = rnd(2, 12) * 2, h = rnd(3, 10); return { vraag: `${naam()} maakt een driehoekig verkeersbord voor de verkeersles. De onderkant is ${basis} cm breed en het bord is ${h} cm hoog. Hoeveel cm² karton is daarvoor nodig?`, antwoord: basis * h / 2, eenheid: 'cm²', figuur: { type: 'driehoek', l: basis, b: h, eenheid: 'cm' }, uitleg: `(${basis} × ${h}) ÷ 2 = ${basis * h} ÷ 2 = ${basis * h / 2} cm²` } }
+const oppDriehoekV = () => { const basis = rnd(2, 12) * 2, h = rnd(3, 10); return { kaal: `Oppervlakte van een driehoek met basis ${basis} cm en hoogte ${h} cm?`, vraag: `${naam()} maakt een driehoekig verkeersbord voor de verkeersles. De onderkant is ${basis} cm breed en het bord is ${h} cm hoog. Hoeveel cm² karton is daarvoor nodig?`, antwoord: basis * h / 2, eenheid: 'cm²', figuur: { type: 'driehoek', l: basis, b: h, eenheid: 'cm' }, uitleg: `(${basis} × ${h}) ÷ 2 = ${basis * h} ÷ 2 = ${basis * h / 2} cm²` } }
 const OMTREK = [
   (n, l, b) => `Om het voetbalveldje van ${l} m bij ${b} m komt een hek. Hoeveel meter hek is daarvoor nodig?`,
   (n, l, b) => `${n} zet een lint om de moestuin van ${l} m bij ${b} m, helemaal rondom. Hoeveel meter lint heeft ${n} nodig?`,
   (n, l, b) => `${n} loopt precies één rondje langs de rand van het schoolplein van ${l} m bij ${b} m. Hoeveel meter loopt ${n}?`,
 ]
-const omtrekV = (mL = 16, mB = 11) => { const l = rnd(4, mL), b = rnd(3, mB); return { vraag: pick(OMTREK)(naam(), l, b), antwoord: 2 * (l + b), eenheid: 'm', figuur: { type: 'rechthoek', l, b, eenheid: 'm' }, uitleg: `2 × (${l} + ${b}) = 2 × ${l + b} = ${2 * (l + b)} m` } }
-const balkInhoudV = (mL = 8) => {
+const omtrekV = (mL = 16, mB = 11) => { const l = rnd(4, mL), b = rnd(3, mB); return { kaal: `Omtrek van een rechthoek van ${l} m bij ${b} m?`, vraag: pick(OMTREK)(naam(), l, b), antwoord: 2 * (l + b), eenheid: 'm', figuur: { type: 'rechthoek', l, b, eenheid: 'm' }, uitleg: `2 × (${l} + ${b}) = 2 × ${l + b} = ${2 * (l + b)} m` } }
+const balkInhoudV = (mL = 8, soort) => {
   const l = rnd(2, mL), b = rnd(2, 6), h = rnd(2, 6), nm = naam()
   const fig = { type: 'balk', l, b, h, eenheid: 'dm' }
-  if (Math.random() < 0.5) {
-    return { vraag: `${nm} vult een bak voor de moestuin met regenwater. De bak is ${l} dm lang, ${b} dm breed en ${h} dm hoog. Hoeveel liter water gaat erin?`, antwoord: l * b * h, eenheid: 'l', figuur: fig, uitleg: `${l} × ${b} × ${h} = ${l * b * h} dm³, en 1 dm³ is 1 liter: ${l * b * h} liter.` }
+  if (soort === 'liter' || (!soort && Math.random() < 0.5)) {
+    return { vraag: `${nm} vult een bak voor de moestuin met regenwater. De bak is ${l} dm lang, ${b} dm breed en ${h} dm hoog. Hoeveel liter water gaat erin?`, kaal: `Inhoud van een balk van ${l} × ${b} × ${h} dm, in liter?`, antwoord: l * b * h, eenheid: 'l', figuur: fig, uitleg: `${l} × ${b} × ${h} = ${l * b * h} dm³, en 1 dm³ is 1 liter: ${l * b * h} liter.` }
   }
-  return { vraag: `${nm} stapelt blokken van 1 dm³ in een doos van ${l} dm bij ${b} dm bij ${h} dm. De doos komt precies vol. Hoeveel blokken passen erin?`, antwoord: l * b * h, eenheid: 'blokken', figuur: fig, uitleg: `${l} × ${b} × ${h} = ${l * b * h} blokken van 1 dm³.` }
+  return { vraag: `${nm} stapelt blokken van 1 dm³ in een doos van ${l} dm bij ${b} dm bij ${h} dm. De doos komt precies vol. Hoeveel blokken passen erin?`, kaal: `Hoeveel blokken van 1 dm³ passen er in ${l} × ${b} × ${h} dm?`, antwoord: l * b * h, eenheid: 'blokken', figuur: fig, uitleg: `${l} × ${b} × ${h} = ${l * b * h} blokken van 1 dm³.` }
 }
-const kommaVermV = () => { const a = rnd(11, 49) / 10, b = rnd(11, 49) / 10, ant = +(a * b).toFixed(2), n = naam(); return { vraag: `${n} laat bij de stoffenwinkel een lap afknippen voor een verkleedpak. De stof kost ${euro(a)} per meter en ${n} heeft ${komma(b)} meter nodig. Hoeveel moet ${n} betalen? (eerst schatten, dan precies uitrekenen)`, antwoord: ant, eenheid: '€', uitleg: `${komma(b)} × ${euro(a)} = ${euro(ant)}` } }
-const breukMaalBreukV = () => { const n1 = pick([2, 3, 4]), n2 = pick([2, 3, 4]); return { vraag: `Van een taart is nog 1/${n1} over. ${naam()} eet 1/${n2} van dat stuk op. Welk deel van de héle taart is dat? Geef de noemer (de teller is 1).`, antwoord: n1 * n2, uitleg: `1/${n1} × 1/${n2} = 1/${n1 * n2}` } }
-const nieuwePrijsV = () => { const prijs = rnd(10, 90), p = pick([10, 20, 25, 50]), nieuw = +(prijs * (1 - p / 100)).toFixed(2); return { vraag: `${naam()} ziet in de etalage een jas van ${euro(prijs)}. Op de ruit hangt een bord: ${p}% korting op alles. Hoeveel kost de jas nu?`, antwoord: nieuw, eenheid: '€', uitleg: `Korting: ${p}% van ${euro(prijs)} = ${euro(prijs * p / 100)}. ${euro(prijs)} − ${euro(prijs * p / 100)} = ${euro(nieuw)}` } }
-const oudePrijsV = () => { const oud = rnd(20, 80), p = pick([10, 20, 25, 50]), nieuw = +(oud * (1 - p / 100)).toFixed(2); return { vraag: `Na ${p}% korting kost een spel ${euro(nieuw)}. Wat was de oude prijs?`, antwoord: oud, eenheid: '€', uitleg: `${euro(nieuw)} is ${100 - p}% van de oude prijs. Oude prijs = ${euro(nieuw)} ÷ ${100 - p} × 100 = ${euro(oud)}` } }
-const kortingPctV = () => { const oud = pick([20, 40, 50, 80, 100]), p = pick([10, 20, 25, 50]), nieuw = +(oud * (1 - p / 100)).toFixed(2); return { vraag: `Op het prijskaartje van een spel staat ${euro(oud)} doorgestreept. Aan de kassa betaalt ${naam()} er ${euro(nieuw)} voor. Hoeveel procent korting is dat?`, antwoord: p, eenheid: '%', uitleg: `Korting = ${euro(oud - nieuw)}. ${euro(oud - nieuw)} ÷ ${euro(oud)} × 100 = ${p}%` } }
-const totaalViaPctV = () => { const p = pick([10, 20, 25, 50]), totaal = rnd(2, 10) * 20, deel = totaal * p / 100; return { vraag: `${deel} kinderen is ${p}% van alle kinderen. Hoeveel kinderen zijn er in totaal?`, antwoord: totaal, uitleg: `${p}% = ${deel}, dus 100% = ${deel} ÷ ${p} × 100 = ${totaal}` } }
-const oudAantalViaPctV = () => { const oud = rnd(2, 10) * 10, p = pick([10, 20, 25, 50]), nieuw = oud + oud * p / 100; return { vraag: `Een aantal is met ${p}% gestegen tot ${nieuw}. Wat was het oude aantal?`, antwoord: oud, uitleg: `${nieuw} is ${100 + p}% van het oude aantal. ${nieuw} ÷ ${100 + p} × 100 = ${oud}` } }
+const kommaVermV = () => { const a = rnd(11, 49) / 10, b = rnd(11, 49) / 10, ant = +(a * b).toFixed(2), n = naam(); return { vraag: `${n} laat bij de stoffenwinkel een lap afknippen voor een verkleedpak. De stof kost ${euro(a)} per meter en ${n} heeft ${komma(b)} meter nodig. Hoeveel moet ${n} betalen? (eerst schatten, dan precies uitrekenen)`, kaal: `${komma(b)} × ${komma(a)} =`, antwoord: ant, eenheid: '€', uitleg: `${komma(b)} × ${euro(a)} = ${euro(ant)}` } }
+const breukMaalBreukV = (zwaar) => { const n1 = pick(zwaar ? [3, 4, 5, 6] : [2, 3, 4]), n2 = pick(zwaar ? [3, 4, 5, 6] : [2, 3, 4]); return { kaal: `1/${n1} × 1/${n2} = 1/?`, vraag: `Van een taart is nog 1/${n1} over. ${naam()} eet 1/${n2} van dat stuk op. Welk deel van de héle taart is dat? Geef de noemer (de teller is 1).`, antwoord: n1 * n2, uitleg: `1/${n1} × 1/${n2} = 1/${n1 * n2}` } }
+const nieuwePrijsV = () => { const prijs = rnd(10, 90), p = pick([10, 20, 25, 50]), nieuw = +(prijs * (1 - p / 100)).toFixed(2); return { kaal: `${euro(prijs)} met ${p}% korting =`, vraag: `${naam()} ziet in de etalage een jas van ${euro(prijs)}. Op de ruit hangt een bord: ${p}% korting op alles. Hoeveel kost de jas nu?`, antwoord: nieuw, eenheid: '€', uitleg: `Korting: ${p}% van ${euro(prijs)} = ${euro(prijs * p / 100)}. ${euro(prijs)} − ${euro(prijs * p / 100)} = ${euro(nieuw)}` } }
+const oudePrijsV = () => { const oud = rnd(20, 80), p = pick([10, 20, 25, 50]), nieuw = +(oud * (1 - p / 100)).toFixed(2); return { kaal: `Na ${p}% korting: ${euro(nieuw)}. Wat was de oude prijs?`, vraag: `Na ${p}% korting kost een spel ${euro(nieuw)}. Wat was de oude prijs?`, antwoord: oud, eenheid: '€', uitleg: `${euro(nieuw)} is ${100 - p}% van de oude prijs. Oude prijs = ${euro(nieuw)} ÷ ${100 - p} × 100 = ${euro(oud)}` } }
+const kortingPctV = () => { const oud = pick([20, 40, 50, 80, 100]), p = pick([10, 20, 25, 50]), nieuw = +(oud * (1 - p / 100)).toFixed(2); return { kaal: `Van ${euro(oud)} naar ${euro(nieuw)} — hoeveel procent korting?`, vraag: `Op het prijskaartje van een spel staat ${euro(oud)} doorgestreept. Aan de kassa betaalt ${naam()} er ${euro(nieuw)} voor. Hoeveel procent korting is dat?`, antwoord: p, eenheid: '%', uitleg: `Korting = ${euro(oud - nieuw)}. ${euro(oud - nieuw)} ÷ ${euro(oud)} × 100 = ${p}%` } }
+const totaalViaPctV = () => { const p = pick([10, 20, 25, 50]), totaal = rnd(2, 10) * 20, deel = totaal * p / 100; return { kaal: `${p}% is ${deel}. Hoeveel is 100%?`, vraag: `${deel} kinderen is ${p}% van alle kinderen. Hoeveel kinderen zijn er in totaal?`, antwoord: totaal, uitleg: `${p}% = ${deel}, dus 100% = ${deel} ÷ ${p} × 100 = ${totaal}` } }
+const oudAantalViaPctV = () => { const oud = rnd(2, 10) * 10, p = pick([10, 20, 25, 50]), nieuw = oud + oud * p / 100; return { kaal: `Met ${p}% gestegen tot ${nieuw}. Wat was het oude aantal?`, vraag: `Een aantal is met ${p}% gestegen tot ${nieuw}. Wat was het oude aantal?`, antwoord: oud, uitleg: `${nieuw} is ${100 + p}% van het oude aantal. ${nieuw} ÷ ${100 + p} × 100 = ${oud}` } }
 // Percentage van een aantal, met een strook erbij die het percentage laat zien.
 //
 // Het aantal moet zo gekozen worden dat het percentage een héél aantal
@@ -573,6 +765,7 @@ const procentVanAantalV = (percentages, maxStappen, plaats, wat, werkwoord) => {
   const deel = n * p / 100
   return {
     vraag: `${plaats} ${n} ${wat}. ${p}% ${werkwoord}. Hoeveel ${wat} zijn dat?`,
+    kaal: `${p}% van ${n} =`,
     antwoord: deel, eenheid: wat,
     figuur: { type: 'strook', pct: p, totaal: n, deel },
     uitleg: `${p}% is ${breuk}. ${breuk} van ${n} = ${n} : ${stap}${p === 75 ? ` × 3` : ''} = ${deel}.`,
@@ -608,6 +801,7 @@ const geheelTerugV = () => {
   const n = naam(), d = ding()
   return {
     vraag: `${n} heeft al ${deel} ${d[1]} gespaard. Dat is ${tel}/${noem} deel van wat ${n} wil sparen. Hoeveel ${d[1]} wil ${n} in totaal sparen?`,
+    kaal: `${tel}/${noem} is ${deel}. Hoeveel is het hele getal?`,
     antwoord: geheel, eenheid: d[1],
     uitleg: tel === 1
       ? `1/${noem} is ${deel}, dus het geheel is ${noem} × ${deel} = ${geheel}.`
@@ -616,14 +810,15 @@ const geheelTerugV = () => {
 }
 
 // Getallen schrijven en de waarde van een cijfer benoemen.
-const getalSchrijvenV = (maxDuizend) => {
-  const n = rnd(11, maxDuizend) * 1000 + rnd(1, 999)
+const getalSchrijvenV = (maxDuizend, minDuizend = 11) => {
+  const n = rnd(minDuizend, maxDuizend) * 1000 + rnd(1, 999)
   if (Math.random() < 0.5) {
     const posities = [[1000, 'duizendtallen'], [100, 'honderdtallen'], [10, 'tientallen']]
     const [waarde, hoe] = pick(posities)
     const cijfer = Math.floor(n / waarde) % 10
     return {
       vraag: `Op de kilometerteller van de schoolbus staat ${getal(n)}. Welk cijfer staat daarin op de plaats van de ${hoe}?`,
+      kaal: `${getal(n)} — welk cijfer staat op de plaats van de ${hoe}?`,
       antwoord: cijfer,
       uitleg: `${getal(n)} — op de plaats van de ${hoe} staat een ${cijfer}.`,
     }
@@ -631,6 +826,7 @@ const getalSchrijvenV = (maxDuizend) => {
   const dz = Math.floor(n / 1000), rest = n % 1000
   return {
     vraag: `${naam()} leest in de krant dat er ${getal(dz)} duizend ${rest === 0 ? '' : getal(rest) + ' '}mensen naar het festival kwamen. Schrijf dat aantal in cijfers.`,
+    kaal: `Schrijf in cijfers: ${getal(dz)} duizend ${rest === 0 ? '' : getal(rest)}`.trim(),
     antwoord: n,
     uitleg: `${getal(dz)} duizend is ${getal(dz * 1000)}, plus ${getal(rest)} = ${getal(n)}.`,
   }
@@ -642,19 +838,19 @@ const kalenderV = () => {
   const soort = rnd(1, 4)
   if (soort === 4) {
     const w = rnd(2, 8), nm = naam()
-    return { vraag: `De zomervakantie van ${nm} duurt ${w} weken. Hoeveel dagen zijn dat?`, antwoord: w * 7, eenheid: 'dagen', uitleg: `${w} × 7 = ${w * 7} dagen` }
+    return { vraag: `De zomervakantie van ${nm} duurt ${w} weken. Hoeveel dagen zijn dat?`, kaal: `${w} weken = … dagen`, antwoord: w * 7, eenheid: 'dagen', uitleg: `${w} × 7 = ${w * 7} dagen` }
   }
   if (soort === 1) {
     const [maand, dagen] = pick(MAANDDAGEN)
-    return { vraag: `Hoeveel hele weken passen er in ${maand} (${dagen} dagen), en hoeveel dagen blijven er over? Geef het aantal dagen dat overblijft.`, antwoord: dagen % 7, eenheid: 'dagen', uitleg: `${dagen} : 7 = ${Math.floor(dagen / 7)} weken en ${dagen % 7} dagen over.` }
+    return { vraag: `Hoeveel hele weken passen er in ${maand} (${dagen} dagen), en hoeveel dagen blijven er over? Geef het aantal dagen dat overblijft.`, kaal: `${dagen} dagen : 7 = … weken en … dagen over. Hoeveel dagen blijven over?`, antwoord: dagen % 7, eenheid: 'dagen', uitleg: `${dagen} : 7 = ${Math.floor(dagen / 7)} weken en ${dagen % 7} dagen over.` }
   }
   if (soort === 2) {
     const week = rnd(3, 45), erbij = rnd(2, 8)
-    return { vraag: `De schoolreis is in week ${week}. Het schoolfeest is ${erbij} weken later. In welke week is het schoolfeest?`, antwoord: week + erbij, eenheid: 'week', uitleg: `Week ${week} + ${erbij} weken = week ${week + erbij}.` }
+    return { vraag: `De schoolreis is in week ${week}. Het schoolfeest is ${erbij} weken later. In welke week is het schoolfeest?`, kaal: `Week ${week} + ${erbij} weken = week …`, antwoord: week + erbij, eenheid: 'week', uitleg: `Week ${week} + ${erbij} weken = week ${week + erbij}.` }
   }
   const h2 = rnd(13, 17), m2 = pick([0, 15, 30, 45]), dur = rnd(3, 7) * 15
   const tot = h2 * 60 + m2 - dur, h1 = Math.floor(tot / 60), m1 = tot % 60
-  return { vraag: `Een voorstelling is om ${h2}:${PAD(m2)} uur afgelopen en duurde ${dur} minuten. Hoe laat begon de voorstelling?`, antwoordType: 'tijd', tijdH: h1, tijdM: m1, antwoord: `${h1}:${PAD(m1)}`, uitleg: `${h2}:${PAD(m2)} min ${dur} minuten = ${h1}:${PAD(m1)} uur.` }
+  return { vraag: `Een voorstelling is om ${h2}:${PAD(m2)} uur afgelopen en duurde ${dur} minuten. Hoe laat begon de voorstelling?`, kaal: `${h2}:${PAD(m2)} − ${dur} min = …`, antwoordType: 'tijd', tijdH: h1, tijdM: m1, antwoord: `${h1}:${PAD(m1)}`, uitleg: `${h2}:${PAD(m2)} min ${dur} minuten = ${h1}:${PAD(m1)} uur.` }
 }
 
 // Gelijkwaardige breuken herkennen.
@@ -662,6 +858,7 @@ const gelijkwaardigeBreukV = () => {
   const noem = pick([2, 3, 4, 5]), tel = rnd(1, noem - 1), f = rnd(2, 5)
   return {
     vraag: `${tel}/${noem} is even veel als ?/${noem * f}. Welk getal moet er op de plaats van het vraagteken staan?`,
+    kaal: `${tel}/${noem} = ?/${noem * f}`,
     antwoord: tel * f,
     uitleg: `De noemer gaat ${noem} × ${f} = ${noem * f}, dus de teller ook: ${tel} × ${f} = ${tel * f}. Dus ${tel}/${noem} = ${tel * f}/${noem * f}.`,
   }
@@ -673,17 +870,19 @@ const kommaNaarBreukV = () => {
   const noem = Number(b.split('/')[1])
   return {
     vraag: `${naam()} loopt naar school en dat is ${komma(d)} kilometer. Diezelfde afstand kun je ook als breuk schrijven: ?/${noem} kilometer. Welk getal hoort op de plaats van het vraagteken?`,
+    kaal: `${komma(d)} = ?/${noem}`,
     antwoord: Number(b.split('/')[0]),
     uitleg: `${komma(d)} km = ${b} km.`,
   }
 }
 
 // Miljoenen op twee manieren schrijven, en afronden op honderdduizendtallen.
-const miljoenV = () => {
+const miljoenV = (soort) => {
   const heel = rnd(1, 9), tiende = rnd(1, 9)
-  if (Math.random() < 0.5) {
+  if (soort === 'cijfers' || (!soort && Math.random() < 0.5)) {
     return {
       vraag: `In de krant staat: "${komma(heel + tiende / 10)} miljoen mensen". Schrijf dat getal in cijfers.`,
+      kaal: `Schrijf in cijfers: ${komma(heel + tiende / 10)} miljoen`,
       antwoord: heel * 1000000 + tiende * 100000,
       uitleg: `${heel} miljoen = ${getal(heel * 1000000)}. ${komma(tiende / 10)} miljoen = ${getal(tiende * 100000)}. Samen ${getal(heel * 1000000 + tiende * 100000)}.`,
     }
@@ -692,6 +891,7 @@ const miljoenV = () => {
   const af = Math.round(n / 100000) * 100000
   return {
     vraag: `In het stadion kwamen dit jaar ${getal(n)} bezoekers. Rond dat aantal af op honderdduizendtallen.`,
+    kaal: `Rond af op honderdduizendtallen: ${getal(n)}`,
     antwoord: af, eenheid: 'bezoekers',
     uitleg: `${getal(n)} afgerond op honderdduizendtallen = ${getal(af)}.`,
   }
@@ -702,14 +902,15 @@ const pctBoven100V = () => {
   const p = pick([120, 150, 200, 250]), basis = rnd(2, 12) * 10
   return {
     vraag: `De schoolmusical trok vorig jaar ${basis} bezoekers. Dit jaar kwamen er ${p}% van dat aantal kijken. Hoeveel bezoekers waren dat dit jaar?`,
+    kaal: `${p}% van ${basis} =`,
     antwoord: basis * p / 100, eenheid: 'bezoekers',
     uitleg: `100% is ${basis}, dus 1% is ${basis / 100}. ${p} × ${basis / 100} = ${basis * p / 100}.`,
   }
 }
 
-const procentVia1V = () => { const bedrag = rnd(2, 20) * 100, p = rnd(2, 9) * 5, nm = naam(); return { vraag: `${nm} heeft met een vakantiebaantje ${euro(bedrag)} verdiend en zet daarvan ${p}% op de spaarrekening. Hoeveel euro gaat er naar de spaarrekening?`, antwoord: +(bedrag * p / 100).toFixed(2), eenheid: '€', uitleg: `1% van ${getal(bedrag)} = ${euro(bedrag / 100)}. ${p} × ${euro(bedrag / 100)} = ${euro(bedrag * p / 100)}` } }
-const snelheidV = () => { const v = pick([60, 70, 80, 90, 100, 120]), t = rnd(2, 5); return { vraag: `Een auto rijdt ${v * t} km in ${t} uur. Wat is de gemiddelde snelheid in km per uur?`, antwoord: v, eenheid: 'km/u', uitleg: `${v * t} km ÷ ${t} uur = ${v} km/u` } }
-const valutaV = () => { const koers = rnd(85, 130) / 100, n = rnd(3, 30), nm = naam(); return { vraag: `${nm} gaat op vakantie naar Amerika. In een winkel daar hangt een pet van ${n} dollar. Op het bord bij de bank staat: 1 dollar = ${euro(koers)}. Hoeveel euro kost die pet?`, antwoord: +(n * koers).toFixed(2), eenheid: '€', uitleg: `${n} × ${euro(koers)} = ${euro(n * koers)}` } }
+const procentVia1V = (zwaar) => { const bedrag = zwaar ? rnd(120, 900) * 10 : rnd(2, 20) * 100, p = zwaar ? rnd(11, 89) : rnd(2, 9) * 5, nm = naam(); return { kaal: `${p}% van ${euro(bedrag)} =`, vraag: `${nm} heeft met een vakantiebaantje ${euro(bedrag)} verdiend en zet daarvan ${p}% op de spaarrekening. Hoeveel euro gaat er naar de spaarrekening?`, antwoord: +(bedrag * p / 100).toFixed(2), eenheid: '€', uitleg: `1% van ${getal(bedrag)} = ${euro(bedrag / 100)}. ${p} × ${euro(bedrag / 100)} = ${euro(bedrag * p / 100)}` } }
+const snelheidV = () => { const v = pick([60, 70, 80, 90, 100, 120]), t = rnd(2, 5); return { vraag: `Een auto rijdt ${v * t} km in ${t} uur. Wat is de gemiddelde snelheid in km per uur?`, kaal: `${v * t} km in ${t} uur = … km/u`, antwoord: v, eenheid: 'km/u', uitleg: `${v * t} km ÷ ${t} uur = ${v} km/u` } }
+const valutaV = () => { const koers = rnd(85, 130) / 100, n = rnd(3, 30), nm = naam(); return { kaal: `1 dollar = ${euro(koers)}. Hoeveel euro is ${n} dollar?`, vraag: `${nm} gaat op vakantie naar Amerika. In een winkel daar hangt een pet van ${n} dollar. Op het bord bij de bank staat: 1 dollar = ${euro(koers)}. Hoeveel euro kost die pet?`, antwoord: +(n * koers).toFixed(2), eenheid: '€', uitleg: `${n} × ${euro(koers)} = ${euro(n * koers)}` } }
 // Delen door 10 of 100 moet op twee decimalen uitkomen: een touwstuk van
 // 0,128 meter is geen antwoord dat een kind opschrijft. Daarom wordt de lengte
 // zo gekozen dat de uitkomst netjes is — bij delen door 100 dus een heel
@@ -719,17 +920,17 @@ const kommaDeel10V = () => {
   const stukjes = f === 100 ? rnd(2, 40) * 100 : rnd(15, 990) * 10
   const g = stukjes / 100
   const ant = +(g / f).toFixed(2)
-  return { vraag: `${naam()} knipt een touw van ${komma(g)} meter in ${f} even lange stukken. Hoe lang is elk stuk (in meter)?`, antwoord: ant, eenheid: 'm', uitleg: `${komma(g)} : ${f} = ${komma(ant)} m` }
+  return { vraag: `${naam()} knipt een touw van ${komma(g)} meter in ${f} even lange stukken. Hoe lang is elk stuk (in meter)?`, kaal: `${komma(g)} : ${f} =`, antwoord: ant, eenheid: 'm', uitleg: `${komma(g)} : ${f} = ${komma(ant)} m` }
 }
-const breukVergelijkV = () => { const noem = pick([4, 5, 6, 8]), t1 = rnd(1, noem - 1); let t2 = rnd(1, noem - 1); if (t2 === t1) t2 = (t2 % (noem - 1)) + 1; const groot = t1 > t2 ? t1 : t2; const n1 = naam(), n2 = naam(); return { vraag: `${n1} eet ${t1}/${noem} van een pizza en ${n2} eet ${t2}/${noem} van een even grote pizza. Wie eet het grootste deel? Geef de teller van dat deel.`, antwoord: groot, uitleg: `Bij dezelfde noemer is de breuk met de grootste teller het grootst: ${groot}/${noem}.` } }
-const tijdsduurV = () => { const h1 = rnd(7, 11), m1 = pick([0, 5, 10, 15, 20, 25, 40, 45]), dur = rnd(4, 8) * 15, tot = h1 * 60 + m1 + dur, h2 = Math.floor(tot / 60), m2 = tot % 60; return { vraag: `Een film begint om ${h1}:${PAD(m1)} uur en eindigt om ${h2}:${PAD(m2)} uur. Hoeveel minuten duurt de film?`, antwoord: dur, eenheid: 'min', uitleg: `Van ${h1}:${PAD(m1)} tot ${h2}:${PAD(m2)} = ${dur} minuten` } }
-const breukDeelV = () => { const n = pick([2, 3, 4, 5]), m = rnd(2, 6); return { vraag: `Hoeveel glazen van 1/${n} liter kun je vullen uit ${m} liter?`, antwoord: m * n, eenheid: 'glazen', uitleg: `${m} : 1/${n} = ${m} × ${n} = ${m * n}` } }
-const cirkelV = () => { const r = pick([2, 3, 4, 5, 10]), nm = naam(); if (Math.random() < 0.5) return { vraag: `${nm} maakt een rond kleedje met een straal van ${r} cm en wil er een lint omheen plakken. Hoeveel cm lint is dat (de omtrek)? (gebruik π ≈ 3,14)`, antwoord: +(2 * 3.14 * r).toFixed(2), eenheid: 'cm', uitleg: `omtrek = 2 × π × r = 2 × 3,14 × ${r} = ${komma(+(2 * 3.14 * r).toFixed(2))} cm` }; return { vraag: `${nm} maakt een ronde tafel met een straal van ${r} cm. Bereken de oppervlakte van het tafelblad. (gebruik π ≈ 3,14)`, antwoord: +(3.14 * r * r).toFixed(2), eenheid: 'cm²', uitleg: `oppervlakte = π × r × r = 3,14 × ${r} × ${r} = ${komma(+(3.14 * r * r).toFixed(2))} cm²` } }
+const breukVergelijkV = () => { const noem = pick([4, 5, 6, 8]), t1 = rnd(1, noem - 1); let t2 = rnd(1, noem - 1); if (t2 === t1) t2 = (t2 % (noem - 1)) + 1; const groot = t1 > t2 ? t1 : t2; const n1 = naam(), n2 = naam(); return { vraag: `${n1} eet ${t1}/${noem} van een pizza en ${n2} eet ${t2}/${noem} van een even grote pizza. Wie eet het grootste deel? Geef de teller van dat deel.`, kaal: `Welke breuk is het grootst: ${t1}/${noem} of ${t2}/${noem}? Geef de teller.`, antwoord: groot, uitleg: `Bij dezelfde noemer is de breuk met de grootste teller het grootst: ${groot}/${noem}.` } }
+const tijdsduurV = () => { const h1 = rnd(7, 11), m1 = pick([0, 5, 10, 15, 20, 25, 40, 45]), dur = rnd(4, 8) * 15, tot = h1 * 60 + m1 + dur, h2 = Math.floor(tot / 60), m2 = tot % 60; return { kaal: `Van ${h1}:${PAD(m1)} tot ${h2}:${PAD(m2)} = … minuten`, vraag: `Een film begint om ${h1}:${PAD(m1)} uur en eindigt om ${h2}:${PAD(m2)} uur. Hoeveel minuten duurt de film?`, antwoord: dur, eenheid: 'min', uitleg: `Van ${h1}:${PAD(m1)} tot ${h2}:${PAD(m2)} = ${dur} minuten` } }
+const breukDeelV = (zwaar) => { const n = pick(zwaar ? [4, 5, 6, 8] : [2, 3, 4, 5]), m = rnd(2, zwaar ? 12 : 6); return { kaal: `${m} : 1/${n} =`, vraag: `Hoeveel glazen van 1/${n} liter kun je vullen uit ${m} liter?`, antwoord: m * n, eenheid: 'glazen', uitleg: `${m} : 1/${n} = ${m} × ${n} = ${m * n}` } }
+const cirkelV = (soort) => { const r = pick([2, 3, 4, 5, 10]), nm = naam(); if (soort === 'omtrek' || (!soort && Math.random() < 0.5)) return { kaal: `Omtrek van een cirkel met straal ${r} cm? (π ≈ 3,14)`, vraag: `${nm} maakt een rond kleedje met een straal van ${r} cm en wil er een lint omheen plakken. Hoeveel cm lint is dat (de omtrek)? (gebruik π ≈ 3,14)`, antwoord: +(2 * 3.14 * r).toFixed(2), eenheid: 'cm', uitleg: `omtrek = 2 × π × r = 2 × 3,14 × ${r} = ${komma(+(2 * 3.14 * r).toFixed(2))} cm` }; return { kaal: `Oppervlakte van een cirkel met straal ${r} cm? (π ≈ 3,14)`, vraag: `${nm} maakt een ronde tafel met een straal van ${r} cm. Bereken de oppervlakte van het tafelblad. (gebruik π ≈ 3,14)`, antwoord: +(3.14 * r * r).toFixed(2), eenheid: 'cm²', uitleg: `oppervlakte = π × r × r = 3,14 × ${r} × ${r} = ${komma(+(3.14 * r * r).toFixed(2))} cm²` } }
 const ROMEINS = [['IV', 4], ['VI', 6], ['IX', 9], ['XI', 11], ['XIII', 13], ['XIV', 14], ['XIX', 19], ['XXII', 22], ['XXV', 25], ['XL', 40], ['L', 50]]
-const romeinsV = () => { if (Math.random() < 0.5) { const [r, n] = pick(ROMEINS); return { vraag: `Op een oud gebouw staat het bouwjaar met het Romeinse getal ${r}. Welk gewoon getal is dat?`, antwoord: n, uitleg: `${r} = ${n}` } } const a = rnd(2, 9), b = rnd(1, 9); return { vraag: `Het is ${a} graden buiten. Het wordt ${a + b} graden kouder. Hoeveel graden staat de thermometer dan aan?`, antwoord: -b, eenheid: '°', uitleg: `${a} − ${a + b} = −${b} graden` } }
-const kwadraatWortelV = () => { const nm = naam(); if (Math.random() < 0.5) { const n = rnd(2, 12); return { vraag: `${nm} legt een vierkant van ${n} bij ${n} tegels. Hoeveel tegels zijn dat samen?`, antwoord: n * n, eenheid: 'tegels', uitleg: `${n} × ${n} = ${n * n} (dat is ${n}²)` } } const n = pick([4, 9, 16, 25, 36, 49, 64, 81, 100, 121, 144]); return { vraag: `${nm} legt ${n} tegels in een perfect vierkant. Hoeveel tegels liggen er op één rij?`, antwoord: Math.sqrt(n), eenheid: 'tegels', uitleg: `√${n} = ${Math.sqrt(n)}, want ${Math.sqrt(n)} × ${Math.sqrt(n)} = ${n}` } }
-const patroonRijV = () => { const start = rnd(1, 12), stap = pick([2, 3, 4, 5, 10]), rij = [start, start + stap, start + 2 * stap, start + 3 * stap], nm = naam(); return { vraag: `${nm} maakt stapels blokken. De eerste stapels hebben ${rij.join(', ')} blokken. Steeds komen er evenveel bij. Hoeveel blokken heeft de volgende stapel?`, antwoord: start + 4 * stap, eenheid: 'blokken', uitleg: `Steeds ${stap} erbij: ${rij[3]} + ${stap} = ${start + 4 * stap}.` } }
-const combinatiesV = () => { const a = rnd(2, 5), b = rnd(2, 5), dingA = pick(['shirts', 'broeken', 'petjes', 'truien']), dingB = pick(['schoenen', 'sokken', 'jassen']); return { vraag: `Je hebt ${a} ${dingA} en ${b} ${dingB}. Hoeveel verschillende combinaties kun je maken?`, antwoord: a * b, eenheid: 'combinaties', uitleg: `${a} × ${b} = ${a * b} mogelijke combinaties` } }
+const romeinsV = (soort) => { if (soort === 'romeins' || (!soort && Math.random() < 0.5)) { const [r, n] = pick(ROMEINS); return { kaal: `${r} = …`, vraag: `Op een oud gebouw staat het bouwjaar met het Romeinse getal ${r}. Welk gewoon getal is dat?`, antwoord: n, uitleg: `${r} = ${n}` } } const a = rnd(2, 9), b = rnd(1, 9); return { kaal: `${a} − ${a + b} =`, vraag: `Het is ${a} graden buiten. Het wordt ${a + b} graden kouder. Hoeveel graden staat de thermometer dan aan?`, antwoord: -b, eenheid: '°', uitleg: `${a} − ${a + b} = −${b} graden` } }
+const kwadraatWortelV = (soort) => { const nm = naam(); if (soort === 'kwadraat' || (!soort && Math.random() < 0.5)) { const n = rnd(2, 12); return { kaal: `${n}² =`, vraag: `${nm} legt een vierkant van ${n} bij ${n} tegels. Hoeveel tegels zijn dat samen?`, antwoord: n * n, eenheid: 'tegels', uitleg: `${n} × ${n} = ${n * n} (dat is ${n}²)` } } const n = pick([4, 9, 16, 25, 36, 49, 64, 81, 100, 121, 144]); return { kaal: `√${n} =`, vraag: `${nm} legt ${n} tegels in een perfect vierkant. Hoeveel tegels liggen er op één rij?`, antwoord: Math.sqrt(n), eenheid: 'tegels', uitleg: `√${n} = ${Math.sqrt(n)}, want ${Math.sqrt(n)} × ${Math.sqrt(n)} = ${n}` } }
+const patroonRijV = (zwaar) => { const start = rnd(1, zwaar ? 40 : 12), stap = pick(zwaar ? [6, 7, 8, 9, 12, 25] : [2, 3, 4, 5, 10]), rij = [start, start + stap, start + 2 * stap, start + 3 * stap], nm = naam(); return { kaal: `${rij.join(', ')}, … — welk getal komt er?`, vraag: `${nm} maakt stapels blokken. De eerste stapels hebben ${rij.join(', ')} blokken. Steeds komen er evenveel bij. Hoeveel blokken heeft de volgende stapel?`, antwoord: start + 4 * stap, eenheid: 'blokken', uitleg: `Steeds ${stap} erbij: ${rij[3]} + ${stap} = ${start + 4 * stap}.` } }
+const combinatiesV = (zwaar) => { const a = rnd(2, zwaar ? 9 : 5), b = rnd(2, zwaar ? 9 : 5), dingA = pick(['shirts', 'broeken', 'petjes', 'truien']), dingB = pick(['schoenen', 'sokken', 'jassen']); return { kaal: `${a} × ${b} = … combinaties`, vraag: `Je hebt ${a} ${dingA} en ${b} ${dingB}. Hoeveel verschillende combinaties kun je maken?`, antwoord: a * b, eenheid: 'combinaties', uitleg: `${a} × ${b} = ${a * b} mogelijke combinaties` } }
 
 // ── Bouwers voor de groep-7-doelen die nog niet klopten ─────────────────────
 
@@ -755,7 +956,7 @@ const kommaLijnV = () => {
   const waarde = +((startI + i) / schaal).toFixed(diepte)
   const stap = +(1 / schaal).toFixed(diepte)
   return {
-    vraag: c.zin(naam()), antwoord: waarde, eenheid: c.e,
+    vraag: c.zin(naam()), kaal: `Welk getal hoort bij de pijl? (in ${c.e})`, antwoord: waarde, eenheid: c.e,
     figuur: { type: 'getallenlijn', start, eind, waarde, segs: 10 },
     uitleg: `De lijn loopt van ${komma(start)} tot ${komma(eind)} in 10 stapjes van ${komma(stap)}. De pijl staat bij het ${i}e streepje: ${komma(waarde)} ${c.e}.`,
   }
@@ -763,29 +964,33 @@ const kommaLijnV = () => {
 
 // Hoofdrekenen met eenvoudige kommagetallen: optellen én aftrekken, met
 // bedragen van hele kwartjes zodat het uit het hoofd kan.
-const kommaHoofdrekenV = (max) => {
+const kommaHoofdrekenV = (max, soort) => {
   const n = naam(), p1 = rnd(6, max) * 25 / 100, p2 = rnd(6, 24) * 25 / 100
   const spullen = pick([['boek', 'pen'], ['bal', 'pet'], ['puzzel', 'sleutelhanger'], ['broodje', 'pakje sap']])
-  if (Math.random() < 0.5) {
+  if (soort === 'plus' || (!soort && Math.random() < 0.5)) {
     return { vraag: `${n} staat bij de kassa met een ${spullen[0]} van ${euro(p1)} en een ${spullen[1]} van ${euro(p2)}. Hoeveel moet ${n} afrekenen?`,
+             kaal: `${euro(p1)} + ${euro(p2)} =`,
              antwoord: +(p1 + p2).toFixed(2), eenheid: '€', uitleg: `${euro(p1)} + ${euro(p2)} = ${euro(p1 + p2)}` }
   }
   const groot = Math.max(p1, p2) + 5, klein = Math.min(p1, p2)
   return { vraag: `${n} krijgt ${euro(groot)} zakgeld en koopt daar meteen een tijdschrift van ${euro(klein)} van. Hoeveel zakgeld heeft ${n} dan nog?`,
+           kaal: `${euro(groot)} − ${euro(klein)} =`,
            antwoord: +(groot - klein).toFixed(2), eenheid: '€', uitleg: `${euro(groot)} − ${euro(klein)} = ${euro(groot - klein)}` }
 }
 
 // Cijferend of kolomsgewijs met benoemde kommagetallen: allebei de bewerkingen,
 // en met bedragen waar echt bij onthouden of geleend moet worden.
-const kommaCijferV = (max) => {
+const kommaCijferV = (max, soort) => {
   const n = naam()
-  if (Math.random() < 0.5) {
+  if (soort === 'plus' || (!soort && Math.random() < 0.5)) {
     const a = rnd(650, max) / 100, b = rnd(650, max) / 100
     return { vraag: `${n} maakt de kassabon van het verjaardagsfeest na. Op de bon staan een taart van ${euro(a)} en een pak slingers van ${euro(b)}. Welk bedrag stond er onderaan de bon?`,
+             kaal: `${euro(a)} + ${euro(b)} =`,
              antwoord: +(a + b).toFixed(2), eenheid: '€', uitleg: `${euro(a)} + ${euro(b)} = ${euro(a + b)}` }
   }
   const prijs = rnd(650, max) / 100, betaald = Math.ceil(prijs / 5) * 5
   return { vraag: `${n} rekent bij de kassa een spel van ${euro(prijs)} af met een briefje van ${euro(betaald)}. Hoeveel geld krijgt ${n} terug?`,
+           kaal: `${euro(betaald)} − ${euro(prijs)} =`,
            antwoord: +(betaald - prijs).toFixed(2), eenheid: '€', uitleg: `${euro(betaald)} − ${euro(prijs)} = ${euro(betaald - prijs)}` }
 }
 
@@ -795,6 +1000,7 @@ const breukHelenV = () => {
   const n = naam()
   return {
     vraag: `In de pizzeria liggen nog ${t} losse punten pizza. Uit één hele pizza snijdt ${n} er ${noem}. Hoeveel héle pizza's kan ${n} daarmee opnieuw maken, en hoeveel punten blijven er over?`,
+    kaal: `${t}/${noem} = … hele en … / ${noem}`,
     antwoord: h, rest: r,
     uitleg: `${t}/${noem} = ${t} : ${noem} = ${h} met rest ${r}. Dus ${h} hele pizza's en ${r}/${noem} pizza over.`,
   }
@@ -807,17 +1013,20 @@ const verhoudingsTabelV = () => {
   if (k === 1) {
     const a = pick([3, 4, 5, 6]), per = rnd(2, 9) * 50 / 100, b = a * rnd(2, 5)
     return { vraag: `De schoolkantine haalt bij de groothandel ${a} kratten limonade voor ${euro(a * per)}. Voor het schoolfeest zijn er ${b} kratten nodig. Hoeveel euro kost die bestelling?`,
+             kaal: `${a} kratten kosten ${euro(a * per)}. Wat kosten ${b} kratten?`,
              antwoord: +(b * per).toFixed(2), eenheid: '€',
              uitleg: `1 krat: ${euro(a * per)} : ${a} = ${euro(per)}. ${b} kratten: ${b} × ${euro(per)} = ${euro(b * per)}.` }
   }
   if (k === 2) {
     const liter = pick([2, 3, 4, 5]), perLiter = rnd(6, 12), opp = liter * perLiter * rnd(2, 4)
     return { vraag: `Met ${liter} liter verf kan ${nm} ${liter * perLiter} m² muur schilderen. De gymzaal heeft ${opp} m² muur. Hoeveel liter verf heeft ${nm} nodig?`,
+             kaal: `${liter} liter is genoeg voor ${liter * perLiter} m². Hoeveel liter voor ${opp} m²?`,
              antwoord: opp / perLiter, eenheid: 'l',
              uitleg: `1 liter is genoeg voor ${liter * perLiter} : ${liter} = ${perLiter} m². ${opp} : ${perLiter} = ${opp / perLiter} liter.` }
   }
   const n = rnd(3, 8), stuk = rnd(40, 250) / 100
   return { vraag: `${nm} koopt ${n} dezelfde schriften en betaalt ${euro(+(n * stuk).toFixed(2))}. Alle schriften kosten evenveel. Wat kost één schrift?`,
+           kaal: `${n} stuks kosten ${euro(+(n * stuk).toFixed(2))}. Wat kost er 1?`,
            antwoord: +stuk.toFixed(2), eenheid: '€', uitleg: `${euro(+(n * stuk).toFixed(2))} : ${n} = ${euro(stuk)}` }
 }
 
@@ -837,13 +1046,58 @@ const cirkelDiagramV = (maxStappen) => {
   const fig = { type: 'cirkel', delen, titel: set.vraag }
   if (Math.random() < 0.5) {
     return { vraag: `Op school is gevraagd: "${set.vraag}" Er deden ${totaal} ${set.wie} mee. Hoeveel ${set.wie} kozen ${k.label}?`,
+             kaal: `${totaal} ${set.wie} in totaal. Hoeveel kozen ${k.label}?`,
              antwoord: totaal * k.pct / 100, eenheid: set.wie, figuur: fig,
              uitleg: `${k.label} is ${k.pct}% van de taart. ${k.pct}% van ${totaal} = ${totaal} : 100 × ${k.pct} = ${totaal * k.pct / 100}.` }
   }
   const a = delen[0], b = delen[delen.length - 1]
   return { vraag: `Op school is gevraagd: "${set.vraag}" Er deden ${totaal} ${set.wie} mee. Hoeveel ${set.wie} meer kozen ${a.label} dan ${b.label}?`,
+           kaal: `${totaal} ${set.wie} in totaal. Hoeveel meer kozen ${a.label} dan ${b.label}?`,
            antwoord: totaal * (a.pct - b.pct) / 100, eenheid: set.wie, figuur: fig,
            uitleg: `${a.label}: ${totaal * a.pct / 100}. ${b.label}: ${totaal * b.pct / 100}. Verschil: ${totaal * (a.pct - b.pct) / 100}.` }
+}
+
+// Gemiddelde met de rekenmachine: meer getallen en grotere aantallen dan je
+// uit het hoofd doet — de tweede les van dat doel.
+const gemiddeldeGrootV = () => {
+  const k = rnd(4, 5), gem = rnd(12, 60) * 5
+  const waarden = []
+  let som = 0
+  for (let i = 0; i < k - 1; i++) { const w = gem + rnd(-40, 40) * 5; waarden.push(w); som += w }
+  waarden.push(gem * k - som)
+  const nm = naam()
+  return {
+    vraag: `${nm} telt ${k} dagen lang hoeveel bezoekers er in het museum komen: ${waarden.join(', ')}. Wat is het gemiddelde aantal bezoekers per dag?`,
+    kaal: `Gemiddelde van ${waarden.join(', ')} =`,
+    antwoord: gem, eenheid: 'bezoekers',
+    uitleg: `(${waarden.join(' + ')}) : ${k} = ${getal(gem * k)} : ${k} = ${gem}`,
+  }
+}
+
+// Rekenen met prijs én gewicht: de tweede les bij het gewichtsdoel.
+const prijsGewichtV = () => {
+  const perKilo = rnd(4, 24) * 25 / 100, gram = pick([250, 500, 750, 1500, 2500])
+  const nm = naam()
+  return {
+    vraag: `Bij de kaasboer kost een kilo ${euro(perKilo)}. ${nm} koopt ${getal(gram)} gram. Hoeveel moet ${nm} betalen?`,
+    kaal: `1 kg kost ${euro(perKilo)}. Wat kost ${getal(gram)} g?`,
+    antwoord: +(perKilo * gram / 1000).toFixed(2), eenheid: '€',
+    uitleg: `${getal(gram)} g = ${komma(gram / 1000)} kg. ${komma(gram / 1000)} × ${euro(perKilo)} = ${euro(perKilo * gram / 1000)}`,
+  }
+}
+
+// Twee lengtes bij elkaar optellen, elk met een eigen maat: de tweede les bij
+// het lengtedoel, waar de eerste les alleen omrekent.
+const maatLengteOptelV = () => {
+  const m1 = rnd(1, 8), cm1 = rnd(10, 90), m2 = rnd(1, 8), cm2 = rnd(10, 90)
+  const totaal = m1 * 100 + cm1 + m2 * 100 + cm2
+  const nm = naam()
+  return {
+    vraag: `${nm} legt twee planken achter elkaar: één van ${m1} m ${cm1} cm en één van ${m2} m ${cm2} cm. Hoeveel centimeter zijn ze samen?`,
+    kaal: `${m1} m ${cm1} cm + ${m2} m ${cm2} cm = … cm`,
+    antwoord: totaal, eenheid: 'cm',
+    uitleg: `${m1} m ${cm1} cm = ${m1 * 100 + cm1} cm en ${m2} m ${cm2} cm = ${m2 * 100 + cm2} cm. Samen ${getal(totaal)} cm.`,
+  }
 }
 
 // ── Klok aflezen (analoge klok) ──
@@ -861,6 +1115,7 @@ const klokV = (mins) => {   // mins = toegestane minuut-waarden
   const wijzer = m === 0 ? 'de 12' : `de ${m / 5}`
   return {
     vraag: `Hoe laat is het ${dd.naam} op de klok? Schrijf het zo: ${h}:${PAD(m === 0 ? 25 : m)}`,
+    kaal: `Hoe laat is het? Schrijf het zo: ${h}:${PAD(m === 0 ? 25 : m)}`,
     antwoordType: 'tijd', tijdH: h, tijdM: m, antwoord: `${h}:${PAD(m)}`,
     figuur: { type: 'klok', h, m, dagdeel: dd.naam, icon: dd.icon },
     uitleg: `De grote wijzer wijst naar ${wijzer} en de kleine wijzer naar de ${h}. Het is ${h}:${PAD(m)} uur ${dd.naam} (= ${h24}:${PAD(m)} uur).`,
@@ -873,6 +1128,7 @@ const getallenlijnV = (start, lengte) => {
   const i = rnd(1, segs - 1), waarde = start + i * (lengte / segs)
   return {
     vraag: `${naam()} zet een pijl op de getallenlijn. Welk getal hoort bij de pijl?`,
+    kaal: 'Welk getal hoort bij de pijl?',
     antwoord: waarde, figuur: { type: 'getallenlijn', start, eind, waarde, segs },
     uitleg: `De getallenlijn loopt van ${getal(start)} tot ${getal(eind)} in ${segs} stappen van ${getal(lengte / segs)}. De pijl staat op ${getal(waarde)}.`,
   }
@@ -890,23 +1146,25 @@ const DIAGRAM_INTRO = [
   (t) => `Voor de schoolkrant maakt de redactie een diagram van het aantal ${t}.`,
   (t) => `In de klas hangt een diagram met het aantal ${t} van de afgelopen tijd.`,
 ]
-const diagramV = (type, step, maxUnits) => {
+const diagramV = (type, step, maxUnits, soort) => {
   const set = pick(DIAGRAM_SETS)
   const intro = pick(DIAGRAM_INTRO)(set.titel)
   const items = set.labels.map(l => ({ label: l, waarde: rnd(1, maxUnits) * step }))
-  const soort = pick(['lees', 'diff', 'totaal'])
+  const vraagSoort = soort === 'lees' ? 'lees'
+    : soort === 'rekenen' ? pick(['diff', 'totaal'])
+    : pick(['lees', 'diff', 'totaal'])
   const fig = { type, items, step, titel: set.titel }
-  if (soort === 'totaal') {
+  if (vraagSoort === 'totaal') {
     const som = items.reduce((s, x) => s + x.waarde, 0)
-    return { vraag: `${intro} Hoeveel ${set.titel} zijn het er bij elkaar?`, antwoord: som, figuur: fig, uitleg: `${items.map(x => x.waarde).join(' + ')} = ${som}` }
+    return { kaal: `Hoeveel ${set.titel} in totaal volgens het diagram?`, vraag: `${intro} Hoeveel ${set.titel} zijn het er bij elkaar?`, antwoord: som, figuur: fig, uitleg: `${items.map(x => x.waarde).join(' + ')} = ${som}` }
   }
-  if (soort === 'diff') {
+  if (vraagSoort === 'diff') {
     const sorted = [...items].sort((a, b) => b.waarde - a.waarde)
     const a = sorted[0], b = sorted[sorted.length - 1]
-    return { vraag: `${intro} Hoeveel ${set.titel} scheelt het tussen ${a.label} en ${b.label}?`, antwoord: a.waarde - b.waarde, figuur: fig, uitleg: `${a.waarde} − ${b.waarde} = ${a.waarde - b.waarde}` }
+    return { kaal: `Hoeveel ${set.titel} scheelt het tussen ${a.label} en ${b.label}?`, vraag: `${intro} Hoeveel ${set.titel} scheelt het tussen ${a.label} en ${b.label}?`, antwoord: a.waarde - b.waarde, figuur: fig, uitleg: `${a.waarde} − ${b.waarde} = ${a.waarde - b.waarde}` }
   }
   const k = pick(items)
-  return { vraag: `${intro} Hoeveel ${set.titel} horen er bij ${k.label}?`, antwoord: k.waarde, figuur: fig, uitleg: `Lees de hoogte bij ${k.label} af: ${k.waarde}.` }
+  return { kaal: `Hoeveel ${set.titel} bij ${k.label}?`, vraag: `${intro} Hoeveel ${set.titel} horen er bij ${k.label}?`, antwoord: k.waarde, figuur: fig, uitleg: `Lees de hoogte bij ${k.label} af: ${k.waarde}.` }
 }
 
 // ── Groep 5 (Pluspunt). Eén traject (geen FS/S+). Instap + blok 1 t/m 10. ──
@@ -987,76 +1245,210 @@ function maakGroep6(plus) {
   const cijf = plus ? 'cijferend' : 'cijferend of kolomsgewijs'
   return {
     0: [
-      { doel: 'Je leert optellen en aftrekken tot en met 1000 met de strategieën rijgen (in max 2 sprongen), splitsen en aanvullen' + (plus ? ', en rijgen met te veel.' : '.'), gen: () => { const a = rnd(140, 880); return Math.random() < 0.5 ? optelV(a, rnd(110, 480)) : aftrekV(a, rnd(110, a - 80)) } },
-      { doel: 'Je leert sommen als 4 × 67 en 67 × 4 uitrekenen met de basisstrategie splitsen, al dan niet door eerst om te keren' + (plus ? ', en met de variastrategieën rekenen met te veel en halveren en verdubbelen.' : '.'), gen: () => keerV(rnd(3, 9), rnd(41, 89)) },
-      { doel: 'Je leert sommen als 42 : 3 uitrekenen met de basisstrategie splitsen.', gen: () => deelV(rnd(3, 8), rnd(11, 30)) },
-      { doel: 'Je leert van een klok met wijzers en van een digitale klok 5, 10 en 15 minuten voor en over een heel uur en een half uur aflezen.', gen: () => klokV([5, 10, 15, 20, 25, 35, 40, 45, 50, 55]) },
+      D('Je leert optellen en aftrekken tot en met 1000 met de strategieën rijgen (in max 2 sprongen), splitsen en aanvullen' + (plus ? ', en rijgen met te veel.' : '.'), [
+        { label: 'optellen', gen: () => optelV(rnd(140, 880), rnd(110, 480)) },
+        { label: 'aftrekken', gen: () => { const a = rnd(140, 880); return aftrekV(a, rnd(110, a - 80)) } },
+      ]),
+      D('Je leert sommen als 4 × 67 en 67 × 4 uitrekenen met de basisstrategie splitsen, al dan niet door eerst om te keren' + (plus ? ', en met de variastrategieën rekenen met te veel en halveren en verdubbelen.' : '.'), [
+        { label: '4 × 67', gen: () => keerV(rnd(3, 9), rnd(41, 89)) },
+        { label: '67 × 4 (omkeren)', gen: () => keerV(rnd(41, 89), rnd(3, 9)) },
+      ]),
+      D('Je leert sommen als 42 : 3 uitrekenen met de basisstrategie splitsen.', [
+        { label: 'basis', gen: () => deelV(rnd(3, 6), rnd(11, 20)) },
+        { label: 'grotere getallen', gen: () => deelV(rnd(3, 8), rnd(21, 30)) },
+      ]),
+      D('Je leert van een klok met wijzers en van een digitale klok 5, 10 en 15 minuten voor en over een heel uur en een half uur aflezen.', [
+        { label: 'voor en over het hele uur', gen: () => klokV([5, 10, 15, 45, 50, 55]) },
+        { label: 'voor en over het halve uur', gen: () => klokV([20, 25, 35, 40]) },
+      ]),
     ],
     1: [
-      { doel: 'Je leert getallen tot 10.000 splitsen in en samenstellen met duizendtallen, honderdtallen, tientallen en eenheden, en de waardes van de cijfers schrijven in woorden en met cijfers.', gen: () => getallenlijnV(rnd(0, 5) * 1000, 5000) },
-      { doel: 'Je leert sommen als 1200 + 1300, 4500 - 1200, 3 × 700 en 4500 : 9 vlot uitrekenen door te rekenen met de kleine som.', gen: () => {
-        const k = rnd(1, 4)
-        if (k === 1) return optelV(rnd(11, 80) * 100, rnd(11, 40) * 100)
-        if (k === 2) { const a = rnd(25, 90) * 100, b = rnd(11, Math.floor(a / 100) - 5) * 100; return aftrekV(a, b) }
-        if (k === 3) return keerV(rnd(2, 9), rnd(2, 9) * 100)
-        return deelV(rnd(2, 9), rnd(2, 9) * 100)
-      } },
-      { doel: 'Je leert meten met stroken en de uitkomst opschrijven in breukentaal, en je leert dat breuken ontstaan uit eerlijk verdelen.', gen: () => deelVanGeheelV() },
-      { doel: 'Je leert van een klok met wijzers de tijd op de minuut nauwkeurig aflezen en van een digitale klok de minuten aflezen en aangeven.', gen: () => klokV([0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55]) },
+      D('Je leert getallen tot 10.000 splitsen in en samenstellen met duizendtallen, honderdtallen, tientallen en eenheden, en de waardes van de cijfers schrijven in woorden en met cijfers.', [
+        { label: 'splitsen en cijferwaarde', gen: () => getalSchrijvenV(9, 1) },
+        { label: 'plaatsen op de getallenlijn', gen: () => getallenlijnV(rnd(0, 5) * 1000, 5000) },
+      ]),
+      D('Je leert sommen als 1200 + 1300, 4500 - 1200, 3 × 700 en 4500 : 9 vlot uitrekenen door te rekenen met de kleine som.', [
+        { label: 'plus en min', gen: () => Math.random() < 0.5
+          ? optelV(rnd(11, 80) * 100, rnd(11, 40) * 100)
+          : (() => { const a = rnd(25, 90) * 100, b = rnd(11, Math.floor(a / 100) - 5) * 100; return aftrekV(a, b) })() },
+        { label: 'keer en delen', gen: () => Math.random() < 0.5
+          ? keerV(rnd(2, 9), rnd(2, 9) * 100)
+          : deelV(rnd(2, 9), rnd(2, 9) * 100) },
+      ]),
+      D('Je leert meten met stroken en de uitkomst opschrijven in breukentaal, en je leert dat breuken ontstaan uit eerlijk verdelen.', [
+        { label: 'eerlijk verdelen', gen: () => deelVanGeheelV() },
+        { label: 'aanvullen tot een hele', gen: () => breukAanvullenV(false) },
+      ]),
+      D('Je leert van een klok met wijzers de tijd op de minuut nauwkeurig aflezen en van een digitale klok de minuten aflezen en aangeven.', [
+        { label: 'hele vijf minuten', gen: () => klokV([0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55]) },
+        { label: 'op de minuut nauwkeurig', gen: () => klokV(Array.from({ length: 60 }, (_, i) => i)) },
+      ]),
     ],
     2: [
-      { doel: 'Je leert tellen tot en met 10.000 met sprongen van 1, 10, 100 en 1000, getallen op volgorde zetten en schattend plaatsen en aflezen op de getallenlijn.', gen: () => getallenlijnV(rnd(0, 5) * 1000, 5000) },
-      { doel: 'Je leert sommen als 368 + 257 kolomsgewijs optellen en je begrijpt wat je opschrijft.', gen: () => optelV(rnd(140, 680 + M * 200), rnd(140, 680)) },
-      { doel: 'Je leert bij een plaatje aangeven welk deel gekleurd is en welke breuk erbij hoort.', gen: () => deelVanGeheelV() },
-      { doel: 'Je leert hoe je een plaats op een kaart kunt vinden en hoe je de lengte van een route kunt berekenen.', gen: () => kaartV() },
+      D('Je leert tellen tot en met 10.000 met sprongen van 1, 10, 100 en 1000, getallen op volgorde zetten en schattend plaatsen en aflezen op de getallenlijn.', [
+        { label: 'sprongen van 1000', gen: () => getallenlijnV(rnd(0, 5) * 1000, 5000) },
+        { label: 'sprongen van 100', gen: () => getallenlijnV(rnd(0, 9) * 1000, 1000) },
+      ]),
+      D('Je leert sommen als 368 + 257 kolomsgewijs optellen en je begrijpt wat je opschrijft.', [
+        { label: 'basis', gen: () => optelV(rnd(140, 480), rnd(140, 380)) },
+        { label: 'grotere getallen', gen: () => optelV(rnd(340, 680 + M * 200), rnd(240, 680)) },
+      ]),
+      D('Je leert bij een plaatje aangeven welk deel gekleurd is en welke breuk erbij hoort.', [
+        { label: 'welk deel is het', gen: () => deelVanGeheelV() },
+        { label: 'aanvullen tot een hele', gen: () => breukAanvullenV(false) },
+      ]),
+      D('Je leert hoe je een plaats op een kaart kunt vinden en hoe je de lengte van een route kunt berekenen.', [
+        { label: 'korte route', gen: () => kaartV(false) },
+        { label: 'langere route', gen: () => kaartV(true) },
+      ]),
     ],
     3: [
-      { doel: 'Je leert getallen afronden op tientallen, honderdtallen en duizendtallen, en optellen en aftrekken met de afgeronde getallen.', gen: () => afrondV(9800, [10, 100, 1000]) },
-      { doel: 'Je leert sommen als 92 : 4 uitrekenen met de basisstrategie splitsen.', gen: () => deelV(rnd(3, 8), rnd(11, 30)) },
-      { doel: 'Je leert een breuk aanvullen tot een hele en bij een deel de hele tekenen.', gen: () => breukAanvullenV() },
-      { doel: 'Je leert uitrekenen hoe laat het over een bepaalde tijd is en hoeveel uren en minuten het later is.', gen: () => tijdErbijV(120) },
+      D('Je leert getallen afronden op tientallen, honderdtallen en duizendtallen, en optellen en aftrekken met de afgeronde getallen.', [
+        { label: 'afronden', gen: () => afrondV(9800, [10, 100, 1000]) },
+        { label: 'rekenen met afgeronde getallen', gen: () => Math.random() < 0.5
+          ? optelV(rnd(11, 89) * 100, rnd(11, 49) * 100)
+          : (() => { const a = rnd(25, 90) * 100; return aftrekV(a, rnd(11, Math.floor(a / 100) - 5) * 100) })() },
+      ]),
+      D('Je leert sommen als 92 : 4 uitrekenen met de basisstrategie splitsen.', [
+        { label: 'basis', gen: () => deelV(rnd(3, 6), rnd(11, 20)) },
+        { label: 'grotere getallen', gen: () => deelV(rnd(3, 8), rnd(21, 30)) },
+      ]),
+      D('Je leert een breuk aanvullen tot een hele en bij een deel de hele tekenen.', [
+        { label: 'aanvullen tot een hele', gen: () => breukAanvullenV(false) },
+        { label: 'grotere noemers', gen: () => breukAanvullenV(true) },
+      ]),
+      D('Je leert uitrekenen hoe laat het over een bepaalde tijd is en hoeveel uren en minuten het later is.', [
+        { label: 'binnen het uur', gen: () => tijdErbijV(60) },
+        { label: 'over meerdere uren', gen: () => tijdErbijV(180) },
+      ]),
     ],
     4: [
-      { doel: `Je leert sommen als 432 + 257 ${cijf} optellen en je begrijpt wat je opschrijft.`, gen: () => optelV(rnd(140, 680), rnd(140, 560)) },
-      { doel: `Je leert sommen als 487 + 235 ${cijf} optellen en je begrijpt wat je opschrijft.`, gen: () => optelV(rnd(150, 690), rnd(150, 490)) },
-      { doel: 'Je leert breuken schattend plaatsen en aflezen op de getallenlijn, vanaf 0 en vanaf een willekeurig getal.', gen: () => deelVanGeheelV() },
-      { doel: 'Je leert de maten kilogram en gram en de maten liter, deciliter, centiliter en milliliter gebruiken.', gen: () => Math.random() < 0.5 ? maatGewichtV() : maatInhoudV() },
+      D(`Je leert sommen als 432 + 257 ${cijf} optellen en je begrijpt wat je opschrijft.`, [
+        { label: 'basis', gen: () => optelV(rnd(140, 440), rnd(140, 350)) },
+        { label: 'grotere getallen', gen: () => optelV(rnd(340, 680), rnd(240, 560)) },
+      ]),
+      D(`Je leert sommen als 487 + 235 ${cijf} optellen en je begrijpt wat je opschrijft.`, [
+        { label: 'met onthouden', gen: () => optelV(...metOnthouden(150, 490)) },
+        { label: 'grotere getallen', gen: () => optelV(...metOnthouden(350, 690)) },
+      ]),
+      D('Je leert breuken schattend plaatsen en aflezen op de getallenlijn, vanaf 0 en vanaf een willekeurig getal.', [
+        { label: 'deel van een geheel', gen: () => deelVanGeheelV() },
+        { label: 'breuken vergelijken', gen: () => breukVergelijkV() },
+      ]),
+      D('Je leert de maten kilogram en gram en de maten liter, deciliter, centiliter en milliliter gebruiken.', [
+        { label: 'kilogram en gram', gen: () => maatGewichtV() },
+        { label: 'liter, dl, cl en ml', gen: () => maatInhoudV() },
+      ]),
     ],
     5: [
-      { doel: 'Je leert sommen als 463 - 248 kolomsgewijs aftrekken en je begrijpt wat je opschrijft.', gen: () => { const a = rnd(360, 980), b = rnd(140, a - 100); return aftrekV(a, b) } },
-      { doel: 'Je leert sommen als 423 - 248 kolomsgewijs aftrekken (met meer wisselen) en je begrijpt wat je opschrijft.', gen: () => { const a = rnd(400, 920), b = rnd(240, a - 80); return aftrekV(a, b) } },
-      { doel: 'Je leert breuken met elkaar vergelijken met behulp van afbeeldingen en de getallenlijn.', gen: () => breukVergelijkV() },
-      { doel: 'Je leert tijden aflezen en aangeven op de seconde nauwkeurig en tijden omrekenen in minuten en seconden.', gen: () => tijdNaarSecV() },
+      D('Je leert sommen als 463 - 248 kolomsgewijs aftrekken en je begrijpt wat je opschrijft.', [
+        { label: 'basis', gen: () => { const a = rnd(360, 680); return aftrekV(a, rnd(140, a - 100)) } },
+        { label: 'grotere getallen', gen: () => { const a = rnd(560, 980); return aftrekV(a, rnd(240, a - 100)) } },
+      ]),
+      D('Je leert sommen als 423 - 248 kolomsgewijs aftrekken (met meer wisselen) en je begrijpt wat je opschrijft.', [
+        { label: 'met lenen', gen: () => aftrekV(...metLenen(240, 720)) },
+        { label: 'grotere getallen', gen: () => aftrekV(...metLenen(340, 920)) },
+      ]),
+      D('Je leert breuken met elkaar vergelijken met behulp van afbeeldingen en de getallenlijn.', [
+        { label: 'vergelijken', gen: () => breukVergelijkV() },
+        { label: 'gelijkwaardige breuken', gen: () => gelijkwaardigeBreukV() },
+      ]),
+      D('Je leert tijden aflezen en aangeven op de seconde nauwkeurig en tijden omrekenen in minuten en seconden.', [
+        { label: 'minuten naar seconden', gen: () => tijdNaarSecV(false) },
+        { label: 'langere tijden', gen: () => tijdNaarSecV(true) },
+      ]),
     ],
     6: [
-      { doel: 'Je leert tellen tot en met 100.000 met sprongen van 1, 10, 100, 1000 en 10.000, getallen splitsen, samenstellen, schrijven, op volgorde zetten en schattend plaatsen op de getallenlijn.', gen: () => getallenlijnV(rnd(0, 5) * 10000, 50000) },
-      { doel: 'Je leert sommen als 826 : 9 (met rest) uitrekenen met de basisstrategie splitsen.', gen: () => { const deler = rnd(3, 9); return deelRestV(deler, rnd(40, 99), rnd(1, deler - 1)) } },
-      { doel: 'Je leert de betekenis van kommagetallen bij diverse maten en geld, en het lezen en schrijven van benoemde en onbenoemde kommagetallen met 1, 2 en 3 cijfers achter de komma.', gen: () => breukKommaV() },
-      { doel: 'Je leert de maten kilometer, hectometer, meter, decimeter, centimeter en millimeter omrekenen, maten in meter met een komma opschrijven en de omtrek van een figuur berekenen.', gen: () => Math.random() < 0.5 ? maatLengteV() : omtrekV(12 + M * 6, 9 + M * 5) },
+      D('Je leert tellen tot en met 100.000 met sprongen van 1, 10, 100, 1000 en 10.000, getallen splitsen, samenstellen, schrijven, op volgorde zetten en schattend plaatsen op de getallenlijn.', [
+        { label: 'plaatsen op de getallenlijn', gen: () => getallenlijnV(rnd(0, 5) * 10000, 50000) },
+        { label: 'in cijfers schrijven', gen: () => getalSchrijvenV(99, 11) },
+      ]),
+      D('Je leert sommen als 826 : 9 (met rest) uitrekenen met de basisstrategie splitsen.', [
+        { label: 'zonder rest', gen: () => deelV(rnd(3, 9), rnd(40, 99)) },
+        { label: 'met rest', gen: () => { const deler = rnd(3, 9); return deelRestV(deler, rnd(40, 99), rnd(1, deler - 1)) } },
+      ]),
+      D('Je leert de betekenis van kommagetallen bij diverse maten en geld, en het lezen en schrijven van benoemde en onbenoemde kommagetallen met 1, 2 en 3 cijfers achter de komma.', [
+        { label: 'breuk en kommagetal', gen: () => breukKommaV() },
+        { label: 'kommagetal op de getallenlijn', gen: () => kommaLijnV() },
+      ]),
+      D('Je leert de maten kilometer, hectometer, meter, decimeter, centimeter en millimeter omrekenen, maten in meter met een komma opschrijven en de omtrek van een figuur berekenen.', [
+        { label: 'maten omrekenen', gen: () => maatLengteV() },
+        { label: 'omtrek berekenen', gen: () => omtrekV(12 + M * 6, 9 + M * 5) },
+      ]),
     ],
     7: [
-      { doel: `Je leert sommen als 454 - 237 ${cijf} aftrekken en je begrijpt wat je opschrijft.`, gen: () => { const a = rnd(360, 980), b = rnd(140, a - 100); return aftrekV(a, b) } },
-      { doel: plus ? 'Je leert sommen als 432 - 263 en 1705 - 346 cijferend aftrekken.' : 'Je leert sommen als 432 - 263 en 402 - 267 cijferend of kolomsgewijs aftrekken.', gen: () => { const a = rnd(400, plus ? 1900 : 920), b = rnd(240, a - 80); return aftrekV(a, b) } },
-      { doel: 'Je leert een deel van een geheel berekenen en een deel aflezen van een staafdiagram.', gen: () => deelVanGeheelV() },
-      { doel: 'Je leert een datum opschrijven in cijfers (dag-maand-jaar), een datum berekenen met en zonder kalender en een tijdbalk gebruiken bij het rekenen met jaartallen.', gen: () => datumV() },
+      D(`Je leert sommen als 454 - 237 ${cijf} aftrekken en je begrijpt wat je opschrijft.`, [
+        { label: 'basis', gen: () => { const a = rnd(360, 680); return aftrekV(a, rnd(140, a - 100)) } },
+        { label: 'grotere getallen', gen: () => { const a = rnd(560, 980); return aftrekV(a, rnd(240, a - 100)) } },
+      ]),
+      D(plus ? 'Je leert sommen als 432 - 263 en 1705 - 346 cijferend aftrekken.' : 'Je leert sommen als 432 - 263 en 402 - 267 cijferend of kolomsgewijs aftrekken.', [
+        { label: '432 − 263', gen: () => aftrekV(...metLenen(240, 720)) },
+        plus
+          ? { label: '1705 − 346', gen: () => { const a = rnd(1100, 1900); return aftrekV(a, rnd(240, 900)) } }
+          : { label: '402 − 267 (met nullen)', gen: () => { const a = rnd(4, 9) * 100 + rnd(0, 9); return aftrekV(a, rnd(240, a - 80)) } },
+      ]),
+      D('Je leert een deel van een geheel berekenen en een deel aflezen van een staafdiagram.', [
+        { label: 'deel van een geheel', gen: () => deelVanGeheelV() },
+        { label: 'aflezen van een staafdiagram', gen: () => diagramV('staaf', pick([5, 10]), rnd(3, 9)) },
+      ]),
+      D('Je leert een datum opschrijven in cijfers (dag-maand-jaar), een datum berekenen met en zonder kalender en een tijdbalk gebruiken bij het rekenen met jaartallen.', [
+        { label: 'datum berekenen', gen: () => datumV() },
+        { label: 'weken en kalender', gen: () => kalenderV() },
+      ]),
     ],
     8: [
-      { doel: 'Je leert sommen als 30 × 40 en 1500 : 30 uitrekenen met de kleine som.', gen: () => Math.random() < 0.5 ? keerV(rnd(2, 9) * 10, rnd(2, 9) * 10) : deelV(rnd(2, 9) * 10, rnd(2, 9)) },
-      { doel: 'Je leert sommen als 6 × 284 kolomsgewijs uit te rekenen en je begrijpt wat je opschrijft.', gen: () => keerV(rnd(3, 9), rnd(110, 450 + M * 240)) },
-      { doel: 'Je leert benoemde kommagetallen t/m honderdsten plaatsen en aflezen op de getallenlijn.', gen: () => breukKommaV() },
-      { doel: 'Je leert de inhoud aflezen bij maatbekers en de maten liter, deciliter, centiliter en milliliter omrekenen, en maten in liter met een komma opschrijven.', gen: () => maatInhoudV() },
+      D('Je leert sommen als 30 × 40 en 1500 : 30 uitrekenen met de kleine som.', [
+        { label: '30 × 40', gen: () => keerV(rnd(2, 9) * 10, rnd(2, 9) * 10) },
+        { label: '1500 : 30', gen: () => deelV(rnd(2, 9) * 10, rnd(2, 9)) },
+      ]),
+      D('Je leert sommen als 6 × 284 kolomsgewijs uit te rekenen en je begrijpt wat je opschrijft.', [
+        { label: 'basis', gen: () => keerV(rnd(3, 9), rnd(110, 290)) },
+        { label: 'grotere getallen', gen: () => keerV(rnd(3, 9), rnd(300, 450 + M * 240)) },
+      ]),
+      D('Je leert benoemde kommagetallen t/m honderdsten plaatsen en aflezen op de getallenlijn.', [
+        { label: 'op de getallenlijn', gen: () => kommaLijnV() },
+        { label: 'breuk en kommagetal', gen: () => breukKommaV() },
+      ]),
+      D('Je leert de inhoud aflezen bij maatbekers en de maten liter, deciliter, centiliter en milliliter omrekenen, en maten in liter met een komma opschrijven.', [
+        { label: 'maten omrekenen', gen: () => maatInhoudV() },
+        { label: 'aflezen op de maatbeker', gen: () => kommaLijnV() },
+      ]),
     ],
     9: [
-      { doel: plus ? 'Je leert sommen als 138 : 3 met de basisstrategie splitsen en sommen als 147 : 3 met rekenen met te veel uitrekenen.' : 'Je leert sommen als 138 : 3 uitrekenen met de basisstrategie splitsen.', gen: () => deelV(rnd(2, 9), rnd(40, 150)) },
-      { doel: plus ? 'Je leert sommen als 3 × 67 met splitsen, 4 × 69 met rekenen met te veel en 4 × 35 met halveren en verdubbelen uitrekenen.' : 'Je leert sommen als 3 × 67 en 4 × 35 uitrekenen met de basisstrategie splitsen.', gen: () => keerV(rnd(3, 9), rnd(41, 89)) },
-      { doel: 'Je leert een deel van een geheel berekenen en berekenen wat het geheel is als je een deel weet.', gen: () => deelVanGeheelV() },
-      { doel: 'Je leert de omtrek en de oppervlakte berekenen van een figuur met maten in centimeters of meters.', gen: () => Math.random() < 0.5 ? omtrekV(12 + M * 8, 8 + M * 7) : oppRechthoekV(12 + M * 8, 8 + M * 7) },
+      D(plus ? 'Je leert sommen als 138 : 3 met de basisstrategie splitsen en sommen als 147 : 3 met rekenen met te veel uitrekenen.' : 'Je leert sommen als 138 : 3 uitrekenen met de basisstrategie splitsen.', [
+        { label: 'basis', gen: () => deelV(rnd(2, 6), rnd(40, 90)) },
+        { label: 'grotere getallen', gen: () => deelV(rnd(3, 9), rnd(80, 150)) },
+      ]),
+      D(plus ? 'Je leert sommen als 3 × 67 met splitsen, 4 × 69 met rekenen met te veel en 4 × 35 met halveren en verdubbelen uitrekenen.' : 'Je leert sommen als 3 × 67 en 4 × 35 uitrekenen met de basisstrategie splitsen.', [
+        { label: '3 × 67 (splitsen)', gen: () => keerV(rnd(3, 6), rnd(41, 89)) },
+        { label: '4 × 35 (halveren en verdubbelen)', gen: () => keerV(pick([4, 6, 8]), rnd(3, 9) * 5) },
+      ]),
+      D('Je leert een deel van een geheel berekenen en berekenen wat het geheel is als je een deel weet.', [
+        { label: 'deel van een geheel', gen: () => deelVanGeheelV() },
+        { label: 'terug naar het geheel', gen: () => geheelTerugV() },
+      ]),
+      D('Je leert de omtrek en de oppervlakte berekenen van een figuur met maten in centimeters of meters.', [
+        { label: 'omtrek', gen: () => omtrekV(12 + M * 8, 8 + M * 7) },
+        { label: 'oppervlakte', gen: () => oppRechthoekV(12 + M * 8, 8 + M * 7) },
+      ]),
     ],
     10: [
-      { doel: 'Je leert schattend vermenigvuldigen en delen in rekenverhalen met geld en met ronde getallen.', gen: () => schattenV() },
-      { doel: plus ? 'Je leert sommen als 4 × 231 en 4 × 36 cijferend uitrekenen, en je begrijpt wat je opschrijft.' : 'Je leert sommen als 4 × 231 en 4 × 536 cijferend of kolomsgewijs uitrekenen, en je begrijpt wat je opschrijft.', gen: () => keerV(rnd(3, 9), rnd(110, 590)) },
-      { doel: 'Je leert benoemde en onbenoemde kommagetallen t/m duizendsten vergelijken en ordenen.', gen: () => breukKommaV() },
-      { doel: 'Je leert rekenen met lijndiagrammen en een beelddiagram aflezen.', gen: () => diagramV('lijn', pick([5, 10]), rnd(3, 9)) },
+      D('Je leert schattend vermenigvuldigen en delen in rekenverhalen met geld en met ronde getallen.', [
+        { label: 'schatten bij keersommen', gen: () => schattenV('keer') },
+        { label: 'schatten bij geld', gen: () => schattenV('geld') },
+      ]),
+      D(plus ? 'Je leert sommen als 4 × 231 en 4 × 36 cijferend uitrekenen, en je begrijpt wat je opschrijft.' : 'Je leert sommen als 4 × 231 en 4 × 536 cijferend of kolomsgewijs uitrekenen, en je begrijpt wat je opschrijft.', [
+        { label: '4 × 231', gen: () => keerV(rnd(3, 9), rnd(110, 290)) },
+        { label: '4 × 536', gen: () => keerV(rnd(3, 9), rnd(300, 590)) },
+      ]),
+      D('Je leert benoemde en onbenoemde kommagetallen t/m duizendsten vergelijken en ordenen.', [
+        { label: 'breuk naar kommagetal', gen: () => breukKommaV() },
+        { label: 'kommagetal naar breuk', gen: () => kommaNaarBreukV() },
+      ]),
+      D('Je leert rekenen met lijndiagrammen en een beelddiagram aflezen.', [
+        { label: 'aflezen', gen: () => diagramV('lijn', pick([5, 10]), rnd(3, 9), 'lees') },
+        { label: 'ermee rekenen', gen: () => diagramV('lijn', pick([5, 10]), rnd(3, 9), 'rekenen') },
+      ]),
     ],
   }
 }
@@ -1064,80 +1456,256 @@ function maakGroep6(plus) {
 // ── Groep 8 (Pluspunt FS + S+). Instap + blok 1 t/m 10. Aantal doelen per
 //    blok wisselt (zoals in de methode): latere blokken hebben er minder. ──
 function maakGroep8(plus) {
-  const opp = () => Math.random() < 0.5 ? oppRechthoekV(plus ? 30 : 16, plus ? 20 : 11) : oppDriehoekV()
-  const kommaOptel = () => { const p1 = rnd(150, plus ? 8000 : 3000) / 100, p2 = rnd(150, 3000) / 100, n = naam(); return { vraag: `${n} koopt een tas van ${euro(p1)} en een pet van ${euro(p2)}. Hoeveel betaalt ${n} samen?`, antwoord: +(p1 + p2).toFixed(2), eenheid: '€', uitleg: `${euro(p1)} + ${euro(p2)} = ${euro(p1 + p2)}` } }
-  const samengesteld = () => { const perKg = rnd(150, 900) / 100, kg = rnd(2, plus ? 9 : 6); return { vraag: `Vlees kost ${euro(perKg)} per kilogram. Hoeveel kost ${kg} kg?`, antwoord: +(perKg * kg).toFixed(2), eenheid: '€', uitleg: `${kg} × ${euro(perKg)} = ${euro(perKg * kg)}` } }
+  const opp = (soort) => (soort === 'driehoek' ? oppDriehoekV() : oppRechthoekV(plus ? 30 : 16, plus ? 20 : 11))
+  const kommaOptel = (soort) => {
+    const p1 = rnd(150, plus ? 8000 : 3000) / 100, p2 = rnd(150, 3000) / 100, n = naam()
+    if (soort === 'min') {
+      const groot = Math.max(p1, p2) + 5, klein = Math.min(p1, p2)
+      return { vraag: `${n} heeft ${euro(groot)} en koopt een pet van ${euro(klein)}. Hoeveel houdt ${n} over?`,
+               kaal: `${euro(groot)} − ${euro(klein)} =`,
+               antwoord: +(groot - klein).toFixed(2), eenheid: '€', uitleg: `${euro(groot)} − ${euro(klein)} = ${euro(groot - klein)}` }
+    }
+    return { vraag: `${n} koopt een tas van ${euro(p1)} en een pet van ${euro(p2)}. Hoeveel betaalt ${n} samen?`,
+             kaal: `${euro(p1)} + ${euro(p2)} =`,
+             antwoord: +(p1 + p2).toFixed(2), eenheid: '€', uitleg: `${euro(p1)} + ${euro(p2)} = ${euro(p1 + p2)}` }
+  }
+  const samengesteld = (zwaar) => {
+    const perKg = rnd(150, zwaar ? 1800 : 900) / 100, kg = rnd(2, zwaar ? 12 : 6)
+    return { vraag: `Vlees kost ${euro(perKg)} per kilogram. Hoeveel kost ${kg} kg?`,
+             kaal: `${kg} × ${euro(perKg)} =`,
+             antwoord: +(perKg * kg).toFixed(2), eenheid: '€', uitleg: `${kg} × ${euro(perKg)} = ${euro(perKg * kg)}` }
+  }
+  const kommaDelenV = (zwaar) => {
+    const deler = rnd(15, 95) / 10, q = rnd(2, zwaar ? 14 : 9), deeltal = +(deler * q).toFixed(2)
+    return { vraag: `${komma(deeltal)} kg appels wordt verdeeld in zakken van ${komma(deler)} kg. Hoeveel zakken kun je vullen?`,
+             kaal: `${komma(deeltal)} : ${komma(deler)} =`,
+             antwoord: q, eenheid: 'zakken', uitleg: `${komma(deeltal)} : ${komma(deler)} = ${q}` }
+  }
   return {
     0: [
-      { doel: 'Je oefent sommen als 12 × 64, 22 × 64 en 6 × 346 met cijferen of splitsen, en je begrijpt wat je opschrijft.', gen: () => Math.random() < 0.5 ? keerV(rnd(12, plus ? 89 : 49), rnd(21, 89)) : keerV(rnd(3, 9), rnd(110, 590)) },
-      { doel: 'Je oefent hoofdrekenend vermenigvuldigen en delen met benoemde kommagetallen en vermenigvuldigen bij sommen als 2,9 × 8,1 en 24 × 0,67.', gen: () => Math.random() < 0.5 ? kommaVermV() : kommaKeerV() },
-      { doel: 'Je herhaalt het koppelen van 5% of 10% aan breuken, kommagetallen en verhoudingen, en de nieuwe prijs uitrekenen uit de oude prijs en het kortingspercentage.', gen: () => Math.random() < 0.5 ? procentVanV() : nieuwePrijsV() },
-      { doel: 'Je leert de oppervlakte berekenen van rechthoeken en driehoeken en de inhoud van een balk berekenen in dm³ en liter.', gen: () => Math.random() < 0.5 ? opp() : balkInhoudV(plus ? 12 : 8) },
+      D('Je oefent sommen als 12 × 64, 22 × 64 en 6 × 346 met cijferen of splitsen, en je begrijpt wat je opschrijft.', [
+        { label: 'twee cijfers × twee cijfers', gen: () => keerV(rnd(12, plus ? 89 : 49), rnd(21, 89)) },
+        { label: '6 × 346', gen: () => keerV(rnd(3, 9), rnd(110, 590)) },
+      ]),
+      D('Je oefent hoofdrekenend vermenigvuldigen en delen met benoemde kommagetallen en vermenigvuldigen bij sommen als 2,9 × 8,1 en 24 × 0,67.', [
+        { label: 'heel getal × kommagetal', gen: () => kommaKeerV() },
+        { label: 'kommagetal × kommagetal', gen: () => kommaVermV() },
+      ]),
+      D('Je herhaalt het koppelen van 5% of 10% aan breuken, kommagetallen en verhoudingen, en de nieuwe prijs uitrekenen uit de oude prijs en het kortingspercentage.', [
+        { label: 'percentage van een aantal', gen: () => procentVanV(false) },
+        { label: 'nieuwe prijs na korting', gen: () => nieuwePrijsV() },
+      ]),
+      D('Je leert de oppervlakte berekenen van rechthoeken en driehoeken en de inhoud van een balk berekenen in dm³ en liter.', [
+        { label: 'oppervlakte', gen: () => opp(Math.random() < 0.5 ? 'driehoek' : 'rechthoek') },
+        { label: 'inhoud van een balk', gen: () => balkInhoudV(plus ? 12 : 8) },
+      ]),
     ],
     1: [
-      { doel: 'Je leert in welke volgorde je moet vermenigvuldigen, delen, optellen en aftrekken.', gen: () => volgordeV() },
-      { doel: 'Je leert delen met kommagetallen bij sommen als 18,88 : 5,9, door eerst te schatten en dan zonder komma te rekenen met de rekenmachine.', gen: () => { const deler = rnd(15, 95) / 10, q = rnd(2, plus ? 14 : 9), deeltal = +(deler * q).toFixed(2); return { vraag: `${komma(deeltal)} kg appels wordt verdeeld in zakken van ${komma(deler)} kg. Hoeveel zakken kun je vullen?`, antwoord: q, eenheid: 'zakken', uitleg: `${komma(deeltal)} : ${komma(deler)} = ${q}` } } },
-      { doel: plus ? 'Je leert de oude prijs uitrekenen uit de nieuwe prijs en het kortingspercentage, en het totaal uitrekenen aan de hand van een percentage.' : 'Je herhaalt de nieuwe prijs uitrekenen uit de oude prijs en het kortingspercentage, en je leert het totaal uitrekenen aan de hand van een percentage.', gen: () => plus ? (Math.random() < 0.5 ? oudePrijsV() : totaalViaPctV()) : (Math.random() < 0.5 ? nieuwePrijsV() : totaalViaPctV()) },
-      { doel: 'Je leert de tijd uitrekenen van een plaats in een andere tijdzone en de tijdsduur tussen 2 tijdstippen berekenen.', gen: () => Math.random() < 0.5 ? tijdzoneV() : tijdsduurV() },
+      D('Je leert in welke volgorde je moet vermenigvuldigen, delen, optellen en aftrekken.', [
+        { label: 'plus en keer', gen: () => volgordeV('plus') },
+        { label: 'keer en min', gen: () => volgordeV('min') },
+      ]),
+      D('Je leert delen met kommagetallen bij sommen als 18,88 : 5,9, door eerst te schatten en dan zonder komma te rekenen met de rekenmachine.', [
+        { label: 'basis', gen: () => kommaDelenV(false) },
+        { label: 'grotere getallen', gen: () => kommaDelenV(true) },
+      ]),
+      D(plus ? 'Je leert de oude prijs uitrekenen uit de nieuwe prijs en het kortingspercentage, en het totaal uitrekenen aan de hand van een percentage.' : 'Je herhaalt de nieuwe prijs uitrekenen uit de oude prijs en het kortingspercentage, en je leert het totaal uitrekenen aan de hand van een percentage.', [
+        plus
+          ? { label: 'de oude prijs terugrekenen', gen: () => oudePrijsV() }
+          : { label: 'de nieuwe prijs uitrekenen', gen: () => nieuwePrijsV() },
+        { label: 'het totaal via een percentage', gen: () => totaalViaPctV() },
+      ]),
+      D('Je leert de tijd uitrekenen van een plaats in een andere tijdzone en de tijdsduur tussen 2 tijdstippen berekenen.', [
+        { label: 'tijdzones', gen: () => tijdzoneV() },
+        { label: 'tijdsduur', gen: () => tijdsduurV() },
+      ]),
     ],
     2: [
-      { doel: 'Je leert heel grote getallen op 2 manieren schrijven (1,2 miljard en 1.200.000.000) en getallen afronden volgens de afrondregels.', gen: () => Math.random() < 0.5 ? grootGetalV() : miljoenV() },
-      { doel: plus ? 'Je leert optellen en aftrekken met benoemde en onbenoemde kommagetallen.' : 'Je herhaalt het optellen en aftrekken van benoemde kommagetallen.', gen: () => kommaOptel() },
-      { doel: 'Je herhaalt het koppelen van percentages aan breuken en verhoudingen en leert hoe je handig verhoudingsproblemen oplost.', gen: () => Math.random() < 0.5 ? procentRedeneerV() : verhoudingV() },
-      { doel: 'Je leert met een schaallijntje een lengte op schaal omrekenen naar een lengte in het echt en omgekeerd, en de schaal berekenen.', gen: () => schaalV() },
+      D('Je leert heel grote getallen op 2 manieren schrijven (1,2 miljard en 1.200.000.000) en getallen afronden volgens de afrondregels.', [
+        { label: 'in cijfers schrijven', gen: () => grootGetalV() },
+        { label: 'afronden', gen: () => miljoenV('afronden') },
+      ]),
+      D(plus ? 'Je leert optellen en aftrekken met benoemde en onbenoemde kommagetallen.' : 'Je herhaalt het optellen en aftrekken van benoemde kommagetallen.', [
+        { label: 'optellen', gen: () => kommaOptel('plus') },
+        { label: 'aftrekken', gen: () => kommaOptel('min') },
+      ]),
+      D('Je herhaalt het koppelen van percentages aan breuken en verhoudingen en leert hoe je handig verhoudingsproblemen oplost.', [
+        { label: 'percentages', gen: () => procentRedeneerV(false) },
+        { label: 'verhoudingen', gen: () => verhoudingV() },
+      ]),
+      D('Je leert met een schaallijntje een lengte op schaal omrekenen naar een lengte in het echt en omgekeerd, en de schaal berekenen.', [
+        { label: 'kaart ↔ in het echt', gen: () => schaalV('omrekenen') },
+        { label: 'de schaal uitrekenen', gen: () => schaalV('schaal') },
+      ]),
     ],
     3: plus ? [
-      { doel: 'Je leert bewerkingen schattend uitrekenen, in contexten waarbij het zinvol is om te schatten.', gen: () => schattenV() },
-      { doel: 'Je leert een breuk met een breuk vermenigvuldigen.', gen: () => breukMaalBreukV() },
-      { doel: 'Je leert redeneren over uitspraken met percentages, percentages boven 100% uitrekenen en het oude aantal uitrekenen.', gen: () => Math.random() < 0.5 ? procentRedeneerV() : oudAantalViaPctV() },
-      { doel: 'Je leert rekenen met alle maten voor gewicht, schattend en precies, met prijzen en gewichten.', gen: () => Math.random() < 0.5 ? maatGewichtV() : samengesteld() },
+      D('Je leert bewerkingen schattend uitrekenen, in contexten waarbij het zinvol is om te schatten.', [
+        { label: 'schatten bij keersommen', gen: () => schattenV('keer') },
+        { label: 'schatten bij geld en optellen', gen: () => schattenV('geld') },
+      ]),
+      D('Je leert een breuk met een breuk vermenigvuldigen.', [
+        { label: 'basis', gen: () => breukMaalBreukV(false) },
+        { label: 'grotere noemers', gen: () => breukMaalBreukV(true) },
+      ]),
+      D('Je leert redeneren over uitspraken met percentages, percentages boven 100% uitrekenen en het oude aantal uitrekenen.', [
+        { label: 'boven de 100%', gen: () => pctBoven100V() },
+        { label: 'het oude aantal terugrekenen', gen: () => oudAantalViaPctV() },
+      ]),
+      D('Je leert rekenen met alle maten voor gewicht, schattend en precies, met prijzen en gewichten.', [
+        { label: 'gewichten omrekenen', gen: () => maatGewichtV() },
+        { label: 'prijs per kilo', gen: () => samengesteld(true) },
+      ]),
     ] : [
-      { doel: 'Je leert bewerkingen schattend uitrekenen, in contexten waarbij het zinvol is om te schatten.', gen: () => schattenV() },
-      { doel: 'Je herhaalt het berekenen van een deel van een hoeveelheid en een heel getal met een benoemde breuk vermenigvuldigen.', gen: () => Math.random() < 0.5 ? deelVanGeheelV() : breukMaalHeelV() },
-      { doel: 'Je leert redeneren over uitspraken met percentages, via 1% rekenen en het oude aantal uitrekenen.', gen: () => Math.random() < 0.5 ? procentRedeneerV() : oudAantalViaPctV() },
-      { doel: 'Je leert rekenen met alle maten voor gewicht in verhaalsommen, schattend en precies met prijzen en gewichten.', gen: () => Math.random() < 0.5 ? maatGewichtV() : samengesteld() },
+      D('Je leert bewerkingen schattend uitrekenen, in contexten waarbij het zinvol is om te schatten.', [
+        { label: 'schatten bij keersommen', gen: () => schattenV('keer') },
+        { label: 'schatten bij geld en optellen', gen: () => schattenV('geld') },
+      ]),
+      D('Je herhaalt het berekenen van een deel van een hoeveelheid en een heel getal met een benoemde breuk vermenigvuldigen.', [
+        { label: 'deel van een hoeveelheid', gen: () => deelVanGeheelV() },
+        { label: 'heel getal × breuk', gen: () => breukMaalHeelV(false) },
+      ]),
+      D('Je leert redeneren over uitspraken met percentages, via 1% rekenen en het oude aantal uitrekenen.', [
+        { label: 'via 1% rekenen', gen: () => procentVia1V(false) },
+        { label: 'het oude aantal terugrekenen', gen: () => oudAantalViaPctV() },
+      ]),
+      D('Je leert rekenen met alle maten voor gewicht in verhaalsommen, schattend en precies met prijzen en gewichten.', [
+        { label: 'gewichten omrekenen', gen: () => maatGewichtV() },
+        { label: 'prijs per kilo', gen: () => samengesteld(false) },
+      ]),
     ],
     4: [
-      { doel: plus ? 'Je herhaalt cijferend vermenigvuldigen bij sommen als 22 × 65 en 36 × 65, en kolomsgewijs delen bij sommen als 5819 : 23.' : 'Je herhaalt cijferend of kolomsgewijs vermenigvuldigen bij sommen als 6 × 346 en 22 × 64, en kolomsgewijs delen bij 5819 : 23.', gen: () => Math.random() < 0.5 ? keerV(rnd(21, plus ? 89 : 49), rnd(21, 89)) : (() => { const deler = rnd(13, 29), quo = rnd(120, plus ? 399 : 250); return deelV(deler, quo) })() },
-      { doel: plus ? 'Je leert sommen als 2/3 : 1/6 uitrekenen op de getallenlijn of met een verhoudingstabel en door te rekenen met verhoudingen.' : 'Je leert problemen (verhalen en/of plaatjes) met breuken oplossen door te tekenen of op de getallenlijn.', gen: () => plus ? breukDeelV() : deelVanGeheelV() },
-      { doel: 'Je leert rekenen met breuken, kommagetallen, procenten en verhoudingen bij verschillende aanbiedingen.', gen: () => Math.random() < 0.5 ? nieuwePrijsV() : procentRedeneerV() },
-      { doel: 'Je leert berekeningen maken met samengestelde grootheden, zoals de prijs per oppervlakte of gewicht, en verhoudingsgewijs vergelijken.', gen: () => Math.random() < 0.5 ? samengesteld() : verhoudingV() },
+      D(plus ? 'Je herhaalt cijferend vermenigvuldigen bij sommen als 22 × 65 en 36 × 65, en kolomsgewijs delen bij sommen als 5819 : 23.' : 'Je herhaalt cijferend of kolomsgewijs vermenigvuldigen bij sommen als 6 × 346 en 22 × 64, en kolomsgewijs delen bij 5819 : 23.', [
+        { label: 'vermenigvuldigen', gen: () => keerV(rnd(21, plus ? 89 : 49), rnd(21, 89)) },
+        { label: 'delen', gen: () => deelV(rnd(13, 29), rnd(120, plus ? 399 : 250)) },
+      ]),
+      D(plus ? 'Je leert sommen als 2/3 : 1/6 uitrekenen op de getallenlijn of met een verhoudingstabel en door te rekenen met verhoudingen.' : 'Je leert problemen (verhalen en/of plaatjes) met breuken oplossen door te tekenen of op de getallenlijn.', [
+        plus
+          ? { label: 'delen door een breuk', gen: () => breukDeelV(false) }
+          : { label: 'deel van een geheel', gen: () => deelVanGeheelV() },
+        plus
+          ? { label: 'grotere noemers', gen: () => breukDeelV(true) }
+          : { label: 'breuken vergelijken', gen: () => breukVergelijkV() },
+      ]),
+      D('Je leert rekenen met breuken, kommagetallen, procenten en verhoudingen bij verschillende aanbiedingen.', [
+        { label: 'korting', gen: () => nieuwePrijsV() },
+        { label: 'redeneren met percentages', gen: () => procentRedeneerV(false) },
+      ]),
+      D('Je leert berekeningen maken met samengestelde grootheden, zoals de prijs per oppervlakte of gewicht, en verhoudingsgewijs vergelijken.', [
+        { label: 'prijs per kilo', gen: () => samengesteld(false) },
+        { label: 'verhoudingsgewijs vergelijken', gen: () => verhoudingV() },
+      ]),
     ],
     5: [
-      { doel: plus ? 'Je leert herkennen wanneer een getal deelbaar is door 2, 10, 5 of 4 en door 8, 3 en 9.' : 'Je leert herkennen wanneer een getal deelbaar is door 2, 10, 5 of 4.', gen: () => restV() },
-      { doel: plus ? 'Je leert sommen als 3,5 : 0,5 met verhoudingen en sommen als 16,2 : 3 met splitsen uitrekenen.' : 'Je herhaalt sommen als 18,6 kg : 3 uitrekenen met de strategie splitsen.', gen: () => kommaDeelV() },
-      { doel: 'Je leert contextproblemen over procenten, verhoudingen, breuken en kommagetallen oplossen.', gen: () => procentRedeneerV() },
-      { doel: 'Je oriënteert je op het werken met diagrammen: gegevens aflezen, trends herkennen (stijgen, dalen, gelijk blijven), verbanden leggen en rekenen met eenvoudige percentages.', gen: () => diagramV(pick(['staaf', 'lijn']), pick([5, 10]), rnd(3, 9)) },
+      D(plus ? 'Je leert herkennen wanneer een getal deelbaar is door 2, 10, 5 of 4 en door 8, 3 en 9.' : 'Je leert herkennen wanneer een getal deelbaar is door 2, 10, 5 of 4.', [
+        { label: 'deelbaar door 2, 4, 5 en 10', gen: () => restV(false) },
+        plus
+          ? { label: 'deelbaar door 3, 8 en 9', gen: () => restV(true) }
+          : { label: 'grotere getallen', gen: () => restV(true) },
+      ]),
+      D(plus ? 'Je leert sommen als 3,5 : 0,5 met verhoudingen en sommen als 16,2 : 3 met splitsen uitrekenen.' : 'Je herhaalt sommen als 18,6 kg : 3 uitrekenen met de strategie splitsen.', [
+        { label: 'delen door een heel getal', gen: () => kommaDeelV() },
+        { label: 'delen door een kommagetal', gen: () => kommaDelenV(false) },
+      ]),
+      D('Je leert contextproblemen over procenten, verhoudingen, breuken en kommagetallen oplossen.', [
+        { label: 'procenten', gen: () => procentRedeneerV(false) },
+        { label: 'lastigere percentages', gen: () => procentRedeneerV(true) },
+      ]),
+      D('Je oriënteert je op het werken met diagrammen: gegevens aflezen, trends herkennen (stijgen, dalen, gelijk blijven), verbanden leggen en rekenen met eenvoudige percentages.', [
+        { label: 'aflezen', gen: () => diagramV(pick(['staaf', 'lijn']), pick([5, 10]), rnd(3, 9), 'lees') },
+        { label: 'ermee rekenen', gen: () => diagramV(pick(['staaf', 'lijn']), pick([5, 10]), rnd(3, 9), 'rekenen') },
+      ]),
     ],
     6: [
-      { doel: 'Je herhaalt het rekenen met een schaallijntje, het omrekenen van lengtes op schaal en in het echt, het berekenen van een schaal en van de omtrek en oppervlakte.', gen: () => Math.random() < 0.5 ? schaalV() : omtrekV(plus ? 30 : 16, plus ? 20 : 11) },
-      { doel: 'Je herhaalt het berekenen van de inhoud van een balk in dm³ en liter en het aantal blokken dat in een grotere doos past.', gen: () => balkInhoudV(plus ? 12 : 8) },
-      { doel: 'Je oriënteert je op het berekenen van de oppervlakte van figuren op roosters, die te verdelen zijn in rechthoeken en driehoeken.', gen: () => Math.random() < 0.5 ? oppRechthoekV(plus ? 30 : 16, plus ? 20 : 11) : oppDriehoekV() },
-      { doel: 'Je oriënteert je op het berekenen van de omtrek en de oppervlakte van een cirkel.', gen: () => cirkelV() },
+      D('Je herhaalt het rekenen met een schaallijntje, het omrekenen van lengtes op schaal en in het echt, het berekenen van een schaal en van de omtrek en oppervlakte.', [
+        { label: 'schaal', gen: () => schaalV() },
+        { label: 'omtrek', gen: () => omtrekV(plus ? 30 : 16, plus ? 20 : 11) },
+      ]),
+      D('Je herhaalt het berekenen van de inhoud van een balk in dm³ en liter en het aantal blokken dat in een grotere doos past.', [
+        { label: 'inhoud in liter', gen: () => balkInhoudV(plus ? 12 : 8, 'liter') },
+        { label: 'blokken van 1 dm³', gen: () => balkInhoudV(plus ? 12 : 8, 'blokken') },
+      ]),
+      D('Je oriënteert je op het berekenen van de oppervlakte van figuren op roosters, die te verdelen zijn in rechthoeken en driehoeken.', [
+        { label: 'rechthoek', gen: () => oppRechthoekV(plus ? 30 : 16, plus ? 20 : 11) },
+        { label: 'driehoek', gen: () => oppDriehoekV() },
+      ]),
+      D('Je oriënteert je op het berekenen van de omtrek en de oppervlakte van een cirkel.', [
+        { label: 'omtrek van een cirkel', gen: () => cirkelV('omtrek') },
+        { label: 'oppervlakte van een cirkel', gen: () => cirkelV('oppervlakte') },
+      ]),
     ],
     7: [
-      { doel: 'Je herhaalt het koppelen van veelvoorkomende percentages aan breuken, kommagetallen en verhoudingen, en leert contextproblemen oplossen.', gen: () => Math.random() < 0.5 ? procentVanV() : procentRedeneerV() },
-      { doel: plus ? 'Je herhaalt ongelijknamige breuken optellen en vermenigvuldigen met breuken.' : 'Je herhaalt benoemde gelijknamige breuken optellen en het berekenen van een deel van een hoeveelheid.', gen: () => Math.random() < 0.5 ? breukOptelGelijkV() : (plus ? breukMaalBreukV() : deelVanGeheelV()) },
-      { doel: 'Je oriënteert je op getallen en grafieken uit het nieuws en of die kloppen.', gen: () => diagramV('staaf', pick([5, 10]), rnd(3, 9)) },
-      { doel: 'Je oriënteert je op het verwerken van enquêtes: het gemiddelde uitrekenen en rekenen met percentages.', gen: () => Math.random() < 0.5 ? gemiddeldeV() : procentVanV() },
+      D('Je herhaalt het koppelen van veelvoorkomende percentages aan breuken, kommagetallen en verhoudingen, en leert contextproblemen oplossen.', [
+        { label: 'percentage van een aantal', gen: () => procentVanV(false) },
+        { label: 'lastigere percentages', gen: () => procentVanV(true) },
+      ]),
+      D(plus ? 'Je herhaalt ongelijknamige breuken optellen en vermenigvuldigen met breuken.' : 'Je herhaalt benoemde gelijknamige breuken optellen en het berekenen van een deel van een hoeveelheid.', [
+        { label: 'breuken optellen', gen: () => breukOptelGelijkV() },
+        plus
+          ? { label: 'breuk × breuk', gen: () => breukMaalBreukV(false) }
+          : { label: 'deel van een hoeveelheid', gen: () => deelVanGeheelV() },
+      ]),
+      D('Je oriënteert je op getallen en grafieken uit het nieuws en of die kloppen.', [
+        { label: 'aflezen', gen: () => diagramV('staaf', pick([5, 10]), rnd(3, 9), 'lees') },
+        { label: 'ermee rekenen', gen: () => diagramV('staaf', pick([5, 10]), rnd(3, 9), 'rekenen') },
+      ]),
+      D('Je oriënteert je op het verwerken van enquêtes: het gemiddelde uitrekenen en rekenen met percentages.', [
+        { label: 'het gemiddelde', gen: () => gemiddeldeV(false) },
+        { label: 'percentages', gen: () => procentVanV(false) },
+      ]),
     ],
     8: [
-      { doel: 'Je herhaalt betekenis verlenen aan getallen tot in de miljarden, ze op 2 manieren schrijven en op volgorde zetten, aflezen en schattend plaatsen op een getallenlijn.', gen: () => Math.random() < 0.5 ? grootGetalV() : getallenlijnV(rnd(0, 5) * 1000000000, 5000000000) },
-      { doel: 'Je herhaalt het gemiddelde berekenen met hoofdrekenen en met de rekenmachine.', gen: () => gemiddeldeV() },
-      { doel: 'Je oriënteert je op negatieve getallen en op Romeinse cijfers.', gen: () => romeinsV() },
-      { doel: 'Je oriënteert je op eenvoudige kwadraten en wortels.', gen: () => kwadraatWortelV() },
+      D('Je herhaalt betekenis verlenen aan getallen tot in de miljarden, ze op 2 manieren schrijven en op volgorde zetten, aflezen en schattend plaatsen op een getallenlijn.', [
+        { label: 'in cijfers schrijven', gen: () => grootGetalV() },
+        { label: 'plaatsen op de getallenlijn', gen: () => getallenlijnV(rnd(0, 5) * 1000000000, 5000000000) },
+      ]),
+      D('Je herhaalt het gemiddelde berekenen met hoofdrekenen en met de rekenmachine.', [
+        { label: 'hoofdrekenen', gen: () => gemiddeldeV(false) },
+        { label: 'met de rekenmachine', gen: () => gemiddeldeV(true) },
+      ]),
+      D('Je oriënteert je op negatieve getallen en op Romeinse cijfers.', [
+        { label: 'Romeinse cijfers', gen: () => romeinsV('romeins') },
+        { label: 'negatieve getallen', gen: () => romeinsV('negatief') },
+      ]),
+      D('Je oriënteert je op eenvoudige kwadraten en wortels.', [
+        { label: 'kwadraten', gen: () => kwadraatWortelV('kwadraat') },
+        { label: 'wortels', gen: () => kwadraatWortelV('wortel') },
+      ]),
     ],
     9: [
-      { doel: plus ? 'Je herhaalt hoofdrekenend optellen, aftrekken, vermenigvuldigen en delen met eenvoudige benoemde en onbenoemde kommagetallen.' : 'Je herhaalt hoofdrekenend optellen, aftrekken, vermenigvuldigen en delen met eenvoudige benoemde kommagetallen.', gen: () => Math.random() < 0.5 ? kommaOptel() : kommaKeerV() },
-      { doel: 'Je herhaalt in welke volgorde je moet optellen, aftrekken, vermenigvuldigen en delen.', gen: () => volgordeV() },
-      { doel: plus ? 'Je leert staartdelen.' : 'Je herhaalt kolomsgewijs delen in maximaal 3 stappen.', gen: () => { const deler = rnd(13, 29); return deelRestV(deler, rnd(15, plus ? 99 : 49), rnd(1, deler - 1)) } },
-      { doel: 'Je leert ontbinden in priemgetallen.', gen: () => priemV() },
+      D(plus ? 'Je herhaalt hoofdrekenend optellen, aftrekken, vermenigvuldigen en delen met eenvoudige benoemde en onbenoemde kommagetallen.' : 'Je herhaalt hoofdrekenend optellen, aftrekken, vermenigvuldigen en delen met eenvoudige benoemde kommagetallen.', [
+        { label: 'plus en min', gen: () => kommaOptel(Math.random() < 0.5 ? 'plus' : 'min') },
+        { label: 'keer en delen', gen: () => Math.random() < 0.5 ? kommaKeerV() : kommaDeelV() },
+      ]),
+      D('Je herhaalt in welke volgorde je moet optellen, aftrekken, vermenigvuldigen en delen.', [
+        { label: 'plus en keer', gen: () => volgordeV('plus') },
+        { label: 'keer en min', gen: () => volgordeV('min') },
+      ]),
+      D(plus ? 'Je leert staartdelen.' : 'Je herhaalt kolomsgewijs delen in maximaal 3 stappen.', [
+        { label: 'zonder rest', gen: () => deelV(rnd(13, 29), rnd(15, plus ? 99 : 49)) },
+        { label: 'met rest', gen: () => { const deler = rnd(13, 29); return deelRestV(deler, rnd(15, plus ? 99 : 49), rnd(1, deler - 1)) } },
+      ]),
+      D('Je leert ontbinden in priemgetallen.', [
+        { label: 'kleine priemgetallen', gen: () => priemV(false) },
+        { label: 'grotere priemgetallen', gen: () => priemV(true) },
+      ]),
     ],
     10: [
-      { doel: 'Je herhaalt het werken met diagrammen: aflezen, berekenen, trends herkennen (stijgen, dalen, gelijk blijven) en rekenen met percentages.', gen: () => diagramV('staaf', pick([5, 10]), rnd(3, 9)) },
-      { doel: 'Je herhaalt het werken met lijndiagrammen en met diagrammen met tijd en afstand: aflezen, maken en er berekeningen mee maken.', gen: () => diagramV('lijn', pick([5, 10]), rnd(3, 9)) },
-      { doel: 'Je oriënteert je op het herkennen, uitleggen en voortzetten van patronen met figuren en in getallenrijen.', gen: () => patroonRijV() },
-      { doel: 'Je oriënteert je op het handig tellen van alle mogelijke combinaties, waarbij de volgorde wel of niet belangrijk is.', gen: () => combinatiesV() },
+      D('Je herhaalt het werken met diagrammen: aflezen, berekenen, trends herkennen (stijgen, dalen, gelijk blijven) en rekenen met percentages.', [
+        { label: 'aflezen', gen: () => diagramV('staaf', pick([5, 10]), rnd(3, 9), 'lees') },
+        { label: 'ermee rekenen', gen: () => diagramV('staaf', pick([5, 10]), rnd(3, 9), 'rekenen') },
+      ]),
+      D('Je herhaalt het werken met lijndiagrammen en met diagrammen met tijd en afstand: aflezen, maken en er berekeningen mee maken.', [
+        { label: 'aflezen', gen: () => diagramV('lijn', pick([5, 10]), rnd(3, 9), 'lees') },
+        { label: 'ermee rekenen', gen: () => diagramV('lijn', pick([5, 10]), rnd(3, 9), 'rekenen') },
+      ]),
+      D('Je oriënteert je op het herkennen, uitleggen en voortzetten van patronen met figuren en in getallenrijen.', [
+        { label: 'eenvoudige rijen', gen: () => patroonRijV(false) },
+        { label: 'grotere sprongen', gen: () => patroonRijV(true) },
+      ]),
+      D('Je oriënteert je op het handig tellen van alle mogelijke combinaties, waarbij de volgorde wel of niet belangrijk is.', [
+        { label: 'basis', gen: () => combinatiesV(false) },
+        { label: 'meer mogelijkheden', gen: () => combinatiesV(true) },
+      ]),
     ],
   }
 }
@@ -1201,7 +1769,7 @@ function alleDoelen(groep, route) {
   const voeg = (g, blokken, herhaling) => {
     for (const nr of Object.keys(blokken)) {
       blokken[nr].forEach((item, i) => {
-        alles.push({ key: `g${g}b${nr}i${i}`, groep: g, blok: +nr, doel: item.doel, gen: item.gen, herhaling })
+        alles.push({ key: `g${g}b${nr}i${i}`, groep: g, blok: +nr, doel: item.doel, gen: item.gen, delen: item.delen, herhaling })
       })
     }
   }
@@ -1252,6 +1820,22 @@ export function onderdelenVan(groep, route, mode = 'leerlijn') {
     items.push({ key: 'll-' + lijn.key, label: lijn.label, gens })
   }
   return items
+}
+
+// ── Lesdelen ───────────────────────────────────────────────────────────────
+// Een doel loopt over twee lessen en die doen vaak elk een ander stuk (zie D()
+// in maakBlokken). Deze twee helpers geven de lescheck toegang tot één zo'n
+// stuk, zonder dat de rest van het spel er iets van merkt.
+export function delenVanDoel(groep, route, key) {
+  return alleDoelen(groep, route).find(a => a.key === key)?.delen ?? []
+}
+
+// De generator van één lesdeel, in de vorm waar maakOpgaveUit mee overweg kan.
+export function gensVoorDeel(groep, route, key, deelNr) {
+  const item = alleDoelen(groep, route).find(a => a.key === key)
+  const deel = item?.delen?.[deelNr - 1]
+  if (!deel) return null
+  return [{ groep: item.groep, blok: item.blok, doel: item.doel, gen: deel.gen }]
 }
 
 // Eén verse opgave uit de gekozen onderdelen (alles door elkaar)

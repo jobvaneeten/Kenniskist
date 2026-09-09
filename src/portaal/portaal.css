@@ -458,3 +458,5 @@
 }
 .portaal-lesdetail p { margin: 0 0 6px; font-size: 0.9rem; }
 .portaal-lesdetail p:last-child { margin-bottom: 0; }
+.portaal-lesdeel { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+.portaal-lesdeel select { max-width: 100%; }

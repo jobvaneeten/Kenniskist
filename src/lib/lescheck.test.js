@@ -1,6 +1,9 @@
 import { describe, it, expect } from 'vitest'
-import { doelenVanBlokMetKey, doelVoorLes, bouwLesOpdracht, isHerhalingsles, lescheckTitel } from './lescheck.js'
-import { doelenVanBlok } from '../games/redactiesommen.js'
+import {
+  GROEPEN_MET_LESDELEN, bouwLesOpdracht, delenVoorDoel, doelenVanBlokMetKey,
+  doelVoorLes, isHerhalingsles, lescheckTitel,
+} from './lescheck.js'
+import { doelenVanBlok, onderdelenVan } from '../games/redactiesommen.js'
 
 // De lescheck koppelt een les aan één doel uit de methode. Gaat die koppeling
 // schuiven, dan krijgt een kind een som over het verkeerde doel en ziet de
@@ -30,6 +33,58 @@ describe('lescheck: les → doel', () => {
     expect(doelVoorLes(7, 'FS', 3, 5)).toBe(null)
     expect(doelVoorLes(7, 'FS', 3, 10)).toBe(null)
     expect(isHerhalingsles(4)).toBe(false)
+  })
+})
+
+describe('lesdelen', () => {
+  // Een doel loopt over twee lessen die elk een ander stuk doen. Raakt die
+  // indeling zoek, dan krijgt een kind een som over iets wat het die les niet
+  // heeft gehad — precies waar de lescheck voor bedoeld was.
+  it('geeft elk doel van groep 6, 7 en 8 precies twee lesdelen met een naam', () => {
+    for (const groep of GROEPEN_MET_LESDELEN) {
+      for (const route of ['FS', 'S+']) {
+        for (const blok of onderdelenVan(groep, route, 'blok')) {
+          if (!blok.key.startsWith('blok-')) continue
+          for (const g of blok.gens) {
+            expect(g.delen, `g${groep} ${route} ${blok.key}: ${g.doel.slice(0, 40)}`).toHaveLength(2)
+            for (const d of g.delen) expect(typeof d.label === 'string' && d.label.length > 2).toBe(true)
+          }
+        }
+      }
+    }
+  })
+
+  it('levert bij elk lesdeel een kale som, zonder verhaal eromheen', () => {
+    for (const groep of GROEPEN_MET_LESDELEN) {
+      for (const route of ['FS', 'S+']) {
+        for (const blok of onderdelenVan(groep, route, 'blok')) {
+          if (!blok.key.startsWith('blok-')) continue
+          for (const g of blok.gens) {
+            for (const d of g.delen) {
+              for (let n = 0; n < 12; n++) {
+                const o = d.gen()
+                expect(typeof o.kaal, `g${groep} ${blok.key} ${d.label}`).toBe('string')
+                expect(o.kaal.length).toBeGreaterThan(2)
+                // Een kale som is kort en is niet stiekem het verhaal.
+                expect(o.kaal.split(' ').length, `te lang: ${o.kaal}`).toBeLessThan(21)
+                expect(o.kaal, 'de kale som is het verhaal').not.toBe(o.vraag)
+              }
+            }
+          }
+        }
+      }
+    }
+  })
+
+  it('koppelt les 3 aan het eerste deel van doel 2 en les 4 aan het tweede', () => {
+    // Het voorbeeld uit de klas: blok 1 les 3 is plus en min, les 4 is keer en
+    // delen — allebei doel 2.
+    const les3 = doelVoorLes(7, 'FS', 1, 3), les4 = doelVoorLes(7, 'FS', 1, 4)
+    expect(les3.doelNr).toBe(2)
+    expect(les4.doelNr).toBe(2)
+    expect(les3.deelNr).toBe(1)
+    expect(les4.deelNr).toBe(2)
+    expect(delenVoorDoel(7, 'FS', 1, 2).map(d => d.label)).toEqual(['plus en min', 'keer en delen'])
   })
 })
 

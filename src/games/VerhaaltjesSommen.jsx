@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { onderdelenVan, maakOpgaveUit, maakToets, GROEPEN, HEEFT_ROUTE, checkAntwoord, checkSom, checkTijd, GROEP_DOELEN, doelKey, LEERLIJN_LABEL, LEERLIJN_VOLGORDE } from './redactiesommen'
+import { onderdelenVan, gensVoorDeel, maakOpgaveUit, maakToets, GROEPEN, HEEFT_ROUTE, checkAntwoord, checkSom, checkTijd, GROEP_DOELEN, doelKey, LEERLIJN_LABEL, LEERLIJN_VOLGORDE } from './redactiesommen'
 import SpelBeloning from './SpelBeloning'
 import { useGebruikOpdracht } from './gebruikOpdracht.js'
 import OpdrachtKlaarScherm from './OpdrachtKlaarScherm.jsx'
@@ -241,7 +241,7 @@ function RekenMachine() {
   )
 }
 
-function VraagKaart({ opgave, onNext }) {
+function VraagKaart({ opgave, onNext, kaal = false }) {
   const [som, setSom]   = useState('')
   const [antw, setAntw] = useState('')
   const [rest, setRest] = useState('')
@@ -249,11 +249,12 @@ function VraagKaart({ opgave, onNext }) {
   const [somOk, setSomOk] = useState(null)
   const [calcOpen, setCalcOpen] = useState(false)
   const somRef = useRef(null)
+  const antwRef = useRef(null)
   const isTijd = opgave.antwoordType === 'tijd'
   const heeftRest = opgave.rest != null && !isTijd
   const magRekenmachine = /rekenmachine/i.test(opgave.doel || '')
 
-  useEffect(() => { setSom(''); setAntw(''); setRest(''); setPhase('answering'); setSomOk(null); setCalcOpen(false); setTimeout(() => somRef.current?.focus(), 50) }, [opgave])
+  useEffect(() => { setSom(''); setAntw(''); setRest(''); setPhase('answering'); setSomOk(null); setCalcOpen(false); setTimeout(() => (kaal ? antwRef : somRef).current?.focus(), 50) }, [opgave, kaal])
 
   // Wat de leerling opschreef, zoals het in het portaal getoond wordt. Gaat
   // mee naar registreer(), want bij een lescheck wil de leerkracht niet alleen
@@ -278,7 +279,7 @@ function VraagKaart({ opgave, onNext }) {
   return (
     <div className="rs-card">
       <div className={`rs-doel${opgave.groep !== 7 ? ' rs-doel-herhaling' : ''}`}>{label}</div>
-      <div className="rs-vraag">{opgave.vraag}</div>
+      <div className={`rs-vraag${kaal && opgave.kaal ? ' rs-vraag-kaal' : ''}`}>{kaal && opgave.kaal ? opgave.kaal : opgave.vraag}</div>
       {opgave.figuur && <div className="rs-figuur-wrap"><Figuur figuur={opgave.figuur} /></div>}
 
       {magRekenmachine && (
@@ -307,17 +308,21 @@ function VraagKaart({ opgave, onNext }) {
 
       {phase === 'answering' && !isTijd && (
         <div className="rs-velden">
-          <div className="rs-veld">
-            <label className="rs-veld-label">Wat is de som? <span className="rs-veld-opt">(hoe reken je het uit)</span></label>
-            <input ref={somRef} className="rs-input" type="text" autoComplete="off" placeholder="bijv. 5000 + 923"
-              value={som} onChange={e => setSom(zonderIsGelijk(e.target.value))}
-              onBeforeInput={weigerInvoer}
-              onKeyDown={e => { weigerToets(e); if (e.key === 'Enter') check() }} />
-          </div>
+          {/* Bij een kale som staat de som er al: dan is "hoe reken je het uit"
+              een overbodige extra stap. */}
+          {!kaal && (
+            <div className="rs-veld">
+              <label className="rs-veld-label">Wat is de som? <span className="rs-veld-opt">(hoe reken je het uit)</span></label>
+              <input ref={somRef} className="rs-input" type="text" autoComplete="off" placeholder="bijv. 5000 + 923"
+                value={som} onChange={e => setSom(zonderIsGelijk(e.target.value))}
+                onBeforeInput={weigerInvoer}
+                onKeyDown={e => { weigerToets(e); if (e.key === 'Enter') check() }} />
+            </div>
+          )}
           <div className="rs-veld">
             <label className="rs-veld-label">Antwoord</label>
             <div className="rs-antwoord-row">
-              <input className="rs-input" type="text" inputMode="decimal" autoComplete="off" placeholder="Jouw antwoord…"
+              <input ref={antwRef} className="rs-input" type="text" inputMode="decimal" autoComplete="off" placeholder="Jouw antwoord…"
                 value={antw} onChange={e => setAntw(zonderIsGelijk(e.target.value))}
                 onBeforeInput={weigerInvoer}
                 onKeyDown={e => { weigerToets(e); if (e.key === 'Enter') check() }} />
@@ -493,6 +498,9 @@ export default function VerhaaltjesSommen({ groep: eigenGroep = 7, onBack, addBr
   const [sinds, setSinds]     = useState(0)
   const [verdiend, setVerdiend] = useState(0)
   const [showReward, setShowReward] = useState(false)
+  // Bij een lescheck: de generator van één lesdeel, i.p.v. alles wat er is
+  // aangevinkt. null = gewoon oefenen.
+  const [vastDeel, setVastDeel] = useState(null)
   const [stats, setStats]     = useState(laadStats)
   const [terugNaar, setTerugNaar] = useState('groep')
   const [toetsJaren, setToetsJaren] = useState(() => new Set([5, 6, 7, 8]))
@@ -515,8 +523,8 @@ export default function VerhaaltjesSommen({ groep: eigenGroep = 7, onBack, addBr
     return s
   })
 
-  const nieuweOpgave = (k = klas, r = route, sel = gekozen) =>
-    maakOpgaveUit([{ gens: onderdelenVan(k, r).flatMap(o => o.gens).filter(g => sel.has(g.key)) }])
+  const nieuweOpgave = (k = klas, r = route, sel = gekozen, vast = vastDeel) =>
+    maakOpgaveUit([{ gens: vast ?? onderdelenVan(k, r).flatMap(o => o.gens).filter(g => sel.has(g.key)) }])
 
   const naarKies = (k, r) => {
     // standaard alle doelen van de eigen groep aan, herhaal-doelen uit
@@ -542,8 +550,14 @@ export default function VerhaaltjesSommen({ groep: eigenGroep = 7, onBack, addBr
     const sel = config.doelen?.length
       ? new Set(config.doelen)
       : new Set(onderdelenVan(g, r).flatMap(o => o.gens.filter(gg => !gg.herhaling).map(gg => gg.key)))
+    // Lescheck: één doel, één deel daarvan (de helft die in díe les is
+    // uitgelegd) — zie src/lib/lescheck.js.
+    const vast = config.deel && config.doelen?.length === 1
+      ? gensVoorDeel(g, r, config.doelen[0], config.deel)
+      : null
+    setVastDeel(vast)
     setKlas(g); setRoute(r); setGekozen(sel); setSinds(0)
-    setOpgave(nieuweOpgave(g, r, sel))
+    setOpgave(nieuweOpgave(g, r, sel, vast))
     setScreen('oefen')
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -587,7 +601,7 @@ export default function VerhaaltjesSommen({ groep: eigenGroep = 7, onBack, addBr
     if (opgave) recordStat(opgave, correct)
     const zalKlaarZijn = opdracht.aantal != null && (opdracht.gedaan + 1) >= opdracht.aantal
     opdracht.registreer(correct, {
-      vraag: opgave?.vraag,
+      vraag: (config?.kaal && opgave?.kaal) || opgave?.vraag,
       antwoord: ingevuld,
       juist: opgave ? toonAntwoord(opgave) : null,
       cat: opgave ? doelKey(opgave.groep, opgave.doel) : undefined,
@@ -815,7 +829,7 @@ export default function VerhaaltjesSommen({ groep: eigenGroep = 7, onBack, addBr
         <div className="rs-progress-bar" style={{ width: `${(sinds / PER_BELONING) * 100}%` }} />
       </div>
       <div className="rs-progress-label">{PER_BELONING - sinds} goede tot een spelletje 🎮</div>
-      {opgave && <VraagKaart opgave={opgave} onNext={volgende} />}
+      {opgave && <VraagKaart opgave={opgave} onNext={volgende} kaal={!!config?.kaal} />}
     </div>
   )
 }

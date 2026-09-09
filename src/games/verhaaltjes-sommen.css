@@ -331,3 +331,12 @@
 .rs-calc-eq { background: #facc15; color: #1f2937; }
 .rs-calc-fn { color: #cbd5e1; }
 .rs-calc-wis { color: #fca5a5; }
+
+/* Lescheck: een kale som, groot en zonder verhaal eromheen. */
+.rs-vraag-kaal {
+  font-size: clamp(1.6rem, 5vw, 2.4rem);
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-align: center;
+  line-height: 1.3;
+}

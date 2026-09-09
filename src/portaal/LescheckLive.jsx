@@ -77,7 +77,10 @@ export default function LescheckLive({ blok, leerlingen, onTerug }) {
 
       {les && (
         <>
-          <p className="portaal-zacht" style={{ marginTop: 12 }}>{les.doel}</p>
+          <p className="portaal-zacht" style={{ marginTop: 12 }}>
+            {les.doel}
+            {les.deelLabel && <> · <strong>de som gaat over: {les.deelLabel}</strong></>}
+          </p>
           <p style={{ margin: '6px 0 12px', fontWeight: 700 }}>
             {gemaakt.size} van de {leerlingen.length} klaar · ✅ {goed} goed · ❌ {fout} fout
           </p>

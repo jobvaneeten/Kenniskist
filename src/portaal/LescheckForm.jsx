@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react'
 import {
-  LESSEN, blokLabel, datumOver, doelenVanBlokMetKey, doelVoorLes,
-  isHerhalingsles, slaLescheckOp,
+  GROEPEN_MET_LESDELEN, LESSEN, blokLabel, datumOver, delenVoorDoel,
+  doelenVanBlokMetKey, doelVoorLes, isHerhalingsles, slaLescheckOp,
 } from '../lib/lescheck.js'
 import { BLOKKEN } from '../games/denkvragenData.js'
-import { GROEPEN, HEEFT_ROUTE } from '../games/redactiesommen.js'
+import { HEEFT_ROUTE } from '../games/redactiesommen.js'
 
 // Lessen van één blok klaarzetten. Bewust geen stappenformulier zoals de
 // weektaak: de leerkracht doet dit tussen twee lessen door. Blok kiezen,
@@ -14,18 +14,20 @@ import { GROEPEN, HEEFT_ROUTE } from '../games/redactiesommen.js'
 // nieuw blok). Die lessen staan vast aangevinkt: eraf halen zou het gemaakte
 // werk losknippen van de opdracht.
 export default function LescheckForm({ klas, leerlingen, bestaand, onKlaar, onAnnuleer }) {
-  const klasGroepen = (klas.groepen ?? []).filter(g => GROEPEN.includes(g))
+  // Alleen groepen met een lesindeling: de lescheck toetst één les, en zonder
+  // die indeling weet hij niet welk stuk van het doel daarbij hoort.
+  const klasGroepen = (klas.groepen ?? []).filter(g => GROEPEN_MET_LESDELEN.includes(g))
   const [groep, setGroep] = useState(bestaand?.groep ?? klasGroepen[0] ?? 7)
   const [route, setRoute] = useState(bestaand?.route ?? 'FS')
   const [blok, setBlok] = useState(bestaand?.blok ?? 1)
   const [eindOp, setEindOp] = useState(bestaand?.eindOp ?? datumOver(42))
-  // les → doelNr. Alleen lessen die erin staan worden klaargezet.
+  // les → { doelNr, deelNr }. Alleen lessen die erin staan worden klaargezet.
   const [gekozen, setGekozen] = useState(new Map())
   const [bezig, setBezig] = useState(false)
   const [fout, setFout] = useState('')
 
   const vast = useMemo(
-    () => new Map((bestaand?.opdrachten ?? []).map(o => [o.les, o.doelNr])),
+    () => new Map((bestaand?.opdrachten ?? []).map(o => [o.les, { doelNr: o.doelNr, deelNr: o.deelNr ?? 1 }])),
     [bestaand],
   )
   const doelen = useMemo(() => doelenVanBlokMetKey(groep, HEEFT_ROUTE(groep) ? route : null, blok), [groep, route, blok])
@@ -37,14 +39,16 @@ export default function LescheckForm({ klas, leerlingen, bestaand, onKlaar, onAn
     setGekozen(m => {
       const n = new Map(m)
       if (n.has(les)) { n.delete(les); return n }
-      // Bij een gewone les staat het doel vast; bij een herhalingsles begint
-      // hij op doel 1 en kiest de leerkracht zelf.
-      n.set(les, doelVoorLes(groep, route, blok, les)?.doelNr ?? 1)
+      // Bij een gewone les staan doel én onderdeel vast; bij een herhalingsles
+      // begint hij op doel 1 deel 1 en kiest de leerkracht zelf.
+      const d = doelVoorLes(groep, route, blok, les)
+      n.set(les, { doelNr: d?.doelNr ?? 1, deelNr: d?.deelNr ?? 1 })
       return n
     })
   }
 
-  const zetDoel = (les, doelNr) => setGekozen(m => new Map(m).set(les, doelNr))
+  const zetDoel = (les, doelNr) => setGekozen(m => new Map(m).set(les, { ...m.get(les), doelNr, deelNr: 1 }))
+  const zetDeel = (les, deelNr) => setGekozen(m => new Map(m).set(les, { ...m.get(les), deelNr }))
 
   const opslaan = async () => {
     if (gekozen.size === 0) { setFout('Vink minstens één les aan.'); return }
@@ -55,7 +59,7 @@ export default function LescheckForm({ klas, leerlingen, bestaand, onKlaar, onAn
         weektaakId: bestaand?.weektaakId ?? null,
         klas, leerlingIds: leerlingen.map(l => l.id),
         groep, route: HEEFT_ROUTE(groep) ? route : null, blok,
-        lessen: [...gekozen].map(([les, doelNr]) => ({ les, doelNr })),
+        lessen: [...gekozen].map(([les, keuze]) => ({ les, doelNr: keuze.doelNr, deelNr: keuze.deelNr })),
         eindOp,
         bestaandeOpdrachten: (bestaand?.opdrachten ?? []).map(o => ({
           id: o.id, toolId: 'verhaaltjessommen', aantal: 1, config: o.config,
@@ -76,7 +80,8 @@ export default function LescheckForm({ klas, leerlingen, bestaand, onKlaar, onAn
         <button className="portaal-knop-subtiel portaal-knop" onClick={onAnnuleer}>Annuleren</button>
       </div>
       <p className="portaal-zacht">
-        Eén som per les, over het doel van díe les. Elk kind krijgt een eigen som, dus afkijken heeft geen zin.
+        Eén kale som per les, over het onderdeel dat in díe les is uitgelegd — geen verhaaltje, dus je meet of ze de
+        bewerking snappen. Elk kind krijgt zijn eigen getallen, dus afkijken heeft geen zin.
       </p>
 
       <div className="portaal-veldrij" style={{ marginTop: 14 }}>
@@ -112,38 +117,50 @@ export default function LescheckForm({ klas, leerlingen, bestaand, onKlaar, onAn
 
       <h3 style={{ margin: '18px 0 4px', fontSize: '1rem' }}>Welke lessen?</h3>
       <p className="portaal-zacht">
-        Achter elke les staat het doel waar de som over gaat. Les 5 en 10 zijn herhalingslessen — kies daar zelf een doel.
+        Achter elke les staat het doel én het onderdeel waar de som over gaat. Twee lessen delen één doel maar doen
+        meestal een ander stuk ervan — klopt dat een keer niet, zet het onderdeel dan zelf goed.
+        Les 5 en 10 zijn herhalingslessen: kies daar zelf een doel.
       </p>
 
       <div className="portaal-leslijst">
         {LESSEN.map(les => {
-          const aan = vast.has(les) || gekozen.has(les)
-          const doelNr = vast.get(les) ?? gekozen.get(les) ?? doelVoorLes(groep, route, blok, les)?.doelNr
-          const doelTekst = doelen[(doelNr ?? 1) - 1]?.doel
+          const staatVast = vast.has(les)
+          const aan = staatVast || gekozen.has(les)
+          const auto = doelVoorLes(groep, route, blok, les)
+          const keuze = vast.get(les) ?? gekozen.get(les)
+          const doelNr = keuze?.doelNr ?? auto?.doelNr ?? 1
+          const deelNr = keuze?.deelNr ?? auto?.deelNr ?? 1
+          const doelTekst = doelen[doelNr - 1]?.doel
+          const delen = delenVoorDoel(groep, route, blok, doelNr)
           return (
             <div key={les} className={`portaal-lesrij${aan ? ' aan' : ''}`}>
               <label className="portaal-lesvink">
                 <input
-                  type="checkbox" checked={aan} disabled={vast.has(les)}
+                  type="checkbox" checked={aan} disabled={staatVast}
                   onChange={() => toggel(les)}
                 />
                 <strong>Les {les}</strong>
-                {vast.has(les) && <span className="portaal-zacht"> · staat al klaar</span>}
+                {staatVast && <span className="portaal-zacht"> · staat al klaar</span>}
               </label>
               <div className="portaal-lesdoel">
-                {isHerhalingsles(les) ? (
-                  aan ? (
-                    <select
-                      value={doelNr ?? 1} disabled={vast.has(les)}
-                      onChange={e => zetDoel(les, Number(e.target.value))}
-                    >
-                      {doelen.map((d, i) => (
-                        <option key={d.key} value={i + 1}>Doel {i + 1} — {d.doel.slice(0, 70)}…</option>
-                      ))}
-                    </select>
-                  ) : <span className="portaal-zacht">herhalingsles · kies zelf een doel</span>
-                ) : (
-                  <span className={aan ? '' : 'portaal-zacht'}>{doelTekst ?? '—'}</span>
+                {isHerhalingsles(les) && !aan
+                  ? <span className="portaal-zacht">herhalingsles · kies zelf een doel</span>
+                  : <span className={aan ? '' : 'portaal-zacht'}>{doelTekst ?? '—'}</span>}
+                {aan && (
+                  <div className="portaal-lesdeel">
+                    {isHerhalingsles(les) && (
+                      <select value={doelNr} disabled={staatVast} onChange={e => zetDoel(les, Number(e.target.value))}>
+                        {doelen.map((d, i) => (
+                          <option key={d.key} value={i + 1}>Doel {i + 1} — {d.doel.slice(0, 60)}…</option>
+                        ))}
+                      </select>
+                    )}
+                    {delen.length > 1 && (
+                      <select value={deelNr} disabled={staatVast} onChange={e => zetDeel(les, Number(e.target.value))}>
+                        {delen.map((d, i) => <option key={d.label} value={i + 1}>De som gaat over: {d.label}</option>)}
+                      </select>
+                    )}
+                  </div>
                 )}
               </div>
             </div>

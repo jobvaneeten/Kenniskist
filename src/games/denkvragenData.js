@@ -32,6 +32,12 @@ export const LESSEN_PER_BLOK = 10
 // Welk doel hoort bij welke les. null = herhalingsles, geen denkvraag.
 export const DOEL_VAN_LES = { 1: 1, 2: 1, 3: 2, 4: 2, 5: null, 6: 3, 7: 3, 8: 4, 9: 4, 10: null }
 
+// Welk deel van dat doel. Een doel beslaat twee lessen en die doen bijna nooit
+// hetzelfde: les 3 doet "grote getallen plus en min", les 4 doet "keer en
+// delen", terwijl het in de methode één doel is. De eerste les van een doel
+// pakt deel 1, de tweede les deel 2 (zie D() in redactiesommen.js).
+export const DEEL_VAN_LES = { 1: 1, 2: 2, 3: 1, 4: 2, 5: null, 6: 1, 7: 2, 8: 1, 9: 2, 10: null }
+
 export const BLOKKEN = [
   { nr: 0, label: 'Instap' },
   ...Array.from({ length: 10 }, (_, i) => ({ nr: i + 1, label: `Blok ${i + 1}` })),
