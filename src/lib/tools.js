@@ -24,6 +24,7 @@ export const VAKKEN = [
   { key: 'spelling',   label: 'Spelling' },
   { key: 'rekenen',    label: 'Rekenen' },
   { key: 'begrijpend', label: 'Begrijpend lezen' },
+  { key: 'lezen',      label: 'Lezen' },
   { key: 'topo',       label: 'Topografie' },
 ]
 
@@ -176,6 +177,21 @@ export const TOOL_FAMILIES = [
       'Coole constructies', 'De beste materialen', 'Leve de fabriek?',
       'Kinderen aan het werk', 'Mobiel binnenstebuiten',
     ].map((naam, i) => ({ toolId: `spullen-les${i + 1}`, label: `Les ${i + 1} — ${naam}`, les: i + 1 })),
+  },
+  {
+    // Stil lezen met een timer: geen opgaven, alleen tijd. `aantal` telt dus
+    // leesbeurten (eenheid 'sessies'), de lengte van één beurt staat in
+    // config.minuten. Zie src/games/LeesTimer.jsx.
+    familie: 'lezen', toolId: 'lezen-timer', label: 'Lezen met een timer',
+    vak: 'lezen', groepen: [4, 5, 6, 7, 8],
+    aantalInstelbaar: true, standaardAantal: 1, eenheid: 'sessies',
+    configVelden: [
+      { key: 'minuten', type: 'getal', label: 'Hoeveel minuten', min: 1, max: 60, placeholder: '15',
+        hint: 'Leeg laten = 15 minuten. De timer staat stil zodra de leerling het scherm verlaat.' },
+      { key: 'opdrachttekst', type: 'tekst', label: 'Wat moeten ze lezen?',
+        placeholder: 'bv. Lees in je eigen leesboek',
+        hint: 'Staat op het startscherm en tijdens het lezen in beeld.' },
+    ],
   },
   {
     // TopoMaster Europa kaart A: landen, hoofdsteden, zeeën, rivieren en

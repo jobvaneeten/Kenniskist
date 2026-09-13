@@ -79,6 +79,20 @@ export default function OpdrachtRij({ opdracht, nummer, onWijzig, onVerwijder })
             )
           }
 
+          if (veld.type === 'tekst') {
+            return (
+              <label key={veld.key} className="portaal-veld portaal-veld-breed">
+                <span className="portaal-veld-label">{veld.label}</span>
+                <input
+                  type="text" maxLength={120} placeholder={veld.placeholder}
+                  value={opdracht.config?.[veld.key] ?? ''}
+                  onChange={e => zetConfig(veld.key, e.target.value)}
+                />
+                {veld.hint && <span className="portaal-veld-hint">{veld.hint}</span>}
+              </label>
+            )
+          }
+
           if (veld.type === 'bool') {
             return (
               <label key={veld.key} className="portaal-vinkje" style={{ alignSelf: 'flex-start' }}>

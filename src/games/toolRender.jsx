@@ -21,6 +21,7 @@ import ProcentenBreuken from './ProcentenBreuken.jsx'
 import DicteeThema from './DicteeThema.jsx'
 import BegrijpendLezen from './BegrijpendLezen.jsx'
 import TopoOefenen from './TopoOefenen.jsx'
+import LeesTimer from './LeesTimer.jsx'
 import '../game.css'
 
 function NogNietBeschikbaar({ label, onBack }) {
@@ -127,6 +128,13 @@ export default function RenderTool({ opdracht, groep, onBack, addBriefgeld, addC
           onBack={onBack} addBriefgeld={addBriefgeld} addCuruntie={addCuruntie}
           aantal={aantal}
           config={{ kaart: info.variant.kaart, soorten: config?.soorten, modus: config?.modus }}
+        />
+      )
+    case 'lezen':
+      return (
+        <LeesTimer
+          onBack={onBack} addBriefgeld={addBriefgeld}
+          aantal={aantal} config={config} opdrachtId={opdracht.opdrachtId}
         />
       )
     case 'spullen':
