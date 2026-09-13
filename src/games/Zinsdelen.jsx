@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react'
 import {
-  VRAGEN, ZINSDELEN, SAMENGESTELDE_ZINNEN, TIP_ZINSDEEL, splitZin, woordIndexen, zinsdeelFrase,
+  ZINSDELEN, TIP_ZINSDEEL, splitZin, woordIndexen, zinsdeelFrase,
 } from './taalData.js'
+import { ZINSDEEL_VRAGEN, ZINSDEEL_SAMENGESTELD } from './zinsdeelZinnen.js'
 import SpelBeloning, { BRIEFGELD } from './SpelBeloning'
 import { useGebruikOpdracht } from './gebruikOpdracht.js'
 import OpdrachtKlaarScherm from './OpdrachtKlaarScherm.jsx'
@@ -103,9 +104,9 @@ function maakSegmenten(zin, alleGroepen, plekken) {
 // en is dus twee doelen — beide stukken moeten aangeklikt worden.
 function bouwZinnen(labels, metSamengesteld) {
   const perZin = new Map()
-  for (const r of VRAGEN) {
+  for (const r of ZINSDEEL_VRAGEN) {
     if (!r.zinsdeel) continue
-    if (!metSamengesteld && SAMENGESTELDE_ZINNEN.has(r.zin)) continue
+    if (!metSamengesteld && ZINSDEEL_SAMENGESTELD.has(r.zin)) continue
     const indexen = woordIndexen(r.zin, zinsdeelFrase(r))
     if (!indexen.size) continue
     if (!perZin.has(r.zin)) perZin.set(r.zin, [])
@@ -308,7 +309,7 @@ export default function Zinsdelen({
       <div className="tv-werk">
         <div className={`tv-card ${zinKlaar ? (zinGoed ? 'tv-card-correct' : 'tv-card-wrong') : ''}`}>
           <p className="tv-mode-label">
-            🔍 Zinsdelen{SAMENGESTELDE_ZINNEN.has(huidig.zin) ? ' · samengestelde zin' : ''}
+            🔍 Zinsdelen{ZINSDEEL_SAMENGESTELD.has(huidig.zin) ? ' · samengestelde zin' : ''}
           </p>
 
           {/* De stappenrij: wat je al hebt, waar je nu bent en wat er nog komt. */}
