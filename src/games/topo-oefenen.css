@@ -190,8 +190,10 @@
 }
 .topo-kaart {
   width: 100%;
+  /* max-width komt uit TopoOefenen.jsx: die kent de verhouding van de kaart en
+     rekent hem om naar de beschikbare hoogte. Hier geen max-height meer — die
+     maakte het vak breder dan de tekening en dus elke klik onnauwkeurig. */
   max-width: 920px;
-  max-height: calc(100vh - 215px);
   border-radius: 22px;
   border: 1px solid rgba(255,255,255,0.18);
   box-shadow: 0 22px 50px rgba(0,0,0,0.5);

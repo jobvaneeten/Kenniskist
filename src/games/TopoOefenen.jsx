@@ -17,7 +17,25 @@ import './topo-oefenen.css'
 
 const GOED_VOOR_REWARD = 10
 const SLEEP_MARGE = 6
-const TREFAFSTAND = 26   // px in kaartcoördinaten: hoe dicht je moet klikken
+// Stippen (steden) en lijnen (rivieren, gebergtes) worden beoordeeld met
+// "dichtstbijzijnde wint": van álle stippen op de kaart moet het gevraagde de
+// dichtstbijzijnde zijn, en verder dan onderstaande straal mag je er niet
+// naast zitten. Dat is precies de regel die een kind zelf ook hanteert — je
+// hoeft een stadje van drie pixels niet op de millimeter te raken, maar een
+// klik die duidelijk bij de buurstad hoort blijft fout.
+//
+// Alles in SCHERMpixels, niet in kaarteenheden: zo klikt het even makkelijk op
+// de hele kaart als ingezoomd, en op een groot scherm net zo goed als op een
+// iPad.
+const RUIM_PUNT_PX = 85
+const RUIM_LIJN_PX = 70
+const RUIM_ZEE_PX  = 170
+// Raak je het gevraagde binnen deze straal, dan is het altijd goed — ook als
+// er toevallig een andere stip bovenop ligt (Rome en Vaticaanstad, Bern en
+// Vaduz). Zonder dit zou zo'n stip letterlijk onaanklikbaar zijn.
+const GENADE_PX    = 9
+const RAND_PX      = 26   // net naast de kust van een land geklikt
+const KLEIN_VLAK   = 60   // kaarteenheden: tot deze maat is een land "piepklein"
 const MIN_ZOOM = 1
 const MAX_ZOOM = 6
 const ZOOM_STAP = 1.6
@@ -206,15 +224,27 @@ export default function TopoOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [huidig, correctCount, poolIdx, pool, opdracht])
 
-  // Van schermpositie naar kaartcoördinaten (het venster verschuift en
-  // verkleint als je inzoomt).
+  // Van schermpositie naar kaartcoördinaten. Via getScreenCTM en niet via
+  // getBoundingClientRect: een SVG met viewBox tekent zichzelf gecentreerd
+  // binnen zijn vak zodra het vak een andere verhouding heeft dan de viewBox
+  // (bijvoorbeeld omdat max-height toeslaat). Het vak is dan bréder dan de
+  // getekende kaart, en een berekening op rect.width mikt er tientallen pixels
+  // naast — precies de klikken die "niet aan te klikken" leken. De CTM weet
+  // exact waar de kaart staat, letterboxing en al.
   function naarKaart(clientX, clientY) {
-    const rect = svgRef.current.getBoundingClientRect()
-    const [vx, vy, vb, vh] = vensterRef.current
-    return [
-      vx + ((clientX - rect.left) / rect.width) * vb,
-      vy + ((clientY - rect.top) / rect.height) * vh,
-    ]
+    const ctm = svgRef.current?.getScreenCTM()
+    if (!ctm) return [0, 0]
+    const p = new DOMPoint(clientX, clientY).matrixTransform(ctm.inverse())
+    return [p.x, p.y]
+  }
+
+  // Hoeveel kaarteenheden één schermpixel is — om marges in pixels uit te
+  // drukken. Valt terug op het venster als de kaart nog niet gemeten kan worden.
+  function perPixel() {
+    const ctm = svgRef.current?.getScreenCTM()
+    if (ctm?.a) return 1 / ctm.a
+    const breedte = svgRef.current?.getBoundingClientRect().width || 900
+    return vensterRef.current[2] / breedte
   }
 
   // Landen en regio's zijn echte vlakken: kijken wat er onder de cursor ligt.
@@ -224,40 +254,74 @@ export default function TopoOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
       .some(el => el?.dataset?.[attribuut] === naam)
   }
 
+  // Ligt er überhaupt een land (of regio) onder de cursor, of klikte het kind
+  // in zee? Bepaalt of de coulanceregel hieronder mag ingrijpen.
+  function ietsOnder(clientX, clientY, attribuut) {
+    return document.elementsFromPoint(clientX, clientY).some(el => el?.dataset?.[attribuut])
+  }
+
+  // Net náást een land geklikt. We prikken een ringetje schermpunten rond de
+  // klik en kijken of het gevraagde land daar wél ligt — dat volgt de echte
+  // kustlijn, in tegenstelling tot een rechthoek om het land heen.
+  function vlakbijVlak(clientX, clientY, attribuut, naam, px) {
+    for (const straal of [px * 0.55, px]) {
+      for (let i = 0; i < 12; i++) {
+        const hoek = (i / 12) * Math.PI * 2
+        if (raakVlak(clientX + Math.cos(hoek) * straal, clientY + Math.sin(hoek) * straal, attribuut, naam)) return true
+      }
+    }
+    return false
+  }
+
   // Piepkleine landjes (Luxemburg is nog geen 10 bij 12 op de kaart) raak je
-  // zelfs ingezoomd bijna nooit precies. Klik je er vlak naast, dan telt dat
-  // ook. Grote vlakken houden gewoon hun eigen grens.
-  function dichtbijVlak(attribuut, naam, x, y) {
+  // zelfs ingezoomd bijna nooit precies — daar mag de ring altijd redden, ook
+  // midden op een buurland.
+  function kleinVlak(attribuut, naam) {
     const el = svgRef.current?.querySelector(`[data-${attribuut}="${naam}"]`)
     if (!el?.getBBox) return false
-    let bb
-    try { bb = el.getBBox() } catch { return false }
-    if (Math.max(bb.width, bb.height) > 40) return false
-    const marge = 9
-    return x >= bb.x - marge && x <= bb.x + bb.width + marge
-        && y >= bb.y - marge && y <= bb.y + bb.height + marge
+    try {
+      const bb = el.getBBox()
+      return Math.max(bb.width, bb.height) <= KLEIN_VLAK
+    } catch { return false }
   }
+
+  // Dichtstbijzijnde-wint. `afstandVan` geeft per kandidaat de afstand in
+  // kaarteenheden; goed is: het gevraagde ding is van alle kandidaten het
+  // dichtstbij én je zit er niet absurd ver naast.
+  function dichtstbijWint(naam, kandidaten, afstandVan, ruimPx) {
+    const px = perPixel()
+    const eigen = afstandVan(naam)
+    if (eigen > ruimPx * px) return false
+    if (eigen <= GENADE_PX * px) return true
+    for (const k of kandidaten) if (k !== naam && afstandVan(k) <= eigen) return false
+    return true
+  }
+
+  const stippen = () => [...Object.keys(KAART.hoofdsteden), ...Object.keys(KAART.steden)]
+  const stipPunt = (n) => (KAART.hoofdsteden[n]?.punt ?? KAART.steden[n].punt)
 
   function controleer(clientX, clientY) {
     if (!huidig) return
     const [x, y] = naarKaart(clientX, clientY)
     const { soort, naam } = huidig
+    const bij = (p) => Math.hypot(x - p[0], y - p[1])
     let goed = false
-    if (soort === 'landen') goed = raakVlak(clientX, clientY, 'land', naam) || dichtbijVlak('land', naam, x, y)
-    else if (soort === 'regios') goed = raakVlak(clientX, clientY, 'regio', naam) || dichtbijVlak('regio', naam, x, y)
-    else if (soort === 'hoofdsteden') {
-      const p = KAART.hoofdsteden[naam].punt
-      goed = Math.hypot(x - p[0], y - p[1]) <= TREFAFSTAND
-    } else if (soort === 'steden') {
-      const p = KAART.steden[naam].punt
-      goed = Math.hypot(x - p[0], y - p[1]) <= TREFAFSTAND
+
+    if (soort === 'landen' || soort === 'regios') {
+      const attribuut = soort === 'landen' ? 'land' : 'regio'
+      goed = raakVlak(clientX, clientY, attribuut, naam)
+        // Coulance: in zee geklikt vlak bij de kust, of een piepklein landje
+        // net gemist. Klikt het kind midden in een ánder (normaal) land, dan
+        // blijft dat gewoon fout.
+        || ((!ietsOnder(clientX, clientY, attribuut) || kleinVlak(attribuut, naam))
+            && vlakbijVlak(clientX, clientY, attribuut, naam, RAND_PX))
+    } else if (soort === 'hoofdsteden' || soort === 'steden') {
+      goed = dichtstbijWint(naam, stippen(), n => bij(stipPunt(n)), RUIM_PUNT_PX)
     } else if (soort === 'wateren') {
-      const p = KAART.wateren[naam]
-      goed = Math.hypot(x - p[0], y - p[1]) <= TREFAFSTAND * 1.6
-    } else if (soort === 'rivieren') {
-      goed = afstandTotLijn(x, y, KAART.rivieren[naam]) <= TREFAFSTAND * 0.8
-    } else if (soort === 'gebergtes') {
-      goed = afstandTotLijn(x, y, KAART.gebergtes[naam]) <= TREFAFSTAND
+      goed = dichtstbijWint(naam, Object.keys(KAART.wateren), n => bij(KAART.wateren[n]), RUIM_ZEE_PX)
+    } else if (soort === 'rivieren' || soort === 'gebergtes') {
+      const lijnen = soort === 'rivieren' ? KAART.rivieren : KAART.gebergtes
+      goed = dichtstbijWint(naam, Object.keys(lijnen), n => afstandTotLijn(x, y, lijnen[n]), RUIM_LIJN_PX)
     }
     registreer(goed)
   }
@@ -316,9 +380,8 @@ export default function TopoOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
     if (!p.bewogen && Math.hypot(dx, dy) < SLEEP_MARGE) return
     p.bewogen = true
     geenKlikRef.current = true
-    const rect = svgRef.current.getBoundingClientRect()
-    const [, , vb, vh] = vensterRef.current
-    setCentrum([p.centrum[0] - (dx / rect.width) * vb, p.centrum[1] - (dy / rect.height) * vh])
+    const px = perPixel()
+    setCentrum([p.centrum[0] - dx * px, p.centrum[1] - dy * px])
   }
 
   function svgUp(e) {
@@ -513,11 +576,17 @@ export default function TopoOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
             : 'Sleep het juiste kaartje naar de plek op de kaart')}
       </p>
 
+      {/* De kaart wordt zo breed als de hoogte toelaat bij déze
+          kaartverhouding. Met een vaste max-width bleef er links en rechts
+          donkere ruimte over terwijl de kaart zelf onnodig klein was — en werd
+          het svg-vak bréder dan de tekening erin, waardoor elke berekende klik
+          ernaast mikte (zie naarKaart). */}
       <div className="topo-kaartwrap">
         <svg
           ref={svgRef}
           viewBox={`${vx} ${vy} ${vb} ${vh}`}
           className="topo-kaart"
+          style={{ maxWidth: `min(1500px, calc((100vh - ${modus === 'sleep' ? 290 : 200}px) * ${vb / vh}))` }}
           onClick={kaartKlik}
           onPointerDown={svgDown}
           onPointerMove={svgMove}
@@ -667,7 +736,7 @@ export default function TopoOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
       <p className="topo-tip">
         {zoom > 1
           ? 'Sleep de kaart om te schuiven · 🗺️ voor de hele kaart'
-          : 'Te klein om aan te klikken? Zoom in met + (of scrollen, of twee vingers) en sleep de kaart.'}
+          : 'Precies op de stip hoeft niet — als je het dichtst bij de goede plek klikt, is het goed. Wil je het toch groter zien? Zoom in met + (of scrollen, of twee vingers).'}
       </p>
 
       {modus === 'sleep' && !feedback && (
