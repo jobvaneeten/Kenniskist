@@ -153,6 +153,14 @@
     try { window.top.KennisKistMuziek && window.top.KennisKistMuziek.demp(aan) } catch (e) {}
   }
 
+  // Mag deze leerling teksten laten voorlezen? Gezet door de leerkracht in
+  // het portaal (profielen.voorlezen, migratie 0012) en meegespiegeld in
+  // kk_profiel_cache. Niet ingelogd = geen voorleesknop.
+  function magVoorlezen() {
+    var profiel = leesJson('kk_profiel_cache')
+    return !!(profiel && profiel.voorlezen)
+  }
+
   function toonInlogstatus(el) {
     if (!el) return
     if (getLeerling()) { el.style.display = 'none'; return }
@@ -170,6 +178,7 @@
     slaResultaatOp: slaResultaatOp,
     startOefening: startOefening,
     muziekDemp: muziekDemp,
+    magVoorlezen: magVoorlezen,
     toonInlogstatus: toonInlogstatus,
   }
 })()

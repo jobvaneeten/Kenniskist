@@ -27,6 +27,10 @@
     --highlight-sel: rgba(155,77,202,.45);
     --highlight-ok: rgba(21,166,107,.30);
     --highlight-err: rgba(255,97,80,.25);
+    /* Leesbreedte. Stond op 800px, wat op een schoolbord of iPad een smalle
+       kolom midden op een leeg scherm opleverde; de teksten en de vraag
+       ernaast krijgen nu de ruimte die er is. */
+    --breed: 1180px;
   }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -67,7 +71,7 @@
   }
   header p { margin-top: 8px; font-size: 14px; color: var(--ink-soft); }
 
-  #progress-bar-wrap { background: rgba(255,255,255,0.10); height: 8px; border-radius: 99px; max-width: 800px; margin: 0 auto; }
+  #progress-bar-wrap { background: rgba(255,255,255,0.10); height: 8px; border-radius: 99px; max-width: var(--breed); margin: 0 auto; }
   #progress-bar { height: 8px; border-radius: 99px; background: linear-gradient(90deg,var(--primary),#c084f5); width: 0%; transition: width .5s ease; box-shadow: 0 0 12px var(--primary-glow); }
 
   #score-badge {
@@ -79,7 +83,7 @@
     box-shadow: 0 8px 24px -6px var(--primary-glow);
   }
 
-  main { max-width: 800px; margin: 0 auto; padding: 32px 20px 80px; }
+  main { max-width: var(--breed); margin: 0 auto; padding: 32px 24px 80px; }
 
   .screen { display: none; }
   .screen.active { display: block; }
@@ -88,7 +92,7 @@
   #intro-screen { text-align: center; padding: 40px 0; }
   #intro-screen .compass { font-size: 64px; margin-bottom: 16px; filter: drop-shadow(0 0 24px var(--primary-glow)); }
   #intro-screen h2 { font-family: 'Baloo 2', system-ui, sans-serif; font-size: 1.8rem; margin-bottom: 12px; color: #fff; }
-  #intro-screen p { max-width: 520px; margin: 0 auto 20px; color: var(--ink-soft); }
+  #intro-screen p { max-width: 640px; margin: 0 auto 20px; color: var(--ink-soft); }
   .legend { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-bottom:28px; }
   .legend span { padding:5px 12px; border-radius:99px; font-size:13px; font-weight:700; }
 
@@ -230,8 +234,8 @@
   #finish-screen .medal { font-size:72px; filter: drop-shadow(0 0 24px var(--primary-glow)); }
   #finish-screen h2 { font-family:'Baloo 2',sans-serif; font-size:2rem; margin:16px 0 10px; color:#fff; }
   #finish-screen .score-big { font-size:3.5rem; font-weight:800; color:var(--primary); font-family:'Baloo 2',sans-serif; text-shadow: 0 0 30px var(--primary-glow); }
-  #finish-screen p { max-width:460px; margin:12px auto 28px; color:var(--ink-soft); }
-  #finish-overview { max-width:520px; margin:0 auto 28px; text-align:left; }
+  #finish-screen p { max-width:620px; margin:12px auto 28px; color:var(--ink-soft); }
+  #finish-overview { max-width:760px; margin:0 auto 28px; text-align:left; }
   .ov-title { text-align:center; font-family:'Baloo 2',sans-serif; font-weight:800; color:#fff; font-size:1.15rem; margin-bottom:14px; }
   .ov-row { display:flex; align-items:flex-start; gap:10px; padding:9px 12px; border-radius:10px; margin-bottom:7px; border:1.5px solid var(--line); font-size:14px; }
   .ov-row.ov-ok { background:rgba(21,166,107,0.12); border-color:rgba(21,166,107,0.4); }
@@ -240,6 +244,26 @@
   .ov-q { color:rgba(255,255,255,0.85); line-height:1.4; }
   .ov-q b { color:#fff; }
 
+  /* VOORLEZEN — alleen zichtbaar bij leerlingen die dat recht hebben */
+  .voorlees-btn {
+    display:inline-flex; align-items:center; gap:6px;
+    margin:0 0 14px; padding:7px 15px; border-radius:99px;
+    border:1.5px solid rgba(56,189,248,.45); background:rgba(56,189,248,.12);
+    color:#7dd3fc; font-family:'Nunito',sans-serif; font-size:13px; font-weight:700;
+    cursor:pointer; transition:background .15s;
+  }
+  .voorlees-btn:hover { background:rgba(56,189,248,.24); }
+
+  /* Breed scherm: de tekst links, de antwoorden ernaast, zodat een leerling
+     niet hoeft te scrollen tussen lezen en antwoorden. Alleen bij meerkeuze —
+     bij markeren is de tekst zelf het antwoord en mag die de volle breedte. */
+  @media(min-width:1000px){
+    .q-breed { display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,1fr); column-gap:28px; align-items:start; }
+    .q-breed > * { grid-column:2; }
+    .q-breed > .q-type-label, .q-breed > h3 { grid-column:1 / -1; }
+    .q-breed > .passage { grid-column:1; margin-bottom:0; }
+    .q-breed > .voorlees-btn { grid-column:1 / -1; }
+  }
   @media(max-width:560px){
     .q-card { padding:18px 16px; }
     .drag-container { flex-direction:column; }
@@ -505,15 +529,71 @@ function updateProgress() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// VOORLEZEN
+// ─────────────────────────────────────────────────────────────────────────────
+// Alleen voor leerlingen bij wie de leerkracht dat heeft aangezet
+// (profielen.voorlezen, migratie 0012 — via kk_profiel_cache uitgelezen door
+// kenniskist-login.js). Eén knop leest de vraag, de tekst en de antwoorden
+// achter elkaar voor; nog een keer klikken zet 'm stil.
+let magVoorlezen = false;
+try { magVoorlezen = !!(window.KennisKist && window.KennisKist.magVoorlezen && window.KennisKist.magVoorlezen()); } catch (e) {}
+const kanSpreken = typeof window.speechSynthesis !== 'undefined';
+
+function voorleesTekst() {
+  const area  = document.getElementById('question-area');
+  const delen = [];
+  const vraag = area.querySelector('h3');
+  if (vraag) delen.push(vraag.textContent);
+  const passage = area.querySelector('.passage');
+  if (passage) delen.push(passage.textContent);
+  area.querySelectorAll('.opt-btn').forEach((b, i) => delen.push('Antwoord ' + (i + 1) + ': ' + b.textContent));
+  area.querySelectorAll('.order-item, .drag-item').forEach(el => delen.push(el.textContent));
+  return delen.join('. ');
+}
+
+function stopVoorlezen() {
+  if (kanSpreken) window.speechSynthesis.cancel();
+  document.querySelectorAll('.voorlees-btn').forEach(b => { b.textContent = '🔊 Lees voor'; });
+}
+
+function toggleVoorlezen(btn) {
+  if (window.speechSynthesis.speaking) { stopVoorlezen(); return; }
+  const zin = new SpeechSynthesisUtterance(voorleesTekst());
+  zin.lang = 'nl-NL';
+  zin.rate = 0.95;
+  // Een Nederlandse stem als die er is; anders doet lang='nl-NL' zijn best.
+  const stem = window.speechSynthesis.getVoices().find(v => (v.lang || '').toLowerCase().indexOf('nl') === 0);
+  if (stem) zin.voice = stem;
+  zin.onend = stopVoorlezen;
+  zin.onerror = stopVoorlezen;
+  btn.textContent = '⏹ Stop';
+  window.speechSynthesis.speak(zin);
+}
+
+function plaatsVoorleesknop() {
+  if (!magVoorlezen || !kanSpreken) return;
+  const kaart = document.querySelector('#question-area .q-card');
+  if (!kaart) return;
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'voorlees-btn';
+  btn.textContent = '🔊 Lees voor';
+  btn.onclick = () => toggleVoorlezen(btn);
+  const kop = kaart.querySelector('h3');
+  kaart.insertBefore(btn, kop ? kop.nextSibling : kaart.firstChild);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // RENDER DISPATCH
 // ─────────────────────────────────────────────────────────────────────────────
 function renderQuestion() {
+  stopVoorlezen();
   updateProgress();
   const q   = questions[current];
   const area = document.getElementById('question-area');
   const nav  = document.getElementById('nav-row');
 
-  let html = `<div class="q-card">`;
+  let html = `<div class="q-card${q.type === 'mc' && q.passage ? ' q-breed' : ''}">`;
   html += `<span class="q-type-label ${q.labelClass}">${q.label}</span>`;
   html += `<h3>${q.question}</h3>`;
 
@@ -525,6 +605,7 @@ function renderQuestion() {
   html += `<div class="feedback" id="feedback-box"></div>`;
   html += `</div>`;
   area.innerHTML = html;
+  plaatsVoorleesknop();
 
   if (q.type === 'order') attachOrderHandlers();
   if (q.type === 'drag')  attachDragHandlers();

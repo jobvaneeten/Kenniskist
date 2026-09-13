@@ -34,7 +34,9 @@ export function SessieProvider({ children }) {
     const { data } = await supabase.from('profielen').select('*').eq('id', uid).single()
     setProfiel(data ?? null)
     setLaden(false)
-    if (data) localStorage.setItem('kk_profiel_cache', JSON.stringify({ id: data.id, weergavenaam: data.weergavenaam }))
+    // voorlezen gaat mee de spiegel in: de losse HTML-tools (begrijpend
+    // lezen) lezen 'm daaruit om de voorleesknop wel of niet te tonen.
+    if (data) localStorage.setItem('kk_profiel_cache', JSON.stringify({ id: data.id, weergavenaam: data.weergavenaam, voorlezen: !!data.voorlezen }))
     else localStorage.removeItem('kk_profiel_cache')
 
     // Leeg (of geen klas) betekent geen beperking — zie 0006_klas_leeftijdsgroepen.sql

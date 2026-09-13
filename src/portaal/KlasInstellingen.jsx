@@ -62,6 +62,56 @@ function Leerlingen({ leerlingen, onGewijzigd }) {
   )
 }
 
+// Wie mag teksten laten voorlezen. Staat hier en niet bij de leerling zelf:
+// je zet dit aan het begin van het jaar voor een handvol kinderen tegelijk,
+// en dan wil je één lijstje met vinkjes, geen zeven keer doorklikken.
+//
+// Optimistisch: het vinkje springt meteen om en draait alleen terug als de
+// update faalt — anders voelt een rij vinkjes zetten traag.
+function Voorlezen({ leerlingen, onGewijzigd }) {
+  const [bezig, setBezig] = useState(null)
+  const [fout, setFout] = useState('')
+  const [lokaal, setLokaal] = useState({})
+
+  const staatAan = (l) => lokaal[l.id] ?? !!l.voorlezen
+
+  const zet = async (l) => {
+    const nieuw = !staatAan(l)
+    setLokaal(prev => ({ ...prev, [l.id]: nieuw }))
+    setBezig(l.id); setFout('')
+    const { error } = await supabase.from('profielen').update({ voorlezen: nieuw }).eq('id', l.id)
+    setBezig(null)
+    if (error) {
+      setLokaal(prev => ({ ...prev, [l.id]: !nieuw }))
+      setFout(`Opslaan mislukt voor ${l.weergavenaam}`)
+      return
+    }
+    onGewijzigd()
+  }
+
+  const aan = leerlingen.filter(staatAan).length
+
+  return (
+    <div className="portaal-kaart">
+      <h2>Voorlezen ({aan} van de {leerlingen.length})</h2>
+      <p className="portaal-zacht">
+        Deze leerlingen krijgen bij Begrijpend lezen een luidsprekerknop bij de tekst en de vraag. Ze mogen
+        zichzelf alles laten voorlezen, ook tijdens een weektaak-opdracht.
+      </p>
+      {leerlingen.length === 0 && <p className="portaal-leeg">Deze klas is leeg.</p>}
+      {fout && <p className="portaal-fout">{fout}</p>}
+      <div className="portaal-keuzevakjes" style={{ maxHeight: 'none' }}>
+        {leerlingen.map(l => (
+          <label key={l.id} className={staatAan(l) ? 'portaal-vakje aan' : 'portaal-vakje'}>
+            <input type="checkbox" checked={staatAan(l)} disabled={bezig === l.id} onChange={() => zet(l)} />
+            {l.weergavenaam}
+          </label>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 // Welke leerkracht hoort bij deze klas. Puur organisatorisch: iedereen van de
 // school kan elke klas al inzien (RLS: klassen_lezen op school_id), dit maakt
 // alleen zichtbaar wie hem draait.
@@ -144,7 +194,7 @@ export default function KlasInstellingen({ klas, alleKlassen, onGewijzigd, onVer
     let actief = true
     async function laad() {
       const [{ data: lln }, { data: pers }] = await Promise.all([
-        supabase.from('profielen').select('id, weergavenaam, gebruikersnaam')
+        supabase.from('profielen').select('id, weergavenaam, gebruikersnaam, voorlezen')
           .eq('klas_id', klas.id).eq('rol', 'leerling').order('weergavenaam'),
         supabase.from('profielen').select('id, weergavenaam, rol, klas_id')
           .eq('school_id', klas.school_id).in('rol', ['leerkracht', 'icter']).order('weergavenaam'),
@@ -292,6 +342,8 @@ export default function KlasInstellingen({ klas, alleKlassen, onGewijzigd, onVer
       </div>
 
       <LeerkrachtKoppelen klas={klas} personeel={personeel} onGewijzigd={naGewijzigd} />
+
+      <Voorlezen leerlingen={leerlingen} onGewijzigd={naGewijzigd} />
 
       <Leerlingen leerlingen={leerlingen} onGewijzigd={naGewijzigd} />
 
