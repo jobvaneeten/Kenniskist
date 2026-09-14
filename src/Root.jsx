@@ -6,6 +6,7 @@ import Portaal from './portaal/Portaal.jsx'
 import WachtwoordResetten from './WachtwoordResetten.jsx'
 import { SessieProvider, useSessie } from './lib/sessie.jsx'
 import { wisAlles } from './lib/voortgangSync.js'
+import VersieBanner from './lib/versie.jsx'
 
 const ROUTES = {
   '/leerlingportaal':     'student',
@@ -140,6 +141,7 @@ export default function Root() {
   return (
     <SessieProvider>
       <RootInhoud />
+      <VersieBanner />
     </SessieProvider>
   )
 }
