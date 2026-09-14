@@ -28,6 +28,8 @@ const UNLOCK_TEACHERS_CODE = 'pabo1'    // ontgrendelt Meester Job & Meester Luu
 const UNLOCK_HILLCLIMB_CODE = 'auto1'   // ontgrendelt alle Bergrijden-auto's
 const EVO_CODE = 'pieter'               // 100.000 miljoen blaadjes in Dier Evolutie
 const EVO_BONUS = 1e11
+const GRAVEN_CODE = '0001'              // 100 duiken in Diepgravers
+const GRAVEN_DUIKEN = 100
 const ESCAPE_CODE = 'vrijdag'           // opent de GLITCH-escaperoom
 
 function fmt(n) { return n.toLocaleString('nl-NL') }
@@ -49,7 +51,7 @@ function CurrencyBadge({ munten, briefgeld, hideMunten }) {
   )
 }
 
-function CodeModal({ onClose, onRedeem, onRedeemBrief, onUnlockAll, onUnlockCountries, onUnlockSomalia, onUnlockTara, onUnlockNina, onUnlockPim, onUnlockVinn, onUnlockRb, onUnlockGroep7, onUnlockTeachers, onUnlockHillclimb, onUnlockEvo, onEscape, usedCodes }) {
+function CodeModal({ onClose, onRedeem, onRedeemBrief, onUnlockAll, onUnlockCountries, onUnlockSomalia, onUnlockTara, onUnlockNina, onUnlockPim, onUnlockVinn, onUnlockRb, onUnlockGroep7, onUnlockTeachers, onUnlockHillclimb, onUnlockEvo, onUnlockGraven, onEscape, usedCodes }) {
   const [code, setCode] = useState('')
   const [msg,  setMsg]  = useState(null)
   const [ok,   setOk]   = useState(false)
@@ -105,6 +107,10 @@ function CodeModal({ onClose, onRedeem, onRedeemBrief, onUnlockAll, onUnlockCoun
     } else if (key === EVO_CODE) {
       onUnlockEvo()
       setMsg('🐨 100.000 miljoen blaadjes + alle 24 dieren van je huidige soort!')
+      setOk(true)
+    } else if (key === GRAVEN_CODE) {
+      onUnlockGraven()
+      setMsg(`⛏️ ${GRAVEN_DUIKEN} duiken in Diepgravers!`)
       setOk(true)
     } else if (BRIEF_CODES[key] !== undefined) {
       if (usedCodes.includes(key)) {
@@ -274,6 +280,14 @@ export default function App({ gast = false }) {
   // "pieter" code → blaadjes in Dier Evolutie (eigen munt in kk_evo_state) plus
   // alle 24 evoluties van de soort waar je nu in zit. Werkt ook als het spel nog
   // nooit geopend is: dan zetten we een geldige beginstand neer.
+  // "0001" code → 100 duiken in Diepgravers. Normaal verdien je er drie per
+  // beloning en kun je ze niet opsparen; deze code is de uitzondering voor de
+  // leerkracht (en om zelf te kunnen testen). Werkt ook als het spel nog nooit
+  // geopend is: het leest deze sleutel bij het laden.
+  const unlockGraafDuiken = () => {
+    localStorage.setItem('kk_gr_duiken', String(GRAVEN_DUIKEN))
+  }
+
   const EVO_MAXLV = 24   // moet gelijk blijven aan THEMES.length in public/evolutie
   const unlockEvoGeld = () => {
     let s
@@ -471,6 +485,7 @@ export default function App({ gast = false }) {
           onUnlockTeachers={unlockTeachers}
           onUnlockHillclimb={unlockHillclimbAutos}
           onUnlockEvo={unlockEvoGeld}
+          onUnlockGraven={unlockGraafDuiken}
           onEscape={() => { setShowCode(false); setScreen('escaperoom') }}
           usedCodes={usedCodes}
         />
