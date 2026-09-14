@@ -30,7 +30,7 @@
     /* Leesbreedte. Stond op 800px, wat op een schoolbord of iPad een smalle
        kolom midden op een leeg scherm opleverde; de teksten en de vraag
        ernaast krijgen nu de ruimte die er is. */
-    --breed: 1180px;
+    --breed: min(1600px, 100%);
   }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -83,7 +83,7 @@
     box-shadow: 0 8px 24px -6px var(--primary-glow);
   }
 
-  main { max-width: var(--breed); margin: 0 auto; padding: 32px 24px 80px; }
+  main { max-width: var(--breed); margin: 0 auto; padding: 32px clamp(16px, 3vw, 44px) 80px; }
 
   .screen { display: none; }
   .screen.active { display: block; }
@@ -235,7 +235,7 @@
   #finish-screen h2 { font-family:'Baloo 2',sans-serif; font-size:2rem; margin:16px 0 10px; color:#fff; }
   #finish-screen .score-big { font-size:3.5rem; font-weight:800; color:var(--primary); font-family:'Baloo 2',sans-serif; text-shadow: 0 0 30px var(--primary-glow); }
   #finish-screen p { max-width:620px; margin:12px auto 28px; color:var(--ink-soft); }
-  #finish-overview { max-width:760px; margin:0 auto 28px; text-align:left; }
+  #finish-overview { max-width:min(1100px, 100%); margin:0 auto 28px; text-align:left; }
   .ov-title { text-align:center; font-family:'Baloo 2',sans-serif; font-weight:800; color:#fff; font-size:1.15rem; margin-bottom:14px; }
   .ov-row { display:flex; align-items:flex-start; gap:10px; padding:9px 12px; border-radius:10px; margin-bottom:7px; border:1.5px solid var(--line); font-size:14px; }
   .ov-row.ov-ok { background:rgba(21,166,107,0.12); border-color:rgba(21,166,107,0.4); }
@@ -484,24 +484,35 @@ let markState = questions.map(() => new Set());
 // PERSISTENCE
 // ─────────────────────────────────────────────────────────────────────────────
 let paidSet = new Set();
-function loadPaid() { try { const s = localStorage.getItem('bl_wereld_v2_paid'); if (s) paidSet = new Set(JSON.parse(s)); } catch(e){} }
-function savePaid() { try { localStorage.setItem('bl_wereld_v2_paid', JSON.stringify([...paidSet])); } catch(e){} }
+function loadPaid() { try { const s = localStorage.getItem('bl_spullen_les5_paid'); if (s) paidSet = new Set(JSON.parse(s)); } catch(e){} }
+function savePaid() { try { localStorage.setItem('bl_spullen_les5_paid', JSON.stringify([...paidSet])); } catch(e){} }
 function loadProgress() {
   loadPaid();
   try {
-    const saved = localStorage.getItem('bl_wereld_v2');
+    // Oude sleutel: alle vijf de lessen deelden 'bl_wereld_v2'. Wie les 1 had
+    // gemaakt, kreeg les 2 t/m 5 meteen als "helemaal af" te zien. Opruimen,
+    // zodat die stand nooit meer in een les terechtkomt.
+    localStorage.removeItem('bl_wereld_v2');
+    localStorage.removeItem('bl_wereld_v2_paid');
+    const saved = localStorage.getItem('bl_spullen_les5');
     if (saved) {
       const d = JSON.parse(saved);
-      scores   = d.scores   || scores;
-      answered = d.answered || answered;
-      score    = scores.reduce((a,b)=>a+b,0);
+      // Alleen een stand die bij déze les hoort: evenveel vragen, anders weg.
+      if (Array.isArray(d.answered) && d.answered.length === questions.length
+          && Array.isArray(d.scores) && d.scores.length === questions.length) {
+        scores   = d.scores;
+        answered = d.answered;
+        score    = scores.reduce((a,b)=>a+b,0);
+      } else {
+        localStorage.removeItem('bl_spullen_les5');
+      }
     }
   } catch(e){}
 }
 
 function saveProgress() {
   try {
-    localStorage.setItem('bl_wereld_v2', JSON.stringify({ scores, answered }));
+    localStorage.setItem('bl_spullen_les5', JSON.stringify({ scores, answered }));
   } catch(e){}
 }
 
@@ -511,6 +522,12 @@ function saveProgress() {
 function startQuiz() {
   loadProgress();
   document.getElementById('score-badge').style.display = 'block';
+  // Verder waar je gebleven was: de eerste vraag die nog niet beantwoord is.
+  // Is alles al beantwoord, dan de laatste vraag — dan staat de knop "Bekijk
+  // resultaat" er en wordt het resultaat pas ingestuurd als het kind klikt,
+  // niet bij elke verversing opnieuw.
+  const eerste = answered.indexOf(false);
+  current = eerste === -1 ? questions.length - 1 : eerste;
   show('quiz-screen');
   renderQuestion();
 }
@@ -1011,6 +1028,17 @@ function restartQuiz() {
   show('quiz-screen');
   renderQuestion();
 }
+
+// Per ongeluk de pagina verversen mag geen straf zijn: staat er al voortgang in
+// de opslag, dan slaan we het introscherm over en pakken we de les op bij de
+// eerste vraag die nog open staat.
+(function hervatNaVerversen() {
+  try {
+    const d = JSON.parse(localStorage.getItem('bl_spullen_les5') || 'null');
+    if (d && Array.isArray(d.answered) && d.answered.length === questions.length
+        && d.answered.some(Boolean)) startQuiz();
+  } catch (e) {}
+})();
 /* ===== Spelletje na elke 5 goede antwoorden (briefgeld bij beide vakken) ===== */
 (function(){
   var streak = 0, pending = false;
