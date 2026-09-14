@@ -27,6 +27,7 @@ export async function slaWeektaakOp({ weektaakId, schoolId, klasId, titel, start
   if (leesFout) throw leesFout
   const bestaandeIds = new Set((bestaandeOpdrachten ?? []).map(o => o.id))
   const behoudenIds = new Set()
+  const nieuweIds = new Set()
 
   for (let i = 0; i < opdrachten.length; i++) {
     const o = opdrachten[i]
@@ -42,6 +43,7 @@ export async function slaWeektaakOp({ weektaakId, schoolId, klasId, titel, start
       const { data, error } = await supabase.from('opdrachten').insert(rij).select('id').single()
       if (error) throw error
       behoudenIds.add(data.id)
+      nieuweIds.add(data.id)
     }
   }
 
@@ -52,8 +54,13 @@ export async function slaWeektaakOp({ weektaakId, schoolId, klasId, titel, start
     if (error) throw error
   }
 
+  // Alleen nieuwe opdrachten krijgen standaard de hele lijst leerlingen. Bij een
+  // opdracht die er al stond is de differentiatie leidend (WeektaakDifferentiatie
+  // .jsx): heb je daar leerlingen van een opdracht afgehaald, dan mag een keer
+  // opslaan van de weektaak dat niet stilletjes terugzetten op "iedereen alles".
+  const seedIds = weektaakId ? [...nieuweIds] : [...behoudenIds]
   const gewenst = []
-  for (const opdrachtId of behoudenIds) {
+  for (const opdrachtId of seedIds) {
     for (const leerlingId of leerlingIds) {
       gewenst.push({ opdracht_id: opdrachtId, leerling_id: leerlingId, school_id: schoolId })
     }
@@ -81,10 +88,11 @@ export async function slaWeektaakOp({ weektaakId, schoolId, klasId, titel, start
 
 // Zet dezelfde weektaak nog een keer klaar, meestal voor de week erna.
 //
-// Wat mee gaat: de opdrachten (tool, aantal, config, volgorde) en de
-// differentiatie — wie welke opdracht krijgt en met welk eigen aantal. Wat níet
-// mee gaat: de voortgang, vrijstellingen en herkansingen. Dat is precies de
-// bedoeling: hetzelfde werk, schone lei.
+// Wat mee gaat: de opdrachten (tool, aantal, config, volgorde) en de complete
+// differentiatie — wie welke opdracht krijgt, met welk eigen aantal, en wie een
+// opdracht niet hoeft te maken (status 'vrijgesteld'). Wat níet mee gaat: de
+// voortgang en de herkansingen. Dat is precies de bedoeling: hetzelfde werk en
+// dezelfde afspraken per leerling, maar een schone lei.
 //
 // De opgaven zelf komen niet uit de database maar worden bij het spelen
 // gegenereerd uit tool_id + config. Een kopie levert dus vanzelf nieuwe sommen,
@@ -99,7 +107,7 @@ export async function kopieerWeektaak({ bronId, schoolId, klasId, titel, startOp
   let bronToewijzingen = []
   if (bronIds.length) {
     const { data, error } = await supabase
-      .from('toewijzingen').select('opdracht_id, leerling_id, aantal_override')
+      .from('toewijzingen').select('opdracht_id, leerling_id, aantal_override, status')
       .in('opdracht_id', bronIds)
     if (error) throw error
     bronToewijzingen = data ?? []
@@ -124,14 +132,17 @@ export async function kopieerWeektaak({ bronId, schoolId, klasId, titel, startOp
     idKaart.set(o.id, data.id)
   }
 
-  // status blijft op de standaard 'open' en herkansingen op 0: een vrijstelling
-  // of een herkansing hoorde bij de vorige week, niet bij deze.
+  // status gaat wél mee: "hoeft deze opdracht niet te maken" is een afspraak
+  // over de leerling, niet over die ene week — zet je de weektaak opnieuw klaar,
+  // dan geldt hij nog steeds. Herkansingen blijven op 0: die hoorden bij het
+  // werk van de vorige week.
   const nieuweToewijzingen = bronToewijzingen
     .filter(t => idKaart.has(t.opdracht_id))
     .map(t => ({
       opdracht_id: idKaart.get(t.opdracht_id),
       leerling_id: t.leerling_id,
       aantal_override: t.aantal_override,
+      status: t.status ?? 'open',
       school_id: schoolId,
     }))
   if (nieuweToewijzingen.length) {

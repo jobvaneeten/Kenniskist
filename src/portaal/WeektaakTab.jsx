@@ -157,10 +157,10 @@ export default function WeektaakTab({ klas, onKiesLeerling }) {
           <div className="portaal-waarschuwing" style={{ borderColor: 'rgba(120,180,255,0.5)' }}>
             <p className="portaal-zacht" style={{ margin: 0 }}>
               <strong>{gekozen.titel}</strong> nog een keer klaarzetten. De opdrachten gaan mee, en ook wie
-              welke opdracht krijgt en met welk eigen aantal — de differentiatie blijft dus precies zoals
-              je hem hebt ingesteld. De <strong>opgaven zelf zijn nieuw</strong>: sommen, woorden en zinnen
-              worden bij het spelen gemaakt, dus je leerlingen krijgen andere opgaven van dezelfde soort.
-              De voortgang begint weer op nul.
+              welke opdracht krijgt, met welk eigen aantal en wie een opdracht niet hoeft te maken — de
+              differentiatie blijft dus precies zoals je hem hebt ingesteld. De <strong>opgaven zelf zijn
+              nieuw</strong>: sommen, woorden en zinnen worden bij het spelen gemaakt, dus je leerlingen
+              krijgen andere opgaven van dezelfde soort. De voortgang begint weer op nul.
             </p>
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 10 }}>
               <label className="portaal-veld">
