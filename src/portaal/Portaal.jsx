@@ -139,16 +139,21 @@ export default function Portaal() {
   const [alsLeerkracht, setAlsLeerkracht] = useState(false)
 
   const laadKlassen = useCallback(async () => {
-    const [{ data }, { data: lln }, { data: pers }] = await Promise.all([
+    // Wie welke klas draait staat sinds migratie 0013 in klas_leerkrachten;
+    // los opgehaald en hier samengevoegd, zodat er geen embed nodig is.
+    const [{ data }, { data: lln }, { data: pers }, { data: kopp }] = await Promise.all([
       supabase.from('klassen').select('id, school_id, naam, schooljaar, code, groepen').order('naam'),
       supabase.from('profielen').select('klas_id').eq('rol', 'leerling'),
-      supabase.from('profielen').select('weergavenaam, klas_id').in('rol', ['leerkracht', 'icter']).not('klas_id', 'is', null),
+      supabase.from('profielen').select('id, weergavenaam').in('rol', ['leerkracht', 'icter']),
+      supabase.from('klas_leerkrachten').select('klas_id, leerkracht_id'),
     ])
     setKlassen(data ?? [])
     setAantallen((lln ?? []).reduce((acc, p) => ({ ...acc, [p.klas_id]: (acc[p.klas_id] ?? 0) + 1 }), {}))
-    setLeerkrachten((pers ?? []).reduce((acc, p) => ({
-      ...acc, [p.klas_id]: [...(acc[p.klas_id] ?? []), p.weergavenaam],
-    }), {}))
+    const naamBij = new Map((pers ?? []).map(p => [p.id, p.weergavenaam]))
+    setLeerkrachten((kopp ?? []).reduce((acc, k) => {
+      const naam = naamBij.get(k.leerkracht_id)
+      return naam ? { ...acc, [k.klas_id]: [...(acc[k.klas_id] ?? []), naam] } : acc
+    }, {}))
   }, [])
 
   useEffect(() => { if (profiel && profiel.rol !== 'admin') laadKlassen() }, [profiel, laadKlassen])

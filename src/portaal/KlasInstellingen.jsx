@@ -112,31 +112,43 @@ function Voorlezen({ leerlingen, onGewijzigd }) {
   )
 }
 
-// Welke leerkracht hoort bij deze klas. Puur organisatorisch: iedereen van de
-// school kan elke klas al inzien (RLS: klassen_lezen op school_id), dit maakt
-// alleen zichtbaar wie hem draait.
-function LeerkrachtKoppelen({ klas, personeel, onGewijzigd }) {
+// Wie geeft les aan deze klas. Sinds migratie 0013 is dit geen etiketje meer
+// maar de toegang zelf: een leerkracht ziet alleen de klassen waaraan hij hier
+// gekoppeld is. Meerdere leerkrachten per klas mag (duo, vakleerkracht), en
+// een leerkracht mag aan meerdere klassen hangen.
+function LeerkrachtKoppelen({ klas, personeel, koppelingen, onGewijzigd }) {
   const [keuze, setKeuze] = useState('')
   const [bezig, setBezig] = useState(false)
   const [fout, setFout] = useState('')
 
-  const gekoppeld = personeel.filter(p => p.klas_id === klas.id)
-  const vrij = personeel.filter(p => p.klas_id !== klas.id)
+  const gekoppeldeIds = new Set(koppelingen.map(k => k.leerkracht_id))
+  const gekoppeld = personeel.filter(p => gekoppeldeIds.has(p.id))
+  const vrij = personeel.filter(p => !gekoppeldeIds.has(p.id))
 
-  const zetKlas = async (id, klasId) => {
+  const koppel = async (id) => {
     setBezig(true); setFout('')
-    const { error } = await supabase.from('profielen').update({ klas_id: klasId }).eq('id', id)
+    const { error } = await supabase.from('klas_leerkrachten')
+      .insert({ klas_id: klas.id, leerkracht_id: id, school_id: klas.school_id })
     setBezig(false)
-    if (error) { setFout('Opslaan mislukt'); return }
+    if (error) { setFout('Koppelen mislukt'); return }
     setKeuze('')
+    onGewijzigd()
+  }
+
+  const ontkoppel = async (id) => {
+    setBezig(true); setFout('')
+    const { error } = await supabase.from('klas_leerkrachten')
+      .delete().eq('klas_id', klas.id).eq('leerkracht_id', id)
+    setBezig(false)
+    if (error) { setFout('Loskoppelen mislukt'); return }
     onGewijzigd()
   }
 
   return (
     <div className="portaal-kaart">
-      <h2>Leerkracht van deze klas</h2>
+      <h2>Leerkrachten van deze klas</h2>
       {gekoppeld.length === 0
-        ? <p className="portaal-leeg">Nog niemand gekoppeld.</p>
+        ? <p className="portaal-leeg">Nog niemand gekoppeld — niemand kan deze klas inzien.</p>
         : (
           <div className="portaal-naamlijst">
             {gekoppeld.map(p => (
@@ -145,7 +157,7 @@ function LeerkrachtKoppelen({ klas, personeel, onGewijzigd }) {
                   <span className="portaal-naamknop-naam">{p.weergavenaam}</span>
                   <span className="portaal-zacht">{p.rol}</span>
                 </div>
-                <button className="portaal-rijknop" title="Loskoppelen" disabled={bezig} onClick={() => zetKlas(p.id, null)}>✕</button>
+                <button className="portaal-rijknop" title="Loskoppelen" disabled={bezig} onClick={() => ontkoppel(p.id)}>✕</button>
               </div>
             ))}
           </div>
@@ -158,19 +170,17 @@ function LeerkrachtKoppelen({ klas, personeel, onGewijzigd }) {
           <select value={keuze} onChange={e => setKeuze(e.target.value)}>
             <option value="">— kies een leerkracht —</option>
             {vrij.map(p => (
-              <option key={p.id} value={p.id}>
-                {p.weergavenaam}{p.klas_id ? ' (nu bij een andere klas)' : ''}
-              </option>
+              <option key={p.id} value={p.id}>{p.weergavenaam}</option>
             ))}
           </select>
-          <button className="portaal-knop" disabled={!keuze || bezig} onClick={() => zetKlas(keuze, klas.id)}>
+          <button className="portaal-knop" disabled={!keuze || bezig} onClick={() => koppel(keuze)}>
             Koppelen
           </button>
         </div>
       )}
       <p className="portaal-veld-hint" style={{ marginTop: 8 }}>
-        Dit legt alleen vast wie de klas draait; alle leerkrachten van de school kunnen elke klas blijven inzien.
-        Een leerkracht hoort bij één klas tegelijk.
+        Alleen gekoppelde leerkrachten zien deze klas: de leerlingen, hun resultaten en de weektaken.
+        Een icter ziet altijd alle klassen van de school.
       </p>
     </div>
   )
@@ -186,6 +196,7 @@ function LeerkrachtKoppelen({ klas, personeel, onGewijzigd }) {
 export default function KlasInstellingen({ klas, alleKlassen, onGewijzigd, onVerwijderd }) {
   const [leerlingen, setLeerlingen] = useState([])
   const [personeel, setPersoneel] = useState([])
+  const [koppelingen, setKoppelingen] = useState([])
   // Zelfde herlaad-truc als klasGegevens.js: ophalen gebeurt ín het effect, en
   // een teller trekt het opnieuw op gang na een wijziging.
   const [teller, setTeller] = useState(0)
@@ -193,15 +204,17 @@ export default function KlasInstellingen({ klas, alleKlassen, onGewijzigd, onVer
   useEffect(() => {
     let actief = true
     async function laad() {
-      const [{ data: lln }, { data: pers }] = await Promise.all([
+      const [{ data: lln }, { data: pers }, { data: kopp }] = await Promise.all([
         supabase.from('profielen').select('id, weergavenaam, gebruikersnaam, voorlezen')
           .eq('klas_id', klas.id).eq('rol', 'leerling').order('weergavenaam'),
-        supabase.from('profielen').select('id, weergavenaam, rol, klas_id')
+        supabase.from('profielen').select('id, weergavenaam, rol')
           .eq('school_id', klas.school_id).in('rol', ['leerkracht', 'icter']).order('weergavenaam'),
+        supabase.from('klas_leerkrachten').select('leerkracht_id').eq('klas_id', klas.id),
       ])
       if (!actief) return
       setLeerlingen(lln ?? [])
       setPersoneel(pers ?? [])
+      setKoppelingen(kopp ?? [])
     }
     laad()
     return () => { actief = false }
@@ -341,7 +354,7 @@ export default function KlasInstellingen({ klas, alleKlassen, onGewijzigd, onVer
         </p>
       </div>
 
-      <LeerkrachtKoppelen klas={klas} personeel={personeel} onGewijzigd={naGewijzigd} />
+      <LeerkrachtKoppelen klas={klas} personeel={personeel} koppelingen={koppelingen} onGewijzigd={naGewijzigd} />
 
       <Voorlezen leerlingen={leerlingen} onGewijzigd={naGewijzigd} />
 

@@ -147,6 +147,17 @@ async function leerkrachtAanmaken(request, env) {
   return json({ ok: true })
 }
 
+// Een leerkracht mag alleen bij de klas(sen) waaraan hij gekoppeld is; icter en
+// admin mogen de hele school. Zelfde grens als de RLS uit migratie 0013 — de
+// Worker draait met de service key en komt daar niet vanzelf langs.
+async function magKlas(env, profiel, klasId) {
+  if (profiel.rol !== 'leerkracht') return true
+  if (!klasId) return false
+  const res = await serviceFetch(env, `/rest/v1/klas_leerkrachten?leerkracht_id=eq.${profiel.id}&klas_id=eq.${klasId}&select=klas_id`)
+  const rijen = res.ok ? await res.json() : []
+  return rijen.length > 0
+}
+
 // ── POST /api/leerling-aanmaken (leerkracht/icter/admin) ────────────────
 async function leerlingAanmaken(request, env) {
   const profiel = await huidigProfiel(request, env)
@@ -166,6 +177,9 @@ async function leerlingAanmaken(request, env) {
   const klasRes = await serviceFetch(env, `/rest/v1/klassen?id=eq.${klasId}&school_id=eq.${schoolId}&select=code`)
   const [klas] = klasRes.ok ? await klasRes.json() : []
   if (!klas) return json({ fout: 'Deze klas hoort niet bij deze school' }, 400)
+  if (!await magKlas(env, profiel, klasId)) {
+    return json({ fout: 'Je bent niet aan deze klas gekoppeld' }, 403)
+  }
 
   const email = `${klas.code}.${gebruikersnaam}@leerling.kenniskist.nl`
   const userRes = await serviceFetch(env, '/auth/v1/admin/users', {
@@ -198,13 +212,16 @@ async function wachtwoordReset(request, env) {
   const { gebruikerId, nieuwWachtwoord } = await request.json()
   if (!gebruikerId || !nieuwWachtwoord) return json({ fout: 'Gegevens ontbreken' }, 400)
 
-  const doelRes = await serviceFetch(env, `/rest/v1/profielen?id=eq.${gebruikerId}&select=id,school_id,rol`)
+  const doelRes = await serviceFetch(env, `/rest/v1/profielen?id=eq.${gebruikerId}&select=id,school_id,rol,klas_id`)
   const [doel] = doelRes.ok ? await doelRes.json() : []
   if (!doel) return json({ fout: 'Gebruiker niet gevonden' }, 404)
 
   const zelfdeSchool = profiel.rol === 'admin' || doel.school_id === profiel.school_id
   const magVanwegeRang = ROL_RANG[profiel.rol] > ROL_RANG[doel.rol]
   if (!zelfdeSchool || !magVanwegeRang) return json({ fout: 'Geen toegang' }, 403)
+  if (doel.rol === 'leerling' && !await magKlas(env, profiel, doel.klas_id)) {
+    return json({ fout: 'Deze leerling zit niet in jouw klas' }, 403)
+  }
 
   const res = await serviceFetch(env, `/auth/v1/admin/users/${gebruikerId}`, {
     method: 'PUT',
@@ -229,13 +246,16 @@ async function leerlingVerwijderen(request, env) {
   const { leerlingId } = await request.json()
   if (!leerlingId) return json({ fout: 'Gegevens ontbreken' }, 400)
 
-  const doelRes = await serviceFetch(env, `/rest/v1/profielen?id=eq.${leerlingId}&select=id,school_id,rol`)
+  const doelRes = await serviceFetch(env, `/rest/v1/profielen?id=eq.${leerlingId}&select=id,school_id,rol,klas_id`)
   const [doel] = doelRes.ok ? await doelRes.json() : []
   if (!doel) return json({ fout: 'Leerling niet gevonden' }, 404)
   if (doel.rol !== 'leerling') return json({ fout: 'Dit is geen leerling' }, 400)
 
   const zelfdeSchool = profiel.rol === 'admin' || doel.school_id === profiel.school_id
   if (!zelfdeSchool) return json({ fout: 'Geen toegang' }, 403)
+  if (!await magKlas(env, profiel, doel.klas_id)) {
+    return json({ fout: 'Deze leerling zit niet in jouw klas' }, 403)
+  }
 
   const res = await serviceFetch(env, `/auth/v1/admin/users/${leerlingId}`, { method: 'DELETE' })
   if (!res.ok) return json({ fout: 'Kon leerling niet verwijderen' }, 400)
