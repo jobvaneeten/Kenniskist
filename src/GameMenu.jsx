@@ -9,6 +9,7 @@ import SterrenstroompGame from './games/SterrenstroompGame'
 import DoodleSprongGame from './games/DoodleSprongGame'
 import FruitsabelGame from './games/FruitsabelGame'
 import SterrenveerGame from './games/SterrenveerGame'
+import GraafGame from './games/GraafGame'
 import DierEvolutieGame from './games/DierEvolutieGame'
 import BrugBouwen from './games/BrugBouwen'
 import ProcentenBreuken from './games/ProcentenBreuken'
@@ -83,6 +84,7 @@ const FREE_GAMES = [
   { key: 'hillclimb',     emoji: '🚗', name: 'Bergrijden',      desc: 'Race over heuvels, verzamel munten en upgrade je auto!' },
   { key: 'fruitsabel',    emoji: '🍉', name: 'Fruitsabel',      desc: 'Snijd 60 seconden fruit doormidden — en koop scherpere sabels!', img: '/scenes/games/fruitsabel.svg' },
   { key: 'sterrenveer',   emoji: '🌠', name: 'Sterrenveer',     desc: 'Ruimte-platformer: 16 levels, sterren verdienen en 12 personages kopen!', img: '/scenes/games/sterrenveer.svg' },
+  { key: 'graven',        emoji: '⛏️', name: 'Diepgravers',     desc: '8 aardlagen diep, 40 upgrades — maar doodgaan kost al je duiken!', img: '/scenes/games/graven.svg' },
 ]
 
 function RewardChips({ rewards }) {
@@ -178,6 +180,10 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
 
   if (directGame === 'sterrenveer') {
     return vrij(<SterrenveerGame onBack={onBack} />)
+  }
+
+  if (directGame === 'graven') {
+    return vrij(<GraafGame onBack={onBack} />)
   }
 
 

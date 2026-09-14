@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Diepgravers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="stijl.css">
+</head>
+<body>
+
+<button id="terug">← Menu</button>
+
+<!-- ── De duik ──────────────────────────────────────────────────────────── -->
+<div id="spel-laag">
+  <canvas id="doek"></canvas>
+</div>
+
+<div id="hud">
+  <div class="meter" id="brandstof"><span class="lab">FUEL</span><span class="vul" id="brandstof-vul"><i style="width:100%"></i></span></div>
+  <div class="meter" id="lading"><span class="lab">LADING</span><span class="vul" id="lading-vul"><i style="width:0%"></i></span></div>
+  <div class="meter" id="romp"><span class="lab">ROMP</span><span class="vul" id="romp-vul"><i style="width:100%"></i></span></div>
+  <span class="chip diep" id="diepte">0 m</span>
+  <span class="chip" id="waarde">0</span>
+</div>
+<div id="waarschuwing"></div>
+<div id="banner"></div>
+
+<div id="tikken">
+  <div class="pad">
+    <div class="tik" data-toets="links">◀</div>
+    <div class="tik" data-toets="rechts">▶</div>
+  </div>
+  <div class="pad">
+    <div class="tik" data-toets="omlaag">▼</div>
+    <div class="tik" data-toets="omhoog">▲</div>
+  </div>
+</div>
+
+<!-- ── Uitleg ───────────────────────────────────────────────────────────── -->
+<div class="scherm" id="uitleg">
+  <div class="kaart">
+
+    <div class="uitleg-paneel aan">
+      <svg viewBox="0 0 420 200" role="img" aria-label="Een boorwagen graaft een gang naar beneden">
+        <defs>
+          <linearGradient id="u1grond" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#6b4f2a"/><stop offset="100%" stop-color="#3a2a16"/>
+          </linearGradient>
+        </defs>
+        <rect width="420" height="46" fill="#0a1026"/>
+        <circle cx="70" cy="22" r="1.6" fill="#fff" opacity=".8"/><circle cx="180" cy="16" r="1.2" fill="#fff" opacity=".6"/>
+        <circle cx="330" cy="28" r="1.4" fill="#fff" opacity=".7"/>
+        <rect y="46" width="420" height="154" fill="url(#u1grond)"/>
+        <path d="M170 46 h80 v70 q0 18 -18 18 h-44 q-18 0 -18 -18 z" fill="#0d0a06"/>
+        <g transform="translate(210 108)">
+          <rect x="-30" y="-22" width="60" height="34" rx="9" fill="#2b3350" stroke="#38bdf8" stroke-width="2"/>
+          <rect x="-20" y="-15" width="22" height="14" rx="4" fill="#0a1026" stroke="#38bdf8" stroke-width="1.2"/>
+          <circle cx="-16" cy="14" r="8" fill="#151b2c" stroke="#8fa0bd" stroke-width="2"/>
+          <circle cx="16" cy="14" r="8" fill="#151b2c" stroke="#8fa0bd" stroke-width="2"/>
+          <path d="M-8 12 l16 0 l-8 24 z" fill="#a855f7"/>
+          <path d="M-14 36 l28 0" stroke="#a855f7" stroke-width="3" stroke-linecap="round" opacity=".5"/>
+          <circle cx="26" cy="-6" r="4" fill="#ffc23c"/>
+        </g>
+        <circle cx="196" cy="150" r="3" fill="#c8b08a" opacity=".7"/>
+        <circle cx="226" cy="158" r="2.4" fill="#c8b08a" opacity=".5"/>
+        <circle cx="210" cy="166" r="2" fill="#c8b08a" opacity=".4"/>
+      </svg>
+      <h2>Dit is je boor</h2>
+      <p>Rijd naar links en rechts, en hou <b>omlaag</b> vast om je door de grond te boren. Hoe dieper je komt, hoe harder de steen — daar heb je een betere boor voor nodig.</p>
+    </div>
+
+    <div class="uitleg-paneel">
+      <svg viewBox="0 0 420 200" role="img" aria-label="Een laadruim dat halfvol zit met oplichtend erts">
+        <rect width="420" height="200" fill="#0d1324"/>
+        <g>
+          <rect x="40" y="52" width="150" height="110" rx="12" fill="#1b2440" stroke="#38bdf8" stroke-width="2"/>
+          <text x="115" y="44" font-family="Russo One" font-size="15" fill="#8fa0bd" text-anchor="middle">LAADRUIM</text>
+          <rect x="52" y="112" width="126" height="38" rx="6" fill="#0a1026"/>
+          <circle cx="74" cy="132" r="11" fill="#e08a4a"/><circle cx="74" cy="132" r="17" fill="#e08a4a" opacity=".22"/>
+          <circle cx="108" cy="128" r="10" fill="#ffc23c"/><circle cx="108" cy="128" r="16" fill="#ffc23c" opacity=".22"/>
+          <circle cx="142" cy="134" r="9" fill="#c06bff"/><circle cx="142" cy="134" r="15" fill="#c06bff" opacity=".22"/>
+          <path d="M52 108 h126" stroke="#38bdf8" stroke-width="1.5" stroke-dasharray="5 5" opacity=".6"/>
+          <text x="115" y="100" font-family="Outfit" font-size="12" fill="#8fa0bd" text-anchor="middle">hier is het vol</text>
+        </g>
+        <g transform="translate(300 106)">
+          <circle r="46" fill="#ffc23c" opacity=".13"/>
+          <circle r="26" fill="#ffc23c" opacity=".2"/>
+          <text y="10" font-family="Russo One" font-size="30" fill="#ffc23c" text-anchor="middle">€</text>
+        </g>
+        <path d="M205 106 h60" stroke="#8fa0bd" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M256 98 l12 8 l-12 8" fill="none" stroke="#8fa0bd" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <h2>Erts is geld</h2>
+      <p>Alles wat je uitboort gaat in je laadruim. Dat is <b>niet oneindig groot</b> — als het vol is, past er niets meer bij. Boven verkoop je de hele lading in één keer.</p>
+    </div>
+
+    <div class="uitleg-paneel">
+      <svg viewBox="0 0 420 200" role="img" aria-label="Een brandstofmeter in het rood, diep in een schacht">
+        <rect width="420" height="200" fill="#120c14"/>
+        <rect x="150" y="0" width="120" height="200" fill="#241a12"/>
+        <rect x="168" y="0" width="84" height="200" fill="#0a0705"/>
+        <g transform="translate(210 120)">
+          <rect x="-26" y="-18" width="52" height="28" rx="8" fill="#2b3350" stroke="#ff6150" stroke-width="2"/>
+          <circle cx="-13" cy="12" r="7" fill="#151b2c" stroke="#8fa0bd" stroke-width="1.8"/>
+          <circle cx="13" cy="12" r="7" fill="#151b2c" stroke="#8fa0bd" stroke-width="1.8"/>
+          <path d="M-7 10 l14 0 l-7 20 z" fill="#ff6150"/>
+        </g>
+        <g transform="translate(60 70)">
+          <rect x="0" y="0" width="76" height="24" rx="12" fill="#0a1026" stroke="#ff6150" stroke-width="2"/>
+          <rect x="4" y="4" width="14" height="16" rx="8" fill="#ff6150"/>
+          <text x="38" y="-10" font-family="Russo One" font-size="13" fill="#ff6150" text-anchor="middle">BIJNA LEEG</text>
+        </g>
+        <g transform="translate(330 84)" opacity=".95">
+          <circle r="30" fill="none" stroke="#ff6150" stroke-width="3"/>
+          <path d="M0 -14 v18" stroke="#ff6150" stroke-width="5" stroke-linecap="round"/>
+          <circle cy="14" r="3.4" fill="#ff6150"/>
+        </g>
+        <text x="210" y="185" font-family="Outfit" font-size="13" fill="#8fa0bd" text-anchor="middle">nog 320 meter naar boven…</text>
+      </svg>
+      <h2>Let op je brandstof</h2>
+      <p>De meter loopt de hele tijd door, en <b>omhoog vliegen kost het meest</b>. Raakt hij leeg terwijl je onder de grond bent, dan ben je dood. Onder de grond is nergens brandstof te vinden.</p>
+    </div>
+
+    <div class="uitleg-paneel">
+      <svg viewBox="0 0 420 200" role="img" aria-label="De mijnbasis met verkooploods en werkplaats">
+        <rect width="420" height="200" fill="#0a1026"/>
+        <circle cx="60" cy="30" r="1.5" fill="#fff" opacity=".7"/><circle cx="150" cy="20" r="1.2" fill="#fff" opacity=".5"/>
+        <circle cx="260" cy="34" r="1.6" fill="#fff" opacity=".8"/><circle cx="370" cy="22" r="1.3" fill="#fff" opacity=".6"/>
+        <rect y="140" width="420" height="60" fill="#3a2a16"/>
+        <rect y="136" width="420" height="6" fill="#6b4f2a"/>
+        <g>
+          <path d="M40 140 v-52 h84 v52 z" fill="#1b2440" stroke="#ffc23c" stroke-width="2"/>
+          <path d="M32 88 l50 -26 l50 26 z" fill="#2b3350" stroke="#ffc23c" stroke-width="2"/>
+          <rect x="66" y="104" width="32" height="36" rx="4" fill="#ffc23c" opacity=".85"/>
+          <text x="82" y="78" font-family="Russo One" font-size="11" fill="#ffc23c" text-anchor="middle">VERKOOP</text>
+        </g>
+        <g>
+          <path d="M170 140 v-44 h76 v44 z" fill="#1b2440" stroke="#06d6a0" stroke-width="2"/>
+          <rect x="186" y="108" width="44" height="32" rx="4" fill="#06d6a0" opacity=".8"/>
+          <text x="208" y="88" font-family="Russo One" font-size="11" fill="#06d6a0" text-anchor="middle">WERKPLAATS</text>
+        </g>
+        <g>
+          <rect x="292" y="98" width="30" height="42" rx="6" fill="#1b2440" stroke="#38bdf8" stroke-width="2"/>
+          <path d="M322 112 h14 v22" fill="none" stroke="#38bdf8" stroke-width="2.5" stroke-linecap="round"/>
+          <rect x="299" y="106" width="16" height="12" rx="3" fill="#38bdf8" opacity=".85"/>
+          <text x="318" y="90" font-family="Russo One" font-size="11" fill="#38bdf8" text-anchor="middle">TANKEN</text>
+        </g>
+        <g transform="translate(378 128)">
+          <rect x="-18" y="-12" width="36" height="20" rx="6" fill="#2b3350" stroke="#a855f7" stroke-width="1.6"/>
+          <circle cx="-9" cy="9" r="5" fill="#151b2c" stroke="#8fa0bd" stroke-width="1.4"/>
+          <circle cx="9" cy="9" r="5" fill="#151b2c" stroke="#8fa0bd" stroke-width="1.4"/>
+        </g>
+      </svg>
+      <h2>Ga op tijd terug</h2>
+      <p>Kom je heelhuids boven, dan verkoop je je lading, tank je <b>gratis</b> vol en koop je betere spullen in de werkplaats. Daarna mag je opnieuw duiken.</p>
+    </div>
+
+    <div class="uitleg-paneel">
+      <svg viewBox="0 0 420 200" role="img" aria-label="Doodgaan kost je lading en je overgebleven duiken">
+        <rect width="420" height="200" fill="#160d12"/>
+        <g transform="translate(112 96)">
+          <rect x="-58" y="-40" width="116" height="80" rx="12" fill="#1b2440" stroke="#ff6150" stroke-width="2"/>
+          <circle cx="-26" cy="8" r="11" fill="#e08a4a" opacity=".5"/>
+          <circle cx="4" cy="4" r="10" fill="#ffc23c" opacity=".5"/>
+          <circle cx="32" cy="10" r="9" fill="#c06bff" opacity=".5"/>
+          <text y="-18" font-family="Russo One" font-size="12" fill="#8fa0bd" text-anchor="middle">JE LADING</text>
+          <path d="M-58 40 L58 -40" stroke="#ff6150" stroke-width="6" stroke-linecap="round"/>
+          <path d="M-58 -40 L58 40" stroke="#ff6150" stroke-width="6" stroke-linecap="round"/>
+        </g>
+        <g transform="translate(300 96)">
+          <text y="-30" font-family="Russo One" font-size="12" fill="#8fa0bd" text-anchor="middle">JE DUIKEN</text>
+          <circle cx="-40" r="15" fill="none" stroke="#ff6150" stroke-width="2.5"/>
+          <path d="M-49 -9 l18 18 M-49 9 l18 -18" stroke="#ff6150" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="0" r="15" fill="none" stroke="#ff6150" stroke-width="2.5"/>
+          <path d="M-9 -9 l18 18 M-9 9 l18 -18" stroke="#ff6150" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="40" r="15" fill="none" stroke="#ff6150" stroke-width="2.5"/>
+          <path d="M31 -9 l18 18 M31 9 l18 -18" stroke="#ff6150" stroke-width="3" stroke-linecap="round"/>
+          <text y="44" font-family="Outfit" font-size="13" fill="#ff6150" text-anchor="middle">allemaal weg</text>
+        </g>
+      </svg>
+      <h2>Doodgaan kost alles van deze keer</h2>
+      <p>Je lading is weg <b>én al je overgebleven duiken</b>. Daarna moet je eerst weer een oefening maken voordat je opnieuw mag. Wat je al veilig had — je erts en je upgrades — blijft altijd staan.</p>
+    </div>
+
+    <div class="stippen" id="stippen"></div>
+    <button class="knop" id="uitleg-door">Volgende →</button>
+  </div>
+</div>
+
+<!-- ── Basis ────────────────────────────────────────────────────────────── -->
+<div class="scherm" id="basis">
+  <div class="basis-kop">
+    <h1>Diepgravers</h1>
+    <span class="erts-saldo" id="saldo">0</span>
+    <div class="duiken" id="duikbollen"></div>
+  </div>
+  <p class="zacht" id="basis-regel">Klaar om te duiken.</p>
+
+  <div class="balken">
+    <span class="mini">diepterecord <b id="record">0 m</b></span>
+    <span class="mini">nu tot <b id="haalbaar">laag 1</b></span>
+    <span class="mini">wereld <b id="wereld-nu">De Oude Mijn</b></span>
+    <span class="mini" id="baas-mini" hidden>🏆 <b>Sterrenkern gehaald</b></span>
+  </div>
+
+  <!-- Winkel: drie tabbladen, met links een levend portret van je graafwagen
+       zodat je meteen ziet wat een lak of upgrade met hem doet. -->
+  <div class="winkel">
+    <div class="portret">
+      <canvas id="portret-doek" width="260" height="190"></canvas>
+      <div class="portret-naam" id="portret-naam">Staalgrijs</div>
+      <div class="portret-stats" id="portret-stats"></div>
+    </div>
+
+    <div class="winkel-rechts">
+      <div class="tabs" id="tabs">
+        <button class="tab aan" data-tab="werkplaats">🔧 Werkplaats</button>
+        <button class="tab" data-tab="lakken">🎨 Lakken</button>
+        <button class="tab" data-tab="werelden">🌍 Werelden</button>
+      </div>
+      <div class="sporen" id="sporen"></div>
+      <div class="rooster" id="lakken" hidden></div>
+      <div class="rooster breed" id="werelden" hidden></div>
+    </div>
+  </div>
+
+  <div class="basis-onder">
+    <button class="knop groen" id="duik-knop">⛏ Duiken</button>
+    <button class="knop stil" id="uitleg-knop">Uitleg opnieuw</button>
+    <button class="knop stil" id="klaar-knop" hidden>Verder →</button>
+  </div>
+</div>
+
+<!-- ── Dood ─────────────────────────────────────────────────────────────── -->
+<div class="scherm" id="dood">
+  <div class="melding fout">
+    <div class="groot" id="dood-icoon">💀</div>
+    <h2 id="dood-titel">Je bent er geweest</h2>
+    <p class="zacht" id="dood-reden"></p>
+    <div class="verlies">
+      <div>Lading kwijt: <span id="dood-lading">0</span></div>
+      <div>Duiken kwijt: <span id="dood-duiken">0</span></div>
+      <div class="zacht">Je erts en je upgrades staan er nog.</div>
+    </div>
+    <button class="knop" id="dood-door">Verder</button>
+  </div>
+</div>
+
+<!-- ── Geen duiken meer ─────────────────────────────────────────────────── -->
+<div class="scherm" id="slot">
+  <div class="melding">
+    <div class="groot">🔒</div>
+    <h2>Je duiken zijn op</h2>
+    <p class="zacht">Maak een oefening in Kenniskist, dan mag je weer 3 keer duiken.</p>
+    <div class="basis-onder">
+      <button class="knop stil" id="slot-winkel">Bekijk de werkplaats</button>
+      <button class="knop" id="slot-door">Terug</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Gewonnen ─────────────────────────────────────────────────────────── -->
+<div class="scherm" id="winst">
+  <div class="melding">
+    <div class="groot">🌟</div>
+    <h2>De Sterrenkern is van jou</h2>
+    <p class="zacht">Je hebt de Magmaworm verslagen en de bodem van de wereld gehaald. In je basis staat vanaf nu een plaquette.</p>
+    <button class="knop groen" id="winst-door">Terug naar de basis</button>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script src="spel.js"></script>
+</body>
+</html>

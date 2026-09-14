@@ -80,6 +80,7 @@ const SPELLEN = [
   { key: 'hillclimb',  emoji: '🚗', name: 'Bergrijden',     desc: 'Rij tot je crasht',                img: '/scenes/games/hillclimb.png' },
   { key: 'fruitsabel', emoji: '🍉', name: 'Fruitsabel',     desc: 'Snijd 60 seconden fruit',          img: '/scenes/games/fruitsabel.svg' },
   { key: 'sterrenveer', emoji: '🌠', name: 'Sterrenveer',   desc: 'Speel 1 level',                    img: '/scenes/games/sterrenveer.svg' },
+  { key: 'graven',     emoji: '⛏️', name: 'Diepgravers',    desc: 'Je krijgt 3 duiken',               img: '/scenes/games/graven.svg' },
 ]
 
 export default function SpelBeloning({ title, sub, geld, addCuruntie, onDone }) {
@@ -109,6 +110,10 @@ export default function SpelBeloning({ title, sub, geld, addCuruntie, onDone }) 
   // Deze twee hebben een eigen winkeltje: na het potje mag je eerst je munten
   // uitgeven en ga je met "Verder" zelf terug naar de oefening.
   if (picked === 'fruitsabel') return <IframeEmbed src="/fruitsabel/" title="Fruitsabel" doneType="fruitsabel-gameover" hint="Speel 1 potje — daarna kun je upgraden en op Verder klikken 🍉" onDone={onDone} />
+  // Diepgravers geeft 3 duiken per beloning; gaat een kind dood, dan zijn de
+  // resterende duiken meteen weg (dat is de hele opzet, zie het spel zelf).
+  // Net als Fruitsabel eindigt het niet vanzelf: eerst upgraden, dan Verder.
+  if (picked === 'graven')     return <IframeEmbed src="/graven/" title="Diepgravers" doneType="graven-gameover" hint="Je krijgt 3 duiken — daarna kun je upgraden en op Verder klikken ⛏️" onDone={onDone} />
 
   return (
     <div className="sb-screen">
