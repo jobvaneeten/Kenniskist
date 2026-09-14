@@ -121,6 +121,7 @@
     // Een waarschuwing van tijdens de duik ("brandstof raakt op") mag niet
     // over het doodscherm blijven hangen.
     if (!duikt) { $('waarschuwing').classList.remove('aan'); meldTimer = 0 }
+    if (!duikt) { $('stoppen').hidden = true; $('stop-chip').hidden = true }
     if (duikt) stopMenuBeeld()
     else startMenuBeeld()
   }
@@ -232,6 +233,7 @@
     sp.boorRichting = null; sp.boorVoortgang = 0
     sp.raakCooldown = 0; sp.schud = 0
     sp.onderGeweest = false
+    duikOpbrengst = 0
     laatsteLaag = -1
     vallers.length = 0
     knallen.length = 0
@@ -589,14 +591,46 @@
   function checkBoven() {
     if (!sp.onderGeweest) { if (diepteMeter() > 6) sp.onderGeweest = true; return }
     if (sp.y + sp.h / 2 > -1) return
+    // Boven de grond staat de handelaar klaar: je lading gaat meteen van boord,
+    // zodat je met een leeg laadruim weer naar beneden kunt. De graafbeurt zelf
+    // loopt door — die eindigt alleen als je er zelf voor kiest met E.
+    const opbrengst = verkoopLading()
+    if (opbrengst <= 0) return
+    duikOpbrengst += opbrengst
+    bewaar()
+    banner('+ ' + opbrengst.toLocaleString('nl-NL'), 'erts verkocht', '#ffc23c')
+    melding('Verkocht! Duik weer naar beneden, of stop met E', 1800)
+  }
+
+  // Bovengekomen mag je zelf stoppen met E (of de knop op een tablet): de
+  // graafbeurt eindigt, je lading wordt verkocht en je tank is bij de volgende
+  // duik weer vol. De duik is bij het starten al afgeschreven, dus stoppen kost
+  // evenveel als doodgaan — alleen ga je nu mét je erts naar huis.
+  //
+  // Bewust alleen vlak onder de oppervlakte: dieper in de mijn moet je nog
+  // steeds zélf zien thuis te komen, anders is er niets meer aan. Zodra het
+  // mag staat het groot in beeld, zodat een kind niet hoeft te raden welke
+  // toets dat doet.
+  const STOP_DIEPTE = 12   // meter; ongeveer de bovenste zes rijen
+  const magStoppen = () => bezig && sp.onderGeweest && diepteMeter() <= STOP_DIEPTE
+
+  function rondDuikAf() {
+    if (!bezig) return
     bezig = false
     const opbrengst = verkoopLading()
+    duikOpbrengst += opbrengst
     bewaar()
     if (opbrengst > 0) banner('+ ' + opbrengst.toLocaleString('nl-NL'), 'erts verkocht', '#ffc23c')
-    naarBasis(opbrengst > 0
-      ? `Verkocht voor ${opbrengst.toLocaleString('nl-NL')} erts. Tank is weer vol.`
+    // De regel in de basis gaat over de hele graafbeurt, niet over dit laatste
+    // laadruim: wie tussendoor al bovenkwam heeft toen al verkocht.
+    naarBasis(duikOpbrengst > 0
+      ? `Verkocht voor ${duikOpbrengst.toLocaleString('nl-NL')} erts. Tank is weer vol.`
       : 'Niets meegenomen deze keer.')
   }
+
+  // Wat deze hele graafbeurt heeft opgeleverd, inclusief wat je tussendoor
+  // bovengronds al verkocht hebt.
+  let duikOpbrengst = 0
 
   function verkoopLading() {
     const w = ladingWaarde()
@@ -1684,6 +1718,8 @@
     $('romp-vul').firstElementChild.style.width = Math.max(0, sp.romp / maxRomp() * 100) + '%'
     $('diepte').textContent = diepteMeter() + ' m'
     $('waarde').textContent = ladingWaarde()
+    $('stoppen').hidden = !magStoppen()
+    $('stop-chip').hidden = !magStoppen()
   }
 
   // ── 6. Schermen ─────────────────────────────────────────────────────────
@@ -2007,11 +2043,15 @@
     ArrowDown: 'omlaag', KeyS: 'omlaag',
   }
   addEventListener('keydown', e => {
+    if (e.code === 'KeyE') { e.preventDefault(); if (magStoppen()) rondDuikAf(); return }
     const t = kaart[e.code]
     if (!t) return
     e.preventDefault()
     toetsen[t] = true
   })
+  const stopTik = (e) => { e.preventDefault(); if (magStoppen()) rondDuikAf() }
+  $('stoppen').querySelector('b').addEventListener('pointerdown', stopTik)
+  $('stop-chip').addEventListener('pointerdown', stopTik)
   addEventListener('keyup', e => { const t = kaart[e.code]; if (t) toetsen[t] = false })
 
   const aanraakbaar = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window
