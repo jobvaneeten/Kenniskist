@@ -130,11 +130,11 @@ export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
     if (zalKlaarZijn) {
       setTimeout(() => {
         setFeedback(null)
-        opdracht.registreer(correct, { vraag: q.zin, antwoord: label, juist: q.woordsoort })
+        opdracht.registreer(correct, { vraag: q.zin, antwoord: label, juist: q.woordsoort, cat: q.woordsoort, catLabel: q.woordsoort })
       }, 1400)
       return
     }
-    opdracht.registreer(correct, { vraag: q.zin, antwoord: label, juist: q.woordsoort })
+    opdracht.registreer(correct, { vraag: q.zin, antwoord: label, juist: q.woordsoort, cat: q.woordsoort, catLabel: q.woordsoort })
 
     if (correct) {
       const newCount = correctCount + 1

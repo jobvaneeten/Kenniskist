@@ -130,7 +130,8 @@ function Oefenspel({ tafels, soort, onKlaar, weektaakModus, onOpslaanMislukt }) 
   const check = () => {
     const jouw = parseInt(input, 10)
     const goed = jouw === vraag.antwoord
-    const res = { tafel: vraag.tafel, links: vraag.links, sym: vraag.sym, rechts: vraag.rechts, antwoord: vraag.antwoord, jouw, goed }
+    const res = { tafel: vraag.tafel, links: vraag.links, sym: vraag.sym, rechts: vraag.rechts, antwoord: vraag.antwoord, jouw, goed,
+      cat: `tafel-${vraag.tafel}`, catLabel: `Tafel van ${vraag.tafel}` }
     setResultaten(prev => [...prev, res])
     if (weektaakModus) {
       const opslaan = window.KennisKist?.slaResultaatOp?.('tafels', goed ? 1 : 0, 1, { opgaven: [res] })

@@ -234,6 +234,12 @@ export default function Zinsdelen({
   // misser zat.
   function rondAf() {
     const correct = misgeklikt.size === 0
+    // Per zinsdeel apart doorgeven: het portaal maakt daar "onderwerp 10/10,
+    // gezegde 3/10" van. Eén zin telt als één opgave, maar raakt meerdere
+    // onderdelen — vandaar `cats` in plaats van één `cat`.
+    const cats = huidig.stappen.map(st => ({
+      cat: st.zinsdeel, catLabel: st.zinsdeel, goed: !misgeklikt.has(st.zinsdeel),
+    }))
     setZinKlaar(true)
     setZinGoed(correct)
     if (correct) setCorrectCount(c => c + 1)
@@ -241,13 +247,13 @@ export default function Zinsdelen({
     // Bij de laatste opgave van een weektaak pas registreren als de leerling
     // de uitleg gelezen heeft en op "Verder" klikt — anders klapt het
     // klaar-scherm er meteen overheen.
-    if (zalKlaarZijn) setWachtOpAfronden({ correct })
-    else opdracht.registreer(correct, { vraag: huidig.zin, goedInEenKeer: correct })
+    if (zalKlaarZijn) setWachtOpAfronden({ correct, cats })
+    else opdracht.registreer(correct, { vraag: huidig.zin, goedInEenKeer: correct, cats })
   }
 
   function naZin() {
     if (wachtOpAfronden) {
-      opdracht.registreer(wachtOpAfronden.correct, { vraag: huidig.zin, goedInEenKeer: wachtOpAfronden.correct })
+      opdracht.registreer(wachtOpAfronden.correct, { vraag: huidig.zin, goedInEenKeer: wachtOpAfronden.correct, cats: wachtOpAfronden.cats })
       setWachtOpAfronden(null)
       return
     }

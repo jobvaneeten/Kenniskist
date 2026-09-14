@@ -14,49 +14,72 @@ const CATEGORIE_LABELS = {
   vd: 'Voltooid deelwoord',
 }
 
-// Samenvatting per spellingregel/doel. Alleen tools die een `cat` per opgave
-// loggen leveren hier iets op (werkwoordspelling; verhaaltjessommen via
-// catLabel). Staat bewust ónder de foutenlijst: dit toont patronen, niet de
-// losse fouten waar je mee begint.
-function FoutenPerCategorie({ resultaten }) {
+// Overzicht per onderdeel: welke categorie, welk zinsdeel, welk doel gaat goed
+// en welk niet — "onderwerp 10/10, gezegde 3/10". Dit staat bovenaan, want een
+// leerkracht wil eerst het patroon zien en pas daarna de losse fouten.
+//
+// Tools leveren dit per opgave aan als `cat` (+ optioneel `catLabel`). Eén
+// opgave kan ook meerdere onderdelen raken — Zinsdelen kijkt in één zin naar
+// het onderwerp én het gezegde — en levert dan `cats: [{ cat, catLabel, goed }]`.
+function PerOnderdeel({ resultaten }) {
   const perTool = {}
+  const tel = (toolId, cat, label, goed) => {
+    const tellingen = perTool[toolId] ?? (perTool[toolId] = {})
+    const t = tellingen[cat] ?? (tellingen[cat] = { goed: 0, totaal: 0, label: null })
+    if (label && !t.label) t.label = label
+    t.totaal++
+    if (goed) t.goed++
+  }
+
   for (const r of resultaten) {
     const opgaven = r.details_json?.opgaven
     if (!Array.isArray(opgaven)) continue
     for (const o of opgaven) {
-      if (!o.cat) continue
-      const tellingen = perTool[r.tool_id] ?? (perTool[r.tool_id] = {})
-      if (!tellingen[o.cat]) tellingen[o.cat] = { goed: 0, fout: 0, label: o.catLabel }
-      tellingen[o.cat][o.goed ? 'goed' : 'fout']++
+      if (Array.isArray(o.cats)) {
+        for (const c of o.cats) if (c?.cat) tel(r.tool_id, c.cat, c.catLabel, c.goed)
+      } else if (o.cat) {
+        tel(r.tool_id, o.cat, o.catLabel, o.goed)
+      }
     }
   }
+
   const toolIds = Object.keys(perTool)
   if (toolIds.length === 0) return null
 
   return (
     <div className="portaal-kaart">
-      <h2>Fouten per categorie</h2>
+      <h2>Waar zit het in?</h2>
+      <p className="portaal-zacht" style={{ margin: '0 0 14px' }}>
+        Per onderdeel hoeveel er goed ging. De zwakste plek staat bovenaan.
+      </p>
       {toolIds.map(toolId => {
-        const tellingen = perTool[toolId]
+        const rijen = Object.entries(perTool[toolId])
+          .map(([cat, t]) => ({
+            cat,
+            label: t.label ?? CATEGORIE_LABELS[cat] ?? cat,
+            goed: t.goed,
+            totaal: t.totaal,
+            pct: Math.round((t.goed / t.totaal) * 100),
+          }))
+          .sort((a, b) => a.pct - b.pct)
         return (
           <div key={toolId} style={{ marginBottom: 18 }}>
             <h3 style={{ margin: '0 0 8px', fontSize: '0.95rem' }}>{toolLabel(toolId)}</h3>
             <table className="portaal-tabel">
-              <thead><tr><th>Categorie</th><th>Goed</th><th>Fout</th><th>Percentage</th></tr></thead>
+              <thead><tr><th>Onderdeel</th><th>Goed</th><th>Score</th></tr></thead>
               <tbody>
-                {Object.keys(tellingen).map(cat => {
-                  const { goed, fout, label } = tellingen[cat]
-                  const totaal = goed + fout
-                  const pct = totaal ? Math.round((goed / totaal) * 100) : 0
-                  return (
-                    <tr key={cat}>
-                      <td>{label ?? CATEGORIE_LABELS[cat] ?? cat}</td>
-                      <td>{goed}</td>
-                      <td>{fout}</td>
-                      <td><span className={scoreKlasse(pct)}>{pct}%</span></td>
-                    </tr>
-                  )
-                })}
+                {rijen.map(r => (
+                  <tr key={r.cat}>
+                    <td>{r.label}</td>
+                    <td>{r.goed}/{r.totaal}</td>
+                    <td>
+                      <span className="portaal-scorecel">
+                        <Balk pct={r.pct} />
+                        <span className={scoreKlasse(r.pct)}>{r.pct}%</span>
+                      </span>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
@@ -285,8 +308,10 @@ export default function LeerlingDetail({ leerlingId, bereik, herkomst }) {
         <>
           <LeerlingCijfers rijen={gefilterd} />
 
+          <PerOnderdeel resultaten={gefilterd} />
+
           <div className="portaal-kaart">
-            <h2>Wat ging er fout?</h2>
+            <h2>Wat ging er precies fout?</h2>
             <FoutenLijst rijen={gefilterd} />
           </div>
 
@@ -294,8 +319,6 @@ export default function LeerlingDetail({ leerlingId, bereik, herkomst }) {
             <h2>Wat is er gemaakt?</h2>
             <Sessies sessies={sessies} />
           </div>
-
-          <FoutenPerCategorie resultaten={gefilterd} />
         </>
       )}
     </>

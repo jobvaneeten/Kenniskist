@@ -904,6 +904,18 @@ const speakerEl=$('speaker'),answerEl=$('answer'),grid=$('animalGrid');
 
 /* ===== STATE ===== */
 let queue=[],idx=0,spellPts=0,animalPts=0,goodAnswers=0,lastBreakAt=0,spellOk=false,animalOk=false,selected=new Set(),locked=false;
+// Per woord bijhouden wat er getypt is en bij welke spellingcategorie het hoort.
+// Het portaal maakt daar het overzicht per categorie van ("ei/ij 8/10") en de
+// foutenlijst eronder; tot nu toe gingen er helemaal geen opgaven mee.
+const kkOpgaven=[];
+function kkNoteer(item,getypt,ok){
+  const catId=(item.a&&item.a[0]&&item.a[0][0])||null;
+  const cat=catId?ANIMALS.find(a=>a.id===catId):null;
+  kkOpgaven.push({
+    vraag:item.w, antwoord:getypt, juist:item.w, goed:ok,
+    cat:catId||undefined, catLabel:cat?(cat.rule||cat.nm):undefined,
+  });
+}
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 // Weektaak-opdracht kan het dictee inkorten: ?woorden=15 laat de leerling er
 // 15 doen in plaats van de hele lijst. Zonder de parameter verandert er niets.
@@ -924,7 +936,7 @@ function buildGrid(){
 }
 
 function startGame(){
-  queue=kkBeperk(shuffle(WORDS));idx=0;spellPts=0;animalPts=0;goodAnswers=0;lastBreakAt=0;spellOk=false;animalOk=false;
+  queue=kkBeperk(shuffle(WORDS));idx=0;kkOpgaven.length=0;spellPts=0;animalPts=0;goodAnswers=0;lastBreakAt=0;spellOk=false;animalOk=false;
   screenStart.classList.add('hide');screenEnd.classList.add('hide');screenGame.classList.remove('hide');
   buildGrid();showWord();
 }
@@ -955,6 +967,7 @@ function checkSpelling(){
   const target=norm(item.w);
   const ok=typed===target||typed.toLowerCase()===target.toLowerCase();
   if(ok){spellPts++;spellOk=true;}
+  kkNoteer(item,answerEl.value.trim(),ok);
   answerEl.blur();
   phaseA.classList.add('hide');phaseB.classList.remove('hide');
   $('verdict').textContent=ok?'Goed gespeld!':'Bijna!';
@@ -1025,7 +1038,7 @@ function finish(){
   // Naar het portaal gaat het aantal woorden, niet de punten: de weektaak
   // telt in woorden ("8/12"), en het scherm hierboven blijft de punten
   // tonen inclusief het dierenspel.
-  window.KennisKist?.slaResultaatOp?.('dictee-categorie', spellPts, total, null);
+  window.KennisKist?.slaResultaatOp?.('dictee-categorie', spellPts, total, { opgaven: kkOpgaven.slice() });
   window.KennisKist?.toonInlogstatus?.(document.getElementById('kkStatus'));
 }
 
@@ -1099,7 +1112,7 @@ $('startInfo').textContent=`${WORDS.length} woorden \u00b7 ${ANIMALS.length} die
   var _startGame = startGame;
   startGame = function(){
     var words = (typeof __catFilter==='string') ? WORDS.filter(function(w){ return w.a.some(function(x){ return x[0]===__catFilter; }); }) : WORDS;
-    queue = kkBeperk(shuffle(words)); idx=0; spellPts=0; animalPts=0; goodAnswers=0; lastBreakAt=0; spellOk=false; animalOk=false;
+    queue = kkBeperk(shuffle(words)); idx=0; kkOpgaven.length=0; spellPts=0; animalPts=0; goodAnswers=0; lastBreakAt=0; spellOk=false; animalOk=false;
     screenStart.classList.add('hide'); screenEnd.classList.add('hide'); sec.classList.add('hide'); screenGame.classList.remove('hide');
     buildGrid(); showWord();
   };
@@ -1130,7 +1143,7 @@ $('startInfo').textContent=`${WORDS.length} woorden \u00b7 ${ANIMALS.length} die
   startGame = function(){
     var words = WORDS.filter(function(w){ return w.a.some(function(x){ return lijst.indexOf(x[0]) !== -1; }); });
     if (!words.length) words = WORDS;
-    queue = kkBeperk(shuffle(words)); idx=0; spellPts=0; animalPts=0; goodAnswers=0; lastBreakAt=0; spellOk=false; animalOk=false;
+    queue = kkBeperk(shuffle(words)); idx=0; kkOpgaven.length=0; spellPts=0; animalPts=0; goodAnswers=0; lastBreakAt=0; spellOk=false; animalOk=false;
     screenStart.classList.add('hide'); screenEnd.classList.add('hide');
     var catSec = document.getElementById('screen-cat'); if (catSec) catSec.classList.add('hide');
     screenGame.classList.remove('hide');
