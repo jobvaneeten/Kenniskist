@@ -41,16 +41,22 @@
   color: rgba(255, 255, 255, .8);
 }
 
-/* Timer stil: alles dempt, zodat meteen duidelijk is dat er niets meer loopt. */
-.lt-stil .lt-klok {
-  color: rgba(255, 255, 255, .35);
-  text-shadow: none;
+/* Pauzeknop: bewust rustiger dan de startknop — stoppen mag, maar hoeft
+   niet te lonken. */
+.lt-pauzeknop {
+  padding: 12px 28px;
+  border: 1px solid rgba(255, 255, 255, .22);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, .08);
+  color: rgba(255, 255, 255, .85);
+  font-family: 'Baloo 2', system-ui, sans-serif;
+  font-size: 1rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background .15s, transform .1s;
 }
-.lt-stil .lt-balk-vul {
-  background: rgba(255, 255, 255, .25);
-  box-shadow: none;
-}
-.lt-stil .lt-status { color: #ffb020; }
+.lt-pauzeknop:hover { background: rgba(255, 255, 255, .16); }
+.lt-pauzeknop:active { transform: scale(.97); }
 
 .lt-startknop {
   margin-top: 22px;

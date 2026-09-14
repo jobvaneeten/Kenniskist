@@ -1,35 +1,21 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useGebruikOpdracht } from './gebruikOpdracht.js'
+import { doelMinuten, leesStand, schrijfStand, wisStand, verstreken } from '../lib/leestimerOpslag.js'
 import './lees-timer.css'
 
 // Stil lezen als weektaak-opdracht: geen vragen, geen scherm om naar te
 // kijken — alleen een timer die loopt terwijl het kind in zijn boek leest.
 //
-// Twee dingen maken dit een taak en geen kookwekker:
-//   • Tijdens het lopen is er geen uitgang. De terugknop verdwijnt, zodat het
-//     kind die kwartier ook echt niet iets anders in Kenniskist kan doen.
-//   • De klok telt alleen als dit scherm vóór staat (zichtbaar én in focus).
-//     Wegklikken naar een spelletje of een ander tabblad zet de timer stil in
-//     plaats van hem door te laten lopen.
+// De klok rekent met échte kloktijd (zie lib/leestimerOpslag.js), niet met
+// tikken. Gaat de iPad in slaapstand, valt het tabblad weg of herlaadt de
+// pagina midden in een leesbeurt, dan telt de tijd gewoon door — precies wat je
+// wilt bij een kind dat in een papieren boek leest. Daarbovenop vraagt dit
+// scherm een Wake Lock aan, zodat het scherm zo lang mogelijk aanblijft.
 //
-// De verstreken tijd staat in localStorage, per opdracht. Herladen of even
-// wegklikken kost dus geen voortgang — maar levert ook niets op.
-const STANDAARD_MINUTEN = 15
+// Stoppen doe je expliciet: de pauzeknop, of teruggaan naar de weektaak. Beide
+// zetten de verstreken tijd vast. Op de weektaakkaart staat dan hoeveel
+// minuten er nog te lezen zijn; de opdracht blijft open tot ze gelezen zijn.
 const BRIEFGELD_PER_MINUUT = 10
-const VERVALT_NA_MS = 24 * 60 * 60 * 1000
-
-function sleutelVoor(opdrachtId) {
-  return `kk_leestimer_${opdrachtId ?? 'vrij'}`
-}
-
-function leesOpgeslagen(sleutel, doelSeconden) {
-  try {
-    const d = JSON.parse(localStorage.getItem(sleutel) || 'null')
-    if (!d || d.doel !== doelSeconden) return 0
-    if (!d.op || Date.now() - d.op > VERVALT_NA_MS) return 0
-    return Math.min(doelSeconden, Math.max(0, d.seconden | 0))
-  } catch { return 0 }
-}
 
 const minutenTekst = (n) => `${n} ${n === 1 ? 'minuut' : 'minuten'}`
 
@@ -40,38 +26,85 @@ function klok(seconden) {
 }
 
 export default function LeesTimer({ onBack, addBriefgeld, aantal, config, opdrachtId }) {
-  const minuten = Math.max(1, Math.min(60, parseInt(config?.minuten, 10) || STANDAARD_MINUTEN))
+  const minuten = doelMinuten(config)
   const opdrachttekst = config?.opdrachttekst?.trim()
   const doelSeconden = minuten * 60
-  const sleutel = sleutelVoor(opdrachtId)
 
   const opdracht = useGebruikOpdracht({ toolId: 'lezen-timer', aantal })
-  const [fase, setFase] = useState('start')   // start | bezig | af
-  const [seconden, setSeconden] = useState(() => leesOpgeslagen(sleutel, doelSeconden))
-  const [loopt, setLoopt] = useState(true)    // false = scherm staat niet vóór
+  const beginstand = useRef(leesStand(opdrachtId, doelSeconden)).current
+  const [stand, setStand] = useState(beginstand)
+  // Liep de timer nog toen de pagina wegviel (slaapstand, crash, herladen),
+  // dan pakken we hem meteen lopend weer op: de tijd is ondertussen ook
+  // doorgelopen, het zou raar zijn om dan op een startknop te wachten.
+  const [fase, setFase] = useState(beginstand.startOp ? 'bezig' : 'start')
+  const [, tik] = useState(0)
   const afgerondRef = useRef(false)
 
-  const bewaar = useCallback((s) => {
-    try { localStorage.setItem(sleutel, JSON.stringify({ seconden: s, doel: doelSeconden, op: Date.now() })) } catch { /* vol of privémodus */ }
-  }, [sleutel, doelSeconden])
+  const standRef = useRef(stand)
+  standRef.current = stand
 
-  // Eén tik per seconde, maar alleen als dit scherm zichtbaar is én de focus
-  // heeft. Beide checks binnen de tik zelf: een visibilitychange-listener zou
-  // het geval "ander venster ervoor" missen.
+  const zet = useCallback((nieuw) => {
+    setStand(nieuw)
+    schrijfStand(opdrachtId, doelSeconden, nieuw)
+  }, [opdrachtId, doelSeconden])
+
+  const seconden = verstreken(stand, doelSeconden)
+
+  // Vastzetten zonder de fase aan te raken: ook gebruikt bij het verlaten van
+  // het scherm, en dan is er geen component meer om een fase aan te geven.
+  const zetVast = useCallback(() => {
+    const s = standRef.current
+    if (!s.startOp) return
+    const stil = { gebankt: verstreken(s, doelSeconden), startOp: null }
+    standRef.current = stil
+    schrijfStand(opdrachtId, doelSeconden, stil)
+    return stil
+  }, [opdrachtId, doelSeconden])
+
+  const pauzeer = useCallback(() => {
+    const stil = zetVast()
+    if (stil) setStand(stil)
+    setFase(f => (f === 'bezig' ? 'pauze' : f))
+  }, [zetVast])
+
+  // Eén render per seconde zolang de timer loopt; het rekenwerk zit in
+  // verstreken(). Ook bij terugkomst uit de slaapstand meteen bijwerken, zodat
+  // de klok niet een seconde lang de oude tijd laat staan.
   useEffect(() => {
     if (fase !== 'bezig') return
-    const id = setInterval(() => {
-      const voor = document.visibilityState === 'visible' && document.hasFocus()
-      setLoopt(voor)
-      if (!voor) return
-      setSeconden(s => {
-        const nieuw = s + 1
-        if (nieuw % 5 === 0 || nieuw >= doelSeconden) bewaar(nieuw)
-        return nieuw
-      })
-    }, 1000)
-    return () => clearInterval(id)
-  }, [fase, doelSeconden, bewaar])
+    const id = setInterval(() => tik(n => n + 1), 1000)
+    const bij = () => tik(n => n + 1)
+    document.addEventListener('visibilitychange', bij)
+    return () => { clearInterval(id); document.removeEventListener('visibilitychange', bij) }
+  }, [fase])
+
+  // Scherm wakker houden terwijl er gelezen wordt. iPadOS geeft de lock terug
+  // zodra het tabblad even weg is geweest, dus opnieuw aanvragen bij terugkomst.
+  useEffect(() => {
+    if (fase !== 'bezig') return
+    let lock = null
+    let levend = true
+    const vraag = async () => {
+      try {
+        if (!levend || !navigator.wakeLock) return
+        lock = await navigator.wakeLock.request('screen')
+      } catch { /* batterijbesparing of geen ondersteuning — niet erg */ }
+    }
+    const opnieuw = () => { if (document.visibilityState === 'visible') vraag() }
+    vraag()
+    document.addEventListener('visibilitychange', opnieuw)
+    return () => {
+      levend = false
+      document.removeEventListener('visibilitychange', opnieuw)
+      lock?.release?.().catch(() => {})
+    }
+  }, [fase])
+
+  // Weg van dit scherm (terugknop, of het hele menu sluit) = pauze. Anders zou
+  // een lopende startOp blijven staan en zou het kind na een uur iets anders
+  // doen zijn leesbeurt "af" hebben. Alleen de opslag, geen fase: in StrictMode
+  // is een unmount niet altijd echt het einde.
+  useEffect(() => zetVast, [zetVast])
 
   // Klaar: één keer rapporteren (score 1 van 1, zodat de weektaak deze sessie
   // als gemaakt telt) en de bewaarde tijd opruimen.
@@ -80,12 +113,14 @@ export default function LeesTimer({ onBack, addBriefgeld, aantal, config, opdrac
     afgerondRef.current = true
     opdracht.registreer(true, { vraag: `${minutenTekst(minuten)} lezen`, antwoord: 'uitgelezen' })
     addBriefgeld?.(minuten * BRIEFGELD_PER_MINUUT)
-    try { localStorage.removeItem(sleutel) } catch { /* niets aan te doen */ }
+    setStand({ gebankt: 0, startOp: null })
+    wisStand(opdrachtId)
     setFase('af')
-  }, [fase, seconden, doelSeconden, minuten, opdracht, addBriefgeld, sleutel])
+  }, [fase, seconden, doelSeconden, minuten, opdracht, addBriefgeld, opdrachtId])
 
   const over = Math.max(0, doelSeconden - seconden)
   const pct = Math.min(100, Math.round((seconden / doelSeconden) * 100))
+  const minutenOver = Math.ceil(over / 60)
 
   if (fase === 'af') {
     const nogNodig = opdracht.aantal != null && !opdracht.klaar
@@ -107,7 +142,11 @@ export default function LeesTimer({ onBack, addBriefgeld, aantal, config, opdrac
           {nogNodig && (
             <button
               className="lt-startknop"
-              onClick={() => { afgerondRef.current = false; setSeconden(0); setFase('bezig') }}
+              onClick={() => {
+                afgerondRef.current = false
+                zet({ gebankt: 0, startOp: Date.now() })
+                setFase('bezig')
+              }}
             >
               Nog een leesbeurt
             </button>
@@ -120,39 +159,52 @@ export default function LeesTimer({ onBack, addBriefgeld, aantal, config, opdrac
 
   if (fase === 'bezig') {
     return (
-      <div className={`game-screen game-screen-center lt-scherm${loopt ? '' : ' lt-stil'}`}>
+      <div className="game-screen game-screen-center lt-scherm">
         <div className="lt-klok">{klok(over)}</div>
         <div className="lt-balk"><div className="lt-balk-vul" style={{ width: `${pct}%` }} /></div>
-        <p className="lt-status">
-          {loopt
-            ? 'Lezen maar — de timer loopt. Deze pagina moet openblijven.'
-            : '⏸ De timer staat stil. Klik op dit scherm om verder te gaan.'}
-        </p>
+        <p className="lt-status">Lezen maar — de timer loopt gewoon door, ook als het scherm uitgaat.</p>
         {opdrachttekst && <p className="lt-opdracht">{opdrachttekst}</p>}
+        <div className="lt-knoppen">
+          <button className="lt-pauzeknop" onClick={pauzeer}>⏸ Pauze</button>
+        </div>
       </div>
     )
   }
+
+  const hervat = seconden > 0
 
   return (
     <div className="game-screen game-screen-center">
       <button className="back-btn" onClick={onBack}>← Terug naar weektaak</button>
       <div className="game-header">
-        <span className="game-header-icon">📖</span>
-        <h1 className="game-header-title">{minutenTekst(minuten)} lezen</h1>
+        <span className="game-header-icon">{fase === 'pauze' ? '⏸' : '📖'}</span>
+        <h1 className="game-header-title">
+          {fase === 'pauze' ? 'Pauze' : `${minutenTekst(minuten)} lezen`}
+        </h1>
         <p className="game-header-sub">
-          {opdrachttekst || 'Pak je leesboek erbij. Als je op start drukt loopt de timer.'}
+          {fase === 'pauze'
+            ? `Nog ${minutenTekst(minutenOver)} te lezen. De timer staat stil tot je verder gaat.`
+            : opdrachttekst || 'Pak je leesboek erbij. Als je op start drukt loopt de timer.'}
         </p>
       </div>
-      {seconden > 0 && (
-        <p className="lt-hervat">Je was al {klok(seconden)} bezig — je gaat verder waar je gebleven was.</p>
+      {fase !== 'pauze' && hervat && (
+        <p className="lt-hervat">Je hebt al {klok(seconden)} gelezen — nog {minutenTekst(minutenOver)} te gaan.</p>
       )}
       <p className="lt-uitleg">
-        Tijdens het lezen kun je niets anders doen in Kenniskist. Klik je weg, dan staat de timer stil tot je
-        terug bent.
+        Je mag tussendoor stoppen met de pauzeknop of de terugknop: je gelezen minuten blijven bewaard en je
+        leestaak is pas af als je ze allemaal hebt gelezen.
       </p>
-      <button className="lt-startknop" onClick={() => setFase('bezig')}>
-        {seconden > 0 ? 'Verder lezen' : 'Start de timer'}
+      <button
+        className="lt-startknop"
+        onClick={() => { zet({ gebankt: seconden, startOp: Date.now() }); setFase('bezig') }}
+      >
+        {hervat ? 'Verder lezen' : 'Start de timer'}
       </button>
+      {fase === 'pauze' && (
+        <div className="lt-knoppen">
+          <button className="back-btn lt-terug" onClick={onBack}>← Terug naar weektaak</button>
+        </div>
+      )}
     </div>
   )
 }

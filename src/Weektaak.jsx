@@ -1,11 +1,20 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSessie } from './lib/sessie.jsx'
 import { haalMijnWeektaak, zetActieveOpdracht, wisActieveOpdracht } from './lib/weektaak.js'
-import { toolLabel } from './lib/tools.js'
+import { toolLabel, TOOL_BY_ID } from './lib/tools.js'
+import { resterendeMinuten } from './lib/leestimerOpslag.js'
 import { isLescheck, lesLabel } from './lib/lescheck.js'
 import { groepeer, korteDatum } from './lib/weektaakMapjes.js'
 import RenderTool from './games/toolRender.jsx'
 import './game.css'
+
+// Halverwege gestopt met lezen: dan telt niet "0 / 1 gemaakt" maar hoeveel
+// minuten er nog liggen. De stand staat lokaal op dit apparaat (zie
+// lib/leestimerOpslag.js), dus dit klopt alleen op de iPad waar gelezen is.
+function leesRest(o) {
+  if (o.klaar || TOOL_BY_ID[o.toolId]?.familie !== 'lezen') return null
+  return resterendeMinuten(o.opdrachtId, o.config)
+}
 
 // Leerlingscherm: de weektaken van de eigen klas als mapjes, met daarin de
 // opdrachten die aan deze leerling zijn toegewezen. Los van GameMenu.jsx (zie
@@ -93,9 +102,11 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
               <span className="mode-desc">
                 {isLescheck(o)
                   ? (o.klaar ? 'Je som is gemaakt' : 'Eén som over de les van vandaag')
-                  : o.doel != null
-                    ? `${Math.min(o.somMax, o.doel)} / ${o.doel} gemaakt`
-                    : `${o.pogingen}× gemaakt`}
+                  : leesRest(o) != null
+                    ? `Nog ${leesRest(o)} min te lezen`
+                    : o.doel != null
+                      ? `${Math.min(o.somMax, o.doel)} / ${o.doel} gemaakt`
+                      : `${o.pogingen}× gemaakt`}
               </span>
               {/* Opnieuw gezet: door de juf of meester, of automatisch omdat er
                   minder dan de helft goed was. De teller staat dan weer op 0. */}
