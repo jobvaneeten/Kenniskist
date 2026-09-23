@@ -102,20 +102,24 @@ describe('groep 7 in het bijzonder', () => {
     }
   })
 
-  it('vraagt bij het instapdoel over kommagetallen naar plaatsen en aflezen, niet naar breuk-naar-komma', () => {
-    // Breuken omzetten in kommagetallen komt pas in blok 4; in het instapblok
-    // gaat het over een getal als 0,242 op de getallenlijn.
-    const doelen = g7.filter((g) => g.blok === 0 && /kommagetallen plaatsen/.test(g.doel))
+  it('rekent bij kommagetallen vergelijken 6,169 niet goed als 6,17 het antwoord is', () => {
+    // Het instapdoel gaat over duizendsten: het verschil tussen twee getallen
+    // is soms maar 0,001, dus het antwoord mag geen speling hebben.
+    const doelen = g7.filter((g) => g.blok === 0 && /duizendsten/.test(g.doel))
     expect(doelen.length).toBeGreaterThan(0)
-    let opDeLijn = 0
+    let vergeleken = 0
     for (const g of doelen) {
-      for (let n = 0; n < 60; n++) {
+      for (let n = 0; n < 80; n++) {
         const o = g.gen()
-        expect(String(o.vraag), 'breuk omzetten hoort hier nog niet').not.toMatch(/als kommagetal/)
-        if (o.figuur?.type === 'getallenlijn') opDeLijn++
+        expect(checkAntwoord(o.antwoord, o.antwoord), o.kaal).toBe(true)
+        const m = String(o.kaal).match(/groter: (.+) of (.+)\?/)
+        if (!m) continue
+        vergeleken++
+        const ander = m[1] === o.antwoord ? m[2] : m[1]
+        expect(checkAntwoord(ander, o.antwoord), o.kaal).toBe(false)
       }
     }
-    expect(opDeLijn, 'er hoort een kommagetal op een getallenlijn bij te zitten').toBeGreaterThan(0)
+    expect(vergeleken).toBeGreaterThan(0)
   })
 
   it('zet elke som in een situatie met een onderwerp, niet in een kale rekenregel', () => {

@@ -47,76 +47,73 @@ export const BLOKKEN = [
 const VRAGEN = {
   7: {
     // ═══════════════════════════════════════════════════════════════════════
-    // INSTAP
+    // INSTAP · schatten, 4 × 536, kommagetallen vergelijken, diagrammen
     // ═══════════════════════════════════════════════════════════════════════
     0: {
-      // ── Doel 1 · kleine som ────────────────────────────────────────────
+      // ── Doel 1 · schatten met geld en ronde getallen ───────────────────
       1: {
-        niveau: 'analyseren',
-        vraag: 'Hier staan vier sommen:\n\n1200 + 1300     1250 + 1300\n30 × 40           32 × 40\n\n'
-          + 'Bij welke sommen helpt de kleine som je echt, en bij welke niet?\n'
-          + 'Leg bij elke som uit waaraan je dat ziet.',
-        hint: 'Kijk naar de nullen aan het eind van de getallen. Wat gebeurt er als er ook nog andere cijfers staan?',
+        niveau: 'evalueren',
+        vraag: 'Je hebt € 10,- en wilt 4 pakjes sap kopen van € 2,45.\n'
+          + 'Mees schat: € 2,45 is ongeveer € 2,-. 4 × 2 = 8. Ik heb genoeg!\n\n'
+          + 'Klopt het dat Mees genoeg heeft? Leg uit waarom zijn schatting hier gevaarlijk is.\n'
+          + 'Hoe had hij beter kunnen schatten als hij zeker wil weten of het geld genoeg is?',
+        hint: 'Rond je naar beneden af, dan schat je te weinig. Wat gebeurt er als je € 2,45 naar boven afrondt?',
       },
       2: {
-        niveau: 'evalueren en creëren',
-        vraag: 'Tim rekent 1500 : 30 uit. Hij denkt: 15 : 3 = 5, dus het antwoord is 5.\n'
-          + 'Sanne zegt: nee, het is 50.\n\n'
-          + 'Wie heeft gelijk? Laat zien hoe je dat kunt controleren zonder de deling nog een keer te doen.\n'
-          + 'Bedenk daarna zelf een som waarbij deze fout heel makkelijk te maken is.',
-        hint: 'Draai het om. Als het antwoord 5 zou zijn, hoeveel is dan 30 × 5? Kan dat kloppen met 1500?',
+        niveau: 'analyseren en creëren',
+        vraag: 'Bij 1540 : 32 schat Yara: 1500 : 30 = 50.\n'
+          + 'Daan schat: 1600 : 32 = 50.\n\n'
+          + 'Allebei 50, maar ze kozen andere getallen. Wat maakt een getal "handig" om mee te delen?\n'
+          + 'Bedenk zelf een deelsom waarbij afronden op tientallen juist níet handig is, en kies betere getallen.',
+        hint: 'Een handige deling past in een tafel: 15 : 3, 16 : 4, 24 : 6. Kijk of de kleine som opgaat.',
       },
 
-      // ── Doel 2 · cijferend rekenen ─────────────────────────────────────
+      // ── Doel 2 · 4 × 536 cijferend of kolomsgewijs ─────────────────────
       3: {
         niveau: 'evalueren',
-        vraag: 'Noor rekent 432 − 263 cijferend uit. Zij komt uit op 231.\n\n'
-          + 'Reken eerst uit hoeveel het ongeveer moet zijn.\n'
-          + 'Zoek daarna kolom voor kolom uit wat Noor gedaan heeft.\n'
-          + 'Hoe had zij zelf kunnen merken dat haar antwoord niet kon kloppen?',
-        hint: 'Kijk bij de eenheden. Wat doet Noor als het bovenste cijfer kleiner is dan het onderste?',
+        vraag: 'Noor rekent 4 × 536 cijferend uit. Ze schrijft onder de streep: 20 12 24, en zegt: het antwoord is 201224.\n\n'
+          + 'Wat is er misgegaan? Leg uit wat "onthouden" betekent en waarom je dat moet doen.',
+        hint: 'Mag er op de plek van de eenheden een getal van twee cijfers staan? Waar gaan die tientjes heen?',
       },
       4: {
-        niveau: 'creëren en analyseren',
-        vraag: 'Bedenk een plussom van twee getallen van drie cijfers waarbij je twee keer moet onthouden.\n'
-          + 'Bedenk er ook één waarbij je geen enkele keer hoeft te onthouden.\n\n'
-          + 'Hoe kun je aan de getallen al zien welke van de twee het wordt, vóórdat je begint met rekenen?',
-        hint: 'Tel de cijfers per kolom bij elkaar op, van rechts naar links. Wanneer kom je boven de 9 uit?',
+        niveau: 'analyseren',
+        vraag: 'Kolomsgewijs: 4 × 500 = 2000, 4 × 30 = 120, 4 × 6 = 24. Samen 2144.\n'
+          + 'Cijferend: 4 × 6 = 24, 4 opschrijven, 2 onthouden …\n\n'
+          + 'Waar zie je in de cijferende som de 120 en de 2000 terug?\n'
+          + 'Welke manier vind jij het duidelijkst, en welke gaat sneller?',
+        hint: 'Het "onthouden" getal hoort bij de volgende kolom. Hoeveel is dat onthouden 2-tje eigenlijk waard?',
       },
 
-      // ── Doel 3 · kommagetallen en deel van een geheel ──────────────────
+      // ── Doel 3 · kommagetallen tot duizendsten vergelijken ─────────────
       6: {
-        niveau: 'evalueren en creëren',
-        vraag: 'Jesse zegt: 0,45 meter is meer dan 0,5 meter, want 45 is meer dan 5.\n\n'
-          + 'Leg uit waarom dat niet klopt.\n'
-          + 'Bedenk daarna een manier om het aan Jesse te laten zien waarbij je niets hoeft uit te rekenen.',
-        hint: 'Maak er centimeters van. Of denk aan geld: wat is meer, € 0,45 of € 0,50?',
+        niveau: 'evalueren',
+        vraag: 'Jesse zegt: 6,169 is groter dan 6,17, want 169 is meer dan 17.\n\n'
+          + 'Heeft Jesse gelijk? Leg uit hoe je twee kommagetallen eerlijk vergelijkt.\n'
+          + 'Bedenk nog twee getallen waarbij je dezelfde fout zou kunnen maken.',
+        hint: 'Maak ze even lang: schrijf 6,17 als 6,170. Vergelijk dan cijfer voor cijfer.',
       },
       7: {
-        niveau: 'analyseren en creëren',
-        vraag: 'Een kwart van de koekjes in een pak is op. Er zitten er nog 18 in.\n'
-          + 'Marijn zegt: dan zaten er 22 in, want 18 + 4 = 22.\n\n'
-          + 'Wat gaat er mis in haar denken?\n'
-          + 'Bedenk daarna zelf een vraag waarbij je net zo moet terugrekenen naar het geheel.',
-        hint: 'Teken het pak als vier gelijke vakjes. Hoeveel vakjes zijn er nog vol, en hoeveel koekjes zitten er dan in één vakje?',
+        niveau: 'creëren',
+        vraag: 'Bedenk vier kommagetallen tussen 2 en 3 die heel erg op elkaar lijken, zoals 2,6 en 2,06.\n'
+          + 'Zet ze van klein naar groot.\n\n'
+          + 'Welke van jouw getallen zou een klasgenoot het makkelijkst verkeerd neerzetten, en waarom?',
+        hint: 'Speel met de nul: 2,6 – 2,06 – 2,006 – 2,60. Welke zijn eigenlijk even groot?',
       },
 
-      // ── Doel 4 · omtrek en oppervlakte ─────────────────────────────────
+      // ── Doel 4 · lijndiagram en beelddiagram ───────────────────────────
       8: {
-        niveau: 'analyseren en creëren',
-        vraag: 'Twee rechthoeken hebben dezelfde omtrek, maar niet dezelfde oppervlakte.\n'
-          + 'Teken er twee die dat laten zien.\n\n'
-          + 'Lukt het je ook om twee rechthoeken te tekenen met dezelfde oppervlakte maar een verschillende omtrek?\n'
-          + 'Leg uit hoe dat kan.',
-        hint: 'Begin met een lange, smalle rechthoek en met eentje die bijna vierkant is. Reken bij allebei de omtrek én de oppervlakte uit.',
+        niveau: 'analyseren',
+        vraag: 'In een lijndiagram van de hoogste temperatuur gaat de lijn van dinsdag naar woensdag steil omhoog, en van woensdag naar donderdag loopt hij horizontaal.\n\n'
+          + 'Wat betekent dat voor het weer op die dagen?\n'
+          + 'Waarom gebruik je hier een lijndiagram en geen beelddiagram?',
+        hint: 'Omhoog = het wordt warmer. Horizontaal = de temperatuur blijft gelijk. Een lijn laat verandering zien.',
       },
       9: {
-        niveau: 'evalueren',
-        vraag: 'De juf wil een rechthoekige moestuin van 24 vierkante meter. Ze heeft 20 meter hek.\n\n'
-          + 'Zoek eerst alle rechthoeken van 24 m² met hele meters.\n'
-          + 'Past het hek er bij allemaal omheen?\n'
-          + 'Welke moestuin zou jij kiezen, en waarom?',
-        hint: 'Zoek de keersommen met antwoord 24: 1 × 24, 2 × 12 … Reken bij elke rechthoek de omtrek uit.',
+        niveau: 'creëren en evalueren',
+        vraag: 'In een beelddiagram staat één boekje voor 10 boeken. Groep 6 heeft in maart 45 informatieboeken geleend.\n\n'
+          + 'Hoe teken je dat? Leg uit waarom je een half boekje nodig hebt.\n'
+          + 'Wat zou je doen als het er 43 waren? Is een beelddiagram dan nog handig?',
+        hint: 'Een half boekje is de helft van 10. Hoe laat je 3 boeken zien als één plaatje al 10 is?',
       },
     },
 

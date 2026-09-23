@@ -183,6 +183,123 @@ function Figuur({ figuur }) {
       </svg>
     )
   }
+  // Onder elkaar, zoals op het werkblad: cijfers rechts uitgelijnd, een streep
+  // met × of + erachter, en eventueel één rij onder een vlek.
+  if (figuur.type === 'cijferend') {
+    const breed = Math.max(...figuur.rijen.map(r => String(r.t).length)) + 1
+    const cw = 20, rh = 28, x1 = 12 + breed * cw
+    return (
+      <svg className="rs-figuur" viewBox={`0 0 ${x1 + 28} ${figuur.rijen.length * rh + 14}`} width={x1 + 28} height={figuur.rijen.length * rh + 14}>
+        {figuur.rijen.map((r, i) => {
+          const y = 24 + i * rh, s = String(r.t)
+          return (
+            <g key={i}>
+              {i === figuur.vlek
+                ? <rect x={x1 - s.length * cw - 4} y={y - 19} width={s.length * cw + 8} height="25" rx="11" fill="#a3e635" />
+                : [...s].map((c, j) => <text key={j} x={x1 - (s.length - j - 0.5) * cw} y={y} textAnchor="middle" fill="#fffbeb" fontSize="19" fontWeight="700">{c}</text>)}
+              {r.op && <line x1={x1 - breed * cw} y1={y + 7} x2={x1} y2={y + 7} stroke="#ffd23f" strokeWidth="2" />}
+              {r.op && <text x={x1 + 8} y={y + 12} fill="#ffd23f" fontSize="17" fontWeight="800">{r.op}</text>}
+            </g>
+          )
+        })}
+      </svg>
+    )
+  }
+  if (figuur.type === 'sprongen') {
+    const x0 = 24, W = 300, y = 60, stap = W / figuur.n
+    return (
+      <svg className="rs-figuur" viewBox={`0 0 ${W + 48} 92`} width={W + 48} height="92">
+        <line x1={x0} y1={y} x2={x0 + W} y2={y} stroke="#ffd23f" strokeWidth="3" />
+        {[...Array(figuur.n + 1)].map((_, i) => <line key={i} x1={x0 + i * stap} y1={y - 7} x2={x0 + i * stap} y2={y + 7} stroke="#ffd23f" strokeWidth="2" />)}
+        {[...Array(figuur.n)].map((_, i) => (
+          <path key={i} d={`M ${x0 + i * stap + 3} ${y - 9} Q ${x0 + (i + 0.5) * stap} ${y - 48} ${x0 + (i + 1) * stap - 3} ${y - 9}`} fill="none" stroke="#7dd3fc" strokeWidth="2" />
+        ))}
+        <text x={x0} y={y + 24} textAnchor="middle" fill="#fffbeb" fontSize="13" fontWeight="700">{figuur.start.toLocaleString('nl-NL')}</text>
+        <text x={x0 + W} y={y + 24} textAnchor="middle" fill="#fffbeb" fontSize="13" fontWeight="700">{figuur.eind.toLocaleString('nl-NL')}</text>
+      </svg>
+    )
+  }
+  // Lijndiagram met de hoogste en laagste temperatuur: fijne lijnen per graad,
+  // zodat je een waarde als 27 °C echt kunt aflezen.
+  if (figuur.type === 'temp') {
+    const top = Math.ceil(Math.max(...figuur.hoog) / 5) * 5, x0 = 34, y0 = 10, per = 7, kol = 56
+    const W = figuur.dagen.length * kol, H = top * per
+    const sx = (i) => x0 + kol / 2 + i * kol, sy = (v) => y0 + H - v * per
+    const lijn = (rij, kleur) => (
+      <g>
+        <polyline points={rij.map((v, i) => `${sx(i)},${sy(v)}`).join(' ')} fill="none" stroke={kleur} strokeWidth="2.5" />
+        {rij.map((v, i) => <circle key={i} cx={sx(i)} cy={sy(v)} r="3.5" fill={kleur} />)}
+      </g>
+    )
+    return (
+      <svg className="rs-figuur" viewBox={`0 0 ${x0 + W + 10} ${y0 + H + 50}`} width={x0 + W + 10} height={y0 + H + 50}>
+        {[...Array(top + 1)].map((_, v) => (
+          <line key={v} x1={x0} y1={sy(v)} x2={x0 + W} y2={sy(v)} stroke="rgba(255,255,255,1)" strokeOpacity={v % 5 ? 0.07 : 0.22} strokeWidth="1" />
+        ))}
+        {[...Array(top / 5 + 1)].map((_, i) => <text key={i} x={x0 - 5} y={sy(i * 5)} textAnchor="end" dominantBaseline="central" fill="rgba(255,255,255,0.75)" fontSize="10">{i * 5}</text>)}
+        {figuur.dagen.map((d, i) => <line key={d} x1={sx(i)} y1={y0} x2={sx(i)} y2={y0 + H} stroke="rgba(255,255,255,0.1)" strokeWidth="1" />)}
+        {lijn(figuur.hoog, '#fb923c')}
+        {lijn(figuur.laag, '#38bdf8')}
+        {figuur.dagen.map((d, i) => <text key={d} x={sx(i)} y={y0 + H + 14} textAnchor="middle" fill="#fffbeb" fontSize="11" fontWeight="700">{d}</text>)}
+        <text x={x0} y={y0 + H + 38} fill="#fb923c" fontSize="11" fontWeight="700">● hoogste temperatuur</text>
+        <text x={x0 + W / 2 + 10} y={y0 + H + 38} fill="#38bdf8" fontSize="11" fontWeight="700">● laagste temperatuur</text>
+      </svg>
+    )
+  }
+  // Beelddiagram: één plaatje is 10 (of 100), een half plaatje de helft.
+  if (figuur.type === 'beeld') {
+    const KLEUREN = ['#a78bfa', '#34d399', '#f472b6']
+    const icoon = (kleur, half, k) => (
+      <svg key={k} width={half ? 8 : 16} height="20" viewBox={`0 0 ${half ? 8 : 16} 20`} style={{ marginRight: 2 }}>
+        <rect x="0" y="0" width="16" height="20" rx="3" fill={kleur} />
+        <rect x="3" y="4" width="10" height="2" fill="rgba(0,0,0,0.35)" />
+      </svg>
+    )
+    const plaatjes = (n, kleur) => [...Array(Math.ceil(n))].map((_, k) => icoon(kleur, k + 1 > n, k))
+    return (
+      <div className="rs-schaal">
+        <b>{figuur.titel}</b>
+        <table className="rs-vtabel rs-beeld"><tbody>
+          {figuur.rijen.map(r => (
+            <tr key={r.label}><th>{r.label}</th><td>{r.n.map((n, s) => <span key={s} className="rs-beeld-groep">{plaatjes(n, KLEUREN[s])}</span>)}</td></tr>
+          ))}
+        </tbody></table>
+        <div className="rs-beeld-legenda">
+          {figuur.soorten.map((s, i) => <span key={s}>{icoon(KLEUREN[i], false, s)} = {figuur.per} {s}</span>)}
+        </div>
+      </div>
+    )
+  }
+  if (figuur.type === 'kalender') {
+    const dagen = ['ma', 'di', 'wo', 'do', 'vr', 'za', 'zo']
+    return (
+      <table className="rs-vtabel rs-kalender"><tbody>
+        <tr><th className="rs-kal-titel" colSpan={figuur.weken.length + 1}>{figuur.titel}</th></tr>
+        <tr><th />{figuur.weken.map(w => <td key={w.nr} className="rs-kal-week">{w.nr}</td>)}</tr>
+        {dagen.map((d, i) => (
+          <tr key={d}><th>{d}</th>{figuur.weken.map(w => <td key={w.nr}>{w.dagen[i] ?? ''}</td>)}</tr>
+        ))}
+      </tbody></table>
+    )
+  }
+  if (figuur.type === 'schaal') {
+    return (
+      <div className="rs-schaal">
+        {figuur.N && (
+          <div className="rs-schaal-lijn">
+            <span className="rs-schaal-streep" />
+            <span>{figuur.N.toLocaleString('nl-NL')} cm</span>
+            <b>1 : {figuur.N.toLocaleString('nl-NL')}</b>
+          </div>
+        )}
+        <table className="rs-vtabel"><tbody>
+          {figuur.tabel.map((rij, i) => (
+            <tr key={i}>{rij.map((c, j) => j === 0 ? <th key={j}>{c}</th> : <td key={j} className={c === '?' ? 'rs-vtabel-vraag' : ''}>{c}</td>)}</tr>
+          ))}
+        </tbody></table>
+      </div>
+    )
+  }
   return null
 }
 
@@ -259,7 +376,7 @@ function VraagKaart({ opgave, onNext, kaal = false }) {
   // Wat de leerling opschreef, zoals het in het portaal getoond wordt. Gaat
   // mee naar registreer(), want bij een lescheck wil de leerkracht niet alleen
   // zien dát het fout was maar ook wát er stond.
-  const ingevuld = () => (heeftRest ? `${antw.trim()} rest ${rest.trim()}` : antw.trim())
+  const ingevuld = () => (heeftRest ? `${antw.trim()} ${opgave.restLabel ? 'en' : 'rest'} ${rest.trim()}${opgave.restLabel ? ' ' + opgave.restLabel : ''}` : antw.trim())
 
   const check = () => {
     if (!antw.trim()) return
@@ -280,7 +397,7 @@ function VraagKaart({ opgave, onNext, kaal = false }) {
     <div className="rs-card">
       <div className={`rs-doel${opgave.groep !== 7 ? ' rs-doel-herhaling' : ''}`}>{label}</div>
       <div className={`rs-vraag${kaal && opgave.kaal ? ' rs-vraag-kaal' : ''}`}>{kaal && opgave.kaal ? opgave.kaal : opgave.vraag}</div>
-      {opgave.figuur && <div className="rs-figuur-wrap"><Figuur figuur={opgave.figuur} /></div>}
+      {opgave.figuur && (kaal || !opgave.figuur.alleenKaal) && <div className="rs-figuur-wrap"><Figuur figuur={opgave.figuur} /></div>}
 
       {magRekenmachine && (
         <div className="rs-calc-wrap">
@@ -320,7 +437,7 @@ function VraagKaart({ opgave, onNext, kaal = false }) {
             </div>
           )}
           <div className="rs-veld">
-            <label className="rs-veld-label">Antwoord</label>
+            <label className="rs-veld-label">{opgave.antwLabel ?? 'Antwoord'}</label>
             <div className="rs-antwoord-row">
               <input ref={antwRef} className="rs-input" type="text" inputMode="decimal" autoComplete="off" placeholder="Jouw antwoord…"
                 value={antw} onChange={e => setAntw(zonderIsGelijk(e.target.value))}
@@ -328,7 +445,7 @@ function VraagKaart({ opgave, onNext, kaal = false }) {
                 onKeyDown={e => { weigerToets(e); if (e.key === 'Enter') check() }} />
               {heeftRest && (
                 <div className="rs-rest-vak">
-                  <span className="rs-rest-label">Rest</span>
+                  <span className="rs-rest-label">{opgave.restLabel ?? 'Rest'}</span>
                   <input className="rs-input rs-rest-input" type="text" inputMode="numeric" autoComplete="off" placeholder="…"
                     value={rest} onChange={e => setRest(zonderIsGelijk(e.target.value))}
                     onBeforeInput={weigerInvoer}
@@ -353,7 +470,7 @@ function VraagKaart({ opgave, onNext, kaal = false }) {
 
       {phase === 'bad' && (
         <div className="rs-feedback rs-fout">
-          <span>❌ Het juiste antwoord is <b>{toonAntwoord(opgave)}{heeftRest ? ` met rest ${opgave.rest}` : ''}</b>.</span>
+          <span>❌ Het juiste antwoord is <b>{opgave.toon ?? `${toonAntwoord(opgave)}${heeftRest ? ` met rest ${opgave.rest}` : ''}`}</b>.</span>
           <div className="rs-uitleg">💡 {opgave.uitleg}</div>
           <button className="rs-verder-btn" onClick={() => onNext(false, ingevuld())}>Volgende →</button>
         </div>
@@ -610,7 +727,7 @@ export default function VerhaaltjesSommen({ groep: eigenGroep = 7, onBack, addBr
     opdracht.registreer(correct, {
       vraag: (config?.kaal && opgave?.kaal) || opgave?.vraag,
       antwoord: ingevuld,
-      juist: opgave ? toonAntwoord(opgave) : null,
+      juist: opgave ? (opgave.toon ?? toonAntwoord(opgave)) : null,
       cat: opgave ? doelKey(opgave.groep, opgave.doel) : undefined,
       catLabel: opgave?.doel,
     })
