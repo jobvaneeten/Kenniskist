@@ -12,6 +12,8 @@ export default maakLevel({
   index: 13,
   doeltijd: 100,
   hints: [T.hints.grot],
+  // De stenen in het plafond hangen nooit boven een lavaput: daar heb je de
+  // volle hoogte nodig om over te springen.
   kaart: [
     g(B),
     g(B),
@@ -23,8 +25,8 @@ export default maakLevel({
     g(B),
     g(B),
     p(20) + 'U' + p(23) + 'U' + p(23) + 'U' + p(23) + 'U' + p(23) + 'U' + p(43),
-    p(24) + g(3) + p(21) + g(3) + p(21) + g(3) + p(21) + g(3) + p(61),
-    p(24) + g(3) + p(21) + g(3) + p(21) + g(3) + p(21) + g(3) + p(61),
+    p(24) + g(3) + p(21) + g(3) + p(33) + g(3) + p(9) + g(3) + p(61),
+    p(24) + g(3) + p(21) + g(3) + p(33) + g(3) + p(9) + g(3) + p(61),
     p(6) + munt(5) + p(15) + munt(5) + p(15) + munt(5) + p(15) + munt(5) + p(15) + munt(5) + p(15) + munt(5) + p(15) + munt(5) + p(29),
     p(2) + 'S' + p(5) + 'H' + p(19) + 'R' + p(23) + 'C' + p(19) + 'A' + p(23) + 'R' + p(19) + 'C' + p(19) + 'D' + p(15) + 'F' + p(7),
     g(34) + lava(5) + g(31) + lava(5) + g(31) + lava(5) + g(49),
