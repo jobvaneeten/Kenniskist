@@ -17,7 +17,11 @@
 // Hoe de vragen gebouwd zijn. Bijna elke vraag draait om een echte valkuil —
 // een fout die kinderen in groep 7 aantoonbaar maken (nullen wegstrepen,
 // "delen maakt kleiner", "keer maakt groter", een breuk is altijd minder dan
-// één, twee keer 25% is 50%). Dan is er iets om over te praten. En waar een
+// één, twee keer 25% is 50%). Dan is er iets om over te praten.
+//
+// De vragen zijn bedoeld voor de sterke rekenaars: niet één fout aanwijzen,
+// maar een regel zoeken, alle oplossingen vinden, een tegenvoorbeeld
+// bedenken of uitleggen waarom iets áltijd (of juist nooit) klopt. En waar een
 // klasgenoot iets beweert, klopt het soms wél: dan is de vraag waarom, en niet
 // alleen wat er mis is. De getallen zijn nagerekend; waar een fout antwoord
 // staat is dat het antwoord dat de genoemde fout ook echt oplevert.
@@ -52,68 +56,73 @@ const VRAGEN = {
     0: {
       // ── Doel 1 · schatten met geld en ronde getallen ───────────────────
       1: {
-        niveau: 'evalueren',
-        vraag: 'Je hebt € 10,- en wilt 4 pakjes sap kopen van € 2,45.\n'
-          + 'Mees schat: € 2,45 is ongeveer € 2,-. 4 × 2 = 8. Ik heb genoeg!\n\n'
-          + 'Klopt het dat Mees genoeg heeft? Leg uit waarom zijn schatting hier gevaarlijk is.\n'
-          + 'Hoe had hij beter kunnen schatten als hij zeker wil weten of het geld genoeg is?',
-        hint: 'Rond je naar beneden af, dan schat je te weinig. Wat gebeurt er als je € 2,45 naar boven afrondt?',
+        niveau: 'evalueren en creëren',
+        vraag: 'Je hebt € 20. Je koopt 3 × € 2,45, 2 × € 3,55 en 1 × € 4,95.\n'
+          + 'Mees rondt elke prijs af op hele euro\'s: 3 × 2 + 2 × 4 + 5 = 19. "Past!", zegt hij.\n\n'
+          + 'Mees heeft toevallig gelijk. Leg uit waarom zijn manier toch niet te vertrouwen is.\n'
+          + 'Bedenk andere prijzen waarbij zijn schatting nog steeds € 19 zegt, maar je in het echt méér dan € 20 kwijt bent.',
+        hint: 'Kijk per prijs: rondde Mees naar boven of naar beneden af? Hoeveel cent "verdween" er per ding, en keer hoeveel?',
       },
       2: {
-        niveau: 'analyseren en creëren',
-        vraag: 'Bij 1540 : 32 schat Yara: 1500 : 30 = 50.\n'
-          + 'Daan schat: 1600 : 32 = 50.\n\n'
-          + 'Allebei 50, maar ze kozen andere getallen. Wat maakt een getal "handig" om mee te delen?\n'
-          + 'Bedenk zelf een deelsom waarbij afronden op tientallen juist níet handig is, en kies betere getallen.',
-        hint: 'Een handige deling past in een tafel: 15 : 3, 16 : 4, 24 : 6. Kijk of de kleine som opgaat.',
+        niveau: 'analyseren',
+        vraag: 'Drie kinderen schatten 7812 : 38.\n'
+          + 'Yara doet 8000 : 40. Daan doet 7600 : 38. Mila doet 7800 : 39.\n'
+          + 'Alle drie komen ze op 200. Het echte antwoord is iets meer dan 205.\n\n'
+          + 'Bij welke schatting kon je van tevoren al weten dat hij te klein zou uitvallen? Leg uit waarom.\n'
+          + 'Bij welke schatting kon je dat níet weten?',
+        hint: 'Maakt een groter deeltal het antwoord groter of kleiner? En een grotere deler? Kijk per schatting welke kant elke verandering op duwt.',
       },
 
       // ── Doel 2 · 4 × 536 cijferend of kolomsgewijs ─────────────────────
       3: {
         niveau: 'evalueren',
-        vraag: 'Noor rekent 4 × 536 cijferend uit. Ze schrijft onder de streep: 20 12 24, en zegt: het antwoord is 201224.\n\n'
-          + 'Wat is er misgegaan? Leg uit wat "onthouden" betekent en waarom je dat moet doen.',
-        hint: 'Mag er op de plek van de eenheden een getal van twee cijfers staan? Waar gaan die tientjes heen?',
+        vraag: 'Noor rekent 4 × 536 cijferend uit en krijgt 2124. Ze heeft precies één ding vergeten.\n\n'
+          + 'Zoek uit wat ze vergat, zonder het goede antwoord eerst uit te rekenen.\n'
+          + 'Hoeveel scheelt haar antwoord met het goede? Leg uit waarom het verschil precies zo groot is.',
+        hint: 'Doe de som kolom voor kolom zoals Noor. In welke kolom had er iets bij moeten komen, en hoeveel is dat daar waard?',
       },
       4: {
-        niveau: 'analyseren',
-        vraag: 'Kolomsgewijs: 4 × 500 = 2000, 4 × 30 = 120, 4 × 6 = 24. Samen 2144.\n'
-          + 'Cijferend: 4 × 6 = 24, 4 opschrijven, 2 onthouden …\n\n'
-          + 'Waar zie je in de cijferende som de 120 en de 2000 terug?\n'
-          + 'Welke manier vind jij het duidelijkst, en welke gaat sneller?',
-        hint: 'Het "onthouden" getal hoort bij de volgende kolom. Hoeveel is dat onthouden 2-tje eigenlijk waard?',
+        niveau: 'analyseren en creëren',
+        vraag: 'Uit deze keersom zijn cijfers weggevallen:\n\n■ × 5■6 = 2■44\n\n'
+          + 'Zoek álle oplossingen. Hoe weet je zeker dat je er geen gemist hebt?\n'
+          + 'Bedenk daarna zelf zo\'n puzzel met precies één oplossing.',
+        hint: 'Begin bij de eenheden: welk getal keer 6 eindigt op een 4? Kan de uitkomst dan nog met een 2 beginnen?',
       },
 
       // ── Doel 3 · kommagetallen tot duizendsten vergelijken ─────────────
       6: {
         niveau: 'evalueren',
-        vraag: 'Jesse zegt: 6,169 is groter dan 6,17, want 169 is meer dan 17.\n\n'
-          + 'Heeft Jesse gelijk? Leg uit hoe je twee kommagetallen eerlijk vergelijkt.\n'
-          + 'Bedenk nog twee getallen waarbij je dezelfde fout zou kunnen maken.',
-        hint: 'Maak ze even lang: schrijf 6,17 als 6,170. Vergelijk dan cijfer voor cijfer.',
+        vraag: 'Jesse zegt: tussen 6,17 en 6,18 zit geen enkel getal, want er zit niks tussen 17 en 18.\n'
+          + 'Fleur zegt: er zitten er 9 tussen. Tim zegt: er zitten er oneindig veel tussen.\n\n'
+          + 'Wie heeft gelijk? Leg uit waar elk kind aan denkt.\n'
+          + 'Hoeveel getallen met precies vier cijfers achter de komma liggen ertussen?',
+        hint: 'Schrijf 6,17 als 6,170 en 6,18 als 6,180. Wat past daartussen? En als je er nog een nul bij zet?',
       },
       7: {
-        niveau: 'creëren',
-        vraag: 'Bedenk vier kommagetallen tussen 2 en 3 die heel erg op elkaar lijken, zoals 2,6 en 2,06.\n'
-          + 'Zet ze van klein naar groot.\n\n'
-          + 'Welke van jouw getallen zou een klasgenoot het makkelijkst verkeerd neerzetten, en waarom?',
-        hint: 'Speel met de nul: 2,6 – 2,06 – 2,006 – 2,60. Welke zijn eigenlijk even groot?',
+        niveau: 'analyseren en creëren',
+        vraag: 'Je hebt vier kaartjes: 0, 2, 6 en een komma. Je moet ze alle vier gebruiken.\n\n'
+          + 'Hoeveel verschillende getallen kun je maken? Zet ze van klein naar groot.\n'
+          + 'Sommige leggen zien er anders uit, maar zijn even groot. Welke?\n'
+          + 'Leg uit hoe je zeker weet dat je niets gemist hebt.',
+        hint: 'Werk ordelijk: zet de komma eerst op de tweede plek en probeer alles, daarna op de derde plek. Is 02,6 een ander getal dan 2,6?',
       },
 
       // ── Doel 4 · lijndiagram en beelddiagram ───────────────────────────
       8: {
         niveau: 'analyseren',
-        vraag: 'In een lijndiagram van de hoogste temperatuur gaat de lijn van dinsdag naar woensdag steil omhoog, en van woensdag naar donderdag loopt hij horizontaal.\n\n'
-          + 'Wat betekent dat voor het weer op die dagen?\n'
-          + 'Waarom gebruik je hier een lijndiagram en geen beelddiagram?',
-        hint: 'Omhoog = het wordt warmer. Horizontaal = de temperatuur blijft gelijk. Een lijn laat verandering zien.',
+        vraag: 'Een lijndiagram laat de temperatuur in de tuin zien, elk heel uur gemeten.\n'
+          + 'Om 12:00 is het 24 graden, om 13:00 is het 19 graden en om 14:00 weer 23 graden.\n\n'
+          + 'Wat kan er rond 13:00 gebeurd zijn?\n'
+          + 'Hoe warm was het om half één? Leg uit waarom de lijn tussen twee meetpunten eigenlijk een gok is.',
+        hint: 'Tussen twee meetpunten is niets gemeten. De lijn doet alsof de temperatuur rustig verandert. Was dat om 12:30 zo?',
       },
       9: {
         niveau: 'creëren en evalueren',
-        vraag: 'In een beelddiagram staat één boekje voor 10 boeken. Groep 6 heeft in maart 45 informatieboeken geleend.\n\n'
-          + 'Hoe teken je dat? Leg uit waarom je een half boekje nodig hebt.\n'
-          + 'Wat zou je doen als het er 43 waren? Is een beelddiagram dan nog handig?',
-        hint: 'Een half boekje is de helft van 10. Hoe laat je 3 boeken zien als één plaatje al 10 is?',
+        vraag: 'Groep 7 leende in maart 43 boeken, in april 38 en in mei 51.\n\n'
+          + 'Maak een beelddiagram zonder halve of kapotte plaatjes. Welk getal kies je voor één plaatje?\n'
+          + 'Waarom lukt dat alleen als je afrondt?\n'
+          + 'Welke keuze vind jij het eerlijkst, en hoe laat je zien dat het diagram niet precies is?',
+        hint: 'Welk getal past precies in 43, 38 én 51? Als dat niet bestaat, wat lever je dan in: precisie of hele plaatjes?',
       },
     },
 
@@ -124,67 +133,72 @@ const VRAGEN = {
       // ── Doel 1 · getallen tot 1 miljoen ────────────────────────────────
       1: {
         niveau: 'evalueren en creëren',
-        vraag: 'De juf zegt: "driehonderdvijfduizend twintig".\n'
-          + 'Sam schrijft op: 3005020.\nBo schrijft op: 305020.\n\n'
-          + 'Wie heeft het goed? Leg uit wat er bij de ander misgaat.\n'
-          + 'Bedenk daarna een manier waarmee je zulke fouten altijd kunt voorkomen.',
-        hint: 'Verdeel het getal in groepjes van drie cijfers, van achteren naar voren. Hoeveel cijfers mogen er in het groepje van de duizenden staan?',
+        vraag: 'Bo zegt: een getal met meer cijfers is altijd groter.\n'
+          + 'Sam zegt: en een getal met een langere naam in woorden is ook altijd groter.\n\n'
+          + 'Wie heeft gelijk? Laat het zien met voorbeelden. Moet je bij Bo iets afspreken?\n'
+          + 'Bedenk een getal onder de 1000 met een zo lang mogelijke naam, en een getal boven de 100.000 met een zo kort mogelijke naam.',
+        hint: 'Schrijf "honderd" en "zevenenzeventig" uit en tel de letters. En denk bij Bo eens aan 0999 of aan 12,5.',
       },
       2: {
-        niveau: 'creëren en evalueren',
-        vraag: 'Teken zelf een getallenlijn van 0 tot 1.000.000 en zet er 10.000, 250.000 en 900.000 op.\n\n'
-          + 'Lieke zette 250.000 precies in het midden. Waarom klopt dat niet?\n'
-          + 'Leg uit hoe je zonder liniaal toch de goede plek vindt — ook voor 10.000, dat veel dichter bij de 0 zit dan je denkt.',
-        hint: 'Deel de lijn eerst in tien gelijke stukken. Hoeveel is dan elk stuk? Hoeveel van die stukken is 250.000?',
+        niveau: 'analyseren en creëren',
+        vraag: 'Lieke tekent een getallenlijn van 0 tot 1.000.000. Ze zet 10.000 op 1 cm van de 0.\n\n'
+          + 'Hoe lang wordt haar hele lijn?\n'
+          + 'Hoe ver liggen 999.999 en 1.000.000 op haar lijn uit elkaar?\n'
+          + 'Leg uit waarom je op een getallenlijn nooit álle getallen apart kunt laten zien, en bedenk hoe je toch kunt inzoomen.',
+        hint: 'Hoeveel keer past 10.000 in 1.000.000? En welk deel van een centimeter is dan 1?',
       },
 
       // ── Doel 2 · sommen als 35.400 + 3500 en 24.000 : 600 ──────────────
       3: {
         niveau: 'evalueren',
-        vraag: 'Daan rekent 24.000 : 600 uit met de kleine som. Hij streept nullen weg, doet 24 : 6 = 4 en zegt: het antwoord is 4.\n'
-          + 'Milan zegt: 40. Fatima zegt: 400.\n\n'
-          + 'Wie heeft gelijk? Leg uit hoe je bij nullen wegstrepen precíes bijhoudt hoeveel er overblijven.',
-        hint: 'Streep aan allebei de kanten evenveel nullen weg. 600 heeft er twee. Hoeveel nullen blijven er dan nog over bij 24.000?',
+        vraag: 'Daan rekent 24.000 : 600 = 40. Hij streepte aan allebei de kanten twee nullen weg: 240 : 6 = 40.\n'
+          + 'Dan doet hij 24.000 × 600 op dezelfde manier: 240 × 6 = 1440.\n\n'
+          + 'Wat gaat er mis bij de keersom? Wat is het goede antwoord?\n'
+          + 'Leg uit waarom nullen wegstrepen bij delen wél mag en bij keer niet.',
+        hint: 'Wat gebeurt er met 24.000 : 600 als je allebei door 100 deelt? En hoeveel keer kleiner wordt 24.000 × 600 als je allebei door 100 deelt?',
       },
       4: {
         niveau: 'creëren en analyseren',
-        vraag: 'Bedenk drie verschillende sommen waarvan het antwoord 35.000 is: een plussom, een minsom en een keersom.\n'
-          + 'Maak ze zo dat je ze uit je hoofd kunt doen.\n\n'
-          + 'Bij welke van de drie moest je het slimst zijn, en waarom?',
-        hint: 'Begin bij een som die je wél makkelijk vindt, en verander steeds één getal.',
+        vraag: 'Bedenk zo veel mogelijk deelsommen met antwoord 35.000, waarbij de deler op een 0 eindigt.\n'
+          + '(70.000 : 2 telt dus niet.)\n\n'
+          + 'Wat is de kleinste deler die je kunt kiezen? Bestaat er een grootste?\n'
+          + 'Leg uit welk patroon je ziet tussen de deler en het deeltal.',
+        hint: 'Als de deler 10 keer zo groot wordt, wat moet er dan met het deeltal gebeuren om hetzelfde antwoord te houden?',
       },
 
       // ── Doel 3 · helen uit de breuk, breuken vergelijken ───────────────
       6: {
         niveau: 'evalueren en creëren',
-        vraag: 'Iris zegt: een breuk is altijd kleiner dan 1. Dus 7/4 pizza is minder dan één hele pizza.\n\n'
-          + 'Leg uit waarom dat niet klopt, en hoeveel pizza 7/4 eigenlijk is.\n'
-          + 'Bedenk daarna drie verschillende breuken die samen precies 2 hele pizza\'s zijn.',
-        hint: 'Hoeveel kwarten is één hele pizza? Hoeveel hele pizza\'s haal je dan uit 7 kwarten, en wat blijft er over?',
+        vraag: 'Iris zegt: 7/4 is meer dan 5/3, want 7 is meer dan 5 én 4 is meer dan 3.\n\n'
+          + 'Haar antwoord klopt, maar haar manier niet. Bedenk twee breuken waarbij haar manier het verkeerde antwoord geeft.\n'
+          + 'Welke breuk met noemer 4 ligt het dichtst bij 5/3? Leg uit hoe je dat weet.',
+        hint: 'Schrijf ze als helen en een restje: 7/4 = 1 3/4. Welk restje blijft er bij 5/3 over? Vergelijk die restjes.',
       },
       7: {
         niveau: 'analyseren en creëren',
-        vraag: 'Noor heeft 2/3 van een reep gegeten. Tom heeft 3/5 van precies zo\'n reep gegeten.\n\n'
-          + 'Wie heeft het meest gegeten? Leg uit hoe je dat kunt weten zonder de repen precies af te meten.\n'
-          + 'Bedenk daarna twee breuken waarbij je het verschil juist heel moeilijk ziet.',
-        hint: 'Kijk eens naar wat er nog óver is: Noor heeft nog 1/3, Tom nog 2/5. Wie heeft het minst over?',
+        vraag: 'Kijk naar het rijtje 1/2, 2/3, 3/4, 4/5, 5/6, …\n\n'
+          + 'Worden de breuken steeds groter of steeds kleiner? Leg uit hoe je dat zeker weet, zonder ze gelijknamig te maken.\n'
+          + 'Komt het rijtje ooit bij 1?\n'
+          + 'Bedenk een breuk uit het rijtje die minder dan 1/100 van 1 af ligt.',
+        hint: 'Kijk naar het stukje dat steeds ontbreekt tot een hele. Hoe groot is dat bij 3/4, bij 4/5, bij 5/6?',
       },
 
       // ── Doel 4 · kalender, tijdsduur, begin- en eindtijd ───────────────
       8: {
         niveau: 'evalueren',
-        vraag: 'Een film begint om 19:45 uur en duurt 1 uur en 50 minuten.\n'
-          + 'Ruben rekent: 19 + 1 = 20 en 45 + 50 = 95, dus 20:95 uur. En dat is 21:35 uur.\n\n'
-          + 'Zijn antwoord klopt. Toch is er iets mis met zijn manier. Wat?\n'
-          + 'Laat zien hoe jij het zou doen, en leg uit waarom dat veiliger is.',
-        hint: 'Kan een klok 20:95 uur aanwijzen? Wat gebeurt er op een klok zodra er 60 minuten voorbij zijn?',
+        vraag: 'Een nachttrein vertrekt om 22:48 uur en komt aan om 01:17 uur.\n'
+          + 'Ruben rekent: 22 − 1 = 21 uur, en 48 − 17 = 31 minuten. Dus 21 uur en 31 minuten.\n\n'
+          + 'Welke fouten maakt Ruben? Hoe lang duurt de reis echt?\n'
+          + 'Bedenk een manier die altijd werkt, ook over middernacht heen, en leg uit waarom.',
+        hint: 'Spring eerst naar een handig tijdstip, zoals 23:00 of 00:00, en tel de stukjes daarna op.',
       },
       9: {
         niveau: 'analyseren',
-        vraag: 'Stel dat je verjaardag dit jaar op een dinsdag valt.\n\n'
-          + 'Op welke dag valt hij volgend jaar? Leg uit waarom dat zo is.\n'
-          + 'En waarom pakt het sommige jaren toch anders uit?',
-        hint: 'Hoeveel dagen heeft een jaar? Hoeveel hele weken zijn dat, en wat blijft er dan over?',
+        vraag: 'Je verjaardag valt dit jaar op een dinsdag.\n\n'
+          + 'Hoeveel jaar duurt het minstens voordat hij weer op een dinsdag valt? Kan het ook langer duren?\n'
+          + 'Leg uit wat schrikkeljaren daarmee te maken hebben.\n'
+          + 'Hoe vaak valt je verjaardag in de komende 28 jaar op een zaterdag?',
+        hint: 'Een gewoon jaar schuift je verjaardag één dag op. Hoeveel dagen schuift hij als er een 29 februari tussen zit?',
       },
     },
 
@@ -195,67 +209,73 @@ const VRAGEN = {
       // ── Doel 1 · 12 × 64 cijferend of met splitsen ─────────────────────
       1: {
         niveau: 'analyseren en creëren',
-        vraag: 'Lars rekent 12 × 64 uit door te splitsen: 10 × 64 = 640 en 2 × 64 = 128. Samen 768.\n'
-          + 'Sanne splitst anders: 12 × 60 = 720 en 12 × 4 = 48. Samen 768.\n\n'
-          + 'Allebei goed! Bedenk nog een derde manier van splitsen die ook klopt.\n'
-          + 'Welke van de drie vind jij het handigst, en waarom?',
-        hint: 'Je mag ook allebei de getallen splitsen. Of eerst 6 × 64 uitrekenen en dat verdubbelen.',
+        vraag: 'Je weet: 12 × 64 = 768.\n\n'
+          + 'Zonder opnieuw te rekenen: wat is 24 × 32? En 6 × 128? En 48 × 16?\n'
+          + 'Leg uit waarom die allemaal 768 zijn.\n'
+          + 'Bedenk zelf de moeilijkst uitziende keersom die toch 768 geeft, en één met een kommagetal.',
+        hint: 'Wat gebeurt er met het antwoord als je het ene getal verdubbelt en het andere halveert?',
       },
       2: {
         niveau: 'evalueren',
-        vraag: 'Yara rekent 12 × 64 cijferend uit. Onder de streep schrijft ze eerst 128, en daaronder 64.\n'
-          + 'Ze telt op en krijgt 192.\n\n'
-          + 'Waar is het misgegaan? Leg uit wat die tweede regel eigenlijk betekent, en waarom het uitmaakt op welke plek je hem neerzet.',
-        hint: 'Die 1 van 12 is geen 1 maar een 10. Wat is 10 × 64 dan eigenlijk?',
+        vraag: 'Yara maakt bij cijferend vermenigvuldigen steeds dezelfde fout: ze zet de tweede regel niet een plek op.\n'
+          + 'Bij 12 × 64 krijgt ze zo 192.\n\n'
+          + 'Voorspel zonder de sommen te maken wat ze met die fout krijgt bij 13 × 64 en bij 21 × 64.\n'
+          + 'Leg uit hoe je dat voorspelt, en waarom haar antwoord bijna altijd veel te klein is.',
+        hint: 'Met haar fout telt de 1 van 12 als 1 in plaats van als 10. Welke som maakt ze dus eigenlijk?',
       },
 
       // ── Doel 2 · 22 × 64, en 6 × 346 ───────────────────────────────────
       3: {
         niveau: 'analyseren',
-        vraag: 'Je weet al dat 12 × 64 = 768.\n\n'
-          + 'Hoe kun je daarmee 22 × 64 uitrekenen zonder helemaal opnieuw te beginnen?\n'
-          + 'En 24 × 64? Leg uit waarom dat mag.',
-        hint: 'Wat is het verschil tussen 12 keer iets en 22 keer iets? Hoeveel keer 64 komt erbij?',
+        vraag: 'Je weet: 22 × 64 = 1408.\n\n'
+          + 'Reken hiermee uit, zonder opnieuw te beginnen: 22 × 65, 23 × 64, 11 × 128 en 21 × 63.\n'
+          + 'Leg bij elke som uit welke verbetering je doet.\n'
+          + 'Bij één som gaat het makkelijk mis. Welke, en waarom?',
+        hint: 'Teken 22 × 64 als een rechthoek met rijen en kolommen. Wat haal je weg als er een rij én een kolom af gaan — en welk vakje haal je dan dubbel weg?',
       },
       4: {
         niveau: 'creëren en evalueren',
-        vraag: 'Bedenk een verhaaltje waarin je 6 × 346 écht precies moet uitrekenen.\n'
-          + 'Bedenk daarna een verhaaltje waarin je 6 × 346 leest, maar een schatting eigenlijk genoeg is.\n\n'
-          + 'Wat is het verschil tussen die twee situaties?',
-        hint: 'Wanneer wil je alleen weten óf het genoeg is, en wanneer moet je het precieze aantal weten?',
+        vraag: '6 × 346 = 2076.\n\n'
+          + 'Bedenk een verhaaltje waarin je 6 × 346 uitrekent, maar het antwoord op de vraag toch níet 2076 is.\n'
+          + 'Laat een klasgenoot je verhaaltje maken. Trapte hij erin?\n'
+          + 'Wat maakt een verhaaltje zo\'n goede valkuil?',
+        hint: 'Denk aan vragen als "hoeveel dozen van 100 heb je nodig?" of "hoeveel houd je over van € 2500?".',
       },
 
       // ── Doel 3 · hoofdrekenen met kommagetallen ────────────────────────
       6: {
         niveau: 'evalueren',
-        vraag: 'Mees koopt iets van € 3,45 en iets van € 2,80.\n'
-          + 'Hij rekent: 3 + 2 = 5 en 45 + 80 = 125. Dus € 5,125.\n\n'
-          + 'Wat gaat hier mis? Leg uit wat er met die 125 moet gebeuren, en waarom een bedrag nooit drie cijfers achter de komma heeft.',
-        hint: 'Hoeveel cent is 125 cent eigenlijk? Kun je daar een euro uit halen?',
+        vraag: 'Mees telt € 3,45 + € 2,80 + € 1,75 op: 3 + 2 + 1 = 6 en 45 + 80 + 75 = 200. Dus € 6,200.\n'
+          + 'Anouk zegt: die 200 zijn 2 euro, dus het is € 8.\n\n'
+          + 'Wie heeft gelijk? Leg uit waar het bij Mees misgaat.\n'
+          + 'Bedenk een slimmere volgorde waarmee je dit in twee stappen uit je hoofd doet.',
+        hint: 'Hoeveel cent is 200 cent? Zoek twee bedragen waarvan de centen samen een ronde euro maken.',
       },
       7: {
         niveau: 'creëren en analyseren',
-        vraag: 'Je hebt € 10 en koopt twee dingen. Bedenk twee prijzen mét centen waarbij je precies € 1,25 terugkrijgt.\n\n'
-          + 'Bedenk daarna twee prijzen waarbij je het wisselgeld snel kunt bedenken zónder eerst op te tellen.\n'
-          + 'Wat maakt die tweede makkelijker?',
-        hint: 'Bij "aanvullen" tel je van de prijs omhoog naar de € 10, in plaats van af te trekken.',
+        vraag: 'Je betaalt met € 10 en krijgt € 1,25 terug. Je kocht precies twee dingen, allebei duurder dan € 3.\n\n'
+          + 'Bedenk drie verschillende paren prijzen die kloppen.\n'
+          + 'Wat is de hoogste prijs die één van de twee kan hebben? En de laagste?\n'
+          + 'Leg uit hoe je dat zeker weet.',
+        hint: 'Hoeveel heb je samen uitgegeven? Als het ene ding zo duur mogelijk is, hoe goedkoop moet het andere dan zijn?',
       },
 
       // ── Doel 4 · schaallijntje en schaal ───────────────────────────────
       8: {
         niveau: 'evalueren',
-        vraag: 'Op een kaart staat een schaallijntje: 1 cm op de kaart is 500 meter in het echt.\n'
-          + 'Kim meet de weg naar school op de kaart: 6 cm. Ze zegt: dat is 6 × 500 = 3000 cm.\n\n'
-          + 'Wat klopt er niet, en wat is het dan wél?\n'
-          + 'Leg ook uit waarom zo\'n schaallijntje handiger is dan alleen "schaal 1 : 50.000".',
-        hint: 'Welke maat hoort bij die 500? Kijk nog eens goed naar wat er bij het lijntje staat.',
+        vraag: 'Op een kaart met schaal 1 : 25.000 meet Kim 6 cm. Ze zegt: 6 × 25.000 = 150.000 meter.\n\n'
+          + 'Wat klopt er niet? Hoe ver is het echt?\n'
+          + 'Daarna vergroot Kim de kaart op het kopieerapparaat tot twee keer zo groot.\n'
+          + 'Klopt "schaal 1 : 25.000" dan nog? En het schaallijntje? Leg uit waarom.',
+        hint: 'In welke maat meet je op de kaart? Dan staat de 150.000 ook in die maat. En wat gebeurt er met het lijntje als je de kaart vergroot?',
       },
       9: {
         niveau: 'creëren',
-        vraag: 'Teken een plattegrond van je klaslokaal op schaal, zodat hij op een A4\'tje past.\n\n'
-          + 'Welke schaal kies je, en hoe heb je dat bepaald?\n'
-          + 'Wat gebeurt er als je een schaal kiest die te groot of juist te klein is?',
-        hint: 'Meet of schat eerst hoe lang en breed het lokaal is. Hoeveel centimeter heb je op het papier?',
+        vraag: 'Je wilt de hele school op één A4\'tje tekenen, en ook je gum.\n\n'
+          + 'Kies voor allebei een schaal en leg uit hoe je die bepaalt.\n'
+          + 'Waarom zou je voor de gum een schaal als 5 : 1 kiezen? Wat betekent dat?\n'
+          + 'Bedenk iets waarvoor schaal 1 : 1 het handigst is.',
+        hint: 'Bij 1 : 100 is de tekening kleiner dan in het echt. Wat zou 5 : 1 dan betekenen voor iets heel kleins?',
       },
     },
 
@@ -266,67 +286,71 @@ const VRAGEN = {
       // ── Doel 1 · hele grote getallen ───────────────────────────────────
       1: {
         niveau: 'analyseren',
-        vraag: 'In Nederland wonen ongeveer 18 miljoen mensen. Op de hele wereld ongeveer 8 miljard.\n\n'
-          + 'Schrijf allebei de getallen in cijfers.\n'
-          + 'Hoeveel keer past Nederland ongeveer in de wereld? Leg uit hoe je dat schattend doet, zonder een lange deelsom.',
-        hint: 'Streep aan allebei de kanten dezelfde nullen weg. Wat blijft er dan over om te delen?',
+        vraag: 'Een miljoen seconden is ongeveer 11 en een halve dag.\n\n'
+          + 'Hoe lang is een miljard seconden ongeveer?\n'
+          + 'Ben jij al een miljard seconden oud? En je ouders?\n'
+          + 'Leg uit hoe je dat schat zonder rekenmachine.',
+        hint: 'Een miljard is duizend keer een miljoen. Hoeveel is duizend keer 11,5 dagen, en hoeveel jaar is dat ongeveer?',
       },
       2: {
         niveau: 'evalueren en creëren',
-        vraag: 'Sil zegt: 1 miljard is 1000 miljoen.\n'
-          + 'Fay zegt: nee, 1 miljard is 100 miljoen, want "miljard" klinkt maar een beetje groter dan "miljoen".\n\n'
-          + 'Wie heeft gelijk? Laat het zien met nullen.\n'
-          + 'Bedenk daarna iets uit het echte leven waarvan er ongeveer een miljard zijn.',
-        hint: 'Schrijf 1 miljoen uit met nullen. Hoeveel nullen komen erbij om er duizend keer zoveel van te maken?',
+        vraag: 'Sil zegt: als je een miljard euromuntjes op elkaar stapelt, komt de toren tot aan de maan.\n'
+          + 'Een muntje is ongeveer 2 mm dik. De maan is ongeveer 384.000 km van ons af.\n\n'
+          + 'Klopt het wat Sil zegt? Leg uit hoe je het nagaat.\n'
+          + 'Bedenk daarna zelf een "miljard-vergelijking" die wél klopt.',
+        hint: 'Reken de hoogte uit in millimeters en zet die om naar kilometers. Hoeveel nullen gaan eraf van mm naar km?',
       },
 
       // ── Doel 2 · cijferend rekenen met kommagetallen ───────────────────
       3: {
         niveau: 'evalueren',
-        vraag: 'Bram zet 12,5 kg en 3,75 kg cijferend onder elkaar en komt uit op 5,00 kg.\n\n'
-          + 'Dat kan niet kloppen — je telt op, en het antwoord is kleiner dan 12,5.\n'
-          + 'Wat is er misgegaan bij het onder elkaar zetten? Laat zien hoe het wel moet, en leg uit wat de komma hier te zeggen heeft.',
-        hint: 'Zet de komma\'s precies onder elkaar. Wat wordt 12,5 als je er een nul achter zet? Verandert de waarde dan?',
+        vraag: 'Bram zet bij cijferend optellen altijd de laatste cijfers onder elkaar.\n'
+          + 'Bij 12,50 + 3,75 gaat dat goed. Bij 12,5 + 3,75 krijgt hij 5,00.\n\n'
+          + 'Leg uit waarom zijn manier soms wél en soms níet werkt.\n'
+          + 'Bedenk een regel waarmee zijn manier altijd werkt. Werkt die ook bij 7 − 2,38?',
+        hint: 'Verandert 12,5 als je er een 0 achter zet? En wat kun je achter de 7 zetten zonder dat hij verandert?',
       },
       4: {
         niveau: 'creëren',
-        vraag: 'Bedenk een verhaaltje waarin je twee kommagetallen van elkaar moet aftrekken en waarbij je écht moet lenen.\n\n'
-          + 'Kies de getallen zo dat een klasgenoot er makkelijk een fout in maakt.\n'
-          + 'Leg uit waar de valkuil zit.',
-        hint: 'Lenen óver de komma heen is het lastigst. Bijvoorbeeld bij 5,2 − 2,75: waar haal je dan iets vandaan?',
+        vraag: 'Bedenk een cijferende aftreksom met kommagetallen waarbij je drie keer achter elkaar moet lenen, ook een keer over de komma heen.\n\n'
+          + 'Controleer je som door terug te rekenen.\n'
+          + 'Hoe klein kan de uitkomst van zo\'n som zijn? Leg uit.',
+        hint: 'Je leent als er boven een kleiner cijfer staat dan onder. Hoe zorg je dat dat in drie kolommen achter elkaar gebeurt? Denk aan nullen.',
       },
 
       // ── Doel 3 · gelijkwaardige breuken, vergelijken ───────────────────
       6: {
         niveau: 'analyseren en creëren',
-        vraag: 'Lotte zegt: 2/4 en 3/6 en 5/10 zijn precies evenveel.\n\n'
-          + 'Klopt dat? Leg uit waarom.\n'
-          + 'Bedenk daarna zelf vijf breuken die allemaal evenveel zijn als 2/3. Wat hebben die vijf met elkaar gemeen?',
-        hint: 'Wat gebeurt er met de waarde als je de teller én de noemer met hetzelfde getal vermenigvuldigt?',
+        vraag: 'Lotte zegt: als je bij teller én noemer hetzelfde getal optelt, blijft een breuk even groot.\n'
+          + 'Kijk maar: 2/3 wordt 3/4.\n\n'
+          + 'Klopt dat? Wordt 3/4 groter of kleiner dan 2/3? Probeer het ook met 5/3.\n'
+          + 'Leg uit wat er echt gebeurt, en bedenk een regel die wél altijd een even grote breuk geeft.',
+        hint: 'Zet 2/3, 3/4, 4/5 op een getallenlijn. Doe hetzelfde met 5/3, 6/4, 7/5. Naar welk getal kruipen ze toe?',
       },
       7: {
         niveau: 'evalueren',
-        vraag: 'Welke is groter: 3/8 of 2/5?\n'
-          + 'Jip zegt: 3/8, want 3 is meer dan 2 én 8 is meer dan 5.\n\n'
-          + 'Leg uit waarom de manier van Jip niet werkt. Laat zien hoe je het wél zeker weet.\n'
-          + 'Lukt het je ook zonder de breuken gelijknamig te maken?',
-        hint: 'Vergelijk allebei de breuken eens met een half. Welke zit daar het dichtst bij?',
+        vraag: 'Welke is groter: 3/8 of 2/5? Allebei liggen ze onder een half.\n'
+          + 'Jip zegt: 3/8 is 1/8 minder dan een half, en 2/5 is 1/10 minder dan een half. Dus 2/5 is groter.\n\n'
+          + 'Klopt zijn redenering? Leg uit waarom.\n'
+          + 'Zoek twee breuken waarbij deze truc je niet sneller maakt.',
+        hint: 'Hoe groot is het stukje dat er tot een half ontbreekt? Welk van die stukjes is het kleinst?',
       },
 
       // ── Doel 4 · lengtematen ───────────────────────────────────────────
       8: {
         niveau: 'analyseren',
-        vraag: 'Zet op volgorde van klein naar groot:\n\n1200 mm     1,5 m     130 cm     0,001 km\n\n'
-          + 'Leg uit hoe je dat aanpakt zonder alles tot op de millimeter uit te rekenen.\n'
-          + 'Welke twee liggen het dichtst bij elkaar?',
-        hint: 'Zet alles eerst in dezelfde maat. Welke maat is hier het handigst?',
+        vraag: 'Een slak kruipt 1 millimeter per seconde.\n\n'
+          + 'Hoe lang doet hij over 1 dm? Over 1 m? Over 1 km?\n'
+          + 'Leg uit wat er bij elke stap op het maten-trappetje met de tijd gebeurt.\n'
+          + 'Waarom gaat het van meter naar kilometer ineens zo hard?',
+        hint: 'Hoeveel millimeter zit er in 1 dm, in 1 m en in 1 km? Elke millimeter kost één seconde.',
       },
       9: {
         niveau: 'creëren en evalueren',
-        vraag: 'Meet drie dingen in de klas: iets dat je in millimeters meet, iets in centimeters en iets in meters.\n\n'
-          + 'Leg per ding uit waarom je juist die maat koos.\n'
-          + 'Hoe lang zijn de drie dingen samen? In welke maat schrijf je dát op?',
-        hint: 'Kies de maat waarbij je geen heel lange getallen en geen komma\'s nodig hebt.',
+        vraag: 'Een A4\'tje is veel dunner dan een millimeter, dus met een liniaal kun je het niet meten.\n\n'
+          + 'Bedenk een manier om toch te weten te komen hoe dik één blaadje is.\n'
+          + 'Hoe nauwkeurig is jouw manier? Leg uit hoe je hem nog beter maakt.',
+        hint: 'Iets heel dun meet je niet los. Hoe dik is een hele stapel, en hoeveel blaadjes zitten erin?',
       },
     },
 
@@ -336,70 +360,72 @@ const VRAGEN = {
     4: {
       // ── Doel 1 · rekenmachine met schatting ────────────────────────────
       1: {
-        niveau: 'evalueren',
-        vraag: 'Noa tikt 48 × 52 in op de rekenmachine en krijgt 2496.\n'
-          + 'Milan tikt dezelfde som in en krijgt 24.960.\n\n'
-          + 'Wie heeft de goede uitkomst? Hoe weet je dat zónder de rekenmachine opnieuw te gebruiken?\n'
-          + 'Wat is er bij de ander waarschijnlijk misgegaan?',
-        hint: 'Rond allebei de getallen af op een tiental. Hoeveel is de som dan ongeveer?',
+        niveau: 'analyseren en evalueren',
+        vraag: 'Noa tikt 48 × 52 in en krijgt 2496. Ze zegt: dat is nét onder 50 × 50 = 2500. Toeval?\n\n'
+          + 'Reken met de rekenmachine ook 47 × 53 en 45 × 55 uit. Wat zie je?\n'
+          + 'Voorspel nu 49 × 51 en 40 × 60 uit je hoofd.\n'
+          + 'Leg uit waarom dit werkt.',
+        hint: 'Hoeveel minder dan 2500 is elke uitkomst? Kijk hoe ver de getallen van 50 af liggen.',
       },
       2: {
-        niveau: 'analyseren en creëren',
-        vraag: 'Hier staan vier sommen:\n\n25 × 4     1999 + 1     347 × 29     6000 : 30\n\n'
-          + 'Bij welke pak je de rekenmachine, en bij welke doe je het uit je hoofd? Leg per som uit waarom.\n'
-          + 'Bedenk zelf een som die er moeilijk uitziet, maar makkelijk uit het hoofd kan.',
-        hint: 'Kijk of je ronde getallen ziet, of getallen die nét naast een rond getal liggen.',
+        niveau: 'creëren en evalueren',
+        vraag: 'Bedenk een som die er op de rekenmachine heel moeilijk uitziet, maar die jij sneller uit je hoofd doet dan iemand hem kan intikken.\n'
+          + 'Doe een wedstrijdje met een klasgenoot mét rekenmachine.\n\n'
+          + 'Wat maakt jouw som "nep-moeilijk"? Bedenk er ook één met delen en één met een kommagetal.',
+        hint: 'Denk aan getallen die elkaar opheffen, zoals × 25 en × 4, of aan 999 dat bijna 1000 is.',
       },
 
       // ── Doel 2 · breuken en kommagetallen ──────────────────────────────
       3: {
         niveau: 'analyseren',
-        vraag: 'Je weet: 1/4 = 0,25 en 1/2 = 0,5.\n\n'
-          + 'Wat is dan 3/4 als kommagetal, zonder rekenmachine? En 1/8?\n'
-          + 'Leg uit hoe je van die eerste twee naar de andere komt.\n'
-          + 'Bedenk daarna een breuk die je níet zo makkelijk in een kommagetal krijgt, en leg uit waarom niet.',
-        hint: 'Halveer 1/4 om 1/8 te krijgen. Wat gebeurt er dan met 0,25?',
+        vraag: 'Je weet: 1/8 = 0,125.\n\n'
+          + 'Wat is dan 1/16? En 1/80? En 7/8? Leg bij elke uit welke stap je zet.\n'
+          + 'Welke van deze breuken worden een kommagetal dat ophoudt: 1/5, 1/6, 1/20, 1/12, 1/25?\n'
+          + 'Zoek uit wat de regel is.',
+        hint: 'Probeer van de noemer 10, 100 of 1000 te maken door hem ergens mee te vermenigvuldigen. Bij welke noemers lukt dat nooit?',
       },
       4: {
         niveau: 'evalueren en creëren',
-        vraag: 'Dilan zegt: 0,4 is hetzelfde als 1/4, want allebei hebben ze een 4.\n\n'
-          + 'Leg uit waarom dat niet klopt, en wat 0,4 wél is als breuk.\n'
-          + 'Bedenk daarna een kommagetal en een breuk die er heel anders uitzien, maar toch precies gelijk zijn.',
-        hint: '0,4 is vier tienden. Hoe schrijf je tienden als een breuk?',
+        vraag: 'Dilan zegt: 0,4 = 4/10 = 2/5. Dus 0,04 = 2/50 en 0,44 = 22/50.\n\n'
+          + 'Klopt dat allemaal? Kun je het nog eenvoudiger schrijven?\n'
+          + 'Bedenk drie kommagetallen met drie cijfers achter de komma die je als een breuk met een noemer onder de 10 kunt schrijven.',
+        hint: 'Schrijf het kommagetal eerst als breuk met 10, 100 of 1000 eronder. Zoek daarna een getal waar teller én noemer door te delen zijn.',
       },
 
       // ── Doel 3 · procenten in strook en cirkel ─────────────────────────
       6: {
         niveau: 'analyseren en creëren',
-        vraag: 'In een cirkeldiagram is precies een kwart blauw gekleurd.\n\n'
-          + 'Hoeveel procent is dat? Leg uit hoe je dat ziet.\n'
-          + 'Kleur nu zelf een strook in met 30%. Hoe verdeel je de strook zodat je dat precíes kunt doen?',
-        hint: '100% is de hele strook. In hoeveel gelijke stukjes deel je hem om 10% te kunnen aanwijzen?',
+        vraag: 'In een cirkeldiagram is blauw 25%, rood 40% en groen de rest.\n\n'
+          + 'Hoe groot is de hoek van elk stuk, in graden? Leg uit hoe je van procenten naar graden gaat.\n'
+          + 'Bedenk een cirkeldiagram met vier kleuren waarin geen enkel stuk een "mooi" percentage heeft, maar dat je toch precies kunt tekenen.',
+        hint: 'Een hele cirkel is 360 graden. Hoeveel graden is dan 1%? En 10%?',
       },
       7: {
         niveau: 'evalueren',
-        vraag: 'Bij een toets had Lena 8 van de 10 vragen goed. Jesse had 16 van de 20 goed.\n'
-          + 'Jesse zegt: ik heb twee keer zoveel goed, dus ik heb het beter gedaan.\n\n'
-          + 'Wat vind jij? Reken het om naar procenten.\n'
-          + 'Leg uit wat een percentage eigenlijk laat zien, en waarom dat hier eerlijker is dan tellen.',
-        hint: 'Stel dat allebei de toetsen 100 vragen hadden. Hoeveel had elk kind er dan goed?',
+        vraag: 'Lena had 8 van de 10 vragen goed. Jesse had 17 van de 20 goed. Wie deed het beter?\n\n'
+          + 'Daarna maakt Lena een tweede toets: 27 van de 30 goed.\n'
+          + 'Jesse zegt: jouw totaal is nu (80% + 90%) : 2 = 85%.\n\n'
+          + 'Klopt dat? Reken het na met alle vragen samen.\n'
+          + 'Leg uit wanneer je percentages wél zo mag middelen, en wanneer niet.',
+        hint: 'Tel alle vragen van Lena bij elkaar op, en alle goede antwoorden ook. Telt een toets van 30 vragen even zwaar als een toets van 10?',
       },
 
       // ── Doel 4 · gemiddelde snelheid ───────────────────────────────────
       8: {
         niveau: 'evalueren',
-        vraag: 'Een auto rijdt 150 km in 3 uur.\n'
-          + 'Ravi zegt: de gemiddelde snelheid is 50 km per uur, dus de auto reed de hele tijd precies 50.\n\n'
-          + 'Klopt dat laatste? Leg uit wat "gemiddeld" hier betekent.\n'
-          + 'Bedenk twee heel verschillende manieren waarop de rit ook gegaan kan zijn.',
-        hint: 'Kan de auto ook even stilgestaan hebben bij een stoplicht? Wat moet er dan daarna gebeuren om toch op tijd aan te komen?',
+        vraag: 'Je fietst 10 km naar opa met 20 km per uur. Terug heb je wind tegen en fiets je 10 km per uur.\n'
+          + 'Ravi zegt: gemiddeld ging je dus 15 km per uur.\n\n'
+          + 'Klopt dat? Reken uit hoe lang je over heen en terug deed.\n'
+          + 'Leg uit waarom Ravi\'s manier hier niet werkt.',
+        hint: 'Gemiddelde snelheid is de hele afstand gedeeld door de hele tijd. Hoe lang duurde de heenweg, en hoe lang de terugweg?',
       },
       9: {
-        niveau: 'creëren en analyseren',
-        vraag: 'Op de fiets rijd je ongeveer 15 km per uur.\n\n'
-          + 'Bedenk een fietstocht van jouw huis naar een plek die je kent, en schat hoe lang je erover doet.\n'
-          + 'Welke dingen maken je echte tijd langer of korter dan je berekening?',
-        hint: 'Hoeveel kilometer is het ongeveer? Als 15 km een uur duurt, hoe lang duurt 5 km dan?',
+        niveau: 'analyseren en creëren',
+        vraag: 'Je fietst 10 km naar opa, heel rustig: 10 km per uur.\n'
+          + 'Op de terugweg wil je zo hard fietsen dat je over de hele tocht gemiddeld 20 km per uur hebt gereden.\n\n'
+          + 'Hoe hard moet je terug? Zoek het uit en leg uit wat je ontdekt.\n'
+          + 'Bedenk daarna een versie van deze puzzel die wél kan.',
+        hint: 'Hoeveel tijd mag de hele tocht van 20 km duren als je gemiddeld 20 km per uur rijdt? Hoeveel daarvan heb je op de heenweg al gebruikt?',
       },
     },
 
@@ -410,72 +436,71 @@ const VRAGEN = {
       // ── Doel 1 · 357 : 17 en 360 : 17 ──────────────────────────────────
       1: {
         niveau: 'evalueren',
-        vraag: 'Bo rekent 360 : 17 uit en zegt: het is 21 rest 3.\n'
-          + 'Sam zegt: dat kan niet kloppen, want 21 × 17 is geen 357.\n\n'
-          + 'Wie heeft gelijk? Reken het na.\n'
-          + 'Laat zien hoe je een deelsom met rest áltijd kunt controleren.',
-        hint: 'Doe de deelsom terug: antwoord × deler, en dan de rest erbij. Wat moet daar uitkomen?',
+        vraag: 'Je weet: 360 : 17 = 21 rest 3.\n'
+          + 'Sam zegt: dan is 3600 : 17 = 210 rest 3.\n\n'
+          + 'Klopt dat? Laat zien hoe je het controleert.\n'
+          + 'Wat is 3600 : 170? Leg uit wat er met de rest gebeurt als je het deeltal (en de deler) keer 10 doet.',
+        hint: 'Reken terug: 210 × 17, en tel de rest erbij op. Kom je dan op 3600?',
       },
       2: {
         niveau: 'creëren en analyseren',
-        vraag: 'Bedenk een deelsom door 17 die precies uitkomt, zonder rest.\n'
-          + 'Bedenk er ook één met rest 16.\n\n'
-          + 'Hoe heb je die tweede gevonden?\n'
-          + 'Kan een deelsom door 17 ook rest 17 hebben? Leg uit.',
-        hint: 'Begin met een keersom met 17, en tel er daarna iets bij op.',
+        vraag: 'Een getal gedeeld door 17 geeft rest 5. Een ander getal gedeeld door 17 geeft rest 13.\n\n'
+          + 'Wat is de rest als je die twee getallen optelt en dan door 17 deelt? Probeer het met je eigen voorbeelden.\n'
+          + 'Leg uit waarom het altijd zo uitkomt.\n'
+          + 'Wat gebeurt er met de rest als je de twee getallen keer elkaar doet?',
+        hint: 'Kies zelf getallen: 17 + 5 = 22 en 17 + 13 = 30. Tel ze op en deel door 17. Probeer daarna andere getallen met dezelfde resten.',
       },
 
       // ── Doel 2 · 3726 : 23 in maximaal 3 stappen ───────────────────────
       3: {
         niveau: 'analyseren',
-        vraag: 'Je gaat 3726 : 23 uitrekenen. Maar eerst:\n\n'
-          + 'Wordt het antwoord groter of kleiner dan 100? En dan 200?\n'
-          + 'Leg uit hoe je dat snel ziet, en waarom dat helpt bij het kolomsgewijs delen.',
-        hint: 'Wat is 23 × 100? En 23 × 200? Tussen welke twee zit 3726?',
+        vraag: 'Zonder uit te rekenen: is 3726 : 23 meer of minder dan 3726 : 25?\n\n'
+          + 'Welke van de twee is makkelijker uit je hoofd, en waarom?\n'
+          + 'Hoe kun je de makkelijke gebruiken om de moeilijke te schatten? Hoeveel scheelt het ongeveer?',
+        hint: 'Als je door een kleiner getal deelt, krijgt ieder dan meer of minder? En hoeveel keer past 25 in 100?',
       },
       4: {
         niveau: 'evalueren',
-        vraag: 'Maud deelt 3732 door 23 in stappen: eerst 100 × 23 = 2300, dan 50 × 23 = 1150, dan 10 × 23 = 230.\n'
-          + 'Ze telt op: 160. Er is nog 52 over, dus ze schrijft: 160 rest 52.\n\n'
-          + 'Wat is er nog niet klaar?\n'
-          + 'Leg uit hoe je zeker weet wanneer je écht klaar bent met delen.',
-        hint: 'Kijk goed naar de rest. Past 23 er nog een keer in?',
+        vraag: 'Maud deelt 3732 door 23 in stappen: 100 × 23, 50 × 23 en 10 × 23. Ze schrijft: 160 rest 52.\n'
+          + 'Tim kijkt alleen naar die 52 en zegt meteen: het is 162 rest 6.\n\n'
+          + 'Hoe kan Tim dat zo snel zien? Klopt zijn antwoord?\n'
+          + 'Leg uit hoe je aan een rest ziet dat je nog niet klaar bent, en controleer Tim zonder de deelsom opnieuw te maken.',
+        hint: 'Hoe vaak past 23 in 52? Wat blijft er dan over?',
       },
 
       // ── Doel 3 · verhoudingen ──────────────────────────────────────────
       6: {
         niveau: 'analyseren',
-        vraag: 'Voor 4 pannenkoeken heb je 3 eieren nodig.\n\n'
-          + 'Hoeveel eieren heb je nodig voor 10 pannenkoeken?\n'
-          + 'Leg uit hoe je met een verhoudingstabel bij 10 komt, ook al is 10 geen veelvoud van 4.\n'
-          + 'En wat doe je met een half ei?',
-        hint: 'Ga in de tabel eerst naar 2 pannenkoeken, of juist naar 20.',
+        vraag: 'Voor 4 pannenkoeken heb je 3 eieren en 250 ml melk nodig.\n'
+          + 'Je hebt 7 eieren en 1 liter melk.\n\n'
+          + 'Hoeveel pannenkoeken kun je maximaal bakken? Wat raakt het eerst op?\n'
+          + 'Leg uit hoe je dat met verhoudingstabellen uitzoekt.',
+        hint: 'Reken voor elk ingrediënt apart uit hoeveel pannenkoeken je ermee kunt bakken. Welk ingrediënt houdt je tegen?',
       },
       7: {
         niveau: 'evalueren en creëren',
-        vraag: 'In een klas zit 1/4 van de kinderen op een sportclub.\n'
-          + 'Tessa zegt: dan is de verhouding sporters : niet-sporters 1 : 4.\n\n'
-          + 'Klopt dat? Leg uit.\n'
-          + 'Teken daarna een cirkeldiagram dat laat zien hoe het wél zit.',
-        hint: 'Als 1 van de 4 kinderen sport, hoeveel van die 4 sporten er dan níet?',
+        vraag: 'In groep 7a is de verhouding jongens : meisjes 2 : 3. In groep 7b is het 3 : 2.\n'
+          + 'Tessa zegt: als de twee groepen samen op kamp gaan, zijn er dus precies evenveel jongens als meisjes.\n\n'
+          + 'Klopt dat altijd? Leg uit.\n'
+          + 'Bedenk klassen waarbij het wel klopt en klassen waarbij het niet klopt.',
+        hint: 'Een verhouding zegt niets over hoeveel kinderen er zijn. Probeer een klas van 20 met een klas van 30.',
       },
 
       // ── Doel 4 · oppervlakte in cm, dm, m ──────────────────────────────
       8: {
         niveau: 'evalueren',
-        vraag: 'Een vloer is 3 m lang en 40 dm breed.\n'
-          + 'Ilse rekent: 3 × 40 = 120, dus 120 m².\n\n'
-          + 'Wat gaat er mis? Wat is de oppervlakte wél?\n'
-          + 'Leg uit waarom je bij oppervlakte extra goed op de maten moet letten.',
-        hint: 'Zet eerst allebei de maten in dezelfde eenheid. Hoeveel meter is 40 dm?',
+        vraag: 'Een vloer van 3 m bij 4 m krijgt tegels van 20 cm bij 20 cm.\n'
+          + 'Ilse rekent: 300 : 20 = 15 en 400 : 20 = 20, dus 15 + 20 = 35 tegels.\n\n'
+          + 'Wat vind je van haar manier? Hoeveel tegels zijn het echt?\n'
+          + 'Controleer je antwoord op een tweede manier, via de oppervlakte van één tegel in m².',
+        hint: 'Teken de vloer met rijen tegels. Hoeveel tegels liggen er in één rij, en hoeveel rijen zijn er?',
       },
       9: {
         niveau: 'creëren en analyseren',
-        vraag: 'Een kamer in de vorm van een L kun je op twee manieren in rechthoeken verdelen.\n\n'
-          + 'Teken een L-vorm met maten erbij. Verdeel hem op allebei de manieren en reken de oppervlakte uit.\n'
-          + 'Komt er hetzelfde uit? Leg uit waarom dat wel móet kloppen.\n'
-          + 'Is er nog een derde manier, waarbij je iets aftrekt in plaats van optelt?',
-        hint: 'Teken de L in een grote rechthoek en knip er in gedachten een hoek af.',
+        vraag: 'Teken zo veel mogelijk verschillende rechthoeken met een oppervlakte van 36 m², met alleen hele meters.\n\n'
+          + 'Welke heeft de kortste omtrek, en welke de langste? Leg uit waarom.\n'
+          + 'Kun je een figuur van 36 m² bedenken (geen rechthoek) met een nóg langere omtrek?',
+        hint: 'Zoek alle paren getallen die keer elkaar 36 zijn. Wat gebeurt er met de omtrek als de rechthoek meer op een vierkant gaat lijken?',
       },
     },
 
@@ -486,70 +511,72 @@ const VRAGEN = {
       // ── Doel 1 · 5,2 miljoen en afronden ───────────────────────────────
       1: {
         niveau: 'evalueren',
-        vraag: 'In de krant staat: "Er wonen 5,2 miljoen mensen in de stad."\n'
-          + 'Kees zegt: dat zijn dus 5.000.002 mensen.\n\n'
-          + 'Wat gaat er mis? Schrijf het goede getal op.\n'
-          + 'Leg uit waarom de krant liever "5,2 miljoen" schrijft dan het hele getal.',
-        hint: '0,2 miljoen is een deel van een miljoen. Hoeveel is een tiende van een miljoen?',
+        vraag: 'Krant A: "In de stad wonen 5,2 miljoen mensen."\n'
+          + 'Krant B: "In de stad wonen 5.249.000 mensen."\n'
+          + 'Krant C: "In de stad wonen 5 miljoen mensen."\n\n'
+          + 'Kunnen ze alle drie gelijk hebben? Leg uit.\n'
+          + 'Wat is het kleinste en het grootste echte aantal waarbij krant A gelijk heeft?',
+        hint: 'Afgerond op een tiende miljoen: welke getallen worden allemaal 5,2 miljoen? Waar ligt de grens met 5,1 en met 5,3?',
       },
       2: {
-        niveau: 'analyseren en evalueren',
-        vraag: 'Rond 3.749.999 af op een honderdduizendtal. Wat krijg je?\n'
-          + 'Rond nu 3.750.000 af. Wat krijg je nu?\n\n'
-          + 'Die twee getallen verschillen maar 1. Leg uit waarom hun afronding zo ver uit elkaar ligt.\n'
-          + 'Vind je dat eerlijk? Wanneer zou je líever niet afronden?',
-        hint: 'Kijk naar het cijfer van de tienduizendtallen. Vanaf welk cijfer rond je naar boven af?',
+        niveau: 'analyseren en creëren',
+        vraag: 'Rond 3.749.999 af op honderdduizendtallen. Wat krijg je?\n'
+          + 'Tom doet het stapje voor stapje: eerst op tienduizendtallen (3.750.000) en dan op honderdduizendtallen (3.800.000).\n\n'
+          + 'Wie heeft gelijk, jij of Tom? Leg uit wat er bij Tom misgaat.\n'
+          + 'Bedenk zelf een getal waarbij stapje voor stapje afronden een ander antwoord geeft dan in één keer.',
+        hint: 'Kijk bij in één keer afronden alleen naar het cijfer direct rechts van de honderdduizendtallen. Wat doen de negens bij Tom?',
       },
 
       // ── Doel 2 · heel getal × breuk ────────────────────────────────────
       3: {
         niveau: 'analyseren',
-        vraag: 'Anne rekent 6 × 3/4 liter uit: 6 × 3 = 18, dus 18/4 liter, dus 4½ liter.\n'
-          + 'Ben zegt: 3/4 van 6 liter is óók 4½ liter.\n\n'
-          + 'Is dat toeval? Leg uit waarom 6 × 3/4 en 3/4 van 6 hetzelfde geven.\n'
-          + 'Welke van de twee manieren vind jij handiger, en waarom?',
-        hint: 'Wat is de helft van 6 liter? En driekwart?',
+        vraag: 'Hier staan vijf sommen:\n\n6 × 3/4     3/4 × 6     3 × 6/4     6/4 × 3     4 × 3/6\n\n'
+          + 'Zoek uit welke precies even groot zijn, en welke niet.\n'
+          + 'Leg uit waarom, zonder elke som helemaal uit te rekenen.\n'
+          + 'Welke van de gelijke sommen reken jij het liefst uit je hoofd?',
+        hint: 'Schrijf alles als één breuk: (heel getal × teller) / noemer. Welke getallen staan dan boven en onder de streep?',
       },
       4: {
-        niveau: 'creëren',
-        vraag: 'Bedenk een verhaaltje waarin je 8 × 2/3 nodig hebt.\n\n'
-          + 'Bedenk daarna een verhaaltje waarin het antwoord uiteindelijk een héél getal moet zijn — je kunt bijvoorbeeld geen derde pak kopen.\n'
-          + 'Wat doe je dan met het stukje dat overblijft? Leg uit.',
-        hint: 'Denk aan dingen die je niet in stukjes kunt kopen: pakken, flessen, dozen.',
+        niveau: 'creëren en analyseren',
+        vraag: 'Bedenk een verhaaltje met 8 × 2/3 waarin je het antwoord naar boven moet afronden, en één waarin je naar beneden moet afronden.\n\n'
+          + 'Voor welke hele getallen n is n × 2/3 precies een heel getal?\n'
+          + 'Leg uit hoe je dat ziet.',
+        hint: 'Wanneer blijft er bij n × 2/3 geen stukje over? Probeer n = 1, 2, 3, 4, 5, 6 en zoek het patroon.',
       },
 
       // ── Doel 3 · 5%, 10%, 25%, 50%, 75% ────────────────────────────────
       6: {
         niveau: 'analyseren',
         vraag: 'Je weet dat 10% van 80 gelijk is aan 8.\n\n'
-          + 'Hoe kom je dan snel aan 5%? En aan 25%? En aan 75%?\n'
-          + 'Leg uit welke stapjes je zet, en welk percentage je uit welk ander percentage kunt afleiden.',
-        hint: '5% is de helft van 10%. 25% is een kwart van alles. En 75% is drie keer een kwart — of alles min een kwart.',
+          + 'Hoe vind je met zo weinig mogelijk stappen: 35%, 95%, 12,5% en 150% van 80?\n'
+          + 'Leg per percentage uit welke route je kiest: via 10%, via een breuk, of via "alles min een stukje".',
+        hint: '95% is bijna alles. 12,5% is de helft van 25%. En 150% is meer dan het hele getal.',
       },
       7: {
         niveau: 'evalueren en creëren',
-        vraag: 'Wat is meer: 25% van 60 of 50% van 20?\n'
-          + 'Lieke zegt meteen: 50% is meer dan 25%, dus de tweede.\n\n'
-          + 'Reken het na. Leg uit waarom je een percentage nooit los kunt zien van het getal waar het van is.\n'
-          + 'Bedenk zelf nog zo\'n paar, waarbij het kleinste percentage tóch het meeste oplevert.',
-        hint: 'Een percentage is altijd een deel ván iets. Van welk getal is het hier?',
+        vraag: 'Winkel A: spel van € 60 met 25% korting.\n'
+          + 'Winkel B: hetzelfde spel voor € 50 met 10% korting.\n'
+          + 'Winkel C: € 48, zonder korting.\n\n'
+          + 'Daan zegt: A is het goedkoopst, want daar is de korting het grootst. Wat vind je?\n'
+          + 'Bedenk zelf drie winkels waarbij de winkel met de kleinste korting het goedkoopst is.',
+        hint: 'Reken bij elke winkel uit wat je echt betaalt. Is de grootste korting ook de laagste prijs?',
       },
 
       // ── Doel 4 · staaf- en cirkeldiagrammen ────────────────────────────
       8: {
         niveau: 'evalueren',
-        vraag: 'Twee staafdiagrammen laten dezelfde cijfers zien: op maandag 40 ijsjes verkocht, op dinsdag 50.\n'
-          + 'In het ene diagram begint de as bij 0. In het andere begint de as bij 35.\n\n'
-          + 'In welk diagram lijkt het verschil het grootst? Leg uit hoe dat komt.\n'
-          + 'Hoe kan een diagram je zo voor de gek houden, en wanneer moet je daar op letten?',
-        hint: 'Kijk waar de as begint. Hoe lang is de staaf van 40 in elk diagram, en die van 50?',
+        vraag: 'Een staafdiagram: op maandag 40 ijsjes verkocht, op dinsdag 50. De as begint bij 35.\n\n'
+          + 'Hoeveel keer zo lang is de staaf van dinsdag als die van maandag? En hoeveel keer zoveel ijsjes zijn er echt verkocht?\n'
+          + 'Bij welk getal moet de as beginnen om het te laten lijken alsof er op dinsdag vijf keer zoveel verkocht is?\n'
+          + 'Leg uit hoe je dat vindt.',
+        hint: 'Meet de staven vanaf waar de as begint, niet vanaf 0. Hoe lang zijn ze als de as bij 35 begint?',
       },
       9: {
         niveau: 'creëren en evalueren',
-        vraag: 'Houd een dag bij hoeveel uur je slaapt, op school zit, buiten bent en naar een scherm kijkt.\n\n'
-          + 'Kies of je er een staafdiagram of een cirkeldiagram van maakt, en leg uit waarom dat hier de beste keuze is.\n'
-          + 'Wat laat het andere diagram juist mínder goed zien?',
-        hint: 'Een cirkel laat zien hoe één geheel verdeeld is. Staven zijn handig om hoogtes met elkaar te vergelijken.',
+        vraag: 'Houd een week bij hoeveel tijd je per dag aan een scherm besteedt.\n\n'
+          + 'Maak twee diagrammen van dezelfde getallen: één die eerlijk is, en één die je ouders ervan overtuigt dat je veel te wéinig schermtijd krijgt — zonder over de getallen te liegen.\n'
+          + 'Welke trucs gebruikte je? Leg uit hoe je die trucs bij een ander herkent.',
+        hint: 'Je mag niet liegen, maar wel kiezen: waar begint de as, welke dagen laat je zien, en met wie vergelijk je?',
       },
     },
 
@@ -560,67 +587,70 @@ const VRAGEN = {
       // ── Doel 1 · gemiddelde ────────────────────────────────────────────
       1: {
         niveau: 'evalueren',
-        vraag: 'Vijf kinderen halen voor een toets: 6, 7, 7, 8 en 2.\n'
-          + 'Milan zegt: het gemiddelde is 7, want de meeste kinderen hebben een 7.\n\n'
-          + 'Klopt dat? Reken het uit.\n'
-          + 'Leg uit wat die ene 2 met het gemiddelde doet, en of het gemiddelde dan nog een eerlijk beeld geeft van de klas.',
-        hint: 'Tel alle cijfers bij elkaar op en deel door het aantal kinderen.',
+        vraag: 'Vijf kinderen halen voor een toets: 6, 7, 7, 8 en 2. Het gemiddelde is 6.\n'
+          + 'Milan maakt een herkansing: zijn 2 wordt een 7.\n\n'
+          + 'Wat wordt het gemiddelde? Leg uit hoe je dat voorspelt zonder alles opnieuw op te tellen.\n'
+          + 'Daarna komt er een zesde kind bij. Welk cijfer moet dat kind halen om het gemiddelde weer op 6 te krijgen? Kan dat?',
+        hint: 'Als één cijfer 5 punten hoger wordt, hoeveel stijgt het totaal dan? Hoeveel is dat per kind?',
       },
       2: {
         niveau: 'creëren en analyseren',
-        vraag: 'Bedenk vijf getallen waarvan het gemiddelde precies 10 is, maar waar géén enkel getal 10 tussen zit.\n\n'
-          + 'Bedenk daarna vijf getallen met gemiddelde 10 die zo ver mogelijk uit elkaar liggen.\n'
-          + 'Wat moet er dan kloppen?',
-        hint: 'Alle vijf de getallen samen moeten 50 zijn. Als er één heel groot is, wat moet er dan met de andere gebeuren?',
+        vraag: 'Bedenk vijf hele getallen van 1 tot en met 10 met een gemiddelde van precies 7.\n\n'
+          + 'Zet ze op volgorde. Hoe laag kan het middelste getal zijn? En hoe hoog?\n'
+          + 'Leg uit waarom het niet lager of hoger kan.',
+        hint: 'Alle vijf samen moeten 35 zijn. Als je het middelste getal laag wilt, wat doe je dan met de twee grootste?',
       },
 
       // ── Doel 2 · kommagetallen × en : 10, 100, 1000 ────────────────────
       3: {
         niveau: 'evalueren',
-        vraag: 'Sara zegt: 2,5 × 10 = 2,50, want je zet er gewoon een nul achter.\n\n'
-          + 'Leg uit waarom dat niet klopt, en wat er wél gebeurt met de komma.\n'
-          + 'En waarom werkt "een nul erachter" bij 25 × 10 dan wél?',
-        hint: '2,50 is precies evenveel als 2,5. Is 2,5 × 10 dan ook evenveel als 2,5?',
+        vraag: 'Sara zegt: bij × 10 schuift de komma één plek naar rechts.\n'
+          + 'Tom zegt: nee, de cijfers schuiven één plek naar links, en de komma blijft staan.\n\n'
+          + 'Wie heeft gelijk? Maakt het uit? Laat met 2,5 × 10 en 0,03 × 1000 zien wat er gebeurt.\n'
+          + 'Waarom zou een juf zeggen: "de komma verspringt nooit"?',
+        hint: 'Zet 2,5 en 25 in een tabel met kolommen voor tientallen, eenheden en tienden. Wat verschuift er: de cijfers of de komma?',
       },
       4: {
         niveau: 'analyseren',
-        vraag: 'Een pak melk kost € 1,20. Wat kosten 10 pakken? En 100 pakken?\n'
-          + 'Bij een andere winkel kosten 100 pakken € 95. Wat kost daar één pak?\n\n'
-          + 'Leg uit wat er met de komma gebeurt bij vermenigvuldigen en bij delen.\n'
-          + 'Waarom zijn die twee precies elkaars omgekeerde?',
-        hint: 'Delen door 100 doet precies het tegenovergestelde van keer 100. Welke kant gaat de komma dan op?',
+        vraag: 'Een pak melk van 1 liter kost € 1,20.\n\n'
+          + 'Wat kosten 1000 pakken? En wat kost 1 ml melk?\n'
+          + 'Leg uit wat er met de komma gebeurt, en hoe je zeker weet dat je antwoord niet 10 keer te groot of te klein is.',
+        hint: 'Een liter heeft 1000 ml. Hoeveel plekken schuift het bij delen door 1000? Schat eerst: kost één slokje meer of minder dan 1 cent?',
       },
 
       // ── Doel 3 · verhoudingen en vreemde valuta ────────────────────────
       6: {
         niveau: 'analyseren en evalueren',
-        vraag: 'Voor 1 euro krijg je ongeveer 1,10 dollar.\n'
-          + 'Op vakantie in Amerika kost een ijsje 3,30 dollar. Thuis kost zo\'n ijsje € 2,50.\n\n'
-          + 'Is het ijsje op vakantie duurder of goedkoper? Leg uit hoe je zulke prijzen eerlijk vergelijkt.',
-        hint: 'Reken de dollars eerst om naar euro\'s. Hoeveel keer past 1,10 in 3,30?',
+        vraag: 'Voor je vakantie wissel je € 10 om. Je krijgt 11 dollar: 1 euro = 1,10 dollar.\n'
+          + 'Terug thuis wissel je die 11 dollar weer om. Maar de bank rekent nu: 1 euro kost 1,25 dollar.\n\n'
+          + 'Hoeveel euro krijg je terug? Waar is de rest gebleven?\n'
+          + 'Leg uit waarom een bank bij heen- en terugwisselen bijna altijd wint.',
+        hint: 'Hoeveel keer past 1,25 in 11? Tip: 4 × 1,25 = 5.',
       },
       7: {
         niveau: 'creëren en evalueren',
-        vraag: 'Een recept voor 6 personen gebruikt 450 gram pasta. Jij kookt voor 8 personen.\n\n'
-          + 'Bedenk twee verschillende manieren om uit te rekenen hoeveel pasta je nodig hebt.\n'
-          + 'Welke manier zou je een klasgenoot aanraden, en waarom?',
-        hint: 'Hoeveel gram is het voor 1 persoon? Of voor 2 personen?',
+        vraag: 'Een recept voor 6 personen: 450 gram pasta, 3 eieren en 1 ui. Jij kookt voor 8 personen.\n\n'
+          + 'De pasta is makkelijk. Wat doe je met de eieren en de ui?\n'
+          + 'Bedenk een recept voor 5 personen dat je ook voor 3 en voor 10 personen precies kunt omrekenen.\n'
+          + 'Leg uit waarom sommige ingrediënten niet precies om te rekenen zijn.',
+        hint: 'Reken eerst uit wat er voor 2 personen nodig is. Welke ingrediënten kun je niet in stukjes gebruiken?',
       },
 
       // ── Doel 4 · inhoud van een balk ───────────────────────────────────
       8: {
         niveau: 'analyseren',
         vraag: 'Een doos is 4 dm lang, 3 dm breed en 2 dm hoog.\n\n'
-          + 'Hoeveel blokjes van 1 dm³ passen erin? Leg uit hoe je dat weet zonder ze allemaal te tellen.\n'
-          + 'Wat verandert er aan het aantal als je de doos op zijn kant zet? En aan je berekening?',
-        hint: 'Hoeveel blokjes passen er op de bodem? En hoeveel lagen kun je daarvan stapelen?',
+          + 'Je maakt elke maat twee keer zo groot. Hoeveel keer zoveel past er nu in? Voorspel eerst, reken dan.\n'
+          + 'Hoeveel keer zoveel karton heb je nodig voor de grote doos?\n'
+          + 'Leg uit waarom dat niet hetzelfde getal is.',
+        hint: 'Hoeveel blokjes passen er in de lengte, de breedte en de hoogte? Wat gebeurt er met elk van die drie getallen?',
       },
       9: {
         niveau: 'creëren en evalueren',
-        vraag: 'Ontwerp een doos van precies 24 liter.\n\n'
-          + 'Bedenk drie verschillende maten (lengte, breedte, hoogte) die allemaal kloppen.\n'
-          + 'Welke doos zou je kiezen om pakken melk in te vervoeren — en waarom niet de andere twee?',
-        hint: '1 liter is precies 1 dm³. Zoek drie getallen die met elkaar vermenigvuldigd 24 geven.',
+        vraag: 'Ontwerp een doos van precies 24 liter, met hele decimeters als maten.\n\n'
+          + 'Zoek alle mogelijkheden. Welke doos gebruikt het minste karton?\n'
+          + 'Waarom kiest een fabrikant toch niet altijd die doos? Bedenk een goede reden.',
+        hint: 'Zoek alle drietallen hele getallen die keer elkaar 24 zijn. Het karton is de oppervlakte van alle zes de zijkanten samen.',
       },
     },
 
@@ -631,68 +661,73 @@ const VRAGEN = {
       // ── Doel 1 · rekenmachine bij verhaaltjessommen ────────────────────
       1: {
         niveau: 'evalueren',
-        vraag: 'Jip koopt 3 broden van € 2,45 en betaalt met € 10.\n'
-          + 'Hij tikt in: 10 − 3 × 2,45 en krijgt 2,65.\n'
-          + 'Zijn klasgenoot tikt in: 10 − 3 = 7, en dan × 2,45 = 17,15.\n\n'
-          + 'Wie heeft gelijk? Leg uit wat een rekenmachine doet als je meerdere bewerkingen achter elkaar intikt.\n'
-          + 'Hoe zorg je dat je daar zeker van bent?',
-        hint: 'Wat moet je éérst weten: wat de broden samen kosten, of iets anders? Reken dat los uit.',
+        vraag: 'Jip koopt 3 broden van € 2,45 en betaalt met € 10. Hij tikt in: 10 − 3 × 2,45.\n'
+          + 'Op de ene rekenmachine komt er 2,65 uit, op een andere 17,15.\n\n'
+          + 'Hoe kan dat? Welke rekenmachine rekent zoals Jip het bedoelt?\n'
+          + 'Bedenk een som waarbij allebei de rekenmachines hetzelfde geven, en leg uit waarom.',
+        hint: 'Sommige rekenmachines rekenen gewoon van links naar rechts, andere doen eerst keer en delen. Wanneer maakt die volgorde niets uit?',
       },
       2: {
         niveau: 'creëren',
-        vraag: 'Bedenk een verhaaltje met kommagetallen waarbij je het antwoord op de rekenmachine uitrekent, maar er dan iets raars uitkomt — bijvoorbeeld 2,6 bussen.\n\n'
-          + 'Leg uit wat je met zo\'n antwoord doet. Rond je af naar boven, naar beneden, of hangt dat ergens van af?',
-        hint: 'Denk aan dingen die je niet in stukjes kunt hebben: bussen, dozen, mensen.',
+        vraag: 'Bedenk drie verhaaltjes waarbij de rekenmachine steeds 2,6 geeft:\n'
+          + 'één waarin het goede antwoord 3 is, één waarin het 2 is, en één waarin het precies 2,6 is.\n\n'
+          + 'Leg bij elk verhaaltje uit waarom je zo afrondt (of juist niet).',
+        hint: 'Denk aan bussen (je kunt geen stukje bus huren), aan dozen die helemaal vol moeten, en aan liters of kilo\'s.',
       },
 
       // ── Doel 2 · heel getal × breuk (herhaling) ────────────────────────
       3: {
         niveau: 'analyseren en creëren',
-        vraag: 'Welke is meer: 4 × 3/5 liter of 3 × 4/5 liter?\n\n'
-          + 'Leg uit hoe je dat weet zonder allebei helemaal uit te rekenen.\n'
-          + 'Bedenk nog een paar van zulke paren die altijd gelijk uitkomen. Wat is de regel?',
-        hint: 'Welke getallen vermenigvuldig je met elkaar in de teller? En wat blijft de noemer?',
+        vraag: '4 × 3/5 is precies evenveel als 3 × 4/5.\n\n'
+          + 'Is a × b/c altijd hetzelfde als b × a/c? Leg uit waarom.\n'
+          + 'Gebruik dat om 12 × 5/6 en 25 × 3/100 slim uit te rekenen.\n'
+          + 'Bedenk zelf een som waarbij omdraaien een lastige som ineens makkelijk maakt.',
+        hint: 'Schrijf allebei als (a × b) / c. En welke breuk is 25/100 eigenlijk?',
       },
       4: {
         niveau: 'evalueren',
-        vraag: 'Kim rekent 5 × 2/3 uit en schrijft 10/15.\n'
-          + 'Rob rekent dezelfde som uit en schrijft 10/3.\n\n'
-          + 'Wie heeft gelijk? Wat heeft de ander gedaan, en waarom klopt dat niet?\n'
-          + 'Leg uit wat "keer" eigenlijk betekent bij een breuk.',
-        hint: '5 × 2/3 is 2/3 + 2/3 + 2/3 + 2/3 + 2/3. Wat verandert er dan: de teller of de noemer?',
+        vraag: 'Kim rekent 5 × 2/3 uit en schrijft 10/15. Rob schrijft 10/3.\n'
+          + 'Kim zegt: maar 10/15 is hetzelfde als 2/3!\n\n'
+          + 'Wat betekent het dat Kims antwoord gelijk is aan 2/3? Kan dat kloppen?\n'
+          + 'Leg uit hoe je aan elk antwoord kunt zien dat Kims manier nooit kan kloppen.',
+        hint: 'Als je 5 keer zoveel pizza hebt, kan het dan net zoveel pizza zijn als eerst? Wat doet "teller én noemer keer 5" met de waarde?',
       },
 
       // ── Doel 3 · korting en percentages boven 100% ─────────────────────
       6: {
         niveau: 'evalueren',
-        vraag: 'Een jas van € 80 is afgeprijsd met 25%. Een week later gaat de nieuwe prijs nóg eens 25% omlaag.\n'
-          + 'Femke zegt: dan is het samen 50% korting, dus de jas kost nu € 40.\n\n'
+        vraag: 'Een jas van € 80 wordt eerst 25% duurder. Een week later krijg je 25% korting.\n'
+          + 'Femke zegt: dan kost de jas gewoon weer € 80.\n\n'
           + 'Klopt dat? Reken het na.\n'
-          + 'Leg uit waarom twee keer 25% korting niet hetzelfde is als één keer 50%.',
-        hint: 'De tweede korting gaat van de níeuwe prijs af, niet van € 80.',
+          + 'Hoeveel procent korting had de winkel moeten geven om weer precies op € 80 uit te komen? Leg uit waarom dat geen 25% is.',
+        hint: 'Reken elke stap apart uit. Gaat de korting af van € 80, of van de nieuwe prijs?',
       },
       7: {
         niveau: 'analyseren en creëren',
-        vraag: 'Een spel kostte vorig jaar € 20 en nu € 30. Hoeveel procent is het duurder geworden?\n\n'
-          + 'Bedenk daarna een prijs die met precies 200% is gestegen. Wat betekent dat eigenlijk?\n'
-          + 'En kan een prijs ook met 200% dálen? Leg uit.',
-        hint: '100% erbij betekent: het wordt twee keer zo duur. Wat betekent 100% eráf?',
+        vraag: 'Een spel kostte € 20 en kost nu € 30. Dat is 50% duurder.\n'
+          + 'Een maand later kost het weer € 20.\n\n'
+          + 'Met hoeveel procent is de prijs gedaald? Leg uit waarom dat geen 50% is.\n'
+          + 'Bedenk een prijs die met 200% stijgt. Kan een prijs ook met 200% dalen?',
+        hint: 'Van welk bedrag reken je het percentage bij de daling: van € 20 of van € 30?',
       },
 
       // ── Doel 4 · gewichten en prijzen ──────────────────────────────────
       8: {
         niveau: 'evalueren',
-        vraag: 'Bij de groenteboer kost 1 kg appels € 2,40.\n'
-          + 'Yassin koopt 750 gram en betaalt € 1,80. Hij zegt: ik heb te veel betaald, want 750 is meer dan 2,40.\n\n'
-          + 'Leg uit wat er mis is in zijn denken. Klopt de prijs die hij betaalde?',
-        hint: 'Hoeveel gram is 1 kg? Welk deel van een kilo is 750 gram dan?',
+        vraag: 'Bij de groenteboer kost 1 kg appels € 2,40. In de supermarkt kost een zak van 750 gram € 1,95.\n'
+          + 'Yassin zegt: de zak is goedkoper, want € 1,95 is minder dan € 2,40.\n\n'
+          + 'Wat vind je? Leg uit hoe je de prijzen eerlijk vergelijkt.\n'
+          + 'Waarom staat in winkels vaak een kiloprijs op een klein bordje?',
+        hint: '750 gram is drie keer 250 gram. Wat kost 250 gram bij allebei?',
       },
       9: {
         niveau: 'analyseren en creëren',
-        vraag: 'Wat is zwaarder: een emmer met 3500 gram zand, of een emmer met 3,2 kg water?\n\n'
-          + 'Leg uit welke maat je kiest om dit eerlijk te vergelijken.\n'
-          + 'Bedenk daarna drie dingen die je in grammen weegt en drie die je in kilo\'s weegt. Waarom niet andersom?',
-        hint: 'Zet eerst alles in dezelfde maat. Kilo of gram — wat is hier handig?',
+        vraag: '1 liter water weegt ongeveer 1 kilo.\n\n'
+          + 'Hoeveel weegt het water in een vol bad van 150 liter?\n'
+          + 'En in een zwembad van 25 m lang, 10 m breed en 2 m diep?\n'
+          + 'Leg uit hoe liters, dm³ en kilo\'s met elkaar samenhangen.\n'
+          + 'Bedenk iets waarbij die regel níet klopt.',
+        hint: '1 liter is 1 dm³. Hoeveel dm³ past er in 1 m³? Rekenen met m³ is makkelijker als je eerst de inhoud van het zwembad uitrekent.',
       },
     },
 
@@ -703,70 +738,71 @@ const VRAGEN = {
       // ── Doel 1 · 5819 : 23 ─────────────────────────────────────────────
       1: {
         niveau: 'analyseren',
-        vraag: 'Je gaat 5819 : 23 uitrekenen. Maar eerst schatten:\n\n'
-          + 'Ligt het antwoord dichter bij 200 of bij 300? Leg uit hoe je dat schat.\n'
-          + 'Welke eerste stap kies je dan: 100 × 23, 200 × 23 of 250 × 23? Waarom?',
-        hint: '23 is bijna 25, en 4 × 25 = 100. Hoeveel keer past 25 ongeveer in 5800?',
+        vraag: 'Je weet: 5819 : 23 = 253.\n\n'
+          + 'Zonder opnieuw te delen: wat is 5842 : 23? En 5819 : 253? En 58.190 : 230?\n'
+          + 'Leg bij elke som uit hoe je het ziet.',
+        hint: 'Wat is het verschil tussen 5842 en 5819? En bij een deelsom horen drie getallen die je ook als keersom kunt schrijven.',
       },
       2: {
         niveau: 'evalueren',
-        vraag: 'Twee kinderen delen 5819 door 23.\n'
-          + 'Nadia doet het in 3 stappen: 200, 50 en 3.\n'
-          + 'Tim doet het in 6 stappen: 100, 100, 20, 20, 10 en 3.\n'
-          + 'Allebei komen ze uit op 253.\n\n'
-          + 'Wie heeft het beter gedaan? Is meer stappen fout?\n'
-          + 'Leg uit wat een handige stap is, en welke stap jij niet zou aandurven.',
-        hint: 'Grote stappen zijn sneller, maar je moet ze wel zeker weten. Wat is het risico van een te grote stap?',
+        vraag: 'Drie kinderen delen 5819 door 23.\n'
+          + 'Nadia doet het in 3 stappen: 200, 50 en 3. Tim in 6 stappen: 100, 100, 20, 20, 10 en 3.\n'
+          + 'Kaya begint met 300 × 23 = 6900.\n\n'
+          + 'Wat gaat er mis bij Kaya?\n'
+          + 'In hoeveel stappen kan het minimaal? Leg uit waarom zo min mogelijk stappen niet altijd het beste is.',
+        hint: 'Is 6900 meer of minder dan 5819? En welke keersom met 23 kun je makkelijk uitrekenen die bijna 5819 is?',
       },
 
       // ── Doel 2 · vermenigvuldigen en delen met kommagetallen ───────────
       3: {
         niveau: 'analyseren',
-        vraag: 'Een pakje kost € 0,75. Hoeveel kosten 8 pakjes?\n\n'
-          + 'Bedenk twee manieren: één via centen en één via breuken.\n'
-          + 'Waarom komt er hetzelfde uit?\n'
-          + 'Welke van de twee manieren werkt óók nog als een pakje € 0,79 kost?',
-        hint: '0,75 is driekwart. En het is ook 75 cent. Allebei kun je gebruiken.',
+        vraag: '8 pakjes van € 0,75 kosten samen € 6.\n\n'
+          + 'Wat kosten dan 8 pakjes van € 0,79? En 79 pakjes van € 0,08?\n'
+          + 'Leg uit welke trucs je gebruikt. Waarom zijn de laatste twee antwoorden gelijk?',
+        hint: '€ 0,79 is 4 cent meer dan € 0,75. En kijk goed naar de cijfers van 79 × 0,08 en 8 × 0,79.',
       },
       4: {
         niveau: 'evalueren',
-        vraag: 'Sem verdeelt 4,5 liter limonade over 3 kannen. Hij zegt: 4,5 : 3 = 1,5 liter per kan. Klopt.\n'
-          + 'Daarna verdeelt hij 4,5 liter over flesjes van 0,5 liter. Hij zegt: 4,5 : 0,5 is ongeveer 2, want delen maakt kleiner.\n\n'
-          + 'Waar gaat het mis? Hoeveel flesjes zijn het echt?\n'
-          + 'Leg uit waarom delen soms juist een gróter getal geeft.',
-        hint: 'Hoeveel halve liters passen er in 1 liter? En in 4,5 liter?',
+        vraag: 'Sem zegt: delen maakt altijd kleiner, en keer maakt altijd groter.\n\n'
+          + 'Zoek voor alle vier de gevallen een som met kommagetallen: keer maakt groter, keer maakt kleiner, delen maakt kleiner, delen maakt groter.\n'
+          + 'Wanneer maakt delen precies groter? Leg uit met een regel die altijd klopt.',
+        hint: 'Kijk naar het getal waardoor je deelt of waarmee je vermenigvuldigt. Is het groter of kleiner dan 1?',
       },
 
       // ── Doel 3 · procenten via 1% ──────────────────────────────────────
       6: {
         niveau: 'analyseren',
-        vraag: 'Hier staan vier sommen:\n\n50% van 68     7% van 300     25% van 44     13% van 250\n\n'
-          + 'Bij welke reken je via een breuk, en bij welke via 1%? Leg per som uit waarom.\n'
-          + 'Is er een som waarbij allebei even handig is?',
-        hint: '50% en 25% zijn een half en een kwart. Bij een raar percentage helpt het om eerst 1% te nemen.',
+        vraag: 'Je kunt 13% van 250 uitrekenen via 1%: 1% is 2,5, dus 13% is 13 × 2,5.\n\n'
+          + 'Bedenk nog twee andere routes voor 13% van 250.\n'
+          + 'Bedenk ook drie routes voor 17,5% van 80.\n'
+          + 'Welke route is steeds het kortst? Leg uit waarom.',
+        hint: 'Probeer 10% + 1% + 1% + 1%, of 25% min een stukje. En 17,5% is 10% + 5% + de helft van 5%.',
       },
       7: {
         niveau: 'evalueren en creëren',
-        vraag: 'Daan zegt: 15% van 80 is precies hetzelfde als 80% van 15.\n\n'
-          + 'Klopt dat? Reken het na.\n'
-          + 'Als het klopt, leg dan uit waarom. En bedenk een procentsom die je met deze truc ineens heel makkelijk maakt.',
-        hint: 'Schrijf allebei op als keersom met een breuk: 15/100 × 80 en 80/100 × 15. Wat zie je?',
+        vraag: 'Daan ontdekt: 15% van 80 is hetzelfde als 80% van 15.\n'
+          + 'Dan zegt hij: dus 15% korting op € 80 is ook hetzelfde als 80% korting op € 15.\n\n'
+          + 'Heeft Daan gelijk? Reken uit wat je in allebei de gevallen betaalt.\n'
+          + 'Leg uit waar zijn truc wél en waar hij níet werkt, en bedenk een procentsom die je met de truc ineens uit je hoofd kunt.',
+        hint: 'De korting zelf is in allebei de gevallen even groot. Maar wat betaal je? Waar trek je de korting van af?',
       },
 
       // ── Doel 4 · windrichtingen en routes ──────────────────────────────
       8: {
         niveau: 'analyseren en evalueren',
-        vraag: 'Je staat met je rug naar het noorden.\n\n'
-          + 'Aan welke kant is het oosten dan: links of rechts? Leg uit hoe je dat bedenkt.\n'
-          + 'Waarom is "links" en "rechts" geen goede manier om iemand de weg te wijzen, en "noord" en "zuid" wel?',
-        hint: 'Teken de windroos en draai hem in gedachten zo dat het noorden áchter je ligt.',
+        vraag: 'Je loopt een spiraal: 1 stap noord, 2 stappen oost, 3 stappen zuid, 4 stappen west, 5 stappen noord, en zo verder.\n\n'
+          + 'Waar ben je na 8 stukken, gezien vanaf je startplek? Hoeveel stappen en in welke windrichting?\n'
+          + 'Leg uit hoe je dat bijhoudt zonder alles te tekenen.\n'
+          + 'Waar ben je na 100 stukken?',
+        hint: 'Houd twee getallen bij: hoeveel stappen noord (zuid telt als min) en hoeveel stappen oost (west telt als min).',
       },
       9: {
         niveau: 'creëren en evalueren',
-        vraag: 'Beschrijf de route van de klas naar het schoolplein, alleen met windrichtingen en aantallen stappen. Dus zonder "links" en "rechts".\n\n'
-          + 'Laat een klasgenoot de route lopen. Waar ging het mis?\n'
-          + 'Hoe maak je de beschrijving beter?',
-        hint: 'Zoek eerst uit waar het noorden is in de school. Zonder dat kan niemand je route volgen.',
+        vraag: 'Beschrijf een route door de school met alleen windrichtingen en aantallen stappen.\n'
+          + 'Voorwaarden: je eindigt precies 10 stappen ten noorden van je start, en je verandert minstens vier keer van richting.\n\n'
+          + 'Laat een klasgenoot de route lopen. Kwam hij goed uit?\n'
+          + 'Leg uit hoe je je route op papier controleert voordat iemand hem loopt.',
+        hint: 'Alles wat je naar het oosten loopt, moet je ook weer naar het westen lopen. Hoe zorg je dat noord en zuid samen op 10 uitkomen?',
       },
     },
 
@@ -777,70 +813,69 @@ const VRAGEN = {
       // ── Doel 1 · schattend rekenen ─────────────────────────────────────
       1: {
         niveau: 'analyseren en creëren',
-        vraag: 'Wanneer is schatten goed genoeg, en wanneer moet het precies?\n\n'
-          + 'Hoeveel bussen er nodig zijn voor een schoolreis.\n'
-          + 'Hoeveel wisselgeld je terugkrijgt.\n'
-          + 'Hoeveel verf je nodig hebt voor een muur.\n'
-          + 'De uitslag van een verkiezing.\n\n'
-          + 'Leg per situatie uit waarom. Bedenk er zelf twee bij: één waar schatten mag en één waar het niet mag.',
-        hint: 'Wat gaat er mis als je bij die situatie een klein beetje ernaast zit? Is dat erg?',
+        vraag: 'Schat: hoe vaak klopt je hart in een jaar? En hoeveel stappen zet je in een week?\n\n'
+          + 'Leg per schatting uit welke getallen je gebruikt, en hoe ver je er ongeveer naast kunt zitten.\n'
+          + 'Bedenk een schatvraag waarbij twee klasgenoten met een goede aanpak tóch heel verschillende antwoorden krijgen.',
+        hint: 'Begin klein: hoe vaak per minuut? Maak het dan steeds groter: per uur, per dag, per jaar. Rond onderweg af.',
       },
       2: {
         niveau: 'evalueren',
         vraag: 'Een klas van 29 kinderen gaat naar de dierentuin. Een kaartje kost € 19,75.\n'
-          + 'De juf schat: 30 × 20 = 600, dus we hebben genoeg aan € 600.\n\n'
-          + 'Klopt haar redenering? Zit ze aan de veilige kant?\n'
-          + 'Leg uit hoe je bij schatten kiest of je naar boven of naar beneden afrondt.',
-        hint: 'Ze rondde allebei de getallen naar bóven af. Wat betekent dat voor haar antwoord: te veel of te weinig?',
+          + 'De juf schat: 30 × 20 = 600. De meester schat: 30 × 19 = 570.\n'
+          + 'Het echte bedrag is € 572,75.\n\n'
+          + 'Welke schatting ligt het dichtst bij? Welke is de beste om te weten hoeveel geld je moet meenemen?\n'
+          + 'Leg uit waarom dat niet dezelfde is.',
+        hint: 'Bij welke schatting heb je genoeg geld als je precies dat bedrag meeneemt?',
       },
 
       // ── Doel 2 · vermenigvuldigen met kommagetallen ────────────────────
       3: {
         niveau: 'evalueren',
-        vraag: 'Bij 2,9 × 8,1 tikt Iris 29 × 81 in op de rekenmachine en krijgt 2349.\n'
-          + 'Nu twijfelt ze: is het 2,349 of 23,49 of 234,9?\n\n'
-          + 'Hoe helpt schatten haar hier?\n'
-          + 'Leg uit hoe je de komma altijd op de goede plek krijgt.',
-        hint: '2,9 is bijna 3 en 8,1 is bijna 8. Hoeveel is 3 × 8 ongeveer? Welk antwoord ligt daar het dichtst bij?',
+        vraag: 'De rekenmachine zegt: 29 × 81 = 2349.\n\n'
+          + 'Waar staat de komma bij 2,9 × 8,1? En bij 0,29 × 81? En bij 2,9 × 0,81? En bij 0,029 × 0,81?\n'
+          + 'Iris zegt: tel de cijfers achter de komma. Leg uit waarom die regel werkt.\n'
+          + 'Hoe controleer je met schatten dat je de komma goed hebt gezet?',
+        hint: 'Hoeveel cijfers staan er samen achter de komma in de twee getallen? En klopt je antwoord als je schat, bijvoorbeeld 0,3 × 80?',
       },
       4: {
         niveau: 'analyseren en creëren',
-        vraag: 'Wat is meer: 24 × 0,67 of 24 × 1? Leg uit hoe je dat weet zonder te rekenen.\n\n'
-          + 'Bedenk daarna een keersom met een kommagetal waarvan het antwoord kleiner is dan állebei de getallen waarmee je begon.\n'
-          + 'Hoe kan dat, als "keer" toch groter maakt?',
-        hint: 'Keer 0,5 is hetzelfde als de helft nemen. Wat gebeurt er dan met een getal?',
+        vraag: 'Zonder te rekenen: welke van deze antwoorden zijn groter dan 24?\n\n24 × 0,99     24 : 0,99     24 × 1,01     24 : 1,01\n\n'
+          + 'Leg uit hoe je dat ziet.\n'
+          + 'Bedenk een deelsom met kommagetallen waarvan het antwoord groter is dan allebei de getallen waarmee je begint.',
+        hint: 'Keer iets onder de 1 geeft minder dan je had. Wat doet delen door iets onder de 1?',
       },
 
       // ── Doel 3 · breuken en kommagetallen ordenen ──────────────────────
       6: {
         niveau: 'analyseren',
-        vraag: 'Zet op volgorde van klein naar groot:\n\n3/4     0,7     2/3     0,66\n\n'
-          + 'Leg uit hoe je ze vergelijkt als de ene een breuk is en de andere een kommagetal.\n'
-          + 'Welke twee liggen het dichtst bij elkaar? Pas op, dat is een valstrik.',
-        hint: 'Maak van alles een kommagetal, of van alles een breuk met dezelfde noemer. Wat is 2/3 als kommagetal precies?',
+        vraag: 'Zet op volgorde van klein naar groot:\n\n3/4     0,7     2/3     0,66     7/10     0,67\n\n'
+          + 'Welke zijn precies even groot?\n'
+          + 'Welke twee verschillende getallen liggen het dichtst bij elkaar, en hoe dichtbij? Leg uit hoe je dat zeker weet.',
+        hint: 'Schrijf alles als kommagetal met drie cijfers achter de komma. Wat is 2/3 dan ongeveer?',
       },
       7: {
         niveau: 'evalueren en creëren',
-        vraag: 'Pim zegt: 1/3 is 0,33. Dus 3 × 0,33 = 0,99. Dus drie derden zijn niet één hele!\n\n'
-          + 'Wat klopt hier niet? Leg uit wat er met 1/3 als kommagetal aan de hand is.\n'
-          + 'Bedenk nog een breuk waarbij precies hetzelfde gebeurt.',
-        hint: 'Deel 1 door 3 op de rekenmachine. Houdt het ergens op?',
+        vraag: 'Pim zegt: 0,999… (met oneindig veel negens) is net iets minder dan 1.\n'
+          + 'Kim zegt: nee, het is precies 1. Want 1/3 = 0,333… en 3 × 1/3 = 1.\n\n'
+          + 'Wie heeft gelijk? Leg uit waarom.\n'
+          + 'Lukt het je een getal te bedenken dat tussen 0,999… en 1 ligt? Wat zegt dat?',
+        hint: 'Als twee getallen verschillen, past er altijd een getal tussen, bijvoorbeeld precies in het midden. Lukt dat hier?',
       },
 
       // ── Doel 4 · lijndiagrammen en tijd-afstand ────────────────────────
       8: {
         niveau: 'analyseren',
-        vraag: 'In een tijd-afstand-diagram van een fietstocht loopt de lijn eerst schuin omhoog, dan een stuk helemaal plat, en daarna steiler omhoog dan aan het begin.\n\n'
-          + 'Vertel het verhaal van de tocht: wat gebeurde er in elk stuk?\n'
-          + 'Waar ging de fietser het hardst, en hoe zie je dat aan de lijn?',
-        hint: 'Plat betekent: de afstand verandert niet. Wat doet de fietser dan?',
+        vraag: 'Anna vertrekt om 9:00 uur en fietst 15 km per uur. Bram vertrekt om 9:20 uur langs dezelfde weg en fietst 20 km per uur.\n\n'
+          + 'Teken ze allebei in één tijd-afstand-diagram. Waar kruisen de lijnen, en wat betekent dat?\n'
+          + 'Leg uit hoe je aan de lijnen ziet wie sneller gaat.',
+        hint: 'Hoe ver is Anna al als Bram vertrekt? Hoeveel km per uur loopt Bram op haar in?',
       },
       9: {
         niveau: 'creëren en analyseren',
-        vraag: 'Teken een tijd-afstand-diagram van je eigen weg naar school, met een stuk waar je stilstaat.\n\n'
-          + 'Kan de lijn ooit naar beneden gaan? En recht omhoog?\n'
-          + 'Leg uit wat dat zou betekenen, en of dat kan.',
-        hint: 'Naar beneden zou betekenen dat de afstand tot huis kleiner wordt. Recht omhoog zou betekenen dat er geen tijd voorbijgaat.',
+        vraag: 'Teken een tijd-afstand-diagram (afstand tot je huis) van een wandeling waarbij je halverwege iets vergeet en terugloopt.\n\n'
+          + 'Kan de lijn naar beneden gaan? Kan hij recht omhoog gaan?\n'
+          + 'Hoe ziet de lijn eruit als je steeds sneller gaat lopen? Leg uit wat elke vorm betekent.',
+        hint: 'Op de as staat de afstand tot je huis. Wat gebeurt er met die afstand als je omkeert? En hoe ziet het eruit als je steeds sneller gaat?',
       },
     },
   },
