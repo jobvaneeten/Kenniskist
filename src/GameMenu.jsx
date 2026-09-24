@@ -7,6 +7,7 @@ import HeadSoccer from './games/HeadSoccer'
 import AstroKatapultGame from './games/AstroKatapultGame'
 import SterrenstroompGame from './games/SterrenstroompGame'
 import DoodleSprongGame from './games/DoodleSprongGame'
+import MeteoorvluchtGame from './games/MeteoorvluchtGame'
 import FruitsabelGame from './games/FruitsabelGame'
 import SterrenveerGame from './games/SterrenveerGame'
 import GraafGame from './games/GraafGame'
@@ -80,6 +81,7 @@ const FREE_GAMES = [
   { key: 'astrokatapult', emoji: '🪐', name: 'Astro Katapult',   desc: 'Lanceer & versla de aliens in 50 levels!' },
   { key: 'sterrenstroom', emoji: '🛸', name: 'Spacerunner',     desc: 'Ontwijk de asteroïden in de ruimte!' },
   { key: 'doodlesprong',  emoji: '🦘', name: 'Doodle Sprong',   desc: 'Spring zo hoog mogelijk en shop nieuwe personages!' },
+  { key: 'meteoorvlucht', emoji: '☄️', name: 'Meteoorvlucht',   desc: 'Ren weg voor de meteoor en spaar voor 49 poppetjes!', img: '/scenes/games/meteoorvlucht.svg' },
   { key: 'evolutie',      emoji: '🐨', name: 'Dier Evolutie',   desc: 'Voeg dieren samen en ontdek 24 evoluties per soort!' },
   { key: 'brug',          emoji: '🌉', name: 'Brug Bouwen',     desc: 'Bouw bruggen in 22 levels — hout, weg, metaal & touw!' },
   { key: 'hillclimb',     emoji: '🚗', name: 'Bergrijden',      desc: 'Race over heuvels, verzamel munten en upgrade je auto!' },
@@ -161,6 +163,10 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
 
   if (directGame === 'doodlesprong') {
     return vrij(<DoodleSprongGame onBack={onBack} />)
+  }
+
+  if (directGame === 'meteoorvlucht') {
+    return vrij(<MeteoorvluchtGame onBack={onBack} />)
   }
 
   if (directGame === 'evolutie') {

@@ -10,6 +10,7 @@ const GAMES = [
   { emoji: '🪐', label: 'Astro Katapult' },
   { emoji: '🛸', label: 'Spacerunner' },
   { emoji: '🦘', label: 'Doodle Sprong' },
+  { emoji: '☄️', label: 'Meteoorvlucht' },
   { emoji: '🐨', label: 'Dier Evolutie' },
   { emoji: '🌉', label: 'Brug Bouwen' },
   { emoji: '🏰', label: 'Tower Defense' },

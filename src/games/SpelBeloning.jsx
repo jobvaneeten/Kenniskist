@@ -74,6 +74,7 @@ const SPELLEN = [
   { key: 'astro',      emoji: '🪐', name: 'Astro Katapult', desc: 'Speel 1 level',                    img: '/scenes/games/astrokatapult.png' },
   { key: 'space',      emoji: '🛸', name: 'Spacerunner',    desc: 'Vlieg door de ruimte!',            img: '/scenes/games/sterrenstroom.png' },
   { key: 'doodle',     emoji: '🦘', name: 'Doodle Sprong',  desc: 'Spring zo hoog mogelijk!',          img: '/scenes/games/doodlesprong.png' },
+  { key: 'meteoor',    emoji: '☄️', name: 'Meteoorvlucht',  desc: 'Ren weg voor de meteoor!',          img: '/scenes/games/meteoorvlucht.svg' },
   { key: 'evolutie',   emoji: '🐨', name: 'Dier Evolutie',  desc: 'Voeg dieren samen',                 img: '/scenes/games/evolutie.png' },
   { key: 'tower',      emoji: '🏰', name: 'Tower Defense',  desc: 'Verdedig je toren!',               img: '/scenes/games/towerdefense.png' },
   { key: 'brug',       emoji: '🌉', name: 'Brug Bouwen',    desc: 'Bouw 3 bruggen',                   img: '/scenes/games/brug.png' },
@@ -98,6 +99,7 @@ export default function SpelBeloning({ title, sub, geld, addCuruntie, onDone }) 
   if (picked === 'astro')      return <IframeEmbed src="/astrokatapult/?reward=1" title="Astro Katapult" doneType="astrokatapult-leveldone" hint="Speel 1 level — daarna ga je verder 🪐" onDone={onDone} />
   if (picked === 'space')      return <IframeEmbed src="/sterrenstroom/" title="Spacerunner" doneType="spacerunner-gameover" hint="Je gaat automatisch verder na het spel 🛸" onDone={onDone} />
   if (picked === 'doodle')     return <IframeEmbed src="/doodlesprong/" title="Doodle Sprong" doneType="doodlesprong-gameover" hint="Je gaat automatisch verder na het spel 🦘" onDone={onDone} />
+  if (picked === 'meteoor')    return <IframeEmbed src="/meteoorvlucht/" title="Meteoorvlucht" doneType="meteoorvlucht-gameover" hint="Je gaat automatisch verder na het spel ☄️" onDone={onDone} />
   // Evolutie is een idle-spel zonder eigen 'potje', dus hier bepaalt de klok het
   // einde: 1 minuut spelen en dan automatisch terug naar de oefening.
   if (picked === 'evolutie')   return <IframeEmbed src="/evolutie/" title="Dier Evolutie" doneType="evolutie-klaar" seconds={60} hint="Tik op de dieren en raap poep — na 1 minuut ga je verder 🐨" onDone={onDone} />
