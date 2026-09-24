@@ -17,6 +17,7 @@ import VerhaaltjesSommen from './VerhaaltjesSommen.jsx'
 import TafelsOefenen from './TafelsOefenen.jsx'
 import BreukenPlaatjes from './BreukenPlaatjes.jsx'
 import MaatenOmrekenen from './MaatenOmrekenen.jsx'
+import KlokKijken from './KlokKijken.jsx'
 import ProcentenBreuken from './ProcentenBreuken.jsx'
 import DicteeThema from './DicteeThema.jsx'
 import BegrijpendLezen from './BegrijpendLezen.jsx'
@@ -102,6 +103,13 @@ export default function RenderTool({ opdracht, groep, onBack, addBriefgeld, addC
     case 'maten-omrekenen':
       return (
         <MaatenOmrekenen
+          onBack={onBack} addBriefgeld={addBriefgeld} addCuruntie={addCuruntie}
+          aantal={aantal} config={config}
+        />
+      )
+    case 'klokkijken':
+      return (
+        <KlokKijken
           onBack={onBack} addBriefgeld={addBriefgeld} addCuruntie={addCuruntie}
           aantal={aantal} config={config}
         />

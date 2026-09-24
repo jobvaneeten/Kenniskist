@@ -166,6 +166,14 @@ export const TOOL_FAMILIES = [
     ],
   },
   {
+    familie: 'klokkijken', toolId: 'klokkijken', label: 'Klokkijken',
+    vak: 'rekenen', groepen: [5, 6, 7, 8], aantalInstelbaar: true, standaardAantal: 15, eenheid: 'opgaven',
+    configVelden: [
+      { key: 'weergave', type: 'keuze', label: 'Klok', opties: ['analoog', 'digitaal'] },
+      { key: 'level', type: 'keuze', label: 'Level', opties: ['1', '2', '3', '4'] },
+    ],
+  },
+  {
     familie: 'procenten-breuken', toolId: 'procenten-breuken', label: 'Procenten · Breuken · Komma',
     vak: 'rekenen', groepen: [7, 8], aantalInstelbaar: true, standaardAantal: 5, eenheid: 'sessies',
     configVelden: [],

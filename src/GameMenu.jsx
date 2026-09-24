@@ -17,6 +17,7 @@ import VerhaaltjesSommen from './games/VerhaaltjesSommen'
 import Denkvragen from './games/Denkvragen'
 import BreukenPlaatjes from './games/BreukenPlaatjes'
 import MaatenOmrekenen from './games/MaatenOmrekenen'
+import KlokKijken from './games/KlokKijken'
 import TafelsOefenen from './games/TafelsOefenen'
 import WerkwoordSpelling from './games/WerkwoordSpelling'
 import DicteeThema from './games/DicteeThema'
@@ -284,6 +285,9 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
       if (rekenKeuze === 'breuken') {
         return <BreukenPlaatjes onBack={() => setRekenKeuze(null)} addBriefgeld={addBriefgeld} addCuruntie={addCuruntie} />
       }
+      if (rekenKeuze === 'klok') {
+        return <KlokKijken onBack={() => setRekenKeuze(null)} addBriefgeld={addBriefgeld} addCuruntie={addCuruntie} />
+      }
       if (rekenKeuze === 'maten') {
         return <MaatenOmrekenen onBack={() => setRekenKeuze(null)} addBriefgeld={addBriefgeld} addCuruntie={addCuruntie} />
       }
@@ -341,6 +345,13 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
                 <RewardChips rewards={['💵 briefgeld']} />
               </button>
             )}
+            <button className="mode-card" onClick={() => setRekenKeuze('klok')}>
+              <MenuScene name="blok9" />
+              <span className="mode-name">🕒 Klokkijken</span>
+              <span className="mode-desc">Analoog of digitaal · 4 levels</span>
+              <span className="vb-line">"tien voor half vier" · "15:20"</span>
+              <RewardChips rewards={['💵 briefgeld']} />
+            </button>
             <button className="mode-card" onClick={() => setRekenKeuze('verhaal')}>
               <MenuScene name="taal" />
               <span className="mode-name">📖 Verhaaltjessommen</span>
