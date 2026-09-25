@@ -9,11 +9,11 @@ import RenderTool from './games/toolRender.jsx'
 import './game.css'
 
 // Halverwege gestopt met lezen: dan telt niet "0 / 1 gemaakt" maar hoeveel
-// minuten er nog liggen. De stand staat lokaal op dit apparaat (zie
-// lib/leestimerOpslag.js), dus dit klopt alleen op de iPad waar gelezen is.
+// minuten er nog liggen. De stand staat lokaal én in de database (zie
+// lib/leestimerOpslag.js), dus dit klopt ook op een andere iPad.
 function leesRest(o) {
   if (o.klaar || TOOL_BY_ID[o.toolId]?.familie !== 'lezen') return null
-  return resterendeMinuten(o.opdrachtId, o.config)
+  return resterendeMinuten(o.opdrachtId, o.config, o.leesstand)
 }
 
 // Leerlingscherm: de weektaken van de eigen klas als mapjes, met daarin de

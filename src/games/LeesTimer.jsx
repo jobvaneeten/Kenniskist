@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useGebruikOpdracht } from './gebruikOpdracht.js'
-import { doelMinuten, leesStand, schrijfStand, wisStand, verstreken } from '../lib/leestimerOpslag.js'
+import {
+  doelMinuten, leesStand, schrijfStand, wisStand, verstreken, haalServerStand, bewaarServerStand, besteStand,
+} from '../lib/leestimerOpslag.js'
 import './lees-timer.css'
 
 // Stil lezen als weektaak-opdracht: geen vragen, geen scherm om naar te
@@ -13,7 +15,8 @@ import './lees-timer.css'
 // scherm een Wake Lock aan, zodat het scherm zo lang mogelijk aanblijft.
 //
 // Stoppen doe je expliciet: de pauzeknop, of teruggaan naar de weektaak. Beide
-// zetten de verstreken tijd vast. Op de weektaakkaart staat dan hoeveel
+// zetten de verstreken tijd vast. De stand staat ook in de database, zodat een
+// kind op een andere iPad verder kan lezen. Op de weektaakkaart staat dan hoeveel
 // minuten er nog te lezen zijn; de opdracht blijft open tot ze gelezen zijn.
 const BRIEFGELD_PER_MINUUT = 10
 
@@ -35,8 +38,12 @@ export default function LeesTimer({ onBack, addBriefgeld, aantal, config, opdrac
   const [stand, setStand] = useState(beginstand)
   // Liep de timer nog toen de pagina wegviel (slaapstand, crash, herladen),
   // dan pakken we hem meteen lopend weer op: de tijd is ondertussen ook
-  // doorgelopen, het zou raar zijn om dan op een startknop te wachten.
-  const [fase, setFase] = useState(beginstand.startOp ? 'bezig' : 'start')
+  // doorgelopen, het zou raar zijn om dan op een startknop te wachten. Zelfde
+  // bij een leesbeurt die al vol was maar nog niet opgeslagen kon worden: dan
+  // meteen opnieuw proberen.
+  const volOfLopend = (s) => !!s.startOp || verstreken(s, doelSeconden) >= doelSeconden
+  const [fase, setFase] = useState(volOfLopend(beginstand) ? 'bezig' : 'start')
+  const [opslaanMislukt, setOpslaanMislukt] = useState(false)
   const [, tik] = useState(0)
   const afgerondRef = useRef(false)
 
@@ -49,6 +56,32 @@ export default function LeesTimer({ onBack, addBriefgeld, aantal, config, opdrac
   }, [opdrachtId, doelSeconden])
 
   const seconden = verstreken(stand, doelSeconden)
+
+  // Stand uit de database erbij: misschien is er op een andere iPad al
+  // gelezen. Alleen overnemen als daar meer tijd staat dan hier.
+  useEffect(() => {
+    let levend = true
+    haalServerStand(opdrachtId).then((server) => {
+      if (!levend || !server) return
+      const huidig = standRef.current
+      const beste = besteStand(huidig, server, doelSeconden)
+      if (beste === huidig) return
+      standRef.current = beste
+      setStand(beste)
+      schrijfStand(opdrachtId, doelSeconden, beste)
+      if (volOfLopend(beste)) setFase(f => (f === 'af' ? f : 'bezig'))
+    })
+    return () => { levend = false }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- alleen bij openen
+  }, [opdrachtId, doelSeconden])
+
+  // Scherm weg (slaapstand, app wisselen): de stand nog een keer naar de
+  // database, voor het geval het opslaan bij het starten mislukte.
+  useEffect(() => {
+    const weg = () => { if (document.visibilityState === 'hidden') bewaarServerStand(opdrachtId, standRef.current) }
+    document.addEventListener('visibilitychange', weg)
+    return () => document.removeEventListener('visibilitychange', weg)
+  }, [opdrachtId])
 
   // Vastzetten zonder de fase aan te raken: ook gebruikt bij het verlaten van
   // het scherm, en dan is er geen component meer om een fase aan te geven.
@@ -107,15 +140,30 @@ export default function LeesTimer({ onBack, addBriefgeld, aantal, config, opdrac
   useEffect(() => zetVast, [zetVast])
 
   // Klaar: één keer rapporteren (score 1 van 1, zodat de weektaak deze sessie
-  // als gemaakt telt) en de bewaarde tijd opruimen.
+  // als gemaakt telt). De bewaarde tijd pas opruimen als het resultaat echt
+  // is opgeslagen; lukt dat niet (geen wifi, verlopen sessie), dan blijft de
+  // volle stand staan en probeert het de volgende keer dat het kind de
+  // leestaak opent opnieuw. Briefgeld alleen bij de eerste poging.
   useEffect(() => {
     if (fase !== 'bezig' || seconden < doelSeconden || afgerondRef.current) return
     afgerondRef.current = true
-    opdracht.registreer(true, { vraag: `${minutenTekst(minuten)} lezen`, antwoord: 'uitgelezen' })
-    addBriefgeld?.(minuten * BRIEFGELD_PER_MINUUT)
-    setStand({ gebankt: 0, startOp: null })
-    wisStand(opdrachtId)
+    const vol = { gebankt: doelSeconden, startOp: null }
+    const eerder = standRef.current.startOp == null && standRef.current.gebankt >= doelSeconden
+    standRef.current = vol
+    setStand(vol)
+    schrijfStand(opdrachtId, doelSeconden, vol)
+    if (!eerder) addBriefgeld?.(minuten * BRIEFGELD_PER_MINUUT)
     setFase('af')
+    Promise.resolve(opdracht.registreer(true, { vraag: `${minutenTekst(minuten)} lezen`, antwoord: 'uitgelezen' }))
+      .then((res) => {
+        if (!opdrachtId || res?.ok) {
+          standRef.current = { gebankt: 0, startOp: null }
+          setStand(standRef.current)
+          wisStand(opdrachtId)
+        } else {
+          setOpslaanMislukt(true)
+        }
+      })
   }, [fase, seconden, doelSeconden, minuten, opdracht, addBriefgeld, opdrachtId])
 
   const over = Math.max(0, doelSeconden - seconden)
@@ -135,7 +183,7 @@ export default function LeesTimer({ onBack, addBriefgeld, aantal, config, opdrac
               : 'Je leestaak is af — laat het aan je juf of meester zien.'}
           </p>
         </div>
-        {opdracht.opslaanMislukt && (
+        {(opdracht.opslaanMislukt || opslaanMislukt) && (
           <p className="lt-waarschuwing">⚠️ Je leesbeurt kon niet worden opgeslagen — laat dit scherm zien.</p>
         )}
         <div className="lt-knoppen">

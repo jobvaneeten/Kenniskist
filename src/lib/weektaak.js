@@ -1,4 +1,5 @@
 import { supabase } from './supabase.js'
+import { vanServer } from './leestimerOpslag.js'
 
 // kk_actieve_opdracht: gelezen door public/kenniskist-login.js om een
 // resultaat aan de juiste opdracht te hangen (toolId moet matchen — zie
@@ -56,15 +57,19 @@ export async function haalMijnWeektaak(profielId, klasId) {
   // De status staat niet in weektaak_voortgang, dus apart erbij: een opdracht
   // die de leerkracht heeft vrijgesteld ("hoeft niet") hoort niet meer in het
   // lijstje van de leerling te staan.
-  const [{ data: voortgang }, { data: toewijzingen }] = await Promise.all([
+  const [{ data: voortgang }, { data: toewijzingen }, { data: leesstanden }] = await Promise.all([
     supabase.from('weektaak_voortgang').select('opdracht_id, doel_aantal, som_score, som_max, pogingen, herkansingen')
       .eq('leerling_id', profielId).in('opdracht_id', opdrachtIds),
     supabase.from('toewijzingen').select('opdracht_id, status')
+      .eq('leerling_id', profielId).in('opdracht_id', opdrachtIds),
+    // Half gelezen leesbeurten, ook van een andere iPad (zie leestimerOpslag.js).
+    supabase.from('leesstanden').select('opdracht_id, gebankt, start_op')
       .eq('leerling_id', profielId).in('opdracht_id', opdrachtIds),
   ])
 
   const weektaakBij = new Map(weektaken.map(w => [w.id, w]))
   const voortgangBij = new Map((voortgang ?? []).map(v => [v.opdracht_id, v]))
+  const leesstandBij = new Map((leesstanden ?? []).map(l => [l.opdracht_id, vanServer(l)]))
   const vrijgesteld = new Set((toewijzingen ?? []).filter(t => t.status === 'vrijgesteld').map(t => t.opdracht_id))
 
   return opdrachten
@@ -86,6 +91,7 @@ export async function haalMijnWeektaak(profielId, klasId) {
         // automatisch na minder dan 50% goed, zie migratie 0010). De telling
         // hierboven loopt dan al vanaf die streep, dus 0 = echt weer opnieuw.
         herkansingen: v.herkansingen ?? 0,
+        leesstand: leesstandBij.get(o.id) ?? null,
         // Cap op de weergave, niet op de data: een leerling die de opdracht
         // vaker doet dan gevraagd komt boven 100%, dat is prima — hij heeft
         // 'm dan allang gehaald.

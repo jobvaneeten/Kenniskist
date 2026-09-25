@@ -35,6 +35,9 @@ export function useGebruikOpdracht({ toolId, aantal }) {
     // waarschuwing te komen dat het opslaan mislukte.
     opslaan?.then(res => { if (!res?.ok && res?.reden !== 'niet-ingelogd') setOpslaanMislukt(true) })
     if (aantal != null && nieuwGedaan >= aantal) setKlaar(true)
+    // Teruggeven zodat een tool kan wachten tot het echt is opgeslagen (de
+    // leestimer ruimt zijn stand pas daarna op).
+    return opslaan
   }, [klaar, gedaan, goed, aantal, toolId])
 
   return { gedaan, goed, klaar, opslaanMislukt, aantal, registreer }
