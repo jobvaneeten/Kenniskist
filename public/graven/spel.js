@@ -56,7 +56,7 @@
     schrijf('kk_gr_bezit', opslag.bezit)
   }
 
-  const niveau = (sleutel) => Math.max(1, Math.min(8, opslag.upgrades[sleutel] | 0 || 1))
+  const niveau = (sleutel) => Math.max(1, Math.min(maxVan(spoorVan(sleutel)), opslag.upgrades[sleutel] | 0 || 1))
   const spoorVan = (sleutel) => SPOREN.find(s => s.sleutel === sleutel)
 
   const maxBrandstof = () => spoorVan('tank').liters[niveau('tank') - 1]
@@ -580,7 +580,7 @@
     if (!bezig) return
     bezig = false
     opslag.baas = true
-    opslag.upgrades.romp = 8   // de mooiste romp van het spel als trofee
+    opslag.upgrades.romp = Math.max(8, niveau('romp'))   // de mooiste romp van het spel als trofee
     verkoopLading()
     bewaar()
     toon('winst')
@@ -1796,7 +1796,7 @@
       const n = niveau(s.sleutel)
       const prijs = prijsVan(s, n)
       const kan = prijs !== null && opslag.erts >= prijs
-      const vakjes = Array.from({ length: 8 }, (_, i) =>
+      const vakjes = Array.from({ length: maxVan(s) }, (_, i) =>
         `<span class="vakje${i < n ? ' vol' : ''}" style="--kleur:${s.kleur}"></span>`).join('')
       const rechts = prijs === null
         ? '<span class="max">MAX</span>'
@@ -1804,7 +1804,7 @@
            <button class="knop klein" data-koop="${s.sleutel}" ${kan ? '' : 'disabled'}>Koop</button>`
       return `<div class="spoor" style="--kleur:${s.kleur}">
         <div>
-          <div class="spoor-naam" style="color:${s.kleur}">${s.icoon} ${s.naam} <span class="zacht">${n}/8</span></div>
+          <div class="spoor-naam" style="color:${s.kleur}">${s.icoon} ${s.naam} <span class="zacht">${n}/${maxVan(s)}</span></div>
           <div class="spoor-wat">nu: ${s.wat(n)}${prijs !== null ? ` → straks: ${s.wat(n + 1)}` : ''}</div>
           <div class="vakjes">${vakjes}</div>
         </div>

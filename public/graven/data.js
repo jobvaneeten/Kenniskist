@@ -84,10 +84,24 @@ const WERELDEN = [
   },
 ]
 
-// ── De acht upgradesporen, acht niveaus elk ───────────────────────────────
+// ── De upgradesporen, zestien niveaus elk ────────────────────────────────
 // Niveau 1 heeft iedereen bij de start. De eerste stap blijft met opzet
 // goedkoop — binnen een paar duiken te betalen, anders blijven ze niet hangen.
-// Daarna loopt het hard op: niveau 8 is een spaardoel van weken.
+// Daarna loopt het hard op: niveau 8 is een spaardoel van weken, en 9 t/m 16
+// zijn voor wie écht door wil (zie prijsVan). Koeling en schokdemper zijn op
+// niveau 8 al volledig, die stoppen daar (`max: 8`).
+const MAX_NIVEAU = 16
+const TANK = [40, 58, 80, 108, 145, 195, 260, 350, 440, 540, 650, 770, 900, 1040, 1190, 1350]
+const LAADRUIM = [6, 9, 13, 18, 24, 32, 42, 55, 66, 78, 91, 105, 120, 136, 153, 171]
+const ROMP = [3, 4, 5, 6, 7, 8, 10, 12, 13, 14, 15, 16, 18, 20, 22, 25]
+const LAMPEN = ['schemerlampje', 'kleine bundel', 'brede bundel', 'verre bundel',
+  'zoeklicht', 'sterk zoeklicht', 'schijnwerper', 'daglicht', 'fel daglicht', 'bouwlamp',
+  'stadionlamp', 'vuurtoren', 'bliksemschicht', 'supernova', 'zonnestraal', 'zon in je zak']
+const MAGNEET = [0, 1, 2, 2, 3, 4, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10]
+const RADAR = [0, 3, 4, 6, 8, 10, 13, 16, 18, 20, 22, 24, 26, 28, 31, 34]
+const HANDEL = [0, 8, 17, 27, 38, 50, 64, 80, 92, 105, 118, 132, 146, 161, 177, 195]
+const GELUK = [0, 15, 30, 48, 68, 90, 115, 145, 158, 171, 184, 197, 210, 223, 237, 250]
+
 const SPOREN = [
   {
     sleutel: 'boor', naam: 'Boor', kleur: '#a855f7', icoon: '⛏️',
@@ -95,50 +109,50 @@ const SPOREN = [
     basis: 180,
     // Seconden per tegel. Nog een slag sneller: blokken moeten lekker vlot
     // stukgaan, anders voelt graven als wachten.
-    tempo: [0.30, 0.25, 0.21, 0.175, 0.145, 0.12, 0.095, 0.075],
+    tempo: [0.30, 0.25, 0.21, 0.175, 0.145, 0.12, 0.095, 0.075,
+      0.066, 0.058, 0.051, 0.045, 0.040, 0.035, 0.031, 0.027],
   },
   {
     sleutel: 'tank', naam: 'Tank', kleur: '#06d6a0', icoon: '⛽',
-    wat: (n) => `${[40, 58, 80, 108, 145, 195, 260, 350][n - 1]} liter brandstof`,
+    wat: (n) => `${TANK[n - 1]} liter brandstof`,
     basis: 160,
     // Je begint met een kleine tank: eerder terug, sneller spannend.
-    liters: [40, 58, 80, 108, 145, 195, 260, 350],
+    liters: TANK,
   },
   {
     sleutel: 'laadruim', naam: 'Laadruim', kleur: '#ffc23c', icoon: '📦',
-    wat: (n) => `${[6, 9, 13, 18, 24, 32, 42, 55][n - 1]} brokken erts`,
+    wat: (n) => `${LAADRUIM[n - 1]} brokken erts`,
     basis: 170,
-    plekken: [6, 9, 13, 18, 24, 32, 42, 55],
+    plekken: LAADRUIM,
   },
   {
     sleutel: 'romp', naam: 'Romp', kleur: '#ff6150', icoon: '🛡️',
-    wat: (n) => `${[3, 4, 5, 6, 7, 8, 10, 12][n - 1]} klappen incasseren`,
+    wat: (n) => `${ROMP[n - 1]} klappen incasseren`,
     basis: 200,
-    schade: [3, 4, 5, 6, 7, 8, 10, 12],
+    schade: ROMP,
   },
   {
     sleutel: 'motor', naam: 'Motor', kleur: '#38bdf8', icoon: '🚀',
     wat: (n) => `rijden ${n} · stijgen ${n}`,
     basis: 150,
-    rij: [150, 168, 186, 205, 224, 244, 266, 290],
-    stijg: [430, 470, 512, 556, 602, 650, 706, 770],
+    rij: [150, 168, 186, 205, 224, 244, 266, 290, 306, 322, 338, 354, 370, 386, 402, 418],
+    stijg: [430, 470, 512, 556, 602, 650, 706, 770, 810, 850, 890, 930, 970, 1010, 1050, 1090],
   },
   {
     sleutel: 'koplamp', naam: 'Koplamp', kleur: '#ffe9b0', icoon: '💡',
-    wat: (n) => `zicht ${n} · ${[ 'schemerlampje', 'kleine bundel', 'brede bundel', 'verre bundel',
-      'zoeklicht', 'sterk zoeklicht', 'schijnwerper', 'daglicht' ][n - 1]}`,
+    wat: (n) => `zicht ${n} · ${LAMPEN[n - 1]}`,
     basis: 190,
-    straal: [118, 140, 164, 190, 220, 254, 292, 340],
+    straal: [118, 140, 164, 190, 220, 254, 292, 340, 370, 400, 430, 460, 490, 520, 550, 580],
   },
   {
     sleutel: 'magneet', naam: 'Magneet', kleur: '#7ef0e0', icoon: '🧲',
-    wat: (n) => (n === 1 ? 'nog geen magneet' : `trekt erts van ${[0, 1, 2, 2, 3, 4, 5, 6][n - 1]} tegels ver naar je toe`),
+    wat: (n) => (n === 1 ? 'nog geen magneet' : `trekt erts van ${MAGNEET[n - 1]} tegels ver naar je toe`),
     basis: 320,
     // Straal in kaarteenheden waarbinnen los erts vanzelf naar je toe komt.
-    straal: [0, 42, 62, 84, 108, 134, 164, 200],
+    straal: [0, 42, 62, 84, 108, 134, 164, 200, 220, 240, 260, 280, 300, 320, 340, 360],
   },
   {
-    sleutel: 'koeling', naam: 'Koeling', kleur: '#8fd8ff', icoon: '❄️',
+    sleutel: 'koeling', naam: 'Koeling', kleur: '#8fd8ff', icoon: '❄️', max: 8,
     wat: (n) => (n >= 8 ? 'volledig hittebestendig' : `houdt ${n} van de 8 hitte tegen`),
     basis: 240,
     // Hitteschade per seconde in de magmakern. Zonder koeling hou je het daar
@@ -147,36 +161,45 @@ const SPOREN = [
   },
   {
     sleutel: 'radar', naam: 'Radar', kleur: '#4ade80', icoon: '📡',
-    wat: (n) => (n === 1 ? 'geen radar' : `laat erts dóór de steen heen zien, ${[0, 3, 4, 6, 8, 10, 13, 16][n - 1]} tegels ver`),
+    wat: (n) => (n === 1 ? 'geen radar' : `laat erts dóór de steen heen zien, ${RADAR[n - 1]} tegels ver`),
     basis: 280,
     // Straal in kaarteenheden waarbinnen verborgen erts oplicht.
-    straal: [0, 100, 150, 200, 260, 330, 420, 540],
+    straal: [0, 100, 150, 200, 260, 330, 420, 540, 610, 680, 750, 820, 890, 960, 1050, 1150],
   },
   {
     sleutel: 'handelaar', naam: 'Handelaar', kleur: '#ffc23c', icoon: '🤝',
-    wat: (n) => `je erts brengt ${[0, 8, 17, 27, 38, 50, 64, 80][n - 1]}% meer op`,
+    wat: (n) => `je erts brengt ${HANDEL[n - 1]}% meer op`,
     basis: 300,
-    bonus: [1, 1.08, 1.17, 1.27, 1.38, 1.5, 1.64, 1.8],
+    bonus: HANDEL.map(p => 1 + p / 100),
   },
   {
     sleutel: 'geluk', naam: 'Geluk', kleur: '#c06bff', icoon: '🍀',
-    wat: (n) => `${[0, 15, 30, 48, 68, 90, 115, 145][n - 1]}% meer erts in de grond`,
+    wat: (n) => `${GELUK[n - 1]}% meer erts in de grond`,
     basis: 260,
-    factor: [1, 1.15, 1.3, 1.48, 1.68, 1.9, 2.15, 2.45],
+    // Na niveau 8 gaat het rustiger omhoog, anders bestaat de grond straks
+    // alleen nog uit erts.
+    factor: GELUK.map(p => 1 + p / 100),
   },
   {
-    sleutel: 'schokdemper', naam: 'Schokdemper', kleur: '#f472b6', icoon: '🪶',
+    sleutel: 'schokdemper', naam: 'Schokdemper', kleur: '#f472b6', icoon: '🪶', max: 8,
     wat: (n) => (n === 1 ? 'geen demping' : `vallend gesteente en gas doen ${[0, 20, 35, 48, 60, 72, 85, 100][n - 1]}% minder pijn`),
     basis: 230,
     demping: [1, 0.8, 0.65, 0.52, 0.4, 0.28, 0.15, 0],
   },
 ]
 
-// Prijs om van niveau n naar n+1 te gaan. De factor 2.9 maakt het eindspel
-// echt duur: de laatste stap van een spoor kost ruim honderdduizend.
+const maxVan = (spoor) => spoor.max || MAX_NIVEAU
+
+// Prijs om van niveau n naar n+1 te gaan. Tot niveau 8 is de factor 2.9: de
+// laatste stap kost ruim honderdduizend. Daarboven eerst een sprong van x3 en
+// dan x2.5 per niveau — de stap naar 16 kost zo'n tweehonderd miljoen.
 function prijsVan(spoor, niveau) {
-  if (niveau >= 8) return null
-  return Math.round(spoor.basis * Math.pow(2.9, niveau - 1) / 10) * 10
+  if (niveau >= maxVan(spoor)) return null
+  const p = niveau < 8
+    ? spoor.basis * Math.pow(2.9, niveau - 1)
+    : spoor.basis * Math.pow(2.9, 6) * 3 * Math.pow(2.5, niveau - 8)
+  const rond = p < 1e6 ? 10 : 1000
+  return Math.round(p / rond) * rond
 }
 
 // ── Lakken voor je graafwagen ─────────────────────────────────────────────
