@@ -673,14 +673,15 @@ export class LevelScene {
     }
 
     if (!baas.raaktSpeler(l)) return
-    if (this._stampt(l, baas.lichaam, 10)) {
+    const zacht = baas.ruimeStamp && (baas.open || baas.staat === 'gewond')
+    if (this._stampt(l, baas.lichaam, zacht ? baas.lichaam.h / 2 : 10)) {
       if (baas.opStamp(this.spel.particles, fx, l)) {
         this.speler.stamp(this.spel.invoer.ingedrukt('spring'))
       } else {
         // Buiten het kwetsbare venster stuiter je af zonder schade te doen.
         this.speler.stamp(false)
       }
-    } else if (baas.staat !== 'dood') {
+    } else if (baas.staat !== 'dood' && !zacht) {
       this.speler.raak(baas.midX, fx)
     }
     if (this.speler.levens <= 0) this.speler.sterf(fx)

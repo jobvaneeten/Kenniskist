@@ -833,6 +833,9 @@ export class KernAI {
     this.leeft = true
     this.klaar = false
     this.stampbaar = true
+    // Zie _baasBotsingen in level.js: als het schild open is telt elke landing
+    // op de bovenste helft, en doet de zijkant geen pijn.
+    this.ruimeStamp = true
     this.zwaartekrachtOm = false
 
     this.ballen = []
@@ -888,6 +891,10 @@ export class KernAI {
             this._begin('open', this.fase === 3 ? 1.85 : 2.5)
             this.kwetsbaar = this.timer
             this.zwaartekrachtOm = false
+            // De laatste slijmballen stuiterden nog om hem heen precies als het
+            // schild openging; zo kon je er niet bij zonder geraakt te worden.
+            for (const b of this.ballen) particles.pop(b.lichaam.midX, b.lichaam.midY, '#3ef0ff', 6)
+            this.ballen.length = 0
             sfx.portaal()
           } else {
             this._begin('schieten', this.fase === 3 ? 0.8 : 1.05)
