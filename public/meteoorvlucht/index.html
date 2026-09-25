@@ -200,7 +200,7 @@
 
   <div class="screen on" id="start">
     <div class="logo">METEOOR<br>VLUCHT<small>KENNISKIST</small></div>
-    <div class="tag">Een gloeiende meteoor rolt achter je aan! Je rent vanzelf: spring over rotsen en gaten, duik onder lasers door. Botsen maakt je trager — dan komt de meteoor dichterbij.</div>
+    <div class="tag">Een gloeiende meteoor rolt achter je aan! Je rent vanzelf: spring over rotsen, zagen en gaten, duik onder lasers door. Pas op: één keer botsen en de meteoor pakt je!</div>
     <div class="keys"><span class="key">▲ / W / spatie = springen</span><span class="key">▼ / S = duiken</span><span class="key">of veeg / tik</span></div>
     <div class="statrow">
       <div class="statbox cyan"><div class="k">Record</div><div class="v" id="sBest">0m</div></div>
@@ -251,9 +251,10 @@
 /* ==========================================================================
    METEOORVLUCHT — endless runner
    Je rent vanzelf naar rechts; een meteoor rolt achter je aan. Springen over
-   rotsen, kristallen en gaten, duiken onder lasers en drones. Een botsing
-   maakt je even traag en brengt de meteoor dichterbij (S.gap: 1 = ver weg,
-   0 = gepakt). In een gat vallen is meteen afgelopen.
+   rotsen, kristallen, zagen, inslaande kometen en gaten, duiken onder lasers
+   en drones, en laten je door springplaten over muren lanceren. Eén botsing
+   is genoeg: dan rolt de meteoor over je heen. Alleen een schild of de raket
+   redt je. S.gap (1 = ver weg, 0 = gepakt) is alleen nog voor het beeld.
 
    Alles haalbaar: sprong ≈ 155 hoog en 0,70 s in de lucht. Gaten zijn hooguit
    55% van de spronglengte bij de huidige snelheid, en tussen twee obstakels
@@ -358,8 +359,11 @@ const RARITY = {
 };
 
 const UPGRADES = [
-  { id:'voorsprong', name:'Voorsprong',     desc:'De meteoor begint verder weg',   icon:'🏃', max:4, base:120 },
-  { id:'herstel',    name:'Snel herstel',   desc:'Na een botsing loop je sneller weer uit', icon:'💨', max:5, base:100 },
+  // voorsprong en herstel hielpen alleen bij meerdere botsingen; sinds één
+  // botsing genoeg is doen ze iets anders, met dezelfde id's zodat gekochte
+  // niveaus blijven staan.
+  { id:'voorsprong', name:'Meer power-ups', desc:'Power-ups komen vaker langs',   icon:'🎁', max:4, base:120 },
+  { id:'herstel',    name:'Muntbonus',      desc:'+10% munten aan het eind van elke run', icon:'💰', max:5, base:100 },
   { id:'magneet',    name:'Sterke magneet', desc:'De muntmagneet duurt langer',     icon:'🧲', max:5, base:90 },
   { id:'raket',      name:'Raketboost',     desc:'De raket duurt langer',           icon:'🚀', max:4, base:140 },
   { id:'schild',     name:'Startschild',    desc:'Begin elke run met een schild',   icon:'🛡', max:1, base:600 },
@@ -1035,13 +1039,15 @@ const SFX = (() => {
     hit:  () => tone(220, 60, .3, 'sawtooth', .07),
     pup:  () => tone(500, 1300, .25, 'triangle', .06),
     over: () => tone(300, 40, .8, 'sawtooth', .08),
+    boem: () => tone(140, 45, .35, 'triangle', .08),
   };
 })();
 
 /* ==========================================================================
    SPELSTATE
    ========================================================================== */
-const G = 2500, JV = 880, JV2 = 760, PPM = 30;
+const G = 2500, JV = 880, JV2 = 760, PPM = 30, ZAAG_V = 150;
+const COMBO_MIN = { SS:.8, SD:.6, DS:.45, DD:.3 };
 const AIR = 2*JV/G;               // 0,70 s in de lucht
 let S = null, running = false, lastT = 0, gt = 0;
 
@@ -1049,8 +1055,8 @@ function newState(demo){
   return {
     demo, dist:0, speed: demo ? 170 : 340, y:0, vy:0, onGround:true, falling:false, ducking:false,
     duckHeld:false, duckT:0, jumpBuf:0, coyote:0, jumpsUsed:0, leg:0,
-    gap: demo ? 0.5 : 0.64 + 0.08*up('voorsprong'),
-    stumbleT:0, invT:0, shield: !demo && up('schild') > 0, magnetT:0, boostT:0,
+    gap: demo ? 0.5 : 0.64,
+    invT:0, shield: !demo && up('schild') > 0, magnetT:0, boostT:0,
     obs:[], coins:[], pups:[], parts:[],
     nextX: 900, nextPup: 4200, run:0, shake:0, ending:false, endT:0, endReason:'', zone:0, nextMile:250,
   };
@@ -1063,13 +1069,18 @@ function spawnPattern(){
   let x = S.nextX, len = 0;
   const kansen = [
     ['rots', 1], ['kristal', .6 + d*.4], ['laser', .5 + d*.7], ['drone', .35 + d*.5], ['gat', .45 + d*.6],
-    ['munten', .45], ['duo', d > .12 ? .4 + d : 0], ['rotslaser', d > .28 ? .35 + d : 0], ['gatdrone', d > .45 ? .3 + d*.8 : 0],
+    ['munten', .35], ['rotsrij', .5 + d*.3],
+    // De nieuwe obstakels komen er één voor één bij, binnen de eerste 250 m.
+    ['zaag', S.dist > 1500 ? .6 + d*.4 : 0], ['komeet', S.dist > 3000 ? .55 + d*.4 : 0],
+    ['eiland', S.dist > 4500 ? .45 + d*.4 : 0], ['lanceer', S.dist > 6000 ? .45 + d*.3 : 0],
+    // Twee tot vier obstakels vlak achter elkaar; wordt steeds vaker.
+    ['combo', S.dist > 2400 ? 1.2 + d*2.5 : .3],
   ];
   let tot = kansen.reduce((a,k) => a + k[1], 0), r = Math.random()*tot, soort = 'rots';
   for (const [k,w] of kansen){ if ((r -= w) <= 0){ soort = k; break; } }
 
-  const rots = (x0, hoog) => {
-    const w = rand(38, 58), h = hoog ? rand(58, 80) : rand(30, 48);
+  const rots = (x0, hoog, klein) => {
+    const w = klein ? rand(34, 42) : rand(38, 58), h = hoog ? rand(58, 80) : klein ? rand(28, 36) : rand(30, 48);
     const n = 9, pts = [], rr = srand((Math.random()*1e6)|0);
     for (let i = 0; i < n; i++){ const a = Math.PI + i/(n-1)*Math.PI; pts.push([Math.cos(a)*(0.8 + rr()*0.2), Math.sin(a)*(0.8 + rr()*0.25)]); }
     S.obs.push({ type: hoog ? 'kristal' : 'rots', x:x0, w, h, pts, seed: rr() });
@@ -1079,6 +1090,58 @@ function spawnPattern(){
   const laser = x0 => { S.obs.push({ type:'laser', x:x0, w:18 }); for (let i = -1; i <= 1; i++) S.coins.push({ x:x0 + 9 + i*34, h:16 }); return 18; };
   const drone = x0 => { S.obs.push({ type:'drone', x:x0, w:42, ph:Math.random()*6 }); return 42; };
   const gat = x0 => { const w = clamp(J*rand(0.36, 0.52), 70, 240); S.obs.push({ type:'gat', x:x0, w }); boogMunten(x0 + w/2, J); return w; };
+  // Rolt je tegemoet. mx is waar je hem tegenkomt; update rekent zijn echte
+  // plek elke frame uit, dus de afstand tot het vorige obstakel blijft eerlijk.
+  const zaag = x0 => { S.obs.push({ type:'zaag', mx:x0 + 23, x:x0, w:46 }); return 46; };
+  // Valt uit de lucht en slaat in voordat je er bent; een rode ring op de
+  // grond laat zien waar.
+  const komeet = x0 => { S.obs.push({ type:'komeet', x:x0, w:44, h:40, val:0 }); if (Math.random() < .5) boogMunten(x0 + 22, J); return 44; };
+  // Te breed om over te springen: je landt halverwege op een zwevend eiland.
+  // Met L = 0,42 sprong en een eiland van een halve seconde lang land je
+  // erop als je ergens in de laatste 0,3 s voor de rand springt.
+  const eiland = x0 => {
+    const L = J*0.42, P = clamp(v*0.5, 150, 320), w = L + P + J*0.42;
+    S.obs.push({ type:'gat', x:x0, w });
+    S.obs.push({ type:'eiland', x:x0 + L, w:P, h:64 });
+    for (let i = 0; i < 4; i++) S.coins.push({ x:x0 + L + 20 + i*(P - 40)/3, h:64 + 26 });
+    return w;
+  };
+  // Springplaat schiet je (vy 1150, ~265 hoog) over een muur van 190 die met
+  // een gewone sprong (155) niet te halen is. Op 0,33 s na de plaat zit je
+  // bij elke snelheid ruim boven de muur.
+  const lanceer = x0 => {
+    const mx = x0 + v*0.33;
+    S.obs.push({ type:'plaat', x:x0, w:40 });
+    S.obs.push({ type:'muur', x:mx, w:34, h:190 });
+    return mx + 34 - x0;
+  };
+
+  // Twee lage rotsen vlak na elkaar: met één sprong over allebei.
+  const rotsrij = x0 => {
+    // Klein houden, anders is de sprong te kort om over het geheel te komen.
+    const a = rots(x0, false, true), tus = rand(10, 22);
+    return a + tus + rots(x0 + a + tus, false, true);
+  };
+  // Een reeks losse obstakels met de kleinste tussenruimte waarbij het nog te
+  // halen is (in seconden, gemeten van rand tot rand, getest met een bot die
+  // alle springmomenten afzoekt): springen-springen, springen-duiken, enz.
+  const combo = () => {
+    const DOEN = { rots:'S', kristal:'S', zaag:'S', komeet:'S', gat:'S', rotsrij:'S', laser:'D', drone:'D' };
+    const pool = ['rots', 'rots', 'kristal', 'laser', 'laser', 'drone', 'gat', 'rotsrij']
+      .concat(S.dist > 1500 ? ['zaag', 'zaag'] : [], S.dist > 3000 ? ['komeet'] : []);
+    const n = 2 + (Math.random() < .3 + d*.5 ? 1 : 0) + (d > .5 && Math.random() < .35 ? 1 : 0);
+    let xx = x, vorige = null;
+    for (let i = 0; i < n; i++){
+      let s2 = pool[(Math.random()*pool.length)|0];
+      if (vorige === 'gat' && s2 === 'gat') s2 = 'rots';
+      if (vorige) xx += v*COMBO_MIN[DOEN[vorige] + DOEN[s2]]*rand(1, 1.3 - 0.2*d);
+      xx += maak(s2, xx);
+      vorige = s2;
+    }
+    return xx - x;
+  };
+  const maak = (s2, x0) => s2 === 'rots' ? rots(x0, false) : s2 === 'kristal' ? rots(x0, true) : s2 === 'laser' ? laser(x0)
+    : s2 === 'drone' ? drone(x0) : s2 === 'gat' ? gat(x0) : s2 === 'zaag' ? zaag(x0) : s2 === 'komeet' ? komeet(x0) : rotsrij(x0);
 
   if (soort === 'rots') len = rots(x, false);
   else if (soort === 'kristal') len = rots(x, true);
@@ -1089,11 +1152,15 @@ function spawnPattern(){
     const golf = Math.random() < .5;
     for (let i = 0; i < 9; i++) S.coins.push({ x: x + i*32, h: 26 + (golf ? Math.abs(Math.sin(i/8*Math.PI))*80 : 0) });
     len = 9*32;
-  } else if (soort === 'duo'){ const a = rots(x, false), dx = v*1.12; len = dx + rots(x + dx, Math.random() < .4); void a; }
-  else if (soort === 'rotslaser'){ rots(x, false); const dx = v*1.2; len = dx + laser(x + dx); }
-  else if (soort === 'gatdrone'){ gat(x); const dx = v*1.25; len = dx + drone(x + dx); }
+  }
+  else if (soort === 'rotsrij') len = rotsrij(x);
+  else if (soort === 'combo') len = combo();
+  else if (soort === 'zaag') len = zaag(x);
+  else if (soort === 'komeet') len = komeet(x);
+  else if (soort === 'eiland') len = eiland(x);
+  else if (soort === 'lanceer') len = lanceer(x);
 
-  S.nextX = x + len + v*rand(0.95, 1.55)*(1.2 - 0.3*d);
+  S.nextX = x + len + v*rand(0.85, 1.35)*(1.15 - 0.25*d);
 }
 // Munten precies op de sprongboog: wie op tijd springt, pakt ze allemaal.
 function boogMunten(cx, J){
@@ -1127,14 +1194,14 @@ function endRun(reden){
   S.ending = true; S.endReason = reden; S.endT = 0;
   SFX.over();
   const m = Math.floor(S.dist/PPM);
-  const bonus = Math.floor(m/40);
-  const earned = S.run + bonus;
+  const earned = Math.round((S.run + Math.floor(m/40))*(1 + 0.1*up('herstel')));
+  const bonus = earned - S.run;
   setCoins(getCoins() + earned);
   const beat = m > best;
   if (beat){ best = m; Store.set('kk_mv_best', String(m)); }
   try { parent.postMessage({ type:'meteoorvlucht-gameover' }, '*'); } catch(e){}
   document.getElementById('oTitle').textContent = reden === 'gat' ? 'IN HET GAT!' : 'GEPAKT!';
-  document.getElementById('oWhy').textContent = reden === 'gat' ? 'Je viel in een gat in de grond.' : 'De meteoor heeft je ingehaald.';
+  document.getElementById('oWhy').textContent = reden === 'gat' ? 'Je viel in een gat in de grond.' : 'Je botste ergens tegenaan en de meteoor rolde over je heen.';
   document.getElementById('oD').textContent = m + 'm';
   document.getElementById('oC').textContent = S.run;
   document.getElementById('oBonus').textContent = '+' + bonus;
@@ -1157,7 +1224,7 @@ function update(dt){
   }
   if (S.ending){
     S.endT += dt;
-    if (S.endReason === 'meteoor'){ S.gap -= dt*1.2; S.dist += 120*dt; }
+    if (S.endReason === 'bots'){ S.gap -= dt*1.2; S.dist += 120*dt; if (S.y < 0 && !holeAt(S.dist + PX)) S.y = Math.min(0, S.y + 500*dt); }
     else { S.vy += G*dt; S.y += S.vy*dt; }
     if (S.endT > 1.2 && running){ running = false; refreshLabels(); show('over'); }
     return;
@@ -1165,16 +1232,10 @@ function update(dt){
 
   // snelheid
   let doel = 340 + 400*(1 - Math.exp(-S.dist/50000));
-  if (S.stumbleT > 0){ S.stumbleT -= dt; doel *= 0.55; }
   if (S.boostT > 0) doel *= 1.45;
   S.speed += (doel - S.speed)*Math.min(1, dt*4);
   S.dist += S.speed*dt;
   S.leg += dt*S.speed/24;
-
-  // meteoor
-  if (S.boostT > 0) S.gap = Math.min(1, S.gap + dt*0.45);
-  else if (S.stumbleT <= 0) S.gap = Math.min(1, S.gap + dt*(0.03 + 0.008*up('herstel')));
-  if (S.gap < 0.22) S.shake = Math.max(S.shake, 0.05);
 
   // timers
   if (S.invT > 0) S.invT -= dt;
@@ -1184,6 +1245,8 @@ function update(dt){
   // speler
   const px = S.dist + PX;
   const gatHier = holeAt(px);
+  const eiland = S.obs.find(o => o.type === 'eiland' && px > o.x - 6 && px < o.x + o.w + 6);
+  const vloer = eiland ? -eiland.h : 0;
   if (S.boostT > 0){
     S.boostT -= dt;
     S.y += (-80 - S.y)*Math.min(1, dt*8); S.vy = 0; S.onGround = false; S.falling = false; S.jumpsUsed = 1;
@@ -1202,21 +1265,41 @@ function update(dt){
       }
     }
     if (!S.onGround){
-      const zw = S.vy < 0 ? G : G*1.15;
+      const zw = S.vy < 0 ? G : G*1.15, vorige = S.y;
       S.vy += (S.duckHeld ? zw*2.2 : zw)*dt;
       S.y += S.vy*dt;
-      if (S.y >= 0 && !S.falling){
+      if (eiland && S.vy > 0 && vorige <= vloer + 1 && S.y >= vloer){
+        S.y = vloer; S.vy = 0; S.onGround = true; S.jumpsUsed = 0;
+        burst(px, GROUND + vloer, 5, 'rgba(200,210,255,.7)', 90, .3);
+      } else if (S.y >= 0 && !S.falling){
         if (gatHier){ if (S.y > 4) S.falling = true; }
         else {
           S.y = 0; S.vy = 0; S.onGround = true; S.jumpsUsed = 0;
           burst(px, GROUND, 5, 'rgba(200,210,255,.7)', 90, .3);
         }
       }
-    } else if (gatHier){ S.onGround = false; S.vy = 80; }
+    } else if (S.y < -1){ if (!eiland){ S.onGround = false; S.vy = 0; } }
+    else if (gatHier){ S.onGround = false; S.vy = 80; }
     if (S.falling && S.y > 60) S.shake = 0.1;
     if (S.falling && S.y > 170){ endRun('gat'); return; }
   }
   S.ducking = S.onGround && (S.duckHeld || S.duckT > 0);
+
+  // bewegende obstakels en springplaten
+  for (const o of S.obs){
+    if (o.type === 'zaag') o.x = o.mx - o.w/2 + (o.mx - px)*ZAAG_V/S.speed;
+    else if (o.type === 'komeet' && !o.geland){
+      o.val = Math.max(o.val, clamp(1 - ((o.x + o.w/2 - px) - S.speed*1.0)/(S.speed*0.9), 0, 1));
+      if (o.val >= 1){
+        o.geland = true; S.shake = Math.max(S.shake, .15); SFX.boem();
+        burst(o.x + o.w/2, GROUND - 8, 20, '#ffb02d', 240, .5);
+      }
+    } else if (o.type === 'plaat' && !o.used && S.boostT <= 0 && px > o.x && px < o.x + o.w + 6 && S.y > -110){
+      // Ook als je net te vroeg sprong: de plaat wint het van je eigen sprong.
+      S.vy = -1150; S.onGround = false; S.jumpsUsed = 1; S.coyote = 0; S.jumpBuf = 0; S.duckT = 0;
+      o.used = true; o.t = gt; SFX.pup(); burst(px, GROUND, 14, '#57f2c8', 200, .45);
+    }
+  }
 
   // obstakels maken
   while (S.nextX < S.dist + view.VW + 300) spawnPattern();
@@ -1224,7 +1307,7 @@ function update(dt){
     const types = ['magneet','schild','raket'];
     S.pups.push({ x: S.nextX, h: 44, type: types[(Math.random()*3)|0] });
     S.nextX += 200;
-    S.nextPup += rand(5200, 8200);
+    S.nextPup += rand(5200, 8200)*(1 - 0.12*up('voorsprong'));
   }
 
   // botsingen
@@ -1232,12 +1315,15 @@ function update(dt){
   const ph = S.ducking ? 26 : 48, pw = S.ducking ? 38 : 28;
   const pL = px - pw/2, pR = px + pw/2, pT = feet - ph, pB = feet;
   for (const o of S.obs){
-    if (o.type === 'gat' || o.hit) continue;
+    if (o.type === 'gat' || o.type === 'eiland' || o.type === 'plaat' || o.hit) continue;
     if (o.x > pR + 10 || o.x + o.w < pL - 10) continue;
     let oL = o.x, oR = o.x + o.w, oT, oB = GROUND;
     if (o.type === 'rots' || o.type === 'kristal'){ oL += 5; oR -= 5; oT = GROUND - o.h + 5; }
     else if (o.type === 'laser'){ oT = -9999; oB = GROUND - 40; }
     else if (o.type === 'drone'){ oL += 4; oR -= 4; oT = GROUND - 62; oB = GROUND - 38; }
+    else if (o.type === 'zaag'){ oL += 7; oR -= 7; oT = GROUND - o.w + 8; }
+    else if (o.type === 'komeet'){ if (!o.geland) continue; oL += 6; oR -= 6; oT = GROUND - o.h + 6; }
+    else if (o.type === 'muur'){ oL += 4; oR -= 4; oT = GROUND - o.h; }
     if (pR > oL && pL < oR && pB > oT && pT < oB) raak(o, px, feet - ph/2);
   }
 
@@ -1269,7 +1355,6 @@ function update(dt){
   const z = zoneIndex(S.dist);
   if (z !== S.zone){ S.zone = z; setTimeout(() => milestone(ZONES[z % ZONES.length].naam), 900); }
 
-  if (S.gap <= 0){ S.gap = 0; endRun('meteoor'); }
 }
 
 function raak(o, px, py){
@@ -1281,10 +1366,9 @@ function raak(o, px, py){
     return;
   }
   if (S.invT > 0) return;
-  o.hit = true;
-  S.gap -= 0.27; S.stumbleT = 0.55; S.invT = 1.1; S.shake = 0.3;
-  SFX.hit(); burst(px, py, 14, '#ff8a6d', 200, .5);
-  if (S.gap > 0) milestone('AU!');
+  o.hit = true; S.shake = 0.35;
+  SFX.hit(); burst(px, py, 18, '#ff8a6d', 220, .55);
+  endRun('bots');
 }
 
 /* ==========================================================================
@@ -1449,6 +1533,11 @@ function draw(){
     else if (o.type === 'kristal') drawKristal(o, x);
     else if (o.type === 'laser') drawLaser(o, x);
     else if (o.type === 'drone') drawDrone(o, x);
+    else if (o.type === 'zaag') drawZaag(o, x);
+    else if (o.type === 'komeet') drawKomeet(o, x);
+    else if (o.type === 'eiland') drawEiland(o, x);
+    else if (o.type === 'plaat') drawPlaat(o, x);
+    else if (o.type === 'muur') drawMuur(o, x);
     ctx.globalAlpha = 1;
   }
 
@@ -1480,7 +1569,7 @@ function draw(){
   // speler
   const ch = curCh();
   const feet = GROUND + S.y;
-  const gepakt = S.ending && S.endReason === 'meteoor' && meteorX() + 60 > PX;
+  const gepakt = S.ending && S.endReason === 'bots' && meteorX() + 60 > PX;
   if (!gepakt && !(S.invT > 0 && Math.sin(gt*40) > 0.3)){
     const pose = S.demo ? 'run' : S.boostT > 0 ? 'jump' : S.ducking ? 'duck' : S.onGround ? 'run' : 'jump';
     if (S.magnetT > 0){
@@ -1577,6 +1666,105 @@ function drawDrone(o, x){
   const bg = ctx.createLinearGradient(0, cy + 6, 0, cy + 30);
   bg.addColorStop(0, 'rgba(87,242,200,.35)'); bg.addColorStop(1, 'rgba(87,242,200,0)');
   ctx.fillStyle = bg; ctx.beginPath(); ctx.moveTo(cx - 8, cy + 6); ctx.lineTo(cx + 8, cy + 6); ctx.lineTo(cx + 16, cy + 30); ctx.lineTo(cx - 16, cy + 30); ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+
+function drawZaag(o, x){
+  const r = o.w/2, cx = x + r, cy = GROUND - r;
+  ctx.save(); ctx.translate(cx, cy); ctx.rotate(-gt*14);
+  ctx.shadowBlur = 16; ctx.shadowColor = '#ff4fa3'; ctx.fillStyle = '#ff4fa3';
+  ctx.beginPath();
+  for (let i = 0; i < 24; i++){ const a = i/24*Math.PI*2, rr = i%2 ? r*0.78 : r; ctx.lineTo(Math.cos(a)*rr, Math.sin(a)*rr); }
+  ctx.closePath(); ctx.fill(); ctx.shadowBlur = 0;
+  const zg = ctx.createRadialGradient(-4, -4, 2, 0, 0, r*0.75);
+  zg.addColorStop(0, '#d8dcf0'); zg.addColorStop(1, '#4a4f72');
+  ctx.fillStyle = zg; ctx.beginPath(); ctx.arc(0, 0, r*0.72, 0, 7); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,79,163,.7)'; ctx.lineWidth = 2;
+  for (let i = 0; i < 3; i++){ const a = i*Math.PI*2/3; ctx.beginPath(); ctx.moveTo(Math.cos(a)*5, Math.sin(a)*5); ctx.lineTo(Math.cos(a)*r*0.62, Math.sin(a)*r*0.62); ctx.stroke(); }
+  ctx.fillStyle = '#1a1030'; ctx.beginPath(); ctx.arc(0, 0, 5, 0, 7); ctx.fill();
+  ctx.restore();
+  // vonken waar hij over de grond schuurt
+  if (!o.hit && Math.random() < .5) S.parts.push({ x:S.dist + cx + rand(-4, 8), y:GROUND - 2, vx:rand(40, 180), vy:rand(-160, -40), life:.3, max:.3, col: Math.random() < .5 ? '#ffd34d' : '#ff4fa3', r:rand(1.2, 2.4) });
+}
+function drawKomeet(o, x){
+  const cx = x + o.w/2;
+  if (!o.geland){
+    // waarschuwing: hier slaat hij in
+    const p = .5 + .5*Math.sin(gt*14);
+    ctx.strokeStyle = 'rgba(255,60,40,' + (.45 + .45*p) + ')'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.ellipse(cx, GROUND - 2, 26 + o.val*6, 6, 0, 0, 7); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,60,40,' + (.25 + .5*p) + ')'; ctx.font = 'bold 22px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('!', cx, GROUND - 14);
+    // de komeet zelf, schuin uit de lucht
+    const k = 1 - o.val, kx = cx + 300*k, ky = GROUND - 20 - (GROUND + 30)*k;
+    const st = ctx.createLinearGradient(kx, ky, kx + 110, ky - 120);
+    st.addColorStop(0, 'rgba(255,190,80,.8)'); st.addColorStop(1, 'rgba(255,80,30,0)');
+    ctx.fillStyle = st; ctx.beginPath(); ctx.moveTo(kx - 12, ky + 6); ctx.lineTo(kx + 120, ky - 128); ctx.lineTo(kx + 12, ky - 12); ctx.closePath(); ctx.fill();
+    ctx.shadowBlur = 20; ctx.shadowColor = '#ff7a1a'; ctx.fillStyle = '#ffcf6b';
+    ctx.beginPath(); ctx.arc(kx, ky, 15, 0, 7); ctx.fill();
+    ctx.fillStyle = '#5a2a1a'; ctx.beginPath(); ctx.arc(kx - 2, ky + 2, 10, 0, 7); ctx.fill();
+    ctx.shadowBlur = 0;
+    return;
+  }
+  // ingeslagen: gloeiende brok in een kratertje
+  ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.beginPath(); ctx.ellipse(cx, GROUND, 30, 5, 0, 0, 7); ctx.fill();
+  ctx.save(); ctx.shadowBlur = 18; ctx.shadowColor = '#ff7a1a';
+  const kg = ctx.createRadialGradient(cx - 5, GROUND - 26, 3, cx, GROUND - 18, 24);
+  kg.addColorStop(0, '#ffd27a'); kg.addColorStop(.35, '#b0401a'); kg.addColorStop(1, '#2a0f0a');
+  ctx.fillStyle = kg; ctx.beginPath();
+  for (let i = 0; i <= 10; i++){ const a = Math.PI + i/10*Math.PI, r = 20 + 4*Math.sin(i*2.3); ctx.lineTo(cx + Math.cos(a)*r, GROUND + Math.sin(a)*r*1.9); }
+  ctx.closePath(); ctx.fill(); ctx.restore();
+  for (let i = 0; i < 3; i++){
+    const fx = cx - 10 + i*10, fh = 10 + 6*Math.sin(gt*12 + i*2);
+    ctx.fillStyle = i === 1 ? 'rgba(255,220,120,.85)' : 'rgba(255,120,40,.75)';
+    ctx.beginPath(); ctx.moveTo(fx - 5, GROUND - 30); ctx.quadraticCurveTo(fx, GROUND - 30 - fh*1.6, fx + 5, GROUND - 30); ctx.fill();
+  }
+}
+function drawEiland(o, x){
+  const top = GROUND - o.h;
+  ctx.save();
+  // straalmotoren eronder
+  for (const f of [0.25, 0.75]){
+    const fx = x + o.w*f, fl = 16 + 6*Math.sin(gt*30 + f*9);
+    const g = ctx.createLinearGradient(0, top + 18, 0, top + 18 + fl);
+    g.addColorStop(0, 'rgba(62,232,255,.9)'); g.addColorStop(1, 'rgba(62,232,255,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(fx - 6, top + 18); ctx.lineTo(fx + 6, top + 18); ctx.lineTo(fx, top + 18 + fl); ctx.closePath(); ctx.fill();
+  }
+  ctx.fillStyle = '#231a3a'; ctx.beginPath(); ctx.moveTo(x, top);
+  ctx.lineTo(x + o.w, top); ctx.lineTo(x + o.w - 10, top + 16);
+  for (let i = 1; i < 8; i++){ const r = srand((o.x|0) + i)(); ctx.lineTo(x + o.w - 10 - i*(o.w - 20)/8, top + 16 + r*14); }
+  ctx.lineTo(x + 10, top + 16); ctx.closePath(); ctx.fill();
+  ctx.shadowBlur = 14; ctx.shadowColor = '#3ee8ff'; ctx.strokeStyle = '#3ee8ff'; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(x, top); ctx.lineTo(x + o.w, top); ctx.stroke();
+  ctx.restore();
+}
+function drawPlaat(o, x){
+  const ing = o.used ? clamp(1 - (gt - o.t)*3, 0, 1) : 0, cx = x + o.w/2;
+  ctx.save(); ctx.shadowBlur = 14; ctx.shadowColor = '#57f2c8';
+  ctx.fillStyle = '#2a2f52'; ctx.fillRect(x, GROUND - 8, o.w, 8);
+  ctx.fillStyle = '#57f2c8'; ctx.fillRect(x - 2, GROUND - 12 - ing*10, o.w + 4, 5);
+  ctx.restore();
+  // pijlen omhoog: hier word je gelanceerd
+  for (let i = 0; i < 3; i++){
+    const yy = GROUND - 26 - i*14 - ((gt*40) % 14);
+    ctx.fillStyle = 'rgba(87,242,200,' + (0.75 - i*0.22) + ')';
+    ctx.beginPath(); ctx.moveTo(cx - 9, yy + 6); ctx.lineTo(cx, yy - 3); ctx.lineTo(cx + 9, yy + 6); ctx.lineTo(cx + 5, yy + 6); ctx.lineTo(cx, yy + 2); ctx.lineTo(cx - 5, yy + 6); ctx.closePath(); ctx.fill();
+  }
+}
+function drawMuur(o, x){
+  const top = GROUND - o.h;
+  ctx.save();
+  const mg = ctx.createLinearGradient(x, 0, x + o.w, 0);
+  mg.addColorStop(0, '#2a1f45'); mg.addColorStop(.5, '#3a2d5e'); mg.addColorStop(1, '#1c1430');
+  ctx.fillStyle = mg; ctx.fillRect(x, top, o.w, o.h);
+  ctx.shadowBlur = 14; ctx.shadowColor = '#ffb02d'; ctx.strokeStyle = '#ffb02d'; ctx.lineWidth = 2.5;
+  ctx.strokeRect(x, top, o.w, o.h);
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = 'rgba(255,176,45,' + (.5 + .4*Math.sin(gt*6)) + ')';
+  for (let i = 0; i < 4; i++) ctx.fillRect(x + o.w/2 - 3, top + 30 + i*38, 6, 18);
+  // gevarenstrepen bovenop
+  ctx.beginPath(); ctx.rect(x, top, o.w, 14); ctx.clip();
+  for (let i = -1; i < 4; i++){ ctx.fillStyle = i%2 ? '#ffb02d' : '#1c1430'; ctx.beginPath(); ctx.moveTo(x + i*12, top + 14); ctx.lineTo(x + i*12 + 12, top); ctx.lineTo(x + i*12 + 24, top); ctx.lineTo(x + i*12 + 12, top + 14); ctx.fill(); }
   ctx.restore();
 }
 
