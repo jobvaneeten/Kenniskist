@@ -179,30 +179,19 @@ function tekenPatroon(ctx, item, b, maat, info, img) {
   }
 }
 
-// Volledige textuur voor een print of patroon op een donor-model. Geeft null
-// als het model niet te lezen is; dan valt applyClothing terug op de oude lap.
-export async function bouwKledingTextuur(item, type, donor, img) {
-  const info = await kaartVan(donor, type)
-  if (!info) return null
-  const S = huidigeResolutie()
-  const cv = document.createElement('canvas')
-  cv.width = S; cv.height = S
-  const ctx = cv.getContext('2d')
-  const basis = item.kind === 'print' ? item.bg : item.c1
-  ctx.fillStyle = basis; ctx.fillRect(0, 0, S, S)
-  const maat = MAAT[type] ?? 1
+// Loopt alle driehoeken langs en roept `teken(ctx, grenzen)` aan met de
+// canvas zo ingesteld dat je in lijf-meters tekent (x rondom, y = −hoogte),
+// afgeknipt op die driehoek. Zo loopt alles wat je tekent naadloos door over
+// de naden tussen de lapjes.
+function opLijf(ctx, S, info, maat, teken) {
   const { pos, uv, idx } = info.mesh
-  const belicht = item.kind === 'print'
-    ? (() => { const g = ctx.createLinearGradient(0, -info.yMax, 0, -info.yMin); g.addColorStop(0, lichter(item.bg, 0.14)); g.addColorStop(1, item.bg); return g })()
-    : null
-
   for (let t = 0; t < idx.length; t += 3) {
     const ids = [idx[t], idx[t + 1], idx[t + 2]]
     const P = ids.map(i => pos[i])
     const e1 = [0, 1, 2].map(k => P[1][k] - P[0][k]), e2 = [0, 1, 2].map(k => P[2][k] - P[0][k])
     const n = [e1[1] * e2[2] - e1[2] * e2[1], e1[2] * e2[0] - e1[0] * e2[2], e1[0] * e2[1] - e1[1] * e2[0]]
     const pq = P.map(v => info.punt(v, n))
-    // Naad van "rondom": een driehoek die over de achterkant heen gaat.
+    // Naad van "rondom": een driehoek die over de zijnaad heen gaat.
     const o = info.omtrek
     if (Math.max(...pq.map(a => a[0])) - Math.min(...pq.map(a => a[0])) > o / 2) pq.forEach(a => { if (a[0] < 0) a[0] += o })
     // Affiene afbeelding (p, q) → (u, v) uit de drie hoekpunten.
@@ -228,11 +217,47 @@ export async function bouwKledingTextuur(item, type, donor, img) {
     ctx.closePath(); ctx.clip()
     ctx.setTransform(S * mu[0], S * mv[0], S * mu[1], S * mv[1], S * mu[2], S * mv[2])
     const marge = 0.08 * maat
-    const bnd = { x0: Math.min(a[0], b[0], c[0]) - marge, x1: Math.max(a[0], b[0], c[0]) + marge,
-      y0: Math.min(a[1], b[1], c[1]) - marge, y1: Math.max(a[1], b[1], c[1]) + marge }
-    if (belicht) { ctx.fillStyle = belicht; ctx.fillRect(bnd.x0, bnd.y0, bnd.x1 - bnd.x0, bnd.y1 - bnd.y0) }
-    tekenPatroon(ctx, item, bnd, maat, info, img)
+    teken(ctx, { x0: Math.min(a[0], b[0], c[0]) - marge, x1: Math.max(a[0], b[0], c[0]) + marge,
+      y0: Math.min(a[1], b[1], c[1]) - marge, y1: Math.max(a[1], b[1], c[1]) + marge })
     ctx.restore()
   }
+}
+
+// Volledige textuur voor een print of patroon op een donor-model. Geeft null
+// als het model niet te lezen is; dan valt applyClothing terug op de oude lap.
+export async function bouwKledingTextuur(item, type, donor, img) {
+  const info = await kaartVan(donor, type)
+  if (!info) return null
+  const S = huidigeResolutie()
+  const cv = document.createElement('canvas')
+  cv.width = S; cv.height = S
+  const ctx = cv.getContext('2d')
+  const basis = item.kind === 'print' ? item.bg : item.c1
+  ctx.fillStyle = basis; ctx.fillRect(0, 0, S, S)
+  const maat = MAAT[type] ?? 1
+  const belicht = item.kind === 'print'
+    ? (() => { const g = ctx.createLinearGradient(0, -info.yMax, 0, -info.yMin); g.addColorStop(0, lichter(item.bg, 0.14)); g.addColorStop(1, item.bg); return g })()
+    : null
+  opLijf(ctx, S, info, maat, (c, bnd) => {
+    if (belicht) { c.fillStyle = belicht; c.fillRect(bnd.x0, bnd.y0, bnd.x1 - bnd.x0, bnd.y1 - bnd.y0) }
+    tekenPatroon(c, item, bnd, maat, info, img)
+  })
   return cv
+}
+
+// Achtergrond van een skin (skins.js) op het lijf: het getekende vlak
+// (`patroon`, een canvas) beslaat `tegel` meter en herhaalt zich; zo staan
+// tijgerstrepen, sterren en rasters op elk lapje even groot en dezelfde kant op.
+export async function tekenSkinBasisOpLijf(ctx, S, type, donor, patroon) {
+  const info = await kaartVan(donor, type)
+  if (!info) return false
+  const maat = MAAT[type] ?? 1
+  const tegel = 1.2 * maat
+  const vulling = ctx.createPattern(patroon, 'repeat')
+  vulling.setTransform(new DOMMatrix().scale(tegel / patroon.width))
+  opLijf(ctx, S, info, maat, (c, bnd) => {
+    c.fillStyle = vulling
+    c.fillRect(bnd.x0, bnd.y0, bnd.x1 - bnd.x0, bnd.y1 - bnd.y0)
+  })
+  return true
 }

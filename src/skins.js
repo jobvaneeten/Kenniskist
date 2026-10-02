@@ -1,3 +1,5 @@
+import { tekenSkinBasisOpLijf } from './kledingTextuur'
+
 // Ontworpen skins: kleding met een echt ontwerp in plaats van een kleur,
 // patroon of emoji-print. Alles wordt hier in code getekend op de UV-indeling
 // van de donor-modellen (zie applyClothing.js), dus er zijn geen plaatjes
@@ -39,7 +41,7 @@ function sterren(ctx, w, h, n, seed, kleur = '#fff') {
   for (let i = 0; i < n; i++) {
     ctx.globalAlpha = 0.35 + r() * 0.65
     const s = r() < 0.08 ? 2.6 : 0.6 + r() * 1.2
-    ctx.beginPath(); ctx.arc(r() * w, r() * h, s * w / 512, 0, Math.PI * 2); ctx.fill()
+    ctx.beginPath(); ctx.arc(r() * w, r() * h, s * w / 1400, 0, Math.PI * 2); ctx.fill()
   }
   ctx.globalAlpha = 1
 }
@@ -76,11 +78,11 @@ const BASIS = {
       n.addColorStop(0, `rgba(${kleur},.38)`); n.addColorStop(1, `rgba(${kleur},0)`)
       ctx.fillStyle = n; ctx.fillRect(0, 0, w, h)
     }
-    sterren(ctx, w, h, Math.round(w * 0.9), seed + 1)
+    sterren(ctx, w, h, Math.round(w * 2.2), seed + 1)
   },
   maliën(ctx, w, h) {
     ctx.fillStyle = '#5d6673'; ctx.fillRect(0, 0, w, h)
-    const r = w / 64
+    const r = w / 120   // één vlak = 1,2 m stof: ringetjes van ~1 cm
     ctx.lineWidth = r * 0.55
     for (let y = 0, rij = 0; y < h + r; y += r * 1.5, rij++) {
       for (let x = (rij % 2) * r; x < w + r; x += r * 2) {
@@ -168,8 +170,10 @@ const BASIS = {
     ctx.fillStyle = g; ctx.fillRect(0, 0, w, h)
     const r = rng(21)
     ctx.fillStyle = '#1a0f08'
-    for (let i = 0; i < 46; i++) {
-      const x = r() * w, y = r() * h, l = w * (0.06 + r() * 0.1), d = w * (0.012 + r() * 0.012), hoek = (r() - 0.5) * 0.8
+    // Eén vlak = 1,2 m stof (zie tekenSkinBasisOpLijf), dus veel strepen, en
+    // vooral dwars: zo lopen ze om het been heen zoals bij een echte tijger.
+    for (let i = 0; i < 170; i++) {
+      const x = r() * w, y = r() * h, l = w * (0.03 + r() * 0.05), d = w * (0.006 + r() * 0.006), hoek = (r() - 0.5) * 0.5
       ctx.save(); ctx.translate(x, y); ctx.rotate(hoek)
       ctx.beginPath(); ctx.moveTo(-l, 0); ctx.quadraticCurveTo(0, -d * 2, l, 0); ctx.quadraticCurveTo(0, d * 0.6, -l, 0); ctx.fill()
       ctx.restore()
@@ -179,13 +183,13 @@ const BASIS = {
     ctx.fillStyle = '#16100e'; ctx.fillRect(0, 0, w, h)
     const r = rng(9)
     ctx.lineCap = 'round'; ctx.lineJoin = 'round'
-    for (let i = 0; i < 38; i++) {
+    for (let i = 0; i < 260; i++) {
       let x = r() * w, y = r() * h
       ctx.strokeStyle = r() < 0.5 ? '#ff6a00' : '#ffb000'
       ctx.shadowColor = '#ff4d00'; ctx.shadowBlur = w / 70
       ctx.lineWidth = w / (180 + r() * 220)
       ctx.beginPath(); ctx.moveTo(x, y)
-      for (let k = 0; k < 5; k++) { x += (r() - 0.5) * w / 9; y += (r() - 0.5) * w / 9; ctx.lineTo(x, y) }
+      for (let k = 0; k < 5; k++) { x += (r() - 0.5) * w / 18; y += (r() - 0.5) * w / 18; ctx.lineTo(x, y) }
       ctx.stroke()
     }
     ctx.shadowBlur = 0
@@ -365,6 +369,8 @@ const streepjes = (van, tot, stap, kleur) => {
   return uit
 }
 const strepen = (lijst) => lijst.flatMap(([y1, y2, kleur]) => band('been', y1, y2, kleur))
+// bies: waar de stof (bijna) recht naar opzij wijst, `d` = drempel 0..1
+const bies = (d, kleur) => Z(kleur, ['zij', '>', d])
 
 export const SKINS = {
   topscorer: {
@@ -432,11 +438,11 @@ export const SKINS = {
   lavabroek: { basis: 'lava' },
   brandweerbroek: {
     basis: 'navy',
-    zones: [...band(1, 0.72, 0.745, '#f2d21b'), ...band(1, 0.75, 0.758, '#d9dde3')],
+    zones: [...band(1, 0.53, 0.555, '#f2d21b'), ...band(1, 0.565, 0.573, '#d9dde3')],
   },
   sportbroek: {
     basis: 'zwart',
-    zones: [...buiten(0.155, '#ffffff'), ...boven(1, 0.875, '#2ee6ff')],
+    zones: [...bies(0.95, '#ffffff'), ...boven(1, 0.875, '#2ee6ff')],
   },
   neonbroek: { basis: 'neonraster' },
   sportsok: { basis: 'wit', zones: strepen([[0.355, 0.375, '#e63946'], [0.39, 0.41, '#1d3f9e']]) },
@@ -510,6 +516,32 @@ function beenHoogte(mesh) {
   return f
 }
 
+// "Hoe recht naar opzij wijst de stof hier" (broek): de x-component van de
+// gladde normaal, positief aan de buitenkant van elk been. Lineair
+// geïnterpoleerd over een driehoek, dus net als de rest exact af te snijden.
+const zijCache = new WeakMap()
+function zijAfstand(mesh) {
+  if (zijCache.has(mesh)) return zijCache.get(mesh)
+  const { pos, idx } = mesh
+  const sleutel = (p) => p.map(v => Math.round(v * 1e4)).join(',')
+  const som = new Map()
+  for (let t = 0; t < idx.length; t += 3) {
+    const [a, b, c] = [pos[idx[t]], pos[idx[t + 1]], pos[idx[t + 2]]]
+    const e1 = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], e2 = [c[0] - a[0], c[1] - a[1], c[2] - a[2]]
+    const n = [e1[1] * e2[2] - e1[2] * e2[1], e1[2] * e2[0] - e1[0] * e2[2], e1[0] * e2[1] - e1[1] * e2[0]]
+    for (const p of [a, b, c]) {
+      const k = sleutel(p), o = som.get(k) || [0, 0, 0]
+      som.set(k, [o[0] + n[0], o[1] + n[1], o[2] + n[2]])
+    }
+  }
+  const f = (p) => {
+    const n = som.get(sleutel(p)) || [0, 0, 0], l = Math.hypot(...n) || 1
+    return Math.sign(p[0]) * n[0] / l
+  }
+  zijCache.set(mesh, f)
+  return f
+}
+
 // Snijdt een veelhoek (punten met .w = waarden per as en .uv) af op waarde
 // `as` (< of >) w. Lineair interpoleren is exact: positie en UV zijn lineair
 // over een driehoek.
@@ -531,7 +563,8 @@ function snij(punten, as, op, w) {
 function kleurZones(ctx, mesh, zones) {
   const { pos, uv, idx } = mesh
   const been = zones.some(z => z.en.some(([as]) => as === 'been')) ? beenHoogte(mesh) : null
-  const punt = (i) => ({ w: { 0: pos[i][0], 1: pos[i][1], 2: pos[i][2], been: been ? been(pos[i]) : 0 }, uv: uv[i] })
+  const zij = zones.some(z => z.en.some(([as]) => as === 'zij')) ? zijAfstand(mesh) : null
+  const punt = (i) => ({ w: { 0: pos[i][0], 1: pos[i][1], 2: pos[i][2], been: been ? been(pos[i]) : 0, zij: zij ? zij(pos[i]) : 0 }, uv: uv[i] })
   for (const { kleur, en } of zones) {
     ctx.fillStyle = kleur; ctx.strokeStyle = kleur; ctx.lineWidth = 1.5; ctx.lineJoin = 'round'
     for (let t = 0; t < idx.length; t += 3) {
@@ -547,7 +580,7 @@ function kleurZones(ctx, mesh, zones) {
 
 // Volledige textuur voor een kledingstuk. `donor` = het GLB-bestand waarvan de
 // UV gebruikt wordt (nodig voor de zones).
-export async function buildSkinTexture(item, donor) {
+export async function buildSkinTexture(item, donor, type) {
   const d = SKINS[item.design]
   // Eerst laden, daarna alles in één keer tekenen: S mag tussendoor niet
   // door een andere textuur veranderd worden.
@@ -558,6 +591,16 @@ export async function buildSkinTexture(item, donor) {
   cv.width = S; cv.height = S
   const ctx = cv.getContext('2d')
   BASIS[d.basis](ctx, S, S)
+  // De achtergrond op het lijf tekenen (zie kledingTextuur.js): op elk lapje
+  // even groot en dezelfde kant op, naadloos over de naden. Het platte vlak
+  // hierboven blijft eronder als vulling voor de randjes tussen de lapjes.
+  if (type) {
+    const pc = document.createElement('canvas')
+    pc.width = pc.height = 1024
+    BASIS[d.basis](pc.getContext('2d'), 1024, 1024)
+    await tekenSkinBasisOpLijf(ctx, S, type, donor, pc)
+    S = resolutie
+  }
   if (mesh) kleurZones(ctx, mesh, zones)
   if (d.voor) {
     OP_LIJF.voor(ctx, d.voor.x, d.voor.y)
@@ -591,7 +634,7 @@ export function skinPreview(item) {
   const sokbanden = zones.filter(z => z.en[0][0] === 'been')
   sokbanden.forEach((z, i) => { ctx.fillStyle = z.kleur; ctx.fillRect(0, P * (0.12 + i * 0.14), P, P * 0.08) })
   if (zones.length && !zool && !sokbanden.length && !d.voor) {
-    const zij = zones.find(z => z.en[0][0] === 0), top = zones.find(z => z.en[0][0] === 1)
+    const zij = zones.find(z => z.en[0][0] === 0 || z.en[0][0] === 'zij'), top = zones.find(z => z.en[0][0] === 1)
     if (zij) { ctx.fillStyle = zij.kleur; ctx.fillRect(P * 0.08, 0, P * 0.08, P); ctx.fillRect(P * 0.84, 0, P * 0.08, P) }
     if (top) { ctx.fillStyle = top.kleur; ctx.fillRect(0, 0, P, P * 0.1) }
   }

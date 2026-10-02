@@ -22,7 +22,7 @@ function applyCanvasTex(scene, mesh, canvas) {
 // they render identically on every device (iOS can't draw emoji to a texture).
 function applyGeneratedTexture(scene, mesh, type, item, donor) {
   if (item.kind === 'skin') {
-    buildSkinTexture(item, donor).then(cv => { if (!mesh.isDisposed()) applyCanvasTex(scene, mesh, cv) })
+    buildSkinTexture(item, donor, type).then(cv => { if (!mesh.isDisposed()) applyCanvasTex(scene, mesh, cv) })
     return
   }
   // Eerst op het lijf tekenen (rechtop, op maat, zie kledingTextuur.js); lukt
@@ -95,7 +95,7 @@ export function applyItemToMesh(scene, mesh, item) {
 // oude clubshirt, maar met de ingebakken clubtextuur eruit gestript.
 const SHIRT_DONOR = '/shirtmodel.glb'
 const DONOR = {
-  broek:    '/test/nieuwebroektest.glb',   // Meshy broek with a clean 0–1 UV
+  broek:    '/Broek/langebroek.glb',   // pijpen tot net boven de knie (tools/blender/langebroek.py)
   sokken:   '/sokken.glb',
   schoenen: '/Schoenen/schoenengoed.glb',  // nieuwe gerigde sneakers (alle schoenen)
 }
