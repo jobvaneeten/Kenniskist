@@ -1298,24 +1298,29 @@ const coinVal= () => 1 + (upgrades.fortuin||0)*0.5;
 const flightM= () => 1 + 0.18*(upgrades.vlucht||0);
 
 // Moeilijkheid loopt op met de hoogte: grotere gaten, verder uit elkaar,
-// smallere platforms. Blijft haalbaar — sprongshoogte is ~203px, gapMax max 158.
+// smallere platforms. Snel: op 90m is het al zo zwaar als vroeger op 240m,
+// daarna wordt het tot 200m nog zwaarder. Bewust — kinderen bleven hier te
+// lang hangen in plaats van te oefenen. Blijft haalbaar: sprong ~203px,
+// gapMax max 178; zijwaarts 430px/s plus doorlopen langs de rand.
 function diff(m){
-  const k = Math.min(1, m/240);
+  const k = Math.min(1, m/90);
+  const k2 = Math.max(0, Math.min(1, (m-90)/110));
   return {
-    gapMin: 64 + 30*k,
-    gapMax: 108 + 50*k,
-    maxDx : 165 + 62*k,
-    platW : 104 - 26*k,
-    vanish: 0.55 - 0.22*k,
-    movSpd: 1 + 0.75*k,
+    gapMin: 64 + 36*k + 14*k2,
+    gapMax: 108 + 52*k + 18*k2,
+    maxDx : 165 + 62*k + 10*k2,
+    platW : 104 - 30*k - 10*k2,
+    vanish: 0.55 - 0.22*k - 0.08*k2,
+    movSpd: 1 + 0.75*k + 0.5*k2,
   };
 }
 function weights(m){
-  if (m < 15)  return { moving:.12, breaking:0,   vanish:0,   monster:0    };
-  if (m < 40)  return { moving:.24, breaking:.13, vanish:.08, monster:.10  };
-  if (m < 80)  return { moving:.28, breaking:.18, vanish:.14, monster:.15  };
-  if (m < 150) return { moving:.30, breaking:.22, vanish:.19, monster:.20  };
-  return          { moving:.32, breaking:.25, vanish:.22, monster:.24 };
+  if (m < 8)   return { moving:.15, breaking:0,   vanish:0,   monster:0    };
+  if (m < 20)  return { moving:.25, breaking:.15, vanish:.10, monster:.12  };
+  if (m < 45)  return { moving:.28, breaking:.20, vanish:.16, monster:.18  };
+  if (m < 90)  return { moving:.30, breaking:.24, vanish:.21, monster:.23  };
+  if (m < 150) return { moving:.31, breaking:.27, vanish:.25, monster:.28  };
+  return          { moving:.30, breaking:.30, vanish:.28, monster:.33 };
 }
 function platType(w){
   const r = Math.random();

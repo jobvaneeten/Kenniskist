@@ -1061,7 +1061,9 @@ function newState(demo){
     nextX: 900, nextPup: 4200, run:0, shake:0, ending:false, endT:0, endReason:'', zone:0, nextMile:250,
   };
 }
-const diff = () => clamp(S.dist/45000, 0, 1);
+// Op 500 m (15000 px) al op volle moeilijkheid; was 1500 m. Kinderen bleven
+// hier te lang hangen in plaats van te oefenen.
+const diff = () => clamp(S.dist/15000, 0, 1);
 const holeAt = px => S.obs.find(o => o.type === 'gat' && px > o.x + 8 && px < o.x + o.w - 8);
 
 function spawnPattern(){
@@ -1070,11 +1072,11 @@ function spawnPattern(){
   const kansen = [
     ['rots', 1], ['kristal', .6 + d*.4], ['laser', .5 + d*.7], ['drone', .35 + d*.5], ['gat', .45 + d*.6],
     ['munten', .35], ['rotsrij', .5 + d*.3],
-    // De nieuwe obstakels komen er één voor één bij, binnen de eerste 250 m.
-    ['zaag', S.dist > 1500 ? .6 + d*.4 : 0], ['komeet', S.dist > 3000 ? .55 + d*.4 : 0],
-    ['eiland', S.dist > 4500 ? .45 + d*.4 : 0], ['lanceer', S.dist > 6000 ? .45 + d*.3 : 0],
+    // De nieuwe obstakels komen er één voor één bij, binnen de eerste 80 m.
+    ['zaag', S.dist > 600 ? .6 + d*.4 : 0], ['komeet', S.dist > 1200 ? .55 + d*.4 : 0],
+    ['eiland', S.dist > 1800 ? .45 + d*.4 : 0], ['lanceer', S.dist > 2400 ? .45 + d*.3 : 0],
     // Twee tot vier obstakels vlak achter elkaar; wordt steeds vaker.
-    ['combo', S.dist > 2400 ? 1.2 + d*2.5 : .3],
+    ['combo', S.dist > 1000 ? 1.4 + d*3.2 : .4],
   ];
   let tot = kansen.reduce((a,k) => a + k[1], 0), r = Math.random()*tot, soort = 'rots';
   for (const [k,w] of kansen){ if ((r -= w) <= 0){ soort = k; break; } }
@@ -1128,8 +1130,8 @@ function spawnPattern(){
   const combo = () => {
     const DOEN = { rots:'S', kristal:'S', zaag:'S', komeet:'S', gat:'S', rotsrij:'S', laser:'D', drone:'D' };
     const pool = ['rots', 'rots', 'kristal', 'laser', 'laser', 'drone', 'gat', 'rotsrij']
-      .concat(S.dist > 1500 ? ['zaag', 'zaag'] : [], S.dist > 3000 ? ['komeet'] : []);
-    const n = 2 + (Math.random() < .3 + d*.5 ? 1 : 0) + (d > .5 && Math.random() < .35 ? 1 : 0);
+      .concat(S.dist > 600 ? ['zaag', 'zaag'] : [], S.dist > 1200 ? ['komeet'] : []);
+    const n = 2 + (Math.random() < .35 + d*.55 ? 1 : 0) + (d > .4 && Math.random() < .45 ? 1 : 0);
     let xx = x, vorige = null;
     for (let i = 0; i < n; i++){
       let s2 = pool[(Math.random()*pool.length)|0];
@@ -1160,7 +1162,7 @@ function spawnPattern(){
   else if (soort === 'eiland') len = eiland(x);
   else if (soort === 'lanceer') len = lanceer(x);
 
-  S.nextX = x + len + v*rand(0.85, 1.35)*(1.15 - 0.25*d);
+  S.nextX = x + len + v*rand(0.85, 1.35)*(1.15 - 0.4*d);
 }
 // Munten precies op de sprongboog: wie op tijd springt, pakt ze allemaal.
 function boogMunten(cx, J){
@@ -1231,7 +1233,7 @@ function update(dt){
   }
 
   // snelheid
-  let doel = 340 + 400*(1 - Math.exp(-S.dist/50000));
+  let doel = 340 + 480*(1 - Math.exp(-S.dist/16000));
   if (S.boostT > 0) doel *= 1.45;
   S.speed += (doel - S.speed)*Math.min(1, dt*4);
   S.dist += S.speed*dt;
