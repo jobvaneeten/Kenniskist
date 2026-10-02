@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSessie } from './lib/sessie.jsx'
-import { haalMijnWeektaak, zetActieveOpdracht, wisActieveOpdracht } from './lib/weektaak.js'
+import { haalMijnWeektaak, zetActieveOpdracht, wisActieveOpdracht, soortVan } from './lib/weektaak.js'
 import { toolLabel, TOOL_BY_ID } from './lib/tools.js'
 import { resterendeMinuten } from './lib/leestimerOpslag.js'
 import { isLescheck, lesLabel } from './lib/lescheck.js'
@@ -23,12 +23,21 @@ function leesRest(o) {
 // openMapId: direct in dit mapje beginnen. Gebruikt door de lescheck-banner op
 // het startscherm — het kind heeft net les gehad en moet in één klik bij zijn
 // les zijn, niet eerst door de mapjes.
-export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId = null }) {
+// persoonlijk: "Speciaal voor mij" — dezelfde schermen, maar alleen de taken
+// of doelen (tabblad bovenin) i.p.v. de weektaken.
+const PERSOONLIJK = {
+  taak: { emoji: '✏️', meervoud: 'Taken', leeg: 'Je hebt nu geen taken.' },
+  doel: { emoji: '🎯', meervoud: 'Doelen', leeg: 'Je hebt nu geen doelen.' },
+}
+
+export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId = null, persoonlijk = false }) {
   const { profiel, toegestaneGroepen } = useSessie()
   const [opdrachten, setOpdrachten] = useState(null)
   const [gekozen, setGekozen] = useState(null)
   const [openMap, setOpenMap] = useState(openMapId)
   const [ververs, setVervers] = useState(0)
+  const [tab, setTab] = useState('taak')
+  const soort = persoonlijk ? tab : 'weektaak'
 
   useEffect(() => {
     let actief = true
@@ -41,7 +50,11 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
     return () => { actief = false }
   }, [profiel?.id, profiel?.klas_id, ververs])
 
-  const mappen = useMemo(() => groepeer(opdrachten ?? []), [opdrachten])
+  const zichtbaar = useMemo(() => (opdrachten ?? []).filter(o => soortVan(o) === soort), [opdrachten, soort])
+  // Een taak is weg zodra hij af is; een doel blijft staan (ook als hij
+  // behaald is) tot de leerkracht hem verwijdert.
+  const mappen = useMemo(() => groepeer(zichtbaar)
+    .filter(m => soort !== 'taak' || !m.opdrachten.every(o => o.klaar)), [zichtbaar, soort])
 
   // Precies hier, vlak vóór het renderen van de tool, wordt kk_actieve_
   // opdracht gezet — en nergens anders. slaResultaatOp (kenniskist-login.js)
@@ -82,14 +95,14 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
     return (
       <div className="game-screen">
         <button className="back-btn" onClick={() => (direct ? onBack() : setOpenMap(null))}>
-          {direct ? '← Menu' : '← Weektaken'}
+          {direct ? '← Menu' : persoonlijk ? `← ${PERSOONLIJK[tab].meervoud}` : '← Weektaken'}
         </button>
         <div className="game-header">
-          <span className="game-header-icon">📂</span>
+          <span className="game-header-icon">{persoonlijk ? PERSOONLIJK[tab].emoji : '📂'}</span>
           <h1 className="game-header-title">{map.titel}</h1>
           <p className="game-header-sub">
             {af} van de {map.opdrachten.length} opdracht{map.opdrachten.length === 1 ? '' : 'en'} af
-            {map.eindOp ? ` · tot en met ${korteDatum(map.eindOp)}` : ''}
+            {map.eindOp && !persoonlijk ? ` · tot en met ${korteDatum(map.eindOp)}` : ''}
           </p>
         </div>
 
@@ -123,15 +136,32 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
   return (
     <div className="game-screen">
       <button className="back-btn" onClick={onBack}>← Menu</button>
-      <div className="game-header">
-        <span className="game-header-icon">📋</span>
-        <h1 className="game-header-title">Mijn weektaak</h1>
-        <p className="game-header-sub">Opdrachten die je juf of meester voor je heeft klaargezet</p>
-      </div>
+      {persoonlijk ? (
+        <div className="game-header">
+          <span className="game-header-icon">⭐</span>
+          <h1 className="game-header-title">Speciaal voor mij</h1>
+          <p className="game-header-sub">Door je juf of meester alleen voor jou klaargezet</p>
+          <div className="svm-tabs">
+            {Object.entries(PERSOONLIJK).map(([key, p]) => (
+              <button key={key} className={tab === key ? 'svm-tab actief' : 'svm-tab'} onClick={() => setTab(key)}>
+                {p.emoji} {p.meervoud}
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="game-header">
+          <span className="game-header-icon">📋</span>
+          <h1 className="game-header-title">Mijn weektaak</h1>
+          <p className="game-header-sub">Opdrachten die je juf of meester voor je heeft klaargezet</p>
+        </div>
+      )}
 
       {opdrachten === null && <p className="mode-desc">Laden…</p>}
-      {opdrachten?.length === 0 && (
-        <p className="mode-desc">Nog geen weektaak — vraag het aan je juf of meester.</p>
+      {opdrachten !== null && zichtbaar.length === 0 && (
+        <p className="mode-desc">
+          {persoonlijk ? PERSOONLIJK[tab].leeg : 'Nog geen weektaak — vraag het aan je juf of meester.'}
+        </p>
       )}
       {mappen.length > 0 && (
         <div className="mode-grid">
@@ -139,13 +169,21 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
             const af = m.opdrachten.filter(o => o.klaar).length
             const alles = af === m.opdrachten.length
             return (
-              <button key={m.id} className="mode-card wt-map" onClick={() => setOpenMap(m.id)}>
-                <span className="mode-emoji">{alles ? '✅' : '📂'}</span>
+              // Een taak of doel met maar één oefening opent meteen die oefening.
+              <button
+                key={m.id} className="mode-card wt-map"
+                onClick={() => (persoonlijk && m.opdrachten.length === 1 ? start(m.opdrachten[0]) : setOpenMap(m.id))}
+              >
+                <span className="mode-emoji">{alles ? '✅' : persoonlijk ? PERSOONLIJK[tab].emoji : '📂'}</span>
                 <span className="mode-name">{m.titel}</span>
                 <span className="mode-desc">
-                  {af} van de {m.opdrachten.length} af
+                  {soort === 'doel'
+                    ? (alles ? 'Behaald! Je mag blijven oefenen' : 'Nog niet behaald')
+                    : soort === 'taak' && m.opdrachten.length === 1 && m.opdrachten[0].doel != null
+                      ? `${Math.min(m.opdrachten[0].somMax, m.opdrachten[0].doel)} / ${m.opdrachten[0].doel} gemaakt`
+                      : `${af} van de ${m.opdrachten.length} af`}
                 </span>
-                {m.eindOp && (
+                {m.eindOp && !persoonlijk && (
                   <span className="wt-map-datum">tot en met {korteDatum(m.eindOp)}</span>
                 )}
               </button>

@@ -38,11 +38,10 @@ function Verplaatsen({ klas, alleKlassen, geselecteerd, onKlaar }) {
 //
 // Verplaatsen naar een andere klas zit achter een schakelaar, zodat de
 // vinkjes de lijst niet onnodig vol maken.
-export default function LeerlingLijst({ klas, alleKlassen, samenvatting, onKiesLeerling, onGewijzigd }) {
+export default function LeerlingLijst({ klas, alleKlassen, leerlingen, onKiesLeerling, onGewijzigd }) {
   const [verplaatsModus, setVerplaatsModus] = useState(false)
   const [geselecteerd, setGeselecteerd] = useState(new Set())
 
-  const leerlingen = [...samenvatting.lijst].sort((a, b) => a.weergavenaam.localeCompare(b.weergavenaam))
   const kanVerplaatsen = alleKlassen.length > 1
 
   const toggel = (id) => setGeselecteerd(prev => {

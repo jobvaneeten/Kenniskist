@@ -14,6 +14,13 @@ export function zetActieveOpdracht(opdracht) {
   }))
 }
 
+// Taken en doelen ("Speciaal voor mij") zijn geen eigen datamodel maar een
+// weektaak in een vaste vorm, net als een lescheck: elke opdracht erin draagt
+// `persoonlijk: 'taak' | 'doel'` in zijn config. Zo werken voortgang,
+// herkansing en differentiatie precies als bij een gewone weektaak.
+export const SOORTEN = ['weektaak', 'taak', 'doel']
+export const soortVan = (opdracht) => opdracht?.config?.persoonlijk ?? 'weektaak'
+
 export function wisActieveOpdracht() {
   localStorage.removeItem('kk_actieve_opdracht')
 }

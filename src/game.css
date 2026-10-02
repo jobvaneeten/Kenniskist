@@ -667,3 +667,25 @@
   color: var(--kk-text-soft);
   opacity: 0.75;
 }
+
+/* Speciaal voor mij: Taken / Doelen */
+.svm-tabs { display: flex; gap: 10px; justify-content: center; margin-top: 14px; }
+.svm-tab {
+  padding: 10px 22px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.75);
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 0.18s, border-color 0.18s, color 0.18s;
+}
+.svm-tab:hover { border-color: rgba(255,210,63,0.5); color: #fff; }
+.svm-tab.actief {
+  background: rgba(255,210,63,0.16);
+  border-color: rgba(255,210,63,0.75);
+  color: #fff;
+  box-shadow: 0 0 18px rgba(255,210,63,0.25);
+}

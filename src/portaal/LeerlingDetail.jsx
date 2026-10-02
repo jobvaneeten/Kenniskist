@@ -4,8 +4,7 @@ import { roepWorkerAan } from '../lib/worker.js'
 import { toolLabel } from '../lib/tools.js'
 import FoutenLijst from './FoutenLijst.jsx'
 import Balk from './Balk.jsx'
-import { berekenBereik } from './datumBereik.js'
-import { groepeerSessies, filterHerkomst, scoreKlasse, kortMoment } from './resultaatHelpers.js'
+import { groepeerSessies, scoreKlasse, kortMoment } from './resultaatHelpers.js'
 
 const CATEGORIE_LABELS = {
   tt: 'Tegenwoordige tijd',
@@ -256,20 +255,19 @@ function WachtwoordResetten({ leerlingId }) {
   )
 }
 
-// Embeddable: geen eigen .portaal-wrapper en geen eigen filters — periode en
-// herkomst komen van KlasScherm, zodat dit scherm hetzelfde laat zien als de
-// lijst waar je vandaan klikte. Terug gaat via de kruimelbalk daarboven.
-export default function LeerlingDetail({ leerlingId, bereik, herkomst }) {
+// Embeddable: geen eigen .portaal-wrapper. Alleen werk dat bij een opdracht
+// hoort (weektaak, taak of doel) — wat een kind vrij oefent ziet de leerkracht
+// bewust niet. Terug gaat via de kruimelbalk daarboven.
+export default function LeerlingDetail({ leerlingId }) {
   const [leerling, setLeerling] = useState(null)
   const [resultaten, setResultaten] = useState(null)
 
   useEffect(() => {
     let actief = true
     async function laad() {
-      const { vanaf, tot } = berekenBereik(bereik)
-      let resultatenQuery = supabase.from('resultaten').select('*').eq('leerling_id', leerlingId).order('aangemaakt_op', { ascending: false })
-      if (vanaf) resultatenQuery = resultatenQuery.gte('aangemaakt_op', vanaf.toISOString())
-      if (tot) resultatenQuery = resultatenQuery.lt('aangemaakt_op', tot.toISOString())
+      const resultatenQuery = supabase.from('resultaten').select('*')
+        .eq('leerling_id', leerlingId).not('opdracht_id', 'is', null)
+        .order('aangemaakt_op', { ascending: false })
 
       const [{ data: p }, { data: r }] = await Promise.all([
         supabase.from('profielen').select('weergavenaam, gebruikersnaam, klassen(code)').eq('id', leerlingId).single(),
@@ -281,9 +279,9 @@ export default function LeerlingDetail({ leerlingId, bereik, herkomst }) {
     }
     laad()
     return () => { actief = false }
-  }, [leerlingId, bereik])
+  }, [leerlingId])
 
-  const gefilterd = useMemo(() => filterHerkomst(resultaten ?? [], herkomst), [resultaten, herkomst])
+  const gefilterd = useMemo(() => resultaten ?? [], [resultaten])
   const sessies = useMemo(() => groepeerSessies(gefilterd), [gefilterd])
 
   return (

@@ -1,15 +1,24 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase.js'
-import { TOOL_BY_ID } from '../lib/tools.js'
+import { TOOL_BY_ID, toolLabel } from '../lib/tools.js'
+import { SOORT_TEKST, ZONDER_EIND } from './soortTekst.js'
 import ToolKiezer from './ToolKiezer.jsx'
 import OpdrachtRij from './OpdrachtRij.jsx'
 import { slaWeektaakOp } from './weektaakOpslaan.js'
 
 function vandaag() { return new Date().toLocaleDateString('sv-SE') }
-function overZesDagen() {
+function overDagen(n) {
   const d = new Date()
-  d.setDate(d.getDate() + 6)
+  d.setDate(d.getDate() + n)
   return d.toLocaleDateString('sv-SE')
+}
+
+// Wat er per soort anders is. Een taak of doel is per leerling, dus daar staat
+// standaard niemand aangevinkt en is er geen periode (zie ZONDER_EIND).
+const STAP1 = {
+  weektaak: { kop: 'Wanneer loopt hij?', label: 'Titel', placeholder: 'bv. Week 36', hint: 'Leeg laten mag; dan heet hij "Weektaak".' },
+  taak: { kop: 'Wat is de taak?', label: 'Taak', placeholder: 'bv. Oefen de tafel van 7', hint: 'Leeg laten mag; dan heet hij zoals de oefening.' },
+  doel: { kop: 'Wat is het doel?', label: 'Doel', placeholder: 'bv. Ik kan het lijdend voorwerp vinden', hint: 'Schrijf het doel zoals de leerling het moet lezen.' },
 }
 
 // Controleert de instellingen die een tool verplicht stelt (bv. minstens twee
@@ -38,10 +47,13 @@ function controleerOpdrachten(opdrachten) {
 // Opgezet als drie stappen onder elkaar, gericht op iemand die dit voor het
 // eerst doet: wanneer loopt hij, wat moeten ze doen, en wat er gebeurt als je
 // opslaat.
-export default function WeektaakForm({ klas, bestaand, onKlaar, onAnnuleren }) {
+export default function WeektaakForm({ klas, soort = 'weektaak', bestaand, onKlaar, onAnnuleren }) {
+  const persoonlijk = soort !== 'weektaak'
+  const tekst = SOORT_TEKST[soort]
+  const stap1 = STAP1[soort]
   const [titel, setTitel] = useState(bestaand?.titel ?? '')
   const [startOp, setStartOp] = useState(bestaand?.start_op ?? vandaag())
-  const [eindOp, setEindOp] = useState(bestaand?.eind_op ?? overZesDagen())
+  const [eindOp, setEindOp] = useState(bestaand?.eind_op ?? (persoonlijk ? ZONDER_EIND : overDagen(6)))
   const [opdrachten, setOpdrachten] = useState(() =>
     (bestaand?.opdrachten ?? []).map(o => ({ id: o.id, toolId: o.tool_id, aantal: o.aantal, config: o.config ?? {} }))
   )
@@ -70,14 +82,14 @@ export default function WeektaakForm({ klas, bestaand, onKlaar, onAnnuleren }) {
           .from('toewijzingen').select('leerling_id').in('opdracht_id', ids)
         if (!actief) return
         const bezet = new Set((tw ?? []).map(t => t.leerling_id))
-        setGekozen(bezet.size ? bezet : new Set((lln ?? []).map(l => l.id)))
+        setGekozen(bezet.size || persoonlijk ? bezet : new Set((lln ?? []).map(l => l.id)))
       } else {
-        setGekozen(new Set((lln ?? []).map(l => l.id)))
+        setGekozen(new Set(persoonlijk ? [] : (lln ?? []).map(l => l.id)))
       }
     }
     laad()
     return () => { actief = false }
-  }, [klas.id, opdrachtSleutel])
+  }, [klas.id, opdrachtSleutel, persoonlijk])
 
   const toggelLeerling = (id) => setGekozen(prev => {
     const next = new Set(prev)
@@ -101,14 +113,15 @@ export default function WeektaakForm({ klas, bestaand, onKlaar, onAnnuleren }) {
     if (eindOp < startOp) { setFout('De einddatum kan niet vóór de startdatum liggen.'); return }
     const configFout = controleerOpdrachten(opdrachten)
     if (configFout) { setFout(configFout); return }
-    if (!gekozen || gekozen.size === 0) { setFout('Kies minstens één leerling die deze weektaak krijgt.'); return }
+    if (!gekozen || gekozen.size === 0) { setFout(`Kies minstens één leerling die deze ${tekst.enkel} krijgt.`); return }
     setBezig(true)
     try {
       await slaWeektaakOp({
         weektaakId: bestaand?.id ?? null,
         schoolId: klas.school_id, klasId: klas.id,
-        titel: titel.trim() || 'Weektaak', startOp, eindOp,
-        opdrachten, leerlingIds: [...gekozen],
+        titel: titel.trim() || (persoonlijk ? toolLabel(opdrachten[0].toolId) : 'Weektaak'), startOp, eindOp,
+        opdrachten: persoonlijk ? opdrachten.map(o => ({ ...o, config: { ...o.config, persoonlijk: soort } })) : opdrachten,
+        leerlingIds: [...gekozen],
       })
       onKlaar()
     } catch {
@@ -121,27 +134,35 @@ export default function WeektaakForm({ klas, bestaand, onKlaar, onAnnuleren }) {
   return (
     <form onSubmit={submit}>
       <div className="portaal-kaart">
-        <h2>{bestaand ? 'Weektaak bewerken' : 'Nieuwe weektaak'}</h2>
+        <h2>{bestaand ? `${tekst.enkel[0].toUpperCase()}${tekst.enkel.slice(1)} bewerken` : tekst.nieuw.slice(2)}</h2>
 
         <div className="portaal-stap">
           <span className="portaal-stap-nr">1</span>
           <div className="portaal-stap-inhoud">
-            <h3>Wanneer loopt hij?</h3>
-            <p className="portaal-zacht">De leerlingen zien de opdrachten alleen tussen deze twee datums.</p>
+            <h3>{stap1.kop}</h3>
+            <p className="portaal-zacht">
+              {soort === 'weektaak' && 'De leerlingen zien de opdrachten alleen tussen deze twee datums.'}
+              {soort === 'taak' && 'De taak blijft staan tot de leerling hem af heeft.'}
+              {soort === 'doel' && 'Het doel blijft staan tot jij hem verwijdert.'}
+            </p>
             <div className="portaal-veldrij">
               <label className="portaal-veld">
-                <span className="portaal-veld-label">Titel</span>
-                <input value={titel} onChange={e => setTitel(e.target.value)} placeholder="bv. Week 36" />
-                <span className="portaal-veld-hint">Leeg laten mag; dan heet hij "Weektaak".</span>
+                <span className="portaal-veld-label">{stap1.label}</span>
+                <input value={titel} onChange={e => setTitel(e.target.value)} placeholder={stap1.placeholder} />
+                <span className="portaal-veld-hint">{stap1.hint}</span>
               </label>
-              <label className="portaal-veld">
-                <span className="portaal-veld-label">Start</span>
-                <input type="date" value={startOp} onChange={e => setStartOp(e.target.value)} required />
-              </label>
-              <label className="portaal-veld">
-                <span className="portaal-veld-label">Eind</span>
-                <input type="date" value={eindOp} onChange={e => setEindOp(e.target.value)} required />
-              </label>
+              {!persoonlijk && (
+                <>
+                  <label className="portaal-veld">
+                    <span className="portaal-veld-label">Start</span>
+                    <input type="date" value={startOp} onChange={e => setStartOp(e.target.value)} required />
+                  </label>
+                  <label className="portaal-veld">
+                    <span className="portaal-veld-label">Eind</span>
+                    <input type="date" value={eindOp} onChange={e => setEindOp(e.target.value)} required />
+                  </label>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -149,9 +170,11 @@ export default function WeektaakForm({ klas, bestaand, onKlaar, onAnnuleren }) {
         <div className="portaal-stap">
           <span className="portaal-stap-nr">2</span>
           <div className="portaal-stap-inhoud">
-            <h3>Wat moeten ze doen?</h3>
+            <h3>{soort === 'doel' ? 'Waarmee oefenen ze het doel?' : 'Wat moeten ze doen?'}</h3>
             <p className="portaal-zacht">
-              Elke opdracht is één oefening met zijn eigen instellingen. Je kunt er zoveel toevoegen als je wilt.
+              {soort === 'doel'
+                ? 'Kies een oefening en vink daarin het doel aan, bv. één doel bij verhaaltjessommen of alleen het lijdend voorwerp bij zinsdelen.'
+                : 'Elke opdracht is één oefening met zijn eigen instellingen. Je kunt er zoveel toevoegen als je wilt.'}
             </p>
 
             {opdrachten.length === 0 && !toonKiezer && (
@@ -186,8 +209,9 @@ export default function WeektaakForm({ klas, bestaand, onKlaar, onAnnuleren }) {
           <div className="portaal-stap-inhoud">
             <h3>Voor wie?</h3>
             <p className="portaal-zacht">
-              Standaard krijgt de hele klas hem. Vink uit wie hem niet hoeft te maken —
-              bijvoorbeeld een kind dat aan iets anders werkt.
+              {persoonlijk
+                ? `Vink aan voor wie deze ${tekst.enkel} is. Alleen zij zien hem, bij "Speciaal voor mij".`
+                : 'Standaard krijgt de hele klas hem. Vink uit wie hem niet hoeft te maken — bijvoorbeeld een kind dat aan iets anders werkt.'}
             </p>
             {gekozen === null && <p className="portaal-leeg">Laden…</p>}
             {gekozen !== null && leerlingen.length === 0 && (
@@ -228,7 +252,7 @@ export default function WeektaakForm({ klas, bestaand, onKlaar, onAnnuleren }) {
             {fout && <p className="portaal-fout">{fout}</p>}
             <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
               <button type="submit" className="portaal-knop" disabled={bezig}>
-                {bezig ? 'Bezig…' : bestaand ? 'Wijzigingen opslaan' : 'Weektaak klaarzetten'}
+                {bezig ? 'Bezig…' : bestaand ? 'Wijzigingen opslaan' : `${tekst.enkel[0].toUpperCase()}${tekst.enkel.slice(1)} klaarzetten`}
               </button>
               <button type="button" className="portaal-knop portaal-knop-subtiel" onClick={onAnnuleren}>Annuleren</button>
             </div>

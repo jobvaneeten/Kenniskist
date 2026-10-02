@@ -288,16 +288,18 @@ export default function App({ gast = false }) {
     localStorage.setItem('kk_gr_duiken', String(GRAVEN_DUIKEN))
   }
 
-  const EVO_MAXLV = 24   // moet gelijk blijven aan THEMES.length in public/evolutie
+  const EVO_MAXLV = 27   // moet gelijk blijven aan THEMES.length in public/evolutie
+  const EVO_SOORTEN = 5  // en dit aan SPECIES.length
   const unlockEvoGeld = () => {
     let s
     try { s = JSON.parse(localStorage.getItem('kk_evo_state') || 'null') } catch { s = null }
     if (!s || !Array.isArray(s.animals)) {
-      s = { sp: 0, money: 0, bought: 0, up: {}, seen: [[], [], []], mult: 1,
+      s = { sp: 0, money: 0, bought: 0, up: {}, seen: [], mult: 1,
             last: Date.now(), helped: false, animals: [], poop: [] }
     }
-    if (!Array.isArray(s.seen) || s.seen.length !== 3) s.seen = [[], [], []]
-    const sp = Math.min(2, Math.max(0, s.sp | 0))
+    if (!Array.isArray(s.seen)) s.seen = []
+    while (s.seen.length < EVO_SOORTEN) s.seen.push([])
+    const sp = Math.min(EVO_SOORTEN - 1, Math.max(0, s.sp | 0))
     s.seen[sp] = Array.from({ length: EVO_MAXLV }, (_, i) => i + 1)
     s.money = (Number(s.money) || 0) + EVO_BONUS
     localStorage.setItem('kk_evo_state', JSON.stringify(s))
@@ -322,6 +324,13 @@ export default function App({ gast = false }) {
     <>
       <CurrencyBadge munten={curuntie} briefgeld={briefgeld} hideMunten />
       <Weektaak onBack={goMenu} addCuruntie={addCuruntie} addBriefgeld={addBriefgeld} />
+    </>
+  )
+
+  if (screen === 'speciaal') return (
+    <>
+      <CurrencyBadge munten={curuntie} briefgeld={briefgeld} hideMunten />
+      <Weektaak onBack={goMenu} addCuruntie={addCuruntie} addBriefgeld={addBriefgeld} persoonlijk />
     </>
   )
 
@@ -396,8 +405,10 @@ export default function App({ gast = false }) {
     </>
   )
 
+  const isLeerling = profiel?.rol === 'leerling'
+
   return (
-    <div className="screen">
+    <div className={isLeerling ? 'screen screen-breed' : 'screen'}>
       <button className="uitloggen-btn" onClick={uitloggen}>{gast ? 'Stoppen met oefenen' : 'Uitloggen'}</button>
       {/* Spectaculaire achtergrond-lagen */}
       <div className="bg-orbs" aria-hidden="true">
@@ -423,6 +434,17 @@ export default function App({ gast = false }) {
         <button className="lescheck-btn" onClick={() => { setLescheckMap(openLescheck.id); setScreen('lescheck') }}>
           <span className="lescheck-btn-titel">📝 {openLescheck.titel}</span>
           <span className="lescheck-btn-sub">Kies je les en maak je som →</span>
+        </button>
+      )}
+
+      <div className={isLeerling ? 'menu-rij' : 'menu-rij menu-rij-los'}>
+      {isLeerling && (
+        <button className="zijkaart zijkaart-speciaal" onClick={() => setScreen('speciaal')}>
+          <span className="zijkaart-emoji">⭐</span>
+          <span className="zijkaart-titel">Speciaal voor mij</span>
+          <span className="zijkaart-desc">Taken en doelen die je juf of meester alleen voor jou klaarzet</span>
+          <span className="zijkaart-chips"><span>✏️ Taken</span><span>🎯 Doelen</span></span>
+          <span className="zijkaart-pijl">→</span>
         </button>
       )}
 
@@ -458,15 +480,19 @@ export default function App({ gast = false }) {
         </button>
       </div>
 
+      {isLeerling && (
+        <button className="zijkaart zijkaart-weektaak" onClick={() => setScreen('weektaak')}>
+          <span className="zijkaart-emoji">📋</span>
+          <span className="zijkaart-titel">Mijn weektaak</span>
+          <span className="zijkaart-desc">De opdrachten van deze week voor de hele klas</span>
+          <span className="zijkaart-pijl">→</span>
+        </button>
+      )}
+      </div>
+
       <button className="code-btn" onClick={() => setShowCode(true)}>
         🎟️ Code invoeren
       </button>
-
-      {profiel?.rol === 'leerling' && (
-        <button className="weektaak-btn" onClick={() => setScreen('weektaak')}>
-          📋 Mijn weektaak
-        </button>
-      )}
 
       {showCode && (
         <CodeModal

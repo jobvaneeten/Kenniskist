@@ -5,26 +5,58 @@ import { kopieerWeektaak } from './weektaakOpslaan.js'
 import WeektaakForm from './WeektaakForm.jsx'
 import WeektaakVoortgang from './WeektaakVoortgang.jsx'
 import WeektaakDifferentiatie from './WeektaakDifferentiatie.jsx'
+import { SOORT_TEKST, ZONDER_EIND } from './soortTekst.js'
 
-async function haalWeektaken(klasId) {
+// Weektaken, taken en doelen staan in dezelfde tabel; de soort zit in de
+// config van de opdrachten (zie soortVan in lib/weektaak.js). Bij taken en
+// doelen komt er bij voor wie hij is — die zijn per leerling, dus de titel
+// alleen zegt te weinig.
+async function haalWeektaken(klasId, soort) {
   const { data } = await supabase
-    .from('weektaken').select('id, titel, start_op, eind_op')
+    .from('weektaken').select('id, titel, start_op, eind_op, opdrachten(id, persoonlijk:config->>persoonlijk)')
     .eq('klas_id', klasId).order('start_op', { ascending: false })
-  return data ?? []
+  const lijst = (data ?? []).filter(wt => (wt.opdrachten?.[0]?.persoonlijk ?? 'weektaak') === soort)
+  if (soort === 'weektaak' || !lijst.length) return lijst
+
+  const opdrachtIds = lijst.flatMap(wt => wt.opdrachten.map(o => o.id))
+  const [{ data: tw }, { data: lln }, { data: vg }] = await Promise.all([
+    supabase.from('toewijzingen').select('opdracht_id, leerling_id').in('opdracht_id', opdrachtIds),
+    supabase.from('profielen').select('id, weergavenaam').eq('klas_id', klasId).eq('rol', 'leerling'),
+    supabase.from('weektaak_voortgang').select('opdracht_id, leerling_id, doel_aantal, som_max').in('opdracht_id', opdrachtIds),
+  ])
+  const naamBij = new Map((lln ?? []).map(l => [l.id, l.weergavenaam]))
+  return lijst.map(wt => {
+    const ids = new Set(wt.opdrachten.map(o => o.id))
+    const leerlingIds = new Set((tw ?? []).filter(t => ids.has(t.opdracht_id)).map(t => t.leerling_id))
+    const namen = [...leerlingIds].map(id => naamBij.get(id)).filter(Boolean)
+    // Af = alle opdrachten van deze taak/dit doel gehaald (zelfde regel als
+    // `klaar` in haalMijnWeektaak).
+    const af = [...leerlingIds].filter(id => {
+      const rijen = (vg ?? []).filter(v => v.leerling_id === id && ids.has(v.opdracht_id))
+      return rijen.length > 0 && rijen.every(v => v.doel_aantal != null && v.som_max >= v.doel_aantal)
+    }).length
+    return { ...wt, voor: namen.sort(), aantal: leerlingIds.size, af }
+  })
 }
 
 function statusLabel(weektaak) {
+  if (weektaak.voor) {
+    const n = weektaak.aantal
+    const woord = weektaak.opdrachten?.[0]?.persoonlijk === 'doel' ? 'behaald' : 'af'
+    return n === 0 ? '' : weektaak.af === n ? `iedereen ${woord}` : `${weektaak.af} van ${n} ${woord}`
+  }
   const vandaag = new Date().toLocaleDateString('sv-SE')
   if (vandaag < weektaak.start_op) return 'komend'
   if (vandaag > weektaak.eind_op) return 'verlopen'
   return 'actief'
 }
 
-// Derde tab van KlasScherm.jsx. Vijf standen: lijst van weektaken, een
+// Tab van KlasScherm.jsx, voor weektaken, taken of doelen (`soort`). Vijf standen: lijst van weektaken, een
 // nieuwe aanmaken, een bestaande bewerken, de voortgang van één weektaak
 // bekijken, of differentiëren (per leerling toewijzing/aantal aanpassen) —
 // de laatste twee delen dezelfde opdrachten-fetch.
-export default function WeektaakTab({ klas, onKiesLeerling }) {
+export default function WeektaakTab({ klas, soort = 'weektaak', onKiesLeerling }) {
+  const tekst = SOORT_TEKST[soort]
   const [weektaken, setWeektaken] = useState(null)
   const [weergave, setWeergave] = useState('lijst') // lijst | nieuw | bewerken | voortgang | differentiatie
   const [gekozen, setGekozen] = useState(null)
@@ -40,9 +72,9 @@ export default function WeektaakTab({ klas, onKiesLeerling }) {
 
   useEffect(() => {
     let actief = true
-    haalWeektaken(klas.id).then(data => { if (actief) setWeektaken(data) })
+    haalWeektaken(klas.id, soort).then(data => { if (actief) setWeektaken(data) })
     return () => { actief = false }
-  }, [klas.id])
+  }, [klas.id, soort])
 
   const kiesWeektaak = (wt) => {
     setGekozen(wt); setWeergave('voortgang'); setAlleenNietAf(false)
@@ -96,18 +128,19 @@ export default function WeektaakTab({ klas, onKiesLeerling }) {
   const differentieren = async () => { await haalOpdrachten(); setWeergave('differentiatie') }
 
   const naOpslaan = () => {
-    haalWeektaken(klas.id).then(setWeektaken)
+    haalWeektaken(klas.id, soort).then(setWeektaken)
     setWeergave('lijst'); setGekozen(null)
   }
 
   if (weergave === 'nieuw') {
-    return <WeektaakForm klas={klas} bestaand={null} onKlaar={naOpslaan} onAnnuleren={() => setWeergave('lijst')} />
+    return <WeektaakForm klas={klas} soort={soort} bestaand={null} onKlaar={naOpslaan} onAnnuleren={() => setWeergave('lijst')} />
   }
 
   if (weergave === 'bewerken' && gekozen && gekozenOpdrachten) {
     return (
       <WeektaakForm
         klas={klas}
+        soort={soort}
         bestaand={{ ...gekozen, opdrachten: gekozenOpdrachten }}
         onKlaar={naOpslaan}
         onAnnuleren={() => setWeergave('voortgang')}
@@ -131,9 +164,14 @@ export default function WeektaakTab({ klas, onKiesLeerling }) {
       <div className="portaal-kaart">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 10, marginBottom: 14 }}>
           <div>
-            <button className="portaal-terug" onClick={() => { setWeergave('lijst'); setGekozen(null) }} style={{ padding: 0 }}>← Alle weektaken</button>
+            <button className="portaal-terug" onClick={() => { setWeergave('lijst'); setGekozen(null) }} style={{ padding: 0 }}>← Alle {tekst.meervoud.toLowerCase()}</button>
             <h2 style={{ margin: '4px 0 0' }}>{gekozen.titel}</h2>
-            <p className="portaal-leeg" style={{ margin: 0 }}>{gekozen.start_op} t/m {gekozen.eind_op}</p>
+            <p className="portaal-leeg" style={{ margin: 0 }}>
+              {gekozen.eind_op === ZONDER_EIND
+                ? `sinds ${gekozen.start_op}`
+                : `${gekozen.start_op} t/m ${gekozen.eind_op}`}
+              {gekozen.voor?.length ? ` · voor ${gekozen.voor.join(', ')}` : ''}
+            </p>
           </div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <button
@@ -141,13 +179,15 @@ export default function WeektaakTab({ klas, onKiesLeerling }) {
               onClick={() => setAlleenNietAf(v => !v)}
             >{alleenNietAf ? 'Toon iedereen' : 'Alleen niet af'}</button>
             <button className="portaal-knop portaal-knop-subtiel" onClick={differentieren}>Differentiëren</button>
-            <button
-              className="portaal-knop portaal-knop-subtiel"
-              onClick={() => {
-                setToonVerwijder(false); setKopieFout('')
-                setKopie(k => (k ? null : kopieVoorstel(gekozen)))
-              }}
-            >Kopiëren</button>
+            {soort === 'weektaak' && (
+              <button
+                className="portaal-knop portaal-knop-subtiel"
+                onClick={() => {
+                  setToonVerwijder(false); setKopieFout('')
+                  setKopie(k => (k ? null : kopieVoorstel(gekozen)))
+                }}
+              >Kopiëren</button>
+            )}
             <button className="portaal-knop portaal-knop-subtiel" onClick={bewerken}>Bewerken</button>
             <button className="portaal-knop portaal-knop-subtiel" onClick={() => setToonVerwijder(v => !v)}>Verwijderen</button>
           </div>
@@ -202,10 +242,9 @@ export default function WeektaakTab({ klas, onKiesLeerling }) {
         {toonVerwijder && (
           <div className="portaal-waarschuwing">
             <p className="portaal-zacht" style={{ margin: 0 }}>
-              <strong>{gekozen.titel}</strong> verwijderen? De opdrachten en de voortgang van deze weektaak
-              verdwijnen. <strong>Het gemaakte werk blijft gewoon staan</strong> — het telt daarna mee als
-              vrij oefenen in plaats van als weektaakwerk, dus je vindt het terug in het groepsoverzicht en
-              bij de leerling zelf. Dit kan niet ongedaan gemaakt worden.
+              <strong>{gekozen.titel}</strong> verwijderen? De opdrachten en de voortgang van deze {tekst.enkel}
+              verdwijnen. Het gemaakte werk blijft bij de leerling bewaard, maar telt daarna als vrij oefenen
+              en staat dus niet meer in het portaal. Dit kan niet ongedaan gemaakt worden.
             </p>
             {verwijderFout && <p className="portaal-fout">{verwijderFout}</p>}
             <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
@@ -227,19 +266,27 @@ export default function WeektaakTab({ klas, onKiesLeerling }) {
 
   return (
     <div className="portaal-kaart">
-      <h2>Weektaken</h2>
+      <h2>{tekst.meervoud}</h2>
+      {soort !== 'weektaak' && (
+        <p className="portaal-zacht" style={{ marginTop: 0 }}>
+          {soort === 'taak'
+            ? 'Een taak zet je voor één of een paar leerlingen klaar. Ze vinden hem bij "Speciaal voor mij".'
+            : 'Een doel is een leerdoel, bv. een doel uit verhaaltjessommen of één zinsdeel. De leerling oefent erop bij "Speciaal voor mij".'}
+        </p>
+      )}
       {weektaken === null && <p className="portaal-leeg">Laden…</p>}
-      {weektaken?.length === 0 && <p className="portaal-leeg">Nog geen weektaken.</p>}
+      {weektaken?.length === 0 && <p className="portaal-leeg">{tekst.leeg}</p>}
       <div className="portaal-grid">
         {weektaken?.map(wt => (
           <button key={wt.id} className="portaal-klaskaart" onClick={() => kiesWeektaak(wt)}>
             {wt.titel}
-            <span>{wt.start_op} t/m {wt.eind_op}</span>
+            <span>{wt.eind_op === ZONDER_EIND ? `sinds ${wt.start_op}` : `${wt.start_op} t/m ${wt.eind_op}`}</span>
+            {wt.voor && <span>voor {wt.voor.length ? wt.voor.join(', ') : 'niemand'}</span>}
             <span>{statusLabel(wt)}</span>
           </button>
         ))}
       </div>
-      <button className="portaal-knop" style={{ marginTop: 16 }} onClick={() => setWeergave('nieuw')}>+ Nieuwe weektaak</button>
+      <button className="portaal-knop" style={{ marginTop: 16 }} onClick={() => setWeergave('nieuw')}>{tekst.nieuw}</button>
     </div>
   )
 }
