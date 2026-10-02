@@ -53,6 +53,23 @@ export const TOOL_FAMILIES = [
     ],
   },
   {
+    familie: 'taal-interpunctie', toolId: 'taal-interpunctie', label: 'Interpunctie',
+    vak: 'taal', groepen: [5, 6, 7, 8], aantalInstelbaar: true, standaardAantal: 20, eenheid: 'opgaven',
+    configVelden: [
+      { key: 'onderdelen', type: 'checkboxes', label: 'Onderdelen', min: 1, opties: [
+        { value: 'komma', label: 'Komma' },
+        { value: 'aanhalingstekens', label: 'Aanhalingstekens' },
+        { value: 'afbreekstreepje', label: 'Afbreekstreepje' },
+        { value: 'hoofdletters', label: 'Hoofdletters' },
+        { value: 'punten', label: 'Punten' },
+      ] },
+    ],
+  },
+  {
+    familie: 'taal-gebiedende-wijs', toolId: 'taal-gebiedende-wijs', label: 'Gebiedende wijs',
+    vak: 'taal', groepen: [5, 6, 7, 8], aantalInstelbaar: true, standaardAantal: 15, eenheid: 'opgaven', configVelden: [],
+  },
+  {
     // Blok 1 = thema 1 "Ik ontmoet", les 2/7/12 (zie
     // src/games/woordenschatData.js). Komt er een blok bij, dan wordt dit een
     // familie met `varianten` zoals bij het dictee.

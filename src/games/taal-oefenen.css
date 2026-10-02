@@ -940,3 +940,13 @@ mark.tv-highlight {
 .tv-hint-lijst li strong { color: #fff; }
 .tv-hint-lijst::-webkit-scrollbar { width: 7px; }
 .tv-hint-lijst::-webkit-scrollbar-thumb { background: rgba(245,158,11,0.35); border-radius: 4px; }
+
+/* Interpunctie / gebiedende wijs: vier zinnen onder elkaar, goed leesbaar */
+.tv-answers-kolom .zk-zin { font-size: 1.08rem; font-weight: 600; letter-spacing: 0.01em; }
+.zk-teken {
+  display: inline-block; min-width: 2.2em; text-align: center; margin-right: 4px;
+  font-weight: 900; color: #ffd23f;
+}
+.zk-regels { margin-bottom: 8px; }
+.zk-regels strong { display: block; margin-bottom: 2px; }
+.zk-regels p { margin: 2px 0; }

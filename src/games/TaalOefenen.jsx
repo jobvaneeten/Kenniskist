@@ -3,6 +3,7 @@ import { WOORDSOORTEN, ZINSDELEN, VRAGEN, TIP_WOORDSOORT, splitZin, woordIndexen
 import SpelBeloning from './SpelBeloning'
 import Woordenschat from './Woordenschat.jsx'
 import Zinsdelen from './Zinsdelen.jsx'
+import { Interpunctie, GebiedendeWijs } from './ZinKeuze.jsx'
 import { useGebruikOpdracht } from './gebruikOpdracht.js'
 import OpdrachtKlaarScherm from './OpdrachtKlaarScherm.jsx'
 import './taal-oefenen.css'
@@ -197,6 +198,14 @@ export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
     )
   }
 
+  if (screen === 'interpunctie') {
+    return <Interpunctie onBack={() => setScreen('taalverkennen')} addBriefgeld={addBriefgeld} addCuruntie={addCuruntie} />
+  }
+
+  if (screen === 'gebiedend') {
+    return <GebiedendeWijs onBack={() => setScreen('taalverkennen')} addBriefgeld={addBriefgeld} addCuruntie={addCuruntie} />
+  }
+
   if (screen === 'zinsdelen') {
     return (
       <Zinsdelen
@@ -364,6 +373,16 @@ export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
             <span className="tv-mode-name">Woordsoorten</span>
             <span className="tv-mode-desc">Naamwoord · Werkwoord · Bijvoeglijk · Bijwoord en meer</span>
           </button>
+          <button className="tv-mode-card" onClick={() => setScreen('interpunctie')}>
+            <span className="tv-mode-emoji">✏️</span>
+            <span className="tv-mode-name">Interpunctie</span>
+            <span className="tv-mode-desc">Komma · Aanhalingstekens · Afbreekstreepje · Hoofdletters · Punten — kies welke zin goed is</span>
+          </button>
+          <button className="tv-mode-card" onClick={() => setScreen('gebiedend')}>
+            <span className="tv-mode-emoji">👉</span>
+            <span className="tv-mode-name">Gebiedende wijs</span>
+            <span className="tv-mode-desc">Welke zin is een bevelzin zonder onderwerp?</span>
+          </button>
         </div>
       </div>
     )
@@ -382,7 +401,7 @@ export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
         <button className="tv-mode-card" onClick={() => setScreen('taalverkennen')}>
           <span className="tv-mode-emoji">🌱</span>
           <span className="tv-mode-name">Taalverkennen</span>
-          <span className="tv-mode-desc">Zinsdelen en woordsoorten oefenen</span>
+          <span className="tv-mode-desc">Zinsdelen, woordsoorten, interpunctie en gebiedende wijs</span>
         </button>
         {/* Alleen groep 7: de woordenlijst is die van thema 1 uit de
             groep 7-methode. */}
