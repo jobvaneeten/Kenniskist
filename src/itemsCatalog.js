@@ -1,3 +1,4 @@
+import { skinPreview } from './skins'
 // ── Per-clothing-type item catalog ───────────────────────────────────
 // Each item is one of:
 //   color   : flat colour              { kind:'color',   hex }
@@ -28,6 +29,8 @@ const texmodel = (key, label, file, texture, preview)  => ({ key, label, rarity:
 // Ultra legendary zonder eigen 3D-skin: een gewoon patroon/print-item dat toch
 // in de hoogste zeldzaamheid valt.
 const ultra   = (key, label, kind, rest)               => ({ key, label, rarity: 'ultra_legendary', kind, ...rest })
+// Ontworpen skin: een getekend ontwerp met embleem/rugnummer/zones (zie skins.js)
+const skin    = (key, label, design)                   => ({ key, label, rarity: 'ultra_legendary', kind: 'skin', design })
 
 // Base colours shared by every clothing type (keeps existing saved unlocks)
 const BASE = () => [
@@ -120,10 +123,21 @@ export const CATALOG = {
     ultra('ajax', 'Rood-Wit Teamshirt',   'pattern', { pattern: 'stripes', c1: '#c8102e', c2: '#f4f4f4' }),
     ultra('psv',  'Rood-Zwart Teamshirt', 'pattern', { pattern: 'stripes', c1: '#cc2222', c2: '#141414' }),
     ultra('rb',   'Navy-Zilver Teamshirt','pattern', { pattern: 'stripes', c1: '#14224a', c2: '#c9d2dc' }),
+    skin('skin_topscorer', 'Topscorer 10',   'topscorer'),
+    skin('skin_astronaut', 'Astronaut',      'astronaut'),
+    skin('skin_ridder',    'Ridder',         'ridder'),
+    skin('skin_gamer',     'Neon Gamer',     'gamer'),
+    skin('skin_galaxy',    'Sterrenstelsel', 'sterrenstelsel'),
+    skin('skin_superheld', 'Superheld',      'superheld'),
+    skin('skin_piraat',    'Piratenkapitein','piraat'),
+    skin('skin_basketbal', 'Basketbal 23',   'basketbal'),
+    skin('skin_brandweer', 'Brandweer',      'brandweer'),
+    skin('skin_kersttrui', 'Foute kersttrui','kersttrui'),
+    skin('skin_tijger',    'Tijger',         'tijger'),
   ],
   broek: [
     ...BASE(),
-    pat  ('spijker',    'Spijkerstof',          'common', 'gradient','#3b6ea5', '#274b6e'),
+    pat  ('spijker',    'Spijkerstof',          'common', 'denim',   '#3b6ea5', '#274b6e'),
     pat  ('strepen_zw', 'Zwart gestreept',      'common', 'stripes', '#222222', '#444444'),
     pat  ('camo_groen', 'Camo groen',           'rare',   'camo',    '#4a5d23', '#2d3a16'),
     print('bliksem_b',  'Bliksem',              'rare',   '⚡',       '#15152a'),
@@ -194,6 +208,12 @@ export const CATALOG = {
     // Eigen sportbroeken in plaats van de clubbroekjes (zie shirt hierboven).
     ultra('ajaxbroek', 'Wit Sportbroekje',  'pattern', { pattern: 'stripes', c1: '#f4f4f4', c2: '#c8102e' }),
     ultra('psvbroek',  'Zwart Sportbroekje','pattern', { pattern: 'stripes', c1: '#141414', c2: '#cc2222' }),
+    skin('skin_galaxybroek', 'Galaxy broek',  'galaxybroek'),
+    skin('skin_sportbroek',  'Sportbroek met bies', 'sportbroek'),
+    skin('skin_neonbroek',   'Neon raster',   'neonbroek'),
+    skin('skin_tijgerbroek', 'Tijgerbroek',   'tijgerbroek'),
+    skin('skin_lavabroek',   'Lavabroek',     'lavabroek'),
+    skin('skin_brandweerbroek', 'Brandweerbroek', 'brandweerbroek'),
   ],
   sokken: [
     ...BASE(),
@@ -202,7 +222,7 @@ export const CATALOG = {
     print('hond',       'Hondjes',              'rare',   '🐶',      '#5a3a1a'),
     print('kat',        'Katjes',               'rare',   '🐱',      '#3a2a1a'),
     print('voetbal_s',  'Voetbal',              'rare',   '⚽',      '#0d8a3e'),
-    pat  ('zigzag',     'Zigzag',               'epic',   'stripes', '#7b2d8b', '#f4c430'),
+    pat  ('zigzag',     'Zigzag',               'epic',   'zigzag',  '#7b2d8b', '#f4c430'),
     print('aap',        'Aapjes',               'epic',   '🐵',      '#3a2410'),
     print('ster_s',     'Sterren',              'epic',   '⭐',      '#1a2a55'),
     print('vos',        'Vosjes',               'legendary', '🦊',   '#3a1a00'),
@@ -265,6 +285,11 @@ export const CATALOG = {
     print('ijs_s',      'IJsblokjes',           'epic',      '🧊',     '#062a3a'),
     print('flamingo_s', 'Flamingos',            'legendary', '🦩',     '#0a2a2a'),
     print('taart_s',    'Taartjes',             'legendary', '🍰',     '#3a1a2a'),
+    skin('skin_sportsok',  'Sportsokken',    'sportsok'),
+    skin('skin_galaxysok', 'Galaxy sokken',  'galaxysok'),
+    skin('skin_regenboogsok', 'Regenboogsokken', 'regenboogsok'),
+    skin('skin_kerstsok',  'Kerstsokken',    'kerstsok'),
+    skin('skin_tijgersok', 'Tijgersokken',   'tijgersok'),
   ],
   schoenen: [
     ...BASE(),
@@ -314,7 +339,7 @@ export const CATALOG = {
     print('donut_sch',  'Donuts',               'rare',      '🍩',     '#3a1a00'),
     print('watermeloen_sch','Watermeloen',      'rare',      '🍉',     '#0a2a10'),
     print('auto_sch',   'Autootjes',            'epic',      '🚗',     '#1a1a2a'),
-    print('ster_glow_sch','Sterren',            'epic',      '🌟',     '#1a2a55'),
+    print('ster_glow_sch','Glinsterende sterren',            'epic',      '🌟',     '#1a2a55'),
     print('bloem_sch',  'Bloemen',              'epic',      '🌸',     '#2a0a1a'),
     print('ufo_sch',    'Invaders',             'legendary', '👾',     '#10102a'),
     // ── extra schoenen (batch 3) ──
@@ -336,6 +361,13 @@ export const CATALOG = {
     print('race_sch',   'Racewagens',           'epic',      '🏎',     '#101820'),
     print('medaille_sch','Medailles',           'legendary', '🥈',     '#20202a'),
     print('schild_sch', 'Schilden',             'legendary', '🛡',     '#1a1030'),
+    skin('skin_neonsneaker',   'Neon sneakers',   'neonsneaker'),
+    skin('skin_goudsneaker',   'Gouden sneakers', 'goudsneaker'),
+    skin('skin_galaxysneaker', 'Galaxy sneakers', 'galaxysneaker'),
+    skin('skin_lavasneaker',   'Lava sneakers',   'lavasneaker'),
+    skin('skin_basketbalsneaker', 'Basketbalschoenen', 'basketbalsneaker'),
+    skin('skin_tijgersneaker', 'Tijger sneakers', 'tijgersneaker'),
+    skin('skin_brandweerlaars','Brandweerlaarzen','brandweerlaars'),
   ],
   // Hoofd = pet (één GLB-model, normaal/achterstevoren te dragen) getint naar
   // de gekozen kleur. Alleen kleur-items: het 3D-model wordt gekleurd, net als
@@ -402,6 +434,7 @@ export function swatchStyle(item) {
     case 'model':
     case 'texmodel': return { backgroundImage: `url('${item.preview}')`, backgroundSize: 'cover', backgroundColor: '#fff' }
     case 'print':  return { background: item.bg }
+    case 'skin':   return { backgroundImage: `url('${skinPreview(item)}')`, backgroundSize: 'cover' }
     case 'pattern': return { background: cssPattern(item) }
     default:       return { background: '#333' }
   }
@@ -426,6 +459,8 @@ function cssPattern({ pattern, c1, c2 }) {
     case 'gradient': return `linear-gradient(135deg, ${c1}, ${c2})`
     case 'camo':     return `radial-gradient(circle at 25% 30%, ${c2} 0 20%, transparent 21%), radial-gradient(circle at 70% 60%, ${c2} 0 18%, transparent 19%), ${c1}`
     case 'rainbow':  return 'linear-gradient(135deg,#e63946,#f77f00,#f4c430,#2d9e4f,#1d6fa4,#7b2d8b)'
+    case 'zigzag':   return `linear-gradient(135deg, ${c2} 25%, transparent 25%) -6px 0 / 12px 12px, linear-gradient(225deg, ${c2} 25%, transparent 25%) -6px 0 / 12px 12px, ${c1}`
+    case 'denim':    return `repeating-linear-gradient(45deg, rgba(255,255,255,.08) 0 2px, transparent 2px 5px), linear-gradient(160deg, ${c1}, ${c2})`
     default:         return c1 || '#333'
   }
 }
@@ -530,7 +565,7 @@ export function buildTextureCanvas(item, emojiImg = null) {
     g.addColorStop(0, c1); g.addColorStop(1, c2)
     ctx.fillStyle = g; ctx.fillRect(0, 0, S, S)
   } else if (pattern === 'camo') {
-    const cols = [c1, c2, '#6b7d3a', '#1f2a10']
+    const cols = [c1, c2, c2, lighten(c1, 0.15)]   // alleen tinten van de eigen kleuren
     for (let i = 0; i < 40; i++) {
       ctx.fillStyle = cols[i % cols.length]
       ctx.beginPath()

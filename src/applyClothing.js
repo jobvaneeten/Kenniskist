@@ -4,9 +4,13 @@
 import { Texture, Color3, Vector3, Quaternion } from '@babylonjs/core'
 import { SceneLoader } from '@babylonjs/core/Loading/sceneLoader'
 import { buildTextureCanvas, buildShirtPrintTexture, emojiUrl } from './itemsCatalog'
+import { buildSkinTexture } from './skins'
+import { bouwKledingTextuur } from './kledingTextuur'
+import { verfijnMesh } from './verfijnMesh'
 
 function applyCanvasTex(scene, mesh, canvas) {
   const tex = new Texture(canvas.toDataURL(), scene, false, false)
+  tex.anisotropicFilteringLevel = 8   // scherp, ook als je schuin op de stof kijkt
   const mat = mesh.material
   if (mat) {
     if (mat.albedoColor !== undefined) { mat.albedoTexture = tex; mat.albedoColor = Color3.White() }
@@ -16,18 +20,29 @@ function applyCanvasTex(scene, mesh, canvas) {
 
 // Build + apply the generated texture. Prints load the Twemoji image first so
 // they render identically on every device (iOS can't draw emoji to a texture).
-function applyGeneratedTexture(scene, mesh, type, item) {
-  const build = (img) => type === 'shirt'
+function applyGeneratedTexture(scene, mesh, type, item, donor) {
+  if (item.kind === 'skin') {
+    buildSkinTexture(item, donor).then(cv => { if (!mesh.isDisposed()) applyCanvasTex(scene, mesh, cv) })
+    return
+  }
+  // Eerst op het lijf tekenen (rechtop, op maat, zie kledingTextuur.js); lukt
+  // het model lezen niet, dan de oude lap over de hele UV.
+  const oud = (img) => type === 'shirt'
     ? buildShirtPrintTexture(item, img)
     : buildTextureCanvas(item, img)
+  const build = (img) => {
+    bouwKledingTextuur(item, type, donor, img)
+      .then(cv => { if (!mesh.isDisposed()) applyCanvasTex(scene, mesh, cv || oud(img)) })
+      .catch(() => { if (!mesh.isDisposed()) applyCanvasTex(scene, mesh, oud(img)) })
+  }
   if (item.kind === 'print') {
     const img = new Image()
     img.crossOrigin = 'anonymous'
-    img.onload  = () => applyCanvasTex(scene, mesh, build(img))
-    img.onerror = () => applyCanvasTex(scene, mesh, build(null))
+    img.onload  = () => build(img)
+    img.onerror = () => build(null)
     img.src = emojiUrl(item.emoji)
   } else {
-    applyCanvasTex(scene, mesh, build(null))   // pattern
+    build(null)   // pattern
   }
 }
 
@@ -36,13 +51,17 @@ function walk(node, fn) {
   ;(node.getChildMeshes ? node.getChildMeshes(false) : []).forEach(fn)
 }
 
+// PBR (glTF) werkt met lineaire kleuren; een hexkleur is sRGB. Zonder omzetten
+// wordt elke effen kleur flets (rood → roze).
+const pbrKleur = (hex) => Color3.FromHexString(hex).toLinearSpace()
+
 function applyColor(mesh, hex) {
   const col = Color3.FromHexString(hex)
   walk(mesh, m => {
     if (!m.material) return
     const mat = m.material.clone(m.material.name + '_c')
     m.material = mat
-    if (mat.albedoColor !== undefined) { mat.albedoTexture = null; mat.albedoColor = col }
+    if (mat.albedoColor !== undefined) { mat.albedoTexture = null; mat.albedoColor = pbrKleur(hex) }
     else if (mat.diffuseColor !== undefined) { mat.diffuseTexture = null; mat.diffuseColor = col }
   })
 }
@@ -62,6 +81,7 @@ function applyTexture(mesh, tex) {
 //  exactly like the wardrobe — their UV can't show a print.)
 export function applyItemToMesh(scene, mesh, item) {
   if (!mesh || !item) return
+  verfijnMesh(mesh)
   if (item.kind === 'color') { applyColor(mesh, item.hex); return }
   if (item.kind === 'pattern' || item.kind === 'print') {
     const tex = new Texture(buildTextureCanvas(item).toDataURL(), scene, false, false)
@@ -106,6 +126,7 @@ export function loadClothingDonor(scene, mesh, skeleton, type, item, onReady) {
       g.scaling            = new Vector3(1, 1, 1)
       const srcSkel = srcSkels?.[0]
       if (srcSkel) remapBoneIndices(g, srcSkel, skeleton)
+      verfijnMesh(g)
       g.skeleton           = skeleton
       if (item.kind === 'texmodel') {
         // donor mesh + a custom designed texture image (its UV matches the file)
@@ -120,11 +141,11 @@ export function loadClothingDonor(scene, mesh, skeleton, type, item, onReady) {
         const col = Color3.FromHexString(item.hex)
         const mat = g.material
         if (mat) {
-          if (mat.albedoColor !== undefined) { mat.albedoTexture = null; mat.albedoColor = col }
+          if (mat.albedoColor !== undefined) { mat.albedoTexture = null; mat.albedoColor = pbrKleur(item.hex) }
           else if (mat.diffuseColor !== undefined) { mat.diffuseTexture = null; mat.diffuseColor = col }
         }
       } else if (item.kind !== 'model') {
-        applyGeneratedTexture(scene, g, type, item)
+        applyGeneratedTexture(scene, g, type, item, '/' + file.replace(/^\//, ''))
       }
       g.setEnabled(true)
       onReady?.(g)
@@ -172,6 +193,7 @@ export function loadHeadItem(scene, parentNode, skeleton, item, stance, onReady)
   SceneLoader.ImportMesh('', '/', file, scene, (loaded, _ps, srcSkels) => {
     const g = loaded.find(lm => (lm.getTotalVertices?.() ?? 0) > 0)
     if (!g) { loaded.forEach(lm => { try { lm.dispose() } catch {} }); srcSkels?.[0]?.dispose(); return }
+    verfijnMesh(g)
 
     if (item.kind === 'texmodel') {
       applyTexture(g, new Texture(item.texture, scene, false, false))

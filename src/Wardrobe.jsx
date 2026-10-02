@@ -10,6 +10,7 @@ import { SceneLoader } from '@babylonjs/core/Loading/sceneLoader'
 import '@babylonjs/loaders/glTF'
 import { getCatalog, findItem, swatchStyle, emojiUrl } from './itemsCatalog'
 import { applyItemToMesh, loadClothingDonor, usesDonor, loadHeadItem } from './applyClothing'
+import { zetResolutie } from './skins'
 import { RARITIES, CRATE_ACCENTS } from './data'
 import './wardrobe.css'
 
@@ -141,6 +142,7 @@ export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlay
   const donorsRef      = useRef({})   // slot -> donor mesh
   const headRef        = useRef(null) // loaded pet mesh (hoofd slot)
   const headGenRef     = useRef(0)    // guards against stale/duplicate pet loads
+  const slotGenRef     = useRef({})   // idem per kledingslot (snel wisselen)
   const animGroupsRef  = useRef({})
   const podiumRef      = useRef(null) // draaiend showpodium
   const positionStageRef = useRef(null) // herpositioneert podium op de echte zool-hoogte
@@ -209,12 +211,16 @@ export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlay
     const scene = sceneRef.current
     const mesh  = meshesRef.current[slot]
     if (!scene || !mesh) return
+    // Een donor die nog aan het laden is als je alweer iets anders kiest, mag
+    // niet alsnog blijven hangen — anders liggen twee sokken door elkaar.
+    const gen = (slotGenRef.current[slot] = (slotGenRef.current[slot] || 0) + 1)
     disposeDonor(slot)
     if (!key) { mesh.setEnabled(false); return }
     const item = findItem(slot, key)
     if (!item) { mesh.setEnabled(false); return }
     if (usesDonor(slot, item)) {
       loadClothingDonor(scene, mesh, skeletonRef.current, slot, item, (g) => {
+        if (gen !== slotGenRef.current[slot]) { try { g.dispose() } catch {} ; return }
         donorsRef.current[slot] = g
         positionStageRef.current?.()
       })
@@ -232,13 +238,13 @@ export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlay
     if (next) fireBurst('shirt', next)
   }
 
+  // applySlot bewust buiten de setWearing-updater: StrictMode roept updaters
+  // twee keer aan en dan laadt het kledingstuk dubbel (zie applyHead).
   const pickClothing = (itemKey, colorKey) => {
-    setWearing(prev => {
-      const next = prev[itemKey] === colorKey ? null : colorKey
-      applySlot(itemKey, next)
-      if (next) fireBurst(itemKey, next)
-      return { ...prev, [itemKey]: next }
-    })
+    const next = wearing[itemKey] === colorKey ? null : colorKey
+    applySlot(itemKey, next)
+    if (next) fireBurst(itemKey, next)
+    setWearing(prev => ({ ...prev, [itemKey]: next }))
   }
 
   // ── Hoofd (pet): standalone GLB tinted to a colour, normaal/achter stance ──
@@ -328,6 +334,7 @@ export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlay
     const engine = new Engine(canvas, true)
     const scene  = new Scene(engine)
     sceneRef.current = scene
+    zetResolutie(2048)   // één poppetje van dichtbij: dubbel zo scherpe stof
     scene.clearColor = new Color4(0, 0, 0, 0)
 
     const camera = new ArcRotateCamera('cam', Math.PI / 2, Math.PI / 2.04, 5, Vector3.Zero(), scene)
@@ -598,6 +605,7 @@ export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlay
       clearExtraMeshes()
       scene.dispose()
       engine.dispose()
+      zetResolutie(1024)
     }
   }, [])
 
