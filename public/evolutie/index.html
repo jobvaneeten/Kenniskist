@@ -137,6 +137,8 @@
     border-radius:14px;padding:6px 4px 5px;display:flex;flex-direction:column;align-items:center;gap:2px;align-self:start;}
   .acard.r-rare{border-color:rgba(62,232,255,.5);} .acard.r-epic{border-color:rgba(155,108,255,.6);}
   .acard.r-legend{border-color:rgba(255,211,77,.7);background:linear-gradient(180deg,rgba(70,56,28,.9),rgba(26,20,38,.95));}
+  .acard.r-mythic{border-color:rgba(255,79,216,.8);background:linear-gradient(180deg,rgba(74,26,80,.92),rgba(18,14,44,.96));
+    box-shadow:0 0 14px rgba(255,79,216,.35);}
   .acard canvas{width:60px;height:60px;display:block;}
   .acard .an{font-size:9px;font-weight:800;line-height:1.15;min-height:22px;display:flex;align-items:center;text-align:center;}
   .acard .ai{font-family:var(--disp);font-size:8.5px;color:var(--muted);}
@@ -171,6 +173,8 @@
   .rbadge.epic  {background:rgba(155,108,255,.18);color:#cbb0ff;border:1px solid rgba(155,108,255,.6);}
   .rbadge.legend{background:rgba(255,211,77,.18);color:#ffe694;border:1px solid rgba(255,211,77,.7);
     box-shadow:0 0 22px rgba(255,211,77,.35);}
+  .rbadge.mythic{background:linear-gradient(90deg,rgba(62,232,255,.22),rgba(255,79,216,.28),rgba(255,211,77,.22));
+    color:#ffd6f5;border:1px solid rgba(255,79,216,.8);box-shadow:0 0 26px rgba(255,79,216,.45);}
   #revealTitle{position:relative;font-family:var(--disp);font-size:12px;letter-spacing:.24em;
     color:#a9b2e8;margin:12px 0 4px;animation:fadeUp .5s .3s both;}
   #revealName{position:relative;font-family:var(--disp);margin:2px 0 0;
@@ -242,7 +246,7 @@
         <div class="lrow"><span class="ic">⭐</span><div><b>Bonus</b>
           <span>Een vermenigvuldiger op alles wat je verdient. Die krijg je als je doorgaat naar een nieuwe diersoort.</span></div></div>
         <div class="lrow"><span class="ic">📖</span><div><b>Album</b>
-          <span>Ontdek alle 24 evoluties. Heb je ze allemaal? Dan mag je kiezen om verder te gaan naar de volgende soort.</span></div></div>
+          <span>Ontdek alle 27 evoluties — de laatste drie zijn mythisch en kosten ook blaadjes om samen te voegen. Heb je ze allemaal? Dan mag je kiezen om verder te gaan naar de volgende soort.</span></div></div>
       </div>
         <div class="lrow"><span class="ic">😴</span><div><b>Als je weg bent</b>
           <span>Je dieren poepen langzaam door: op 5% kracht en maximaal 32 uur lang. Daarna komt er niets meer bij. Zelf spelen levert dus véél meer op dan wachten.</span></div></div>
@@ -325,7 +329,7 @@
 "use strict";
 /* ==========================================================================
    DIER EVOLUTIE — vrij rondlopende dieren, poep oprapen, samenvoegen
-   Koala → Pinguïn → Aap, elk 24 evoluties. Eigen munt (kk_evo_*).
+   Koala → Pinguïn → Aap → Panda → Leeuw, elk 27 evoluties. Eigen munt (kk_evo_*).
    ========================================================================== */
 
 /* De Kenniskist-wrapper laadt dit spel met ?terug=1 en luistert dan naar het
@@ -369,6 +373,18 @@ const SPECIES = [
     fur:'#a9713a', fur2:'#7d4f24', belly:'#e8c9a0', ear:'#e8c9a0', nose:'#4a3524',
     head:{x:50,y:39,r:25}, eye:{dx:9.5,dy:-3,r:4.8},
     scene:'jungle' },
+  // Panda en Leeuw zijn de dure werelden. `waarde` maakt poep meer waard,
+  // `kost` maakt kopen, samenvoegen en upgrades duurder. kost/waarde ligt ver
+  // boven de prestige-bonus (x27 en x81), dus netto duurt het hier ~4x en ~12x
+  // zo lang als bij de koala.
+  { id:'panda', name:'Panda', money:'Bamboe', coin:'🎋',
+    fur:'#f4f4f8', fur2:'#d6d7e2', belly:'#ffffff', ear:'#22232c', nose:'#22232c',
+    head:{x:50,y:40,r:26}, eye:{dx:10,dy:-2,r:4.4},
+    scene:'bamboe', waarde:1e3, kost:1e3*27*4 },
+  { id:'leeuw', name:'Leeuw', money:'Botten', coin:'🦴',
+    fur:'#e6a84c', fur2:'#b9782c', belly:'#f7ddb0', ear:'#c98a3a', nose:'#4a2a18', mane:'#8a4a1c',
+    head:{x:50,y:41,r:23}, eye:{dx:9,dy:-3,r:4.4},
+    scene:'savanne', waarde:1e6, kost:1e6*81*12 },
 ];
 
 const THEMES = [
@@ -396,10 +412,15 @@ const THEMES = [
   { id:'draak',    nm:'Draken',      rar:'legend', fur:'#5de8a8', fur2:'#1f9a6b', belly:'#c2ffe4' },
   { id:'regenboog',nm:'Regenboog',   rar:'legend' },
   { id:'kosmisch', nm:'Kosmische',   rar:'legend', fur:'#4a3a9e', fur2:'#241a5e', belly:'#7a63d6' },
+  // 25–27: mythisch. Samenvoegen kost hier ook blaadjes (zie EVO_FEE), zodat
+  // deze drie samen veel langer duren dan de 24 ervoor.
+  { id:'goud',     nm:'Gouden',      rar:'mythic', fur:'#ffd34d', fur2:'#c48a12', belly:'#fff1b8' },
+  { id:'diamant',  nm:'Diamanten',   rar:'mythic', fur:'#c8f6ff', fur2:'#5fb8e0', belly:'#f2fdff' },
+  { id:'oneindig', nm:'Oneindige',   rar:'mythic', fur:'#24165a', fur2:'#0b0626', belly:'#4b36a8' },
 ];
 const MAXLV = THEMES.length;
-const RARC = { common:'', rare:'r-rare', epic:'r-epic', legend:'r-legend' };
-const ANIMATED = new Set(['vuur','regenboog','kosmisch','slaap','cyborg','bliksem']);
+const RARC = { common:'', rare:'r-rare', epic:'r-epic', legend:'r-legend', mythic:'r-mythic' };
+const ANIMATED = new Set(['vuur','regenboog','kosmisch','slaap','cyborg','bliksem','goud','diamant','oneindig']);
 const stageName = (sp,lv) => THEMES[lv-1].nm + ' ' + SPECIES[sp].name;
 
 /* ==========================================================================
@@ -414,7 +435,8 @@ function drawCreature(g, spIdx, lv, t){
 
   const auraCol = { vuur:'#ff7a2d', ijs:'#7fe8ff', bliksem:'#ffe45c', alien:'#8ef25d',
                     draak:'#5de8a8', regenboog:'#ff4fa3', kosmisch:'#9b6cff',
-                    vampier:'#ff4f6d', held:'#3ee8ff' }[th.id];
+                    vampier:'#ff4f6d', held:'#3ee8ff', goud:'#ffd34d', diamant:'#9ff3ff',
+                    oneindig:'#ff4fd8' }[th.id];
   if (auraCol){
     const ag=g.createRadialGradient(50,52,10,50,52,52);
     ag.addColorStop(0,auraCol+'55'); ag.addColorStop(1,'transparent');
@@ -436,9 +458,16 @@ function drawCreature(g, spIdx, lv, t){
   }
   if (spIdx===2){ g.strokeStyle=fur2; g.lineWidth=5;
     g.beginPath(); g.moveTo(66,78); g.quadraticCurveTo(88,74,84,58); g.stroke(); }
+  if (spIdx===4){ g.strokeStyle=fur2; g.lineWidth=3.5;
+    g.beginPath(); g.moveTo(66,82); g.quadraticCurveTo(86,84,86,66); g.stroke();
+    g.fillStyle=th.fur?fur2:sp.mane; g.beginPath(); g.ellipse(86,63,4.5,6,0,0,TAU); g.fill(); }
+  // panda: zwarte armen en benen, buik blijft wit
+  const panda = spIdx===3 && !th.fur;
+  const limb = panda ? '#22232c' : fur2;
 
   const bodyG=g.createLinearGradient(0,52,0,92);
   bodyG.addColorStop(0,fur); bodyG.addColorStop(1,fur2); g.fillStyle=bodyG;
+  if (panda){ g.fillStyle='#22232c'; g.beginPath(); g.ellipse(50,58,20,8,0,0,TAU); g.fill(); g.fillStyle=bodyG; }
   if (spIdx===1){
     g.beginPath(); g.ellipse(50,60,25,32,0,0,TAU); g.fill();
     g.fillStyle=belly; g.beginPath(); g.ellipse(50,64,16,25,0,0,TAU); g.fill();
@@ -450,7 +479,7 @@ function drawCreature(g, spIdx, lv, t){
   } else {
     g.beginPath(); g.ellipse(50,70,20,22,0,0,TAU); g.fill();
     g.fillStyle=belly; g.beginPath(); g.ellipse(50,73,13,16,0,0,TAU); g.fill();
-    g.fillStyle=fur2;
+    g.fillStyle=limb;
     [-1,1].forEach(s=>{ g.save(); g.translate(50+s*19,66); g.rotate(s*0.4);
       g.beginPath(); g.ellipse(0,0,5.5,12,0,0,TAU); g.fill(); g.restore();
       g.beginPath(); g.ellipse(50+s*10,90,8,6,0,0,TAU); g.fill(); });
@@ -461,6 +490,16 @@ function drawCreature(g, spIdx, lv, t){
   } else if (spIdx===2){
     [-1,1].forEach(s=>{ g.fillStyle=fur; g.beginPath(); g.arc(hx+s*23,hy-2,9.5,0,TAU); g.fill();
       g.fillStyle=th.fur?fur2:sp.ear; g.beginPath(); g.arc(hx+s*23,hy-2,5.5,0,TAU); g.fill(); });
+  } else if (spIdx===3){
+    [-1,1].forEach(s=>{ g.fillStyle=th.fur?fur2:sp.ear; g.beginPath(); g.arc(hx+s*20,hy-18,9.5,0,TAU); g.fill(); });
+  } else if (spIdx===4){
+    // manen: een krans van plukken achter de kop
+    g.fillStyle=th.fur?fur2:sp.mane;
+    for(let i=0;i<14;i++){ const a=i/14*TAU;
+      g.beginPath(); g.ellipse(hx+Math.cos(a)*(hr+5),hy+Math.sin(a)*(hr+5),9,7,a,0,TAU); g.fill(); }
+    g.beginPath(); g.arc(hx,hy,hr+6,0,TAU); g.fill();
+    [-1,1].forEach(s=>{ g.fillStyle=fur; g.beginPath(); g.arc(hx+s*15,hy-hr+3,6.5,0,TAU); g.fill();
+      g.fillStyle=th.fur?fur2:sp.ear; g.beginPath(); g.arc(hx+s*15,hy-hr+3,3.5,0,TAU); g.fill(); });
   }
   const headG=g.createLinearGradient(0,hy-hr,0,hy+hr);
   headG.addColorStop(0,fur); headG.addColorStop(1,fur2); g.fillStyle=headG;
@@ -479,6 +518,33 @@ function drawCreature(g, spIdx, lv, t){
       g.fillStyle=c; g.globalAlpha=.85; g.fillRect(hx-hr,hy-hr+i*(hr*2/6),hr*2,hr*2/6+.6); });
     g.globalAlpha=1; g.restore();
   }
+  if (th.id==='goud'){
+    // glans die over de kop schuift
+    g.save(); g.beginPath(); g.arc(hx,hy,hr,0,TAU); g.clip();
+    const gx = hx - hr*1.6 + ((t*0.6)%1)*hr*3.2;
+    const gg = g.createLinearGradient(gx-8,hy-hr,gx+8,hy+hr);
+    gg.addColorStop(0,'rgba(255,255,255,0)'); gg.addColorStop(.5,'rgba(255,255,255,.75)'); gg.addColorStop(1,'rgba(255,255,255,0)');
+    g.fillStyle=gg; g.fillRect(hx-hr,hy-hr,hr*2,hr*2); g.restore();
+  }
+  if (th.id==='diamant'){
+    // facetten
+    g.save(); g.beginPath(); g.arc(hx,hy,hr,0,TAU); g.clip();
+    g.strokeStyle='rgba(255,255,255,.55)'; g.lineWidth=1;
+    for (let i=0;i<6;i++){ const a=i*Math.PI/3+.3;
+      g.beginPath(); g.moveTo(hx,hy-hr*.2); g.lineTo(hx+Math.cos(a)*hr,hy+Math.sin(a)*hr); g.stroke(); }
+    g.fillStyle='rgba(255,255,255,.25)';
+    g.beginPath(); g.moveTo(hx-hr*.6,hy-hr*.5); g.lineTo(hx-hr*.1,hy-hr*.9); g.lineTo(hx,hy-hr*.2); g.closePath(); g.fill();
+    g.restore();
+  }
+  if (th.id==='oneindig'){
+    // een draaiend sterrenstelsel op de kop
+    g.save(); g.beginPath(); g.arc(hx,hy,hr,0,TAU); g.clip();
+    for (let i=0;i<28;i++){ const a=i*0.62+t*0.8, r=(i/28)*hr;
+      g.fillStyle=['#ff4fd8','#3ee8ff','#ffd34d','#fff'][i%4];
+      g.globalAlpha=.4+.5*Math.abs(Math.sin(t*3+i));
+      g.beginPath(); g.arc(hx+Math.cos(a)*r,hy+Math.sin(a)*r*.7,.8+(i%3)*.5,0,TAU); g.fill(); }
+    g.globalAlpha=1; g.restore();
+  }
   if (th.id==='cyborg'){
     g.save(); g.beginPath(); g.arc(hx,hy,hr,0,TAU); g.clip();
     g.fillStyle='#8b96b8'; g.fillRect(hx,hy-hr,hr,hr*2);
@@ -493,7 +559,22 @@ function drawCreature(g, spIdx, lv, t){
       g.beginPath(); g.moveTo(xx-3,yy-2); g.lineTo(xx+3,yy+2); g.stroke(); }
   }
 
-  if (spIdx===1){
+  if (spIdx===3){
+    // zwarte vlekken rond de ogen
+    g.fillStyle=th.fur?'rgba(10,10,20,.35)':'#22232c';
+    [-1,1].forEach(s=>{ g.save(); g.translate(hx+s*sp.eye.dx, hy+sp.eye.dy+1.5); g.rotate(s*-0.5);
+      g.beginPath(); g.ellipse(0,0,6.8,8.6,0,0,TAU); g.fill(); g.restore(); });
+  }
+
+  if (spIdx===3 || spIdx===4){
+    g.fillStyle = spIdx===4 ? (th.fur?belly:sp.belly) : 'rgba(255,255,255,.9)';
+    g.beginPath(); g.ellipse(hx,hy+9,spIdx===4?11:9,spIdx===4?8:6.5,0,0,TAU); g.fill();
+    g.fillStyle=th.fur&&spIdx===4?fur2:sp.nose;
+    g.beginPath(); g.moveTo(hx-4.5,hy+4.5); g.lineTo(hx+4.5,hy+4.5); g.lineTo(hx,hy+9); g.closePath(); g.fill();
+    g.strokeStyle=sp.nose; g.lineWidth=1.3;
+    g.beginPath(); g.moveTo(hx,hy+9); g.lineTo(hx,hy+11.5);
+    g.moveTo(hx-4,hy+13); g.quadraticCurveTo(hx,hy+15,hx,hy+11.5); g.quadraticCurveTo(hx,hy+15,hx+4,hy+13); g.stroke();
+  } else if (spIdx===1){
     g.fillStyle=th.fur?'#e0862f':sp.nose;
     g.beginPath(); g.moveTo(hx-7,hy+5); g.lineTo(hx+7,hy+5); g.lineTo(hx,hy+13); g.closePath(); g.fill();
   } else if (spIdx===2){
@@ -675,6 +756,41 @@ function drawCreature(g, spIdx, lv, t){
       g.strokeStyle='rgba(155,108,255,.85)'; g.lineWidth=2;
       g.save(); g.translate(hx,hy); g.rotate(Math.sin(t*.7)*.35);
       g.beginPath(); g.ellipse(0,0,hr+13,7,0,0,TAU); g.stroke(); g.restore(); break;
+    case 'goud': {
+      // zwevende stralenkrans en fonkelende sterretjes
+      const zy = topY-9+Math.sin(t*2)*1.5;
+      g.shadowBlur=14; g.shadowColor='#ffd34d'; g.strokeStyle='#ffe680'; g.lineWidth=3;
+      g.beginPath(); g.ellipse(hx,zy,13,4,0,0,TAU); g.stroke(); g.shadowBlur=0;
+      g.fillStyle='#fff6c2';
+      for (let i=0;i<4;i++){ const a=t*1.8+i*1.57, sx=hx+Math.cos(a)*(hr+8), sy=hy+Math.sin(a)*(hr+6);
+        g.globalAlpha=.5+.5*Math.sin(t*4+i);
+        g.beginPath(); for(let k=0;k<8;k++){ const r2=k%2?1.2:3.6,an=k*Math.PI/4; g.lineTo(sx+Math.cos(an)*r2,sy+Math.sin(an)*r2); }
+        g.closePath(); g.fill(); }
+      g.globalAlpha=1; break; }
+    case 'diamant': {
+      // diamanten kroon met fonkeling
+      g.fillStyle='#e8fcff'; g.strokeStyle='#5fb8e0'; g.lineWidth=1.2;
+      [-1,0,1].forEach(s=>{ const bx=hx+s*11, h=s===0?18:12;
+        g.beginPath(); g.moveTo(bx-5,topY+4); g.lineTo(bx-3,topY-h+5); g.lineTo(bx,topY-h); g.lineTo(bx+3,topY-h+5);
+        g.lineTo(bx+5,topY+4); g.closePath(); g.fill(); g.stroke(); });
+      g.globalAlpha=Math.max(0, Math.sin(t*3)); g.fillStyle='#fff'; g.shadowBlur=10; g.shadowColor='#9ff3ff';
+      g.beginPath(); for(let k=0;k<8;k++){ const r2=k%2?1:5,an=k*Math.PI/4; g.lineTo(hx+Math.cos(an)*r2,topY-18+Math.sin(an)*r2); }
+      g.closePath(); g.fill(); g.shadowBlur=0; g.globalAlpha=1; break; }
+    case 'oneindig': {
+      // oneindig-teken boven de kop + planeetjes in een baan
+      g.shadowBlur=12; g.shadowColor='#ff4fd8';
+      const ig=g.createLinearGradient(hx-14,0,hx+14,0);
+      ig.addColorStop(0,'#3ee8ff'); ig.addColorStop(.5,'#ff4fd8'); ig.addColorStop(1,'#ffd34d');
+      g.strokeStyle=ig; g.lineWidth=2.8;
+      g.beginPath();
+      for (let k=0;k<=40;k++){ const u=k/40*TAU, d=1+Math.sin(u)*Math.sin(u);
+        const x=hx+14*Math.cos(u)/d, y=topY-10+14*Math.sin(u)*Math.cos(u)/d;
+        if (k) g.lineTo(x,y); else g.moveTo(x,y); }
+      g.stroke(); g.shadowBlur=0;
+      [['#ffd34d',0],['#3ee8ff',2.1],['#ff4fd8',4.2]].forEach(([c,o])=>{
+        const a=t*1.3+o; g.fillStyle=c;
+        g.beginPath(); g.arc(hx+Math.cos(a)*(hr+12),hy+Math.sin(a)*(hr*.5),3,0,TAU); g.fill(); });
+      break; }
   }
   g.restore();
 }
@@ -717,8 +833,17 @@ const OFFLINE_CAP  = 32*3600;  // er wordt maximaal 32 uur gespaard, daarna niet
 const OFFLINE_RATE = 0.05;     // en dan op 5% kracht, zodat zélf spelen echt loont
 const OFFLINE_UREN = Math.round(OFFLINE_CAP/3600);
 
-const poopValue = lv => Math.pow(VAL_GROW, lv-1);
-const baseCost  = lv => COST_BASE * Math.pow(COST_GROW, lv-1);
+const spWaarde  = () => SPECIES[G.sp].waarde || 1;
+const spKost    = () => SPECIES[G.sp].kost || 1;
+const poopValue = lv => Math.pow(VAL_GROW, lv-1) * spWaarde();
+// Evolutie 25-27 (mythisch): samenvoegen kost daar ook blaadjes, en kopen kost
+// minstens twee keer de vorige plus die prijs. Een klasgenoot had alle 24 te
+// snel; deze drie duren samen veel langer. Uitgedrukt in de koopprijs van
+// evolutie 24 (~2,8e11): 30x, 300x en 3000x daarvan.
+const FEE_FROM  = 25;
+const EVO_FEE   = lv => lv < FEE_FROM ? 0 : COST_BASE*Math.pow(COST_GROW, FEE_FROM-2) * 30 * Math.pow(10, lv-FEE_FROM);
+const baseCost  = lv => lv < FEE_FROM ? COST_BASE * Math.pow(COST_GROW, lv-1)
+                                      : (2*baseCost(lv-1) + EVO_FEE(lv)) * 1.3;
 
 // Veel meer, kleinere stapjes — elke upgrade is een klein doel op zich.
 const UPGRADES = [
@@ -727,26 +852,29 @@ const UPGRADES = [
   { id:'hulp',  ic:'🤖', nm:'Hulpje',         ds:'Raapt zelf poep op, steeds vaker', max:10, base:500, grow:1.55 },
 ];
 const upLv   = id => (G.up && G.up[id]) || 0;
-const upCost = u => Math.ceil(u.base * Math.pow(u.grow, upLv(u.id)));
+const upCost = u => Math.ceil(u.base * Math.pow(u.grow, upLv(u.id)) * spKost());
 
 const valueMult   = () => G.mult * Math.pow(1.12, upLv('waard'));
 const poopInterval= () => POOP_EVERY * Math.pow(0.97, upLv('snel'));
 const helperEvery = () => upLv('hulp') ? 30 / upLv('hulp') : Infinity;
-const buyCost     = lv => Math.ceil(baseCost(lv));
+const buyCost     = lv => Math.ceil(baseCost(lv) * spKost());
+const mergeFee    = lv => EVO_FEE(lv) * spKost();
 const sellValue   = lv => Math.ceil(poopValue(lv) * valueMult() * 8);
 
 /* ==========================================================================
    STATE
    ========================================================================== */
 function blank(){
-  return { sp:0, money:0, animals:[], poop:[], bought:0, up:{}, seen:[[],[],[]],
+  return { sp:0, money:0, animals:[], poop:[], bought:0, up:{}, seen:SPECIES.map(()=>[]),
            mult:1, last:Date.now(), helped:false };
 }
 let G = (function load(){
   let s; try{ s=JSON.parse(Store.get('kk_evo_state')||'null'); }catch(e){ s=null; }
   if (!s || !Array.isArray(s.animals)) s = blank();
-  s.seen = (s.seen && s.seen.length===3) ? s.seen : [[],[],[]];
-  s.sp = clamp(s.sp|0,0,2); s.mult = s.mult||1; s.bought = s.bought||0;
+  // Oudere saves kennen 3 soorten: aanvullen in plaats van het album wissen.
+  s.seen = Array.isArray(s.seen) ? s.seen : [];
+  while (s.seen.length < SPECIES.length) s.seen.push([]);
+  s.sp = clamp(s.sp|0,0,SPECIES.length-1); s.mult = s.mult||1; s.bought = s.bought||0;
   s.up = s.up || {}; s.money = Math.max(0,+s.money||0); s.last = s.last||Date.now();
   s.animals = (s.animals||[]).filter(a=>a && a.lv>=1 && a.lv<=MAXLV);
   s.poop = (s.poop||[]).filter(p=>p && isFinite(p.v));
@@ -771,7 +899,7 @@ function discover(lv){
 
 /* ---------- grote onthulling met effecten ---------- */
 let revealLv = 0;
-const RARNAAM = { common:'GEWOON', rare:'ZELDZAAM', epic:'EPISCH', legend:'LEGENDARISCH' };
+const RARNAAM = { common:'GEWOON', rare:'ZELDZAAM', epic:'EPISCH', legend:'LEGENDARISCH', mythic:'MYTHISCH' };
 function drawReveal(t){
   const c=document.getElementById('revealCv');
   const dpr=Math.min(devicePixelRatio||1,2), S=240;
@@ -795,11 +923,12 @@ function showReveal(lv){
   // sterretjes wegspatten vanaf het midden
   const box = document.querySelector('#reveal .revbox');
   box.querySelectorAll('.spark').forEach(s=>s.remove());
-  const cols = th.rar==='legend' ? ['#ffd34d','#fff2b8','#ff9a3d']
+  const cols = th.rar==='mythic' ? ['#ff4fd8','#3ee8ff','#ffd34d','#fff']
+             : th.rar==='legend' ? ['#ffd34d','#fff2b8','#ff9a3d']
              : th.rar==='epic'   ? ['#9b6cff','#cbb0ff','#3ee8ff']
              : th.rar==='rare'   ? ['#3ee8ff','#8ff0ff','#fff']
              :                     ['#c3cbf0','#fff','#9fb4d9'];
-  const n = th.rar==='legend'?46:th.rar==='epic'?34:24;
+  const n = th.rar==='mythic'?70:th.rar==='legend'?46:th.rar==='epic'?34:24;
   for(let i=0;i<n;i++){
     const a=rnd(0,TAU), d=rnd(90,240), sz=rnd(4,10);
     const s=document.createElement('div'); s.className='spark';
@@ -842,6 +971,29 @@ const depth = y => 0.78 + 0.42 * clamp((y-field.top)/(field.bot-field.top),0,1);
 const animSize = a => 78 * depth(a.y);
 
 /* ---------- achtergrond per soort, één keer gerenderd ---------- */
+// Kleuren per wereld. grove/ice/jungle zijn exact de oude waarden.
+const SCENES = {
+  grove:   { sky:['#0d1b3e','#27406e','#e0895a'], skyMid:.55, glow:'rgba(255,190,120,.75)', sun:'#ffd9a0', sunR:22, sterren:true,
+             far2:'#243a63', far:'#1a2a4e', mid:'#16321f', stam:'#22303c', nevel:'rgba(255,186,132,.34)',
+             grond:['#2f5a34','#224126','#0f2615'], grondMid:.4, licht:'rgba(255,190,120,.3)',
+             vlek:['75,132,80','22,48,28'], struik:'#1a3520', gras:['#7aa96a','#3d6b44'], voor:'#0d1f14' },
+  ice:     { sky:['#050d2a','#123156','#4a9ec0'], skyMid:.5, glow:'rgba(180,230,255,.75)', sun:'#dff0ff', sunR:15, sterren:true,
+             far2:'#24486e', far:'#1b3a5c', mid:'#2a5a80', stam:'#22303c', nevel:'rgba(190,225,250,.5)',
+             grond:['#b7d8ee','#7fb0d0','#2f5a78'], grondMid:.35, licht:'rgba(200,235,255,.4)',
+             vlek:['234,246,255','91,143,181'], struik:'rgba(225,242,255,.75)', gras:['#fff','#fff'], voor:'#173049' },
+  jungle:  { sky:['#08240f','#155029','#a8c24a'], skyMid:.5, glow:'rgba(255,240,170,.6)', sun:'#fff4c0', sunR:22, sterren:false,
+             far2:'#12481f', far:'#0d3a18', mid:'#10501f', stam:'#0a3a14', nevel:'rgba(180,205,120,.32)',
+             grond:['#356b24','#204718','#0c250d'], grondMid:.4, licht:'rgba(200,230,120,.26)',
+             vlek:['78,154,52','18,58,21'], struik:'#123f16', gras:['#7fc04a','#3f7a26'], voor:'#08260e' },
+  bamboe:  { sky:['#1a1030','#4a2d5e','#f0a3a0'], skyMid:.55, glow:'rgba(255,185,195,.6)', sun:'#ffe0e6', sunR:18, sterren:true,
+             far2:'#3b2d58', far:'#2c2347', mid:'#2f7a3c', blad:'#4fa356', stam:'#1e3a22', nevel:'rgba(255,200,215,.32)',
+             grond:['#41733c','#2a4d2a','#112414'], grondMid:.4, licht:'rgba(255,200,210,.22)',
+             vlek:['120,170,100','30,60,32'], struik:'#1e4424', gras:['#8cc26a','#3f7a3a'], voor:'#0e2214' },
+  savanne: { sky:['#2a0f1e','#8a3a2a','#ffb347'], skyMid:.55, glow:'rgba(255,170,80,.8)', sun:'#ffd27a', sunR:30, sterren:false,
+             far2:'#7a3f2f', far:'#5a2f25', mid:'#3a2414', stam:'#2a160e', nevel:'rgba(255,190,110,.35)',
+             grond:['#b0843f','#8a6230','#3e2a14'], grondMid:.4, licht:'rgba(255,200,120,.3)',
+             vlek:['220,180,100','90,60,25'], struik:'#5c4420', gras:['#e0c06a','#a07a35'], voor:'#2a1a0c' },
+};
 function buildBg(){
   bgCv.width = Math.round(W*DPR); bgCv.height = Math.round(H*DPR);
   const b = bgCv.getContext('2d');
@@ -849,24 +1001,22 @@ function buildBg(){
   const scene = SPECIES[G.sp].scene;
   const hz = field.top;
 
+  const P = SCENES[scene];
+
   const sky = b.createLinearGradient(0,0,0,hz+40);
-  if (scene==='grove'){ sky.addColorStop(0,'#0d1b3e'); sky.addColorStop(.55,'#27406e'); sky.addColorStop(1,'#e0895a'); }
-  else if (scene==='ice'){ sky.addColorStop(0,'#050d2a'); sky.addColorStop(.5,'#123156'); sky.addColorStop(1,'#4a9ec0'); }
-  else { sky.addColorStop(0,'#08240f'); sky.addColorStop(.5,'#155029'); sky.addColorStop(1,'#a8c24a'); }
+  sky.addColorStop(0,P.sky[0]); sky.addColorStop(P.skyMid,P.sky[1]); sky.addColorStop(1,P.sky[2]);
   b.fillStyle=sky; b.fillRect(0,0,W,hz+40);
 
   // zon / maan met gloed
   const sunX=W*0.72, sunY=hz*0.62;
   const gl=b.createRadialGradient(sunX,sunY,4,sunX,sunY,hz*0.85);
-  if (scene==='ice'){ gl.addColorStop(0,'rgba(180,230,255,.75)'); gl.addColorStop(1,'transparent'); }
-  else if (scene==='jungle'){ gl.addColorStop(0,'rgba(255,240,170,.6)'); gl.addColorStop(1,'transparent'); }
-  else { gl.addColorStop(0,'rgba(255,190,120,.75)'); gl.addColorStop(1,'transparent'); }
+  gl.addColorStop(0,P.glow); gl.addColorStop(1,'transparent');
   b.fillStyle=gl; b.fillRect(0,0,W,hz+40);
-  b.fillStyle = scene==='ice'?'#dff0ff':scene==='jungle'?'#fff4c0':'#ffd9a0';
-  b.beginPath(); b.arc(sunX,sunY,scene==='ice'?15:22,0,TAU); b.fill();
+  b.fillStyle = P.sun;
+  b.beginPath(); b.arc(sunX,sunY,P.sunR,0,TAU); b.fill();
 
   // sterren (schemer)
-  if (scene!=='jungle'){
+  if (P.sterren){
     b.fillStyle='#fff';
     for(let i=0;i<46;i++){ const x=(i*173)%W, y=(i*97)%(hz*0.72);
       b.globalAlpha=.15+((i*37)%50)/110; b.beginPath(); b.arc(x,y,(i%3)*0.5+0.6,0,TAU); b.fill(); }
@@ -885,31 +1035,46 @@ function buildBg(){
     }
   }
 
-  // verre heuvels / bergen (twee lagen voor diepte)
-  const far2 = scene==='ice' ? '#24486e' : scene==='jungle' ? '#12481f' : '#243a63';
-  b.fillStyle=far2;
+  // verre heuvels / bergen (twee lagen voor diepte). Bamboebos: steile toppen.
+  const piek = scene==='bamboe' ? 2.2 : 1;
+  b.fillStyle=P.far2;
   b.beginPath(); b.moveTo(0,hz);
-  for(let x=0;x<=W;x+=14) b.lineTo(Math.min(x,W), hz - 54 - Math.sin(x/210+1.4)*26 - Math.sin(x/63)*7);
+  for(let x=0;x<=W;x+=14) b.lineTo(Math.min(x,W), hz - 54*piek - Math.sin(x/210+1.4)*26*piek - Math.sin(x/63)*7*piek);
   b.lineTo(W,hz+10); b.lineTo(0,hz+10); b.closePath(); b.fill();
 
-  const far = scene==='ice' ? '#1b3a5c' : scene==='jungle' ? '#0d3a18' : '#1a2a4e';
-  b.fillStyle=far;
+  b.fillStyle=P.far;
   b.beginPath(); b.moveTo(0,hz);
   for(let x=0;x<=W;x+=14) b.lineTo(Math.min(x,W), hz - 32 - Math.sin(x/150)*22 - Math.sin(x/47)*8);
   b.lineTo(W,hz+10); b.lineTo(0,hz+10); b.closePath(); b.fill();
 
-  // middenlaag: bomen / ijsbergen
-  const mid = scene==='ice' ? '#2a5a80' : scene==='jungle' ? '#10501f' : '#16321f';
+  // middenlaag: bomen / ijsbergen / bamboe / acacia's
   for(let i=0;i<9;i++){
     const x = (i*W/8 + (i%2?26:0)) % (W+80) - 20;
     const y = hz - 6;
     if (scene==='ice'){
-      b.fillStyle=mid; b.beginPath(); b.moveTo(x-42,y); b.lineTo(x,y-62-(i%3)*16); b.lineTo(x+42,y); b.closePath(); b.fill();
+      b.fillStyle=P.mid; b.beginPath(); b.moveTo(x-42,y); b.lineTo(x,y-62-(i%3)*16); b.lineTo(x+42,y); b.closePath(); b.fill();
       b.fillStyle='rgba(230,248,255,.55)'; b.beginPath(); b.moveTo(x,y-62-(i%3)*16); b.lineTo(x+16,y-30); b.lineTo(x+42,y); b.closePath(); b.fill();
+    } else if (scene==='bamboe'){
+      for(let k=0;k<3;k++){ const bx=x-14+k*13, hgt=70+((i+k)%3)*22;
+        b.strokeStyle=P.mid; b.lineWidth=5;
+        b.beginPath(); b.moveTo(bx,y); b.lineTo(bx+2,y-hgt); b.stroke();
+        b.strokeStyle='rgba(0,0,0,.3)'; b.lineWidth=5;
+        for(let n=1;n<5;n++){ const ny=y-n*hgt/5; b.beginPath(); b.moveTo(bx-2.5,ny); b.lineTo(bx+3.5,ny); b.stroke(); }
+        b.fillStyle=P.blad;
+        for(let n=0;n<3;n++){ const ly=y-hgt+n*12, d=n%2?1:-1;
+          b.beginPath(); b.ellipse(bx+d*9,ly,10,3,d*0.5,0,TAU); b.fill(); }
+      }
+    } else if (scene==='savanne'){
+      if (i%3) continue;
+      b.strokeStyle=P.stam; b.lineWidth=4;
+      b.beginPath(); b.moveTo(x,y); b.lineTo(x+2,y-30); b.lineTo(x-10,y-46); b.moveTo(x+2,y-30); b.lineTo(x+14,y-44); b.stroke();
+      b.fillStyle=P.mid;
+      b.beginPath(); b.ellipse(x+2,y-48,38,9,0,0,TAU); b.fill();
+      b.beginPath(); b.ellipse(x-8,y-52,22,6,0,0,TAU); b.fill();
     } else {
-      b.strokeStyle = scene==='jungle'?'#0a3a14':'#22303c'; b.lineWidth=7;
+      b.strokeStyle = P.stam; b.lineWidth=7;
       b.beginPath(); b.moveTo(x,y); b.lineTo(x-3,y-46); b.stroke();
-      b.fillStyle=mid;
+      b.fillStyle=P.mid;
       for(let k=0;k<3;k++){ const cxx=x-14+k*14, cyy=y-52-(k%2)*13;
         b.beginPath(); b.ellipse(cxx,cyy,24,17,0,0,TAU); b.fill(); }
     }
@@ -918,15 +1083,13 @@ function buildBg(){
   // nevelband op de horizon: laat heuvels in de grond overlopen
   const fog=b.createLinearGradient(0,hz-46,0,hz+34);
   fog.addColorStop(0,'transparent');
-  fog.addColorStop(.5, scene==='ice'?'rgba(190,225,250,.5)':scene==='jungle'?'rgba(180,205,120,.32)':'rgba(255,186,132,.34)');
+  fog.addColorStop(.5, P.nevel);
   fog.addColorStop(1,'transparent');
   b.fillStyle=fog; b.fillRect(0,hz-46,W,80);
 
   // grond
   const gr = b.createLinearGradient(0,hz-6,0,H);
-  if (scene==='ice'){ gr.addColorStop(0,'#b7d8ee'); gr.addColorStop(.35,'#7fb0d0'); gr.addColorStop(1,'#2f5a78'); }
-  else if (scene==='jungle'){ gr.addColorStop(0,'#356b24'); gr.addColorStop(.4,'#204718'); gr.addColorStop(1,'#0c250d'); }
-  else { gr.addColorStop(0,'#2f5a34'); gr.addColorStop(.4,'#224126'); gr.addColorStop(1,'#0f2615'); }
+  gr.addColorStop(0,P.grond[0]); gr.addColorStop(P.grondMid,P.grond[1]); gr.addColorStop(1,P.grond[2]);
   b.fillStyle=gr;
   b.beginPath(); b.moveTo(0,hz-4);
   for(let x=0;x<=W;x+=20) b.lineTo(Math.min(x,W), hz-4 + Math.sin(x/110)*5);
@@ -934,7 +1097,7 @@ function buildBg(){
 
   // warme lichtstrook net onder de horizon (zon schijnt over de weide)
   const lit=b.createLinearGradient(0,hz-4,0,hz+(H-hz)*0.42);
-  lit.addColorStop(0, scene==='ice'?'rgba(200,235,255,.4)':scene==='jungle'?'rgba(200,230,120,.26)':'rgba(255,190,120,.3)');
+  lit.addColorStop(0, P.licht);
   lit.addColorStop(1,'transparent');
   b.fillStyle=lit; b.fillRect(0,hz-4,W,(H-hz)*0.5);
 
@@ -942,8 +1105,7 @@ function buildBg(){
   for(let i=0;i<16;i++){
     const x=((i*331)%(W+160))-80, y=hz+18+((i*197)%(H-hz-24));
     const rw=90+((i*53)%130), rh=24+((i*29)%30);
-    const col = i%2 ? (scene==='ice'?'234,246,255':scene==='jungle'?'78,154,52':'75,132,80')
-                    : (scene==='ice'?'91,143,181':scene==='jungle'?'18,58,21':'22,48,28');
+    const col = P.vlek[i%2 ? 0 : 1];
     const rg=b.createRadialGradient(x,y,0,x,y,rw);
     rg.addColorStop(0,'rgba('+col+',.14)'); rg.addColorStop(1,'rgba('+col+',0)');
     b.save(); b.translate(x,y); b.scale(1,rh/rw); b.translate(-x,-y);
@@ -953,7 +1115,7 @@ function buildBg(){
   // struiken / rotsen in de middenlaag
   for(let i=0;i<7;i++){
     const x=((i*277)%(W-60))+30, y=hz+14+((i*83)%36);
-    b.fillStyle = scene==='ice'?'rgba(225,242,255,.75)':scene==='jungle'?'#123f16':'#1a3520';
+    b.fillStyle = P.struik;
     b.beginPath();
     b.ellipse(x,y,20,10,0,0,TAU); b.ellipse(x-13,y+3,13,8,0,0,TAU); b.ellipse(x+14,y+3,12,7,0,0,TAU);
     b.fill();
@@ -969,7 +1131,7 @@ function buildBg(){
       b.fillStyle='#ffffff';
       b.beginPath(); b.ellipse(x,y,8*d,2.2*d,0,0,TAU); b.fill();
     } else {
-      b.strokeStyle = i%4===0 ? (scene==='jungle'?'#7fc04a':'#7aa96a') : (scene==='jungle'?'#3f7a26':'#3d6b44');
+      b.strokeStyle = i%4===0 ? P.gras[0] : P.gras[1];
       b.lineWidth=1.7*d; b.lineCap='round';
       b.beginPath();
       b.moveTo(x,y); b.quadraticCurveTo(x-3*d,y-6*d,x-5*d,y-11*d);
@@ -981,7 +1143,7 @@ function buildBg(){
   b.globalAlpha=1;
 
   // voorgrond-silhouetten links/rechts voor lijst
-  const fg = scene==='ice'?'#173049':scene==='jungle'?'#08260e':'#0d1f14';
+  const fg = P.voor;
   b.fillStyle=fg;
   b.beginPath(); b.moveTo(0,H); b.lineTo(0,H-70);
   b.quadraticCurveTo(W*0.09,H-96,W*0.16,H); b.closePath(); b.fill();
@@ -1171,8 +1333,11 @@ function endDrag(){
   if (!dragA) return;
   const a=dragA; dragA=null;
   if (!dragMoved){ poke(a); hoverA=null; refresh(); return; }
-  if (hoverA && hoverA.lv===a.lv && a.lv<MAXLV){
+  if (hoverA && hoverA.lv===a.lv && a.lv<MAXLV && G.money < mergeFee(a.lv+1)){
+    toast('Evolutie '+(a.lv+1)+' kost '+fmt(mergeFee(a.lv+1))+' '+SPECIES[G.sp].coin+' - spaar nog even!');
+  } else if (hoverA && hoverA.lv===a.lv && a.lv<MAXLV){
     const nx=(a.x+hoverA.x)/2, ny=(a.y+hoverA.y)/2, nlv=a.lv+1;
+    G.money -= mergeFee(nlv);
     G.animals = G.animals.filter(x=>x!==a && x!==hoverA);
     const n=mkAnimal(nlv,nx,ny); G.animals.push(n);
     for(let k=0;k<20;k++) parts.push({ x:nx, y:ny-14, vx:rnd(-110,110), vy:rnd(-140,-30),
@@ -1195,7 +1360,8 @@ function showInfo(a){
   drawCreature(g, G.sp, a.lv, performance.now()/1000);
   document.getElementById('infoName').textContent = stageName(G.sp,a.lv).toUpperCase();
   document.getElementById('infoTxt').innerHTML =
-    `Evolutie <b>${a.lv}</b> van ${MAXLV}<br>Elke poep is <b>${fmt(poopValue(a.lv)*valueMult())}</b> ${SPECIES[G.sp].money.toLowerCase()} waard`;
+    `Evolutie <b>${a.lv}</b> van ${MAXLV}<br>Elke poep is <b>${fmt(poopValue(a.lv)*valueMult())}</b> ${SPECIES[G.sp].money.toLowerCase()} waard`+
+    (a.lv<MAXLV && EVO_FEE(a.lv+1) ? `<br>Samenvoegen tot evolutie ${a.lv+1} kost <b>${fmt(mergeFee(a.lv+1))}</b> ${SPECIES[G.sp].coin}` : '');
   document.getElementById('bInfoSellV').textContent = '+'+fmt(sellValue(a.lv));
   ovOn('info');
 }
@@ -1245,7 +1411,9 @@ function renderShop(){
       drawCreature(g, G.sp, lv, .5);
       const txt=document.createElement('span'); txt.className='st';
       // laat zien hoeveel je bespaart door zelf samen te voegen
-      const mergeTip = lv>1
+      const mergeTip = EVO_FEE(lv)
+        ? `<span style="color:#ff9ce8">2× evolutie ${lv-1} + ${fmt(mergeFee(lv))} samenvoegen</span>`
+        : lv>1
         ? `<span style="color:#57f2a1">2× evolutie ${lv-1} = ${fmt(buyCost(lv-1)*2)} → ${Math.round((1-buyCost(lv-1)*2/c)*100)}% goedkoper</span>`
         : `<span>Het goedkoopste dier — hiermee bouw je alles op</span>`;
       txt.innerHTML=`<b>${stageName(G.sp,lv)}</b>
@@ -1334,11 +1502,12 @@ document.getElementById('bAlbumClose').onclick = ()=>ovOff('album');
 function showPrestige(){
   if (!seenAll() || G.sp>=SPECIES.length-1) return;
   const nxt=SPECIES[G.sp+1];
-  document.getElementById('presTitle').textContent='🎉 ALLE 24 ONTDEKT!';
+  document.getElementById('presTitle').textContent='🎉 ALLE '+MAXLV+' ONTDEKT!';
   document.getElementById('presTxt').innerHTML =
     `Je hebt elke evolutie van de <b>${SPECIES[G.sp].name}</b> gevonden!<br><br>`+
     `Wil je verder naar de <b>${nxt.name}</b> ${nxt.coin}? Je begint dan opnieuw met één dier, `+
     `maar je houdt je album én krijgt een <b>permanente bonus van ×3</b> op alles wat je verdient.<br><br>`+
+    (nxt.kost ? `<span style="color:#ff9ce8">Let op: in de wereld van de ${nxt.name} is alles véél duurder.</span><br><br>` : '')+
     `<span style="color:#98a0d0">Je mag ook gewoon lekker doorspelen met de ${SPECIES[G.sp].name}.</span>`;
   ovOn('pres');
 }
