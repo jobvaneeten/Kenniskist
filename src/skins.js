@@ -13,8 +13,6 @@
 // UV-metingen (shirtmodel.glb, uitgelezen met de posities van het model):
 //   voorpand: u = 1.30 − 0.87·y,  v = 0.693 − 0.95·x   (90° gedraaid)
 //   rugpand:  u = 0.755 − 1.14·x, v = 1.533 − 0.91·y   (rechtop)
-// sokken.glb: grote strook v = 1.087 − 1.297·y, zijstrook (u > .85)
-//   v = 0.601 − 1.32·y.
 
 // Textuurmaat. De kledingkast zet hem op 2048 (één poppetje, scherp van
 // dichtbij); in de spellen blijft hij 1024 vanwege het geheugen.
@@ -348,24 +346,43 @@ const OP_LIJF = {
 }
 
 // ── de skins ───────────────────────────────────────────────────────────────
-// zones: [voorwaarde op het midden van een driehoek (x, y, z in meters), kleur]
+// Zones: een kleur op een stuk van het kledingstuk, begrensd door vlakken in
+// 3D ([as, '<' of '>', waarde], as 0 = x, 1 = y, 2 = z, 'been' = hoogte langs
+// het eigen been). Omdat de grenzen rechte vlakken zijn, kunnen we elke
+// driehoek er exact mee afsnijden: strakke randen zonder kartels.
+const Z = (kleur, ...en) => [{ kleur, en }]
+const band = (as, van, tot, kleur) => Z(kleur, [as, '>', van], [as, '<', tot])
+const onder = (as, w, kleur) => Z(kleur, [as, '<', w])
+const boven = (as, w, kleur) => Z(kleur, [as, '>', w])
+// |x| > w: beide zijkanten
+const buiten = (w, kleur) => [...Z(kleur, [0, '>', w]), ...Z(kleur, [0, '<', -w])]
+// a < |x| < b
+const tussenX = (a, b, kleur) => [...Z(kleur, [0, '>', a], [0, '<', b]), ...Z(kleur, [0, '<', -a], [0, '>', -b])]
+// horizontale strepen om de andere band
+const streepjes = (van, tot, stap, kleur) => {
+  const uit = []
+  for (let y = Math.ceil(van / stap) * stap; y < tot; y += stap * 2) uit.push(...band(1, y, y + stap, kleur))
+  return uit
+}
+const strepen = (lijst) => lijst.flatMap(([y1, y2, kleur]) => band('been', y1, y2, kleur))
+
 export const SKINS = {
   topscorer: {
     basis: 'oranje',
-    zones: [[([x]) => Math.abs(x) > 0.27, '#14224a'], [([, y]) => y < 0.875, '#14224a']],
+    zones: [...buiten(0.27, '#14224a'), ...onder(1, 0.875, '#14224a')],
     voor: { embleem: 'topscorer', x: 0.07, y: 1.24, maat: 0.085 },
     rug: [{ tekst: 'KENNISKIST', y: -0.085, grootte: 0.035, kleur: '#fff' },
       { tekst: '10', y: 0.0, grootte: 0.15, kleur: '#fff', rand: '#14224a' }],
   },
   astronaut: {
     basis: 'ruimtepak',
-    zones: [[([x]) => Math.abs(x) > 0.285, '#ff7a1a'], [([x]) => Math.abs(x) > 0.24 && Math.abs(x) < 0.26, '#1d3f9e']],
+    zones: [...buiten(0.285, '#ff7a1a'), ...tussenX(0.24, 0.26, '#1d3f9e')],
     voor: { embleem: 'missie', x: 0.07, y: 1.23, maat: 0.1 },
     rug: [{ tekst: 'ASTRONAUT', y: -0.06, grootte: 0.032, kleur: '#1d3f9e' }],
   },
   ridder: {
     basis: 'maliën',
-    zones: [[([x, y]) => Math.abs(x) < 0.12 && y < 1.33, '#a4161a']],
+    zones: Z('#a4161a', [0, '>', -0.12], [0, '<', 0.12], [1, '<', 1.33]),
     voor: { embleem: 'ridder', x: 0, y: 1.17, maat: 0.13 },
   },
   gamer: {
@@ -379,63 +396,62 @@ export const SKINS = {
   },
   superheld: {
     basis: 'blauw',
-    zones: [[([x]) => Math.abs(x) > 0.24, '#e02a4a'], [([, y]) => y < 0.9, '#ffd34d']],
+    zones: [...buiten(0.24, '#e02a4a'), ...onder(1, 0.9, '#ffd34d')],
     voor: { embleem: 'bliksemcirkel', x: 0, y: 1.2, maat: 0.13 },
   },
   piraat: {
     basis: 'wit',
-    zones: [[([, y]) => Math.floor(y / 0.045) % 2 === 0, '#c8102e'], [([x]) => Math.abs(x) > 0.27, '#14224a']],
+    zones: [...streepjes(0.8, 1.5, 0.045, '#c8102e'), ...buiten(0.27, '#14224a')],
     voor: { embleem: 'doodshoofd', x: 0, y: 1.19, maat: 0.12 },
     rug: [{ tekst: 'KAPITEIN', y: -0.07, grootte: 0.034, kleur: '#14224a', rand: '#ffffff' }],
   },
   basketbal: {
     basis: 'paars',
-    zones: [[([x]) => Math.abs(x) > 0.15 && Math.abs(x) < 0.21, '#ffd34d'], [([x]) => Math.abs(x) > 0.27, '#ffd34d']],
+    zones: [...tussenX(0.15, 0.21, '#ffd34d'), ...buiten(0.27, '#ffd34d')],
     voor: { embleem: 'basketbal', x: 0, y: 1.2, maat: 0.11 },
     rug: [{ tekst: 'KK HOOPS', y: -0.085, grootte: 0.034, kleur: '#ffd34d' },
       { tekst: '23', y: 0.0, grootte: 0.15, kleur: '#ffd34d', rand: '#2a0a52' }],
   },
   brandweer: {
     basis: 'navy',
-    zones: [[([, y]) => (y > 1.0 && y < 1.035) || (y > 1.06 && y < 1.075), '#f2d21b'],
-      [([x]) => Math.abs(x) > 0.25 && Math.abs(x) < 0.27, '#d9dde3']],
+    zones: [...band(1, 1.0, 1.035, '#f2d21b'), ...band(1, 1.06, 1.075, '#f2d21b'), ...tussenX(0.25, 0.27, '#d9dde3')],
     voor: { embleem: 'vlam', x: 0.075, y: 1.25, maat: 0.07 },
     rug: [{ tekst: 'BRANDWEER', y: -0.05, grootte: 0.036, kleur: '#f2d21b' }],
   },
   kersttrui: {
     basis: 'brei',
-    zones: [[([, y]) => y > 1.27 && y < 1.3, '#f4f5f8'], [([, y]) => y < 0.9, '#f4f5f8'], [([x]) => Math.abs(x) > 0.28, '#f4f5f8']],
+    zones: [...band(1, 1.27, 1.3, '#f4f5f8'), ...onder(1, 0.9, '#f4f5f8'), ...buiten(0.28, '#f4f5f8')],
     voor: { embleem: 'kerstboom', x: 0, y: 1.14, maat: 0.15 },
   },
   tijger: {
     basis: 'tijger',
-    zones: [[([, y]) => y < 0.885, '#1a0f08']],
+    zones: onder(1, 0.885, '#1a0f08'),
   },
   galaxybroek: { basis: 'galaxy' },
   tijgerbroek: { basis: 'tijger' },
   lavabroek: { basis: 'lava' },
   brandweerbroek: {
     basis: 'navy',
-    zones: [[([, y]) => y > 0.72 && y < 0.745, '#f2d21b'], [([, y]) => y > 0.75 && y < 0.758, '#d9dde3']],
+    zones: [...band(1, 0.72, 0.745, '#f2d21b'), ...band(1, 0.75, 0.758, '#d9dde3')],
   },
   sportbroek: {
     basis: 'zwart',
-    zones: [[([x]) => Math.abs(x) > 0.155, '#ffffff'], [([, y]) => y > 0.875, '#2ee6ff']],
+    zones: [...buiten(0.155, '#ffffff'), ...boven(1, 0.875, '#2ee6ff')],
   },
   neonbroek: { basis: 'neonraster' },
-  sportsok: { basis: 'wit', strepen: [[0.355, 0.375, '#e63946'], [0.39, 0.41, '#1d3f9e']] },
-  galaxysok: { basis: 'galaxy', strepen: [[0.41, 0.46, '#ff3fd2']] },
-  regenboogsok: { basis: 'wit', strepen: [[0.39, 0.44, '#e63946'], [0.34, 0.39, '#f77f00'], [0.29, 0.34, '#f4c430'],
-    [0.24, 0.29, '#2d9e4f'], [0.19, 0.24, '#1d6fa4'], [0.14, 0.19, '#7b2d8b']] },
-  kerstsok: { basis: 'brei', strepen: [[0.4, 0.45, '#f4f5f8'], [0.32, 0.345, '#1f7a3a'], [0.29, 0.30, '#f4f5f8']] },
-  tijgersok: { basis: 'tijger', strepen: [[0.41, 0.46, '#1a0f08']] },
-  neonsneaker: { basis: 'zwart', zones: [[([, y]) => y < 0.035, '#39ff6a']] },
-  goudsneaker: { basis: 'goud', zones: [[([, y]) => y < 0.035, '#ffffff']] },
-  galaxysneaker: { basis: 'galaxy', zones: [[([, y]) => y < 0.035, '#f4f5f8']] },
-  lavasneaker: { basis: 'lava', zones: [[([, y]) => y < 0.035, '#ff6a00']] },
-  basketbalsneaker: { basis: 'wit', zones: [[([, y]) => y < 0.035, '#e02a4a'], [([, y, z]) => z > 0.13 && y < 0.09, '#e02a4a'], [([, y]) => y > 0.15, '#14224a']] },
-  tijgersneaker: { basis: 'tijger', zones: [[([, y]) => y < 0.035, '#1a0f08']] },
-  brandweerlaars: { basis: 'zwart', zones: [[([, y]) => y > 0.1 && y < 0.12, '#f2d21b'], [([, y]) => y < 0.035, '#5a2a10']] },
+  sportsok: { basis: 'wit', zones: strepen([[0.355, 0.375, '#e63946'], [0.39, 0.41, '#1d3f9e']]) },
+  galaxysok: { basis: 'galaxy', zones: strepen([[0.41, 0.46, '#ff3fd2']]) },
+  regenboogsok: { basis: 'wit', zones: strepen([[0.39, 0.44, '#e63946'], [0.34, 0.39, '#f77f00'], [0.29, 0.34, '#f4c430'],
+    [0.24, 0.29, '#2d9e4f'], [0.19, 0.24, '#1d6fa4'], [0.14, 0.19, '#7b2d8b']]) },
+  kerstsok: { basis: 'brei', zones: strepen([[0.4, 0.45, '#f4f5f8'], [0.32, 0.345, '#1f7a3a'], [0.29, 0.30, '#f4f5f8']]) },
+  tijgersok: { basis: 'tijger', zones: strepen([[0.41, 0.46, '#1a0f08']]) },
+  neonsneaker: { basis: 'zwart', zones: onder(1, 0.035, '#39ff6a') },
+  goudsneaker: { basis: 'goud', zones: onder(1, 0.035, '#ffffff') },
+  galaxysneaker: { basis: 'galaxy', zones: onder(1, 0.035, '#f4f5f8') },
+  lavasneaker: { basis: 'lava', zones: onder(1, 0.035, '#ff6a00') },
+  basketbalsneaker: { basis: 'wit', zones: [...onder(1, 0.035, '#e02a4a'), ...Z('#e02a4a', [2, '>', 0.13], [1, '<', 0.09]), ...boven(1, 0.15, '#14224a')] },
+  tijgersneaker: { basis: 'tijger', zones: onder(1, 0.035, '#1a0f08') },
+  brandweerlaars: { basis: 'zwart', zones: [...band(1, 0.1, 0.12, '#f2d21b'), ...onder(1, 0.035, '#5a2a10')] },
 }
 
 // ── GLB inlezen (alleen posities, UV en driehoeken) ────────────────────────
@@ -471,46 +487,61 @@ export function leesMesh(url) {
   return meshCache.get(url)
 }
 
-// Elke driehoek wordt opgedeeld in n×n stukjes, die los getest worden: zo
-// krijgt een bies of zool een strakke rand, ook op een grof model (de broek
-// heeft maar ~300 driehoeken). Grove modellen fijner, fijne modellen grover.
-function kleurZones(ctx, mesh, zones) {
-  const { pos, uv, idx } = mesh
-  const n = Math.max(1, Math.min(8, Math.round(Math.sqrt(40000 / (idx.length / 3)))))
-  const mix = (a, b, c, l1, l2) => a.map((_, k) => a[k] * l1 + b[k] * l2 + c[k] * (1 - l1 - l2))
-  for (const [voorwaarde, kleur] of zones) {
-    ctx.fillStyle = kleur; ctx.strokeStyle = kleur; ctx.lineWidth = 2; ctx.lineJoin = 'round'
-    for (let t = 0; t < idx.length; t += 3) {
-      const [A, B, C] = [idx[t], idx[t + 1], idx[t + 2]]
-      for (let i = 0; i < n; i++) {
-        for (let j = 0; j < n - i; j++) {
-          // twee soorten deeldriehoekjes: "rechtop" en "omgekeerd"
-          const stukken = [[[i, j], [i + 1, j], [i, j + 1]]]
-          if (j < n - i - 1) stukken.push([[i + 1, j], [i + 1, j + 1], [i, j + 1]])
-          for (const st of stukken) {
-            const l = st.map(([a, b]) => [a / n, b / n])
-            const midden = [0, 1].map(k => (l[0][k] + l[1][k] + l[2][k]) / 3)
-            if (!voorwaarde(mix(pos[A], pos[B], pos[C], midden[0], midden[1]))) continue
-            ctx.beginPath()
-            l.forEach(([l1, l2], k) => {
-              const [u, v] = mix(uv[A], uv[B], uv[C], l1, l2)
-              k ? ctx.lineTo(u * S, v * S) : ctx.moveTo(u * S, v * S)
-            })
-            ctx.closePath(); ctx.fill(); ctx.stroke()
-          }
-        }
-      }
-    }
+// Hoogte langs het been (sokken): per kant de as van onder- naar
+// bovenmidden. Het been staat in het model iets schuin, en een band op vaste
+// y loopt dan voor lager dan opzij.
+const asCache = new WeakMap()
+function beenHoogte(mesh) {
+  if (asCache.has(mesh)) return asCache.get(mesh)
+  const { pos } = mesh
+  const assen = [1, -1].map(k => {
+    const vs = pos.filter(p => Math.sign(p[0]) === k)
+    const yMin = Math.min(...vs.map(p => p[1])), yMax = Math.max(...vs.map(p => p[1]))
+    const gem = (lijst) => [0, 1, 2].map(i => lijst.reduce((t, p) => t + p[i], 0) / lijst.length)
+    const O = gem(vs.filter(p => p[1] < yMin + 0.04)), T = gem(vs.filter(p => p[1] > yMax - 0.03))
+    const d = [T[0] - O[0], T[1] - O[1], T[2] - O[2]], l = Math.hypot(...d)
+    return { T, u: d.map(v => v / l) }
+  })
+  const f = (p) => {
+    const { T, u } = assen[p[0] >= 0 ? 0 : 1]
+    return T[1] + (p[0] - T[0]) * u[0] + (p[1] - T[1]) * u[1] + (p[2] - T[2]) * u[2]
   }
+  asCache.set(mesh, f)
+  return f
 }
 
-function sokStrepen(ctx, strepen) {
-  for (const [y1, y2, kleur] of strepen) {
-    ctx.fillStyle = kleur
-    const hoofd = [1.087 - 1.297 * y2, 1.087 - 1.297 * y1]
-    ctx.fillRect(0, hoofd[0] * S, 0.86 * S, (hoofd[1] - hoofd[0]) * S)
-    const zij = [0.601 - 1.32 * y2, 0.601 - 1.32 * y1]
-    ctx.fillRect(0.85 * S, zij[0] * S, 0.15 * S, (zij[1] - zij[0]) * S)
+// Snijdt een veelhoek (punten met .w = waarden per as en .uv) af op waarde
+// `as` (< of >) w. Lineair interpoleren is exact: positie en UV zijn lineair
+// over een driehoek.
+function snij(punten, as, op, w) {
+  const binnen = (q) => (op === '<' ? q.w[as] <= w : q.w[as] >= w)
+  const uit = []
+  for (let i = 0; i < punten.length; i++) {
+    const a = punten[i], b = punten[(i + 1) % punten.length]
+    if (binnen(a)) uit.push(a)
+    if (binnen(a) !== binnen(b)) {
+      const t = (w - a.w[as]) / (b.w[as] - a.w[as])
+      const mix = (x, y) => x + (y - x) * t
+      uit.push({ w: Object.fromEntries(Object.keys(a.w).map(k => [k, mix(a.w[k], b.w[k])])), uv: [mix(a.uv[0], b.uv[0]), mix(a.uv[1], b.uv[1])] })
+    }
+  }
+  return uit
+}
+
+function kleurZones(ctx, mesh, zones) {
+  const { pos, uv, idx } = mesh
+  const been = zones.some(z => z.en.some(([as]) => as === 'been')) ? beenHoogte(mesh) : null
+  const punt = (i) => ({ w: { 0: pos[i][0], 1: pos[i][1], 2: pos[i][2], been: been ? been(pos[i]) : 0 }, uv: uv[i] })
+  for (const { kleur, en } of zones) {
+    ctx.fillStyle = kleur; ctx.strokeStyle = kleur; ctx.lineWidth = 1.5; ctx.lineJoin = 'round'
+    for (let t = 0; t < idx.length; t += 3) {
+      let poly = [punt(idx[t]), punt(idx[t + 1]), punt(idx[t + 2])]
+      for (const [as, op, w] of en) { poly = snij(poly, as, op, w); if (poly.length < 3) break }
+      if (poly.length < 3) continue
+      ctx.beginPath()
+      poly.forEach((q, k) => (k ? ctx.lineTo(q.uv[0] * S, q.uv[1] * S) : ctx.moveTo(q.uv[0] * S, q.uv[1] * S)))
+      ctx.closePath(); ctx.fill(); ctx.stroke()
+    }
   }
 }
 
@@ -520,14 +551,14 @@ export async function buildSkinTexture(item, donor) {
   const d = SKINS[item.design]
   // Eerst laden, daarna alles in één keer tekenen: S mag tussendoor niet
   // door een andere textuur veranderd worden.
-  const mesh = d.zones ? await leesMesh(donor) : null
+  const zones = d.zones || []
+  const mesh = zones.length ? await leesMesh(donor) : null
   S = resolutie
   const cv = document.createElement('canvas')
   cv.width = S; cv.height = S
   const ctx = cv.getContext('2d')
   BASIS[d.basis](ctx, S, S)
-  if (mesh) kleurZones(ctx, mesh, d.zones)
-  if (d.strepen) sokStrepen(ctx, d.strepen)
+  if (mesh) kleurZones(ctx, mesh, zones)
   if (d.voor) {
     OP_LIJF.voor(ctx, d.voor.x, d.voor.y)
     ctx.scale(d.voor.maat, d.voor.maat)
@@ -554,13 +585,16 @@ export function skinPreview(item) {
   cv.width = P; cv.height = P
   const ctx = cv.getContext('2d')
   BASIS[d.basis](ctx, P, P)
-  const zool = d.zones?.find(([f]) => f([0, 0.01, 0]) && !f([0, 0.1, 0]))
-  if (zool) { ctx.fillStyle = zool[1]; ctx.fillRect(0, P * 0.78, P, P * 0.22) }
-  if (d.strepen) d.strepen.forEach(([, , kleur], i) => { ctx.fillStyle = kleur; ctx.fillRect(0, P * (0.12 + i * 0.14), P, P * 0.08) })
-  if (d.zones && !zool && !d.voor) d.zones.forEach(([, kleur], i) => {
-    ctx.fillStyle = kleur
-    if (i === 0) { ctx.fillRect(P * 0.08, 0, P * 0.08, P); ctx.fillRect(P * 0.84, 0, P * 0.08, P) } else ctx.fillRect(0, 0, P, P * 0.1)
-  })
+  const zones = d.zones || []
+  const zool = zones.find(z => z.en.length === 1 && z.en[0][0] === 1 && z.en[0][1] === '<' && z.en[0][2] < 0.05)
+  if (zool) { ctx.fillStyle = zool.kleur; ctx.fillRect(0, P * 0.78, P, P * 0.22) }
+  const sokbanden = zones.filter(z => z.en[0][0] === 'been')
+  sokbanden.forEach((z, i) => { ctx.fillStyle = z.kleur; ctx.fillRect(0, P * (0.12 + i * 0.14), P, P * 0.08) })
+  if (zones.length && !zool && !sokbanden.length && !d.voor) {
+    const zij = zones.find(z => z.en[0][0] === 0), top = zones.find(z => z.en[0][0] === 1)
+    if (zij) { ctx.fillStyle = zij.kleur; ctx.fillRect(P * 0.08, 0, P * 0.08, P); ctx.fillRect(P * 0.84, 0, P * 0.08, P) }
+    if (top) { ctx.fillStyle = top.kleur; ctx.fillRect(0, 0, P, P * 0.1) }
+  }
   if (d.rug?.some(r => r.grootte > 0.1)) {
     ctx.setTransform(P / 0.32, 0, 0, P / 0.32, P / 2, P / 2)
     rugTekst(ctx, d.rug)
