@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase.js'
 import { TOOL_BY_ID, toolLabel } from '../lib/tools.js'
 import { SOORT_TEKST, ZONDER_EIND } from './soortTekst.js'
 import ToolKiezer from './ToolKiezer.jsx'
+import DoelKiezer from './DoelKiezer.jsx'
 import OpdrachtRij from './OpdrachtRij.jsx'
 import { slaWeektaakOp } from './weektaakOpslaan.js'
 
@@ -18,7 +19,7 @@ function overDagen(n) {
 const STAP1 = {
   weektaak: { kop: 'Wanneer loopt hij?', label: 'Titel', placeholder: 'bv. Week 36', hint: 'Leeg laten mag; dan heet hij "Weektaak".' },
   taak: { kop: 'Wat is de taak?', label: 'Taak', placeholder: 'bv. Oefen de tafel van 7', hint: 'Leeg laten mag; dan heet hij zoals de oefening.' },
-  doel: { kop: 'Wat is het doel?', label: 'Doel', placeholder: 'bv. Ik kan het lijdend voorwerp vinden', hint: 'Schrijf het doel zoals de leerling het moet lezen.' },
+  doel: { kop: 'Wat is het doel?', label: 'Doel', placeholder: 'bv. Ik kan het lijdend voorwerp vinden', hint: 'Leeg laten mag; dan heet hij zoals het doel dat je bij stap 2 kiest.' },
 }
 
 // Controleert de instellingen die een tool verplicht stelt (bv. minstens twee
@@ -58,6 +59,8 @@ export default function WeektaakForm({ klas, soort = 'weektaak', bestaand, onKla
     (bestaand?.opdrachten ?? []).map(o => ({ id: o.id, toolId: o.tool_id, aantal: o.aantal, config: o.config ?? {} }))
   )
   const [toonKiezer, setToonKiezer] = useState(false)
+  // Bij een doel eerst de doelenlijst; "zelf kiezen" valt terug op ToolKiezer.
+  const [zelfKiezen, setZelfKiezen] = useState(false)
   const [fout, setFout] = useState('')
   const [bezig, setBezig] = useState(false)
 
@@ -97,10 +100,14 @@ export default function WeektaakForm({ klas, soort = 'weektaak', bestaand, onKla
     return next
   })
 
-  const voegToe = ({ toolId }) => {
+  // Vanuit DoelKiezer komen ook de instellingen en de titel mee; die titel
+  // wordt alleen ingevuld als de leerkracht er zelf nog niets heeft staan.
+  const voegToe = ({ toolId, config = {}, titel: doelTitel }) => {
     const info = TOOL_BY_ID[toolId]
-    setOpdrachten(prev => [...prev, { toolId, aantal: info?.standaardAantal ?? 1, config: {} }])
+    setOpdrachten(prev => [...prev, { toolId, aantal: info?.standaardAantal ?? 1, config }])
+    if (doelTitel) setTitel(t => t.trim() ? t : doelTitel)
     setToonKiezer(false)
+    setZelfKiezen(false)
   }
 
   const wijzigOpdracht = (i, nieuw) => setOpdrachten(prev => prev.map((o, idx) => idx === i ? nieuw : o))
@@ -173,7 +180,7 @@ export default function WeektaakForm({ klas, soort = 'weektaak', bestaand, onKla
             <h3>{soort === 'doel' ? 'Waarmee oefenen ze het doel?' : 'Wat moeten ze doen?'}</h3>
             <p className="portaal-zacht">
               {soort === 'doel'
-                ? 'Kies een oefening en vink daarin het doel aan, bv. één doel bij verhaaltjessommen of alleen het lijdend voorwerp bij zinsdelen.'
+                ? 'Kies een vak en dan het doel, bv. Taal → Interpunctie → Aanhalingstekens of Rekenen → Verhaaltjessommen → Blok 2. De leerling start er met één klik mee.'
                 : 'Elke opdracht is één oefening met zijn eigen instellingen. Je kunt er zoveel toevoegen als je wilt.'}
             </p>
 
@@ -195,11 +202,17 @@ export default function WeektaakForm({ klas, soort = 'weektaak', bestaand, onKla
 
             {!toonKiezer && (
               <button type="button" className="portaal-knop" style={{ marginTop: 12 }} onClick={() => setToonKiezer(true)}>
-                + Opdracht toevoegen
+                {soort === 'doel' ? '+ Doel kiezen' : '+ Opdracht toevoegen'}
               </button>
             )}
-            {toonKiezer && (
-              <ToolKiezer klasGroepen={klas.groepen} onKies={voegToe} onSluiten={() => setToonKiezer(false)} />
+            {toonKiezer && soort === 'doel' && !zelfKiezen && (
+              <DoelKiezer
+                klasGroepen={klas.groepen} onKies={voegToe}
+                onSluiten={() => setToonKiezer(false)} onZelfKiezen={() => setZelfKiezen(true)}
+              />
+            )}
+            {toonKiezer && (soort !== 'doel' || zelfKiezen) && (
+              <ToolKiezer klasGroepen={klas.groepen} onKies={voegToe} onSluiten={() => { setToonKiezer(false); setZelfKiezen(false) }} />
             )}
           </div>
         </div>

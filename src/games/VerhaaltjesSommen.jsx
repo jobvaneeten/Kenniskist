@@ -29,7 +29,7 @@ function toonAntwoord(o) {
 }
 
 // ── Figuur (oppervlakte / omtrek / inhoud) ──
-function Figuur({ figuur }) {
+export function Figuur({ figuur }) {
   if (!figuur) return null
   const e = figuur.eenheid
   if (figuur.type === 'rechthoek') {

@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase.js'
 import LeerlingLijst from './LeerlingLijst.jsx'
 import LeerlingDetail from './LeerlingDetail.jsx'
 import WeektaakTab from './WeektaakTab.jsx'
+import Werkblad from './Werkblad.jsx'
 
 // De leerkracht ziet alleen wat hij zelf klaarzet: de weektaak voor de klas en
 // de taken en doelen per leerling ("Speciaal voor mij" aan de leerlingkant).
@@ -12,6 +13,7 @@ const TABS = [
   { key: 'weektaak', label: 'Weektaak', hint: 'hele klas' },
   { key: 'taak', label: 'Taken', hint: 'per leerling' },
   { key: 'doel', label: 'Doelen', hint: 'per leerling' },
+  { key: 'werkblad', label: 'Werkblad', hint: 'printen' },
   { key: 'leerlingen', label: 'Leerlingen', hint: 'inloggen & beheer' },
 ]
 
@@ -82,7 +84,9 @@ export default function KlasScherm({ klas, alleKlassen, onBack }) {
                 />
         )}
 
-        {!leerlingId && tab !== 'leerlingen' && (
+        {!leerlingId && tab === 'werkblad' && <Werkblad klas={klas} />}
+
+        {!leerlingId && !['leerlingen', 'werkblad'].includes(tab) && (
           <WeektaakTab key={tab} klas={klas} soort={tab} onKiesLeerling={setLeerlingId} />
         )}
       </div>

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSessie } from './lib/sessie.jsx'
 import { haalMijnWeektaak, zetActieveOpdracht, wisActieveOpdracht, soortVan } from './lib/weektaak.js'
-import { toolLabel, TOOL_BY_ID } from './lib/tools.js'
+import { toolLabel, TOOL_BY_ID, VAKKEN } from './lib/tools.js'
 import { resterendeMinuten } from './lib/leestimerOpslag.js'
 import { isLescheck, lesLabel } from './lib/lescheck.js'
 import { groepeer, korteDatum } from './lib/weektaakMapjes.js'
@@ -25,6 +25,12 @@ function leesRest(o) {
 // les zijn, niet eerst door de mapjes.
 // persoonlijk: "Speciaal voor mij" — dezelfde schermen, maar alleen de taken
 // of doelen (tabblad bovenin) i.p.v. de weektaken.
+// Doelen staan per vak: de leerling kiest eerst het vak en ziet dan de
+// doelen daarvan. Het vak van een doel is dat van zijn (eerste) oefening.
+const VAK_EMOJI = { taal: '📖', spelling: '✏️', rekenen: '🔢', begrijpend: '📚', lezen: '📕', topo: '🗺️' }
+const vakVan = (m) => TOOL_BY_ID[m.opdrachten[0]?.toolId]?.vak ?? 'overig'
+const vakNaam = (key) => VAKKEN.find(v => v.key === key)?.label ?? 'Overig'
+
 const PERSOONLIJK = {
   taak: { emoji: '✏️', meervoud: 'Taken', leeg: 'Je hebt nu geen taken.' },
   doel: { emoji: '🎯', meervoud: 'Doelen', leeg: 'Je hebt nu geen doelen.' },
@@ -37,6 +43,7 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
   const [openMap, setOpenMap] = useState(openMapId)
   const [ververs, setVervers] = useState(0)
   const [tab, setTab] = useState('taak')
+  const [doelVak, setDoelVak] = useState(null)
   const soort = persoonlijk ? tab : 'weektaak'
 
   useEffect(() => {
@@ -143,7 +150,7 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
           <p className="game-header-sub">Door je juf of meester alleen voor jou klaargezet</p>
           <div className="svm-tabs">
             {Object.entries(PERSOONLIJK).map(([key, p]) => (
-              <button key={key} className={tab === key ? 'svm-tab actief' : 'svm-tab'} onClick={() => setTab(key)}>
+              <button key={key} className={tab === key ? 'svm-tab actief' : 'svm-tab'} onClick={() => { setTab(key); setDoelVak(null) }}>
                 {p.emoji} {p.meervoud}
               </button>
             ))}
@@ -163,9 +170,31 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
           {persoonlijk ? PERSOONLIJK[tab].leeg : 'Nog geen weektaak — vraag het aan je juf of meester.'}
         </p>
       )}
-      {mappen.length > 0 && (
+      {/* Doelen: eerst de vakken, dan de doelen van het gekozen vak. */}
+      {soort === 'doel' && !doelVak && mappen.length > 0 && (
         <div className="mode-grid">
-          {mappen.map(m => {
+          {VAKKEN.map(v => v.key).concat('overig')
+            .filter(key => mappen.some(m => vakVan(m) === key))
+            .map(key => {
+              const lijst = mappen.filter(m => vakVan(m) === key)
+              return (
+                <button key={key} className="mode-card wt-map" onClick={() => setDoelVak(key)}>
+                  <span className="mode-emoji">{VAK_EMOJI[key] ?? '🎯'}</span>
+                  <span className="mode-name">{vakNaam(key)}</span>
+                  <span className="mode-desc">{lijst.length} {lijst.length === 1 ? 'doel' : 'doelen'}</span>
+                </button>
+              )
+            })}
+        </div>
+      )}
+      {soort === 'doel' && doelVak && (
+        <button className="svm-tab" style={{ marginBottom: 14 }} onClick={() => setDoelVak(null)}>
+          ← {VAK_EMOJI[doelVak] ?? '🎯'} {vakNaam(doelVak)} · alle vakken
+        </button>
+      )}
+      {mappen.length > 0 && (soort !== 'doel' || doelVak) && (
+        <div className="mode-grid">
+          {mappen.filter(m => soort !== 'doel' || vakVan(m) === doelVak).map(m => {
             const af = m.opdrachten.filter(o => o.klaar).length
             const alles = af === m.opdrachten.length
             return (
