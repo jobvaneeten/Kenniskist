@@ -70,12 +70,13 @@ export const TOOL_FAMILIES = [
     vak: 'taal', groepen: [5, 6, 7, 8], aantalInstelbaar: true, standaardAantal: 15, eenheid: 'opgaven', configVelden: [],
   },
   {
-    // Blok 1 = thema 1 "Ik ontmoet", les 2/7/12 (zie
-    // src/games/woordenschatData.js). Komt er een blok bij, dan wordt dit een
-    // familie met `varianten` zoals bij het dictee.
-    familie: 'woordenschat', toolId: 'woordenschat-blok1', label: 'Woordenschat blok 1',
-    vak: 'taal', groepen: [7],
+    // Blok 1-8 = thema 1-8 van groep 7 (zie src/games/woordenschatData.js
+    // en woordenschatBlokken.js), 45 woorden per blok.
+    familie: 'woordenschat', label: 'Woordenschat', vak: 'taal', groepen: [7],
     aantalInstelbaar: true, standaardAantal: 20, eenheid: 'opgaven', configVelden: [],
+    varianten: Array.from({ length: 8 }, (_, i) => ({
+      toolId: `woordenschat-blok${i + 1}`, label: `Woordenschat blok ${i + 1}`, blok: i + 1,
+    })),
   },
   {
     familie: 'werkwoordspelling', toolId: 'werkwoordspelling', label: 'Werkwoordspelling',

@@ -1,4 +1,4 @@
-// Woordenschat blok 1 — Staal thema 1 "Ik ontmoet", les 2, 7 en 12 (45 begrippen).
+// Woordenschat — blok 1 hieronder (Staal thema 1 "Ik ontmoet", les 2, 7 en 12, 45 begrippen); blok 2-8 in woordenschatBlokken.js.
 //
 // `woord`   zoals het in de methode staat (met lidwoord bij zelfstandige naamwoorden)
 // `kern`    de vorm die in een zin met een gat past ('interview', niet 'het interview');
@@ -7,6 +7,8 @@
 // `tegen`   het woord uit deze lijst dat er de tegenstelling van is
 // `uitdrukking` true bij uitdrukkingen, zodat afleiders ook uitdrukkingen zijn
 //           (anders is "welke past er in de zin" te makkelijk te raden)
+
+import { BLOKKEN_2_8 } from './woordenschatBlokken.js'
 
 export const WOORDEN = [
   // ── Les 2 — Van vlogger tot schipper ──
@@ -152,3 +154,10 @@ export const WOORDEN = [
 ]
 
 export const kernVan = (w) => w.kern || w.woord
+
+// Alle blokken: blok 1 hierboven (les 2/7/12), blok 2-8 per week.
+export const WOORDEN_PER_BLOK = { 1: WOORDEN, ...BLOKKEN_2_8 }
+export const BLOK_NUMMERS = Object.keys(WOORDEN_PER_BLOK).map(Number)
+// Blok 1 is ingedeeld in lessen, de andere blokken in weken.
+export const deelVan = (w) => w.week ?? w.les
+export const deelNaam = (w) => (w.week ? `week ${w.week}` : `les ${w.les}`)

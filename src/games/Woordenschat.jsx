@@ -1,12 +1,12 @@
 import { useState, useMemo } from 'react'
-import { WOORDEN, kernVan } from './woordenschatData.js'
+import { WOORDEN_PER_BLOK, kernVan, deelVan, deelNaam } from './woordenschatData.js'
 import SpelBeloning, { BRIEFGELD } from './SpelBeloning'
 import { useGebruikOpdracht } from './gebruikOpdracht.js'
 import OpdrachtKlaarScherm from './OpdrachtKlaarScherm.jsx'
 import './taal-oefenen.css'
 
-// Woordenschat blok 1 (Staal thema 1, les 2/7/12) — alle 45 woorden door
-// elkaar. Vier vraagvormen per woord, zodat hetzelfde begrip niet elke keer
+// Woordenschat per blok (blok 1 = thema 1, les 2/7/12; blok 2-8 = thema 2-8,
+// week 1-3) — alle 45 woorden van het blok door elkaar. Vier vraagvormen per woord, zodat hetzelfde begrip niet elke keer
 // hetzelfde vraagje wordt: woord→betekenis, betekenis→woord, invullen in een
 // zin en tegenstellingen (alleen bij woordparen).
 //
@@ -50,12 +50,12 @@ function kiesAfleiders(woord, voorkeur, rest, waarde) {
   return gekozen
 }
 
-function maakVraag(woord) {
+function maakVraag(woord, woorden) {
   const soorten = ['betekenis', 'woord', 'zin']
   if (woord.tegen) soorten.push('tegen')
   const soort = soorten[Math.floor(Math.random() * soorten.length)]
-  const zelfdeLes = WOORDEN.filter(w => w.les === woord.les)
-  const anders = WOORDEN.filter(w => w.les !== woord.les)
+  const zelfdeLes = woorden.filter(w => deelVan(w) === deelVan(woord))
+  const anders = woorden.filter(w => deelVan(w) !== deelVan(woord))
 
   if (soort === 'betekenis') {
     const juist = woord.uitleg
@@ -71,16 +71,16 @@ function maakVraag(woord) {
 
   if (soort === 'tegen') {
     const juist = woord.tegen
-    const paren = WOORDEN.filter(w => w.tegen && w.woord !== juist)
-    const opties = shuffle([juist, ...kiesAfleiders(woord, paren, WOORDEN, w => w.woord).map(w => w.woord)])
+    const paren = woorden.filter(w => w.tegen && w.woord !== juist)
+    const opties = shuffle([juist, ...kiesAfleiders(woord, paren, woorden, w => w.woord).map(w => w.woord)])
     return { soort, woord, kop: woord.woord, vraag: 'Wat is het tegenovergestelde?', juist, opties }
   }
 
   // invullen in een zin — afleiders van dezelfde vorm (uitdrukking of niet),
   // anders valt de juiste optie meteen op
   const juist = kernVan(woord)
-  const zelfdeVorm = WOORDEN.filter(w => !!w.uitdrukking === !!woord.uitdrukking)
-  const opties = shuffle([juist, ...kiesAfleiders(woord, zelfdeVorm, WOORDEN, kernVan).map(kernVan)])
+  const zelfdeVorm = woorden.filter(w => !!w.uitdrukking === !!woord.uitdrukking)
+  const opties = shuffle([juist, ...kiesAfleiders(woord, zelfdeVorm, woorden, kernVan).map(kernVan)])
   return { soort, woord, kop: woord.zin, vraag: 'Welk woord past in de zin?', juist, opties }
 }
 
@@ -99,25 +99,26 @@ function ZinMetGat({ zin, ingevuld }) {
   )
 }
 
-export default function Woordenschat({ onBack, addBriefgeld, addCuruntie, aantal }) {
-  const [pool, setPool] = useState(() => shuffle(WOORDEN))
+export default function Woordenschat({ blok = 1, onBack, addBriefgeld, addCuruntie, aantal }) {
+  const woorden = WOORDEN_PER_BLOK[blok]
+  const [pool, setPool] = useState(() => shuffle(woorden))
   const [poolIdx, setPoolIdx] = useState(0)
   const [correctCount, setCorrectCount] = useState(0)
   const [feedback, setFeedback] = useState(null) // { correct, gekozen }
   const [showReward, setShowReward] = useState(false)
   const [hintOpen, setHintOpen] = useState(false)
 
-  const opdracht = useGebruikOpdracht({ toolId: 'woordenschat-blok1', aantal })
+  const opdracht = useGebruikOpdracht({ toolId: `woordenschat-blok${blok}`, aantal })
   const huidig = pool[poolIdx]
   // Eén vraag per woord-beurt: opnieuw genereren bij elke render zou de
   // antwoordknoppen laten springen zodra er state verandert.
-  const vraag = useMemo(() => maakVraag(huidig), [huidig])
-  // De hint: alle woorden van deze les met hun betekenis, op alfabet. Het
+  const vraag = useMemo(() => maakVraag(huidig, woorden), [huidig, woorden])
+  // De hint: alle woorden van deze les/week met hun betekenis, op alfabet. Het
   // antwoord staat er dus tussen, maar de leerling moet het er zelf uit halen.
   const lesWoorden = useMemo(
-    () => WOORDEN.filter(w => w.les === huidig.les)
+    () => woorden.filter(w => deelVan(w) === deelVan(huidig))
       .sort((a, b) => kernVan(a).localeCompare(kernVan(b), 'nl')),
-    [huidig.les],
+    [woorden, huidig],
   )
 
   function volgende() {
@@ -125,7 +126,7 @@ export default function Woordenschat({ onBack, addBriefgeld, addCuruntie, aantal
     setHintOpen(false)
     const next = poolIdx + 1
     if (next >= pool.length) {
-      setPool(shuffle(WOORDEN))
+      setPool(shuffle(woorden))
       setPoolIdx(0)
     } else {
       setPoolIdx(next)
@@ -199,7 +200,7 @@ export default function Woordenschat({ onBack, addBriefgeld, addCuruntie, aantal
 
       <div className="tv-werk">
         <div className={`tv-card ${feedback ? (feedback.correct ? 'tv-card-correct' : 'tv-card-wrong') : ''}`}>
-          <p className="tv-mode-label">📓 Woordenschat · thema 1 · les {huidig.les}</p>
+          <p className="tv-mode-label">📓 Woordenschat · blok {blok} · {deelNaam(huidig)}</p>
           <div className={isZin ? 'tv-zin' : `tv-ws-kop${vraag.soort === 'betekenis' || vraag.soort === 'tegen' ? ' tv-ws-begrip' : ''}`}>
             {isZin
               ? <ZinMetGat zin={huidig.zin} ingevuld={feedback ? vraag.juist : null} />
@@ -218,12 +219,12 @@ export default function Woordenschat({ onBack, addBriefgeld, addCuruntie, aantal
               className={`tv-hint-btn${hintOpen ? ' tv-hint-btn-open' : ''}`}
               onClick={() => setHintOpen(v => !v)}
             >
-              {hintOpen ? '💡 Hint verbergen' : `💡 Hint — woordenlijst van les ${huidig.les}`}
+              {hintOpen ? '💡 Hint verbergen' : `💡 Hint — woordenlijst van ${deelNaam(huidig)}`}
             </button>
             {hintOpen && (
               <div className="tv-hint-lijst">
                 <p className="tv-hint-kop">
-                  Alle woorden van les {huidig.les}. Zoek zelf welk woord erbij hoort.
+                  Alle woorden van {deelNaam(huidig)}. Zoek zelf welk woord erbij hoort.
                 </p>
                 <ul>
                   {lesWoorden.map(w => (

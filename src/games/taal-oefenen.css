@@ -206,6 +206,33 @@
   max-width: 30ch;
 }
 
+/* Menu's met meer dan twee keuzes: naast elkaar, zodat alles zonder scrollen
+   op één scherm past. */
+.tv-mode-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  max-width: 760px;
+}
+.tv-mode-grid-2 .tv-mode-card { padding: 16px 14px; }
+.tv-header-compact { margin: 4px 0 16px; }
+.tv-header-compact .tv-header-icon { font-size: 2.6rem; margin-bottom: 4px; }
+.tv-header-compact h1 { font-size: 1.9rem; }
+
+.tv-blok-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+  max-width: 760px;
+}
+.tv-blok-card { padding: 20px 10px; gap: 4px; }
+.tv-blok-num {
+  font-size: 1.45rem;
+  font-weight: 900;
+  color: #7fdcff;
+  text-shadow: 0 0 18px rgba(79,195,247,0.45);
+}
+
 /* ── Filter screen ── */
 .tv-filter-list {
   display: flex;
@@ -653,6 +680,15 @@ mark.tv-highlight {
   .tv-answer-btn { font-size: 0.94rem; padding: 13px 16px; }
   .tv-reward-track { width: 60px; }
   .tv-werk { justify-content: flex-start; gap: 14px; }
+  .tv-mode-grid-2 { gap: 10px; }
+  .tv-mode-grid-2 .tv-mode-card { padding: 12px 8px; gap: 5px; }
+  .tv-mode-grid-2 .tv-mode-emoji { width: 44px; height: 44px; font-size: 1.5rem; }
+  .tv-mode-grid-2 .tv-mode-name { font-size: 1.02rem; }
+  .tv-mode-grid-2 .tv-mode-desc { font-size: 0.74rem; line-height: 1.3; }
+  .tv-blok-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .tv-blok-card { padding: 14px 8px; }
+  .tv-filter-list { gap: 7px; margin-bottom: 14px; }
+  .tv-filter-item { padding: 8px 12px; }
 }
 
 /* ── Zinsdelen: onderdelen naar de woordgroep slepen ── */

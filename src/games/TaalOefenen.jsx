@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { WOORDSOORTEN, ZINSDELEN, VRAGEN, TIP_WOORDSOORT, splitZin, woordIndexen } from './taalData.js'
 import SpelBeloning from './SpelBeloning'
 import Woordenschat from './Woordenschat.jsx'
+import { BLOK_NUMMERS, WOORDEN_PER_BLOK } from './woordenschatData.js'
 import Zinsdelen from './Zinsdelen.jsx'
 import { Interpunctie, GebiedendeWijs } from './ZinKeuze.jsx'
 import { useGebruikOpdracht } from './gebruikOpdracht.js'
@@ -42,6 +43,7 @@ function renderZin(zin, vraagWoord) {
 // de menu/taalverkennen/filter-schermen over en start direct in de oefening.
 export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie, aantal, config, groep }) {
   const [screen, setScreen] = useState('menu')
+  const [wsBlok, setWsBlok] = useState(null)   // gekozen woordenschat-blok
   const [mode, setMode] = useState(null)
   const [checked, setChecked] = useState({})
   const [pool, setPool] = useState([])
@@ -189,12 +191,34 @@ export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
     )
   }
 
-  if (screen === 'woordenschat') {
+  if (screen === 'woordenschat' && wsBlok) {
     return (
       <Woordenschat
-        onBack={() => setScreen('menu')}
+        key={wsBlok} blok={wsBlok}
+        onBack={() => setWsBlok(null)}
         addBriefgeld={addBriefgeld} addCuruntie={addCuruntie}
       />
+    )
+  }
+
+  if (screen === 'woordenschat') {
+    return (
+      <div className="tv-screen tv-screen-center">
+        <button className="tv-back" onClick={() => setScreen('menu')}>← Menu</button>
+        <div className="tv-header tv-header-compact">
+          <span className="tv-header-icon">📓</span>
+          <h1>Woordenschat</h1>
+          <p>Kies het blok van de woordkaartjes</p>
+        </div>
+        <div className="tv-blok-grid">
+          {BLOK_NUMMERS.map(b => (
+            <button key={b} className="tv-mode-card tv-blok-card" onClick={() => setWsBlok(b)}>
+              <span className="tv-blok-num">Blok {b}</span>
+              <span className="tv-mode-desc">{WOORDEN_PER_BLOK[b].length} woorden</span>
+            </button>
+          ))}
+        </div>
+      </div>
     )
   }
 
@@ -305,7 +329,7 @@ export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
     return (
       <div className="tv-screen tv-screen-center">
         <button className="tv-back" onClick={() => setScreen('taalverkennen')}>← Terug</button>
-        <div className="tv-header">
+        <div className="tv-header tv-header-compact">
           <span className="tv-header-icon">{mode === 'woordsoorten' ? '📚' : '🔍'}</span>
           <h1>{mode === 'woordsoorten' ? 'Woordsoorten' : 'Zinsdelen'}</h1>
           <p>{mode === 'woordsoorten'
@@ -357,12 +381,12 @@ export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
     return (
       <div className="tv-screen tv-screen-center">
         <button className="tv-back" onClick={() => setScreen('menu')}>← Menu</button>
-        <div className="tv-header">
+        <div className="tv-header tv-header-compact">
           <span className="tv-header-icon">🌱</span>
           <h1>Taalverkennen</h1>
           <p>Wat wil je oefenen?</p>
         </div>
-        <div className="tv-mode-grid">
+        <div className="tv-mode-grid tv-mode-grid-2">
           <button className="tv-mode-card" onClick={() => { setMode('zinsdelen'); setScreen('filter') }}>
             <span className="tv-mode-emoji">🔍</span>
             <span className="tv-mode-name">Zinsdelen</span>
@@ -403,13 +427,12 @@ export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
           <span className="tv-mode-name">Taalverkennen</span>
           <span className="tv-mode-desc">Zinsdelen, woordsoorten, interpunctie en gebiedende wijs</span>
         </button>
-        {/* Alleen groep 7: de woordenlijst is die van thema 1 uit de
-            groep 7-methode. */}
+        {/* Alleen groep 7: de woordkaartjes zijn die van de groep 7-methode. */}
         {groep === 7 && (
           <button className="tv-mode-card" onClick={() => setScreen('woordenschat')}>
             <span className="tv-mode-emoji">📓</span>
             <span className="tv-mode-name">Woordenschat</span>
-            <span className="tv-mode-desc">Blok 1 — thema 1 "Ik ontmoet" · 45 woorden uit les 2, 7 en 12</span>
+            <span className="tv-mode-desc">Blok 1 t/m 8 — 45 woorden per blok</span>
           </button>
         )}
       </div>

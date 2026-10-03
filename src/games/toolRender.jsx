@@ -91,7 +91,7 @@ export default function RenderTool({ opdracht, groep, onBack, addBriefgeld, addC
     case 'woordenschat':
       return (
         <Woordenschat
-          onBack={onBack} addBriefgeld={addBriefgeld} addCuruntie={addCuruntie}
+          blok={info.variant.blok} onBack={onBack} addBriefgeld={addBriefgeld} addCuruntie={addCuruntie}
           aantal={aantal}
         />
       )

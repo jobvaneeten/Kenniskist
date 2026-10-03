@@ -1,5 +1,7 @@
+/* 100vw, niet 100%: #root krimpt tot de inhoud, en een iframe is uit zichzelf
+   maar 300px breed — met 100% werd het hele scherm dan 300px smal. */
 .dictee-screen {
-  width: 100%;
+  width: 100vw;
   height: 100%;
   padding: 0;
 }
