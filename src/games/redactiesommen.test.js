@@ -64,8 +64,9 @@ describe('verhaaltjessommen', () => {
         }
         const decimalen = String(o.antwoord).split('.')[1]?.length ?? 0
         // Een kommagetal dat van een getallenlijn wordt afgelezen mag drie
-        // decimalen hebben (0,242 m); verder rekent geen kind met duizendsten.
-        const maxDec = o.figuur?.type === 'getallenlijn' ? 3 : 2
+        // decimalen hebben (0,242 m), net als maten omrekenen (752 g = 0,752 kg);
+        // verder rekent geen kind met duizendsten.
+        const maxDec = o.figuur?.type === 'getallenlijn' || o.omrekenen ? 3 : 2
         expect(decimalen, `${waar}: ${o.antwoord} heeft ${decimalen} decimalen`).toBeLessThanOrEqual(maxDec)
       }
     }

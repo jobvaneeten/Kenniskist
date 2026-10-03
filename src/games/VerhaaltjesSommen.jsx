@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { onderdelenVan, gensVoorDeel, maakOpgaveUit, maakToets, GROEPEN, HEEFT_ROUTE, checkAntwoord, checkSom, checkTijd, GROEP_DOELEN, doelKey, LEERLIJN_LABEL, LEERLIJN_VOLGORDE } from './redactiesommen'
+import { onderdelenVan, gensVoorDeel, maakOpgaveUit, GROEPEN, HEEFT_ROUTE, checkAntwoord, checkSom, checkTijd, GROEP_DOELEN, doelKey, LEERLIJN_LABEL, LEERLIJN_VOLGORDE } from './redactiesommen'
 import SpelBeloning from './SpelBeloning'
 import { useGebruikOpdracht } from './gebruikOpdracht.js'
 import OpdrachtKlaarScherm from './OpdrachtKlaarScherm.jsx'
@@ -368,6 +368,8 @@ function VraagKaart({ opgave, onNext, kaal = false }) {
   const somRef = useRef(null)
   const antwRef = useRef(null)
   const isTijd = opgave.antwoordType === 'tijd'
+  // Keuzevraag (ja/nee, welk getal is groter, op welke dag): knoppen i.p.v. typen.
+  const isKeuze = Array.isArray(opgave.opties)
   const heeftRest = opgave.rest != null && !isTijd
   const magRekenmachine = /rekenmachine/i.test(opgave.doel || '')
 
@@ -377,6 +379,11 @@ function VraagKaart({ opgave, onNext, kaal = false }) {
   // mee naar registreer(), want bij een lescheck wil de leerkracht niet alleen
   // zien dát het fout was maar ook wát er stond.
   const ingevuld = () => (heeftRest ? `${antw.trim()} ${opgave.restLabel ? 'en' : 'rest'} ${rest.trim()}${opgave.restLabel ? ' ' + opgave.restLabel : ''}` : antw.trim())
+
+  const kies = (optie) => {
+    setAntw(optie)
+    setPhase(optie === opgave.antwoord ? 'good' : 'bad')
+  }
 
   const check = () => {
     if (!antw.trim()) return
@@ -423,7 +430,15 @@ function VraagKaart({ opgave, onNext, kaal = false }) {
         </div>
       )}
 
-      {phase === 'answering' && !isTijd && (
+      {phase === 'answering' && isKeuze && (
+        <div className="rs-keuzes">
+          {opgave.opties.map(optie => (
+            <button key={optie} className="rs-keuze-btn" onClick={() => kies(optie)}>{optie}</button>
+          ))}
+        </div>
+      )}
+
+      {phase === 'answering' && !isTijd && !isKeuze && (
         <div className="rs-velden">
           {/* Bij een kale som staat de som er al: dan is "hoe reken je het uit"
               een overbodige extra stap. */}
@@ -461,6 +476,7 @@ function VraagKaart({ opgave, onNext, kaal = false }) {
       {phase === 'good' && (
         <div className="rs-feedback rs-goed">
           <span>🎉 Goed!</span>
+          <div className="rs-jouw">Jouw antwoord: <b>{ingevuld()}</b></div>
           {somOk === false && <div className="rs-som-note">✏️ Je antwoord is goed. Je som klopte niet helemaal — kijk maar: {opgave.uitleg}</div>}
           {somOk === true && <div className="rs-som-note rs-som-ok">✅ En je som klopt ook!</div>}
           <div className="rs-uitleg">💡 {opgave.uitleg}</div>
@@ -470,6 +486,7 @@ function VraagKaart({ opgave, onNext, kaal = false }) {
 
       {phase === 'bad' && (
         <div className="rs-feedback rs-fout">
+          <div className="rs-jouw">Jouw antwoord: <b>{ingevuld() || '—'}</b></div>
           <span>❌ Het juiste antwoord is <b>{opgave.toon ?? `${toonAntwoord(opgave)}${heeftRest ? ` met rest ${opgave.rest}` : ''}`}</b>.</span>
           <div className="rs-uitleg">💡 {opgave.uitleg}</div>
           <button className="rs-verder-btn" onClick={() => onNext(false, ingevuld())}>Volgende →</button>
@@ -621,12 +638,6 @@ export default function VerhaaltjesSommen({ groep: eigenGroep = 7, onBack, addBr
   const [deelIdx, setDeelIdx] = useState(0)
   const [stats, setStats]     = useState(laadStats)
   const [terugNaar, setTerugNaar] = useState('groep')
-  const [toetsJaren, setToetsJaren] = useState(() => new Set([5, 6, 7, 8]))
-  const [toetsLijst, setToetsLijst] = useState([])
-  const [toetsIdx, setToetsIdx]     = useState(0)
-  const [toetsGoed, setToetsGoed]   = useState(0)
-  const [toetsSinds, setToetsSinds] = useState(0)
-  const [rewardVan, setRewardVan]   = useState('oefen')   // 'oefen' | 'toets'
 
   const toggleKeuze = (k) => setGekozen(prev => {
     const s = new Set(prev)
@@ -702,25 +713,6 @@ export default function VerhaaltjesSommen({ groep: eigenGroep = 7, onBack, addBr
     return next
   })
 
-  const toggleJaar = (g) => setToetsJaren(p => { const s = new Set(p); s.has(g) ? s.delete(g) : s.add(g); return s })
-  const startToets = () => {
-    if (!toetsJaren.size) return
-    const lijst = maakToets(toetsJaren)
-    if (!lijst.length) return
-    setToetsLijst(lijst); setToetsIdx(0); setToetsGoed(0); setToetsSinds(0); setScreen('toets')
-  }
-  const toetsVolgende = (correct) => {
-    const opg = toetsLijst[toetsIdx]
-    if (opg) recordStat(opg, correct)
-    setToetsIdx(i => i + 1)
-    if (correct) {
-      setToetsGoed(g => g + 1)
-      const ns = toetsSinds + 1
-      if (ns >= PER_BELONING) { setToetsSinds(0); setRewardVan('toets'); setShowReward(true); return }
-      setToetsSinds(ns)
-    }
-  }
-
   const volgende = useCallback((correct, ingevuld) => {
     if (opgave) recordStat(opgave, correct)
     const zalKlaarZijn = opdracht.aantal != null && (opdracht.gedaan + 1) >= opdracht.aantal
@@ -734,7 +726,7 @@ export default function VerhaaltjesSommen({ groep: eigenGroep = 7, onBack, addBr
     if (zalKlaarZijn) return
     if (correct) {
       const ns = sinds + 1
-      if (ns >= PER_BELONING) { setSinds(0); setRewardVan('oefen'); setShowReward(true); return }
+      if (ns >= PER_BELONING) { setSinds(0); setShowReward(true); return }
       setSinds(ns)
     }
     const volgendeIdx = deelIdx + 1
@@ -746,7 +738,7 @@ export default function VerhaaltjesSommen({ groep: eigenGroep = 7, onBack, addBr
     setShowReward(false)
     addBriefgeld?.(BELONING)
     setVerdiend(v => v + BELONING)
-    if (rewardVan === 'oefen') setOpgave(nieuweOpgave())
+    setOpgave(nieuweOpgave())
   }
 
   if (showReward) {
@@ -782,78 +774,14 @@ export default function VerhaaltjesSommen({ groep: eigenGroep = 7, onBack, addBr
           ))}
         </div>
         <button className="rs-bekijk-btn" onClick={() => openOverzicht('groep')}>📊 Bekijk mijn overzicht</button>
-        <button className="rs-toets-btn" onClick={() => setScreen('toetsKies')}>📝 Toets — test of je alles kent</button>
       </div>
     )
   }
 
   // ── Overzicht ──
   if (screen === 'overzicht') {
-    const labels = { groep: 'Terug', route: 'Terug', kies: 'Terug', oefen: 'Verder oefenen', toets: 'Terug naar toets' }
+    const labels = { groep: 'Terug', route: 'Terug', kies: 'Terug', oefen: 'Verder oefenen' }
     return <Overzicht stats={stats} terugLabel={labels[terugNaar] || 'Terug'} onTerug={() => setScreen(terugNaar)} onWis={wisOverzicht} />
-  }
-
-  // ── Toets: jaren kiezen ──
-  if (screen === 'toetsKies') {
-    const aantal = maakToets(toetsJaren).length
-    return (
-      <div className="rs-screen">
-        <button className="rs-back" onClick={() => setScreen('groep')}>← Terug</button>
-        <div className="rs-header">
-          <span className="rs-icon">📝</span>
-          <h1 className="rs-title">Toets</h1>
-          <p className="rs-sub">Vink de jaren aan. Je krijgt 1 som over elk doel van die jaren.</p>
-        </div>
-        <div className="rs-toets-jaren">
-          {GROEPEN.map(g => {
-            const aan = toetsJaren.has(g)
-            return (
-              <button key={g} className={`rs-doel-rij${aan ? ' aan' : ''}`} onClick={() => toggleJaar(g)}>
-                <span className="rs-doel-check">{aan ? '☑' : '☐'}</span>
-                <span className="rs-doel-tekst">{GROEP_INFO[g].icon} Groep {g}</span>
-              </button>
-            )
-          })}
-        </div>
-        <button className="rs-start-btn" onClick={startToets} disabled={!toetsJaren.size}>
-          {toetsJaren.size ? `Start toets! (${aantal} ${aantal === 1 ? 'som' : 'sommen'}) →` : 'Kies een jaar'}
-        </button>
-        <button className="rs-bekijk-btn" onClick={() => openOverzicht('toetsKies')}>📊 Bekijk mijn overzicht</button>
-      </div>
-    )
-  }
-
-  // ── Toets: lopend / klaar ──
-  if (screen === 'toets') {
-    if (toetsIdx >= toetsLijst.length) {
-      const tot = toetsLijst.length, pct = tot ? Math.round((toetsGoed / tot) * 100) : 0
-      return (
-        <div className="rs-screen">
-          <div className="rs-header">
-            <span className="rs-icon">{pct >= 80 ? '🏆' : pct >= 50 ? '👍' : '💪'}</span>
-            <h1 className="rs-title">Toets klaar!</h1>
-            <p className="rs-sub">Je had <b>{toetsGoed}</b> van de <b>{tot}</b> goed ({pct}%).</p>
-          </div>
-          <p className="rs-ov-tip">Alle antwoorden staan nu in je overzicht. Rode balkjes zijn doelen om nog te oefenen! 💪</p>
-          <button className="rs-bekijk-btn" onClick={() => openOverzicht('toetsKies')}>📊 Bekijk mijn overzicht</button>
-          <button className="rs-start-btn" onClick={() => setScreen('groep')}>Klaar →</button>
-        </div>
-      )
-    }
-    const opg = toetsLijst[toetsIdx]
-    return (
-      <div className="rs-screen rs-screen-oefen">
-        <div className="rs-oefen-top">
-          <button className="rs-back" onClick={() => setScreen('groep')}>← Stop</button>
-          <span className="rs-verdiend">📝 Groep {opg.groep}</span>
-        </div>
-        <div className="rs-progress-wrap">
-          <div className="rs-progress-bar" style={{ width: `${(toetsIdx / toetsLijst.length) * 100}%` }} />
-        </div>
-        <div className="rs-progress-label">Vraag {toetsIdx + 1} van {toetsLijst.length}</div>
-        <VraagKaart key={toetsIdx} opgave={opg} onNext={toetsVolgende} />
-      </div>
-    )
   }
 
   // ── 2. Route-keuze (FS/S+), alleen groep 6/7/8 ──
@@ -900,6 +828,8 @@ export default function VerhaaltjesSommen({ groep: eigenGroep = 7, onBack, addBr
         <div className="rs-mode-toggle">
           <button className={`rs-mode-btn${kiesMode === 'leerlijn' ? ' actief' : ''}`} onClick={() => wisselMode('leerlijn')}>📚 Per leerlijn</button>
           <button className={`rs-mode-btn${kiesMode === 'blok' ? ' actief' : ''}`} onClick={() => wisselMode('blok')}>🧱 Per blok</button>
+          <button className="rs-mode-btn rs-alles-btn" onClick={() => setGekozen(new Set(onderdelen.flatMap(o => o.gens.map(g => g.key))))}>☑ Alles aan</button>
+          <button className="rs-mode-btn rs-alles-btn" onClick={() => setGekozen(new Set())}>☐ Alles uit</button>
         </div>
 
         <div className="rs-tabs">

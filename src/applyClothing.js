@@ -167,6 +167,13 @@ export function loadShirtDonor(scene, shirtMesh, skeleton, item, onReady) {
 // parent it like the clothing, then tint it to the chosen colour.
 // One pet, two stances — each is its own GLB, both rigged to the Head bone.
 const HEAD_FILES = { normaal: 'Pet/petnormaal.glb', achter: 'Pet/petachter.glb' }
+// Beide pet-standen hebben dezelfde UV-indeling; textuur bouwen op de normale.
+const PET_UV = '/Pet/petnormaal.glb'
+const scherpeTex = (scene, cv) => {
+  const tex = new Texture(cv.toDataURL(), scene, false, false)
+  tex.anisotropicFilteringLevel = 8
+  return tex
+}
 
 // Remap a mesh's per-vertex bone indices from srcSkel's order to dstSkel's
 // order, matching by bone name (so it can share dstSkel and follow the right
@@ -199,10 +206,14 @@ export function loadHeadItem(scene, parentNode, skeleton, item, stance, onReady)
       applyTexture(g, new Texture(item.texture, scene, false, false))
     } else if (item.kind === 'color') {
       applyColor(g, item.hex)
+    } else if (item.kind === 'skin') {
+      // Beide standen delen de uitvouwing van petnormaal.glb: één textuur.
+      buildSkinTexture(item, PET_UV, 'hoofd').then(cv => { if (!g.isDisposed()) applyTexture(g, scherpeTex(scene, cv)) })
     } else if (item.kind === 'pattern' || item.kind === 'print') {
-      // Patroon-/print-petten: zelfde canvas-textures als de kleding, gebakken
-      // op de pet-UV. Prints laden eerst de Twemoji-afbeelding (iOS-proof).
-      const toTex = (img) => applyTexture(g, new Texture(buildTextureCanvas(item, img).toDataURL(), scene, false, false))
+      // Patroon-/print-petten: op het lijf getekend (kledingTextuur.js), op de
+      // pet-UV. Prints laden eerst de Twemoji-afbeelding (iOS-proof).
+      const toTex = (img) => bouwKledingTextuur(item, 'hoofd', PET_UV, img)
+        .then(cv => { if (!g.isDisposed()) applyTexture(g, scherpeTex(scene, cv || buildTextureCanvas(item, img))) })
       if (item.kind === 'print') {
         const img = new Image()
         img.crossOrigin = 'anonymous'

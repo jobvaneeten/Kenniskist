@@ -1,4 +1,4 @@
-import { tekenSkinBasisOpLijf } from './kledingTextuur'
+import { tekenSkinBasisOpLijf, tekenOpLijf, PET_VOOR_X } from './kledingTextuur'
 
 // Ontworpen skins: kleding met een echt ontwerp in plaats van een kleur,
 // patroon of emoji-print. Alles wordt hier in code getekend op de UV-indeling
@@ -220,6 +220,11 @@ const BASIS = {
     ctx.strokeStyle = 'rgba(255,255,255,.06)'; ctx.lineWidth = w / 200
     for (let x = 0; x < w; x += w / 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke() }
   },
+  rood(ctx, w, h) {
+    const g = ctx.createLinearGradient(0, 0, 0, h)
+    g.addColorStop(0, '#e02a2a'); g.addColorStop(1, '#b3151c')
+    ctx.fillStyle = g; ctx.fillRect(0, 0, w, h)
+  },
   blauw(ctx, w, h) {
     const g = ctx.createLinearGradient(0, 0, 0, h)
     g.addColorStop(0, '#2563eb'); g.addColorStop(1, '#1e40af')
@@ -368,6 +373,8 @@ const streepjes = (van, tot, stap, kleur) => {
   for (let y = Math.ceil(van / stap) * stap; y < tot; y += stap * 2) uit.push(...band(1, y, y + stap, kleur))
   return uit
 }
+// klep van de pet (+ knoopje bovenop in dezelfde kleur)
+const klep = (kleur) => [...Z(kleur, [2, '>', 0.128], [1, '<', 1.765]), ...boven(1, 1.862, kleur)]
 const strepen = (lijst) => lijst.flatMap(([y1, y2, kleur]) => band('been', y1, y2, kleur))
 // bies: waar de stof (bijna) recht naar opzij wijst, `d` = drempel 0..1
 const bies = (d, kleur) => Z(kleur, ['zij', '>', d])
@@ -433,6 +440,22 @@ export const SKINS = {
     basis: 'tijger',
     zones: onder(1, 0.885, '#1a0f08'),
   },
+  // ── petten (petnormaal.glb): klep = vooruit en laag, knoopje bovenop,
+  // embleem voor op de bol (petEmbleem, in lijf-meters, zie kledingTextuur).
+  pet_topscorer: { basis: 'oranje', zones: klep('#14224a'), petEmbleem: 'topscorer' },
+  pet_astronaut: { basis: 'ruimtepak', zones: klep('#1d3f9e'), petEmbleem: 'missie' },
+  pet_ridder: { basis: 'maliën', zones: klep('#a4161a'), petEmbleem: 'ridder' },
+  pet_gamer: { basis: 'circuit', zones: klep('#ff3fd2'), petEmbleem: 'controller' },
+  pet_galaxy: { basis: 'galaxy', zones: klep('#3a1170'), petEmbleem: 'planeet' },
+  pet_superheld: { basis: 'blauw', zones: klep('#e02a4a'), petEmbleem: 'bliksemcirkel' },
+  pet_piraat: { basis: 'zwart', zones: klep('#111111'), petEmbleem: 'doodshoofd' },
+  pet_basketbal: { basis: 'paars', zones: klep('#ffd34d'), petEmbleem: 'basketbal' },
+  pet_brandweer: { basis: 'rood', zones: klep('#1d2b4f'), petEmbleem: 'vlam' },
+  pet_kerst: { basis: 'brei', zones: klep('#f4f5f8'), petEmbleem: 'kerstboom' },
+  pet_tijger: { basis: 'tijger', zones: klep('#1a0f08') },
+  pet_lava: { basis: 'lava', zones: klep('#ff6a00') },
+  pet_neon: { basis: 'neonraster', zones: klep('#ff3fd2') },
+  pet_goud: { basis: 'goud', zones: klep('#ffffff') },
   galaxybroek: { basis: 'galaxy' },
   tijgerbroek: { basis: 'tijger' },
   lavabroek: { basis: 'lava' },
@@ -602,6 +625,14 @@ export async function buildSkinTexture(item, donor, type) {
     S = resolutie
   }
   if (mesh) kleurZones(ctx, mesh, zones)
+  if (d.petEmbleem) {
+    await tekenOpLijf(ctx, resolutie, 'hoofd', donor, (c) => {
+      c.save(); c.translate(PET_VOOR_X, -1.795); c.scale(0.075, 0.075)
+      EMBLEEM[d.petEmbleem](c)
+      c.restore()
+    })
+    S = resolutie
+  }
   if (d.voor) {
     OP_LIJF.voor(ctx, d.voor.x, d.voor.y)
     ctx.scale(d.voor.maat, d.voor.maat)
@@ -641,9 +672,9 @@ export function skinPreview(item) {
   if (d.rug?.some(r => r.grootte > 0.1)) {
     ctx.setTransform(P / 0.32, 0, 0, P / 0.32, P / 2, P / 2)
     rugTekst(ctx, d.rug)
-  } else if (d.voor) {
+  } else if (d.voor || d.petEmbleem) {
     ctx.setTransform(P * 0.62, 0, 0, P * 0.62, P / 2, P / 2)
-    EMBLEEM[d.voor.embleem](ctx)
+    EMBLEEM[d.voor?.embleem || d.petEmbleem](ctx)
   }
   const url = cv.toDataURL()
   previewCache.set(item.design, url)

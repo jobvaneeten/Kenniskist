@@ -13,7 +13,7 @@
 import { leesMesh, huidigeResolutie } from './skins'
 
 // Afmetingen van het patroon in meters, per kledingstuk (schoenen zijn klein).
-const MAAT = { shirt: 1, broek: 1, sokken: 0.75, schoenen: 0.6 }
+const MAAT = { shirt: 1, broek: 1, sokken: 0.75, schoenen: 0.6, hoofd: 0.85 }
 
 function rng(seed) {
   let a = seed >>> 0
@@ -48,6 +48,9 @@ function lichter(hex, amt) {
 // Omdat (p, q) uit de 3D-positie komt, loopt een patroon naadloos over de
 // naden tussen lapjes heen.
 const kaartCache = new Map()
+const PET_R = 0.13
+// Voorkant van de pet in lijf-meters: midden van de bol, recht vooruit.
+export const PET_VOOR_X = -PET_R * Math.PI / 2
 
 function maakKaart(mesh, type) {
   const { pos } = mesh
@@ -62,7 +65,16 @@ function maakKaart(mesh, type) {
   // Hoek rondom de as, met de naad op de linkerzij (zoals echte zijnaden):
   // voor, rechterzij en rug lopen zo zonder breuk door.
   const rond = (x, z, ax, az, R) => R * Math.atan2(-(z - az), x - ax)
+  // Pet: as door het midden van de bol (bovenste punten), straal ~13 cm.
+  const bol = pos.filter(v => v[1] > yMax - 0.06)
+  const petAs = [bol.reduce((t, v) => t + v[0], 0) / (bol.length || 1), bol.reduce((t, v) => t + v[2], 0) / (bol.length || 1)]
   const punt = (v, n) => {
+    if (type === 'hoofd') {
+      // klep en bovenkant: van bovenaf; de bol zelf: rondom
+      const l = Math.hypot(...n) || 1
+      if (Math.abs(n[1] / l) > 0.75) return [v[0], v[2]]
+      return [rond(v[0], v[2], petAs[0], petAs[1], PET_R), -v[1]]
+    }
     if (type === 'schoenen') {
       const an = n.map(Math.abs)
       if (an[1] >= an[0] && an[1] >= an[2]) return [v[0], v[2]]          // boven/zool
@@ -75,7 +87,8 @@ function maakKaart(mesh, type) {
     }
     return [rond(v[0], v[2], 0, zMid, type === 'broek' ? 0.17 : 0.2), -v[1]]
   }
-  return { punt, yMin, yMax, omtrek: type === 'sokken' ? 0.06 * 2 * Math.PI : 0.2 * 2 * Math.PI }
+  const R = type === 'sokken' ? 0.06 : type === 'hoofd' ? PET_R : 0.2
+  return { punt, yMin, yMax, omtrek: R * 2 * Math.PI, petAs }
 }
 
 async function kaartVan(url, type) {
@@ -243,6 +256,14 @@ export async function bouwKledingTextuur(item, type, donor, img) {
     tekenPatroon(c, item, bnd, maat, info, img)
   })
   return cv
+}
+
+// Iets op het lijf tekenen (embleem op een pet): `teken(ctx)` tekent in
+// lijf-meters, overal afgeknipt per driehoek, dus naadloos over de naden.
+export async function tekenOpLijf(ctx, S, type, donor, teken) {
+  const info = await kaartVan(donor, type)
+  if (!info) return
+  opLijf(ctx, S, info, MAAT[type] ?? 1, (c) => teken(c))
 }
 
 // Achtergrond van een skin (skins.js) op het lijf: het getekende vlak
