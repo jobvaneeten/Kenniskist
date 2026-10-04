@@ -2,7 +2,8 @@
 // Alleen via /huisstijl.html op de dev-server.
 import { createRoot } from 'react-dom/client'
 import { useState } from 'react'
-import { Knop, TerugKnop, Kaart, SchermKop, Saldo, VoortgangsBalk, Feedback, Paneel, EindScherm } from './index.jsx'
+import { Knop, TerugKnop, Kaart, SchermKop, Saldo, VoortgangsBalk, Feedback, Paneel, EindScherm, Icoon } from './index.jsx'
+import '../portaal/portaal.css'
 
 const KLEUREN = [
   ['bg', '--kk-bg'], ['surface-solid', '--kk-surface-solid'], ['primary', '--kk-primary'], ['primary-hi', '--kk-primary-hi'],
@@ -87,6 +88,46 @@ function Staalkaart() {
         <div style={{ ...rij, alignItems: 'flex-start' }}>
           <EindScherm score="8 / 10" tekst="Goed gedaan! Je verdient 40 briefgeld." onOpnieuw={() => {}} onVerder={() => {}} />
           <Knop variant="secundair" onClick={() => setModal(true)}>Open paneel</Knop>
+        </div>
+      </section>
+
+      <section style={sectie}>
+        <h2 style={kop}>Leerkrachtenportaal (rustige variant)</h2>
+        <div className="portaal" style={{ width: '100%', minHeight: 0, padding: 24, borderRadius: 'var(--kk-r-lg)' }}>
+          <div className="portaal-header">
+            <h1>Groep 7 — De Linde</h1>
+            <div className="portaal-header-rechts"><Knop variant="secundair" maat="sm">Uitloggen</Knop></div>
+          </div>
+          <div className="portaal-inhoud">
+            <TerugKnop vast={false}>Alle klassen</TerugKnop>
+            <div className="portaal-tabs-nav">
+              <button className="portaal-tab-knop actief">Overzicht<span className="portaal-tab-hint">de klas</span></button>
+              <button className="portaal-tab-knop">Weektaken<span className="portaal-tab-hint">klaarzetten</span></button>
+              <button className="portaal-tab-knop">Leerlingen<span className="portaal-tab-hint">accounts</span></button>
+            </div>
+            <div className="portaal-kaart">
+              <h2>Nieuwe weektaak</h2>
+              <div className="portaal-veldrij">
+                <label className="portaal-veld"><span className="portaal-veld-label">Titel</span><input defaultValue="Week 41" /></label>
+                <label className="portaal-veld"><span className="portaal-veld-label">Vak</span><select><option>Rekenen</option><option>Taal</option></select></label>
+              </div>
+              <div className="kk-rij kk-mt-3">
+                <Knop variant="primair" maat="sm">Klaarzetten</Knop>
+                <Knop variant="secundair" maat="sm">Annuleren</Knop>
+                <Knop variant="gevaar" maat="sm">Verwijderen</Knop>
+              </div>
+            </div>
+            <div className="portaal-kaart">
+              <table className="portaal-tabel">
+                <thead><tr><th>Leerling</th><th>Oefening</th><th>Score</th><th></th></tr></thead>
+                <tbody>
+                  <tr><td><button className="portaal-leerlingnaam">Sam K.</button></td><td>Tafels<span className="portaal-weektaak-icoon"><Icoon naam="klembord" /></span></td><td className="portaal-score-goed">9 / 10</td><td><button className="portaal-rijknop" aria-label="Verwijderen"><Icoon naam="sluiten" /></button></td></tr>
+                  <tr><td><button className="portaal-leerlingnaam">Noor B.</button></td><td>Werkwoordspelling</td><td className="portaal-score-matig">6 / 10</td><td><button className="portaal-rijknop" aria-label="Verwijderen"><Icoon naam="sluiten" /></button></td></tr>
+                  <tr><td><button className="portaal-leerlingnaam">Ali M.</button></td><td>Topografie</td><td className="portaal-score-slecht">3 / 10</td><td><button className="portaal-rijknop" aria-label="Verwijderen"><Icoon naam="sluiten" /></button></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </section>
 

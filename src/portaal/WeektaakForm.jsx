@@ -6,6 +6,7 @@ import ToolKiezer from './ToolKiezer.jsx'
 import DoelKiezer from './DoelKiezer.jsx'
 import OpdrachtRij from './OpdrachtRij.jsx'
 import { slaWeektaakOp } from './weektaakOpslaan.js'
+import { Knop } from '../ui/index.jsx'
 
 function vandaag() { return new Date().toLocaleDateString('sv-SE') }
 function overDagen(n) {
@@ -201,9 +202,9 @@ export default function WeektaakForm({ klas, soort = 'weektaak', bestaand, onKla
             </div>
 
             {!toonKiezer && (
-              <button type="button" className="portaal-knop" style={{ marginTop: 12 }} onClick={() => setToonKiezer(true)}>
+              <Knop className="kk-mt-3" type="button" variant="primair" maat="sm" onClick={() => setToonKiezer(true)}>
                 {soort === 'doel' ? '+ Doel kiezen' : '+ Opdracht toevoegen'}
-              </button>
+              </Knop>
             )}
             {toonKiezer && soort === 'doel' && !zelfKiezen && (
               <DoelKiezer
@@ -263,11 +264,11 @@ export default function WeektaakForm({ klas, soort = 'weektaak', bestaand, onKla
               aanpassen, en via "Alleen niet af" iemand vrijstellen.
             </p>
             {fout && <p className="portaal-fout">{fout}</p>}
-            <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
-              <button type="submit" className="portaal-knop" disabled={bezig}>
+            <div className="kk-rij kk-mt-1">
+              <Knop type="submit" variant="primair" maat="sm" disabled={bezig}>
                 {bezig ? 'Bezig…' : bestaand ? 'Wijzigingen opslaan' : `${tekst.enkel[0].toUpperCase()}${tekst.enkel.slice(1)} klaarzetten`}
-              </button>
-              <button type="button" className="portaal-knop portaal-knop-subtiel" onClick={onAnnuleren}>Annuleren</button>
+              </Knop>
+              <Knop type="button" variant="secundair" maat="sm" onClick={onAnnuleren}>Annuleren</Knop>
             </div>
           </div>
         </div>

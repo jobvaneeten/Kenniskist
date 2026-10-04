@@ -7,6 +7,7 @@ import KlasInstellingen from './KlasInstellingen.jsx'
 import LeerlingToevoegen from './LeerlingToevoegen.jsx'
 import LeerkrachtToevoegen from './LeerkrachtToevoegen.jsx'
 import './portaal.css'
+import { Knop, TerugKnop, Icoon } from '../ui/index.jsx'
 
 const LEEFTIJDSGROEPEN = [4, 5, 6, 7, 8]
 
@@ -51,7 +52,7 @@ function KlasToevoegen({ schoolId, onKlaar }) {
           />
         </label>
         <label>Leeftijdsgroepen (leeg = geen beperking)
-          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          <div className="kk-rij kk-rij-ruim">
             {LEEFTIJDSGROEPEN.map(g => (
               <label key={g} style={{ display: 'flex', alignItems: 'center', gap: 4, fontWeight: 400 }}>
                 <input type="checkbox" checked={groepen.includes(g)} onChange={() => toggelGroep(g)} />
@@ -61,9 +62,9 @@ function KlasToevoegen({ schoolId, onKlaar }) {
           </div>
         </label>
         {fout && <p className="portaal-fout">{fout}</p>}
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button type="submit" className="portaal-knop" disabled={bezig}>{bezig ? 'Bezig…' : 'Aanmaken'}</button>
-          <button type="button" className="portaal-knop portaal-knop-subtiel" onClick={onKlaar}>Sluiten</button>
+        <div className="kk-rij">
+          <Knop type="submit" variant="primair" maat="sm" disabled={bezig}>{bezig ? 'Bezig…' : 'Aanmaken'}</Knop>
+          <Knop type="button" variant="secundair" maat="sm" onClick={onKlaar}>Sluiten</Knop>
         </div>
       </form>
     </div>
@@ -100,16 +101,16 @@ function KlasOverzicht({ profiel, klassen, aantallen, leerkrachten, isIcter, onK
                   title={`Instellingen van ${k.naam}`}
                   aria-label={`Instellingen van ${k.naam}`}
                   onClick={() => onKiesInstellingen(k)}
-                >⚙</button>
+                ><Icoon naam="instellingen" /></button>
               )}
             </div>
           ))}
         </div>
 
         <div className="portaal-actiebalk">
-          <button className="portaal-knop portaal-knop-subtiel" onClick={() => setToonLeerlingForm(v => !v)}>+ Leerling</button>
-          {isIcter && <button className="portaal-knop portaal-knop-subtiel" onClick={() => setToonLeerkrachtForm(v => !v)}>+ Leerkracht</button>}
-          {isIcter && <button className="portaal-knop portaal-knop-subtiel" onClick={() => setToonKlasForm(v => !v)}>+ Klas</button>}
+          <Knop variant="secundair" maat="sm" onClick={() => setToonLeerlingForm(v => !v)}>+ Leerling</Knop>
+          {isIcter && <Knop variant="secundair" maat="sm" onClick={() => setToonLeerkrachtForm(v => !v)}>+ Leerkracht</Knop>}
+          {isIcter && <Knop variant="secundair" maat="sm" onClick={() => setToonKlasForm(v => !v)}>+ Klas</Knop>}
         </div>
       </div>
 
@@ -170,7 +171,7 @@ export default function Portaal() {
     return (
       <div className="portaal">
         <div className="portaal-inhoud">
-          <button className="portaal-terug" onClick={() => setInstellingenKlas(null)}>← Alle klassen</button>
+          <TerugKnop vast={false} onClick={() => setInstellingenKlas(null)}>Alle klassen</TerugKnop>
           <div className="portaal-klaskop">
             <div>
               <h1>{actueel.naam}</h1>
@@ -197,11 +198,11 @@ export default function Portaal() {
         <div className="portaal-header-rechts">
           <span>{profiel.weergavenaam} ({profiel.rol}{profiel.rol === 'icter' && alsLeerkracht ? ' — als leerkracht' : ''})</span>
           {profiel.rol === 'icter' && (
-            <button className="portaal-knop portaal-knop-subtiel" onClick={() => setAlsLeerkracht(v => !v)}>
+            <Knop variant="secundair" maat="sm" onClick={() => setAlsLeerkracht(v => !v)}>
               {alsLeerkracht ? 'Terug naar icter-weergave' : 'Bekijk als leerkracht'}
-            </button>
+            </Knop>
           )}
-          <button className="portaal-knop portaal-knop-subtiel" onClick={uitloggen}>Uitloggen</button>
+          <Knop variant="secundair" maat="sm" onClick={uitloggen}>Uitloggen</Knop>
         </div>
       </header>
       <KlasOverzicht

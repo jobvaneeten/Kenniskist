@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { VAKKEN } from '../lib/tools.js'
 import { doelVakkenVoor } from '../lib/doelen.js'
 import { onderdelenVan, HEEFT_ROUTE, GROEPEN } from '../games/redactiesommen.js'
+import { Knop, TerugKnop } from '../ui/index.jsx'
 
 // Kiest een doel in drie stapjes, net als ToolKiezer: vak → onderwerp → doel.
 // Het gekozen doel is meteen een complete opdracht (tool + instellingen), met
@@ -27,10 +28,10 @@ export default function DoelKiezer({ klasGroepen, onKies, onSluiten, onZelfKieze
   const kop = (titel, terug) => (
     <div className="portaal-sectiekop">
       <div>
-        <h2 style={{ margin: 0 }}>{titel}</h2>
-        {terug && <button type="button" className="portaal-terug" style={{ padding: '4px 0 0' }} onClick={terug}>← een stap terug</button>}
+        <h2 className="kk-m-0">{titel}</h2>
+        {terug && <TerugKnop vast={false} onClick={terug}>Een stap terug</TerugKnop>}
       </div>
-      <button type="button" className="portaal-knop portaal-knop-subtiel" onClick={onSluiten}>Sluiten</button>
+      <Knop type="button" variant="secundair" maat="sm" onClick={onSluiten}>Sluiten</Knop>
     </div>
   )
 
@@ -48,9 +49,9 @@ export default function DoelKiezer({ klasGroepen, onKies, onSluiten, onZelfKieze
     const r = HEEFT_ROUTE(groep) ? route : null
     const blokken = onderdelenVan(groep, r, 'blok').filter(b => !b.key.startsWith('herh-'))
     return (
-      <div className="portaal-kaart" style={{ marginTop: 10 }}>
+      <div className="portaal-kaart kk-mt-3">
         {kop('Verhaaltjessommen', () => setOnderwerp(null))}
-        <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
+        <div className="kk-rij kk-mb-3">
           <label className="portaal-veld" style={{ maxWidth: 140 }}>
             <span className="portaal-veld-label">Groep</span>
             <select value={groep} onChange={e => setGroep(Number(e.target.value))}>
@@ -67,11 +68,11 @@ export default function DoelKiezer({ klasGroepen, onKies, onSluiten, onZelfKieze
             </label>
           )}
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <div className="kk-kolom">
           {blokken.map(b => (
             <details key={b.key} className="portaal-vak-chip" style={{ padding: '8px 12px' }}>
               <summary style={{ cursor: 'pointer', fontWeight: 800 }}>{b.label.replace('📍 ', '')}</summary>
-              <div className="portaal-naamlijst" style={{ marginTop: 8 }}>
+              <div className="portaal-naamlijst kk-mt-2">
                 {b.gens.map(g => doelKnop(g.key, g.doel, null, () => onKies({
                   toolId: 'verhaaltjessommen',
                   config: { groep, route: r, doelen: [g.key] },
@@ -88,7 +89,7 @@ export default function DoelKiezer({ klasGroepen, onKies, onSluiten, onZelfKieze
   // Stap 3: welk doel binnen het onderwerp
   if (onderwerp) {
     return (
-      <div className="portaal-kaart" style={{ marginTop: 10 }}>
+      <div className="portaal-kaart kk-mt-3">
         {kop(onderwerp.titel, () => setOnderwerp(null))}
         <div className="portaal-naamlijst">
           {onderwerp.doelen.map((x, i) => doelKnop(i, x.titel, null, () => onKies({
@@ -104,7 +105,7 @@ export default function DoelKiezer({ klasGroepen, onKies, onSluiten, onZelfKieze
   if (vak) {
     const onderwerpen = vak.vak === 'rekenen' ? [rekensommen, ...vak.onderwerpen] : vak.onderwerpen
     return (
-      <div className="portaal-kaart" style={{ marginTop: 10 }}>
+      <div className="portaal-kaart kk-mt-3">
         {kop(vakLabel(vak.vak), () => setVak(null))}
         <div className="portaal-naamlijst">
           {onderwerpen.map(o => doelKnop(o.titel, o.titel,
@@ -117,7 +118,7 @@ export default function DoelKiezer({ klasGroepen, onKies, onSluiten, onZelfKieze
 
   // Stap 1: welk vak
   return (
-    <div className="portaal-kaart" style={{ marginTop: 10 }}>
+    <div className="portaal-kaart kk-mt-3">
       {kop(`${titel} — welk vak?`, null)}
       <div className="portaal-naamlijst">
         {vakken.map(v => doelKnop(v.vak, vakLabel(v.vak),
@@ -125,7 +126,7 @@ export default function DoelKiezer({ klasGroepen, onKies, onSluiten, onZelfKieze
           () => setVak(v)))}
       </div>
       {onZelfKiezen && (
-        <p className="portaal-leeg" style={{ marginBottom: 0 }}>
+        <p className="portaal-leeg kk-mb-0">
           Staat het doel er niet bij?{' '}
           <button type="button" className="portaal-minilink" onClick={onZelfKiezen}>Kies zelf een oefening</button>
         </p>

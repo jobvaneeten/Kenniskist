@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase.js'
 import { toolLabel } from '../lib/tools.js'
 import { scoreKlasse } from './resultaatHelpers.js'
+import {  } from '../ui/index.jsx'
 
 const sleutel = (opdrachtId, leerlingId) => `${opdrachtId}:${leerlingId}`
 
@@ -160,7 +161,7 @@ export default function WeektaakVoortgang({ weektaak, klasId, alleenNietAf, onKi
     const nogOpen = openstaand.filter(r => !r.vrij)
     return (
       <>
-        <p className="portaal-leeg" style={{ marginTop: 0 }}>
+        <p className="portaal-leeg kk-mt-0">
           {nogOpen.length > 0
             ? <><strong>{new Set(nogOpen.map(r => r.leerling.id)).size} leerlingen</strong> hebben samen {nogOpen.length} opdracht{nogOpen.length === 1 ? '' : 'en'} openstaan. </>
             : null}
@@ -281,7 +282,7 @@ export default function WeektaakVoortgang({ weektaak, klasId, alleenNietAf, onKi
                             <button
                               className="portaal-minilink" onClick={() => setOpnieuwBezig(cel)}
                               title="Zet de teller op 0: de leerling maakt deze opdracht opnieuw. Het gemaakte werk blijft bewaard."
-                            >↺ opnieuw laten maken</button>
+                            >opnieuw laten maken</button>
                           )}
                         </>
                       )}

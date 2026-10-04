@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase.js'
 import { roepWorkerAan } from '../lib/worker.js'
+import { Knop, Icoon } from '../ui/index.jsx'
 
 const LEEFTIJDSGROEPEN = [4, 5, 6, 7, 8]
 
@@ -37,24 +38,24 @@ function Leerlingen({ leerlingen, onGewijzigd }) {
               <span className="portaal-naamknop-naam">{l.weergavenaam}</span>
               <span className="portaal-zacht">{l.gebruikersnaam}</span>
             </div>
-            <button className="portaal-rijknop" title={`${l.weergavenaam} verwijderen`} onClick={() => { setBevestig(l); setFout('') }}>✕</button>
+            <button className="portaal-rijknop" title={`${l.weergavenaam} verwijderen`} aria-label={`${l.weergavenaam} verwijderen`} onClick={() => { setBevestig(l); setFout('') }}><Icoon naam="sluiten" /></button>
           </div>
         ))}
       </div>
 
       {bevestig && (
         <div className="portaal-waarschuwing">
-          <p className="portaal-zacht" style={{ margin: 0 }}>
+          <p className="portaal-zacht kk-m-0">
             <strong>{bevestig.weergavenaam}</strong> verwijderen? Het account verdwijnt en <strong>al het
             gemaakte werk, de munten en de weektaakvoortgang van dit kind gaan mee</strong>. Dit kan niet
             ongedaan gemaakt worden. Wil je alleen dat hij in een andere klas komt, gebruik dan
             “doorschuiven” of “leerlingen verplaatsen”.
           </p>
-          <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-            <button className="portaal-knop portaal-knop-gevaar" disabled={bezig} onClick={() => verwijder(bevestig)}>
+          <div className="kk-rij kk-mt-3">
+            <Knop variant="gevaar" maat="sm" disabled={bezig} onClick={() => verwijder(bevestig)}>
               {bezig ? 'Bezig…' : `Ja, verwijder ${bevestig.weergavenaam}`}
-            </button>
-            <button className="portaal-knop portaal-knop-subtiel" onClick={() => setBevestig(null)}>Annuleren</button>
+            </Knop>
+            <Knop variant="secundair" maat="sm" onClick={() => setBevestig(null)}>Annuleren</Knop>
           </div>
         </div>
       )}
@@ -157,7 +158,7 @@ function LeerkrachtKoppelen({ klas, personeel, koppelingen, onGewijzigd }) {
                   <span className="portaal-naamknop-naam">{p.weergavenaam}</span>
                   <span className="portaal-zacht">{p.rol}</span>
                 </div>
-                <button className="portaal-rijknop" title="Loskoppelen" disabled={bezig} onClick={() => ontkoppel(p.id)}>✕</button>
+                <button className="portaal-rijknop" title="Loskoppelen" aria-label="Loskoppelen" disabled={bezig} onClick={() => ontkoppel(p.id)}><Icoon naam="sluiten" /></button>
               </div>
             ))}
           </div>
@@ -173,12 +174,12 @@ function LeerkrachtKoppelen({ klas, personeel, koppelingen, onGewijzigd }) {
               <option key={p.id} value={p.id}>{p.weergavenaam}</option>
             ))}
           </select>
-          <button className="portaal-knop" disabled={!keuze || bezig} onClick={() => koppel(keuze)}>
+          <Knop variant="primair" maat="sm" disabled={!keuze || bezig} onClick={() => koppel(keuze)}>
             Koppelen
-          </button>
+          </Knop>
         </div>
       )}
-      <p className="portaal-veld-hint" style={{ marginTop: 8 }}>
+      <p className="portaal-veld-hint kk-mt-2">
         Alleen gekoppelde leerkrachten zien deze klas: de leerlingen, hun resultaten en de weektaken.
         Een icter ziet altijd alle klassen van de school.
       </p>
@@ -302,7 +303,7 @@ export default function KlasInstellingen({ klas, alleKlassen, onGewijzigd, onVer
               <span className="portaal-veld-hint">Hiermee loggen de leerlingen in. Wijzig je dit, dan moeten ze de nieuwe code gebruiken.</span>
             </label>
           </div>
-          <div style={{ marginTop: 12 }}>
+          <div className="kk-mt-3">
             <span className="portaal-veld-label">Leeftijdsgroepen</span>
             <p className="portaal-veld-hint" style={{ margin: '2px 0 6px' }}>
               Bepaalt welke oefeningen je standaard te zien krijgt bij een weektaak. Niets aanvinken = alles tonen.
@@ -318,9 +319,9 @@ export default function KlasInstellingen({ klas, alleKlassen, onGewijzigd, onVer
           </div>
           {gegevensFout && <p className="portaal-fout">{gegevensFout}</p>}
           {gegevensOk && <p className="portaal-succes">{gegevensOk}</p>}
-          <button type="submit" className="portaal-knop" style={{ marginTop: 12 }} disabled={opslaanBezig}>
+          <Knop className="kk-mt-3" type="submit" variant="primair" maat="sm" disabled={opslaanBezig}>
             {opslaanBezig ? 'Bezig…' : 'Wijzigingen opslaan'}
-          </button>
+          </Knop>
         </form>
       </div>
 
@@ -343,13 +344,13 @@ export default function KlasInstellingen({ klas, alleKlassen, onGewijzigd, onVer
                 <option key={k.id} value={k.id}>{k.naam}{k.schooljaar ? ` (${k.schooljaar})` : ''}</option>
               ))}
             </select>
-            <button className="portaal-knop" disabled={!doelKlasId || verplaatsBezig} onClick={verplaatsAllemaal}>
+            <Knop variant="primair" maat="sm" disabled={!doelKlasId || verplaatsBezig} onClick={verplaatsAllemaal}>
               {verplaatsBezig ? 'Bezig…' : 'Doorschuiven'}
-            </button>
+            </Knop>
             {verplaatsMelding && <span className="portaal-succes">{verplaatsMelding}</span>}
           </div>
         )}
-        <p className="portaal-veld-hint" style={{ marginTop: 8 }}>
+        <p className="portaal-veld-hint kk-mt-2">
           Eén leerling verplaatsen doe je bij “Per leerling” met de knop “leerlingen verplaatsen”.
         </p>
       </div>
@@ -372,9 +373,9 @@ export default function KlasInstellingen({ klas, alleKlassen, onGewijzigd, onVer
               <p className="portaal-zacht">
                 De klas is leeg en kan weg. De weektaken en opdrachten van deze klas verdwijnen dan ook.
               </p>
-              <button className="portaal-knop portaal-knop-gevaar" onClick={() => setToonVerwijder(true)}>
+              <Knop variant="gevaar" maat="sm" onClick={() => setToonVerwijder(true)}>
                 Klas verwijderen
-              </button>
+              </Knop>
             </>
           ) : (
             <>
@@ -383,11 +384,11 @@ export default function KlasInstellingen({ klas, alleKlassen, onGewijzigd, onVer
                 Gemaakt werk van leerlingen blijft bewaard. Dit kan niet ongedaan gemaakt worden.
               </p>
               {verwijderFout && <p className="portaal-fout">{verwijderFout}</p>}
-              <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-                <button className="portaal-knop portaal-knop-gevaar" disabled={verwijderBezig} onClick={verwijderKlas}>
+              <div className="kk-rij kk-mt-3">
+                <Knop variant="gevaar" maat="sm" disabled={verwijderBezig} onClick={verwijderKlas}>
                   {verwijderBezig ? 'Bezig…' : `Ja, verwijder ${klas.naam}`}
-                </button>
-                <button className="portaal-knop portaal-knop-subtiel" onClick={() => setToonVerwijder(false)}>Annuleren</button>
+                </Knop>
+                <Knop variant="secundair" maat="sm" onClick={() => setToonVerwijder(false)}>Annuleren</Knop>
               </div>
             </>
           )}

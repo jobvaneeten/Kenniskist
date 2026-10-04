@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { onderdelenVan, HEEFT_ROUTE, GROEPEN } from '../games/redactiesommen.js'
+import { Knop, Icoon } from '../ui/index.jsx'
 
 // Speciale config-editor voor verhaaltjessommen — kan niet generiek via
 // OpdrachtRij's configVelden: welke doelen geldig zijn hangt cascaderend af
@@ -33,7 +34,7 @@ export default function VerhaaltjesSommenConfig({ config, onWijzig }) {
 
   return (
     <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 10 }}>
-      <div style={{ display: 'flex', gap: 10 }}>
+      <div className="kk-rij">
         <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: '0.82rem', fontWeight: 700, maxWidth: 140 }}>
           Groep
           <select value={groep} onChange={e => zetGroep(Number(e.target.value))}>
@@ -51,7 +52,7 @@ export default function VerhaaltjesSommenConfig({ config, onWijzig }) {
         )}
       </div>
 
-      <div style={{ display: 'flex', gap: 8 }}>
+      <div className="kk-rij">
         <button
           type="button"
           className={mode === 'leerlijn' ? 'portaal-tab-knop actief' : 'portaal-tab-knop'}
@@ -64,7 +65,7 @@ export default function VerhaaltjesSommenConfig({ config, onWijzig }) {
         >Per blok</button>
       </div>
 
-      <p className="portaal-leeg" style={{ margin: 0 }}>
+      <p className="portaal-leeg kk-m-0">
         Leeg = alle doelen van deze groep/route (zonder herhaling uit eerdere groepen).
         Klik een sectie open om doelen aan te vinken.
       </p>
@@ -77,20 +78,19 @@ export default function VerhaaltjesSommenConfig({ config, onWijzig }) {
         {onderdelen.map(onderdeel => {
           const keys = onderdeel.gens.map(g => g.key)
           const aantalAan = keys.filter(k => gekozen.has(k)).length
-          const vink = aantalAan === keys.length && keys.length ? '☑' : aantalAan > 0 ? '◪' : '☐'
+          const vink = aantalAan === keys.length && keys.length ? ' aan' : aantalAan > 0 ? ' deels' : ''
           return (
             <details key={onderdeel.key} className="portaal-vak-chip" style={{ padding: '8px 12px' }}>
               <summary style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', gap: 8, fontSize: '0.85rem' }}>
                 <span>{onderdeel.label}</span>
                 <span style={{ opacity: 0.65, fontWeight: 700 }}>{aantalAan}/{keys.length}</span>
               </summary>
-              <button
+              <Knop className="kk-mt-2"
                 type="button"
                 onClick={() => toggelBlok(onderdeel)}
-                className="portaal-knop portaal-knop-subtiel"
-                style={{ marginTop: 8, fontSize: '0.72rem', padding: '4px 10px' }}
-              >{vink} alles aan/uit</button>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginTop: 8 }}>
+                variant="secundair" maat="sm"
+              ><span className={`kk-vink${vink}`}>{vink && <Icoon naam="goed" />}</span>alles aan/uit</Knop>
+              <div className="kk-rij kk-mt-2">
                 {onderdeel.gens.map(g => (
                   <label key={g.key} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.78rem', opacity: g.herhaling ? 0.6 : 1, maxWidth: 260 }}>
                     <input type="checkbox" checked={gekozen.has(g.key)} onChange={() => toggelDoel(g.key)} />

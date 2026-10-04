@@ -4,6 +4,7 @@ import LeerlingLijst from './LeerlingLijst.jsx'
 import LeerlingDetail from './LeerlingDetail.jsx'
 import WeektaakTab from './WeektaakTab.jsx'
 import Werkblad from './Werkblad.jsx'
+import { TerugKnop } from '../ui/index.jsx'
 
 // De leerkracht ziet alleen wat hij zelf klaarzet: de weektaak voor de klas en
 // de taken en doelen per leerling ("Speciaal voor mij" aan de leerlingkant).
@@ -38,7 +39,7 @@ export default function KlasScherm({ klas, alleKlassen, onBack }) {
   return (
     <div className="portaal">
       <div className="portaal-inhoud">
-        <button className="portaal-terug" onClick={onBack}>← Alle klassen</button>
+        <TerugKnop vast={false} onClick={onBack}>Alle klassen</TerugKnop>
 
         <div className="portaal-klaskop">
           <div>

@@ -81,7 +81,7 @@
 }
 
 /* Portaal: zelfde tokens, minder glow. */
-.kk-rustig {
+.kk-rustig, .portaal {
   --kk-glow-sm: none;
   --kk-glow-md: none;
   --kk-primary: #4f46e5;

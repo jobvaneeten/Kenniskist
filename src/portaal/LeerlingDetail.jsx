@@ -5,6 +5,7 @@ import { toolLabel } from '../lib/tools.js'
 import FoutenLijst from './FoutenLijst.jsx'
 import Balk from './Balk.jsx'
 import { groepeerSessies, scoreKlasse, kortMoment } from './resultaatHelpers.js'
+import { Knop, Icoon } from '../ui/index.jsx'
 
 const CATEGORIE_LABELS = {
   tt: 'Tegenwoordige tijd',
@@ -62,7 +63,7 @@ function PerOnderdeel({ resultaten }) {
           }))
           .sort((a, b) => a.pct - b.pct)
         return (
-          <div key={toolId} style={{ marginBottom: 18 }}>
+          <div className="kk-mb-4" key={toolId}>
             <h3 style={{ margin: '0 0 8px', fontSize: '0.95rem' }}>{toolLabel(toolId)}</h3>
             <table className="portaal-tabel">
               <thead><tr><th>Onderdeel</th><th>Goed</th><th>Score</th></tr></thead>
@@ -178,7 +179,7 @@ function Sessies({ sessies }) {
               <td>
                 {toolLabel(s.toolId)}
                 {s.weektaak
-                  ? <span title="Weektaak-opdracht"> 📋</span>
+                  ? <span className="portaal-weektaak-icoon" title="Weektaak-opdracht"><Icoon naam="klembord" titel="Weektaak-opdracht" /></span>
                   : <span className="portaal-vrij-label"> vrij</span>}
               </td>
               <td>{s.maxScore}</td>
@@ -199,7 +200,7 @@ function Sessies({ sessies }) {
                             <td>{o.vraag ?? '—'}</td>
                             <td>{o.antwoord ?? '—'}</td>
                             <td>{o.juist ?? '—'}</td>
-                            <td>{o.goed ? '✅' : '❌'}</td>
+                            <td className={o.goed ? 'portaal-score-goed' : 'portaal-score-slecht'}><Icoon naam={o.goed ? 'goed' : 'fout'} titel={o.goed ? 'goed' : 'fout'} /></td>
                           </tr>
                         ))}
                       </tbody>
@@ -237,19 +238,19 @@ function WachtwoordResetten({ leerlingId }) {
   }
 
   if (!open) {
-    return <button className="portaal-knop portaal-knop-subtiel" onClick={() => setOpen(true)}>Wachtwoord resetten</button>
+    return <Knop variant="secundair" maat="sm" onClick={() => setOpen(true)}>Wachtwoord resetten</Knop>
   }
 
   return (
-    <form className="portaal-form" onSubmit={submit} style={{ margin: 0 }}>
+    <form className="portaal-form kk-m-0" onSubmit={submit}>
       <label>Nieuw wachtwoord
         <input type="password" value={wachtwoord} onChange={e => setWachtwoord(e.target.value)} required minLength={6} autoFocus autoComplete="new-password" />
       </label>
       {fout && <p className="portaal-fout">{fout}</p>}
       {succes && <p className="portaal-succes">{succes}</p>}
-      <div style={{ display: 'flex', gap: 8 }}>
-        <button type="submit" className="portaal-knop" disabled={bezig}>{bezig ? 'Bezig…' : 'Opslaan'}</button>
-        <button type="button" className="portaal-knop portaal-knop-subtiel" onClick={() => setOpen(false)}>Sluiten</button>
+      <div className="kk-rij">
+        <Knop type="submit" variant="primair" maat="sm" disabled={bezig}>{bezig ? 'Bezig…' : 'Opslaan'}</Knop>
+        <Knop type="button" variant="secundair" maat="sm" onClick={() => setOpen(false)}>Sluiten</Knop>
       </div>
     </form>
   )
@@ -289,7 +290,7 @@ export default function LeerlingDetail({ leerlingId }) {
       <div className="portaal-kaart">
         <div className="portaal-sectiekop">
           <div>
-            <h2 style={{ margin: 0 }}>{leerling?.weergavenaam ?? '…'}</h2>
+            <h2 className="kk-m-0">{leerling?.weergavenaam ?? '…'}</h2>
             {leerling && (
               <p className="portaal-zacht" style={{ margin: '4px 0 0' }}>
                 Inloggen met: klas <strong>{leerling.klassen?.code}</strong>, gebruikersnaam <strong>{leerling.gebruikersnaam}</strong>

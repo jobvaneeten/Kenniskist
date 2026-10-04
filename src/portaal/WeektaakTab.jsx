@@ -6,6 +6,7 @@ import WeektaakForm from './WeektaakForm.jsx'
 import WeektaakVoortgang from './WeektaakVoortgang.jsx'
 import WeektaakDifferentiatie from './WeektaakDifferentiatie.jsx'
 import { SOORT_TEKST, ZONDER_EIND } from './soortTekst.js'
+import { Knop, TerugKnop } from '../ui/index.jsx'
 
 // Weektaken, taken en doelen staan in dezelfde tabel; de soort zit in de
 // config van de opdrachten (zie soortVan in lib/weektaak.js). Bij taken en
@@ -164,45 +165,45 @@ export default function WeektaakTab({ klas, soort = 'weektaak', onKiesLeerling }
       <div className="portaal-kaart">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 10, marginBottom: 14 }}>
           <div>
-            <button className="portaal-terug" onClick={() => { setWeergave('lijst'); setGekozen(null) }} style={{ padding: 0 }}>← Alle {tekst.meervoud.toLowerCase()}</button>
+            <TerugKnop vast={false} onClick={() => { setWeergave('lijst'); setGekozen(null) }}>Alle {tekst.meervoud.toLowerCase()}</TerugKnop>
             <h2 style={{ margin: '4px 0 0' }}>{gekozen.titel}</h2>
-            <p className="portaal-leeg" style={{ margin: 0 }}>
+            <p className="portaal-leeg kk-m-0">
               {gekozen.eind_op === ZONDER_EIND
                 ? `sinds ${gekozen.start_op}`
                 : `${gekozen.start_op} t/m ${gekozen.eind_op}`}
               {gekozen.voor?.length ? ` · voor ${gekozen.voor.join(', ')}` : ''}
             </p>
           </div>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <button
-              className={alleenNietAf ? 'portaal-knop' : 'portaal-knop portaal-knop-subtiel'}
+          <div className="kk-rij">
+            <Knop
+              variant={alleenNietAf ? 'primair' : 'secundair'} maat="sm"
               onClick={() => setAlleenNietAf(v => !v)}
-            >{alleenNietAf ? 'Toon iedereen' : 'Alleen niet af'}</button>
-            <button className="portaal-knop portaal-knop-subtiel" onClick={differentieren}>Differentiëren</button>
+            >{alleenNietAf ? 'Toon iedereen' : 'Alleen niet af'}</Knop>
+            <Knop variant="secundair" maat="sm" onClick={differentieren}>Differentiëren</Knop>
             {soort === 'weektaak' && (
-              <button
-                className="portaal-knop portaal-knop-subtiel"
+              <Knop
+                variant="secundair" maat="sm"
                 onClick={() => {
                   setToonVerwijder(false); setKopieFout('')
                   setKopie(k => (k ? null : kopieVoorstel(gekozen)))
                 }}
-              >Kopiëren</button>
+              >Kopiëren</Knop>
             )}
-            <button className="portaal-knop portaal-knop-subtiel" onClick={bewerken}>Bewerken</button>
-            <button className="portaal-knop portaal-knop-subtiel" onClick={() => setToonVerwijder(v => !v)}>Verwijderen</button>
+            <Knop variant="secundair" maat="sm" onClick={bewerken}>Bewerken</Knop>
+            <Knop variant="secundair" maat="sm" onClick={() => setToonVerwijder(v => !v)}>Verwijderen</Knop>
           </div>
         </div>
 
         {kopie && (
           <div className="portaal-waarschuwing" style={{ borderColor: 'rgba(120,180,255,0.5)' }}>
-            <p className="portaal-zacht" style={{ margin: 0 }}>
+            <p className="portaal-zacht kk-m-0">
               <strong>{gekozen.titel}</strong> nog een keer klaarzetten. De opdrachten gaan mee, en ook wie
               welke opdracht krijgt, met welk eigen aantal en wie een opdracht niet hoeft te maken — de
               differentiatie blijft dus precies zoals je hem hebt ingesteld. De <strong>opgaven zelf zijn
               nieuw</strong>: sommen, woorden en zinnen worden bij het spelen gemaakt, dus je leerlingen
               krijgen andere opgaven van dezelfde soort. De voortgang begint weer op nul.
             </p>
-            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 10 }}>
+            <div className="kk-rij kk-mt-3">
               <label className="portaal-veld">
                 Titel
                 <input
@@ -229,29 +230,29 @@ export default function WeektaakTab({ klas, soort = 'weektaak', onKiesLeerling }
               <p className="portaal-fout">De einddatum ligt vóór de startdatum.</p>
             )}
             {kopieFout && <p className="portaal-fout">{kopieFout}</p>}
-            <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-              <button
-                className="portaal-knop"
+            <div className="kk-rij kk-mt-3">
+              <Knop
+                variant="primair" maat="sm"
                 disabled={kopieBezig || kopie.eindOp < kopie.startOp}
                 onClick={opslaanKopie}
-              >{kopieBezig ? 'Bezig…' : 'Kopie klaarzetten'}</button>
-              <button className="portaal-knop portaal-knop-subtiel" onClick={() => setKopie(null)}>Annuleren</button>
+              >{kopieBezig ? 'Bezig…' : 'Kopie klaarzetten'}</Knop>
+              <Knop variant="secundair" maat="sm" onClick={() => setKopie(null)}>Annuleren</Knop>
             </div>
           </div>
         )}
         {toonVerwijder && (
           <div className="portaal-waarschuwing">
-            <p className="portaal-zacht" style={{ margin: 0 }}>
+            <p className="portaal-zacht kk-m-0">
               <strong>{gekozen.titel}</strong> verwijderen? De opdrachten en de voortgang van deze {tekst.enkel}
               verdwijnen. Het gemaakte werk blijft bij de leerling bewaard, maar telt daarna als vrij oefenen
               en staat dus niet meer in het portaal. Dit kan niet ongedaan gemaakt worden.
             </p>
             {verwijderFout && <p className="portaal-fout">{verwijderFout}</p>}
-            <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-              <button className="portaal-knop portaal-knop-gevaar" disabled={verwijderBezig} onClick={verwijderWeektaak}>
+            <div className="kk-rij kk-mt-3">
+              <Knop variant="gevaar" maat="sm" disabled={verwijderBezig} onClick={verwijderWeektaak}>
                 {verwijderBezig ? 'Bezig…' : 'Definitief verwijderen'}
-              </button>
-              <button className="portaal-knop portaal-knop-subtiel" onClick={() => setToonVerwijder(false)}>Annuleren</button>
+              </Knop>
+              <Knop variant="secundair" maat="sm" onClick={() => setToonVerwijder(false)}>Annuleren</Knop>
             </div>
           </div>
         )}
@@ -268,7 +269,7 @@ export default function WeektaakTab({ klas, soort = 'weektaak', onKiesLeerling }
     <div className="portaal-kaart">
       <h2>{tekst.meervoud}</h2>
       {soort !== 'weektaak' && (
-        <p className="portaal-zacht" style={{ marginTop: 0 }}>
+        <p className="portaal-zacht kk-mt-0">
           {soort === 'taak'
             ? 'Een taak zet je voor één of een paar leerlingen klaar. Ze vinden hem bij "Speciaal voor mij".'
             : 'Een doel is een leerdoel, bv. een doel uit verhaaltjessommen of één zinsdeel. De leerling oefent erop bij "Speciaal voor mij".'}
@@ -286,7 +287,7 @@ export default function WeektaakTab({ klas, soort = 'weektaak', onKiesLeerling }
           </button>
         ))}
       </div>
-      <button className="portaal-knop" style={{ marginTop: 16 }} onClick={() => setWeergave('nieuw')}>{tekst.nieuw}</button>
+      <Knop className="kk-mt-4" variant="primair" maat="sm" onClick={() => setWeergave('nieuw')}>{tekst.nieuw}</Knop>
     </div>
   )
 }

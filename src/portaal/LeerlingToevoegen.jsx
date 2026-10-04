@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { roepWorkerAan } from '../lib/worker.js'
+import { Knop } from '../ui/index.jsx'
 
 export default function LeerlingToevoegen({ klassen, onKlaar }) {
   const [voornaam, setVoornaam] = useState('')
@@ -57,9 +58,9 @@ export default function LeerlingToevoegen({ klassen, onKlaar }) {
         )}
         {fout && <p className="portaal-fout">{fout}</p>}
         {succes && <p className="portaal-succes">{succes}</p>}
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button type="submit" className="portaal-knop" disabled={bezig || klassen.length === 0}>{bezig ? 'Bezig…' : 'Aanmaken'}</button>
-          <button type="button" className="portaal-knop portaal-knop-subtiel" onClick={onKlaar}>Sluiten</button>
+        <div className="kk-rij">
+          <Knop type="submit" variant="primair" maat="sm" disabled={bezig || klassen.length === 0}>{bezig ? 'Bezig…' : 'Aanmaken'}</Knop>
+          <Knop type="button" variant="secundair" maat="sm" onClick={onKlaar}>Sluiten</Knop>
         </div>
       </form>
     </div>

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase.js'
+import { Knop } from '../ui/index.jsx'
 
 function Verplaatsen({ klas, alleKlassen, geselecteerd, onKlaar }) {
   const [doelKlasId, setDoelKlasId] = useState('')
@@ -24,9 +25,9 @@ function Verplaatsen({ klas, alleKlassen, geselecteerd, onKlaar }) {
           <option key={k.id} value={k.id}>{k.naam}{k.schooljaar ? ` (${k.schooljaar})` : ''}</option>
         ))}
       </select>
-      <button className="portaal-knop portaal-knop-subtiel" disabled={!doelKlasId || bezig} onClick={verplaats}>
+      <Knop variant="secundair" maat="sm" disabled={!doelKlasId || bezig} onClick={verplaats}>
         Verplaatsen
-      </button>
+      </Knop>
       {melding && <span className="portaal-fout">{melding}</span>}
     </div>
   )

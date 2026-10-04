@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase.js'
 import { TOOL_BY_ID } from '../lib/tools.js'
+import { Knop, TerugKnop } from '../ui/index.jsx'
 
 const cellKey = (opdrachtId, leerlingId) => `${opdrachtId}:${leerlingId}`
 
@@ -102,10 +103,10 @@ export default function WeektaakDifferentiatie({ schoolId, klasId, opdrachten, o
   return (
     <div className="portaal-kaart">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, gap: 10, flexWrap: 'wrap' }}>
-        <h2 style={{ margin: 0 }}>Differentiëren</h2>
-        <button className="portaal-terug" onClick={onTerug} style={{ padding: 0 }}>← Terug</button>
+        <h2 className="kk-m-0">Differentiëren</h2>
+        <TerugKnop vast={false} onClick={onTerug}>Terug</TerugKnop>
       </div>
-      <p className="portaal-leeg" style={{ marginTop: 0 }}>
+      <p className="portaal-leeg kk-mt-0">
         Vink per leerling aan welke opdrachten hij krijgt. Vul een eigen aantal in om af te wijken van het standaard-aantal.
       </p>
 
@@ -120,11 +121,10 @@ export default function WeektaakDifferentiatie({ schoolId, klasId, opdrachten, o
                   <th key={o.id}>
                     {TOOL_BY_ID[o.tool_id]?.label ?? o.tool_id}
                     <br />
-                    <button
-                      type="button" className="portaal-knop portaal-knop-subtiel"
-                      style={{ fontSize: '0.68rem', padding: '2px 8px', marginTop: 4 }}
+                    <Knop className="kk-mt-1"
+                      type="button" variant="secundair" maat="sm"
                       onClick={() => alleAanUit(o.id)}
-                    >alles aan/uit</button>
+                    >alles aan/uit</Knop>
                   </th>
                 ))}
               </tr>
@@ -160,9 +160,9 @@ export default function WeektaakDifferentiatie({ schoolId, klasId, opdrachten, o
 
       {fout && <p className="portaal-fout">{fout}</p>}
       {succes && <p className="portaal-succes">{succes}</p>}
-      <button className="portaal-knop" style={{ marginTop: 14 }} disabled={bezig} onClick={opslaan}>
+      <Knop className="kk-mt-4" variant="primair" maat="sm" disabled={bezig} onClick={opslaan}>
         {bezig ? 'Bezig…' : 'Opslaan'}
-      </button>
+      </Knop>
     </div>
   )
 }

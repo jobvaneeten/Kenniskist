@@ -1,5 +1,6 @@
 import { TOOL_BY_ID, VAKKEN } from '../lib/tools.js'
 import VerhaaltjesSommenConfig from './VerhaaltjesSommenConfig.jsx'
+import { Knop } from '../ui/index.jsx'
 
 // Eén opdrachtregel binnen een weektaak-formulier: wat de leerling gaat doen,
 // hoeveel, en de instellingen van die tool. `opdracht` is het lokale
@@ -40,7 +41,7 @@ export default function OpdrachtRij({ opdracht, nummer, onWijzig, onVerwijder })
           <strong>{info.label}</strong>
           <span className="portaal-zacht">{vakLabel} · {samenvatting}</span>
         </div>
-        <button type="button" className="portaal-knop portaal-knop-subtiel" onClick={onVerwijder}>Verwijderen</button>
+        <Knop type="button" variant="secundair" maat="sm" onClick={onVerwijder}>Verwijderen</Knop>
       </div>
 
       <div className="portaal-opdracht-velden">
@@ -148,7 +149,7 @@ export default function OpdrachtRij({ opdracht, nummer, onWijzig, onVerwijder })
                 })}
               </div>
               {veld.min > 0 && gekozen.size < veld.min && (
-                <p className="portaal-fout" style={{ marginTop: 4 }}>Kies er minstens {veld.min}.</p>
+                <p className="portaal-fout kk-mt-1">Kies er minstens {veld.min}.</p>
               )}
             </div>
           )

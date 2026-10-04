@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase.js'
 import { roepWorkerAan } from '../lib/worker.js'
 import { useSessie } from '../lib/sessie.jsx'
+import { Knop } from '../ui/index.jsx'
 
 export default function AdminScholen() {
   const { profiel, uitloggen } = useSessie()
@@ -48,7 +49,7 @@ export default function AdminScholen() {
           <h1>Kenniskist — beheer</h1>
           <div className="portaal-header-rechts">
             <span>{profiel?.weergavenaam}</span>
-            <button className="portaal-knop portaal-knop-subtiel" onClick={uitloggen}>Uitloggen</button>
+            <Knop variant="secundair" maat="sm" onClick={uitloggen}>Uitloggen</Knop>
           </div>
         </header>
 
@@ -87,7 +88,7 @@ export default function AdminScholen() {
             </label>
             {fout && <p className="portaal-fout">{fout}</p>}
             {succes && <p className="portaal-succes">{succes}</p>}
-            <button type="submit" className="portaal-knop" disabled={bezig}>{bezig ? 'Bezig…' : 'Aanmaken'}</button>
+            <Knop type="submit" variant="primair" maat="sm" disabled={bezig}>{bezig ? 'Bezig…' : 'Aanmaken'}</Knop>
           </form>
         </div>
       </div>

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { VAKKEN, toolsVoorGroepen } from '../lib/tools.js'
+import { Knop, TerugKnop } from '../ui/index.jsx'
 
 // Kiest een concrete tool_id voor een nieuwe opdracht, in stapjes: eerst een
 // vak, dan een oefening, en bij families met varianten (dictee, Duurzaam
@@ -27,19 +28,19 @@ export default function ToolKiezer({ klasGroepen, onKies, onSluiten }) {
   const kop = (titel, terug) => (
     <div className="portaal-sectiekop">
       <div>
-        <h2 style={{ margin: 0 }}>{titel}</h2>
-        {terug && <button type="button" className="portaal-terug" style={{ padding: '4px 0 0' }} onClick={terug}>← een stap terug</button>}
+        <h2 className="kk-m-0">{titel}</h2>
+        {terug && <TerugKnop vast={false} onClick={terug}>Een stap terug</TerugKnop>}
       </div>
-      <button type="button" className="portaal-knop portaal-knop-subtiel" onClick={onSluiten}>Sluiten</button>
+      <Knop type="button" variant="secundair" maat="sm" onClick={onSluiten}>Sluiten</Knop>
     </div>
   )
 
   // Stap 3: welke variant (blok, les, level)
   if (familie) {
     return (
-      <div className="portaal-kaart" style={{ marginTop: 10 }}>
+      <div className="portaal-kaart kk-mt-3">
         {kop(familie.label, () => setFamilie(null))}
-        <p className="portaal-leeg" style={{ marginTop: 0 }}>Kies welke je klaarzet.</p>
+        <p className="portaal-leeg kk-mt-0">Kies welke je klaarzet.</p>
         <div className="portaal-naamlijst">
           {familie.varianten.map(v => (
             <div key={v.toolId} className="portaal-naamrij">
@@ -57,7 +58,7 @@ export default function ToolKiezer({ klasGroepen, onKies, onSluiten }) {
   if (vak) {
     const vakFamilies = families.filter(f => f.vak === vak.key)
     return (
-      <div className="portaal-kaart" style={{ marginTop: 10 }}>
+      <div className="portaal-kaart kk-mt-3">
         {kop(vak.label, () => setVak(null))}
         {vakFamilies.length === 0 && (
           <p className="portaal-leeg">
@@ -84,10 +85,10 @@ export default function ToolKiezer({ klasGroepen, onKies, onSluiten }) {
   // Stap 1: welk vak
   const metAantal = VAKKEN.map(v => ({ ...v, aantal: families.filter(f => f.vak === v.key).length }))
   return (
-    <div className="portaal-kaart" style={{ marginTop: 10 }}>
+    <div className="portaal-kaart kk-mt-3">
       {kop('Voor welk vak?', null)}
       {!toonAlles && klasGroepen?.length > 0 && (
-        <p className="portaal-leeg" style={{ marginTop: 0 }}>
+        <p className="portaal-leeg kk-mt-0">
           Je ziet de oefeningen voor groep {klasGroepen.join(', ')} van deze klas.{' '}
           <button type="button" className="portaal-minilink" onClick={() => setToonAlles(true)}>Toon alle groepen</button>
         </p>

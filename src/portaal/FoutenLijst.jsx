@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { toolLabel } from '../lib/tools.js'
 import { verzamelFouten, kortMoment } from './resultaatHelpers.js'
+import { Knop, Icoon } from '../ui/index.jsx'
 
 // Alle fout gemaakte opgaven op één rij per stuk: wat er gevraagd werd, wat de
 // leerling invulde en wat juist was. Geen uitklappen — dit is waar een
@@ -32,7 +33,7 @@ export default function FoutenLijst({ rijen, limiet = 40 }) {
   return (
     <>
       {oefeningen.length > 1 && (
-        <div className="portaal-datumfilter" style={{ marginBottom: 12 }}>
+        <div className="portaal-datumfilter kk-mb-3">
           <button
             type="button"
             className={oefening === 'alles' ? 'portaal-datumfilter-knop actief' : 'portaal-datumfilter-knop'}
@@ -67,7 +68,7 @@ export default function FoutenLijst({ rijen, limiet = 40 }) {
               <td className="portaal-score-goed">{f.juist ?? '—'}</td>
               <td>
                 {toolLabel(f.toolId)}
-                {f.weektaak && <span title="Gemaakt als weektaak-opdracht"> 📋</span>}
+                {f.weektaak && <span className="portaal-weektaak-icoon" title="Gemaakt als weektaak-opdracht"><Icoon naam="klembord" titel="Weektaak-opdracht" /></span>}
               </td>
               <td>{kortMoment(f.tijd)}</td>
             </tr>
@@ -76,9 +77,9 @@ export default function FoutenLijst({ rijen, limiet = 40 }) {
       </table>
 
       {gefilterd.length > zichtbaar.length && (
-        <button className="portaal-knop portaal-knop-subtiel" style={{ marginTop: 12 }} onClick={() => setToonAlles(true)}>
+        <Knop className="kk-mt-3" variant="secundair" maat="sm" onClick={() => setToonAlles(true)}>
           Toon alle {gefilterd.length} fouten
-        </button>
+        </Knop>
       )}
     </>
   )

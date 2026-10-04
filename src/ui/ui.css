@@ -102,6 +102,7 @@ button.kk-kaart:disabled { opacity: 0.45; cursor: not-allowed; }
 
 /* ── Terugknop ────────────────────────────────────────── */
 .kk-terug { background: rgba(10,10,30,0.75); backdrop-filter: blur(12px); padding-left: var(--kk-s3); }
+.kk-terug:not(.kk-terug--vast) { align-self: flex-start; }
 .kk-terug.kk-terug--vast, .game-screen > .kk-terug--vast { position: fixed; top: var(--kk-s4); left: var(--kk-s4); z-index: 150; }
 
 /* ── Vaste hoekposities (uitloggen, code, …) ──────────── */
@@ -139,3 +140,19 @@ button.kk-kaart:disabled { opacity: 0.45; cursor: not-allowed; }
 .kk-vink svg { width: 14px; height: 14px; stroke-width: 3; }
 .kk-vink.aan { background: var(--kk-accent, var(--kk-primary-hi)); border-color: var(--kk-accent, var(--kk-primary-hi)); }
 .kk-vink.deels { background: color-mix(in srgb, var(--kk-accent, var(--kk-primary-hi)) 45%, transparent); border-color: var(--kk-accent, var(--kk-primary-hi)); }
+
+/* ── Kleine layout-hulpjes (in plaats van losse inline styles) ──
+   Marges met !important: ze vervangen inline styles en moeten dus net zo
+   sterk zijn als die waren. */
+.kk-rij { display: flex; gap: var(--kk-s2); flex-wrap: wrap; align-items: center; }
+.kk-rij-ruim { gap: var(--kk-s3); }
+.kk-kolom { display: flex; flex-direction: column; gap: 6px; }
+.kk-m-0 { margin: 0 !important; }
+.kk-mt-0 { margin-top: 0 !important; }
+.kk-mt-1 { margin-top: var(--kk-s1) !important; }
+.kk-mt-2 { margin-top: var(--kk-s2) !important; }
+.kk-mt-3 { margin-top: var(--kk-s3) !important; }
+.kk-mt-4 { margin-top: var(--kk-s4) !important; }
+.kk-mb-0 { margin-bottom: 0 !important; }
+.kk-mb-3 { margin-bottom: var(--kk-s3) !important; }
+.kk-mb-4 { margin-bottom: var(--kk-s4) !important; }
