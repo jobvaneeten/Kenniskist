@@ -487,3 +487,16 @@
 .wb-deelrij-titel { flex: 1; min-width: 200px; }
 .wb-deelrij-aantal { display: flex; align-items: center; gap: 6px; }
 .wb-deelrij-aantal input { width: 64px; min-height: 36px; padding: 4px 8px; border-radius: var(--kk-r-sm); border: 1px solid var(--kk-border-strong); background: rgba(255,255,255,0.06); color: var(--kk-text); font: inherit; }
+
+/* Doelkiezer met aanvinken (werkblad) */
+.portaal-vinkknop { flex-direction: row; align-items: center; gap: 10px; }
+.portaal-vinkknop.aan { border-color: var(--kk-primary-hi); background: color-mix(in srgb, var(--kk-primary) 22%, transparent); }
+.portaal-vinkknop .kk-vink { --kk-accent: var(--kk-primary); }
+.portaal-keuzebalk {
+  position: sticky; bottom: 12px; z-index: 5;
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  margin-top: 14px; padding: 10px 12px 10px 16px;
+  border-radius: var(--kk-r-md); border: 1px solid var(--kk-primary-hi);
+  background: var(--kk-surface-solid); box-shadow: var(--kk-shadow);
+}
+.portaal-keuzebalk-tekst { flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 2px; }

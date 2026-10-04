@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import DoelKiezer from './DoelKiezer.jsx'
-import { kanOpWerkblad, maakWerkbladOpgaven } from '../lib/werkblad.js'
+import { kanOpWerkblad, maakWerkbladDeel } from '../lib/werkblad.js'
 import { Figuur } from '../games/VerhaaltjesSommen.jsx'
 import { TOOL_BY_ID } from '../lib/tools.js'
 import { Knop, Icoon } from '../ui/index.jsx'
@@ -256,20 +256,25 @@ function SectieKop({ d, i, st }) {
 
 export default function Werkblad({ klas }) {
   const [titel, setTitel] = useState('Werkblad')
-  const [delen, setDelen] = useState([])          // [{ id, toolId, config, titel, aantal, opgaven }]
+  // Eén onderdeel kan meerdere doelen hebben (komma's + aanhalingstekens);
+  // de opgaven worden dan eerlijk over die doelen verdeeld.
+  const [delen, setDelen] = useState([])          // [{ id, doelen: [{ toolId, config, titel }], titel, aantal, opgaven }]
   const [toonKiezer, setToonKiezer] = useState(true)
   const werkbladRef = useRef(null)
   const antwoordRef = useRef(null)
 
-  const voegToe = ({ toolId, config, titel: t }) => {
+  const voegToe = ({ doelen, toolId, config, titel: t }) => {
+    const ds = doelen ?? [{ toolId, config, titel: t }]
+    // Met meer doelen ook meer opgaven, zodat elk doel er een paar krijgt.
+    const aantal = Math.min(30, Math.max(STANDAARD_AANTAL, ds.length * 4))
     setDelen(prev => [...prev, {
-      id: `${Date.now()}-${prev.length}`, toolId, config, titel: t, aantal: STANDAARD_AANTAL,
-      opgaven: maakWerkbladOpgaven({ toolId, config }, STANDAARD_AANTAL),
+      id: `${Date.now()}-${prev.length}`, doelen: ds, titel: t, aantal,
+      opgaven: maakWerkbladDeel(ds, aantal),
     }])
     setToonKiezer(false)
   }
   const ververs = (id, aantal) => setDelen(prev => prev.map(d => d.id !== id ? d
-    : { ...d, aantal: aantal ?? d.aantal, opgaven: maakWerkbladOpgaven(d, aantal ?? d.aantal) }))
+    : { ...d, aantal: aantal ?? d.aantal, opgaven: maakWerkbladDeel(d.doelen, aantal ?? d.aantal) }))
   const verwijder = (id) => setDelen(prev => prev.filter(d => d.id !== id))
   const verschuif = (id, stap) => setDelen(prev => {
     const i = prev.findIndex(d => d.id === id), j = i + stap
@@ -309,8 +314,10 @@ export default function Werkblad({ klas }) {
       <div className="portaal-kaart">
         <h2 className="kk-mt-0">Werkblad maken</h2>
         <p className="portaal-zacht">
-          Kies de doelen die op het werkblad komen. De opgaven komen uit dezelfde oefeningen als op de iPad,
-          elke keer nieuw. Klokkijken, topografie en het dictee kunnen niet op papier.
+          Kies de doelen die op het werkblad komen. Vink je er meer aan (bijvoorbeeld komma's en
+          aanhalingstekens), dan worden ze samen één onderdeel en verdeelt het werkblad de opgaven eerlijk.
+          De opgaven komen uit dezelfde oefeningen als op de iPad, elke keer nieuw. Klokkijken, topografie
+          en het dictee kunnen niet op papier.
         </p>
         <div className="portaal-veldrij">
           <label className="portaal-veld portaal-veld-breed" style={{ maxWidth: 420 }}>
@@ -353,7 +360,7 @@ export default function Werkblad({ klas }) {
         )}
         {toonKiezer && (
           <DoelKiezer
-            klasGroepen={klas.groepen} alleen={kanOpWerkblad} titel="Doel op het werkblad"
+            klasGroepen={klas.groepen} alleen={kanOpWerkblad} titel="Doelen op het werkblad" meerdere
             onKies={voegToe} onSluiten={() => setToonKiezer(false)}
           />
         )}
@@ -379,7 +386,7 @@ export default function Werkblad({ klas }) {
               </div>
 
               {delen.map((d, i) => {
-                const st = stijlVan(d.toolId)
+                const st = stijlVan(d.doelen[0].toolId)
                 const koppen = [...new Set(d.opgaven.map(o => o.kop).filter(Boolean))]
                 const kaal = d.opgaven.length > 0 && d.opgaven.every(o => o.kaal)
                 return (
@@ -424,7 +431,7 @@ export default function Werkblad({ klas }) {
                 </div>
               </div>
               {delen.map((d, i) => {
-                const st = stijlVan(d.toolId)
+                const st = stijlVan(d.doelen[0].toolId)
                 const langste = Math.max(0, ...d.opgaven.map(o => String(o.antwoord).length))
                 const kolommen = langste > 34 ? ' een' : langste > 14 ? ' twee' : ''
                 return (

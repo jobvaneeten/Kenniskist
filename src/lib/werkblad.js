@@ -165,3 +165,16 @@ export function maakWerkbladOpgaven({ toolId, config = {} }, n) {
     default: return []
   }
 }
+
+// Eén onderdeel met meerdere doelen ("komma's + aanhalingstekens"): de
+// opgaven worden eerlijk verdeeld (8 over 2 doelen = 4 + 4; een rest gaat naar
+// de eerste doelen). Zijn het doelen uit dezelfde oefening, dan komen ze door
+// elkaar te staan; anders blijven ze per doel bij elkaar, elk met zijn eigen
+// opdrachtregel.
+export function maakWerkbladDeel(doelen, n) {
+  const k = doelen.length
+  if (k === 1) return maakWerkbladOpgaven(doelen[0], n)
+  const delen = doelen.map((d, i) => maakWerkbladOpgaven(d, Math.floor(n / k) + (i < n % k ? 1 : 0)))
+  const families = new Set(doelen.map(d => TOOL_BY_ID[d.toolId]?.familie))
+  return families.size === 1 ? schud(delen.flat()) : delen.flat()
+}
