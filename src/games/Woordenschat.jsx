@@ -4,6 +4,7 @@ import SpelBeloning, { BRIEFGELD } from './SpelBeloning'
 import { useGebruikOpdracht } from './gebruikOpdracht.js'
 import OpdrachtKlaarScherm from './OpdrachtKlaarScherm.jsx'
 import './taal-oefenen.css'
+import { TerugKnop, Icoon } from '../ui/index.jsx'
 
 // Woordenschat per blok (blok 1 = thema 1, les 2/7/12; blok 2-8 = thema 2-8,
 // week 1-3) — alle 45 woorden van het blok door elkaar. Vier vraagvormen per woord, zodat hetzelfde begrip niet elke keer
@@ -186,21 +187,21 @@ export default function Woordenschat({ blok = 1, onBack, addBriefgeld, addCurunt
   return (
     <div className="tv-screen">
       <div className="tv-top-bar">
-        <button className="tv-back" onClick={onBack}>← Stop</button>
+        <TerugKnop onClick={onBack}>Stoppen</TerugKnop>
         <div className="tv-progress">
-          <span className="tv-score-badge">✓ {correctCount}</span>
+          <span className="tv-score-badge"><Icoon naam="goed" />{correctCount}</span>
           <span className="tv-reward-meter">
             <span className="tv-reward-track">
               <span className="tv-reward-fill" style={{ width: `${(naarBeloning / GOED_VOOR_REWARD) * 100}%` }} />
             </span>
-            <span className="tv-reward-tekst">nog {GOED_VOOR_REWARD - naarBeloning} 🚀</span>
+            <span className="tv-reward-tekst">nog {GOED_VOOR_REWARD - naarBeloning}</span>
           </span>
         </div>
       </div>
 
       <div className="tv-werk">
         <div className={`tv-card ${feedback ? (feedback.correct ? 'tv-card-correct' : 'tv-card-wrong') : ''}`}>
-          <p className="tv-mode-label">📓 Woordenschat · blok {blok} · {deelNaam(huidig)}</p>
+          <p className="tv-mode-label">Woordenschat · blok {blok} · {deelNaam(huidig)}</p>
           <div className={isZin ? 'tv-zin' : `tv-ws-kop${vraag.soort === 'betekenis' || vraag.soort === 'tegen' ? ' tv-ws-begrip' : ''}`}>
             {isZin
               ? <ZinMetGat zin={huidig.zin} ingevuld={feedback ? vraag.juist : null} />
@@ -219,7 +220,7 @@ export default function Woordenschat({ blok = 1, onBack, addBriefgeld, addCurunt
               className={`tv-hint-btn${hintOpen ? ' tv-hint-btn-open' : ''}`}
               onClick={() => setHintOpen(v => !v)}
             >
-              {hintOpen ? '💡 Hint verbergen' : `💡 Hint — woordenlijst van ${deelNaam(huidig)}`}
+              <Icoon naam="lamp" />{hintOpen ? 'Hint verbergen' : `Hint — woordenlijst van ${deelNaam(huidig)}`}
             </button>
             {hintOpen && (
               <div className="tv-hint-lijst">
@@ -255,7 +256,7 @@ export default function Woordenschat({ blok = 1, onBack, addBriefgeld, addCurunt
 
         {feedback && (
           <div className={`tv-feedback ${feedback.correct ? 'tv-feedback-correct' : 'tv-feedback-wrong'}`}>
-            <span className="tv-feedback-icon">{feedback.correct ? '✓' : '✗'}</span>
+            <span className="tv-feedback-icon"><Icoon naam={feedback.correct ? 'goed' : 'fout'} /></span>
             <div>
               <p className="tv-feedback-uitleg"><strong>{huidig.woord}</strong> — {huidig.uitleg}</p>
             </div>

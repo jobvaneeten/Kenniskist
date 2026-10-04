@@ -2,18 +2,27 @@
   position: fixed; inset: 0; z-index: 50;
   display: flex; flex-direction: column; align-items: center;
   padding: 14px 14px 18px;
-  background: radial-gradient(120% 90% at 50% -10%, #20305c 0%, #131a36 45%, #0a0e22 100%);
-  color: #fff; font-family: inherit; overflow-y: auto;
+  --kk-accent: var(--kk-vak-rekenen);
+  background: var(--kk-bg) url('/achtergrond.png') center / cover no-repeat;
+  color: var(--kk-text); font-family: var(--kk-body); overflow-y: auto;
   user-select: none; -webkit-user-select: none; touch-action: none;
 }
 
-.pbk-head { text-align: center; margin: 34px 0 10px; max-width: 640px; }
-.pbk-head h1 { margin: 0; font-family: var(--kk-head, 'Nunito', sans-serif); font-weight: 800; font-size: clamp(19px, 4.6vw, 28px); }
-.pbk-head p { margin: 6px 0 0; opacity: .8; font-size: clamp(12px, 3vw, 15px); }
+.pbk-head { text-align: center; margin: 48px 0 10px; max-width: 640px; display: flex; flex-direction: column; align-items: center; gap: var(--kk-s2); }
+.pbk-icon {
+  width: 52px; height: 52px; display: grid; place-items: center;
+  border-radius: var(--kk-r-md);
+  color: var(--kk-accent);
+  background: color-mix(in srgb, var(--kk-accent) 16%, rgba(10,10,30,0.6));
+  border: 1px solid color-mix(in srgb, var(--kk-accent) 40%, transparent);
+}
+.pbk-icon svg { width: 28px; height: 28px; }
+.pbk-head h1 { margin: 0; font: var(--kk-fw-bold) clamp(1.3rem, 4.6vw, var(--kk-fs-xl))/1.15 var(--kk-head); color: var(--kk-text); text-shadow: 0 0 24px var(--kk-primary-glow); }
+.pbk-head p { margin: 0; color: var(--kk-text-soft); font-size: clamp(12px, 3vw, 15px); }
 .pbk-stats { display: flex; gap: 14px; justify-content: center; margin-top: 10px; }
 .pbk-stats span {
-  background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.14);
-  border-radius: 999px; padding: 4px 13px; font-size: 13px; font-weight: 700;
+  background: rgba(10,10,30,0.75); border: 1px solid var(--kk-border);
+  border-radius: var(--kk-r-pill); padding: 4px 13px; font-size: var(--kk-fs-xs); font-weight: var(--kk-fw-bold); color: var(--kk-text-soft);
 }
 
 /* ── Doel-vakjes ───────────────────────────────────────── */
@@ -25,18 +34,18 @@
 
 .pbk-box {
   position: relative;
-  background: linear-gradient(160deg, rgba(255,255,255,.10), rgba(255,255,255,.03));
-  border: 2px solid rgba(255,255,255,.16); border-radius: 16px;
+  background: rgba(14, 12, 34, 0.82);
+  border: 1px solid var(--kk-border); border-top: 3px solid var(--kk-accent); border-radius: var(--kk-r-lg);
   padding: 12px 10px; display: flex; flex-direction: column; align-items: center; gap: 9px;
   transition: border-color .2s, transform .2s, box-shadow .2s;
 }
 .pbk-box-done {
-  border-color: #34d27a; box-shadow: 0 0 22px rgba(52,210,122,.45);
-  background: linear-gradient(160deg, rgba(52,210,122,.22), rgba(52,210,122,.05));
+  border-color: var(--kk-success); box-shadow: 0 0 22px rgba(34,197,94,.35);
+  background: color-mix(in srgb, var(--kk-success) 14%, rgba(14,12,34,0.85));
 }
 .pbk-box-pct {
   font-size: clamp(22px, 6vw, 34px); font-weight: 900; letter-spacing: .5px;
-  color: #ffe066; text-shadow: 0 2px 8px rgba(0,0,0,.4);
+  font-family: var(--kk-head); color: var(--kk-accent);
 }
 .pbk-slots { display: flex; flex-direction: column; gap: 7px; width: 100%; }
 .pbk-slot {
@@ -46,10 +55,11 @@
 }
 .pbk-slot.filled { border-style: solid; border-color: transparent; background: transparent; }
 .pbk-slot-hint { font-size: 11px; opacity: .55; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+.pbk-check svg { width: 18px; height: 18px; stroke-width: 3; }
 .pbk-check {
   position: absolute; top: -10px; right: -10px; width: 30px; height: 30px;
-  background: #34d27a; color: #06301a; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 18px;
+  background: var(--kk-success); color: #052e16; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
   box-shadow: 0 3px 10px rgba(0,0,0,.4); animation: pbk-pop .3s ease;
 }
 
@@ -57,20 +67,20 @@
 .pbk-tray {
   display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;
   width: 100%; max-width: 620px; margin-top: 16px;
-  padding: 14px 12px; border-radius: 16px;
-  background: rgba(0,0,0,.28); border: 1px solid rgba(255,255,255,.1);
+  padding: 14px 12px; border-radius: var(--kk-r-lg);
+  background: rgba(14, 12, 34, 0.72); border: 1px solid var(--kk-border);
   min-height: 64px;
 }
 
 /* ── Chips ─────────────────────────────────────────────── */
 .pbk-chip {
-  font-family: inherit; font-weight: 800; font-size: clamp(16px, 4.5vw, 21px);
-  border: none; border-radius: 12px; padding: 9px 16px; cursor: grab;
+  font-family: var(--kk-body); font-weight: 800; font-size: clamp(16px, 4.5vw, 21px);
+  border: none; border-radius: var(--kk-r-sm); padding: 9px 16px; cursor: grab;
   color: #fff; box-shadow: 0 4px 0 rgba(0,0,0,.28), 0 6px 14px rgba(0,0,0,.3);
   touch-action: none;
 }
-.pbk-chip.breuk { background: linear-gradient(160deg, #4aa3ff, #2b6fd0); }
-.pbk-chip.deci  { background: linear-gradient(160deg, #c07bff, #8a3fd0); }
+.pbk-chip.breuk { background: #2563eb; }
+.pbk-chip.deci  { background: var(--kk-primary); }
 .pbk-chip.placed { box-shadow: none; padding: 7px 14px; cursor: default; font-size: clamp(15px, 4vw, 19px); }
 .pbk-chip.pbk-dragging-src { opacity: .25; }
 .pbk-float { position: fixed; transform: translate(-50%, -50%); z-index: 200; pointer-events: none; cursor: grabbing; }
@@ -90,10 +100,13 @@
 }
 .pbk-celebrate-box {
   text-align: center; font-size: clamp(22px, 6vw, 34px); font-weight: 900; line-height: 1.4;
-  background: linear-gradient(160deg, #1e2b54, #0e1430); padding: 26px 38px; border-radius: 20px;
-  border: 2px solid #ffe066; box-shadow: 0 0 40px rgba(255,224,102,.4); animation: pbk-pop .35s ease;
+  display: flex; align-items: center; gap: var(--kk-s3);
+  font-family: var(--kk-head);
+  background: var(--kk-surface-solid); padding: 26px 38px; border-radius: var(--kk-r-lg);
+  border: 1px solid rgba(255,210,63,0.6); box-shadow: 0 0 40px rgba(255,210,63,.35); animation: pbk-pop .35s ease;
 }
-.pbk-celebrate-box span { font-size: .7em; color: #ffe066; }
+.pbk-celebrate-box svg { width: 36px; height: 36px; color: var(--kk-gold); }
+.pbk-celebrate-box span { font-size: .7em; color: var(--kk-gold); }
 @keyframes pbk-fade { from { opacity: 0; } to { opacity: 1; } }
 
 /* Beloning-keuze wrapper (hergebruikt de ws-* stijlen uit werkwoord-spelling.css) */

@@ -3,7 +3,7 @@ import { THEMAS } from './begrijpendLezenData'
 import SpelBeloning from './SpelBeloning'
 import MenuScene from '../MenuScenes'
 import './dictee-thema.css'
-import { TerugKnop } from '../ui/index.jsx'
+import { TerugKnop, Icoon } from '../ui/index.jsx'
 
 // startLes: alleen gezet vanuit een weektaak-opdracht (toolRender.jsx) — het
 // lesnummer (1-5) binnen het enige thema "spullen". Springt direct naar die
@@ -64,11 +64,11 @@ export default function BegrijpendLezen({ onBack, addBriefgeld, addCuruntie, sta
       <div className="game-screen game-screen-center">
         <TerugKnop onClick={() => setThema(null)} />
         <div className="game-header">
-          <span className="game-header-icon" style={{ color: thema.kleur }}>{thema.emoji}</span>
+          <span className="game-header-icon" style={{ '--kk-accent': thema.kleur }}><Icoon naam="lezen" /></span>
           <h1 className="game-header-title">{thema.naam}</h1>
           <p className="game-header-sub">Kies een les</p>
         </div>
-        <div className="blok-grid">
+        <div className="blok-grid" style={{ '--kk-accent': thema.kleur }}>
           {thema.lessen.map(l => (
             <button
               key={l.key}
@@ -78,7 +78,7 @@ export default function BegrijpendLezen({ onBack, addBriefgeld, addCuruntie, sta
             >
               <MenuScene name="begrijpend" />
               <span className="blok-num">{l.naam}</span>
-              <span className="blok-tag">{l.klaar ? '✅ Klaar' : '🚧 binnenkort'}</span>
+              <span className="blok-tag">{l.klaar ? 'Klaar' : 'Binnenkort'}</span>
             </button>
           ))}
         </div>
@@ -90,7 +90,7 @@ export default function BegrijpendLezen({ onBack, addBriefgeld, addCuruntie, sta
     <div className="game-screen game-screen-center">
       <TerugKnop onClick={onBack} />
       <div className="game-header">
-        <span className="game-header-icon" style={{ color: '#06D6A0' }}>📚</span>
+        <span className="game-header-icon" style={{ '--kk-accent': 'var(--kk-vak-lezen)' }}><Icoon naam="lezen" /></span>
         <h1 className="game-header-title">Begrijpend Lezen</h1>
         <p className="game-header-sub">Kies een thema</p>
       </div>
@@ -103,9 +103,9 @@ export default function BegrijpendLezen({ onBack, addBriefgeld, addCuruntie, sta
             style={{ '--bl-kleur': t.kleur }}
           >
             <MenuScene name="begrijpend" />
-            <span className="mode-name">{t.emoji} {t.naam}</span>
+            <span className="mode-name">{t.naam}</span>
             <span className="mode-desc">{t.lessen.length} lessen</span>
-            <span className="bl-thema-go">Start →</span>
+            <span className="bl-thema-go">Start</span>
           </button>
         ))}
       </div>

@@ -1,297 +1,191 @@
-/* ===== Werkwoordspelling — Spelling thema (paars) ===== */
+/* ===== Werkwoordspelling — huisstijl-tokens, vakkleur spelling als accent =====
+   Elke tijd houdt zijn eigen kleur (tt blauw, vt oranje, vd groen): dat is
+   leerinhoud, geen versiering. */
 
+.ws-wrap, .ws-catsel-screen, .ws-overzicht { --kk-accent: var(--kk-vak-spelling); }
 .ws-wrap {
   min-height: 100vh;
-  background:
-    radial-gradient(ellipse 55% 45% at 18% 12%, rgba(232,168,245,0.18) 0%, transparent 60%),
-    radial-gradient(ellipse 50% 45% at 85% 20%, rgba(124,58,237,0.28) 0%, transparent 60%),
-    radial-gradient(ellipse 55% 50% at 80% 90%, rgba(56,189,248,0.14) 0%, transparent 60%),
-    linear-gradient(160deg, #3b1a5f 0%, #25103f 60%, #160726 100%);
-  background-size: 200% 200%, 200% 200%, 200% 200%, 100% 100%;
-  animation: ws-bg 18s ease-in-out infinite alternate;
-  color: #fff;
-  font-family: 'Segoe UI', system-ui, sans-serif;
+  color: var(--kk-text);
+  font-family: var(--kk-body);
   display: flex;
   flex-direction: column;
   align-items: center;
-}
-@keyframes ws-bg {
-  0%   { background-position: 0% 0%, 100% 0%, 100% 100%, 0 0; }
-  100% { background-position: 25% 18%, 72% 22%, 60% 78%, 0 0; }
 }
 
-/* ── Gecentreerd scherm ── */
-.ws-screen {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: safe center;
-  min-height: 100vh;
-  padding: 32px 20px 48px;
-  gap: 18px;
-  text-align: center;
-  width: 100%;
-  max-width: 600px;
-  margin: 0 auto;
-  position: relative;
-  z-index: 1;
-}
+/* ── Kop (zelfde als .game-header) ── */
 .ws-icon {
-  font-size: 4.5rem;
-  filter: drop-shadow(0 4px 18px rgba(206,147,216,0.5));
-  animation: ws-float 3s ease-in-out infinite;
+  width: 64px; height: 64px;
+  display: grid; place-items: center;
+  border-radius: var(--kk-r-lg);
+  color: var(--kk-accent);
+  background: color-mix(in srgb, var(--kk-accent) 16%, rgba(10,10,30,0.6));
+  border: 1px solid color-mix(in srgb, var(--kk-accent) 40%, transparent);
+  box-shadow: 0 0 28px color-mix(in srgb, var(--kk-accent) 30%, transparent);
+  margin-bottom: var(--kk-s2);
 }
-.ws-bounce { animation: ws-bounce 0.7s ease-in-out infinite alternate; }
-@keyframes ws-float  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
-@keyframes ws-bounce { from{transform:scale(1)} to{transform:scale(1.12)} }
+.ws-icon svg { width: 34px; height: 34px; }
 .ws-title {
-  font-family: var(--kk-head, 'Nunito', sans-serif);
-  font-size: clamp(1.85rem, 5vw, 2.6rem);
-  font-weight: 800;
+  font: var(--kk-fw-bold) clamp(1.75rem, 5vw, var(--kk-fs-2xl))/1.15 var(--kk-head);
+  color: var(--kk-text);
+  text-shadow: 0 0 24px var(--kk-primary-glow), 0 2px 10px rgba(0,0,0,0.4);
   margin: 0;
-  background: linear-gradient(135deg, #e9a8f5, #a78bfa, #f0abfc);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
 }
-.ws-sub { margin: 0; color: #d8b4fe; font-size: 1.05rem; font-weight: 600; }
-
-/* ── Beloning-keuze ── */
-@keyframes ws-sweep { 0%,60% { left: -65%; } 85%,100% { left: 140%; } }
+.ws-sub { margin: 0; color: var(--kk-text-soft); font-size: var(--kk-fs-sm); font-weight: var(--kk-fw-bold); letter-spacing: 0.06em; text-transform: uppercase; }
 
 /* ── Oefenscherm ── */
 .ws-oefen {
   display: flex;
   flex-direction: column;
   width: 100%;
-  max-width: 640px;
+  max-width: 660px;
   margin: 0 auto;
   padding: 16px 16px 48px;
   gap: 14px;
   position: relative;
   z-index: 1;
 }
-.ws-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.ws-back-btn {
-  background: rgba(255,255,255,0.1);
-  border: 1px solid rgba(255,255,255,0.2);
-  color: #fff;
-  border-radius: 10px;
-  padding: 7px 16px;
-  font-size: 0.9rem;
-  font-weight: 700;
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: background 0.15s;
-}
-.ws-back-btn:hover { background: rgba(255,255,255,0.2); }
-.ws-header-title {
-  flex: 1;
-  font-size: 0.92rem;
-  font-weight: 700;
-  color: #d8b4fe;
-  text-align: center;
-}
-.ws-verdiend { color: #fde68a; font-weight: 800; font-size: 0.9rem; white-space: nowrap; }
-.ws-niet-ingelogd {
-  margin: 6px 0 0;
-  font-size: 0.78rem;
-  color: rgba(255,255,255,0.6);
-  text-align: center;
-}
-.ws-niet-ingelogd a { color: #d8b4fe; font-weight: 700; }
-
-.ws-progress-wrap {
-  height: 8px;
-  background: rgba(255,255,255,0.1);
-  border-radius: 99px;
-  overflow: hidden;
-}
-.ws-progress-bar {
-  height: 100%;
-  background: linear-gradient(90deg, #e9a8f5, #a855f7);
-  border-radius: 99px;
-  transition: width 0.4s ease;
-}
-.ws-progress-label { font-size: 0.8rem; color: #c4b5fd; display: flex; justify-content: space-between; }
-.ws-opgave-teller { color: #fde68a; font-weight: 700; }
+.ws-header { display: flex; align-items: center; gap: 12px; min-height: var(--kk-tap); padding: 0 110px 0 110px; }
+.ws-header-title { flex: 1; font-size: var(--kk-fs-sm); font-weight: var(--kk-fw-bold); color: var(--kk-text-soft); text-align: center; }
+.ws-verdiend { color: var(--kk-text-soft); font-weight: var(--kk-fw-bold); font-size: var(--kk-fs-sm); white-space: nowrap; }
+.ws-niet-ingelogd { margin: 6px 0 0; font-size: var(--kk-fs-xs); color: var(--kk-text-faint); text-align: center; }
+.ws-niet-ingelogd a { color: var(--kk-primary-hi); font-weight: 700; }
+.ws-oefen .kk-voortgang { --kk-accent: var(--kk-vak-spelling); }
+.ws-progress-label { font-size: var(--kk-fs-xs); color: var(--kk-text-soft); display: flex; justify-content: flex-end; }
+.ws-opgave-teller { color: var(--kk-text-soft); font-weight: 700; }
 
 /* ── Categorie-selectie ── */
-.ws-catsel-screen {
-  position: relative;
-  min-height: 100vh;
-  width: 100%;
-  background: transparent;
-}
+.ws-catsel-screen { position: relative; min-height: 100vh; width: 100%; background: transparent; }
 .ws-catsel {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14px;
-  padding: 48px 20px 40px;
-  max-width: 500px;
+  gap: var(--kk-s4);
+  padding: 72px 20px 40px;
+  max-width: 520px;
   margin: 0 auto;
   width: 100%;
   min-height: 100vh;
   position: relative;
   z-index: 1;
 }
-.ws-catsel-back { position: absolute; top: 16px; left: 16px; }
-.ws-catsel-header { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px; }
-.ws-catsel-header .ws-title { font-size: clamp(1.6rem, 5vw, 2.2rem); }
+.ws-catsel-header { text-align: center; display: flex; flex-direction: column; align-items: center; gap: var(--kk-s2); }
 .ws-catsel-lijst { display: flex; flex-direction: column; gap: 10px; width: 100%; margin-top: 6px; }
 .ws-catsel-rij {
+  --kk-accent: var(--tijd-kleur, var(--kk-vak-spelling));
   display: flex;
   align-items: center;
   gap: 14px;
+  min-height: var(--kk-tap);
   padding: 14px 16px;
-  border-radius: 14px;
-  border: 2px solid rgba(206,147,216,0.25);
-  background: linear-gradient(160deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+  border-radius: var(--kk-r-md);
+  border: 1px solid var(--kk-border);
+  background: rgba(14, 12, 34, 0.72);
+  color: var(--kk-text);
+  font-family: inherit;
   cursor: pointer;
-  transition: transform .15s, border-color .15s, background .15s;
+  transition: border-color var(--kk-dur), background var(--kk-dur);
   text-align: left;
-  box-shadow: 0 6px 18px rgba(20,8,40,0.35);
 }
-.ws-catsel-rij:hover { transform: translateY(-2px); }
-.ws-catsel-rij.aan.ws-tijd-tt { border-color: #38bdf8; background: rgba(56,189,248,0.16); }
-.ws-catsel-rij.aan.ws-tijd-vt { border-color: #fb923c; background: rgba(251,146,60,0.16); }
-.ws-catsel-rij.aan.ws-tijd-vd { border-color: #34d399; background: rgba(52,211,153,0.16); }
-.ws-catsel-rij.ws-tijd-tt .ws-catsel-check { color: #38bdf8; }
-.ws-catsel-rij.ws-tijd-vt .ws-catsel-check { color: #fb923c; }
-.ws-catsel-rij.ws-tijd-vd .ws-catsel-check { color: #34d399; }
-.ws-catsel-rij.aan.ws-ond-row { border-color: #e879f9; background: rgba(232,121,249,0.16); }
-.ws-catsel-rij.ws-ond-row .ws-catsel-check { color: #e879f9; }
-.ws-catsel-check { font-size: 26px; line-height: 1; flex-shrink: 0; color: rgba(255,255,255,0.5); }
+.ws-catsel-rij:hover { border-color: color-mix(in srgb, var(--kk-accent) 55%, transparent); }
+.ws-catsel-rij.aan { border-color: var(--kk-accent); background: color-mix(in srgb, var(--kk-accent) 12%, rgba(14,12,34,0.85)); }
+.ws-catsel-rij.ws-ond-row { --kk-accent: var(--kk-pink); }
 .ws-catsel-tekst { flex: 1; display: flex; flex-direction: column; gap: 2px; }
-.ws-catsel-label { font-size: 15px; font-weight: 800; color: #f5f3ff; }
-.ws-catsel-vb { font-size: 12px; color: rgba(255,255,255,0.55); }
+.ws-catsel-label { font-size: var(--kk-fs-md); font-weight: 800; color: var(--kk-text); }
+.ws-catsel-vb { font-size: var(--kk-fs-xs); color: var(--kk-text-soft); }
 .ws-catsel-geld {
   flex-shrink: 0;
-  font-size: 0.82rem; font-weight: 800; color: #fde68a;
-  background: rgba(251,191,36,0.14); border-radius: 8px; padding: 4px 10px;
+  font-size: var(--kk-fs-xs); font-weight: 800; color: var(--kk-gold);
+  background: rgba(255,210,63,0.12); border-radius: var(--kk-r-pill); padding: 4px 10px;
 }
-.ws-catsel-uitleg { font-size: 13px; color: #c4b5fd; text-align: center; margin: 2px 0 0; }
+.ws-catsel-uitleg { font-size: var(--kk-fs-sm); color: var(--kk-text-soft); text-align: center; margin: 2px 0 0; }
 
-/* ── Overzichtsscherm (na 20 opgaven) ── */
+/* ── Overzichtsscherm ── */
 .ws-overzicht {
   position: relative;
   z-index: 1;
   width: 100%;
   max-width: 640px;
   margin: 0 auto;
-  padding: 24px 16px 48px;
+  padding: 72px 16px 48px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: var(--kk-s4);
 }
 .ws-ov-banner {
+  display: flex; align-items: center; justify-content: center; gap: var(--kk-s2);
   text-align: center;
-  font-size: clamp(1.4rem, 4.5vw, 2rem);
-  font-weight: 900;
-  padding: 16px 18px;
-  border-radius: 16px;
-  color: #1a1206;
-  background: linear-gradient(135deg, #fde68a, #fbbf24, #f59e0b);
-  box-shadow: 0 6px 28px rgba(251, 191, 36, 0.45);
-  letter-spacing: 0.01em;
+  font: var(--kk-fw-bold) clamp(1.3rem, 4.5vw, 1.8rem)/1.2 var(--kk-head);
+  padding: var(--kk-s4);
+  border-radius: var(--kk-r-lg);
+  color: var(--kk-text-on-accent);
+  background: var(--kk-gold);
+  box-shadow: 0 0 28px rgba(255,210,63,0.35);
 }
+.ws-ov-banner svg { width: 26px; height: 26px; }
 .ws-ov-score {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: 14px;
-  background: rgba(255,255,255,0.05);
-  border: 2px solid rgba(206,147,216,0.3);
-  border-radius: 16px;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: var(--kk-s4);
+  background: rgba(14, 12, 34, 0.82);
+  border: 1px solid var(--kk-border);
+  border-radius: var(--kk-r-lg);
 }
-.ws-ov-score-groot {
-  font-size: 2.6rem;
-  font-weight: 900;
-  background: linear-gradient(135deg, #34d399, #60a5fa);
-  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
-}
-.ws-ov-score-label { font-size: 0.95rem; color: #c4b5fd; font-weight: 600; }
+.ws-ov-score-groot { font: var(--kk-fw-bold) 2.6rem/1 var(--kk-head); color: var(--kk-gold); }
+.ws-ov-score-label { font-size: 0.95rem; color: var(--kk-text-soft); font-weight: var(--kk-fw-normal); }
 
-.ws-ov-cats {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-}
+.ws-ov-cats { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--kk-s3); }
 .ws-ov-cat {
   padding: 14px 16px;
-  border-radius: 14px;
-  border-left: 6px solid var(--tijd-kleur, #a855f7);
-  background: var(--tijd-bg, rgba(168,85,247,0.12));
+  border-radius: var(--kk-r-md);
+  border: 1px solid var(--kk-border);
+  border-left: 4px solid var(--tijd-kleur, var(--kk-accent));
+  background: rgba(14, 12, 34, 0.72);
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 .ws-ov-cat-head { display: flex; flex-direction: column; gap: 2px; }
-.ws-ov-cat-naam { font-size: 0.95rem; font-weight: 800; color: var(--tijd-kleur, #f3e8ff); }
-.ws-ov-cat-cijfer { font-size: 0.85rem; color: #e2e8f0; font-weight: 600; }
-.ws-ov-cat-fout    { font-size: 0.9rem; font-weight: 700; color: #fca5a5; }
-.ws-ov-cat-perfect { font-size: 0.9rem; font-weight: 700; color: #6ee7b7; }
-.ws-ov-cat-leeg    { font-size: 0.9rem; color: #94a3b8; }
+.ws-ov-cat-naam { font-size: 0.95rem; font-weight: 800; color: var(--tijd-kleur, var(--kk-text)); }
+.ws-ov-cat-cijfer { font-size: 0.85rem; color: var(--kk-text-soft); font-weight: 600; }
+.ws-ov-cat-fout    { font-size: 0.9rem; font-weight: 700; color: #fda4af; }
+.ws-ov-cat-perfect { font-size: 0.9rem; font-weight: 700; color: #86efac; }
+.ws-ov-cat-leeg    { font-size: 0.9rem; color: var(--kk-text-faint); }
 
 .ws-ov-foutenlijst {
-  background: rgba(248,113,113,0.08);
-  border: 1.5px solid rgba(248,113,113,0.3);
-  border-radius: 14px;
+  background: var(--kk-error-soft);
+  border: 1px solid color-mix(in srgb, var(--kk-error) 40%, transparent);
+  border-radius: var(--kk-r-md);
   padding: 14px 16px;
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
-.ws-ov-foutenlijst-titel { font-size: 0.9rem; font-weight: 800; color: #fca5a5; text-transform: uppercase; letter-spacing: 0.04em; }
+.ws-ov-foutenlijst-titel { font-size: var(--kk-fs-sm); font-weight: 800; color: #fda4af; text-transform: uppercase; letter-spacing: 0.04em; }
 .ws-ov-fout-rij {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  align-items: baseline;
+  display: flex; gap: 10px; flex-wrap: wrap; align-items: baseline;
   font-size: 0.92rem;
   padding-bottom: 6px;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
+  border-bottom: 1px solid var(--kk-border);
 }
-.ws-ov-fout-inf  { font-weight: 800; color: #f5f3ff; min-width: 90px; }
-.ws-ov-fout-jouw { color: #fca5a5; }
-.ws-ov-fout-goed { color: #6ee7b7; font-weight: 600; margin-left: auto; }
+.ws-ov-fout-inf  { font-weight: 800; color: var(--kk-text); min-width: 90px; }
+.ws-ov-fout-jouw { color: #fda4af; }
+.ws-ov-fout-goed { color: #86efac; font-weight: 600; margin-left: auto; }
 
-.ws-ov-verder-btn {
-  align-self: center;
-  margin-top: 6px;
-  background: linear-gradient(135deg, #9333ea, #7c3aed);
-  border: none;
-  border-radius: 14px;
-  color: #fff;
-  font-size: 1.05rem;
-  font-weight: 800;
-  padding: 14px 32px;
-  cursor: pointer;
-  transition: opacity 0.15s, transform 0.15s;
-}
-.ws-ov-verder-btn:hover { opacity: 0.9; transform: translateY(-2px); }
+.ws-ov-verder-btn { align-self: center; margin-top: 6px; }
+.ws-ov-knoppen { display: flex; gap: var(--kk-s3); justify-content: center; flex-wrap: wrap; margin-top: 6px; }
 
 /* ── Vraagkaart ── */
 .ws-card {
-  background: linear-gradient(160deg, rgba(255,255,255,0.1), rgba(255,255,255,0.04));
-  border: 2px solid rgba(206,147,216,0.3);
-  border-radius: 22px;
-  padding: 26px 24px 24px;
+  background: rgba(14, 12, 34, 0.82);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--kk-border);
+  border-top: 3px solid var(--kk-accent);
+  border-radius: var(--kk-r-lg);
+  padding: var(--kk-s5);
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  box-shadow: 0 12px 34px rgba(20,8,40,0.5);
-  animation: ws-cardpop 0.32s cubic-bezier(.34,1.56,.64,1);
-}
-@keyframes ws-cardpop {
-  from { opacity: 0; transform: translateY(12px) scale(0.98); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
+  gap: var(--kk-s4);
+  box-shadow: var(--kk-shadow);
+  animation: kk-pop var(--kk-dur-slow) var(--kk-ease);
 }
 /* ── Opdracht: groot werkwoord + tijd (gekleurd per tijd) ── */
 .ws-opdracht {
@@ -300,24 +194,17 @@
   align-items: flex-start;
   gap: 6px;
   padding: 14px 18px;
-  border-radius: 14px;
-  border-left: 6px solid var(--tijd-kleur, #a855f7);
-  background: var(--tijd-bg, rgba(168,85,247,0.12));
+  border-radius: var(--kk-r-md);
+  border-left: 4px solid var(--tijd-kleur, var(--kk-accent));
+  background: var(--tijd-bg, rgba(192,132,252,0.12));
 }
-.ws-inf-groot {
-  font-size: 2.4rem;
-  font-weight: 900;
-  line-height: 1;
-  color: var(--tijd-kleur, #f3e8ff);
-  letter-spacing: 0.01em;
-}
+.ws-inf-groot { font: 900 2.4rem/1 var(--kk-head); color: var(--tijd-kleur, var(--kk-text)); }
 .ws-tijd-tag {
-  font-size: 0.9rem;
+  font-size: var(--kk-fs-sm);
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--tijd-kleur, #d8b4fe);
-  opacity: 0.95;
+  color: var(--tijd-kleur, var(--kk-text-soft));
 }
 
 /* Kleuren per tijd: tt = blauw, vt = oranje, vd = totaal anders (groen) */
@@ -325,12 +212,7 @@
 .ws-tijd-vt { --tijd-kleur: #fb923c; --tijd-bg: rgba(251,146,60,0.12); }
 .ws-tijd-vd { --tijd-kleur: #34d399; --tijd-bg: rgba(52,211,153,0.14); }
 
-.ws-zin {
-  font-size: 1.45rem;
-  font-weight: 700;
-  line-height: 1.7;
-  color: #f5f3ff;
-}
+.ws-zin { font-size: 1.45rem; font-weight: 700; line-height: 1.7; color: var(--kk-text); }
 .ws-gat {
   display: inline-block;
   min-width: 96px;
@@ -338,137 +220,88 @@
   margin: 0 4px;
   padding: 2px 12px;
   border-radius: 8px 8px 0 0;
-  border-bottom: 3px solid var(--tijd-kleur, #e9a8f5);
-  background: color-mix(in srgb, var(--tijd-kleur, #e9a8f5) 14%, transparent);
-  color: #fde68a;
+  border-bottom: 3px solid var(--tijd-kleur, var(--kk-accent));
+  background: color-mix(in srgb, var(--tijd-kleur, var(--kk-accent)) 14%, transparent);
+  color: var(--kk-gold);
   font-weight: 900;
-  animation: ws-gat-glow 1.6s ease-in-out infinite;
-}
-@keyframes ws-gat-glow {
-  0%,100% { box-shadow: 0 2px 0 0 color-mix(in srgb, var(--tijd-kleur,#e9a8f5) 0%, transparent); }
-  50%     { box-shadow: 0 4px 16px 0 color-mix(in srgb, var(--tijd-kleur,#e9a8f5) 45%, transparent); }
 }
 
 .ws-antwoord-row { display: flex; gap: 10px; flex-wrap: wrap; }
 .ws-input {
   flex: 1;
   min-width: 150px;
-  background: rgba(255,255,255,0.08);
-  border: 2px solid rgba(206,147,216,0.35);
-  border-radius: 12px;
-  color: #fff;
-  font-size: 1.15rem;
-  font-weight: 700;
-  padding: 12px 16px;
+  min-height: var(--kk-tap);
+  background: var(--kk-surface);
+  border: 1px solid var(--kk-border-strong);
+  border-radius: var(--kk-r-md);
+  color: var(--kk-text);
+  font: var(--kk-fw-bold) 1.15rem var(--kk-body);
+  padding: 10px 16px;
   outline: none;
-  transition: border-color 0.15s, background 0.15s;
+  transition: border-color var(--kk-dur), box-shadow var(--kk-dur);
 }
-.ws-input:focus { border-color: #e9a8f5; background: rgba(206,147,216,0.1); }
-.ws-check-btn {
-  background: linear-gradient(135deg, #9333ea, #7c3aed);
-  border: none;
-  border-radius: 12px;
-  color: #fff;
-  font-size: 1rem;
-  font-weight: 800;
-  padding: 12px 22px;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: opacity 0.15s, transform 0.15s;
-}
-.ws-check-btn:hover { opacity: 0.9; transform: translateY(-2px); }
+.ws-input::placeholder { color: var(--kk-text-faint); font-weight: var(--kk-fw-normal); }
+.ws-input:focus { border-color: var(--kk-cyan); box-shadow: 0 0 0 3px rgba(56,189,248,0.2); }
 
 .ws-feedback {
-  border-radius: 14px;
-  padding: 16px 18px;
+  border-radius: var(--kk-r-md);
+  padding: var(--kk-s4);
   display: flex;
   flex-direction: column;
   gap: 10px;
-  font-size: 1rem;
-  font-weight: 600;
-  animation: ws-pop 0.2s ease;
+  font-size: var(--kk-fs-md);
+  font-weight: var(--kk-fw-bold);
+  border: 1px solid;
+  animation: kk-pop var(--kk-dur) var(--kk-ease);
 }
-@keyframes ws-pop { from{transform:scale(0.95);opacity:0} to{transform:scale(1);opacity:1} }
-.ws-goed { background: rgba(52,211,153,0.15); border: 2px solid #34d399; color: #6ee7b7; }
-.ws-fout { background: rgba(248,113,113,0.12); border: 2px solid #f87171; color: #fca5a5; }
-.ws-goed strong { color: #a7f3d0; }
-.ws-fout strong { color: #fecaca; }
-.ws-verder-btn {
-  align-self: flex-end;
-  background: rgba(255,255,255,0.12);
-  border: 1.5px solid rgba(255,255,255,0.25);
-  border-radius: 10px;
-  color: #fff;
-  font-size: 0.95rem;
-  font-weight: 800;
-  padding: 9px 20px;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-.ws-verder-btn:hover { background: rgba(255,255,255,0.22); }
-
-/* ── Spel-embed (Jetpack) ── */
+.ws-goed { background: var(--kk-success-soft); border-color: color-mix(in srgb, var(--kk-success) 50%, transparent); color: #86efac; }
+.ws-fout { background: var(--kk-error-soft); border-color: color-mix(in srgb, var(--kk-error) 50%, transparent); color: #fda4af; }
+.ws-goed strong, .ws-goed b, .ws-fout strong, .ws-fout b { color: var(--kk-text); }
+.ws-feedback-kop, .ws-ond-feedback { display: flex; align-items: center; gap: var(--kk-s2); flex-wrap: wrap; }
+.ws-feedback-kop svg, .ws-ond-feedback svg { width: 22px; height: 22px; flex: none; }
+.ws-verder-btn { align-self: flex-end; }
 
 /* Uitleg onder het antwoord (waarom goed / hoe het moet) */
 .ws-uitleg {
-  margin: 8px 0 4px; padding: 10px 14px; border-radius: 12px;
-  background: rgba(0,0,0,.18); border: 1px solid rgba(255,255,255,.14);
-  font-size: 14px; line-height: 1.45; text-align: left; max-width: 460px;
+  display: flex; gap: var(--kk-s2); align-items: flex-start;
+  margin: 4px 0; padding: 10px 14px; border-radius: var(--kk-r-sm);
+  background: rgba(0,0,0,0.22); border: 1px solid var(--kk-border);
+  color: var(--kk-text); font-size: 0.95rem; font-weight: var(--kk-fw-normal); line-height: 1.45; text-align: left;
 }
+.ws-uitleg svg { width: 18px; height: 18px; flex: none; margin-top: 2px; color: var(--kk-gold); }
 
 /* ── Onderwerp markeren ── */
-.ws-catsel-onderwerp-btn {
-  align-self: center;
-  margin-top: 4px;
-  background: rgba(255,255,255,0.1);
-  border: 1.5px solid rgba(255,255,255,0.25);
-  border-radius: 14px;
-  color: #fff;
-  font-size: 0.95rem;
-  font-weight: 700;
-  padding: 12px 26px;
-  cursor: pointer;
-  transition: background 0.15s, transform 0.15s;
-}
-.ws-catsel-onderwerp-btn:hover { background: rgba(255,255,255,0.18); transform: translateY(-2px); }
-
 .ws-ond-marker {
   display: flex;
   flex-direction: column;
   gap: 10px;
   margin: 8px 0 4px;
   padding: 14px 16px;
-  border-radius: 14px;
-  background: rgba(0,0,0,0.18);
-  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: var(--kk-r-md);
+  background: rgba(14, 12, 34, 0.82);
+  border: 1px solid var(--kk-border);
+  width: 100%;
 }
 .ws-ond-compact { padding: 12px 14px; }
-.ws-ond-vraag { margin: 0; font-weight: 700; font-size: 14px; color: #e9d5ff; }
-.ws-ond-zin { line-height: 1.9; font-size: 1.05rem; }
+.ws-ond-vraag { margin: 0; font-weight: 700; font-size: var(--kk-fs-sm); color: var(--kk-text-soft); }
+.ws-ond-zin { line-height: 1.9; font-size: 1.1rem; }
 .ws-ond-word {
   display: inline-block;
   cursor: pointer;
-  padding: 2px 4px;
+  padding: 2px 5px;
   margin: 0 1px;
   border-radius: 6px;
-  transition: background 0.12s, color 0.12s;
+  transition: background var(--kk-dur-fast), color var(--kk-dur-fast);
 }
-.ws-ond-word:hover { background: rgba(255,255,255,0.14); }
-.ws-ond-sel  { background: rgba(168,85,247,0.4); color: #fff; }
-.ws-ond-goed { background: rgba(52,211,153,0.35); color: #d1fae5; }
-.ws-ond-fout { background: rgba(248,113,113,0.35); color: #fee2e2; }
-.ws-ond-check-btn {
-  align-self: flex-start;
-  background: linear-gradient(135deg, #a855f7, #7c3aed);
-  border: none;
-  border-radius: 12px;
-  color: #fff;
-  font-size: 0.9rem;
-  font-weight: 700;
-  padding: 8px 18px;
-  cursor: pointer;
-  transition: opacity 0.15s;
+.ws-ond-word:hover { background: var(--kk-surface-hover); }
+.ws-ond-sel  { background: var(--kk-primary); color: var(--kk-text); }
+.ws-ond-goed { background: color-mix(in srgb, var(--kk-success) 40%, transparent); color: var(--kk-text); }
+.ws-ond-fout { background: color-mix(in srgb, var(--kk-error) 40%, transparent); color: var(--kk-text); }
+.ws-ond-check-btn { align-self: flex-start; }
+.ws-ond-feedback { font-size: var(--kk-fs-sm); font-weight: 700; }
+.ws-ond-feedback.ws-goed, .ws-ond-feedback.ws-fout { background: none; border: 0; padding: 0; }
+
+@media (max-width: 600px) {
+  .ws-header { padding: 0 0 0 100px; }
+  .ws-header-title { display: none; }
 }
-.ws-ond-check-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-.ws-ond-check-btn:hover:not(:disabled) { opacity: 0.9; }
-.ws-ond-feedback { font-size: 14px; font-weight: 700; }

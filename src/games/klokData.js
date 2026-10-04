@@ -37,10 +37,10 @@ export const digitaal = t => {
 // Level 1: hele/halve uren en kwartieren · 2: per 5 minuten
 // 3: per minuut (digitaal met 24-uursklok) · 4: rekenen met tijd
 export const LEVELS = [
-  { n: 1, icon: '🟢', naam: 'Level 1 — kwartieren', desc: 'Hele en halve uren, kwart over en kwart voor', vb: 'kwart over drie' },
-  { n: 2, icon: '🟡', naam: 'Level 2 — per 5 minuten', desc: 'Over, voor, over half en voor half', vb: 'tien voor half vijf' },
-  { n: 3, icon: '🟠', naam: 'Level 3 — per minuut', desc: 'Elke minuut · digitaal met de 24-uursklok', vb: '15:37' },
-  { n: 4, icon: '🔴', naam: 'Level 4 — rekenen met tijd', desc: 'Hoe laat is het straks? Hoe lang duurt het?', vb: '14:50 + 35 min' },
+  { n: 1, naam: 'Level 1 — kwartieren', desc: 'Hele en halve uren, kwart over en kwart voor', vb: 'kwart over drie' },
+  { n: 2, naam: 'Level 2 — per 5 minuten', desc: 'Over, voor, over half en voor half', vb: 'tien voor half vijf' },
+  { n: 3, naam: 'Level 3 — per minuut', desc: 'Elke minuut · digitaal met de 24-uursklok', vb: '15:37' },
+  { n: 4, naam: 'Level 4 — rekenen met tijd', desc: 'Hoe laat is het straks? Hoe lang duurt het?', vb: '14:50 + 35 min' },
 ]
 
 const stap = lvl => (lvl === 1 ? 15 : lvl === 3 ? 1 : 5)

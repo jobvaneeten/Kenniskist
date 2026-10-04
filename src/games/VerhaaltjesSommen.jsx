@@ -4,6 +4,7 @@ import SpelBeloning from './SpelBeloning'
 import { useGebruikOpdracht } from './gebruikOpdracht.js'
 import OpdrachtKlaarScherm from './OpdrachtKlaarScherm.jsx'
 import './verhaaltjes-sommen.css'
+import { Knop, TerugKnop, VoortgangsBalk, Icoon } from '../ui/index.jsx'
 
 const PER_BELONING = 5
 const BELONING     = 50                     // vast bedrag per beloning
@@ -396,9 +397,9 @@ function VraagKaart({ opgave, onNext, kaal = false }) {
   }
 
   const blokLabel = opgave.blok === 0 ? 'Instap' : `Blok ${opgave.blok}`
-  const label = opgave.groep === 7 ? `📖 ${blokLabel} · ${opgave.doel}`
-    : opgave.groep === 8 ? `🚀 Groep 8 · ${blokLabel} · ${opgave.doel}`
-    : `🔁 Groep ${opgave.groep} · ${blokLabel} · ${opgave.doel}`
+  const label = opgave.groep === 7 ? `${blokLabel} · ${opgave.doel}`
+    : opgave.groep === 8 ? `Groep 8 · ${blokLabel} · ${opgave.doel}`
+    : `Herhaling groep ${opgave.groep} · ${blokLabel} · ${opgave.doel}`
 
   return (
     <div className="rs-card">
@@ -409,7 +410,7 @@ function VraagKaart({ opgave, onNext, kaal = false }) {
       {magRekenmachine && (
         <div className="rs-calc-wrap">
           <button className="rs-calc-toggle" onClick={() => setCalcOpen(o => !o)}>
-            🧮 {calcOpen ? 'Verberg rekenmachine' : 'Rekenmachine mag bij deze som'}
+            <Icoon naam="rekenmachine" />{calcOpen ? 'Verberg rekenmachine' : 'Rekenmachine mag bij deze som'}
           </button>
           {calcOpen && <RekenMachine />}
         </div>
@@ -424,7 +425,7 @@ function VraagKaart({ opgave, onNext, kaal = false }) {
                 value={antw} onChange={e => setAntw(zonderIsGelijk(e.target.value))}
                 onBeforeInput={weigerInvoer}
                 onKeyDown={e => { weigerToets(e); if (e.key === 'Enter') check() }} />
-              <button className="rs-check-btn" onClick={check}>Controleer →</button>
+              <Knop variant="primair" icoonRechts="verder" onClick={check}>Controleer</Knop>
             </div>
           </div>
         </div>
@@ -467,7 +468,7 @@ function VraagKaart({ opgave, onNext, kaal = false }) {
                     onKeyDown={e => { weigerToets(e); if (e.key === 'Enter') check() }} />
                 </div>
               )}
-              <button className="rs-check-btn" onClick={check}>Controleer →</button>
+              <Knop variant="primair" icoonRechts="verder" onClick={check}>Controleer</Knop>
             </div>
           </div>
         </div>
@@ -475,21 +476,21 @@ function VraagKaart({ opgave, onNext, kaal = false }) {
 
       {phase === 'good' && (
         <div className="rs-feedback rs-goed">
-          <span>🎉 Goed!</span>
+          <span className="rs-feedback-kop"><Icoon naam="goed" />Goed!</span>
           <div className="rs-jouw">Jouw antwoord: <b>{ingevuld()}</b></div>
-          {somOk === false && <div className="rs-som-note">✏️ Je antwoord is goed. Je som klopte niet helemaal — kijk maar: {opgave.uitleg}</div>}
-          {somOk === true && <div className="rs-som-note rs-som-ok">✅ En je som klopt ook!</div>}
-          <div className="rs-uitleg">💡 {opgave.uitleg}</div>
-          <button className="rs-verder-btn" onClick={() => onNext(true, ingevuld())}>Verder →</button>
+          {somOk === false && <div className="rs-som-note">Je antwoord is goed. Je som klopte niet helemaal — kijk maar: {opgave.uitleg}</div>}
+          {somOk === true && <div className="rs-som-note rs-som-ok">En je som klopt ook!</div>}
+          <div className="rs-uitleg"><Icoon naam="lamp" />{opgave.uitleg}</div>
+          <Knop variant="primair" icoonRechts="verder" className="rs-verder-btn" onClick={() => onNext(true, ingevuld())}>Verder</Knop>
         </div>
       )}
 
       {phase === 'bad' && (
         <div className="rs-feedback rs-fout">
           <div className="rs-jouw">Jouw antwoord: <b>{ingevuld() || '—'}</b></div>
-          <span>❌ Het juiste antwoord is <b>{opgave.toon ?? `${toonAntwoord(opgave)}${heeftRest ? ` met rest ${opgave.rest}` : ''}`}</b>.</span>
-          <div className="rs-uitleg">💡 {opgave.uitleg}</div>
-          <button className="rs-verder-btn" onClick={() => onNext(false, ingevuld())}>Volgende →</button>
+          <span className="rs-feedback-kop"><Icoon naam="fout" />Het juiste antwoord is <b>{opgave.toon ?? `${toonAntwoord(opgave)}${heeftRest ? ` met rest ${opgave.rest}` : ''}`}</b>.</span>
+          <div className="rs-uitleg"><Icoon naam="lamp" />{opgave.uitleg}</div>
+          <Knop variant="primair" icoonRechts="verder" className="rs-verder-btn" onClick={() => onNext(false, ingevuld())}>Volgende</Knop>
         </div>
       )}
     </div>
@@ -517,8 +518,8 @@ function DoelBalk({ groep, doel, badge, stats }) {
           </div>
           <div className="rs-ov-cijfers">
             <span className="rs-ov-aantal">{totaal} opgave{totaal !== 1 ? 'n' : ''}</span>
-            <span className="rs-ov-g">✅ {s.goed} goed</span>
-            <span className="rs-ov-f">❌ {s.fout} fout</span>
+            <span className="rs-ov-g">{s.goed} goed</span>
+            <span className="rs-ov-f">{s.fout} fout</span>
           </div>
         </>
       )}
@@ -545,7 +546,7 @@ function Overzicht({ stats, terugLabel, onTerug, onWis }) {
 
   const secties = mode === 'blok'
     ? [...new Set(info.doelen.map(d => d.blok))].sort((a, b) => a - b).map(nr => ({
-        key: 'b' + nr, label: nr === 0 ? '📍 Instap' : 'Blok ' + nr,
+        key: 'b' + nr, label: nr === 0 ? 'Instap' : 'Blok ' + nr,
         doelen: info.doelen.filter(d => d.blok === nr),
       }))
     : LEERLIJN_VOLGORDE.map(k => ({
@@ -557,11 +558,11 @@ function Overzicht({ stats, terugLabel, onTerug, onWis }) {
 
   return (
     <div className="rs-screen">
-      <button className="rs-back" onClick={onTerug}>← {terugLabel}</button>
+      <TerugKnop onClick={onTerug}>{terugLabel}</TerugKnop>
       <div className="rs-header">
-        <span className="rs-icon">📊</span>
+        <span className="rs-icon"><Icoon naam="grafiek" /></span>
         <h1 className="rs-title">Mijn overzicht</h1>
-        <p className="rs-sub">Een rood balkje betekent: dit doel vind je nog lastig. Oefen die nog eens extra! 💪</p>
+        <p className="rs-sub">Een rood balkje betekent: dit doel vind je nog lastig. Oefen die nog eens extra!</p>
       </div>
 
       <div className="rs-tabs">
@@ -573,12 +574,12 @@ function Overzicht({ stats, terugLabel, onTerug, onWis }) {
       </div>
 
       <div className="rs-mode-toggle">
-        <button className={`rs-mode-btn${mode === 'leerlijn' ? ' actief' : ''}`} onClick={() => setMode('leerlijn')}>📚 Per leerlijn</button>
-        <button className={`rs-mode-btn${mode === 'blok' ? ' actief' : ''}`} onClick={() => setMode('blok')}>🧱 Per blok</button>
+        <button className={`rs-mode-btn${mode === 'leerlijn' ? ' actief' : ''}`} onClick={() => setMode('leerlijn')}>Per leerlijn</button>
+        <button className={`rs-mode-btn${mode === 'blok' ? ' actief' : ''}`} onClick={() => setMode('blok')}>Per blok</button>
       </div>
 
       <p className="rs-ov-tip">
-        {c.totaal > 0 ? `${c.totaal} opgaven gemaakt · ✅ ${c.goed} · ❌ ${c.fout} · ${c.geoefend}/${info.doelen.length} doelen geoefend` : 'Nog niet geoefend in deze groep'}
+        {c.totaal > 0 ? `${c.totaal} opgaven gemaakt · ${c.goed} goed · ${c.fout} fout · ${c.geoefend}/${info.doelen.length} doelen geoefend` : 'Nog niet geoefend in deze groep'}
       </p>
 
       <div className="rs-ov-groepen">
@@ -596,13 +597,13 @@ function Overzicht({ stats, terugLabel, onTerug, onWis }) {
       </div>
 
       {!bevestig ? (
-        <button className="rs-wis-btn" onClick={() => setBevestig(true)}>🗑️ Overzicht wissen</button>
+        <Knop variant="subtiel" maat="sm" icoon="prullenbak" onClick={() => setBevestig(true)}>Overzicht wissen</Knop>
       ) : (
         <div className="rs-wis-bevestig">
           <span>Weet je het zeker? Alles wordt gewist.</span>
           <div className="rs-wis-knoppen">
-            <button className="rs-wis-ja" onClick={() => { onWis(); setBevestig(false) }}>Ja, wis alles</button>
-            <button className="rs-wis-nee" onClick={() => setBevestig(false)}>Nee, laat staan</button>
+            <Knop variant="secundair" onClick={() => setBevestig(false)}>Nee, laat staan</Knop>
+            <Knop variant="gevaar" onClick={() => { onWis(); setBevestig(false) }}>Ja, wis alles</Knop>
           </div>
         </div>
       )}
@@ -611,10 +612,10 @@ function Overzicht({ stats, terugLabel, onTerug, onWis }) {
 }
 
 const GROEP_INFO = {
-  5: { icon: '🌱', desc: 'Doelen per leerlijn' },
-  6: { icon: '🌿', desc: 'Doelen per leerlijn · FS & S+' },
-  7: { icon: '⭐', desc: 'Doelen per leerlijn · FS & S+' },
-  8: { icon: '🚀', desc: 'Doelen per leerlijn · FS & S+' },
+  5: { desc: 'Doelen per leerlijn' },
+  6: { desc: 'Doelen per leerlijn · FS & S+' },
+  7: { desc: 'Doelen per leerlijn · FS & S+' },
+  8: { desc: 'Doelen per leerlijn · FS & S+' },
 }
 
 // aantal/config: alleen gezet vanuit een weektaak-opdracht (toolRender.jsx).
@@ -758,22 +759,22 @@ export default function VerhaaltjesSommen({ groep: eigenGroep = 7, onBack, addBr
   if (screen === 'groep') {
     return (
       <div className="rs-screen">
-        <button className="rs-back" onClick={onBack}>← Terug</button>
+        <TerugKnop onClick={onBack} />
         <div className="rs-header">
-          <span className="rs-icon">📖</span>
+          <span className="rs-icon"><Icoon naam="boek" /></span>
           <h1 className="rs-title">Verhaaltjessommen</h1>
           <p className="rs-sub">Welke groep wil je oefenen?</p>
         </div>
         <div className="rs-groep-grid">
           {GROEPEN.map(g => (
             <button key={g} className="rs-groep-card" onClick={() => kiesGroep(g)}>
-              <span className="rs-groep-emoji">{GROEP_INFO[g].icon}</span>
+              <span className="rs-groep-emoji">{g}</span>
               <span className="rs-groep-naam">Groep {g}</span>
               <span className="rs-groep-desc">{GROEP_INFO[g].desc}</span>
             </button>
           ))}
         </div>
-        <button className="rs-bekijk-btn" onClick={() => openOverzicht('groep')}>📊 Bekijk mijn overzicht</button>
+        <Knop variant="secundair" icoon="grafiek" onClick={() => openOverzicht('groep')}>Bekijk mijn overzicht</Knop>
       </div>
     )
   }
@@ -788,9 +789,9 @@ export default function VerhaaltjesSommen({ groep: eigenGroep = 7, onBack, addBr
   if (screen === 'route') {
     return (
       <div className="rs-screen">
-        <button className="rs-back" onClick={() => setScreen('groep')}>← Terug</button>
+        <TerugKnop onClick={() => setScreen('groep')} />
         <div className="rs-header">
-          <span className="rs-icon">{GROEP_INFO[klas].icon}</span>
+          <span className="rs-icon"><Icoon naam="rekenen" /></span>
           <h1 className="rs-title">Groep {klas}</h1>
           <p className="rs-sub">Kies je niveau</p>
         </div>
@@ -815,21 +816,20 @@ export default function VerhaaltjesSommen({ groep: eigenGroep = 7, onBack, addBr
     const wisselMode = (m) => { setKiesMode(m); setKiesTab(null) }
     const keys = actief.gens.map(g => g.key)
     const aantalAan = keys.filter(k => gekozen.has(k)).length
-    const tabVink = aantalAan === keys.length ? '☑' : aantalAan > 0 ? '◪' : '☐'
     return (
       <div className="rs-screen">
-        <button className="rs-back" onClick={() => setScreen(HEEFT_ROUTE(klas) ? 'route' : 'groep')}>← Terug</button>
+        <TerugKnop onClick={() => setScreen(HEEFT_ROUTE(klas) ? 'route' : 'groep')} />
         <div className="rs-header">
-          <span className="rs-icon">{GROEP_INFO[klas].icon}</span>
+          <span className="rs-icon"><Icoon naam="rekenen" /></span>
           <h1 className="rs-title">{titel}</h1>
           <p className="rs-sub">Vink aan wat je wilt oefenen — achter elk doel zie je jaar en blok. Doelen van eerdere groepen staan er (uitgevinkt) tussen.</p>
         </div>
 
         <div className="rs-mode-toggle">
-          <button className={`rs-mode-btn${kiesMode === 'leerlijn' ? ' actief' : ''}`} onClick={() => wisselMode('leerlijn')}>📚 Per leerlijn</button>
-          <button className={`rs-mode-btn${kiesMode === 'blok' ? ' actief' : ''}`} onClick={() => wisselMode('blok')}>🧱 Per blok</button>
-          <button className="rs-mode-btn rs-alles-btn" onClick={() => setGekozen(new Set(onderdelen.flatMap(o => o.gens.map(g => g.key))))}>☑ Alles aan</button>
-          <button className="rs-mode-btn rs-alles-btn" onClick={() => setGekozen(new Set())}>☐ Alles uit</button>
+          <button className={`rs-mode-btn${kiesMode === 'leerlijn' ? ' actief' : ''}`} onClick={() => wisselMode('leerlijn')}>Per leerlijn</button>
+          <button className={`rs-mode-btn${kiesMode === 'blok' ? ' actief' : ''}`} onClick={() => wisselMode('blok')}>Per blok</button>
+          <button className="rs-mode-btn rs-alles-btn" onClick={() => setGekozen(new Set(onderdelen.flatMap(o => o.gens.map(g => g.key))))}>Alles aan</button>
+          <button className="rs-mode-btn rs-alles-btn" onClick={() => setGekozen(new Set())}>Alles uit</button>
         </div>
 
         <div className="rs-tabs">
@@ -846,7 +846,7 @@ export default function VerhaaltjesSommen({ groep: eigenGroep = 7, onBack, addBr
         <div className="rs-blok-lijst">
           <div className="rs-blok-groep">
             <button className={`rs-blok-kop${aantalAan ? ' aan' : ''}`} onClick={() => toggleBlok(actief)}>
-              <span className="rs-blok-check">{tabVink}</span>
+              <span className={`kk-vink${aantalAan === keys.length ? ' aan' : aantalAan > 0 ? ' deels' : ''}`}>{aantalAan > 0 && <Icoon naam="goed" />}</span>
               <span className="rs-blok-naam">{actief.label} — alles aan/uit</span>
             </button>
             <div className="rs-doel-lijst">
@@ -855,7 +855,7 @@ export default function VerhaaltjesSommen({ groep: eigenGroep = 7, onBack, addBr
                 const badge = `Groep ${g.groep} · ${g.blok === 0 ? 'instap' : 'blok ' + g.blok}`
                 return (
                   <button key={g.key} className={`rs-doel-rij${aan ? ' aan' : ''}${g.herhaling ? ' rs-doel-herh' : ''}`} onClick={() => toggleKeuze(g.key)}>
-                    <span className="rs-doel-check">{aan ? '☑' : '☐'}</span>
+                    <span className={`kk-vink${aan ? ' aan' : ''}`}>{aan && <Icoon naam="goed" />}</span>
                     <span className="rs-doel-tekst">{g.doel || `Doel ${i + 1}`}</span>
                     <span className={`rs-doel-badge${g.herhaling ? ' herh' : ''}`}>{badge}</span>
                   </button>
@@ -865,10 +865,10 @@ export default function VerhaaltjesSommen({ groep: eigenGroep = 7, onBack, addBr
           </div>
         </div>
 
-        <button className="rs-start-btn" onClick={start} disabled={!gekozen.size}>
-          {gekozen.size ? `Start! (${gekozen.size} doel${gekozen.size > 1 ? 'en' : ''}) →` : 'Kies iets om te oefenen'}
-        </button>
-        <button className="rs-bekijk-btn" onClick={() => openOverzicht('kies')}>📊 Bekijk mijn overzicht</button>
+        <Knop variant="primair" maat="lg" icoonRechts={gekozen.size ? 'verder' : undefined} onClick={start} disabled={!gekozen.size}>
+          {gekozen.size ? `Start (${gekozen.size} doel${gekozen.size > 1 ? 'en' : ''})` : 'Kies iets om te oefenen'}
+        </Knop>
+        <Knop variant="secundair" icoon="grafiek" onClick={() => openOverzicht('kies')}>Bekijk mijn overzicht</Knop>
       </div>
     )
   }
@@ -877,14 +877,11 @@ export default function VerhaaltjesSommen({ groep: eigenGroep = 7, onBack, addBr
   return (
     <div className="rs-screen rs-screen-oefen">
       <div className="rs-oefen-top">
-        <button className="rs-back" onClick={() => setScreen('kies')}>← Stop</button>
-        <button className="rs-ov-btn" onClick={() => openOverzicht('oefen')}>📊 Overzicht</button>
+        <TerugKnop onClick={() => setScreen('kies')}>Stoppen</TerugKnop>
+        <Knop variant="secundair" maat="sm" icoon="grafiek" className="rs-ov-btn" onClick={() => openOverzicht('oefen')}>Overzicht</Knop>
         <span className="rs-verdiend">💵 € {verdiend}</span>
       </div>
-      <div className="rs-progress-wrap">
-        <div className="rs-progress-bar" style={{ width: `${(sinds / PER_BELONING) * 100}%` }} />
-      </div>
-      <div className="rs-progress-label">{PER_BELONING - sinds} goede tot een spelletje 🎮</div>
+      <VoortgangsBalk waarde={sinds} max={PER_BELONING} label={`nog ${PER_BELONING - sinds} goed tot een spelletje`} />
       {opgave && <VraagKaart opgave={opgave} onNext={volgende} kaal={!!config?.kaal} />}
     </div>
   )

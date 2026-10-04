@@ -1,27 +1,26 @@
 .mo-hulp-btn {
   margin-top: 12px;
   align-self: center;
-  padding: 8px 18px;
-  border-radius: 14px;
-  border: 1.5px solid rgba(255,210,63,0.5);
-  background: rgba(255,210,63,0.1);
-  color: #fde68a;
-  font-family: inherit;
-  font-weight: 800;
-  font-size: 0.95rem;
+  display: inline-flex; align-items: center; gap: 6px;
+  min-height: 40px; padding: 0 16px;
+  border-radius: var(--kk-r-md);
+  border: 1px solid var(--kk-border-strong);
+  background: var(--kk-surface);
+  color: var(--kk-text-soft);
+  font: var(--kk-fw-bold) var(--kk-fs-sm) var(--kk-body);
   cursor: pointer;
-  transition: background 0.15s, transform 0.12s;
+  transition: background var(--kk-dur), color var(--kk-dur);
 }
-.mo-hulp-btn:hover { background: rgba(255,210,63,0.18); }
-.mo-hulp-btn:active { transform: scale(0.96); }
+.mo-hulp-btn:hover { background: var(--kk-surface-hover); color: var(--kk-text); }
+.mo-hulp-btn svg { width: 18px; height: 18px; color: var(--kk-gold); }
 
 .mo-trap-wrap {
   margin-top: 12px;
   display: flex;
   justify-content: center;
-  background: rgba(255,255,255,0.04);
-  border: 1.5px solid rgba(255,255,255,0.1);
-  border-radius: 16px;
+  background: var(--kk-surface);
+  border: 1px solid var(--kk-border);
+  border-radius: var(--kk-r-md);
   padding: 10px;
 }
 .mo-trap { display: block; }

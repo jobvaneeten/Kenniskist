@@ -5,6 +5,7 @@ import OpdrachtKlaarScherm from './OpdrachtKlaarScherm.jsx'
 import { ONDERDELEN, REGELS, vragenVoor, maakVraag } from './interpunctieData.js'
 import { HULP, maakGebiedendVraag, gebiedendRonde } from './gebiedendeWijsData.js'
 import './taal-oefenen.css'
+import { TerugKnop, Icoon, Knop } from '../ui/index.jsx'
 
 const CORRECT_VOOR_REWARD = 10
 
@@ -62,14 +63,14 @@ function KeuzeOefening({ toolId, titel, vraag, volgende, hulp, beloning, aantal,
   return (
     <div className="tv-screen">
       <div className="tv-top-bar">
-        <button className="tv-back" onClick={onStop}>← Stop</button>
+        <TerugKnop onClick={onStop}>Stoppen</TerugKnop>
         <div className="tv-progress">
-          <span className="tv-score-badge">✓ {correctCount}</span>
+          <span className="tv-score-badge"><Icoon naam="goed" />{correctCount}</span>
           <span className="tv-reward-meter">
             <span className="tv-reward-track">
               <span className="tv-reward-fill" style={{ width: `${((correctCount % CORRECT_VOOR_REWARD) / CORRECT_VOOR_REWARD) * 100}%` }} />
             </span>
-            <span className="tv-reward-tekst">nog {CORRECT_VOOR_REWARD - (correctCount % CORRECT_VOOR_REWARD)} 🚀</span>
+            <span className="tv-reward-tekst">nog {CORRECT_VOOR_REWARD - (correctCount % CORRECT_VOOR_REWARD)}</span>
           </span>
         </div>
       </div>
@@ -97,13 +98,13 @@ function KeuzeOefening({ toolId, titel, vraag, volgende, hulp, beloning, aantal,
         {gekozen == null && (
           <div className="tv-tip-rij">
             <button className="tv-tip-knop" onClick={() => setHulpOpen(h => !h)}>
-              {hulpOpen ? '💡 Hulp verbergen' : '💡 Hulp'}
+              <Icoon naam="lamp" />{hulpOpen ? 'Hulp verbergen' : 'Hulp'}
             </button>
           </div>
         )}
         {gekozen == null && hulpOpen && (
           <div className="tv-tip">
-            <span className="tv-tip-icon">💡</span>
+            <span className="tv-tip-icon"><Icoon naam="lamp" /></span>
             <div>{hulp}</div>
           </div>
         )}
@@ -111,7 +112,7 @@ function KeuzeOefening({ toolId, titel, vraag, volgende, hulp, beloning, aantal,
         {keuze && (
           <>
             <div className={`tv-feedback ${keuze.goed ? 'tv-feedback-correct' : 'tv-feedback-wrong'}`}>
-              <span className="tv-feedback-icon">{keuze.goed ? '✓' : '✗'}</span>
+              <span className="tv-feedback-icon"><Icoon naam={keuze.goed ? 'goed' : 'fout'} /></span>
               <div>
                 <p className="tv-feedback-uitleg">
                   {keuze.goed ? 'Goed gezien! Dit was er mis met de andere zinnen:' : 'Helaas. Dit klopt niet aan jouw zin:'}
@@ -119,7 +120,7 @@ function KeuzeOefening({ toolId, titel, vraag, volgende, hulp, beloning, aantal,
                 {uitleg.map(u => <p key={u} className="tv-feedback-uitleg">• {u}</p>)}
               </div>
             </div>
-            <button className="tv-btn tv-btn-primary" onClick={verder}>Volgende →</button>
+            <Knop variant="primair" icoonRechts="verder" onClick={verder}>Volgende</Knop>
           </>
         )}
       </div>
@@ -164,7 +165,7 @@ export function Interpunctie({ onBack, addBriefgeld, addCuruntie, aantal, config
     return (
       <KeuzeOefening
         toolId="taal-interpunctie"
-        titel={`✏️ Interpunctie · ${labels.map(l => l.label.toLowerCase()).join(', ')}`}
+        titel={`Interpunctie · ${labels.map(l => l.label.toLowerCase()).join(', ')}`}
         vraag="Welke zin is helemaal goed geschreven?"
         volgende={volgende}
         hulp={labels.map(l => (
@@ -183,9 +184,9 @@ export function Interpunctie({ onBack, addBriefgeld, addCuruntie, aantal, config
   const toggel = (id) => setCats(c => (c.includes(id) ? c.filter(x => x !== id) : [...c, id]))
   return (
     <div className="tv-screen tv-screen-center">
-      <button className="tv-back" onClick={onBack}>← Terug</button>
+      <TerugKnop onClick={onBack} />
       <div className="tv-header">
-        <span className="tv-header-icon">✏️</span>
+        <span className="tv-header-icon"><Icoon naam="potlood" /></span>
         <h1>Interpunctie</h1>
         <p>Kies wat je wilt oefenen — meerdere tegelijk mag</p>
       </div>
@@ -200,7 +201,7 @@ export function Interpunctie({ onBack, addBriefgeld, addCuruntie, aantal, config
         ))}
       </div>
       {cats.length === 0 && <p className="tv-filter-warn">Kies minstens 1 onderdeel</p>}
-      <button className="tv-btn tv-btn-primary" disabled={cats.length === 0} onClick={start}>Start oefenen →</button>
+      <Knop variant="primair" icoonRechts="verder" disabled={cats.length === 0} onClick={start}>Start oefenen</Knop>
     </div>
   )
 }
@@ -219,7 +220,7 @@ export function GebiedendeWijs({ onBack, addBriefgeld, addCuruntie, aantal }) {
   return (
     <KeuzeOefening
       toolId="taal-gebiedende-wijs"
-      titel="👉 Gebiedende wijs"
+      titel="Gebiedende wijs"
       vraag="Welke zin is een gebiedende wijs?"
       volgende={volgende}
       hulp={HULP.map(r => <p key={r}>{r}</p>)}

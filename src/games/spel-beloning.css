@@ -1,3 +1,4 @@
+/* ===== Beloning na 5 goed: kies een spel ===== */
 .sb-screen {
   /* volledig dekkend overlay: dekt altijd het oefenscherm af zodra je 5 goed hebt */
   position: fixed;
@@ -5,12 +6,8 @@
   width: 100vw;
   height: 100vh;
   box-sizing: border-box;
-  background:
-    radial-gradient(ellipse 55% 42% at 12% 6%, rgba(79,195,247,0.18) 0%, transparent 60%),
-    radial-gradient(ellipse 52% 40% at 88% 10%, rgba(168,85,247,0.2) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 45% at 75% 98%, rgba(6,214,160,0.13) 0%, transparent 60%),
-    linear-gradient(165deg, #06061a 0%, #0a1230 48%, #061426 100%);
-  color: #fff;
+  background: var(--kk-bg) url('/achtergrond.png') center / cover no-repeat;
+  color: var(--kk-text);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -18,24 +15,10 @@
   justify-content: safe center;
   text-align: center;
   padding: 32px 16px 48px;
-  font-family: inherit;
+  font-family: var(--kk-body);
   z-index: 300;
   overflow-y: auto;
   isolation: isolate;
-}
-/* Sterrenlaag, gelijk aan die van de taaloefeningen */
-.sb-screen::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image:
-    radial-gradient(1.7px 1.7px at 42px 58px, rgba(255,255,255,0.8), transparent 60%),
-    radial-gradient(1.5px 1.5px at 168px 196px, rgba(159,214,255,0.65), transparent 60%),
-    radial-gradient(1.2px 1.2px at 268px 96px, rgba(255,255,255,0.55), transparent 60%),
-    radial-gradient(1.4px 1.4px at 336px 268px, rgba(196,181,253,0.6), transparent 60%);
-  background-size: 400px 320px;
-  opacity: 0.55;
-  pointer-events: none;
 }
 .sb-screen > * { position: relative; z-index: 1; }
 
@@ -43,115 +26,103 @@
 .sb-gamewrap { position: fixed; inset: 0; z-index: 300; background: #05080f; overflow-y: auto; -webkit-overflow-scrolling: touch; }
 
 .sb-star {
-  font-size: 3.4rem;
-  animation: sb-pop 0.5s ease-out;
+  width: 72px; height: 72px;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  color: var(--kk-gold);
+  background: rgba(255,210,63,0.14);
+  box-shadow: 0 0 32px rgba(255,210,63,0.35);
+  animation: sb-pop 0.5s var(--kk-ease);
 }
+.sb-star svg { width: 40px; height: 40px; }
 @keyframes sb-pop {
-  from { transform: scale(0) rotate(-180deg); }
+  from { transform: scale(0) rotate(-90deg); }
   to   { transform: scale(1) rotate(0deg); }
 }
-
 .sb-title {
-  margin: 8px 0 2px;
-  font-size: 1.7rem;
-  color: #f59e0b;
+  margin: var(--kk-s3) 0 2px;
+  font: var(--kk-fw-bold) var(--kk-fs-2xl)/1.1 var(--kk-head);
+  color: var(--kk-text);
+  text-shadow: 0 0 24px rgba(255,210,63,0.4);
 }
-.sb-line { margin: 0; color: #ddd; }
+.sb-line { margin: 0; color: var(--kk-text-soft); }
 .sb-geld {
-  margin: 8px 0 0;
-  background: rgba(245,158,11,0.15);
-  border: 1px solid #f59e0b;
-  border-radius: 8px;
-  padding: 6px 14px;
-  color: #f59e0b;
-  font-weight: 700;
+  margin: var(--kk-s2) 0 0;
+  background: rgba(255,210,63,0.12);
+  border: 1px solid rgba(255,210,63,0.45);
+  border-radius: var(--kk-r-pill);
+  padding: 6px 16px;
+  color: var(--kk-gold);
+  font-weight: var(--kk-fw-bold);
 }
-.sb-sub { margin: 18px 0 10px; color: #aaa; font-size: 0.95rem; }
+.sb-sub { margin: var(--kk-s5) 0 var(--kk-s3); color: var(--kk-text-soft); font-size: var(--kk-fs-sm); font-weight: var(--kk-fw-bold); letter-spacing: 0.06em; text-transform: uppercase; }
 
 .sb-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: var(--kk-s3);
   width: 100%;
-  max-width: 420px;
+  max-width: 720px;
 }
-
 .sb-card {
-  background: rgba(255,255,255,0.07);
-  border: 2px solid rgba(79,195,247,0.3);
-  border-radius: 16px;
-  padding: 18px 12px;
+  --kk-accent: var(--kk-vak-spel);
+  background: rgba(14, 12, 34, 0.78);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--kk-border);
+  border-top: 3px solid var(--kk-accent);
+  border-radius: var(--kk-r-lg);
+  padding: var(--kk-s3) var(--kk-s3) var(--kk-s4);
   cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
-  color: #fff;
+  gap: var(--kk-s2);
+  color: var(--kk-text);
   font-family: inherit;
-  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+  box-shadow: var(--kk-shadow);
+  transition: transform var(--kk-dur) var(--kk-ease), border-color var(--kk-dur), box-shadow var(--kk-dur), background var(--kk-dur);
 }
 .sb-card:hover {
-  background: rgba(79,195,247,0.12);
-  border-color: #4FC3F7;
-  transform: translateY(-2px);
+  transform: translateY(-4px);
+  background: rgba(24, 20, 52, 0.85);
+  border-color: color-mix(in srgb, var(--kk-accent) 60%, transparent);
+  box-shadow: var(--kk-shadow), 0 0 28px color-mix(in srgb, var(--kk-accent) 28%, transparent);
 }
-.sb-emoji { font-size: 2.1rem; }
-.sb-name  { font-size: 1.02rem; font-weight: 700; }
-.sb-desc  { font-size: 0.76rem; color: #aaa; }
+.sb-card:focus-visible { outline: none; box-shadow: var(--kk-focus-ring); }
+.sb-name  { font: var(--kk-fw-bold) 1rem/1.2 var(--kk-head); }
+.sb-desc  { font-size: var(--kk-fs-xs); color: var(--kk-text-soft); }
+.sb-skip { margin-top: var(--kk-s4); }
 
-.sb-skip {
-  margin-top: 18px;
-  background: rgba(255,255,255,0.08);
-  color: #aaa;
-  border: none;
-  border-radius: 12px;
-  padding: 12px 22px;
-  font-size: 0.9rem;
-  font-family: inherit;
-  cursor: pointer;
-}
-.sb-skip:hover { background: rgba(255,255,255,0.15); }
-
-.sb-game-back {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  z-index: 200;
-  background: rgba(0,0,0,0.75);
-  color: #fff;
-  border: 1px solid rgba(255,255,255,0.25);
-  border-radius: 8px;
-  padding: 6px 16px;
-  cursor: pointer;
-  font-size: 14px;
-  font-family: inherit;
-}
+/* ── Spel in een iframe ── */
+.sb-iframe-wrap { position: fixed; inset: 0; z-index: 100; background: #000; display: flex; flex-direction: column; }
+.sb-iframe { flex: 1; border: none; }
+.sb-hint { text-align: center; color: var(--kk-text-soft); padding: 8px; font-size: var(--kk-fs-sm); background: var(--kk-bg); }
 
 /* ── Aftelklok voor spellen zonder eigen einde (Dier Evolutie) ── */
 .sb-timer {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: var(--kk-s4);
+  right: var(--kk-s4);
   z-index: 200;
-  background: rgba(0,0,0,0.78);
-  color: #fff;
-  border: 1px solid rgba(255,255,255,0.28);
-  border-radius: 10px;
-  padding: 7px 15px;
-  font-size: 15px;
-  font-weight: 800;
+  display: inline-flex; align-items: center; gap: 6px;
+  min-height: var(--kk-tap);
+  background: rgba(10,10,30,0.8);
+  color: var(--kk-text);
+  border: 1px solid var(--kk-border-strong);
+  border-radius: var(--kk-r-pill);
+  padding: 0 16px;
+  font: 800 var(--kk-fs-md) var(--kk-body);
   font-variant-numeric: tabular-nums;
-  font-family: inherit;
   backdrop-filter: blur(6px);
-  box-shadow: 0 6px 18px rgba(0,0,0,0.5);
 }
+.sb-timer svg { width: 18px; height: 18px; }
 .sb-timer-urgent {
-  border-color: rgba(255,110,90,0.85);
-  color: #ffd9d2;
+  border-color: var(--kk-error);
+  color: #fecdd3;
   animation: sb-timer-pulse 1s ease-in-out infinite;
 }
 @keyframes sb-timer-pulse {
-  50% { background: rgba(150,30,20,0.85); transform: scale(1.06); }
+  50% { background: rgba(225,29,72,0.6); transform: scale(1.06); }
 }
 
 /* ── Spel-thumbnails (pixel-art scenes) ── */
@@ -160,9 +131,8 @@
   width: 100%;
   aspect-ratio: 16 / 9;
   object-fit: cover;
-  border-radius: 10px;
-  border: 1.5px solid rgba(255,255,255,0.18);
-  box-shadow: 0 3px 10px rgba(0,0,0,0.35);
-  transition: transform 0.2s cubic-bezier(.34,1.56,.64,1);
+  border-radius: var(--kk-r-md);
+  border: 1px solid var(--kk-border);
+  transition: transform var(--kk-dur) var(--kk-ease);
 }
-.sb-card:hover .sb-img { transform: scale(1.05); }
+.sb-card:hover .sb-img { transform: scale(1.04); }

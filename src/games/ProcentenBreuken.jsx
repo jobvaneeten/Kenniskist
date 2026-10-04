@@ -3,7 +3,7 @@ import { PROCENT_SETS, shuffle } from './procentenData'
 import SpelBeloning, { BRIEFGELD } from './SpelBeloning'
 import OpdrachtKlaarScherm from './OpdrachtKlaarScherm.jsx'
 import './procenten.css'
-import { TerugKnop } from '../ui/index.jsx'
+import { TerugKnop, Icoon } from '../ui/index.jsx'
 
 const PER_ROUND    = 4   // aantal vakjes (percentages) per ronde
 const PER_BELONING = 5   // na elke 5 opgeloste rondes een spelletje
@@ -119,11 +119,12 @@ export default function ProcentenBreuken({ onBack, addBriefgeld, aantal }) {
         <TerugKnop onClick={onBack} />
 
         <div className="pbk-head">
-          <h1>💯 Procenten · Breuken · Kommagetallen</h1>
+          <span className="pbk-icon"><Icoon naam="rekenen" /></span>
+          <h1>Procenten · Breuken · Kommagetallen</h1>
           <p>Sleep de juiste breuk én het juiste kommagetal naar elk percentage-vakje.</p>
           <div className="pbk-stats">
-            <span>🏁 Ronde {roundNo}</span>
-            <span>🎮 nog {PER_BELONING - sinds} tot een spelletje</span>
+            <span>Ronde {roundNo}</span>
+            <span>nog {PER_BELONING - sinds} tot een spelletje</span>
             <span>💵 € {verdiend}</span>
           </div>
         </div>
@@ -147,7 +148,7 @@ export default function ProcentenBreuken({ onBack, addBriefgeld, aantal }) {
                            : <span className="pbk-slot-hint">kommagetal</span>}
                   </div>
                 </div>
-                {full && <div className="pbk-check">✓</div>}
+                {full && <div className="pbk-check"><Icoon naam="goed" /></div>}
               </div>
             )
           })}
@@ -180,7 +181,7 @@ export default function ProcentenBreuken({ onBack, addBriefgeld, aantal }) {
 
         {celebrate && (
           <div className="pbk-celebrate">
-            <div className="pbk-celebrate-box">🎉 Ronde opgelost!</div>
+            <div className="pbk-celebrate-box"><Icoon naam="trofee" />Ronde opgelost!</div>
           </div>
         )}
       </div>

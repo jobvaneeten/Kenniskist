@@ -3,7 +3,7 @@ import SpelBeloning from './SpelBeloning'
 import { useGebruikOpdracht } from './gebruikOpdracht.js'
 import OpdrachtKlaarScherm from './OpdrachtKlaarScherm.jsx'
 import './breuken-plaatjes.css'
-import { TerugKnop } from '../ui/index.jsx'
+import { TerugKnop, Icoon, Knop, VoortgangsBalk } from '../ui/index.jsx'
 
 const PER_BELONING = 5
 const BELONING     = 50
@@ -104,13 +104,12 @@ export default function BreukenPlaatjes({ onBack, addBriefgeld, addCuruntie, aan
     <div className="bp-screen">
       <TerugKnop onClick={onBack} />
       <div className="bp-head">
-        <span className="bp-icon">🍕</span>
+        <span className="bp-icon"><Icoon naam="rekenen" /></span>
         <h1 className="bp-title">Breuken &amp; plaatjes</h1>
         <p className="bp-sub">Welke breuk is gekleurd? Vul de teller en de noemer in.</p>
       </div>
 
-      <div className="bp-progress-wrap"><div className="bp-progress-bar" style={{ width: `${(sinds / PER_BELONING) * 100}%` }} /></div>
-      <div className="bp-progress-label">{PER_BELONING - sinds} goede tot een spelletje 🎮 · 💵 € {verdiend}</div>
+      <VoortgangsBalk waarde={sinds} max={PER_BELONING} label={`nog ${PER_BELONING - sinds} goed tot een spelletje · 💵 € ${verdiend}`} />
 
       <div className="bp-prompt"><BreukPlaatje shape={shape} m={m} n={n} size={150} /></div>
 
@@ -127,18 +126,18 @@ export default function BreukenPlaatjes({ onBack, addBriefgeld, addCuruntie, aan
       </div>
 
       {phase === 'vraag' && (
-        <button className="bp-verder-btn" onClick={check} disabled={!teller.trim() || !noemer.trim()}>Controleer →</button>
+        <Knop variant="primair" icoonRechts="verder" onClick={check} disabled={!teller.trim() || !noemer.trim()}>Controleer</Knop>
       )}
       {phase === 'goed' && (
         <div className="bp-feedback bp-goed">
-          <span>🎉 Goed! Het is <b>{m}/{n}</b>.</span>
-          <button className="bp-verder-btn" onClick={verder}>Verder →</button>
+          <span className="rs-feedback-kop"><Icoon naam="goed" />Goed! Het is <b>{m}/{n}</b>.</span>
+          <Knop variant="primair" icoonRechts="verder" className="rs-verder-btn" onClick={verder}>Verder</Knop>
         </div>
       )}
       {phase === 'fout' && (
         <div className="bp-feedback bp-fout">
-          <span>❌ Het juiste antwoord is <b>{m}/{n}</b> ({m} van de {n} delen gekleurd).</span>
-          <button className="bp-verder-btn" onClick={verder}>Volgende →</button>
+          <span className="rs-feedback-kop"><Icoon naam="fout" />Het juiste antwoord is <b>{m}/{n}</b> ({m} van de {n} delen gekleurd).</span>
+          <Knop variant="primair" icoonRechts="verder" className="rs-verder-btn" onClick={verder}>Volgende</Knop>
         </div>
       )}
     </div>

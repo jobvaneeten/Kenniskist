@@ -1,58 +1,19 @@
+/* ===== Taaltools (Taalverkennen, Zinsdelen, Interpunctie, Woordenschat) =====
+   Huisstijl-tokens; vakkleur taal als accent. De sterrenhemel komt van de body. */
 .tv-screen {
+  --kk-accent: var(--kk-vak-taal);
   width: 100vw;
   min-height: 100vh;
-  background:
-    radial-gradient(ellipse 55% 42% at 10% 4%, rgba(79,195,247,0.2) 0%, transparent 60%),
-    radial-gradient(ellipse 50% 40% at 90% 10%, rgba(168,85,247,0.22) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 45% at 80% 98%, rgba(6,214,160,0.14) 0%, transparent 60%),
-    radial-gradient(ellipse 45% 38% at 14% 94%, rgba(59,130,246,0.14) 0%, transparent 58%),
-    linear-gradient(165deg, #06061a 0%, #0a1230 48%, #061426 100%);
-  background-size: 200% 200%, 200% 200%, 200% 200%, 200% 200%, 100% 100%;
-  animation: tv-bg 22s ease-in-out infinite alternate;
-  color: #fff;
+  color: var(--kk-text);
   display: flex;
   flex-direction: column;
-  padding: 16px;
+  padding: 72px 16px 16px;
   box-sizing: border-box;
-  font-family: inherit;
+  font-family: var(--kk-body);
   overflow-y: auto;
   position: relative;       /* stacking context boven de fixed currency-badge */
   z-index: 1;
   isolation: isolate;       /* voorkomt compositing-glitch (inhoud onzichtbaar) */
-}
-@keyframes tv-bg {
-  0%   { background-position: 0% 0%, 100% 0%, 100% 100%, 0% 100%, 0 0; }
-  100% { background-position: 34% 22%, 66% 24%, 58% 78%, 30% 74%, 0 0; }
-}
-
-/* Sterrenlaag: vier tegels met stipjes die langzaam oplichten. */
-.tv-screen::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image:
-    radial-gradient(1.7px 1.7px at 42px 58px, rgba(255,255,255,0.85), transparent 60%),
-    radial-gradient(1.5px 1.5px at 168px 196px, rgba(159,214,255,0.7), transparent 60%),
-    radial-gradient(1.2px 1.2px at 268px 96px, rgba(255,255,255,0.6), transparent 60%),
-    radial-gradient(1.4px 1.4px at 336px 268px, rgba(196,181,253,0.65), transparent 60%);
-  background-size: 400px 320px;
-  animation: tv-twinkle 7s ease-in-out infinite alternate;
-  pointer-events: none;
-}
-@keyframes tv-twinkle {
-  0%   { opacity: 0.35; }
-  100% { opacity: 0.75; }
-}
-
-/* Neongloed langs de onderrand — dezelfde horizon als in de 3D-spellen. */
-.tv-screen::after {
-  content: '';
-  position: absolute;
-  left: 0; right: 0; bottom: 0;
-  height: 42%;
-  background:
-    linear-gradient(to top, rgba(124,58,237,0.28) 0%, rgba(79,195,247,0.09) 45%, transparent 100%);
-  pointer-events: none;
 }
 
 /* Forceer eigen paint-laag zodat in-flow content altijd schildert */
@@ -60,8 +21,7 @@
 
 .tv-screen-center {
   align-items: center;
-  justify-content: center;
-  padding-top: 24px;
+  justify-content: safe center;
   text-align: center;
 }
 
@@ -80,131 +40,77 @@
   padding-bottom: 28px;
 }
 
-/* ── Back button ── */
-.tv-back {
-  align-self: flex-start;
-  background: rgba(255,255,255,0.07);
-  color: #dbe6f5;
-  border: 1px solid rgba(255,255,255,0.16);
-  border-radius: 999px;
-  padding: 7px 16px;
-  cursor: pointer;
-  font-size: 0.88rem;
-  font-weight: 700;
-  font-family: inherit;
-  backdrop-filter: blur(6px);
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
-}
-.tv-back:hover {
-  background: rgba(79,195,247,0.18);
-  border-color: rgba(79,195,247,0.55);
-  color: #fff;
-}
-
-/* ── Header ── */
-.tv-header {
-  margin: 12px 0 24px;
-}
+/* ── Kop (zelfde als .game-header) ── */
+.tv-header { margin: 0 0 var(--kk-s6); display: flex; flex-direction: column; align-items: center; gap: var(--kk-s2); }
 .tv-header-icon {
-  font-size: 3.4rem;
-  display: block;
-  margin-bottom: 8px;
-  filter: drop-shadow(0 0 22px rgba(79,195,247,0.5));
-  animation: tv-float 4s ease-in-out infinite;
+  width: 64px; height: 64px;
+  display: grid; place-items: center;
+  border-radius: var(--kk-r-lg);
+  color: var(--kk-accent);
+  background: color-mix(in srgb, var(--kk-accent) 16%, rgba(10,10,30,0.6));
+  border: 1px solid color-mix(in srgb, var(--kk-accent) 40%, transparent);
+  box-shadow: 0 0 28px color-mix(in srgb, var(--kk-accent) 30%, transparent);
+  margin-bottom: var(--kk-s2);
 }
-@keyframes tv-float {
-  0%,100% { transform: translateY(0) rotate(-5deg); }
-  50%     { transform: translateY(-8px) rotate(5deg); }
-}
+.tv-header-icon svg { width: 34px; height: 34px; }
 .tv-header h1 {
-  margin: 0 0 6px;
-  font-size: 2.2rem;
-  font-weight: 900;
-  letter-spacing: -0.5px;
-  background: linear-gradient(100deg, #7fdcff 0%, #fff 50%, #b69bff 100%);
-  background-size: 200% auto;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: tv-shine 5s linear infinite;
+  margin: 0;
+  font: var(--kk-fw-bold) var(--kk-fs-2xl)/1.1 var(--kk-head);
+  color: var(--kk-text);
+  text-shadow: 0 0 24px var(--kk-primary-glow), 0 2px 10px rgba(0,0,0,0.4);
 }
-@keyframes tv-shine { to { background-position: 200% center; } }
 .tv-header p {
   margin: 0;
-  color: #b9c6da;
-  font-size: 1.02rem;
-  font-weight: 600;
+  color: var(--kk-text-soft);
+  font-size: var(--kk-fs-sm);
+  font-weight: var(--kk-fw-bold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
-/* ── Menu cards ── */
+/* ── Keuzekaarten ── */
 .tv-mode-grid {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: var(--kk-s4);
   width: 100%;
-  max-width: 380px;
+  max-width: 400px;
 }
-
 .tv-mode-card {
-  background: linear-gradient(160deg, rgba(255,255,255,0.1), rgba(255,255,255,0.04));
-  border: 2px solid rgba(79,195,247,0.35);
-  border-radius: 20px;
-  padding: 22px;
+  background: rgba(14, 12, 34, 0.72);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--kk-border);
+  border-top: 3px solid var(--kk-accent);
+  border-radius: var(--kk-r-lg);
+  padding: var(--kk-s5);
   cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 7px;
-  transition: background 0.18s, border-color 0.18s, transform 0.15s, box-shadow 0.18s;
-  color: #fff;
+  gap: var(--kk-s2);
+  color: var(--kk-text);
   font-family: inherit;
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 6px 22px rgba(0,0,0,0.25);
+  box-shadow: var(--kk-shadow);
+  transition: transform var(--kk-dur) var(--kk-ease), border-color var(--kk-dur), box-shadow var(--kk-dur), background var(--kk-dur);
 }
-.tv-mode-card::after {
-  content: '';
-  position: absolute;
-  top: 0; bottom: 0; left: -60%;
-  width: 50%;
-  background: linear-gradient(100deg, transparent, rgba(255,255,255,0.22), transparent);
-  transform: skewX(-18deg);
-  animation: tv-sweep 5s ease-in-out infinite;
-  pointer-events: none;
-}
-@keyframes tv-sweep { 0%,60% { left: -60%; } 85%,100% { left: 140%; } }
 .tv-mode-card:hover {
-  background: linear-gradient(160deg, rgba(79,195,247,0.22), rgba(124,58,237,0.12));
-  border-color: #4FC3F7;
-  transform: translateY(-4px) scale(1.02);
-  box-shadow: 0 14px 36px rgba(79,195,247,0.3);
+  transform: translateY(-4px);
+  background: rgba(24, 20, 52, 0.85);
+  border-color: color-mix(in srgb, var(--kk-accent) 60%, transparent);
+  box-shadow: var(--kk-shadow), 0 0 28px color-mix(in srgb, var(--kk-accent) 28%, transparent);
 }
-.tv-mode-card-disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-  pointer-events: none;
+.tv-mode-card:focus-visible { outline: none; box-shadow: var(--kk-focus-ring); }
+.tv-mode-card-disabled { opacity: 0.45; cursor: not-allowed; pointer-events: none; }
+.tv-mode-emoji {
+  width: 52px; height: 52px;
+  display: grid; place-items: center;
+  border-radius: var(--kk-r-md);
+  color: var(--kk-accent);
+  background: color-mix(in srgb, var(--kk-accent) 16%, transparent);
 }
-.tv-mode-emoji  {
-  font-size: 2rem;
-  width: 62px;
-  height: 62px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  background: radial-gradient(circle at 50% 35%, rgba(79,195,247,0.28), rgba(124,58,237,0.16));
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.14), 0 0 26px rgba(79,195,247,0.28);
-}
-.tv-mode-name   {
-  font-size: 1.22rem;
-  font-weight: 900;
-  letter-spacing: -0.2px;
-}
-.tv-mode-desc   {
-  font-size: 0.84rem;
-  color: #9fb0c6;
-  line-height: 1.45;
-  max-width: 30ch;
-}
+.tv-mode-emoji svg { width: 28px; height: 28px; }
+.tv-mode-name { font: var(--kk-fw-bold) 1.2rem/1.2 var(--kk-head); }
+.tv-mode-desc { font-size: var(--kk-fs-sm); color: var(--kk-text-soft); line-height: 1.45; max-width: 32ch; }
 
 /* Menu's met meer dan twee keuzes: naast elkaar, zodat alles zonder scrollen
    op één scherm past. */
@@ -213,412 +119,218 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   max-width: 760px;
 }
-.tv-mode-grid-2 .tv-mode-card { padding: 16px 14px; }
-.tv-header-compact { margin: 4px 0 16px; }
-.tv-header-compact .tv-header-icon { font-size: 2.6rem; margin-bottom: 4px; }
-.tv-header-compact h1 { font-size: 1.9rem; }
+.tv-mode-grid-2 .tv-mode-card { padding: var(--kk-s4); }
+.tv-header-compact { margin-bottom: var(--kk-s5); }
 
 .tv-blok-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
+  gap: var(--kk-s3);
   width: 100%;
   max-width: 760px;
 }
-.tv-blok-card { padding: 20px 10px; gap: 4px; }
-.tv-blok-num {
-  font-size: 1.45rem;
-  font-weight: 900;
-  color: #7fdcff;
-  text-shadow: 0 0 18px rgba(79,195,247,0.45);
-}
+.tv-blok-card { padding: var(--kk-s5) 10px; gap: 4px; }
+.tv-blok-num { font: var(--kk-fw-bold) 1.45rem/1.1 var(--kk-head); color: var(--kk-text); }
 
-/* ── Filter screen ── */
+/* ── Filter (aanvinken wat je oefent) ── */
 .tv-filter-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--kk-s2);
   width: 100%;
-  max-width: 340px;
-  margin: 0 0 20px;
+  max-width: 360px;
+  margin: 0 0 var(--kk-s5);
   text-align: left;
 }
-
 .tv-filter-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  background: rgba(255,255,255,0.06);
-  border-radius: 10px;
+  gap: var(--kk-s3);
+  background: rgba(14, 12, 34, 0.72);
+  border: 1px solid var(--kk-border);
+  border-radius: var(--kk-r-md);
+  min-height: var(--kk-tap);
   padding: 10px 14px;
   cursor: pointer;
-  transition: background 0.12s;
+  transition: background var(--kk-dur), border-color var(--kk-dur);
 }
-.tv-filter-item {
-  border: 1px solid rgba(255,255,255,0.08);
-}
-.tv-filter-item:hover {
-  background: rgba(255,255,255,0.12);
-  border-color: rgba(79,195,247,0.4);
-}
+.tv-filter-item:hover { border-color: color-mix(in srgb, var(--kk-accent) 55%, transparent); }
 .tv-filter-item:has(input:checked) {
-  background: linear-gradient(100deg, rgba(79,195,247,0.2), rgba(124,58,237,0.12));
-  border-color: rgba(79,195,247,0.55);
+  background: color-mix(in srgb, var(--kk-accent) 12%, rgba(14,12,34,0.8));
+  border-color: var(--kk-accent);
 }
 .tv-filter-item input[type="checkbox"] {
   width: 20px; height: 20px;
-  accent-color: #4FC3F7;
+  accent-color: var(--kk-accent);
   cursor: pointer;
   flex-shrink: 0;
 }
-.tv-filter-label {
-  font-size: 1rem;
-  font-weight: 500;
-}
+.tv-filter-label { font-size: var(--kk-fs-md); font-weight: var(--kk-fw-normal); }
+.tv-filter-warn { color: var(--kk-error); font-size: var(--kk-fs-sm); font-weight: var(--kk-fw-bold); margin: 0 0 10px; }
 
-.tv-filter-warn {
-  color: #f87171;
-  font-size: 0.85rem;
-  margin: 0 0 10px;
-}
-
-/* ── Buttons ── */
-.tv-btn {
-  display: block;
-  width: 100%;
-  max-width: 340px;
-  padding: 14px 20px;
-  border-radius: 12px;
-  font-size: 1.05rem;
-  font-weight: 700;
-  font-family: inherit;
-  cursor: pointer;
-  border: none;
-  transition: opacity 0.15s, transform 0.1s;
-  margin: 6px 0;
-}
-.tv-btn:hover:not(:disabled) { transform: translateY(-2px); }
-.tv-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-
-.tv-btn-primary {
-  background: linear-gradient(135deg, #4FC3F7, #7c3aed);
-  color: #fff;
-  box-shadow: 0 10px 28px rgba(79,195,247,0.32);
-}
-.tv-btn-primary:hover:not(:disabled) { box-shadow: 0 14px 34px rgba(124,58,237,0.4); }
-.tv-btn-skip {
-  background: rgba(255,255,255,0.08);
-  color: #aaa;
-  font-size: 0.9rem;
-}
-
-/* ── Exercise screen ── */
+/* ── Oefenscherm ── */
 .tv-top-bar {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
-  margin-bottom: 16px;
-  /* ruimte voor de vaste munten-/briefgeldbadge rechtsboven */
-  padding-right: 104px;
+  min-height: var(--kk-tap);
+  margin: -56px 0 var(--kk-s4);
+  /* ruimte voor de vaste terugknop links en de saldo-pil rechts */
+  padding: 0 120px;
 }
-
-.tv-progress {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
+.tv-progress { display: flex; align-items: center; gap: 10px; }
 .tv-score-badge {
-  background: linear-gradient(135deg, #22c55e, #06d6a0);
-  color: #05251b;
-  border-radius: 999px;
-  padding: 5px 14px;
-  font-size: 0.9rem;
-  font-weight: 900;
-  box-shadow: 0 4px 16px rgba(6,214,160,0.35);
+  display: inline-flex; align-items: center; gap: 4px;
+  min-height: 36px;
+  background: var(--kk-success-soft);
+  border: 1px solid color-mix(in srgb, var(--kk-success) 50%, transparent);
+  color: #86efac;
+  border-radius: var(--kk-r-pill);
+  padding: 0 14px;
+  font-size: var(--kk-fs-sm);
+  font-weight: var(--kk-fw-black);
 }
+.tv-score-badge svg { width: 16px; height: 16px; }
 /* Hoe ver nog tot het volgende spelletje */
 .tv-reward-meter {
   display: flex;
   align-items: center;
   gap: 9px;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.14);
-  border-radius: 999px;
-  padding: 5px 13px 5px 9px;
+  min-height: 36px;
+  background: rgba(10,10,30,0.75);
+  border: 1px solid var(--kk-border);
+  border-radius: var(--kk-r-pill);
+  padding: 0 13px 0 11px;
 }
-.tv-reward-track {
-  width: 92px;
-  height: 8px;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.13);
-  overflow: hidden;
-}
+.tv-reward-track { width: 92px; height: 8px; border-radius: var(--kk-r-pill); background: rgba(255,255,255,0.13); overflow: hidden; }
 .tv-reward-fill {
   display: block;
   height: 100%;
-  border-radius: 999px;
-  background: linear-gradient(90deg, #4FC3F7, #a855f7);
-  box-shadow: 0 0 12px rgba(124,58,237,0.7);
-  transition: width 0.35s ease;
+  border-radius: var(--kk-r-pill);
+  background: var(--kk-accent);
+  box-shadow: 0 0 10px var(--kk-accent);
+  transition: width var(--kk-dur-slow) var(--kk-ease);
 }
-.tv-reward-tekst {
-  color: #b9c6da;
-  font-size: 0.78rem;
-  font-weight: 800;
-  white-space: nowrap;
-}
+.tv-reward-tekst { color: var(--kk-text-soft); font-size: var(--kk-fs-xs); font-weight: var(--kk-fw-bold); white-space: nowrap; }
 
 .tv-card {
   position: relative;
   overflow: hidden;
-  background: linear-gradient(160deg, rgba(255,255,255,0.11), rgba(255,255,255,0.035));
-  border: 1px solid rgba(255,255,255,0.14);
-  border-radius: 26px;
-  padding: 28px 30px 26px;
-  box-shadow: 0 18px 44px rgba(0,0,0,0.34), inset 0 1px 0 rgba(255,255,255,0.08);
-  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  background: rgba(14, 12, 34, 0.82);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--kk-border);
+  border-top: 3px solid var(--kk-accent);
+  border-radius: var(--kk-r-lg);
+  padding: var(--kk-s6) var(--kk-s6) var(--kk-s5);
+  box-shadow: var(--kk-shadow);
+  transition: border-color var(--kk-dur), background var(--kk-dur);
 }
-/* neonlijn langs de bovenkant van de kaart */
-.tv-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 12%; right: 12%;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, #4FC3F7, #a855f7, transparent);
-}
-.tv-card-correct {
-  border-color: #22c55e;
-  background: rgba(34,197,94,0.1);
-}
-.tv-card-wrong {
-  border-color: #ef4444;
-  background: rgba(239,68,68,0.1);
-}
+.tv-card-correct { border-color: var(--kk-success); background: color-mix(in srgb, var(--kk-success) 10%, rgba(14,12,34,0.85)); }
+.tv-card-wrong   { border-color: var(--kk-error);   background: color-mix(in srgb, var(--kk-error) 10%, rgba(14,12,34,0.85)); }
 
 .tv-mode-label {
   display: inline-block;
-  background: rgba(79,195,247,0.13);
-  border: 1px solid rgba(79,195,247,0.32);
-  border-radius: 999px;
+  background: color-mix(in srgb, var(--kk-accent) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--kk-accent) 35%, transparent);
+  border-radius: var(--kk-r-pill);
   padding: 4px 13px;
-  font-size: 0.72rem;
-  font-weight: 800;
-  color: #7fdcff;
+  font-size: var(--kk-fs-xs);
+  font-weight: var(--kk-fw-bold);
+  color: var(--kk-accent);
   text-transform: uppercase;
   letter-spacing: 0.07em;
   margin: 0 0 16px;
 }
 
-.tv-zin {
-  font-size: 1.35rem;
-  font-weight: 600;
-  line-height: 1.6;
-  margin-bottom: 14px;
-  color: #f0f0f0;
-}
+.tv-zin { font-size: 1.35rem; font-weight: var(--kk-fw-normal); line-height: 1.6; margin-bottom: 14px; color: var(--kk-text); }
 
 mark.tv-highlight {
-  background: linear-gradient(135deg, #ffd23f, #ff9a3d);
-  color: #1a1a2e;
+  background: var(--kk-gold);
+  color: var(--kk-text-on-accent);
   border-radius: 7px;
   padding: 2px 7px;
   font-weight: 900;
-  box-shadow: 0 3px 10px rgba(245,158,11,0.45);
-  animation: tv-pulse 1.4s ease-in-out infinite;
-}
-@keyframes tv-pulse {
-  0%, 100% { box-shadow: 0 3px 10px rgba(245,158,11,0.35), 0 0 0 0 rgba(245,158,11,0.55); }
-  50%       { box-shadow: 0 3px 14px rgba(245,158,11,0.55), 0 0 0 8px rgba(245,158,11,0); }
+  box-shadow: 0 0 14px rgba(255,210,63,0.45);
 }
 
-.tv-vraag {
-  font-size: 0.95rem;
-  color: #ccc;
-  margin: 0;
-}
+.tv-vraag { font-size: 0.95rem; color: var(--kk-text-soft); margin: 0; }
 
 /* ── Zinsdelen: het zinsdeel in de zin aanklikken ── */
-.tv-zin-klik {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-start;
-  gap: 6px 3px;
-}
+.tv-zin-klik { display: flex; flex-wrap: wrap; justify-content: flex-start; gap: 6px 3px; }
 .tv-woord {
   font: inherit;
   color: inherit;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 10px;
+  background: var(--kk-surface);
+  border: 1px solid var(--kk-border);
+  border-radius: var(--kk-r-sm);
   padding: 3px 9px;
   cursor: pointer;
-  transition: background 0.12s, border-color 0.12s, color 0.12s, transform 0.1s;
+  transition: background var(--kk-dur-fast), border-color var(--kk-dur-fast), color var(--kk-dur-fast);
 }
-.tv-woord:hover:not(:disabled) {
-  background: rgba(79,195,247,0.16);
-  border-color: rgba(79,195,247,0.5);
-}
+.tv-woord:hover:not(:disabled) { background: color-mix(in srgb, var(--kk-accent) 16%, transparent); border-color: var(--kk-accent); }
 .tv-woord:disabled { cursor: default; }
-.tv-woord-aan {
-  background: linear-gradient(135deg, #4FC3F7, #7c3aed);
-  border-color: #4FC3F7;
-  color: #fff;
-  font-weight: 900;
-}
+.tv-woord-aan { background: var(--kk-primary); border-color: var(--kk-primary-hi); color: var(--kk-text); font-weight: 900; }
 /* Na het nakijken: groen = het juiste zinsdeel, rood = fout aangeklikt */
-.tv-woord-juist {
-  background: linear-gradient(135deg, #06d6a0, #04a077);
-  border-color: #06d6a0;
-  color: #06251c;
-  font-weight: 900;
-}
-.tv-woord-mis {
-  background: rgba(255,107,107,0.2);
-  border-color: #ff6b6b;
-  color: #ffd0c6;
-  text-decoration: line-through;
-}
+.tv-woord-juist { background: var(--kk-success); border-color: var(--kk-success); color: #052e16; font-weight: 900; }
+.tv-woord-mis { background: var(--kk-error-soft); border-color: var(--kk-error); color: #fecdd3; text-decoration: line-through; }
 
 .tv-answers-klik { align-items: center; }
-.tv-nakijk-btn:disabled {
-  opacity: 0.4;
-  cursor: default;
-  transform: none;
-}
-.tv-nakijk-btn:disabled:hover {
-  background: linear-gradient(160deg, rgba(255,255,255,0.12), rgba(255,255,255,0.05));
-  border-color: rgba(255,255,255,0.18);
-  transform: none;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.22);
-}
 .tv-wis-btn {
   background: none;
   border: none;
-  color: rgba(255,255,255,0.55);
+  color: var(--kk-text-soft);
   font-family: inherit;
-  font-size: 0.85rem;
+  font-size: var(--kk-fs-sm);
   text-decoration: underline;
   cursor: pointer;
-  padding: 8px;
+  min-height: var(--kk-tap);
+  padding: 0 8px;
 }
 
-/* ── Answer buttons ── */
-.tv-answers {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: center;
-}
-
+/* ── Antwoordknoppen ── */
+.tv-answers { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
 .tv-answer-btn {
-  background: linear-gradient(160deg, rgba(255,255,255,0.12), rgba(255,255,255,0.045));
-  border: 1px solid rgba(255,255,255,0.2);
-  border-radius: 16px;
-  color: #fff;
-  font-family: inherit;
-  font-size: 1rem;
-  font-weight: 700;
-  padding: 15px 22px;
+  background: rgba(14, 12, 34, 0.8);
+  border: 1px solid var(--kk-border-strong);
+  border-radius: var(--kk-r-md);
+  color: var(--kk-text);
+  font: var(--kk-fw-bold) var(--kk-fs-md) var(--kk-body);
+  min-height: 52px;
+  padding: 12px 22px;
   cursor: pointer;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.24);
-  transition: background 0.14s, border-color 0.14s, transform 0.1s, box-shadow 0.14s, opacity 0.14s;
+  transition: background var(--kk-dur), border-color var(--kk-dur), transform var(--kk-dur-fast), opacity var(--kk-dur);
 }
-.tv-answer-btn:hover {
-  background: linear-gradient(160deg, rgba(79,195,247,0.28), rgba(124,58,237,0.16));
-  border-color: #4FC3F7;
-  transform: translateY(-3px) scale(1.04);
-  box-shadow: 0 10px 24px rgba(79,195,247,0.32);
-}
-.tv-answer-btn:active { transform: translateY(0) scale(0.98); }
+.tv-answer-btn:hover { background: color-mix(in srgb, var(--kk-accent) 16%, rgba(14,12,34,0.85)); border-color: var(--kk-accent); transform: translateY(-2px); }
+.tv-answer-btn:active { transform: scale(0.98); }
+.tv-answer-btn:focus-visible { outline: none; box-shadow: var(--kk-focus-ring); }
 
 /* ── Feedback ── */
 .tv-feedback {
   display: flex;
   align-items: flex-start;
   gap: 14px;
-  border-radius: 18px;
-  padding: 16px 20px;
-  animation: tv-slide-in 0.2s ease;
+  border-radius: var(--kk-r-md);
+  padding: var(--kk-s4) var(--kk-s5);
+  border: 1px solid;
+  text-align: left;
+  animation: kk-pop var(--kk-dur) var(--kk-ease);
 }
-@keyframes tv-slide-in {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-.tv-feedback-correct {
-  background: linear-gradient(100deg, rgba(6,214,160,0.2), rgba(6,214,160,0.07));
-  border: 1px solid rgba(6,214,160,0.55);
-  box-shadow: 0 10px 30px rgba(6,214,160,0.16);
-}
-.tv-feedback-wrong {
-  background: linear-gradient(100deg, rgba(255,107,107,0.2), rgba(255,107,107,0.07));
-  border: 1px solid rgba(255,107,107,0.55);
-  box-shadow: 0 10px 30px rgba(255,107,107,0.14);
-}
+.tv-feedback-correct { background: var(--kk-success-soft); border-color: color-mix(in srgb, var(--kk-success) 50%, transparent); }
+.tv-feedback-wrong   { background: var(--kk-error-soft);   border-color: color-mix(in srgb, var(--kk-error) 50%, transparent); }
 .tv-feedback-icon {
-  width: 30px;
-  height: 30px;
-  display: grid;
-  place-items: center;
+  width: 30px; height: 30px;
+  display: grid; place-items: center;
   border-radius: 50%;
-  font-size: 1.05rem;
-  font-weight: 900;
   flex-shrink: 0;
   background: rgba(255,255,255,0.1);
 }
-.tv-feedback-correct .tv-feedback-icon { color: #22c55e; }
-.tv-feedback-wrong   .tv-feedback-icon { color: #ef4444; }
-.tv-feedback-antwoord {
-  margin: 0 0 4px;
-  font-size: 0.9rem;
-  color: #fca5a5;
-}
-.tv-feedback-uitleg {
-  margin: 0;
-  font-size: 0.92rem;
-  color: #e2e2e2;
-  line-height: 1.4;
-}
-
-/* ── Reward screen ── */
-.tv-reward-box {
-  background: rgba(255,255,255,0.07);
-  border: 2px solid rgba(245,158,11,0.4);
-  border-radius: 20px;
-  padding: 36px 28px;
-  max-width: 340px;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-}
-.tv-reward-star {
-  font-size: 4rem;
-  animation: tv-spin 0.6s ease-out;
-}
-@keyframes tv-spin {
-  from { transform: scale(0) rotate(-180deg); }
-  to   { transform: scale(1) rotate(0deg); }
-}
-.tv-reward-box h2 {
-  margin: 0;
-  font-size: 1.8rem;
-  color: #f59e0b;
-}
-.tv-reward-box p {
-  margin: 0;
-  color: #ddd;
-}
-.tv-reward-geld {
-  background: rgba(245,158,11,0.15);
-  border: 1px solid #f59e0b;
-  border-radius: 8px;
-  padding: 6px 14px;
-  color: #f59e0b !important;
-  font-weight: 700;
-}
+.tv-feedback-icon svg { width: 18px; height: 18px; stroke-width: 3; }
+.tv-feedback-correct .tv-feedback-icon { color: var(--kk-success); }
+.tv-feedback-wrong   .tv-feedback-icon { color: var(--kk-error); }
+.tv-feedback-antwoord { margin: 0 0 4px; font-size: 0.9rem; color: #fda4af; }
+.tv-feedback-uitleg { margin: 0; font-size: 0.95rem; color: var(--kk-text); line-height: 1.45; }
 
 /* ── Woordenschat ── */
 .tv-ws-kop {
@@ -627,13 +339,13 @@ mark.tv-highlight {
   line-height: 1.4;
   letter-spacing: -0.3px;
   margin-bottom: 16px;
-  color: #f4f8ff;
+  color: var(--kk-text);
   text-shadow: 0 2px 20px rgba(79,195,247,0.22);
 }
 /* Eén begrip in beeld mag groter dan een hele uitleg-zin */
 .tv-ws-kop.tv-ws-begrip { font-size: 2.1rem; }
 .tv-gat {
-  color: #7fdcff;
+  color: var(--kk-accent);
   letter-spacing: 0.06em;
   font-weight: 900;
   text-shadow: 0 0 16px rgba(79,195,247,0.6);
@@ -657,23 +369,22 @@ mark.tv-highlight {
 .tv-answers .tv-answer-btn.tv-answer-dim { opacity: 0.4; }
 .tv-answers .tv-answer-btn.tv-answer-goed,
 .tv-answers .tv-answer-btn.tv-answer-goed:hover {
-  background: linear-gradient(160deg, rgba(6,214,160,0.42), rgba(6,214,160,0.16));
-  border-color: #06d6a0;
-  box-shadow: 0 10px 28px rgba(6,214,160,0.28);
+  background: color-mix(in srgb, var(--kk-success) 22%, rgba(14,12,34,0.85));
+  border-color: var(--kk-success);
   transform: none;
 }
 .tv-answers .tv-answer-btn.tv-answer-fout,
 .tv-answers .tv-answer-btn.tv-answer-fout:hover {
-  background: linear-gradient(160deg, rgba(255,107,107,0.4), rgba(255,107,107,0.14));
-  border-color: #ff6b6b;
-  box-shadow: 0 10px 28px rgba(255,107,107,0.22);
+  background: color-mix(in srgb, var(--kk-error) 22%, rgba(14,12,34,0.85));
+  border-color: var(--kk-error);
   transform: none;
 }
 
 /* ── Kleine schermen ── */
 @media (max-width: 640px) {
-  .tv-screen { padding: 12px; }
-  .tv-card { padding: 22px 18px 20px; border-radius: 22px; }
+  .tv-screen { padding: 68px 12px 12px; }
+  .tv-top-bar { padding: 0 0 0 96px; justify-content: flex-start; margin-top: -52px; }
+  .tv-card { padding: 22px 18px 20px; }
   .tv-ws-kop { font-size: 1.3rem; }
   .tv-ws-kop.tv-ws-begrip { font-size: 1.7rem; }
   .tv-zin { font-size: 1.15rem; }
@@ -682,7 +393,7 @@ mark.tv-highlight {
   .tv-werk { justify-content: flex-start; gap: 14px; }
   .tv-mode-grid-2 { gap: 10px; }
   .tv-mode-grid-2 .tv-mode-card { padding: 12px 8px; gap: 5px; }
-  .tv-mode-grid-2 .tv-mode-emoji { width: 44px; height: 44px; font-size: 1.5rem; }
+  .tv-mode-grid-2 .tv-mode-emoji { width: 44px; height: 44px; }
   .tv-mode-grid-2 .tv-mode-name { font-size: 1.02rem; }
   .tv-mode-grid-2 .tv-mode-desc { font-size: 0.74rem; line-height: 1.3; }
   .tv-blok-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
@@ -736,7 +447,7 @@ mark.tv-highlight {
   background: rgba(255,255,255,0.09);
 }
 .zd-groep-mis {
-  border-color: #ff6b6b !important;
+  border-color: var(--kk-error) !important;
   background: rgba(255,107,107,0.25) !important;
   animation: zd-schud 0.4s ease;
 }
@@ -798,7 +509,7 @@ mark.tv-highlight {
   margin: -4px 0 18px;
 }
 .zd-stap {
-  --zd-kleur: #4FC3F7;
+  --zd-kleur: var(--kk-vak-taal);
   font-size: 0.7rem;
   font-weight: 800;
   letter-spacing: 0.02em;
@@ -828,37 +539,16 @@ mark.tv-highlight {
 }
 .zd-baan-nu .zd-baan-label { opacity: 0.92; }
 .zd-baan-fout::before {
-  background: #ff6b6b !important;
+  background: var(--kk-error) !important;
   animation: zd-schud 0.4s ease;
 }
-.zd-baan-fout .zd-baan-label { background: #ff6b6b; }
+.zd-baan-fout .zd-baan-label { background: var(--kk-error); }
 
 /* Nakijken gebeurt pas als je hierop klikt. */
-.zd-verder {
-  align-self: center;
-  min-width: 220px;
-  font-family: inherit;
-  font-size: 1rem;
-  font-weight: 800;
-  padding: 12px 30px;
-  border: 0;
-  border-radius: 999px;
-  background: linear-gradient(135deg, #4FC3F7, #7f8cff);
-  color: #08131f;
-  cursor: pointer;
-  box-shadow: 0 8px 22px rgba(79,195,247,0.28);
-  transition: transform 0.12s, box-shadow 0.14s;
-}
-.zd-verder:hover:not(:disabled) { transform: translateY(-2px); }
-.zd-verder:disabled {
-  background: rgba(255,255,255,0.06);
-  color: #7d8ea6;
-  box-shadow: none;
-  cursor: default;
-}
+.zd-verder { align-self: center; min-width: 220px; }
 
-.tv-vraag-fout { color: #ff9d9d; font-weight: 700; }
-.tv-vraag-extra { color: #9fb0c6; }
+.tv-vraag-fout { color: var(--kk-error); font-weight: 700; }
+.tv-vraag-extra { color: var(--kk-text-soft); }
 
 @media (max-width: 640px) {
   .zd-groep { font-size: 1.1rem; }
@@ -879,9 +569,9 @@ mark.tv-highlight {
   text-align: left;
 }
 .tv-filter-hint {
-  font-size: 0.76rem;
+  font-size: var(--kk-fs-xs);
   font-weight: 500;
-  color: #9fb0c6;
+  color: var(--kk-text-soft);
   line-height: 1.35;
 }
 
@@ -891,38 +581,36 @@ mark.tv-highlight {
   justify-content: center;
 }
 .tv-tip-knop {
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.16);
-  border-radius: 999px;
-  color: #cdd9ec;
-  font-family: inherit;
-  font-size: 0.86rem;
-  font-weight: 700;
-  padding: 9px 18px;
+  display: inline-flex; align-items: center; gap: 6px;
+  min-height: 40px; padding: 0 16px;
+  background: var(--kk-surface);
+  border: 1px solid var(--kk-border-strong);
+  border-radius: var(--kk-r-md);
+  color: var(--kk-text-soft);
+  font: var(--kk-fw-bold) var(--kk-fs-sm) var(--kk-body);
   cursor: pointer;
-  transition: background 0.14s, border-color 0.14s, color 0.14s;
+  transition: background var(--kk-dur), color var(--kk-dur), border-color var(--kk-dur);
 }
-.tv-tip-knop:hover {
-  background: rgba(255,210,63,0.16);
-  border-color: rgba(255,210,63,0.5);
-  color: #fff;
-}
+.tv-tip-knop:hover { background: var(--kk-surface-hover); color: var(--kk-text); }
+.tv-tip-knop svg, .tv-hint-btn svg { width: 18px; height: 18px; color: var(--kk-gold); }
 .tv-tip {
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  background: linear-gradient(100deg, rgba(255,210,63,0.14), rgba(255,210,63,0.05));
-  border: 1px solid rgba(255,210,63,0.45);
-  border-radius: 18px;
+  text-align: left;
+  background: rgba(255,210,63,0.08);
+  border: 1px solid rgba(255,210,63,0.35);
+  border-radius: var(--kk-r-md);
   padding: 14px 18px;
-  animation: tv-slide-in 0.2s ease;
+  animation: kk-pop var(--kk-dur) var(--kk-ease);
 }
-.tv-tip-icon { font-size: 1.2rem; line-height: 1.3; }
+.tv-tip-icon { color: var(--kk-gold); display: grid; }
+.tv-tip-icon svg { width: 20px; height: 20px; }
 .tv-tip p {
   margin: 0 0 6px;
-  font-size: 0.92rem;
+  font-size: 0.95rem;
   line-height: 1.45;
-  color: #f0e6cd;
+  color: var(--kk-text);
 }
 .tv-tip p:last-child { margin-bottom: 0; }
 
@@ -934,33 +622,32 @@ mark.tv-highlight {
 }
 .tv-hint-btn {
   align-self: flex-start;
-  background: rgba(245,158,11,0.12);
-  border: 1px solid rgba(245,158,11,0.42);
-  color: #ffd98a;
-  border-radius: 999px;
-  padding: 9px 18px;
-  font-size: 0.85rem;
-  font-weight: 800;
+  display: inline-flex; align-items: center; gap: 6px;
+  min-height: 40px; padding: 0 16px;
+  background: var(--kk-surface);
+  border: 1px solid var(--kk-border-strong);
+  border-radius: var(--kk-r-md);
+  color: var(--kk-text-soft);
+  font: var(--kk-fw-bold) var(--kk-fs-sm) var(--kk-body);
   cursor: pointer;
-  transition: background 0.15s, transform 0.15s, border-color 0.15s;
+  transition: background var(--kk-dur), color var(--kk-dur), border-color var(--kk-dur);
 }
-.tv-hint-btn:hover { background: rgba(245,158,11,0.2); transform: translateY(-1px); }
-.tv-hint-btn:active { transform: translateY(0); }
-.tv-hint-btn-open { background: rgba(245,158,11,0.24); border-color: rgba(245,158,11,0.7); }
+.tv-hint-btn:hover, .tv-hint-btn-open { background: var(--kk-surface-hover); color: var(--kk-text); }
 .tv-hint-lijst {
   max-height: 250px;
   overflow-y: auto;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(245,158,11,0.28);
-  border-radius: 18px;
+  text-align: left;
+  background: rgba(14, 12, 34, 0.82);
+  border: 1px solid var(--kk-border);
+  border-radius: var(--kk-r-md);
   padding: 14px 18px;
-  animation: tv-slide-in 0.2s ease;
+  animation: kk-pop var(--kk-dur) var(--kk-ease);
 }
 .tv-hint-kop {
   margin: 0 0 10px;
-  font-size: 0.78rem;
+  font-size: var(--kk-fs-xs);
   font-weight: 800;
-  color: #ffd98a;
+  color: var(--kk-gold);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -968,20 +655,20 @@ mark.tv-highlight {
 .tv-hint-lijst li {
   font-size: 0.9rem;
   line-height: 1.45;
-  color: #dbe2ee;
+  color: var(--kk-text-soft);
   padding: 6px 0;
-  border-top: 1px solid rgba(255,255,255,0.07);
+  border-top: 1px solid var(--kk-border);
 }
 .tv-hint-lijst li:first-child { border-top: none; }
-.tv-hint-lijst li strong { color: #fff; }
+.tv-hint-lijst li strong { color: var(--kk-text); }
 .tv-hint-lijst::-webkit-scrollbar { width: 7px; }
-.tv-hint-lijst::-webkit-scrollbar-thumb { background: rgba(245,158,11,0.35); border-radius: 4px; }
+.tv-hint-lijst::-webkit-scrollbar-thumb { background: var(--kk-border-strong); border-radius: 4px; }
 
 /* Interpunctie / gebiedende wijs: vier zinnen onder elkaar, goed leesbaar */
 .tv-answers-kolom .zk-zin { font-size: 1.08rem; font-weight: 600; letter-spacing: 0.01em; }
 .zk-teken {
   display: inline-block; min-width: 2.2em; text-align: center; margin-right: 4px;
-  font-weight: 900; color: #ffd23f;
+  font-weight: 900; color: var(--kk-accent);
 }
 .zk-regels { margin-bottom: 8px; }
 .zk-regels strong { display: block; margin-bottom: 2px; }

@@ -5,6 +5,7 @@ import OpdrachtKlaarScherm from './OpdrachtKlaarScherm.jsx'
 import { LEVELS, maakOpgave, tijdLabel } from './klokData.js'
 import './verhaaltjes-sommen.css'
 import './klok-kijken.css'
+import { Knop, TerugKnop, VoortgangsBalk, Icoon } from '../ui/index.jsx'
 
 const PER_BELONING = 5
 const BELONING     = 50
@@ -93,9 +94,9 @@ function VraagKaart({ opgave, modus, level, onNext }) {
 
       {gekozen !== null && (
         <div className={`rs-feedback ${goed ? 'rs-goed' : 'rs-fout'}`}>
-          <span>{goed ? '🎉 Goed!' : <>❌ Het goede antwoord is <b>{opgave.juist}</b>.</>}</span>
-          <div className="rs-uitleg">💡 {opgave.uitleg}</div>
-          <button className="rs-verder-btn" onClick={() => onNext(goed)}>{goed ? 'Verder →' : 'Volgende →'}</button>
+          <span className="rs-feedback-kop"><Icoon naam={goed ? 'goed' : 'fout'} />{goed ? 'Goed!' : <>Het goede antwoord is <b>{opgave.juist}</b>.</>}</span>
+          <div className="rs-uitleg"><Icoon naam="lamp" />{opgave.uitleg}</div>
+          <Knop variant="primair" icoonRechts="verder" className="rs-verder-btn" onClick={() => onNext(goed)}>{goed ? 'Verder' : 'Volgende'}</Knop>
         </div>
       )}
     </div>
@@ -156,9 +157,9 @@ export default function KlokKijken({ onBack, addBriefgeld, addCuruntie, aantal, 
   if (modus === null) {
     return (
       <div className="rs-screen">
-        <button className="rs-back" onClick={onBack}>← Terug</button>
+        <TerugKnop onClick={onBack} />
         <div className="rs-header">
-          <span className="rs-icon">🕒</span>
+          <span className="rs-icon"><Icoon naam="klok" /></span>
           <h1 className="rs-title">Klokkijken</h1>
           <p className="rs-sub">Welke klok wil je oefenen?</p>
         </div>
@@ -183,16 +184,16 @@ export default function KlokKijken({ onBack, addBriefgeld, addCuruntie, aantal, 
   if (level === null) {
     return (
       <div className="rs-screen">
-        <button className="rs-back" onClick={() => setModus(null)}>← Terug</button>
+        <TerugKnop onClick={() => setModus(null)} />
         <div className="rs-header">
-          <span className="rs-icon">🕒</span>
+          <span className="rs-icon"><Icoon naam="klok" /></span>
           <h1 className="rs-title">Klokkijken — {modus === 'analoog' ? 'analoog' : 'digitaal'}</h1>
           <p className="rs-sub">Kies je level</p>
         </div>
         <div className="rs-groep-grid">
           {LEVELS.map(l => (
             <button key={l.n} className="rs-groep-card" onClick={() => start(modus, l.n)}>
-              <span className="rs-groep-emoji">{l.icon}</span>
+              <span className="rs-groep-emoji">{l.n}</span>
               <span className="rs-groep-naam">{l.naam}</span>
               <span className="rs-groep-desc">{l.desc}</span>
               <span className="vb-line">{l.vb}</span>
@@ -206,14 +207,11 @@ export default function KlokKijken({ onBack, addBriefgeld, addCuruntie, aantal, 
   return (
     <div className="rs-screen rs-screen-oefen">
       <div className="rs-oefen-top">
-        <button className="rs-back" onClick={() => setLevel(null)}>← Stop</button>
-        <span className="rs-verdiend">🕒 Level {level}</span>
+        <TerugKnop onClick={() => setLevel(null)}>Stoppen</TerugKnop>
+        <span className="rs-verdiend">Level {level}</span>
         <span className="rs-verdiend">💵 € {verdiend}</span>
       </div>
-      <div className="rs-progress-wrap">
-        <div className="rs-progress-bar" style={{ width: `${(sinds / PER_BELONING) * 100}%` }} />
-      </div>
-      <div className="rs-progress-label">{PER_BELONING - sinds} goede tot een spelletje 🎮</div>
+      <VoortgangsBalk waarde={sinds} max={PER_BELONING} label={`nog ${PER_BELONING - sinds} goed tot een spelletje`} />
       {/* key: bij elke nieuwe opgave een verse kaart, zodat de vorige keuze weg is */}
       {opgave && <VraagKaart key={opgave.id} opgave={opgave} modus={modus} level={level} onNext={volgende} />}
     </div>

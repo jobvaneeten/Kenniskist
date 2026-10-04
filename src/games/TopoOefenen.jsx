@@ -5,6 +5,7 @@ import SpelBeloning, { BRIEFGELD } from './SpelBeloning'
 import { useGebruikOpdracht } from './gebruikOpdracht.js'
 import OpdrachtKlaarScherm from './OpdrachtKlaarScherm.jsx'
 import './topo-oefenen.css'
+import { TerugKnop, Knop, Icoon } from '../ui/index.jsx'
 
 // Topografie op de kaart: je krijgt een naam en wijst die aan (klikken), of je
 // sleept naamkaartjes naar de juiste plek. Na elke 10 goede antwoorden een
@@ -485,9 +486,9 @@ export default function TopoOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
   if (scherm === 'menu') {
     return (
       <div className="topo-screen topo-screen-center">
-        <button className="topo-back" onClick={onBack}>← Menu</button>
+        <TerugKnop onClick={onBack} />
         <div className="topo-header">
-          <span className="topo-header-icon">🗺️</span>
+          <span className="topo-header-icon"><Icoon naam="kaart" /></span>
           <h1>Topografie</h1>
           <p>TopoMaster Europa</p>
         </div>
@@ -505,7 +506,7 @@ export default function TopoOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
                 setCentrum([bx + bb / 2, by + bh / 2])
               }}
             >
-              <span>{k.key === 'europa-a' ? '🌍' : '🧭'}</span> {k.kort}
+              <span className="topo-modus-icoon"><Icoon naam="kaart" /></span>{k.kort}
               <em>{k.naam.split('— ')[1]}</em>
             </button>
           ))}
@@ -528,18 +529,18 @@ export default function TopoOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
 
         <div className="topo-modus">
           <button className={`topo-modus-knop${modus === 'klik' ? ' aan' : ''}`} onClick={() => setModus('klik')}>
-            <span>👆</span> Aanwijzen
+            <span className="topo-modus-icoon"><Icoon naam="wijs" /></span>Aanwijzen
             <em>Je krijgt een naam en klikt de plek aan</em>
           </button>
           <button className={`topo-modus-knop${modus === 'sleep' ? ' aan' : ''}`} onClick={() => setModus('sleep')}>
-            <span>✋</span> Slepen
+            <span className="topo-modus-icoon"><Icoon naam="slepen" /></span>Slepen
             <em>Sleep het juiste naamkaartje naar de kaart</em>
           </button>
         </div>
 
-        <button className="topo-start" disabled={soorten.length === 0} onClick={start}>
-          Start oefenen →
-        </button>
+        <Knop variant="primair" maat="lg" icoonRechts="verder" className="topo-start" disabled={soorten.length === 0} onClick={start}>
+          Start oefenen
+        </Knop>
       </div>
     )
   }
@@ -556,14 +557,14 @@ export default function TopoOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
   return (
     <div className="topo-screen">
       <div className="topo-top-bar">
-        <button className="topo-back" onClick={() => (config ? onBack() : setScherm('menu'))}>← Stop</button>
+        <TerugKnop onClick={() => (config ? onBack() : setScherm('menu'))}>Stoppen</TerugKnop>
         <div className="topo-progress">
-          <span className="topo-score">✓ {correctCount}</span>
+          <span className="topo-score"><Icoon naam="goed" />{correctCount}</span>
           <span className="topo-meter">
             <span className="topo-meter-track">
               <span className="topo-meter-fill" style={{ width: `${(naarBeloning / GOED_VOOR_REWARD) * 100}%` }} />
             </span>
-            <span className="topo-meter-tekst">nog {GOED_VOOR_REWARD - naarBeloning} 🚀</span>
+            <span className="topo-meter-tekst">nog {GOED_VOOR_REWARD - naarBeloning}</span>
           </span>
         </div>
       </div>
@@ -729,13 +730,13 @@ export default function TopoOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
           <button type="button" onClick={() => zoomKnop(ZOOM_STAP)} disabled={zoom >= MAX_ZOOM} title="Inzoomen">+</button>
           <span className="topo-zoom-stand">{Math.round(zoom * 10) / 10}×</span>
           <button type="button" onClick={() => zoomKnop(1 / ZOOM_STAP)} disabled={zoom <= MIN_ZOOM} title="Uitzoomen">−</button>
-          <button type="button" className="topo-zoom-heel" onClick={heleKaart} disabled={zoom === 1} title="Hele kaart">🗺️</button>
+          <button type="button" className="topo-zoom-heel" onClick={heleKaart} disabled={zoom === 1} title="Hele kaart" aria-label="Hele kaart"><Icoon naam="kaart" /></button>
         </div>
       </div>
 
       <p className="topo-tip">
         {zoom > 1
-          ? 'Sleep de kaart om te schuiven · 🗺️ voor de hele kaart'
+          ? 'Sleep de kaart om te schuiven · kaartknop voor de hele kaart'
           : 'Precies op de stip hoeft niet — als je het dichtst bij de goede plek klikt, is het goed. Wil je het toch groter zien? Zoom in met + (of scrollen, of twee vingers).'}
       </p>
 

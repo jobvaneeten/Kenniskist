@@ -8,6 +8,7 @@ import { Interpunctie, GebiedendeWijs } from './ZinKeuze.jsx'
 import { useGebruikOpdracht } from './gebruikOpdracht.js'
 import OpdrachtKlaarScherm from './OpdrachtKlaarScherm.jsx'
 import './taal-oefenen.css'
+import { TerugKnop, Icoon, Knop } from '../ui/index.jsx'
 
 const BRIEFGELD_PER_AANGEVINKT = 5 // € per aangevinkt onderdeel, per beloning
 const CORRECT_VOOR_REWARD = 10
@@ -204,9 +205,9 @@ export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
   if (screen === 'woordenschat') {
     return (
       <div className="tv-screen tv-screen-center">
-        <button className="tv-back" onClick={() => setScreen('menu')}>← Menu</button>
+        <TerugKnop onClick={() => setScreen('menu')} />
         <div className="tv-header tv-header-compact">
-          <span className="tv-header-icon">📓</span>
+          <span className="tv-header-icon"><Icoon naam="boek" /></span>
           <h1>Woordenschat</h1>
           <p>Kies het blok van de woordkaartjes</p>
         </div>
@@ -248,9 +249,9 @@ export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
     return (
       <div className="tv-screen">
         <div className="tv-top-bar">
-          <button className="tv-back" onClick={() => setScreen('filter')}>← Stop</button>
+          <TerugKnop onClick={() => setScreen('filter')}>Stoppen</TerugKnop>
           <div className="tv-progress">
-            <span className="tv-score-badge">✓ {correctCount}</span>
+            <span className="tv-score-badge"><Icoon naam="goed" />{correctCount}</span>
             <span className="tv-reward-meter">
               <span className="tv-reward-track">
                 <span
@@ -258,14 +259,14 @@ export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
                   style={{ width: `${((correctCount % CORRECT_VOOR_REWARD) / CORRECT_VOOR_REWARD) * 100}%` }}
                 />
               </span>
-              <span className="tv-reward-tekst">nog {CORRECT_VOOR_REWARD - (correctCount % CORRECT_VOOR_REWARD)} 🚀</span>
+              <span className="tv-reward-tekst">nog {CORRECT_VOOR_REWARD - (correctCount % CORRECT_VOOR_REWARD)}</span>
             </span>
           </div>
         </div>
 
         <div className="tv-werk">
           <div className={`tv-card ${feedback ? (feedback.correct ? 'tv-card-correct' : 'tv-card-wrong') : ''}`}>
-            <p className="tv-mode-label">📚 Woordsoorten</p>
+            <p className="tv-mode-label">Woordsoorten</p>
             <div className="tv-zin">{renderZin(q.zin, q.vraagWoord)}</div>
             <p className="tv-vraag">Wat voor woordsoort is het gekleurde woord?</p>
           </div>
@@ -296,13 +297,13 @@ export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
           {!feedback && (
             <div className="tv-tip-rij">
               <button className="tv-tip-knop" onClick={() => setTipOpen(o => !o)}>
-                {tipOpen ? '💡 Tip verbergen' : '💡 Hoe herken ik ze?'}
+                <Icoon naam="lamp" />{tipOpen ? 'Tip verbergen' : 'Hoe herken ik ze?'}
               </button>
             </div>
           )}
           {!feedback && tipOpen && (
             <div className="tv-tip">
-              <span className="tv-tip-icon">💡</span>
+              <span className="tv-tip-icon"><Icoon naam="lamp" /></span>
               <div>
                 {checkedLabels.map(l => (
                   <p key={l}><strong>{l}</strong> — {TIP_WOORDSOORT[l]}</p>
@@ -313,7 +314,7 @@ export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
 
           {feedback && (
             <div className={`tv-feedback ${feedback.correct ? 'tv-feedback-correct' : 'tv-feedback-wrong'}`}>
-              <span className="tv-feedback-icon">{feedback.correct ? '✓' : '✗'}</span>
+              <span className="tv-feedback-icon"><Icoon naam={feedback.correct ? 'goed' : 'fout'} /></span>
               <div>
                 <p className="tv-feedback-uitleg">{feedback.uitleg}</p>
               </div>
@@ -328,9 +329,9 @@ export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
     const canStart = mode === 'zinsdelen' ? checkedLabels.length >= 1 : checkedLabels.length >= 2
     return (
       <div className="tv-screen tv-screen-center">
-        <button className="tv-back" onClick={() => setScreen('taalverkennen')}>← Terug</button>
+        <TerugKnop onClick={() => setScreen('taalverkennen')} />
         <div className="tv-header tv-header-compact">
-          <span className="tv-header-icon">{mode === 'woordsoorten' ? '📚' : '🔍'}</span>
+          <span className="tv-header-icon"><Icoon naam={mode === 'woordsoorten' ? 'boek' : 'lezen'} /></span>
           <h1>{mode === 'woordsoorten' ? 'Woordsoorten' : 'Zinsdelen'}</h1>
           <p>{mode === 'woordsoorten'
             ? 'Kies wat je wilt oefenen'
@@ -366,13 +367,9 @@ export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
             {mode === 'zinsdelen' ? 'Kies minstens 1 onderdeel' : 'Kies minstens 2 soorten'}
           </p>
         )}
-        <button
-          className="tv-btn tv-btn-primary"
-          disabled={!canStart}
-          onClick={startOefening}
-        >
-          Start oefenen →
-        </button>
+        <Knop variant="primair" icoonRechts="verder" disabled={!canStart} onClick={startOefening}>
+          Start oefenen
+        </Knop>
       </div>
     )
   }
@@ -380,30 +377,30 @@ export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
   if (screen === 'taalverkennen') {
     return (
       <div className="tv-screen tv-screen-center">
-        <button className="tv-back" onClick={() => setScreen('menu')}>← Menu</button>
+        <TerugKnop onClick={() => setScreen('menu')} />
         <div className="tv-header tv-header-compact">
-          <span className="tv-header-icon">🌱</span>
+          <span className="tv-header-icon"><Icoon naam="tekst" /></span>
           <h1>Taalverkennen</h1>
           <p>Wat wil je oefenen?</p>
         </div>
         <div className="tv-mode-grid tv-mode-grid-2">
           <button className="tv-mode-card" onClick={() => { setMode('zinsdelen'); setScreen('filter') }}>
-            <span className="tv-mode-emoji">🔍</span>
+            <span className="tv-mode-emoji"><Icoon naam="lezen" /></span>
             <span className="tv-mode-name">Zinsdelen</span>
             <span className="tv-mode-desc">Sleep onderwerp, persoonsvorm, gezegde, voorwerpen en bepalingen naar de juiste woorden</span>
           </button>
           <button className="tv-mode-card" onClick={() => { setMode('woordsoorten'); setScreen('filter') }}>
-            <span className="tv-mode-emoji">📚</span>
+            <span className="tv-mode-emoji"><Icoon naam="boek" /></span>
             <span className="tv-mode-name">Woordsoorten</span>
             <span className="tv-mode-desc">Naamwoord · Werkwoord · Bijvoeglijk · Bijwoord en meer</span>
           </button>
           <button className="tv-mode-card" onClick={() => setScreen('interpunctie')}>
-            <span className="tv-mode-emoji">✏️</span>
+            <span className="tv-mode-emoji"><Icoon naam="potlood" /></span>
             <span className="tv-mode-name">Interpunctie</span>
             <span className="tv-mode-desc">Komma · Aanhalingstekens · Afbreekstreepje · Hoofdletters · Punten — kies welke zin goed is</span>
           </button>
           <button className="tv-mode-card" onClick={() => setScreen('gebiedend')}>
-            <span className="tv-mode-emoji">👉</span>
+            <span className="tv-mode-emoji"><Icoon naam="uitroep" /></span>
             <span className="tv-mode-name">Gebiedende wijs</span>
             <span className="tv-mode-desc">Welke zin is een bevelzin zonder onderwerp?</span>
           </button>
@@ -415,22 +412,22 @@ export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
   // menu
   return (
     <div className="tv-screen tv-screen-center">
-      <button className="tv-back" onClick={onBack}>← Menu</button>
+      <TerugKnop onClick={onBack} />
       <div className="tv-header">
-        <span className="tv-header-icon">📖</span>
+        <span className="tv-header-icon"><Icoon naam="boek" /></span>
         <h1>Taal</h1>
         <p>Kies een onderdeel</p>
       </div>
       <div className="tv-mode-grid">
         <button className="tv-mode-card" onClick={() => setScreen('taalverkennen')}>
-          <span className="tv-mode-emoji">🌱</span>
+          <span className="tv-mode-emoji"><Icoon naam="tekst" /></span>
           <span className="tv-mode-name">Taalverkennen</span>
           <span className="tv-mode-desc">Zinsdelen, woordsoorten, interpunctie en gebiedende wijs</span>
         </button>
         {/* Alleen groep 7: de woordkaartjes zijn die van de groep 7-methode. */}
         {groep === 7 && (
           <button className="tv-mode-card" onClick={() => setScreen('woordenschat')}>
-            <span className="tv-mode-emoji">📓</span>
+            <span className="tv-mode-emoji"><Icoon naam="boek" /></span>
             <span className="tv-mode-name">Woordenschat</span>
             <span className="tv-mode-desc">Blok 1 t/m 8 — 45 woorden per blok</span>
           </button>

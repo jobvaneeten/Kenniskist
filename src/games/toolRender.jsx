@@ -25,14 +25,14 @@ import BegrijpendLezen from './BegrijpendLezen.jsx'
 import TopoOefenen from './TopoOefenen.jsx'
 import LeesTimer from './LeesTimer.jsx'
 import '../game.css'
-import { TerugKnop } from '../ui/index.jsx'
+import { TerugKnop, Icoon } from '../ui/index.jsx'
 
 function NogNietBeschikbaar({ label, onBack }) {
   return (
     <div className="game-screen">
       <TerugKnop onClick={onBack} />
       <div className="game-header">
-        <span className="game-header-icon">🚧</span>
+        <span className="game-header-icon"><Icoon naam="slot" /></span>
         <h1 className="game-header-title">{label}</h1>
         <p className="game-header-sub">
           Deze oefening werkt nog niet vanuit een weektaak. Oefen 'm voorlopig vrij via "Speel Game",

@@ -4,6 +4,7 @@ import { useGebruikOpdracht } from './gebruikOpdracht.js'
 import OpdrachtKlaarScherm from './OpdrachtKlaarScherm.jsx'
 import './verhaaltjes-sommen.css'
 import './maten-omrekenen.css'
+import { Knop, TerugKnop, VoortgangsBalk, Icoon } from '../ui/index.jsx'
 
 const PER_BELONING = 5
 const BELONING     = 50
@@ -138,11 +139,11 @@ function VraagKaart({ opgave, onNext }) {
               <input ref={ref} className="rs-input" type="text" inputMode="decimal" autoComplete="off"
                 placeholder="Jouw antwoord…" value={antw}
                 onChange={e => setAntw(e.target.value)} onKeyDown={e => e.key === 'Enter' && check()} />
-              <button className="rs-check-btn" onClick={check}>Controleer →</button>
+              <Knop variant="primair" icoonRechts="verder" onClick={check}>Controleer</Knop>
             </div>
           </div>
           <button className="mo-hulp-btn" onClick={() => setHulp(h => !h)}>
-            {hulp ? '🙈 Verberg hulp' : '💡 Hulp: trappetje'}
+            <Icoon naam="lamp" />{hulp ? 'Verberg hulp' : 'Hulp: trappetje'}
           </button>
           {hulp && <div className="mo-trap-wrap"><Trap kind={opgave.ladder} /></div>}
         </div>
@@ -150,17 +151,17 @@ function VraagKaart({ opgave, onNext }) {
 
       {phase === 'good' && (
         <div className="rs-feedback rs-goed">
-          <span>🎉 Goed! {fmt(opgave.value)} {opgave.from} = {fmt(opgave.answer)} {opgave.to}</span>
-          <div className="rs-uitleg">💡 {opgave.uitleg}</div>
-          <button className="rs-verder-btn" onClick={() => onNext(true)}>Verder →</button>
+          <span className="rs-feedback-kop"><Icoon naam="goed" />Goed! {fmt(opgave.value)} {opgave.from} = {fmt(opgave.answer)} {opgave.to}</span>
+          <div className="rs-uitleg"><Icoon naam="lamp" />{opgave.uitleg}</div>
+          <Knop variant="primair" icoonRechts="verder" className="rs-verder-btn" onClick={() => onNext(true)}>Verder</Knop>
         </div>
       )}
 
       {phase === 'bad' && (
         <div className="rs-feedback rs-fout">
-          <span>❌ Het juiste antwoord is <b>{fmt(opgave.answer)} {opgave.to}</b>.</span>
-          <div className="rs-uitleg">💡 {opgave.uitleg}</div>
-          <button className="rs-verder-btn" onClick={() => onNext(false)}>Volgende →</button>
+          <span className="rs-feedback-kop"><Icoon naam="fout" />Het juiste antwoord is <b>{fmt(opgave.answer)} {opgave.to}</b>.</span>
+          <div className="rs-uitleg"><Icoon naam="lamp" />{opgave.uitleg}</div>
+          <Knop variant="primair" icoonRechts="verder" className="rs-verder-btn" onClick={() => onNext(false)}>Volgende</Knop>
         </div>
       )}
     </div>
@@ -168,9 +169,9 @@ function VraagKaart({ opgave, onNext }) {
 }
 
 const LEVELS = [
-  { n: 1, icon: '🟢', naam: 'Level 1 — makkelijk', desc: '1 of 2 stappen, hele getallen', vb: '5 m = … cm' },
-  { n: 2, icon: '🟡', naam: 'Level 2 — lastiger',  desc: 'Meer stappen, grotere getallen', vb: '3 km = … dm' },
-  { n: 3, icon: '🔴', naam: 'Level 3 — komma',      desc: 'Komma plaatsen of weglaten', vb: '2,5 m = … cm' },
+  { n: 1, naam: 'Level 1 — makkelijk', desc: '1 of 2 stappen, hele getallen', vb: '5 m = … cm' },
+  { n: 2, naam: 'Level 2 — lastiger',  desc: 'Meer stappen, grotere getallen', vb: '3 km = … dm' },
+  { n: 3, naam: 'Level 3 — komma',      desc: 'Komma plaatsen of weglaten', vb: '2,5 m = … cm' },
 ]
 
 // aantal/config: alleen gezet vanuit een weektaak-opdracht (toolRender.jsx).
@@ -231,16 +232,16 @@ export default function MaatenOmrekenen({ onBack, addBriefgeld, addCuruntie, aan
   if (level === null) {
     return (
       <div className="rs-screen">
-        <button className="rs-back" onClick={onBack}>← Terug</button>
+        <TerugKnop onClick={onBack} />
         <div className="rs-header">
-          <span className="rs-icon">📏</span>
+          <span className="rs-icon"><Icoon naam="liniaal" /></span>
           <h1 className="rs-title">Maten omrekenen</h1>
           <p className="rs-sub">Lengte en inhoud · kies je level</p>
         </div>
         <div className="rs-groep-grid">
           {LEVELS.map(l => (
             <button key={l.n} className="rs-groep-card" onClick={() => start(l.n)}>
-              <span className="rs-groep-emoji">{l.icon}</span>
+              <span className="rs-groep-emoji">{l.n}</span>
               <span className="rs-groep-naam">{l.naam}</span>
               <span className="rs-groep-desc">{l.desc}</span>
               <span className="vb-line">{l.vb}</span>
@@ -254,14 +255,11 @@ export default function MaatenOmrekenen({ onBack, addBriefgeld, addCuruntie, aan
   return (
     <div className="rs-screen rs-screen-oefen">
       <div className="rs-oefen-top">
-        <button className="rs-back" onClick={() => setLevel(null)}>← Stop</button>
-        <span className="rs-verdiend">📏 Level {level}</span>
+        <TerugKnop onClick={() => setLevel(null)}>Stoppen</TerugKnop>
+        <span className="rs-verdiend">Level {level}</span>
         <span className="rs-verdiend">💵 € {verdiend}</span>
       </div>
-      <div className="rs-progress-wrap">
-        <div className="rs-progress-bar" style={{ width: `${(sinds / PER_BELONING) * 100}%` }} />
-      </div>
-      <div className="rs-progress-label">{PER_BELONING - sinds} goede tot een spelletje 🎮</div>
+      <VoortgangsBalk waarde={sinds} max={PER_BELONING} label={`nog ${PER_BELONING - sinds} goed tot een spelletje`} />
       {opgave && <VraagKaart opgave={opgave} onNext={volgende} />}
     </div>
   )

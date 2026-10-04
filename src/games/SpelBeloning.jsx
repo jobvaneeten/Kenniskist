@@ -6,6 +6,7 @@ import BrugBouwen from './BrugBouwen'
 import HillClimbGame from './HillClimbGame'
 import SterrenveerGame from './SterrenveerGame'
 import './spel-beloning.css'
+import { Knop, TerugKnop, Icoon } from '../ui/index.jsx'
 
 // ── Gedeeld beloning-systeem: na 5 goede antwoorden mag je één van de games
 // spelen (in "reward-modus": één potje/ronde/level, dan automatisch terug).
@@ -51,15 +52,15 @@ function IframeEmbed({ src, title, doneType, hint, onDone, seconds }) {
   const urgent = over != null && over <= 10
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: '#000', display: 'flex', flexDirection: 'column' }}>
-      <button className="sb-game-back" onClick={onDone}>← Klaar</button>
+    <div className="sb-iframe-wrap">
+      <TerugKnop onClick={onDone}>Stoppen</TerugKnop>
       {mmss && (
         <div className={`sb-timer${urgent ? ' sb-timer-urgent' : ''}`}>
-          ⏱ {over === 0 ? 'Tijd voorbij!' : mmss}
+          <Icoon naam="klok" />{over === 0 ? 'Tijd voorbij!' : mmss}
         </div>
       )}
-      <iframe src={src} title={title} allow="autoplay" style={{ flex: 1, border: 'none' }} />
-      <div style={{ textAlign: 'center', color: '#aaa', padding: '8px', fontSize: '0.85rem' }}>{hint}</div>
+      <iframe src={src} title={title} allow="autoplay" className="sb-iframe" />
+      <div className="sb-hint">{hint}</div>
     </div>
   )
 }
@@ -68,20 +69,20 @@ function IframeEmbed({ src, title, doneType, hint, onDone, seconds }) {
 export const BRIEFGELD = 50
 
 const SPELLEN = [
-  { key: 'headsoccer', emoji: '🥅', name: 'Supervoetbal',   desc: 'Speel een ronde van het toernooi', img: '/scenes/games/headsoccer.png' },
-  { key: 'voetbal',    emoji: '⚽', name: '1v1 Voetbal',    desc: 'Jij tegen de computer',            img: '/scenes/games/football.png' },
-  { key: 'jetpack',    emoji: '🚀', name: 'Jetpack',        desc: 'Vlieg zo ver mogelijk!',           img: '/scenes/games/jetpack.png' },
-  { key: 'astro',      emoji: '🪐', name: 'Astro Katapult', desc: 'Speel 1 level',                    img: '/scenes/games/astrokatapult.png' },
-  { key: 'space',      emoji: '🛸', name: 'Spacerunner',    desc: 'Vlieg door de ruimte!',            img: '/scenes/games/sterrenstroom.png' },
-  { key: 'doodle',     emoji: '🦘', name: 'Doodle Sprong',  desc: 'Spring zo hoog mogelijk!',          img: '/scenes/games/doodlesprong.png' },
-  { key: 'meteoor',    emoji: '☄️', name: 'Meteoorvlucht',  desc: 'Ren weg voor de meteoor!',          img: '/scenes/games/meteoorvlucht.svg' },
-  { key: 'evolutie',   emoji: '🐨', name: 'Dier Evolutie',  desc: 'Voeg dieren samen',                 img: '/scenes/games/evolutie.png' },
-  { key: 'tower',      emoji: '🏰', name: 'Tower Defense',  desc: 'Verdedig je toren!',               img: '/scenes/games/towerdefense.png' },
-  { key: 'brug',       emoji: '🌉', name: 'Brug Bouwen',    desc: 'Bouw 3 bruggen',                   img: '/scenes/games/brug.png' },
-  { key: 'hillclimb',  emoji: '🚗', name: 'Bergrijden',     desc: 'Rij tot je crasht',                img: '/scenes/games/hillclimb.png' },
-  { key: 'fruitsabel', emoji: '🍉', name: 'Fruitsabel',     desc: 'Snijd 60 seconden fruit',          img: '/scenes/games/fruitsabel.svg' },
-  { key: 'sterrenveer', emoji: '🌠', name: 'Sterrenveer',   desc: 'Speel 1 level',                    img: '/scenes/games/sterrenveer.svg' },
-  { key: 'graven',     emoji: '⛏️', name: 'Diepgravers',    desc: 'Je krijgt 3 duiken',               img: '/scenes/games/graven.svg' },
+  { key: 'headsoccer', name: 'Supervoetbal',   desc: 'Speel een ronde van het toernooi', img: '/scenes/games/headsoccer.png' },
+  { key: 'voetbal',    name: '1v1 Voetbal',    desc: 'Jij tegen de computer',            img: '/scenes/games/football.png' },
+  { key: 'jetpack',    name: 'Jetpack',        desc: 'Vlieg zo ver mogelijk!',           img: '/scenes/games/jetpack.png' },
+  { key: 'astro',      name: 'Astro Katapult', desc: 'Speel 1 level',                    img: '/scenes/games/astrokatapult.png' },
+  { key: 'space',      name: 'Spacerunner',    desc: 'Vlieg door de ruimte!',            img: '/scenes/games/sterrenstroom.png' },
+  { key: 'doodle',     name: 'Doodle Sprong',  desc: 'Spring zo hoog mogelijk!',          img: '/scenes/games/doodlesprong.png' },
+  { key: 'meteoor',    name: 'Meteoorvlucht',  desc: 'Ren weg voor de meteoor!',          img: '/scenes/games/meteoorvlucht.svg' },
+  { key: 'evolutie',   name: 'Dier Evolutie',  desc: 'Voeg dieren samen',                 img: '/scenes/games/evolutie.png' },
+  { key: 'tower',      name: 'Tower Defense',  desc: 'Verdedig je toren!',               img: '/scenes/games/towerdefense.png' },
+  { key: 'brug',       name: 'Brug Bouwen',    desc: 'Bouw 3 bruggen',                   img: '/scenes/games/brug.png' },
+  { key: 'hillclimb',  name: 'Bergrijden',     desc: 'Rij tot je crasht',                img: '/scenes/games/hillclimb.png' },
+  { key: 'fruitsabel', name: 'Fruitsabel',     desc: 'Snijd 60 seconden fruit',          img: '/scenes/games/fruitsabel.svg' },
+  { key: 'sterrenveer', name: 'Sterrenveer',   desc: 'Speel 1 level',                    img: '/scenes/games/sterrenveer.svg' },
+  { key: 'graven',     name: 'Diepgravers',    desc: 'Je krijgt 3 duiken',               img: '/scenes/games/graven.svg' },
 ]
 
 export default function SpelBeloning({ title, sub, geld, addCuruntie, onDone }) {
@@ -95,14 +96,14 @@ export default function SpelBeloning({ title, sub, geld, addCuruntie, onDone }) 
   // rewardMode: precies één wedstrijd, dan (na de eindstand) automatisch terug.
   // initialBracket houdt het toernooi vast tussen beloningen door.
   if (picked === 'voetbal')    return wrap(<FootballGame rewardMode noQuiz initialBracket={loadToernooi()} onMatchDone={() => onDone()} onBack={onDone} addCuruntie={addCuruntie} />)
-  if (picked === 'jetpack')    return <IframeEmbed src="/jetpack/index.html" title="Jetpack" doneType="jetpack-gameover" hint="Je gaat automatisch verder na het spel ✈️" onDone={onDone} />
-  if (picked === 'astro')      return <IframeEmbed src="/astrokatapult/?reward=1" title="Astro Katapult" doneType="astrokatapult-leveldone" hint="Speel 1 level — daarna ga je verder 🪐" onDone={onDone} />
-  if (picked === 'space')      return <IframeEmbed src="/sterrenstroom/" title="Spacerunner" doneType="spacerunner-gameover" hint="Je gaat automatisch verder na het spel 🛸" onDone={onDone} />
-  if (picked === 'doodle')     return <IframeEmbed src="/doodlesprong/" title="Doodle Sprong" doneType="doodlesprong-gameover" hint="Je gaat automatisch verder na het spel 🦘" onDone={onDone} />
-  if (picked === 'meteoor')    return <IframeEmbed src="/meteoorvlucht/" title="Meteoorvlucht" doneType="meteoorvlucht-gameover" hint="Je gaat automatisch verder na het spel ☄️" onDone={onDone} />
+  if (picked === 'jetpack')    return <IframeEmbed src="/jetpack/index.html" title="Jetpack" doneType="jetpack-gameover" hint="Je gaat automatisch verder na het spel" onDone={onDone} />
+  if (picked === 'astro')      return <IframeEmbed src="/astrokatapult/?reward=1" title="Astro Katapult" doneType="astrokatapult-leveldone" hint="Speel 1 level — daarna ga je verder" onDone={onDone} />
+  if (picked === 'space')      return <IframeEmbed src="/sterrenstroom/" title="Spacerunner" doneType="spacerunner-gameover" hint="Je gaat automatisch verder na het spel" onDone={onDone} />
+  if (picked === 'doodle')     return <IframeEmbed src="/doodlesprong/" title="Doodle Sprong" doneType="doodlesprong-gameover" hint="Je gaat automatisch verder na het spel" onDone={onDone} />
+  if (picked === 'meteoor')    return <IframeEmbed src="/meteoorvlucht/" title="Meteoorvlucht" doneType="meteoorvlucht-gameover" hint="Je gaat automatisch verder na het spel" onDone={onDone} />
   // Evolutie is een idle-spel zonder eigen 'potje', dus hier bepaalt de klok het
   // einde: 1 minuut spelen en dan automatisch terug naar de oefening.
-  if (picked === 'evolutie')   return <IframeEmbed src="/evolutie/" title="Dier Evolutie" doneType="evolutie-klaar" seconds={60} hint="Tik op de dieren en raap poep — na 1 minuut ga je verder 🐨" onDone={onDone} />
+  if (picked === 'evolutie')   return <IframeEmbed src="/evolutie/" title="Dier Evolutie" doneType="evolutie-klaar" seconds={60} hint="Tik op de dieren en raap poep — na 1 minuut ga je verder" onDone={onDone} />
   if (picked === 'tower')      return wrap(<TowerDefenseGame onBack={onDone} onRoundDone={onDone} />)
   if (picked === 'brug')       return wrap(<BrugBouwen reward onBack={onDone} />)
   if (picked === 'hillclimb')  return wrap(<HillClimbGame reward onBack={onDone} />)
@@ -111,29 +112,29 @@ export default function SpelBeloning({ title, sub, geld, addCuruntie, onDone }) 
   if (picked === 'sterrenveer') return wrap(<SterrenveerGame reward onBack={onDone} />)
   // Deze twee hebben een eigen winkeltje: na het potje mag je eerst je munten
   // uitgeven en ga je met "Verder" zelf terug naar de oefening.
-  if (picked === 'fruitsabel') return <IframeEmbed src="/fruitsabel/" title="Fruitsabel" doneType="fruitsabel-gameover" hint="Speel 1 potje — daarna kun je upgraden en op Verder klikken 🍉" onDone={onDone} />
+  if (picked === 'fruitsabel') return <IframeEmbed src="/fruitsabel/" title="Fruitsabel" doneType="fruitsabel-gameover" hint="Speel 1 potje — daarna kun je upgraden en op Verder klikken" onDone={onDone} />
   // Diepgravers geeft 3 duiken per beloning; gaat een kind dood, dan zijn de
   // resterende duiken meteen weg (dat is de hele opzet, zie het spel zelf).
   // Net als Fruitsabel eindigt het niet vanzelf: eerst upgraden, dan Verder.
-  if (picked === 'graven')     return <IframeEmbed src="/graven/" title="Diepgravers" doneType="graven-gameover" hint="Je krijgt 3 duiken — daarna kun je upgraden en op Verder klikken ⛏️" onDone={onDone} />
+  if (picked === 'graven')     return <IframeEmbed src="/graven/" title="Diepgravers" doneType="graven-gameover" hint="Je krijgt 3 duiken — daarna kun je upgraden en op Verder klikken" onDone={onDone} />
 
   return (
     <div className="sb-screen">
-      <div className="sb-star">🎉</div>
+      <div className="sb-star"><Icoon naam="trofee" /></div>
       <h2 className="sb-title">{title || 'Goed gedaan!'}</h2>
       {sub && <p className="sb-line">{sub}</p>}
-      {geld != null && <p className="sb-geld">+{geld} briefgeld verdiend! 💵</p>}
+      {geld != null && <p className="sb-geld">+{geld} briefgeld verdiend 💵</p>}
       <p className="sb-sub">Kies een spel als beloning</p>
       <div className="sb-grid">
         {SPELLEN.map(g => (
           <button key={g.key} className="sb-card" onClick={() => setPicked(g.key)}>
             <img className="sb-img" src={g.img} alt="" />
-            <span className="sb-name">{g.emoji} {g.name}</span>
+            <span className="sb-name">{g.name}</span>
             <span className="sb-desc">{g.desc}</span>
           </button>
         ))}
       </div>
-      <button className="sb-skip" onClick={onDone}>Sla over →</button>
+      <Knop variant="subtiel" icoonRechts="verder" className="sb-skip" onClick={onDone}>Sla over</Knop>
     </div>
   )
 }

@@ -4,7 +4,7 @@ import {
   doelMinuten, leesStand, schrijfStand, wisStand, verstreken, haalServerStand, bewaarServerStand, besteStand,
 } from '../lib/leestimerOpslag.js'
 import './lees-timer.css'
-import { TerugKnop } from '../ui/index.jsx'
+import { TerugKnop, Icoon, Knop, Feedback } from '../ui/index.jsx'
 
 // Stil lezen als weektaak-opdracht: geen vragen, geen scherm om naar te
 // kijken — alleen een timer die loopt terwijl het kind in zijn boek leest.
@@ -175,8 +175,8 @@ export default function LeesTimer({ onBack, addBriefgeld, aantal, config, opdrac
     const nogNodig = opdracht.aantal != null && !opdracht.klaar
     return (
       <div className="game-screen game-screen-center">
-        <div className="game-header">
-          <span className="game-header-icon">📖</span>
+        <div className="game-header" style={{ '--kk-accent': 'var(--kk-vak-lezen)' }}>
+          <span className="game-header-icon"><Icoon naam="boek" /></span>
           <h1 className="game-header-title">{minutenTekst(minuten)} gelezen!</h1>
           <p className="game-header-sub">
             {nogNodig
@@ -185,12 +185,12 @@ export default function LeesTimer({ onBack, addBriefgeld, aantal, config, opdrac
           </p>
         </div>
         {(opdracht.opslaanMislukt || opslaanMislukt) && (
-          <p className="lt-waarschuwing">⚠️ Je leesbeurt kon niet worden opgeslagen — laat dit scherm zien.</p>
+          <Feedback soort="fout">Je leesbeurt kon niet worden opgeslagen — laat dit scherm zien.</Feedback>
         )}
         <div className="lt-knoppen">
           {nogNodig && (
-            <button
-              className="lt-startknop"
+            <Knop
+              variant="primair" maat="lg" icoon="spelen"
               onClick={() => {
                 afgerondRef.current = false
                 zet({ gebankt: 0, startOp: Date.now() })
@@ -198,7 +198,7 @@ export default function LeesTimer({ onBack, addBriefgeld, aantal, config, opdrac
               }}
             >
               Nog een leesbeurt
-            </button>
+            </Knop>
           )}
           <TerugKnop vast={false} onClick={onBack} />
         </div>
@@ -214,7 +214,7 @@ export default function LeesTimer({ onBack, addBriefgeld, aantal, config, opdrac
         <p className="lt-status">Lezen maar — de timer loopt gewoon door, ook als het scherm uitgaat.</p>
         {opdrachttekst && <p className="lt-opdracht">{opdrachttekst}</p>}
         <div className="lt-knoppen">
-          <button className="lt-pauzeknop" onClick={pauzeer}>⏸ Pauze</button>
+          <Knop variant="secundair" maat="lg" icoon="pauze" onClick={pauzeer}>Pauze</Knop>
         </div>
       </div>
     )
@@ -225,8 +225,8 @@ export default function LeesTimer({ onBack, addBriefgeld, aantal, config, opdrac
   return (
     <div className="game-screen game-screen-center">
       <TerugKnop onClick={onBack} />
-      <div className="game-header">
-        <span className="game-header-icon">{fase === 'pauze' ? '⏸' : '📖'}</span>
+      <div className="game-header" style={{ '--kk-accent': 'var(--kk-vak-lezen)' }}>
+        <span className="game-header-icon"><Icoon naam={fase === 'pauze' ? 'pauze' : 'boek'} /></span>
         <h1 className="game-header-title">
           {fase === 'pauze' ? 'Pauze' : `${minutenTekst(minuten)} lezen`}
         </h1>
@@ -243,12 +243,12 @@ export default function LeesTimer({ onBack, addBriefgeld, aantal, config, opdrac
         Je mag tussendoor stoppen met de pauzeknop of de terugknop: je gelezen minuten blijven bewaard en je
         leestaak is pas af als je ze allemaal hebt gelezen.
       </p>
-      <button
-        className="lt-startknop"
+      <Knop
+        variant="primair" maat="lg" icoon="spelen"
         onClick={() => { zet({ gebankt: seconden, startOp: Date.now() }); setFase('bezig') }}
       >
         {hervat ? 'Verder lezen' : 'Start de timer'}
-      </button>
+      </Knop>
       {fase === 'pauze' && (
         <div className="lt-knoppen">
           <TerugKnop vast={false} onClick={onBack} />

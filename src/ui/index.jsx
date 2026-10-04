@@ -34,6 +34,16 @@ const PADEN = {
   slot:    'M6 11h12v10H6zM8 11V8a4 4 0 0 1 8 0v3',
   geluid:  'M4 9h4l5-4v14l-5-4H4zM16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12',
   stil:    'M4 9h4l5-4v14l-5-4H4zM17 9l5 6M22 9l-5 6',
+  grafiek: 'M4 20V10M10 20V4M16 20v-7M22 20H2',
+  liniaal: 'M3 16L16 3l5 5L8 21zM7 12l2 2M10 9l2 2M13 6l2 2',
+  lamp:    'M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z',
+  prullenbak: 'M4 7h16M10 11v6M14 11v6M6 7l1 14h10l1-14M9 7V4h6v3',
+  rekenmachine: 'M6 3h12v18H6zM9 7h6M9 12h.01M12 12h.01M15 12h.01M9 16h.01M12 16h.01M15 16h.01',
+  tekst:   'M4 6h16M4 12h16M4 18h10',
+  uitroep: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7v6M12 16.5h.01',
+  denk:    'M7 17a5 5 0 0 1-1-9.9A6 6 0 0 1 17.5 6 4.5 4.5 0 0 1 17 15H9zM7 21h.01M5 19h.01',
+  wijs:    'M9 11V5a2 2 0 0 1 4 0v5l4.5.8a2 2 0 0 1 1.6 2.3L18 19a2 2 0 0 1-2 1.6h-5.6a2 2 0 0 1-1.6-.8L6 16a1.5 1.5 0 0 1 2.3-2L9 15',
+  slepen:  'M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M12 2v20',
 }
 export function Icoon({ naam, titel }) {
   return (

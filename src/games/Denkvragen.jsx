@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { BLOKKEN, LESSEN_PER_BLOK, denkvraag, heeftBlok, isHerhalingsles } from './denkvragenData.js'
 import '../game.css'
 import './denkvragen.css'
-import { TerugKnop } from '../ui/index.jsx'
+import { TerugKnop, Icoon } from '../ui/index.jsx'
 
 // Denkvragen: blok kiezen, les kiezen, vraag lezen. Verder niets — het kind
 // schrijft zijn antwoord op papier en bespreekt het met de leerkracht, dus er
@@ -21,8 +21,8 @@ export default function Denkvragen({ groep, onBack }) {
     return (
       <div className="game-screen">
         <TerugKnop onClick={() => setBlok(null)} />
-        <div className="game-header">
-          <span className="game-header-icon">💭</span>
+        <div className="game-header" style={{ '--kk-accent': 'var(--kk-vak-rekenen)' }}>
+          <span className="game-header-icon"><Icoon naam="denk" /></span>
           <h1 className="game-header-title">{blokLabel}</h1>
           <p className="game-header-sub">Bij welke les hoort de denkvraag?</p>
         </div>
@@ -50,8 +50,8 @@ export default function Denkvragen({ groep, onBack }) {
   return (
     <div className="game-screen">
       <TerugKnop onClick={onBack} />
-      <div className="game-header">
-        <span className="game-header-icon">💭</span>
+      <div className="game-header" style={{ '--kk-accent': 'var(--kk-vak-rekenen)' }}>
+        <span className="game-header-icon"><Icoon naam="denk" /></span>
         <h1 className="game-header-title">Denkvragen — Groep {groep}</h1>
         <p className="game-header-sub">Zoek de denkvraag van jouw les op. Schrijf je antwoord op papier.</p>
       </div>

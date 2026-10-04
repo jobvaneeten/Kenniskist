@@ -7,6 +7,7 @@ import SpelBeloning, { BRIEFGELD } from './SpelBeloning'
 import { useGebruikOpdracht } from './gebruikOpdracht.js'
 import OpdrachtKlaarScherm from './OpdrachtKlaarScherm.jsx'
 import './taal-oefenen.css'
+import { TerugKnop, Icoon, Knop } from '../ui/index.jsx'
 
 // Zinsdelen ontleden door aan te klikken. De zin staat al in woordgroepen op
 // het scherm ("De juf" · "leest" · "de kinderen" · …); je klikt de groep aan
@@ -287,7 +288,7 @@ export default function Zinsdelen({
   if (!huidig) {
     return (
       <div className="tv-screen tv-screen-center">
-        <button className="tv-back" onClick={onBack}>← Terug</button>
+        <TerugKnop onClick={onBack} />
         <p className="tv-filter-warn">Voor deze onderdelen zijn nog geen zinnen.</p>
       </div>
     )
@@ -300,14 +301,14 @@ export default function Zinsdelen({
   return (
     <div className="tv-screen">
       <div className="tv-top-bar">
-        <button className="tv-back" onClick={onBack}>← Stop</button>
+        <TerugKnop onClick={onBack}>Stoppen</TerugKnop>
         <div className="tv-progress">
-          <span className="tv-score-badge">✓ {correctCount}</span>
+          <span className="tv-score-badge"><Icoon naam="goed" />{correctCount}</span>
           <span className="tv-reward-meter">
             <span className="tv-reward-track">
               <span className="tv-reward-fill" style={{ width: `${(naarBeloning / GOED_VOOR_REWARD) * 100}%` }} />
             </span>
-            <span className="tv-reward-tekst">nog {GOED_VOOR_REWARD - naarBeloning} 🚀</span>
+            <span className="tv-reward-tekst">nog {GOED_VOOR_REWARD - naarBeloning}</span>
           </span>
         </div>
       </div>
@@ -315,7 +316,7 @@ export default function Zinsdelen({
       <div className="tv-werk">
         <div className={`tv-card ${zinKlaar ? (zinGoed ? 'tv-card-correct' : 'tv-card-wrong') : ''}`}>
           <p className="tv-mode-label">
-            🔍 Zinsdelen{ZINSDEEL_SAMENGESTELD.has(huidig.zin) ? ' · samengestelde zin' : ''}
+            Zinsdelen{ZINSDEEL_SAMENGESTELD.has(huidig.zin) ? ' · samengestelde zin' : ''}
           </p>
 
           {/* De stappenrij: wat je al hebt, waar je nu bent en wat er nog komt. */}
@@ -401,20 +402,20 @@ export default function Zinsdelen({
 
         {!zinKlaar && stap && (
           <>
-            <button className="zd-verder" disabled={gekozen.length === 0} onClick={kijkStapNa}>
-              {gekozen.length === 0 ? 'Klik eerst in de zin' : 'Verder →'}
-            </button>
+            <Knop variant="primair" icoonRechts={gekozen.length ? 'verder' : undefined} className="zd-verder" disabled={gekozen.length === 0} onClick={kijkStapNa}>
+              {gekozen.length === 0 ? 'Klik eerst in de zin' : 'Verder'}
+            </Knop>
 
             {/* Hulp: geen antwoord, maar de truc om het onderdeel zelf te
                 vinden. De tip hoort bij de stap waar je nu mee bezig bent. */}
             <div className="tv-tip-rij">
               <button className="tv-tip-knop" onClick={() => setTipOpen(o => !o)}>
-                {tipOpen ? '💡 Tip verbergen' : '💡 Hoe vind ik dit?'}
+                <Icoon naam="lamp" />{tipOpen ? 'Tip verbergen' : 'Hoe vind ik dit?'}
               </button>
             </div>
             {tipOpen && (
               <div className="tv-tip">
-                <span className="tv-tip-icon">💡</span>
+                <span className="tv-tip-icon"><Icoon naam="lamp" /></span>
                 <p>
                   <strong style={{ color: kleurNu }}>{stap.zinsdeel}</strong> — {TIP_ZINSDEEL[stap.zinsdeel]}
                 </p>
@@ -426,7 +427,7 @@ export default function Zinsdelen({
         {zinKlaar && (
           <>
             <div className={`tv-feedback ${zinGoed ? 'tv-feedback-correct' : 'tv-feedback-wrong'}`}>
-              <span className="tv-feedback-icon">{zinGoed ? '✓' : '✗'}</span>
+              <span className="tv-feedback-icon"><Icoon naam={zinGoed ? 'goed' : 'fout'} /></span>
               <div>
                 {huidig.stappen
                   .flatMap(s => [...new Set(s.doelen.map(d => d.plekId))])
@@ -438,7 +439,7 @@ export default function Zinsdelen({
                   ))}
               </div>
             </div>
-            <button className="zd-verder" onClick={naZin}>Volgende zin →</button>
+            <Knop variant="primair" icoonRechts="verder" onClick={naZin}>Volgende zin</Knop>
           </>
         )}
       </div>

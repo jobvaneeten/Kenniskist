@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { shuffleGefilterd, checkAntwoord, uitlegVoor, tokeniseerZin, onderwerpIndices } from './werkwoorden'
 import SpelBeloning, { BRIEFGELD } from './SpelBeloning'
 import './werkwoord-spelling.css'
+import { Knop, TerugKnop, VoortgangsBalk, Icoon, Feedback } from '../ui/index.jsx'
 
 const PER_BELONING = 5     // na elke 5 goede antwoorden een spel kiezen
 const PER_OVERZICHT = 20   // na elke 20 opgaven een overzichtsscherm
@@ -76,7 +77,7 @@ function OnderwerpMarker({ zin, onderwerp, compact, onKlaar }) {
 
   return (
     <div className={`ws-ond-marker ${compact ? 'ws-ond-compact' : ''}`}>
-      {!compact && <p className="ws-ond-vraag">🎯 Klik op het onderwerp van de zin:</p>}
+      {!compact && <p className="ws-ond-vraag">Klik op het onderwerp van de zin:</p>}
       <div className="ws-ond-zin">
         {woorden.map((w, i) => {
           const isSel = selected.has(i)
@@ -90,9 +91,9 @@ function OnderwerpMarker({ zin, onderwerp, compact, onKlaar }) {
         })}
       </div>
       {phase === 'answering'
-        ? <button className="ws-ond-check-btn" onClick={check} disabled={selected.size === 0}>Controleer onderwerp →</button>
+        ? <Knop variant="primair" icoonRechts="verder" className="ws-ond-check-btn" onClick={check} disabled={selected.size === 0}>Controleer onderwerp</Knop>
         : <div className={`ws-ond-feedback ${phase === 'good' ? 'ws-goed' : 'ws-fout'}`}>
-            {phase === 'good' ? '✅ Goed! Dat is het onderwerp.' : `❌ Niet helemaal. Het onderwerp is "${onderwerp}".`}
+            <Icoon naam={phase === 'good' ? 'goed' : 'fout'} />{phase === 'good' ? 'Goed! Dat is het onderwerp.' : `Niet helemaal. Het onderwerp is "${onderwerp}".`}
           </div>}
     </div>
   )
@@ -103,14 +104,14 @@ function OnderwerpOefenScherm({ onBack }) {
   const item = ONDERWERP_ZINNEN[idx % ONDERWERP_ZINNEN.length]
   return (
     <div className="ws-catsel">
-      <button className="ws-back-btn ws-catsel-back" onClick={onBack}>← Terug</button>
+      <TerugKnop onClick={onBack} />
       <div className="ws-catsel-header">
-        <span className="ws-icon">🎯</span>
+        <span className="ws-icon"><Icoon naam="doel" /></span>
         <h1 className="ws-title">Onderwerp markeren</h1>
         <p className="ws-sub">Klik het onderwerp van de zin aan</p>
       </div>
       <OnderwerpMarker key={idx} zin={item.zin} onderwerp={item.onderwerp} />
-      <button className="ws-ov-verder-btn" onClick={() => setIdx(i => i + 1)}>Volgende zin →</button>
+      <Knop variant="primair" icoonRechts="verder" className="ws-ov-verder-btn" onClick={() => setIdx(i => i + 1)}>Volgende zin</Knop>
     </div>
   )
 }
@@ -172,23 +173,23 @@ function VraagKaart({ oef, onNext, eerstOnderwerp }) {
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && check()}
               />
-              <button className="ws-check-btn" onClick={check}>Controleer →</button>
+              <Knop variant="primair" icoonRechts="verder" onClick={check}>Controleer</Knop>
             </div>
           )}
 
           {phase === 'good' && (
             <div className="ws-feedback ws-goed">
-              <span>🎉 Goed!</span>
-              <div className="ws-uitleg">💡 {uitlegVoor(oef)}</div>
-              <button className="ws-verder-btn" onClick={() => onNext(true, input)}>Verder →</button>
+              <span className="ws-feedback-kop"><Icoon naam="goed" />Goed!</span>
+              <div className="ws-uitleg"><Icoon naam="lamp" />{uitlegVoor(oef)}</div>
+              <Knop variant="primair" icoonRechts="verder" className="ws-verder-btn" onClick={() => onNext(true, input)}>Verder</Knop>
             </div>
           )}
 
           {phase === 'bad' && (
             <div className="ws-feedback ws-fout">
-              <span>❌ Niet goed. Het juiste antwoord is <b>{oef.antwoord}</b>.</span>
-              <div className="ws-uitleg">💡 {uitlegVoor(oef)}</div>
-              <button className="ws-verder-btn" onClick={() => onNext(false, input)}>Volgende →</button>
+              <span className="ws-feedback-kop"><Icoon naam="fout" />Niet goed. Het juiste antwoord is <b>{oef.antwoord}</b>.</span>
+              <div className="ws-uitleg"><Icoon naam="lamp" />{uitlegVoor(oef)}</div>
+              <Knop variant="primair" icoonRechts="verder" className="ws-verder-btn" onClick={() => onNext(false, input)}>Volgende</Knop>
             </div>
           )}
         </>
@@ -204,11 +205,9 @@ function VraagKaart({ oef, onNext, eerstOnderwerp }) {
 function Overzicht({ stats, totaalGoed, doel, fouten, onVerder, weektaakTerug, opslaanMislukt }) {
   return (
     <div className="ws-overzicht">
-      <div className="ws-ov-banner">📋 Laat dit aan de meester zien!</div>
+      <div className="ws-ov-banner"><Icoon naam="klembord" />Laat dit aan de meester zien!</div>
       {opslaanMislukt && (
-        <div className="ws-ov-banner" style={{ background: '#fca5a5', color: '#7f1d1d' }}>
-          ⚠️ Je resultaat kon niet worden opgeslagen — laat dit scherm aan de juf of meester zien.
-        </div>
+        <Feedback soort="fout">Je resultaat kon niet worden opgeslagen — laat dit scherm aan de juf of meester zien.</Feedback>
       )}
 
       <div className="ws-ov-score">
@@ -227,9 +226,9 @@ function Overzicht({ stats, totaalGoed, doel, fouten, onVerder, weektaakTerug, o
                 <span className="ws-ov-cat-cijfer">{st.goed}/{totaal || 0} goed</span>
               </div>
               {st.fout > 0
-                ? <span className="ws-ov-cat-fout">❌ {st.fout} fout{st.fout > 1 ? 'en' : ''}</span>
+                ? <span className="ws-ov-cat-fout">{st.fout} fout{st.fout > 1 ? 'en' : ''}</span>
                 : (totaal > 0
-                    ? <span className="ws-ov-cat-perfect">✅ alles goed</span>
+                    ? <span className="ws-ov-cat-perfect">alles goed</span>
                     : <span className="ws-ov-cat-leeg">— niet geoefend</span>)}
             </div>
           )
@@ -249,10 +248,10 @@ function Overzicht({ stats, totaalGoed, doel, fouten, onVerder, weektaakTerug, o
         </div>
       )}
 
-      <button className="ws-ov-verder-btn" onClick={onVerder}>Verder oefenen →</button>
-      {weektaakTerug && (
-        <button className="ws-ov-verder-btn" onClick={weektaakTerug} style={{ marginTop: 8 }}>← Terug naar weektaak</button>
-      )}
+      <div className="ws-ov-knoppen">
+        {weektaakTerug && <Knop variant="secundair" icoon="terug" onClick={weektaakTerug}>Terug</Knop>}
+        <Knop variant="primair" icoonRechts="verder" onClick={onVerder}>Verder oefenen</Knop>
+      </div>
     </div>
   )
 }
@@ -278,9 +277,9 @@ function CatSelectie({ groep, onStart, onBack, onOnderwerp }) {
 
   return (
     <div className="ws-catsel">
-      <button className="ws-back-btn ws-catsel-back" onClick={onBack}>← Terug</button>
+      <TerugKnop onClick={onBack} />
       <div className="ws-catsel-header">
-        <span className="ws-icon">📝</span>
+        <span className="ws-icon"><Icoon naam="potlood" /></span>
         <h1 className="ws-title">Werkwoordspelling</h1>
         <p className="ws-sub">Groep {groep} · kies wat je wil oefenen</p>
       </div>
@@ -294,7 +293,7 @@ function CatSelectie({ groep, onStart, onBack, onOnderwerp }) {
               className={`ws-catsel-rij ${info.cls}${aan ? ' aan' : ''}`}
               onClick={() => toggle(key)}
             >
-              <span className="ws-catsel-check">{aan ? '☑' : '☐'}</span>
+              <span className={`kk-vink${aan ? ' aan' : ''}`}>{aan && <Icoon naam="goed" />}</span>
               <span className="ws-catsel-tekst">
                 <span className="ws-catsel-label">{info.label}</span>
                 <span className="ws-catsel-vb">{info.vb}</span>
@@ -307,20 +306,20 @@ function CatSelectie({ groep, onStart, onBack, onOnderwerp }) {
           className={`ws-catsel-rij ws-ond-row${metOnderwerp ? ' aan' : ''}`}
           onClick={() => setMetOnderwerp(v => !v)}
         >
-          <span className="ws-catsel-check">{metOnderwerp ? '☑' : '☐'}</span>
+          <span className={`kk-vink${metOnderwerp ? ' aan' : ''}`}>{metOnderwerp && <Icoon naam="goed" />}</span>
           <span className="ws-catsel-tekst">
-            <span className="ws-catsel-label">🎯 Onderwerp markeren</span>
+            <span className="ws-catsel-label">Onderwerp markeren</span>
             <span className="ws-catsel-vb">klik bij elke zin eerst het onderwerp aan vóór je invult</span>
           </span>
         </button>
       </div>
-      <p className="ws-catsel-uitleg">Je verdient € 10 per onderdeel dat je aanvinkt bij elk spelletje 🎮</p>
-      <button className="ws-ov-verder-btn" onClick={() => onStart(gekozen, metOnderwerp)}>
-        Start! (€ {gekozen.size * 10} per spel) →
-      </button>
-      <button className="ws-catsel-onderwerp-btn" onClick={onOnderwerp}>
-        🎯 Onderwerp markeren oefenen →
-      </button>
+      <p className="ws-catsel-uitleg">Je verdient € 10 per onderdeel dat je aanvinkt bij elk spelletje</p>
+      <Knop variant="primair" maat="lg" icoonRechts="verder" className="ws-ov-verder-btn" onClick={() => onStart(gekozen, metOnderwerp)}>
+        Start (€ {gekozen.size * 10} per spel)
+      </Knop>
+      <Knop variant="secundair" icoon="doel" onClick={onOnderwerp}>
+        Onderwerp markeren oefenen
+      </Knop>
     </div>
   )
 }
@@ -475,7 +474,7 @@ export default function WerkwoordSpelling({ groep, onBack, addBriefgeld, aantal,
         <div className="ws-wrap" style={{ display: phase === 'play' ? 'flex' : 'none' }}>
           <div className="ws-oefen">
             <div className="ws-header">
-              <button className="ws-back-btn" onClick={onBack}>← Terug</button>
+              <TerugKnop onClick={onBack}>Stoppen</TerugKnop>
               <div className="ws-header-title">Werkwoordspelling{groep ? ` · Groep ${groep}` : ''}</div>
               <span className="ws-verdiend">💵 € {verdiend}</span>
             </div>
@@ -485,11 +484,8 @@ export default function WerkwoordSpelling({ groep, onBack, addBriefgeld, aantal,
               </p>
             )}
 
-            <div className="ws-progress-wrap">
-              <div className="ws-progress-bar" style={{ width: `${(sinds / PER_BELONING) * 100}%` }} />
-            </div>
+            <VoortgangsBalk waarde={sinds} max={PER_BELONING} label={`nog ${PER_BELONING - sinds} goed tot een spelletje`} />
             <div className="ws-progress-label">
-              <span>{PER_BELONING - sinds} goede tot een spelletje 🎮</span>
               <span className="ws-opgave-teller">Opgave {gemaakt + 1} / {doel}</span>
             </div>
 

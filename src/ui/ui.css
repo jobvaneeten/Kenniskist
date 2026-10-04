@@ -126,3 +126,16 @@ button.kk-kaart:disabled { opacity: 0.45; cursor: not-allowed; }
 .kk-invoer::placeholder { color: var(--kk-text-faint); font-weight: var(--kk-fw-normal); }
 .hoek-rechtsonder { position: fixed; bottom: var(--kk-s4); right: var(--kk-s4); z-index: 100; }
 .hoek-rechtsonder.kk-knop { background: rgba(10,10,30,0.75); backdrop-filter: blur(12px); }
+
+/* ── Vinkje (aan / deels / uit) ───────────────────────── */
+.kk-vink {
+  width: 22px; height: 22px; flex: none;
+  display: grid; place-items: center;
+  border-radius: 6px;
+  border: 2px solid var(--kk-border-strong);
+  color: var(--kk-text-on-accent);
+  transition: background var(--kk-dur), border-color var(--kk-dur);
+}
+.kk-vink svg { width: 14px; height: 14px; stroke-width: 3; }
+.kk-vink.aan { background: var(--kk-accent, var(--kk-primary-hi)); border-color: var(--kk-accent, var(--kk-primary-hi)); }
+.kk-vink.deels { background: color-mix(in srgb, var(--kk-accent, var(--kk-primary-hi)) 45%, transparent); border-color: var(--kk-accent, var(--kk-primary-hi)); }

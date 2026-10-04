@@ -1,21 +1,21 @@
-import { TerugKnop } from '../ui/index.jsx'
-// Gedeeld eindscherm voor tools die via gebruikOpdracht.js rapporteren.
-// Gebruikt alleen game.css-klassen (al geladen via toolRender.jsx) — geen
-// eigen stylesheet nodig.
+import { EindScherm, Feedback } from '../ui/index.jsx'
+
+// Gedeeld eindscherm voor tools die via gebruikOpdracht.js rapporteren. Het
+// verschijnt alleen als een weektaak-opdracht af is; "Verder" gaat terug naar
+// de weektaak.
 export default function OpdrachtKlaarScherm({ goed, aantal, opslaanMislukt, onBack }) {
   return (
     <div className="game-screen game-screen-center">
-      <div className="game-header">
-        <span className="game-header-icon">🎉</span>
-        <h1 className="game-header-title">{goed} / {aantal}</h1>
-        <p className="game-header-sub">goed beantwoord — laat dit aan je juf of meester zien!</p>
-      </div>
-      {opslaanMislukt && (
-        <p style={{ color: '#fca5a5', fontWeight: 700, textAlign: 'center' }}>
-          ⚠️ Je resultaat kon niet worden opgeslagen — laat dit scherm zien.
-        </p>
-      )}
-      <TerugKnop onClick={onBack} />
+      <EindScherm
+        titel="Opdracht klaar!"
+        score={`${goed} / ${aantal}`}
+        tekst="goed beantwoord — laat dit aan je juf of meester zien!"
+        onVerder={onBack}
+      >
+        {opslaanMislukt && (
+          <Feedback soort="fout">Je resultaat kon niet worden opgeslagen — laat dit scherm zien.</Feedback>
+        )}
+      </EindScherm>
     </div>
   )
 }

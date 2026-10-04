@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import SpelBeloning, { BRIEFGELD } from './SpelBeloning'
 import './tafels-oefenen.css'
+import { TerugKnop, Knop, Icoon, Feedback } from '../ui/index.jsx'
 
 const ALLE_TAFELS = [2, 3, 4, 5, 6, 7, 8, 9, 10]
 const DUUR = 120  // seconden
@@ -38,11 +39,11 @@ function TypeKeuze({ groep, onKies }) {
   return (
     <div className="to-wrap to-selectie">
       <div className="to-header">
-        <span className="to-icon">🔢</span>
+        <span className="to-icon"><Icoon naam="rekenen" /></span>
         <h1 className="to-titel">Tafels oefenen · Groep {groep}</h1>
         <p className="to-sub">Wat wil je oefenen?</p>
       </div>
-      <div className="to-highscore-vooraf">⭐ Jouw record: {highscore} goed</div>
+      <div className="to-highscore-vooraf"><Icoon naam="ster" />Jouw record: {highscore} goed</div>
       <div className="to-type-grid">
         <button className="to-type-btn" onClick={() => onKies('keer')}>
           <span className="to-type-sym">×</span>
@@ -73,7 +74,7 @@ function TafelSelectie({ groep, soort, onStart }) {
   return (
     <div className="to-wrap to-selectie">
       <div className="to-header">
-        <span className="to-icon">🔢</span>
+        <span className="to-icon"><Icoon naam="rekenen" /></span>
         <h1 className="to-titel">{soort === 'keer' ? 'Keersommen' : 'Deelsommen'} · Groep {groep}</h1>
         <p className="to-sub">Kies welke tafels je wil oefenen</p>
       </div>
@@ -89,9 +90,9 @@ function TafelSelectie({ groep, soort, onStart }) {
           </button>
         ))}
       </div>
-      <button className="to-start-btn" onClick={() => onStart([...gekozen].sort((a, b) => a - b))}>
-        Start! ({gekozen.size} tafel{gekozen.size !== 1 ? 's' : ''}) →
-      </button>
+      <Knop variant="primair" maat="lg" icoonRechts="verder" className="to-start-btn" onClick={() => onStart([...gekozen].sort((a, b) => a - b))}>
+        Start ({gekozen.size} tafel{gekozen.size !== 1 ? 's' : ''})
+      </Knop>
     </div>
   )
 }
@@ -152,7 +153,7 @@ function Oefenspel({ tafels, soort, onKlaar, weektaakModus, onOpslaanMislukt }) 
         <span className={`to-timer${urgent ? ' urgent' : ''}`}>{min}:{sec}</span>
         <span className="to-teller">{resultaten.length} gedaan</span>
         <span className="to-goed-teller">{resultaten.filter(r => r.goed).length} goed</span>
-        <span className="to-highscore-teller">⭐ record: {highscore}</span>
+        <span className="to-highscore-teller"><Icoon naam="ster" />record: {highscore}</span>
       </div>
       <div className="to-vraag-wrap">
         <div className="to-vraag">
@@ -172,11 +173,12 @@ function Oefenspel({ tafels, soort, onKlaar, weektaakModus, onOpslaanMislukt }) 
             autoFocus
           />
         </div>
-        <button
-          className="to-check-btn"
+        <Knop
+          variant="primair" maat="lg" alleenIcoon icoon="verder"
+          className="to-check-btn" aria-label="Controleer"
           onClick={check}
           disabled={input === '' || flash !== null}
-        >→</button>
+        />
       </div>
     </div>
   )
@@ -204,7 +206,7 @@ function Overzicht({ tafels, resultaten, onSpelletje }) {
 
   return (
     <div className="to-overzicht">
-      <div className="to-ov-banner">📋 Laat dit aan de meester/juf zien!</div>
+      <div className="to-ov-banner"><Icoon naam="klembord" />Laat dit aan de meester/juf zien!</div>
 
       <div className="to-ov-score">
         <span className="to-ov-score-groot">{goed} / {resultaten.length}</span>
@@ -213,8 +215,8 @@ function Overzicht({ tafels, resultaten, onSpelletje }) {
 
       <div className="to-ov-highscore">
         {nieuwRecord
-          ? <>🏆 Nieuw record! {goed} goed</>
-          : <>⭐ Jouw record: {highscore} goed</>}
+          ? <><Icoon naam="trofee" />Nieuw record! {goed} goed</>
+          : <><Icoon naam="ster" />Jouw record: {highscore} goed</>}
       </div>
 
       <div className="to-ov-cats">
@@ -229,9 +231,9 @@ function Overzicht({ tafels, resultaten, onSpelletje }) {
                 <span className="to-ov-cat-cijfer">{s.goed}/{totaal}{pct !== null ? ` (${pct}%)` : ''} goed</span>
               </div>
               {s.fout > 0
-                ? <span className="to-ov-cat-fout">❌ {s.fout} fout{s.fout > 1 ? 'en' : ''}</span>
+                ? <span className="to-ov-cat-fout">{s.fout} fout{s.fout > 1 ? 'en' : ''}</span>
                 : (totaal > 0
-                    ? <span className="to-ov-cat-perfect">✅ alles goed</span>
+                    ? <span className="to-ov-cat-perfect">alles goed</span>
                     : <span className="to-ov-cat-leeg">— niet geoefend</span>)}
             </div>
           )
@@ -251,7 +253,7 @@ function Overzicht({ tafels, resultaten, onSpelletje }) {
         </div>
       )}
 
-      <button className="to-ov-verder-btn" onClick={onSpelletje}>🎮 Speel een spelletje!</button>
+      <Knop variant="beloning" maat="lg" icoon="spel" className="to-ov-verder-btn" onClick={onSpelletje}>Speel een spelletje</Knop>
     </div>
   )
 }
@@ -301,14 +303,14 @@ export default function TafelsOefenen({ groep, onBack, addBriefgeld, addCuruntie
 
       {fase === 'type' && (
         <div className="to-outer">
-          <button className="to-back-btn" onClick={onBack}>← Terug</button>
+          <TerugKnop onClick={onBack} />
           <TypeKeuze groep={groep} onKies={(s) => { setSoort(s); setFase('selectie') }} />
         </div>
       )}
 
       {fase === 'selectie' && (
         <div className="to-outer">
-          <button className="to-back-btn" onClick={() => setFase('type')}>← Terug</button>
+          <TerugKnop onClick={() => setFase('type')} />
           <TafelSelectie
             groep={groep}
             soort={soort}
@@ -319,7 +321,7 @@ export default function TafelsOefenen({ groep, onBack, addBriefgeld, addCuruntie
 
       {fase === 'spel' && (
         <div className="to-outer">
-          <button className="to-back-btn" onClick={() => setFase('selectie')}>← Stop</button>
+          <TerugKnop onClick={() => setFase('selectie')}>Stoppen</TerugKnop>
           <Oefenspel
             tafels={tafels} soort={soort} onKlaar={spelKlaar}
             weektaakModus={!!config} onOpslaanMislukt={() => setOpslaanMislukt(true)}
@@ -329,13 +331,9 @@ export default function TafelsOefenen({ groep, onBack, addBriefgeld, addCuruntie
 
       {fase === 'overzicht' && (
         <div className="to-outer">
-          <button className="to-back-btn" onClick={() => config ? onBack() : setFase('type')}>
-            {config ? '← Terug naar weektaak' : '← Opnieuw'}
-          </button>
+          <TerugKnop onClick={() => config ? onBack() : setFase('type')} />
           {opslaanMislukt && (
-            <p style={{ color: '#fca5a5', fontWeight: 700, textAlign: 'center' }}>
-              ⚠️ Je resultaat kon niet worden opgeslagen — laat dit scherm zien.
-            </p>
+            <Feedback soort="fout">Je resultaat kon niet worden opgeslagen — laat dit scherm zien.</Feedback>
           )}
           <Overzicht
             tafels={tafels}

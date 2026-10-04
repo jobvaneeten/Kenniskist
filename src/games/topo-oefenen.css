@@ -2,61 +2,44 @@
    lichte atlaskaart: het water blijft licht zodat de kaart leest als een echte
    schoolkaart. */
 .topo-screen {
+  --kk-accent: var(--kk-vak-topo);
   width: 100vw;
   min-height: 100vh;
   box-sizing: border-box;
-  padding: 14px;
+  padding: 72px 14px 14px;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  color: #eaf2fb;
-  font-family: inherit;
+  color: var(--kk-text);
+  font-family: var(--kk-body);
   position: relative;
   z-index: 1;
   isolation: isolate;
   overflow-y: auto;
-  background:
-    radial-gradient(ellipse 55% 42% at 10% 4%, rgba(79,195,247,0.2) 0%, transparent 60%),
-    radial-gradient(ellipse 50% 40% at 90% 10%, rgba(168,85,247,0.22) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 45% at 80% 98%, rgba(6,214,160,0.14) 0%, transparent 60%),
-    linear-gradient(165deg, #06061a 0%, #0a1230 48%, #061426 100%);
 }
 .topo-screen > * { position: relative; z-index: 1; }
-.topo-screen-center { align-items: center; justify-content: center; text-align: center; }
+.topo-screen-center { align-items: center; justify-content: safe center; text-align: center; }
 
-.topo-back {
-  align-self: flex-start;
-  background: rgba(255,255,255,0.07);
-  color: #dbe6f5;
-  border: 1px solid rgba(255,255,255,0.16);
-  border-radius: 999px;
-  padding: 8px 17px;
-  font: inherit;
-  font-size: 0.88rem;
-  font-weight: 800;
-  cursor: pointer;
-  backdrop-filter: blur(6px);
-  transition: background 0.14s, border-color 0.14s, color 0.14s;
-}
-.topo-back:hover { background: rgba(79,195,247,0.18); border-color: rgba(79,195,247,0.55); color: #fff; }
-
-.topo-header { margin: 10px 0 6px; }
+/* ── Kop (zelfde als .game-header) ── */
+.topo-header { margin: 0 0 var(--kk-s3); display: flex; flex-direction: column; align-items: center; gap: var(--kk-s2); }
 .topo-header-icon {
-  font-size: 3.1rem;
-  display: block;
-  filter: drop-shadow(0 0 22px rgba(79,195,247,0.5));
+  width: 64px; height: 64px;
+  display: grid; place-items: center;
+  border-radius: var(--kk-r-lg);
+  color: var(--kk-accent);
+  background: color-mix(in srgb, var(--kk-accent) 16%, rgba(10,10,30,0.6));
+  border: 1px solid color-mix(in srgb, var(--kk-accent) 40%, transparent);
+  box-shadow: 0 0 28px color-mix(in srgb, var(--kk-accent) 30%, transparent);
+  margin-bottom: var(--kk-s2);
 }
+.topo-header-icon svg { width: 34px; height: 34px; }
 .topo-header h1 {
-  margin: 8px 0 4px;
-  font-size: 2.2rem;
-  font-weight: 900;
-  letter-spacing: -0.5px;
-  background: linear-gradient(100deg, #7fdcff, #fff 55%, #b69bff);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+  margin: 0;
+  font: var(--kk-fw-bold) var(--kk-fs-2xl)/1.1 var(--kk-head);
+  color: var(--kk-text);
+  text-shadow: 0 0 24px var(--kk-primary-glow), 0 2px 10px rgba(0,0,0,0.4);
 }
-.topo-header p { margin: 0; color: #9fb0c6; font-weight: 700; }
+.topo-header p { margin: 0; color: var(--kk-text-soft); font-size: var(--kk-fs-sm); font-weight: var(--kk-fw-bold); letter-spacing: 0.06em; text-transform: uppercase; }
 
 /* ── Keuzescherm ── */
 .topo-filter {
@@ -71,66 +54,54 @@
   display: flex;
   align-items: center;
   gap: 9px;
-  background: rgba(255,255,255,0.06);
-  border: 1.5px solid rgba(255,255,255,0.12);
-  border-radius: 999px;
-  padding: 9px 16px;
+  min-height: 40px;
+  background: rgba(14, 12, 34, 0.72);
+  border: 1px solid var(--kk-border-strong);
+  border-radius: var(--kk-r-pill);
+  padding: 0 16px;
   cursor: pointer;
-  font-weight: 800;
-  font-size: 0.92rem;
-  transition: border-color 0.14s, background 0.14s, transform 0.1s;
+  font-weight: var(--kk-fw-bold);
+  font-size: var(--kk-fs-sm);
+  transition: border-color var(--kk-dur), background var(--kk-dur);
 }
-.topo-filter-item:hover { transform: translateY(-1px); }
-.topo-filter-item input { width: 18px; height: 18px; accent-color: #4FC3F7; cursor: pointer; }
-.topo-filter-item span { color: var(--topo-kleur, #fff); }
-.topo-filter-item em { color: #8fa0b6; font-style: normal; font-weight: 700; font-size: 0.85em; }
-.topo-filter-item:has(input:checked) {
-  border-color: var(--topo-kleur, #4FC3F7);
-  background: rgba(255,255,255,0.12);
-}
+.topo-filter-item input { width: 18px; height: 18px; accent-color: var(--kk-accent); cursor: pointer; }
+.topo-filter-item span { color: var(--topo-kleur, var(--kk-text)); }
+.topo-filter-item em { color: var(--kk-text-faint); font-style: normal; font-weight: 700; font-size: 0.85em; }
+.topo-filter-item:has(input:checked) { border-color: var(--topo-kleur, var(--kk-accent)); background: rgba(24, 20, 52, 0.85); }
 
-.topo-modus { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin: 10px 0 4px; }
+.topo-modus { display: flex; flex-wrap: wrap; gap: var(--kk-s3); justify-content: center; margin: 10px 0 4px; }
 .topo-modus-knop {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
   width: 210px;
-  padding: 16px 14px;
-  border-radius: 20px;
-  border: 2px solid rgba(255,255,255,0.14);
-  background: linear-gradient(160deg, rgba(255,255,255,0.09), rgba(255,255,255,0.03));
-  color: #fff;
-  font: inherit;
-  font-weight: 800;
+  padding: var(--kk-s4) 14px;
+  border-radius: var(--kk-r-lg);
+  border: 1px solid var(--kk-border);
+  background: rgba(14, 12, 34, 0.72);
+  backdrop-filter: blur(10px);
+  color: var(--kk-text);
+  font: var(--kk-fw-bold) 1.05rem/1.2 var(--kk-head);
   cursor: pointer;
-  transition: border-color 0.15s, background 0.15s, transform 0.1s;
+  box-shadow: var(--kk-shadow);
+  transition: border-color var(--kk-dur), background var(--kk-dur), transform var(--kk-dur) var(--kk-ease), box-shadow var(--kk-dur);
 }
-.topo-modus-knop span { font-size: 1.9rem; }
-.topo-modus-knop em { font-style: normal; font-weight: 700; font-size: 0.78rem; color: #9fb0c6; }
-.topo-modus-knop:hover { transform: translateY(-3px); }
+.topo-modus-icoon {
+  width: 44px; height: 44px; display: grid; place-items: center; margin-bottom: 4px;
+  border-radius: var(--kk-r-md);
+  color: var(--kk-accent);
+  background: color-mix(in srgb, var(--kk-accent) 16%, transparent);
+}
+.topo-modus-icoon svg { width: 24px; height: 24px; }
+.topo-modus-knop em { font: normal var(--kk-fw-normal) var(--kk-fs-xs)/1.35 var(--kk-body); color: var(--kk-text-soft); }
+.topo-modus-knop:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--kk-accent) 55%, transparent); }
 .topo-modus-knop.aan {
-  border-color: #4FC3F7;
-  background: linear-gradient(160deg, rgba(79,195,247,0.24), rgba(124,58,237,0.12));
-  box-shadow: 0 12px 26px rgba(79,195,247,0.25);
+  border-color: var(--kk-accent);
+  background: color-mix(in srgb, var(--kk-accent) 14%, rgba(14,12,34,0.85));
+  box-shadow: var(--kk-shadow), 0 0 26px color-mix(in srgb, var(--kk-accent) 30%, transparent);
 }
-
-.topo-start {
-  margin-top: 12px;
-  padding: 15px 30px;
-  border: none;
-  border-radius: 16px;
-  background: linear-gradient(135deg, #38bdf8, #6366f1);
-  color: #fff;
-  font: inherit;
-  font-size: 1.05rem;
-  font-weight: 900;
-  cursor: pointer;
-  box-shadow: 0 12px 26px rgba(56,189,248,0.4);
-  transition: transform 0.1s, box-shadow 0.15s;
-}
-.topo-start:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 16px 32px rgba(99,102,241,0.4); }
-.topo-start:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
+.topo-start { margin-top: var(--kk-s3); }
 
 /* ── Oefenscherm ── */
 .topo-top-bar {
@@ -138,37 +109,36 @@
   flex-wrap: wrap;
   gap: 8px;
   align-items: center;
-  justify-content: space-between;
-  padding-right: 104px;   /* ruimte voor de muntenbadge rechtsboven */
+  justify-content: center;
+  min-height: var(--kk-tap);
+  margin-top: -56px;
+  padding: 0 120px;   /* ruimte voor terugknop en saldo */
 }
 .topo-progress { display: flex; align-items: center; gap: 10px; }
 .topo-score {
-  background: linear-gradient(135deg, #22c55e, #06d6a0);
-  color: #04301f;
-  border-radius: 999px;
-  padding: 6px 15px;
-  font-size: 0.9rem;
-  font-weight: 900;
-  box-shadow: 0 4px 12px rgba(6,214,160,0.32);
+  display: inline-flex; align-items: center; gap: 4px; min-height: 36px;
+  background: var(--kk-success-soft);
+  border: 1px solid color-mix(in srgb, var(--kk-success) 50%, transparent);
+  color: #86efac;
+  border-radius: var(--kk-r-pill);
+  padding: 0 14px;
+  font-size: var(--kk-fs-sm);
+  font-weight: var(--kk-fw-black);
 }
+.topo-score svg { width: 16px; height: 16px; }
 .topo-meter {
   display: flex;
   align-items: center;
   gap: 9px;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.14);
-  border-radius: 999px;
-  padding: 5px 13px 5px 9px;
+  min-height: 36px;
+  background: rgba(10,10,30,0.75);
+  border: 1px solid var(--kk-border);
+  border-radius: var(--kk-r-pill);
+  padding: 0 13px 0 11px;
 }
-.topo-meter-track { width: 92px; height: 8px; border-radius: 999px; background: rgba(255,255,255,0.13); overflow: hidden; }
-.topo-meter-fill {
-  display: block;
-  height: 100%;
-  border-radius: 999px;
-  background: linear-gradient(90deg, #38bdf8, #6366f1);
-  transition: width 0.35s ease;
-}
-.topo-meter-tekst { color: #b9c6da; font-size: 0.78rem; font-weight: 800; white-space: nowrap; }
+.topo-meter-track { width: 92px; height: 8px; border-radius: var(--kk-r-pill); background: rgba(255,255,255,0.13); overflow: hidden; }
+.topo-meter-fill { display: block; height: 100%; border-radius: var(--kk-r-pill); background: var(--kk-accent); box-shadow: 0 0 10px var(--kk-accent); transition: width var(--kk-dur-slow) var(--kk-ease); }
+.topo-meter-tekst { color: var(--kk-text-soft); font-size: var(--kk-fs-xs); font-weight: var(--kk-fw-bold); white-space: nowrap; }
 
 .topo-vraag {
   margin: 0;
@@ -176,10 +146,11 @@
   font-size: 1.4rem;
   font-weight: 900;
   letter-spacing: -0.2px;
-  color: #f2f7ff;
+  font-family: var(--kk-head);
+  color: var(--kk-text);
 }
-.topo-vraag.goed { color: #34d399; }
-.topo-vraag.fout { color: #ffa591; }
+.topo-vraag.goed { color: var(--kk-success); }
+.topo-vraag.fout { color: var(--kk-error); }
 
 .topo-kaartwrap {
   flex: 1;
@@ -194,9 +165,9 @@
      rekent hem om naar de beschikbare hoogte. Hier geen max-height meer — die
      maakte het vak breder dan de tekening en dus elke klik onnauwkeurig. */
   max-width: 920px;
-  border-radius: 22px;
-  border: 1px solid rgba(255,255,255,0.18);
-  box-shadow: 0 22px 50px rgba(0,0,0,0.5);
+  border-radius: var(--kk-r-lg);
+  border: 1px solid var(--kk-border-strong);
+  box-shadow: var(--kk-shadow-lg);
   background: #dff1fb;
   touch-action: manipulation;
 }
@@ -273,14 +244,15 @@
 /* ── Sleepkaartjes ── */
 .topo-tray { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
 .topo-kaartje {
-  --topo-kleur: #4FC3F7;
+  --topo-kleur: var(--kk-vak-topo);
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: linear-gradient(160deg, rgba(255,255,255,0.14), rgba(255,255,255,0.05));
+  min-height: var(--kk-tap);
+  background: rgba(14, 12, 34, 0.85);
   border: 2px solid var(--topo-kleur);
-  border-radius: 999px;
-  color: #fff;
+  border-radius: var(--kk-r-pill);
+  color: var(--kk-text);
   font: inherit;
   font-size: 0.95rem;
   font-weight: 800;
@@ -344,51 +316,39 @@
   align-items: center;
   gap: 4px;
   padding: 5px;
-  border-radius: 12px;
-  background: rgba(8, 19, 31, 0.72);
-  border: 1px solid rgba(255,255,255,0.16);
+  border-radius: var(--kk-r-md);
+  background: rgba(10, 10, 30, 0.8);
+  border: 1px solid var(--kk-border);
   backdrop-filter: blur(8px);
   z-index: 3;
 }
 .topo-zoom button {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   display: grid;
   place-items: center;
-  font-family: inherit;
-  font-size: 1.15rem;
-  font-weight: 900;
-  line-height: 1;
-  color: #dbe6f5;
-  background: rgba(255,255,255,0.09);
-  border: 1px solid rgba(255,255,255,0.18);
-  border-radius: 9px;
+  font: 900 1.15rem/1 var(--kk-body);
+  color: var(--kk-text);
+  background: var(--kk-surface);
+  border: 1px solid var(--kk-border);
+  border-radius: var(--kk-r-sm);
   cursor: pointer;
-  transition: background 0.14s, border-color 0.14s, transform 0.1s;
+  transition: background var(--kk-dur), border-color var(--kk-dur);
 }
-.topo-zoom button:hover:not(:disabled) {
-  background: rgba(79,195,247,0.24);
-  border-color: rgba(79,195,247,0.6);
-  transform: translateY(-1px);
-}
+.topo-zoom button:hover:not(:disabled) { background: var(--kk-surface-hover); border-color: var(--kk-accent); }
 .topo-zoom button:disabled { opacity: 0.35; cursor: default; }
-.topo-zoom-heel { font-size: 0.95rem !important; }
-.topo-zoom-stand {
-  font-size: 0.66rem;
-  font-weight: 800;
-  color: #9fb0c6;
-  letter-spacing: 0.02em;
-}
+.topo-zoom button svg { width: 18px; height: 18px; }
+.topo-zoom-stand { font-size: 0.66rem; font-weight: 800; color: var(--kk-text-soft); letter-spacing: 0.02em; }
 
 .topo-tip {
   margin: 8px 0 0;
   text-align: center;
-  font-size: 0.78rem;
-  color: #8fa1b8;
+  font-size: var(--kk-fs-xs);
+  color: var(--kk-text-faint);
 }
 
 @media (max-width: 640px) {
   .topo-zoom { top: 6px; right: 6px; padding: 4px; }
-  .topo-zoom button { width: 28px; height: 28px; font-size: 1rem; }
+  .topo-top-bar { padding: 0 0 0 96px; justify-content: flex-start; margin-top: -52px; }
   .topo-tip { font-size: 0.72rem; }
 }
