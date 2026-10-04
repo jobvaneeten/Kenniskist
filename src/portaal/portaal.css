@@ -478,3 +478,12 @@
 /* Kleine knoppen in tabelkoppen (alles aan/uit) */
 .portaal-tabel th .kk-knop { margin-top: 4px; }
 
+
+/* ── Werkblad: de lijst met onderdelen ── */
+.wb-deelrij { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.wb-deelrij-volgorde { display: flex; flex-direction: column; gap: 2px; }
+.wb-pijl { width: 26px; height: 20px; font-size: 0.6rem; border-color: var(--kk-border-strong); background: var(--kk-surface); color: var(--kk-text-soft); }
+.wb-pijl:hover:not(:disabled) { background: var(--kk-surface-hover); color: var(--kk-text); }
+.wb-deelrij-titel { flex: 1; min-width: 200px; }
+.wb-deelrij-aantal { display: flex; align-items: center; gap: 6px; }
+.wb-deelrij-aantal input { width: 64px; min-height: 36px; padding: 4px 8px; border-radius: var(--kk-r-sm); border: 1px solid var(--kk-border-strong); background: rgba(255,255,255,0.06); color: var(--kk-text); font: inherit; }

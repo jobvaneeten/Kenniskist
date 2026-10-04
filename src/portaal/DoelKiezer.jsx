@@ -22,6 +22,9 @@ export default function DoelKiezer({ klasGroepen, onKies, onSluiten, onZelfKieze
     .map(v => ({ ...v, onderwerpen: v.onderwerpen
       .map(o => ({ ...o, doelen: alleen ? o.doelen.filter(x => alleen(x.toolId)) : o.doelen }))
       .filter(o => o.doelen.length) }))
+    // Een vak zonder doelen (topografie op een werkblad) heeft geen zin om te
+    // tonen; rekenen houdt altijd de verhaaltjessommen.
+    .filter(v => v.onderwerpen.length || v.vak === 'rekenen')
   const vakLabel = (key) => VAKKEN.find(v => v.key === key)?.label ?? key
   const rekensommen = { titel: 'Verhaaltjessommen', verhaaltjes: true }
 

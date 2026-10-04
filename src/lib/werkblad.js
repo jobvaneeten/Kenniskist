@@ -6,6 +6,7 @@
 //   onderstreep — woord(groep) in de vraag dat onderstreept gedrukt wordt
 //   opties      — omcirkel het goede antwoord
 //   velden      — schrijflijnen met een label ervoor ('Antwoord', 'Onderwerp', …)
+//   tag         — labeltje vóór de vraag (het hele werkwoord bij werkwoordspelling)
 
 import { onderdelenVan, maakOpgaveUit, HEEFT_ROUTE } from '../games/redactiesommen.js'
 import { maakVraag as interpunctieVraag, vragenVoor } from '../games/interpunctieData.js'
@@ -81,7 +82,12 @@ function gebiedend(n) {
 
 function woordsoorten(config, n) {
   const soorten = config.soorten?.length ? config.soorten : WOORDSOORTEN.map(w => w.label)
-  const pool = schud(VRAGEN.filter(q => q.woordsoort && soorten.includes(q.woordsoort)))
+  // Eerst elke zin één keer, pas daarna dezelfde zin met een ander woord:
+  // twee keer "Tom geeft zijn oma een grote knuffel." op één blad is saai.
+  const alles = schud(VRAGEN.filter(q => q.woordsoort && soorten.includes(q.woordsoort)))
+  const gezien = new Set()
+  const eerst = alles.filter(q => !gezien.has(q.zin) && gezien.add(q.zin))
+  const pool = [...eerst, ...alles.filter(q => !eerst.includes(q))]
   return pool.slice(0, n).map(q => ({
     vraag: q.zin, onderstreep: q.vraagWoord, kop: 'Welke woordsoort is het onderstreepte woord?',
     opties: soorten, antwoord: `${q.vraagWoord}: ${q.woordsoort}`,
@@ -97,9 +103,10 @@ function zinsdelen(config, n) {
     const m = perZin.get(q.zin)
     if (!m.has(q.zinsdeel)) m.set(q.zinsdeel, q.zinsdeelWoorden || q.vraagWoord)
   }
-  // Alleen zinnen waarin alle gevraagde zinsdelen voorkomen, behalve de
-  // optionele voorwerpen/bepalingen: die mogen ontbreken (dan "—").
-  const verplicht = gevraagd.filter(z => ['persoonsvorm', 'onderwerp', 'gezegde'].includes(z))
+  // Alleen zinnen met de kern (pv, onderwerp, gezegde) én het zinsdeel waar
+  // het doel om draait (het laatste in de lijst); andere voorwerpen en
+  // bepalingen mogen ontbreken (dan "—").
+  const verplicht = [...new Set([...gevraagd.filter(z => ['persoonsvorm', 'onderwerp', 'gezegde'].includes(z)), gevraagd.at(-1)])]
   const zinnen = schud([...perZin.entries()].filter(([, m]) => verplicht.every(z => m.has(z))))
   return zinnen.slice(0, n).map(([zin, m]) => ({
     vraag: zin, kop: 'Ontleed de zin. Schrijf de zinsdelen op.',
@@ -120,7 +127,7 @@ function woordenschat(blok, n) {
 function werkwoordspelling(config, n) {
   const cats = config.categorieen?.length ? config.categorieen : ['tt', 'vtZwak', 'vtSterk', 'vd']
   return shuffleGefilterd(cats).slice(0, n).map(o => ({
-    vraag: `${o.zin.replace('___', '……………')} (${o.inf})`, kop: `Vul het werkwoord in. Let op de ${o.tijd}.`,
+    vraag: o.zin.replace('___', '……………'), tag: o.inf, kop: `Vul het werkwoord in (${o.tijd}).`,
     antwoord: o.antwoord,
   }))
 }
