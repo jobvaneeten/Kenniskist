@@ -9,11 +9,16 @@
 // `van` komt precies één keer in de zin voor (zie interpunctieData.test.js).
 // Komma's bij een citaat ("...", zei hij / "..." , zei hij) staan er bewust
 // niet in: methodes en de Taalunie verschillen daarover van mening.
+//
+// Afbreekstreepje = het streepje aan het eind van een regel als een woord op
+// de volgende regel verdergaat. In die zinnen staat "\n" waar de regel
+// eindigt; de oefening en het werkblad tonen dat als echte regelovergang.
+// Het streepje ín een woord (zee-egel, wc-bril) hoort hier niet bij.
 
 export const ONDERDELEN = [
   { id: 'komma', label: 'Komma', emoji: ',' },
   { id: 'aanhalingstekens', label: 'Aanhalingstekens', emoji: '“ ”' },
-  { id: 'afbreekstreepje', label: 'Afbreekstreepje', emoji: '-' },
+  { id: 'afbreekstreepje', label: 'Afbreekstreepje', emoji: '-↵' },
   { id: 'hoofdletters', label: 'Hoofdletters', emoji: 'Aa' },
   { id: 'punten', label: 'Punten', emoji: '.' },
 ]
@@ -33,12 +38,12 @@ export const REGELS = {
     'Staat "vroeg Daan" na het citaat? Dan gaat de zin door met een kleine letter.',
   ],
   afbreekstreepje: [
-    'Klinkerbotsing: zou je twee klinkers als één klank lezen, dan komt er een streepje: zee-egel, auto-ongeluk. Anders niet: zeearend, fotoalbum.',
-    'Na een afkorting of letterwoord: tv-programma, cd-speler, wc-deur.',
-    'Na ex- en oud- (= vroeger): ex-buurman, oud-leerling.',
-    'Bij weglating: voor- en achternaam.',
-    'Namen met een windrichting: Noord-Brabant, Zuid-Afrika. Maar: Noordzee.',
-    'Een gewone samenstelling schrijf je gewoon aan elkaar: schoolplein, huiswerk.',
+    'Past een woord niet meer op de regel? Dan breek je het af en zet je een streepje aan het eind van de regel.',
+    'Het streepje staat achteraan de regel, niet vooraan op de volgende regel.',
+    'Je breekt af tussen twee lettergrepen: ka-mer, span-nend, la-chen.',
+    'Een samengesteld woord breek je af tussen de delen: zand-bak, boter-ham.',
+    'Klanken als ch, ij, ei, ui, ou en oe blijven bij elkaar: la-chen, bij-en.',
+    'Eén letter alleen breek je niet af (dus niet e-zel): dan zet je het hele woord op de volgende regel, zonder streepje.',
   ],
   hoofdletters: [
     'Een zin begint met een hoofdletter. Bij \'s ervoor krijgt het tweede woord hem: \'s Morgens.',
@@ -57,11 +62,10 @@ export const REGELS = {
 
 const k = (van, naar, uitleg) => ({ cat: 'komma', van, naar, uitleg })
 const a = (van, naar, uitleg) => ({ cat: 'aanhalingstekens', van, naar, uitleg })
-const s = (van, naar, uitleg) => ({ cat: 'afbreekstreepje', van, naar, uitleg })
+const af = (van, naar, uitleg) => ({ cat: 'afbreekstreepje', van, naar, uitleg })
 const h = (van, naar, uitleg) => ({ cat: 'hoofdletters', van, naar, uitleg })
 const p = (van, naar, uitleg) => ({ cat: 'punten', van, naar, uitleg })
 
-const SAMEN = 'Een samenstelling schrijf je aan elkaar, zonder streepje.'
 const BEGIN = 'Een zin begint met een hoofdletter.'
 const GEEN_NAAM = 'Dit is geen naam, dus een kleine letter.'
 const DUBBELE_PUNT = 'Voor wat iemand letterlijk zegt, na "zei" of "riep", komt een dubbele punt.'
@@ -69,18 +73,20 @@ const PUNT_BINNEN = 'De punt hoort bij wat er gezegd wordt, dus vóór het laats
 const DOORLOPEN = 'Na het citaat loopt de zin gewoon door, dus een kleine letter.'
 const CITAAT_HOOFDLETTER = 'Wat iemand letterlijk zegt, begint met een hoofdletter.'
 const EIND_PUNT = 'Een zin eindigt met een punt.'
+const STREEP_EIND = 'Het afbreekstreepje staat aan het eind van de regel, niet aan het begin van de volgende regel.'
+const STREEP_NODIG = 'Breek je een woord af, dan zet je aan het eind van de regel een streepje.'
+const LETTERGREEP = (w) => `Je breekt een woord af tussen twee lettergrepen: ${w}.`
+const DELEN = (w) => `Een samengesteld woord breek je af tussen de delen: ${w}.`
 
 export const ZINNEN = [
   // ── komma ───────────────────────────────────────────────────────────────
   { zin: 'Toen de bel ging, rende iedereen naar het schoolplein.', fouten: [
     k('ging, rende', 'ging rende', 'Tussen de persoonsvormen "ging" en "rende" hoort een komma.'),
     k('Toen de bel', 'Toen, de bel', 'Na "Toen" komt geen komma: het eerste stuk loopt door tot "ging".'),
-    s('schoolplein', 'school-plein', SAMEN),
   ] },
   { zin: 'Sanne, wil jij de ramen even dichtdoen?', fouten: [
     k('Sanne, wil', 'Sanne wil', 'Na een naam waarmee je iemand aanspreekt, komt een komma.'),
     k('wil jij de', 'wil jij, de', 'Tussen "jij" en "de ramen" hoort geen komma.'),
-    s('dichtdoen', 'dicht-doen', SAMEN),
   ] },
   { zin: 'We kochten appels, peren en bananen bij de markt in Utrecht.', fouten: [
     k('peren en', 'peren, en', 'Voor het laatste "en" in een opsomming komt geen komma.'),
@@ -93,12 +99,10 @@ export const ZINNEN = [
     k('mee, maar', 'mee maar', 'Voor "maar" tussen twee zinnen komt een komma.'),
     k('maar ik moest', 'maar, ik moest', 'Na "maar" komt geen komma.'),
     k('Ik wilde graag', 'Ik wilde, graag', 'Tussen "wilde" en "graag" hoort geen komma.'),
-    s('huiswerk', 'huis-werk', SAMEN),
   ] },
   { zin: 'Nee, ik heb mijn gymspullen vandaag niet bij me.', fouten: [
     k('Nee, ik', 'Nee ik', 'Na "ja" of "nee" aan het begin van de zin komt een komma.'),
     k('vandaag niet', 'vandaag, niet', 'Tussen "vandaag" en "niet" hoort geen komma.'),
-    s('gymspullen', 'gym-spullen', SAMEN),
     p('bij me.', 'bij me', EIND_PUNT),
   ] },
   { zin: 'Als je goed oplet, zie je de vos tussen de bomen.', fouten: [
@@ -116,7 +120,6 @@ export const ZINNEN = [
   { zin: 'Kun je, voordat je gaat spelen, eerst je kamer opruimen?', fouten: [
     k('je, voordat', 'je voordat', '"voordat je gaat spelen" staat tussen de zin geschoven: komma vóór én na.'),
     k('spelen, eerst', 'spelen eerst', '"voordat je gaat spelen" staat tussen de zin geschoven: komma vóór én na.'),
-    s('opruimen', 'op-ruimen', 'Een werkwoord als opruimen schrijf je aan elkaar.'),
   ] },
   { zin: 'Omdat het hard waaide, bleven de kinderen tijdens de pauze binnen.', fouten: [
     k('waaide, bleven', 'waaide bleven', 'Tussen de persoonsvormen "waaide" en "bleven" hoort een komma.'),
@@ -141,7 +144,6 @@ export const ZINNEN = [
     a('rekenschrift."', 'rekenschrift".', PUNT_BINNEN),
     h('"Pak', '"pak', CITAAT_HOOFDLETTER),
     h('Juf Annemiek', 'juf Annemiek', BEGIN),
-    s('rekenschrift', 'reken-schrift', SAMEN),
   ] },
   { zin: '"Kom je morgen ook naar mijn feestje?" vroeg Daan.', fouten: [
     a('feestje?" vroeg', 'feestje?", vroeg', 'Na een vraagteken komt geen komma meer.'),
@@ -160,7 +162,6 @@ export const ZINNEN = [
     a('grasveld."', 'grasveld".', PUNT_BINNEN),
     h('"Niet', '"niet', CITAAT_HOOFDLETTER),
     h('Op het', 'op het', BEGIN),
-    s('voetballen', 'voet-ballen', SAMEN),
   ] },
   { zin: '"Wat een prachtige regenboog!" riep Lotte.', fouten: [
     a('regenboog!" riep', 'regenboog!", riep', 'Na een uitroepteken komt geen komma meer.'),
@@ -208,60 +209,106 @@ export const ZINNEN = [
     h('Meester Bram', 'meester Bram', BEGIN),
   ] },
 
-  // ── afbreekstreepje ─────────────────────────────────────────────────────
+  // ── afbreekstreepje (woord loopt door op de volgende regel) ──────────────
+  { zin: 'Op school eet ik een boter-\nham met kaas.', fouten: [
+    af('boter-\nham', 'bote-\nrham', DELEN('boter-ham')),
+    af('boter-\nham', 'boter\n-ham', STREEP_EIND),
+    af('boter-\nham', 'boter\nham', STREEP_NODIG),
+    h('Op school', 'op school', BEGIN),
+  ] },
+  { zin: 'De kinderen spelen in de zand-\nbak bij het hek.', fouten: [
+    af('zand-\nbak', 'zan-\ndbak', DELEN('zand-bak')),
+    af('zand-\nbak', 'zand\n-bak', STREEP_EIND),
+    af('zand-\nbak', 'zand\nbak', STREEP_NODIG),
+    p('hek.', 'hek', EIND_PUNT),
+  ] },
+  { zin: 'In onze klas staat een ka-\nmerplant.', fouten: [
+    af('ka-\nmerplant', 'kam-\nerplant', LETTERGREEP('ka-mer-plant')),
+    af('ka-\nmerplant', 'ka\n-merplant', STREEP_EIND),
+    af('ka-\nmerplant', 'ka\nmerplant', STREEP_NODIG),
+    h('In onze', 'in onze', BEGIN),
+  ] },
+  { zin: 'De clown liet ons hard la-\nchen om zijn grap.', fouten: [
+    af('la-\nchen', 'lac-\nhen', 'De klank ch blijft bij elkaar: la-chen.'),
+    af('la-\nchen', 'la\n-chen', STREEP_EIND),
+    af('la-\nchen', 'la\nchen', STREEP_NODIG),
+    p('grap.', 'grap', EIND_PUNT),
+  ] },
+  { zin: 'Gisteren zagen we een\nezel in de wei.', fouten: [
+    af('een\nezel', 'een e-\nzel', 'Eén letter alleen breek je niet af: dan zet je het hele woord op de volgende regel.'),
+    af('een\nezel', 'een ez-\nel', 'Je breekt af tussen lettergrepen (e-zel), en één letter alleen breek je niet af: dus hier helemaal niet.'),
+    af('een\nezel', 'een\n-ezel', 'Staat het hele woord op de nieuwe regel, dan komt er geen streepje.'),
+    h('Gisteren', 'gisteren', BEGIN),
+  ] },
+  { zin: 'Mijn zus wil later dieren-\narts worden.', fouten: [
+    af('dieren-\narts', 'dierena-\nrts', DELEN('dieren-arts')),
+    af('dieren-\narts', 'dieren\n-arts', STREEP_EIND),
+    af('dieren-\narts', 'dieren\narts', STREEP_NODIG),
+    p('worden.', 'worden', EIND_PUNT),
+  ] },
+  { zin: 'In de tuin vliegen veel bij-\nen rond.', fouten: [
+    af('bij-\nen', 'bi-\njen', 'De klank ij blijft bij elkaar: bij-en.'),
+    af('bij-\nen', 'bij\n-en', STREEP_EIND),
+    af('bij-\nen', 'bij\nen', STREEP_NODIG),
+    h('In de tuin', 'in de tuin', BEGIN),
+  ] },
+  { zin: 'Op het plein staat een kas-\ntanjeboom.', fouten: [
+    af('kas-\ntanjeboom', 'ka-\nstanjeboom', 'Staan er twee medeklinkers tussen de klinkers, dan breek je ertussen af: kas-tan-je-boom.'),
+    af('kas-\ntanjeboom', 'kas\n-tanjeboom', STREEP_EIND),
+    af('kas-\ntanjeboom', 'kas\ntanjeboom', STREEP_NODIG),
+    p('tanjeboom.', 'tanjeboom', EIND_PUNT),
+  ] },
+  { zin: 'Juf leest voor uit een span-\nnend boek.', fouten: [
+    af('span-\nnend', 'spann-\nend', LETTERGREEP('span-nend')),
+    af('span-\nnend', 'span\n-nend', STREEP_EIND),
+    af('span-\nnend', 'span\nnend', STREEP_NODIG),
+    h('Juf leest', 'juf leest', BEGIN),
+  ] },
+  { zin: 'Morgen komt de school-\nfotograaf langs.', fouten: [
+    af('school-\nfotograaf', 'schoolf-\notograaf', DELEN('school-fotograaf')),
+    af('school-\nfotograaf', 'school\n-fotograaf', STREEP_EIND),
+    af('school-\nfotograaf', 'school\nfotograaf', STREEP_NODIG),
+    h('Morgen', 'morgen', BEGIN),
+  ] },
+  { zin: 'Na de gymles moeten we ons om-\nkleden.', fouten: [
+    af('om-\nkleden', 'omk-\nleden', DELEN('om-kleden')),
+    af('om-\nkleden', 'om\n-kleden', STREEP_EIND),
+    af('om-\nkleden', 'om\nkleden', STREEP_NODIG),
+    p('kleden.', 'kleden', EIND_PUNT),
+  ] },
+
+  // ── hoofdletters en punten in zinnen met een streepje in een woord ───────
   { zin: 'Op het strand vonden we een zee-egel en een zeester.', fouten: [
-    s('zee-egel', 'zeeegel', 'Bij "zee-egel" botsen de klinkers (ee + e): dan zet je een streepje.'),
-    s('zeester', 'zee-ster', 'Bij "zeester" botsen er geen klinkers: gewoon aan elkaar.'),
     h('Op het', 'op het', BEGIN),
     p('zeester.', 'zeester', EIND_PUNT),
   ] },
   { zin: 'Mijn ex-buurman woont nu in Noord-Brabant.', fouten: [
-    s('ex-buurman', 'exbuurman', 'Na "ex" zet je een streepje.'),
-    s('Noord-Brabant', 'Noord Brabant', 'Een naam met een windrichting ervoor krijgt een streepje.'),
     h('Mijn', 'mijn', BEGIN),
     h('Noord-', 'noord-', 'Noord hoort bij de naam Noord-Brabant: hoofdletter.'),
   ] },
   { zin: 'Na het auto-ongeluk stond de autoweg urenlang vast.', fouten: [
-    s('auto-ongeluk', 'autoongeluk', 'Bij "auto-ongeluk" botsen de klinkers (o + o): dan zet je een streepje.'),
-    s('autoweg', 'auto-weg', 'Bij "autoweg" botsen er geen klinkers: gewoon aan elkaar.'),
-    s('urenlang', 'uren-lang', SAMEN),
     h('Na het', 'na het', BEGIN),
   ] },
   { zin: 'Vul je voor- en achternaam in op het formulier.', fouten: [
-    s('voor- en', 'voor en', 'Bij "voor- en achternaam" laat je een stuk weg (naam): dat zie je aan het streepje.'),
-    s('achternaam', 'achter-naam', SAMEN),
     h('formulier', 'Formulier', GEEN_NAAM),
     p('formulier.', 'formulier', EIND_PUNT),
   ] },
   { zin: 'We keken naar een tv-programma over de Noordzee.', fouten: [
-    s('tv-programma', 'tvprogramma', 'Na een letterwoord als tv zet je een streepje.'),
-    s('Noordzee', 'Noord-zee', 'Noordzee is één naam: aan elkaar.'),
     h('We keken', 'we keken', BEGIN),
     p('tv-', 't.v.-', 'Een letterwoord als tv krijgt geen punten.'),
   ] },
   { zin: 'Bij de in- en uitgang van de supermarkt stonden karretjes.', fouten: [
-    s('in- en', 'in en', 'Bij "in- en uitgang" laat je een stuk weg (gang): dat zie je aan het streepje.'),
-    s('supermarkt', 'super-markt', SAMEN),
     h('Bij de', 'bij de', BEGIN),
   ] },
   { zin: 'De radio-omroep sprak met een oud-leerling van onze school.', fouten: [
-    s('radio-omroep', 'radioomroep', 'Bij "radio-omroep" botsen de klinkers (o + o): dan zet je een streepje.'),
-    s('oud-leerling', 'oudleerling', 'Oud betekent hier "vroeger": dan zet je een streepje, net als bij ex-.'),
     h('onze school', 'onze School', GEEN_NAAM),
   ] },
   { zin: 'In Zuid-Afrika zagen we een zeearend boven het water.', fouten: [
-    s('Zuid-Afrika', 'Zuid Afrika', 'Een naam met een windrichting ervoor krijgt een streepje.'),
-    s('zeearend', 'zee-arend', 'Bij "zeearend" lees je ee en a gewoon los: geen streepje.'),
     h('het water', 'het Water', GEEN_NAAM),
   ] },
   { zin: 'Mijn klasgenoot kreeg een cd-speler en een fotoalbum.', fouten: [
-    s('cd-speler', 'cdspeler', 'Na een letterwoord als cd zet je een streepje.'),
-    s('fotoalbum', 'foto-album', 'Bij "fotoalbum" lees je o en a gewoon los: geen streepje.'),
-    s('klasgenoot', 'klas-genoot', SAMEN),
   ] },
   { zin: 'Bij de wc-deur hangt een briefje voor de schoonmaker.', fouten: [
-    s('wc-deur', 'wcdeur', 'Na een letterwoord als wc zet je een streepje.'),
-    s('schoonmaker', 'schoon-maker', SAMEN),
     p('wc-', 'w.c.-', 'Een letterwoord als wc krijgt geen punten.'),
   ] },
 
@@ -295,7 +342,6 @@ export const ZINNEN = [
   { zin: 'Lisa de Vries woont in een Amsterdams grachtenpand.', fouten: [
     h('Lisa de Vries', 'Lisa De Vries', 'Met de voornaam ervoor krijgt "de" een kleine letter: Lisa de Vries.'),
     h('Amsterdams', 'amsterdams', 'Een woord dat van een plaatsnaam komt (Amsterdams) krijgt een hoofdletter.'),
-    s('grachtenpand', 'grachten-pand', SAMEN),
   ] },
   { zin: 'In het noorden van het land ligt de provincie Groningen.', fouten: [
     h('noorden', 'Noorden', 'Windrichtingen krijgen een kleine letter.'),
@@ -311,7 +357,6 @@ export const ZINNEN = [
     h('zomervakantie', 'Zomervakantie', 'Seizoenen en vakanties krijgen een kleine letter.'),
     h('Spanje', 'spanje', 'Landen krijgen een hoofdletter.'),
     h('Portugal', 'portugal', 'Landen krijgen een hoofdletter.'),
-    s('zomervakantie', 'zomer-vakantie', SAMEN),
   ] },
   { zin: 'Mijn tante is een Duitse en woont vlak bij de grens.', fouten: [
     h('Duitse', 'duitse', 'Iemand uit een land (een Duitse) krijgt een hoofdletter.'),
@@ -324,7 +369,6 @@ export const ZINNEN = [
     p('o.a.', 'oa', 'De afkorting o.a. (onder andere) krijgt punten.'),
     p('mee.', 'mee', EIND_PUNT),
     p('o.a.', 'o.a', 'Bij o.a. hoort na elke letter een punt.'),
-    s('gymschoenen', 'gym-schoenen', SAMEN),
   ] },
   { zin: 'De wandeling is 5 km lang en duurt ongeveer twee uur.', fouten: [
     p('km', 'km.', 'Na een maat als km komt geen punt.'),
@@ -357,7 +401,6 @@ export const ZINNEN = [
     p('ANWB', 'A.N.W.B.', 'Een letterwoord als ANWB krijgt geen punten.'),
     p('o.a.', 'oa', 'De afkorting o.a. (onder andere) krijgt punten.'),
     h('Europa', 'europa', 'Werelddelen krijgen een hoofdletter.'),
-    s('wegenkaarten', 'wegen-kaarten', SAMEN),
   ] },
   { zin: 'Er stonden ca. dertig kinderen in de rij.', fouten: [
     p('ca.', 'ca', 'De afkorting ca. (circa) krijgt een punt.'),

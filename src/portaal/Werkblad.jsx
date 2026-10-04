@@ -92,6 +92,12 @@ const WB_CSS = `
 .wb-optie::before { content:''; width:11px; height:11px; border-radius:50%; border:1.4px solid #4b5563; flex-shrink:0; }
 .wb-opties.lang { flex-direction:column; gap:1.3mm; }
 .wb-opties.lang .wb-optie::before { display:none; }
+/* Korte zinnen: 2×2 naast elkaar, letter bovenaan de regel. */
+.wb-opties.lang.raster { display:grid; grid-template-columns:1fr 1fr; gap:2mm 8mm; }
+.wb-opties.lang .wb-optie { align-items:flex-start; }
+/* Afbreekstreepje: de zin loopt door op een tweede regel, precies waar de 
+ staat. */
+.wb-opties.lang .wb-optie, .wb-antw { white-space:pre-line; }
 .wb-letter { width:19px; height:19px; border-radius:50%; border:1.4px solid #4b5563; display:grid; place-items:center;
   font-size:11px; font-weight:900; flex-shrink:0; }
 
@@ -189,7 +195,7 @@ function Opgave({ o, nr, metKop }) {
         <Vraag o={o} />
         {o.figuur && <div className="wb-figuur"><Figuur figuur={o.figuur} /></div>}
         {o.opties && (
-          <div className={`wb-opties${o.lang ? ' lang' : ''}`}>
+          <div className={`wb-opties${o.lang ? ' lang' : ''}${o.lang && o.opties.every(x => Math.max(...String(x).split('\n').map(r => r.length)) <= 38) ? ' raster' : ''}`}>
             {o.opties.map((x, i) => (
               <span key={i} className="wb-optie">
                 {o.lang && <span className="wb-letter">{'abcd'[i]}</span>}{x}

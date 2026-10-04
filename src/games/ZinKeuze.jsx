@@ -166,7 +166,7 @@ export function Interpunctie({ onBack, addBriefgeld, addCuruntie, aantal, config
       <KeuzeOefening
         toolId="taal-interpunctie"
         titel={`Interpunctie · ${labels.map(l => l.label.toLowerCase()).join(', ')}`}
-        vraag="Welke zin is helemaal goed geschreven?"
+        vraag={cats.length === 1 && cats[0] === 'afbreekstreepje' ? 'Bij welke zin is het woord goed afgebroken?' : 'Welke zin is helemaal goed geschreven?'}
         volgende={volgende}
         hulp={labels.map(l => (
           <div key={l.id} className="zk-regels">

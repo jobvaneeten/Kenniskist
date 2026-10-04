@@ -25,7 +25,7 @@ export const DOEL_VAKKEN = [
       { titel: 'Interpunctie', doelen: [
         d('Komma’s zetten', 'taal-interpunctie', { onderdelen: ['komma'] }),
         d('Aanhalingstekens', 'taal-interpunctie', { onderdelen: ['aanhalingstekens'] }),
-        d('Afbreekstreepje', 'taal-interpunctie', { onderdelen: ['afbreekstreepje'] }),
+        d('Afbreekstreepje (woord afbreken aan het eind van de regel)', 'taal-interpunctie', { onderdelen: ['afbreekstreepje'] }),
         d('Hoofdletters', 'taal-interpunctie', { onderdelen: ['hoofdletters'] }),
         d('Punten', 'taal-interpunctie', { onderdelen: ['punten'] }),
       ] },

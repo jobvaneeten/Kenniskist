@@ -666,6 +666,9 @@ mark.tv-highlight {
 
 /* Interpunctie / gebiedende wijs: vier zinnen onder elkaar, goed leesbaar */
 .tv-answers-kolom .zk-zin { font-size: 1.08rem; font-weight: 600; letter-spacing: 0.01em; }
+/* Afbreekstreepje: de zin loopt door op een tweede regel, precies waar de 
+ staat. */
+.zk-zin { white-space: pre-line; }
 .zk-teken {
   display: inline-block; min-width: 2.2em; text-align: center; margin-right: 4px;
   font-weight: 900; color: var(--kk-accent);

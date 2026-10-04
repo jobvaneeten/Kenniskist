@@ -68,7 +68,9 @@ function interpunctie(config, n) {
   return vragenVoor(cats).slice(0, n).map(item => {
     const v = interpunctieVraag(item, cats)
     const letter = 'abcd'[v.opties.findIndex(o => o.goed)]
-    return { vraag: 'Welke zin is goed geschreven?', opties: v.opties.map(o => o.tekst), lang: true, antwoord: `${letter}. ${v.zin}` }
+    const vraag = cats.length === 1 && cats[0] === 'afbreekstreepje'
+      ? 'Bij welke zin is het woord goed afgebroken?' : 'Welke zin is goed geschreven?'
+    return { vraag, opties: v.opties.map(o => o.tekst), lang: true, antwoord: `${letter}. ${v.zin}` }
   })
 }
 
