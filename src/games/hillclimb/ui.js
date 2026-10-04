@@ -116,9 +116,9 @@ export function makeButton(scene, x, y, w, h, label, cb, { color = COL.groen, fo
   return { gfx: g, txt, zone }
 }
 
-// Terug-knop linksboven.
+// Terug-knop linksboven, onder de vaste terugknop van de app (die gaat het spel uit).
 export function makeBackButton(scene, cb) {
-  return makeButton(scene, 78, 36, 120, 40, '← Terug', cb, { color: 0x37415a, fontSize: 15 })
+  return makeButton(scene, 78, 92, 120, 40, '← Vorige', cb, { color: 0x37415a, fontSize: 15 })
 }
 
 // Munten-chip rechtsboven; refresh() na een aankoop.

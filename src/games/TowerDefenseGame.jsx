@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { createGame } from './towerdefense/GameEngine.js'
 import OrientationGate from '../OrientationGate'
 import './towerdefense.css'
+import { TerugKnop } from '../ui/index.jsx'
 
 export default function TowerDefenseGame({ onBack, onRoundDone, visible = true }) {
   const containerRef = useRef(null)
@@ -33,19 +34,7 @@ export default function TowerDefenseGame({ onBack, onRoundDone, visible = true }
 
   return (
     <div className="td-wrapper" style={{ display: visible ? 'block' : 'none' }}>
-      <button
-        onClick={onBack}
-        style={{
-          position: 'fixed', top: 14, left: 14, zIndex: 9999,
-          background: 'rgba(0,0,0,0.65)', color: '#fff',
-          border: '1px solid rgba(255,255,255,0.25)',
-          borderRadius: 10, padding: '7px 16px',
-          fontSize: 14, fontWeight: 700, cursor: 'pointer',
-          fontFamily: 'inherit', backdropFilter: 'blur(6px)',
-        }}
-      >
-        ← Menu
-      </button>
+      <TerugKnop onClick={onBack} style={{ zIndex: 9999 }} />
       <div ref={containerRef} className="td-container" />
       {visible && <OrientationGate />}
     </div>

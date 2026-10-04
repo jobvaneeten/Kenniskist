@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import OrientationGate from '../OrientationGate'
+import { TerugKnop } from '../ui/index.jsx'
 
 // Eigen massa-veer-physics (Verlet + constraint-relaxatie, Jakobsen-methode).
 // Breken op basis van échte balkkracht i.p.v. een doorzak-trucje.
@@ -735,7 +736,7 @@ export default function BrugBouwen({ onBack, reward = false }) {
 
   return (
     <div style={wrap}>
-      <button style={backBtn} onClick={() => { if (reward) { teardown(); onBack() } else if (screen === 'play') { teardown(); setMode('build'); setScreen('select') } else onBack() }}>← {reward ? 'Klaar' : screen === 'play' ? 'Levels' : 'Menu'}</button>
+      <TerugKnop style={{ zIndex: 9999 }} onClick={() => { if (reward) { teardown(); onBack() } else if (screen === 'play') { teardown(); setMode('build'); setScreen('select') } else onBack() }}>{reward ? 'Stoppen' : 'Terug'}</TerugKnop>
       <div style={{ position: 'absolute', inset: 0 }}>
         <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block', touchAction: 'none' }} />
       </div>
@@ -1151,7 +1152,6 @@ function segDist(px, py, ax, ay, bx, by) {
 
 // ═══ styles ════════════════════════════════════════════════════════════════
 const wrap = { position: 'fixed', inset: 0, background: '#0b1422', fontFamily: 'inherit', overflow: 'hidden' }
-const backBtn = { position: 'absolute', top: 12, left: 12, zIndex: 8, background: 'rgba(8,16,34,.8)', color: '#fff', border: '1px solid rgba(255,255,255,.22)', borderRadius: 10, padding: '8px 16px', cursor: 'pointer', fontSize: 14, fontWeight: 700, fontFamily: 'inherit' }
 const hudTop = { position: 'absolute', top: 12, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 10, zIndex: 6 }
 const badge = { background: 'rgba(8,16,34,.78)', color: '#eaf1ff', border: '1px solid rgba(120,140,255,.28)', borderRadius: 30, padding: '8px 16px', fontWeight: 800, fontSize: 14 }
 const matBar = { position: 'absolute', left: '50%', bottom: 76, transform: 'translateX(-50%)', display: 'flex', gap: 10, zIndex: 6 }

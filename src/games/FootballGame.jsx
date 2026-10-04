@@ -3,7 +3,7 @@ import { getQuestions } from './questions_rekenen'
 import { COUNTRIES, getCountry, generateBracket, DEFAULT_UNLOCKED } from './countries'
 import OrientationGate from '../OrientationGate'
 import './football.css'
-import { TerugKnop } from '../ui/index.jsx'
+import { TerugKnop, Knop } from '../ui/index.jsx'
 
 // ── Field constants ───────────────────────────────────────────────
 const W = 800, H = 450
@@ -1582,10 +1582,9 @@ export default function FootballGame({ year, onBack, addCuruntie, noQuiz = false
           </p>
           <div className="fb-end-coins"><span>💵</span><span>+ € 50 briefgeld!</span></div>
           <div className="fb-end-btns">
-            <button className="fb-end-btn fb-end-btn-again" style={{ background:'#FFD23F' }}
-              onClick={() => onMatchDone?.(won, next, true)}>
-              ✏️ Verder met oefenen →
-            </button>
+            <Knop variant="primair" maat="lg" icoonRechts="verder" onClick={() => onMatchDone?.(won, next, true)}>
+              Verder met oefenen
+            </Knop>
           </div>
           <p style={{ color:'rgba(255,255,255,0.4)', fontSize:'0.75rem', marginTop:6 }}>Je gaat zo automatisch verder…</p>
         </div>
@@ -1619,23 +1618,23 @@ export default function FootballGame({ year, onBack, addCuruntie, noQuiz = false
           )}
           <div className="fb-end-btns">
             {(won || draw) && next && (
-              <button className="fb-end-btn fb-end-btn-again" style={{ background: '#FFD23F' }} onClick={() => advanceRound(true)}>
-                → Naar de {next}
-              </button>
+              <Knop variant="primair" maat="lg" icoonRechts="verder" onClick={() => advanceRound(true)}>
+                Naar de {next}
+              </Knop>
             )}
             {(won || draw) && !next && (
-              <button className="fb-end-btn fb-end-btn-again" onClick={() => advanceRound(true)}>
-                🏆 Claim de beker!
-              </button>
+              <Knop variant="beloning" maat="lg" icoon="trofee" onClick={() => advanceRound(true)}>
+                Claim de beker!
+              </Knop>
             )}
             {!won && !draw && (
               <>
-                <button className="fb-end-btn fb-end-btn-again" onClick={restart}>🔄 Wedstrijd herspelen</button>
-                <button className="fb-end-btn fb-end-btn-back" onClick={() => { clearToernooi(); setBracket(null); setPhase('country_select') }}>← Nieuw toernooi</button>
+                <Knop variant="primair" icoon="opnieuw" onClick={restart}>Wedstrijd herspelen</Knop>
+                <Knop variant="secundair" icoon="opnieuw" onClick={() => { clearToernooi(); setBracket(null); setPhase('country_select') }}>Nieuw toernooi</Knop>
               </>
             )}
             {(won || draw) && (
-              <button className="fb-end-btn fb-end-btn-back" onClick={onBack}>← Terug naar menu</button>
+              <Knop variant="secundair" icoon="terug" onClick={onBack}>Terug</Knop>
             )}
           </div>
         </div>
@@ -1654,10 +1653,12 @@ export default function FootballGame({ year, onBack, addCuruntie, noQuiz = false
         {newUnlock && (
           <p className="wk-champ-unlock">🔓 Nieuw land ontgrendeld: {getCountry(newUnlock)?.flag} {getCountry(newUnlock)?.name}!</p>
         )}
-        <button className="fb-end-btn fb-end-btn-again" style={{ marginTop: 16 }} onClick={() => { clearToernooi(); setBracket(null); setNewUnlock(null); setPhase('country_select') }}>
-          🔄 Nieuw toernooi
-        </button>
-        <button className="fb-end-btn fb-end-btn-back" onClick={onBack}>← Terug naar menu</button>
+        <div className="fb-end-btns">
+        <Knop variant="primair" icoon="opnieuw" onClick={() => { clearToernooi(); setBracket(null); setNewUnlock(null); setPhase('country_select') }}>
+          Nieuw toernooi
+        </Knop>
+        <Knop variant="secundair" icoon="terug" onClick={onBack}>Terug</Knop>
+        </div>
       </div>
     </div>
   )
@@ -1670,8 +1671,8 @@ export default function FootballGame({ year, onBack, addCuruntie, noQuiz = false
         <h2 className="fb-end-title" style={{ color: '#FF6B6B' }}>Uitgeschakeld</h2>
         <p style={{ color: 'rgba(255,255,255,0.5)' }}>Je bent uitgeschakeld in de {bracket?.roundNames[bracket?.currentRound]}.</p>
         <div className="fb-end-btns">
-          <button className="fb-end-btn fb-end-btn-again" onClick={restart}>🔄 Wedstrijd herspelen</button>
-          <button className="fb-end-btn fb-end-btn-back" onClick={() => { clearToernooi(); setBracket(null); setPhase('country_select') }}>← Nieuw toernooi</button>
+          <Knop variant="primair" icoon="opnieuw" onClick={restart}>Wedstrijd herspelen</Knop>
+          <Knop variant="secundair" icoon="opnieuw" onClick={() => { clearToernooi(); setBracket(null); setPhase('country_select') }}>Nieuw toernooi</Knop>
         </div>
       </div>
     </div>

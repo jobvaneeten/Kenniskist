@@ -14,22 +14,6 @@
 }
 
 /* ── Back button ── */
-.rg-back {
-  position: fixed;
-  top: 14px; left: 14px;
-  z-index: 100;
-  padding: 9px 18px;
-  border-radius: 14px;
-  border: 1.5px solid rgba(255,255,255,0.12);
-  background: rgba(10,10,30,0.75);
-  color: rgba(255,255,255,0.85);
-  font-family: inherit;
-  font-size: 0.88rem;
-  font-weight: 800;
-  cursor: pointer;
-  backdrop-filter: blur(12px);
-}
-.rg-back:hover { background: rgba(255,255,255,0.1); color: #fff; }
 
 /* ── Score bar ── */
 .rg-score {

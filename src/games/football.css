@@ -174,14 +174,6 @@
 .fb-end-score  { font-size: 1.1rem; color: rgba(255,255,255,0.55); font-weight: 700; }
 .fb-end-coins  { display: flex; align-items: center; gap: 8px; font-size: 1rem; font-weight: 900; color: #FFD23F; }
 .fb-end-btns   { display: flex; flex-direction: column; gap: 10px; width: 100%; margin-top: 6px; }
-.fb-end-btn {
-  padding: 14px; border-radius: 12px; border: none;
-  font-family: inherit; font-size: 1rem; font-weight: 900;
-  cursor: pointer; transition: filter 0.15s, transform 0.12s;
-}
-.fb-end-btn:hover  { filter: brightness(1.1); transform: scale(1.02); }
-.fb-end-btn-again  { background: #FFD23F; color: #1a1a2e; }
-.fb-end-btn-back   { background: rgba(255,255,255,0.1); color: #fff; border: 1.5px solid rgba(255,255,255,0.2); }
 
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(12px); }

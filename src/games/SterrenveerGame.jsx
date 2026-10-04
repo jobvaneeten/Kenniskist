@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { startSterrenveer } from '../game/main.js'
 import './sterrenveer.css'
+import { TerugKnop } from '../ui/index.jsx'
 
 // Dunne wrapper om het spel. Alle logica zit in src/game/; hier alleen het
 // canvas, het dempen van de shell-muziek en een terugknop.
@@ -40,9 +41,7 @@ export default function SterrenveerGame({ onBack, reward = false }) {
   return (
     <div className="sterrenveer-wrap">
       <canvas ref={canvasRef} className="sterrenveer-canvas" />
-      <button type="button" className="sterrenveer-terug" onClick={onBack}>
-        ← Terug
-      </button>
+      <TerugKnop onClick={onBack} style={{ zIndex: 9999 }} />
     </div>
   )
 }

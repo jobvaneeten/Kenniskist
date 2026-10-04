@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { createGame } from './hillclimb/GameEngine.js'
 import OrientationGate from '../OrientationGate'
 import './hillclimb/hillclimb.css'
+import { TerugKnop } from '../ui/index.jsx'
 
 export default function HillClimbGame({ onBack, reward = false }) {
   const containerRef = useRef(null)
@@ -33,19 +34,7 @@ export default function HillClimbGame({ onBack, reward = false }) {
 
   return (
     <div className="hc-wrapper">
-      <button
-        onClick={onBack}
-        style={{
-          position: 'fixed', top: 14, left: 14, zIndex: 9999,
-          background: 'rgba(0,0,0,0.65)', color: '#fff',
-          border: '1px solid rgba(255,255,255,0.25)',
-          borderRadius: 10, padding: '7px 16px',
-          fontSize: 14, fontWeight: 700, cursor: 'pointer',
-          fontFamily: 'inherit', backdropFilter: 'blur(6px)',
-        }}
-      >
-        ← Menu
-      </button>
+      <TerugKnop onClick={onBack} style={{ zIndex: 9999 }} />
       <div ref={containerRef} className="hc-container" />
       <OrientationGate />
     </div>

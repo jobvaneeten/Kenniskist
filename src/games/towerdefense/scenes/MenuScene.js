@@ -126,10 +126,8 @@ export default class MenuScene extends Phaser.Scene {
       }
     })
 
-    // ── Back button ────────────────────────────────────────────────
-    this._makeButton(80, 40, 130, 40, '← Terug', 0x333333, 0x555555, () => {
-      this.game.events.emit('back')
-    })
+    // Geen eigen terugknop: de app zet zijn vaste terugknop linksboven
+    // (TowerDefenseGame.jsx), die hetzelfde doet.
 
     // ── Floating particles ─────────────────────────────────────────
     this._spawnFloatingParticles()

@@ -11,6 +11,7 @@ import OrientationGate from '../OrientationGate'
 import { KART_COLORS, AV_Y, AV_Z, buildKart, loadAvatar, safeJSON } from './kartShared'
 import { SET, nachtOmgeving, glowLaag, nachtLucht, pbrMat, neonMat, gelaktMat } from './neonOmgeving'
 import './botsen-game.css'
+import { TerugKnop } from '../ui/index.jsx'
 
 // ═══════════════════════════════════════════════════════════════════════
 //  BALLONNENGEVECHT (intern "botsen", moet matchen met de server) — kart +
@@ -1015,7 +1016,7 @@ function BotsenMatch({ onBack, room, sessionId, joinCode, myNameProp, myColorPro
     <div className="botsen-wrap">
       <OrientationGate />
       <canvas ref={canvasRef} className="botsen-canvas" />
-      <button className="botsen-exit" onClick={onBack}>← Verlaten</button>
+      <TerugKnop onClick={onBack}>Stoppen</TerugKnop>
 
       {phase === 'lobby' && (
         <div className="botsen-lobby-wait">
@@ -1103,7 +1104,7 @@ export default function BotsenGame({ onBack }) {
 
   return (
     <div className="botsen-menu">
-      <button className="botsen-exit" onClick={onBack}>← Kledingkast</button>
+      <TerugKnop onClick={onBack} />
       <div className="botsen-menu-box">
         <div className="botsen-menu-icon">🎈</div>
         <h1 className="botsen-menu-title">Ballonnengevecht</h1>
@@ -1138,7 +1139,7 @@ function BotsenLobby({ onBack, onJoined }) {
 
   return (
     <div className="botsen-menu">
-      <button className="botsen-exit" onClick={onBack}>← Terug</button>
+      <TerugKnop onClick={onBack} />
       <div className="botsen-menu-box">
         <div className="botsen-menu-icon">🌍</div>
         <h1 className="botsen-menu-title">Online ballonnengevecht</h1>

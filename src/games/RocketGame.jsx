@@ -13,6 +13,7 @@ import { findItem } from '../itemsCatalog'
 import { applyItemToMesh, loadClothingDonor, usesDonor, loadHeadItem } from '../applyClothing'
 import OrientationGate from '../OrientationGate'
 import './rocket-game.css'
+import { TerugKnop } from '../ui/index.jsx'
 
 const SERVER_URL = 'wss://kenniskist-server.onrender.com'
 
@@ -1050,7 +1051,7 @@ function Lobby({ onBack, onJoined }) {
 
   return (
     <div className="rg-lobby">
-      <button className="rg-back" onClick={onBack}>← Menu</button>
+      <TerugKnop onClick={onBack} />
       <div className="rg-lobby-box">
         <div className="rg-lobby-icon">⚽</div>
         <h1 className="rg-lobby-title">Potje <span>Voetballen</span></h1>
@@ -1091,7 +1092,7 @@ function WaitingRoom({ code, players, room, onBack }) {
   const [botDiff, setBotDiff] = useState('normaal')
   return (
     <div className="rg-waiting">
-      <button className="rg-back" onClick={onBack}>← Menu</button>
+      <TerugKnop onClick={onBack} />
       <div className="rg-waiting-box">
         <p className="rg-waiting-label">Lobby-code</p>
         <div className="rg-waiting-code">{code ?? '?????'}</div>
@@ -1242,7 +1243,7 @@ export default function RocketGame({ onBack, solo = false }) {
       <OrientationGate />
       <canvas ref={canvasRef} className="rg-canvas" />
 
-      <button className="rg-back" onClick={() => { room?.leave(); onBack() }}>← Menu</button>
+      <TerugKnop onClick={() => { room?.leave(); onBack() }} />
 
       <div className="rg-score">
         <span className="rg-score-a">🔴 {rs?.scoreA ?? 0}</span>
