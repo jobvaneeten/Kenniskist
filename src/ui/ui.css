@@ -1,0 +1,128 @@
+/* Gedeelde componenten — gebruikt alleen tokens uit src/theme.css. */
+.kk-knop, .kk-kaart, .kk-schermkop, .kk-paneel, .kk-eind, .kk-feedback { box-sizing: border-box; }
+
+/* ── Knop ─────────────────────────────────────────────── */
+.kk-knop {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--kk-s2);
+  min-height: var(--kk-tap); padding: 0 var(--kk-s5);
+  border: 1px solid transparent; border-radius: var(--kk-r-md);
+  font: var(--kk-fw-bold) var(--kk-fs-md)/1 var(--kk-body);
+  color: var(--kk-text); background: var(--kk-surface);
+  cursor: pointer; user-select: none; white-space: nowrap;
+  transition: transform var(--kk-dur-fast) var(--kk-ease), box-shadow var(--kk-dur) var(--kk-ease),
+              background var(--kk-dur) var(--kk-ease), border-color var(--kk-dur) var(--kk-ease);
+}
+.kk-knop:hover:not(:disabled)  { transform: translateY(-1px); }
+.kk-knop:active:not(:disabled) { transform: translateY(1px) scale(0.98); }
+.kk-knop:focus-visible { outline: none; box-shadow: var(--kk-focus-ring); }
+.kk-knop:disabled { opacity: 0.4; cursor: not-allowed; }
+.kk-knop svg { width: 1.15em; height: 1.15em; flex: none; }
+
+.kk-knop--primair { background: var(--kk-primary); box-shadow: var(--kk-glow-sm); }
+.kk-knop--primair:hover:not(:disabled) { background: var(--kk-primary-hi); box-shadow: var(--kk-glow-md); }
+.kk-knop--beloning { background: var(--kk-gold); color: var(--kk-text-on-accent); --kk-accent-glow: rgba(255,210,63,0.5); box-shadow: var(--kk-glow-sm); }
+.kk-knop--secundair { background: var(--kk-surface); border-color: var(--kk-border-strong); }
+.kk-knop--secundair:hover:not(:disabled) { background: var(--kk-surface-hover); border-color: var(--kk-primary-hi); }
+.kk-knop--gevaar { background: var(--kk-danger); }
+.kk-knop--gevaar:hover:not(:disabled) { filter: brightness(1.1); }
+.kk-knop--subtiel { background: transparent; color: var(--kk-text-soft); padding: 0 var(--kk-s3); }
+.kk-knop--subtiel:hover:not(:disabled) { color: var(--kk-text); background: var(--kk-surface); }
+
+.kk-knop--sm { min-height: var(--kk-tap); padding: 0 var(--kk-s4); font-size: var(--kk-fs-sm); border-radius: var(--kk-r-sm); }
+.kk-knop--lg { min-height: 56px; padding: 0 var(--kk-s6); font-size: var(--kk-fs-lg); border-radius: var(--kk-r-lg); }
+.kk-knop--icoon { padding: 0; width: var(--kk-tap); }
+.kk-knop--icoon.kk-knop--sm { width: var(--kk-tap); }
+.kk-knop--breed { width: 100%; }
+
+/* ── Kaart ────────────────────────────────────────────── */
+.kk-kaart {
+  --kk-accent: var(--kk-primary-hi);
+  display: flex; flex-direction: column; gap: var(--kk-s2);
+  padding: var(--kk-s5); border-radius: var(--kk-r-lg);
+  background: var(--kk-surface); border: 1px solid var(--kk-border);
+  color: var(--kk-text); text-align: left; font-family: var(--kk-body);
+  backdrop-filter: blur(6px);
+}
+button.kk-kaart { cursor: pointer; transition: transform var(--kk-dur) var(--kk-ease), border-color var(--kk-dur), box-shadow var(--kk-dur), background var(--kk-dur); }
+button.kk-kaart:hover:not(:disabled) { transform: translateY(-3px); border-color: var(--kk-accent); background: var(--kk-surface-hover); box-shadow: 0 0 20px color-mix(in srgb, var(--kk-accent) 35%, transparent); }
+button.kk-kaart:focus-visible { outline: none; box-shadow: var(--kk-focus-ring); }
+button.kk-kaart:disabled { opacity: 0.45; cursor: not-allowed; }
+.kk-kaart--accent { border-top: 3px solid var(--kk-accent); }
+.kk-kaart-icoon { width: 48px; height: 48px; display: grid; place-items: center; border-radius: var(--kk-r-md); background: color-mix(in srgb, var(--kk-accent) 18%, transparent); color: var(--kk-accent); }
+.kk-kaart-icoon svg { width: 28px; height: 28px; }
+.kk-kaart-titel { margin: 0; font: var(--kk-fw-bold) var(--kk-fs-lg)/1.2 var(--kk-head); }
+.kk-kaart-tekst { margin: 0; font-size: var(--kk-fs-sm); color: var(--kk-text-soft); line-height: 1.4; }
+
+.kk-chip { display: inline-flex; align-items: center; gap: var(--kk-s1); padding: 3px 10px; border-radius: var(--kk-r-pill); font: var(--kk-fw-bold) var(--kk-fs-xs)/1.4 var(--kk-body); color: var(--kk-accent, var(--kk-text-soft)); background: color-mix(in srgb, var(--kk-accent, #fff) 14%, transparent); border: 1px solid color-mix(in srgb, var(--kk-accent, #fff) 35%, transparent); }
+
+/* ── Schermkop ────────────────────────────────────────── */
+.kk-schermkop { position: relative; display: grid; grid-template-columns: 1fr auto 1fr; align-items: start; gap: var(--kk-s4); width: 100%; padding: var(--kk-s4) var(--kk-s4) 0; }
+.kk-schermkop-links  { justify-self: start; }
+.kk-schermkop-rechts { justify-self: end; display: flex; gap: var(--kk-s2); }
+.kk-schermkop-midden { text-align: center; padding-top: var(--kk-s2); }
+.kk-schermkop-titel { margin: 0; font: var(--kk-fw-bold) var(--kk-fs-2xl)/1.1 var(--kk-head); color: var(--kk-text); text-shadow: 0 0 24px var(--kk-primary-glow); }
+.kk-schermkop-sub { margin: var(--kk-s1) 0 0; font: var(--kk-fw-bold) var(--kk-fs-sm)/1.4 var(--kk-body); color: var(--kk-text-soft); }
+@media (max-width: 600px) {
+  .kk-schermkop { grid-template-columns: auto 1fr auto; }
+  .kk-schermkop-titel { font-size: var(--kk-fs-xl); }
+}
+
+.kk-saldo { display: inline-flex; align-items: center; gap: var(--kk-s2); min-height: 36px; padding: 0 var(--kk-s3); border-radius: var(--kk-r-pill); background: var(--kk-surface); border: 1px solid var(--kk-border); font: var(--kk-fw-black) var(--kk-fs-sm)/1 var(--kk-body); color: var(--kk-gold); }
+.kk-saldo svg { width: 16px; height: 16px; }
+
+/* ── Voortgangsbalk ───────────────────────────────────── */
+.kk-voortgang { display: flex; align-items: center; gap: var(--kk-s3); width: 100%; font: var(--kk-fw-bold) var(--kk-fs-xs)/1 var(--kk-body); color: var(--kk-text-soft); }
+.kk-voortgang-baan { flex: 1; height: 10px; border-radius: var(--kk-r-pill); background: rgba(255,255,255,0.1); overflow: hidden; }
+.kk-voortgang-vulling { height: 100%; border-radius: inherit; background: var(--kk-accent, var(--kk-primary-hi)); box-shadow: 0 0 10px var(--kk-accent, var(--kk-primary-hi)); transition: width var(--kk-dur-slow) var(--kk-ease); }
+
+/* ── Feedback ─────────────────────────────────────────── */
+.kk-feedback { display: flex; align-items: center; gap: var(--kk-s3); padding: var(--kk-s3) var(--kk-s4); border-radius: var(--kk-r-md); border: 1px solid; font: var(--kk-fw-bold) var(--kk-fs-md)/1.35 var(--kk-body); animation: kk-pop var(--kk-dur) var(--kk-ease); }
+.kk-feedback svg { width: 22px; height: 22px; flex: none; }
+.kk-feedback--goed { color: #86efac; background: var(--kk-success-soft); border-color: color-mix(in srgb, var(--kk-success) 50%, transparent); }
+.kk-feedback--fout { color: #fda4af; background: var(--kk-error-soft); border-color: color-mix(in srgb, var(--kk-error) 50%, transparent); }
+.kk-feedback--info { color: #bae6fd; background: rgba(56,189,248,0.12); border-color: rgba(56,189,248,0.4); }
+@keyframes kk-pop { from { transform: scale(0.96); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* ── Paneel / Modal ───────────────────────────────────── */
+.kk-scrim { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: var(--kk-s4); background: var(--kk-scrim); backdrop-filter: blur(4px); animation: kk-fade var(--kk-dur) var(--kk-ease); }
+.kk-paneel { width: min(480px, 100%); max-height: calc(100svh - 32px); overflow: auto; padding: var(--kk-s5); border-radius: var(--kk-r-lg); background: var(--kk-surface-solid); border: 1px solid var(--kk-border); box-shadow: var(--kk-shadow-lg); color: var(--kk-text); font-family: var(--kk-body); animation: kk-pop var(--kk-dur) var(--kk-ease); }
+.kk-paneel-titel { margin: 0 0 var(--kk-s2); font: var(--kk-fw-bold) var(--kk-fs-xl)/1.2 var(--kk-head); }
+.kk-paneel-tekst { margin: 0 0 var(--kk-s5); color: var(--kk-text-soft); line-height: 1.5; }
+.kk-knoppenrij { display: flex; gap: var(--kk-s3); justify-content: flex-end; flex-wrap: wrap; }
+@keyframes kk-fade { from { opacity: 0; } }
+
+/* ── Eindscherm ───────────────────────────────────────── */
+.kk-eind { display: flex; flex-direction: column; align-items: center; gap: var(--kk-s4); text-align: center; width: min(440px, 100%); margin: 0 auto; padding: var(--kk-s6) var(--kk-s5); border-radius: var(--kk-r-lg); background: var(--kk-surface); border: 1px solid var(--kk-border); box-shadow: var(--kk-shadow); }
+.kk-eind-icoon { width: 72px; height: 72px; display: grid; place-items: center; border-radius: 50%; color: var(--kk-gold); background: rgba(255,210,63,0.14); box-shadow: 0 0 32px rgba(255,210,63,0.35); }
+.kk-eind-icoon svg { width: 40px; height: 40px; }
+.kk-eind-titel { margin: 0; font: var(--kk-fw-bold) var(--kk-fs-xl)/1.1 var(--kk-head); }
+.kk-eind-score { margin: 0; font: var(--kk-fw-black) var(--kk-fs-2xl)/1 var(--kk-head); color: var(--kk-gold); }
+.kk-eind-tekst { margin: 0; color: var(--kk-text-soft); font-weight: var(--kk-fw-normal); }
+.kk-eind .kk-knoppenrij { justify-content: center; width: 100%; }
+
+/* ── Terugknop ────────────────────────────────────────── */
+.kk-terug { background: rgba(10,10,30,0.75); backdrop-filter: blur(12px); padding-left: var(--kk-s3); }
+.kk-terug--vast { position: fixed; top: var(--kk-s4); left: var(--kk-s4); z-index: 150; }
+
+/* ── Vaste hoekposities (uitloggen, code, …) ──────────── */
+.hoek-rechtsboven { position: fixed; top: var(--kk-s4); right: var(--kk-s4); z-index: 100; }
+.hoek-linksonder  { position: fixed; bottom: var(--kk-s4); left: 72px; z-index: 100; }   /* rechts van de muziekknop */
+.hoek-rechtsboven.kk-knop, .hoek-linksonder.kk-knop { background: rgba(10,10,30,0.75); backdrop-filter: blur(12px); }
+
+/* ── Invoerveld ───────────────────────────────────────── */
+.kk-invoer {
+  width: 100%;
+  min-height: var(--kk-tap);
+  padding: 0 var(--kk-s4);
+  background: var(--kk-surface);
+  border: 1px solid var(--kk-border-strong);
+  border-radius: var(--kk-r-md);
+  color: var(--kk-text);
+  font: var(--kk-fw-bold) var(--kk-fs-md) var(--kk-body);
+  outline: none;
+  transition: border-color var(--kk-dur), box-shadow var(--kk-dur);
+}
+.kk-invoer:focus { border-color: var(--kk-cyan); box-shadow: 0 0 0 3px rgba(56,189,248,0.2); }
+.kk-invoer::placeholder { color: var(--kk-text-faint); font-weight: var(--kk-fw-normal); }
+.hoek-rechtsonder { position: fixed; bottom: var(--kk-s4); right: var(--kk-s4); z-index: 100; }
+.hoek-rechtsonder.kk-knop { background: rgba(10,10,30,0.75); backdrop-filter: blur(12px); }

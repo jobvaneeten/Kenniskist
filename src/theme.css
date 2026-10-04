@@ -1,0 +1,94 @@
+/* Kenniskist huisstijl — design tokens (donker neon).
+   Eén bron voor kleur, type, maat en glow. Alles in src/ui/ en (na fase 2)
+   alle schermen gebruiken alleen deze variabelen, geen losse hex-waarden. */
+:root {
+  /* ── Achtergrond & oppervlak ───────────────────────── */
+  --kk-bg:            #0b0a1a;                 /* pagina (nachtlucht) */
+  --kk-bg-portaal:    #0b0e18;                 /* leerkrachtenportaal: koeler, rustiger */
+  --kk-surface:       rgba(255,255,255,0.06);  /* kaart, paneel */
+  --kk-surface-hover: rgba(255,255,255,0.10);
+  --kk-surface-solid: #1a1733;                 /* modal, dropdown (dekkend) */
+  --kk-border:        rgba(255,255,255,0.14);
+  --kk-border-strong: rgba(255,255,255,0.28);
+  --kk-scrim:         rgba(5,4,15,0.72);       /* achter modals */
+
+  /* ── Tekst ─────────────────────────────────────────── */
+  --kk-text:        #ffffff;
+  --kk-text-soft:   rgba(255,255,255,0.72);
+  --kk-text-faint:  rgba(255,255,255,0.55);
+  --kk-text-on-accent: #120a26;               /* tekst op gele/groene knop */
+
+  /* ── Merk & accenten (neon) ────────────────────────── */
+  --kk-primary:       #7c3aed;   /* violet: hoofdactie (wit erop = 6:1) */
+  --kk-primary-hi:    #a78bfa;
+  --kk-primary-glow:  rgba(139,92,246,0.55);
+  --kk-gold:          #ffd23f;   /* munten, beloning, titels-accent */
+  --kk-cyan:          #38bdf8;   /* info, focus */
+  --kk-pink:          #ff2f8e;   /* neon-gloed uit neonOmgeving.js */
+
+  /* ── Status ────────────────────────────────────────── */
+  --kk-success:      #22c55e;
+  --kk-success-soft: rgba(34,197,94,0.16);
+  --kk-error:        #fb7185;   /* tekst/rand op donker */
+  --kk-danger:       #e11d48;   /* knopvlak, wit erop = 5:1 */
+  --kk-error-soft:   rgba(244,63,94,0.16);
+  --kk-warning:      #f59e0b;
+
+  /* ── Accent per vak (kaartrand, chip, voortgangsbalk) ─ */
+  --kk-vak-rekenen:  #ffb020;
+  --kk-vak-taal:     #38bdf8;
+  --kk-vak-spelling: #c084fc;
+  --kk-vak-lezen:    #34d399;
+  --kk-vak-topo:     #2dd4bf;
+  --kk-vak-spel:     #ff2f8e;   /* vrij spelen / arcade */
+
+  /* ── Typografie ────────────────────────────────────── */
+  --kk-head: 'Baloo 2', 'Nunito', system-ui, sans-serif;
+  --kk-body: 'Nunito', system-ui, sans-serif;
+  --kk-fs-xs:  0.75rem;   /* 12 — labels, chips */
+  --kk-fs-sm:  0.875rem;  /* 14 — bijtekst */
+  --kk-fs-md:  1rem;      /* 16 — basistekst, knoppen */
+  --kk-fs-lg:  1.25rem;   /* 20 — kaarttitel */
+  --kk-fs-xl:  1.75rem;   /* 28 — sectiekop */
+  --kk-fs-2xl: 2.5rem;    /* 40 — schermtitel */
+  --kk-fw-normal: 600;
+  --kk-fw-bold:   800;
+  --kk-fw-black:  900;
+
+  /* ── Ruimte (4px-raster) ───────────────────────────── */
+  --kk-s1: 4px;  --kk-s2: 8px;  --kk-s3: 12px; --kk-s4: 16px;
+  --kk-s5: 24px; --kk-s6: 32px; --kk-s7: 48px; --kk-s8: 64px;
+
+  /* ── Vorm ──────────────────────────────────────────── */
+  --kk-r-sm:   10px;   /* chip, invoerveld */
+  --kk-r-md:   14px;   /* knop, kleine kaart */
+  --kk-r-lg:   20px;   /* kaart, paneel */
+  --kk-r-pill: 999px;
+  --kk-tap:    44px;   /* minimale knophoogte */
+
+  /* ── Schaduw & glow ────────────────────────────────── */
+  --kk-shadow:      0 8px 24px rgba(0,0,0,0.35);
+  --kk-shadow-lg:   0 18px 48px rgba(0,0,0,0.5);
+  --kk-glow-sm:     0 0 12px var(--kk-accent-glow, var(--kk-primary-glow));
+  --kk-glow-md:     0 0 24px var(--kk-accent-glow, var(--kk-primary-glow));
+  --kk-focus-ring:  0 0 0 3px var(--kk-bg), 0 0 0 5px var(--kk-cyan);
+
+  /* ── Beweging ──────────────────────────────────────── */
+  --kk-dur-fast: 120ms;
+  --kk-dur:      200ms;
+  --kk-dur-slow: 400ms;
+  --kk-ease:     cubic-bezier(.2,.8,.2,1);
+}
+
+/* Portaal: zelfde tokens, minder glow. */
+.kk-rustig {
+  --kk-glow-sm: none;
+  --kk-glow-md: none;
+  --kk-primary: #4f46e5;
+  --kk-primary-hi: #818cf8;
+  --kk-primary-glow: rgba(99,102,241,0.35);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --kk-dur-fast: 0ms; --kk-dur: 0ms; --kk-dur-slow: 0ms; }
+}
