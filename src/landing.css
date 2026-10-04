@@ -1,68 +1,19 @@
-/* ── Landing / portal-keuze ─────────────────────────────── */
+/* ── Landing / portal-keuze ───────────────────────────────
+   Zelfde sterrenhemel als de rest van de site (body, App.css); alle kaarten
+   gebruiken de gedeelde glas-kaartstijl. */
 .landing-screen {
   width: 100vw;
   min-height: 100vh;
-  background:
-    radial-gradient(ellipse 50% 42% at 88% 6%, rgba(168,85,247,0.28) 0%, transparent 62%),
-    radial-gradient(ellipse 55% 48% at 8% 94%,  rgba(56,130,246,0.2) 0%, transparent 62%),
-    linear-gradient(180deg, #131028 0%, #1d1544 48%, #261a55 100%);
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 56px 24px 40px;
-  font-family: 'Nunito', 'Segoe UI', system-ui, sans-serif;
-  color: #fff;
-  gap: 40px;
+  font-family: var(--kk-body);
+  color: var(--kk-text);
+  gap: var(--kk-s7);
   overflow-x: hidden;
 }
-
-.landing-stars { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
-.landing-star {
-  position: absolute;
-  width: 3px; height: 3px;
-  border-radius: 50%;
-  background: #fff;
-  animation: landingStarTwinkle ease-in-out infinite;
-}
-@keyframes landingStarTwinkle {
-  0%, 100% { opacity: var(--o, 0.2); }
-  50%      { opacity: 1; }
-}
-
-.landing-back-btn {
-  position: fixed;
-  top: 18px; left: 18px;
-  z-index: 20;
-  background: rgba(255,255,255,0.1);
-  border: 1px solid rgba(255,255,255,0.2);
-  color: #fff;
-  font-family: inherit;
-  font-size: 0.88rem;
-  font-weight: 800;
-  padding: 8px 18px;
-  border-radius: 999px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-.landing-back-btn:hover { background: rgba(255,255,255,0.22); }
-
-.landing-uitloggen-btn {
-  position: fixed;
-  top: 18px; right: 18px;
-  z-index: 20;
-  background: rgba(255,255,255,0.1);
-  border: 1px solid rgba(255,255,255,0.2);
-  color: #fff;
-  font-family: inherit;
-  font-size: 0.88rem;
-  font-weight: 800;
-  padding: 8px 18px;
-  border-radius: 999px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-.landing-uitloggen-btn:hover { background: rgba(255,255,255,0.22); }
 
 /* ── Hero-banner met artwork ───────────────────────────── */
 .landing-hero-banner {
@@ -89,7 +40,7 @@
 .hero-art-fade {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(19,16,40,0.5) 0%, rgba(19,16,40,0.2) 40%, transparent 100%);
+  background: linear-gradient(180deg, rgba(11,10,26,0.5) 0%, rgba(11,10,26,0.2) 40%, transparent 100%);
   pointer-events: none;
 }
 .landing-hero {
@@ -100,27 +51,22 @@
   align-items: center;
   text-align: center;
   max-width: 760px;
-  gap: 6px;
+  gap: var(--kk-s2);
   padding: 12px 0 40px;
 }
 .landing-logo-ring {
   position: relative;
-  padding: 7px;
+  padding: 6px;
   border-radius: 50%;
-  background: conic-gradient(from 0deg, #ffd23f, #a78bfa, #38bdf8, #4ade80, #ffd23f);
-  animation: logoRingSpin 9s linear infinite;
-  box-shadow: 0 0 44px rgba(255,210,63,0.35), 0 14px 40px rgba(0,0,0,0.5);
-  margin-bottom: 12px;
-}
-@keyframes logoRingSpin {
-  0%,100% { filter: hue-rotate(0deg); }
-  50%      { filter: hue-rotate(30deg); }
+  background: conic-gradient(from 0deg, var(--kk-primary-hi), var(--kk-cyan), var(--kk-pink), var(--kk-primary-hi));
+  box-shadow: 0 0 44px var(--kk-primary-glow), 0 14px 40px rgba(0,0,0,0.5);
+  margin-bottom: var(--kk-s3);
 }
 .landing-logo {
   display: block;
   width: 168px; height: 168px;
   border-radius: 50%;
-  box-shadow: 0 0 0 4px #131028;
+  box-shadow: 0 0 0 4px var(--kk-bg);
   animation: logoFloat 3.4s ease-in-out infinite;
 }
 @keyframes logoFloat {
@@ -128,58 +74,60 @@
   50%      { transform: translateY(-7px); }
 }
 .landing-title {
-  font-size: 3.4rem;
-  font-weight: 900;
+  font: var(--kk-fw-bold) 3.4rem/1.05 var(--kk-head);
   letter-spacing: -0.5px;
-  background: linear-gradient(100deg, #fff 0%, #ffe9a8 30%, #fff 50%, #a5e8ff 70%, #fff 100%);
-  background-size: 220% auto;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: landingTitleShine 6s linear infinite;
+  color: var(--kk-text);
+  text-shadow: 0 0 28px var(--kk-primary-glow), 0 4px 16px rgba(0,0,0,0.55);
   margin: 0;
-  filter: drop-shadow(0 4px 16px rgba(0,0,0,0.55));
 }
-@keyframes landingTitleShine { to { background-position: 220% center; } }
 .landing-tagline {
-  font-size: 1.1rem; font-weight: 800; color: #ffd23f; margin: 0;
+  font: var(--kk-fw-bold) var(--kk-fs-sm)/1 var(--kk-body);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--kk-gold);
+  margin: 0;
   text-shadow: 0 2px 10px rgba(0,0,0,0.6);
 }
 .landing-intro {
-  font-size: 0.98rem;
+  font-size: var(--kk-fs-md);
   line-height: 1.65;
   color: rgba(255,255,255,0.88);
-  font-weight: 600;
-  margin: 12px 0 0;
+  font-weight: var(--kk-fw-normal);
+  margin: var(--kk-s3) 0 0;
   text-shadow: 0 1px 8px rgba(0,0,0,0.7);
 }
+
+/* ── Gedeelde kaartvorm op deze pagina ─────────────────── */
+.stat-card, .step-card, .audience-card, .showcase-card, .portal-card, .landing-cta {
+  --kk-accent: var(--kk-primary-hi);
+  background: rgba(14, 12, 34, 0.72);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--kk-border);
+  border-radius: var(--kk-r-lg);
+  box-shadow: var(--kk-shadow);
+  color: var(--kk-text);
+}
+.landing-icoon {
+  width: 52px; height: 52px;
+  display: grid; place-items: center;
+  border-radius: var(--kk-r-md);
+  color: var(--kk-accent);
+  background: color-mix(in srgb, var(--kk-accent) 16%, transparent);
+}
+.landing-icoon svg { width: 28px; height: 28px; }
 
 /* ── Stats-strook ───────────────────────────────────────── */
 .landing-stats {
   position: relative; z-index: 1;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
+  gap: var(--kk-s4);
   width: 100%;
   max-width: 760px;
 }
-.stat-card {
-  background: linear-gradient(168deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02)),
-              linear-gradient(165deg, #2c2363, #1f1848);
-  border: 1.5px solid rgba(255,255,255,0.12);
-  border-radius: 16px;
-  padding: 16px 10px;
-  display: flex; flex-direction: column; align-items: center; gap: 2px;
-}
-.stat-value {
-  font-size: 1.55rem;
-  font-weight: 900;
-  background: linear-gradient(180deg, #ffe9a8, #ffd23f);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-.stat-label { font-size: 0.72rem; font-weight: 800; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 0.05em; }
+.stat-card { padding: var(--kk-s4) 10px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.stat-value { font: var(--kk-fw-bold) 1.7rem/1.1 var(--kk-head); color: var(--kk-gold); }
+.stat-label { font-size: var(--kk-fs-xs); font-weight: var(--kk-fw-bold); color: var(--kk-text-soft); text-transform: uppercase; letter-spacing: 0.05em; }
 
 /* ── Vakken-chips ───────────────────────────────────────── */
 .landing-subjects {
@@ -187,97 +135,70 @@
   display: flex; flex-wrap: wrap; justify-content: center;
   gap: 10px;
 }
-.landing-chip {
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.16);
-  border-radius: 999px;
-  padding: 8px 16px;
-  font-weight: 800;
-  font-size: 0.85rem;
-}
+.landing-subjects .kk-chip { font-size: var(--kk-fs-sm); padding: 6px 14px; }
+.landing-subjects .kk-chip svg { width: 16px; height: 16px; }
 
 /* ── "Hoe werkt het" stappen ────────────────────────────── */
 .landing-steps { position: relative; z-index: 1; width: 100%; max-width: 980px; text-align: center; }
-.steps-row {
+.steps-row, .audience-row {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
+  gap: var(--kk-s5);
 }
-.step-card {
-  background: linear-gradient(168deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02)),
-              linear-gradient(165deg, #2c2363, #1f1848);
-  border: 1.5px solid rgba(255,255,255,0.12);
-  border-radius: 18px;
-  padding: 22px 18px;
+.step-card, .audience-card {
+  padding: var(--kk-s5) var(--kk-s4);
   display: flex; flex-direction: column; align-items: center;
-  gap: 6px;
+  gap: var(--kk-s2);
 }
-.step-emoji { font-size: 2rem; }
-.step-title { font-size: 0.98rem; font-weight: 900; margin: 2px 0 0; }
-.step-desc { font-size: 0.8rem; color: rgba(255,255,255,0.65); font-weight: 600; line-height: 1.5; margin: 0; }
+.step-title, .audience-title { font: var(--kk-fw-bold) 1.1rem/1.2 var(--kk-head); margin: var(--kk-s1) 0 0; }
+.step-desc, .audience-desc { font-size: var(--kk-fs-sm); color: var(--kk-text-soft); font-weight: var(--kk-fw-normal); line-height: 1.5; margin: 0; }
 
 /* ── Showcase-kaarten (klikbaar) ────────────────────────── */
 .landing-showcase-wrap { position: relative; z-index: 1; width: 100%; max-width: 1040px; text-align: center; }
 .landing-showcase {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 22px;
+  gap: var(--kk-s5);
   width: 100%;
   align-items: start;
 }
 .showcase-card {
-  background: linear-gradient(168deg, rgba(255,255,255,0.09), rgba(255,255,255,0.02)),
-              linear-gradient(165deg, #2c2363, #1f1848);
-  border: 1.5px solid rgba(255,255,255,0.12);
-  border-radius: 18px;
   overflow: hidden;
-  box-shadow: 0 10px 28px rgba(0,0,0,0.4);
   display: flex; flex-direction: column;
   align-items: stretch;
   text-align: left;
   font-family: inherit;
-  color: #fff;
-  cursor: pointer;
   padding: 0;
-  transition: transform 0.2s ease, border-color 0.2s;
 }
-.showcase-card:hover { transform: translateY(-6px); border-color: rgba(255,255,255,0.28); }
-.showcase-card-open { border-color: #ffd23f; box-shadow: 0 10px 28px rgba(0,0,0,0.4), 0 0 24px rgba(255,210,63,0.25); }
+button.showcase-card { cursor: pointer; transition: transform var(--kk-dur) var(--kk-ease), border-color var(--kk-dur), box-shadow var(--kk-dur); }
+button.showcase-card:hover { transform: translateY(-4px); border-color: color-mix(in srgb, var(--kk-accent) 60%, transparent); box-shadow: var(--kk-shadow), 0 0 28px color-mix(in srgb, var(--kk-accent) 28%, transparent); }
+.showcase-card-open { border-color: var(--kk-gold); --kk-accent: var(--kk-gold); }
 .showcase-img { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; }
-.showcase-title { font-size: 1.05rem; font-weight: 900; margin: 12px 16px 2px; }
-.showcase-desc { font-size: 0.82rem; color: rgba(255,255,255,0.65); font-weight: 600; margin: 0 16px 10px; line-height: 1.5; }
-.showcase-toggle {
-  font-size: 0.72rem;
-  font-weight: 800;
-  color: #ffd23f;
-  margin: 0 16px 14px;
-}
+.showcase-title { display: flex; align-items: center; gap: var(--kk-s2); font: var(--kk-fw-bold) 1.15rem/1.2 var(--kk-head); margin: var(--kk-s3) var(--kk-s4) 2px; }
+.showcase-title svg { width: 20px; height: 20px; color: var(--kk-accent); flex: none; }
+.showcase-desc { font-size: var(--kk-fs-sm); color: var(--kk-text-soft); font-weight: var(--kk-fw-normal); margin: 0 var(--kk-s4) 10px; line-height: 1.5; }
+.showcase-toggle { font-size: var(--kk-fs-xs); font-weight: var(--kk-fw-bold); color: var(--kk-gold); margin: 0 var(--kk-s4) 14px; }
 .showcase-detail {
-  font-size: 0.82rem;
-  color: rgba(255,255,255,0.8);
-  font-weight: 600;
+  font-size: var(--kk-fs-sm);
+  color: rgba(255,255,255,0.82);
+  font-weight: var(--kk-fw-normal);
   line-height: 1.6;
-  margin: 0 16px 18px;
+  margin: 0 var(--kk-s4) 18px;
   animation: showcaseDetailIn 0.2s ease-out;
 }
 @keyframes showcaseDetailIn {
   from { opacity: 0; transform: translateY(-4px); }
   to   { opacity: 1; transform: none; }
 }
+.landing-faq { max-width: 780px; margin: 0 auto; grid-template-columns: 1fr; }
+.landing-faq .showcase-card { padding: 4px 0; }
+.landing-faq .showcase-title { margin-top: 18px; }
 
 /* ── Spellen-overzicht ──────────────────────────────────── */
 .landing-games { position: relative; z-index: 1; width: 100%; max-width: 900px; text-align: center; }
-.landing-section-title { font-size: 1.3rem; font-weight: 900; margin: 0 0 16px; }
+.landing-section-title { font: var(--kk-fw-bold) var(--kk-fs-xl)/1.2 var(--kk-head); margin: 0 0 var(--kk-s4); }
 .landing-games-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
-.landing-game-chip {
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 999px;
-  padding: 7px 14px;
-  font-weight: 700;
-  font-size: 0.82rem;
-  color: rgba(255,255,255,0.85);
-}
+.landing-games-grid .kk-chip { font-size: var(--kk-fs-sm); padding: 6px 14px; color: var(--kk-text-soft); }
 
 /* ── Portaalkeuze ───────────────────────────────────────── */
 .portal-choice { position: relative; z-index: 1; width: 100%; max-width: 820px; text-align: center; }
@@ -285,56 +206,33 @@
 .portal-cards {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 24px;
+  gap: var(--kk-s5);
 }
 .portal-card {
   display: flex; flex-direction: column; align-items: center;
-  gap: 8px;
-  padding: 32px 24px;
-  border-radius: 22px;
-  border: 1.5px solid rgba(255,255,255,0.14);
+  gap: var(--kk-s2);
+  padding: var(--kk-s6) var(--kk-s5);
+  border-top: 4px solid var(--kk-accent);
   cursor: pointer;
   font-family: inherit;
-  color: #fff;
-  transition: transform 0.2s cubic-bezier(0.34,1.3,0.64,1), border-color 0.2s, box-shadow 0.2s;
-  position: relative;
-  overflow: hidden;
+  transition: transform var(--kk-dur) var(--kk-ease), border-color var(--kk-dur), box-shadow var(--kk-dur), background var(--kk-dur);
 }
-.portal-card:hover { transform: translateY(-6px) scale(1.02); }
-.portal-student {
-  background: linear-gradient(160deg, rgba(6,214,160,0.16), rgba(255,255,255,0.03)),
-              linear-gradient(165deg, #2c2363, #1f1848);
+.portal-card:hover {
+  transform: translateY(-4px);
+  background: rgba(24, 20, 52, 0.85);
+  border-color: color-mix(in srgb, var(--kk-accent) 60%, transparent);
+  box-shadow: var(--kk-shadow), 0 0 28px color-mix(in srgb, var(--kk-accent) 30%, transparent);
 }
-.portal-student:hover { border-color: #06D6A0; box-shadow: 0 0 30px rgba(6,214,160,0.3); }
-.portal-teacher {
-  background: linear-gradient(160deg, rgba(96,165,250,0.16), rgba(255,255,255,0.03)),
-              linear-gradient(165deg, #2c2363, #1f1848);
-}
-.portal-teacher:hover { border-color: #60a5fa; box-shadow: 0 0 30px rgba(96,165,250,0.3); }
-.portal-icon { font-size: 2.6rem; }
-.portal-name { font-size: 1.15rem; font-weight: 900; }
-.portal-desc { font-size: 0.82rem; color: rgba(255,255,255,0.65); font-weight: 600; line-height: 1.5; }
-.portal-arrow { margin-top: 6px; font-weight: 900; font-size: 0.85rem; color: #ffd23f; }
+.portal-card:focus-visible { outline: none; box-shadow: var(--kk-focus-ring); }
+.portal-student { --kk-accent: var(--kk-pink); }
+.portal-teacher { --kk-accent: var(--kk-cyan); }
+.portal-name { font: var(--kk-fw-bold) 1.35rem/1.2 var(--kk-head); margin-top: var(--kk-s1); }
+.portal-desc { font-size: var(--kk-fs-sm); color: var(--kk-text-soft); font-weight: var(--kk-fw-normal); line-height: 1.5; }
+.portal-arrow { display: inline-flex; align-items: center; gap: 4px; margin-top: var(--kk-s2); font-weight: var(--kk-fw-black); font-size: var(--kk-fs-sm); color: var(--kk-accent); }
+.portal-arrow svg { width: 18px; height: 18px; }
 
 /* ── Doelgroep ──────────────────────────────────────────── */
 .landing-audience { position: relative; z-index: 1; width: 100%; max-width: 980px; text-align: center; }
-.audience-row {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-}
-.audience-card {
-  background: linear-gradient(168deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02)),
-              linear-gradient(165deg, #2c2363, #1f1848);
-  border: 1.5px solid rgba(255,255,255,0.12);
-  border-radius: 18px;
-  padding: 22px 18px;
-  display: flex; flex-direction: column; align-items: center;
-  gap: 6px;
-}
-.audience-emoji { font-size: 2rem; }
-.audience-title { font-size: 0.98rem; font-weight: 900; margin: 2px 0 0; }
-.audience-desc { font-size: 0.8rem; color: rgba(255,255,255,0.65); font-weight: 600; line-height: 1.5; margin: 0; }
 
 /* ── Slot-CTA ───────────────────────────────────────────── */
 .landing-cta {
@@ -342,46 +240,17 @@
   width: 100%;
   max-width: 720px;
   text-align: center;
-  padding: 34px 24px;
-  border-radius: 24px;
-  background:
-    radial-gradient(ellipse 70% 80% at 50% 0%, rgba(255,210,63,0.14) 0%, transparent 70%),
-    linear-gradient(168deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02)),
-    linear-gradient(165deg, #2c2363, #1f1848);
-  border: 1.5px solid rgba(255,210,63,0.3);
-  box-shadow: 0 10px 32px rgba(0,0,0,0.4), 0 0 34px rgba(255,210,63,0.12);
+  padding: var(--kk-s6) var(--kk-s5);
+  border-color: color-mix(in srgb, var(--kk-primary-hi) 40%, transparent);
+  box-shadow: var(--kk-shadow), 0 0 34px var(--kk-primary-glow);
 }
-.landing-cta-title { font-size: 1.4rem; font-weight: 900; margin: 0 0 16px; }
-.landing-cta-btn {
-  padding: 14px 32px;
-  border: none;
-  border-radius: 14px;
-  font-family: inherit;
-  font-size: 1.02rem;
-  font-weight: 900;
-  color: #4a2b00;
-  cursor: pointer;
-  background: linear-gradient(180deg, #ffe27a, #f6b23a 55%, #e08b12);
-  box-shadow: 0 6px 20px rgba(240,170,30,0.45), inset 0 1px 0 rgba(255,255,255,0.6);
-  transition: transform 0.15s, box-shadow 0.2s;
-  position: relative;
-  overflow: hidden;
-}
-.landing-cta-btn::after {
-  content: '';
-  position: absolute; inset: 0;
-  background: linear-gradient(100deg, transparent 30%, rgba(255,255,255,0.6) 50%, transparent 70%);
-  transform: translateX(-120%);
-}
-.landing-cta-btn:hover::after { transform: translateX(120%); transition: transform 0.55s ease; }
-.landing-cta-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 28px rgba(240,170,30,0.6), inset 0 1px 0 rgba(255,255,255,0.6); }
-.landing-cta-btn:active { transform: scale(0.97); }
+.landing-cta-title { font: var(--kk-fw-bold) var(--kk-fs-xl)/1.2 var(--kk-head); margin: 0 0 var(--kk-s4); }
 
 .landing-footer {
   position: relative; z-index: 1;
-  font-size: 0.75rem;
-  color: rgba(255,255,255,0.4);
-  font-weight: 600;
+  font-size: var(--kk-fs-xs);
+  color: var(--kk-text-faint);
+  font-weight: var(--kk-fw-normal);
   margin-top: 8px;
   text-align: center;
 }
@@ -390,10 +259,10 @@
   margin-top: 6px;
   font-size: 0.68rem;
   font-weight: 500;
-  color: rgba(255,255,255,0.28);
+  color: rgba(255,255,255,0.4);
 }
 .landing-credits a { color: inherit; text-decoration: underline; }
-.landing-credits a:hover { color: rgba(255,255,255,0.55); }
+.landing-credits a:hover { color: var(--kk-text-soft); }
 
 @media (max-width: 820px) {
   .landing-showcase { grid-template-columns: 1fr; max-width: 420px; margin: 0 auto; }
@@ -406,8 +275,5 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .landing-star, .landing-title, .landing-logo, .landing-logo-ring,
-  .landing-cta-btn::after {
-    animation: none !important;
-  }
+  .landing-logo { animation: none !important; }
 }

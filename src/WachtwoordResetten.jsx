@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { supabase } from './lib/supabase.js'
 import './login.css'
+import { Knop, Feedback, Icoon } from './ui/index.jsx'
 
 // Landingsplek voor de link uit de reset-e-mail (zie sessie.jsx:
 // wachtwoordVergeten → redirectTo). Supabase-js herkent het herstel-token in
@@ -23,17 +24,6 @@ export default function WachtwoordResetten() {
 
   return (
     <div className="login-scherm">
-      <div className="login-stars" aria-hidden="true">
-        {Array.from({ length: 22 }, (_, i) => (
-          <span key={i} className="login-star" style={{
-            left: `${(i * 43 + 6) % 100}%`,
-            top: `${(i * 61 + 9) % 100}%`,
-            animationDelay: `${(i * 0.29) % 4}s`,
-            animationDuration: `${3 + (i % 4)}s`,
-            '--o': 0.15 + (i % 5) * 0.08,
-          }} />
-        ))}
-      </div>
       <div className="login-kaart">
         <div className="login-logo-ring">
           <img className="login-logo" src="/logo-rond.png" alt="Kenniskist" />
@@ -42,17 +32,17 @@ export default function WachtwoordResetten() {
 
         {succes ? (
           <>
-            <p className="login-subtitel"><span className="login-subtitel-icoon">✅</span>Wachtwoord gewijzigd</p>
-            <a className="login-knop" style={{ textAlign: 'center', textDecoration: 'none' }} href="/leerkrachtenportaal">Naar het portaal →</a>
+            <p className="login-subtitel"><Icoon naam="goed" />Wachtwoord gewijzigd</p>
+            <a className="kk-knop kk-knop--primair kk-knop--breed" style={{ textDecoration: 'none' }} href="/leerkrachtenportaal">Naar het portaal <Icoon naam="verder" /></a>
           </>
         ) : (
           <>
-            <p className="login-subtitel"><span className="login-subtitel-icoon">🔑</span>Nieuw wachtwoord instellen</p>
+            <p className="login-subtitel"><Icoon naam="slot" />Nieuw wachtwoord instellen</p>
             <form onSubmit={submit} className="login-formulier">
               <label className="login-label">
                 Nieuw wachtwoord
                 <input
-                  className="login-input"
+                  className="kk-invoer"
                   type="password"
                   value={nieuwWachtwoord}
                   onChange={(e) => setNieuwWachtwoord(e.target.value)}
@@ -62,10 +52,10 @@ export default function WachtwoordResetten() {
                   autoComplete="new-password"
                 />
               </label>
-              {fout && <p className="login-fout">⚠️ {fout}</p>}
-              <button type="submit" className="login-knop" disabled={bezig}>
-                {bezig ? 'Bezig…' : 'Opslaan →'}
-              </button>
+              {fout && <div className="login-fout"><Feedback soort="fout">{fout}</Feedback></div>}
+              <Knop type="submit" variant="primair" breed disabled={bezig}>
+                {bezig ? 'Bezig…' : 'Opslaan'}
+              </Knop>
             </form>
           </>
         )}

@@ -3,6 +3,7 @@ import { getQuestions } from './questions_rekenen'
 import { COUNTRIES, getCountry, generateBracket, DEFAULT_UNLOCKED } from './countries'
 import OrientationGate from '../OrientationGate'
 import './football.css'
+import { TerugKnop } from '../ui/index.jsx'
 
 // ── Field constants ───────────────────────────────────────────────
 const W = 800, H = 450
@@ -1340,7 +1341,7 @@ export default function FootballGame({ year, onBack, addCuruntie, noQuiz = false
   // Country selection
   if (phase === 'pick_p2_country') return (
     <div className="fb-screen">
-      <button className="back-btn" onClick={() => setPhase('country_select')}>← Terug</button>
+      <TerugKnop onClick={() => setPhase('country_select')} />
       <div className="wk-header">
         <span className="wk-trophy">🎮</span>
         <h1 className="wk-title" style={{ color: '#4FC3F7' }}>Speler 2</h1>
@@ -1360,7 +1361,7 @@ export default function FootballGame({ year, onBack, addCuruntie, noQuiz = false
 
   if (phase === 'country_select') return (
     <div className="fb-screen">
-      <button className="back-btn" onClick={onBack}>← Menu</button>
+      <TerugKnop onClick={onBack} />
       <div className="wk-header">
         <span className="wk-trophy">{twoPlayer ? '🎮' : '🏆'}</span>
         <h1 className="wk-title">{twoPlayer ? '2 Spelers' : '1 tegen 1 voetbal'}</h1>
@@ -1392,7 +1393,7 @@ export default function FootballGame({ year, onBack, addCuruntie, noQuiz = false
     const rnd = bracket.roundNames[bracket.currentRound]
     return (
       <div className="fb-screen">
-        <button className="back-btn" onClick={() => rewardMode ? onMatchDone?.(false, bracket, false) : setPhase('country_select')}>← Terug</button>
+        <TerugKnop onClick={() => rewardMode ? onMatchDone?.(false, bracket, false) : setPhase('country_select')} />
         <div className="wk-preview">
           <div className="wk-round-badge">{rnd}</div>
           <div className="wk-vs-row">
@@ -1446,7 +1447,7 @@ export default function FootballGame({ year, onBack, addCuruntie, noQuiz = false
     const opp = currentOpponent
     return (
       <div className="fb-screen">
-        <button className="back-btn" onClick={() => setPhase('match_preview')}>← Terug</button>
+        <TerugKnop onClick={() => setPhase('match_preview')} />
         <div className="fb-quiz-wrap">
           <div className="fb-quiz-header">
             <span>Los 3 sommen op om te mogen spelen!</span>
@@ -1496,7 +1497,7 @@ export default function FootballGame({ year, onBack, addCuruntie, noQuiz = false
     return (
       <div className="fb-screen" style={{ gap: 0, paddingTop: 56 }}>
         <OrientationGate />
-        <button className="back-btn" style={{ position:'absolute', top:14, left:14, zIndex:50 }} onClick={onBack}>← Menu</button>
+        <TerugKnop onClick={onBack} />
         <div className="fb-hud">
           <div style={{ display:'flex', alignItems:'center', gap:10, background:`${pl.c1}1a`, padding:'7px 16px', borderRadius:14, border:`1.5px solid ${pl.c1}50` }}>
             <span style={{ fontSize:'1.4rem', lineHeight:1 }}>{pl.flag}</span>

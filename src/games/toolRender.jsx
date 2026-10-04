@@ -25,11 +25,12 @@ import BegrijpendLezen from './BegrijpendLezen.jsx'
 import TopoOefenen from './TopoOefenen.jsx'
 import LeesTimer from './LeesTimer.jsx'
 import '../game.css'
+import { TerugKnop } from '../ui/index.jsx'
 
 function NogNietBeschikbaar({ label, onBack }) {
   return (
     <div className="game-screen">
-      <button className="back-btn" onClick={onBack}>← Terug naar weektaak</button>
+      <TerugKnop onClick={onBack} />
       <div className="game-header">
         <span className="game-header-icon">🚧</span>
         <h1 className="game-header-title">{label}</h1>

@@ -12,6 +12,7 @@ import { allUnlockedMap } from './itemsCatalog'
 import { COUNTRIES, DEFAULT_UNLOCKED } from './games/countries'
 import { useSessie } from './lib/sessie.jsx'
 import VrijSpelenBadge from './VrijSpelenBadge.jsx'
+import { Knop, TerugKnop, Paneel, Icoon } from './ui/index.jsx'
 
 const CODES = { pabo: 100000 }
 const BRIEF_CODES = { start: 800 }   // eenmalige briefgeld-codes
@@ -132,24 +133,20 @@ function CodeModal({ onClose, onRedeem, onRedeemBrief, onUnlockAll, onUnlockCoun
   }
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-box" onClick={e => e.stopPropagation()}>
-        <h2 className="modal-title">Code invoeren</h2>
+    <Paneel titel="Code invoeren" onSluiten={onClose} knoppen={<>
+      <Knop variant="secundair" onClick={onClose}>Sluiten</Knop>
+      <Knop variant="primair" onClick={submit}>Activeren</Knop>
+    </>}>
         <input
-          className="modal-input"
+          className="kk-invoer"
           placeholder="Typ hier je code..."
           value={code}
           onChange={e => setCode(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && submit()}
           autoFocus
         />
-        {msg && <p className={`modal-msg ${ok ? 'modal-msg-ok' : 'modal-msg-err'}`}>{msg}</p>}
-        <div className="modal-actions">
-          <button className="modal-btn modal-btn-confirm" onClick={submit}>Activeren</button>
-          <button className="modal-btn modal-btn-cancel"  onClick={onClose}>Sluiten</button>
-        </div>
-      </div>
-    </div>
+        {msg && <p style={{ marginTop: 12, fontWeight: 800, color: ok ? 'var(--kk-success)' : 'var(--kk-error)' }}>{msg}</p>}
+    </Paneel>
   )
 }
 
@@ -380,14 +377,7 @@ export default function App({ gast = false }) {
         title="GLITCH Escaperoom"
         style={{ width: '100%', height: '100%', border: 'none' }}
       />
-      <button
-        onClick={goMenu}
-        style={{ position: 'fixed', left: 12, top: 12, zIndex: 100, padding: '8px 14px',
-          borderRadius: 10, border: '1px solid #1d2a38', background: '#0f1620',
-          color: '#cfe3ef', fontWeight: 700, cursor: 'pointer' }}
-      >
-        ← Terug
-      </button>
+      <TerugKnop onClick={goMenu} />
       <VrijSpelenBadge />
     </div>
   )
@@ -409,30 +399,18 @@ export default function App({ gast = false }) {
 
   return (
     <div className={isLeerling ? 'screen screen-breed' : 'screen'}>
-      <button className="uitloggen-btn" onClick={uitloggen}>{gast ? 'Stoppen met oefenen' : 'Uitloggen'}</button>
-      {/* Spectaculaire achtergrond-lagen */}
-      <div className="bg-orbs" aria-hidden="true">
-        <span className="orb orb-1" />
-        <span className="orb orb-2" />
-        <span className="orb orb-3" />
-        <span className="orb orb-4" />
-      </div>
-      <div className="floaties" aria-hidden="true">
-        {['🚀','⭐','🎮','✏️','🔢','📚','🏆','🎨','🧮','🌟','🎈','🪁'].map((e, i) => (
-          <span key={i} className={`floaty floaty-${i + 1}`}>{e}</span>
-        ))}
-      </div>
+      <Knop variant="secundair" maat="sm" icoon="uit" className="hoek-rechtsboven" onClick={uitloggen}>{gast ? 'Stoppen met oefenen' : 'Uitloggen'}</Knop>
 
       <div className="hero">
         <div className="logo-wrap">
           <img className="logo-img" src="/logo-rond.png" alt="Kenniskist" />
         </div>
-        <p className="hero-sub">✨ Leren terwijl je speelt ✨</p>
+        <p className="hero-sub">Leren terwijl je speelt</p>
       </div>
 
       {profiel?.rol === 'leerling' && openLescheck && (
         <button className="lescheck-btn" onClick={() => { setLescheckMap(openLescheck.id); setScreen('lescheck') }}>
-          <span className="lescheck-btn-titel">📝 {openLescheck.titel}</span>
+          <span className="lescheck-btn-titel">{openLescheck.titel}</span>
           <span className="lescheck-btn-sub">Kies je les en maak je som →</span>
         </button>
       )}
@@ -440,11 +418,11 @@ export default function App({ gast = false }) {
       <div className={isLeerling ? 'menu-rij' : 'menu-rij menu-rij-los'}>
       {isLeerling && (
         <button className="zijkaart zijkaart-speciaal" onClick={() => setScreen('speciaal')}>
-          <span className="zijkaart-emoji">⭐</span>
+          <span className="zijkaart-emoji"><Icoon naam="ster" /></span>
           <span className="zijkaart-titel">Speciaal voor mij</span>
           <span className="zijkaart-desc">Taken en doelen die je juf of meester alleen voor jou klaarzet</span>
-          <span className="zijkaart-chips"><span>✏️ Taken</span><span>🎯 Doelen</span></span>
-          <span className="zijkaart-pijl">→</span>
+          <span className="zijkaart-chips"><span className="kk-chip">Taken</span><span className="kk-chip">Doelen</span></span>
+          <span className="zijkaart-pijl"><Icoon naam="verder" /></span>
         </button>
       )}
 
@@ -452,47 +430,47 @@ export default function App({ gast = false }) {
         <button className="menu-btn btn-game" onClick={() => setScreen('game')}>
           <div className="btn-scene"><img className="scene-img" src="/scenes/game.png" alt="" /></div>
           <div className="btn-text">
-            <span className="btn-label">🎮 Speel Game</span>
-            <span className="btn-desc">Oefen rekenen, taal, spelling & meer — verdien 🪙 en 💵</span>
-            <span className="btn-examples">⚽ 1 tegen 1 voetbal · 🥅 Supervoetbal · 🚀 Jetpack · 🌉 Brug Bouwen · 🏰 Tower Defense</span>
+            <span className="btn-label"><Icoon naam="spel" />Speel Game</span>
+            <span className="btn-desc">Oefen rekenen, taal, spelling en meer — verdien munten en briefgeld</span>
+            <span className="btn-examples">1 tegen 1 voetbal · Supervoetbal · Jetpack · Brug Bouwen · Tower Defense</span>
           </div>
-          <span className="btn-arrow">→</span>
+          <span className="btn-arrow"><Icoon naam="verder" /></span>
         </button>
 
         <button className="menu-btn btn-wardrobe" onClick={() => setScreen('wardrobe')}>
           <div className="btn-scene"><img className="scene-img" src="/scenes/kledingkast.png" alt="" /></div>
           <div className="btn-text">
-            <span className="btn-label">👗 Kledingkast</span>
+            <span className="btn-label"><Icoon naam="shirt" />Kledingkast</span>
             <span className="btn-desc">Pas je poppetje aan in 3D</span>
-            <span className="btn-examples">🎯 Paintball · 🎈 Ballonnengevecht · ⚽ Voetbal</span>
+            <span className="btn-examples">Paintball · Ballonnengevecht · Voetbal</span>
           </div>
-          <span className="btn-arrow">→</span>
+          <span className="btn-arrow"><Icoon naam="verder" /></span>
         </button>
 
         <button className="menu-btn btn-shop" onClick={() => setScreen('shop')}>
           <div className="btn-scene"><img className="scene-img" src="/scenes/winkel.png" alt="" /></div>
           <div className="btn-text">
-            <span className="btn-label">🛒 Winkel</span>
-            <span className="btn-desc">Koop nieuwe kleding met je 🪙 munten en 💵 briefgeld</span>
-            <span className="btn-examples">👕 Shirts · 👟 Schoenen · 🕶️ Accessoires</span>
+            <span className="btn-label"><Icoon naam="tas" />Winkel</span>
+            <span className="btn-desc">Koop nieuwe kleding met je munten en briefgeld</span>
+            <span className="btn-examples">Shirts · Schoenen · Accessoires</span>
           </div>
-          <span className="btn-arrow">→</span>
+          <span className="btn-arrow"><Icoon naam="verder" /></span>
         </button>
       </div>
 
       {isLeerling && (
         <button className="zijkaart zijkaart-weektaak" onClick={() => setScreen('weektaak')}>
-          <span className="zijkaart-emoji">📋</span>
+          <span className="zijkaart-emoji"><Icoon naam="klembord" /></span>
           <span className="zijkaart-titel">Mijn weektaak</span>
           <span className="zijkaart-desc">De opdrachten van deze week voor de hele klas</span>
-          <span className="zijkaart-pijl">→</span>
+          <span className="zijkaart-pijl"><Icoon naam="verder" /></span>
         </button>
       )}
       </div>
 
-      <button className="code-btn" onClick={() => setShowCode(true)}>
-        🎟️ Code invoeren
-      </button>
+      <Knop variant="secundair" maat="sm" icoon="ticket" className="hoek-linksonder" onClick={() => setShowCode(true)}>
+        Code invoeren
+      </Knop>
 
       {showCode && (
         <CodeModal

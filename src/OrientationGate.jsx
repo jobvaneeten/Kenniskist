@@ -29,7 +29,7 @@ export default function OrientationGate({ want = 'landscape' }) {
       <div className="orient-title">
         {want === 'landscape' ? 'Draai je telefoon liggend' : 'Draai je telefoon rechtop'}
       </div>
-      <div className="orient-sub">om dit spel te spelen 🎮</div>
+      <div className="orient-sub">om dit spel te spelen</div>
     </div>
   )
 }

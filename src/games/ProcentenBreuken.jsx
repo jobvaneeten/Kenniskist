@@ -3,6 +3,7 @@ import { PROCENT_SETS, shuffle } from './procentenData'
 import SpelBeloning, { BRIEFGELD } from './SpelBeloning'
 import OpdrachtKlaarScherm from './OpdrachtKlaarScherm.jsx'
 import './procenten.css'
+import { TerugKnop } from '../ui/index.jsx'
 
 const PER_ROUND    = 4   // aantal vakjes (percentages) per ronde
 const PER_BELONING = 5   // na elke 5 opgeloste rondes een spelletje
@@ -115,7 +116,7 @@ export default function ProcentenBreuken({ onBack, addBriefgeld, aantal }) {
       )}
 
       <div className="pbk-screen" style={{ display: phase === 'play' ? 'flex' : 'none' }}>
-        <button className="back-btn" onClick={onBack}>← Menu</button>
+        <TerugKnop onClick={onBack} />
 
         <div className="pbk-head">
           <h1>💯 Procenten · Breuken · Kommagetallen</h1>

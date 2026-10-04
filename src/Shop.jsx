@@ -4,6 +4,7 @@ import { getCatalog, swatchStyle, swatchEmoji, swatchBadge } from './itemsCatalo
 import CrateArtwork from './CrateArtwork'
 import { playTierSound, isMuted, setMuted } from './lootboxSound'
 import './shop.css'
+import { Knop, TerugKnop, Icoon } from './ui/index.jsx'
 
 // Generic visual for any item (colour / pattern / print / model)
 function ItemSwatch({ item, className = '', style, title }) {
@@ -251,33 +252,17 @@ export default function Shop({ briefgeld, addBriefgeld, unlockedColors, onUnlock
 
   return (
     <div className="shop-screen">
-      <div className="shop-nebula" />
-      <div className="shop-starfield">
-        {Array.from({ length: 26 }, (_, i) => (
-          <span key={i} className="shop-star" style={{
-            left: `${(i * 37 + 5) % 100}%`,
-            top: `${(i * 53 + 7) % 100}%`,
-            width: `${2 + (i % 3)}px`,
-            height: `${2 + (i % 3)}px`,
-            animationDelay: `${(i * 0.37) % 4}s`,
-            animationDuration: `${3 + (i % 4)}s`,
-            '--o': 0.15 + (i % 5) * 0.08,
-          }} />
-        ))}
-        <span className="shop-shootingstar" style={{ left: '75%', top: '12%', animationDelay: '0s' }} />
-        <span className="shop-shootingstar" style={{ left: '30%', top: '55%', animationDelay: '3.2s' }} />
-      </div>
-      <button className="back-btn" onClick={onBack}>← Terug</button>
-      <button
-        className="mute-btn"
+      <TerugKnop onClick={onBack} />
+      <Knop
+        variant="secundair" alleenIcoon icoon={muted ? 'stil' : 'geluid'}
+        className="hoek-rechtsonder"
         onClick={() => { const next = !muted; setMuted(next); setMutedState(next) }}
-        title={muted ? 'Geluid aan' : 'Geluid uit'}
-      >
-        {muted ? '🔇' : '🔊'}
-      </button>
-      <div className="shop-title-wrap">
-        <span className="shop-title-sparkle">✦</span>
-        <h2 className="shop-title">Winkel</h2>
+        title={muted ? 'Geluid aan' : 'Geluid uit'} aria-label={muted ? 'Geluid aan' : 'Geluid uit'}
+      />
+      <div className="game-header" style={{ '--kk-accent': 'var(--kk-gold)', marginBottom: 0 }}>
+        <span className="game-header-icon"><Icoon naam="tas" /></span>
+        <h1 className="game-header-title">Winkel</h1>
+        <p className="game-header-sub">Open een lootbox met je briefgeld</p>
       </div>
 
       <div className="shop-grid">
@@ -289,7 +274,8 @@ export default function Shop({ briefgeld, addBriefgeld, unlockedColors, onUnlock
           const isSelected = selectedKey === item.key
 
           return (
-            <div
+            <button
+              type="button"
               key={item.key}
               className={`shopcard ${isSelected ? 'shopcard-selected' : ''}`}
               style={{ '--accent': accent }}
@@ -300,7 +286,7 @@ export default function Shop({ briefgeld, addBriefgeld, unlockedColors, onUnlock
               <CrateArtwork itemKey={item.key} iconKey={icon} accent={accent} size={150} />
               <div className="shopcard-name">{item.label}</div>
               <div className="shopcard-meta">{unlocked}/{total} · 💵 {fmt(LOOTBOX_COST)}</div>
-            </div>
+            </button>
           )
         })}
       </div>
@@ -320,7 +306,7 @@ export default function Shop({ briefgeld, addBriefgeld, unlockedColors, onUnlock
           <>
             <div className="shop-detail-backdrop" onClick={() => setSelectedKey(null)} />
             <div className="shop-detail-panel" style={{ '--accent': accent }}>
-              <button className="shop-detail-close" onClick={() => setSelectedKey(null)}>✕</button>
+              <Knop variant="secundair" maat="sm" alleenIcoon icoon="sluiten" className="shop-detail-close" aria-label="Sluiten" onClick={() => setSelectedKey(null)} />
 
               <div className="shop-detail-left">
                 <div className="shop-detail-rays" />
@@ -370,13 +356,14 @@ export default function Shop({ briefgeld, addBriefgeld, unlockedColors, onUnlock
                   })}
                 </div>
 
-                <button
-                  className={`shop-detail-open-btn ${allDone ? 'lb-btn-done' : !canAfford ? 'lb-btn-broke' : ''}`}
+                <Knop
+                  variant="beloning" maat="lg" breed
+                  icoon={allDone ? 'goed' : undefined}
                   onClick={() => openLootbox(item)}
                   disabled={allDone || !canAfford}
                 >
-                  {allDone ? '✓ Compleet!' : !canAfford ? 'Te weinig 💵' : `💵 ${fmt(LOOTBOX_COST)} · Openen`}
-                </button>
+                  {allDone ? 'Compleet!' : !canAfford ? 'Te weinig 💵' : `💵 ${fmt(LOOTBOX_COST)} · Openen`}
+                </Knop>
               </div>
             </div>
           </>
@@ -551,12 +538,9 @@ export default function Shop({ briefgeld, addBriefgeld, unlockedColors, onUnlock
                   </div>
 
                   {showEnd && (
-                    <button
-                      className={`lb-continue-btn ${isUltra ? 'lb-continue-ultra' : ''}`}
-                      onClick={close}
-                    >
-                      {isUltra ? '🎆 FANTASTISCH! VERDER 🎆' : '✦ VERDER ✦'}
-                    </button>
+                    <Knop variant="beloning" maat="lg" icoonRechts="verder" className="lb-continue-btn" onClick={close}>
+                      {isUltra ? 'Fantastisch! Verder' : 'Verder'}
+                    </Knop>
                   )}
                 </div>
               )}

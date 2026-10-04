@@ -1,3 +1,5 @@
+import { Icoon } from './ui/index.jsx'
+
 // Klein merkteken rechtsboven zodra er vrij gespeeld wordt: een spel dat niet
 // als beloning na een oefening komt. Zo zie je van een afstandje of een kind
 // aan het oefenen is of gewoon aan het spelen.
@@ -8,7 +10,7 @@
 export default function VrijSpelenBadge() {
   return (
     <span className="vrij-spelen-badge" title="Vrij spelen (geen oefening)" aria-label="Vrij spelen">
-      🎮
+      <Icoon naam="spel" />
     </span>
   )
 }

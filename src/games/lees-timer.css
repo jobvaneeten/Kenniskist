@@ -92,5 +92,4 @@
   gap: 14px;
   margin-top: 20px;
 }
-/* De terugknop staat hier in de flow, niet linksboven vastgeprikt. */
-.lt-knoppen .lt-terug { position: static; }
+

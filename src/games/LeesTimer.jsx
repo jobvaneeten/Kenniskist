@@ -4,6 +4,7 @@ import {
   doelMinuten, leesStand, schrijfStand, wisStand, verstreken, haalServerStand, bewaarServerStand, besteStand,
 } from '../lib/leestimerOpslag.js'
 import './lees-timer.css'
+import { TerugKnop } from '../ui/index.jsx'
 
 // Stil lezen als weektaak-opdracht: geen vragen, geen scherm om naar te
 // kijken — alleen een timer die loopt terwijl het kind in zijn boek leest.
@@ -199,7 +200,7 @@ export default function LeesTimer({ onBack, addBriefgeld, aantal, config, opdrac
               Nog een leesbeurt
             </button>
           )}
-          <button className="back-btn lt-terug" onClick={onBack}>← Terug naar weektaak</button>
+          <TerugKnop vast={false} onClick={onBack} />
         </div>
       </div>
     )
@@ -223,7 +224,7 @@ export default function LeesTimer({ onBack, addBriefgeld, aantal, config, opdrac
 
   return (
     <div className="game-screen game-screen-center">
-      <button className="back-btn" onClick={onBack}>← Terug naar weektaak</button>
+      <TerugKnop onClick={onBack} />
       <div className="game-header">
         <span className="game-header-icon">{fase === 'pauze' ? '⏸' : '📖'}</span>
         <h1 className="game-header-title">
@@ -250,7 +251,7 @@ export default function LeesTimer({ onBack, addBriefgeld, aantal, config, opdrac
       </button>
       {fase === 'pauze' && (
         <div className="lt-knoppen">
-          <button className="back-btn lt-terug" onClick={onBack}>← Terug naar weektaak</button>
+          <TerugKnop vast={false} onClick={onBack} />
         </div>
       )}
     </div>

@@ -1,9 +1,4 @@
-/* Kenniskist — donker thema: gedeelde variabelen */
-:root {
-  --kk-head: 'Baloo 2', 'Nunito', system-ui, sans-serif;   /* speels display-font voor koppen */
-  --kk-text-soft:  rgba(255,255,255,0.72);   /* leesbare bijtekst (was ~0.4) */
-  --kk-text-faint: rgba(255,255,255,0.55);   /* subtiele labels */
-}
+/* Kenniskist — basis. Alle kleuren/maten staan als tokens in theme.css. */
 
 *, *::before, *::after { box-sizing: border-box; }
 
@@ -11,9 +6,14 @@ html, body {
   margin: 0;
   overflow-x: hidden;
   max-width: 100vw;
-  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-family: var(--kk-body);
+  color: var(--kk-text);
+  background: var(--kk-bg);
   -webkit-font-smoothing: antialiased;
 }
+
+/* Overal zichtbaar waar je met het toetsenbord bent. */
+:focus-visible { outline: 2px solid var(--kk-cyan); outline-offset: 2px; }
 
 #root {
   min-height: 100svh;

@@ -5,6 +5,7 @@ import { emojiUrl } from '../itemsCatalog'
 import OrientationGate from '../OrientationGate'
 import './football.css'
 import './headsoccer.css'
+import { TerugKnop } from '../ui/index.jsx'
 
 // ── Arena constants (single screen) ───────────────────────────────
 const W = 1100, H = 620     // hoger veld → zo blijven hoge super-sprongen (skyrockets, moonshot, ...) in beeld
@@ -2819,7 +2820,7 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
   if (phase === 'select' && classMode) {
     return (
       <div className="game-screen game-screen-center hs-select">
-        <button className="back-btn" onClick={() => setClassMode(false)}>← Landen</button>
+        <TerugKnop onClick={() => setClassMode(false)} />
         <div className="hs-select-head">
           <span className="hs-select-logo">👥⚽</span>
           <h1 className="hs-select-title">GROEP 7</h1>
@@ -2850,7 +2851,7 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
     const total = COUNTRIES.length, got = unlocked.length
     return (
       <div className="game-screen game-screen-center hs-select">
-        <button className="back-btn" onClick={onBack}>← Menu</button>
+        <TerugKnop onClick={onBack} />
         <div className="hs-select-head">
           <span className="hs-select-logo">🥅⚽</span>
           <h1 className="hs-select-title">SUPERVOETBAL</h1>
@@ -2891,7 +2892,7 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
     const m = getMove(playerKey)
     return (
       <div className="game-screen game-screen-center">
-        <button className="back-btn" onClick={() => setPhase('select')}>← Terug</button>
+        <TerugKnop onClick={() => setPhase('select')} />
         <div className="wk-header">
           <span className="wk-trophy"><FlagIcon emoji={playerCountry.flag} /></span>
           <h1 className="wk-title">{playerCountry.name}</h1>
@@ -2931,7 +2932,7 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
   if (phase === 'wk_level') {
     return (
       <div className="game-screen game-screen-center">
-        <button className="back-btn" onClick={() => setPhase('mode')}>← Terug</button>
+        <TerugKnop onClick={() => setPhase('mode')} />
         <div className="wk-header">
           <span className="wk-trophy">🏆</span>
           <h1 className="wk-title">Kies je niveau</h1>
@@ -2962,7 +2963,7 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
   if (phase === 'wk_bracket') {
     return (
       <div className="game-screen game-screen-center">
-        <button className="back-btn" onClick={() => { setBracket(null); setPhase(bracket.isClass ? 'mode' : 'wk_level') }}>← Terug</button>
+        <TerugKnop onClick={() => { setBracket(null); setPhase(bracket.isClass ? 'mode' : 'wk_level') }} />
         <div className="wk-header">
           <span className="wk-trophy">🏆</span>
           <h1 className="wk-title">{bracket.isClass ? 'Groep 7-toernooi' : 'WK Toernooi'}</h1>
@@ -3065,7 +3066,7 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
   // phase === 'match'
   return (
     <div className="hs-match-root">
-      <button className="back-btn" onClick={onBack}>← Menu</button>
+      <TerugKnop onClick={onBack} />
       <div className="hs-hud">
         <div className="hs-hud-team">
           <span><FlagIcon emoji={playerCountry.flag} /></span>

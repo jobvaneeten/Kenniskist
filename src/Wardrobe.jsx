@@ -13,6 +13,7 @@ import { applyItemToMesh, loadClothingDonor, usesDonor, loadHeadItem } from './a
 import { zetResolutie } from './skins'
 import { RARITIES, CRATE_ACCENTS } from './data'
 import './wardrobe.css'
+import { Knop, TerugKnop } from './ui/index.jsx'
 
 // Category tabs — same accent colours as the shop's lootboxes. Icons are
 // real Nano Banana Pro illustrations (public/icons/).
@@ -620,20 +621,7 @@ export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlay
 
   return (
     <div className="wardrobe-screen">
-      <div className="wd-starfield">
-        {Array.from({ length: 20 }, (_, i) => (
-          <span key={i} className="wd-star" style={{
-            left: `${(i * 41 + 6) % 100}%`,
-            top: `${(i * 59 + 9) % 100}%`,
-            width: `${2 + (i % 3)}px`,
-            height: `${2 + (i % 3)}px`,
-            animationDelay: `${(i * 0.33) % 4}s`,
-            animationDuration: `${3 + (i % 4)}s`,
-            '--o': 0.15 + (i % 5) * 0.08,
-          }} />
-        ))}
-      </div>
-      <button className="back-btn" onClick={onBack}>← Menu</button>
+      <TerugKnop onClick={onBack} />
 
       {/* ── Left: clothing ── */}
       <aside className="clothing-panel">
@@ -643,9 +631,9 @@ export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlay
         <h2 className="panel-title">Kledingkast</h2>
         <p className="panel-sub">Klik om aan te trekken</p>
 
-        <button className="surprise-btn" onClick={surpriseMe}>
-          <span className="surprise-dice">🎲</span> Verras me!
-        </button>
+        <Knop variant="beloning" icoon="ster" className="surprise-btn" onClick={surpriseMe}>
+          Verras me!
+        </Knop>
 
         <div className="category-tabs">
           {TABS.map(tab => {
@@ -713,7 +701,7 @@ export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlay
           )}
 
           {!rawActiveItems.length ? (
-            <p className="clothing-empty">Nog niets ontgrendeld — win {activeTabMeta.label.toLowerCase()} in de 🛒 Winkel!</p>
+            <p className="clothing-empty">Nog niets ontgrendeld — win {activeTabMeta.label.toLowerCase()} in de Winkel!</p>
           ) : (
             <div className="color-swatches">
               {filteredActiveItems.map(c => {
@@ -744,23 +732,15 @@ export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlay
         {!loading && (
           showGames ? (
             <div className="wd-game-menu">
-              <button className="play3d-btn play-rocket-btn" onClick={onPlayRocket}>
-                ⚽ Voetbal
-              </button>
-              <button className="play3d-btn play-paintball-btn" onClick={onPlayPaintball}>
-                🎯 Paintball
-              </button>
-              <button className="play3d-btn play-botsen-btn" onClick={onPlayBotsen}>
-                🎈 Ballonnengevecht
-              </button>
-              <button className="play3d-btn wd-game-close" onClick={() => setShowGames(false)}>
-                ✕ Sluiten
-              </button>
+              <Knop variant="secundair" maat="lg" icoonRechts="verder" onClick={onPlayRocket}>Voetbal</Knop>
+              <Knop variant="secundair" maat="lg" icoonRechts="verder" onClick={onPlayPaintball}>Paintball</Knop>
+              <Knop variant="secundair" maat="lg" icoonRechts="verder" onClick={onPlayBotsen}>Ballonnengevecht</Knop>
+              <Knop variant="subtiel" icoon="sluiten" onClick={() => setShowGames(false)}>Sluiten</Knop>
             </div>
           ) : (
-            <button className="play3d-btn" onClick={() => setShowGames(true)}>
-              🎮 Speel een spel!
-            </button>
+            <Knop variant="beloning" maat="lg" icoon="spel" className="wd-speel" onClick={() => setShowGames(true)}>
+              Speel een spel
+            </Knop>
           )
         )}
       </div>

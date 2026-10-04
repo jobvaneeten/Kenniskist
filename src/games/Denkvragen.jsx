@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { BLOKKEN, LESSEN_PER_BLOK, denkvraag, heeftBlok, isHerhalingsles } from './denkvragenData.js'
 import '../game.css'
 import './denkvragen.css'
+import { TerugKnop } from '../ui/index.jsx'
 
 // Denkvragen: blok kiezen, les kiezen, vraag lezen. Verder niets — het kind
 // schrijft zijn antwoord op papier en bespreekt het met de leerkracht, dus er
@@ -19,7 +20,7 @@ export default function Denkvragen({ groep, onBack }) {
     const blokLabel = BLOKKEN.find(b => b.nr === blok)?.label ?? `Blok ${blok}`
     return (
       <div className="game-screen">
-        <button className="back-btn" onClick={() => setBlok(null)}>← Blokken</button>
+        <TerugKnop onClick={() => setBlok(null)} />
         <div className="game-header">
           <span className="game-header-icon">💭</span>
           <h1 className="game-header-title">{blokLabel}</h1>
@@ -48,7 +49,7 @@ export default function Denkvragen({ groep, onBack }) {
 
   return (
     <div className="game-screen">
-      <button className="back-btn" onClick={onBack}>← Rekenen</button>
+      <TerugKnop onClick={onBack} />
       <div className="game-header">
         <span className="game-header-icon">💭</span>
         <h1 className="game-header-title">Denkvragen — Groep {groep}</h1>
@@ -80,7 +81,7 @@ function VraagScherm({ vraag, blok, onBack }) {
 
   return (
     <div className="game-screen">
-      <button className="back-btn" onClick={onBack}>← Lessen</button>
+      <TerugKnop onClick={onBack} />
       <div className="dv-kaart">
         <p className="dv-kop">{blokLabel} · les {vraag.les}</p>
         {vraag.doel && (

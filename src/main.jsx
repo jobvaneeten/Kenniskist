@@ -1,5 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import './theme.css'
 import './index.css'
 import Root from './Root.jsx'
 import { hydrateer } from './lib/voortgangSync.js'

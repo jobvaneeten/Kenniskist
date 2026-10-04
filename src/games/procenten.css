@@ -7,12 +7,6 @@
   user-select: none; -webkit-user-select: none; touch-action: none;
 }
 
-.pbk-screen .back-btn {
-  position: absolute; top: 12px; left: 12px; z-index: 60;
-  background: rgba(0,0,0,.5); color: #fff; border: 1px solid rgba(255,255,255,.2);
-  border-radius: 9px; padding: 7px 14px; cursor: pointer; font-size: 14px;
-}
-
 .pbk-head { text-align: center; margin: 34px 0 10px; max-width: 640px; }
 .pbk-head h1 { margin: 0; font-family: var(--kk-head, 'Nunito', sans-serif); font-weight: 800; font-size: clamp(19px, 4.6vw, 28px); }
 .pbk-head p { margin: 6px 0 0; opacity: .8; font-size: clamp(12px, 3vw, 15px); }

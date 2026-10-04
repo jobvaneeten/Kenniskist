@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
 import SpelBeloning from './SpelBeloning'
 import './dictee-thema.css'
+import { TerugKnop } from '../ui/index.jsx'
 
 // cats: alleen gezet vanuit een weektaak-opdracht voor dictee-categorie (zie
 // toolRender.jsx) — welke spellingcategorieën de leerkracht heeft aangevinkt.
@@ -42,7 +43,7 @@ export default function DicteeThema({ onBack, addCuruntie, addBriefgeld, thema =
   return (
     <>
       <div className="game-screen dictee-screen">
-        <button className="back-btn" onClick={onBack}>← Terug</button>
+        <TerugKnop onClick={onBack} />
         <iframe
           ref={frameRef}
           className="dictee-frame"

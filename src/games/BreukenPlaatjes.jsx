@@ -3,6 +3,7 @@ import SpelBeloning from './SpelBeloning'
 import { useGebruikOpdracht } from './gebruikOpdracht.js'
 import OpdrachtKlaarScherm from './OpdrachtKlaarScherm.jsx'
 import './breuken-plaatjes.css'
+import { TerugKnop } from '../ui/index.jsx'
 
 const PER_BELONING = 5
 const BELONING     = 50
@@ -101,7 +102,7 @@ export default function BreukenPlaatjes({ onBack, addBriefgeld, addCuruntie, aan
 
   return (
     <div className="bp-screen">
-      <button className="back-btn" onClick={onBack}>← Menu</button>
+      <TerugKnop onClick={onBack} />
       <div className="bp-head">
         <span className="bp-icon">🍕</span>
         <h1 className="bp-title">Breuken &amp; plaatjes</h1>

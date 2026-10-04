@@ -6,6 +6,7 @@ import { resterendeMinuten } from './lib/leestimerOpslag.js'
 import { isLescheck, lesLabel } from './lib/lescheck.js'
 import { groepeer, korteDatum } from './lib/weektaakMapjes.js'
 import RenderTool from './games/toolRender.jsx'
+import { Knop, TerugKnop, Icoon } from './ui/index.jsx'
 import './game.css'
 
 // Halverwege gestopt met lezen: dan telt niet "0 / 1 gemaakt" maar hoeveel
@@ -27,13 +28,14 @@ function leesRest(o) {
 // of doelen (tabblad bovenin) i.p.v. de weektaken.
 // Doelen staan per vak: de leerling kiest eerst het vak en ziet dan de
 // doelen daarvan. Het vak van een doel is dat van zijn (eerste) oefening.
-const VAK_EMOJI = { taal: '📖', spelling: '✏️', rekenen: '🔢', begrijpend: '📚', lezen: '📕', topo: '🗺️' }
+const VAK_ICOON = { taal: 'boek', spelling: 'potlood', rekenen: 'rekenen', begrijpend: 'lezen', lezen: 'boek', topo: 'kaart' }
+const VAK_KLEUR = { taal: 'var(--kk-vak-taal)', spelling: 'var(--kk-vak-spelling)', rekenen: 'var(--kk-vak-rekenen)', begrijpend: 'var(--kk-vak-lezen)', lezen: 'var(--kk-vak-lezen)', topo: 'var(--kk-vak-topo)' }
 const vakVan = (m) => TOOL_BY_ID[m.opdrachten[0]?.toolId]?.vak ?? 'overig'
 const vakNaam = (key) => VAKKEN.find(v => v.key === key)?.label ?? 'Overig'
 
 const PERSOONLIJK = {
-  taak: { emoji: '✏️', meervoud: 'Taken', leeg: 'Je hebt nu geen taken.' },
-  doel: { emoji: '🎯', meervoud: 'Doelen', leeg: 'Je hebt nu geen doelen.' },
+  taak: { icoon: 'potlood', meervoud: 'Taken', leeg: 'Je hebt nu geen taken.' },
+  doel: { icoon: 'doel',    meervoud: 'Doelen', leeg: 'Je hebt nu geen doelen.' },
 }
 
 export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId = null, persoonlijk = false }) {
@@ -101,11 +103,9 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
     const direct = openMapId === map.id
     return (
       <div className="game-screen">
-        <button className="back-btn" onClick={() => (direct ? onBack() : setOpenMap(null))}>
-          {direct ? '← Menu' : persoonlijk ? `← ${PERSOONLIJK[tab].meervoud}` : '← Weektaken'}
-        </button>
-        <div className="game-header">
-          <span className="game-header-icon">{persoonlijk ? PERSOONLIJK[tab].emoji : '📂'}</span>
+        <TerugKnop onClick={() => (direct ? onBack() : setOpenMap(null))} />
+        <div className="game-header" style={{ '--kk-accent': 'var(--kk-cyan)' }}>
+          <span className="game-header-icon"><Icoon naam={persoonlijk ? PERSOONLIJK[tab].icoon : 'klembord'} /></span>
           <h1 className="game-header-title">{map.titel}</h1>
           <p className="game-header-sub">
             {af} van de {map.opdrachten.length} opdracht{map.opdrachten.length === 1 ? '' : 'en'} af
@@ -115,9 +115,11 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
 
         <div className="mode-grid">
           {map.opdrachten.map(o => (
-            <button key={o.opdrachtId} className="mode-card" onClick={() => start(o)}>
+            <button key={o.opdrachtId} className="mode-card" onClick={() => start(o)}
+              style={{ '--kk-accent': o.klaar ? 'var(--kk-success)' : VAK_KLEUR[TOOL_BY_ID[o.toolId]?.vak] }}>
+              <span className="mode-icoon"><Icoon naam={o.klaar ? 'goed' : VAK_ICOON[TOOL_BY_ID[o.toolId]?.vak] ?? 'doel'} /></span>
               <span className="mode-name">
-                {isLescheck(o) ? lesLabel(o) : toolLabel(o.toolId)}{o.klaar ? ' ✅' : ''}
+                {isLescheck(o) ? lesLabel(o) : toolLabel(o.toolId)}
               </span>
               <span className="mode-desc">
                 {isLescheck(o)
@@ -131,7 +133,7 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
               {/* Opnieuw gezet: door de juf of meester, of automatisch omdat er
                   minder dan de helft goed was. De teller staat dan weer op 0. */}
               {o.herkansingen > 0 && !o.klaar && (
-                <span className="wt-opnieuw">↺ Opnieuw maken · poging {o.herkansingen + 1}</span>
+                <span className="wt-opnieuw">Opnieuw maken · poging {o.herkansingen + 1}</span>
               )}
             </button>
           ))}
@@ -142,23 +144,23 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
 
   return (
     <div className="game-screen">
-      <button className="back-btn" onClick={onBack}>← Menu</button>
+      <TerugKnop onClick={onBack} />
       {persoonlijk ? (
-        <div className="game-header">
-          <span className="game-header-icon">⭐</span>
+        <div className="game-header" style={{ '--kk-accent': 'var(--kk-pink)' }}>
+          <span className="game-header-icon"><Icoon naam="ster" /></span>
           <h1 className="game-header-title">Speciaal voor mij</h1>
           <p className="game-header-sub">Door je juf of meester alleen voor jou klaargezet</p>
           <div className="svm-tabs">
             {Object.entries(PERSOONLIJK).map(([key, p]) => (
               <button key={key} className={tab === key ? 'svm-tab actief' : 'svm-tab'} onClick={() => { setTab(key); setDoelVak(null) }}>
-                {p.emoji} {p.meervoud}
+                {p.meervoud}
               </button>
             ))}
           </div>
         </div>
       ) : (
-        <div className="game-header">
-          <span className="game-header-icon">📋</span>
+        <div className="game-header" style={{ '--kk-accent': 'var(--kk-cyan)' }}>
+          <span className="game-header-icon"><Icoon naam="klembord" /></span>
           <h1 className="game-header-title">Mijn weektaak</h1>
           <p className="game-header-sub">Opdrachten die je juf of meester voor je heeft klaargezet</p>
         </div>
@@ -178,8 +180,8 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
             .map(key => {
               const lijst = mappen.filter(m => vakVan(m) === key)
               return (
-                <button key={key} className="mode-card wt-map" onClick={() => setDoelVak(key)}>
-                  <span className="mode-emoji">{VAK_EMOJI[key] ?? '🎯'}</span>
+                <button key={key} className="mode-card wt-map" style={{ '--kk-accent': VAK_KLEUR[key] }} onClick={() => setDoelVak(key)}>
+                  <span className="mode-icoon"><Icoon naam={VAK_ICOON[key] ?? 'doel'} /></span>
                   <span className="mode-name">{vakNaam(key)}</span>
                   <span className="mode-desc">{lijst.length} {lijst.length === 1 ? 'doel' : 'doelen'}</span>
                 </button>
@@ -188,9 +190,9 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
         </div>
       )}
       {soort === 'doel' && doelVak && (
-        <button className="svm-tab" style={{ marginBottom: 14 }} onClick={() => setDoelVak(null)}>
-          ← {VAK_EMOJI[doelVak] ?? '🎯'} {vakNaam(doelVak)} · alle vakken
-        </button>
+        <Knop variant="secundair" maat="sm" icoon="terug" style={{ marginBottom: 14 }} onClick={() => setDoelVak(null)}>
+          {vakNaam(doelVak)} · alle vakken
+        </Knop>
       )}
       {mappen.length > 0 && (soort !== 'doel' || doelVak) && (
         <div className="mode-grid">
@@ -201,9 +203,10 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
               // Een taak of doel met maar één oefening opent meteen die oefening.
               <button
                 key={m.id} className="mode-card wt-map"
+                style={alles ? { '--kk-accent': 'var(--kk-success)' } : undefined}
                 onClick={() => (persoonlijk && m.opdrachten.length === 1 ? start(m.opdrachten[0]) : setOpenMap(m.id))}
               >
-                <span className="mode-emoji">{alles ? '✅' : persoonlijk ? PERSOONLIJK[tab].emoji : '📂'}</span>
+                <span className="mode-icoon"><Icoon naam={alles ? 'goed' : persoonlijk ? PERSOONLIJK[tab].icoon : 'klembord'} /></span>
                 <span className="mode-name">{m.titel}</span>
                 <span className="mode-desc">
                   {soort === 'doel'

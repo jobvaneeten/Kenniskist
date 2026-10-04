@@ -102,7 +102,7 @@ button.kk-kaart:disabled { opacity: 0.45; cursor: not-allowed; }
 
 /* ── Terugknop ────────────────────────────────────────── */
 .kk-terug { background: rgba(10,10,30,0.75); backdrop-filter: blur(12px); padding-left: var(--kk-s3); }
-.kk-terug--vast { position: fixed; top: var(--kk-s4); left: var(--kk-s4); z-index: 150; }
+.kk-terug.kk-terug--vast, .game-screen > .kk-terug--vast { position: fixed; top: var(--kk-s4); left: var(--kk-s4); z-index: 150; }
 
 /* ── Vaste hoekposities (uitloggen, code, …) ──────────── */
 .hoek-rechtsboven { position: fixed; top: var(--kk-s4); right: var(--kk-s4); z-index: 100; }

@@ -1,92 +1,84 @@
 import { useState } from 'react'
 import './landing.css'
+import { Knop, Icoon } from './ui/index.jsx'
 
 // Moet kloppen met FREE_GAMES in GameMenu.jsx plus de drie 3D-spellen die je
 // vanuit de Kledingkast start (Voetbal, Paintball, Ballonnengevecht).
 const GAMES = [
-  { emoji: '⚽', label: 'Voetbal' },
-  { emoji: '🥅', label: 'Supervoetbal' },
-  { emoji: '🚀', label: 'Jetpack' },
-  { emoji: '🪐', label: 'Astro Katapult' },
-  { emoji: '🛸', label: 'Spacerunner' },
-  { emoji: '🦘', label: 'Doodle Sprong' },
-  { emoji: '☄️', label: 'Meteoorvlucht' },
-  { emoji: '🐨', label: 'Dier Evolutie' },
-  { emoji: '🌉', label: 'Brug Bouwen' },
-  { emoji: '🏰', label: 'Tower Defense' },
-  { emoji: '🚗', label: 'Bergrijden' },
-  { emoji: '🎯', label: 'Paintball' },
-  { emoji: '🎈', label: 'Ballonnengevecht' },
-  { emoji: '🍉', label: 'Fruitsabel' },
-  { emoji: '🌠', label: 'Sterrenveer' },
+  'Voetbal', 'Supervoetbal', 'Jetpack', 'Astro Katapult', 'Spacerunner',
+  'Doodle Sprong', 'Meteoorvlucht', 'Dier Evolutie', 'Brug Bouwen', 'Tower Defense',
+  'Bergrijden', 'Paintball', 'Ballonnengevecht', 'Fruitsabel', 'Sterrenveer', 'Diepgravers',
 ]
 
 // Moet kloppen met VAKKEN in src/lib/tools.js en MODES in GameMenu.jsx.
 const SUBJECTS = [
-  { emoji: '🔢', label: 'Rekenen' },
-  { emoji: '✏️', label: 'Taal & Spelling' },
-  { emoji: '📚', label: 'Begrijpend lezen' },
-  { emoji: '🗺️', label: 'Topografie' },
+  { icoon: 'rekenen', label: 'Rekenen',          kleur: 'var(--kk-vak-rekenen)' },
+  { icoon: 'potlood', label: 'Taal & Spelling',  kleur: 'var(--kk-vak-spelling)' },
+  { icoon: 'lezen',   label: 'Begrijpend lezen', kleur: 'var(--kk-vak-lezen)' },
+  { icoon: 'kaart',   label: 'Topografie',       kleur: 'var(--kk-vak-topo)' },
 ]
 
 const STATS = [
-  { value: '15',    label: 'minigames' },
+  { value: String(GAMES.length), label: 'minigames' },
   { value: '300+',  label: 'items te winnen' },
   { value: '4',     label: 'vakgebieden' },
   { value: '4–8',   label: 'voor groep' },
 ]
 
 const STEPS = [
-  { emoji: '📝', title: '1. Opgaves maken', desc: 'Je kiest een oefening — rekenen, taal, spelling of begrijpend lezen — en maakt een rondje opgaves.' },
-  { emoji: '🎮', title: '2. Tussendoor spelen', desc: 'Na een paar goede antwoorden krijg je een kort, leuk spelletje als afwisseling — een minigame zoals Voetbal of Jetpack.' },
-  { emoji: '🪙', title: '3. Belonen verdienen', desc: 'Je verdient munten en briefgeld voor wat je goed hebt gedaan, die je meteen kunt uitgeven in de Kledingkast en de Winkel.' },
+  { icoon: 'potlood', title: '1. Opgaves maken', desc: 'Je kiest een oefening — rekenen, taal, spelling of begrijpend lezen — en maakt een rondje opgaves.' },
+  { icoon: 'spel', title: '2. Tussendoor spelen', desc: 'Na een paar goede antwoorden krijg je een kort, leuk spelletje als afwisseling — een minigame zoals Voetbal of Jetpack.' },
+  { icoon: 'munt', title: '3. Belonen verdienen', desc: 'Je verdient munten en briefgeld voor wat je goed hebt gedaan, die je meteen kunt uitgeven in de Kledingkast en de Winkel.' },
 ]
 
 const SHOWCASE = [
   {
     key: 'game',
     img: '/scenes/game.png',
-    title: '🎮 Speel Game',
+    icoon: 'spel',
+    title: 'Speel Game',
     desc: 'Oefenspellen voor rekenen, taal en spelling.',
-    detail: 'Je start met een setje opgaves — bijvoorbeeld sommen, een dictee of een tafelrij. Na elk paar goed gemaakte opgaves krijg je tussendoor een kort spelletje (zoals Voetbal, Jetpack of Brug Bouwen) als afwisseling en beloning, voordat je verdergaat met oefenen. Elke goed antwoord levert munten 🪙 en briefgeld 💵 op.',
+    detail: 'Je start met een setje opgaves — bijvoorbeeld sommen, een dictee of een tafelrij. Na elk paar goed gemaakte opgaves krijg je tussendoor een kort spelletje (zoals Voetbal, Jetpack of Brug Bouwen) als afwisseling en beloning, voordat je verdergaat met oefenen. Elk goed antwoord levert munten en briefgeld op.',
   },
   {
     key: 'kledingkast',
     img: '/scenes/kledingkast.png',
-    title: '👗 Kledingkast',
+    icoon: 'shirt',
+    title: 'Kledingkast',
     desc: 'Je eigen 3D-poppetje aankleden.',
     detail: 'In de Kledingkast trek je je 3D-poppetje aan met alle shirts, broeken, sokken, schoenen en petten die je hebt verdiend of gewonnen. Je kunt per categorie kiezen, het poppetje laten bewegen en dansen, en met "Verras me!" een willekeurige outfit uitproberen.',
   },
   {
     key: 'winkel',
     img: '/scenes/winkel.png',
-    title: '🛒 Winkel',
+    icoon: 'tas',
+    title: 'Winkel',
     desc: 'Lootboxen openen met verdiend geld.',
-    detail: 'In de Winkel open je met je verdiende briefgeld 💵 lootboxen voor Shirt, Broek, Sokken, Schoenen en Pet. Elke box geeft een willekeurig nieuw item — van gewoon tot ultra legendarisch — dat je meteen kunt gebruiken in de Kledingkast.',
+    detail: 'In de Winkel open je met je verdiende briefgeld lootboxen voor Shirt, Broek, Sokken, Schoenen en Pet. Elke box geeft een willekeurig nieuw item — van gewoon tot ultra legendarisch — dat je meteen kunt gebruiken in de Kledingkast.',
   },
 ]
 
 const AUDIENCE = [
-  { emoji: '🏠', title: 'Thuis', desc: 'Zelfstandig extra oefenen op een leuke manier — zonder account, gewoon openen en beginnen.' },
-  { emoji: '🏫', title: 'In de klas', desc: 'Als los oefenmoment, keuzewerk of beloning na afgerond werk, op chromebook of tablet.' },
-  { emoji: '🎒', title: 'Groep 4 t/m 8', desc: 'Oefeningen sluiten aan bij de basisschoolstof, van tafels en spelling tot begrijpend lezen.' },
+  { icoon: 'ster', title: 'Thuis', desc: 'Zelfstandig extra oefenen op een leuke manier — zonder account, gewoon openen en beginnen.' },
+  { icoon: 'klembord', title: 'In de klas', desc: 'Als los oefenmoment, keuzewerk of beloning na afgerond werk, op chromebook of tablet.' },
+  { icoon: 'boek', title: 'Groep 4 t/m 8', desc: 'Oefeningen sluiten aan bij de basisschoolstof, van tafels en spelling tot begrijpend lezen.' },
 ]
 
 const VOOR_LEERKRACHTEN = [
   {
-    title: '📚 Welke vaardigheden komen aan bod?',
+    title: 'Welke vaardigheden komen aan bod?',
     body: 'Rekenen (sommen, tafels), taal & spelling (dictees, werkwoordspelling, woordenschat, zinsontleding) en begrijpend lezen, via verschillende minigames en thema\'s. Nieuwe oefeningen en spellen worden regelmatig toegevoegd.',
   },
   {
-    title: '🕹️ Hoe motiveert het spelen?',
+    title: 'Hoe motiveert het spelen?',
     body: 'Elke oefensessie geeft een directe, tastbare beloning: munten voor de winkel, briefgeld voor lootboxen. Kinderen bouwen zo een eigen verzameling kleding en accessoires op voor hun personage — een lichte, speelse motivatieprikkel naast het oefenen zelf.',
   },
   {
-    title: '🔒 Privacy & inzage',
+    title: 'Privacy & inzage',
     body: 'Van leerlingen slaan we alleen voornaam + eerste letter achternaam, gebruikersnaam en klas op — geen e-mail, geen geboortedatum. Leerlingen loggen in met een account dat de leerkracht voor hen aanmaakt, nooit zelf. Resultaten van de leertools zijn zichtbaar in het leerkrachtenportaal; wat een kind aan het personage of in de winkel doet, blijft privé.',
   },
   {
-    title: '🏫 Inzetten in de klas',
+    title: 'Inzetten in de klas',
     body: 'Geschikt als losse oefenmomenten, keuzewerk, of beloning na afgerond werk. Werkt op een gedeeld klasapparaat of chromebook per leerling.',
   },
 ]
@@ -96,18 +88,7 @@ export default function Landing({ onChoose, ingelogd, onUitloggen }) {
 
   return (
     <div className="landing-screen">
-      {ingelogd && <button className="landing-uitloggen-btn" onClick={onUitloggen}>Uitloggen</button>}
-      <div className="landing-stars" aria-hidden="true">
-        {Array.from({ length: 30 }, (_, i) => (
-          <span key={i} className="landing-star" style={{
-            left: `${(i * 37 + 4) % 100}%`,
-            top: `${(i * 53 + 6) % 100}%`,
-            animationDelay: `${(i * 0.31) % 4}s`,
-            animationDuration: `${3 + (i % 4)}s`,
-            '--o': 0.15 + (i % 5) * 0.08,
-          }} />
-        ))}
-      </div>
+      {ingelogd && <Knop variant="secundair" maat="sm" icoon="uit" className="hoek-rechtsboven" onClick={onUitloggen}>Uitloggen</Knop>}
 
       {/* ── Hero met Nano Banana-artwork ── */}
       <header className="landing-hero-banner">
@@ -118,7 +99,7 @@ export default function Landing({ onChoose, ingelogd, onUitloggen }) {
             <img className="landing-logo" src="/logo-rond.png" alt="Kenniskist" />
           </div>
           <h1 className="landing-title">Kenniskist</h1>
-          <p className="landing-tagline">✨ Leren terwijl je speelt ✨</p>
+          <p className="landing-tagline">Leren terwijl je speelt</p>
           <p className="landing-intro">
             Kenniskist is een leerplatform voor groep 4 t/m 8 waarin kinderen rekenen, taal en spelling
             oefenen via korte, speelse minigames. Voor elk goed antwoord verdien je munten en briefgeld,
@@ -131,16 +112,16 @@ export default function Landing({ onChoose, ingelogd, onUitloggen }) {
         <h2 className="landing-section-title">Kies je portaal</h2>
         <div className="portal-cards">
           <button className="portal-card portal-student" onClick={() => onChoose('student')}>
-            <span className="portal-icon">🎒</span>
+            <span className="landing-icoon"><Icoon naam="spel" /></span>
             <span className="portal-name">Leerlingen portaal</span>
             <span className="portal-desc">Ga direct spelen, oefenen en je poppetje aankleden.</span>
-            <span className="portal-arrow">Start →</span>
+            <span className="portal-arrow">Start <Icoon naam="verder" /></span>
           </button>
           <button className="portal-card portal-teacher" onClick={() => onChoose('teacher')}>
-            <span className="portal-icon">🧑‍🏫</span>
+            <span className="landing-icoon"><Icoon naam="klembord" /></span>
             <span className="portal-name">Leerkrachten portaal</span>
             <span className="portal-desc">Lees hoe Kenniskist werkt, welke vakken het dekt en hoe je het inzet in de klas.</span>
-            <span className="portal-arrow">Bekijk →</span>
+            <span className="portal-arrow">Bekijk <Icoon naam="verder" /></span>
           </button>
         </div>
       </section>
@@ -156,7 +137,7 @@ export default function Landing({ onChoose, ingelogd, onUitloggen }) {
 
       <section className="landing-subjects" aria-label="Vakken">
         {SUBJECTS.map(s => (
-          <span key={s.label} className="landing-chip">{s.emoji} {s.label}</span>
+          <span key={s.label} className="kk-chip" style={{ '--kk-accent': s.kleur }}><Icoon naam={s.icoon} />{s.label}</span>
         ))}
       </section>
 
@@ -165,7 +146,7 @@ export default function Landing({ onChoose, ingelogd, onUitloggen }) {
         <div className="steps-row">
           {STEPS.map(s => (
             <div key={s.title} className="step-card">
-              <span className="step-emoji">{s.emoji}</span>
+              <span className="landing-icoon"><Icoon naam={s.icoon} /></span>
               <h3 className="step-title">{s.title}</h3>
               <p className="step-desc">{s.desc}</p>
             </div>
@@ -186,9 +167,9 @@ export default function Landing({ onChoose, ingelogd, onUitloggen }) {
                 aria-expanded={open}
               >
                 <img src={s.img} alt={s.title} className="showcase-img" loading="lazy" />
-                <h3 className="showcase-title">{s.title}</h3>
+                <h3 className="showcase-title"><Icoon naam={s.icoon} />{s.title}</h3>
                 <p className="showcase-desc">{s.desc}</p>
-                <span className="showcase-toggle">{open ? '▲ Minder' : '▼ Meer uitleg'}</span>
+                <span className="showcase-toggle">{open ? 'Minder' : 'Meer uitleg'}</span>
                 {open && <p className="showcase-detail">{s.detail}</p>}
               </button>
             )
@@ -201,7 +182,7 @@ export default function Landing({ onChoose, ingelogd, onUitloggen }) {
         <div className="audience-row">
           {AUDIENCE.map(a => (
             <div key={a.title} className="audience-card">
-              <span className="audience-emoji">{a.emoji}</span>
+              <span className="landing-icoon"><Icoon naam={a.icoon} /></span>
               <h3 className="audience-title">{a.title}</h3>
               <p className="audience-desc">{a.desc}</p>
             </div>
@@ -211,11 +192,11 @@ export default function Landing({ onChoose, ingelogd, onUitloggen }) {
 
       <section className="landing-showcase-wrap" aria-label="Voor leerkrachten">
         <h2 className="landing-section-title">Voor leerkrachten</h2>
-        <div className="landing-showcase" style={{ maxWidth: 780, margin: '0 auto', gridTemplateColumns: '1fr' }}>
+        <div className="landing-showcase landing-faq">
           {VOOR_LEERKRACHTEN.map(s => (
-            <div key={s.title} className="showcase-card" style={{ padding: '4px 0' }}>
-              <h3 className="showcase-title" style={{ marginTop: 18 }}>{s.title}</h3>
-              <p className="showcase-desc" style={{ fontSize: '0.88rem' }}>{s.body}</p>
+            <div key={s.title} className="showcase-card">
+              <h3 className="showcase-title">{s.title}</h3>
+              <p className="showcase-desc">{s.body}</p>
             </div>
           ))}
         </div>
@@ -225,16 +206,16 @@ export default function Landing({ onChoose, ingelogd, onUitloggen }) {
         <h2 className="landing-section-title">Wat zit er allemaal in?</h2>
         <div className="landing-games-grid">
           {GAMES.map(g => (
-            <span key={g.label} className="landing-game-chip">{g.emoji} {g.label}</span>
+            <span key={g} className="kk-chip">{g}</span>
           ))}
         </div>
       </section>
 
       <section className="landing-cta">
         <h2 className="landing-cta-title">Klaar om te beginnen?</h2>
-        <button className="landing-cta-btn" onClick={() => onChoose('student')}>
-          🎒 Open het leerlingen portaal →
-        </button>
+        <Knop variant="primair" maat="lg" icoonRechts="verder" onClick={() => onChoose('student')}>
+          Open het leerlingen portaal
+        </Knop>
       </section>
 
       {/* Twemoji staat onder CC-BY 4.0: commercieel gebruik mag, maar

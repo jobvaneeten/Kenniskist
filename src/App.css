@@ -1,9 +1,9 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* ── Google Font import via system stack ── */
+/* Eén achtergrond voor de hele leerlingkant: de pixel-sterrenhemel. */
 body {
-  font-family: 'Nunito', 'Segoe UI', system-ui, sans-serif;
-  background: #0d0d1a url('/achtergrond.png') center / cover no-repeat fixed;
+  font-family: var(--kk-body);
+  background: var(--kk-bg) url('/achtergrond.png') center / cover no-repeat fixed;
   min-height: 100vh;
   display: flex;
   align-items: center;
@@ -11,16 +11,16 @@ body {
   overflow-x: hidden;
 }
 
-/* ── Animated aurora background ─────────────────── */
+/* ── Langzaam bewegend noorderlicht ─────────────── */
 body::before {
   content: '';
   position: fixed;
   inset: -20%;
   background:
-    radial-gradient(ellipse 50% 45% at 18% 12%, rgba(232,67,147,0.18) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 45% at 18% 12%, rgba(255,47,142,0.14) 0%, transparent 60%),
     radial-gradient(ellipse 45% 40% at 82% 18%, rgba(124,58,237,0.18) 0%, transparent 60%),
-    radial-gradient(ellipse 55% 50% at 80% 85%, rgba(6,214,160,0.12) 0%, transparent 60%),
-    radial-gradient(ellipse 50% 45% at 15% 88%, rgba(56,189,248,0.12) 0%, transparent 60%);
+    radial-gradient(ellipse 55% 50% at 80% 85%, rgba(45,212,191,0.10) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 45% at 15% 88%, rgba(56,189,248,0.10) 0%, transparent 60%);
   z-index: 0;
   pointer-events: none;
   animation: aurora 18s ease-in-out infinite alternate;
@@ -31,69 +31,14 @@ body::before {
   100% { transform: translate3d(-2%, 2%, 0) scale(1.04) rotate(-2deg); filter: hue-rotate(-12deg); }
 }
 
-/* subtiel sterren-stippelpatroon erbovenop */
-body::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background-image: radial-gradient(rgba(255,255,255,0.5) 1px, transparent 1px);
-  background-size: 42px 42px;
-  opacity: 0.03;   /* de pixel-achtergrond heeft al sterren */
-  z-index: 0;
-  pointer-events: none;
-}
-
-/* ── Zwevende lichtbollen ── */
-.bg-orbs { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
-.orb {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(48px);
-  opacity: 0.3;   /* subtieler zodat de pixel-art achtergrond zichtbaar blijft */
-  will-change: transform;
-}
-.orb-1 { width: 320px; height: 320px; top: -60px;  left: -60px;  background: #e84393; animation: drift1 16s ease-in-out infinite; }
-.orb-2 { width: 280px; height: 280px; top: 30%;    right: -80px; background: #7c3aed; animation: drift2 20s ease-in-out infinite; }
-.orb-3 { width: 300px; height: 300px; bottom: -80px; left: 10%;  background: #06d6a0; animation: drift3 22s ease-in-out infinite; }
-.orb-4 { width: 220px; height: 220px; bottom: 20%; right: 20%;   background: #38bdf8; animation: drift1 19s ease-in-out infinite reverse; }
-@keyframes drift1 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(40px,60px); } }
-@keyframes drift2 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(-50px,40px); } }
-@keyframes drift3 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(30px,-50px); } }
-
-/* ── Zwevende emoji ── */
-.floaties { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
-.floaty {
-  position: absolute;
-  font-size: 2rem;
-  opacity: 0.26;   /* rustiger — de achtergrond-art doet nu het sfeerwerk */
-  filter: drop-shadow(0 6px 14px rgba(0,0,0,0.45)) drop-shadow(0 0 18px rgba(124,58,237,0.25));
-  animation: bobfloat 9s ease-in-out infinite;
-}
-.floaty-1  { top: 11%; left: 7%;   animation-delay: 0s;   font-size: 2.5rem; }
-.floaty-2  { top: 20%; right: 9%;  animation-delay: 1.2s; font-size: 2.2rem; }
-.floaty-3  { top: 45%; left: 4%;   animation-delay: 2.4s; font-size: 2.7rem; }
-.floaty-4  { top: 63%; right: 6%;  animation-delay: 0.8s; font-size: 2.3rem; }
-.floaty-5  { top: 80%; left: 12%;  animation-delay: 3.1s; font-size: 2.2rem; }
-.floaty-6  { top: 34%; right: 14%; animation-delay: 1.8s; font-size: 2.5rem; }
-.floaty-7  { top: 88%; right: 20%; animation-delay: 2.7s; font-size: 2.1rem; }
-.floaty-8  { top: 7%;  left: 38%;  animation-delay: 3.6s; font-size: 2rem; }
-.floaty-9  { top: 55%; right: 4%;  animation-delay: 1.5s; font-size: 2.1rem; }
-.floaty-10 { top: 72%; left: 3%;   animation-delay: 4.2s; font-size: 2.3rem; }
-.floaty-11 { top: 15%; right: 30%; animation-delay: 2.1s; font-size: 1.9rem; }
-.floaty-12 { top: 92%; left: 44%;  animation-delay: 0.4s; font-size: 2.2rem; }
-@keyframes bobfloat {
-  0%,100% { transform: translateY(0) rotate(-6deg); }
-  50%     { transform: translateY(-22px) rotate(8deg); }
-}
-
 .screen {
   position: relative;
   z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 40px;
-  padding: 48px 24px 80px;
+  gap: var(--kk-s6);
+  padding: var(--kk-s7) var(--kk-s5) 80px;
   width: 100%;
   max-width: 460px;
 }
@@ -103,34 +48,21 @@ body::after {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: var(--kk-s3);
   text-align: center;
 }
 
-.logo-wrap {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.logo-icon {
-  font-size: clamp(2rem, 8.5vw, 3.8rem);
-  filter: drop-shadow(0 0 28px rgba(232,67,147,0.55)) drop-shadow(0 4px 12px rgba(0,0,0,0.5));
-  animation: float 4s ease-in-out infinite, wobble 6s ease-in-out infinite;
-}
-
+.logo-wrap { position: relative; display: flex; align-items: center; }
 .logo-img {
   width: clamp(150px, 34vw, 240px);
   height: auto;
   border-radius: 50%;
-  filter: drop-shadow(0 0 32px rgba(108,92,231,0.55)) drop-shadow(0 6px 16px rgba(0,0,0,0.5));
+  filter: drop-shadow(0 0 32px var(--kk-primary-glow)) drop-shadow(0 6px 16px rgba(0,0,0,0.5));
   animation: float 4s ease-in-out infinite;
   position: relative;
   z-index: 1;
-  transition: transform 0.25s cubic-bezier(.34,1.56,.64,1);
 }
-.logo-wrap { position: relative; }
-/* Pulserende halo-ring achter het logo */
+/* Pulserende halo achter het logo */
 .logo-wrap::before {
   content: '';
   position: absolute;
@@ -140,265 +72,145 @@ body::after {
   animation: haloPulse 3.2s ease-in-out infinite;
   pointer-events: none;
 }
-/* Draaiende sterrenkrans-rand */
-.logo-wrap::after {
-  content: '';
-  position: absolute;
-  inset: -4%;
-  border-radius: 50%;
-  border: 2px dashed rgba(154,120,255,0.4);
-  animation: haloSpin 24s linear infinite;
-  pointer-events: none;
-}
 @keyframes haloPulse {
   0%,100% { transform: scale(0.96); opacity: 0.7; }
   50%     { transform: scale(1.06); opacity: 1; }
 }
-@keyframes haloSpin { to { transform: rotate(360deg); } }
-.logo-img:hover { transform: scale(1.05) rotate(2deg); }
-
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
   50%       { transform: translateY(-8px); }
 }
-@keyframes wobble {
-  0%, 100% { rotate: -8deg; }
-  50%      { rotate: 8deg; }
-}
-
-.logo-title {
-  font-family: var(--kk-head);
-  font-size: clamp(1.9rem, 7.4vw, 3.8rem);
-  font-weight: 800;
-  letter-spacing: -1px;
-  background: linear-gradient(100deg, #fff 0%, #ffe9a8 30%, #fff 50%, #d6c4ff 70%, #fff 100%);
-  background-size: 220% auto;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 4px 24px rgba(0,0,0,0.45));
-  animation: shine 5s linear infinite;
-}
 @keyframes shine { to { background-position: 220% center; } }
-
-.accent {
-  background: linear-gradient(100deg, #FFD23F, #ff8a3d, #FFD23F);
-  background-size: 220% auto;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: shine 5s linear infinite;
+@keyframes cardIn { to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp {
+  from { transform: translateY(24px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
 }
 
 .hero-sub {
-  font-size: 1.0rem;
-  font-weight: 800;
-  color: rgba(255,255,255,0.85);
-  letter-spacing: 0.04em;
-  animation: pulseGlow 2.6s ease-in-out infinite;
-  background: rgba(124,58,237,0.16);
-  border: 1px solid rgba(154,120,255,0.35);
-  border-radius: 999px;
-  padding: 8px 18px;
-  backdrop-filter: blur(6px);
-}
-@keyframes pulseGlow {
-  0%,100% { opacity: 0.6; text-shadow: 0 0 8px rgba(255,210,63,0.0); }
-  50%     { opacity: 1;   text-shadow: 0 0 18px rgba(255,210,63,0.5); }
+  font: var(--kk-fw-bold) var(--kk-fs-sm)/1 var(--kk-body);
+  color: var(--kk-text-soft);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
-/* ── Menu ────────────────────────────────── */
+/* ── Menu: drie grote kaarten ─────────────── */
 .menu {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: var(--kk-s3);
   width: 100%;
 }
 
 .menu-btn {
+  --kk-accent: var(--kk-primary-hi);
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: var(--kk-s4);
   width: 100%;
-  padding: 24px 26px;
-  border: 1.5px solid transparent;
-  border-radius: 24px;
+  padding: var(--kk-s4) var(--kk-s5) var(--kk-s4) var(--kk-s4);
+  border: 1px solid var(--kk-border);
+  border-left: 4px solid var(--kk-accent);
+  border-radius: var(--kk-r-lg);
+  background: rgba(14, 12, 34, 0.72);
+  backdrop-filter: blur(10px);
   cursor: pointer;
   font-family: inherit;
-  color: #fff;
+  color: var(--kk-text);
   text-align: left;
-  transition: transform 0.2s cubic-bezier(.34,1.56,.64,1), box-shadow 0.2s, border-color 0.2s;
+  box-shadow: var(--kk-shadow);
+  transition: transform var(--kk-dur) var(--kk-ease), box-shadow var(--kk-dur), border-color var(--kk-dur), background var(--kk-dur);
   position: relative;
-  overflow: hidden;
   opacity: 0;
   transform: translateY(20px);
-  animation: cardIn 0.55s cubic-bezier(.34,1.56,.64,1) forwards;
+  animation: cardIn 0.5s var(--kk-ease) forwards;
 }
-.btn-game     { animation-delay: 0.05s; }
-.btn-wardrobe { animation-delay: 0.16s; }
-.btn-shop     { animation-delay: 0.27s; }
-@keyframes cardIn {
-  to { opacity: 1; transform: translateY(0); }
-}
+.btn-game     { --kk-accent: var(--kk-vak-spel); animation-delay: 0.05s; }
+.btn-wardrobe { --kk-accent: var(--kk-primary-hi); animation-delay: 0.14s; }
+.btn-shop     { --kk-accent: var(--kk-gold); animation-delay: 0.23s; }
 
-/* Gloss overlay */
-.menu-btn::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 50%;
-  background: linear-gradient(180deg, rgba(255,255,255,0.16), transparent);
-  border-radius: 24px 24px 0 0;
-  pointer-events: none;
+.menu-btn:hover {
+  transform: translateY(-3px);
+  background: rgba(24, 20, 52, 0.85);
+  border-color: color-mix(in srgb, var(--kk-accent) 60%, transparent);
+  box-shadow: var(--kk-shadow), 0 0 28px color-mix(in srgb, var(--kk-accent) 35%, transparent);
 }
-
-/* Glanzende veeg die over de knop schiet */
-.menu-btn::after {
-  content: '';
-  position: absolute;
-  top: 0; bottom: 0;
-  left: -60%;
-  width: 50%;
-  background: linear-gradient(100deg, transparent, rgba(255,255,255,0.35), transparent);
-  transform: skewX(-18deg);
-  animation: sweep 4.5s ease-in-out infinite;
-  pointer-events: none;
-}
-.btn-wardrobe::after { animation-delay: 1.5s; }
-.btn-shop::after     { animation-delay: 3s; }
-@keyframes sweep {
-  0%, 60%   { left: -60%; }
-  85%, 100% { left: 130%; }
-}
-
-.menu-btn:hover { transform: translateY(-5px) scale(1.03); filter: brightness(1.08); }
-.menu-btn:active { transform: scale(0.97); transition-duration: 0.08s; }
-/* Zichtbare focus-ring voor toetsenbord-navigatie */
-.menu-btn:focus-visible {
-  outline: 3px solid #FFD23F;
-  outline-offset: 3px;
-}
-
-.btn-game {
-  background: linear-gradient(135deg, #e84393 0%, #ff6b35 100%);
-  box-shadow: 0 8px 32px rgba(232,67,147,0.35), 0 2px 8px rgba(0,0,0,0.3);
-  border-color: rgba(255,210,63,0.45);
-  animation: cardIn 0.55s cubic-bezier(.34,1.56,.64,1) forwards,
-             ctaGlow 2.8s ease-in-out 0.6s infinite;
-}
-/* Primaire actie: zachte gouden gloed-puls zodat dit dé knop is */
-@keyframes ctaGlow {
-  0%,100% { box-shadow: 0 8px 32px rgba(232,67,147,0.35), 0 2px 8px rgba(0,0,0,0.3), 0 0 0 0 rgba(255,210,63,0.0); }
-  50%     { box-shadow: 0 10px 38px rgba(232,67,147,0.5), 0 2px 8px rgba(0,0,0,0.3), 0 0 26px 3px rgba(255,210,63,0.35); }
-}
-.btn-game:hover {
-  box-shadow: 0 14px 48px rgba(232,67,147,0.55), 0 4px 16px rgba(0,0,0,0.4);
-  border-color: rgba(255,160,160,0.4);
-}
-
-.btn-wardrobe {
-  background: linear-gradient(135deg, #7c3aed 0%, #c026d3 100%);
-  box-shadow: 0 8px 32px rgba(124,58,237,0.35), 0 2px 8px rgba(0,0,0,0.3);
-  border-color: rgba(200,130,255,0.2);
-}
-.btn-wardrobe:hover {
-  box-shadow: 0 14px 48px rgba(124,58,237,0.55), 0 4px 16px rgba(0,0,0,0.4);
-  border-color: rgba(200,130,255,0.4);
-}
-
-.btn-shop {
-  background: linear-gradient(135deg, #059669 0%, #0891b2 100%);
-  box-shadow: 0 8px 32px rgba(5,150,105,0.35), 0 2px 8px rgba(0,0,0,0.3);
-  border-color: rgba(100,230,200,0.2);
-}
-.btn-shop:hover {
-  box-shadow: 0 14px 48px rgba(5,150,105,0.55), 0 4px 16px rgba(0,0,0,0.4);
-  border-color: rgba(100,230,200,0.4);
-}
-
-.btn-icon {
-  font-size: 2.2rem;
-  line-height: 1;
-  flex-shrink: 0;
-  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.3));
-}
+.menu-btn:active { transform: scale(0.98); transition-duration: var(--kk-dur-fast); }
+.menu-btn:focus-visible { outline: none; box-shadow: var(--kk-focus-ring); }
 
 .btn-text {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--kk-s1);
 }
-
 .btn-label {
-  font-family: var(--kk-head);
-  font-size: 1.3rem;
-  font-weight: 800;
-  letter-spacing: -0.2px;
-  line-height: 1.2;
+  display: flex;
+  align-items: center;
+  gap: var(--kk-s2);
+  font: var(--kk-fw-bold) 1.35rem/1.2 var(--kk-head);
 }
-
+.btn-label svg { width: 22px; height: 22px; color: var(--kk-accent); flex: none; }
 .btn-desc {
-  font-size: 0.78rem;
-  font-weight: 600;
-  opacity: 0.75;
-  letter-spacing: 0.01em;
+  font-size: var(--kk-fs-sm);
+  font-weight: var(--kk-fw-normal);
+  color: var(--kk-text-soft);
+}
+.btn-examples {
+  font-size: var(--kk-fs-xs);
+  font-weight: var(--kk-fw-bold);
+  color: var(--kk-text-faint);
+  margin-top: 2px;
 }
 
 .btn-arrow {
-  font-size: 1.3rem;
-  opacity: 0.6;
-  transition: transform 0.18s, opacity 0.18s;
+  display: grid;
+  color: var(--kk-text-faint);
+  transition: transform var(--kk-dur) var(--kk-ease), color var(--kk-dur);
   flex-shrink: 0;
 }
-.menu-btn:hover .btn-arrow { transform: translateX(4px); opacity: 1; animation: arrowNudge 0.9s ease-in-out infinite; }
-@keyframes arrowNudge {
-  0%,100% { transform: translateX(4px); }
-  50%     { transform: translateX(9px); }
-}
+.btn-arrow svg { width: 22px; height: 22px; }
+.menu-btn:hover .btn-arrow { transform: translateX(4px); color: var(--kk-accent); }
 
-.btn-scene {
-  width: 108px;
-  flex-shrink: 0;
-  border-radius: 14px;
-}
-.btn-scene .ms-wrap { border-radius: 14px; }
+.btn-scene { width: 108px; flex-shrink: 0; border-radius: var(--kk-r-md); }
+.btn-scene .ms-wrap { border-radius: var(--kk-r-md); }
 .scene-img {
   display: block;
   width: 100%;
   aspect-ratio: 16 / 9;
   object-fit: cover;
-  border-radius: 14px;
-  border: 1.5px solid rgba(255,255,255,0.22);
+  border-radius: var(--kk-r-md);
+  border: 1px solid var(--kk-border);
   box-shadow: 0 3px 12px rgba(0,0,0,0.35);
-  transition: transform 0.2s cubic-bezier(.34,1.56,.64,1);
-}
-.menu-btn:hover .scene-img { transform: scale(1.06) rotate(-1deg); }
-
-.btn-examples {
-  font-size: 0.68rem;
-  font-weight: 700;
-  opacity: 0.85;
-  margin-top: 5px;
-  background: rgba(0,0,0,0.22);
-  border-radius: 12px;
-  padding: 4px 10px;
-  align-self: flex-start;
-  letter-spacing: 0.01em;
 }
 
-/* ── Currency badges ─────────────────────── */
+/* ── Saldo rechtsboven ───────────────────── */
 .currency-badges {
   position: fixed;
-  top: 18px;
-  right: 18px;
+  top: var(--kk-s4);
+  right: var(--kk-s4);
   z-index: 100;
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 8px;
+  align-items: center;
+  gap: var(--kk-s2);
 }
-/* Merkteken voor vrij spelen — klein, in dezelfde hoek als de geldbadge. */
+.curuntie-badge {
+  display: flex;
+  align-items: center;
+  gap: var(--kk-s2);
+  min-height: 36px;
+  padding: 0 var(--kk-s4) 0 var(--kk-s3);
+  border-radius: var(--kk-r-pill);
+  background: rgba(10, 10, 30, 0.75);
+  border: 1px solid var(--kk-border);
+  backdrop-filter: blur(12px);
+}
+.curuntie-icon   { font-size: 1.05rem; line-height: 1; }
+.curuntie-amount { font: var(--kk-fw-black) var(--kk-fs-sm)/1 var(--kk-body); color: var(--kk-gold); letter-spacing: 0.03em; }
+.briefgeld-amount { color: var(--kk-success); }
+
+/* Merkteken voor vrij spelen — klein, onder de saldo-pil. */
 .vrij-spelen-badge {
   position: fixed;
   /* Onder de HUD-balk die spellen bovenaan tekenen (score, munten, tijd) en
@@ -416,77 +228,14 @@ body::after {
   line-height: 1;
   border-radius: 50%;
   background: rgba(10, 10, 30, 0.72);
-  border: 1.5px solid rgba(255, 176, 32, 0.55);
+  color: var(--kk-vak-spel);
+  border: 1px solid color-mix(in srgb, var(--kk-vak-spel) 55%, transparent);
   box-shadow: 0 4px 14px rgba(0,0,0,0.35);
   backdrop-filter: blur(10px);
   pointer-events: none;
   user-select: none;
 }
-
-.uitloggen-btn {
-  position: fixed;
-  top: 18px;
-  right: 18px;
-  z-index: 100;
-  background: rgba(10, 10, 30, 0.75);
-  border: 1.5px solid rgba(255,255,255,0.2);
-  color: #fff;
-  font-family: inherit;
-  font-size: 0.85rem;
-  font-weight: 800;
-  padding: 8px 18px;
-  border-radius: 999px;
-  cursor: pointer;
-  backdrop-filter: blur(12px);
-}
-.uitloggen-btn:hover { background: rgba(20, 20, 45, 0.85); }
-.curuntie-badge {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  background: rgba(10, 10, 30, 0.75);
-  border: 1.5px solid rgba(255,210,63,0.35);
-  border-radius: 999px;
-  padding: 8px 18px 8px 12px;
-  backdrop-filter: blur(12px);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,210,63,0.1);
-}
-.briefgeld-badge {
-  border-color: rgba(80,210,140,0.4);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.3), 0 0 0 1px rgba(80,210,140,0.12);
-}
-.briefgeld-amount { color: #4fe0a0 !important; }
-.curuntie-icon   { font-size: 1.25rem; line-height: 1; }
-.curuntie-amount {
-  font-size: 0.95rem;
-  font-weight: 900;
-  color: #FFD23F;
-  letter-spacing: 0.04em;
-}
-
-/* ── Code invoeren knop ──────────────────── */
-.code-btn {
-  position: fixed;
-  bottom: 22px;
-  left: 22px;
-  background: rgba(124,58,237,0.14);
-  border: 1.5px solid rgba(154,120,255,0.3);
-  color: rgba(255,255,255,0.65);
-  font-family: inherit;
-  font-size: 0.82rem;
-  font-weight: 700;
-  padding: 9px 16px;
-  border-radius: 999px;
-  cursor: pointer;
-  backdrop-filter: blur(6px);
-  transition: background 0.2s, color 0.2s, border-color 0.2s;
-  backdrop-filter: blur(8px);
-}
-.code-btn:hover {
-  background: rgba(255,255,255,0.12);
-  color: #fff;
-  border-color: rgba(255,255,255,0.25);
-}
+.vrij-spelen-badge svg { width: 18px; height: 18px; }
 
 /* ── Menu met zijkaarten (leerling): speciaal | menu | weektaak ──── */
 .screen-breed { max-width: 1180px; }
@@ -499,50 +248,54 @@ body::after {
   align-items: stretch;
 }
 .zijkaart {
+  --kk-accent: var(--kk-cyan);
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  padding: 28px 22px;
-  border-radius: 26px;
+  gap: var(--kk-s3);
+  padding: var(--kk-s6) var(--kk-s5);
+  border-radius: var(--kk-r-lg);
   font-family: inherit;
-  color: #fff;
+  color: var(--kk-text);
   text-align: center;
   cursor: pointer;
-  overflow: hidden;
+  background: rgba(14, 12, 34, 0.72);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--kk-border);
+  border-top: 4px solid var(--kk-accent);
+  box-shadow: var(--kk-shadow);
   opacity: 0;
   transform: translateY(20px);
-  animation: cardIn 0.55s cubic-bezier(.34,1.56,.64,1) 0.35s forwards;
-  transition: transform 0.2s cubic-bezier(.34,1.56,.64,1), box-shadow 0.2s, border-color 0.2s;
+  animation: cardIn 0.5s var(--kk-ease) 0.3s forwards;
+  transition: transform var(--kk-dur) var(--kk-ease), box-shadow var(--kk-dur), border-color var(--kk-dur), background var(--kk-dur);
 }
-.zijkaart:hover { transform: translateY(-5px) scale(1.02); }
-.zijkaart:active { transform: scale(0.97); transition-duration: 0.08s; }
-.zijkaart-speciaal {
-  background: linear-gradient(160deg, rgba(236,72,153,0.22), rgba(124,58,237,0.18));
-  border: 2px solid rgba(244,114,182,0.5);
-  box-shadow: 0 10px 34px rgba(236,72,153,0.18), inset 0 1px 0 rgba(255,255,255,0.08);
+.zijkaart:hover {
+  transform: translateY(-3px);
+  background: rgba(24, 20, 52, 0.85);
+  border-color: color-mix(in srgb, var(--kk-accent) 60%, transparent);
+  box-shadow: var(--kk-shadow), 0 0 28px color-mix(in srgb, var(--kk-accent) 30%, transparent);
 }
-.zijkaart-speciaal:hover { border-color: rgba(244,114,182,0.85); box-shadow: 0 16px 44px rgba(236,72,153,0.3); }
-.zijkaart-weektaak {
-  background: linear-gradient(160deg, rgba(37,99,235,0.26), rgba(6,182,212,0.16));
-  border: 2px solid rgba(96,165,250,0.55);
-  box-shadow: 0 10px 34px rgba(37,99,235,0.2), inset 0 1px 0 rgba(255,255,255,0.08);
+.zijkaart:active { transform: scale(0.98); transition-duration: var(--kk-dur-fast); }
+.zijkaart:focus-visible { outline: none; box-shadow: var(--kk-focus-ring); }
+.zijkaart-speciaal { --kk-accent: var(--kk-pink); }
+.zijkaart-weektaak { --kk-accent: var(--kk-cyan); }
+.zijkaart-emoji {
+  width: 64px; height: 64px;
+  display: grid; place-items: center;
+  border-radius: var(--kk-r-lg);
+  color: var(--kk-accent);
+  background: color-mix(in srgb, var(--kk-accent) 16%, transparent);
 }
-.zijkaart-weektaak:hover { border-color: rgba(125,211,252,0.9); box-shadow: 0 16px 44px rgba(37,99,235,0.34); }
-.zijkaart-emoji { font-size: 3.4rem; line-height: 1; filter: drop-shadow(0 0 14px rgba(255,255,255,0.25)); }
-.zijkaart-weektaak .zijkaart-emoji { font-size: 4.4rem; }
-.zijkaart-titel { font-family: var(--kk-head, inherit); font-size: 1.35rem; font-weight: 900; line-height: 1.15; }
-.zijkaart-weektaak .zijkaart-titel { font-size: 1.7rem; }
-.zijkaart-desc { font-size: 0.85rem; font-weight: 600; color: rgba(255,255,255,0.72); max-width: 240px; }
+.zijkaart-emoji svg { width: 34px; height: 34px; }
+.zijkaart-titel { font: var(--kk-fw-bold) 1.4rem/1.15 var(--kk-head); }
+.zijkaart-weektaak .zijkaart-titel { font-size: 1.6rem; }
+.zijkaart-desc { font-size: var(--kk-fs-sm); font-weight: var(--kk-fw-normal); color: var(--kk-text-soft); max-width: 240px; }
 .zijkaart-chips { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
-.zijkaart-chips span {
-  font-size: 0.72rem; font-weight: 800; padding: 4px 10px; border-radius: 999px;
-  background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.18);
-}
-.zijkaart-pijl { font-size: 1.3rem; font-weight: 900; opacity: 0.7; transition: transform 0.2s, opacity 0.2s; }
-.zijkaart:hover .zijkaart-pijl { transform: translateX(4px); opacity: 1; }
+.zijkaart-pijl { display: grid; color: var(--kk-text-faint); transition: transform var(--kk-dur), color var(--kk-dur); }
+.zijkaart-pijl svg { width: 22px; height: 22px; }
+.zijkaart:hover .zijkaart-pijl { transform: translateX(4px); color: var(--kk-accent); }
 
 /* Smal scherm: menu bovenaan, de twee zijkaarten eronder naast elkaar */
 @media (max-width: 900px) {
@@ -556,7 +309,6 @@ body::after {
   .zijkaart-speciaal { grid-area: speciaal; }
   .zijkaart-weektaak { grid-area: weektaak; }
   .zijkaart { padding: 20px 14px; }
-  .zijkaart-weektaak .zijkaart-emoji { font-size: 3.4rem; }
   .zijkaart-weektaak .zijkaart-titel { font-size: 1.35rem; }
 }
 
@@ -568,125 +320,38 @@ body::after {
   width: min(560px, 92vw);
   margin: 0 auto 16px;
   padding: 14px 20px;
-  border-radius: 18px;
+  border-radius: var(--kk-r-lg);
   cursor: pointer;
   font-family: inherit;
   text-align: left;
-  color: #fff;
-  background: linear-gradient(120deg, rgba(245,158,11,0.28), rgba(236,72,153,0.24));
-  border: 2px solid rgba(253,224,71,0.55);
-  box-shadow: 0 10px 28px rgba(245,158,11,0.22);
+  color: var(--kk-text);
+  background: rgba(255,210,63,0.12);
+  border: 1px solid color-mix(in srgb, var(--kk-gold) 60%, transparent);
+  border-left: 4px solid var(--kk-gold);
+  box-shadow: 0 0 24px rgba(255,210,63,0.18);
   animation: lescheck-pols 2.4s ease-in-out infinite;
-  transition: transform 0.15s, box-shadow 0.2s;
+  transition: transform var(--kk-dur-fast), box-shadow var(--kk-dur);
 }
-.lescheck-btn:hover { transform: translateY(-2px); box-shadow: 0 14px 32px rgba(245,158,11,0.32); }
-.lescheck-btn-titel { font-size: 1.02rem; font-weight: 900; }
-.lescheck-btn-sub { font-size: 0.82rem; color: rgba(255,255,255,0.82); font-weight: 700; }
+.lescheck-btn:hover { transform: translateY(-2px); box-shadow: 0 0 32px rgba(255,210,63,0.3); }
+.lescheck-btn-titel { font-size: 1.02rem; font-weight: var(--kk-fw-black); }
+.lescheck-btn-sub { font-size: var(--kk-fs-sm); color: var(--kk-text-soft); font-weight: var(--kk-fw-bold); }
 @keyframes lescheck-pols {
-  0%, 100% { border-color: rgba(253,224,71,0.55); }
-  50%      { border-color: rgba(253,224,71,0.95); }
+  0%, 100% { box-shadow: 0 0 18px rgba(255,210,63,0.12); }
+  50%      { box-shadow: 0 0 30px rgba(255,210,63,0.32); }
 }
-
-/* ── Code modal ──────────────────────────── */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.7);
-  backdrop-filter: blur(6px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 200;
-  animation: fadeIn 0.15s ease;
-}
-
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-.modal-box {
-  background: linear-gradient(160deg, #161630, #0f1f3d);
-  border: 1.5px solid rgba(255,255,255,0.12);
-  border-radius: 24px;
-  padding: 36px 30px;
-  width: 100%;
-  max-width: 380px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  box-shadow: 0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05);
-  animation: slideUp 0.2s cubic-bezier(.34,1.56,.64,1);
-}
-
-@keyframes slideUp {
-  from { transform: translateY(24px); opacity: 0; }
-  to   { transform: translateY(0);    opacity: 1; }
-}
-
-.modal-title {
-  font-size: 1.35rem;
-  font-weight: 900;
-  color: #fff;
-  letter-spacing: -0.3px;
-}
-.modal-input {
-  width: 100%;
-  padding: 13px 16px;
-  background: rgba(255,255,255,0.06);
-  border: 1.5px solid rgba(255,255,255,0.12);
-  border-radius: 14px;
-  color: #fff;
-  font-family: inherit;
-  font-size: 1rem;
-  font-weight: 700;
-  outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s;
-}
-.modal-input:focus {
-  border-color: #FFD23F;
-  box-shadow: 0 0 0 3px rgba(255,210,63,0.12);
-}
-.modal-msg     { font-size: 0.88rem; font-weight: 700; }
-.modal-msg-ok  { color: #06D6A0; }
-.modal-msg-err { color: #f87171; }
-.modal-actions { display: flex; gap: 10px; }
-.modal-btn {
-  flex: 1;
-  padding: 13px;
-  border-radius: 14px;
-  border: none;
-  font-family: inherit;
-  font-size: 0.95rem;
-  font-weight: 800;
-  cursor: pointer;
-  transition: filter 0.15s, transform 0.1s;
-}
-.modal-btn:hover  { filter: brightness(1.12); }
-.modal-btn:active { transform: scale(0.97); }
-.modal-btn-confirm { background: #FFD23F; color: #1a1a2e; }
-.modal-btn-cancel  { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.8); border: 1.5px solid rgba(255,255,255,0.12); }
 
 /* ── iPad / mobile responsive ──────────────── */
 @media (max-width: 600px) {
-  .screen { gap: 28px; padding: 52px 16px 72px; }
-  .hero-sub   { font-size: 0.9rem; }
-  .menu-btn   { padding: 16px 18px; gap: 14px; }
-  .btn-icon   { font-size: 1.8rem; }
-  .btn-label  { font-size: 1.1rem; }
+  .screen { gap: 28px; padding: 64px 16px 72px; }
+  .menu-btn   { padding: 14px 16px 14px 12px; gap: 12px; }
+  .btn-label  { font-size: 1.15rem; }
   .btn-scene  { width: 78px; }
-  .btn-examples { font-size: 0.6rem; padding: 3px 8px; }
-  .curuntie-badge { top: 12px; right: 12px; padding: 6px 14px 6px 10px; }
-  .curuntie-icon  { font-size: 1rem; }
-  .curuntie-amount { font-size: 0.85rem; }
-  .code-btn   { bottom: 14px; left: 14px; font-size: 0.75rem; padding: 8px 14px; }
-  .lescheck-btn { padding: 12px 16px; border-radius: 16px; }
-  .modal-box  { margin: 0 16px; padding: 28px 20px; }
+  .btn-examples { display: none; }
 }
 
 /* ── Rustige modus: respecteer prefers-reduced-motion ── */
 @media (prefers-reduced-motion: reduce) {
-  body::before, .orb, .floaty, .logo-img, .logo-wrap::before, .logo-wrap::after,
-  .hero-sub, .menu-btn::after, .btn-arrow, .lescheck-btn {
-    animation: none !important;
-  }
+  body::before, .logo-img, .logo-wrap::before, .lescheck-btn { animation: none !important; }
   .menu-btn, .zijkaart { animation-duration: 0.01s !important; }
   * { transition-duration: 0.01s !important; }
 }

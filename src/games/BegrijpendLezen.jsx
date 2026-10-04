@@ -3,6 +3,7 @@ import { THEMAS } from './begrijpendLezenData'
 import SpelBeloning from './SpelBeloning'
 import MenuScene from '../MenuScenes'
 import './dictee-thema.css'
+import { TerugKnop } from '../ui/index.jsx'
 
 // startLes: alleen gezet vanuit een weektaak-opdracht (toolRender.jsx) — het
 // lesnummer (1-5) binnen het enige thema "spullen". Springt direct naar die
@@ -45,7 +46,7 @@ export default function BegrijpendLezen({ onBack, addBriefgeld, addCuruntie, sta
     return (
       <>
         <div className="game-screen dictee-screen">
-          <button className="back-btn" onClick={() => setLes(null)}>← Terug</button>
+          <TerugKnop onClick={() => setLes(null)} />
           <iframe
             ref={frameRef}
             className="dictee-frame"
@@ -61,7 +62,7 @@ export default function BegrijpendLezen({ onBack, addBriefgeld, addCuruntie, sta
   if (thema) {
     return (
       <div className="game-screen game-screen-center">
-        <button className="back-btn" onClick={() => setThema(null)}>← Menu</button>
+        <TerugKnop onClick={() => setThema(null)} />
         <div className="game-header">
           <span className="game-header-icon" style={{ color: thema.kleur }}>{thema.emoji}</span>
           <h1 className="game-header-title">{thema.naam}</h1>
@@ -87,7 +88,7 @@ export default function BegrijpendLezen({ onBack, addBriefgeld, addCuruntie, sta
 
   return (
     <div className="game-screen game-screen-center">
-      <button className="back-btn" onClick={onBack}>← Menu</button>
+      <TerugKnop onClick={onBack} />
       <div className="game-header">
         <span className="game-header-icon" style={{ color: '#06D6A0' }}>📚</span>
         <h1 className="game-header-title">Begrijpend Lezen</h1>

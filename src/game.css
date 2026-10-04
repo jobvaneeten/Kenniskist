@@ -1,28 +1,31 @@
-/* ── Screen ─────────────────────────────── */
+/* Gedeelde schermopbouw voor alle menu's en oefeningen: één achtergrond,
+   één kop, één kaartstijl. Kleuren en maten komen uit theme.css. */
+
+/* ── Scherm ─────────────────────────────── */
 .game-screen {
   width: 100vw;
   min-height: 100vh;
-  background: #0d0d1a url('/achtergrond.png') center / cover no-repeat fixed;
+  background: var(--kk-bg) url('/achtergrond.png') center / cover no-repeat fixed;
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 88px 24px 60px;
-  font-family: 'Nunito', sans-serif;
-  color: #fff;
+  font-family: var(--kk-body);
+  color: var(--kk-text);
   position: relative;
   overflow-x: hidden;
 }
 
-/* Ambient glow layers (langzaam bewegende aurora) */
+/* Langzaam bewegend noorderlicht, gelijk aan het hoofdmenu */
 .game-screen::before {
   content: '';
   position: fixed;
   inset: -20%;
   background:
-    radial-gradient(ellipse 50% 42% at 14% 14%, rgba(232,67,147,0.12) 0%, transparent 58%),
-    radial-gradient(ellipse 46% 40% at 86% 18%, rgba(124,58,237,0.12) 0%, transparent 58%),
-    radial-gradient(ellipse 52% 46% at 84% 86%, rgba(6,214,160,0.09) 0%, transparent 58%),
-    radial-gradient(ellipse 48% 42% at 12% 86%, rgba(56,189,248,0.09) 0%, transparent 58%);
+    radial-gradient(ellipse 50% 42% at 14% 14%, rgba(255,47,142,0.10) 0%, transparent 58%),
+    radial-gradient(ellipse 46% 40% at 86% 18%, rgba(124,58,237,0.14) 0%, transparent 58%),
+    radial-gradient(ellipse 52% 46% at 84% 86%, rgba(45,212,191,0.08) 0%, transparent 58%),
+    radial-gradient(ellipse 48% 42% at 12% 86%, rgba(56,189,248,0.08) 0%, transparent 58%);
   z-index: 0;
   pointer-events: none;
   animation: gs-aurora 20s ease-in-out infinite alternate;
@@ -32,17 +35,6 @@
   50%  { transform: translate3d(2%,-2%,0) scale(1.07) rotate(2deg); filter: hue-rotate(16deg); }
   100% { transform: translate3d(-2%,2%,0) scale(1.04) rotate(-2deg); filter: hue-rotate(-10deg); }
 }
-/* fijne sterren-stippen */
-.game-screen::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background-image: radial-gradient(rgba(255,255,255,0.5) 1px, transparent 1px);
-  background-size: 44px 44px;
-  opacity: 0.03;   /* de pixel-achtergrond heeft al sterren */
-  z-index: 0;
-  pointer-events: none;
-}
 
 .game-screen > * { position: relative; z-index: 1; }
 
@@ -51,126 +43,125 @@
   justify-content: safe center;
 }
 
-/* ── Header ─────────────────────────────── */
+/* ── Kop: icoon-tegel, titel, ondertitel ─── */
 .game-header {
+  --kk-accent: var(--kk-primary-hi);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 36px;
+  gap: var(--kk-s2);
+  margin-bottom: var(--kk-s6);
   text-align: center;
 }
 .game-header-icon {
-  font-size: 3.8rem;
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--kk-r-lg);
+  font-size: 2rem;
   line-height: 1;
-  filter: drop-shadow(0 0 24px rgba(124,58,237,0.5)) drop-shadow(0 4px 12px rgba(0,0,0,0.5));
-  margin-bottom: 4px;
-  animation: gs-float 4s ease-in-out infinite;
+  color: var(--kk-accent);
+  background: color-mix(in srgb, var(--kk-accent) 16%, rgba(10,10,30,0.6));
+  border: 1px solid color-mix(in srgb, var(--kk-accent) 40%, transparent);
+  box-shadow: 0 0 28px color-mix(in srgb, var(--kk-accent) 30%, transparent);
+  margin-bottom: var(--kk-s2);
 }
-@keyframes gs-float {
-  0%,100% { transform: translateY(0) rotate(-4deg); }
-  50%     { transform: translateY(-8px) rotate(4deg); }
-}
+.game-header-icon svg { width: 34px; height: 34px; }
 .game-header-title {
-  font-family: var(--kk-head);
-  font-size: 2.9rem;
-  font-weight: 800;
-  letter-spacing: -0.5px;
-  background: linear-gradient(100deg, #fff 0%, #ffe9a8 30%, #fff 50%, #d6c4ff 70%, #fff 100%);
-  background-size: 220% auto;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  text-shadow: none;
-  animation: gs-shine 5s linear infinite;
+  font: var(--kk-fw-bold) var(--kk-fs-2xl)/1.1 var(--kk-head);
+  color: var(--kk-text);
+  letter-spacing: -0.3px;
+  text-shadow: 0 0 24px var(--kk-primary-glow), 0 2px 10px rgba(0,0,0,0.4);
+  margin: 0;
 }
-@keyframes gs-shine { to { background-position: 220% center; } }
 .game-header-sub {
-  font-size: 0.9rem;
-  color: rgba(255,255,255,0.6);   /* beter leesbaar (contrast) */
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  font-size: var(--kk-fs-sm);
+  color: var(--kk-text-soft);
+  font-weight: var(--kk-fw-bold);
+  letter-spacing: 0.06em;
   text-transform: uppercase;
+  margin: 0;
 }
 
-/* ── Year grid (5 cards) ─────────────────── */
+/* ── Gedeelde kaartstijl ──────────────────
+   Alle keuzekaarten (groep, vak, tool, blok, spel, thema) zien er hetzelfde uit:
+   donker glas, dunne rand, accentstreep in de vakkleur, licht op bij hover. */
+.year-card, .subject-card, .mode-card, .blok-card, .free-game-card {
+  --kk-accent: var(--kk-primary-hi);
+  position: relative;
+  overflow: hidden;
+  font-family: inherit;
+  color: var(--kk-text);
+  cursor: pointer;
+  background: rgba(14, 12, 34, 0.72);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--kk-border);
+  box-shadow: var(--kk-shadow);
+  transition: transform var(--kk-dur) var(--kk-ease), border-color var(--kk-dur), box-shadow var(--kk-dur), background var(--kk-dur);
+  opacity: 0;
+  animation: gs-cardin 0.45s ease forwards;
+}
+.year-card:hover, .subject-card:hover, .mode-card:hover, .blok-card:hover:not(:disabled), .free-game-card:hover {
+  background: rgba(24, 20, 52, 0.85);
+  border-color: color-mix(in srgb, var(--kk-accent) 60%, transparent);
+  box-shadow: var(--kk-shadow), 0 0 28px color-mix(in srgb, var(--kk-accent) 28%, transparent);
+}
+.subject-card:hover, .mode-card:hover, .blok-card:hover:not(:disabled), .free-game-card:hover { transform: translateY(-4px); }
+.year-card:active, .subject-card:active, .mode-card:active, .blok-card:active, .free-game-card:active { transform: scale(0.98); }
+.year-card:focus-visible, .subject-card:focus-visible, .mode-card:focus-visible, .blok-card:focus-visible, .free-game-card:focus-visible {
+  outline: none;
+  box-shadow: var(--kk-focus-ring);
+}
+/* accentstreep bovenaan */
+.subject-card::before, .mode-card::before, .blok-card::before, .free-game-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--kk-accent);
+  opacity: 0.85;
+}
+
+.year-card:nth-child(1), .subject-card:nth-child(1), .mode-card:nth-child(1), .blok-card:nth-child(1), .free-game-card:nth-child(1) { animation-delay: 0.03s; }
+.year-card:nth-child(2), .subject-card:nth-child(2), .mode-card:nth-child(2), .blok-card:nth-child(2), .free-game-card:nth-child(2) { animation-delay: 0.08s; }
+.year-card:nth-child(3), .subject-card:nth-child(3), .mode-card:nth-child(3), .blok-card:nth-child(3), .free-game-card:nth-child(3) { animation-delay: 0.13s; }
+.year-card:nth-child(4), .subject-card:nth-child(4), .mode-card:nth-child(4), .blok-card:nth-child(4), .free-game-card:nth-child(4) { animation-delay: 0.18s; }
+.year-card:nth-child(n+5), .subject-card:nth-child(n+5), .mode-card:nth-child(n+5), .blok-card:nth-child(n+5), .free-game-card:nth-child(n+5) { animation-delay: 0.23s; }
+@keyframes gs-cardin { from { opacity: 0; } to { opacity: 1; } }
+
+/* ── Groepenlijst ────────────────────────── */
 .year-grid {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--kk-s3);
   width: 100%;
   max-width: 440px;
 }
-
 .year-card {
+  --kk-accent: var(--yc);
   display: flex;
   align-items: center;
-  gap: 0;
   width: 100%;
   padding: 0;
-  border: 1.5px solid rgba(255,255,255,0.07);
-  border-radius: 20px;
-  cursor: pointer;
-  font-family: inherit;
-  color: #fff;
-  background: linear-gradient(135deg,
-    color-mix(in srgb, var(--yc) 30%, #111128),
-    color-mix(in srgb, var(--yd) 22%, #0d0d1a)
-  );
-  box-shadow: 0 4px 20px rgba(0,0,0,0.35),
-              inset 0 1px 0 rgba(255,255,255,0.1);
-  transition: transform 0.18s cubic-bezier(.34,1.56,.64,1), box-shadow 0.18s, border-color 0.18s;
-  overflow: hidden;
-  position: relative;
-  opacity: 0;
-  transform: translateY(16px);
-  animation: gs-cardIn 0.45s cubic-bezier(.34,1.56,.64,1) forwards;
+  border-left: 4px solid var(--kk-accent);
+  border-radius: var(--kk-r-lg);
 }
-/* Stagger: kaarten verschijnen na elkaar */
-.year-card:nth-child(1) { animation-delay: 0.04s; }
-.year-card:nth-child(2) { animation-delay: 0.09s; }
-.year-card:nth-child(3) { animation-delay: 0.14s; }
-.year-card:nth-child(4) { animation-delay: 0.19s; }
-.year-card:nth-child(5) { animation-delay: 0.24s; }
-@keyframes gs-cardIn { to { opacity: 1; transform: translateY(0); } }
-
-/* colour stripe on left */
-.year-card::before {
-  content: '';
-  position: absolute;
-  left: 0; top: 0; bottom: 0;
-  width: 4px;
-  background: var(--yc);
-  opacity: 0.8;
-}
-
-.year-card:hover {
-  transform: translateX(8px);
-  border-color: color-mix(in srgb, var(--yc) 50%, transparent);
-  box-shadow: 0 8px 32px color-mix(in srgb, var(--yc) 30%, rgba(0,0,0,0.4)),
-              inset 0 1px 0 rgba(255,255,255,0.15);
-}
-.year-card:active { transform: scale(0.98); }
-
+.year-card:hover { transform: translateX(6px); }
 .year-badge {
-  padding: 22px 18px 22px 28px;
-  font-size: 0.7rem;
-  font-weight: 900;
+  padding: 22px 12px 22px 22px;
+  font-size: var(--kk-fs-xs);
+  font-weight: var(--kk-fw-black);
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--yc);
-  opacity: 0.9;
-  min-width: 92px;
+  color: var(--kk-accent);
+  min-width: 84px;
   text-align: right;
 }
 .year-num {
-  font-family: var(--kk-head);
-  font-size: 3.1rem;
-  font-weight: 800;
-  line-height: 1;
+  font: var(--kk-fw-bold) 3rem/1 var(--kk-head);
   padding: 14px 16px;
-  color: #fff;
-  text-shadow: 0 3px 12px rgba(0,0,0,0.4);
+  color: var(--kk-text);
 }
 .year-tags {
   flex: 1;
@@ -181,469 +172,208 @@
   padding: 8px 0;
 }
 .year-tag {
-  font-size: 0.6rem;
-  font-weight: 800;
-  padding: 3px 8px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--yc) 14%, transparent);
-  border: 1px solid color-mix(in srgb, var(--yc) 40%, transparent);
-  color: color-mix(in srgb, var(--yc) 85%, #fff);
+  font-size: 0.68rem;
+  font-weight: var(--kk-fw-bold);
+  padding: 3px 9px;
+  border-radius: var(--kk-r-pill);
+  background: color-mix(in srgb, var(--kk-accent) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--kk-accent) 35%, transparent);
+  color: color-mix(in srgb, var(--kk-accent) 80%, #fff);
   white-space: nowrap;
 }
-.year-tag-soon {
-  background: rgba(255,255,255,0.05);
-  border-color: rgba(255,255,255,0.15);
-  color: rgba(255,255,255,0.4);
-}
+.year-tag-soon { background: var(--kk-surface); border-color: var(--kk-border); color: var(--kk-text-faint); }
 .year-arrow {
-  padding: 22px 24px;
-  font-size: 1.1rem;
-  color: var(--yc);
-  opacity: 0.5;
-  transition: transform 0.18s, opacity 0.18s;
+  display: grid;
+  padding: 22px 20px;
+  color: var(--kk-text-faint);
+  transition: transform var(--kk-dur), color var(--kk-dur);
 }
-.year-card:hover .year-arrow { transform: translateX(4px); opacity: 1; }
+.year-arrow svg { width: 22px; height: 22px; }
+.year-card:hover .year-arrow { transform: translateX(4px); color: var(--kk-accent); }
 
-/* ── Subject grid (2×2) ─────────────────── */
+/* ── Vakken (2 kolommen) ─────────────────── */
 .subject-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 14px;
+  gap: var(--kk-s4);
   width: 100%;
   max-width: 520px;
 }
-
 .subject-card {
+  --kk-accent: var(--sc);
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  gap: 10px;
-  padding: 16px 16px 20px;
-  border: 1.5px solid color-mix(in srgb, var(--sc) 25%, transparent);
-  border-radius: 22px;
-  cursor: pointer;
-  font-family: inherit;
-  color: #fff;
-  background: linear-gradient(150deg,
-    color-mix(in srgb, var(--sc) 15%, #111128),
-    color-mix(in srgb, var(--sd) 10%, #0d0d1a)
-  );
-  box-shadow: 0 4px 20px rgba(0,0,0,0.35),
-              inset 0 1px 0 rgba(255,255,255,0.07);
-  transition: transform 0.18s cubic-bezier(.34,1.56,.64,1), box-shadow 0.18s, border-color 0.18s;
-  position: relative;
-  overflow: hidden;
-  opacity: 0;
-  transform: translateY(16px);
-  animation: gs-cardIn 0.45s cubic-bezier(.34,1.56,.64,1) forwards;
-}
-.subject-card:nth-child(1) { animation-delay: 0.04s; }
-.subject-card:nth-child(2) { animation-delay: 0.09s; }
-.subject-card:nth-child(3) { animation-delay: 0.14s; }
-.subject-card:nth-child(4) { animation-delay: 0.19s; }
-.subject-card:nth-child(5) { animation-delay: 0.24s; }
-.subject-card:nth-child(6) { animation-delay: 0.29s; }
-.subject-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, var(--sc), transparent);
-  opacity: 0.9;
-}
-.subject-card:hover {
-  transform: translateY(-6px);
-  border-color: color-mix(in srgb, var(--sc) 55%, transparent);
-  box-shadow: 0 14px 40px color-mix(in srgb, var(--sc) 22%, rgba(0,0,0,0.5)),
-              inset 0 1px 0 rgba(255,255,255,0.12);
-}
-.subject-card:active { transform: scale(0.97); }
-
-.subject-emoji {
-  font-size: 2.8rem;
-  line-height: 1;
-  filter: drop-shadow(0 3px 8px rgba(0,0,0,0.4));
+  gap: var(--kk-s2);
+  padding: var(--kk-s4) var(--kk-s4) var(--kk-s5);
+  border-radius: var(--kk-r-lg);
 }
 .subject-label {
-  font-family: var(--kk-head);
-  font-size: 1.05rem;
-  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: var(--kk-s2);
+  font: var(--kk-fw-bold) 1.15rem/1.2 var(--kk-head);
   text-align: center;
-  color: color-mix(in srgb, var(--sc) 90%, #fff);
+  margin-top: var(--kk-s1);
 }
+.subject-label svg { width: 20px; height: 20px; color: var(--kk-accent); }
 .subject-tag {
-  font-size: 0.68rem;
-  font-weight: 700;
+  font-size: var(--kk-fs-xs);
+  font-weight: var(--kk-fw-bold);
   color: var(--kk-text-faint);
   letter-spacing: 0.06em;
   text-transform: uppercase;
+  text-align: center;
 }
 
-/* ── Mode selection ─────────────────────── */
+/* ── Toolkaarten ─────────────────────────── */
 .mode-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 220px));
+  gap: var(--kk-s4);
   width: 100%;
-  max-width: 680px;
+  max-width: 720px;
   justify-content: center;
 }
 .mode-card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  padding: 16px 16px 22px;
-  border-radius: 22px;
-  border: 1.5px solid rgba(255,255,255,0.1);
-  background: rgba(255,255,255,0.04);
-  cursor: pointer;
-  font-family: inherit;
-  color: #fff;
-  transition: transform 0.18s cubic-bezier(.34,1.56,.64,1), border-color 0.18s, background 0.18s;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.3),
-              inset 0 1px 0 rgba(255,255,255,0.07);
+  gap: var(--kk-s2);
+  padding: var(--kk-s4) var(--kk-s4) var(--kk-s5);
+  border-radius: var(--kk-r-lg);
 }
-.mode-card:hover {
-  transform: translateY(-6px);
-  border-color: rgba(255,210,63,0.6);
-  background: rgba(255,210,63,0.07);
-  box-shadow: 0 14px 40px rgba(255,210,63,0.15), 0 4px 20px rgba(0,0,0,0.35);
+.mode-emoji { font-size: 2.6rem; line-height: 1; }
+/* Icoon-tegel bovenaan een kaart (vak, map, status) */
+.mode-icoon {
+  width: 52px; height: 52px;
+  display: grid; place-items: center;
+  border-radius: var(--kk-r-md);
+  color: var(--kk-accent);
+  background: color-mix(in srgb, var(--kk-accent) 16%, transparent);
 }
-.mode-card:active { transform: scale(0.97); }
-.mode-emoji { font-size: 3rem; line-height: 1; }
-.mode-name  { font-family: var(--kk-head); font-size: 1.15rem; font-weight: 700; text-align: center; max-width: 100%; line-height: 1.15; overflow-wrap: break-word; word-break: break-word; }
-.mode-desc  { font-size: 0.78rem; color: var(--kk-text-soft); font-weight: 600; text-align: center; }
+.mode-icoon svg { width: 28px; height: 28px; }
+.mode-name  { font: var(--kk-fw-bold) 1.15rem/1.15 var(--kk-head); text-align: center; max-width: 100%; overflow-wrap: break-word; word-break: break-word; margin-top: var(--kk-s1); }
+.mode-desc  { font-size: var(--kk-fs-sm); color: var(--kk-text-soft); font-weight: var(--kk-fw-normal); text-align: center; }
 /* Weektaak-opdracht die opnieuw gemaakt moet worden (zie migratie 0010) */
 .wt-opnieuw {
   margin-top: 6px;
   padding: 3px 10px;
-  border-radius: 999px;
-  background: rgba(255,110,90,0.16);
-  border: 1px solid rgba(255,110,90,0.55);
-  color: #ffd0c6;
-  font-size: 0.72rem;
-  font-weight: 800;
+  border-radius: var(--kk-r-pill);
+  background: var(--kk-error-soft);
+  border: 1px solid color-mix(in srgb, var(--kk-error) 55%, transparent);
+  color: #fecdd3;
+  font-size: var(--kk-fs-xs);
+  font-weight: var(--kk-fw-bold);
   text-align: center;
 }
 
-/* ── Begrijpend Lezen: thema-kaarten ─────── */
-.bl-thema-grid { flex-wrap: wrap; justify-content: center; }
-.bl-thema-card {
-  flex: 0 1 230px;
-  max-width: 260px;
-  padding: 24px 18px 20px;
-  border-color: color-mix(in srgb, var(--bl-kleur, #06D6A0) 35%, rgba(255,255,255,0.1));
-  background: linear-gradient(165deg, color-mix(in srgb, var(--bl-kleur, #06D6A0) 16%, transparent), rgba(255,255,255,0.02));
-}
-.bl-thema-card:hover {
-  border-color: color-mix(in srgb, var(--bl-kleur, #06D6A0) 70%, transparent);
-  background: linear-gradient(165deg, color-mix(in srgb, var(--bl-kleur, #06D6A0) 26%, transparent), rgba(255,255,255,0.03));
-  box-shadow: 0 14px 38px color-mix(in srgb, var(--bl-kleur, #06D6A0) 22%, transparent), 0 4px 20px rgba(0,0,0,0.35);
-}
-.bl-thema-emoji {
-  font-size: 3rem; line-height: 1;
-  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.45));
-}
-.bl-thema-go {
-  margin-top: 4px;
-  font-size: 0.72rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase;
-  color: var(--bl-kleur, #06D6A0);
+/* Voorbeeldregel op een kaart ("23 × 4 = ?") */
+.vb-line {
+  font-size: var(--kk-fs-xs);
+  font-weight: var(--kk-fw-bold);
+  font-style: italic;
+  color: var(--kk-text-faint);
+  text-align: center;
+  padding: 4px 10px;
+  border-radius: var(--kk-r-sm);
+  border: 1px dashed var(--kk-border);
 }
 
-/* ── Spellingblok-grid ────────────── */
+/* Beloning-chips */
+.reward-chips { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.reward-chip {
+  font-size: var(--kk-fs-xs);
+  font-weight: var(--kk-fw-bold);
+  padding: 3px 10px;
+  border-radius: var(--kk-r-pill);
+  color: var(--kk-gold);
+  background: rgba(255,210,63,0.1);
+  border: 1px solid rgba(255,210,63,0.35);
+}
+.reward-chip.brief { color: #86efac; background: var(--kk-success-soft); border-color: color-mix(in srgb, var(--kk-success) 45%, transparent); }
+
+/* ── Begrijpend Lezen: thema-kaarten ─────── */
+.bl-thema-grid { flex-wrap: wrap; justify-content: center; }
+.bl-thema-card { --kk-accent: var(--bl-kleur, var(--kk-vak-lezen)); }
+.bl-thema-emoji { font-size: 2.6rem; line-height: 1; }
+.bl-thema-go {
+  margin-top: 4px;
+  font-size: var(--kk-fs-xs); font-weight: var(--kk-fw-bold); letter-spacing: 0.05em; text-transform: uppercase;
+  color: var(--kk-accent);
+}
+
+/* ── Spellingblokken ─────────────────────── */
 .ta-section-title {
   width: 100%;
   max-width: 480px;
   margin: 26px 0 12px;
   font-size: 1rem;
-  font-weight: 900;
+  font-weight: var(--kk-fw-black);
   letter-spacing: 0.04em;
-  color: #CE93D8;
+  color: var(--kk-vak-spelling);
 }
 .blok-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: var(--kk-s3);
   width: 100%;
-  max-width: 460px;
+  max-width: 680px;
 }
 .blok-card {
-  position: relative;
-  overflow: hidden;
+  --kk-accent: var(--kk-vak-spelling);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 9px;
-  padding: 20px 8px 16px;
-  border-radius: 18px;
-  border: 1.5px solid rgba(255,255,255,0.1);
-  background: linear-gradient(160deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 6px 18px rgba(0,0,0,0.25);
-  cursor: pointer;
-  font-family: inherit;
-  color: #fff;
-  transition: transform 0.18s cubic-bezier(.34,1.56,.64,1), border-color 0.18s, box-shadow 0.18s, background 0.18s;
+  gap: var(--kk-s2);
+  padding: var(--kk-s4) var(--kk-s3) var(--kk-s4);
+  border-radius: var(--kk-r-lg);
 }
-.blok-card:hover {
-  transform: translateY(-5px);
-  border-color: rgba(206,147,216,0.6);
-  box-shadow: 0 14px 32px rgba(155,77,202,0.28), inset 0 1px 0 rgba(255,255,255,0.12);
-}
-.blok-card:active { transform: scale(0.96); }
+.blok-card:not(.ready)::before { opacity: 0.25; }
 .blok-card:disabled { cursor: default; opacity: 0.5; }
-.blok-card.ready {
-  border-color: rgba(206,147,216,0.7);
-  background: linear-gradient(160deg, rgba(206,147,216,0.24), rgba(155,77,202,0.10));
-  box-shadow: 0 8px 22px rgba(155,77,202,0.25), inset 0 1px 0 rgba(255,255,255,0.14);
-}
-/* accent-streepje bovenaan bij beschikbare blokken */
-.blok-card.ready::before {
-  content: '';
-  position: absolute; top: 0; left: 18%; right: 18%; height: 3px;
-  border-radius: 0 0 4px 4px;
-  background: linear-gradient(90deg, transparent, #e6b0f5, transparent);
-}
-.blok-num { font-size: 1.05rem; font-weight: 900; letter-spacing: 0.2px; z-index: 1; line-height: 1.15; text-align: center; max-width: 100%; overflow-wrap: anywhere; hyphens: auto; }
-.blok-card.ready .blok-num {
-  background: linear-gradient(180deg, #ffffff, #f0d6f8);
-  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
-}
+.blok-num { font: var(--kk-fw-bold) 1.1rem/1.15 var(--kk-head); text-align: center; max-width: 100%; overflow-wrap: anywhere; hyphens: auto; }
 .blok-tag {
-  font-size: 0.6rem; font-weight: 800; letter-spacing: 0.02em; text-align: center;
-  padding: 3px 9px; border-radius: 99px; z-index: 1;
-  background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.45);
+  font-size: var(--kk-fs-xs); font-weight: var(--kk-fw-bold); text-align: center;
+  padding: 3px 9px; border-radius: var(--kk-r-pill);
+  background: var(--kk-surface); color: var(--kk-text-faint);
 }
-.blok-card.ready .blok-tag { background: rgba(206,147,216,0.22); color: #f3d6fb; }
+.blok-card.ready .blok-tag { background: color-mix(in srgb, var(--kk-accent) 18%, transparent); color: color-mix(in srgb, var(--kk-accent) 70%, #fff); }
 
-/* glanzende veeg over beschikbare blokken + gefaseerde fade-in */
-.blok-card.ready::after {
-  content: ''; position: absolute; top: 0; bottom: 0; left: -65%; width: 45%;
-  background: linear-gradient(100deg, transparent, rgba(255,255,255,0.22), transparent);
-  transform: skewX(-18deg); pointer-events: none; animation: gs-sweep 5s ease-in-out infinite; z-index: 2;
-}
-.blok-card { opacity: 0; animation: gs-cardin 0.5s ease forwards; }
-.blok-card:nth-child(1){animation-delay:.04s}
-.blok-card:nth-child(2){animation-delay:.09s}
-.blok-card:nth-child(3){animation-delay:.14s}
-.blok-card:nth-child(4){animation-delay:.19s}
-.blok-card:nth-child(5){animation-delay:.24s}
-.blok-card:nth-child(6){animation-delay:.29s}
-.blok-card:nth-child(7){animation-delay:.34s}
-.blok-card:nth-child(8){animation-delay:.39s}
-
-@media (max-width: 520px) {
-  .blok-grid { grid-template-columns: repeat(2, 1fr); }
-}
-
-/* ── Free games section ─────────────────── */
+/* ── Vrije spellen ───────────────────────── */
 .free-games-section {
   width: 100%;
-  max-width: 440px;
-  margin-top: 28px;
+  max-width: 720px;
+  margin-top: var(--kk-s6);
 }
 .free-games-label {
-  font-size: 0.7rem;
-  font-weight: 900;
+  font-size: var(--kk-fs-xs);
+  font-weight: var(--kk-fw-black);
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.28);
+  color: var(--kk-text-faint);
   margin: 0 0 12px 6px;
   display: flex;
   align-items: center;
   gap: 8px;
 }
-.free-games-label::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: rgba(255,255,255,0.08);
-}
+.free-games-label::after { content: ''; flex: 1; height: 1px; background: var(--kk-border); }
 .free-games-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: var(--kk-s3);
 }
 .free-game-card {
+  --kk-accent: var(--kk-vak-spel);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 12px 12px 16px;
-  border-radius: 18px;
-  border: 1.5px solid rgba(255,210,63,0.2);
-  background: rgba(255,210,63,0.04);
-  cursor: pointer;
-  font-family: inherit;
-  color: #fff;
-  transition: transform 0.18s cubic-bezier(.34,1.56,.64,1), border-color 0.18s, background 0.18s;
-  flex: 1;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+  gap: var(--kk-s2);
+  padding: var(--kk-s3) var(--kk-s3) var(--kk-s4);
+  border-radius: var(--kk-r-lg);
 }
-.free-game-card:hover {
-  transform: translateY(-4px);
-  border-color: rgba(255,210,63,0.55);
-  background: rgba(255,210,63,0.1);
-  box-shadow: 0 10px 32px rgba(255,210,63,0.15), 0 4px 16px rgba(0,0,0,0.3);
-}
-.free-game-card:active { transform: scale(0.97); }
-.free-game-emoji { font-size: 2rem; line-height: 1; }
-.free-game-name  { font-family: var(--kk-head); font-size: 0.95rem; font-weight: 700; text-align: center; }
-.free-game-desc  { font-size: 0.72rem; color: var(--kk-text-soft); font-weight: 600; text-align: center; }
-
-/* ── Game placeholder ───────────────────── */
-.game-placeholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 14px;
-  background: rgba(255,255,255,0.03);
-  border: 1.5px solid rgba(255,255,255,0.08);
-  border-radius: 28px;
-  padding: 52px 40px;
-  max-width: 400px;
-  text-align: center;
-  box-shadow: 0 24px 64px rgba(0,0,0,0.45),
-              inset 0 1px 0 rgba(255,255,255,0.06);
-}
-.gp-emoji { font-size: 4rem; line-height: 1; }
-.gp-title { font-family: var(--kk-head); font-size: 1.85rem; font-weight: 800; margin: 0; letter-spacing: -0.3px; }
-.gp-sub   { font-size: 0.85rem; color: var(--kk-text-faint); font-weight: 700; margin: 0; text-transform: uppercase; letter-spacing: 0.08em; }
-.gp-soon-badge {
-  background: rgba(255,255,255,0.06);
-  border: 1.5px solid rgba(255,255,255,0.14);
-  border-radius: 999px;
-  padding: 8px 22px;
-  font-size: 0.85rem;
-  font-weight: 900;
-  letter-spacing: 0.04em;
-  color: rgba(255,255,255,0.5);
-}
-.gp-desc {
-  font-size: 0.88rem;
-  color: rgba(255,255,255,0.4);
-  line-height: 1.7;
-  margin: 0;
-}
-
-/* ── Back button (shared) ───────────────── */
-.back-btn {
-  position: fixed;
-  top: 16px;
-  left: 16px;
-  z-index: 100;
-  padding: 9px 18px;
-  border-radius: 14px;
-  border: 1.5px solid rgba(255,255,255,0.1);
-  background: rgba(10,10,30,0.75);
-  color: rgba(255,255,255,0.8);
-  font-family: inherit;
-  font-size: 0.88rem;
-  font-weight: 800;
-  cursor: pointer;
-  backdrop-filter: blur(12px);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
-  transition: background 0.15s, transform 0.1s, border-color 0.15s, color 0.15s;
-  letter-spacing: 0.01em;
-}
-.back-btn:hover {
-  background: rgba(255,255,255,0.1);
-  border-color: rgba(255,255,255,0.22);
-  color: #fff;
-  transform: translateX(-2px);
-}
-.back-btn:active { transform: scale(0.96); }
-
-/* ── Glans + entree-animaties (spectaculair) ───────────────────────────── */
-.mode-card, .free-game-card { position: relative; overflow: hidden; }
-
-/* glanzende veeg die over de kaarten schiet */
-.year-card::after, .subject-card::after, .mode-card::after, .free-game-card::after {
-  content: '';
-  position: absolute;
-  top: 0; bottom: 0; left: -65%;
-  width: 45%;
-  background: linear-gradient(100deg, transparent, rgba(255,255,255,0.28), transparent);
-  transform: skewX(-18deg);
-  pointer-events: none;
-  animation: gs-sweep 5s ease-in-out infinite;
-  z-index: 2;
-}
-.subject-card:nth-child(2)::after { animation-delay: 0.6s; }
-.subject-card:nth-child(3)::after { animation-delay: 1.2s; }
-.subject-card:nth-child(4)::after { animation-delay: 1.8s; }
-.year-card:nth-child(2)::after { animation-delay: 0.4s; }
-.year-card:nth-child(3)::after { animation-delay: 0.8s; }
-.year-card:nth-child(4)::after { animation-delay: 1.2s; }
-.year-card:nth-child(5)::after { animation-delay: 1.6s; }
-.free-game-card:nth-child(2)::after { animation-delay: 0.7s; }
-.free-game-card:nth-child(3)::after { animation-delay: 1.4s; }
-.free-game-card:nth-child(4)::after { animation-delay: 2.1s; }
-@keyframes gs-sweep {
-  0%, 62%   { left: -65%; }
-  88%, 100% { left: 135%; }
-}
-
-/* zachte entree (faden) — alleen opacity zodat hover-transform vrij blijft */
-.year-card, .subject-card, .mode-card, .free-game-card {
-  opacity: 0;
-  animation: gs-cardin 0.5s ease forwards;
-}
-.year-card:nth-child(1), .subject-card:nth-child(1), .mode-card:nth-child(1), .free-game-card:nth-child(1) { animation-delay: 0.04s; }
-.year-card:nth-child(2), .subject-card:nth-child(2), .mode-card:nth-child(2), .free-game-card:nth-child(2) { animation-delay: 0.10s; }
-.year-card:nth-child(3), .subject-card:nth-child(3), .free-game-card:nth-child(3) { animation-delay: 0.16s; }
-.year-card:nth-child(4), .subject-card:nth-child(4), .free-game-card:nth-child(4) { animation-delay: 0.22s; }
-.year-card:nth-child(5) { animation-delay: 0.28s; }
-@keyframes gs-cardin {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-
-/* emoji's iets levendiger */
-.subject-emoji, .mode-emoji, .free-game-emoji {
-  animation: gs-bob 3.5s ease-in-out infinite;
-}
-@keyframes gs-bob {
-  0%,100% { transform: translateY(0); }
-  50%     { transform: translateY(-4px); }
-}
-
-/* ── iPad / mobile responsive ──────────────── */
-@media (max-width: 600px) {
-  .game-screen { padding: 72px 12px 40px; }
-  .game-header-icon  { font-size: 2.6rem; }
-  .game-header-title { font-size: 2rem; }
-  .year-grid { max-width: 100%; }
-  .year-num  { font-size: 2.4rem; }
-  .year-badge { min-width: 72px; padding: 18px 12px 18px 22px; font-size: 0.65rem; }
-  .subject-grid { max-width: 100%; gap: 10px; }
-  .subject-card { padding: 24px 12px 20px; }
-  .subject-emoji { font-size: 2.2rem; }
-  .subject-label { font-size: 0.9rem; }
-  .mode-grid { flex-direction: column; max-width: 100%; }
-  .mode-card { padding: 14px 14px 18px; }
-  .free-games-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-  .free-game-card { padding: 10px 10px 14px; }
-  .free-game-emoji { font-size: 1.6rem; }
-  .year-tags { display: none; }
-  .game-placeholder { padding: 36px 24px; }
-  .gp-emoji { font-size: 3rem; }
-  .gp-title { font-size: 1.5rem; }
-}
-
-/* ── Focus-ringen voor toetsenbord-navigatie ── */
-.year-card:focus-visible, .subject-card:focus-visible, .mode-card:focus-visible, .back-btn:focus-visible {
-  outline: 3px solid #FFD23F;
-  outline-offset: 3px;
-}
-
-/* ── Rustige modus ── */
-@media (prefers-reduced-motion: reduce) {
-  .game-screen::before, .game-header-icon, .game-header-title { animation: none !important; }
-  .year-card, .subject-card { animation-duration: 0.01s !important; }
-}
+.free-game-name  { font: var(--kk-fw-bold) 1rem/1.2 var(--kk-head); text-align: center; }
+.free-game-desc  { font-size: var(--kk-fs-xs); color: var(--kk-text-soft); font-weight: var(--kk-fw-normal); text-align: center; }
 
 /* ── Game-thumbnails (pixel-art scenes) ── */
 .fg-img {
@@ -651,41 +381,84 @@
   width: 100%;
   aspect-ratio: 16 / 9;
   object-fit: cover;
-  border-radius: 12px;
-  border: 1.5px solid rgba(255,255,255,0.15);
-  box-shadow: 0 3px 12px rgba(0,0,0,0.35);
-  transition: transform 0.2s cubic-bezier(.34,1.56,.64,1);
+  border-radius: var(--kk-r-md);
+  border: 1px solid var(--kk-border);
+  transition: transform var(--kk-dur) var(--kk-ease);
 }
-.free-game-card:hover .fg-img { transform: scale(1.05) rotate(-1deg); }
+.free-game-card:hover .fg-img { transform: scale(1.04); }
 
+/* ── "Komt binnenkort" ───────────────────── */
+.game-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--kk-s3);
+  background: rgba(14, 12, 34, 0.72);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--kk-border);
+  border-radius: var(--kk-r-lg);
+  padding: var(--kk-s7) var(--kk-s6);
+  max-width: 400px;
+  text-align: center;
+  box-shadow: var(--kk-shadow-lg);
+}
+.gp-emoji { font-size: 3rem; line-height: 1; color: var(--kk-text-faint); }
+.gp-emoji svg { width: 48px; height: 48px; }
+.gp-title { font: var(--kk-fw-bold) var(--kk-fs-xl)/1.2 var(--kk-head); margin: 0; color: var(--kk-text); }
+.gp-sub   { font-size: var(--kk-fs-sm); color: var(--kk-text-faint); font-weight: var(--kk-fw-bold); margin: 0; text-transform: uppercase; letter-spacing: 0.08em; }
+.gp-soon-badge {
+  background: var(--kk-surface);
+  border: 1px solid var(--kk-border-strong);
+  border-radius: var(--kk-r-pill);
+  padding: 6px 18px;
+  font-size: var(--kk-fs-sm);
+  font-weight: var(--kk-fw-black);
+  color: var(--kk-text-soft);
+}
+.gp-desc { font-size: var(--kk-fs-sm); color: var(--kk-text-soft); line-height: 1.6; margin: 0; }
+
+/* ── Weektaak ───────────────────────────── */
 /* Weektaak als mapjes: de leerkracht zet opdrachten klaar per weektaak, dus de
    leerling ziet eerst de weektaak en daarna pas wat erin zit. */
-.wt-map .mode-emoji { font-size: 2.6rem; }
-.wt-map-datum {
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: var(--kk-text-soft);
-  opacity: 0.75;
-}
+.wt-map-datum { font-size: var(--kk-fs-xs); font-weight: var(--kk-fw-bold); color: var(--kk-text-faint); }
 
 /* Speciaal voor mij: Taken / Doelen */
 .svm-tabs { display: flex; gap: 10px; justify-content: center; margin-top: 14px; }
 .svm-tab {
-  padding: 10px 22px;
-  border-radius: 999px;
-  border: 1.5px solid rgba(255,255,255,0.15);
-  background: rgba(255,255,255,0.05);
-  color: rgba(255,255,255,0.75);
+  min-height: var(--kk-tap);
+  padding: 0 22px;
+  border-radius: var(--kk-r-pill);
+  border: 1px solid var(--kk-border-strong);
+  background: var(--kk-surface);
+  color: var(--kk-text-soft);
   font-family: inherit;
   font-size: 0.95rem;
-  font-weight: 800;
+  font-weight: var(--kk-fw-bold);
   cursor: pointer;
-  transition: background 0.18s, border-color 0.18s, color 0.18s;
+  transition: background var(--kk-dur), border-color var(--kk-dur), color var(--kk-dur);
 }
-.svm-tab:hover { border-color: rgba(255,210,63,0.5); color: #fff; }
-.svm-tab.actief {
-  background: rgba(255,210,63,0.16);
-  border-color: rgba(255,210,63,0.75);
-  color: #fff;
-  box-shadow: 0 0 18px rgba(255,210,63,0.25);
+.svm-tab:hover { border-color: var(--kk-primary-hi); color: var(--kk-text); }
+.svm-tab.actief { background: var(--kk-primary); border-color: var(--kk-primary); color: var(--kk-text); box-shadow: var(--kk-glow-sm); }
+
+/* ── Telefoon ───────────────────────────── */
+@media (max-width: 600px) {
+  .game-screen { padding: 76px 12px 40px; }
+  .game-header-title { font-size: var(--kk-fs-xl); }
+  .year-grid { max-width: 100%; }
+  .year-num  { font-size: 2.4rem; }
+  .year-badge { min-width: 72px; padding: 18px 10px 18px 18px; }
+  .year-tags { display: none; }
+  .subject-grid { max-width: 100%; gap: 10px; }
+  .subject-card { padding: 14px 10px 18px; }
+  .subject-label { font-size: 1rem; }
+  .mode-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 100%; gap: 10px; }
+  .mode-card { padding: 12px 10px 16px; }
+  .free-games-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .game-placeholder { padding: 36px 24px; }
+}
+
+/* ── Rustige modus ── */
+@media (prefers-reduced-motion: reduce) {
+  .game-screen::before { animation: none !important; }
+  .year-card, .subject-card, .mode-card, .blok-card, .free-game-card { animation-duration: 0.01s !important; }
 }

@@ -1,3 +1,4 @@
+import { TerugKnop } from '../ui/index.jsx'
 // Gedeeld eindscherm voor tools die via gebruikOpdracht.js rapporteren.
 // Gebruikt alleen game.css-klassen (al geladen via toolRender.jsx) — geen
 // eigen stylesheet nodig.
@@ -14,7 +15,7 @@ export default function OpdrachtKlaarScherm({ goed, aantal, opslaanMislukt, onBa
           ⚠️ Je resultaat kon niet worden opgeslagen — laat dit scherm zien.
         </p>
       )}
-      <button className="back-btn" onClick={onBack}>← Terug naar weektaak</button>
+      <TerugKnop onClick={onBack} />
     </div>
   )
 }

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useSessie } from './lib/sessie.jsx'
 import './login.css'
+import { Knop, TerugKnop, Feedback, Icoon } from './ui/index.jsx'
 
 // soort ligt vast aan het portaal waar je vandaan komt (/leerlingportaal of
 // /leerkrachtenportaal) — geen tabje om te wisselen, dus je logt hier alleen
@@ -43,20 +44,9 @@ export default function Login({ soort, onBack, onGast }) {
 
   return (
     <div className="login-scherm">
-      <div className="login-stars" aria-hidden="true">
-        {Array.from({ length: 22 }, (_, i) => (
-          <span key={i} className="login-star" style={{
-            left: `${(i * 43 + 6) % 100}%`,
-            top: `${(i * 61 + 9) % 100}%`,
-            animationDelay: `${(i * 0.29) % 4}s`,
-            animationDuration: `${3 + (i % 4)}s`,
-            '--o': 0.15 + (i % 5) * 0.08,
-          }} />
-        ))}
-      </div>
 
       <div className="login-kaart">
-        {onBack && <button type="button" className="login-terug" onClick={onBack}>← Terug</button>}
+        {onBack && <TerugKnop vast={false} onClick={onBack} />}
 
         <div className="login-logo-ring">
           <img className="login-logo" src="/logo-rond.png" alt="Kenniskist" />
@@ -65,20 +55,20 @@ export default function Login({ soort, onBack, onGast }) {
 
         {modus === 'verzonden' ? (
           <>
-            <p className="login-subtitel"><span className="login-subtitel-icoon">📬</span>Check je e-mail</p>
+            <p className="login-subtitel"><Icoon naam="info" />Check je e-mail</p>
             <p className="login-hint">
               Als <strong>{email}</strong> bij een leerkrachtaccount hoort, staat er een linkje in je inbox om een nieuw wachtwoord te kiezen.
             </p>
-            <button type="button" className="login-terug" style={{ alignSelf: 'center', paddingTop: 18 }} onClick={() => setModus('inloggen')}>← Terug naar inloggen</button>
+            <Knop variant="subtiel" icoon="terug" className="login-link" onClick={() => setModus('inloggen')}>Terug naar inloggen</Knop>
           </>
         ) : modus === 'vergeten' ? (
           <>
-            <p className="login-subtitel"><span className="login-subtitel-icoon">🔑</span>Wachtwoord vergeten</p>
+            <p className="login-subtitel"><Icoon naam="slot" />Wachtwoord vergeten</p>
             <form onSubmit={verstuurResetlink} className="login-formulier">
               <label className="login-label">
                 E-mailadres
                 <input
-                  className="login-input"
+                  className="kk-invoer"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -87,17 +77,17 @@ export default function Login({ soort, onBack, onGast }) {
                   autoFocus
                 />
               </label>
-              {foutmelding && <p className="login-fout">⚠️ {foutmelding}</p>}
-              <button type="submit" className="login-knop" disabled={bezig}>
-                {bezig ? 'Bezig…' : 'Stuur resetlink →'}
-              </button>
+              {foutmelding && <div className="login-fout"><Feedback soort="fout">{foutmelding}</Feedback></div>}
+              <Knop type="submit" variant="primair" breed icoonRechts="verder" disabled={bezig}>
+                {bezig ? 'Bezig…' : 'Stuur resetlink'}
+              </Knop>
             </form>
-            <button type="button" className="login-terug" style={{ alignSelf: 'center', paddingTop: 14 }} onClick={() => { setModus('inloggen'); setFoutmelding('') }}>← Terug naar inloggen</button>
+            <Knop variant="subtiel" icoon="terug" className="login-link" onClick={() => { setModus('inloggen'); setFoutmelding('') }}>Terug naar inloggen</Knop>
           </>
         ) : (
           <>
             <p className="login-subtitel">
-              <span className="login-subtitel-icoon">{soort === 'leerling' ? '🎒' : '🧑‍🏫'}</span>
+              <Icoon naam={soort === 'leerling' ? 'spel' : 'klembord'} />
               {soort === 'leerling' ? 'Inloggen als leerling' : 'Inloggen als leerkracht'}
             </p>
 
@@ -107,7 +97,7 @@ export default function Login({ soort, onBack, onGast }) {
                   <label className="login-label">
                     Klascode
                     <input
-                      className="login-input"
+                      className="kk-invoer"
                       value={klascode}
                       onChange={(e) => setKlascode(e.target.value)}
                       placeholder="bv. linde7"
@@ -117,7 +107,7 @@ export default function Login({ soort, onBack, onGast }) {
                   <label className="login-label">
                     Gebruikersnaam
                     <input
-                      className="login-input"
+                      className="kk-invoer"
                       value={gebruikersnaam}
                       onChange={(e) => setGebruikersnaam(e.target.value)}
                       autoComplete="username"
@@ -129,7 +119,7 @@ export default function Login({ soort, onBack, onGast }) {
                 <label className="login-label">
                   E-mailadres
                   <input
-                    className="login-input"
+                    className="kk-invoer"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -141,7 +131,7 @@ export default function Login({ soort, onBack, onGast }) {
               <label className="login-label">
                 Wachtwoord
                 <input
-                  className="login-input"
+                  className="kk-invoer"
                   type="password"
                   value={wachtwoord}
                   onChange={(e) => setWachtwoord(e.target.value)}
@@ -149,25 +139,25 @@ export default function Login({ soort, onBack, onGast }) {
                   required
                 />
               </label>
-              {foutmelding && <p className="login-fout">⚠️ {foutmelding}</p>}
-              <button type="submit" className="login-knop" disabled={bezig}>
-                {bezig ? 'Bezig…' : 'Inloggen →'}
-              </button>
+              {foutmelding && <div className="login-fout"><Feedback soort="fout">{foutmelding}</Feedback></div>}
+              <Knop type="submit" variant="primair" breed icoonRechts="verder" disabled={bezig}>
+                {bezig ? 'Bezig…' : 'Inloggen'}
+              </Knop>
             </form>
 
             {soort === 'leerling' ? (
               <>
                 <p className="login-hint">Vraag je klascode, gebruikersnaam en wachtwoord aan je juf of meester.</p>
                 {onGast && (
-                  <button type="button" className="login-terug" style={{ alignSelf: 'center', paddingTop: 14 }} onClick={onGast}>
-                    Oefenen zonder account (niet bewaard) →
-                  </button>
+                  <Knop variant="subtiel" icoonRechts="verder" className="login-link" onClick={onGast}>
+                    Oefenen zonder account (niet bewaard)
+                  </Knop>
                 )}
               </>
             ) : (
-              <button type="button" className="login-terug" style={{ alignSelf: 'center', paddingTop: 14 }} onClick={() => { setModus('vergeten'); setFoutmelding('') }}>
+              <Knop variant="subtiel" className="login-link" onClick={() => { setModus('vergeten'); setFoutmelding('') }}>
                 Wachtwoord vergeten?
-              </button>
+              </Knop>
             )}
           </>
         )}

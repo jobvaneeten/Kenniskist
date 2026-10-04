@@ -27,22 +27,23 @@ import BegrijpendLezen from './games/BegrijpendLezen'
 import TopoOefenen from './games/TopoOefenen'
 import MenuScene from './MenuScenes'
 import VrijSpelenBadge from './VrijSpelenBadge.jsx'
+import { TerugKnop, Icoon } from './ui/index.jsx'
 import './game.css'
 
 const YEARS = [
-  { num: 4, color: '#4FC3F7', dark: '#0d6ea3' },
-  { num: 5, color: '#06D6A0', dark: '#04a077' },
-  { num: 6, color: '#CE93D8', dark: '#8e3fa8' },
-  { num: 7, color: '#FFD23F', dark: '#c09800' },
-  { num: 8, color: '#FF6B6B', dark: '#c03030' },
+  { num: 4, color: 'var(--kk-vak-taal)' },
+  { num: 5, color: 'var(--kk-vak-lezen)' },
+  { num: 6, color: 'var(--kk-vak-spelling)' },
+  { num: 7, color: 'var(--kk-gold)' },
+  { num: 8, color: 'var(--kk-error)' },
 ]
 
 const SUBJECTS = [
-  { key: 'taal',       label: 'Taal',            emoji: '📖', color: '#4FC3F7', dark: '#0d6ea3', scene: 'taal',       vb: '"Enorm" betekent: heel groot of heel klein?' },
-  { key: 'spelling',   label: 'Spelling',         emoji: '✏️', color: '#CE93D8', dark: '#8e3fa8', scene: 'spelling',   vb: 'ik loop → hij ...?' },
-  { key: 'rekenen',    label: 'Rekenen',          emoji: '🔢', color: '#FFD23F', dark: '#c09800', scene: 'rekenen',    vb: '23 × 4 = ?' },
-  { key: 'begrijpend', label: 'Begrijpend Lezen', emoji: '📚', color: '#06D6A0', dark: '#04a077', scene: 'begrijpend', vb: 'Lees de tekst & beantwoord de vragen' },
-  { key: 'topo',       label: 'Topografie',       emoji: '🗺️', color: '#f59e0b', dark: '#b45309', scene: 'begrijpend', vb: 'Waar ligt Zweden? Wijs het aan!' },
+  { key: 'taal',       label: 'Taal',            icoon: 'boek',    color: 'var(--kk-vak-taal)',     scene: 'taal',       vb: '"Enorm" betekent: heel groot of heel klein?' },
+  { key: 'spelling',   label: 'Spelling',         icoon: 'potlood', color: 'var(--kk-vak-spelling)', scene: 'spelling',   vb: 'ik loop → hij ...?' },
+  { key: 'rekenen',    label: 'Rekenen',          icoon: 'rekenen', color: 'var(--kk-vak-rekenen)',  scene: 'rekenen',    vb: '23 × 4 = ?' },
+  { key: 'begrijpend', label: 'Begrijpend Lezen', icoon: 'lezen',   color: 'var(--kk-vak-lezen)',    scene: 'begrijpend', vb: 'Lees de tekst & beantwoord de vragen' },
+  { key: 'topo',       label: 'Topografie',       icoon: 'kaart',   color: 'var(--kk-vak-topo)',     scene: 'topo',       vb: 'Waar ligt Zweden? Wijs het aan!' },
 ]
 
 // Beloningen per spel-type (chips op de kaarten)
@@ -74,20 +75,20 @@ const GAMES = {
 }
 
 const FREE_GAMES = [
-  { key: 'football',      emoji: '⚽', name: '1 tegen 1 voetbal', desc: 'Scoor tegen de computer of een vriend' },
-  { key: 'headsoccer',    emoji: '🥅', name: 'Supervoetbal',     desc: '1-tegen-1 met landen & special moves' },
-  { key: 'towerdefense',  emoji: '🏰', name: 'Tower Defense',   desc: 'Bouw torens & stop de vijanden' },
-  { key: 'jetpack',       emoji: '🚀', name: 'Jetpack',          desc: 'Vlieg zo ver mogelijk!' },
-  { key: 'astrokatapult', emoji: '🪐', name: 'Astro Katapult',   desc: 'Lanceer & versla de aliens in 50 levels!' },
-  { key: 'sterrenstroom', emoji: '🛸', name: 'Spacerunner',     desc: 'Ontwijk de asteroïden in de ruimte!' },
-  { key: 'doodlesprong',  emoji: '🦘', name: 'Doodle Sprong',   desc: 'Spring zo hoog mogelijk en shop nieuwe personages!' },
-  { key: 'meteoorvlucht', emoji: '☄️', name: 'Meteoorvlucht',   desc: 'Ren weg voor de meteoor en spaar voor 49 poppetjes!', img: '/scenes/games/meteoorvlucht.svg' },
-  { key: 'evolutie',      emoji: '🐨', name: 'Dier Evolutie',   desc: 'Voeg dieren samen en ontdek 24 evoluties per soort!' },
-  { key: 'brug',          emoji: '🌉', name: 'Brug Bouwen',     desc: 'Bouw bruggen in 22 levels — hout, weg, metaal & touw!' },
-  { key: 'hillclimb',     emoji: '🚗', name: 'Bergrijden',      desc: 'Race over heuvels, verzamel munten en upgrade je auto!' },
-  { key: 'fruitsabel',    emoji: '🍉', name: 'Fruitsabel',      desc: 'Snijd 60 seconden fruit doormidden — en koop scherpere sabels!', img: '/scenes/games/fruitsabel.svg' },
-  { key: 'sterrenveer',   emoji: '🌠', name: 'Sterrenveer',     desc: 'Ruimte-platformer: 16 levels, sterren verdienen en 12 personages kopen!', img: '/scenes/games/sterrenveer.svg' },
-  { key: 'graven',        emoji: '⛏️', name: 'Diepgravers',     desc: '8 aardlagen diep, 40 upgrades — maar doodgaan kost al je duiken!', img: '/scenes/games/graven.svg' },
+  { key: 'football',      name: '1 tegen 1 voetbal', desc: 'Scoor tegen de computer of een vriend' },
+  { key: 'headsoccer',    name: 'Supervoetbal',     desc: '1-tegen-1 met landen & special moves' },
+  { key: 'towerdefense',  name: 'Tower Defense',   desc: 'Bouw torens & stop de vijanden' },
+  { key: 'jetpack',       name: 'Jetpack',          desc: 'Vlieg zo ver mogelijk!' },
+  { key: 'astrokatapult', name: 'Astro Katapult',   desc: 'Lanceer & versla de aliens in 50 levels!' },
+  { key: 'sterrenstroom', name: 'Spacerunner',     desc: 'Ontwijk de asteroïden in de ruimte!' },
+  { key: 'doodlesprong',  name: 'Doodle Sprong',   desc: 'Spring zo hoog mogelijk en shop nieuwe personages!' },
+  { key: 'meteoorvlucht', name: 'Meteoorvlucht',   desc: 'Ren weg voor de meteoor en spaar voor 49 poppetjes!', img: '/scenes/games/meteoorvlucht.svg' },
+  { key: 'evolutie',      name: 'Dier Evolutie',   desc: 'Voeg dieren samen en ontdek 24 evoluties per soort!' },
+  { key: 'brug',          name: 'Brug Bouwen',     desc: 'Bouw bruggen in 22 levels — hout, weg, metaal & touw!' },
+  { key: 'hillclimb',     name: 'Bergrijden',      desc: 'Race over heuvels, verzamel munten en upgrade je auto!' },
+  { key: 'fruitsabel',    name: 'Fruitsabel',      desc: 'Snijd 60 seconden fruit doormidden — en koop scherpere sabels!', img: '/scenes/games/fruitsabel.svg' },
+  { key: 'sterrenveer',   name: 'Sterrenveer',     desc: 'Ruimte-platformer: 16 levels, sterren verdienen en 12 personages kopen!', img: '/scenes/games/sterrenveer.svg' },
+  { key: 'graven',        name: 'Diepgravers',     desc: '8 aardlagen diep, 40 upgrades — maar doodgaan kost al je duiken!', img: '/scenes/games/graven.svg' },
 ]
 
 function RewardChips({ rewards }) {
@@ -221,27 +222,27 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
   if (directGame === 'football') {
     return (
       <div className="game-screen game-screen-center">
-        <button className="back-btn" onClick={() => setDirectGame(null)}>← Menu</button>
+        <TerugKnop onClick={() => setDirectGame(null)} />
         <div className="game-header">
-          <span className="game-header-icon">⚽</span>
+          <span className="game-header-icon" style={{ '--kk-accent': 'var(--kk-vak-spel)' }}><Icoon naam="spel" /></span>
           <h1 className="game-header-title">1 tegen 1 voetbal</h1>
           <p className="game-header-sub">Kies een modus</p>
         </div>
         {loadToernooi() && (
           <button className="mode-card" style={{ maxWidth: 360, marginBottom: 14 }} onClick={() => setGameMode('resume')}>
-            <span className="mode-name">🏆 Verder met je toernooi</span>
+            <span className="mode-name">Verder met je toernooi</span>
             <span className="mode-desc">Speel de volgende ronde van je lopende toernooi</span>
           </button>
         )}
-        <div className="mode-grid">
+        <div className="mode-grid" style={{ '--kk-accent': 'var(--kk-vak-spel)' }}>
           <button className="mode-card" onClick={() => setGameMode('solo')}>
             <MenuScene name="solo" />
-            <span className="mode-name">🧑 1 Speler</span>
+            <span className="mode-name">1 speler</span>
             <span className="mode-desc">Jij tegen de computer</span>
           </button>
           <button className="mode-card" onClick={() => setGameMode('2player')}>
             <MenuScene name="duo" />
-            <span className="mode-name">👥 2 Spelers</span>
+            <span className="mode-name">2 spelers</span>
             <span className="mode-desc">Pijltjes vs WASD</span>
           </button>
         </div>
@@ -300,17 +301,17 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
       // keuzescherm: verhaaltjessommen of oefenen blok 9
       return (
         <div className="game-screen game-screen-center">
-          <button className="back-btn" onClick={() => setSubject(null)}>← Menu</button>
+          <TerugKnop onClick={() => setSubject(null)} />
           <div className="game-header">
-            <span className="game-header-icon" style={{ color: '#FFD23F' }}>🔢</span>
+            <span className="game-header-icon" style={{ '--kk-accent': 'var(--kk-vak-rekenen)' }}><Icoon naam="rekenen" /></span>
             <h1 className="game-header-title">Rekenen — Groep {year}</h1>
             <p className="game-header-sub">Wat wil je oefenen?</p>
           </div>
-          <div className="mode-grid">
+          <div className="mode-grid" style={{ '--kk-accent': 'var(--kk-vak-rekenen)' }}>
             {(year === 5 || year === 6) && (
               <button className="mode-card" onClick={() => setRekenKeuze('tafels')}>
-                <MenuScene name="blok9" />
-                <span className="mode-name">✖️ Tafels &amp; deelsommen</span>
+                <MenuScene name="tafels" />
+                <span className="mode-name">Tafels &amp; deelsommen</span>
                 <span className="mode-desc">Oefen de keer- en deelsommen</span>
                 <span className="vb-line">"7 × 8 = ?" en "56 : 8 = ?"</span>
                 <RewardChips rewards={['💵 briefgeld']} />
@@ -318,8 +319,8 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
             )}
             {year === 6 && (
               <button className="mode-card" onClick={() => setRekenKeuze('breuken')}>
-                <MenuScene name="blok9" />
-                <span className="mode-name">🍕 Breuken &amp; plaatjes</span>
+                <MenuScene name="breuken" />
+                <span className="mode-name">Breuken &amp; plaatjes</span>
                 <span className="mode-desc">Koppel de breuk aan het plaatje</span>
                 <span className="vb-line">Ronde taarten en langwerpige repen</span>
                 <RewardChips rewards={['💵 briefgeld']} />
@@ -327,8 +328,8 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
             )}
             {(year === 6 || year === 7) && (
               <button className="mode-card" onClick={() => setRekenKeuze('maten')}>
-                <MenuScene name="blok9" />
-                <span className="mode-name">📏 Maten omrekenen</span>
+                <MenuScene name="maten" />
+                <span className="mode-name">Maten omrekenen</span>
                 <span className="mode-desc">Lengte &amp; inhoud · 3 levels</span>
                 <span className="vb-line">"5 m = ? cm" · "2,5 m = ? cm"</span>
                 <RewardChips rewards={['💵 briefgeld']} />
@@ -336,31 +337,31 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
             )}
             {year === 7 && (
               <button className="mode-card" onClick={() => setRekenKeuze('denkvragen')}>
-                <MenuScene name="blok9" />
-                <span className="mode-name">💭 Denkvragen</span>
+                <MenuScene name="denkvragen" />
+                <span className="mode-name">Denkvragen</span>
                 <span className="mode-desc">Zoek de denkvraag van je les op</span>
                 <span className="vb-line">Geen som uitrekenen — uitleggen hoe je denkt</span>
               </button>
             )}
             {(year === 7 || year === 8) && (
               <button className="mode-card" onClick={() => setRekenKeuze('procenten')}>
-                <MenuScene name="blok9" />
-                <span className="mode-name">💯 Procenten · Breuken · Komma</span>
+                <MenuScene name="procenten" />
+                <span className="mode-name">Procenten · Breuken · Komma</span>
                 <span className="mode-desc">Sleep wat bij elkaar hoort</span>
                 <span className="vb-line">"25% = 1/4 = 0,25"</span>
                 <RewardChips rewards={['💵 briefgeld']} />
               </button>
             )}
             <button className="mode-card" onClick={() => setRekenKeuze('klok')}>
-              <MenuScene name="blok9" />
-              <span className="mode-name">🕒 Klokkijken</span>
+              <MenuScene name="klok" />
+              <span className="mode-name">Klokkijken</span>
               <span className="mode-desc">Analoog of digitaal · 4 levels</span>
               <span className="vb-line">"tien voor half vier" · "15:20"</span>
               <RewardChips rewards={['💵 briefgeld']} />
             </button>
             <button className="mode-card" onClick={() => setRekenKeuze('verhaal')}>
-              <MenuScene name="taal" />
-              <span className="mode-name">📖 Verhaaltjessommen</span>
+              <MenuScene name="verhaal" />
+              <span className="mode-name">Verhaaltjessommen</span>
               <span className="mode-desc">Redactiesommen op jouw niveau{year >= 6 ? ' (FS of S+)' : ''}</span>
               <span className="vb-line">Oefen per doel uit de leerlijn</span>
               <RewardChips rewards={['💵 briefgeld']} />
@@ -409,12 +410,12 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
       if (taSoonBlok !== null) {
         return (
           <div className="game-screen game-screen-center">
-            <button className="back-btn" onClick={() => setTaSoonBlok(null)}>← Terug</button>
+            <TerugKnop onClick={() => setTaSoonBlok(null)} />
             <div className="game-placeholder">
-              <span className="gp-emoji">✏️</span>
-              <h2 className="gp-title" style={{ color: '#CE93D8' }}>Spellingblok {taSoonBlok}</h2>
+              <span className="gp-emoji"><Icoon naam="slot" /></span>
+              <h2 className="gp-title">Spellingblok {taSoonBlok}</h2>
               <p className="gp-sub">Groep {year}</p>
-              <div className="gp-soon-badge">🚧 Komt binnenkort 🚧</div>
+              <div className="gp-soon-badge">Komt binnenkort</div>
               <p className="gp-desc">Dit blok is nog in aanbouw.<br />Check snel weer terug!</p>
             </div>
           </div>
@@ -427,23 +428,23 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
       if (spellingKeuze === 'nietww') {
         return (
           <div className="game-screen game-screen-center">
-            <button className="back-btn" onClick={() => setSpellingKeuze(null)}>← Terug</button>
+            <TerugKnop onClick={() => setSpellingKeuze(null)} />
             <div className="game-header">
-              <span className="game-header-icon" style={{ color: '#CE93D8' }}>✏️</span>
+              <span className="game-header-icon" style={{ '--kk-accent': 'var(--kk-vak-spelling)' }}><Icoon naam="potlood" /></span>
               <h1 className="game-header-title">Niet-werkwoordspelling</h1>
               <p className="game-header-sub">Hoe wil je oefenen?</p>
             </div>
-            <div className="mode-grid">
+            <div className="mode-grid" style={{ '--kk-accent': 'var(--kk-vak-spelling)' }}>
               <button className="mode-card" onClick={() => setSpellingKeuze('blokken')}>
-                <MenuScene name="spelling" />
-                <span className="mode-name">📕 Per blok oefenen</span>
+                <MenuScene name="dictee" />
+                <span className="mode-name">Per blok oefenen</span>
                 <span className="mode-desc">Oefen de woorden van een spellingblok</span>
                 <span className="vb-line">Blok 1 t/m 8 — dictee + dieren</span>
                 <RewardChips rewards={['💵 briefgeld']} />
               </button>
               <button className="mode-card" onClick={() => setSpellingKeuze('categorie')}>
-                <MenuScene name="taal" />
-                <span className="mode-name">🐾 Per categorie oefenen</span>
+                <MenuScene name="categorie" />
+                <span className="mode-name">Per categorie oefenen</span>
                 <span className="mode-desc">Kies een spellingregel en oefen alleen die woorden</span>
                 <span className="vb-line">"open lettergreep", "ei/ij", "verkleinwoord -je", ...</span>
                 <RewardChips rewards={['💵 briefgeld']} />
@@ -457,9 +458,9 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
       if (spellingKeuze === 'blokken') {
         return (
           <div className="game-screen game-screen-center">
-            <button className="back-btn" onClick={() => setSpellingKeuze('nietww')}>← Terug</button>
+            <TerugKnop onClick={() => setSpellingKeuze('nietww')} />
             <div className="game-header">
-              <span className="game-header-icon" style={{ color: '#CE93D8' }}>📕</span>
+              <span className="game-header-icon" style={{ '--kk-accent': 'var(--kk-vak-spelling)' }}><Icoon naam="boek" /></span>
               <h1 className="game-header-title">Per blok oefenen</h1>
               <p className="game-header-sub">Kies een spellingblok</p>
             </div>
@@ -472,9 +473,9 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
                     className={`blok-card${ready ? ' ready' : ''}`}
                     onClick={() => ready ? (setDicteeNr(b), setSpellingKeuze('dictee')) : setTaSoonBlok(b)}
                   >
-                    <MenuScene name="spelling" />
+                    <MenuScene name="dictee" />
                     <span className="blok-num">Blok {b}</span>
-                    <span className="blok-tag">{ready ? '✅ Dictee + dieren' : '🚧 binnenkort'}</span>
+                    <span className="blok-tag">{ready ? 'Dictee + dieren' : 'Binnenkort'}</span>
                   </button>
                 )
               })}
@@ -486,25 +487,25 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
       // Hoofdkeuze: werkwoordspelling of niet-werkwoordspelling
       return (
         <div className="game-screen game-screen-center">
-          <button className="back-btn" onClick={() => setSubject(null)}>← Menu</button>
+          <TerugKnop onClick={() => setSubject(null)} />
           <div className="game-header">
-            <span className="game-header-icon" style={{ color: '#CE93D8' }}>✏️</span>
+            <span className="game-header-icon" style={{ '--kk-accent': 'var(--kk-vak-spelling)' }}><Icoon naam="potlood" /></span>
             <h1 className="game-header-title">Spelling — Groep {year}</h1>
             <p className="game-header-sub">Wat wil je oefenen?</p>
           </div>
-          <div className="mode-grid">
+          <div className="mode-grid" style={{ '--kk-accent': 'var(--kk-vak-spelling)' }}>
             {hasWerkwoord && (
               <button className="mode-card" onClick={() => setSpellingKeuze('werkwoord')}>
                 <MenuScene name="spelling" />
-                <span className="mode-name">✒️ Werkwoordspelling</span>
+                <span className="mode-name">Werkwoordspelling</span>
                 <span className="mode-desc">Tegenwoordige tijd, verleden tijd & voltooid deelwoord</span>
                 <span className="vb-line">"ik vind → gisteren ... hij" en "lopen → hij heeft ...?"</span>
                 <RewardChips rewards={['💵 briefgeld']} />
               </button>
             )}
             <button className="mode-card" onClick={() => setSpellingKeuze('nietww')}>
-              <MenuScene name="taal" />
-              <span className="mode-name">📝 Niet-werkwoordspelling</span>
+              <MenuScene name="dictee" />
+              <span className="mode-name">Niet-werkwoordspelling</span>
               <span className="mode-desc">Per blok of per categorie oefenen</span>
               <span className="vb-line">Spellingblokken of een spellingregel</span>
               <RewardChips rewards={['💵 briefgeld']} />
@@ -528,12 +529,12 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
     const s = SUBJECTS.find(s => s.key === subject)
     return (
       <div className="game-screen game-screen-center">
-        <button className="back-btn" onClick={() => setSubject(null)}>← Menu</button>
+        <TerugKnop onClick={() => setSubject(null)} />
         <div className="game-placeholder">
-          <span className="gp-emoji">{s.emoji}</span>
-          <h2 className="gp-title" style={{ color: s.color }}>{s.label}</h2>
+          <span className="gp-emoji"><Icoon naam="slot" /></span>
+          <h2 className="gp-title">{s.label}</h2>
           <p className="gp-sub">Groep {year}</p>
-          <div className="gp-soon-badge">🚧 Komt binnenkort 🚧</div>
+          <div className="gp-soon-badge">Komt binnenkort</div>
           <p className="gp-desc">
             Het spel voor <strong>{s.label}</strong> groep {year} is in aanbouw.<br />
             Check snel weer terug!
@@ -548,9 +549,9 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
     const y = YEARS.find(y => y.num === year)
     return (
       <div className="game-screen">
-        <button className="back-btn" onClick={() => setYear(null)}>← Menu</button>
+        <TerugKnop onClick={() => setYear(null)} />
         <div className="game-header">
-          <span className="game-header-icon" style={{ color: y.color }}>📚</span>
+          <span className="game-header-icon" style={{ '--kk-accent': y.color }}><Icoon naam="boek" /></span>
           <h1 className="game-header-title">Groep {year}</h1>
           <p className="game-header-sub">Kies een vak</p>
         </div>
@@ -561,25 +562,25 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
               <button
                 key={s.key}
                 className="subject-card"
-                style={{ '--sc': s.color, '--sd': s.dark }}
+                style={{ '--sc': s.color }}
                 onClick={() => setSubject(s.key)}
               >
                 <MenuScene name={s.scene} />
-                <span className="subject-label">{s.emoji} {s.label}</span>
+                <span className="subject-label"><Icoon naam={s.icoon} />{s.label}</span>
                 <span className="subject-tag">
                   {game === 'tafels'
-                    ? '✖️ Tafels oefenen'
+                    ? 'Tafels oefenen'
                     : game === 'iep'
-                    ? '🚀 Verhaaltjessommen + blok 9 & 10'
+                    ? 'Verhaaltjessommen + blok 9 & 10'
                     : s.key === 'spelling'
-                    ? (game === 'werkwoord' ? '✒️ Werkwoord + spellingblok' : '📕 Spellingblokken')
+                    ? (game === 'werkwoord' ? 'Werkwoord + spellingblok' : 'Spellingblokken')
                     : game === 'taal'
-                    ? (year === 7 ? '📖 Taalverkennen + woordenschat' : '📖 Taalverkennen + toets')
+                    ? (year === 7 ? 'Taalverkennen + woordenschat' : 'Taalverkennen + toets')
                     : game === 'topo'
-                    ? '🗺️ Europa — kaart A'
+                    ? 'Europa — kaart A'
                     : game === 'begrijpend'
-                    ? '🏭 Duurzaam design'
-                    : '🚧 Komt binnenkort'}
+                    ? 'Duurzaam design'
+                    : 'Komt binnenkort'}
                 </span>
                 {(game || s.key === 'spelling') && <span className="vb-line">{s.vb}</span>}
                 {game && <RewardChips rewards={REWARDS[game]} />}
@@ -594,9 +595,9 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
   // Year selection
   return (
     <div className="game-screen">
-      <button className="back-btn" onClick={onBack}>← Menu</button>
+      <TerugKnop onClick={onBack} />
       <div className="game-header">
-        <span className="game-header-icon">🎮</span>
+        <span className="game-header-icon" style={{ '--kk-accent': 'var(--kk-vak-spel)' }}><Icoon naam="spel" /></span>
         <h1 className="game-header-title">Games</h1>
         <p className="game-header-sub">Kies jouw groep</p>
       </div>
@@ -604,12 +605,12 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
         {zichtbareJaren.map(y => {
           const tags = SUBJECTS
             .filter(s => GAMES[`${y.num}-${s.key}`])
-            .map(s => `${s.emoji} ${s.label}`)
+            .map(s => s.label)
           return (
             <button
               key={y.num}
               className="year-card"
-              style={{ '--yc': y.color, '--yd': y.dark }}
+              style={{ '--yc': y.color }}
               onClick={() => setYear(y.num)}
             >
               <span className="year-badge">Groep</span>
@@ -617,21 +618,21 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
               <span className="year-tags">
                 {tags.length
                   ? tags.map(t => <span key={t} className="year-tag">{t}</span>)
-                  : <span className="year-tag year-tag-soon">🚧 In aanbouw</span>}
+                  : <span className="year-tag year-tag-soon">In aanbouw</span>}
               </span>
-              <span className="year-arrow">→</span>
+              <span className="year-arrow"><Icoon naam="verder" /></span>
             </button>
           )
         })}
       </div>
 
       <div className="free-games-section">
-        <p className="free-games-label">🎮 Games</p>
+        <p className="free-games-label">Vrij spelen</p>
         <div className="free-games-grid">
           {FREE_GAMES.map(g => (
             <button key={g.key} className="free-game-card" onClick={() => setDirectGame(g.key)}>
               <img className="fg-img" src={g.img || `/scenes/games/${g.key}.png`} alt="" />
-              <span className="free-game-name">{g.emoji} {g.name}</span>
+              <span className="free-game-name">{g.name}</span>
               <span className="free-game-desc">{g.desc}</span>
               <RewardChips rewards={g.rewards} />
             </button>
