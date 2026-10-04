@@ -283,3 +283,8 @@
   transition: transform var(--kk-dur-fast), border-color var(--kk-dur), background var(--kk-dur);
 }
 .rs-keuze-btn:hover { transform: translateY(-2px); border-color: var(--kk-accent); background: color-mix(in srgb, var(--kk-accent) 12%, transparent); }
+
+/* Telefoon: de bovenste rij schuift onder de vaste saldo-pil, dus ruimte rechts. */
+@media (max-width: 600px) {
+  .rs-oefen-top { padding-right: 84px; }
+}
