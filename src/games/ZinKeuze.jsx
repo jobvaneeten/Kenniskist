@@ -120,7 +120,7 @@ function KeuzeOefening({ toolId, titel, vraag, volgende, hulp, beloning, aantal,
                 {uitleg.map(u => <p key={u} className="tv-feedback-uitleg">• {u}</p>)}
               </div>
             </div>
-            <Knop variant="primair" icoonRechts="verder" onClick={verder}>Volgende</Knop>
+            <Knop enter variant="primair" icoonRechts="verder" onClick={verder}>Volgende</Knop>
           </>
         )}
       </div>

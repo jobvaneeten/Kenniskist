@@ -481,7 +481,7 @@ function VraagKaart({ opgave, onNext, kaal = false }) {
           {somOk === false && <div className="rs-som-note">Je antwoord is goed. Je som klopte niet helemaal — kijk maar: {opgave.uitleg}</div>}
           {somOk === true && <div className="rs-som-note rs-som-ok">En je som klopt ook!</div>}
           <div className="rs-uitleg"><Icoon naam="lamp" />{opgave.uitleg}</div>
-          <Knop variant="primair" icoonRechts="verder" className="rs-verder-btn" onClick={() => onNext(true, ingevuld())}>Verder</Knop>
+          <Knop enter variant="primair" icoonRechts="verder" className="rs-verder-btn" onClick={() => onNext(true, ingevuld())}>Verder</Knop>
         </div>
       )}
 
@@ -490,7 +490,7 @@ function VraagKaart({ opgave, onNext, kaal = false }) {
           <div className="rs-jouw">Jouw antwoord: <b>{ingevuld() || '—'}</b></div>
           <span className="rs-feedback-kop"><Icoon naam="fout" />Het juiste antwoord is <b>{opgave.toon ?? `${toonAntwoord(opgave)}${heeftRest ? ` met rest ${opgave.rest}` : ''}`}</b>.</span>
           <div className="rs-uitleg"><Icoon naam="lamp" />{opgave.uitleg}</div>
-          <Knop variant="primair" icoonRechts="verder" className="rs-verder-btn" onClick={() => onNext(false, ingevuld())}>Volgende</Knop>
+          <Knop enter variant="primair" icoonRechts="verder" className="rs-verder-btn" onClick={() => onNext(false, ingevuld())}>Volgende</Knop>
         </div>
       )}
     </div>

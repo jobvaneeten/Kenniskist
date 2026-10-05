@@ -131,13 +131,13 @@ export default function BreukenPlaatjes({ onBack, addBriefgeld, addCuruntie, aan
       {phase === 'goed' && (
         <div className="bp-feedback bp-goed">
           <span className="rs-feedback-kop"><Icoon naam="goed" />Goed! Het is <b>{m}/{n}</b>.</span>
-          <Knop variant="primair" icoonRechts="verder" className="rs-verder-btn" onClick={verder}>Verder</Knop>
+          <Knop enter variant="primair" icoonRechts="verder" className="rs-verder-btn" onClick={verder}>Verder</Knop>
         </div>
       )}
       {phase === 'fout' && (
         <div className="bp-feedback bp-fout">
           <span className="rs-feedback-kop"><Icoon naam="fout" />Het juiste antwoord is <b>{m}/{n}</b> ({m} van de {n} delen gekleurd).</span>
-          <Knop variant="primair" icoonRechts="verder" className="rs-verder-btn" onClick={verder}>Volgende</Knop>
+          <Knop enter variant="primair" icoonRechts="verder" className="rs-verder-btn" onClick={verder}>Volgende</Knop>
         </div>
       )}
     </div>

@@ -96,7 +96,7 @@ function VraagKaart({ opgave, modus, level, onNext }) {
         <div className={`rs-feedback ${goed ? 'rs-goed' : 'rs-fout'}`}>
           <span className="rs-feedback-kop"><Icoon naam={goed ? 'goed' : 'fout'} />{goed ? 'Goed!' : <>Het goede antwoord is <b>{opgave.juist}</b>.</>}</span>
           <div className="rs-uitleg"><Icoon naam="lamp" />{opgave.uitleg}</div>
-          <Knop variant="primair" icoonRechts="verder" className="rs-verder-btn" onClick={() => onNext(goed)}>{goed ? 'Verder' : 'Volgende'}</Knop>
+          <Knop enter variant="primair" icoonRechts="verder" className="rs-verder-btn" onClick={() => onNext(goed)}>{goed ? 'Verder' : 'Volgende'}</Knop>
         </div>
       )}
     </div>

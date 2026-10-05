@@ -153,7 +153,7 @@ function VraagKaart({ opgave, onNext }) {
         <div className="rs-feedback rs-goed">
           <span className="rs-feedback-kop"><Icoon naam="goed" />Goed! {fmt(opgave.value)} {opgave.from} = {fmt(opgave.answer)} {opgave.to}</span>
           <div className="rs-uitleg"><Icoon naam="lamp" />{opgave.uitleg}</div>
-          <Knop variant="primair" icoonRechts="verder" className="rs-verder-btn" onClick={() => onNext(true)}>Verder</Knop>
+          <Knop enter variant="primair" icoonRechts="verder" className="rs-verder-btn" onClick={() => onNext(true)}>Verder</Knop>
         </div>
       )}
 
@@ -161,7 +161,7 @@ function VraagKaart({ opgave, onNext }) {
         <div className="rs-feedback rs-fout">
           <span className="rs-feedback-kop"><Icoon naam="fout" />Het juiste antwoord is <b>{fmt(opgave.answer)} {opgave.to}</b>.</span>
           <div className="rs-uitleg"><Icoon naam="lamp" />{opgave.uitleg}</div>
-          <Knop variant="primair" icoonRechts="verder" className="rs-verder-btn" onClick={() => onNext(false)}>Volgende</Knop>
+          <Knop enter variant="primair" icoonRechts="verder" className="rs-verder-btn" onClick={() => onNext(false)}>Volgende</Knop>
         </div>
       )}
     </div>

@@ -1,5 +1,6 @@
 // Gedeelde UI-componenten van de Kenniskist-huisstijl. Alleen tokens uit
 // src/theme.css; geen eigen kleuren per scherm.
+import { useEffect, useRef } from 'react'
 import '../theme.css'
 import './ui.css'
 
@@ -62,9 +63,30 @@ const cx = (...c) => c.filter(Boolean).join(' ')
 // ── Knop ──────────────────────────────────────────────────────────────
 // variant: primair | secundair | beloning | gevaar | subtiel
 // maat: sm | md | lg — icoon links, icoonRechts rechts, alleenIcoon = vierkant
-export function Knop({ variant = 'secundair', maat = 'md', icoon, icoonRechts, alleenIcoon, breed, className, children, ...rest }) {
+// enter: deze knop reageert ook op de Enter-toets, waar de focus ook staat
+// (bv. "Verder" na het nakijken: dan hoeft het kind niet naar de muis).
+// Typt iemand in een veld of staat de focus op een andere knop, dan blijft
+// Enter van dat veld of die knop.
+export function Knop({ variant = 'secundair', maat = 'md', icoon, icoonRechts, alleenIcoon, breed, className, children, enter, ...rest }) {
+  const ref = useRef(null)
+  useEffect(() => {
+    if (!enter) return
+    // De Enter die "Controleer" deed, mag niet meteen ook "Verder" doen: die
+    // toets was er al vóór deze knop verscheen.
+    const sinds = performance.now()
+    const opEnter = (e) => {
+      if (e.timeStamp < sinds) return
+      if (e.key !== 'Enter' || e.repeat || e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return
+      const doel = e.target
+      if (doel !== ref.current && doel?.closest?.('input, textarea, select, button, a, [contenteditable="true"]')) return
+      e.preventDefault()
+      ref.current?.click()
+    }
+    window.addEventListener('keydown', opEnter)
+    return () => window.removeEventListener('keydown', opEnter)
+  }, [enter])
   return (
-    <button type="button" {...rest}
+    <button type="button" ref={ref} {...rest}
       className={cx('kk-knop', `kk-knop--${variant}`, maat !== 'md' && `kk-knop--${maat}`,
         alleenIcoon && 'kk-knop--icoon', breed && 'kk-knop--breed', className)}>
       {icoon && <Icoon naam={icoon} />}
@@ -166,7 +188,7 @@ export function EindScherm({ titel = 'Klaar!', score, tekst, onVerder, verderTek
       {children}
       <div className="kk-knoppenrij">
         {onOpnieuw && <Knop variant="secundair" icoon="opnieuw" onClick={onOpnieuw}>Opnieuw</Knop>}
-        {onVerder && <Knop variant="primair" icoonRechts="verder" onClick={onVerder}>{verderTekst}</Knop>}
+        {onVerder && <Knop enter variant="primair" icoonRechts="verder" onClick={onVerder}>{verderTekst}</Knop>}
       </div>
     </section>
   )

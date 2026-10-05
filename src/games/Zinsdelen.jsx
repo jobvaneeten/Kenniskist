@@ -439,7 +439,7 @@ export default function Zinsdelen({
                   ))}
               </div>
             </div>
-            <Knop variant="primair" icoonRechts="verder" onClick={naZin}>Volgende zin</Knop>
+            <Knop enter variant="primair" icoonRechts="verder" onClick={naZin}>Volgende zin</Knop>
           </>
         )}
       </div>

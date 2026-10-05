@@ -181,7 +181,7 @@ function VraagKaart({ oef, onNext, eerstOnderwerp }) {
             <div className="ws-feedback ws-goed">
               <span className="ws-feedback-kop"><Icoon naam="goed" />Goed!</span>
               <div className="ws-uitleg"><Icoon naam="lamp" />{uitlegVoor(oef)}</div>
-              <Knop variant="primair" icoonRechts="verder" className="ws-verder-btn" onClick={() => onNext(true, input)}>Verder</Knop>
+              <Knop enter variant="primair" icoonRechts="verder" className="ws-verder-btn" onClick={() => onNext(true, input)}>Verder</Knop>
             </div>
           )}
 
@@ -189,7 +189,7 @@ function VraagKaart({ oef, onNext, eerstOnderwerp }) {
             <div className="ws-feedback ws-fout">
               <span className="ws-feedback-kop"><Icoon naam="fout" />Niet goed. Het juiste antwoord is <b>{oef.antwoord}</b>.</span>
               <div className="ws-uitleg"><Icoon naam="lamp" />{uitlegVoor(oef)}</div>
-              <Knop variant="primair" icoonRechts="verder" className="ws-verder-btn" onClick={() => onNext(false, input)}>Volgende</Knop>
+              <Knop enter variant="primair" icoonRechts="verder" className="ws-verder-btn" onClick={() => onNext(false, input)}>Volgende</Knop>
             </div>
           )}
         </>
