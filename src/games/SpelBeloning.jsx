@@ -83,6 +83,8 @@ const SPELLEN = [
   { key: 'fruitsabel', name: 'Fruitsabel',     desc: 'Snijd 60 seconden fruit',          img: '/scenes/games/fruitsabel.svg' },
   { key: 'sterrenveer', name: 'Sterrenveer',   desc: 'Speel 1 level',                    img: '/scenes/games/sterrenveer.svg' },
   { key: 'graven',     name: 'Diepgravers',    desc: 'Je krijgt 3 duiken',               img: '/scenes/games/graven.svg' },
+  { key: 'neongolf',   name: 'Neongolf',       desc: 'Speel 1 hole',                     img: '/scenes/games/neongolf.svg' },
+  { key: 'blokken',    name: 'Blokkenblitz',   desc: 'Speel 1 potje (max 4 minuten)',    img: '/scenes/games/blokkenblitz.svg' },
 ]
 
 export default function SpelBeloning({ title, sub, geld, addCuruntie, onDone }) {
@@ -117,6 +119,10 @@ export default function SpelBeloning({ title, sub, geld, addCuruntie, onDone }) 
   // resterende duiken meteen weg (dat is de hele opzet, zie het spel zelf).
   // Net als Fruitsabel eindigt het niet vanzelf: eerst upgraden, dan Verder.
   if (picked === 'graven')     return <IframeEmbed src="/graven/" title="Diepgravers" doneType="graven-gameover" hint="Je krijgt 3 duiken — daarna kun je upgraden en op Verder klikken" onDone={onDone} />
+  // Eén hole naar keuze; na de hole tik je op Klaar.
+  if (picked === 'neongolf')   return <IframeEmbed src="/neongolf/" title="Neongolf" doneType="neongolf-gameover" hint="Speel 1 hole — daarna tik je op Klaar" onDone={onDone} />
+  // Een potje kan lang duren als je goed bent: na 4 minuten ga je hoe dan ook verder.
+  if (picked === 'blokken')    return <IframeEmbed src="/blokkenblitz/" title="Blokkenblitz" doneType="blokkenblitz-gameover" seconds={240} hint="Speel 1 potje — na 4 minuten ga je vanzelf verder" onDone={onDone} />
 
   return (
     <div className="sb-screen">

@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Neongolf</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#eef3ff; --dim:#8f9bc4; --cyaan:#3ef0ff; --magenta:#ff4fa3; --goud:#ffc83d; --violet:#c06bff; --lime:#8cff5a;
+    --disp:'Russo One',system-ui,sans-serif; --body:'Outfit','Nunito',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;height:100%;overflow:hidden;background:#05060f;}
+  body{font-family:var(--body);color:var(--ink);user-select:none;-webkit-user-select:none;touch-action:none;}
+  canvas{position:fixed;inset:0;width:100%;height:100%;display:block;}
+
+  #hud{position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:5;display:none;gap:8px;pointer-events:none;}
+  #hud.aan{display:flex;}
+  .vak{background:rgba(10,12,32,.72);border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:5px 12px;
+       backdrop-filter:blur(8px);text-align:center;min-width:64px;}
+  .vak b{display:block;font-family:var(--disp);font-size:17px;font-variant-numeric:tabular-nums;white-space:nowrap;}
+  .vak span{display:block;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);}
+  #holenaam b{font-size:14px;}
+  #slagvak.krap b{color:#ff6b7d;}
+  @media (max-width:560px){ #hud{top:56px;} .vak{padding:4px 9px;} #holenaam b{font-size:12.5px;} }
+
+  .rondknop{position:fixed;z-index:20;width:42px;height:42px;border-radius:50%;display:none;align-items:center;justify-content:center;
+            color:var(--ink);background:rgba(10,12,32,.75);border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(8px);cursor:pointer;padding:0;}
+  .rondknop.aan{display:flex;}
+  .rondknop svg{width:20px;height:20px;}
+  #menuknop{top:8px;left:10px;}
+  #opnieuwknop{top:8px;right:60px;}
+  #geluid{top:8px;right:10px;display:flex;}
+  #terug{position:fixed;top:10px;left:10px;z-index:20;padding:9px 16px;font-size:14px;color:var(--ink);font-weight:800;
+         background:rgba(10,12,32,.75);border:1px solid rgba(255,255,255,.2);border-radius:999px;display:none;cursor:pointer;font-family:var(--body);}
+  #terug.aan{display:block;}
+  #melding{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:6;pointer-events:none;
+           font-size:13px;color:var(--dim);background:rgba(10,12,32,.65);padding:7px 14px;border-radius:999px;display:none;white-space:nowrap;}
+  #melding.aan{display:block;}
+
+  .scherm{position:fixed;inset:0;z-index:10;display:none;flex-direction:column;align-items:center;justify-content:flex-start;
+          gap:14px;padding:22px 16px 30px;overflow-y:auto;
+          background:radial-gradient(ellipse 70% 50% at 50% 15%,rgba(62,240,255,.16),transparent 70%),
+                     radial-gradient(ellipse 60% 45% at 50% 100%,rgba(192,107,255,.16),transparent 70%),rgba(5,6,15,.93);
+          backdrop-filter:blur(6px);}
+  .scherm.aan{display:flex;}
+  .scherm.midden{justify-content:center;}
+  h1{font-family:var(--disp);font-size:clamp(34px,9vw,58px);margin:8px 0 0;letter-spacing:.06em;text-transform:uppercase;text-align:center;
+     background:linear-gradient(100deg,var(--lime),#fff 45%,var(--cyaan));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+     filter:drop-shadow(0 0 22px rgba(62,240,255,.35));}
+  h2{font-family:var(--disp);font-size:clamp(26px,7vw,40px);margin:0;letter-spacing:.06em;text-transform:uppercase;text-align:center;}
+  .onder{color:var(--dim);margin:0;font-size:14.5px;text-align:center;max-width:44ch;line-height:1.5;}
+  .rij{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center;}
+  .munt{display:inline-flex;align-items:center;gap:6px;font-family:var(--disp);color:var(--goud);}
+  .munt::before{content:'';width:14px;height:14px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff3b0,#ffc83d 55%,#b8860b);box-shadow:0 0 10px rgba(255,200,61,.6);}
+  .ster{color:var(--goud);letter-spacing:2px;text-shadow:0 0 10px rgba(255,200,61,.6);}
+  .ster i{font-style:normal;color:rgba(255,255,255,.2);text-shadow:none;}
+
+  button{font-family:var(--body);font-weight:800;cursor:pointer;border-radius:999px;border:0;}
+  .knop{padding:14px 30px;font-size:17px;color:#071018;letter-spacing:.03em;
+        background:linear-gradient(135deg,var(--lime),#c6ff8c);box-shadow:0 10px 28px rgba(140,255,90,.28);transition:transform .12s;}
+  .knop:hover{transform:translateY(-2px);}
+  .knop2{padding:12px 22px;font-size:15px;color:var(--ink);background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);}
+  .knop2:hover{background:rgba(255,255,255,.15);}
+  .verborgen{display:none !important;}
+
+  .baan{width:100%;max-width:640px;border-radius:18px;padding:12px 14px 14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);}
+  .baankop{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;}
+  .baankop b{font-family:var(--disp);font-size:17px;letter-spacing:.08em;text-transform:uppercase;}
+  .baankop span{font-size:12.5px;color:var(--dim);}
+  .holes{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;}
+  @media (max-width:460px){.holes{grid-template-columns:repeat(3,1fr);}}
+  .hole{display:flex;flex-direction:column;align-items:center;gap:2px;padding:9px 4px 8px;border-radius:14px;color:var(--ink);
+        background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.14);font-family:var(--body);}
+  .hole b{font-family:var(--disp);font-size:20px;}
+  .hole small{font-size:10.5px;color:var(--dim);white-space:nowrap;}
+  .hole .ster{font-size:11px;}
+  .hole:disabled{opacity:.35;cursor:default;}
+  .hole.volgende{border-color:var(--lime);box-shadow:0 0 18px rgba(140,255,90,.25);}
+
+  #einde .groot{font-family:var(--disp);font-size:clamp(38px,11vw,64px);margin:0;letter-spacing:.04em;text-transform:uppercase;text-align:center;}
+  #einde .sterren{font-size:44px;letter-spacing:8px;}
+
+  .tabs{display:flex;gap:8px;}
+  .tab{padding:9px 18px;font-size:14px;color:var(--dim);background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);}
+  .tab.aan{color:#071018;background:linear-gradient(135deg,var(--lime),#c6ff8c);border-color:transparent;}
+  .lijst{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;width:100%;max-width:640px;}
+  .kaart{display:flex;flex-direction:column;align-items:center;gap:7px;padding:12px 10px;border-radius:16px;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.12);}
+  .kaart.gekozen{border-color:var(--lime);box-shadow:0 0 0 1px var(--lime) inset,0 0 22px rgba(140,255,90,.22);}
+  .kaart canvas{position:static;width:110px;height:56px;}
+  .kaart .naam{font-family:var(--disp);font-size:13.5px;letter-spacing:.06em;text-transform:uppercase;text-align:center;}
+  .kaart button{padding:8px 14px;font-size:13px;min-width:96px;}
+  .koop{color:#20140a;background:linear-gradient(135deg,var(--goud),#ffe08a);}
+  .koop:disabled{background:rgba(255,255,255,.08);color:#6f7899;cursor:default;}
+  .kies{color:var(--ink);background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);}
+  .kies.aan{color:#071018;background:linear-gradient(135deg,var(--lime),#c6ff8c);border-color:transparent;}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div id="hud">
+  <div class="vak" id="holenaam"><b id="h-naam">Hole 1</b><span id="h-baan">Neonpark</span></div>
+  <div class="vak"><b id="h-par">3</b><span>par</span></div>
+  <div class="vak" id="slagvak"><b id="h-slag">0</b><span>slagen</span></div>
+</div>
+<div id="melding">Sleep naar achteren om te mikken · laat los om te slaan</div>
+<button id="terug">‹ Menu</button>
+<button class="rondknop" id="menuknop" aria-label="Holes"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg></button>
+<button class="rondknop" id="opnieuwknop" aria-label="Hole opnieuw"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 12a8 8 0 1 0 2.5-5.8"/><path d="M4 4v5h5"/></svg></button>
+<button class="rondknop" id="geluid" aria-label="Geluid"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path id="golfje" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg></button>
+
+<div class="scherm aan" id="menu">
+  <h1>Neongolf</h1>
+  <p class="onder">Minigolf in het donker: 36 holes vol bumpers, portalen, molens, magneten en lasers. Sleep naar achteren om te mikken, laat los om te slaan.</p>
+  <div class="rij"><span class="ster" id="totster">★ 0</span><button class="knop2" id="naarwinkel">Winkel · <span class="munt" id="menumunten">0</span></button></div>
+  <div id="banen" style="display:flex;flex-direction:column;gap:12px;width:100%;align-items:center"></div>
+</div>
+
+<div class="scherm midden" id="einde">
+  <p class="groot" id="e-titel">Par</p>
+  <div class="sterren ster" id="e-sterren">★★★</div>
+  <p class="onder" id="e-regel"></p>
+  <p class="onder" id="e-munten"></p>
+  <div class="rij">
+    <button class="knop" id="e-volgende">Volgende hole</button>
+    <button class="knop verborgen" id="e-klaar">Klaar ✓</button>
+    <button class="knop2" id="e-opnieuw">Opnieuw</button>
+    <button class="knop2" id="e-menu">Alle holes</button>
+  </div>
+</div>
+
+<div class="scherm" id="winkel">
+  <h2>Winkel</h2>
+  <p class="onder">Je hebt <span class="munt" id="winkelmunten">0</span>. Munten verdien je met elke hole die je uitspeelt — en extra voor nieuwe sterren en een hole-in-one.</p>
+  <div class="tabs"><button class="tab aan" data-tab="bal">Ballen</button><button class="tab" data-tab="spoor">Sporen</button></div>
+  <div class="lijst" id="lijst"></div>
+  <button class="knop2" id="uitwinkel">Terug</button>
+</div>
+
+<script src="kern.js"></script>
+<script src="spel.js"></script>
+</body>
+</html>

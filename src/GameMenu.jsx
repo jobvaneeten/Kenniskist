@@ -11,6 +11,7 @@ import MeteoorvluchtGame from './games/MeteoorvluchtGame'
 import FruitsabelGame from './games/FruitsabelGame'
 import SterrenveerGame from './games/SterrenveerGame'
 import GraafGame from './games/GraafGame'
+import IframeSpel from './games/IframeSpel'
 import DierEvolutieGame from './games/DierEvolutieGame'
 import BrugBouwen from './games/BrugBouwen'
 import ProcentenBreuken from './games/ProcentenBreuken'
@@ -89,6 +90,8 @@ const FREE_GAMES = [
   { key: 'fruitsabel',    name: 'Fruitsabel',      desc: 'Snijd 60 seconden fruit doormidden — en koop scherpere sabels!', img: '/scenes/games/fruitsabel.svg' },
   { key: 'sterrenveer',   name: 'Sterrenveer',     desc: 'Ruimte-platformer: 16 levels, sterren verdienen en 12 personages kopen!', img: '/scenes/games/sterrenveer.svg' },
   { key: 'graven',        name: 'Diepgravers',     desc: '8 aardlagen diep, 40 upgrades — maar doodgaan kost al je duiken!', img: '/scenes/games/graven.svg' },
+  { key: 'neongolf',      name: 'Neongolf',        desc: 'Minigolf in 36 holes met portalen, magneten en lasers!', img: '/scenes/games/neongolf.svg' },
+  { key: 'blokkenblitz',  name: 'Blokkenblitz',    desc: "Leg blokken, speel rijen weg en bouw combo's!", img: '/scenes/games/blokkenblitz.svg' },
 ]
 
 function RewardChips({ rewards }) {
@@ -192,6 +195,14 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
 
   if (directGame === 'graven') {
     return vrij(<GraafGame onBack={onBack} />)
+  }
+
+  if (directGame === 'neongolf') {
+    return vrij(<IframeSpel src="/neongolf/" titel="Neongolf" terugType="neongolf-terug" onBack={onBack} />)
+  }
+
+  if (directGame === 'blokkenblitz') {
+    return vrij(<IframeSpel src="/blokkenblitz/" titel="Blokkenblitz" terugType="blokkenblitz-terug" achtergrond="#070816" onBack={onBack} />)
   }
 
 
