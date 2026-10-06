@@ -49,20 +49,13 @@ function buildReel(winner, pool) {
 
 function fmt(n) { return n.toLocaleString('nl-NL') }
 
-// ── Reel card icon: color swatch or team logo ─────────────────────
+// ── Reel card icon: color swatch ──────────────────────────────────
 function ReelIcon({ item }) {
   return <ItemSwatch item={item} className="lb-rc-swatch" />
 }
 
-// ── Win card icon: big swatch (colour / pattern / print / logo) ────
-function WinIcon({ item, rarity }) {
-  if (item.kind === 'model') {
-    return (
-      <div className={`lb-wc-logo-wrap lb-wl-${rarity}`}>
-        <img src={item.preview} className="lb-wc-logo" alt={item.label} />
-      </div>
-    )
-  }
+// ── Win card icon: big swatch (colour / pattern / print) ──────────
+function WinIcon({ item }) {
   return <ItemSwatch item={item} className="lb-wc-swatch" />
 }
 
@@ -519,7 +512,7 @@ export default function Shop({ briefgeld, addBriefgeld, unlockedColors, onUnlock
                   <div className={`lb-win-card lb-wc-${overlay.wonItem.rarity} ${r === 'legendary' || isUltra ? 'lb-wc-flip' : ''} ${isUltra ? 'lb-wc-chroma' : ''}`}>
                     {(r === 'legendary' || isUltra) && <div className="lb-wc-ultra-rays" />}
                     {r === 'epic' && <div className="lb-wc-epic-rays" />}
-                    <WinIcon item={overlay.wonItem} rarity={overlay.wonItem.rarity} />
+                    <WinIcon item={overlay.wonItem} />
                     <div className="lb-wc-name">{overlay.wonItem.label}</div>
 
                     {showEnd && (

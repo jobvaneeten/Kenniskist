@@ -27,7 +27,9 @@ const VAK_STIJL = {
 }
 const stijlVan = (toolId) => VAK_STIJL[TOOL_BY_ID[toolId]?.vak] ?? VAK_STIJL.taal
 
-const FONTS = 'https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Baloo+2:wght@600;700;800&display=swap'
+// Zelf gehost (geen Google). Volledige URL: het printvenster is about:blank,
+// daar zou een relatief pad nergens heen wijzen.
+const FONTS = `${window.location.origin}/fonts/fonts.css`
 
 // Eén stylesheet voor het voorbeeld én voor het printen. Maten in mm waar het
 // om schrijfruimte gaat: een kinderhand heeft zo'n 8 à 9 mm per regel nodig.

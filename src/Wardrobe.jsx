@@ -357,7 +357,7 @@ export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlay
     sun.intensity = 1.6
 
     SceneLoader.ImportMesh('', '/', 'Poppetje.glb', scene, (meshes) => {
-      // Store Poppetje's skeleton so extra meshes (Ajax shirt) can share it
+      // Store Poppetje's skeleton so extra meshes (shirt, broek, pet) can share it
       skeletonRef.current = scene.skeletons[0] ?? null
 
       // Store clothing mesh refs

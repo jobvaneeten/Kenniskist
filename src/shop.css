@@ -1044,33 +1044,6 @@
   100% { filter: none; }
 }
 
-/* Logo wraps in win card */
-.lb-wc-logo-wrap {
-  width: 90px; height: 90px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  z-index: 1;
-  flex-shrink: 0;
-}
-.lb-wl-ultra_legendary {
-  box-shadow: 0 0 0 4px rgba(255,215,0,0.6), 0 0 30px rgba(255,102,0,0.8);
-  animation: logoRingPulse 1s ease-in-out infinite;
-}
-@keyframes logoRingPulse {
-  0%,100% { box-shadow: 0 0 0 4px rgba(255,215,0,0.5), 0 0 30px rgba(255,102,0,0.7); }
-  50%      { box-shadow: 0 0 0 8px rgba(255,215,0,0.8), 0 0 50px rgba(255,102,0,1); }
-}
-.lb-wc-logo {
-  width: 90px; height: 90px;
-  border-radius: 50%;
-  object-fit: cover;
-  position: relative;
-  z-index: 1;
-}
-
 .lb-wc-swatch { width: 70px; height: 70px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.35); flex-shrink: 0; }
 .lb-wc-name   { font-size: 1.1rem; font-weight: 900; color: #fff; position: relative; z-index: 1; }
 

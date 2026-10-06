@@ -109,11 +109,11 @@ export function usesDonor(type, item) {
   return item.kind !== 'color' || ALWAYS_DONOR.has(type)
 }
 
-// For a print/pattern/model item: load the matching donor mesh (real UV),
+// For a print/pattern/texmodel item: load the matching donor mesh (real UV),
 // attach the character's skeleton, parent it like the plain slot, and bake the
 // generated texture (emoji print / pattern) onto it. `type` = shirt|broek|…
 export function loadClothingDonor(scene, mesh, skeleton, type, item, onReady) {
-  const file = (item.kind === 'model' || item.kind === 'texmodel')
+  const file = item.kind === 'texmodel'
     ? item.file
     : (type === 'shirt' ? SHIRT_DONOR : (DONOR[type] || SHIRT_DONOR))
   mesh.setEnabled(false)
@@ -144,7 +144,7 @@ export function loadClothingDonor(scene, mesh, skeleton, type, item, onReady) {
           if (mat.albedoColor !== undefined) { mat.albedoTexture = null; mat.albedoColor = pbrKleur(item.hex) }
           else if (mat.diffuseColor !== undefined) { mat.diffuseTexture = null; mat.diffuseColor = col }
         }
-      } else if (item.kind !== 'model') {
+      } else {
         applyGeneratedTexture(scene, g, type, item, '/' + file.replace(/^\//, ''))
       }
       g.setEnabled(true)

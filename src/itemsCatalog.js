@@ -4,14 +4,13 @@ import { skinPreview } from './skins'
 //   color   : flat colour              { kind:'color',   hex }
 //   pattern : procedural canvas texture { kind:'pattern', pattern, c1, c2 }
 //   print   : tiled emoji print         { kind:'print',   emoji, bg }
-//   model   : GLB shirt (Ajax/PSV)      { kind:'model',   file, preview }
 
 // ── Zeldzaamheid: centraal bepaald door het SOORT item, niet per regel ──
 //   kleur (1 egale kleur)            → common
 //   patroon (strepen/stippen/…)      → rare   (regenboogprint → ultra)
 //   emoji-print                      → epic   (premium emoji → legendary,
 //                                              🦄/🌈 → ultra_legendary)
-//   model/texmodel (echte 3D-skins)  → ultra_legendary
+//   texmodel (echte 3D-skins)        → ultra_legendary
 // De rarity-parameter in de item-regels hieronder wordt bewust genegeerd —
 // zo blijft de verdeling overal logisch en consistent.
 const PREMIUM_EMOJI = ['👑', '💎', '🐲', '🔥', '💀', '🏆', '🛡']
@@ -23,7 +22,6 @@ const printRarity = (emoji) =>
 const color   = (key, label, _rarity, hex)              => ({ key, label, rarity: 'common', kind: 'color', hex })
 const pat     = (key, label, _rarity, pattern, c1, c2)  => ({ key, label, rarity: pattern === 'rainbow' ? 'ultra_legendary' : 'rare', kind: 'pattern', pattern, c1, c2 })
 const print   = (key, label, _rarity, emoji, bg)        => ({ key, label, rarity: printRarity(emoji), kind: 'print', emoji, bg })
-const model   = (key, label, file, preview)             => ({ key, label, rarity: 'ultra_legendary', kind: 'model', file, preview })
 // Donor GLB with a custom baked texture image (a designed clothing skin)
 const texmodel = (key, label, file, texture, preview)  => ({ key, label, rarity: 'ultra_legendary', kind: 'texmodel', file, texture, preview })
 // Ultra legendary zonder eigen 3D-skin: een gewoon patroon/print-item dat toch
@@ -117,9 +115,8 @@ export const CATALOG = {
     print('brein_sh',   'Breinen',              'epic',      '🧠',     '#2a1030'),
     print('flamingo_sh','Flamingos',            'legendary', '🦩',     '#0a2a2a'),
     print('clown_sh',   'Clowns',               'legendary', '🤡',     '#202038'),
-    // Eigen teamshirts. Waren clubtenues (Ajax/PSV/Red Bull); die zijn eruit
-    // omdat clubnamen, logo's en sponsoruitingen merken van anderen zijn. De
-    // sleutels blijven gelijk, zodat wie ze al ontgrendeld had ze houdt.
+    // Eigen teamshirts zonder clubnamen of logo's. De sleutels zijn van vroeger
+    // en blijven gelijk, zodat wie ze al ontgrendeld had ze houdt.
     ultra('ajax', 'Rood-Wit Teamshirt',   'pattern', { pattern: 'stripes', c1: '#c8102e', c2: '#f4f4f4' }),
     ultra('psv',  'Rood-Zwart Teamshirt', 'pattern', { pattern: 'stripes', c1: '#cc2222', c2: '#141414' }),
     ultra('rb',   'Navy-Zilver Teamshirt','pattern', { pattern: 'stripes', c1: '#14224a', c2: '#c9d2dc' }),
@@ -472,7 +469,6 @@ export function swatchStyle(item) {
   if (item.badge) return { background: 'linear-gradient(135deg, #ffe08a, #d4af37)' }
   switch (item.kind) {
     case 'color':  return { background: item.hex }
-    case 'model':
     case 'texmodel': return { backgroundImage: `url('${item.preview}')`, backgroundSize: 'cover', backgroundColor: '#fff' }
     case 'print':  return { background: item.bg }
     case 'skin':   return { backgroundImage: `url('${skinPreview(item)}')`, backgroundSize: 'cover' }
@@ -539,7 +535,7 @@ function tileEmoji(ctx, S, cols, item, img) {
   }
 }
 
-// ── Shirt print baked onto the Ajax/PSV shirt UV layout ──────────────
+// ── Shirt print baked onto the donor shirt's UV layout ───────────────
 // The donor shirt mesh has a real UV: front-chest ≈ (0.342, 0.526),
 // back ≈ (0.668, 0.731). We fill the shirt colour and stamp the emoji on
 // the front (big) and back (smaller). Texture is used with invertY=false,

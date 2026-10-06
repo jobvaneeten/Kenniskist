@@ -149,12 +149,11 @@
 </div>
 
 <script>
-/* Matter.js robuust laden: probeer meerdere CDN's, toon nette fout bij falen */
+/* Matter.js laden (zelf gehost, MIT-licentie): geen externe CDN's, dus geen
+   IP-adressen van leerlingen naar derden. Nette fout als het toch misgaat. */
 (function(){
   var urls=[
-    "https://cdn.jsdelivr.net/npm/matter-js@0.20.0/build/matter.min.js",
-    "https://unpkg.com/matter-js@0.20.0/build/matter.min.js",
-    "https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.20.0/matter.min.js"
+    "matter.min.js"
   ];
   var i=0;
   function next(){

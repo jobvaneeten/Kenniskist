@@ -50,7 +50,7 @@ const SUBJECTS = [
 // Beloningen per spel-type (chips op de kaarten)
 const REWARDS = {
   taal:      ['💵 briefgeld'],
-  iep:       ['💵 briefgeld'],
+  rekenen:   ['💵 briefgeld'],
   werkwoord: ['💵 briefgeld'],
   tafels:    ['💵 briefgeld'],
 }
@@ -62,10 +62,10 @@ const GAMES = {
   '7-taal': 'taal',
   '8-taal': 'taal',
   '4-rekenen': 'tafels',
-  '5-rekenen': 'iep',
-  '6-rekenen': 'iep',
-  '7-rekenen': 'iep',
-  '8-rekenen': 'iep',
+  '5-rekenen': 'rekenen',
+  '6-rekenen': 'rekenen',
+  '7-rekenen': 'rekenen',
+  '8-rekenen': 'rekenen',
   '6-spelling': 'werkwoord',
   '7-spelling': 'werkwoord',
   '8-spelling': 'werkwoord',
@@ -287,7 +287,7 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
       )
     }
 
-    if (GAMES[gameId] === 'iep') {
+    if (GAMES[gameId] === 'rekenen') {
       if (rekenKeuze === 'procenten') {
         return <ProcentenBreuken onBack={() => setRekenKeuze(null)} addBriefgeld={addBriefgeld} />
       }
@@ -581,7 +581,7 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
                 <span className="subject-tag">
                   {game === 'tafels'
                     ? 'Tafels oefenen'
-                    : game === 'iep'
+                    : game === 'rekenen'
                     ? 'Verhaaltjessommen + blok 9 & 10'
                     : s.key === 'spelling'
                     ? (game === 'werkwoord' ? 'Werkwoord + spellingblok' : 'Spellingblokken')
