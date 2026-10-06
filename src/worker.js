@@ -15,6 +15,10 @@
 const ROL_RANG = { leerling: 0, leerkracht: 1, icter: 2, admin: 3 }
 const GEBRUIKERSNAAM_RE = /^[a-z0-9]{3,30}$/
 const SCHOOLCODE_RE = /^[a-z0-9]{2,20}$/
+// ID's uit een request gaan in een PostgREST- of Auth-URL: alleen een echte
+// UUID doorlaten, zodat er nooit extra filters of padstukken mee kunnen komen.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const isUuid = (x) => typeof x === 'string' && UUID_RE.test(x)
 
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json' } })
@@ -44,6 +48,7 @@ async function huidigProfiel(request, env) {
   })
   if (!userRes.ok) return null
   const user = await userRes.json()
+  if (!isUuid(user.id)) return null
 
   const profielRes = await serviceFetch(env, `/rest/v1/profielen?id=eq.${user.id}&select=id,school_id,rol`)
   if (!profielRes.ok) return null
@@ -56,7 +61,7 @@ async function huidigProfiel(request, env) {
 // de doelschool dus expliciet in de request staan; icter/leerkracht kunnen
 // alleen binnen hun eigen school werken, ongeacht wat de request meestuurt.
 function bepaalSchoolId(profiel, body) {
-  if (profiel.rol === 'admin') return body.schoolId || null
+  if (profiel.rol === 'admin') return isUuid(body.schoolId) ? body.schoolId : null
   return profiel.school_id
 }
 
@@ -152,7 +157,7 @@ async function leerkrachtAanmaken(request, env) {
 // Worker draait met de service key en komt daar niet vanzelf langs.
 async function magKlas(env, profiel, klasId) {
   if (profiel.rol !== 'leerkracht') return true
-  if (!klasId) return false
+  if (!isUuid(klasId)) return false
   const res = await serviceFetch(env, `/rest/v1/klas_leerkrachten?leerkracht_id=eq.${profiel.id}&klas_id=eq.${klasId}&select=klas_id`)
   const rijen = res.ok ? await res.json() : []
   return rijen.length > 0
@@ -171,7 +176,7 @@ async function leerlingAanmaken(request, env) {
     return json({ fout: 'Gebruikersnaam moet 3-30 kleine letters/cijfers zijn' }, 400)
   }
   if (!wachtwoord || !voornaam) return json({ fout: 'Gegevens ontbreken' }, 400)
-  if (!klasId) return json({ fout: 'Kies een klas — de inlogcode van een leerling komt van de klas' }, 400)
+  if (!isUuid(klasId)) return json({ fout: 'Kies een klas — de inlogcode van een leerling komt van de klas' }, 400)
 
   // Login draait op de klascode, niet de schoolcode: <klascode>.<gebruikersnaam>
   const klasRes = await serviceFetch(env, `/rest/v1/klassen?id=eq.${klasId}&school_id=eq.${schoolId}&select=code`)
@@ -210,7 +215,7 @@ async function wachtwoordReset(request, env) {
   if (!profiel || ROL_RANG[profiel.rol] < ROL_RANG.leerkracht) return json({ fout: 'Geen toegang' }, 403)
 
   const { gebruikerId, nieuwWachtwoord } = await request.json()
-  if (!gebruikerId || !nieuwWachtwoord) return json({ fout: 'Gegevens ontbreken' }, 400)
+  if (!isUuid(gebruikerId) || !nieuwWachtwoord) return json({ fout: 'Gegevens ontbreken' }, 400)
 
   const doelRes = await serviceFetch(env, `/rest/v1/profielen?id=eq.${gebruikerId}&select=id,school_id,rol,klas_id`)
   const [doel] = doelRes.ok ? await doelRes.json() : []
@@ -244,7 +249,7 @@ async function leerlingVerwijderen(request, env) {
   if (!profiel || ROL_RANG[profiel.rol] < ROL_RANG.leerkracht) return json({ fout: 'Geen toegang' }, 403)
 
   const { leerlingId } = await request.json()
-  if (!leerlingId) return json({ fout: 'Gegevens ontbreken' }, 400)
+  if (!isUuid(leerlingId)) return json({ fout: 'Gegevens ontbreken' }, 400)
 
   const doelRes = await serviceFetch(env, `/rest/v1/profielen?id=eq.${leerlingId}&select=id,school_id,rol,klas_id`)
   const [doel] = doelRes.ok ? await doelRes.json() : []

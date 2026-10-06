@@ -25,8 +25,8 @@ jobs:
           PUBLIEK_URL="https://vbvtkzieyvdctlighgoj.supabase.co"
           PUBLIEK_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZidnRremlleXZkY3RsaWdoZ29qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5NTQwNjUsImV4cCI6MjEwMDUzMDA2NX0.S_hAftcczB64X6kdjRnJTqBd_i7pbvefSaSB3RvAES4"
 
-          # Roept public.keepalive() aan (migratie keepalive_functie): die telt
-          # één keer de rijen in `klassen` en geeft 'ok' terug. Bewust niet
+          # Roept public.keepalive() aan (migraties 0008 en 0015): een /rpc-call
+          # laat Postgres een echte query draaien en geeft 'ok' terug. Bewust niet
           # /rest/v1/ pingen — dat handelt PostgREST zelf af zonder Postgres aan
           # te raken, waardoor de runs van 3, 5 en 7 augustus 2026 groen stonden
           # terwijl het project alsnog in de auto-pause liep.
