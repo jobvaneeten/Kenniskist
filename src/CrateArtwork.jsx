@@ -1,7 +1,6 @@
 // Schatkist per kledingcategorie (illustraties in public/crates/), met
-// twinkels en een gloed op de vloer. In de lootbox-modal stuurt animState
-// de animatie: 'idle' (zweven), 'laden' (trillen en oplichten), 'open'
-// (openbarsten). Overzicht en detailpaneel laten animState weg.
+// twinkels en een gloed op de vloer (winkeloverzicht en detailpaneel; het
+// openen zelf is 3D, zie KistOpener3D.jsx).
 const CRATE_IMAGES = {
   shirt:    '/crates/crate_shirt.webp',
   broek:    '/crates/crate_broek.webp',
@@ -17,10 +16,9 @@ const TWINKLE_OFFSETS = [
   { x: 132, y: 108, delay: 0.9 },
 ]
 
-export default function CrateArtwork({ itemKey, accent, size = 130, big = false, animState = null }) {
-  const animClass = animState ? `crate-anim-${animState}` : ''
+export default function CrateArtwork({ itemKey, accent, size = 130, big = false }) {
   return (
-    <div className={`crate-art-photo ${big ? 'crate-art-photo-big' : ''} ${animClass}`} style={{ width: size, height: size }}>
+    <div className={`crate-art-photo ${big ? 'crate-art-photo-big' : ''}`} style={{ width: size, height: size }}>
       <div className="crate-art-floorglow" style={{ '--accent': accent }} />
       {TWINKLE_OFFSETS.map((t, i) => (
         <span

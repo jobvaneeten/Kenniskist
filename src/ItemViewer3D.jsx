@@ -12,8 +12,8 @@ import { loadAvatar, safeJSON } from './games/kartShared'
 const FOCUS = {
   shirt:    { h: 0.64, r: 0.7 },
   broek:    { h: 0.34, r: 0.75 },
-  sokken:   { h: 0.1,  r: 0.42 },
-  schoenen: { h: 0.07, r: 0.42 },
+  sokken:   { h: 0.12, r: 0.75 },
+  schoenen: { h: 0.1,  r: 0.75 },
   hoofd:    { h: 0.92, r: 0.4 },
 }
 
@@ -65,7 +65,8 @@ export default function ItemViewer3D({ type, itemKey, gloed = '#facc15', childre
         const hoog = mx.y - mn.y, f = FOCUS[type] || FOCUS.shirt
         cam.target = new Vector3((mn.x + mx.x) / 2, mn.y + hoog * f.h, (mn.z + mx.z) / 2)
         cam.radius = hoog * 1.2 * f.r
-        cam.lowerRadiusLimit = hoog * 0.35; cam.upperRadiusLimit = hoog * 2.4
+        cam.lowerRadiusLimit = hoog * 0.6; cam.upperRadiusLimit = hoog * 2.4   // niet zo dichtbij dat je door voeten/hoofd kijkt
+        cam.minZ = 0.01
         // podium onder de voeten
         const p = MeshBuilder.CreateCylinder('podium', { diameter: hoog * 0.75, height: hoog * 0.03, tessellation: 48 }, scene)
         p.position.set(cam.target.x, mn.y - hoog * 0.015, cam.target.z)

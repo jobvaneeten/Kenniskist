@@ -3,24 +3,15 @@ import { CLOTHING_ITEMS, LOOTBOX_COST, RARITIES, CRATE_ACCENTS } from './data'
 import { getCatalog } from './itemsCatalog'
 import CrateArtwork from './CrateArtwork'
 import KledingPreview from './KledingPreview'
-import { playTierSound, playChargeSound, playBurstSound, playTick, isMuted, setMuted } from './lootboxSound'
+import { isMuted, setMuted, playKlik, playMunten, playSluiten, playSter } from './lootboxSound'
 import './shop.css'
 // 3D-poppetje pas laden als er echt iets gewonnen is (Babylon is groot)
 const ItemViewer3D = lazy(() => import('./ItemViewer3D'))
+const KistOpener3D = lazy(() => import('./KistOpener3D'))
 import { Knop, TerugKnop, Icoon } from './ui/index.jsx'
 
-const CARD_W  = 96
-const CARD_GAP = 8
-const SLOT_W  = CARD_W + CARD_GAP
-const VISIBLE = 5
-const WIN_W   = VISIBLE * CARD_W + (VISIBLE - 1) * CARD_GAP
-
-const SPIN_MS = 5000
-const LAAD_MS = 1300   // kist trilt en laadt op in de kleur van wat erin zit
-const OPEN_MS = 700    // flits + scherven, daarna de rol
 // sterren per zeldzaamheid op het onthul-scherm
 const STERREN = { common: 1, rare: 2, epic: 3, legendary: 4, ultra_legendary: 5 }
-const quintic = t => 1 - Math.pow(1 - t, 5)
 
 // Higher legendary/ultra chance. Effective odds also depend on how many
 // items each rarity has (see rarityOdds, computed from the real pool).
@@ -28,19 +19,6 @@ const RARITY_WEIGHTS = { common: 12, rare: 10, epic: 9, legendary: 8, ultra_lege
 
 // Confetti / particle colours (SHIRT_COLORS import was removed)
 const CONFETTI = ['#e63946','#1d6fa4','#2d9e4f','#f4c430','#f77f00','#7b2d8b','#ffd23f','#ffffff']
-
-function buildReel(winner, pool) {
-  const reel = []
-  for (let round = 0; round < 5; round++) {
-    const shuffled = [...pool].sort(() => Math.random() - 0.5)
-    reel.push(...shuffled)
-  }
-  const winIdx = reel.length   // index of winner card
-  reel.push(winner)
-  const extras = pool.filter(c => c.key !== winner.key)
-  for (let i = 0; i < 4; i++) reel.push(extras[i % extras.length])
-  return { cards: reel, winIdx }
-}
 
 function fmt(n) { return n.toLocaleString('nl-NL') }
 
@@ -60,24 +38,15 @@ function fmtPct(p) {
 
 export default function Shop({ briefgeld, addBriefgeld, unlockedColors, onUnlock, onBack }) {
   const [overlay,   setOverlay]   = useState(null)
-  const [boxState,  setBoxState]  = useState('idle')
-  const [reelCards, setReelCards] = useState([])
-  const [reelWinIdx, setReelWinIdx] = useState(40)
-  const [reelX,     setReelX]     = useState(0)
   const [confetti,  setConfetti]  = useState([])
   const [fireworks, setFireworks] = useState([])
   const [showEnd,   setShowEnd]   = useState(false)
   const [muted,     setMutedState] = useState(() => isMuted())
   const [selectedKey, setSelectedKey] = useState(null)   // item key whose detail panel is open
 
-  const rafRef    = useRef(null)
-  const startRef  = useRef(null)
   const fwTimers  = useRef([])
 
-  useEffect(() => () => {
-    rafRef.current && cancelAnimationFrame(rafRef.current)
-    fwTimers.current.forEach(clearTimeout)
-  }, [])
+  useEffect(() => () => { fwTimers.current.forEach(clearTimeout) }, [])
 
   // Close the detail panel on Escape
   useEffect(() => {
@@ -168,14 +137,10 @@ export default function Shop({ briefgeld, addBriefgeld, unlockedColors, onUnlock
       // item al in bezit → volledige teruggave, niets afschrijven
     } else {
       addBriefgeld(-LOOTBOX_COST)
+      playMunten()
       onUnlock(item.key, won.key)
     }
 
-    const { cards, winIdx } = buildReel(won, pool)
-    setReelCards(cards)
-    setReelWinIdx(winIdx)
-    setReelX(0)
-    setBoxState('idle')
     setShowEnd(false)
     setFireworks([])
     setOverlay({
@@ -184,48 +149,21 @@ export default function Shop({ briefgeld, addBriefgeld, unlockedColors, onUnlock
       itemLabel:    item.label,
       wonItem:      won,
       isDuplicate,
-      phase:        'box',
+      phase:        'kist',
     })
   }
 
-  const tapBox = () => {
-    if (boxState !== 'idle') return
-    setBoxState('laden')
-    playChargeSound(LAAD_MS / 1000)
-
-    setTimeout(() => { setBoxState('open'); playBurstSound() }, LAAD_MS)
-
-    setTimeout(() => {
-      setBoxState('idle')
-      setOverlay(o => o ? { ...o, phase: 'spin' } : null)
-
-      const winCenter = reelWinIdx * SLOT_W + CARD_W / 2
-      const targetX   = WIN_W / 2 - winCenter
-      startRef.current = null
-      const wonRarity  = overlay?.wonItem?.rarity
-      let laatsteKaart = -1
-
-      const spin = (ts) => {
-        if (!startRef.current) startRef.current = ts
-        const t = Math.min((ts - startRef.current) / SPIN_MS, 1)
-        const x = targetX * quintic(t)
-        setReelX(x)
-        const kaart = Math.round((WIN_W / 2 - x - CARD_W / 2) / SLOT_W)
-        if (kaart !== laatsteKaart) { if (laatsteKaart >= 0) playTick(); laatsteKaart = kaart }
-        if (t < 1) {
-          rafRef.current = requestAnimationFrame(spin)
-        } else {
-          setOverlay(o => o ? { ...o, phase: 'reveal' } : null)
-          if (wonRarity && wonRarity !== 'common') playTierSound(wonRarity)
-          setTimeout(() => setShowEnd(true), wonRarity === 'ultra_legendary' ? 900 : 700)
-        }
-      }
-      rafRef.current = requestAnimationFrame(spin)
-    }, LAAD_MS + OPEN_MS)
+  // kist is open en het kledingstuk is eruit gezweefd → onthulling
+  const naarOnthulling = () => {
+    // sterren ploppen één voor één (zelfde vertraging als de CSS)
+    const n = STERREN[overlay?.wonItem?.rarity] || 0
+    for (let i = 0; i < n; i++) fwTimers.current.push(setTimeout(() => playSter(i), 450 + i * 130))
+    setOverlay(o => o ? { ...o, phase: 'reveal' } : null)
+    setTimeout(() => setShowEnd(true), 600)
   }
 
   const close = () => {
-    rafRef.current && cancelAnimationFrame(rafRef.current)
+    playSluiten()
     fwTimers.current.forEach(clearTimeout)
     setOverlay(null)
     setConfetti([])
@@ -234,7 +172,7 @@ export default function Shop({ briefgeld, addBriefgeld, unlockedColors, onUnlock
   }
 
   return (
-    <div className="shop-screen">
+    <div className={`shop-screen ${overlay ? 'shop-pauze' : ''}`}>
       <TerugKnop onClick={onBack} />
       <Knop
         variant="secundair" alleenIcoon icoon={muted ? 'stil' : 'geluid'}
@@ -245,8 +183,9 @@ export default function Shop({ briefgeld, addBriefgeld, unlockedColors, onUnlock
       <div className="game-header" style={{ '--kk-accent': 'var(--kk-gold)', marginBottom: 0 }}>
         <span className="game-header-icon"><Icoon naam="tas" /></span>
         <h1 className="game-header-title">Winkel</h1>
-        <p className="game-header-sub">Open een lootbox met je briefgeld</p>
+        <p className="game-header-sub">Kies een kist — in elke kist zit nieuwe kleding voor je poppetje</p>
       </div>
+      <div className="shop-saldo"><span className="shop-saldo-icoon">💵</span><b>{fmt(briefgeld)}</b><span>briefgeld</span></div>
 
       <div className="shop-grid">
         {CLOTHING_ITEMS.map(item => {
@@ -255,6 +194,8 @@ export default function Shop({ briefgeld, addBriefgeld, unlockedColors, onUnlock
           const total     = pool.length
           const { accent } = CRATE_ACCENTS[item.key] || CRATE_ACCENTS.shirt
           const isSelected = selectedKey === item.key
+          const compleet  = unlocked >= total
+          const kanKopen  = briefgeld >= LOOTBOX_COST
 
           return (
             <button
@@ -262,13 +203,22 @@ export default function Shop({ briefgeld, addBriefgeld, unlockedColors, onUnlock
               key={item.key}
               className={`shopcard ${isSelected ? 'shopcard-selected' : ''}`}
               style={{ '--accent': accent }}
-              onClick={() => setSelectedKey(isSelected ? null : item.key)}
+              onClick={() => { playKlik(); setSelectedKey(isSelected ? null : item.key) }}
             >
+              <div className="shopcard-podium">
+                <div className="shopcard-stralen" />
+                <CrateArtwork itemKey={item.key} accent={accent} size={170} />
+              </div>
               <div className="shopcard-shine" />
-              {item.hasFeatured && <div className="shopcard-ultra-badge">ULTRA KANS</div>}
-              <CrateArtwork itemKey={item.key} accent={accent} size={150} />
-              <div className="shopcard-name">{item.label}</div>
-              <div className="shopcard-meta">{unlocked}/{total} · 💵 {fmt(LOOTBOX_COST)}</div>
+              {item.hasFeatured && <div className="shopcard-ultra-badge">⚡ ULTRA KANS</div>}
+              <div className="shopcard-name">{item.emoji} {item.label}</div>
+              <div className="shopcard-voortgang" title={`${unlocked} van ${total} gewonnen`}>
+                <div className="shopcard-voortgang-balk" style={{ width: `${(unlocked / Math.max(1, total)) * 100}%` }} />
+                <span>{unlocked}/{total}</span>
+              </div>
+              <div className={`shopcard-prijs ${compleet ? 'is-compleet' : kanKopen ? '' : 'te-duur'}`}>
+                {compleet ? '✓ Compleet' : <>💵 {fmt(LOOTBOX_COST)} <span>· Openen</span></>}
+              </div>
             </button>
           )
         })}
@@ -372,36 +322,13 @@ export default function Shop({ briefgeld, addBriefgeld, unlockedColors, onUnlock
 
             <div className={`lb-modal-card ${r ? `lb-mc-${r}` : ''}`} style={{ '--rc': rc || hint }}>
 
-              {/* ── Fase 1: kist ── */}
-              {overlay.phase === 'box' && (
-                <div className={`lb-box-phase lb-box-${boxState}`} style={{ '--hint': hint }}>
-                  <p className="lb-box-label">{overlay.itemEmoji} {overlay.itemLabel} lootbox</p>
-                  <div className="lb-open-box" onClick={tapBox}>
-                    <div className="lb-box-stralen" />
-                    <div className="lb-box-glow" />
-                    {boxState === 'idle' && Array.from({ length: 6 }, (_, i) => (
-                      <span key={i} className="lb-box-orbit" style={{ animationDelay: `${i * 0.55}s` }}>✦</span>
-                    ))}
-                    {boxState === 'laden' && Array.from({ length: 14 }, (_, i) => (
-                      <span key={i} className="lb-box-zuig" style={{ '--ang': `${i * 25.7}deg`, animationDelay: `${(i % 7) * 0.12}s` }} />
-                    ))}
-                    <CrateArtwork itemKey={overlay.itemKey} accent="#FFD23F" size={200} big animState={boxState} />
-                    {boxState === 'open' && (
-                      <>
-                        <div className="lb-flash-overlay" />
-                        <div className="lb-box-pilaar" />
-                        <div className="lb-ring" />
-                        <div className="lb-ring lb-ring-2" />
-                        <div className="lb-crate-burst">
-                          {Array.from({ length: 22 }, (_, i) => (
-                            <span key={i} className={`lb-scherf ${i % 3 ? '' : 'lb-scherf-goud'}`}
-                              style={{ '--ang': `${i * 16.4 + (i % 2) * 6}deg`, '--afst': `${110 + (i * 37) % 70}px`, animationDelay: `${(i % 4) * 0.025}s` }} />
-                          ))}
-                        </div>
-                      </>
-                    )}
-                  </div>
-                  <p className={`lb-tap-text ${boxState !== 'idle' ? 'lb-tap-weg' : ''}`}>✦ TIK OM TE OPENEN ✦</p>
+              {/* ── Fase 1: de kist in 3D: tik, tik, open ── */}
+              {overlay.phase === 'kist' && (
+                <div className="lb-kist-phase">
+                  <p className="lb-box-label">{overlay.itemEmoji} {overlay.itemLabel}-kist</p>
+                  <Suspense fallback={<div className="ko ko-laden" />}>
+                    <KistOpener3D type={overlay.itemKey} item={won} rarity={won.rarity} onKlaar={naarOnthulling} />
+                  </Suspense>
                   <div className="lb-box-hint">
                     Bevat kleuren · zeldzaam · episch · legendarisch
                     {overlay.itemKey === 'shirt' && <span className="lb-box-hint-ultra"> · ⚡ ultra</span>}
@@ -409,39 +336,7 @@ export default function Shop({ briefgeld, addBriefgeld, unlockedColors, onUnlock
                 </div>
               )}
 
-              {/* ── Fase 2: rol ── */}
-              {overlay.phase === 'spin' && (() => {
-                const centerIdx = Math.round((WIN_W / 2 - reelX - CARD_W / 2) / SLOT_W)
-                const targetX   = WIN_W / 2 - (reelWinIdx * SLOT_W + CARD_W / 2)
-                const nearLand  = Math.abs(reelX - targetX) < SLOT_W * 2.5
-                const bigWin    = ['epic', 'legendary', 'ultra_legendary'].includes(won.rarity)
-                const snel      = Math.abs(reelX - targetX) > SLOT_W * 12
-
-                return (
-                  <div className="lb-spin-phase">
-                    {nearLand && bigWin && <div className="lb-spin-buildup" style={{ '--bc': hint }} />}
-                    <p className="lb-spin-label">{overlay.itemEmoji} {overlay.itemLabel}</p>
-                    <div className="lb-ptr-wrap"><div key={centerIdx} className="lb-ptr lb-ptr-tick" /></div>
-                    <div className={`lb-slot-win ${snel ? 'lb-slot-snel' : ''}`}>
-                      <div className="lb-slot-fade-l" />
-                      <div className="lb-slot-fade-r" />
-                      <div className="lb-slot-center-line" />
-                      <div className="lb-slot-reel" style={{ transform: `translateX(${reelX}px)` }}>
-                        {reelCards.map((c, i) => (
-                          <div key={i} className={`lb-reel-card ${i === centerIdx ? 'lb-rc-tick' : ''}`} style={{ '--rc': RARITIES[c.rarity].color }}>
-                            <KledingPreview type={overlay.itemKey} item={c} size={58} />
-                            <div className="lb-rc-name">{c.label}</div>
-                            <div className="lb-rc-balk" />
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="lb-ptr-wrap lb-ptr-onder"><div key={centerIdx} className="lb-ptr lb-ptr-tick" /></div>
-                  </div>
-                )
-              })()}
-
-              {/* ── Fase 3: onthulling ── */}
+              {/* ── Fase 2: onthulling ── */}
               {overlay.phase === 'reveal' && (
                 <div className={`lb-reveal-phase lb-rv-${r}`} style={{ '--rc': rc }}>
                   {confetti.map(p => (

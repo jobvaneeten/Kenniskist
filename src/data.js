@@ -13,7 +13,7 @@ export const CRATE_ACCENTS = {
   broek:    { accent: '#60a5fa', icon: 'broek' },
   sokken:   { accent: '#fbbf24', icon: 'sokken' },
   schoenen: { accent: '#e879f9', icon: 'schoenen' },
-  hoofd:    { accent: '#facc15', icon: 'pet' },
+  hoofd:    { accent: '#fb923c', icon: 'pet' },
 }
 
 export const SHIRT_COLORS = [
