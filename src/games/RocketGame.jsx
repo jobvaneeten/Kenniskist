@@ -9,7 +9,7 @@ import {
 import { SceneLoader } from '@babylonjs/core/Loading/sceneLoader'
 import '@babylonjs/loaders/glTF'
 import { findItem } from '../itemsCatalog'
-import { applyItemToMesh, loadClothingDonor, usesDonor, loadHeadItem } from '../applyClothing'
+import { applyItemToMesh, loadClothingDonor, usesDonor, loadHeadItem, zetLegeOnderdelenUit, ruimAnimatieBronOp } from '../applyClothing'
 import OrientationGate from '../OrientationGate'
 import { bouwStadion } from './voetbalStadion'
 import './rocket-game.css'
@@ -161,6 +161,7 @@ class PlayerInstance {
 
   _load() {
     SceneLoader.ImportMesh('', '/', 'Poppetje.glb', this.scene, (meshes, _ps, skels) => {
+      zetLegeOnderdelenUit(meshes)
       this.root      = meshes[0]
       this._skeleton = skels[0] ?? null
 
@@ -246,7 +247,7 @@ class PlayerInstance {
         this._onReady?.()
       }
       ANIMS.forEach(({ key, file, stripRoot }) => {
-        SceneLoader.ImportMesh('', '/', file, this.scene, (aM, _p, _s, aG) => {
+        SceneLoader.ImportMesh('', '/', file, this.scene, (aM, _p, aSk, aG) => {
           aM.forEach(m => m.setEnabled(false))
           if (!aG.length) { done(); return }
           const orig = aG[0]
@@ -273,7 +274,7 @@ class PlayerInstance {
               anim.getKeys().forEach(kf => kf.value.copyFrom(corr.multiply(kf.value)))
             }
           }
-          rt.stop(); this._anims[key] = rt; orig.dispose(); done()
+          rt.stop(); this._anims[key] = rt; orig.dispose(); ruimAnimatieBronOp(aM, aSk); done()
         }, null, () => done())
       })
     }, null, (_, msg, err) => { console.error('Poppetje load error:', msg, err) })

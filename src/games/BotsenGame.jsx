@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   Engine, Scene, FollowCamera, TransformNode,
-  HemisphericLight, DirectionalLight, ShadowGenerator,
+  HemisphericLight, DirectionalLight,
   Vector3, Color3, Color4,
   MeshBuilder, StandardMaterial, DynamicTexture, ParticleSystem,
   DefaultRenderingPipeline,
@@ -415,7 +415,8 @@ function BotsenMatch({ onBack, room, sessionId, joinCode, myNameProp, myColorPro
 
   useEffect(() => {
     const canvas = canvasRef.current
-    const engine = new Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true })
+    // geen preserveDrawingBuffer (kost op veel GPU's flink wat) en vraag de snelle GPU
+    const engine = new Engine(canvas, true, { stencil: true, powerPreference: 'high-performance' })
     const scene = new Scene(engine)
 
     // Nachtbelichting: het meeste licht komt uit de HDRI-omgeving en het neon
@@ -430,15 +431,9 @@ function BotsenMatch({ onBack, room, sessionId, joinCode, myNameProp, myColorPro
     const sun = new DirectionalLight('s', new Vector3(-0.4, -1, -0.3), scene)
     sun.position = new Vector3(30, 50, 20); sun.intensity = 2.2
     sun.diffuse = new Color3(0.72, 0.80, 1.0)
-    // Zonder expliciete grenzen rekt Babylon het schaduw-frustum op tot álles
-    // in de scene past — inclusief de sky-sphere van ~220 units. Eén 1024-map
-    // over dat gebied betekende dat de hele arena in schaduw viel.
-    sun.autoUpdateExtends = false
-    sun.orthoLeft = -ARENA_HALF * 1.3; sun.orthoRight = ARENA_HALF * 1.3
-    sun.orthoBottom = -ARENA_HALF * 1.3; sun.orthoTop = ARENA_HALF * 1.3
-    sun.shadowMinZ = 1; sun.shadowMaxZ = 160
-    const sg = new ShadowGenerator(1024, sun); sg.useBlurExponentialShadowMap = true
-    sg.blurKernel = 24; sg.setDarkness(0.45)
+    // Geen ShadowGenerator: de gebakken vloer reageert niet op licht, dus
+    // schaduwen waren onzichtbaar maar kostten elk beeld een extra pass.
+    // De schaduwvlek onder elke kart (maakSchaduw) doet het werk.
 
     const arena = buildArena(scene)
     const fireTex = makeFireTexture(scene)
@@ -475,14 +470,25 @@ function BotsenMatch({ onBack, room, sessionId, joinCode, myNameProp, myColorPro
     //    tonemapping staan al op de scene via nachtOmgeving. ──
     const pipeline = new DefaultRenderingPipeline('bpipeline', true, scene, [cam])
     pipeline.fxaaEnabled = true
-    pipeline.samples = 4
+    pipeline.samples = 1   // FXAA is genoeg; 4× MSAA kostte op Chromebooks te veel
     pipeline.bloomEnabled = true
     pipeline.bloomThreshold = 0.88; pipeline.bloomWeight = 0.4; pipeline.bloomKernel = 48; pipeline.bloomScale = 0.5
-    pipeline.sharpenEnabled = true
+    pipeline.sharpenEnabled = false
     pipeline.sharpen.edgeAmount = 0.3
     pipeline.imageProcessing.vignetteEnabled = true
     pipeline.imageProcessing.vignetteWeight = 2.6
     pipeline.imageProcessing.vignetteColor = new Color4(0.04, 0.01, 0.10, 1)
+
+    // Trage computer? Na een paar seconden zelf terugschakelen: eerst gloed en
+    // bloom uit, daarna minder pixels. Liever vloeiend dan mooi-en-schokkerig.
+    let kwaliteitStap = 0
+    const kwaliteitTimer = setInterval(() => {
+      const fps = engine.getFps()
+      if (fps >= 45 || kwaliteitStap >= 2) return
+      kwaliteitStap++
+      if (kwaliteitStap === 1) { scene.effectLayers.forEach(l => { l.isEnabled = false }); pipeline.bloomEnabled = false }
+      else engine.setHardwareScalingLevel(1.4)
+    }, 3000)
 
     // ── Slip-vonken (Shift + sturen): puur visuele feedback tijdens het driften ──
     const driftPs = new ParticleSystem('driftPs', 60, scene)
@@ -503,8 +509,11 @@ function BotsenMatch({ onBack, room, sessionId, joinCode, myNameProp, myColorPro
       av.parent = kartRoot
       av.position.set(0, AV_Y, AV_Z)
       av.rotation = new Vector3(0, Math.PI, 0)
-      av.getChildMeshes?.(false).forEach(m => sg.addShadowCaster(m))
+      zonderGloed(av)
     })
+
+    // poppetjes gloeien niet: niet meetekenen in de gloedlaag (scheelt een pass per onderdeel)
+    const zonderGloed = (av) => av.getChildMeshes?.(false).forEach(m => scene.effectLayers.forEach(l => l.addExcludedMesh?.(m)))
 
     // ── Remote karts (ook outer/visual gesplitst, voor dezelfde tol-animatie) ──
     const remotes = new Map()
@@ -523,7 +532,7 @@ function BotsenMatch({ onBack, room, sessionId, joinCode, myNameProp, myColorPro
       const ent = { outer: outerR, visual: built.root, wheels: built.wheels, balloons, tx: outerR.position.x, tz: outerR.position.z, trot: outerR.rotation.y, tvel: 0, lastBalloons: 3, lastHitSeq: p.hitSeq ?? 0 }
       loadAvatar(scene, p.shirt || '', safeJSON(p.wearing), (av) => {
         av.parent = built.root; av.position.set(0, AV_Y, AV_Z); av.rotation = new Vector3(0, Math.PI, 0)
-        av.getChildMeshes?.(false).forEach(m => sg.addShadowCaster(m))
+        zonderGloed(av)
       })
       remotes.set(sid, ent)
     }
@@ -838,6 +847,7 @@ function BotsenMatch({ onBack, room, sessionId, joinCode, myNameProp, myColorPro
     window.addEventListener('resize', onResize)
 
     return () => {
+      clearInterval(kwaliteitTimer)
       window.removeEventListener('keydown', kd)
       window.removeEventListener('keyup', ku)
       window.removeEventListener('resize', onResize)

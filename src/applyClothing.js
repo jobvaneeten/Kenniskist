@@ -271,3 +271,20 @@ function walkSet(node, fn) {
   fn(node)
   ;(node.getChildMeshes ? node.getChildMeshes(false) : []).forEach(fn)
 }
+
+// ── Prestaties: poppetje zo licht mogelijk ───────────────────────────────
+// Poppetje.glb bevat een dozijn lege placeholder-onderdelen (Hat, Gloves,
+// Glasses, ... met 4 hoekpunten). Onzichtbaar, maar elk kostte per speler een
+// draw call in het beeld, de schaduw én de gloedlaag.
+export function zetLegeOnderdelenUit(meshes) {
+  meshes.forEach(m => {
+    const n = m.getTotalVertices ? m.getTotalVertices() : 0
+    if (m.skeleton && n > 0 && n <= 8) m.setEnabled(false)
+  })
+}
+// Een animatie-GLB brengt een compleet eigen poppetje + skelet mee. Na het
+// retargeten (alleen nog Poppetje-botten als doel) mag dat helemaal weg.
+export function ruimAnimatieBronOp(aM, skels) {
+  aM.forEach(m => { if (!m.isDisposed()) m.dispose(false, true) })
+  skels?.forEach(s => s.dispose())
+}

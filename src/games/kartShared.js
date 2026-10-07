@@ -6,7 +6,7 @@ import {
 import { SceneLoader, LoadAssetContainerAsync } from '@babylonjs/core/Loading/sceneLoader'
 import '@babylonjs/loaders/glTF'
 import { findItem } from '../itemsCatalog'
-import { applyItemToMesh, loadClothingDonor, usesDonor, loadHeadItem } from '../applyClothing'
+import { applyItemToMesh, loadClothingDonor, usesDonor, loadHeadItem, zetLegeOnderdelenUit, ruimAnimatieBronOp } from '../applyClothing'
 
 export const KART_VISUAL = 0.6   // hele kart+poppetje kleiner in de wereld
 export const AV_Y = -0.12        // zithoogte avatar in de kart
@@ -53,9 +53,7 @@ function kartMaterialen(scene, hex, id) {
     zwart: pbr('kzwart', new Color3(0.035, 0.035, 0.04), 0, 0.55),
     chroom: pbr('kchroom', new Color3(0.92, 0.93, 0.95), 1, 0.12),
     band: pbr('kband', new Color3(0.025, 0.025, 0.03), 0, 0.9),
-    stoel: pbr('kstoel', new Color3(0.07, 0.07, 0.08), 0, 0.75),
     koplamp: Object.assign(new StandardMaterial('kkop' + id, scene), { disableLighting: true, emissiveColor: new Color3(1, 0.96, 0.85) }),
-    achterlicht: Object.assign(new StandardMaterial('kachter' + id, scene), { disableLighting: true, emissiveColor: new Color3(1, 0.1, 0.1) }),
   }
 }
 
@@ -88,6 +86,7 @@ export function loadAvatar(scene, shirt, wearing, onReady, animBestand = 'rijden
   SceneLoader.ImportMesh('', '/', 'Poppetje.glb', scene, (meshes, _ps, skels) => {
     const root = meshes[0]
     const skeleton = skels[0] ?? null
+    zetLegeOnderdelenUit(meshes)
     const nodeMap = {}
     scene.transformNodes.forEach(n => { nodeMap[n.name] = n })
     scene.meshes.forEach(m => { if (!nodeMap[m.name]) nodeMap[m.name] = m })
@@ -120,7 +119,7 @@ export function loadAvatar(scene, shirt, wearing, onReady, animBestand = 'rijden
     })
 
     // Rij-animatie — retarget naar Poppetje (zelfde Mixamo-skelet, ruwe keys direct)
-    SceneLoader.ImportMesh('', '/', animBestand, scene, (aM, _p, _s, aG) => {
+    SceneLoader.ImportMesh('', '/', animBestand, scene, (aM, _p, aSk, aG) => {
       aM.forEach(m => m.setEnabled(false))
       if (aG.length) {
         const orig = aG[0]
@@ -138,6 +137,7 @@ export function loadAvatar(scene, shirt, wearing, onReady, animBestand = 'rijden
         rt.play(true)
         orig.dispose()
       }
+      ruimAnimatieBronOp(aM, aSk)
       onReady?.(root)
     }, null, () => onReady?.(root))
   }, null, (_, msg, err) => console.error('Kart avatar load error:', msg, err))
