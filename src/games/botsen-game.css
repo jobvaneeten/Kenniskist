@@ -164,3 +164,11 @@
   transition: transform 0.12s;
 }
 .botsen-start-btn:hover { transform: translateY(-2px); }
+
+/* nieuw item gepakt: icoon tolt en ploft in het vakje (key wisselt per item) */
+.botsen-item-btn.has-item .botsen-item-emoji { display: inline-block; animation: itemKrijg 0.65s cubic-bezier(0.34, 1.56, 0.64, 1); }
+@keyframes itemKrijg {
+  0%   { transform: scale(0.2) rotate(-540deg); filter: brightness(3); }
+  70%  { transform: scale(1.35) rotate(15deg); filter: brightness(1.5); }
+  100% { transform: scale(1) rotate(0); filter: none; }
+}

@@ -65,3 +65,42 @@ export function playTierSound(rarity) {
     }
   } catch {}
 }
+
+// Opladen: stijgende zoem terwijl de kist trilt (duur in seconden).
+export function playChargeSound(dur = 1.3) {
+  if (isMuted()) return
+  try {
+    const ac = getCtx(), t = ac.currentTime
+    const osc = ac.createOscillator(), g = ac.createGain()
+    osc.type = 'sawtooth'
+    osc.frequency.setValueAtTime(110, t)
+    osc.frequency.exponentialRampToValueAtTime(660, t + dur)
+    const lp = ac.createBiquadFilter(); lp.type = 'lowpass'
+    lp.frequency.setValueAtTime(400, t); lp.frequency.exponentialRampToValueAtTime(3000, t + dur)
+    g.gain.setValueAtTime(0.0001, t)
+    g.gain.exponentialRampToValueAtTime(0.12, t + dur * 0.9)
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.05)
+    osc.connect(lp); lp.connect(g); g.connect(ac.destination)
+    osc.start(t); osc.stop(t + dur + 0.1)
+  } catch {}
+}
+
+// Openbarsten: doffe klap + glinstering.
+export function playBurstSound() {
+  if (isMuted()) return
+  try {
+    const ac = getCtx()
+    subThump(ac, 0)
+    tone(ac, { freq: 1568, start: 0.02, dur: 0.35, gain: 0.12, type: 'triangle' })
+    tone(ac, { freq: 2093, start: 0.08, dur: 0.4, gain: 0.08, type: 'triangle' })
+  } catch {}
+}
+
+// Tik van de rol als er een nieuw kaartje onder de wijzer schuift.
+export function playTick() {
+  if (isMuted()) return
+  try {
+    const ac = getCtx()
+    tone(ac, { freq: 1800 + Math.random() * 200, start: 0, dur: 0.035, gain: 0.07, type: 'square' })
+  } catch {}
+}

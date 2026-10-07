@@ -9,6 +9,7 @@ import {
 import * as Colyseus from '@colyseus/sdk'
 import OrientationGate from '../OrientationGate'
 import { KART_COLORS, AV_Y, AV_Z, buildKart, loadAvatar, safeJSON } from './kartShared'
+import { maakItemBlok, maakProjectiel, maakBom } from './botsenItems'
 import { nachtOmgeving, glowLaag, nachtLucht } from './neonOmgeving'
 import { laadGebakkenMap } from './gebakkenMap'
 import './botsen-game.css'
@@ -149,6 +150,9 @@ function platformFootprints() {
 // meter terug de helling af.
 const DEK_Y = PLAT_H - 1.2
 
+const BOMB_RADIUS = 4.5   // gelijk aan de server (BotsenRoom.ts)
+const BOMB_FUSE = 2.0
+
 const ITEM_INFO = {
   schild:  { emoji: '🛡️', label: 'Schild' },
   bom:     { emoji: '💣', label: 'Bom' },
@@ -228,64 +232,6 @@ function makeFireTexture(scene) {
   tex.update(); tex.hasAlpha = true
   return tex
 }
-// ── Projectielen: groen schild (zelfde look als Karten) of een écht
-//    vlammend vuurtje (kleine gloeikern + deeltjes-vuur eromheen) ────────
-function makeShellMesh(scene, kind, fireTex) {
-  if (kind === 'vuurtje') {
-    const core = MeshBuilder.CreateSphere('bflame', { diameter: 0.45, segments: 8 }, scene)
-    const m = new StandardMaterial('bflamem', scene)
-    m.emissiveColor = new Color3(1, 0.75, 0.25); m.diffuseColor = new Color3(1, 0.4, 0.05)
-    m.specularColor = Color3.Black()
-    core.material = m; core.isPickable = false
-    const ps = new ParticleSystem('firePs', 80, scene)
-    ps.particleTexture = fireTex
-    ps.emitter = core
-    ps.minEmitBox = new Vector3(-0.1, -0.1, -0.1); ps.maxEmitBox = new Vector3(0.1, 0.1, 0.1)
-    ps.color1 = new Color4(1, 0.75, 0.25, 1); ps.color2 = new Color4(1, 0.35, 0.05, 1)
-    ps.colorDead = new Color4(0.3, 0.05, 0, 0)
-    ps.minSize = 0.35; ps.maxSize = 0.75
-    ps.minLifeTime = 0.12; ps.maxLifeTime = 0.28
-    ps.emitRate = 140
-    ps.blendMode = ParticleSystem.BLENDMODE_ADD
-    ps.direction1 = new Vector3(-0.6, 0.4, -0.6); ps.direction2 = new Vector3(0.6, 1.4, 0.6)
-    ps.minEmitPower = 0.3; ps.maxEmitPower = 0.8
-    ps.gravity = new Vector3(0, 1.4, 0)
-    ps.start()
-    core._fireParticles = ps
-    return core
-  }
-  const dome = MeshBuilder.CreateSphere('bshell', { diameter: 0.9, segments: 14, slice: 0.62 }, scene)
-  dome.scaling.y = 0.78
-  const tex = new DynamicTexture('bshellTex', { width: 128, height: 128 }, scene, false)
-  const tc = tex.getContext()
-  const g = tc.createRadialGradient(64, 44, 4, 64, 44, 76)
-  g.addColorStop(0, '#7CFF9E'); g.addColorStop(0.55, '#1FA648'); g.addColorStop(1, '#0B5B27')
-  tc.fillStyle = g; tc.fillRect(0, 0, 128, 128)
-  tc.strokeStyle = 'rgba(6,50,20,0.55)'; tc.lineWidth = 4
-  for (let i = 0; i < 3; i++) { tc.beginPath(); tc.arc(64, 128, 34 + i * 26, Math.PI, Math.PI * 2); tc.stroke() }
-  tc.strokeStyle = 'rgba(255,255,255,0.55)'; tc.lineWidth = 3
-  tc.beginPath(); tc.ellipse(64, 44, 46, 26, 0, 0, Math.PI * 2); tc.stroke()
-  tex.update()
-  const m = new StandardMaterial('bshellm', scene)
-  m.diffuseTexture = tex; m.emissiveColor = new Color3(0.08, 0.35, 0.14); m.specularColor = new Color3(0.7, 0.9, 0.7); m.specularPower = 24
-  dome.material = m; dome.isPickable = false
-  // subtiel glinster-sparkeltje eromheen (minder druk dan het vuurtje)
-  const ps = new ParticleSystem('shellSparkle', 24, scene)
-  ps.particleTexture = fireTex
-  ps.emitter = dome
-  ps.minEmitBox = new Vector3(-0.3, -0.1, -0.3); ps.maxEmitBox = new Vector3(0.3, 0.3, 0.3)
-  ps.color1 = new Color4(0.6, 1, 0.7, 0.8); ps.color2 = new Color4(0.3, 0.9, 0.5, 0.6)
-  ps.colorDead = new Color4(0.2, 0.6, 0.3, 0)
-  ps.minSize = 0.12; ps.maxSize = 0.28
-  ps.minLifeTime = 0.2; ps.maxLifeTime = 0.4
-  ps.emitRate = 30
-  ps.blendMode = ParticleSystem.BLENDMODE_ADD
-  ps.direction1 = new Vector3(-0.3, 0.2, -0.3); ps.direction2 = new Vector3(0.3, 0.6, 0.3)
-  ps.minEmitPower = 0.1; ps.maxEmitPower = 0.3
-  ps.start()
-  dome._fireParticles = ps
-  return dome
-}
 // ── Explosie: felle lichtflits + deeltjes-uitbarsting + een uitdovende
 //    ring die de schade-straal van de bom laat zien ──────────────────────
 function makeExplosion(scene, x, y, z, radius, fireTex) {
@@ -330,45 +276,6 @@ function stepExplosion(ex, dt) {
   return ex.t >= ex.dur
 }
 function disposeExplosion(ex) { ex.rings.forEach(r => r.mesh.dispose()) }
-function disposeShellMesh(mesh) {
-  mesh._fireParticles?.stop(); mesh._fireParticles?.dispose()
-  mesh.dispose()
-}
-// ── Bom: zwarte bol met lont ─────────────────────────────────────────────
-function makeBombMesh(scene) {
-  const body = MeshBuilder.CreateSphere('bbomb', { diameter: 1.1, segments: 12 }, scene)
-  const m = new StandardMaterial('bbombm', scene)
-  m.diffuseColor = new Color3(0.1, 0.1, 0.12); m.specularColor = new Color3(0.4, 0.4, 0.4)
-  body.material = m; body.isPickable = false
-  const fuse = MeshBuilder.CreateCylinder('bfuse', { height: 0.4, diameter: 0.08, tessellation: 6 }, scene)
-  fuse.parent = body; fuse.position.set(0, 0.6, 0); fuse.rotation.x = -0.3
-  const fm = new StandardMaterial('bfusem', scene); fm.diffuseColor = new Color3(0.6, 0.5, 0.3)
-  fuse.material = fm
-  const spark = MeshBuilder.CreateSphere('bspark', { diameter: 0.18, segments: 6 }, scene)
-  spark.parent = body; spark.position.set(0, 0.82, 0)
-  const sm = new StandardMaterial('bsparkm', scene); sm.emissiveColor = new Color3(1, 0.7, 0.1); sm.diffuseColor = new Color3(1, 0.6, 0.1)
-  spark.material = sm
-  return body
-}
-// ── Item-box: draaiend "?"-blok (zelfde stijl als Karten) ───────────────
-function makeItemBox(scene, x, z) {
-  const box = MeshBuilder.CreateBox('bibox', { size: 1.3 }, scene)
-  box.position.set(x, 1.05, z); box.isPickable = false
-  const m = new StandardMaterial('biboxm', scene)
-  const tex = new DynamicTexture('biboxt', { width: 128, height: 128 }, scene, false)
-  const c = tex.getContext()
-  const g = c.createLinearGradient(0, 0, 128, 128)
-  g.addColorStop(0, '#ffe14d'); g.addColorStop(0.5, '#ff8a3d'); g.addColorStop(1, '#ff4db8')
-  c.fillStyle = g; c.fillRect(0, 0, 128, 128)
-  c.strokeStyle = 'rgba(255,255,255,0.9)'; c.lineWidth = 8; c.strokeRect(6, 6, 116, 116)
-  c.fillStyle = '#fff'; c.font = 'bold 92px Arial'; c.textAlign = 'center'; c.textBaseline = 'middle'
-  c.fillText('?', 64, 70)
-  tex.update()
-  m.diffuseTexture = tex; m.emissiveColor = new Color3(0.6, 0.45, 0.2)
-  box.material = m
-  return box
-}
-
 // hex '#rrggbb' → [r,g,b] in 0..1
 function hexRgb(hex) { const c = Color3.FromHexString(hex); return [c.r, c.g, c.b] }
 
@@ -845,33 +752,45 @@ function BotsenMatch({ onBack, room, sessionId, joinCode, myNameProp, myColorPro
         driftPs.emitRate = 0
       }
 
-      // Schilden/vuurtjes syncen + draaien
+      // Schilden/vuurtjes: lokaal vloeiend doorgerekend, bijgestuurd door de server
       room.state.shells?.forEach((s, id) => {
         let m = shellMeshes.get(id)
-        if (!m) { m = makeShellMesh(scene, s.kind, fireTex); shellMeshes.set(id, m) }
-        m.position.set(s.x, heightAt(s.x, s.z) + 0.6, s.z); m.rotation.y += dt * 8
+        if (!m) {
+          m = maakProjectiel(scene, s.kind, fireTex, s.x, heightAt(s.x, s.z) + 0.6, s.z)
+          // beginrichting: de kart die hem net afvuurde (server zet hem 2,2 m voor de kart)
+          let best = null, bd = 9
+          room.state.players?.forEach(p => {
+            const d = Math.hypot(p.x + Math.sin(p.rotY) * 2.2 - s.x, p.z + Math.cos(p.rotY) * 2.2 - s.z)
+            if (d < bd) { bd = d; best = p }
+          })
+          if (best) { m.dx = Math.sin(best.rotY); m.dz = Math.cos(best.rotY) }
+          shellMeshes.set(id, m)
+        }
+        m.server(s.x, s.z, now)
+        m.stap(dt, now, heightAt)
       })
       for (const id of [...shellMeshes.keys()]) {
-        if (!room.state.shells?.get(id)) { disposeShellMesh(shellMeshes.get(id)); shellMeshes.delete(id) }
+        if (!room.state.shells?.get(id)) {
+          const m = shellMeshes.get(id)
+          let raak = false
+          room.state.players?.forEach(p => { if (Math.hypot(p.x - m.rx, p.z - m.rz) < 2.6) raak = true })
+          m.weg(raak); shellMeshes.delete(id)
+        }
       }
-      // Bommen syncen (lont knippert sneller naarmate hij korter wordt — hier simpel: schalen)
+      // Bommen: neerploffen, lont sist, ring knippert steeds sneller
       room.state.bombs?.forEach((b, id) => {
         let m = bombMeshes.get(id)
-        if (!m) { m = makeBombMesh(scene); bombMeshes.set(id, m) }
-        m.position.set(b.x, heightAt(b.x, b.z) + 0.55, b.z)
-        const pulse = 1 + Math.sin(now / 90) * 0.08
-        m.scaling.setAll(pulse)
+        if (!m) { m = maakBom(scene, fireTex, b.x, heightAt(b.x, b.z), b.z, BOMB_RADIUS); bombMeshes.set(id, m) }
+        m.stap(dt, b.x, heightAt(b.x, b.z), b.z, b.fuse, BOMB_FUSE)
       })
       for (const id of [...bombMeshes.keys()]) {
-        if (!room.state.bombs?.get(id)) { bombMeshes.get(id).dispose(); bombMeshes.delete(id) }
+        if (!room.state.bombs?.get(id)) { bombMeshes.get(id).weg(); bombMeshes.delete(id) }
       }
-      // Item-boxen syncen (zichtbaarheid via active, respawn op de server)
+      // ❔-blokken (zichtbaarheid via active, respawn op de server)
       room.state.boxes?.forEach((box, i) => {
         let m = itemBoxMeshes.get(i)
-        if (!m) { m = makeItemBox(scene, box.x, box.z); itemBoxMeshes.set(i, m) }
-        m.rotation.y += dt * 1.8
-        m.position.y = heightAt(box.x, box.z) + 1.05 + Math.sin(now / 400 + i) * 0.15
-        m.setEnabled(box.active)
+        if (!m) { m = maakItemBlok(scene, fireTex); itemBoxMeshes.set(i, m) }
+        m.update(dt, now, box.active, box.x, heightAt(box.x, box.z) + 1.05, box.z, i)
       })
 
       // Bom-explosies: ring laten uitdijen tot de schade-straal, dan opruimen
@@ -972,7 +891,7 @@ function BotsenMatch({ onBack, room, sessionId, joinCode, myNameProp, myColorPro
           onClick={() => useItemRef.current()}
           disabled={!heldItem}
         >
-          <span className="botsen-item-emoji">{heldItem ? ITEM_INFO[heldItem]?.emoji : '❔'}</span>
+          <span key={heldItem || 'leeg'} className="botsen-item-emoji">{heldItem ? ITEM_INFO[heldItem]?.emoji : '❔'}</span>
           <span className="botsen-item-label">{heldItem ? ITEM_INFO[heldItem]?.label : 'Geen item'}</span>
           {heldItem && <span className="botsen-item-count">×{heldCount}</span>}
         </button>

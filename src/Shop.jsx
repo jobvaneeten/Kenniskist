@@ -1,30 +1,25 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, lazy, Suspense } from 'react'
 import { CLOTHING_ITEMS, LOOTBOX_COST, RARITIES, CRATE_ACCENTS } from './data'
-import { getCatalog, swatchStyle, swatchEmoji, swatchBadge } from './itemsCatalog'
+import { getCatalog } from './itemsCatalog'
 import CrateArtwork from './CrateArtwork'
-import { playTierSound, isMuted, setMuted } from './lootboxSound'
+import KledingPreview from './KledingPreview'
+import { playTierSound, playChargeSound, playBurstSound, playTick, isMuted, setMuted } from './lootboxSound'
 import './shop.css'
+// 3D-poppetje pas laden als er echt iets gewonnen is (Babylon is groot)
+const ItemViewer3D = lazy(() => import('./ItemViewer3D'))
 import { Knop, TerugKnop, Icoon } from './ui/index.jsx'
 
-// Generic visual for any item (colour / pattern / print / model)
-function ItemSwatch({ item, className = '', style, title }) {
-  const emoji = swatchEmoji(item)
-  const badge = swatchBadge(item)
-  return (
-    <div className={`item-swatch ${className}`} title={title} style={{ ...swatchStyle(item), ...style }}>
-      {emoji && <span className="item-swatch-emoji">{emoji}</span>}
-      {badge && <span className="item-swatch-badge">{badge}</span>}
-    </div>
-  )
-}
-
-const CARD_W  = 90
+const CARD_W  = 96
 const CARD_GAP = 8
 const SLOT_W  = CARD_W + CARD_GAP
 const VISIBLE = 5
 const WIN_W   = VISIBLE * CARD_W + (VISIBLE - 1) * CARD_GAP
 
-const SPIN_MS = 5600
+const SPIN_MS = 5000
+const LAAD_MS = 1300   // kist trilt en laadt op in de kleur van wat erin zit
+const OPEN_MS = 700    // flits + scherven, daarna de rol
+// sterren per zeldzaamheid op het onthul-scherm
+const STERREN = { common: 1, rare: 2, epic: 3, legendary: 4, ultra_legendary: 5 }
 const quintic = t => 1 - Math.pow(1 - t, 5)
 
 // Higher legendary/ultra chance. Effective odds also depend on how many
@@ -48,16 +43,6 @@ function buildReel(winner, pool) {
 }
 
 function fmt(n) { return n.toLocaleString('nl-NL') }
-
-// ── Reel card icon: color swatch ──────────────────────────────────
-function ReelIcon({ item }) {
-  return <ItemSwatch item={item} className="lb-rc-swatch" />
-}
-
-// ── Win card icon: big swatch (colour / pattern / print) ──────────
-function WinIcon({ item }) {
-  return <ItemSwatch item={item} className="lb-wc-swatch" />
-}
 
 // ── Real drop chances per rarity, computed from the actual pool ───
 const RARITY_ORDER = ['common','rare','epic','legendary','ultra_legendary']
@@ -205,9 +190,10 @@ export default function Shop({ briefgeld, addBriefgeld, unlockedColors, onUnlock
 
   const tapBox = () => {
     if (boxState !== 'idle') return
-    setBoxState('shake')
+    setBoxState('laden')
+    playChargeSound(LAAD_MS / 1000)
 
-    setTimeout(() => setBoxState('explode'), 580)
+    setTimeout(() => { setBoxState('open'); playBurstSound() }, LAAD_MS)
 
     setTimeout(() => {
       setBoxState('idle')
@@ -217,21 +203,25 @@ export default function Shop({ briefgeld, addBriefgeld, unlockedColors, onUnlock
       const targetX   = WIN_W / 2 - winCenter
       startRef.current = null
       const wonRarity  = overlay?.wonItem?.rarity
+      let laatsteKaart = -1
 
       const spin = (ts) => {
         if (!startRef.current) startRef.current = ts
         const t = Math.min((ts - startRef.current) / SPIN_MS, 1)
-        setReelX(targetX * quintic(t))
+        const x = targetX * quintic(t)
+        setReelX(x)
+        const kaart = Math.round((WIN_W / 2 - x - CARD_W / 2) / SLOT_W)
+        if (kaart !== laatsteKaart) { if (laatsteKaart >= 0) playTick(); laatsteKaart = kaart }
         if (t < 1) {
           rafRef.current = requestAnimationFrame(spin)
         } else {
           setOverlay(o => o ? { ...o, phase: 'reveal' } : null)
           if (wonRarity && wonRarity !== 'common') playTierSound(wonRarity)
-          setTimeout(() => setShowEnd(true), wonRarity === 'ultra_legendary' ? 600 : 900)
+          setTimeout(() => setShowEnd(true), wonRarity === 'ultra_legendary' ? 900 : 700)
         }
       }
       rafRef.current = requestAnimationFrame(spin)
-    }, 1200)
+    }, LAAD_MS + OPEN_MS)
   }
 
   const close = () => {
@@ -263,7 +253,7 @@ export default function Shop({ briefgeld, addBriefgeld, unlockedColors, onUnlock
           const pool      = getPool(item.key)
           const unlocked  = (unlockedColors[item.key] || []).length
           const total     = pool.length
-          const { accent, icon } = CRATE_ACCENTS[item.key] || CRATE_ACCENTS.shirt
+          const { accent } = CRATE_ACCENTS[item.key] || CRATE_ACCENTS.shirt
           const isSelected = selectedKey === item.key
 
           return (
@@ -276,7 +266,7 @@ export default function Shop({ briefgeld, addBriefgeld, unlockedColors, onUnlock
             >
               <div className="shopcard-shine" />
               {item.hasFeatured && <div className="shopcard-ultra-badge">ULTRA KANS</div>}
-              <CrateArtwork itemKey={item.key} iconKey={icon} accent={accent} size={150} />
+              <CrateArtwork itemKey={item.key} accent={accent} size={150} />
               <div className="shopcard-name">{item.label}</div>
               <div className="shopcard-meta">{unlocked}/{total} · 💵 {fmt(LOOTBOX_COST)}</div>
             </button>
@@ -293,7 +283,7 @@ export default function Shop({ briefgeld, addBriefgeld, unlockedColors, onUnlock
         const allDone   = unlocked >= total
         const canAfford = briefgeld >= LOOTBOX_COST
         const odds      = rarityOdds(pool)
-        const { accent, icon } = CRATE_ACCENTS[item.key] || CRATE_ACCENTS.shirt
+        const { accent } = CRATE_ACCENTS[item.key] || CRATE_ACCENTS.shirt
 
         return (
           <>
@@ -304,7 +294,7 @@ export default function Shop({ briefgeld, addBriefgeld, unlockedColors, onUnlock
               <div className="shop-detail-left">
                 <div className="shop-detail-rays" />
                 <div className="shop-detail-crate-float">
-                  <CrateArtwork itemKey={item.key} iconKey={icon} accent={accent} size={190} big />
+                  <CrateArtwork itemKey={item.key} accent={accent} size={190} big />
                 </div>
               </div>
 
@@ -334,17 +324,15 @@ export default function Shop({ briefgeld, addBriefgeld, unlockedColors, onUnlock
                 <div className="shop-detail-grid">
                   {pool.map(c => {
                     const owned = (unlockedColors[item.key] || []).includes(c.key)
-                    return owned ? (
+                    return (
                       <div
                         key={c.key}
-                        className="shop-marble"
-                        title={c.label}
-                        style={{ ...swatchStyle(c), '--rc': RARITIES[c.rarity].color }}
+                        className={`shop-tegel ${owned ? '' : 'shop-tegel-dicht'}`}
+                        title={owned ? c.label : 'Nog niet gewonnen'}
+                        style={{ '--rc': RARITIES[c.rarity].color }}
                       >
-                        {swatchEmoji(c) && <span className="item-swatch-emoji">{swatchEmoji(c)}</span>}
+                        <KledingPreview type={item.key} item={owned ? c : null} size={30} />
                       </div>
-                    ) : (
-                      <div key={c.key} className="shop-marble shop-marble-locked" title="Nog niet gewonnen" />
                     )
                   })}
                 </div>
@@ -365,64 +353,55 @@ export default function Shop({ briefgeld, addBriefgeld, unlockedColors, onUnlock
 
       {/* ── Overlay ── */}
       {overlay && (() => {
-        const r  = overlay.phase === 'reveal' ? overlay.wonItem.rarity : null
+        const won = overlay.wonItem
+        const r  = overlay.phase === 'reveal' ? won.rarity : null
         const rc = r ? RARITIES[r].color : null
         const isUltra = r === 'ultra_legendary'
+        const hint = RARITIES[won.rarity].color   // de kist laadt op in de kleur van wat erin zit
 
         return (
           <div className={`lb-overlay ${isUltra ? 'lb-overlay-ultra' : ''}`}>
 
-            {/* Full-screen fireworks for ultra legendary */}
             {fireworks.map(fw => (
               <div
                 key={fw.id}
                 className="lb-firework"
-                style={{
-                  left:            `${fw.x}%`,
-                  top:             `${fw.y}%`,
-                  '--fw-color':    fw.color,
-                  '--fw-size':     `${fw.size}px`,
-                  animationDelay:  `${fw.delay}s`,
-                }}
+                style={{ left: `${fw.x}%`, top: `${fw.y}%`, '--fw-color': fw.color, '--fw-size': `${fw.size}px`, animationDelay: `${fw.delay}s` }}
               />
             ))}
 
-            <div className={`lb-modal-card ${r ? `lb-mc-${r}` : ''}`}>
-              <div
-                className="lb-glow-strip"
-                style={rc ? { background: `linear-gradient(90deg, transparent, ${rc}cc, transparent)` } : {}}
-              />
+            <div className={`lb-modal-card ${r ? `lb-mc-${r}` : ''}`} style={{ '--rc': rc || hint }}>
 
-              {/* ── Phase 1: Box ── */}
+              {/* ── Fase 1: kist ── */}
               {overlay.phase === 'box' && (
-                <div className="lb-box-phase">
+                <div className={`lb-box-phase lb-box-${boxState}`} style={{ '--hint': hint }}>
                   <p className="lb-box-label">{overlay.itemEmoji} {overlay.itemLabel} lootbox</p>
-                  <div className={`lb-open-box lb-box-${boxState}`} onClick={tapBox}>
-                    <div className="lb-box-beam" />
+                  <div className="lb-open-box" onClick={tapBox}>
+                    <div className="lb-box-stralen" />
                     <div className="lb-box-glow" />
                     {boxState === 'idle' && Array.from({ length: 6 }, (_, i) => (
-                      <span key={i} className="lb-box-orbit" style={{ '--oi': i, animationDelay: `${i * 0.55}s` }}>✦</span>
+                      <span key={i} className="lb-box-orbit" style={{ animationDelay: `${i * 0.55}s` }}>✦</span>
                     ))}
-                    <CrateArtwork
-                      itemKey={overlay.itemKey}
-                      iconKey={(CRATE_ACCENTS[overlay.itemKey] || CRATE_ACCENTS.shirt).icon}
-                      accent="#FFD23F"
-                      size={190}
-                      big
-                      animState={boxState}
-                    />
-                    {boxState === 'explode' && (
+                    {boxState === 'laden' && Array.from({ length: 14 }, (_, i) => (
+                      <span key={i} className="lb-box-zuig" style={{ '--ang': `${i * 25.7}deg`, animationDelay: `${(i % 7) * 0.12}s` }} />
+                    ))}
+                    <CrateArtwork itemKey={overlay.itemKey} accent="#FFD23F" size={200} big animState={boxState} />
+                    {boxState === 'open' && (
                       <>
                         <div className="lb-flash-overlay" />
+                        <div className="lb-box-pilaar" />
+                        <div className="lb-ring" />
+                        <div className="lb-ring lb-ring-2" />
                         <div className="lb-crate-burst">
-                          {Array.from({ length: 16 }, (_, i) => (
-                            <span key={i} className="lb-crate-burst-p" style={{ '--ang': `${i * 22.5}deg`, animationDelay: `${(i % 4) * 0.03}s` }} />
+                          {Array.from({ length: 22 }, (_, i) => (
+                            <span key={i} className={`lb-scherf ${i % 3 ? '' : 'lb-scherf-goud'}`}
+                              style={{ '--ang': `${i * 16.4 + (i % 2) * 6}deg`, '--afst': `${110 + (i * 37) % 70}px`, animationDelay: `${(i % 4) * 0.025}s` }} />
                           ))}
                         </div>
                       </>
                     )}
                   </div>
-                  {boxState === 'idle' && <p className="lb-tap-text">✦ TAP OM TE OPENEN ✦</p>}
+                  <p className={`lb-tap-text ${boxState !== 'idle' ? 'lb-tap-weg' : ''}`}>✦ TIK OM TE OPENEN ✦</p>
                   <div className="lb-box-hint">
                     Bevat kleuren · zeldzaam · episch · legendarisch
                     {overlay.itemKey === 'shirt' && <span className="lb-box-hint-ultra"> · ⚡ ultra</span>}
@@ -430,74 +409,57 @@ export default function Shop({ briefgeld, addBriefgeld, unlockedColors, onUnlock
                 </div>
               )}
 
-              {/* ── Phase 2: Spin ── */}
+              {/* ── Fase 2: rol ── */}
               {overlay.phase === 'spin' && (() => {
-                const centerIdx  = Math.round((WIN_W / 2 - reelX - CARD_W / 2) / SLOT_W)
-                const targetX    = WIN_W / 2 - (reelWinIdx * SLOT_W + CARD_W / 2)
-                const nearLand   = Math.abs(reelX - targetX) < SLOT_W * 2.5
-                const bigWin     = ['epic', 'legendary', 'ultra_legendary'].includes(overlay.wonItem.rarity)
-                const buildColor = RARITIES[overlay.wonItem.rarity]?.color
+                const centerIdx = Math.round((WIN_W / 2 - reelX - CARD_W / 2) / SLOT_W)
+                const targetX   = WIN_W / 2 - (reelWinIdx * SLOT_W + CARD_W / 2)
+                const nearLand  = Math.abs(reelX - targetX) < SLOT_W * 2.5
+                const bigWin    = ['epic', 'legendary', 'ultra_legendary'].includes(won.rarity)
+                const snel      = Math.abs(reelX - targetX) > SLOT_W * 12
 
                 return (
                   <div className="lb-spin-phase">
-                    {nearLand && bigWin && (
-                      <div className="lb-spin-buildup" style={{ '--bc': buildColor }} />
-                    )}
+                    {nearLand && bigWin && <div className="lb-spin-buildup" style={{ '--bc': hint }} />}
                     <p className="lb-spin-label">{overlay.itemEmoji} {overlay.itemLabel}</p>
-                    <div className="lb-ptr-wrap">
-                      <div key={centerIdx} className="lb-ptr lb-ptr-tick" />
-                    </div>
-                    <div className="lb-slot-win">
+                    <div className="lb-ptr-wrap"><div key={centerIdx} className="lb-ptr lb-ptr-tick" /></div>
+                    <div className={`lb-slot-win ${snel ? 'lb-slot-snel' : ''}`}>
                       <div className="lb-slot-fade-l" />
                       <div className="lb-slot-fade-r" />
                       <div className="lb-slot-center-line" />
-                      <div
-                        className="lb-slot-reel"
-                        style={{ transform: `translateX(${reelX}px)` }}
-                      >
+                      <div className="lb-slot-reel" style={{ transform: `translateX(${reelX}px)` }}>
                         {reelCards.map((c, i) => (
-                          <div key={i} className={`lb-reel-card lb-rc-${c.rarity} ${i === centerIdx ? 'lb-rc-tick' : ''}`}>
-                            <ReelIcon item={c} />
+                          <div key={i} className={`lb-reel-card ${i === centerIdx ? 'lb-rc-tick' : ''}`} style={{ '--rc': RARITIES[c.rarity].color }}>
+                            <KledingPreview type={overlay.itemKey} item={c} size={58} />
                             <div className="lb-rc-name">{c.label}</div>
-                            <div className={`lb-rc-badge lb-rb-${c.rarity}`}>
-                              {RARITIES[c.rarity].label.split(' ')[0]}
-                            </div>
+                            <div className="lb-rc-balk" />
                           </div>
                         ))}
                       </div>
                     </div>
+                    <div className="lb-ptr-wrap lb-ptr-onder"><div key={centerIdx} className="lb-ptr lb-ptr-tick" /></div>
                   </div>
                 )
               })()}
 
-              {/* ── Phase 3: Reveal ── */}
+              {/* ── Fase 3: onthulling ── */}
               {overlay.phase === 'reveal' && (
-                <div className={`lb-reveal-phase ${isUltra ? 'lb-reveal-ultra' : ''}`}>
+                <div className={`lb-reveal-phase lb-rv-${r}`} style={{ '--rc': rc }}>
                   {confetti.map(p => (
                     <div
                       key={p.id}
                       className={`lb-confetti ${p.shape === 'rect' ? 'lb-confetti-rect' : ''}`}
-                      style={{
-                        left:           `${p.x}%`,
-                        animationDelay: `${p.delay}s`,
-                        background:     p.color,
-                        width:          `${p.size}px`,
-                        height:         `${p.size}px`,
-                      }}
+                      style={{ left: `${p.x}%`, animationDelay: `${p.delay}s`, background: p.color, width: `${p.size}px`, height: `${p.size}px` }}
                     />
                   ))}
-
-                  {isUltra && (
-                    <div className="lb-ultra-banner">
-                      ⚡ ULTRA LEGENDARISCH ⚡
-                    </div>
-                  )}
-
-                  <div className="lb-ptr-wrap">
-                    <div className="lb-ptr lb-ptr-lit" style={{ '--rc': rc }} />
+                  <div className="lb-rv-stralen" />
+                  <div className="lb-rv-gloed" />
+                  <div className="lb-ring lb-rv-ring" />
+                  <div className="lb-crate-burst lb-rv-burst">
+                    {Array.from({ length: 6 + STERREN[r] * 4 }, (_, i) => (
+                      <span key={i} className="lb-scherf lb-scherf-rc"
+                        style={{ '--ang': `${(i * 360) / (6 + STERREN[r] * 4)}deg`, '--afst': `${120 + (i * 29) % 60}px` }} />
+                    ))}
                   </div>
-
-                  <div className="lb-shockwave" style={{ '--rc': rc }} />
                   {(r === 'legendary' || isUltra) && (
                     <div className="lb-embers">
                       {Array.from({ length: 16 }, (_, i) => (
@@ -509,31 +471,37 @@ export default function Shop({ briefgeld, addBriefgeld, unlockedColors, onUnlock
                       ))}
                     </div>
                   )}
-                  <div className={`lb-win-card lb-wc-${overlay.wonItem.rarity} ${r === 'legendary' || isUltra ? 'lb-wc-flip' : ''} ${isUltra ? 'lb-wc-chroma' : ''}`}>
-                    {(r === 'legendary' || isUltra) && <div className="lb-wc-ultra-rays" />}
-                    {r === 'epic' && <div className="lb-wc-epic-rays" />}
-                    <WinIcon item={overlay.wonItem} />
-                    <div className="lb-wc-name">{overlay.wonItem.label}</div>
 
-                    {showEnd && (
-                      <>
-                        <div
-                          className={`lb-wc-badge lb-badge-pop ${isUltra ? 'lb-badge-ultra' : ''}`}
-                          style={!isUltra ? { background: RARITIES[overlay.wonItem.rarity].color } : undefined}
-                        >
-                          {RARITIES[overlay.wonItem.rarity].label}
-                        </div>
-                        <div className={`lb-wc-message ${isUltra ? 'lb-msg-ultra' : ''}`}>
-                          {overlay.isDuplicate ? `🔄 Al in bezit! Geld terug 💵 ${fmt(LOOTBOX_COST)}` : isUltra ? '🎆 GEWELDIG! JE HEBT HET! 🎆' : '🎉 NIEUW GEWONNEN!'}
-                        </div>
-                      </>
-                    )}
+                  {isUltra && <div className="lb-ultra-banner">⚡ ULTRA LEGENDARISCH ⚡</div>}
+
+                  <div className="lb-rv-item">
+                    {/* eerst het plaatje (pop-in), dan het echte item op het poppetje, draaibaar */}
+                    <Suspense fallback={<div className="lb-rv-zweef"><KledingPreview type={overlay.itemKey} item={won} size={170} glans /></div>}>
+                      <ItemViewer3D type={overlay.itemKey} itemKey={won.key} gloed={rc}>
+                        <div className="lb-rv-zweef"><KledingPreview type={overlay.itemKey} item={won} size={170} glans /></div>
+                      </ItemViewer3D>
+                    </Suspense>
+                  </div>
+
+                  <div className="lb-rv-sterren">
+                    {Array.from({ length: 5 }, (_, i) => (
+                      <span key={i} className={i < STERREN[r] ? 'aan' : ''} style={{ animationDelay: `${0.45 + i * 0.13}s` }}>★</span>
+                    ))}
+                  </div>
+                  <div className="lb-wc-name">{won.label}</div>
+                  <div className={`lb-wc-badge lb-badge-pop ${isUltra ? 'lb-badge-ultra' : ''}`}>
+                    {RARITIES[won.rarity].label}
                   </div>
 
                   {showEnd && (
-                    <Knop variant="beloning" maat="lg" icoonRechts="verder" className="lb-continue-btn" onClick={close}>
-                      {isUltra ? 'Fantastisch! Verder' : 'Verder'}
-                    </Knop>
+                    <>
+                      <div className={`lb-wc-message ${isUltra ? 'lb-msg-ultra' : ''}`}>
+                        {overlay.isDuplicate ? `🔄 Al in bezit! Geld terug 💵 ${fmt(LOOTBOX_COST)}` : isUltra ? '🎆 GEWELDIG! JE HEBT HET! 🎆' : '🎉 NIEUW GEWONNEN!'}
+                      </div>
+                      <Knop variant="beloning" maat="lg" icoonRechts="verder" className="lb-continue-btn" onClick={close}>
+                        {isUltra ? 'Fantastisch! Verder' : 'Verder'}
+                      </Knop>
+                    </>
                   )}
                 </div>
               )}
