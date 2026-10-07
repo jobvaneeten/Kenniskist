@@ -84,7 +84,7 @@ const SPELLEN = [
   { key: 'sterrenveer', name: 'Sterrenveer',   desc: 'Speel 1 level',                    img: '/scenes/games/sterrenveer.svg' },
   { key: 'graven',     name: 'Diepgravers',    desc: 'Je krijgt 3 duiken',               img: '/scenes/games/graven.svg' },
   { key: 'neongolf',   name: 'Neongolf',       desc: 'Speel 1 hole',                     img: '/scenes/games/neongolf.svg' },
-  { key: 'blokken',    name: 'Blokkenblitz',   desc: 'Speel 1 potje (max 4 minuten)',    img: '/scenes/games/blokkenblitz.svg' },
+  { key: 'blokken',    name: 'Blokkenblitz',   desc: '1 minuut spelen, daarna ga je de volgende keer verder', img: '/scenes/games/blokkenblitz.svg' },
 ]
 
 export default function SpelBeloning({ title, sub, geld, addCuruntie, onDone }) {
@@ -121,8 +121,9 @@ export default function SpelBeloning({ title, sub, geld, addCuruntie, onDone }) 
   if (picked === 'graven')     return <IframeEmbed src="/graven/" title="Diepgravers" doneType="graven-gameover" hint="Je krijgt 3 duiken — daarna kun je upgraden en op Verder klikken" onDone={onDone} />
   // Eén hole naar keuze; na de hole tik je op Klaar.
   if (picked === 'neongolf')   return <IframeEmbed src="/neongolf/" title="Neongolf" doneType="neongolf-gameover" hint="Speel 1 hole — daarna tik je op Klaar" onDone={onDone} />
-  // Een potje kan lang duren als je goed bent: na 4 minuten ga je hoe dan ook verder.
-  if (picked === 'blokken')    return <IframeEmbed src="/blokkenblitz/" title="Blokkenblitz" doneType="blokkenblitz-gameover" seconds={240} hint="Speel 1 potje — na 4 minuten ga je vanzelf verder" onDone={onDone} />
+  // Eén minuut per beloning. Het potje wordt na elke zet bewaard, dus bij de
+  // volgende beloning ga je verder waar je was (zie public/blokkenblitz/spel.js).
+  if (picked === 'blokken')    return <IframeEmbed src="/blokkenblitz/" title="Blokkenblitz" doneType="blokkenblitz-gameover" seconds={60} hint="1 minuut spelen — je potje wordt bewaard voor de volgende keer" onDone={onDone} />
 
   return (
     <div className="sb-screen">

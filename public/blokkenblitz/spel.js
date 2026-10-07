@@ -14,7 +14,9 @@ if (!BELONING) {
 }
 
 // ── opslag (kk_-prefix ⇒ synct mee naar het account) ──
-var OPSLAG = 'kk_bb', SPELOPSLAG = 'kk_bb_spel'
+// Beloning (1 minuut per keer) heeft een eigen potje dat bewaard blijft: bij de
+// volgende beloning ga je verder waar je was. Los van het vrij-spelen-potje.
+var OPSLAG = 'kk_bb', SPELOPSLAG = BELONING ? 'kk_bb_beloning' : 'kk_bb_spel'
 var D = (function () {
   var d = {}
   try { d = JSON.parse(localStorage.getItem(OPSLAG) || '{}') || {} } catch (e) {}
@@ -189,11 +191,11 @@ var schud = 0, toonScore = 0, trayIn = 0, eindeT = 0
 var sleep = null, terugVlucht = null
 
 function bewaarSpel() {
-  if (BELONING || !spel || spel.over) return
+  if (!spel || spel.over) return
   try { localStorage.setItem(SPELOPSLAG, JSON.stringify(BB.bewaar(spel))) } catch (e) {}
 }
 function wisSpel() { try { localStorage.removeItem(SPELOPSLAG) } catch (e) {} }
-function opgeslagen() { if (BELONING) return null; try { return JSON.parse(localStorage.getItem(SPELOPSLAG) || 'null') } catch (e) { return null } }
+function opgeslagen() { try { return JSON.parse(localStorage.getItem(SPELOPSLAG) || 'null') } catch (e) { return null } }
 
 function start(herstelData) {
   spel = herstelData ? BB.herstel(herstelData) : BB.nieuwSpel()
@@ -555,7 +557,8 @@ window.addEventListener('pagehide', bewaarSpel)
 
 meet()
 tekenGeluidKnop()
-toonMenu()
+if (BELONING) start(opgeslagen())   // beloning: meteen spelen, verder met het bewaarde potje
+else toonMenu()
 requestAnimationFrame(frame)
 // wacht op het lettertype zodat canvas-teksten meteen goed staan
 if (document.fonts && document.fonts.load) document.fonts.load("30px 'Russo One'")
