@@ -33,3 +33,4 @@ animatie_bronnen/
 screenshots/
 test-results/
 playwright-report/
+*.blend1

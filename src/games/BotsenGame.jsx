@@ -9,7 +9,8 @@ import {
 import * as Colyseus from '@colyseus/sdk'
 import OrientationGate from '../OrientationGate'
 import { KART_COLORS, AV_Y, AV_Z, buildKart, loadAvatar, safeJSON } from './kartShared'
-import { SET, nachtOmgeving, glowLaag, nachtLucht, pbrMat, neonMat, gelaktMat } from './neonOmgeving'
+import { nachtOmgeving, glowLaag, nachtLucht } from './neonOmgeving'
+import { laadGebakkenMap } from './gebakkenMap'
 import './botsen-game.css'
 import { TerugKnop } from '../ui/index.jsx'
 
@@ -171,6 +172,24 @@ function buildBalloons(scene, idSuffix) {
 }
 function setBalloons(balls, count) {
   balls.forEach((b, i) => b.setEnabled(i < count))
+}
+
+// ── Zachte schaduwvlek onder een kart: de gebakken vloer vangt geen echte
+//    schaduwen, en zonder schaduw lijkt een kart te zweven. ───────────────
+let schaduwMat = null
+function maakSchaduw(scene, ouder) {
+  if (!schaduwMat || schaduwMat.getScene() !== scene) {
+    const t = new DynamicTexture('kartSchaduwTex', { width: 128, height: 128 }, scene, false)
+    const c = t.getContext(), g = c.createRadialGradient(64, 64, 4, 64, 64, 62)
+    g.addColorStop(0, 'rgba(0,0,0,0.75)'); g.addColorStop(0.6, 'rgba(0,0,0,0.4)'); g.addColorStop(1, 'rgba(0,0,0,0)')
+    c.fillStyle = g; c.fillRect(0, 0, 128, 128); t.update(); t.hasAlpha = true
+    schaduwMat = new StandardMaterial('kartSchaduw', scene)
+    schaduwMat.diffuseTexture = t; schaduwMat.useAlphaFromDiffuseTexture = true
+    schaduwMat.disableLighting = true; schaduwMat.emissiveColor = Color3.Black(); schaduwMat.specularColor = Color3.Black()
+  }
+  const d = MeshBuilder.CreateGround('kartSchaduw', { width: 3.2, height: 4.2 }, scene)
+  d.material = schaduwMat; d.parent = ouder; d.position.y = 0.04; d.isPickable = false
+  return d
 }
 
 // ── Naamkaartje: zwevend, altijd naar de camera gericht, boven de kart ──
@@ -381,157 +400,53 @@ function buildClouds(scene) {
   })
 }
 
-// ── Arena bouwen: alleen lucht (géén gras/bomen), fort-achtige gekleurde
-//    vloer + platform/helling, gekleurde kratten als dekking. Grens =
-//    ONZICHTBAAR (geen muur-mesh — alleen botsing); mist laat de vloer
-//    zachtjes in de lucht verdwijnen zodat het een zwevend eiland lijkt. ──
-function buildArena(scene, sg) {
-  const half = ARENA_HALF
-  // Mistkleur = de horizonband van de nachtlucht. Daardoor loopt de vloerrand
-  // naadloos over in de lucht in plaats van als zwart gat te eindigen.
-  const nachtBodem = '#3a2168'
+// ── Arena: gebouwd in Blender (tools/blender/bouw_ballonnen.py) met gebakken
+//    nachtlicht — zie gebakkenMap.js. De vorm (platforms, bruggen, hellingen,
+//    leuningen, bumpers) volgt exact de constanten hierboven; de BOTSING komt
+//    nog steeds uit die constanten (moet gelijk zijn aan de server), niet uit
+//    de meshes. ─────────────────────────────────────────────────────────────
+const ARENA_MAP = {
+  map: '/ballonnen/', glb: 'arena.glb', lichtNiveau: 1.8,
+  lightmaps: { floor: 'lm_vloer.jpg', '*': 'lm_arena.jpg' },
+  geenBotsing: [''],   // alles: de botsing zit in de constanten, niet in meshes
+  materialen: {
+    ground_asfalt: { tex: '/tex/asfalt_diff.jpg', m: 5, tint: '#d6dbe6' },
+    verf_wit:      { tint: '#e9eef7' },
+    verf_geel:     { tint: '#ffd23f' },
+    dek:           { tex: '/tex/vloer_diff.jpg', m: 3, tint: '#d2d8e4' },
+    paneel:        { tex: '/tex/plaat_diff.jpg', m: 2.5, tint: '#8c95a5' },
+    paneel_blauw:  { tex: '/tex/plaat_diff.jpg', m: 2.5, tint: '#6aa8ff' },
+    paneel_rood:   { tex: '/tex/plaat_diff.jpg', m: 2.5, tint: '#ff6b78' },
+    paneel_groen:  { tex: '/tex/plaat_diff.jpg', m: 2.5, tint: '#5fe39c' },
+    paneel_geel:   { tex: '/tex/plaat_diff.jpg', m: 2.5, tint: '#ffcc4d' },
+    staal:         { tint: '#59606d' },
+    bumper_0:      { tint: '#9b5de5' }, bumper_1: { tint: '#f4a261' }, bumper_2: { tint: '#43aa8b' }, bumper_3: { tint: '#ff6b9d' },
+    gebouw:        { gloed: '#5a5a5a', sterkte: 1, tex: '/tex/stad/ramen.jpg', m: 8, geenMist: true },
+    dak:           { tint: '#1a1e27', geenMist: true },
+    neon_blauw:    { gloed: '#19e6ff', sterkte: 1.2 },
+    neon_rood:     { gloed: '#ff2f6e', sterkte: 1.2 },
+    neon_groen:    { gloed: '#39ff88', sterkte: 1.2 },
+    neon_geel:     { gloed: '#ffc21a', sterkte: 1.2 },
+    neon_roze:     { gloed: '#ff2f8e', sterkte: 1.1 },
+    neon_paars:    { gloed: '#b388ff', sterkte: 1.1 },
+    bumperneon_0:  { gloed: '#9b5de5', sterkte: 1.3 }, bumperneon_1: { gloed: '#f4a261', sterkte: 1.3 },
+    bumperneon_2:  { gloed: '#43aa8b', sterkte: 1.3 }, bumperneon_3: { gloed: '#ff6b9d', sterkte: 1.3 },
+    lamp_wit:      { gloed: '#fff6e0', sterkte: 1.2 },
+  },
+}
 
-  // Nachtelijke hemel: diep indigo met een magenta stadsgloed op de horizon.
+function buildArena(scene) {
+  const half = ARENA_HALF
+  const nachtBodem = '#140f2e'
   nachtLucht(scene, half + 160)
   scene.clearColor = new Color4(...hexRgb(nachtBodem), 1)
-  // Mist vlak achter de speelgrens: de vloer "verdwijnt" in de lucht i.p.v.
-  // een harde rand — er is verder geen grond, dus je ziet er gewoon lucht.
-  scene.fogMode = Scene.FOGMODE_LINEAR; scene.fogStart = half - 12; scene.fogEnd = half + 38
+  scene.fogMode = Scene.FOGMODE_EXP2; scene.fogDensity = 0.004
   scene.fogColor = new Color3(...hexRgb(nachtBodem))
 
-  // Vloer: echt versleten beton (albedo + normal + AO/rough/metal) i.p.v. het
-  // lichtblauwe schaakbord. Geen emissive raster erover: dat waste over de
-  // hele vloer uit tot een egale gloed zodra je er schuin overheen keek.
-  const floor = MeshBuilder.CreateGround('bfloor', { width: half * 2, height: half * 2 }, scene)
-  const fMat = pbrMat(scene, 'bfloorMat', SET.vloer, { uv: half / 3, tint: '#8f97a6', ruw: 0.85, metaal: 0.1 })
-  floor.material = fMat; floor.receiveShadows = true; floor.position.y = -0.015
+  laadGebakkenMap(scene, ARENA_MAP)
+  buildClouds(scene)
 
-  // Rand rond de hele arena: donkere metaalplaat met een oplichtende neon-lijst
-  // erbovenop, in plaats van het houten boord.
-  const borderMat = pbrMat(scene, 'bborderMat', SET.plaat, { uv: half / 6, tint: '#5a6472', ruw: 0.45, metaal: 0.9 })
-  const borderNeon = neonMat(scene, 'bborderNeon', '#ff2f8e', { kracht: 1.0 })
-  const borderH = 1.6, borderT = 2.2
-  const neonLijst = (naam, w, d, x, z) => {
-    const strip = MeshBuilder.CreateBox(naam, { width: w, height: 0.18, depth: d }, scene)
-    strip.position.set(x, borderH - 0.3, z); strip.material = borderNeon; strip.isPickable = false
-  }
-  ;[[0, -half - borderT / 2, half * 2 + borderT * 2, borderT], [0, half + borderT / 2, half * 2 + borderT * 2, borderT]].forEach(([, zc, w, d], i) => {
-    const seg = MeshBuilder.CreateBox('bborderZ' + i, { width: w, height: borderH, depth: d }, scene)
-    seg.position.set(0, borderH / 2 - 0.3, zc); seg.material = borderMat; seg.receiveShadows = true; sg.addShadowCaster(seg)
-    neonLijst('bborderZneon' + i, w * 0.995, d * 0.55, 0, zc)
-  })
-  ;[[-half - borderT / 2, 0, borderT, half * 2 + borderT * 2], [half + borderT / 2, 0, borderT, half * 2 + borderT * 2]].forEach(([xc, , w, d], i) => {
-    const seg = MeshBuilder.CreateBox('bborderX' + i, { width: w, height: borderH, depth: d }, scene)
-    seg.position.set(xc, borderH / 2 - 0.3, 0); seg.material = borderMat; seg.receiveShadows = true; sg.addShadowCaster(seg)
-    neonLijst('bborderXneon' + i, w * 0.55, d * 0.995, xc, 0)
-  })
-
-  // ── Vier gekleurde platforms + hun buiten-helling naar de grond, elk met
-  //    een gekleurde rand bovenop (zoals het voorbeeld-plaatje) ───────────
-  function buildQuadrant(q) {
-    const hp = PLAT_SIZE / 2
-    // Flank = betonblokken in de teamkleur, dek = beton met een matte
-    // teamtint. Geen platte diffuseColor meer, dus je ziet het oppervlak.
-    const bodyMat = pbrMat(scene, 'bplatMat' + q.key, SET.muur, { uv: 2.5, tint: q.body, ruw: 0.9, metaal: 0.05 })
-    const topMat = pbrMat(scene, 'bplatTopMat' + q.key, SET.vloer, { uv: 3, tint: q.top, ruw: 0.8, metaal: 0.08 })
-    const body = MeshBuilder.CreateBox('bplateau' + q.key, { width: PLAT_SIZE, height: PLAT_H, depth: PLAT_SIZE }, scene)
-    body.position.set(q.x, PLAT_H / 2, q.z); body.material = bodyMat
-    body.receiveShadows = true; sg.addShadowCaster(body)
-    const topPlane = MeshBuilder.CreateGround('bplateauTop' + q.key, { width: PLAT_SIZE, height: PLAT_SIZE }, scene)
-    topPlane.position.set(q.x, PLAT_H + 0.01, q.z); topPlane.material = topMat; topPlane.receiveShadows = true
-
-    // gekleurde opstaande rand — materiaal alvast klaarzetten; de rand zelf
-    // wordt verderop getekend als de botsings-wandsegmenten (platformWalls),
-    // NIET als los, doorlopend vierkant — anders zou de rand ook over de
-    // helling- en brug-opening heen lopen terwijl de botsing daar juist
-    // openstaat (dat gaf het "balken over de opening"-effect).
-    const rimMat = neonMat(scene, 'bplatRimMat' + q.key, q.rail, { kracht: 1.5 })
-
-    // helling naar de grond (buitenkant, in de x-richting van rampDir)
-    const rampX0 = q.x + q.rampDir * hp
-    const rampSlopeLen = Math.hypot(RAMP_LEN, PLAT_H)
-    const ramp = MeshBuilder.CreateBox('bramp' + q.key, { width: rampSlopeLen, height: 0.6, depth: PLAT_SIZE }, scene)
-    ramp.position.set(rampX0 + q.rampDir * RAMP_LEN / 2, PLAT_H / 2, q.z)
-    // Rotatie om de Z-as tilt het verre X-uiteinde omlaag (analoog aan de
-    // oude Z-georiënteerde helling die om de X-as tilde).
-    ramp.rotation.z = -q.rampDir * Math.atan2(PLAT_H, RAMP_LEN)
-    ramp.material = bodyMat; ramp.receiveShadows = true; sg.addShadowCaster(ramp)
-
-    // leuningen (volgen de botsings-wanden van platformWalls exact)
-    platformWalls(q).forEach((seg, i) => {
-      const railH = 0.9
-      const rail = MeshBuilder.CreateBox('brail' + q.key + i, { width: seg.hw * 2 * 0.9, height: railH, depth: seg.hd * 2 * 0.9 }, scene)
-      const y = heightAt(seg.x, seg.z)
-      rail.position.set(seg.x, y + railH / 2, seg.z); rail.material = rimMat
-    })
-  }
-  QUADRANTS.forEach(buildQuadrant)
-
-  // ── Vier korte, SMALLE bruggen tussen de platforms — smaller dan de hele
-  //    opening (BRIDGE_W < CORRIDOR), met steunpoten, zodat duidelijk te
-  //    zien is dat je aan weerszijden op de grond eronderdoor kunt rijden ──
-  const bridgeMat = pbrMat(scene, 'bbridgeMat', SET.plaat, { uv: 3, tint: '#8d97a6', ruw: 0.4, metaal: 1 })
-  const bridgeRailMat = gelaktMat(scene, 'bbridgeRailMat', '#4a5162', { ruw: 0.4 })
-  const hb = BRIDGE_W / 2
-  const BRIDGES = [
-    { x: 0, z: -OFF, horizontal: true }, { x: 0, z: OFF, horizontal: true },
-    { x: -OFF, z: 0, horizontal: false }, { x: OFF, z: 0, horizontal: false },
-  ]
-  BRIDGES.forEach((b, i) => {
-    const len = CORRIDOR, w = b.horizontal ? len : BRIDGE_W, d = b.horizontal ? BRIDGE_W : len
-    const deck = MeshBuilder.CreateBox('bbridge' + i, { width: w, height: 0.6, depth: d }, scene)
-    deck.position.set(b.x, PLAT_H - 0.3, b.z); deck.material = bridgeMat
-    deck.receiveShadows = true; sg.addShadowCaster(deck)
-    // leuningen langs de lange zijden van het dek (puur decoratief, geen botsing)
-    ;[-hb, hb].forEach(off => {
-      const rail = MeshBuilder.CreateBox('bbrail' + i + off, b.horizontal
-        ? { width: len * 0.95, height: 0.7, depth: 0.3 } : { width: 0.3, height: 0.7, depth: len * 0.95 }, scene)
-      rail.position.set(b.horizontal ? b.x : b.x + off, PLAT_H + 0.35, b.horizontal ? b.z + off : b.z)
-      rail.material = bridgeRailMat; rail.isPickable = false
-    })
-    // twee steunpoten omlaag naar de grond, in het midden van het dek (visueel;
-    // staan precies op de grens tussen brug en de open rijstroken ernaast)
-    ;[-len / 4, len / 4].forEach(off => {
-      const leg = MeshBuilder.CreateCylinder('bbleg' + i + off, { height: PLAT_H, diameter: 0.6, tessellation: 10 }, scene)
-      leg.position.set(b.horizontal ? b.x + off : b.x, PLAT_H / 2 - 0.3, b.horizontal ? b.z : b.z + off)
-      leg.material = bridgeRailMat
-    })
-  })
-
-  // ── Obstakels: mooie afgeronde bumper-blokken met een glanzende top-dop,
-  //    een lichte body-glans en een donkere voet-ring (speelgoed-look) ──
-  const boxes = []
-  OBSTACLES.forEach((o, i) => {
-    const h = 2.6
-    // Body = gelakt metaal in de obstakelkleur, dop = datzelfde neon (die dus
-    // echt gloeit), voet = donkere metaalplaat. Vervangt de speelgoed-glans.
-    const bodyMat = gelaktMat(scene, 'bobsMat' + i, o.color, { ruw: 0.3, metaal: 0.8 })
-    const capMat = neonMat(scene, 'bobsCapMat' + i, o.color, { kracht: 1.5 })
-    const footMat = pbrMat(scene, 'bobsFootMat' + i, SET.plaat, { uv: 1.2, tint: '#3d4350', ruw: 0.5, metaal: 1 })
-    // afgeronde body (cilinder als het vierkant is, anders een box met dop)
-    const round = Math.abs(o.w - o.d) < 0.5
-    let body
-    if (round) {
-      body = MeshBuilder.CreateCylinder('bobs' + i, { height: h, diameter: o.w, tessellation: 24 }, scene)
-    } else {
-      body = MeshBuilder.CreateBox('bobs' + i, { width: o.w, height: h, depth: o.d }, scene)
-    }
-    body.position.set(o.x, h / 2, o.z); body.material = bodyMat
-    body.receiveShadows = true; sg.addShadowCaster(body)
-    // glanzende afgeronde top-dop
-    const cap = round
-      ? MeshBuilder.CreateSphere('bobsCap' + i, { diameter: o.w, segments: 16 }, scene)
-      : MeshBuilder.CreateBox('bobsCap' + i, { width: o.w, height: 0.5, depth: o.d }, scene)
-    if (round) cap.scaling.y = 0.45
-    cap.position.set(o.x, h + (round ? -0.05 : 0.0), o.z); cap.material = capMat
-    sg.addShadowCaster(cap)
-    // donkere voet-ring
-    const foot = MeshBuilder.CreateCylinder('bobsFoot' + i, { height: 0.35, diameter: Math.max(o.w, o.d) + 0.7, tessellation: round ? 24 : 4 }, scene)
-    if (!round) foot.rotation.y = Math.PI / 4
-    foot.position.set(o.x, 0.17, o.z); foot.material = footMat; foot.receiveShadows = true
-    boxes.push({ x: o.x, z: o.z, hw: o.w / 2, hd: o.d / 2 })
-  })
-
+  const boxes = OBSTACLES.map(o => ({ x: o.x, z: o.z, hw: o.w / 2, hd: o.d / 2 }))
   // ── Onzichtbare grens (alleen botsing, geen mesh) ──
   const invisWalls = [
     { x: 0, z: half + 1, hw: half + 1, hd: 1 },
@@ -539,9 +454,6 @@ function buildArena(scene, sg) {
     { x: half + 1, z: 0, hw: 1, hd: half + 1 },
     { x: -half - 1, z: 0, hw: 1, hd: half + 1 },
   ]
-
-  buildClouds(scene)
-
   // Twee botsingssets: welke geldt hangt af van je hoogte. Op de grond zijn de
   // platforms dichte blokken en bestaan de bruggen niet; op het bovendek gelden
   // de platformranden (met hun openingen) plus de brugleuningen.
@@ -601,8 +513,9 @@ function BotsenMatch({ onBack, room, sessionId, joinCode, myNameProp, myColorPro
 
     // Nachtbelichting: het meeste licht komt uit de HDRI-omgeving en het neon
     // zelf. De "zon" is hier koel maanlicht dat alleen de vormen leest.
-    nachtOmgeving(scene, { intensiteit: 1.0, contrast: 1.15, belichting: 1.15 })
-    glowLaag(scene, 0.25)
+    // arena-licht is gebakken; ACES uit zodat de kleuren verzadigd blijven
+    nachtOmgeving(scene, { intensiteit: 1.0, contrast: 1.1, belichting: 1.0, tonemap: false })
+    glowLaag(scene, 0.35)
     const hemi = new HemisphericLight('h', new Vector3(0, 1, 0), scene)
     hemi.intensity = 1.0
     hemi.diffuse = new Color3(0.55, 0.62, 0.95)
@@ -620,7 +533,7 @@ function BotsenMatch({ onBack, room, sessionId, joinCode, myNameProp, myColorPro
     const sg = new ShadowGenerator(1024, sun); sg.useBlurExponentialShadowMap = true
     sg.blurKernel = 24; sg.setDarkness(0.45)
 
-    const arena = buildArena(scene, sg)
+    const arena = buildArena(scene)
     const fireTex = makeFireTexture(scene)
 
     // ── Eigen kart + avatar ──
@@ -639,6 +552,7 @@ function BotsenMatch({ onBack, room, sessionId, joinCode, myNameProp, myColorPro
     outer.rotation.y = myP?.rotY ?? 0
     const { root: kartRoot, wheels } = buildKart(scene, myColor, 'me')
     kartRoot.parent = outer
+    maakSchaduw(scene, outer)
     const myBalloonMeshes = buildBalloons(scene, 'me')
     myBalloonMeshes.forEach(b => { b.parent = kartRoot })
     const myNameTag = makeNameTag(scene, myNameProp || myP?.name)
@@ -694,6 +608,7 @@ function BotsenMatch({ onBack, room, sessionId, joinCode, myNameProp, myColorPro
       outerR.rotation.y = p.rotY || 0
       const built = buildKart(scene, col, 'r' + sid)
       built.root.parent = outerR
+      maakSchaduw(scene, outerR)
       const balloons = buildBalloons(scene, 'r' + sid)
       balloons.forEach(b => { b.parent = built.root })
       const nameTag = makeNameTag(scene, p.name)

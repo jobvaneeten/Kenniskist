@@ -2,8 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import * as Colyseus from '@colyseus/sdk'
 import {
   Engine, Scene, FreeCamera,
-  Color3, Color4, Vector3, Quaternion,
-  HemisphericLight, DirectionalLight, ShadowGenerator,
+  Color3, Vector3, Quaternion,
   MeshBuilder, StandardMaterial, DynamicTexture,
   DefaultRenderingPipeline,
 } from '@babylonjs/core'
@@ -12,6 +11,7 @@ import '@babylonjs/loaders/glTF'
 import { findItem } from '../itemsCatalog'
 import { applyItemToMesh, loadClothingDonor, usesDonor, loadHeadItem } from '../applyClothing'
 import OrientationGate from '../OrientationGate'
+import { bouwStadion } from './voetbalStadion'
 import './rocket-game.css'
 import { TerugKnop } from '../ui/index.jsx'
 
@@ -366,177 +366,6 @@ class PlayerInstance {
   }
 }
 
-// ── Build world (identical to FootballScene3D's SceneBuilder) ──────────
-function buildWorld(scene) {
-  scene.clearColor = new Color4(0.42, 0.65, 0.92, 1)
-  scene.fogMode    = Scene.FOGMODE_EXP2
-  scene.fogColor   = new Color3(0.42, 0.65, 0.92)
-  scene.fogDensity = 0.004
-
-  const ambient = new HemisphericLight('hemi', new Vector3(0,1,0), scene)
-  ambient.intensity   = 0.55
-  ambient.groundColor = new Color3(0.12, 0.20, 0.08)
-  ambient.diffuse     = new Color3(0.75, 0.82, 1.0)
-
-  const lightPositions = [
-    new Vector3(-FIELD_HALF-8, 32,  FIELD_HALF+8),
-    new Vector3( FIELD_HALF+8, 32,  FIELD_HALF+8),
-    new Vector3(-FIELD_HALF-8, 32, -FIELD_HALF-8),
-    new Vector3( FIELD_HALF+8, 32, -FIELD_HALF-8),
-  ]
-  const lights = lightPositions.map((pos, i) => {
-    const l = new DirectionalLight('fl'+i, new Vector3(0,0,0).subtract(pos).normalize(), scene)
-    l.position = pos; l.intensity = 2.2; l.diffuse = new Color3(1.0, 0.98, 0.90)
-    return l
-  })
-  const sg = new ShadowGenerator(1024, lights[0])   // 1024 = much cheaper than 2048
-  sg.usePoissonSampling = true; sg.bias = 0.0003
-
-  // Field texture
-  const W = 1024, H = 1024
-  const tex = new DynamicTexture('gt', { width: W, height: H }, scene)
-  const ctx = tex.getContext()
-  for (let i = 0; i < 14; i++) {
-    ctx.fillStyle = i%2===0 ? '#28c428' : '#22b022'
-    ctx.fillRect(0, i*(H/14), W, H/14)
-  }
-  ctx.globalAlpha = 0.06
-  for (let y2=0; y2<H; y2+=4) for (let x2=0; x2<W; x2+=4) {
-    if (Math.random()>0.5) { ctx.fillStyle='#000000'; ctx.fillRect(x2,y2,2,2) }
-  }
-  ctx.globalAlpha = 1.0
-  ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 9; ctx.lineJoin = 'round'
-  const pad = 28
-  ctx.strokeRect(pad, pad, W-pad*2, H-pad*2)
-  ctx.beginPath(); ctx.moveTo(pad, H/2); ctx.lineTo(W-pad, H/2); ctx.stroke()
-  ctx.beginPath(); ctx.arc(W/2, H/2, 110, 0, Math.PI*2); ctx.stroke()
-  ctx.fillStyle = '#ffffff'
-  ctx.beginPath(); ctx.arc(W/2, H/2, 10, 0, Math.PI*2); ctx.fill()
-  const paW = W*0.44, paH = H*0.16
-  ctx.strokeRect((W-paW)/2, pad, paW, paH)
-  ctx.strokeRect((W-paW)/2, H-pad-paH, paW, paH)
-  tex.update()
-
-  const ground = MeshBuilder.CreateGround('ground', { width: FIELD_HALF*2, height: FIELD_HALF*2 }, scene)
-  ground.receiveShadows = true; ground.isPickable = false
-  const gmat = new StandardMaterial('gmat', scene)
-  gmat.diffuseTexture = tex; gmat.specularColor = new Color3(0.05, 0.05, 0.05)
-  ground.material = gmat
-
-  // Stands
-  const concMat = new StandardMaterial('conc', scene)
-  concMat.diffuseColor = new Color3(0.24, 0.24, 0.28); concMat.specularColor = Color3.Black()
-  const CROWD = [
-    new Color3(0.85,0.10,0.10), new Color3(0.95,0.55,0.05),
-    new Color3(0.10,0.30,0.85), new Color3(0.95,0.92,0.20),
-    new Color3(0.20,0.70,0.25), new Color3(0.92,0.92,0.92),
-  ]
-  const ROWS=10, ROW_H=1.4, ROW_D=1.8, GAP=4
-  const buildSide = (offsetZ, len) => {
-    for (let r=0; r<ROWS; r++) {
-      const step = MeshBuilder.CreateBox('st', { width:len, height:ROW_H, depth:ROW_D }, scene)
-      step.isPickable=false; step.material=concMat
-      const y=r*ROW_H+ROW_H/2, d=GAP+r*ROW_D+ROW_D/2
-      step.position.set(0, y, offsetZ>0 ? offsetZ+d : offsetZ-d)
-      const seat = MeshBuilder.CreateBox('seat', { width:len, height:0.22, depth:ROW_D*0.7 }, scene)
-      seat.isPickable=false
-      const smat = new StandardMaterial('s_'+r+'_'+offsetZ, scene)
-      smat.diffuseColor = CROWD[(r*3+(offsetZ>0?0:1)) % CROWD.length]
-      smat.emissiveColor = smat.diffuseColor.scale(0.18)
-      smat.specularColor = Color3.Black()
-      seat.material = smat
-      seat.position.set(0, y+ROW_H/2+0.11, offsetZ>0 ? offsetZ+d : offsetZ-d)
-    }
-  }
-  buildSide( FIELD_HALF, FIELD_HALF*2+4)
-  buildSide(-FIELD_HALF, FIELD_HALF*2+4)
-
-  // Floodlight poles
-  const poleMat = new StandardMaterial('pole', scene)
-  poleMat.diffuseColor = new Color3(0.7,0.7,0.75)
-  const lampMat = new StandardMaterial('lamp', scene)
-  lampMat.diffuseColor = new Color3(1,0.97,0.85); lampMat.emissiveColor = new Color3(1.0,0.94,0.70)
-  lightPositions.forEach(pos => {
-    const pole = MeshBuilder.CreateCylinder('flp', { height:pos.y, diameterTop:0.35, diameterBottom:0.55, tessellation:10 }, scene)
-    pole.position.set(pos.x, pos.y/2, pos.z); pole.material=poleMat; pole.isPickable=false
-    const head = MeshBuilder.CreateBox('flh', { width:4, height:0.6, depth:1.5 }, scene)
-    head.position.set(pos.x, pos.y+0.3, pos.z); head.material=lampMat; head.isPickable=false
-  })
-
-  // Rounded arena wall — smooth ribbon panels (matches physics, open goal mouths)
-  const fenceMat = new StandardMaterial('fence', scene)
-  fenceMat.diffuseColor = new Color3(0.12,0.18,0.10); fenceMat.alpha = 0.9
-  fenceMat.backFaceCulling = false
-  const H2 = 1.6
-  const C  = BOUND - CORNER_R
-  const wall = (pts) => {
-    const bottom = pts.map(([x,z]) => new Vector3(x, 0,  z))
-    const top    = pts.map(([x,z]) => new Vector3(x, H2, z))
-    const r = MeshBuilder.CreateRibbon('wall', { pathArray:[bottom, top] }, scene)
-    r.material = fenceMat; r.isPickable = false
-  }
-  // Straight side walls (x = ±BOUND)
-  wall([[ BOUND,-C],[ BOUND, C]])
-  wall([[-BOUND,-C],[-BOUND, C]])
-  // Goal-end walls (z = ±BOUND), split by the open goal mouth
-  wall([[ GOAL_HALF_W, BOUND],[ C, BOUND]])
-  wall([[-C, BOUND],[-GOAL_HALF_W, BOUND]])
-  wall([[ GOAL_HALF_W,-BOUND],[ C,-BOUND]])
-  wall([[-C,-BOUND],[-GOAL_HALF_W,-BOUND]])
-  // Smooth rounded corners
-  const Nc = 14
-  for (const [sx, sz] of [[1,1],[1,-1],[-1,1],[-1,-1]]) {
-    const pts = []
-    for (let i = 0; i <= Nc; i++) {
-      const th = (i / Nc) * (Math.PI / 2)
-      pts.push([sx * (C + CORNER_R * Math.cos(th)), sz * (C + CORNER_R * Math.sin(th))])
-    }
-    wall(pts)
-  }
-
-  // Goals
-  const postMat = new StandardMaterial('post', scene)
-  postMat.diffuseColor = Color3.White(); postMat.emissiveColor = new Color3(0.14,0.14,0.14)
-  postMat.specularColor = new Color3(0.6,0.6,0.6); postMat.specularPower = 48
-  const cyl = (x,y,z,h,d,rx=0,rz=0) => {
-    const m = MeshBuilder.CreateCylinder('gp', { height:h, diameter:d, tessellation:14 }, scene)
-    m.material=postMat; m.isPickable=false; m.position.set(x,y,z); m.rotation.x=rx; m.rotation.z=rz
-  }
-  for (const gz of [-GOAL_Z, GOAL_Z]) {
-    const openDir = gz < 0 ? 1 : -1
-    const bZ      = gz - openDir * 1.6
-    const midZ    = (gz + bZ) / 2
-    cyl(-GOAL_HALF_W, GOAL_H/2, gz, GOAL_H, 0.14)
-    cyl( GOAL_HALF_W, GOAL_H/2, gz, GOAL_H, 0.14)
-    cyl(0, GOAL_H, gz, GOAL_HALF_W*2+0.14, 0.12, 0, Math.PI/2)
-    cyl(-GOAL_HALF_W, GOAL_H, midZ, 1.6, 0.08, Math.PI/2)
-    cyl( GOAL_HALF_W, GOAL_H, midZ, 1.6, 0.08, Math.PI/2)
-
-    // Net texture
-    const netTex = new DynamicTexture('nt'+gz, { width:512, height:512 }, scene)
-    netTex.hasAlpha = true
-    const nc = netTex.getContext(); nc.clearRect(0,0,512,512)
-    nc.strokeStyle = 'rgba(255,255,255,0.88)'; nc.lineWidth = 3
-    for (let x2=0; x2<=512; x2+=22) { nc.beginPath(); nc.moveTo(x2,0); nc.lineTo(x2,512); nc.stroke() }
-    for (let y2=0; y2<=512; y2+=22) { nc.beginPath(); nc.moveTo(0,y2); nc.lineTo(512,y2); nc.stroke() }
-    netTex.update()
-    const mkNet = (w2,h2,nx,ny,nz,ry,rx=0) => {
-      const nm = MeshBuilder.CreatePlane('net', { width:w2, height:h2 }, scene)
-      nm.position.set(nx,ny,nz); nm.rotation.y=ry; nm.rotation.x=rx; nm.isPickable=false
-      const nmat = new StandardMaterial('nm'+Math.random(), scene)
-      nmat.diffuseTexture = netTex; nmat.diffuseTexture.hasAlpha = true
-      nmat.useAlphaFromDiffuseTexture = true; nmat.backFaceCulling = false
-      nmat.specularColor = Color3.Black(); nm.material = nmat
-    }
-    mkNet(GOAL_HALF_W*2, GOAL_H, 0, GOAL_H/2, bZ, openDir < 0 ? Math.PI : 0)
-    mkNet(1.6, GOAL_H, -GOAL_HALF_W, GOAL_H/2, midZ,  Math.PI/2)
-    mkNet(1.6, GOAL_H,  GOAL_HALF_W, GOAL_H/2, midZ, -Math.PI/2)
-    mkNet(GOAL_HALF_W*2, 1.6, 0, GOAL_H, midZ, 0, -Math.PI/2)
-  }
-
-  return sg
-}
-
 // ── Create ball (same as FootballScene3D's PhysicsObject mesh) ─────────
 function createBallMesh(scene, sg) {
   const ball = MeshBuilder.CreateSphere('ball', { diameter: BALL_RADIUS*2, segments:16 }, scene)
@@ -622,7 +451,7 @@ function initScene(canvas, { localSessionId, getRoomState, sendInput, sendEmote,
   const camera = new FreeCamera('cam', new Vector3(0,5,20), scene)
   camera.inputs.clear(); camera.minZ = 0.1; camera.maxZ = 450
 
-  const sg         = buildWorld(scene)
+  const { sg, stadion } = bouwStadion(scene, { half: FIELD_HALF, bound: BOUND, cornerR: CORNER_R, goalZ: GOAL_Z, goalHalfW: GOAL_HALF_W, goalH: GOAL_H, goalDepth: GOAL_DEPTH })
   const { ball, disc } = createBallMesh(scene, sg)
   const particles  = new ParticlePool(scene, 50)
 
@@ -671,6 +500,7 @@ function initScene(canvas, { localSessionId, getRoomState, sendInput, sendEmote,
     if (timerDomRef?.current) {
       timerDomRef.current.textContent = fmtTime(Math.max(0, rs.timeLeft ?? 0))
     }
+    stadion.scorebord(rs.scoreA ?? 0, rs.scoreB ?? 0, fmtTime(Math.max(0, rs.timeLeft ?? 0)))
 
     // ── Stamina bar (local player) ──
     if (staminaDomRef?.current) {
@@ -775,9 +605,11 @@ function initScene(canvas, { localSessionId, getRoomState, sendInput, sendEmote,
       particles.burst(new Vector3(0, GOAL_H/2, 0), 40,
         ['#FFD700','#FF6B35','#FFFFFF','#4FC3F7','#06D6A0'])
       playCrowdCheer()
+      stadion.juich()
     }
     if (rs.phase !== 'goal') goalFlashing = false
     particles.update(dt)
+    stadion.update(dt)
 
     // ── Camera (Rocket League style) ──
     if (pred.init) {

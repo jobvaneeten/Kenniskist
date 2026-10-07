@@ -2,17 +2,18 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import * as Colyseus from '@colyseus/sdk'
 import {
   Engine, Scene, FreeCamera,
-  Color3, Color4, Vector3, Quaternion, Ray,
+  Color3, Color4, Vector3, Quaternion, Ray, Matrix,
   HemisphericLight, DirectionalLight, ShadowGenerator,
-  MeshBuilder, StandardMaterial, PBRMaterial, DynamicTexture,
-  DefaultRenderingPipeline, ParticleSystem, VertexBuffer,
+  MeshBuilder, StandardMaterial, DynamicTexture,
+  DefaultRenderingPipeline, ParticleSystem,
 } from '@babylonjs/core'
 import { SceneLoader } from '@babylonjs/core/Loading/sceneLoader'
 import '@babylonjs/loaders/glTF'
 import { findItem } from '../itemsCatalog'
 import { applyItemToMesh, loadClothingDonor, usesDonor, loadHeadItem } from '../applyClothing'
 import OrientationGate from '../OrientationGate'
-import { SET, nachtOmgeving, glowLaag, nachtLucht, pbrMat } from './neonOmgeving'
+import { nachtOmgeving, glowLaag, nachtLucht } from './neonOmgeving'
+import { laadGebakkenMap } from './gebakkenMap'
 import './rocket-game.css'
 import './paintball.css'
 import { TerugKnop } from '../ui/index.jsx'
@@ -26,21 +27,98 @@ const MAPS = {
   // Nacht-varianten: donkere hemel, mist in de kleur van de horizongloed en
   // PBR-texturesets (albedo + normal + AO/rough/metal) i.p.v. losse PNG's.
   // `neon` is de accentkleur die de kaart z'n eigen sfeer geeft.
-  dorp: { label: 'Dorp', glb: 'map.glb', ax: 24, az: 24,
-    clear: [0.13, 0.07, 0.24], fog: [0.16, 0.09, 0.28], fogD: 0.0075,
-    sky: ['#05030f', '#150a30', '#3a1d55'], neon: '#ff9d2f',
-    tex: { ground: SET.zand, stone: SET.muur, scale: 9, stoneScale: 3 } },
-  bos:  { label: 'Bos', glb: 'bos.glb', ax: 40, az: 40,
-    clear: [0.06, 0.11, 0.14], fog: [0.08, 0.14, 0.17], fogD: 0.0055,
-    sky: ['#03070c', '#0a1a22', '#16414a'], neon: '#39ff88',
-    tex: { ground: SET.gras, stone: SET.muur, scale: 22, stoneScale: 2 } },
-  stad: { label: 'Industrieterrein', glb: 'stad.glb', ax: 25, az: 50,
-    clear: [0.10, 0.06, 0.18], fog: [0.13, 0.08, 0.22], fogD: 0.005,
+  // Dorp: nieuw dorpsplein uit Blender (tools/blender/paintball.blend), met
+  // gebakken nachtlicht — zie gebakkenMap.js.
+  dorp: { label: 'Dorp', ax: 24, az: 24,
+    clear: [0.03, 0.04, 0.10], fog: [0.04, 0.05, 0.12], fogD: 0.006,
+    sky: ['#03040d', '#0b1030', '#2a2350'], neon: '#ffb35c',
+    gebakken: {
+      map: '/paintball/dorp/', glb: 'dorp.glb', lichtNiveau: 1.25,
+      lightmaps: { floor: 'lm_grond.jpg', '*': 'lm_dorp.jpg' },
+      materialen: {
+        ground_kinderkopjes: { tex: '/tex/dorp/kinderkopjes.jpg', m: 1.6 },
+        pleister:        { tex: '/tex/dorp/pleister.jpg', m: 2.5, tint: '#e8e0d0' },
+        pleister_wit:    { tex: '/tex/dorp/pleister.jpg', m: 2.5, tint: '#f6efe2' },
+        pleister_oker:   { tex: '/tex/dorp/pleister.jpg', m: 2.5, tint: '#f2d39c' },
+        pleister_roze:   { tex: '/tex/dorp/pleister.jpg', m: 2.5, tint: '#eebaae' },
+        pleister_groen:  { tex: '/tex/dorp/pleister.jpg', m: 2.5, tint: '#bcd9c2' },
+        dakpannen:       { tex: '/tex/dorp/dakpannen.jpg', m: 2.2 },
+        hout:            { tex: '/tex/dorp/hout.jpg', m: 1.6 },
+        steen:           { tex: '/tex/dorp/steen.jpg', m: 2.0 },
+        metaal:          { tint: '#30343b' },
+        doek_rood:       { tint: '#d8333f' },
+        doek_blauw:      { tint: '#2f62de' },
+        glas_warm:       { gloed: '#ffb35c', sterkte: 0.75 },
+        lamp_warm:       { gloed: '#ffe0a8', sterkte: 0.9 },
+        water:           { gloed: '#2fb6ff', sterkte: 0.85 },
+        team_rood:       { gloed: '#ff3344', sterkte: 1.5 },
+        team_blauw:      { gloed: '#3a7bff', sterkte: 1.5 },
+        lampion_rood:    { gloed: '#ff4d3a', sterkte: 1.3 },
+        lampion_geel:    { gloed: '#ffd04d', sterkte: 1.3 },
+        lampion_blauw:   { gloed: '#4d9dff', sterkte: 1.3 },
+        lampion_groen:   { gloed: '#66ff73', sterkte: 1.3 },
+      },
+    } },
+  // Bos: zelfde indeling als vroeger, opnieuw opgebouwd in Blender
+  // (tools/blender/bouw_bos.py) met kampvuur, lantaarns en gebakken maanlicht.
+  bos:  { label: 'Bos', ax: 40, az: 40,
+    clear: [0.02, 0.04, 0.06], fog: [0.03, 0.06, 0.08], fogD: 0.012,
+    sky: ['#02050a', '#07141b', '#123a40'], neon: '#39ff88', vuurvliegjes: true,
+    gebakken: {
+      map: '/paintball/bos/', glb: 'bos.glb', lichtNiveau: 1.5,
+      lightmaps: { floor: 'lm_bosgrond.jpg', '*': 'lm_bos.jpg' },
+      materialen: {
+        bosgrond:       { tex: '/tex/bos/bosgrond.jpg', m: 3 },
+        planken:        { tex: '/tex/bos/planken.jpg', m: 2, tint: '#e0c7a8' },
+        planken_donker: { tex: '/tex/bos/planken.jpg', m: 2, tint: '#8a7360' },
+        hek:            { tex: '/tex/bos/planken.jpg', m: 2, tint: '#b8a58f' },
+        dak_mos:        { tex: '/tex/bos/mosrots.jpg', m: 3, tint: '#9fb08a' },
+        schors:         { tex: '/tex/bos/schors.jpg', m: 1.5 },
+        mosrots:        { tex: '/tex/bos/mosrots.jpg', m: 2 },
+        steen:          { tex: '/tex/bos/mosrots.jpg', m: 1, tint: '#a8a8a8' },
+        naald:          { tint: '#24532f' },
+        naald2:         { tint: '#2f6439' },
+        naald_ver:      { tint: '#0c1a12' },
+        bosgrond_ver:   { tex: '/tex/bos/bosgrond.jpg', m: 4, tint: '#3a3a3a' },
+        team_rood:      { gloed: '#ff3344', sterkte: 0.7 },
+        team_blauw:     { gloed: '#3a7bff', sterkte: 0.7 },
+        lamp_warm:      { gloed: '#ffd08a', sterkte: 1.0 },
+        vuur:           { gloed: '#ff8a2a', sterkte: 1.4 },
+      },
+    } },
+  // Industrieterrein: nieuwe puntsymmetrische indeling uit Blender
+  // (tools/blender/bouw_stad.py) — containers, tanks, overkapping, natriumlampen.
+  stad: { label: 'Industrieterrein', ax: 25, az: 50,
+    clear: [0.04, 0.03, 0.08], fog: [0.06, 0.045, 0.1], fogD: 0.006,
     sky: ['#04030c', '#120a2c', '#42124f'], neon: '#19e6ff',
-    // Bewust beton en geen metaalplaat: de stad-kaart classificeert ook grote
-    // vloervlakken als "stone", en een echt metallic materiaal spiegelt daar
-    // de HDRI in — dat gaf een bruine plas in plaats van een vloer.
-    tex: { ground: SET.asfalt, stone: SET.muur, scale: 12, brickSize: 1.5 } },
+    gebakken: {
+      map: '/paintball/stad/', glb: 'stad.glb', lichtNiveau: 1.7,
+      lightmaps: { floor: 'lm_stadgrond.jpg', '*': 'lm_stad.jpg' },
+      materialen: {
+        asfalt:           { tex: '/tex/asfalt_diff.jpg', m: 4 },
+        asfalt_ver:       { tex: '/tex/asfalt_diff.jpg', m: 6, tint: '#2a2a30' },
+        beton:            { tex: '/tex/vloer_diff.jpg', m: 2 },
+        muur:             { tex: '/tex/muur_diff.jpg', m: 3 },
+        staal:            { tex: '/tex/plaat_diff.jpg', m: 2, tint: '#9aa3ad' },
+        staal_geel:       { tex: '/tex/plaat_diff.jpg', m: 2, tint: '#f0b52a' },
+        tank:             { tex: '/tex/plaat_diff.jpg', m: 3, tint: '#e6eaee' },
+        hout:             { tex: '/tex/bos/planken.jpg', m: 1.2, tint: '#f0d2a8' },
+        gevaar:           { tex: '/tex/stad/gevaar.jpg', m: 0.6 },
+        verf_geel:        { tint: '#e8b030' },
+        verf_wit:         { tint: '#d8d8d8' },
+        dakplaat:         { tex: '/tex/stad/golfplaat.jpg', m: 4, tint: '#8c96a3' },
+        container_rood:   { tex: '/tex/stad/golfplaat.jpg', m: 4, tint: '#c2392f' },
+        container_blauw:  { tex: '/tex/stad/golfplaat.jpg', m: 4, tint: '#2f63b8' },
+        container_groen:  { tex: '/tex/stad/golfplaat.jpg', m: 4, tint: '#2f8a4f' },
+        container_oranje: { tex: '/tex/stad/golfplaat.jpg', m: 4, tint: '#e0761c' },
+        gebouw:           { gloed: '#5a5a5a', sterkte: 1, tex: '/tex/stad/ramen.jpg', m: 8, geenMist: true },
+        dak:              { tint: '#15161c', geenMist: true },
+        lamp_natrium:     { gloed: '#ffb060', sterkte: 1.3 },
+        tl_wit:           { gloed: '#e4f2ff', sterkte: 1.3 },
+        team_rood:        { gloed: '#ff3344', sterkte: 1.2 },
+        team_blauw:       { gloed: '#3a7bff', sterkte: 1.2 },
+      },
+    } },
 }
 const PLAYER_SPEED   = 5.2
 const TEAM_HEX = ['#e63946', '#1d6fd0']   // 0 rood, 1 blauw
@@ -343,7 +421,7 @@ function addSkyDecor(scene, mapCfg) {
   maan.material = maanMat; maan.applyFog = false
 
   // Geen wolken in het bos (dicht bladerdak)
-  if (mapCfg.glb === 'bos.glb') return
+  if (mapCfg.vuurvliegjes) return
   const cloudTex = new DynamicTexture('cloudTex', { width: 256, height: 128 }, scene)
   const cc = cloudTex.getContext()
   cc.clearRect(0, 0, 256, 128)
@@ -412,116 +490,45 @@ function makeSplatAlphaTexture(scene) {
   return t
 }
 
-// ── Map-decor: omgeving buiten de arena + sfeer-particles ───────────────
-// Alles is puur visueel: isPickable=false, geen collisions, frozen matrices.
-function addMapDecor(scene, mapCfg) {
-  const ax = mapCfg.ax, az = mapCfg.az
-  const isBos  = mapCfg.glb === 'bos.glb'
-  const isStad = mapCfg.glb === 'stad.glb'
-  const rnd  = (a, b) => a + Math.random() * (b - a)
-  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)]
+// Onzichtbare grensmuren: je kunt nooit van de kaart af glitchen.
+function maakGrenzen(scene) {
+  const BH = 10
+  const mkBound = (w, d, x, z) => {
+    const b = MeshBuilder.CreateBox('bound', { width: w, height: BH, depth: d }, scene)
+    b.position.set(x, BH / 2, z); b.checkCollisions = true; b.isVisible = false; b.isPickable = false
+  }
+  mkBound(1, ARENA_Z * 2 + 2,  ARENA_X + 0.5, 0)
+  mkBound(1, ARENA_Z * 2 + 2, -ARENA_X - 0.5, 0)
+  mkBound(ARENA_X * 2 + 2, 1, 0,  ARENA_Z + 0.5)
+  mkBound(ARENA_X * 2 + 2, 1, 0, -ARENA_Z - 0.5)
+}
 
-  // PBR i.p.v. StandardMaterial: het decor vangt nu hetzelfde maanlicht en
-  // dezelfde omgevingsreflectie als de arena. Nachtpalet, want het staat
-  // buiten het bereik van de lampen — anders zweeft er een helder
-  // daglicht-landschap rond een donkere arena.
-  const mkMat = (hex, emiss = 0) => {
-    const m = new PBRMaterial('dm' + Math.random(), scene)
-    const c = Color3.FromHexString(hex)
-    m.albedoColor = c
-    m.metallic = 0
-    m.roughness = 0.92
-    if (emiss) m.emissiveColor = c.scale(emiss)
-    return m
+// ── Vuurvliegjes: zwevende lichtpuntjes (één mesh met thin instances) ──
+function vuurvliegjes(scene, ax, az, n = 70) {
+  const bol = MeshBuilder.CreateSphere('vuurvlieg', { diameter: 0.09, segments: 3 }, scene)
+  const m = new StandardMaterial('vuurvliegMat', scene)
+  m.disableLighting = true; m.emissiveColor = new Color3(0.75, 1.0, 0.35); m.freeze()
+  bol.material = m; bol.isPickable = false; bol.alwaysSelectAsActiveMesh = true   // instances zweven overal: niet cullen op de kleine basisbol
+  const vl = Array.from({ length: n }, () => ({
+    x: (Math.random() * 2 - 1) * ax, z: (Math.random() * 2 - 1) * az, y: 0.6 + Math.random() * 2.2,
+    f: Math.random() * 6.3, s: 0.3 + Math.random() * 0.5,
+  }))
+  const buf = new Float32Array(n * 16)
+  const mat = new Matrix()
+  const zet = (t) => {
+    vl.forEach((v, i) => {
+      const k = 0.4 + 0.6 * Math.max(0, Math.sin(t * 1.7 + v.f * 3))   // knipperen = kleiner worden
+      Matrix.ScalingToRef(k, k, k, mat)
+      mat.setTranslationFromFloats(v.x + Math.sin(t * v.s + v.f) * 1.5, v.y + Math.sin(t * 0.9 + v.f) * 0.4, v.z + Math.cos(t * v.s * 0.8 + v.f) * 1.5)
+      mat.copyToArray(buf, i * 16)
+    })
   }
-  const done = (m) => { m.isPickable = false; try { m.freezeWorldMatrix() } catch {} }
-
-  // Grote omgevingsvloer — geen lege void achter de arenarand. Zelfde
-  // textuurset als de arenagrond, zodat de overgang niet als plaat opvalt.
-  const bigGround = MeshBuilder.CreateDisc('decoGround', { radius: 220, tessellation: 48 }, scene)
-  bigGround.rotation.x = Math.PI / 2
-  bigGround.position.y = -0.08
-  bigGround.material = mapCfg.tex?.ground
-    ? pbrMat(scene, 'decoGroundMat', mapCfg.tex.ground, { uv: 90, tint: '#787878', ruw: 1, metaal: 1 })
-    : mkMat(isBos ? '#0e1a0c' : isStad ? '#15171c' : '#241d12')
-  done(bigGround)
-
-  // Verre decor-ring: RUIM buiten de map-geometrie, zodat niets clipt of bereikbaar is.
-  const R0 = Math.max(ax, az) + 30
-  const ringSpot = () => {
-    const a = Math.random() * Math.PI * 2
-    const r = R0 + Math.random() * 60
-    return { x: Math.cos(a) * r, z: Math.sin(a) * r }
-  }
-
-  const mkTree = (x, z, s, leafHex) => {
-    const trunk = MeshBuilder.CreateCylinder('dTr', { height: 2.2 * s, diameter: 0.5 * s, tessellation: 6 }, scene)
-    trunk.material = mkMat('#241a10'); trunk.position.set(x, 1.1 * s, z); done(trunk)
-    const top = MeshBuilder.CreateCylinder('dLf', { height: 3.6 * s, diameterTop: 0, diameterBottom: 2.9 * s, tessellation: 7 }, scene)
-    top.material = mkMat(leafHex); top.position.set(x, 2.2 * s + 1.6 * s, z); done(top)
-  }
-  const mkRock = (x, z, s) => {
-    const r = MeshBuilder.CreatePolyhedron('dRk', { type: Math.floor(Math.random() * 4), size: s }, scene)
-    r.material = mkMat(pick(['#2e2d29', '#26251f', '#33312b']))
-    r.position.set(x, s * 0.45, z)
-    r.rotation.set(Math.random(), Math.random() * 6, Math.random())
-    done(r)
-  }
-  const mkBuilding = (x, z) => {
-    const w = rnd(5, 10), h = rnd(8, 26), d = rnd(5, 10)
-    const b = MeshBuilder.CreateBox('dBld', { width: w, height: h, depth: d }, scene)
-    b.material = mkMat(pick(['#13161c', '#191d24', '#0f1218', '#1c212a', '#161a21']))
-    b.position.set(x, h / 2, z); b.rotation.y = rnd(0, Math.PI * 2); done(b)
-  }
-  const mkHouse = (x, z) => {
-    const w = rnd(4, 6), h = rnd(2.6, 3.4), d = rnd(3.5, 5)
-    const body = MeshBuilder.CreateBox('dHs', { width: w, height: h, depth: d }, scene)
-    body.material = mkMat(pick(['#3b3324', '#332c20', '#39311f'])); body.position.set(x, h / 2, z)
-    body.rotation.y = rnd(0, Math.PI * 2); done(body)
-    const roof = MeshBuilder.CreateCylinder('dRf', { height: rnd(1.4, 1.9), diameterTop: 0, diameterBottom: Math.max(w, d) * 1.3, tessellation: 4 }, scene)
-    roof.material = mkMat(pick(['#3a1c13', '#33170f', '#40251a'])); roof.position.set(x, h + 0.8, z)
-    roof.rotation.y = body.rotation.y + Math.PI / 4; done(roof)
-  }
-
-  if (isBos) {
-    for (let i = 0; i < 110; i++) { const p = ringSpot(); mkTree(p.x, p.z, rnd(1.0, 2.4), pick(['#0f2415', '#0b1c10', '#132b18', '#0d2013'])) }
-    for (let i = 0; i < 22; i++)  { const p = ringSpot(); mkRock(p.x, p.z, rnd(1.0, 2.6)) }
-  } else if (isStad) {
-    for (let i = 0; i < 46; i++) { const p = ringSpot(); mkBuilding(p.x, p.z) }
-    for (let i = 0; i < 16; i++) { const p = ringSpot(); mkTree(p.x, p.z, rnd(0.9, 1.6), pick(['#132a16', '#102513'])) }
-  } else {
-    for (let i = 0; i < 70; i++) { const p = ringSpot(); mkTree(p.x, p.z, rnd(0.9, 1.9), pick(['#142d18', '#18351d', '#112611'])) }
-    for (let i = 0; i < 16; i++) { const p = ringSpot(); mkRock(p.x, p.z, rnd(0.8, 1.9)) }
-    for (let i = 0; i < 8;  i++) { const p = ringSpot(); mkHouse(p.x, p.z) }
-  }
-
-  // ── Sfeer-particles boven de arena ──
-  if (isBos) {
-    const lv = new ParticleSystem('dLv', 90, scene)
-    lv.particleTexture = softDotTexture(scene, '200,235,130')
-    lv.emitter = new Vector3(0, 11, 0)
-    lv.minEmitBox = new Vector3(-ax, 0, -az); lv.maxEmitBox = new Vector3(ax, 0, az)
-    lv.color1 = new Color4(0.55, 0.78, 0.3, 0.8); lv.color2 = new Color4(0.85, 0.62, 0.25, 0.75)
-    lv.colorDead = new Color4(0.6, 0.6, 0.3, 0)
-    lv.minSize = 0.1; lv.maxSize = 0.26
-    lv.minLifeTime = 6; lv.maxLifeTime = 10; lv.emitRate = 9
-    lv.direction1 = new Vector3(-0.4, -1, -0.4); lv.direction2 = new Vector3(0.4, -0.6, 0.4)
-    lv.minEmitPower = 0.5; lv.maxEmitPower = 1.1
-    lv.gravity = new Vector3(0, -0.45, 0); lv.updateSpeed = 0.01
-    lv.start()
-  } else if (!isStad) {
-    const dust = new ParticleSystem('dDu', 70, scene)
-    dust.particleTexture = softDotTexture(scene, '255,245,220')
-    dust.emitter = new Vector3(0, 1.4, 0)
-    dust.minEmitBox = new Vector3(-ax, 0, -az); dust.maxEmitBox = new Vector3(ax, 2.5, az)
-    dust.color1 = new Color4(1, 0.96, 0.85, 0.1); dust.color2 = new Color4(1, 0.94, 0.8, 0.07)
-    dust.colorDead = new Color4(1, 0.95, 0.85, 0)
-    dust.minSize = 0.08; dust.maxSize = 0.22
-    dust.minLifeTime = 5; dust.maxLifeTime = 9; dust.emitRate = 8
-    dust.direction1 = new Vector3(-0.3, 0.05, -0.1); dust.direction2 = new Vector3(0.5, 0.25, 0.2)
-    dust.minEmitPower = 0.2; dust.maxEmitPower = 0.6; dust.updateSpeed = 0.008
-    dust.start()
-  }
+  zet(0); bol.thinInstanceSetBuffer('matrix', buf, 16, false)
+  let t = 0
+  scene.onBeforeRenderObservable.add(() => {
+    t += scene.getEngine().getDeltaTime() / 1000
+    zet(t); bol.thinInstanceBufferUpdated('matrix')
+  })
 }
 
 // ── Arena world (loads the chosen GLB map) ─────────────────────────────
@@ -532,9 +539,9 @@ function buildWorld(scene, mapCfg, onObstacles) {
   scene.fogDensity = mapCfg.fogD
   scene.collisionsEnabled = true   // real mesh collision against the GLB map
 
-  // HDRI-omgeving: zonder dit blijven PBR-materialen dof, want ze hebben
-  // niets om te spiegelen. Doet 's nachts het meeste werk.
-  nachtOmgeving(scene, { intensiteit: 1.4, contrast: 1.1, belichting: 1.6 })
+  // licht zit al in de lightmaps: neutrale belichting, geen tonemapping
+  // (HDRI blijft voor de spelers/kogels)
+  nachtOmgeving(scene, { intensiteit: 1.0, contrast: 1.1, belichting: 1.0, tonemap: false })
   glowLaag(scene, 0.3)
 
   const ambient = new HemisphericLight('hemi', new Vector3(0, 1, 0), scene)
@@ -567,118 +574,43 @@ function buildWorld(scene, mapCfg, onObstacles) {
   nachtLucht(scene, 140, { boven: mapCfg.sky[0], midden: mapCfg.sky[1], horizon: mapCfg.sky[2], gloed: mapCfg.neon })
 
   addSkyDecor(scene, mapCfg)
-  try { addMapDecor(scene, mapCfg) } catch (e) { console.warn('map-decor overgeslagen:', e) }
 
-  // Elke mesh krijgt een eigen PBR-materiaal uit de set van deze kaart: albedo
-  // + normal + AO/rough/metal, met een UV-schaal per mesh. Dat vervangt de
-  // oude aanpak (één platte diffuse-PNG op het bestaande GLB-materiaal), waar
-  // niets aan reflecteerde en elk oppervlak er vlak uitzag.
-  //
-  // De UV-schaal wordt uit de geometrie afgeleid i.p.v. uit een vast getal per
-  // kaart: de GLB's gebruiken verschillende UV-conventies (dorp/bos ~0-1 per
-  // vlak, stad al op wereldschaal), dus één vaste factor gaf op de ene kaart
-  // een bruikbare tegel en op de andere 300 tegels over een vloer — die
-  // middelde de mipmap weg tot één egale kleur.
-  const TEGEL_M = 2.5   // ~2,5 meter per textuur-tegel
-  const uvSchaal = (mesh, valU, valV) => {
-    const uvs = mesh.getVerticesData(VertexBuffer.UVKind)
-    if (!uvs || uvs.length < 4) return [valU, valV]
-    let minU = Infinity, maxU = -Infinity, minV = Infinity, maxV = -Infinity
-    for (let i = 0; i < uvs.length; i += 2) {
-      if (uvs[i] < minU) minU = uvs[i]; if (uvs[i] > maxU) maxU = uvs[i]
-      if (uvs[i + 1] < minV) minV = uvs[i + 1]; if (uvs[i + 1] > maxV) maxV = uvs[i + 1]
-    }
-    const du = maxU - minU, dv = maxV - minV
-    if (!(du > 0.001) || !(dv > 0.001)) return [valU, valV]
-    const bb = mesh.getBoundingInfo().boundingBox
-    const s = bb.maximumWorld.subtract(bb.minimumWorld)
-    // de twee grootste afmetingen zijn het vlak dat de textuur draagt
-    const [wu, wv] = [s.x, s.y, s.z].sort((a, b) => b - a)
-    return [(wu / TEGEL_M) / du, (wv / TEGEL_M) / dv]
-  }
-  const applyPbr = (mesh, set, uS, vS) => {
-    if (!mesh || !set) return
-    mesh.material = pbrMat(scene, mesh.name + '_pbr', set, { uv: uvSchaal(mesh, uS, vS), ruw: 1, metaal: 1 })
-  }
-
-  // The chosen GLB map. Real mesh collision drives walking + the shoot-raycast.
-  const derivedObstacles = []   // hitbox-AABB's, afgeleid uit de échte geometrie
-  SceneLoader.ImportMesh('', '/', mapCfg.glb, scene, (meshes) => {
-    meshes.forEach(m => {
-      if (m.getTotalVertices && m.getTotalVertices() > 0) {
-        m.receiveShadows = true
-        m.checkCollisions = true   // blocks the player collider
-        m.isPickable = true        // so the shoot-raycast + grounded-ray hit real walls/floor
-
-        // Hitbox-AABB afleiden (alles behalve grond/vloer) → naar de server voor bot-LOS
-        const mnL = (m.name || '').toLowerCase()
-        const matnL = (m.material?.name || '').toLowerCase()
-        const ground = matnL.includes('ground') || matnL.includes('grass') || mnL === 'floor' || mnL.includes('floor')
-        if (!ground) {
-          try {
-            m.computeWorldMatrix(true)
-            const bb = m.getBoundingInfo().boundingBox
-            const mn2 = bb.minimumWorld, mx2 = bb.maximumWorld
-            const hw = (mx2.x - mn2.x) / 2, hd = (mx2.z - mn2.z) / 2, top = mx2.y
-            if (top > 0.5 && hw < 30 && hd < 30 && (hw > 0.2 || hd > 0.2)) {
-              derivedObstacles.push({ x: (mn2.x + mx2.x) / 2, z: (mn2.z + mx2.z) / 2, hw, hd, top })
-            }
-          } catch {}
+  // Gebakken map: licht zit in de lightmaps, dekking per object (niet per
+  // glTF-primitive, anders wordt elk raampje een eigen obstakel voor de bots).
+  const dozen = new Map()
+  laadGebakkenMap(scene, mapCfg.gebakken, {
+    onMesh(mesh, { obj, deco }) {
+      if (obj === 'deco_vlam') {   // kampvuur: vlam flakkert (schaal vanaf de grond)
+        mesh.unfreezeWorldMatrix()
+        let t = 0
+        scene.onBeforeRenderObservable.add(() => {
+          t += scene.getEngine().getDeltaTime() / 1000
+          const f = 1 + Math.sin(t * 11) * 0.08 + Math.sin(t * 17.3) * 0.06
+          mesh.scaling.set(2 - f, f, 2 - f)
+        })
+      }
+      if (deco || obj === 'floor') return
+      mesh.computeWorldMatrix(true)
+      const bb = mesh.getBoundingInfo().boundingBox
+      const d = dozen.get(obj) || { mn: bb.minimumWorld.clone(), mx: bb.maximumWorld.clone() }
+      d.mn.minimizeInPlace(bb.minimumWorld); d.mx.maximizeInPlace(bb.maximumWorld)
+      dozen.set(obj, d)
+    },
+    onKlaar() {
+      const obstakels = []
+      dozen.forEach(({ mn, mx }) => {
+        const hw = (mx.x - mn.x) / 2, hd = (mx.z - mn.z) / 2, top = mx.y
+        // alleen wat binnen het speelveld staat en echt dekking geeft
+        const cx = (mn.x + mx.x) / 2, cz = (mn.z + mx.z) / 2
+        if (top > 0.5 && (hw > 0.2 || hd > 0.2) && Math.abs(cx) < mapCfg.ax + 2 && Math.abs(cz) < mapCfg.az + 2) {
+          obstakels.push({ x: cx, z: cz, hw, hd, top })
         }
-        if (mapCfg.tex) {
-          const mn   = (m.name || '').toLowerCase()
-          const matn = (m.material?.name || '').toLowerCase()
-          const cfg  = mapCfg.tex
-
-          const isGround = matn.includes('ground') || matn.includes('grass') || mn === 'floor' || mn.includes('floor')
-          if (isGround) {
-            applyPbr(m, cfg.ground, cfg.scale || 9, cfg.scale || 9)
-          } else if (matn.includes('sand') || matn.includes('wall') || matn.includes('roof') || matn.includes('wood') ||
-                     mn.includes('house') || mn.includes('cover') || mn.includes('big') || mn.includes('cube') ||
-                     mn.includes('cylinder') || mn.includes('object') || mn.includes('jump')) {
-            // brickSize aanwezig → cube-projection UVs (1 UV-unit = 1m, e.g. stad).
-            // stoneScale → genormaliseerde UVs (0-1), vaste tiling (bos/dorp).
-            let uS, vS
-            if (cfg.brickSize) {
-              const s = 1 / cfg.brickSize
-              uS = s; vS = s
-            } else {
-              const ss = cfg.stoneScale || 3
-              uS = ss; vS = ss
-            }
-            applyPbr(m, cfg.stone, uS, vS)
-          } else {
-            // Alles wat geen van beide filters raakt hield zijn kale GLB-
-            // materiaal: grote effen platen die in een donkere scene juist
-            // opvallen. Die krijgen dezelfde steenset, maar met hun eigen
-            // kleur als tint — teamkleuren en markeringen blijven dus leesbaar.
-            const oud = m.material
-            const eigen = oud?.albedoColor || oud?.diffuseColor
-            const tint = eigen ? eigen.scale(0.85).toHexString() : '#8a8a8a'
-            applyPbr(m, cfg.stone, cfg.stoneScale || 3, cfg.stoneScale || 3)
-            if (m.material) m.material.albedoColor = Color3.FromHexString(tint)
-          }
-        }
-        try { m.freezeWorldMatrix() } catch {}
-        try { sg.getShadowMap()?.renderList?.push(m) } catch {}
-      } else { m.isPickable = false }
-    })
-    onObstacles?.(derivedObstacles)
-  }, null, (_s, msg, err) => console.error('map load error:', msg, err))
-
-  // Invisible boundary walls so you can't glitch off the map.
-  const BH = 10
-  const mkBound = (w, d, x, z) => {
-    const b = MeshBuilder.CreateBox('bound', { width: w, height: BH, depth: d }, scene)
-    b.position.set(x, BH / 2, z); b.checkCollisions = true; b.isVisible = false; b.isPickable = false
-  }
-  mkBound(1, ARENA_Z * 2 + 2,  ARENA_X + 0.5, 0)
-  mkBound(1, ARENA_Z * 2 + 2, -ARENA_X - 0.5, 0)
-  mkBound(ARENA_X * 2 + 2, 1, 0,  ARENA_Z + 0.5)
-  mkBound(ARENA_X * 2 + 2, 1, 0, -ARENA_Z - 0.5)
-
-  // (Huizen, daken, trapjes en dekking komen uit map.glb — geen losse kratten hier.)
-
+      })
+      onObstacles?.(obstakels)
+    },
+  })
+  maakGrenzen(scene)
+  if (mapCfg.vuurvliegjes) vuurvliegjes(scene, mapCfg.ax, mapCfg.az)
   return sg
 }
 
@@ -896,6 +828,8 @@ function initScene(canvas, { localSessionId, getRoomState, sendState, sendShoot,
       // Snap the collider to the server spawn on first appearance and on respawn.
       if (!spawnedOnce || (lp.alive && wasDead)) {
         collider.position.set(lp.x, (lp.y ?? 0), lp.z); vy = 0; spawnedOnce = true
+        // kijk bij (re)spawn naar het midden van de kaart i.p.v. tegen de muur achter je
+        look.yaw = Math.atan2(-lp.x, -lp.z); look.pitch = 0
       }
       wasDead = !lp.alive
     }
@@ -1100,7 +1034,7 @@ function Lobby({ onBack, onJoined }) {
           <input className="rg-input" placeholder="Speler" value={name} maxLength={12} onChange={e => setName(e.target.value)} /></div>
         <div className="rg-lobby-field"><label>Kies een map</label>
           <div className="pb-map-pick">
-            {[['dorp', 'Dorp', '/mapshot_dorp.png'], ['bos', 'Bos', '/mapshot_bos.png'], ['stad', 'Industrieterrein', '/mapshot_stad.png']].map(([k, lbl, img]) => (
+            {[['dorp', 'Dorp', '/mapshot_dorp.jpg'], ['bos', 'Bos', '/mapshot_bos.jpg'], ['stad', 'Industrieterrein', '/mapshot_stad.jpg']].map(([k, lbl, img]) => (
               <button key={k} type="button" className={'pb-map-card' + (mapKey === k ? ' on' : '')} onClick={() => setMapKey(k)}>
                 <img src={img} alt={lbl} />
                 <span>{lbl}</span>
