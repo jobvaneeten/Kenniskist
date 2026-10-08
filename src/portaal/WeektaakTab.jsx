@@ -5,6 +5,8 @@ import { kopieerWeektaak } from './weektaakOpslaan.js'
 import WeektaakForm from './WeektaakForm.jsx'
 import WeektaakVoortgang from './WeektaakVoortgang.jsx'
 import WeektaakDifferentiatie from './WeektaakDifferentiatie.jsx'
+import PersoonlijkPerLeerling from './PersoonlijkPerLeerling.jsx'
+import LeerlingDetail from './LeerlingDetail.jsx'
 import { SOORT_TEKST, ZONDER_EIND } from './soortTekst.js'
 import { Knop, TerugKnop } from '../ui/index.jsx'
 
@@ -20,11 +22,15 @@ async function haalWeektaken(klasId, soort) {
   if (soort === 'weektaak' || !lijst.length) return lijst
 
   const opdrachtIds = lijst.flatMap(wt => wt.opdrachten.map(o => o.id))
-  const [{ data: tw }, { data: lln }, { data: vg }] = await Promise.all([
+  const [{ data: tw }, { data: lln }, { data: vg }, { data: dv }] = await Promise.all([
     supabase.from('toewijzingen').select('opdracht_id, leerling_id').in('opdracht_id', opdrachtIds),
     supabase.from('profielen').select('id, weergavenaam').eq('klas_id', klasId).eq('rol', 'leerling'),
-    supabase.from('weektaak_voortgang').select('opdracht_id, leerling_id, doel_aantal, som_max').in('opdracht_id', opdrachtIds),
+    supabase.from('weektaak_voortgang').select('opdracht_id, leerling_id, doel_aantal, som_max, afgerond').in('opdracht_id', opdrachtIds),
+    soort === 'doel'
+      ? supabase.from('doel_voortgang').select('opdracht_id, leerling_id, gehaald').in('opdracht_id', opdrachtIds)
+      : Promise.resolve({ data: [] }),
   ])
+  const gehaald = new Set((dv ?? []).filter(d => d.gehaald).map(d => `${d.opdracht_id}:${d.leerling_id}`))
   const naamBij = new Map((lln ?? []).map(l => [l.id, l.weergavenaam]))
   return lijst.map(wt => {
     const ids = new Set(wt.opdrachten.map(o => o.id))
@@ -34,7 +40,9 @@ async function haalWeektaken(klasId, soort) {
     // `klaar` in haalMijnWeektaak).
     const af = [...leerlingIds].filter(id => {
       const rijen = (vg ?? []).filter(v => v.leerling_id === id && ids.has(v.opdracht_id))
-      return rijen.length > 0 && rijen.every(v => v.doel_aantal != null && v.som_max >= v.doel_aantal)
+      return rijen.length > 0 && rijen.every(v => soort === 'doel'
+        ? gehaald.has(`${v.opdracht_id}:${v.leerling_id}`)
+        : v.afgerond || (v.doel_aantal != null && v.som_max >= v.doel_aantal))
     }).length
     return { ...wt, voor: namen.sort(), aantal: leerlingIds.size, af }
   })
@@ -70,6 +78,11 @@ export default function WeektaakTab({ klas, soort = 'weektaak', onKiesLeerling }
   const [kopie, setKopie] = useState(null)
   const [kopieBezig, setKopieBezig] = useState(false)
   const [kopieFout, setKopieFout] = useState('')
+  // Taken en doelen: bekijken per doel/taak of per leerling.
+  const [kijk, setKijk] = useState('items') // items | leerlingen
+  // Per doel/taak → één leerling: alleen zijn werk op dit doel of deze taak.
+  const [leerlingKeuze, setLeerlingKeuze] = useState(null) // { id, naam }
+  const persoonlijk = soort !== 'weektaak'
 
   useEffect(() => {
     let actief = true
@@ -78,7 +91,7 @@ export default function WeektaakTab({ klas, soort = 'weektaak', onKiesLeerling }
   }, [klas.id, soort])
 
   const kiesWeektaak = (wt) => {
-    setGekozen(wt); setWeergave('voortgang'); setAlleenNietAf(false)
+    setGekozen(wt); setWeergave('voortgang'); setAlleenNietAf(false); setLeerlingKeuze(null)
     setToonVerwijder(false); setKopie(null); setKopieFout('')
   }
 
@@ -157,6 +170,21 @@ export default function WeektaakTab({ klas, soort = 'weektaak', onKiesLeerling }
         opdrachten={gekozenOpdrachten}
         onTerug={() => setWeergave('voortgang')}
       />
+    )
+  }
+
+  if (weergave === 'voortgang' && gekozen && leerlingKeuze) {
+    return (
+      <>
+        <div className="portaal-kruimels">
+          <button onClick={() => { setWeergave('lijst'); setGekozen(null); setLeerlingKeuze(null) }}>Alle {tekst.meervoud.toLowerCase()}</button>
+          <span>›</span>
+          <button onClick={() => setLeerlingKeuze(null)}>{gekozen.titel}</button>
+          <span>›</span>
+          <strong>{leerlingKeuze.naam}</strong>
+        </div>
+        <LeerlingDetail leerlingId={leerlingKeuze.id} opdrachtIds={gekozen.opdrachten.map(o => o.id)} kop={gekozen.titel} />
+      </>
     )
   }
 
@@ -259,13 +287,33 @@ export default function WeektaakTab({ klas, soort = 'weektaak', onKiesLeerling }
 
         <WeektaakVoortgang
           weektaak={gekozen} klasId={klas.id}
-          alleenNietAf={alleenNietAf} onKiesLeerling={onKiesLeerling}
+          alleenNietAf={alleenNietAf} onKiesLeerling={persoonlijk ? (id, naam) => setLeerlingKeuze({ id, naam }) : (id) => onKiesLeerling(id)}
         />
       </div>
     )
   }
 
+  const keuze = persoonlijk && (
+    <div className="portaal-keuze">
+      <Knop variant={kijk === 'items' ? 'primair' : 'secundair'} maat="sm" onClick={() => setKijk('items')}>Per {tekst.enkel}</Knop>
+      <Knop variant={kijk === 'leerlingen' ? 'primair' : 'secundair'} maat="sm" onClick={() => setKijk('leerlingen')}>Per leerling</Knop>
+    </div>
+  )
+
+  if (persoonlijk && kijk === 'leerlingen') {
+    return (
+      <>
+        {keuze}
+        {weektaken === null
+          ? <p className="portaal-leeg">Laden…</p>
+          : <PersoonlijkPerLeerling klas={klas} soort={soort} weektaken={weektaken} tekst={tekst} />}
+      </>
+    )
+  }
+
   return (
+    <>
+    {keuze}
     <div className="portaal-kaart">
       <h2>{tekst.meervoud}</h2>
       {soort !== 'weektaak' && (
@@ -289,5 +337,6 @@ export default function WeektaakTab({ klas, soort = 'weektaak', onKiesLeerling }
       </div>
       <Knop className="kk-mt-4" variant="primair" maat="sm" onClick={() => setWeergave('nieuw')}>{tekst.nieuw}</Knop>
     </div>
+    </>
   )
 }

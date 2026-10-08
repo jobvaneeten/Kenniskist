@@ -62,10 +62,9 @@ export default function ProcentenBreuken({ onBack, addBriefgeld, aantal }) {
       setCelebrate(false)
       const nieuwRondesGedaan = rondesGedaan + 1
       setRondesGedaan(nieuwRondesGedaan)
-      if (aantal != null) {
-        const opslaan = window.KennisKist?.slaResultaatOp?.('procenten-breuken', 1, 1, {})
-        opslaan?.then(r => { if (!r?.ok) setOpslaanMislukt(true) })
-      }
+      // Ook zonder aantal (vrij oefenen of een doel) telt elke ronde mee.
+      const opslaan = window.KennisKist?.slaResultaatOp?.('procenten-breuken', 1, 1, {})
+      opslaan?.then(r => { if (!r?.ok && r?.reden !== 'niet-ingelogd') setOpslaanMislukt(true) })
       if (aantal != null && nieuwRondesGedaan >= aantal) {
         setKlaar(true)
         return

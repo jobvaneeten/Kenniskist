@@ -128,7 +128,11 @@ export default function WeektaakForm({ klas, soort = 'weektaak', bestaand, onKla
         weektaakId: bestaand?.id ?? null,
         schoolId: klas.school_id, klasId: klas.id,
         titel: titel.trim() || (persoonlijk ? toolLabel(opdrachten[0].toolId) : 'Weektaak'), startOp, eindOp,
-        opdrachten: persoonlijk ? opdrachten.map(o => ({ ...o, config: { ...o.config, persoonlijk: soort } })) : opdrachten,
+        // Een doel heeft geen aantal: het is behaald bij 80% goed van de
+        // laatste 20 opgaven (zie migratie 0016_doel_voortgang.sql).
+        opdrachten: persoonlijk
+          ? opdrachten.map(o => ({ ...o, aantal: soort === 'doel' ? null : o.aantal, config: { ...o.config, persoonlijk: soort } }))
+          : opdrachten,
         leerlingIds: [...gekozen],
       })
       onKlaar()
@@ -195,6 +199,7 @@ export default function WeektaakForm({ klas, soort = 'weektaak', bestaand, onKla
                   key={o.id ?? `nieuw-${i}`}
                   opdracht={o}
                   nummer={i + 1}
+                  zonderAantal={soort === 'doel'}
                   onWijzig={nieuw => wijzigOpdracht(i, nieuw)}
                   onVerwijder={() => verwijderOpdracht(i)}
                 />

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSessie } from './lib/sessie.jsx'
-import { haalMijnWeektaak, zetActieveOpdracht, wisActieveOpdracht, soortVan } from './lib/weektaak.js'
+import { haalMijnWeektaak, zetActieveOpdracht, wisActieveOpdracht, soortVan, DOEL_MIN, DOEL_PCT } from './lib/weektaak.js'
+import { uitlegVoor } from './lib/doelUitleg.js'
 import { toolLabel, TOOL_BY_ID, VAKKEN } from './lib/tools.js'
 import { resterendeMinuten } from './lib/leestimerOpslag.js'
 import { isLescheck, lesLabel } from './lib/lescheck.js'
@@ -33,6 +34,58 @@ const VAK_KLEUR = { taal: 'var(--kk-vak-taal)', spelling: 'var(--kk-vak-spelling
 const vakVan = (m) => TOOL_BY_ID[m.opdrachten[0]?.toolId]?.vak ?? 'overig'
 const vakNaam = (key) => VAKKEN.find(v => v.key === key)?.label ?? 'Overig'
 
+// Balk van een doel: eerst "7 / 20 gemaakt", vanaf 20 opgaven het % goed van
+// de laatste 20 met een streepje op 80%, en behaald = volle groene balk.
+function DoelBalk({ stand }) {
+  if (!stand) return null
+  const { gemaakt, pct, gehaald, genoeg } = stand
+  const breedte = gehaald ? 100 : genoeg ? pct : Math.round((gemaakt / DOEL_MIN) * 100)
+  const tekst = gehaald
+    ? `Doel gehaald! · ${pct}% goed`
+    : genoeg
+      ? `${pct}% goed van de laatste ${DOEL_MIN} · nodig: ${DOEL_PCT}%`
+      : `${gemaakt} / ${DOEL_MIN} gemaakt`
+  return (
+    <span className={`wt-doelbalk${gehaald ? ' gehaald' : ''}`}>
+      <span className="wt-doelbalk-baan">
+        <span className="wt-doelbalk-vul" style={{ width: `${breedte}%` }} />
+        {genoeg && !gehaald && <span className="wt-doelbalk-lat" style={{ left: `${DOEL_PCT}%` }} />}
+      </span>
+      <span className="wt-doelbalk-tekst">{tekst}</span>
+    </span>
+  )
+}
+
+// Vóór het oefenen van een doel: kort de uitleg, dan pas de oefening.
+function DoelUitleg({ opdracht, titel, onStart, onBack }) {
+  const { regels, voorbeeld } = uitlegVoor(opdracht)
+  return (
+    <div className="game-screen">
+      <TerugKnop onClick={onBack} />
+      <div className="game-header" style={{ '--kk-accent': VAK_KLEUR[TOOL_BY_ID[opdracht.toolId]?.vak] ?? 'var(--kk-pink)' }}>
+        <span className="game-header-icon"><Icoon naam="doel" /></span>
+        <h1 className="game-header-title">{titel}</h1>
+        <p className="game-header-sub">Zo werkt het</p>
+      </div>
+      <div className="wt-uitleg">
+        <ul className="wt-uitleg-regels">
+          {regels.map((r, i) => <li key={i}>{r}</li>)}
+        </ul>
+        {voorbeeld && (
+          <div className="wt-uitleg-vb">
+            <span className="wt-uitleg-vb-kop">Voorbeeld</span>
+            <span>{voorbeeld.vraag}</span>
+            <strong>{voorbeeld.antwoord}</strong>
+          </div>
+        )}
+        <p className="wt-uitleg-doel">Het doel is gehaald als je van je laatste {DOEL_MIN} opgaven er minstens {DOEL_PCT}% goed hebt.</p>
+        <DoelBalk stand={opdracht.doelStand} />
+        <Knop variant="primair" icoon="spelen" style={{ marginTop: 18 }} onClick={onStart}>Start oefenen</Knop>
+      </div>
+    </div>
+  )
+}
+
 const PERSOONLIJK = {
   taak: { icoon: 'potlood', meervoud: 'Taken', leeg: 'Je hebt nu geen taken.' },
   doel: { icoon: 'doel',    meervoud: 'Doelen', leeg: 'Je hebt nu geen doelen.' },
@@ -46,6 +99,7 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
   const [ververs, setVervers] = useState(0)
   const [tab, setTab] = useState('taak')
   const [doelVak, setDoelVak] = useState(null)
+  const [uitleg, setUitleg] = useState(null) // { opdracht, titel } — doel vóór het oefenen
   const soort = persoonlijk ? tab : 'weektaak'
 
   useEffect(() => {
@@ -71,9 +125,12 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
   // als de toolId matcht: klikt de leerling terug en oefent hij iets anders
   // vrij, dan mag dát resultaat nooit aan deze opdracht blijven hangen.
   const start = (opdracht) => {
+    setUitleg(null)
     zetActieveOpdracht(opdracht)
     setGekozen(opdracht)
   }
+  // Een doel krijgt eerst de uitleg; de rest start meteen.
+  const kies = (opdracht, titel) => (soortVan(opdracht) === 'doel' ? setUitleg({ opdracht, titel }) : start(opdracht))
 
   const terugVanTool = () => {
     wisActieveOpdracht()
@@ -91,6 +148,10 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
         addCuruntie={addCuruntie}
       />
     )
+  }
+
+  if (uitleg) {
+    return <DoelUitleg opdracht={uitleg.opdracht} titel={uitleg.titel} onStart={() => start(uitleg.opdracht)} onBack={() => setUitleg(null)} />
   }
 
   // Het open mapje wordt per render opnieuw opgezocht in plaats van in state
@@ -115,7 +176,7 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
 
         <div className="mode-grid">
           {map.opdrachten.map(o => (
-            <button key={o.opdrachtId} className="mode-card" onClick={() => start(o)}
+            <button key={o.opdrachtId} className="mode-card" onClick={() => kies(o, toolLabel(o.toolId))}
               style={{ '--kk-accent': o.klaar ? 'var(--kk-success)' : VAK_KLEUR[TOOL_BY_ID[o.toolId]?.vak] }}>
               <span className="mode-icoon"><Icoon naam={o.klaar ? 'goed' : VAK_ICOON[TOOL_BY_ID[o.toolId]?.vak] ?? 'doel'} /></span>
               <span className="mode-name">
@@ -126,10 +187,13 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
                   ? (o.klaar ? 'Je som is gemaakt' : 'Eén som over de les van vandaag')
                   : leesRest(o) != null
                     ? `Nog ${leesRest(o)} min te lezen`
+                    : o.doelStand
+                      ? null
                     : o.doel != null
                       ? `${Math.min(o.somMax, o.doel)} / ${o.doel} gemaakt`
                       : `${o.pogingen}× gemaakt`}
               </span>
+              {o.doelStand && <DoelBalk stand={o.doelStand} />}
               {/* Opnieuw gezet: door de juf of meester, of automatisch omdat er
                   minder dan de helft goed was. De teller staat dan weer op 0. */}
               {o.herkansingen > 0 && !o.klaar && (
@@ -204,17 +268,20 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
               <button
                 key={m.id} className="mode-card wt-map"
                 style={alles ? { '--kk-accent': 'var(--kk-success)' } : undefined}
-                onClick={() => (persoonlijk && m.opdrachten.length === 1 ? start(m.opdrachten[0]) : setOpenMap(m.id))}
+                onClick={() => (persoonlijk && m.opdrachten.length === 1 ? kies(m.opdrachten[0], m.titel) : setOpenMap(m.id))}
               >
                 <span className="mode-icoon"><Icoon naam={alles ? 'goed' : persoonlijk ? PERSOONLIJK[tab].icoon : 'klembord'} /></span>
                 <span className="mode-name">{m.titel}</span>
                 <span className="mode-desc">
                   {soort === 'doel'
-                    ? (alles ? 'Behaald! Je mag blijven oefenen' : 'Nog niet behaald')
+                    ? (m.opdrachten.length === 1
+                        ? (alles ? 'Je mag blijven oefenen' : null)
+                        : `${af} van de ${m.opdrachten.length} behaald`)
                     : soort === 'taak' && m.opdrachten.length === 1 && m.opdrachten[0].doel != null
                       ? `${Math.min(m.opdrachten[0].somMax, m.opdrachten[0].doel)} / ${m.opdrachten[0].doel} gemaakt`
                       : `${af} van de ${m.opdrachten.length} af`}
                 </span>
+                {soort === 'doel' && m.opdrachten.length === 1 && <DoelBalk stand={m.opdrachten[0].doelStand} />}
                 {m.eindOp && !persoonlijk && (
                   <span className="wt-map-datum">tot en met {korteDatum(m.eindOp)}</span>
                 )}

@@ -11,7 +11,8 @@ import { Knop } from '../ui/index.jsx'
 // dat er bijna vijftig, dus die lijst heeft knoppen om alles of niets aan te
 // vinken en toont hoeveel er gekozen zijn — anders zit je te scrollen zonder
 // te weten waar je bent.
-export default function OpdrachtRij({ opdracht, nummer, onWijzig, onVerwijder }) {
+// zonderAantal: bij een doel telt geen aantal maar 80% goed van de laatste 20.
+export default function OpdrachtRij({ opdracht, nummer, onWijzig, onVerwijder, zonderAantal = false }) {
   const info = TOOL_BY_ID[opdracht.toolId]
   if (!info) return null
 
@@ -29,7 +30,9 @@ export default function OpdrachtRij({ opdracht, nummer, onWijzig, onVerwijder })
 
   // Wat de leerling straks te zien krijgt, in gewone taal.
   const eenheidNaam = info.eenheid === 'opgaven' ? 'opgaven' : info.eenheid === 'woorden' ? 'woorden' : null
-  const samenvatting = eenheidNaam
+  const samenvatting = zonderAantal
+    ? 'behaald bij 80% goed van de laatste 20'
+    : eenheidNaam
     ? `${aantal} ${eenheidNaam}`
     : aantal > 1 ? `${aantal} keer maken` : '1 keer maken'
 
@@ -45,7 +48,7 @@ export default function OpdrachtRij({ opdracht, nummer, onWijzig, onVerwijder })
       </div>
 
       <div className="portaal-opdracht-velden">
-        {info.aantalInstelbaar && (
+        {info.aantalInstelbaar && !zonderAantal && (
           <label className="portaal-veld">
             <span className="portaal-veld-label">{eenheidNaam ? `Aantal ${eenheidNaam}` : 'Hoe vaak maken'}</span>
             <input type="number" min={1} value={aantal} onChange={e => zetAantal(e.target.value)} />

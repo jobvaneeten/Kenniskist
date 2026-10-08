@@ -64,19 +64,23 @@ export async function haalMijnWeektaak(profielId, klasId) {
   // De status staat niet in weektaak_voortgang, dus apart erbij: een opdracht
   // die de leerkracht heeft vrijgesteld ("hoeft niet") hoort niet meer in het
   // lijstje van de leerling te staan.
-  const [{ data: voortgang }, { data: toewijzingen }, { data: leesstanden }] = await Promise.all([
-    supabase.from('weektaak_voortgang').select('opdracht_id, doel_aantal, som_score, som_max, pogingen, herkansingen')
+  const [{ data: voortgang }, { data: toewijzingen }, { data: leesstanden }, { data: doelen }] = await Promise.all([
+    supabase.from('weektaak_voortgang').select('opdracht_id, doel_aantal, som_score, som_max, pogingen, herkansingen, afgerond')
       .eq('leerling_id', profielId).in('opdracht_id', opdrachtIds),
     supabase.from('toewijzingen').select('opdracht_id, status')
       .eq('leerling_id', profielId).in('opdracht_id', opdrachtIds),
     // Half gelezen leesbeurten, ook van een andere iPad (zie leestimerOpslag.js).
     supabase.from('leesstanden').select('opdracht_id, gebankt, start_op')
       .eq('leerling_id', profielId).in('opdracht_id', opdrachtIds),
+    // Doelen: % goed van de laatste 20 en of hij behaald is (migratie 0016).
+    supabase.from('doel_voortgang').select('opdracht_id, gemaakt, laatste_goed, laatste_aantal, gehaald')
+      .eq('leerling_id', profielId).in('opdracht_id', opdrachtIds),
   ])
 
   const weektaakBij = new Map(weektaken.map(w => [w.id, w]))
   const voortgangBij = new Map((voortgang ?? []).map(v => [v.opdracht_id, v]))
   const leesstandBij = new Map((leesstanden ?? []).map(l => [l.opdracht_id, vanServer(l)]))
+  const doelBij = new Map((doelen ?? []).map(d => [d.opdracht_id, d]))
   const vrijgesteld = new Set((toewijzingen ?? []).filter(t => t.status === 'vrijgesteld').map(t => t.opdracht_id))
 
   return opdrachten
@@ -102,7 +106,20 @@ export async function haalMijnWeektaak(profielId, klasId) {
         // Cap op de weergave, niet op de data: een leerling die de opdracht
         // vaker doet dan gevraagd komt boven 100%, dat is prima — hij heeft
         // 'm dan allang gehaald.
-        klaar: doel != null && v.som_max >= doel,
+        // afgerond: al af vóórdat de leerkracht het werk wiste (migratie 0017).
+        klaar: soortVan(o) === 'doel' ? !!doelBij.get(o.id)?.gehaald : v.afgerond || (doel != null && v.som_max >= doel),
+        doelStand: soortVan(o) === 'doel' ? doelStandVan(doelBij.get(o.id)) : null,
       }
     })
+}
+
+// Stand van een doel voor de balk: onder de 20 opgaven telt hij het aantal,
+// daarna het percentage goed van de laatste 20. Behaald = 80% gehaald, en dat
+// blijft zo (de view kijkt of het ooit gelukt is).
+export const DOEL_MIN = 20
+export const DOEL_PCT = 80
+export function doelStandVan(d) {
+  const gemaakt = d?.gemaakt ?? 0
+  const pct = d?.laatste_aantal ? Math.round((d.laatste_goed / d.laatste_aantal) * 100) : 0
+  return { gemaakt, pct, gehaald: !!d?.gehaald, genoeg: gemaakt >= DOEL_MIN }
 }

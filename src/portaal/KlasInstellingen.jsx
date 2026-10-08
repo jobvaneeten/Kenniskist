@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase.js'
 import { roepWorkerAan } from '../lib/worker.js'
 import { Knop, Icoon } from '../ui/index.jsx'
+import GegevensWissen from './GegevensWissen.jsx'
 
 const LEEFTIJDSGROEPEN = [4, 5, 6, 7, 8]
 
@@ -356,6 +357,18 @@ export default function KlasInstellingen({ klas, alleKlassen, onGewijzigd, onVer
       </div>
 
       <LeerkrachtKoppelen klas={klas} personeel={personeel} koppelingen={koppelingen} onGewijzigd={naGewijzigd} />
+
+      <div className="portaal-kaart">
+        <h2>Gemaakt werk wissen</h2>
+        <p className="portaal-zacht kk-mt-0">
+          Wist de opgaven, fouten en sessies van alle {aantal} leerlingen, bijvoorbeeld aan het begin van een nieuw
+          blok. Weektaken, taken en doelen blijven klaarstaan; wat af of behaald was, blijft dat. Eén leerling
+          wissen kan op de pagina van die leerling.
+        </p>
+        <div className="kk-rij">
+          <GegevensWissen leerlingIds={leerlingen.map(l => l.id)} wie={`de hele klas ${klas.naam}`} />
+        </div>
+      </div>
 
       <Voorlezen leerlingen={leerlingen} onGewijzigd={naGewijzigd} />
 

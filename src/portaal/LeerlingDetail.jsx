@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase.js'
 import { roepWorkerAan } from '../lib/worker.js'
 import { toolLabel } from '../lib/tools.js'
 import FoutenLijst from './FoutenLijst.jsx'
+import GegevensWissen from './GegevensWissen.jsx'
 import Balk from './Balk.jsx'
 import { groepeerSessies, scoreKlasse, kortMoment } from './resultaatHelpers.js'
 import { Knop, Icoon } from '../ui/index.jsx'
@@ -44,11 +45,10 @@ function PerOnderdeel({ resultaten }) {
   }
 
   const toolIds = Object.keys(perTool)
-  if (toolIds.length === 0) return null
+  if (toolIds.length === 0) return <p className="portaal-leeg kk-m-0">Voor deze oefeningen is er geen overzicht per onderdeel.</p>
 
   return (
-    <div className="portaal-kaart">
-      <h2>Waar zit het in?</h2>
+    <>
       <p className="portaal-zacht" style={{ margin: '0 0 14px' }}>
         Per onderdeel hoeveel er goed ging. De zwakste plek staat bovenaan.
       </p>
@@ -85,14 +85,14 @@ function PerOnderdeel({ resultaten }) {
           </div>
         )
       })}
-    </div>
+    </>
   )
 }
 
 // Kop met de cijfers van deze leerling. Stond eerst in de leerlingenlijst,
 // maar die is nu een keuzelijst met alleen namen — dus hoort het hier, bij het
 // kind zelf: hoeveel, hoe goed, wanneer voor het laatst, en per oefening.
-function LeerlingCijfers({ rijen }) {
+function telPerTool(rijen) {
   const perTool = {}
   let opgaven = 0, goed = 0, laatste = 0
   for (const r of rijen) {
@@ -107,12 +107,15 @@ function LeerlingCijfers({ rijen }) {
     .map(([toolId, t]) => ({ toolId, ...t, pct: Math.round((t.goed / t.opgaven) * 100) }))
     .sort((a, b) => a.pct - b.pct)
 
-  if (opgaven === 0) {
-    return <div className="portaal-kaart"><p className="portaal-leeg">Deze leerling heeft in deze periode niets gemaakt.</p></div>
-  }
+  return { opgaven, goed, laatste, pct, tools }
+}
 
+function LeerlingCijfers({ rijen }) {
+  const { opgaven, goed, laatste, pct } = telPerTool(rijen)
+  if (opgaven === 0) {
+    return <div className="portaal-kaart"><p className="portaal-leeg">Hier is (nog) niets gemaakt.</p></div>
+  }
   return (
-    <>
       <div className="portaal-tegels">
         <div className="portaal-tegel">
           <span className="portaal-tegel-getal">{opgaven}</span>
@@ -131,9 +134,12 @@ function LeerlingCijfers({ rijen }) {
           <span className="portaal-tegel-label">Laatst actief</span>
         </div>
       </div>
+  )
+}
 
-      <div className="portaal-kaart">
-        <h2>Per oefening</h2>
+function PerOefening({ rijen }) {
+  const { tools } = telPerTool(rijen)
+  return (
         <table className="portaal-tabel">
           <thead><tr><th>Oefening</th><th>Gemaakt</th><th>Fout</th><th>Goed</th></tr></thead>
           <tbody>
@@ -152,8 +158,17 @@ function LeerlingCijfers({ rijen }) {
             ))}
           </tbody>
         </table>
-      </div>
-    </>
+  )
+}
+
+// Uitklapbaar blok: de leerkracht ziet eerst alleen de koppen en klapt open
+// wat hij nodig heeft.
+function Uitklap({ titel, open = false, children }) {
+  return (
+    <details className="portaal-kaart portaal-sectie" open={open}>
+      <summary><h2>{titel}</h2></summary>
+      <div className="portaal-sectie-inhoud">{children}</div>
+    </details>
   )
 }
 
@@ -259,16 +274,21 @@ function WachtwoordResetten({ leerlingId }) {
 // Embeddable: geen eigen .portaal-wrapper. Alleen werk dat bij een opdracht
 // hoort (weektaak, taak of doel) — wat een kind vrij oefent ziet de leerkracht
 // bewust niet. Terug gaat via de kruimelbalk daarboven.
-export default function LeerlingDetail({ leerlingId }) {
+// opdrachtIds: alleen het werk van die opdrachten (één doel of taak), met
+// `kop` als titel; dan geen beheer (wachtwoord, wissen) erbij.
+export default function LeerlingDetail({ leerlingId, opdrachtIds = null, kop = null }) {
   const [leerling, setLeerling] = useState(null)
   const [resultaten, setResultaten] = useState(null)
+  const [teller, setTeller] = useState(0)
+  const filterSleutel = opdrachtIds?.join(',') ?? ''
 
   useEffect(() => {
     let actief = true
     async function laad() {
-      const resultatenQuery = supabase.from('resultaten').select('*')
+      let resultatenQuery = supabase.from('resultaten').select('*')
         .eq('leerling_id', leerlingId).not('opdracht_id', 'is', null)
         .order('aangemaakt_op', { ascending: false })
+      if (filterSleutel) resultatenQuery = resultatenQuery.in('opdracht_id', filterSleutel.split(','))
 
       const [{ data: p }, { data: r }] = await Promise.all([
         supabase.from('profielen').select('weergavenaam, gebruikersnaam, klassen(code)').eq('id', leerlingId).single(),
@@ -280,24 +300,33 @@ export default function LeerlingDetail({ leerlingId }) {
     }
     laad()
     return () => { actief = false }
-  }, [leerlingId])
+  }, [leerlingId, filterSleutel, teller])
 
   const gefilterd = useMemo(() => resultaten ?? [], [resultaten])
   const sessies = useMemo(() => groepeerSessies(gefilterd), [gefilterd])
+  const beheer = !opdrachtIds
 
   return (
     <>
       <div className="portaal-kaart">
         <div className="portaal-sectiekop">
           <div>
-            <h2 className="kk-m-0">{leerling?.weergavenaam ?? '…'}</h2>
-            {leerling && (
+            <h2 className="kk-m-0">{kop ? `${leerling?.weergavenaam ?? '…'} · ${kop}` : leerling?.weergavenaam ?? '…'}</h2>
+            {leerling && beheer && (
               <p className="portaal-zacht" style={{ margin: '4px 0 0' }}>
                 Inloggen met: klas <strong>{leerling.klassen?.code}</strong>, gebruikersnaam <strong>{leerling.gebruikersnaam}</strong>
               </p>
             )}
           </div>
-          {leerling && <WachtwoordResetten leerlingId={leerlingId} />}
+          {leerling && beheer && (
+            <div className="kk-rij">
+              <WachtwoordResetten leerlingId={leerlingId} />
+              <GegevensWissen
+                leerlingIds={[leerlingId]} wie={leerling.weergavenaam}
+                onGewist={() => setTeller(t => t + 1)}
+              />
+            </div>
+          )}
         </div>
       </div>
 
@@ -306,18 +335,22 @@ export default function LeerlingDetail({ leerlingId }) {
       {resultaten !== null && (
         <>
           <LeerlingCijfers rijen={gefilterd} />
-
-          <PerOnderdeel resultaten={gefilterd} />
-
-          <div className="portaal-kaart">
-            <h2>Wat ging er precies fout?</h2>
-            <FoutenLijst rijen={gefilterd} />
-          </div>
-
-          <div className="portaal-kaart">
-            <h2>Wat is er gemaakt?</h2>
-            <Sessies sessies={sessies} />
-          </div>
+          {gefilterd.length > 0 && (
+            <>
+              <Uitklap titel="Waar zit het in? (foutanalyse)" open>
+                <PerOnderdeel resultaten={gefilterd} />
+              </Uitklap>
+              <Uitklap titel="Wat ging er precies fout?">
+                <FoutenLijst rijen={gefilterd} />
+              </Uitklap>
+              <Uitklap titel="Per oefening">
+                <PerOefening rijen={gefilterd} />
+              </Uitklap>
+              <Uitklap titel="Wat is er gemaakt? (alle sessies)">
+                <Sessies sessies={sessies} />
+              </Uitklap>
+            </>
+          )}
         </>
       )}
     </>

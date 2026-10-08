@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase.js'
 import { toolLabel } from '../lib/tools.js'
+import { doelStandVan, DOEL_MIN, DOEL_PCT } from '../lib/weektaak.js'
 import { scoreKlasse } from './resultaatHelpers.js'
 import {  } from '../ui/index.jsx'
 
@@ -27,6 +28,15 @@ function kortTijd(ms) {
 // Twee weergaven: de volle matrix (sorteerbaar per opdracht — klik op een
 // kolomkop om te zien wie achterloopt) en de lijst met alleen wat nog niet af
 // is, waar je een opdracht per leerling kunt vrijstellen.
+// Doel: behaald (groen), of het % goed van de laatste 20, of nog de teller.
+export function DoelCel({ stand }) {
+  if (stand.gehaald) return <span className="portaal-score-goed"><strong>Gehaald</strong> · {stand.pct}%</span>
+  if (stand.genoeg) return <span className={scoreKlasse(stand.pct)}><strong>{stand.pct}%</strong> <span className="portaal-zacht">laatste {DOEL_MIN} · nodig {DOEL_PCT}%</span></span>
+  return <span><strong>{stand.gemaakt}/{DOEL_MIN}</strong> <span className="portaal-zacht">gemaakt</span></span>
+}
+// Voor het sorteren: hoe ver de leerling is (0 = niets, 1 = behaald).
+const doelDeel = (st) => (st.gehaald ? 1 : st.genoeg ? 0.5 + st.pct / 200 : 0.5 * st.gemaakt / DOEL_MIN)
+
 export default function WeektaakVoortgang({ weektaak, klasId, alleenNietAf, onKiesLeerling }) {
   const [leerlingen, setLeerlingen] = useState(null)
   const [opdrachten, setOpdrachten] = useState([])
@@ -41,24 +51,32 @@ export default function WeektaakVoortgang({ weektaak, klasId, alleenNietAf, onKi
     let actief = true
     async function laad() {
       const { data: opd } = await supabase
-        .from('opdrachten').select('id, tool_id, aantal, volgorde')
+        .from('opdrachten').select('id, tool_id, aantal, config, volgorde')
         .eq('weektaak_id', weektaak.id).order('volgorde')
       if (!actief) return
       const opdrachtIds = (opd ?? []).map(o => o.id)
 
-      const [{ data: lln }, { data: vg }, { data: tw }] = await Promise.all([
+      const [{ data: lln }, { data: vg }, { data: tw }, { data: dv }] = await Promise.all([
         supabase.from('profielen').select('id, weergavenaam')
           .eq('klas_id', klasId).eq('rol', 'leerling').order('weergavenaam'),
-        supabase.from('weektaak_voortgang').select('opdracht_id, leerling_id, doel_aantal, som_score, som_max, som_ms, herkansingen')
+        supabase.from('weektaak_voortgang').select('opdracht_id, leerling_id, doel_aantal, som_score, som_max, som_ms, herkansingen, afgerond')
           .eq('weektaak_id', weektaak.id),
         opdrachtIds.length
           ? supabase.from('toewijzingen').select('opdracht_id, leerling_id, status').in('opdracht_id', opdrachtIds)
+          : Promise.resolve({ data: [] }),
+        // Doelen: % goed van de laatste 20 en behaald (migratie 0016).
+        opdrachtIds.length
+          ? supabase.from('doel_voortgang').select('opdracht_id, leerling_id, gemaakt, laatste_goed, laatste_aantal, gehaald').in('opdracht_id', opdrachtIds)
           : Promise.resolve({ data: [] }),
       ])
       if (!actief) return
       setOpdrachten(opd ?? [])
       setLeerlingen(lln ?? [])
-      setVoortgang(vg ?? [])
+      const isDoel = new Set((opd ?? []).filter(o => o.config?.persoonlijk === 'doel').map(o => o.id))
+      const doelBij = new Map((dv ?? []).map(d => [sleutel(d.opdracht_id, d.leerling_id), d]))
+      setVoortgang((vg ?? []).map(v => isDoel.has(v.opdracht_id)
+        ? { ...v, doelStand: doelStandVan(doelBij.get(sleutel(v.opdracht_id, v.leerling_id))) }
+        : v))
       setStatussen(new Map((tw ?? []).map(t => [sleutel(t.opdracht_id, t.leerling_id), t.status])))
       setAangeraakt(new Set())
       setOpnieuwBezig(null)
@@ -81,10 +99,10 @@ export default function WeektaakVoortgang({ weektaak, klasId, alleenNietAf, onKi
     for (const l of leerlingen ?? []) {
       for (const o of opdrachten) {
         const vg = vind(l.id, o.id)
-        if (!vg || !vg.doel_aantal) continue
+        if (!vg || (!vg.doel_aantal && !vg.doelStand)) continue
         const status = statusVan(l.id, o.id)
         const vrij = status === 'vrijgesteld'
-        const klaar = Number(vg.som_max) >= vg.doel_aantal
+        const klaar = vg.doelStand ? vg.doelStand.gehaald : vg.afgerond || Number(vg.som_max) >= vg.doel_aantal
         if (klaar) continue
         if (vrij && !aangeraakt.has(sleutel(o.id, l.id))) continue
         regels.push({ leerling: l, opdracht: o, vg, vrij })
@@ -106,7 +124,10 @@ export default function WeektaakVoortgang({ weektaak, klasId, alleenNietAf, onKi
       const deel = (l) => {
         const status = statusVan(l.id, kolom)
         const vg = vind(l.id, kolom)
-        if (status === 'vrijgesteld' || !vg || !vg.doel_aantal) return null
+        if (status === 'vrijgesteld' || !vg) return null
+        if (vg.doelStand) return doelDeel(vg.doelStand)
+        if (!vg.doel_aantal) return null
+        if (vg.afgerond) return 1
         return Math.min(Number(vg.som_max), vg.doel_aantal) / vg.doel_aantal
       }
       lijst.sort((a, b) => {
@@ -134,7 +155,7 @@ export default function WeektaakVoortgang({ weektaak, klasId, alleenNietAf, onKi
     if (error) { setFout('Opnieuw zetten mislukt — probeer het nog eens.'); return }
     setVoortgang(prev => prev.map(v => (
       v.opdracht_id === opdrachtId && v.leerling_id === leerlingId
-        ? { ...v, som_score: 0, som_max: 0, som_ms: 0, herkansingen: (v.herkansingen ?? 0) + 1 }
+        ? { ...v, som_score: 0, som_max: 0, som_ms: 0, herkansingen: (v.herkansingen ?? 0) + 1, ...(v.doelStand && { doelStand: doelStandVan(null) }) }
         : v
     )))
   }
@@ -180,11 +201,13 @@ export default function WeektaakVoortgang({ weektaak, klasId, alleenNietAf, onKi
                 {openstaand.map(({ leerling, opdracht, vg, vrij }) => (
                   <tr key={sleutel(opdracht.id, leerling.id)} className={vrij ? 'portaal-rij-vrijgesteld' : undefined}>
                     <td>
-                      <button className="portaal-leerlingnaam" onClick={() => onKiesLeerling(leerling.id)}>{leerling.weergavenaam}</button>
+                      <button className="portaal-leerlingnaam" onClick={() => onKiesLeerling(leerling.id, leerling.weergavenaam)}>{leerling.weergavenaam}</button>
                     </td>
                     <td>{toolLabel(opdracht.tool_id)}</td>
                     <td>
-                      <strong>{Math.min(Number(vg.som_max), vg.doel_aantal)}/{vg.doel_aantal}</strong>
+                      {vg.doelStand
+                        ? <DoelCel stand={vg.doelStand} />
+                        : <strong>{Math.min(Number(vg.som_max), vg.doel_aantal)}/{vg.doel_aantal}</strong>}
                       {Number(vg.som_max) === 0 && (
                         <span className="portaal-score-slecht">
                           {vg.herkansingen > 0 ? ` opnieuw beginnen (poging ${vg.herkansingen + 1})` : ' nog niet begonnen'}
@@ -234,13 +257,14 @@ export default function WeektaakVoortgang({ weektaak, klasId, alleenNietAf, onKi
             {gesorteerd.map(l => (
               <tr key={l.id}>
                 <td>
-                  <button className="portaal-leerlingnaam" onClick={() => onKiesLeerling(l.id)}>{l.weergavenaam}</button>
+                  <button className="portaal-leerlingnaam" onClick={() => onKiesLeerling(l.id, l.weergavenaam)}>{l.weergavenaam}</button>
                 </td>
                 {opdrachten.map(o => {
                   const v = vind(l.id, o.id)
                   if (statusVan(l.id, o.id) === 'vrijgesteld') {
                     return <td key={o.id}><span className="portaal-zacht">hoeft niet</span></td>
                   }
+                  if (v?.doelStand) return <td key={o.id}><DoelCel stand={v.doelStand} /></td>
                   if (!v || !v.doel_aantal) return <td key={o.id} className="portaal-cel-leeg">—</td>
                   const gemaakt = Math.min(v.som_max, v.doel_aantal)
                   const pct = v.som_max > 0 ? Math.round((v.som_score / v.som_max) * 100) : 0
@@ -250,6 +274,7 @@ export default function WeektaakVoortgang({ weektaak, klasId, alleenNietAf, onKi
                   return (
                     <td key={o.id}>
                       <strong>{gemaakt}/{v.doel_aantal}</strong>
+                      {v.afgerond && gemaakt < v.doel_aantal && <> <span className="portaal-score-goed">af</span></>}
                       {v.herkansingen > 0 && <> <span className="portaal-zacht">poging {v.herkansingen + 1}</span></>}
                       {v.som_max > 0 && (
                         <>
@@ -260,7 +285,7 @@ export default function WeektaakVoortgang({ weektaak, klasId, alleenNietAf, onKi
                               <br />
                               <button
                                 className="portaal-terug" style={{ padding: 0, fontSize: '0.78rem' }}
-                                onClick={() => onKiesLeerling(l.id)}
+                                onClick={() => onKiesLeerling(l.id, l.weergavenaam)}
                                 title="Open het leerlingprofiel met de foutenlijst"
                               >{Math.round(foutAantal)} fout →</button>
                             </>

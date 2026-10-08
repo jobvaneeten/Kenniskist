@@ -500,3 +500,14 @@
   background: var(--kk-surface-solid); box-shadow: var(--kk-shadow);
 }
 .portaal-keuzebalk-tekst { flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 2px; }
+
+/* Uitklapbare blokken op de leerlingpagina (LeerlingDetail.jsx) */
+.portaal-sectie > summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 10px; }
+.portaal-sectie > summary::-webkit-details-marker { display: none; }
+.portaal-sectie > summary::before { content: '▸'; font-size: 0.9rem; opacity: .7; transition: transform .15s; }
+.portaal-sectie[open] > summary::before { transform: rotate(90deg); }
+.portaal-sectie > summary h2 { margin: 0; }
+.portaal-sectie-inhoud { margin-top: 14px; }
+
+/* Keuze bij Taken/Doelen: per doel of per leerling */
+.portaal-keuze { display: flex; gap: 8px; margin: 0 0 14px; flex-wrap: wrap; }
