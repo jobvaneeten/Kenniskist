@@ -87,12 +87,21 @@ function KlasOverzicht({ profiel, klassen, aantallen, leerkrachten, isIcter, onK
         <div className="portaal-grid">
           {klassen.map(k => (
             <div key={k.id} className="portaal-klaskaart-wrap">
-              <button className="portaal-klaskaart" onClick={() => onKiesKlas(k)}>
-                {k.naam}
-                <span>{aantallen[k.id] ?? 0} leerlingen{k.schooljaar ? ` · ${k.schooljaar}` : ''}</span>
-                <span>inlogcode: {k.code}</span>
-                <span>{k.groepen?.length ? `groep ${k.groepen.join(', ')}` : 'alle groepen'}</span>
-                {leerkrachten[k.id]?.length > 0 && <span>{leerkrachten[k.id].join(', ')}</span>}
+              <button className="portaal-klaskaart portaal-klas" onClick={() => onKiesKlas(k)}>
+                <span className="portaal-klas-kop">
+                  <span className="portaal-klas-icoon"><Icoon naam="school" /></span>
+                  <span className="portaal-klas-naam">{k.naam}</span>
+                </span>
+                <span className="portaal-chips">
+                  <span className="portaal-chip"><Icoon naam="mensen" />{aantallen[k.id] ?? 0} leerlingen</span>
+                  <span className="portaal-chip"><Icoon naam="sleutel" />{k.code}</span>
+                  <span className="portaal-chip">{k.groepen?.length ? `groep ${k.groepen.join(', ')}` : 'alle groepen'}</span>
+                </span>
+                <span className="portaal-klas-voet">
+                  {k.schooljaar && <span>{k.schooljaar}</span>}
+                  {leerkrachten[k.id]?.length > 0 && <span>{leerkrachten[k.id].join(', ')}</span>}
+                  <span className="portaal-klas-pijl"><Icoon naam="verder" /></span>
+                </span>
               </button>
               {/* Naast de kaart en niet erin: een knop in een knop mag niet. */}
               {isIcter && (
@@ -194,9 +203,21 @@ export default function Portaal() {
   return (
     <div className="portaal">
       <header className="portaal-header">
-        <h1>Kenniskist portaal</h1>
+        <div className="portaal-merk">
+          <img src="/logo-rond.png" alt="" />
+          <div>
+            <h1>Kenniskist</h1>
+            <span className="portaal-merk-sub">Leerkrachtenportaal</span>
+          </div>
+        </div>
         <div className="portaal-header-rechts">
-          <span>{profiel.weergavenaam} ({profiel.rol}{profiel.rol === 'icter' && alsLeerkracht ? ' — als leerkracht' : ''})</span>
+          <span className="portaal-gebruiker">
+            <span className="portaal-avatar">{profiel.weergavenaam?.[0]?.toUpperCase() ?? '?'}</span>
+            <span className="portaal-gebruiker-tekst">
+              <strong>{profiel.weergavenaam}</strong>
+              <small>{profiel.rol}{profiel.rol === 'icter' && alsLeerkracht ? ' · als leerkracht' : ''}</small>
+            </span>
+          </span>
           {profiel.rol === 'icter' && (
             <Knop variant="secundair" maat="sm" onClick={() => setAlsLeerkracht(v => !v)}>
               {alsLeerkracht ? 'Terug naar icter-weergave' : 'Bekijk als leerkracht'}

@@ -11,47 +11,95 @@
   color: var(--kk-text);
   padding: 28px 24px 64px;
   background:
-    radial-gradient(1100px 520px at 15% -10%, rgba(99,102,241,0.16), transparent 65%),
-    radial-gradient(900px 480px at 92% 8%, rgba(56,189,248,0.09), transparent 60%),
+    radial-gradient(1100px 560px at 12% -12%, rgba(124,92,255,0.22), transparent 65%),
+    radial-gradient(900px 500px at 95% 4%, rgba(56,189,248,0.13), transparent 60%),
+    radial-gradient(800px 600px at 50% 115%, rgba(236,72,153,0.08), transparent 60%),
     var(--kk-bg-portaal);
   background-attachment: fixed;
 }
+/* Fijn raster over de achtergrond: geeft diepte zonder af te leiden. */
+.portaal::before {
+  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(ellipse at 50% 0%, #000 30%, transparent 75%);
+}
+.portaal > * { position: relative; z-index: 1; }
 
 .portaal-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16px; flex-wrap: wrap;
   max-width: 1100px;
-  margin: 0 auto 24px;
+  margin: 0 auto 28px;
+  padding: 12px 16px 12px 12px;
+  border-radius: var(--kk-r-lg);
+  background: rgba(16, 14, 38, 0.7);
+  border: 1px solid rgba(255,255,255,0.1);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 10px 40px -18px rgba(124,92,255,0.6);
 }
-.portaal-header h1 { font: var(--kk-fw-bold) var(--kk-fs-xl)/1.15 var(--kk-head); margin: 0; }
-.portaal-header-rechts { display: flex; align-items: center; gap: 12px; font-size: 0.9rem; color: rgba(255,255,255,0.75); }
+.portaal-header h1 {
+  margin: 0; font: var(--kk-fw-bold) 1.45rem/1 var(--kk-head); letter-spacing: 0.02em;
+  background: linear-gradient(90deg, #fff, var(--kk-cyan) 60%, var(--kk-primary-hi));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.portaal-merk { display: flex; align-items: center; gap: 12px; }
+.portaal-merk img { width: 46px; height: 46px; border-radius: 50%; box-shadow: 0 0 22px rgba(56,189,248,0.45); }
+.portaal-merk-sub { display: block; margin-top: 4px; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: var(--kk-text-faint); }
+.portaal-header-rechts { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 0.9rem; color: rgba(255,255,255,0.75); }
+.portaal-gebruiker { display: inline-flex; align-items: center; gap: 10px; padding-right: 6px; }
+.portaal-avatar {
+  width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center;
+  font: var(--kk-fw-bold) 1rem/1 var(--kk-head); color: #fff;
+  background: linear-gradient(135deg, var(--kk-primary), var(--kk-pink));
+  box-shadow: 0 0 14px rgba(236,72,153,0.4);
+}
+.portaal-gebruiker-tekst { display: flex; flex-direction: column; line-height: 1.15; }
+.portaal-gebruiker-tekst strong { color: var(--kk-text); font-size: 0.9rem; }
+.portaal-gebruiker-tekst small { font-size: 0.72rem; text-transform: capitalize; color: var(--kk-text-faint); }
 
 .portaal-inhoud { max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
 
-.portaal-tabs-nav { display: flex; gap: 8px; flex-wrap: wrap; }
-.portaal-tab-knop {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1px;
-  min-height: var(--kk-tap);
-  padding: 6px 20px;
-  border-radius: var(--kk-r-md);
-  border: 1px solid var(--kk-border-strong);
-  background: var(--kk-surface);
-  color: rgba(255,255,255,0.85);
-  font-family: inherit;
-  font-weight: 800;
-  font-size: 0.9rem;
-  cursor: pointer;
+.portaal-tabs-nav {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px;
+  padding: 8px; border-radius: var(--kk-r-lg);
+  background: rgba(16, 14, 38, 0.6); border: 1px solid rgba(255,255,255,0.08);
+  backdrop-filter: blur(10px);
 }
-.portaal-tab-knop:hover { border-color: var(--kk-primary-hi); }
-.portaal-tab-knop.actief { background: var(--kk-primary); border-color: var(--kk-primary); color: var(--kk-text); }
+.portaal-tab-knop {
+  --kk-accent: var(--kk-primary-hi);
+  position: relative;
+  display: flex; align-items: center; gap: 10px;
+  min-height: 54px; padding: 8px 12px;
+  border-radius: var(--kk-r-md);
+  border: 1px solid transparent;
+  background: transparent;
+  color: rgba(255,255,255,0.78);
+  font-family: inherit; font-weight: 800; font-size: 0.92rem; text-align: left;
+  cursor: pointer;
+  transition: background var(--kk-dur), border-color var(--kk-dur), color var(--kk-dur), box-shadow var(--kk-dur);
+}
+.portaal-tab-knop:hover { background: rgba(255,255,255,0.05); color: var(--kk-text); }
+.portaal-tab-knop.actief {
+  color: var(--kk-text);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--kk-accent) 22%, transparent), color-mix(in srgb, var(--kk-accent) 6%, transparent));
+  border-color: color-mix(in srgb, var(--kk-accent) 55%, transparent);
+  box-shadow: 0 0 22px -6px var(--kk-accent), inset 0 0 12px color-mix(in srgb, var(--kk-accent) 10%, transparent);
+}
+.portaal-tab-icoon {
+  flex: none; width: 34px; height: 34px; display: grid; place-items: center; border-radius: 10px;
+  color: var(--kk-accent); background: color-mix(in srgb, var(--kk-accent) 14%, transparent);
+}
+.portaal-tab-icoon svg { width: 18px; height: 18px; }
+.portaal-tab-knop.actief .portaal-tab-icoon { background: var(--kk-accent); color: #0b0e18; }
+.portaal-tab-tekst { display: flex; flex-direction: column; gap: 1px; line-height: 1.15; }
 /* Tweede regel op een tabblad: zonder die hint moet je alle vier de pagina's
    openen om te weten waar iets staat. */
-.portaal-tab-hint { font-size: 0.68rem; font-weight: 700; opacity: 0.6; text-transform: uppercase; letter-spacing: 0.04em; }
+.portaal-tab-hint { font-size: 0.64rem; font-weight: 700; opacity: 0.55; text-transform: uppercase; letter-spacing: 0.06em; }
 
 /* Keuzescherm bij het openen van een klas: per leerling, per vak of de groep. */
 .portaal-keuze-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
@@ -87,7 +135,12 @@
 .portaal-klaskop p { margin: 4px 0 0; }
 .portaal-filters { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
 
-.portaal-kruimels { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: rgba(255,255,255,0.5); }
+.portaal-kruimels {
+  display: inline-flex; align-self: flex-start; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 8px 14px; border-radius: var(--kk-r-pill);
+  background: rgba(16, 14, 38, 0.65); border: 1px solid rgba(255,255,255,0.1);
+  font-size: 0.85rem; color: rgba(255,255,255,0.4);
+}
 .portaal-kruimels button {
   background: none; border: none; padding: 0; font: inherit;
   color: var(--kk-primary-hi); font-weight: 800; cursor: pointer;
@@ -123,13 +176,28 @@
 .portaal-vak-chip:hover { border-color: var(--kk-primary-hi); background: rgba(255,255,255,0.1); }
 
 .portaal-kaart {
-  background: rgba(20,16,45,0.55);
-  border: 1px solid rgba(255,255,255,0.14);
-  border-radius: 14px;
-  padding: 20px 24px;
-  backdrop-filter: blur(10px);
+  position: relative;
+  background: linear-gradient(180deg, rgba(26,22,58,0.72), rgba(16,14,38,0.72));
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: var(--kk-r-lg);
+  padding: 22px 24px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 18px 40px -24px rgba(0,0,0,0.8);
 }
-.portaal-kaart h2 { margin: 0 0 14px; font: var(--kk-fw-bold) var(--kk-fs-lg)/1.2 var(--kk-head); }
+/* Dunne gloeilijn bovenaan elke kaart */
+.portaal-kaart::before {
+  content: ''; position: absolute; left: 22px; right: 22px; top: -1px; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(124,92,255,0.8), rgba(56,189,248,0.8), transparent);
+}
+.portaal-kaart h2 {
+  margin: 0 0 14px; font: var(--kk-fw-bold) var(--kk-fs-lg)/1.2 var(--kk-head);
+  display: flex; align-items: center; gap: 10px;
+}
+.portaal-kaart h2::before {
+  content: ''; flex: none; width: 4px; height: 1.05em; border-radius: 4px;
+  background: linear-gradient(180deg, var(--kk-cyan), var(--kk-primary-hi));
+  box-shadow: 0 0 10px rgba(56,189,248,0.6);
+}
 
 .portaal-terug {
   background: none; border: none; color: var(--kk-primary-hi); font-weight: 800;
@@ -153,19 +221,34 @@
 .portaal-knop-subtiel { background: rgba(255,255,255,0.12); color: var(--kk-text); }
 .portaal-knop-subtiel:hover { background: rgba(255,255,255,0.2); }
 
-.portaal-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+.portaal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
 .portaal-klaskaart {
-  padding: 14px 18px;
-  border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.16);
-  background: rgba(255,255,255,0.06);
+  position: relative;
+  display: flex; flex-direction: column; gap: 3px;
+  padding: 14px 16px 14px 18px;
+  border-radius: var(--kk-r-md);
+  border: 1px solid rgba(255,255,255,0.1);
+  background: linear-gradient(135deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02));
   cursor: pointer;
-  font-family: inherit;
+  font-family: inherit; font-size: 0.98rem;
   text-align: left;
   font-weight: 800;
   color: var(--kk-text);
+  overflow: hidden;
+  transition: transform var(--kk-dur) var(--kk-ease), border-color var(--kk-dur), box-shadow var(--kk-dur), background var(--kk-dur);
 }
-.portaal-klaskaart:hover { border-color: var(--kk-primary-hi); background: rgba(255,255,255,0.1); }
+.portaal-klaskaart::before {
+  content: ''; position: absolute; left: 0; top: 10px; bottom: 10px; width: 3px; border-radius: 0 3px 3px 0;
+  background: linear-gradient(180deg, var(--kk-cyan), var(--kk-primary-hi)); opacity: .55;
+  transition: opacity var(--kk-dur);
+}
+.portaal-klaskaart:hover {
+  transform: translateY(-2px);
+  border-color: rgba(124,92,255,0.6);
+  background: linear-gradient(135deg, rgba(124,92,255,0.14), rgba(56,189,248,0.05));
+  box-shadow: 0 10px 30px -14px rgba(124,92,255,0.8);
+}
+.portaal-klaskaart:hover::before { opacity: 1; }
 .portaal-klaskaart span { display: block; font-weight: 600; font-size: 0.8rem; color: rgba(255,255,255,0.6); }
 
 /* Tandwieltje rechtsboven op een klaskaart (alleen voor de icter). Los van de
@@ -203,10 +286,16 @@
 .portaal-knop-gevaar { background: var(--kk-danger); }
 .portaal-knop-gevaar:hover { filter: brightness(1.1); }
 
-.portaal-tabel { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
-.portaal-tabel th, .portaal-tabel td { text-align: left; padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.12); }
-.portaal-tabel th { color: rgba(255,255,255,0.6); font-weight: 800; font-size: 0.75rem; text-transform: uppercase; }
-.portaal-tabel tr:hover td { background: rgba(255,255,255,0.05); }
+.portaal-tabel { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.88rem; }
+.portaal-tabel th, .portaal-tabel td { text-align: left; padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.07); }
+.portaal-tabel th {
+  color: var(--kk-cyan); font-weight: 800; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.07em;
+  background: rgba(56,189,248,0.06); border-bottom: 1px solid rgba(56,189,248,0.25);
+}
+.portaal-tabel th:first-child { border-top-left-radius: 10px; }
+.portaal-tabel th:last-child { border-top-right-radius: 10px; }
+.portaal-tabel tbody tr:nth-child(even) td { background: rgba(255,255,255,0.018); }
+.portaal-tabel tr:hover td { background: rgba(124,92,255,0.08); }
 .portaal-leerlingnaam { background: none; border: none; font: inherit; font-weight: 800; color: var(--kk-primary-hi); cursor: pointer; padding: 0; }
 .portaal-leerlingnaam:hover { color: var(--kk-text); }
 
@@ -220,9 +309,10 @@
 .portaal-stap { display: flex; gap: 14px; padding: 18px 0; border-top: 1px solid rgba(255,255,255,0.1); }
 .portaal-stap:first-of-type { border-top: none; padding-top: 6px; }
 .portaal-stap-nr {
-  flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%;
-  background: var(--kk-primary); color: var(--kk-text); font-weight: 900; font-size: 0.85rem;
+  flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--kk-primary), var(--kk-cyan)); color: #fff; font-weight: 900; font-size: 0.9rem;
   display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 16px rgba(124,92,255,0.55);
 }
 .portaal-stap-inhoud { flex: 1; min-width: 0; }
 .portaal-stap-inhoud h3 { margin: 2px 0 4px; font-size: 1rem; }
@@ -235,8 +325,9 @@
 .portaal-veld-hint { font-size: 0.74rem; color: rgba(255,255,255,0.5); }
 .portaal-veld-kop { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
 .portaal-veld input, .portaal-veld select {
-  min-height: 40px; padding: 8px 10px; border-radius: var(--kk-r-sm); border: 1px solid var(--kk-border-strong);
-  background: rgba(255,255,255,0.06); color: var(--kk-text); font-family: inherit; font-size: 0.92rem;
+  min-height: 42px; padding: 8px 12px; border-radius: var(--kk-r-sm); border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(8,8,24,0.55); color: var(--kk-text); font-family: inherit; font-size: 0.92rem;
+  transition: border-color var(--kk-dur), box-shadow var(--kk-dur);
 }
 
 .portaal-minilink {
@@ -247,8 +338,8 @@
 
 .portaal-opdrachtlijst { display: flex; flex-direction: column; gap: 10px; }
 .portaal-opdracht {
-  border: 1px solid rgba(255,255,255,0.14); border-radius: 12px;
-  background: rgba(255,255,255,0.04); padding: 14px 16px;
+  border: 1px solid rgba(255,255,255,0.1); border-left: 3px solid var(--kk-primary-hi); border-radius: 12px;
+  background: linear-gradient(135deg, rgba(124,92,255,0.08), rgba(255,255,255,0.02)); padding: 14px 16px;
 }
 .portaal-opdracht-kop { display: flex; align-items: center; gap: 10px; }
 .portaal-opdracht-nr {
@@ -315,13 +406,13 @@
 .portaal-tegels { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
 .portaal-tegel {
   display: flex; flex-direction: column; gap: 2px;
-  background: rgba(20,16,45,0.55);
-  border: 1px solid rgba(255,255,255,0.14);
-  border-radius: 14px;
+  background: linear-gradient(160deg, rgba(124,92,255,0.14), rgba(16,14,38,0.7) 60%);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: var(--kk-r-lg);
   padding: 16px 18px;
   backdrop-filter: blur(10px);
 }
-.portaal-tegel-getal { font-size: 1.9rem; font-weight: 900; line-height: 1.1; }
+.portaal-tegel-getal { font: 900 2rem/1.1 var(--kk-head); }
 .portaal-tegel-label { font-size: 0.82rem; font-weight: 800; color: rgba(255,255,255,0.85); }
 .portaal-tegel-sub { font-size: 0.74rem; color: rgba(255,255,255,0.5); }
 
@@ -514,3 +605,49 @@
 
 /* Weekoverzicht van een leerling: hetzelfde als "Mijn week" (mijnweek.css) */
 .portaal-week { display: flex; flex-direction: column; align-items: center; }
+
+/* Uitklapblokken: geen gloeistreepje voor de kop, het pijltje staat er al. */
+.portaal-sectie > summary h2::before { display: none; }
+
+/* ── Klaskop met icoon en labels (KlasScherm.jsx) ── */
+.portaal-klashero { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.portaal-klashero h1 { margin: 0 0 8px; font: var(--kk-fw-bold) 2.1rem/1.05 var(--kk-head); letter-spacing: 0.01em; text-shadow: 0 0 24px rgba(124,92,255,0.5); }
+.portaal-klashero-icoon, .portaal-klas-icoon {
+  flex: none; display: grid; place-items: center; border-radius: 16px; color: #fff;
+  background: linear-gradient(135deg, var(--kk-primary), var(--kk-cyan));
+  box-shadow: 0 0 28px -4px rgba(124,92,255,0.8);
+}
+.portaal-klashero-icoon { width: 64px; height: 64px; }
+.portaal-klashero-icoon svg { width: 32px; height: 32px; }
+
+.portaal-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.portaal-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 10px; border-radius: var(--kk-r-pill);
+  font-size: 0.75rem; font-weight: 700; color: var(--kk-text-soft);
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+}
+.portaal-chip strong { color: var(--kk-cyan); letter-spacing: 0.06em; }
+.portaal-chip svg { width: 13px; height: 13px; }
+
+/* ── Klaskaarten op de startpagina (Portaal.jsx) ──
+   .portaal-klaskaart span is display:block voor de gewone kaarten; hier
+   bepalen de eigen klassen de opmaak. */
+.portaal-klas { gap: 12px; padding: 16px 18px; min-height: 150px; }
+.portaal-klaskaart.portaal-klas span { color: inherit; font-size: inherit; font-weight: inherit; }
+.portaal-klaskaart.portaal-klas .portaal-chips { display: flex; }
+.portaal-klaskaart.portaal-klas .portaal-chip { display: inline-flex; font-size: 0.75rem; font-weight: 700; color: var(--kk-text-soft); }
+.portaal-klas-kop { display: flex !important; align-items: center; gap: 12px; }
+.portaal-klas-icoon { width: 42px; height: 42px; border-radius: 12px; }
+.portaal-klas-icoon svg { width: 22px; height: 22px; }
+.portaal-klaskaart.portaal-klas .portaal-klas-naam { display: inline; font: var(--kk-fw-bold) 1.2rem/1.1 var(--kk-head); color: var(--kk-text); }
+.portaal-klaskaart.portaal-klas .portaal-klas-voet { display: flex; align-items: center; gap: 10px; margin-top: auto; font-size: 0.78rem; font-weight: 600; color: var(--kk-text-faint); }
+.portaal-klaskaart.portaal-klas .portaal-klas-pijl { margin-left: auto; display: grid; color: var(--kk-text-faint); transition: transform var(--kk-dur), color var(--kk-dur); }
+.portaal-klas-pijl svg { width: 18px; height: 18px; }
+.portaal-klaskaart.portaal-klas:hover .portaal-klas-pijl { transform: translateX(3px); color: var(--kk-cyan); }
+
+@media (max-width: 640px) {
+  .portaal { padding: 16px 16px 48px; }
+  .portaal-klashero h1 { font-size: 1.6rem; }
+  .portaal-tabs-nav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
