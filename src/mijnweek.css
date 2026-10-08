@@ -1,0 +1,160 @@
+/* ── Mijn week (MijnWeek.jsx) ─────────────────────────────────────────── */
+.mw { padding-left: 16px; padding-right: 16px; }
+.mw > * { position: relative; }
+
+.mw-weeknav {
+  display: flex; align-items: center; justify-content: center; gap: 14px;
+  flex-wrap: wrap; margin: 0 0 22px;
+}
+.mw-weeklabel {
+  display: flex; flex-direction: column; align-items: center; min-width: 150px;
+  font: var(--kk-fw-bold) 1.15rem/1.2 var(--kk-head);
+}
+.mw-weeklabel small { font: var(--kk-fw-bold) var(--kk-fs-xs) var(--kk-body); color: var(--kk-text-soft); margin-top: 2px; }
+
+/* Tegels bovenaan */
+.mw-tegels {
+  width: 100%; max-width: 1180px;
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px;
+  margin-bottom: 22px;
+}
+.mw-tegel {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 16px 10px; border-radius: var(--kk-r-lg);
+  background: rgba(14, 12, 34, 0.72); backdrop-filter: blur(10px);
+  border: 1px solid var(--kk-border);
+  font-size: var(--kk-fs-sm); color: var(--kk-text-soft); text-align: center;
+  animation: mw-in .5s var(--kk-ease) both;
+}
+.mw-tegel-getal {
+  display: inline-flex; align-items: center; gap: 8px;
+  font: var(--kk-fw-black, 800) 2rem/1 var(--kk-head); color: var(--kk-text);
+}
+.mw-tegel-getal svg { width: 26px; height: 26px; }
+.mw-tegel.goud {
+  border-color: color-mix(in srgb, var(--kk-gold) 70%, transparent);
+  box-shadow: 0 0 26px color-mix(in srgb, var(--kk-gold) 35%, transparent), inset 0 0 18px color-mix(in srgb, var(--kk-gold) 12%, transparent);
+}
+.mw-tegel.goud .mw-tegel-getal { color: var(--kk-gold); text-shadow: 0 0 14px color-mix(in srgb, var(--kk-gold) 70%, transparent); }
+
+/* Vier kolommen */
+.mw-kolommen {
+  width: 100%; max-width: 1180px;
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px;
+  align-items: start; padding-bottom: 40px;
+}
+.mw-kolom {
+  display: flex; flex-direction: column; gap: 10px;
+  padding: 16px; border-radius: var(--kk-r-lg);
+  background: rgba(14, 12, 34, 0.78); backdrop-filter: blur(10px);
+  border: 1px solid var(--kk-border); border-top: 4px solid var(--kk-accent);
+  box-shadow: var(--kk-shadow), 0 -6px 24px -10px var(--kk-accent);
+  animation: mw-in .5s var(--kk-ease) both;
+}
+.mw-kolom:nth-child(2) { animation-delay: .06s; }
+.mw-kolom:nth-child(3) { animation-delay: .12s; }
+.mw-kolom:nth-child(4) { animation-delay: .18s; }
+.mw-kolom-kop { display: flex; align-items: center; gap: 10px; }
+.mw-kolom-kop h2 { margin: 0; font: var(--kk-fw-bold) 1.3rem/1.1 var(--kk-head); }
+.mw-kolom-icoon {
+  width: 40px; height: 40px; display: grid; place-items: center; border-radius: var(--kk-r-md);
+  color: var(--kk-accent); background: color-mix(in srgb, var(--kk-accent) 16%, transparent);
+}
+.mw-kolom-icoon svg { width: 22px; height: 22px; }
+
+.mw-cijfers { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: var(--kk-fs-xs); color: var(--kk-text-soft); }
+.mw-cijfers strong { color: var(--kk-text); }
+.mw-leeg { margin: 6px 0 2px; font-size: var(--kk-fs-sm); color: var(--kk-text-faint); }
+
+.mw-items { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.mw-item {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 10px 12px; border-radius: var(--kk-r-md);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid color-mix(in srgb, var(--kk-accent) 22%, transparent);
+}
+.mw-item-kop { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.mw-item-titel { font-weight: var(--kk-fw-bold); line-height: 1.25; }
+.mw-item-sub { font-size: var(--kk-fs-xs); color: var(--kk-text-faint); }
+.mw-item .wt-doelbalk { margin-top: 4px; }
+
+.mw-af, .mw-badge {
+  flex: none; display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 9px; border-radius: var(--kk-r-pill);
+  font-size: var(--kk-fs-xs); font-weight: var(--kk-fw-bold); white-space: nowrap;
+}
+.mw-af svg, .mw-badge svg { width: 14px; height: 14px; }
+.mw-af { color: var(--kk-success); background: color-mix(in srgb, var(--kk-success) 15%, transparent); }
+
+/* Behaald doel: goud, met glans */
+.mw-item.behaald {
+  border-color: color-mix(in srgb, var(--kk-gold) 65%, transparent);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--kk-gold) 14%, transparent), rgba(255, 255, 255, 0.03));
+  box-shadow: 0 0 18px color-mix(in srgb, var(--kk-gold) 25%, transparent);
+  position: relative; overflow: hidden;
+}
+.mw-item.behaald::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(110deg, transparent 35%, rgba(255, 255, 255, 0.18) 50%, transparent 65%);
+  transform: translateX(-100%); animation: mw-glans 3.2s ease-in-out infinite;
+}
+.mw-item.behaald.nieuw { animation: mw-puls 2.4s ease-in-out infinite; }
+.mw-badge {
+  color: #1a1300; background: var(--kk-gold);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--kk-gold) 70%, transparent);
+}
+
+/* Feestmoment */
+.mw-feest {
+  position: fixed; inset: 0; z-index: 1000;
+  display: grid; place-items: center; padding: 16px;
+  background: var(--kk-scrim, rgba(5, 4, 15, 0.78)); backdrop-filter: blur(6px);
+  animation: mw-fade .3s ease both;
+}
+.mw-confetti { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.mw-confetti span {
+  position: absolute; top: -20px; width: 9px; height: 15px; border-radius: 2px;
+  opacity: .95; animation-name: mw-val; animation-timing-function: linear; animation-iteration-count: infinite;
+}
+.mw-feest-kaart {
+  position: relative; width: min(440px, 100%);
+  display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center;
+  padding: 30px 24px 26px; border-radius: var(--kk-r-lg);
+  background: rgba(18, 14, 40, 0.96);
+  border: 2px solid color-mix(in srgb, var(--kk-gold) 75%, transparent);
+  box-shadow: 0 0 60px color-mix(in srgb, var(--kk-gold) 40%, transparent), var(--kk-shadow-lg, var(--kk-shadow));
+  animation: mw-pop .6s cubic-bezier(.2, 1.6, .4, 1) both;
+}
+.mw-feest-kaart h2 { margin: 0; font: var(--kk-fw-black, 800) 2rem/1.1 var(--kk-head); color: var(--kk-gold); text-shadow: 0 0 18px color-mix(in srgb, var(--kk-gold) 60%, transparent); }
+.mw-feest-trofee {
+  width: 108px; height: 108px; display: grid; place-items: center; border-radius: 50%;
+  color: var(--kk-gold);
+  background: radial-gradient(circle, color-mix(in srgb, var(--kk-gold) 30%, transparent), transparent 70%);
+  animation: mw-trofee 1.8s ease-in-out infinite;
+}
+.mw-feest-trofee svg { width: 64px; height: 64px; filter: drop-shadow(0 0 14px var(--kk-gold)); }
+.mw-feest-lijst { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.mw-feest-lijst li { display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-weight: var(--kk-fw-bold); font-size: 1.1rem; }
+.mw-feest-lijst svg { width: 18px; height: 18px; color: var(--kk-gold); }
+.mw-feest-tekst { margin: 0 0 6px; color: var(--kk-text-soft); font-size: var(--kk-fs-sm); }
+
+@keyframes mw-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes mw-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes mw-pop { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: none; } }
+@keyframes mw-glans { 0%, 55% { transform: translateX(-100%); } 85%, 100% { transform: translateX(100%); } }
+@keyframes mw-puls { 0%, 100% { box-shadow: 0 0 14px color-mix(in srgb, var(--kk-gold) 22%, transparent); } 50% { box-shadow: 0 0 30px color-mix(in srgb, var(--kk-gold) 55%, transparent); } }
+@keyframes mw-trofee { 0%, 100% { transform: scale(1) rotate(-4deg); } 50% { transform: scale(1.08) rotate(4deg); } }
+@keyframes mw-val { from { transform: translateY(-20px) rotate(0); } to { transform: translateY(110vh) rotate(var(--draai, 360deg)); } }
+
+@media (max-width: 1050px) {
+  .mw-kolommen { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .mw-tegels { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .mw-kolommen { grid-template-columns: 1fr; }
+  .mw-tegel-getal { font-size: 1.6rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mw-confetti, .mw-item.behaald::after { display: none; }
+  .mw-item.behaald.nieuw, .mw-feest-trofee, .mw-kolom, .mw-tegel, .mw-feest-kaart { animation: none; }
+}

@@ -4,6 +4,7 @@ import Wardrobe        from './Wardrobe'
 import Shop            from './Shop'
 import GameMenu        from './GameMenu'
 import Weektaak        from './Weektaak'
+import MijnWeek        from './MijnWeek'
 import { useOpenLescheck } from './lib/lescheck.js'
 import RocketGame      from './games/RocketGame'
 import PaintballGame   from './games/PaintballGame'
@@ -331,6 +332,8 @@ export default function App({ gast = false }) {
     </>
   )
 
+  if (screen === 'mijnweek') return <MijnWeek onBack={goMenu} />
+
   // Lescheck: hetzelfde weektaakscherm, maar direct in het mapje van de les.
   if (screen === 'lescheck' && lescheckMap) return (
     <>
@@ -463,6 +466,15 @@ export default function App({ gast = false }) {
           <span className="zijkaart-emoji"><Icoon naam="klembord" /></span>
           <span className="zijkaart-titel">Mijn weektaak</span>
           <span className="zijkaart-desc">De opdrachten van deze week voor de hele klas</span>
+          <span className="zijkaart-pijl"><Icoon naam="verder" /></span>
+        </button>
+      )}
+
+      {isLeerling && (
+        <button className="zijkaart zijkaart-mijnweek" onClick={() => setScreen('mijnweek')}>
+          <span className="zijkaart-emoji"><Icoon naam="trofee" /></span>
+          <span className="zijkaart-titel">Mijn week</span>
+          <span className="zijkaart-desc">Kijk wat je deze week gedaan hebt en welke doelen je haalde</span>
           <span className="zijkaart-pijl"><Icoon naam="verder" /></span>
         </button>
       )}

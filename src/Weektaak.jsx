@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSessie } from './lib/sessie.jsx'
 import { haalMijnWeektaak, zetActieveOpdracht, wisActieveOpdracht, soortVan, DOEL_MIN, DOEL_PCT } from './lib/weektaak.js'
+import DoelBalk from './DoelBalk.jsx'
 import { uitlegVoor } from './lib/doelUitleg.js'
 import { toolLabel, TOOL_BY_ID, VAKKEN } from './lib/tools.js'
 import { resterendeMinuten } from './lib/leestimerOpslag.js'
@@ -33,28 +34,6 @@ const VAK_ICOON = { taal: 'boek', spelling: 'potlood', rekenen: 'rekenen', begri
 const VAK_KLEUR = { taal: 'var(--kk-vak-taal)', spelling: 'var(--kk-vak-spelling)', rekenen: 'var(--kk-vak-rekenen)', begrijpend: 'var(--kk-vak-lezen)', lezen: 'var(--kk-vak-lezen)', topo: 'var(--kk-vak-topo)' }
 const vakVan = (m) => TOOL_BY_ID[m.opdrachten[0]?.toolId]?.vak ?? 'overig'
 const vakNaam = (key) => VAKKEN.find(v => v.key === key)?.label ?? 'Overig'
-
-// Balk van een doel: eerst "7 / 20 gemaakt", vanaf 20 opgaven het % goed van
-// de laatste 20 met een streepje op 80%, en behaald = volle groene balk.
-function DoelBalk({ stand }) {
-  if (!stand) return null
-  const { gemaakt, pct, gehaald, genoeg } = stand
-  const breedte = gehaald ? 100 : genoeg ? pct : Math.round((gemaakt / DOEL_MIN) * 100)
-  const tekst = gehaald
-    ? `Doel gehaald! · ${pct}% goed`
-    : genoeg
-      ? `${pct}% goed van de laatste ${DOEL_MIN} · nodig: ${DOEL_PCT}%`
-      : `${gemaakt} / ${DOEL_MIN} gemaakt`
-  return (
-    <span className={`wt-doelbalk${gehaald ? ' gehaald' : ''}`}>
-      <span className="wt-doelbalk-baan">
-        <span className="wt-doelbalk-vul" style={{ width: `${breedte}%` }} />
-        {genoeg && !gehaald && <span className="wt-doelbalk-lat" style={{ left: `${DOEL_PCT}%` }} />}
-      </span>
-      <span className="wt-doelbalk-tekst">{tekst}</span>
-    </span>
-  )
-}
 
 // Vóór het oefenen van een doel: kort de uitleg, dan pas de oefening.
 function DoelUitleg({ opdracht, titel, onStart, onBack }) {

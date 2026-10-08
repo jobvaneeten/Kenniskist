@@ -244,9 +244,14 @@ body::before {
 .menu-rij:not(.menu-rij-los) {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 460px) minmax(0, 1.25fr);
+  grid-template-areas: "speciaal menu weektaak" "mijnweek menu weektaak";
   gap: 20px;
   align-items: stretch;
 }
+.menu-rij:not(.menu-rij-los) .menu { grid-area: menu; }
+.menu-rij:not(.menu-rij-los) .zijkaart-speciaal { grid-area: speciaal; }
+.menu-rij:not(.menu-rij-los) .zijkaart-weektaak { grid-area: weektaak; }
+.menu-rij:not(.menu-rij-los) .zijkaart-mijnweek { grid-area: mijnweek; }
 .zijkaart {
   --kk-accent: var(--kk-cyan);
   position: relative;
@@ -281,6 +286,7 @@ body::before {
 .zijkaart:focus-visible { outline: none; box-shadow: var(--kk-focus-ring); }
 .zijkaart-speciaal { --kk-accent: var(--kk-pink); }
 .zijkaart-weektaak { --kk-accent: var(--kk-cyan); }
+.zijkaart-mijnweek { --kk-accent: var(--kk-gold); animation-delay: 0.4s; }
 .zijkaart-emoji {
   width: 64px; height: 64px;
   display: grid; place-items: center;
@@ -301,7 +307,7 @@ body::before {
 @media (max-width: 900px) {
   .menu-rij:not(.menu-rij-los) {
     grid-template-columns: 1fr 1fr;
-    grid-template-areas: "menu menu" "speciaal weektaak";
+    grid-template-areas: "menu menu" "speciaal weektaak" "mijnweek mijnweek";
     max-width: 560px;
     margin: 0 auto;
   }
