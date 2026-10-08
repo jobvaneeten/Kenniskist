@@ -511,3 +511,6 @@
 
 /* Keuze bij Taken/Doelen: per doel of per leerling */
 .portaal-keuze { display: flex; gap: 8px; margin: 0 0 14px; flex-wrap: wrap; }
+
+/* Weekoverzicht van een leerling: hetzelfde als "Mijn week" (mijnweek.css) */
+.portaal-week { display: flex; flex-direction: column; align-items: center; }
