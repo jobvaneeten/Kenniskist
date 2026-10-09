@@ -294,8 +294,8 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
       if (rekenKeuze === 'denkvragen') {
         return <Denkvragen groep={year} onBack={() => setRekenKeuze(null)} />
       }
-      if (rekenKeuze === 'verhaal') {
-        return <VerhaaltjesSommen groep={year} onBack={() => setRekenKeuze(null)} addBriefgeld={addBriefgeld} addCuruntie={addCuruntie} />
+      if (rekenKeuze === 'verhaal' || rekenKeuze === 'kaal') {
+        return <VerhaaltjesSommen groep={year} onBack={() => setRekenKeuze(null)} addBriefgeld={addBriefgeld} addCuruntie={addCuruntie} kaleSommen={rekenKeuze === 'kaal'} />
       }
       if (rekenKeuze === 'tafels') {
         return <TafelsOefenen groep={year} onBack={() => setRekenKeuze(null)} addBriefgeld={addBriefgeld} addCuruntie={addCuruntie} />
@@ -375,6 +375,13 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
               <span className="mode-name">Verhaaltjessommen</span>
               <span className="mode-desc">Redactiesommen op jouw niveau{year >= 6 ? ' (FS of S+)' : ''}</span>
               <span className="vb-line">Oefen per doel uit de leerlijn</span>
+              <RewardChips rewards={['💵 briefgeld']} />
+            </button>
+            <button className="mode-card" onClick={() => setRekenKeuze('kaal')}>
+              <MenuScene name="kaal" />
+              <span className="mode-name">Kale sommen</span>
+              <span className="mode-desc">Dezelfde doelen, zonder verhaaltje{year >= 6 ? ' (FS of S+)' : ''}</span>
+              <span className="vb-line">"763 − 145 − 55 = ?"</span>
               <RewardChips rewards={['💵 briefgeld']} />
             </button>
           </div>
@@ -582,7 +589,7 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
                   {game === 'tafels'
                     ? 'Tafels oefenen'
                     : game === 'rekenen'
-                    ? 'Verhaaltjessommen + blok 9 & 10'
+                    ? 'Verhaaltjes- en kale sommen'
                     : s.key === 'spelling'
                     ? (game === 'werkwoord' ? 'Werkwoord + spellingblok' : 'Spellingblokken')
                     : game === 'taal'

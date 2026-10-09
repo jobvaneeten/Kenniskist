@@ -97,10 +97,11 @@ export default function RenderTool({ opdracht, groep, onBack, addBriefgeld, addC
         />
       )
     case 'verhaaltjessommen':
+    case 'kale-sommen':
       return (
         <VerhaaltjesSommen
           onBack={onBack} addBriefgeld={addBriefgeld} addCuruntie={addCuruntie}
-          aantal={aantal} config={config}
+          aantal={aantal} config={config} kaleSommen={toolId === 'kale-sommen'}
         />
       )
     case 'tafels':

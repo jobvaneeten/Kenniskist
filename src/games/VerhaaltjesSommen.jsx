@@ -621,8 +621,11 @@ const GROEP_INFO = {
 // aantal/config: alleen gezet vanuit een weektaak-opdracht (toolRender.jsx).
 // config = { groep, route } — slaat groep/route/kies-schermen over en start
 // direct in het oefenscherm met alle niet-herhaaldoelen van die groep/route.
-export default function VerhaaltjesSommen({ groep: eigenGroep = 7, onBack, addBriefgeld, addCuruntie, aantal, config }) {
-  const opdracht = useGebruikOpdracht({ toolId: 'verhaaltjessommen', aantal })
+// kaleSommen: dezelfde oefening als losse tool "Kale sommen" — altijd de kale
+// som (opgave.kaal), zonder verhaaltje; resultaten onder een eigen toolId.
+export default function VerhaaltjesSommen({ groep: eigenGroep = 7, onBack, addBriefgeld, addCuruntie, aantal, config, kaleSommen = false }) {
+  const opdracht = useGebruikOpdracht({ toolId: kaleSommen ? 'kale-sommen' : 'verhaaltjessommen', aantal })
+  const kaal = kaleSommen || !!config?.kaal
   const [klas, setKlas]     = useState(null)        // null | 5 | 6 | 7 | 8
   const [route, setRoute]   = useState(null)        // null | 'FS' | 'S+'
   const [gekozen, setGekozen] = useState(new Set()) // doel-keys (stabiel over beide weergaven)
@@ -718,7 +721,7 @@ export default function VerhaaltjesSommen({ groep: eigenGroep = 7, onBack, addBr
     if (opgave) recordStat(opgave, correct)
     const zalKlaarZijn = opdracht.aantal != null && (opdracht.gedaan + 1) >= opdracht.aantal
     opdracht.registreer(correct, {
-      vraag: (config?.kaal && opgave?.kaal) || opgave?.vraag,
+      vraag: (kaal && opgave?.kaal) || opgave?.vraag,
       antwoord: ingevuld,
       juist: opgave ? (opgave.toon ?? toonAntwoord(opgave)) : null,
       cat: opgave ? doelKey(opgave.groep, opgave.doel) : undefined,
@@ -733,7 +736,7 @@ export default function VerhaaltjesSommen({ groep: eigenGroep = 7, onBack, addBr
     const volgendeIdx = deelIdx + 1
     setDeelIdx(volgendeIdx)
     setOpgave(nieuweOpgave(klas, route, gekozen, vastDeel, volgendeIdx))
-  }, [sinds, klas, route, gekozen, opgave, opdracht, vastDeel, deelIdx])
+  }, [sinds, klas, route, gekozen, opgave, opdracht, vastDeel, deelIdx, kaal])
 
   const naBeloning = () => {
     setShowReward(false)
@@ -761,8 +764,8 @@ export default function VerhaaltjesSommen({ groep: eigenGroep = 7, onBack, addBr
       <div className="rs-screen">
         <TerugKnop onClick={onBack} />
         <div className="rs-header">
-          <span className="rs-icon"><Icoon naam="boek" /></span>
-          <h1 className="rs-title">Verhaaltjessommen</h1>
+          <span className="rs-icon"><Icoon naam={kaleSommen ? 'rekenen' : 'boek'} /></span>
+          <h1 className="rs-title">{kaleSommen ? 'Kale sommen' : 'Verhaaltjessommen'}</h1>
           <p className="rs-sub">Welke groep wil je oefenen?</p>
         </div>
         <div className="rs-groep-grid">
@@ -882,7 +885,7 @@ export default function VerhaaltjesSommen({ groep: eigenGroep = 7, onBack, addBr
         <span className="rs-verdiend">💵 € {verdiend}</span>
       </div>
       <VoortgangsBalk waarde={sinds} max={PER_BELONING} label={`nog ${PER_BELONING - sinds} goed tot een spelletje`} />
-      {opgave && <VraagKaart opgave={opgave} onNext={volgende} kaal={!!config?.kaal} />}
+      {opgave && <VraagKaart opgave={opgave} onNext={volgende} kaal={kaal} />}
     </div>
   )
 }

@@ -91,7 +91,7 @@ const MATEN = {
 }
 const MATEN_VB = { 1: { vraag: '5 m = … cm', antwoord: '500 cm' }, 2: { vraag: '3 km = … dm', antwoord: '30 000 dm' }, 3: { vraag: '2,5 m = … cm', antwoord: '250 cm' } }
 
-function verhaaltjesVoorbeeld(config) {
+function verhaaltjesVoorbeeld(config, kaal = false) {
   try {
     const gens = onderdelenVan(Number(config.groep) || 7, config.route ?? 'FS', 'blok').flatMap(b => b.gens)
     const item = gens.find(g => config.doelen?.includes(g.key))
@@ -99,7 +99,7 @@ function verhaaltjesVoorbeeld(config) {
     const som = gen?.()
     if (!som) return null
     const antwoord = `${som.antwoord}${som.eenheid ? ' ' + som.eenheid : ''}`
-    return { vraag: som.vraag, antwoord: som.uitleg ? `${antwoord} — ${som.uitleg}` : antwoord }
+    return { vraag: (kaal && som.kaal) || som.vraag, antwoord: som.uitleg ? `${antwoord} — ${som.uitleg}` : antwoord }
   } catch { return null }
 }
 
@@ -158,6 +158,10 @@ export function uitlegVoor({ toolId, config = {} }) {
   if (familie === 'procenten-breuken') {
     return { regels: ['Procent betekent “van de honderd”.', '50% = 1/2 = 0,5 · 25% = 1/4 = 0,25 · 10% = 1/10 = 0,1'],
       voorbeeld: { vraag: '75% = …', antwoord: '3/4 = 0,75' } }
+  }
+  if (familie === 'kale-sommen') {
+    return { regels: ['Lees de som goed: welke bewerking moet je doen?', 'Reken handig: kijk of je getallen kunt splitsen of afronden.', 'Controleer je antwoord: kan het kloppen?'],
+      voorbeeld: verhaaltjesVoorbeeld(config, true) }
   }
   if (familie === 'verhaaltjessommen') {
     return { regels: ['Lees de som rustig helemaal.', 'Wat wordt er gevraagd? Welke getallen heb je nodig?', 'Reken het uit en kijk of je antwoord kan kloppen.'],

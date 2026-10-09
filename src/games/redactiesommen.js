@@ -9,6 +9,8 @@ const DINGEN = [['knikker', 'knikkers'], ['sticker', 'stickers'], ['kaart', 'kaa
   ['snoepje', 'snoepjes'], ['munt', 'munten'], ['kraal', 'kralen'], ['postzegel', 'postzegels']]
 
 import * as T from './toetsvormen7.js'
+import { TOETS_GROEP5, TOETS_GROEP6 } from './toetsvormen6.js'
+import { toetsGroep7, toetsGroep8 } from './toetsvormen8.js'
 
 const rnd  = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a
 const pick = a => a[Math.floor(Math.random() * a.length)]
@@ -673,23 +675,23 @@ const gemiddeldeV = (zwaar) => {   // gemiddelde berekenen
 }
 const tussenHonderdV = () => {   // tussen welke honderdtallen ligt een getal, in een verhaal
   const n = rnd(120, 980), laag = Math.floor(n / 100) * 100, nm = naam()
-  return { vraag: `${nm} heeft ${n} euro gespaard. Tussen welke twee honderdtallen ligt dat bedrag? Geef het kleinste honderdtal.`, antwoord: laag, eenheid: '€', uitleg: `${n} ligt tussen ${laag} en ${laag + 100}.` }
+  return { vraag: `${nm} heeft ${n} euro gespaard. Tussen welke twee honderdtallen ligt dat bedrag? Geef het kleinste honderdtal.`, kaal: `${n} ligt tussen … en ${laag + 100}`, antwoord: laag, eenheid: '€', uitleg: `${n} ligt tussen ${laag} en ${laag + 100}.` }
 }
 const standpuntV = () => {   // bedenken wat je vanuit een standpunt ziet
   const r = rnd(2, 5), k = rnd(2, 5)
-  return { vraag: `Je kijkt naar ${r} rijen met elk ${k} dozen. Hoeveel dozen zie je in totaal?`, antwoord: r * k, uitleg: `${r} × ${k} = ${r * k}` }
+  return { vraag: `Je kijkt naar ${r} rijen met elk ${k} dozen. Hoeveel dozen zie je in totaal?`, kaal: `${r} × ${k} =`, antwoord: r * k, uitleg: `${r} × ${k} = ${r * k}` }
 }
 const vormHoekenV = () => {   // namen van figuren en vormen, in een verhaal
   const v = pick([['driehoek', 3], ['vierkant', 4], ['rechthoek', 4], ['vijfhoek', 5], ['zeshoek', 6]]), nm = naam()
-  return { vraag: `${nm} tekent een ${v[0]} op papier. Hoeveel hoeken heeft die figuur?`, antwoord: v[1], eenheid: 'hoeken', uitleg: `Een ${v[0]} heeft ${v[1]} hoeken.` }
+  return { vraag: `${nm} tekent een ${v[0]} op papier. Hoeveel hoeken heeft die figuur?`, kaal: `Hoeveel hoeken heeft een ${v[0]}?`, antwoord: v[1], eenheid: 'hoeken', uitleg: `Een ${v[0]} heeft ${v[1]} hoeken.` }
 }
 const geldOptelV = () => {   // bedragen samen ≤ € 100
   const a = rnd(150, 5000), b = rnd(100, 10000 - a), p1 = a / 100, p2 = b / 100, n = naam()
-  return { vraag: `${n} koopt iets van ${euro(p1)} en iets van ${euro(p2)}. Hoeveel betaalt ${n} samen?`, antwoord: +(p1 + p2).toFixed(2), eenheid: '€', uitleg: `${euro(p1)} + ${euro(p2)} = ${euro(p1 + p2)}` }
+  return { vraag: `${n} koopt iets van ${euro(p1)} en iets van ${euro(p2)}. Hoeveel betaalt ${n} samen?`, kaal: `${euro(p1)} + ${euro(p2)} =`, antwoord: +(p1 + p2).toFixed(2), eenheid: '€', uitleg: `${euro(p1)} + ${euro(p2)} = ${euro(p1 + p2)}` }
 }
 const wisselV = () => {
   const prijs = rnd(150, 4500) / 100, betaald = Math.ceil(prijs / 5) * 5, n = naam()
-  return { vraag: `Iets kost ${euro(prijs)}. ${n} betaalt met ${euro(betaald)}. Hoeveel geld krijgt ${n} terug?`, antwoord: +(betaald - prijs).toFixed(2), eenheid: '€', uitleg: `${euro(betaald)} − ${euro(prijs)} = ${euro(betaald - prijs)}` }
+  return { vraag: `Iets kost ${euro(prijs)}. ${n} betaalt met ${euro(betaald)}. Hoeveel geld krijgt ${n} terug?`, kaal: `${euro(betaald)} − ${euro(prijs)} =`, antwoord: +(betaald - prijs).toFixed(2), eenheid: '€', uitleg: `${euro(betaald)} − ${euro(prijs)} = ${euro(betaald - prijs)}` }
 }
 const afrondV = (max, opties) => {
   const n = rnd(1200, max), op = pick(opties)
@@ -1880,17 +1882,17 @@ function maakGroep5() {
     8: [
       { doel: 'Je leert aftrekken tot en met 1000 met de strategie aanvullen.', gen: () => { const a = rnd(400, 900), b = rnd(a - 90, a - 10); return aftrekV(a, b) } },
       { doel: 'Je leert sommen als 4 × 69 uitrekenen met de variastrategie rekenen met te veel.', gen: () => keerV(rnd(3, 9), rnd(2, 9) * 10 - 1) },
-      { doel: 'Je leert sommen als 120 : 3 uitrekenen met de kleine som 12 : 3.', gen: () => { const deler = rnd(2, 8), q = rnd(3, 9), totaal = deler * q * 10, d = ding(); return { vraag: `${getal(totaal)} ${d[1]} gaan in ${deler} dozen. Hoeveel ${d[1]} in elke doos?`, antwoord: q * 10, uitleg: `${getal(totaal)} : ${deler} = ${q * 10} (kleine som ${deler * q} : ${deler} = ${q})` } } },
+      { doel: 'Je leert sommen als 120 : 3 uitrekenen met de kleine som 12 : 3.', gen: () => { const deler = rnd(2, 8), q = rnd(3, 9), totaal = deler * q * 10, d = ding(); return { vraag: `${getal(totaal)} ${d[1]} gaan in ${deler} dozen. Hoeveel ${d[1]} in elke doos?`, kaal: `${getal(totaal)} : ${deler} =`, antwoord: q * 10, uitleg: `${getal(totaal)} : ${deler} = ${q * 10} (kleine som ${deler * q} : ${deler} = ${q})` } } },
       { doel: 'Je leert uitrekenen hoeveel je terugkrijgt als je met te veel betaalt.', gen: () => wisselV() },
     ],
     9: [
       { doel: 'Je leert optellen tot en met 1000 met de strategie rijgen met te veel.', gen: () => optelV(rnd(120, 800), rnd(2, 9) * 10 - 1) },
       { doel: 'Je leert aftrekken tot en met 1000 met de strategie rijgen met te veel.', gen: () => { const a = rnd(200, 900), b = rnd(2, 9) * 10 - 1; return aftrekV(a, b) } },
       { doel: 'Je leert sommen als 42 : 3 uitrekenen met de basisstrategie splitsen.', gen: () => deelV(rnd(2, 8), rnd(11, 30)) },
-      { doel: 'Je leert nauwkeurig meten in millimeters, centimeters en decimeters en deze maten met elkaar vergelijken.', gen: () => { const cm = rnd(3, 20), mm = rnd(1, 9); return { vraag: `Een potlood is ${cm} cm en ${mm} mm lang. Hoeveel millimeter is dat in totaal?`, antwoord: cm * 10 + mm, eenheid: 'mm', uitleg: `${cm} cm = ${cm * 10} mm. ${cm * 10} + ${mm} = ${cm * 10 + mm} mm` } } },
+      { doel: 'Je leert nauwkeurig meten in millimeters, centimeters en decimeters en deze maten met elkaar vergelijken.', gen: () => { const cm = rnd(3, 20), mm = rnd(1, 9); return { vraag: `Een potlood is ${cm} cm en ${mm} mm lang. Hoeveel millimeter is dat in totaal?`, kaal: `${cm} cm ${mm} mm = … mm`, antwoord: cm * 10 + mm, eenheid: 'mm', uitleg: `${cm} cm = ${cm * 10} mm. ${cm * 10} + ${mm} = ${cm * 10 + mm} mm` } } },
     ],
     10: [
-      { doel: 'Je leert handig rekenen bij een lange optelsom en aftreksom.', gen: () => { const a = rnd(20, 90) * 10, b = rnd(15, 60) * 10, c = rnd(10, 40) * 10, d = ding(); return { vraag: `In 3 dozen zitten ${getal(a)}, ${getal(b)} en ${getal(c)} ${d[1]}. Hoeveel ${d[1]} samen?`, antwoord: a + b + c, uitleg: `${getal(a)} + ${getal(b)} + ${getal(c)} = ${getal(a + b + c)}` } } },
+      { doel: 'Je leert handig rekenen bij een lange optelsom en aftreksom.', gen: () => { const a = rnd(20, 90) * 10, b = rnd(15, 60) * 10, c = rnd(10, 40) * 10, d = ding(); return { vraag: `In 3 dozen zitten ${getal(a)}, ${getal(b)} en ${getal(c)} ${d[1]}. Hoeveel ${d[1]} samen?`, kaal: `${getal(a)} + ${getal(b)} + ${getal(c)} =`, antwoord: a + b + c, uitleg: `${getal(a)} + ${getal(b)} + ${getal(c)} = ${getal(a + b + c)}` } } },
       { doel: 'Je leert sommen als 4 × 35 uitrekenen met de variastrategie halveren en verdubbelen.', gen: () => keerV(rnd(2, 8), rnd(3, 9) * 5) },
       { doel: 'Je leert sommen als 72 : 3 uitrekenen met de basisstrategie splitsen.', gen: () => deelV(rnd(2, 6), rnd(11, 40)) },
       { doel: 'Je leert een stapeldiagram en een lijndiagram aflezen en gebruiken.', gen: () => diagramV(pick(['staaf', 'lijn']), pick([2, 5]), rnd(3, 8)) },
@@ -2384,12 +2386,34 @@ function maakGroep8(plus) {
   }
 }
 
+// Toetsvormen van groep 6 en 8 (toetsvormen6.js, toetsvormen8.js) als variant
+// bij de bestaande doelen: `vormen` is per blok een rij met per doel (in de
+// volgorde van het blok) een generator of null. Elke soort binnen het doel
+// krijgt hem erbij via ofToets, zodat de lescheck niet langer wordt.
+function metToetsvormen(blokken, vormen) {
+  const gehad = new WeakSet() // een soort die in twee delen zit, maar één keer
+  for (const [blok, perDoel] of Object.entries(vormen)) {
+    perDoel.forEach((toets, i) => {
+      const item = blokken[blok]?.[i]
+      if (!toets || !item) return
+      if (item.delen) {
+        for (const deel of item.delen) for (const soort of deel.soorten) {
+          if (gehad.has(soort)) continue
+          gehad.add(soort)
+          soort.gen = ofToets(soort.gen, toets)
+        }
+      } else item.gen = ofToets(item.gen, toets)
+    })
+  }
+  return blokken
+}
+
 // ── Curriculum per groep en route ──
 const CURR = {
-  5: { single: maakGroep5() },
-  6: { 'FS': maakGroep6(false), 'S+': maakGroep6(true) },
-  7: { 'FS': maakBlokken(false), 'S+': maakBlokken(true) },
-  8: { 'FS': maakGroep8(false), 'S+': maakGroep8(true) },
+  5: { single: metToetsvormen(maakGroep5(), TOETS_GROEP5) },
+  6: { 'FS': metToetsvormen(maakGroep6(false), TOETS_GROEP6), 'S+': metToetsvormen(maakGroep6(true), TOETS_GROEP6) },
+  7: { 'FS': metToetsvormen(maakBlokken(false), toetsGroep7(false)), 'S+': metToetsvormen(maakBlokken(true), toetsGroep7(true)) },
+  8: { 'FS': metToetsvormen(maakGroep8(false), toetsGroep8(false)), 'S+': metToetsvormen(maakGroep8(true), toetsGroep8(true)) },
 }
 const blokkenVan = (groep, route) => groep === 5 ? CURR[5].single : (CURR[groep][route] || CURR[groep]['FS'])
 
@@ -2568,11 +2592,13 @@ export function checkSom(input, antwoord) {
 // Antwoord normaliseren en vergelijken (tolerantie voor afronding)
 export function checkAntwoord(input, antwoord) {
   if (input == null) return false
-  // Breuk als antwoord ("2/3"): elke breuk met dezelfde waarde is goed (4/6).
+  // Breuk als antwoord ("2/3"): elke breuk met dezelfde waarde is goed (4/6),
+  // en boven de 1 ook als gemengd getal ("9/4" = "2 1/4").
   if (typeof antwoord === 'string' && antwoord.includes('/')) {
     const [t, n] = antwoord.split('/').map(Number)
-    const m = String(input).replace(/\s/g, '').match(/^(\d+)\/(\d+)$/)
-    return !!m && +m[2] > 0 && +m[1] * n === t * +m[2]
+    const m = String(input).trim().replace(/\s*\/\s*/g, '/').replace(/\s+/g, ' ').match(/^(?:(\d+) )?(\d+)\/(\d+)$/)
+    if (!m || +m[3] === 0) return false
+    return ((+(m[1] ?? 0)) * +m[3] + +m[2]) * n === t * +m[3]
   }
   // Kommagetal als tekst ("6,17"): precies dat getal, geen speling, want
   // 6,169 ligt er maar 0,001 naast. Een extra nul (6,170) mag wel.

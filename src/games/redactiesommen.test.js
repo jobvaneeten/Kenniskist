@@ -26,6 +26,18 @@ function alleGenerators() {
 const GENERATORS = alleGenerators()
 
 describe('verhaaltjessommen', () => {
+  // "Kale sommen" (VerhaaltjesSommen met kaleSommen) toont altijd opgave.kaal;
+  // zonder kale som zou het kind toch het verhaaltje krijgen.
+  it('heeft bij elk doel een kale som', () => {
+    for (const g of GENERATORS) {
+      for (let n = 0; n < 60; n++) {
+        const o = g.gen()
+        expect(typeof o.kaal, `groep ${g.groep} ${g.route} ${g.blok}: ${g.doel.slice(0, 45)}`).toBe('string')
+        expect(o.kaal).not.toBe(o.vraag)
+      }
+    }
+  })
+
   it('heeft generatoren voor alle vier de groepen', () => {
     expect(GENERATORS.length).toBeGreaterThan(150)
     for (const groep of [5, 6, 7, 8]) {

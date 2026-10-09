@@ -89,6 +89,19 @@ const SCENES = {
     </svg>
   ),
 
+  kaal: (
+    <svg viewBox="0 0 160 90" preserveAspectRatio="xMidYMid slice">
+      <rect width="160" height="90" fill="#1a2a4a" />
+      <rect x="18" y="16" width="124" height="58" rx="6" fill="#0f1a33" stroke="#4dd7e8" strokeWidth="2.5" />
+      <text x="30" y="40" fontSize="15" fontWeight="900" fill="#fffbeb" fontFamily={FONT}>763 − 145</text>
+      <text x="30" y="62" fontSize="15" fontWeight="900" fill="#FFD23F" fontFamily={FONT}>= ?</text>
+      <g className="msa ms-liftoff">
+        <rect x="112" y="40" width="20" height="24" rx="3" fill="#e8e8f0" />
+        <path d="M116 47 h12 M116 53 h12 M116 59 h7" stroke="#4dd7e8" strokeWidth="2.2" strokeLinecap="round" />
+      </g>
+    </svg>
+  ),
+
   solo: (
     <svg viewBox="0 0 160 90" preserveAspectRatio="xMidYMid slice">
       <rect width="160" height="90" fill="#2e8b3d" />

@@ -60,7 +60,7 @@ export default function OpdrachtRij({ opdracht, nummer, onWijzig, onVerwijder, z
           </label>
         )}
 
-        {info.familie === 'verhaaltjessommen' && (
+        {(info.familie === 'verhaaltjessommen' || info.familie === 'kale-sommen') && (
           <VerhaaltjesSommenConfig
             config={opdracht.config}
             onWijzig={cfg => onWijzig({ ...opdracht, config: cfg })}

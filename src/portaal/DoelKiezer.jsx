@@ -30,7 +30,11 @@ export default function DoelKiezer({ klasGroepen, onKies, onSluiten, onZelfKieze
     // tonen; rekenen houdt altijd de verhaaltjessommen.
     .filter(v => v.onderwerpen.length || v.vak === 'rekenen')
   const vakLabel = (key) => VAKKEN.find(v => v.key === key)?.label ?? key
-  const rekensommen = { titel: 'Verhaaltjessommen', verhaaltjes: true }
+  // Verhaaltjessommen en kale sommen: dezelfde doelen, andere oefening.
+  const rekensommen = [
+    { titel: 'Verhaaltjessommen', verhaaltjes: true, toolId: 'verhaaltjessommen' },
+    { titel: 'Kale sommen', verhaaltjes: true, toolId: 'kale-sommen' },
+  ].filter(o => !alleen || alleen(o.toolId))
 
   const kop = (titel, terug) => (
     <div className="portaal-sectiekop">
@@ -97,7 +101,7 @@ export default function DoelKiezer({ klasGroepen, onKies, onSluiten, onZelfKieze
     const blokken = onderdelenVan(groep, r, 'blok').filter(b => !b.key.startsWith('herh-'))
     return (
       <div className="portaal-kaart kk-mt-3">
-        {kop('Verhaaltjessommen', () => setOnderwerp(null))}
+        {kop(onderwerp.titel, () => setOnderwerp(null))}
         <div className="kk-rij kk-mb-3">
           <label className="portaal-veld" style={{ maxWidth: 140 }}>
             <span className="portaal-veld-label">Groep</span>
@@ -120,10 +124,10 @@ export default function DoelKiezer({ klasGroepen, onKies, onSluiten, onZelfKieze
             <details key={b.key} className="portaal-vak-chip" style={{ padding: '8px 12px' }}>
               <summary style={{ cursor: 'pointer', fontWeight: 800 }}>{b.label.replace('📍 ', '')}</summary>
               <div className="portaal-naamlijst kk-mt-2">
-                {b.gens.map(g => doelRij(g.key, {
-                  toolId: 'verhaaltjessommen',
+                {b.gens.map(g => doelRij(`${onderwerp.toolId}-${g.key}`, {
+                  toolId: onderwerp.toolId,
                   config: { groep, route: r, doelen: [g.key] },
-                  titel: `${b.label.replace('📍 ', '')} — ${g.doel}`,
+                  titel: `${onderwerp.toolId === 'kale-sommen' ? 'Kale sommen · ' : ''}${b.label.replace('📍 ', '')} — ${g.doel}`,
                 }, g.doel))}
               </div>
             </details>
@@ -153,7 +157,7 @@ export default function DoelKiezer({ klasGroepen, onKies, onSluiten, onZelfKieze
 
   // Stap 2: welk onderwerp binnen het vak
   if (vak) {
-    const onderwerpen = vak.vak === 'rekenen' ? [rekensommen, ...vak.onderwerpen] : vak.onderwerpen
+    const onderwerpen = vak.vak === 'rekenen' ? [...rekensommen, ...vak.onderwerpen] : vak.onderwerpen
     return (
       <div className="portaal-kaart kk-mt-3">
         {kop(vakLabel(vak.vak), () => setVak(null))}
@@ -173,7 +177,7 @@ export default function DoelKiezer({ klasGroepen, onKies, onSluiten, onZelfKieze
       {kop(`${titel} — welk vak?`, null)}
       <div className="portaal-naamlijst">
         {vakken.map(v => doelKnop(v.vak, vakLabel(v.vak),
-          v.onderwerpen.map(o => o.titel).concat(v.vak === 'rekenen' ? ['Verhaaltjessommen'] : []).join(' · '),
+          v.onderwerpen.map(o => o.titel).concat(v.vak === 'rekenen' ? rekensommen.map(o => o.titel) : []).join(' · '),
           () => setVak(v)))}
       </div>
       {keuzeBalk}

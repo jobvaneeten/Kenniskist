@@ -172,6 +172,13 @@ export const TOOL_FAMILIES = [
     configVelden: [],
   },
   {
+    // Dezelfde doelen en instellingen als verhaaltjessommen, maar altijd de
+    // kale som (zie VerhaaltjesSommen.jsx, kaleSommen).
+    familie: 'kale-sommen', toolId: 'kale-sommen', label: 'Kale sommen',
+    vak: 'rekenen', groepen: [5, 6, 7, 8], aantalInstelbaar: true, standaardAantal: 20, eenheid: 'opgaven',
+    configVelden: [],
+  },
+  {
     familie: 'breuken-plaatjes', toolId: 'breuken-plaatjes', label: 'Breuken & plaatjes',
     vak: 'rekenen', groepen: [6], aantalInstelbaar: true, standaardAantal: 15, eenheid: 'opgaven',
     configVelden: [],
