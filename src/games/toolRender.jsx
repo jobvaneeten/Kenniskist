@@ -169,6 +169,13 @@ export default function RenderTool({ opdracht, groep, onBack, addBriefgeld, addC
           startLes={info.variant.les}
         />
       )
+    case 'families':
+      return (
+        <BegrijpendLezen
+          onBack={onBack} addBriefgeld={addBriefgeld} addCuruntie={addCuruntie}
+          startThema="families" startLes={info.variant.les}
+        />
+      )
     default:
       return <NogNietBeschikbaar label={label} onBack={onBack} />
   }

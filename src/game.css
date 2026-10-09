@@ -297,6 +297,7 @@
 .bl-thema-grid { flex-wrap: wrap; justify-content: center; }
 .bl-thema-card { --kk-accent: var(--bl-kleur, var(--kk-vak-lezen)); }
 .bl-thema-emoji { font-size: 2.6rem; line-height: 1; }
+.bl-wissel { background: none; border: none; padding: 0; color: inherit; font: inherit; text-decoration: underline; cursor: pointer; opacity: .85; }
 .bl-thema-go {
   margin-top: 4px;
   font-size: var(--kk-fs-xs); font-weight: var(--kk-fw-bold); letter-spacing: 0.05em; text-transform: uppercase;

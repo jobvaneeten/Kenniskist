@@ -212,6 +212,14 @@ export const TOOL_FAMILIES = [
     ].map((naam, i) => ({ toolId: `spullen-les${i + 1}`, label: `Les ${i + 1} — ${naam}`, les: i + 1 })),
   },
   {
+    familie: 'families', label: 'Fantastische families', vak: 'begrijpend', groepen: [7, 8],
+    aantalInstelbaar: false, standaardAantal: 1, eenheid: 'sessies', configVelden: [],
+    varianten: [
+      'Een koninklijke ruzie', 'Dappere Drucker', 'Ons verleden',
+      'Kom in verzet', 'Rebelse jongeren', 'Nieuwe gezinnen',
+    ].map((naam, i) => ({ toolId: `families-les${i + 1}`, label: `Les ${i + 1} — ${naam}`, les: i + 1 })),
+  },
+  {
     // Stil lezen met een timer: geen opgaven, alleen tijd. `aantal` telt dus
     // leesbeurten (eenheid 'sessies'), de lengte van één beurt staat in
     // config.minuten. Zie src/games/LeesTimer.jsx.

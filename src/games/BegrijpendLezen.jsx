@@ -4,13 +4,28 @@ import SpelBeloning from './SpelBeloning'
 import MenuScene from '../MenuScenes'
 import './dictee-thema.css'
 import { TerugKnop, Icoon } from '../ui/index.jsx'
+import { useSessie } from '../lib/sessie.jsx'
 
 // startLes: alleen gezet vanuit een weektaak-opdracht (toolRender.jsx) — het
-// lesnummer (1-5) binnen het enige thema "spullen". Springt direct naar die
-// les, de thema/les-kiesschermen overslaand.
-export default function BegrijpendLezen({ onBack, addBriefgeld, addCuruntie, startLes }) {
-  const [thema, setThema] = useState(() => startLes ? THEMAS[0] : null)
-  const [les, setLes]     = useState(() => startLes ? THEMAS[0].lessen[startLes - 1] : null)
+// lesnummer binnen thema startThema (standaard "spullen"). Springt direct naar
+// die les, de thema/les-kiesschermen overslaand.
+//
+// Thema's met groepKeuze hebben een les voor groep 7 en een moeilijkere voor
+// groep 8. Vanuit het spellenmenu is de groep al gekozen (prop groep); vanuit
+// een weektaak gaat het vanzelf als de klas alleen groep 7 of alleen groep 8
+// is, en anders kiest de leerling eerst zijn groep.
+export default function BegrijpendLezen({ onBack, addBriefgeld, addCuruntie, startLes, startThema = 'spullen', groep: menuGroep }) {
+  const startT = THEMAS.find(t => t.key === startThema) ?? THEMAS[0]
+  const [thema, setThema] = useState(() => startLes ? startT : null)
+  const [les, setLes]     = useState(() => startLes ? startT.lessen[startLes - 1] : null)
+  const { toegestaneGroepen } = useSessie()
+  const klasGroep = (() => {
+    const g = (toegestaneGroepen ?? []).filter(x => x === 7 || x === 8)
+    return g.length === 1 ? g[0] : null
+  })()
+  const [gekozen, setGekozen] = useState(null)
+  const vasteGroep = menuGroep === 7 || menuGroep === 8 ? menuGroep : klasGroep
+  const groep = vasteGroep ?? gekozen
   const frameRef = useRef(null)
   const [beloning, setBeloning] = useState(false)
 
@@ -42,6 +57,29 @@ export default function BegrijpendLezen({ onBack, addBriefgeld, addCuruntie, sta
     />
   )
 
+  if (thema?.groepKeuze && !groep) {
+    return (
+      <div className="game-screen game-screen-center">
+        <TerugKnop onClick={() => { setLes(null); setThema(null); if (startLes) onBack() }} />
+        <div className="game-header">
+          <span className="game-header-icon" style={{ '--kk-accent': thema.kleur }}><Icoon naam="lezen" /></span>
+          <h1 className="game-header-title">{thema.naam}</h1>
+          <p className="game-header-sub">In welke groep zit je?</p>
+        </div>
+        <div className="mode-grid bl-thema-grid">
+          {[7, 8].map(g => (
+            <button key={g} className="mode-card bl-thema-card" onClick={() => setGekozen(g)} style={{ '--bl-kleur': thema.kleur }}>
+              <MenuScene name="begrijpend" />
+              <span className="mode-name">Groep {g}</span>
+              <span className="mode-desc">{g === 8 ? 'Moeilijkere vragen' : 'Vragen voor groep 7'}</span>
+              <span className="bl-thema-go">Kies</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
   if (thema && les) {
     return (
       <>
@@ -50,7 +88,7 @@ export default function BegrijpendLezen({ onBack, addBriefgeld, addCuruntie, sta
           <iframe
             ref={frameRef}
             className="dictee-frame"
-            src={`${import.meta.env.BASE_URL}begrijpend-lezen/${les.file}`}
+            src={`${import.meta.env.BASE_URL}begrijpend-lezen/${les.file}${thema.groepKeuze ? `?groep=${groep}` : ''}`}
             title={les.naam}
           />
         </div>
@@ -66,7 +104,10 @@ export default function BegrijpendLezen({ onBack, addBriefgeld, addCuruntie, sta
         <div className="game-header">
           <span className="game-header-icon" style={{ '--kk-accent': thema.kleur }}><Icoon naam="lezen" /></span>
           <h1 className="game-header-title">{thema.naam}</h1>
-          <p className="game-header-sub">Kies een les</p>
+          <p className="game-header-sub">
+            Kies een les
+            {thema.groepKeuze && <> · groep {groep}{!vasteGroep && <> · <button className="bl-wissel" onClick={() => setGekozen(null)}>andere groep</button></>}</>}
+          </p>
         </div>
         <div className="blok-grid" style={{ '--kk-accent': thema.kleur }}>
           {thema.lessen.map(l => (

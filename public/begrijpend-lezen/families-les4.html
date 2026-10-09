@@ -1,0 +1,1374 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Begrijpend Lezen – Kom in verzet</title>
+<link href="/fonts/fonts.css" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d1a;
+    --card: rgba(255,255,255,0.05);
+    --card-border: rgba(255,255,255,0.10);
+    --ink: #ffffff;
+    --ink-soft: rgba(255,255,255,0.50);
+    --primary: #9B4DCA;
+    --primary-d: #7a35a8;
+    --primary-glow: rgba(155,77,202,0.35);
+    --gold: #FFC23C;
+    --correct: #15A66B;
+    --wrong: #FF6150;
+    --line: rgba(255,255,255,0.10);
+    --shadow: 0 24px 48px -16px rgba(0,0,0,0.6);
+    --r: 20px;
+    --highlight-hover: rgba(155,77,202,.22);
+    --highlight-sel: rgba(155,77,202,.45);
+    --highlight-ok: rgba(21,166,107,.30);
+    --highlight-err: rgba(255,97,80,.25);
+    /* Leesbreedte. Stond op 800px, wat op een schoolbord of iPad een smalle
+       kolom midden op een leeg scherm opleverde; de teksten en de vraag
+       ernaast krijgen nu de ruimte die er is. */
+    --breed: min(1600px, 100%);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', system-ui, sans-serif;
+    color: var(--ink);
+    background:
+      radial-gradient(ellipse 55% 45% at 14% 14%, rgba(232,67,147,0.18) 0%, transparent 58%),
+      radial-gradient(ellipse 50% 42% at 86% 18%, rgba(124,58,237,0.20) 0%, transparent 58%),
+      radial-gradient(ellipse 52% 46% at 84% 86%, rgba(6,214,160,0.12) 0%, transparent 58%),
+      radial-gradient(ellipse 48% 42% at 12% 86%, rgba(56,189,248,0.12) 0%, transparent 58%),
+      var(--bg);
+    font-size: 17px;
+    line-height: 1.7;
+    min-height: 100vh;
+  }
+
+  header {
+    padding: 28px 24px 10px;
+    text-align: center;
+  }
+  header .eyebrow {
+    font-size: 11px;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--primary);
+    margin-bottom: 6px;
+    font-weight: 700;
+    opacity: .9;
+  }
+  header h1 {
+    font-family: 'Baloo 2', system-ui, sans-serif;
+    font-size: clamp(1.6rem, 5vw, 2.8rem);
+    font-weight: 800;
+    line-height: 1.1;
+    color: #fff;
+  }
+  header p { margin-top: 8px; font-size: 14px; color: var(--ink-soft); }
+
+  #progress-bar-wrap { background: rgba(255,255,255,0.10); height: 8px; border-radius: 99px; max-width: var(--breed); margin: 0 auto; }
+  #progress-bar { height: 8px; border-radius: 99px; background: linear-gradient(90deg,var(--primary),#c084f5); width: 0%; transition: width .5s ease; box-shadow: 0 0 12px var(--primary-glow); }
+
+  #score-badge {
+    position: fixed; top: 12px; right: 16px;
+    background: linear-gradient(135deg,var(--primary),var(--primary-d)); color: #fff;
+    font-weight: 800; font-size: 13px;
+    padding: 5px 12px; border-radius: 20px;
+    z-index: 100; display: none;
+    box-shadow: 0 8px 24px -6px var(--primary-glow);
+  }
+
+  main { max-width: var(--breed); margin: 0 auto; padding: 32px clamp(16px, 3vw, 44px) 80px; }
+
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* INTRO */
+  #intro-screen { text-align: center; padding: 40px 0; }
+  #intro-screen .compass { font-size: 64px; margin-bottom: 16px; filter: drop-shadow(0 0 24px var(--primary-glow)); }
+  #intro-screen h2 { font-family: 'Baloo 2', system-ui, sans-serif; font-size: 1.8rem; margin-bottom: 12px; color: #fff; }
+  #intro-screen p { max-width: 640px; margin: 0 auto 20px; color: var(--ink-soft); }
+  .legend { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-bottom:28px; }
+  .legend span { padding:5px 12px; border-radius:99px; font-size:13px; font-weight:700; }
+
+  /* CARD */
+  .q-card {
+    background: var(--card);
+    border: 1.5px solid var(--card-border);
+    border-radius: var(--r);
+    padding: 28px 28px 24px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,0.08);
+    backdrop-filter: blur(12px);
+  }
+  .q-type-label {
+    display: inline-block;
+    font-size: 10px; letter-spacing: .13em; text-transform: uppercase;
+    font-weight: 700; padding: 3px 9px; border-radius: 99px; margin-bottom: 12px;
+  }
+  .label-literal   { background:rgba(56,189,248,.18); color:#7dd3fc; }
+  .label-inferring { background:rgba(255,193,60,.18); color:var(--gold); }
+  .label-evaluating{ background:rgba(21,166,107,.18); color:#4ade80; }
+
+  .q-card h3 {
+    font-family: 'Baloo 2', system-ui, sans-serif;
+    font-size: 1.12rem; font-weight: 700;
+    margin-bottom: 16px; line-height: 1.4;
+    color: #fff;
+  }
+
+  /* PASSAGE */
+  .passage {
+    background: rgba(255,255,255,0.04);
+    border-left: 3px solid var(--primary);
+    padding: 16px 18px;
+    border-radius: 0 12px 12px 0;
+    font-size: 15.5px;
+    line-height: 1.75;
+    margin-bottom: 20px;
+    position: relative;
+    color: rgba(255,255,255,0.85);
+  }
+  .passage.markable { cursor: text; }
+
+  /* WORD-LEVEL MARKING */
+  .mw {
+    border-radius: 2px;
+    padding: 1px 1px;
+    cursor: pointer;
+    transition: background .1s;
+    display: inline;
+  }
+  .mw:hover  { background: var(--highlight-hover); }
+  .mw.sel    { background: var(--highlight-sel); outline: 1.5px solid var(--primary); border-radius: 3px; }
+  .mw.ok     { background: var(--highlight-ok);  outline: 1.5px solid var(--correct); border-radius: 3px; }
+  .mw.err    { background: var(--highlight-err); outline: 1.5px solid var(--wrong);   border-radius: 3px; }
+
+  .mark-instruction {
+    font-size: 13px; color: var(--ink-soft); font-style: italic;
+    margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+  }
+  .mark-instruction::before { content: '✏️'; font-style: normal; }
+
+  .mark-check-btn {
+    margin-top: 12px;
+    display: inline-block;
+    padding: 9px 18px;
+    background: linear-gradient(135deg,var(--primary),var(--primary-d)); color: #fff;
+    border: none; border-radius: 10px;
+    font-size: 14px; font-weight: 700;
+    cursor: pointer; font-family: 'Nunito', sans-serif;
+    transition: opacity .15s, box-shadow .15s;
+    box-shadow: 0 8px 24px -6px var(--primary-glow);
+  }
+  .mark-check-btn:hover { opacity: .85; }
+  .mark-check-btn:disabled { opacity: .35; cursor: default; box-shadow: none; }
+
+  /* OPTIONS (MC) */
+  .options { display:flex; flex-direction:column; gap:10px; margin-bottom:18px; }
+  .opt-btn {
+    background: rgba(255,255,255,0.05); border:1.5px solid var(--line); border-radius:12px;
+    padding:11px 16px; text-align:left; cursor:pointer;
+    font-size:15px; font-family:'Nunito',sans-serif; color: #fff;
+    transition: border-color .15s, background .15s;
+  }
+  .opt-btn:hover:not(:disabled) { border-color:var(--primary); background:rgba(155,77,202,0.12); }
+  .opt-btn.correct { border-color:var(--correct); background:rgba(21,166,107,0.18); color:#fff; font-weight:600; }
+  .opt-btn.wrong   { border-color:var(--wrong);   background:rgba(255,97,80,0.18); color:#fff; }
+  .opt-btn:disabled { cursor:default; }
+
+  /* DRAG */
+  .drag-container { display:flex; gap:14px; flex-wrap:wrap; margin-bottom:16px; }
+  .drag-pool { flex:1; min-width:170px; }
+  .drag-pool h4 { font-size:12px; text-transform:uppercase; letter-spacing:.1em; color:var(--ink-soft); margin-bottom:7px; font-weight:700; }
+  .drag-list { min-height:70px; border:2px dashed var(--line); border-radius:12px; padding:8px; display:flex; flex-direction:column; gap:6px; }
+  .drag-list.over { border-color:var(--primary); background:rgba(155,77,202,0.10); }
+  .drag-item {
+    background:rgba(255,255,255,0.06); border:1.5px solid var(--line); border-radius:10px;
+    padding:7px 12px; font-size:14px; cursor:grab; user-select:none; color:#fff;
+    transition:box-shadow .15s, border-color .15s, background .15s;
+  }
+  .drag-item:active { cursor:grabbing; box-shadow:0 4px 12px rgba(0,0,0,.35); }
+  .drag-item.correct-drag { border-color:var(--correct); background:rgba(21,166,107,0.18); color:#fff; font-weight:600; }
+  .drag-item.wrong-drag   { border-color:var(--wrong);   background:rgba(255,97,80,0.18); }
+
+  /* ORDER */
+  .order-list { display:flex; flex-direction:column; gap:8px; margin-bottom:16px; }
+  .order-item {
+    background:rgba(255,255,255,0.06); border:1.5px solid var(--line); border-radius:10px;
+    padding:10px 14px; cursor:grab; font-size:14.5px; color:#fff;
+    display:flex; align-items:center; gap:12px; user-select:none;
+  }
+  .order-item:active { cursor:grabbing; box-shadow:0 4px 14px rgba(0,0,0,.35); }
+  .order-item .handle { color:var(--ink-soft); font-size:18px; }
+  .order-item.correct-order { border-color:var(--correct); background:rgba(21,166,107,0.18); }
+  .order-item.wrong-order   { border-color:var(--wrong);   background:rgba(255,97,80,0.18); }
+
+  /* FEEDBACK */
+  .feedback { display:none; margin-top:14px; padding:12px 16px; border-radius:12px; font-size:14.5px; line-height:1.55; }
+  .feedback.show { display:block; }
+  .feedback.correct-fb { background:rgba(21,166,107,0.12); border-left:3px solid var(--correct); color:#bdf5d8; }
+  .feedback.wrong-fb   { background:rgba(255,97,80,0.12); border-left:3px solid var(--wrong);   color:#ffd2cb; }
+
+  /* BUTTONS */
+  .btn {
+    display:inline-block; padding:12px 24px; border-radius:12px;
+    font-size:15px; font-family:'Baloo 2',sans-serif; font-weight:700;
+    cursor:pointer; border:none; transition:opacity .15s, transform .1s, box-shadow .15s;
+  }
+  .btn:hover { opacity:.88; transform:translateY(-1px); }
+  .btn-primary   { background:linear-gradient(135deg,var(--primary),var(--primary-d)); color:#fff; box-shadow:0 8px 24px -6px var(--primary-glow); }
+  .btn-secondary { background:transparent; color:rgba(255,255,255,.75); border:1.5px solid var(--line); }
+  .btn-gold      { background:linear-gradient(135deg,var(--gold),#e0a82e); color:#1c1208; }
+  .btn-row { display:flex; gap:12px; margin-top:20px; flex-wrap:wrap; }
+
+  .q-progress { font-size:12px; color:var(--ink-soft); text-align:right; margin-bottom:4px; font-weight:700; }
+
+  /* FINISH */
+  #finish-screen { text-align:center; padding:40px 0; }
+  #finish-screen .medal { font-size:72px; filter: drop-shadow(0 0 24px var(--primary-glow)); }
+  #finish-screen h2 { font-family:'Baloo 2',sans-serif; font-size:2rem; margin:16px 0 10px; color:#fff; }
+  #finish-screen .score-big { font-size:3.5rem; font-weight:800; color:var(--primary); font-family:'Baloo 2',sans-serif; text-shadow: 0 0 30px var(--primary-glow); }
+  #finish-screen p { max-width:620px; margin:12px auto 28px; color:var(--ink-soft); }
+  #finish-overview { max-width:min(1100px, 100%); margin:0 auto 28px; text-align:left; }
+  .ov-title { text-align:center; font-family:'Baloo 2',sans-serif; font-weight:800; color:#fff; font-size:1.15rem; margin-bottom:14px; }
+  .ov-row { display:flex; align-items:flex-start; gap:10px; padding:9px 12px; border-radius:10px; margin-bottom:7px; border:1.5px solid var(--line); font-size:14px; }
+  .ov-row.ov-ok { background:rgba(21,166,107,0.12); border-color:rgba(21,166,107,0.4); }
+  .ov-row.ov-no { background:rgba(255,97,80,0.12); border-color:rgba(255,97,80,0.4); }
+  .ov-ic { flex-shrink:0; }
+  .ov-q { color:rgba(255,255,255,0.85); line-height:1.4; }
+  .ov-q b { color:#fff; }
+
+  /* VOORLEZEN — alleen zichtbaar bij leerlingen die dat recht hebben */
+  .voorlees-btn {
+    display:inline-flex; align-items:center; gap:6px;
+    margin:0 0 14px; padding:7px 15px; border-radius:99px;
+    border:1.5px solid rgba(56,189,248,.45); background:rgba(56,189,248,.12);
+    color:#7dd3fc; font-family:'Nunito',sans-serif; font-size:13px; font-weight:700;
+    cursor:pointer; transition:background .15s;
+  }
+  .voorlees-btn:hover { background:rgba(56,189,248,.24); }
+
+  /* Breed scherm: de tekst links, de antwoorden ernaast, zodat een leerling
+     niet hoeft te scrollen tussen lezen en antwoorden. Alleen bij meerkeuze —
+     bij markeren is de tekst zelf het antwoord en mag die de volle breedte. */
+  @media(min-width:1000px){
+    .q-breed { display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,1fr); column-gap:28px; align-items:start; }
+    .q-breed > * { grid-column:2; }
+    .q-breed > .q-type-label, .q-breed > h3 { grid-column:1 / -1; }
+    .q-breed > .passage { grid-column:1; margin-bottom:0; }
+    .q-breed > .voorlees-btn { grid-column:1 / -1; }
+  }
+  @media(max-width:560px){
+    .q-card { padding:18px 16px; }
+    .drag-container { flex-direction:column; }
+  }
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  .bl-fig { margin:0 0 14px; }
+  .bl-fig img { display:block; max-width:100%; max-height:300px; border-radius:12px; margin:0 auto; box-shadow:0 8px 24px -10px rgba(0,0,0,.6); }
+  .bl-fig figcaption { font-size:.85rem; color:var(--ink-soft); text-align:center; margin-top:6px; font-style:italic; }
+  .bl-cover { display:block; max-width:min(320px,100%); max-height:220px; margin:0 auto 14px; border-radius:14px; box-shadow:0 10px 28px -12px rgba(0,0,0,.7); }
+  @media(min-width:1000px){ .q-breed > .bl-fig { grid-column:1; } }
+</style>
+<style>.order-item,.drag-item{touch-action:none}.order-item.dragging,.drag-item.dragging{opacity:.6}</style>
+<script src="/kenniskist-login.js"></script>
+</head>
+<body>
+
+<header>
+  <p class="eyebrow" id="bl-eyebrow">Begrijpend lezen · Les 4</p>
+  <h1>Kom in verzet</h1>
+  <p>Thema: Fantastische families</p>
+</header>
+<div id="progress-bar-wrap"><div id="progress-bar"></div></div>
+<div id="score-badge">⭐ <span id="score-num">0</span> pt</div>
+
+<main>
+
+<div id="intro-screen" class="screen active">
+  <div class="compass">✒️</div>
+  <img class="bl-cover" src="families/l4-judith.jpg" alt="">
+  <h2>Klaar om te lezen?</h2>
+  <p>Je leest een interview met Judith de Kom over haar vader Anton de Kom: schrijver, vrijheidsstrijder en verzetsheld. Je beantwoordt tien vragen. Bij <strong>letterlijke vragen</strong> markeer je het antwoord <em>in de tekst zelf</em>. Klik woorden aan om ze te selecteren.</p>
+  <div class="legend">
+    <span style="background:#d0e8ff;color:#0a3a6e;">🔍 Letterlijk – markeer in de tekst</span>
+    <span style="background:#fde8c0;color:#7a3d00;">💡 Afleidend</span>
+    <span style="background:#dff0e2;color:#1a5c2a;">💬 Evaluerend</span>
+  </div>
+  <button class="btn btn-primary" onclick="startQuiz()">Begin de oefening →</button>
+</div>
+
+<div id="quiz-screen" class="screen">
+  <p class="q-progress" id="q-progress"></p>
+  <div id="question-area"></div>
+  <div class="btn-row" id="nav-row"></div>
+</div>
+
+<div id="finish-screen" class="screen">
+  <div class="medal" id="finish-medal">🏅</div>
+  <h2>Goed gedaan, interviewlezer!</h2>
+  <div class="score-big" id="finish-score">0/0</div>
+  <p id="finish-msg"></p>
+  <div id="finish-overview"></div>
+  <p class="eyebrow" id="kkStatus"></p>
+  <button class="btn btn-primary" onclick="restartQuiz()">Opnieuw proberen</button>
+</div>
+
+</main>
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// QUESTION DATA
+// type: 'mark'   → klik woorden aan in de passage (letterlijk)
+// type: 'mc'     → multiple choice
+// type: 'order'  → sleep op volgorde
+// type: 'drag'   → sleep naar categorie
+//
+// Voor 'mark': passage is een string. correctWords = array van exacte
+// woorden/woordgroepen die de leerling moet selecteren (elk woord apart
+// als string). Het systeem splitst de passage in klikbare woorden.
+// correctSpan: [startWordIndex, endWordIndex] (inclusive) = de juiste selectie.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const VRAGEN = {
+ "7": [
+  {
+   "type": "mark",
+   "qtype": "literal",
+   "label": "🔍 Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst hoe Judith haar vader beschrijft.",
+   "passage": "Judith de Kom was dertien jaar oud toen haar vader Anton de Kom verdween. Pas veel later begreep ze hoe bijzonder hij was geweest. Hij kwam op voor mensen die slecht werden behandeld. Maar Judith kende hem niet als held uit een boek. Voor haar was hij vooral haar vader: lief, streng, slim en dapper.",
+   "feedback": "Het staat na de dubbele punt: \"lief, streng, slim en dapper.\"",
+   "img": "families/l4-judith.jpg",
+   "bijschrift": "Judith de Kom (1931-2024)",
+   "correctSpan": {
+    "start": 50,
+    "end": 54
+   },
+   "coreWords": [
+    50,
+    51,
+    52,
+    54
+   ],
+   "points": 2
+  },
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "💡 Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Wat betekent \"In Suriname lagen mijn vaders wortels\"?",
+   "passage": "Uw vader werd geboren in Suriname. Wat betekende dat land voor hem? In Suriname lagen mijn vaders wortels, daar kwam hij vandaan. Hij kende de verhalen, de taal en de mensen en hij hield van dat land. Maar hij zag ook dat veel Surinamers niet eerlijk werden behandeld. Suriname was toen een kolonie van Nederland. Nederlandse bestuurders hadden veel macht, terwijl gewone Surinamers weinig te zeggen hadden.",
+   "feedback": "Judith legt het zelf uit: \"daar kwam hij vandaan\". Je wortels zijn de plek waar je vandaan komt.",
+   "options": [
+    "Hij had in Suriname een moestuin",
+    "Hij kwam uit Suriname en voelde zich er thuis",
+    "Hij werkte in Suriname als boer",
+    "Hij wilde in Suriname bomen planten"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mark",
+   "qtype": "literal",
+   "label": "🔍 Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst waarom Anton naar Nederland ging.",
+   "passage": "Hij verzamelde de verhalen van Surinamers over Suriname en schreef ze op. Hij vond dat zij hun eigen geschiedenis moesten kennen en doorvertellen, niet alleen de geschiedenis zoals Nederlanders die vertelden. Maar hij besloot in Nederland te gaan wonen … Klopt! In Suriname kreeg hij niet de kansen die hij verdiende. Mijn vader kon goed schrijven en rekenen, maar de betere banen waren vaak voor witte Nederlanders. In Nederland hoopte hij werk te vinden en een toekomst op te bouwen.",
+   "feedback": "Het staat in de laatste zin: \"In Nederland hoopte hij werk te vinden en een toekomst op te bouwen.\"",
+   "correctSpan": {
+    "start": 67,
+    "end": 79
+   },
+   "coreWords": [
+    71,
+    76
+   ],
+   "points": 2
+  },
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "💡 Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Waarom was de relatie van Anton en Nellie in die tijd bijzonder?",
+   "passage": "En toen ontmoette hij daar mijn moeder Nellie. Dat ze een relatie kregen, was heel bijzonder, want zij was wit en hij was zwart. In die tijd vonden veel mensen dat een witte vrouw niet met een zwarte man mocht trouwen. Gelukkig was mijn oma, de moeder van mijn moeder, dol op mijn vader. Maar er waren ook veel mensen die racistische opmerkingen maakten.",
+   "feedback": "\"... want zij was wit en hij was zwart. In die tijd vonden veel mensen dat een witte vrouw niet met een zwarte man mocht trouwen.\"",
+   "img": "families/l4-gezin.jpg",
+   "bijschrift": "Nellie, Anton en hun vier kinderen. Judith wordt vastgehouden door haar moeder.",
+   "options": [
+    "Omdat ze elkaar in Suriname ontmoetten",
+    "Omdat zij wit was en hij zwart, en veel mensen vonden dat dat niet mocht",
+    "Omdat ze allebei schrijver waren",
+    "Omdat haar moeder het verbood"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mark",
+   "qtype": "literal",
+   "label": "🔍 Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst wat je volgens Anton beter kunt als je veel weet.",
+   "passage": "Wat voor vader was Anton de Kom? Hij was lief, maar hij kon ook streng zijn. Hij wilde dat we goed leerden, veel lazen en nieuwsgierig bleven naar de wereld om ons heen. Kennis vond hij heel belangrijk. ‘Als je veel weet, begrijp je beter wat er in de wereld gebeurt. Dan kun je ook beter voor jezelf en voor anderen opkomen’, zei hij. Ik zie hem nog zitten, in zijn leunstoel met een stapel woordenboeken naast zich. Hij schreef met een stompje potlood op alles wat hij maar aan papier kon vinden. Voor een notitieboekje had hij geen geld.",
+   "feedback": "Anton zei: \"Als je veel weet, begrijp je beter wat er in de wereld gebeurt. Dan kun je ook beter voor jezelf en voor anderen opkomen.\"",
+   "correctSpan": {
+    "start": 51,
+    "end": 61
+   },
+   "coreWords": [
+    57,
+    60,
+    61
+   ],
+   "points": 2
+  },
+  {
+   "type": "mark",
+   "qtype": "literal",
+   "label": "🔍 Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst wat Anton deed op zijn adviesbureau.",
+   "passage": "Toen u één jaar oud was, verhuisde jullie gezin naar Suriname. Ja, mijn vader besloot om naar Suriname te gaan, omdat zijn moeder ernstig ziek was. In Suriname ontdekte hij hoe Surinaamse arbeiders werden uitgebuit: ze werkten hard, verdienden weinig en zaten vaak vast aan strenge contracten. Wie protesteerde, kon boetes of straf krijgen. Daarom begon mijn vader een adviesbureau. Arbeiders konden daar hun verhaal doen. Hij schreef hun klachten op en wees hen op hun rechten. Zo kregen mensen die nooit werden gehoord ineens wél een stem.",
+   "feedback": "Het staat in de zin: \"Hij schreef hun klachten op en wees hen op hun rechten.\"",
+   "correctSpan": {
+    "start": 66,
+    "end": 76
+   },
+   "coreWords": [
+    69,
+    76
+   ],
+   "points": 2
+  },
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "💡 Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Waarom werd Anton gevangengezet?",
+   "passage": "Maar al snel moesten jullie terugkeren naar Nederland. Waarom? De Nederlandse bestuurders in Suriname werden bang voor zijn invloed. Steeds meer arbeiders, arme mensen en andere Surinamers met klachten kwamen naar hem toe. De bestuurders zagen hem als een oproerkraaier: iemand die voor onrust zorgde. Maar mijn vader wilde geen herrie maken om de herrie. Hij wilde eerlijkheid. Toch werd hij gevangengezet. Daarna werd hij naar Nederland teruggestuurd.",
+   "feedback": "\"De Nederlandse bestuurders in Suriname werden bang voor zijn invloed. Steeds meer ... kwamen naar hem toe.\"",
+   "options": [
+    "Omdat hij iets had gestolen",
+    "Omdat de bestuurders bang waren voor zijn invloed, nu steeds meer mensen naar hem toe kwamen",
+    "Omdat hij geen werk had",
+    "Omdat hij terug wilde naar Nederland"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mark",
+   "qtype": "literal",
+   "label": "🔍 Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst waarover Anton schreef in zijn boek.",
+   "passage": "Een jaar later verscheen zijn boek Wij slaven van Suriname. Waar ging dat boek over? Mijn vader schreef over slavernij, racisme en de manier waarop Surinamers door Nederlanders werden behandeld. Vaak werd die geschiedenis verteld door mensen met macht. Mijn vader draaide dat om: hij schreef vanuit de Surinamers zelf. Hij wilde dat lezers begrepen: dit is onrecht en daar mag je tegen opstaan.",
+   "feedback": "Het staat in de zin: \"Mijn vader schreef over slavernij, racisme en de manier waarop Surinamers door Nederlanders werden behandeld.\"",
+   "img": "families/l4-boek.jpg",
+   "bijschrift": "In 1934 verscheen het boek Wij slaven van Suriname.",
+   "correctSpan": {
+    "start": 15,
+    "end": 29
+   },
+   "coreWords": [
+    19,
+    20,
+    29
+   ],
+   "points": 2
+  },
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "💡 Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Waarom wist het gezin niets van het verzetswerk van Anton?",
+   "passage": "Judith de Kom werd in 1931 geboren. Toen de Tweede Wereldoorlog in 1940 uitbrak, sloot haar vader zich aan bij het verzet. Hij schreef teksten tegen de Duitse bezetters en werkte mee aan geheime kranten. Wij thuis wisten daar niets van. Dat was veiliger, voor hem én voor ons. Maar op 7 augustus 1944 werd hij opgepakt door de Duitse politie. Daarna hebben we nooit meer iets van hem gehoord. Pas jaren later hoorden we dat hij in verschillende Duitse concentratiekampen heeft gezeten. Toen ik 28 jaar was, ontdekte ik dat hij kort voor de bevrijding van Nederland was overleden aan tuberculose, een ernstige ziekte.",
+   "feedback": "\"Wij thuis wisten daar niets van. Dat was veiliger, voor hem én voor ons.\"",
+   "options": [
+    "Omdat Anton het vergeten was te vertellen",
+    "Omdat het veiliger was, voor hem én voor het gezin",
+    "Omdat het gezin in Suriname woonde",
+    "Omdat Judith nog niet kon lezen"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "order",
+   "qtype": "inferring",
+   "label": "💡 Afleidend – Volgorde",
+   "labelClass": "label-inferring",
+   "question": "Zet deze gebeurtenissen uit het leven van Anton de Kom op volgorde.",
+   "passage": "In 1934 verscheen Wij slaven van Suriname, een jaar nadat Anton uit Suriname was teruggestuurd. Hij was daar maar kort geweest: in 1932 was hij met zijn gezin naar Suriname gegaan. Geboren was hij er in 1898. Toen hij 22 jaar was, kwam hij naar Nederland om te werken. Hij overleed in 1945, kort voor de bevrijding.",
+   "feedback": "1898 geboren → 1920 naar Nederland → 1933 teruggestuurd → 1945 overleden.",
+   "img": "families/l4-anton.jpg",
+   "bijschrift": "Anton de Kom kwam op zijn 22e naar Nederland om te werken.",
+   "items": [
+    {
+     "id": "o0",
+     "text": "Anton wordt geboren in Suriname"
+    },
+    {
+     "id": "o1",
+     "text": "Anton komt naar Nederland om te werken"
+    },
+    {
+     "id": "o2",
+     "text": "Anton wordt uit Suriname teruggestuurd"
+    },
+    {
+     "id": "o3",
+     "text": "Anton overlijdt, kort voor de bevrijding"
+    }
+   ],
+   "correctOrder": [
+    "o0",
+    "o1",
+    "o2",
+    "o3"
+   ],
+   "points": 2
+  }
+ ],
+ "8": [
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "💡 Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Wat bedoelt de schrijver met: \"Judith kende hem niet als held uit een boek\"?",
+   "passage": "Judith de Kom was dertien jaar oud toen haar vader Anton de Kom verdween. Pas veel later begreep ze hoe bijzonder hij was geweest. Hij kwam op voor mensen die slecht werden behandeld. Maar Judith kende hem niet als held uit een boek. Voor haar was hij vooral haar vader: lief, streng, slim en dapper.",
+   "feedback": "Anderen kennen hem als held. Judith kende hem van thuis: \"Voor haar was hij vooral haar vader.\"",
+   "img": "families/l4-judith.jpg",
+   "bijschrift": "Judith de Kom (1931-2024)",
+   "options": [
+    "Judith had nooit een boek over haar vader gelezen",
+    "Voor Judith was hij in de eerste plaats gewoon haar vader, niet een beroemd persoon",
+    "Anton de Kom was helemaal geen held",
+    "Judith vond boeken over helden saai"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "evaluating",
+   "label": "💬 Evaluerend",
+   "labelClass": "label-evaluating",
+   "question": "Wat voor tekst is dit, en hoe zie je dat?",
+   "passage": "Uw vader werd geboren in Suriname. Wat betekende dat land voor hem? In Suriname lagen mijn vaders wortels, daar kwam hij vandaan. Hij kende de verhalen, de taal en de mensen en hij hield van dat land. Maar hij zag ook dat veel Surinamers niet eerlijk werden behandeld. Suriname was toen een kolonie van Nederland. Nederlandse bestuurders hadden veel macht, terwijl gewone Surinamers weinig te zeggen hadden.",
+   "feedback": "De tekst begint met een vraag (\"Wat betekende dat land voor hem?\") en daarna antwoordt Judith (\"mijn vaders wortels\").",
+   "options": [
+    "Een dagboek: er staan datums boven",
+    "Een interview: er wordt een vraag gesteld en Judith geeft antwoord",
+    "Een gedicht: de zinnen rijmen",
+    "Een reclame: er wordt iets verkocht"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "💡 Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Waarom vond Anton het belangrijk dat Surinamers hun eigen verhalen opschreven?",
+   "passage": "Hij verzamelde de verhalen van Surinamers over Suriname en schreef ze op. Hij vond dat zij hun eigen geschiedenis moesten kennen en doorvertellen, niet alleen de geschiedenis zoals Nederlanders die vertelden. Maar hij besloot in Nederland te gaan wonen … Klopt! In Suriname kreeg hij niet de kansen die hij verdiende. Mijn vader kon goed schrijven en rekenen, maar de betere banen waren vaak voor witte Nederlanders. In Nederland hoopte hij werk te vinden en een toekomst op te bouwen.",
+   "feedback": "Ze moesten hun eigen geschiedenis kennen, \"niet alleen de geschiedenis zoals Nederlanders die vertelden\".",
+   "options": [
+    "Omdat hij zelf graag verhalen las",
+    "Omdat mensen anders alleen de geschiedenis kenden zoals Nederlanders die vertelden",
+    "Omdat de Nederlanders daarom vroegen",
+    "Omdat hij er een boek mee wilde verkopen"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "💡 Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Judith zegt: \"Gelukkig was mijn oma dol op mijn vader.\" Waarom gebruikt ze het woord \"gelukkig\"?",
+   "passage": "En toen ontmoette hij daar mijn moeder Nellie. Dat ze een relatie kregen, was heel bijzonder, want zij was wit en hij was zwart. In die tijd vonden veel mensen dat een witte vrouw niet met een zwarte man mocht trouwen. Gelukkig was mijn oma, de moeder van mijn moeder, dol op mijn vader. Maar er waren ook veel mensen die racistische opmerkingen maakten.",
+   "feedback": "Er waren \"veel mensen die racistische opmerkingen maakten\". Daarom was het een geluk dat de familie van Nellie wél achter Anton stond.",
+   "img": "families/l4-gezin.jpg",
+   "bijschrift": "Nellie, Anton en hun vier kinderen. Judith wordt vastgehouden door haar moeder.",
+   "options": [
+    "Omdat haar oma heel rijk was",
+    "Omdat veel andere mensen wél racistisch deden, en het fijn was dat haar oma hem steunde",
+    "Omdat haar oma ook uit Suriname kwam",
+    "Omdat haar oma de bruiloft betaalde"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "💡 Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Wat laat het \"stompje potlood\" zien over Anton?",
+   "passage": "Wat voor vader was Anton de Kom? Hij was lief, maar hij kon ook streng zijn. Hij wilde dat we goed leerden, veel lazen en nieuwsgierig bleven naar de wereld om ons heen. Kennis vond hij heel belangrijk. ‘Als je veel weet, begrijp je beter wat er in de wereld gebeurt. Dan kun je ook beter voor jezelf en voor anderen opkomen’, zei hij. Ik zie hem nog zitten, in zijn leunstoel met een stapel woordenboeken naast zich. Hij schreef met een stompje potlood op alles wat hij maar aan papier kon vinden. Voor een notitieboekje had hij geen geld.",
+   "feedback": "Hij schreef op \"alles wat hij maar aan papier kon vinden\", want \"voor een notitieboekje had hij geen geld\". Schrijven was hem heel veel waard.",
+   "options": [
+    "Dat hij slordig was met zijn spullen",
+    "Dat hij weinig geld had, maar toch heel graag wilde schrijven",
+    "Dat hij liever tekende dan schreef",
+    "Dat hij geen woordenboeken had"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "💡 Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Wat betekent \"uitgebuit\" in deze tekst?",
+   "passage": "Toen u één jaar oud was, verhuisde jullie gezin naar Suriname. Ja, mijn vader besloot om naar Suriname te gaan, omdat zijn moeder ernstig ziek was. In Suriname ontdekte hij hoe Surinaamse arbeiders werden uitgebuit: ze werkten hard, verdienden weinig en zaten vaak vast aan strenge contracten. Wie protesteerde, kon boetes of straf krijgen. Daarom begon mijn vader een adviesbureau. Arbeiders konden daar hun verhaal doen. Hij schreef hun klachten op en wees hen op hun rechten. Zo kregen mensen die nooit werden gehoord ineens wél een stem.",
+   "feedback": "Na de dubbele punt wordt het uitgelegd: hard werken, weinig verdienen, vastzitten aan strenge contracten, en straf als je protesteert.",
+   "options": [
+    "Dat ze buiten moesten werken",
+    "Dat ze hard moesten werken voor weinig geld en zich niet konden verzetten",
+    "Dat ze een vrije dag kregen",
+    "Dat ze naar een ander land werden gestuurd"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "evaluating",
+   "label": "💬 Evaluerend",
+   "labelClass": "label-evaluating",
+   "question": "De bestuurders noemden Anton een \"oproerkraaier\". Hoe ziet Judith dat?",
+   "passage": "Maar al snel moesten jullie terugkeren naar Nederland. Waarom? De Nederlandse bestuurders in Suriname werden bang voor zijn invloed. Steeds meer arbeiders, arme mensen en andere Surinamers met klachten kwamen naar hem toe. De bestuurders zagen hem als een oproerkraaier: iemand die voor onrust zorgde. Maar mijn vader wilde geen herrie maken om de herrie. Hij wilde eerlijkheid. Toch werd hij gevangengezet. Daarna werd hij naar Nederland teruggestuurd.",
+   "feedback": "Judith zegt: \"Maar mijn vader wilde geen herrie maken om de herrie. Hij wilde eerlijkheid.\" Het woord \"maar\" laat zien dat zij het anders ziet.",
+   "options": [
+    "Ze is het met de bestuurders eens",
+    "Volgens haar wilde hij geen onrust, maar eerlijkheid",
+    "Ze vindt dat hij nog meer herrie had moeten maken",
+    "Ze weet niet wat hij wilde"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "💡 Afleidend",
+   "labelClass": "label-inferring",
+   "question": "\"Mijn vader draaide dat om.\" Wat draaide hij om?",
+   "passage": "Een jaar later verscheen zijn boek Wij slaven van Suriname. Waar ging dat boek over? Mijn vader schreef over slavernij, racisme en de manier waarop Surinamers door Nederlanders werden behandeld. Vaak werd die geschiedenis verteld door mensen met macht. Mijn vader draaide dat om: hij schreef vanuit de Surinamers zelf. Hij wilde dat lezers begrepen: dit is onrecht en daar mag je tegen opstaan.",
+   "feedback": "\"Dat\" is: geschiedenis verteld door mensen met macht. Anton deed het andersom: \"hij schreef vanuit de Surinamers zelf\".",
+   "img": "families/l4-boek.jpg",
+   "bijschrift": "In 1934 verscheen het boek Wij slaven van Suriname.",
+   "options": [
+    "Hij schreef het boek van achteren naar voren",
+    "Hij vertelde de geschiedenis vanuit de Surinamers zelf, in plaats van vanuit de mensen met macht",
+    "Hij ging van Nederland terug naar Suriname",
+    "Hij maakte van slechte mensen goede mensen"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "💡 Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Judith was 28 toen ze ontdekte hoe haar vader was overleden. Hoeveel jaar na zijn arrestatie was dat ongeveer?",
+   "passage": "Judith de Kom werd in 1931 geboren. Toen de Tweede Wereldoorlog in 1940 uitbrak, sloot haar vader zich aan bij het verzet. Hij schreef teksten tegen de Duitse bezetters en werkte mee aan geheime kranten. Wij thuis wisten daar niets van. Dat was veiliger, voor hem én voor ons. Maar op 7 augustus 1944 werd hij opgepakt door de Duitse politie. Daarna hebben we nooit meer iets van hem gehoord. Pas jaren later hoorden we dat hij in verschillende Duitse concentratiekampen heeft gezeten. Toen ik 28 jaar was, ontdekte ik dat hij kort voor de bevrijding van Nederland was overleden aan tuberculose, een ernstige ziekte.",
+   "feedback": "Judith werd geboren in 1931, dus ze was 28 in 1959. Hij werd opgepakt in 1944. 1959 − 1944 = 15 jaar.",
+   "options": [
+    "1 jaar",
+    "5 jaar",
+    "15 jaar",
+    "28 jaar"
+   ],
+   "correct": 2,
+   "points": 1
+  },
+  {
+   "type": "order",
+   "qtype": "inferring",
+   "label": "💡 Afleidend – Volgorde",
+   "labelClass": "label-inferring",
+   "question": "Zet deze gebeurtenissen op volgorde. Niet alle jaartallen staan erbij: reken ze uit!",
+   "passage": "In 1934 verscheen Wij slaven van Suriname, een jaar nadat Anton uit Suriname was teruggestuurd. Hij was daar maar kort geweest: in 1932 was hij met zijn gezin naar Suriname gegaan. Geboren was hij er in 1898. Toen hij 22 jaar was, kwam hij naar Nederland om te werken. Hij overleed in 1945, kort voor de bevrijding.",
+   "feedback": "1898 geboren → 1920 (22 jaar later) naar Nederland → 1932 naar Suriname → 1933 teruggestuurd (een jaar voor het boek) → 1934 het boek → 1945 overleden.",
+   "img": "families/l4-anton.jpg",
+   "bijschrift": "Anton de Kom kwam op zijn 22e naar Nederland om te werken.",
+   "items": [
+    {
+     "id": "o0",
+     "text": "Anton wordt geboren in Suriname"
+    },
+    {
+     "id": "o1",
+     "text": "Anton komt naar Nederland om te werken"
+    },
+    {
+     "id": "o2",
+     "text": "Anton gaat met zijn gezin naar Suriname"
+    },
+    {
+     "id": "o3",
+     "text": "Anton wordt uit Suriname teruggestuurd"
+    },
+    {
+     "id": "o4",
+     "text": "Het boek Wij slaven van Suriname verschijnt"
+    },
+    {
+     "id": "o5",
+     "text": "Anton overlijdt, kort voor de bevrijding"
+    }
+   ],
+   "correctOrder": [
+    "o0",
+    "o1",
+    "o2",
+    "o3",
+    "o4",
+    "o5"
+   ],
+   "points": 2
+  }
+ ]
+};
+const GROEP = (function () {
+  try { const g = new URLSearchParams(location.search).get('groep'); if (g === '7' || g === '8') return g; } catch (e) {}
+  return '7';
+})();
+const questions = VRAGEN[GROEP];
+const SLEUTEL = 'bl_families-les4_g' + GROEP;
+document.getElementById('bl-eyebrow').textContent = 'Begrijpend lezen · Groep ' + GROEP + ' · Les 4';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────────────────────────────────────
+let current = 0;
+let score   = 0;
+let answered = new Array(questions.length).fill(false);
+let scores   = new Array(questions.length).fill(0);
+
+// per-question word selection state (mark questions)
+// markState[i] = Set of selected word indices
+let markState = questions.map(() => new Set());
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PERSISTENCE
+// ─────────────────────────────────────────────────────────────────────────────
+let paidSet = new Set();
+function loadPaid() { try { const s = localStorage.getItem(SLEUTEL + '_paid'); if (s) paidSet = new Set(JSON.parse(s)); } catch(e){} }
+function savePaid() { try { localStorage.setItem(SLEUTEL + '_paid', JSON.stringify([...paidSet])); } catch(e){} }
+function loadProgress() {
+  loadPaid();
+  try {
+    // Oude sleutel: alle vijf de lessen deelden 'bl_wereld_v2'. Wie les 1 had
+    // gemaakt, kreeg les 2 t/m 5 meteen als "helemaal af" te zien. Opruimen,
+    // zodat die stand nooit meer in een les terechtkomt.
+    localStorage.removeItem('bl_wereld_v2');
+    localStorage.removeItem('bl_wereld_v2_paid');
+    const saved = localStorage.getItem(SLEUTEL);
+    if (saved) {
+      const d = JSON.parse(saved);
+      // Alleen een stand die bij déze les hoort: evenveel vragen, anders weg.
+      if (Array.isArray(d.answered) && d.answered.length === questions.length
+          && Array.isArray(d.scores) && d.scores.length === questions.length) {
+        scores   = d.scores;
+        answered = d.answered;
+        score    = scores.reduce((a,b)=>a+b,0);
+      } else {
+        localStorage.removeItem(SLEUTEL);
+      }
+    }
+  } catch(e){}
+}
+
+function saveProgress() {
+  try {
+    localStorage.setItem(SLEUTEL, JSON.stringify({ scores, answered }));
+  } catch(e){}
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FLOW
+// ─────────────────────────────────────────────────────────────────────────────
+function startQuiz() {
+  loadProgress();
+  document.getElementById('score-badge').style.display = 'block';
+  // Verder waar je gebleven was: de eerste vraag die nog niet beantwoord is.
+  // Is alles al beantwoord, dan de laatste vraag — dan staat de knop "Bekijk
+  // resultaat" er en wordt het resultaat pas ingestuurd als het kind klikt,
+  // niet bij elke verversing opnieuw.
+  const eerste = answered.indexOf(false);
+  current = eerste === -1 ? questions.length - 1 : eerste;
+  show('quiz-screen');
+  renderQuestion();
+}
+
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function updateProgress() {
+  const pct = (current / questions.length) * 100;
+  document.getElementById('progress-bar').style.width = pct + '%';
+  document.getElementById('q-progress').textContent = `Vraag ${current + 1} van ${questions.length}`;
+  document.getElementById('score-num').textContent = score;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// VOORLEZEN
+// ─────────────────────────────────────────────────────────────────────────────
+// Alleen voor leerlingen bij wie de leerkracht dat heeft aangezet
+// (profielen.voorlezen, migratie 0012 — via kk_profiel_cache uitgelezen door
+// kenniskist-login.js). Eén knop leest de vraag, de tekst en de antwoorden
+// achter elkaar voor; nog een keer klikken zet 'm stil.
+let magVoorlezen = false;
+try { magVoorlezen = !!(window.KennisKist && window.KennisKist.magVoorlezen && window.KennisKist.magVoorlezen()); } catch (e) {}
+const kanSpreken = typeof window.speechSynthesis !== 'undefined';
+
+function voorleesTekst() {
+  const area  = document.getElementById('question-area');
+  const delen = [];
+  const vraag = area.querySelector('h3');
+  if (vraag) delen.push(vraag.textContent);
+  const passage = area.querySelector('.passage');
+  if (passage) delen.push(passage.textContent);
+  area.querySelectorAll('.opt-btn').forEach((b, i) => delen.push('Antwoord ' + (i + 1) + ': ' + b.textContent));
+  area.querySelectorAll('.order-item, .drag-item').forEach(el => delen.push(el.textContent));
+  return delen.join('. ');
+}
+
+function stopVoorlezen() {
+  if (kanSpreken) window.speechSynthesis.cancel();
+  document.querySelectorAll('.voorlees-btn').forEach(b => { b.textContent = '🔊 Lees voor'; });
+}
+
+function toggleVoorlezen(btn) {
+  if (window.speechSynthesis.speaking) { stopVoorlezen(); return; }
+  const zin = new SpeechSynthesisUtterance(voorleesTekst());
+  zin.lang = 'nl-NL';
+  zin.rate = 0.95;
+  // Een Nederlandse stem als die er is; anders doet lang='nl-NL' zijn best.
+  const stem = window.speechSynthesis.getVoices().find(v => (v.lang || '').toLowerCase().indexOf('nl') === 0);
+  if (stem) zin.voice = stem;
+  zin.onend = stopVoorlezen;
+  zin.onerror = stopVoorlezen;
+  btn.textContent = '⏹ Stop';
+  window.speechSynthesis.speak(zin);
+}
+
+function plaatsVoorleesknop() {
+  if (!magVoorlezen || !kanSpreken) return;
+  const kaart = document.querySelector('#question-area .q-card');
+  if (!kaart) return;
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'voorlees-btn';
+  btn.textContent = '🔊 Lees voor';
+  btn.onclick = () => toggleVoorlezen(btn);
+  const kop = kaart.querySelector('h3');
+  kaart.insertBefore(btn, kop ? kop.nextSibling : kaart.firstChild);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RENDER DISPATCH
+// ─────────────────────────────────────────────────────────────────────────────
+function renderQuestion() {
+  stopVoorlezen();
+  updateProgress();
+  const q   = questions[current];
+  const area = document.getElementById('question-area');
+  const nav  = document.getElementById('nav-row');
+
+  let html = `<div class="q-card${(q.type === 'mc' || q.type === 'order') && q.passage ? ' q-breed' : ''}">`;
+  html += `<span class="q-type-label ${q.labelClass}">${q.label}</span>`;
+  html += `<h3>${q.question}</h3>`;
+
+  if (q.img) html += `<figure class="bl-fig"><img src="${q.img}" alt=""><figcaption>${q.bijschrift || ''}</figcaption></figure>`;
+  if      (q.type === 'mark')  html += renderMark(q);
+  else if (q.type === 'mc')    html += renderMC(q);
+  else if (q.type === 'order') html += renderOrder(q);
+  else if (q.type === 'drag')  html += renderDrag(q);
+
+  html += `<div class="feedback" id="feedback-box"></div>`;
+  html += `</div>`;
+  area.innerHTML = html;
+  plaatsVoorleesknop();
+
+  if (q.type === 'order') attachOrderHandlers();
+  if (q.type === 'drag')  attachDragHandlers();
+
+  nav.innerHTML = '';
+  if (current > 0) {
+    const b = document.createElement('button');
+    b.className = 'btn btn-secondary';
+    b.textContent = '← Vorige';
+    b.onclick = () => { current--; renderQuestion(); };
+    nav.appendChild(b);
+  }
+
+  if (answered[current]) {
+    restoreAnswered();
+    addNextBtn(nav);
+  }
+}
+
+function addNextBtn(nav) {
+  if (document.getElementById('next-btn')) return;
+  const isLast = current === questions.length - 1;
+  const b = document.createElement('button');
+  b.className = 'btn btn-primary';
+  b.id = 'next-btn';
+  b.textContent = isLast ? 'Bekijk resultaat →' : 'Volgende vraag →';
+  b.onclick = () => {
+    if (isLast) showFinish();
+    else { current++; renderQuestion(); }
+  };
+  nav.appendChild(b);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MARK (word-level highlighting)
+// ─────────────────────────────────────────────────────────────────────────────
+function tokenize(text) {
+  // Split into words and whitespace/punctuation tokens
+  // Each entry: { word: string, isWord: bool }
+  const parts = [];
+  const re = /(\s+|[^\s]+)/g;
+  let m;
+  while ((m = re.exec(text)) !== null) {
+    const t = m[0];
+    const isWord = /\S/.test(t);
+    parts.push({ text: t, isWord });
+  }
+  return parts;
+}
+
+function renderMark(q) {
+  const tokens = tokenize(q.passage);
+  let html = `<p class="mark-instruction">Klik op woorden in de tekst om ze te selecteren. Klik nog een keer om de selectie ongedaan te maken.</p>`;
+  html += `<div class="passage markable" id="mark-passage">`;
+  let wordIdx = 0;
+  tokens.forEach(tok => {
+    if (tok.isWord) {
+      html += `<span class="mw" data-wi="${wordIdx}" onclick="toggleWord(${wordIdx})">${escHtml(tok.text)}</span>`;
+      wordIdx++;
+    } else {
+      html += escHtml(tok.text);
+    }
+  });
+  html += `</div>`;
+  html += `<button class="mark-check-btn" id="mark-check" onclick="checkMark()">Controleer markering</button>`;
+  return html;
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function toggleWord(wi) {
+  if (answered[current]) return;
+  const sel = markState[current];
+  const el  = document.querySelector(`.mw[data-wi="${wi}"]`);
+  if (!el) return;
+  if (sel.has(wi)) { sel.delete(wi); el.classList.remove('sel'); }
+  else             { sel.add(wi);    el.classList.add('sel'); }
+}
+
+function checkMark() {
+  if (answered[current]) return;
+  const q   = questions[current];
+  const sel = markState[current];
+  if (sel.size === 0) return;
+
+  // Full correct set (all words in the ideal span)
+  const correctSet = new Set();
+  for (let i = q.correctSpan.start; i <= q.correctSpan.end; i++) correctSet.add(i);
+
+  // Core words: the keywords that MUST be present for any credit
+  const coreSet = new Set(q.coreWords || []);
+
+  // How many core words did the student select?
+  let coreHit = 0;
+  coreSet.forEach(wi => { if (sel.has(wi)) coreHit++; });
+  const coreRatio = coreSet.size > 0 ? coreHit / coreSet.size : 1;
+
+  // Overlap with full correct span
+  let overlap = 0;
+  sel.forEach(wi => { if (correctSet.has(wi)) overlap++; });
+  const precision = overlap / sel.size;          // hoe veel van wat je selecteerde klopt
+  const recall    = overlap / correctSet.size;   // hoe veel van het goede antwoord heb je
+
+  // Scoring:
+  // 2 pts: kernwoorden aangeraakt én selectie is redelijk precies
+  // 1 pt:  kernwoorden aangeraakt maar selectie te ruim/smal, of goede richting
+  // 0 pt:  kernwoorden gemist
+  let pts = 0;
+  let ok  = false;
+  if (coreRatio >= 0.6) {
+    if (precision >= 0.55 && recall >= 0.45) {
+      pts = q.points;  // vol
+      ok  = true;
+    } else {
+      pts = 1;         // gedeeltelijk — goede richting
+      ok  = true;
+    }
+  }
+
+  // Colour words: groen = goed geselecteerd, rood = fout geselecteerd,
+  // goud omlijnd = had je moeten selecteren (alleen tonen als fout)
+  document.querySelectorAll('.mw').forEach(el => {
+    const wi = parseInt(el.dataset.wi);
+    el.style.pointerEvents = 'none';
+    const inCorrect = correctSet.has(wi);
+    const inSel     = sel.has(wi);
+    if (inCorrect && inSel)  { el.classList.remove('sel'); el.classList.add('ok'); }
+    else if (inSel)          { el.classList.remove('sel'); el.classList.add('err'); }
+    else if (inCorrect && !ok) { el.classList.add('ok'); } // toon gemiste woorden alleen als fout
+  });
+
+  document.getElementById('mark-check').disabled = true;
+  recordAnswer(pts);
+
+  // Aangepaste feedbacktekst afhankelijk van score
+  let fbPrefix = '';
+  if (pts === q.points)    fbPrefix = '✅ <strong>Heel goed!</strong> ';
+  else if (pts === 1)      fbPrefix = '👍 <strong>Bijna!</strong> Je had de goede plek, maar markeer iets preciezer. ';
+  else                     fbPrefix = '❌ <strong>Niet helemaal.</strong> ';
+
+  const fb = document.getElementById('feedback-box');
+  fb.className = 'feedback show ' + (pts > 0 ? 'correct-fb' : 'wrong-fb');
+  fb.innerHTML = fbPrefix + q.feedback;
+
+  addNextBtn(document.getElementById('nav-row'));
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MC
+// ─────────────────────────────────────────────────────────────────────────────
+function renderMC(q) {
+  let html = '';
+  if (q.passage) html += `<div class="passage">${q.passage}</div>`;
+  html += '<div class="options">';
+  q.options.forEach((opt, i) => {
+    html += `<button class="opt-btn" onclick="answerMC(${i})">${opt}</button>`;
+  });
+  html += '</div>';
+  return html;
+}
+
+function answerMC(i) {
+  if (answered[current]) return;
+  const q    = questions[current];
+  const btns = document.querySelectorAll('.opt-btn');
+  btns.forEach(b => b.disabled = true);
+  btns[i].classList.add(i === q.correct ? 'correct' : 'wrong');
+  if (i !== q.correct) btns[q.correct].classList.add('correct');
+  const ok  = i === q.correct;
+  recordAnswer(ok ? q.points : 0);
+  showFeedback(ok, q.feedback);
+  addNextBtn(document.getElementById('nav-row'));
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ORDER
+// ─────────────────────────────────────────────────────────────────────────────
+function renderOrder(q) {
+  const shuffled = [...q.items].sort(() => Math.random() - .5);
+  let html = q.passage ? `<div class="passage">${q.passage}</div>` : '';
+  html += '<div class="order-list" id="order-list">';
+  shuffled.forEach(item => {
+    html += `<div class="order-item" draggable="true" data-id="${item.id}">
+      <span class="handle">⠿</span><span>${item.text}</span>
+    </div>`;
+  });
+  html += '</div>';
+  html += '<button class="btn btn-gold" onclick="checkOrder()" style="margin-top:4px;">Controleer volgorde</button>';
+  return html;
+}
+
+function attachOrderHandlers() {
+  const list = document.getElementById('order-list');
+  if (!list) return;
+  let dragEl = null;
+  list.addEventListener('dragstart', e => { dragEl = e.target.closest('.order-item'); e.dataTransfer.effectAllowed = 'move'; });
+  list.addEventListener('dragover',  e => {
+    e.preventDefault();
+    const target = e.target.closest('.order-item');
+    if (target && target !== dragEl) {
+      const mid = target.getBoundingClientRect().top + target.getBoundingClientRect().height / 2;
+      if (e.clientY < mid) list.insertBefore(dragEl, target);
+      else list.insertBefore(dragEl, target.nextSibling);
+    }
+  });
+  // ── touch (iPad): emuleer slepen ──
+  let touchEl = null;
+  list.addEventListener("touchstart", e => {
+    const t = e.target.closest(".order-item");
+    if (!t || t.draggable === false) return;
+    touchEl = dragEl = t; t.classList.add("dragging");
+  }, { passive: true });
+  list.addEventListener("touchmove", e => {
+    if (!touchEl) return;
+    e.preventDefault();
+    const pt = e.touches[0];
+    const target = document.elementFromPoint(pt.clientX, pt.clientY)?.closest(".order-item");
+    if (target && target !== touchEl) {
+      const r = target.getBoundingClientRect();
+      if (pt.clientY < r.top + r.height / 2) list.insertBefore(touchEl, target);
+      else list.insertBefore(touchEl, target.nextSibling);
+    }
+  }, { passive: false });
+  const endOrderTouch = () => { if (touchEl) touchEl.classList.remove("dragging"); touchEl = null; };
+  list.addEventListener("touchend", endOrderTouch);
+  list.addEventListener("touchcancel", endOrderTouch);
+}
+
+function checkOrder() {
+  if (answered[current]) return;
+  const q      = questions[current];
+  const items  = document.querySelectorAll('.order-item');
+  const user   = [...items].map(el => el.dataset.id);
+  const ok     = JSON.stringify(user) === JSON.stringify(q.correctOrder);
+  items.forEach((el,i) => {
+    el.draggable = false;
+    el.classList.add(user[i] === q.correctOrder[i] ? 'correct-order' : 'wrong-order');
+  });
+  document.querySelector('[onclick="checkOrder()"]').disabled = true;
+  const correct = user.filter((v,i) => v === q.correctOrder[i]).length;
+  const pts = ok ? q.points : (correct >= 3 ? 1 : 0);
+  recordAnswer(pts);
+  showFeedback(ok, q.feedback);
+  addNextBtn(document.getElementById('nav-row'));
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DRAG CATEGORY
+// ─────────────────────────────────────────────────────────────────────────────
+function renderDrag(q) {
+  let html = '';
+  if (q.passage) html += `<div class="passage">${q.passage}</div>`;
+  html += '<div class="drag-container">';
+  const shuffled = [...q.items].sort(() => Math.random() - .5);
+  html += '<div class="drag-pool"><h4>Sleep de namen →</h4><div class="drag-list" id="pool" data-cat="pool">';
+  shuffled.forEach(item => {
+    html += `<div class="drag-item" draggable="true" data-id="${item.id}">${item.text}</div>`;
+  });
+  html += '</div></div>';
+  q.categories.forEach(cat => {
+    const catId = cat.replace(/[\s\/]/g,'_');
+    html += `<div class="drag-pool"><h4>${cat}</h4><div class="drag-list" id="cat_${catId}" data-cat="${cat}"></div></div>`;
+  });
+  html += '</div>';
+  html += '<button class="btn btn-gold" onclick="checkDrag()" style="margin-top:4px;">Controleer</button>';
+  return html;
+}
+
+function attachDragHandlers() {
+  let src = null;
+  document.querySelectorAll('.drag-item').forEach(el => {
+    el.addEventListener('dragstart', e => { src = e.currentTarget; e.dataTransfer.effectAllowed='move'; });
+  });
+  document.querySelectorAll('.drag-list').forEach(zone => {
+    zone.addEventListener('dragover',  e => { e.preventDefault(); zone.classList.add('over'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('over'));
+    zone.addEventListener('drop', e => {
+      e.preventDefault(); zone.classList.remove('over');
+      if (src) zone.appendChild(src); src = null;
+    });
+  });
+  // ── touch (iPad): emuleer slepen naar categorie ──
+  document.querySelectorAll(".drag-item").forEach(el => {
+    el.addEventListener("touchstart", e => {
+      if (el.draggable === false) return;
+      src = el; el.classList.add("dragging");
+    }, { passive: true });
+    el.addEventListener("touchmove", e => {
+      if (src !== el) return;
+      e.preventDefault();
+      const pt = e.touches[0];
+      const zone = document.elementFromPoint(pt.clientX, pt.clientY)?.closest(".drag-list");
+      document.querySelectorAll(".drag-list.over").forEach(z => z.classList.remove("over"));
+      if (zone) zone.classList.add("over");
+    }, { passive: false });
+    const drop = e => {
+      if (src !== el) return;
+      el.classList.remove("dragging");
+      const pt = e.changedTouches[0];
+      const zone = pt ? document.elementFromPoint(pt.clientX, pt.clientY)?.closest(".drag-list") : null;
+      document.querySelectorAll(".drag-list.over").forEach(z => z.classList.remove("over"));
+      if (zone) zone.appendChild(src);
+      src = null;
+    };
+    el.addEventListener("touchend", drop);
+    el.addEventListener("touchcancel", drop);
+  });
+}
+
+function checkDrag() {
+  if (answered[current]) return;
+  const q = questions[current];
+  let correct = 0;
+  q.items.forEach(item => {
+    const el   = document.querySelector(`.drag-item[data-id="${item.id}"]`);
+    if (!el) return;
+    const zone = el.closest('.drag-list');
+    const cat  = zone ? zone.dataset.cat : '';
+    if (cat === item.correct) { el.classList.add('correct-drag'); correct++; }
+    else el.classList.add('wrong-drag');
+    el.draggable = false;
+  });
+  document.querySelector('[onclick="checkDrag()"]').disabled = true;
+  const ok  = correct === q.items.length;
+  const pts = ok ? q.points : (correct >= 2 ? 1 : 0);
+  recordAnswer(pts);
+  showFeedback(ok, q.feedback);
+  addNextBtn(document.getElementById('nav-row'));
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────────────────────────────────────
+function recordAnswer(pts) {
+  scores[current]   = pts;
+  answered[current] = true;
+  score = scores.reduce((a,b)=>a+b,0);
+  document.getElementById('score-num').textContent = score;
+  saveProgress();
+  if (pts > 0 && !paidSet.has(current)) {
+    paidSet.add(current);
+    savePaid();
+    try { window.parent.postMessage({ type: 'begrijpend-correct', amount: 10 }, '*'); } catch(e){}
+  }
+}
+
+function showFeedback(ok, text) {
+  const fb = document.getElementById('feedback-box');
+  fb.className = 'feedback show ' + (ok ? 'correct-fb' : 'wrong-fb');
+  fb.innerHTML = (ok ? '✅ <strong>Goed!</strong> ' : '❌ <strong>Niet helemaal.</strong> ') + text;
+}
+
+function restoreAnswered() {
+  const q   = questions[current];
+  const pts = scores[current];
+  const ok  = pts > 0;
+  const fb  = document.getElementById('feedback-box');
+  if (fb) {
+    fb.className = 'feedback show ' + (ok ? 'correct-fb' : 'wrong-fb');
+    fb.innerHTML = (ok ? '✅ <strong>Goed!</strong> ' : '❌ <strong>Niet helemaal.</strong> ') + q.feedback;
+  }
+  // For mark questions re-disable check button
+  const mc = document.getElementById('mark-check');
+  if (mc) mc.disabled = true;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FINISH
+// ─────────────────────────────────────────────────────────────────────────────
+function showFinish() {
+  const total = questions.reduce((a,q)=>a+q.points,0);
+  const pct   = Math.round((score/total)*100);
+  document.getElementById('progress-bar').style.width = '100%';
+  document.getElementById('finish-score').textContent = `${score} / ${total}`;
+  let medal = '🏅', msg = '';
+  if (pct >= 85) { medal='🏆'; msg='Uitstekend! Je begrijpt de teksten heel goed en markeert precies het juiste stuk.'; }
+  else if (pct >= 60) { medal='⭐'; msg='Goed gedaan! Je snapt de meeste teksten prima. Probeer bij letterlijke vragen nog preciezer te markeren.'; }
+  else { medal='📖'; msg='Nog een keer lezen helpt! Let goed op welk stukje tekst echt het antwoord geeft.'; }
+  document.getElementById('finish-medal').textContent = medal;
+  document.getElementById('finish-msg').textContent   = msg;
+  const goed = scores.filter(p => p > 0).length;
+  const rows = questions.map((q,i) => {
+    const ok = scores[i] > 0;
+    let t = q.question.replace(/<[^>]*>/g,'');
+    if (t.length > 72) t = t.slice(0,72) + '…';
+    return `<div class="ov-row ${ok?'ov-ok':'ov-no'}"><span class="ov-ic">${ok?'✅':'❌'}</span><span class="ov-q"><b>Vraag ${i+1}:</b> ${t}</span></div>`;
+  }).join('');
+  document.getElementById('finish-overview').innerHTML =
+    `<div class="ov-title">${goed} van ${questions.length} vragen goed</div>` + rows;
+  show('finish-screen');
+  const opgaven = questions.map((q,i) => ({ vraag: q.question.replace(/<[^>]*>/g,''), puntenBehaald: scores[i], puntenMax: q.points }));
+  window.KennisKist?.slaResultaatOp?.('families-les4', score, total, { opgaven, groep: +GROEP });
+  window.KennisKist?.toonInlogstatus?.(document.getElementById('kkStatus'));
+}
+
+function restartQuiz() {
+  current  = 0; score = 0;
+  scores   = new Array(questions.length).fill(0);
+  answered = new Array(questions.length).fill(false);
+  markState= questions.map(() => new Set());
+  localStorage.removeItem(SLEUTEL);
+  document.getElementById('score-num').textContent = 0;
+  show('quiz-screen');
+  renderQuestion();
+}
+
+// Per ongeluk de pagina verversen mag geen straf zijn: staat er al voortgang in
+// de opslag, dan slaan we het introscherm over en pakken we de les op bij de
+// eerste vraag die nog open staat.
+(function hervatNaVerversen() {
+  try {
+    const d = JSON.parse(localStorage.getItem(SLEUTEL) || 'null');
+    if (d && Array.isArray(d.answered) && d.answered.length === questions.length
+        && d.answered.some(Boolean)) startQuiz();
+  } catch (e) {}
+})();
+/* ===== Spelletje na elke 5 goede antwoorden (briefgeld bij beide vakken) ===== */
+(function(){
+  var streak = 0, pending = false;
+  var GAMES = [['kies','🎮','Kies een spelletje']];
+  var st = document.createElement('style');
+  st.textContent = '.bl-break-ov{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(8,10,18,.82);backdrop-filter:blur(6px)}.bl-break-ov.hide{display:none}.bl-break-card{background:#11131f;border:1.5px solid rgba(6,214,160,.4);border-radius:22px;box-shadow:0 24px 60px -16px rgba(0,0,0,.7);padding:28px 24px;max-width:460px;width:100%;text-align:center}.bl-break-stars{font-size:1.6rem;letter-spacing:3px}.bl-break-title{font-family:"Baloo 2",system-ui,sans-serif;font-size:1.7rem;margin:8px 0 4px;color:#fff}.bl-break-sub{color:rgba(255,255,255,.6);margin:0 0 18px;font-size:.95rem}.bl-break-games{display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:14px}.bl-break-game{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 6px;border-radius:14px;border:1.5px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#fff;font-weight:700;font-size:.85rem;cursor:pointer;font-family:inherit;transition:.15s}.bl-break-game:hover{transform:translateY(-4px);background:rgba(6,214,160,.18);border-color:rgba(6,214,160,.7)}.bl-break-game:active{transform:scale(.96)}.bl-break-game span{font-size:1.8rem}.bl-break-skip{margin-top:4px;background:none;border:none;color:rgba(255,255,255,.55);font-size:.9rem;cursor:pointer;font-family:inherit;text-decoration:underline}';
+  document.head.appendChild(st);
+  var ov = null;
+  function build(){
+    if(ov) return;
+    ov = document.createElement('div');
+    ov.className = 'bl-break-ov hide';
+    ov.innerHTML = '<div class="bl-break-card"><div class="bl-break-stars">⭐⭐⭐⭐⭐</div><h2 class="bl-break-title">5 goede antwoorden!</h2><p class="bl-break-sub">Kies een spelletje. Daarna ga je verder met lezen.</p><div class="bl-break-games">'+GAMES.map(function(g){return '<button class="bl-break-game" data-game="'+g[0]+'"><span>'+g[1]+'</span>'+g[2]+'</button>';}).join('')+'</div><button class="bl-break-skip" id="bl-break-skip">Doorgaan zonder spelletje →</button></div>';
+    document.body.appendChild(ov);
+    ov.querySelectorAll('.bl-break-game').forEach(function(b){
+      b.onclick = function(){ try{ window.parent.postMessage({type:'begrijpend-game',game:b.dataset.game},'*'); }catch(e){} };
+    });
+    document.getElementById('bl-break-skip').onclick = resume;
+  }
+  function showBreak(){ build(); ov.classList.remove('hide'); }
+  function resume(){
+    if(ov) ov.classList.add('hide');
+    pending = false;
+    if(current === questions.length - 1) showFinish(); else { current++; renderQuestion(); }
+  }
+  window.addEventListener('message', function(e){ if(e.data && e.data.type==='begrijpend-resume') resume(); });
+
+  var _record = recordAnswer;
+  recordAnswer = function(pts){
+    _record(pts);
+    if(pts > 0){ streak++; if(streak % 5 === 0) pending = true; }
+  };
+  var _addNext = addNextBtn;
+  addNextBtn = function(nav){
+    _addNext(nav);
+    var b = document.getElementById('next-btn');
+    if(b){ var orig = b.onclick; b.onclick = function(){ if(pending){ showBreak(); return; } orig(); }; }
+  };
+})();
+</script>
+
+</body>
+</html>

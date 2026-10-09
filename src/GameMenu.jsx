@@ -405,6 +405,7 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
           onBack={() => { clearGate('begrijpend'); setSubject(null) }}
           addBriefgeld={makeGated('begrijpend', addBriefgeld)}
           addCuruntie={makeGated('begrijpend', addCuruntie)}
+          groep={year}
         />
       )
     }
@@ -597,7 +598,7 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
                     : game === 'topo'
                     ? 'Europa — kaart A'
                     : game === 'begrijpend'
-                    ? 'Duurzaam design'
+                    ? 'Duurzaam design · Fantastische families'
                     : 'Komt binnenkort'}
                 </span>
                 {(game || s.key === 'spelling') && <span className="vb-line">{s.vb}</span>}

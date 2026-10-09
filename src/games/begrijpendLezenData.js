@@ -14,4 +14,18 @@ export const THEMAS = [
       { key: 'les5', naam: 'Les 5 — Mobiel binnenstebuiten', file: 'spullen-les5.html', klaar: true },
     ],
   },
+  {
+    // Eén bestand per les met een vragenset voor groep 7 en een (moeilijkere)
+    // voor groep 8; de les krijgt ?groep=7|8 mee. Gebouwd met
+    // scripts/begrijpend/maak-families.mjs.
+    key: 'families',
+    naam: 'Fantastische families',
+    emoji: '👪',
+    kleur: '#F9A826',
+    groepKeuze: true,
+    lessen: [
+      'Een koninklijke ruzie', 'Dappere Drucker', 'Ons verleden',
+      'Kom in verzet', 'Rebelse jongeren', 'Nieuwe gezinnen',
+    ].map((naam, i) => ({ key: `les${i + 1}`, naam: `Les ${i + 1} — ${naam}`, file: `families-les${i + 1}.html`, klaar: true })),
+  },
 ]
