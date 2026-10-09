@@ -210,14 +210,15 @@ export const pctVerhouding = (s) => () => {
 export const schaal = (s) => () => {
   if (!s) {
     const per = pick([200, 250, 500]), cm = rnd(2, 12), echt = cm * per
-    if (Math.random() < 0.5) return { vraag: `Op de kaart staat een schaallijntje: 1 cm is ${per} m. De route is op de kaart ${cm} cm. Hoeveel km is de route in het echt?`, kaal: `${cm} × ${per} m = … km`, antwoord: komma(echt / 1000), eenheid: 'km', uitleg: `${cm} × ${per} = ${getal(echt)} m = ${komma(echt / 1000)} km.` }
+    const lijntje = (kaart, inEcht) => ({ type: 'schaal', N: per * 100, tabel: [['op de kaart (cm)', 1, kaart], ['in het echt (m)', per, inEcht]] })
+    if (Math.random() < 0.5) return { figuur: lijntje(cm, '?'), vraag: `Op de kaart staat een schaallijntje: 1 cm is ${per} m. De route is op de kaart ${cm} cm. Hoeveel km is de route in het echt?`, kaal: `${cm} × ${per} m = … km`, antwoord: komma(echt / 1000), eenheid: 'km', uitleg: `${cm} × ${per} = ${getal(echt)} m = ${komma(echt / 1000)} km.` }
     const km = pick([1, 2, 3]), lijn = km * 1000 / per
     if (!Number.isInteger(lijn * 2)) return schaal(s)()
-    return { vraag: `Op de kaart is 1 cm in het echt ${per} m. Een weg is in het echt ${km} km. Hoe lang teken je de weg op de kaart?`, kaal: `${km} km : ${per} m = … cm`, antwoord: komma(lijn), eenheid: 'cm', uitleg: `${km} km = ${km * 1000} m. ${km * 1000} : ${per} = ${komma(lijn)} cm.` }
+    return { figuur: lijntje('?', getal(km * 1000)), vraag: `Op de kaart is 1 cm in het echt ${per} m. Een weg is in het echt ${km} km. Hoe lang teken je de weg op de kaart?`, kaal: `${km} km : ${per} m = … cm`, antwoord: komma(lijn), eenheid: 'cm', uitleg: `${km} km = ${km * 1000} m. ${km * 1000} : ${per} = ${komma(lijn)} cm.` }
   }
   const sch = pick([50000, 100000, 200000, 250000, 500000, 750000]), cm = rnd(2, 24), km = cm * sch / 100000
-  if (Math.random() < 0.5) return { vraag: `Een kaart heeft schaal 1 : ${getal(sch)}. De route is op de kaart ${cm} cm. Hoeveel km is de route in het echt?`, kaal: `${cm} cm × ${getal(sch)} = … km`, antwoord: komma(km), eenheid: 'km', uitleg: `1 cm = ${getal(sch)} cm = ${komma(sch / 100000)} km. ${cm} × ${komma(sch / 100000)} = ${komma(km)} km.` }
-  return { vraag: `Een route is op de kaart ${cm} cm. In het echt is de route ${komma(km)} km. Wat is de schaal? Schrijf alleen het getal na 1 : …`, kaal: `${cm} cm = ${komma(km)} km. Schaal 1 : …`,
+  if (Math.random() < 0.5) return { figuur: { type: 'schaal', N: sch, tabel: [['op de kaart (cm)', 1, cm], ['in het echt (km)', komma(sch / 100000), '?']] }, vraag: `Een kaart heeft schaal 1 : ${getal(sch)}. De route is op de kaart ${cm} cm. Hoeveel km is de route in het echt?`, kaal: `${cm} cm × ${getal(sch)} = … km`, antwoord: komma(km), eenheid: 'km', uitleg: `1 cm = ${getal(sch)} cm = ${komma(sch / 100000)} km. ${cm} × ${komma(sch / 100000)} = ${komma(km)} km.` }
+  return { figuur: { type: 'schaal', N: null, tabel: [['op de kaart (cm)', cm, 1], ['in het echt (cm)', getal(km * 100000), '?']] }, vraag: `Een route is op de kaart ${cm} cm. In het echt is de route ${komma(km)} km. Wat is de schaal? Schrijf alleen het getal na 1 : …`, kaal: `${cm} cm = ${komma(km)} km. Schaal 1 : …`,
     antwoord: sch, uitleg: `${komma(km)} km = ${getal(km * 100000)} cm. ${getal(km * 100000)} : ${cm} = ${getal(sch)}, dus 1 : ${getal(sch)}.` }
 }
 
@@ -292,8 +293,8 @@ export const cijferenKeerDeel = (s) => () => {
 export const glazenBreuk = (s) => () => {
   const k = pick(s ? [3, 4, 5, 6, 8] : [2, 3, 4, 5]), heel = rnd(1, 4), half = s && Math.random() < 0.5 && k % 2 === 0
   const liter = heel + (half ? 0.5 : 0), aantal = liter * k
-  return { vraag: `Een fles bevat ${half ? `${heel} 1/2` : heel} liter limonade. Hoeveel glazen van 1/${k} liter kun je ermee vullen?`, kaal: `${half ? `${heel} 1/2` : heel} : 1/${k} =`,
-    antwoord: aantal, uitleg: `In 1 liter passen ${k} glazen van 1/${k} liter. ${komma(liter)} × ${k} = ${aantal} glazen.` }
+  return { vraag: `Een fles bevat ${half ? `${heel} 1/2` : heel} liter limonade. Hoeveel glazen van 1/${k} liter kun je ermee vullen? Je mag de getallenlijn gebruiken.`, kaal: `${half ? `${heel} 1/2` : heel} : 1/${k} =`,
+    antwoord: aantal, figuur: { type: 'getallenlijn', start: 0, eind: Math.ceil(liter), waarde: liter, segs: Math.ceil(liter) * k }, uitleg: `In 1 liter passen ${k} glazen van 1/${k} liter. ${komma(liter)} × ${k} = ${aantal} glazen.` }
 }
 
 // Aanbiedingen: hoeveel procent korting, en wat is de beste koop?

@@ -26,6 +26,29 @@ function alleGenerators() {
 const GENERATORS = alleGenerators()
 
 describe('verhaaltjessommen', () => {
+  // Bij doelen die óver een plaatje gaan, hoort de som een plaatje te hebben —
+  // ook als kale som. [deel van de doeltekst, minimaal aandeel met plaatje]
+  const PLAATJE_NODIG = [
+    [/bij een plaatje aangeven welk deel gekleurd/, 1], [/meten met stroken/, 1], [/breuken schattend plaatsen en aflezen op de getallenlijn/, 1],
+    [/breuken met elkaar vergelijken met behulp van afbeeldingen/, 1], [/jaarkalender aflezen/, 1], [/vanuit een bepaald standpunt ziet/, 1],
+    [/namen van figuren en vormen/, 1], [/plaats op een kaart kunt vinden/, 0.6],
+    [/inhoud aflezen bij maatbekers/, 0.3], [/bij een deelverhaal of (een )?plaatje een deelsom/, 0.35], [/met een schaallijntje een lengte op schaal/, 0.6],
+    [/lijndiagrammen en een beelddiagram/, 1], [/stapeldiagram en een lijndiagram/, 1],
+    [/windrichtingen gebruiken/, 1], [/een deel aflezen van een staafdiagram/, 0.12], [/breuk aanvullen tot een hele/, 1], [/omtrek en de oppervlakte van een cirkel/, 1], [/negatieve getallen en op Romeinse/, 0.3],
+    [/oppervlakte berekenen van rechthoeken en eenvoudige figuren/, 0.5],
+  ]
+  it('geeft een plaatje bij doelen die over een plaatje gaan', () => {
+    for (const [re, min] of PLAATJE_NODIG) {
+      const gens = GENERATORS.filter(g => re.test(g.doel))
+      expect(gens.length, `geen doel gevonden voor ${re}`).toBeGreaterThan(0)
+      for (const g of gens) {
+        let met = 0
+        for (let n = 0; n < 200; n++) if (g.gen().figuur) met++
+        expect(met / 200, `groep ${g.groep} ${g.route} ${g.blok}: ${g.doel.slice(0, 50)} — te weinig plaatjes`).toBeGreaterThanOrEqual(min)
+      }
+    }
+  })
+
   // "Kale sommen" (VerhaaltjesSommen met kaleSommen) toont altijd opgave.kaal;
   // zonder kale som zou het kind toch het verhaaltje krijgen.
   it('heeft bij elk doel een kale som', () => {

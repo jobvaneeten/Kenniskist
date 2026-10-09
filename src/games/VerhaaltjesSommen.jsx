@@ -30,6 +30,32 @@ function toonAntwoord(o) {
 }
 
 // ── Figuur (oppervlakte / omtrek / inhoud) ──
+// Breuk als plaatje: strook (n stukken naast elkaar), taart (n punten) of reep
+// (2 rijen). De eerste k stukken zijn gekleurd.
+function BreukVorm({ vorm, n, k }) {
+  const vul = 'rgba(255,210,63,0.6)', leeg = 'rgba(255,255,255,0.05)'
+  if (vorm === 'taart') {
+    const cx = 80, cy = 80, r = 70
+    const punt = (i) => [cx + r * Math.cos(-Math.PI / 2 + i * 2 * Math.PI / n), cy + r * Math.sin(-Math.PI / 2 + i * 2 * Math.PI / n)]
+    return (
+      <svg className="rs-figuur" viewBox="0 0 160 160" width="160" height="160">
+        {[...Array(n)].map((_, i) => {
+          const [x1, y1] = punt(i), [x2, y2] = punt(i + 1)
+          return <path key={i} d={`M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${n === 1 ? 1 : 0} 1 ${x2} ${y2} Z`} fill={i < k ? vul : leeg} stroke="#ffd23f" strokeWidth="2" />
+        })}
+      </svg>
+    )
+  }
+  const rijen = vorm === 'reep' ? 2 : 1, kol = n / rijen, cw = vorm === 'reep' ? 44 : Math.min(60, 300 / n), ch = vorm === 'reep' ? 34 : 44
+  return (
+    <svg className="rs-figuur" viewBox={`0 0 ${kol * cw + 8} ${rijen * ch + 8}`} width={kol * cw + 8} height={rijen * ch + 8}>
+      {[...Array(n)].map((_, i) => (
+        <rect key={i} x={4 + (i % kol) * cw} y={4 + Math.floor(i / kol) * ch} width={cw} height={ch} fill={i < k ? vul : (vorm === 'reep' ? 'rgba(120,72,40,0.5)' : leeg)} stroke="#ffd23f" strokeWidth="2" />
+      ))}
+    </svg>
+  )
+}
+
 export function Figuur({ figuur }) {
   if (!figuur) return null
   const e = figuur.eenheid
@@ -37,10 +63,58 @@ export function Figuur({ figuur }) {
     const max = 170, sc = max / Math.max(figuur.l, figuur.b)
     const w = Math.max(figuur.l * sc, 40), h = Math.max(figuur.b * sc, 30)
     return (
-      <svg className="rs-figuur" viewBox={`0 0 ${w + 70} ${h + 46}`} width={w + 70} height={h + 46}>
-        <rect x="38" y="8" width={w} height={h} fill="rgba(255,210,63,0.14)" stroke="#ffd23f" strokeWidth="2.5" rx="3" />
-        <text x={38 + w / 2} y="2" textAnchor="middle" dominantBaseline="hanging" fill="#fffbeb" fontSize="14" fontWeight="700">{figuur.l} {e}</text>
-        <text x="30" y={8 + h / 2} textAnchor="end" dominantBaseline="middle" fill="#fffbeb" fontSize="14" fontWeight="700">{figuur.b} {e}</text>
+      <svg className="rs-figuur" viewBox={`0 0 ${w + 84} ${h + 40}`} width={w + 84} height={h + 40}>
+        <rect x="52" y="24" width={w} height={h} fill="rgba(255,210,63,0.14)" stroke="#ffd23f" strokeWidth="2.5" rx="3" />
+        <text x={52 + w / 2} y="4" textAnchor="middle" dominantBaseline="hanging" fill="#fffbeb" fontSize="14" fontWeight="700">{figuur.l.toLocaleString('nl-NL')} {e}</text>
+        <text x="44" y={24 + h / 2} textAnchor="end" dominantBaseline="middle" fill="#fffbeb" fontSize="14" fontWeight="700">{figuur.b.toLocaleString('nl-NL')} {e}</text>
+      </svg>
+    )
+  }
+  // L-vorm: de hele rechthoek met rechtsboven een hoek eruit (gestippeld).
+  if (figuur.type === 'lvorm') {
+    const sc = 200 / Math.max(figuur.l, figuur.b * 1.4), w = figuur.l * sc, h = figuur.b * sc
+    const hw = figuur.hl * sc, hh = figuur.hb * sc, x = 38, y = 26
+    const tekst = (tx, ty, s, anchor = 'middle') => <text x={tx} y={ty} textAnchor={anchor} dominantBaseline="middle" fill="#fffbeb" fontSize="13" fontWeight="700">{s} {e}</text>
+    return (
+      <svg className="rs-figuur" viewBox={`0 0 ${w + 90} ${h + 52}`} width={w + 90} height={h + 52}>
+        <rect x={x + w - hw} y={y} width={hw} height={hh} fill="none" stroke="#7dd3fc" strokeWidth="2" strokeDasharray="5 4" />
+        <polygon points={`${x},${y} ${x + w - hw},${y} ${x + w - hw},${y + hh} ${x + w},${y + hh} ${x + w},${y + h} ${x},${y + h}`} fill="rgba(255,210,63,0.16)" stroke="#ffd23f" strokeWidth="2.5" strokeLinejoin="round" />
+        {tekst(x + w / 2, y + h + 16, figuur.l)}
+        {tekst(x - 8, y + h / 2, figuur.b, 'end')}
+        {tekst(x + w - hw / 2, y - 12, figuur.hl)}
+        {tekst(x + w + 8, y + hh / 2, figuur.hb, 'start')}
+      </svg>
+    )
+  }
+  // Cirkel met de straal getekend.
+  if (figuur.type === 'cirkelr') {
+    return (
+      <svg className="rs-figuur" viewBox="0 0 160 150" width="160" height="150">
+        <circle cx="80" cy="75" r="62" fill="rgba(255,210,63,0.14)" stroke="#ffd23f" strokeWidth="2.5" />
+        <line x1="80" y1="75" x2="142" y2="75" stroke="#7dd3fc" strokeWidth="2.5" />
+        <circle cx="80" cy="75" r="3.5" fill="#fffbeb" />
+        <text x="111" y="66" textAnchor="middle" fill="#fffbeb" fontSize="13" fontWeight="800">r = {figuur.r} cm</text>
+      </svg>
+    )
+  }
+  // Thermometer van −10 tot 10 graden, gevuld tot de begintemperatuur.
+  if (figuur.type === 'thermo') {
+    const x = 70, y0 = 12, per = 9, sy = (v) => y0 + (10 - v) * per
+    return (
+      <svg className="rs-figuur" viewBox="0 0 150 222" width="150" height="222">
+        <rect x={x - 7} y={y0 - 4} width="14" height={20 * per + 8} rx="7" fill="rgba(255,255,255,0.06)" stroke="#fffbeb" strokeWidth="2" />
+        <rect x={x - 4} y={sy(figuur.t)} width="8" height={sy(-10) - sy(figuur.t) + 4} rx="4" fill="#f87171" />
+        <circle cx={x} cy={sy(-10) + 16} r="11" fill="#f87171" stroke="#fffbeb" strokeWidth="2" />
+        {[...Array(21)].map((_, i) => {
+          const v = 10 - i, groot = v % 5 === 0
+          return (
+            <g key={v}>
+              <line x1={x + 9} y1={sy(v)} x2={x + (groot ? 22 : 15)} y2={sy(v)} stroke="#ffd23f" strokeWidth={groot ? 2 : 1} />
+              {groot && <text x={x + 27} y={sy(v)} dominantBaseline="central" fill="#fffbeb" fontSize="11" fontWeight="700">{v}</text>}
+            </g>
+          )
+        })}
+        <text x={x - 14} y={sy(figuur.t)} textAnchor="end" dominantBaseline="central" fill="#f87171" fontSize="12" fontWeight="800">{figuur.t}°</text>
       </svg>
     )
   }
@@ -69,8 +143,8 @@ export function Figuur({ figuur }) {
       <svg className="rs-figuur" viewBox={`0 0 ${W + 48} 78`} width={W + 48} height="78">
         <line x1={x0} y1={y} x2={x0 + W} y2={y} stroke="#ffd23f" strokeWidth="3" />
         {[...Array(figuur.segs + 1)].map((_, i) => { const x = x0 + i * (W / figuur.segs); return <line key={i} x1={x} y1={y - 6} x2={x} y2={y + 6} stroke="#ffd23f" strokeWidth="2" /> })}
-        <text x={x0} y={y + 22} textAnchor="middle" fill="#fffbeb" fontSize="13" fontWeight="700">{figuur.start.toLocaleString('nl-NL')}</text>
-        <text x={x0 + W} y={y + 22} textAnchor="middle" fill="#fffbeb" fontSize="13" fontWeight="700">{figuur.eind.toLocaleString('nl-NL')}</text>
+        <text x={x0} y={y + 22} textAnchor="middle" fill="#fffbeb" fontSize="13" fontWeight="700">{figuur.ruw ? String(figuur.start) : figuur.start.toLocaleString('nl-NL')}</text>
+        <text x={x0 + W} y={y + 22} textAnchor="middle" fill="#fffbeb" fontSize="13" fontWeight="700">{figuur.ruw ? String(figuur.eind) : figuur.eind.toLocaleString('nl-NL')}</text>
         <polygon points={`${px},${y - 8} ${px - 7},${y - 22} ${px + 7},${y - 22}`} fill="#f87171" />
         <text x={px} y={y - 26} textAnchor="middle" fill="#fca5a5" fontSize="15" fontWeight="900">?</text>
       </svg>
@@ -269,6 +343,135 @@ export function Figuur({ figuur }) {
           {figuur.soorten.map((s, i) => <span key={s}>{icoon(KLEUREN[i], false, s)} = {figuur.per} {s}</span>)}
         </div>
       </div>
+    )
+  }
+  // Een breuk als plaatje: strook, taart of reep in n gelijke stukken, waarvan
+  // de eerste k gekleurd zijn.
+  if (figuur.type === 'breuk') return <BreukVorm vorm={figuur.vorm} n={figuur.n} k={figuur.k} />
+  // Twee breuken om te vergelijken: twee even lange stroken (of getallenlijnen).
+  if (figuur.type === 'breuken2') {
+    const rij = (label, [k, n], y) => (
+      <g key={label}>
+        <text x="4" y={y + 17} fill="#fffbeb" fontSize="15" fontWeight="900">{label}</text>
+        {figuur.vorm === 'lijn' ? (
+          <g>
+            <line x1="30" y1={y + 18} x2="310" y2={y + 18} stroke="#ffd23f" strokeWidth="3" />
+            {[...Array(n + 1)].map((_, i) => <line key={i} x1={30 + i * 280 / n} y1={y + 11} x2={30 + i * 280 / n} y2={y + 25} stroke="#ffd23f" strokeWidth="2" />)}
+            <circle cx={30 + k * 280 / n} cy={y + 18} r="6" fill="#f87171" />
+            <text x="30" y={y + 40} textAnchor="middle" fill="#fffbeb" fontSize="12">0</text>
+            <text x="310" y={y + 40} textAnchor="middle" fill="#fffbeb" fontSize="12">1</text>
+          </g>
+        ) : (
+          <g>
+            <rect x="30" y={y} width="280" height="34" fill="rgba(255,255,255,0.06)" stroke="#ffd23f" strokeWidth="2" rx="3" />
+            <rect x="30" y={y} width={280 * k / n} height="34" fill="rgba(255,210,63,0.55)" rx="3" />
+            {[...Array(n - 1)].map((_, i) => <line key={i} x1={30 + (i + 1) * 280 / n} y1={y} x2={30 + (i + 1) * 280 / n} y2={y + 34} stroke="#ffd23f" strokeWidth="1.5" />)}
+          </g>
+        )}
+      </g>
+    )
+    return (
+      <svg className="rs-figuur" viewBox="0 0 320 112" width="320" height="112">
+        {rij('A', figuur.a, 6)}
+        {rij('B', figuur.b, 62)}
+      </svg>
+    )
+  }
+  // Stippen in groepjes (een deelsom bij een plaatje), met losse stippen erbij
+  // voor de rest.
+  if (figuur.type === 'stippen') {
+    // Tot 5 op één rij, anders in twee gelijke rijen (6 = 3 + 3, telt makkelijker).
+    const perRij = figuur.per <= 5 ? figuur.per : Math.ceil(figuur.per / 2), rijen = Math.ceil(figuur.per / perRij)
+    const bw = perRij * 16 + 12, bh = rijen * 16 + 12, kol = Math.min(figuur.groepen, 4)
+    const W = kol * (bw + 10) + (figuur.los ? 80 : 0), H = Math.ceil(figuur.groepen / kol) * (bh + 10)
+    return (
+      <svg className="rs-figuur" viewBox={`0 0 ${W} ${Math.max(H, 40)}`} width={W} height={Math.max(H, 40)}>
+        {[...Array(figuur.groepen)].map((_, g) => {
+          const gx = (g % kol) * (bw + 10), gy = Math.floor(g / kol) * (bh + 10)
+          return (
+            <g key={g}>
+              <rect x={gx} y={gy} width={bw} height={bh} rx="8" fill="rgba(125,211,252,0.08)" stroke="#7dd3fc" strokeWidth="1.5" />
+              {[...Array(figuur.per)].map((_, i) => <circle key={i} cx={gx + 14 + (i % perRij) * 16} cy={gy + 14 + Math.floor(i / perRij) * 16} r="5.5" fill="#ffd23f" />)}
+            </g>
+          )
+        })}
+        {[...Array(figuur.los ?? 0)].map((_, i) => <circle key={i} cx={kol * (bw + 10) + 14 + (i % 4) * 16} cy={14 + Math.floor(i / 4) * 16} r="5.5" fill="#f87171" />)}
+      </svg>
+    )
+  }
+  // Blokkenbouwsel van boven gezien: in elk vakje hoeveel blokjes er op elkaar
+  // staan. De voorkant is onder.
+  if (figuur.type === 'stapels') {
+    const c = 44, kol = figuur.grid[0].length, rij = figuur.grid.length
+    return (
+      <svg className="rs-figuur" viewBox={`0 0 ${kol * c + 20} ${rij * c + 34}`} width={kol * c + 20} height={rij * c + 34}>
+        {figuur.grid.map((r, y) => r.map((h, x) => (
+          <g key={`${x}-${y}`}>
+            <rect x={10 + x * c} y={4 + y * c} width={c} height={c} fill={h ? `rgba(255,210,63,${0.15 + h * 0.15})` : 'rgba(255,255,255,0.03)'} stroke="#ffd23f" strokeWidth="1.5" />
+            {h > 0 && <text x={10 + x * c + c / 2} y={4 + y * c + c / 2} textAnchor="middle" dominantBaseline="central" fill="#fffbeb" fontSize="18" fontWeight="900">{h}</text>}
+          </g>
+        )))}
+        <text x={10 + kol * c / 2} y={rij * c + 26} textAnchor="middle" fill="#7dd3fc" fontSize="12" fontWeight="800">▲ voorkant</text>
+      </svg>
+    )
+  }
+  // Vlakke figuur: regelmatige veelhoek, rechthoek (n = -4) of cirkel (n = 0).
+  if (figuur.type === 'veelhoek') {
+    const cx = 80, cy = 72, r = 58
+    const vorm = figuur.n === 0
+      ? <circle cx={cx} cy={cy} r={r} />
+      : figuur.n === -4
+        ? <rect x={cx - 74} y={cy - 38} width="148" height="76" />
+        : <polygon points={[...Array(figuur.n)].map((_, i) => { const a = -Math.PI / 2 + i * 2 * Math.PI / figuur.n; return `${cx + r * Math.cos(a)},${cy + r * Math.sin(a)}` }).join(' ')} />
+    return (
+      <svg className="rs-figuur" viewBox="0 0 160 144" width="160" height="144">
+        <g fill="rgba(255,210,63,0.18)" stroke="#ffd23f" strokeWidth="3" strokeLinejoin="round">{vorm}</g>
+      </svg>
+    )
+  }
+  // Kaart met een rooster: letters boven, cijfers links. Een ster op een plek,
+  // of een route over de lijnen.
+  if (figuur.type === 'rooster') {
+    const c = 34, x0 = 26, y0 = 22, W = figuur.kol * c, H = figuur.rij * c
+    return (
+      <svg className="rs-figuur" viewBox={`0 0 ${x0 + W + 12} ${y0 + H + (figuur.per ? 30 : 10)}`} width={x0 + W + 12} height={y0 + H + (figuur.per ? 30 : 10)}>
+        <rect x={x0} y={y0} width={W} height={H} fill="rgba(52,211,153,0.08)" />
+        {[...Array(figuur.kol + 1)].map((_, i) => <line key={`v${i}`} x1={x0 + i * c} y1={y0} x2={x0 + i * c} y2={y0 + H} stroke="rgba(255,255,255,0.35)" strokeWidth="1" />)}
+        {[...Array(figuur.rij + 1)].map((_, i) => <line key={`h${i}`} x1={x0} y1={y0 + i * c} x2={x0 + W} y2={y0 + i * c} stroke="rgba(255,255,255,0.35)" strokeWidth="1" />)}
+        {figuur.letters !== false && [...Array(figuur.kol)].map((_, i) => <text key={`l${i}`} x={x0 + i * c + c / 2} y={y0 - 7} textAnchor="middle" fill="#fffbeb" fontSize="12" fontWeight="800">{'ABCDEFGH'[i]}</text>)}
+        {figuur.letters !== false && [...Array(figuur.rij)].map((_, i) => <text key={`n${i}`} x={x0 - 9} y={y0 + i * c + c / 2} textAnchor="middle" dominantBaseline="central" fill="#fffbeb" fontSize="12" fontWeight="800">{i + 1}</text>)}
+        {figuur.ster && <text x={x0 + figuur.ster[0] * c + c / 2} y={y0 + figuur.ster[1] * c + c / 2} textAnchor="middle" dominantBaseline="central" fill="#ffd23f" fontSize="22">★</text>}
+        {figuur.vlag && <text x={x0 + figuur.vlag[0] * c + c / 2} y={y0 + figuur.vlag[1] * c + c / 2} textAnchor="middle" dominantBaseline="central" fill="#f87171" fontSize="22">⚑</text>}
+        {figuur.route && (
+          <g>
+            <polyline points={figuur.route.map(([x, y]) => `${x0 + x * c},${y0 + y * c}`).join(' ')} fill="none" stroke="#f87171" strokeWidth="4" strokeLinejoin="round" strokeLinecap="round" />
+            <circle cx={x0 + figuur.route[0][0] * c} cy={y0 + figuur.route[0][1] * c} r="6" fill="#7dd3fc" />
+          </g>
+        )}
+        {figuur.per && <text x={x0} y={y0 + H + 20} fill="#7dd3fc" fontSize="12" fontWeight="800">1 hokje = {figuur.per} m</text>}
+      </svg>
+    )
+  }
+  // Maatbeker met een schaalverdeling en een vloeistof tot `waarde`.
+  if (figuur.type === 'maatbeker') {
+    const x = 52, y = 12, w = 74, h = 170, streepjes = figuur.max / figuur.stap
+    const elke = streepjes > 10 ? 2 : 1
+    const hoogte = (figuur.waarde / figuur.max) * h
+    return (
+      <svg className="rs-figuur" viewBox="0 0 190 196" width="190" height="196">
+        <rect x={x} y={y + h - hoogte} width={w} height={hoogte} fill="rgba(125,211,252,0.45)" />
+        <path d={`M ${x} ${y} V ${y + h} H ${x + w} V ${y}`} fill="none" stroke="#fffbeb" strokeWidth="3" />
+        {[...Array(streepjes + 1)].map((_, i) => {
+          const ty = y + h - (i / streepjes) * h, groot = i % elke === 0
+          return (
+            <g key={i}>
+              <line x1={x + w} y1={ty} x2={x + w - (groot ? 18 : 10)} y2={ty} stroke="#ffd23f" strokeWidth="2" />
+              {groot && i > 0 && <text x={x + w + 6} y={ty} dominantBaseline="central" fill="#fffbeb" fontSize="11" fontWeight="700">{i * figuur.stap}</text>}
+            </g>
+          )
+        })}
+        <text x={x + w + 6} y={y + h + 2} dominantBaseline="central" fill="#7dd3fc" fontSize="11" fontWeight="800">{figuur.eenheid}</text>
+      </svg>
     )
   }
   if (figuur.type === 'kalender') {

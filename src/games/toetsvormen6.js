@@ -73,32 +73,41 @@ export function deelSplitsen2() {
 
 // ── groep 5 blok 7 (kalendervraag uit toets groep 6 blok 1) ──────────────
 
+// Een maandkalender als plaatje (zelfde vorm als in redactiesommen.js).
+function maandFiguur(jaar, maand) {
+  const dagen = new Date(jaar, maand + 1, 0).getDate(), weken = []
+  for (let d = 1; d <= dagen; d++) {
+    const wd = (new Date(jaar, maand, d).getDay() + 6) % 7
+    if (!weken.length || wd === 0) weken.push({ nr: weken.length + 1, dagen: Array(7).fill(null) })
+    weken[weken.length - 1].dagen[wd] = d
+  }
+  return { type: 'kalender', titel: `${MAANDEN[maand]} ${jaar}`, weken }
+}
+
 export function kalenderDatum() {
   const jaar = 2026
-  const soort = rnd(1, 4)
+  const soort = rnd(1, 3)
   const nm = naam()
+  const maand = rnd(0, 11)
   let start, doel, tekst, uitleg, kaal
   if (soort === 1) {
-    start = new Date(jaar, rnd(3, 8), rnd(20, 28)); doel = plusDagen(start, 7)
+    start = new Date(jaar, maand, rnd(1, 21)); doel = plusDagen(start, 7)
     tekst = `Het is ${datumTekst(start)}. ${nm} is over precies 1 week jarig. Op welke datum is ${nm} jarig?`
     uitleg = `1 week = 7 dagen. ${datumTekst(start)} + 7 dagen = ${datumTekst(doel)}.`; kaal = `${datumTekst(start)} + 1 week =`
   } else if (soort === 2) {
-    start = new Date(jaar, rnd(3, 8), rnd(3, 13)); doel = plusDagen(start, -14)
+    start = new Date(jaar, maand, rnd(15, 28)); doel = plusDagen(start, -14)
     tekst = `Het is ${datumTekst(start)}. Precies 2 weken geleden was ${nm} jarig. Op welke datum was dat?`
     uitleg = `2 weken = 14 dagen. ${datumTekst(start)} − 14 dagen = ${datumTekst(doel)}.`; kaal = `${datumTekst(start)} − 2 weken =`
-  } else if (soort === 3) {
-    const m = rnd(0, 10)
-    start = new Date(jaar, m + 1, 0); doel = plusDagen(start, 2)
-    tekst = `Het is ${datumTekst(start)}, de laatste dag van de maand. Welke datum is het overmorgen?`
-    uitleg = `${MAANDEN[m]} heeft ${start.getDate()} dagen. Morgen is het 1 ${MAANDEN[m + 1]}, overmorgen ${datumTekst(doel)}.`; kaal = `${datumTekst(start)} + 2 dagen =`
   } else {
-    start = new Date(jaar, rnd(0, 8), rnd(2, 27)); doel = new Date(jaar, start.getMonth() + 3, start.getDate())
-    tekst = `Het is ${datumTekst(start)}. Welke datum is het over precies 3 maanden?`
-    uitleg = `3 maanden verder: ${MAANDEN[start.getMonth()]} → ${MAANDEN[doel.getMonth()]}. Het wordt ${datumTekst(doel)}.`; kaal = `${datumTekst(start)} + 3 maanden =`
+    start = new Date(jaar, maand, rnd(1, 26)); doel = plusDagen(start, 2)
+    tekst = `Het is ${DAGEN[start.getDay()]} ${datumTekst(start)}. Welke dag is het overmorgen?`
+    uitleg = `Overmorgen = 2 dagen later: ${datumTekst(doel)}.`; kaal = `${DAGEN[start.getDay()]} ${datumTekst(start)} + 2 dagen = welke dag?`
+    const goedDag = DAGEN[doel.getDay()]
+    return { vraag: `${tekst} Kijk op de kalender.`, kaal, opties: keuze(goedDag, DAGEN), antwoord: goedDag, figuur: maandFiguur(jaar, maand), uitleg: `${uitleg} Dat is een ${goedDag}.` }
   }
   const goed = datumTekst(doel)
   const fout = [plusDagen(doel, 1), plusDagen(doel, -1), plusDagen(doel, 7), plusDagen(doel, -7)].map(datumTekst)
-  return { vraag: tekst, kaal, opties: keuze(goed, fout),
+  return { vraag: `${tekst} Kijk op de kalender.`, kaal, opties: keuze(goed, fout), figuur: maandFiguur(jaar, maand),
     antwoord: goed, uitleg: `${uitleg} Dat is een ${DAGEN[doel.getDay()]}.` }
 }
 
@@ -149,7 +158,7 @@ export function breukStuk() {
   const n = pick([2, 3, 4, 5, 6, 8])
   const ding = pick(['taart', 'pizza', 'reep chocola', 'pannenkoek'])
   return { vraag: `Een ${ding} wordt in ${n} gelijke stukken gesneden. Welk deel van de ${ding} is 1 stuk?`,
-    kaal: `1 van de ${n} gelijke stukken is … deel`, antwoord: `1/${n}`,
+    kaal: `1 van de ${n} gelijke stukken is … deel`, antwoord: `1/${n}`, figuur: { type: 'breuk', vorm: ding === 'reep chocola' && n % 2 === 0 && n >= 6 ? 'reep' : 'taart', n, k: 1 },
     uitleg: `${n} gelijke stukken: elk stuk is 1/${n} deel.` }
 }
 
@@ -205,15 +214,16 @@ export function deelGekleurd() {
   const [ding, stuk] = pick([['chocoladereep', 'stukjes'], ['taart', 'punten'], ['vlag', 'banen'], ['plank', 'gelijke stukken']])
   const wat = ding === 'vlag' ? 'gekleurd' : ding === 'plank' ? 'geverfd' : 'opgegeten'
   return { vraag: `Een ${ding} heeft ${n} ${stuk}. Er ${k === 1 ? 'is' : 'zijn'} er ${k} ${wat}. Welk deel van de ${ding} is ${wat}?`,
-    kaal: `${k} van de ${n} stukken = … deel`, antwoord: `${k}/${n}`,
+    kaal: `${k} van de ${n} stukken = … deel`, antwoord: `${k}/${n}`, figuur: { type: 'breuk', vorm: ding === 'taart' ? 'taart' : 'strook', n, k },
     uitleg: `${k} van de ${n} gelijke stukken is ${k}/${n} deel.` }
 }
 
 // Route op de kaart: hokjes tellen keer de afstand per hokje.
 export function routeKaart() {
   const per = pick([10, 20, 50, 100]), a = rnd(2, 7), b = rnd(1, 6), nm = naam()
-  return { vraag: `Op de plattegrond is elk hokje ${per} meter. ${nm} loopt ${a} hokjes naar rechts en dan ${b} hokjes omhoog. Hoeveel meter loopt ${nm}?`,
+  return { vraag: `Op de plattegrond is elk hokje ${per} meter. ${nm} loopt ${a} hokjes naar rechts en dan ${b} hokjes omhoog (de rode route). Hoeveel meter loopt ${nm}?`,
     kaal: `(${a} + ${b}) hokjes van ${per} m =`, antwoord: (a + b) * per, eenheid: 'm',
+    figuur: { type: 'rooster', kol: Math.max(a + 1, 5), rij: Math.max(b, 4), route: [[0, Math.max(b, 4)], [a, Math.max(b, 4)], [a, Math.max(b, 4) - b]], per, letters: false },
     uitleg: `${a} + ${b} = ${a + b} hokjes. ${a + b} × ${per} m = ${(a + b) * per} m.` }
 }
 
@@ -254,12 +264,12 @@ export function deelSplitsen3() {
 export function breukAanvullen() {
   const n = pick([3, 4, 5, 6, 8]), k = rnd(1, n - 1)
   if (Math.random() < 0.5) {
-    return { vraag: `Van een pizza is ${k}/${n} deel opgegeten. Welk deel van de pizza is er nog?`,
-      kaal: `${k}/${n} + … = 1 hele`, antwoord: breuk(n - k, n), uitleg: `1 hele = ${n}/${n}. ${n}/${n} − ${k}/${n} = ${n - k}/${n}.` }
+    return { vraag: `Van een pizza is ${k}/${n} deel opgegeten (het gekleurde deel). Welk deel van de pizza is er nog?`,
+      kaal: `${k}/${n} + … = 1 hele`, antwoord: breuk(n - k, n), figuur: { type: 'breuk', vorm: 'taart', n, k }, uitleg: `1 hele = ${n}/${n}. ${n}/${n} − ${k}/${n} = ${n - k}/${n}.` }
   }
   const stuk = pick([10, 15, 20, 25, 30])
-  return { vraag: `Een stuk plank is 1/${n} deel van de hele plank. Dat stuk is ${stuk} cm. Hoe lang is de hele plank?`,
-    kaal: `1/${n} deel = ${stuk} cm. Hele plank = … cm`, antwoord: stuk * n, eenheid: 'cm',
+  return { vraag: `Een stuk plank is 1/${n} deel van de hele plank (het gekleurde deel). Dat stuk is ${stuk} cm. Hoe lang is de hele plank?`,
+    kaal: `1/${n} deel = ${stuk} cm. Hele plank = … cm`, antwoord: stuk * n, eenheid: 'cm', figuur: { type: 'breuk', vorm: 'strook', n, k: 1 },
     uitleg: `De hele plank is ${n} van die stukken: ${n} × ${stuk} = ${stuk * n} cm.` }
 }
 
@@ -317,10 +327,10 @@ const GEWICHTEN = [['een pak zout', '1000 gram', ['10 gram', '100 gram', '10 kil
 const INHOUDEN = [['een glas limonade', '20 centiliter', ['20 milliliter', '20 liter', '2 milliliter']], ['een emmer water', '10 liter', ['10 milliliter', '10 centiliter', '100 liter']],
   ['een theelepel', '5 milliliter', ['5 liter', '5 deciliter', '50 centiliter']], ['een pak melk', '1 liter', ['1 milliliter', '1 centiliter', '10 liter']],
   ['een flesje medicijn', '100 milliliter', ['100 liter', '10 liter', '1 milliliter']], ['een badkuip', '150 liter', ['150 milliliter', '15 deciliter', '1500 centiliter']]]
-export function maatKiezen() {
-  const [wat, goed, fout] = pick(Math.random() < 0.5 ? GEWICHTEN : INHOUDEN)
-  const soort = GEWICHTEN.some(g => g[0] === wat) ? 'Hoeveel weegt' : 'Hoeveel past er in'
-  return { vraag: `${soort} ${wat} ongeveer? Kies de maat die het beste past.`, kaal: `${wat[0].toUpperCase() + wat.slice(1)}: ongeveer …`,
+export function maatKiezen(soort) {
+  const [wat, goed, fout] = pick(soort === 'gewicht' ? GEWICHTEN : soort === 'inhoud' ? INHOUDEN : Math.random() < 0.5 ? GEWICHTEN : INHOUDEN)
+  const hoe = GEWICHTEN.some(g => g[0] === wat) ? 'Hoeveel weegt' : 'Hoeveel past er in'
+  return { vraag: `${hoe} ${wat} ongeveer? Kies de maat die het beste past.`, kaal: `${wat[0].toUpperCase() + wat.slice(1)}: ongeveer …`,
     opties: keuze(goed, fout), antwoord: goed, uitleg: `${wat[0].toUpperCase() + wat.slice(1)}: ongeveer ${goed}.` }
 }
 
@@ -353,7 +363,7 @@ export function breukVergelijken() {
   const ding = pick(['liter limonade', 'pizza', 'meter lint', 'reep'])
   const groot = a[0] / a[1] > b[0] / b[1] ? a : b
   return { vraag: `Wat is meer: ${a[0]}/${a[1]} ${ding} of ${b[0]}/${b[1]} ${ding}?`, kaal: `Wat is meer: ${a[0]}/${a[1]} of ${b[0]}/${b[1]}?`,
-    opties: [`${a[0]}/${a[1]}`, `${b[0]}/${b[1]}`], antwoord: `${groot[0]}/${groot[1]}`,
+    opties: [`${a[0]}/${a[1]}`, `${b[0]}/${b[1]}`], antwoord: `${groot[0]}/${groot[1]}`, figuur: { type: 'breuken2', a, b, vorm: 'strook' },
     uitleg: a[1] === b[1] ? `Zelfde noemer: meer stukken is meer, dus ${groot[0]}/${groot[1]}.` : `Zelfde teller: grotere stukken (kleinere noemer) is meer, dus ${groot[0]}/${groot[1]}.` }
 }
 
@@ -466,8 +476,9 @@ export function tijdbalkDatum() {
   const soort = rnd(1, 3), nm = naam()
   if (soort === 1) {
     const geb = rnd(1945, 1965), toen = rnd(geb + 40, 2025), mnd = rnd(0, 10)
-    return { vraag: `De opa van ${nm} is geboren op 1 ${MAANDEN[mnd]} ${geb}. Op 1 ${MAANDEN[mnd + 1]} ${toen} kreeg hij een nieuwe auto. Hoe oud was hij toen?`,
-      kaal: `${toen} − ${geb} =`, antwoord: toen - geb, eenheid: 'jaar', uitleg: `${toen} − ${geb} = ${toen - geb}. Hij was al jarig geweest, dus ${toen - geb} jaar.` }
+    const van = Math.floor(geb / 10) * 10, tot = Math.ceil((toen + 1) / 10) * 10
+    return { vraag: `De opa van ${nm} is geboren op 1 ${MAANDEN[mnd]} ${geb}. Op 1 ${MAANDEN[mnd + 1]} ${toen} kreeg hij een nieuwe auto (de pijl op de tijdbalk). Hoe oud was hij toen?`,
+      kaal: `${toen} − ${geb} =`, antwoord: toen - geb, eenheid: 'jaar', figuur: { type: 'getallenlijn', start: van, eind: tot, waarde: toen, segs: (tot - van) / 10, ruw: true }, uitleg: `${toen} − ${geb} = ${toen - geb}. Hij was al jarig geweest, dus ${toen - geb} jaar.` }
   }
   if (soort === 2) {
     const jaar = rnd(2026, 2040), oud = rnd(15, 120)
@@ -518,6 +529,12 @@ export function kommaGetallenlijn() {
 
 // Liter, deciliter, centiliter en milliliter, en glazen vullen.
 export function inhoudOmrekenen() {
+  if (Math.random() < 0.4) {
+    const n = rnd(1, 9), [naar, f] = pick([['dl', 100], ['cl', 10]])
+    return { vraag: `Kijk naar de maatbeker. Hoeveel ${naar} zit erin?`, kaal: `Maatbeker: … ${naar}`, antwoord: n * 100 / f, eenheid: naar,
+      figuur: { type: 'maatbeker', max: 1000, stap: 100, waarde: n * 100, eenheid: 'ml' },
+      uitleg: `Het peil staat bij ${n * 100} ml. 1 ${naar} = ${f} ml, dus ${n * 100} : ${f} = ${n * 100 / f} ${naar}.` }
+  }
   if (Math.random() < 0.5) {
     const [van, naar, f] = pick([['dl', 'cl', 10], ['cl', 'ml', 10], ['l', 'dl', 10], ['l', 'ml', 1000], ['dl', 'ml', 100]])
     const terug = Math.random() < 0.4, n = rnd(2, 9)

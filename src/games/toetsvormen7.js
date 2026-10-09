@@ -99,19 +99,21 @@ export function duizendMiljoenMiljard() {
 
 // Onder elkaar zetten met ongelijke decimalen: 6,53 + 2,9 en 2,2 − 0,38.
 export function kommaOnderElkaar(soort) {
-  const d1 = rnd(1, 2), d2 = d1 === 1 ? 2 : 1
+  const d1 = pick([2, 3]), d2 = pick([1, 2, 3].filter(d => d !== d1))
   const a = rnd(1, 9) + rnd(1, 10 ** d1 - 1) / 10 ** d1
   const b = rnd(0, 3) + rnd(1, 10 ** d2 - 1) / 10 ** d2
   const plus = soort === 'plus'
   const [x, y] = plus ? [a, b] : (a > b ? [a, b] : [b, a])
   if (!plus && x - y < 0.01) return kommaOnderElkaar(soort)
-  const uit = +(plus ? x + y : x - y).toFixed(2)
+  const uit = +(plus ? x + y : x - y).toFixed(3), dm = Math.max(d1, d2), nm = naam()
   const dx = plus ? d1 : (x === a ? d1 : d2), dy = plus ? d2 : (y === b ? d2 : d1)
   const som = `${komma(x, dx)} ${plus ? '+' : '−'} ${komma(y, dy)}`
   return {
-    vraag: `Zet de getallen onder elkaar en reken uit: ${som} =`, kaal: `${som} =`,
-    antwoord: uit, toon: komma(uit),
-    uitleg: `Zet de komma's precies onder elkaar en vul aan met nullen: ${komma(x, 2)} ${plus ? '+' : '−'} ${komma(y, 2)} = ${komma(uit, 2)}.`,
+    vraag: plus
+      ? `${nm} weegt twee pakketjes: ${komma(x, dx)} kg en ${komma(y, dy)} kg. Hoeveel kilo is dat samen? Zet de getallen onder elkaar.`
+      : `Een rol touw is ${komma(x, dx)} m lang. ${nm} knipt er ${komma(y, dy)} m af. Hoeveel meter blijft er over? Zet de getallen onder elkaar.`,
+    kaal: `${som} =`, antwoord: uit, toon: komma(uit), eenheid: plus ? 'kg' : 'm', omrekenen: true,
+    uitleg: `Zet de komma's precies onder elkaar en vul aan met nullen: ${komma(x, dm)} ${plus ? '+' : '−'} ${komma(y, dm)} = ${komma(uit, dm)}.`,
   }
 }
 
@@ -128,7 +130,10 @@ export function breukPlusMin(gelijknamig) {
     const som = `${t1}/${n1} ${plus ? '+' : '−'} ${t2}/${n2}`, ant = breuk(uit, N)
     const kort = typeof ant === 'string' && ant !== `${uit}/${N}` ? ` = ${ant}` : ''
     return {
-      vraag: `Reken uit. Schrijf de breuk zo klein mogelijk: ${som} =`, kaal: `${som} =`, antwoord: ant,
+      vraag: plus
+        ? `${naam()} drinkt 's ochtends ${t1}/${n1} liter water en 's middags ${t2}/${n2} liter. Hoeveel liter is dat samen? Schrijf de breuk zo klein mogelijk.`
+        : `In een fles zit ${t1}/${n1} liter sap. ${naam()} schenkt er ${t2}/${n2} liter uit. Hoeveel liter blijft er over? Schrijf de breuk zo klein mogelijk.`,
+      kaal: `${som} =`, antwoord: ant, eenheid: 'liter',
       uitleg: n1 === n2 ? `Gelijke noemers: tel de tellers ${plus ? 'op' : 'van elkaar af'}: ${uit}/${N}${kort}.`
         : `Maak de noemers gelijk: ${a}/${N} ${plus ? '+' : '−'} ${b}/${N} = ${uit}/${N}${kort}.`,
     }
@@ -217,7 +222,7 @@ export function procentDeelAantal() {
     return {
       vraag: `${p}% van ${totaal} ${wat} ${ww}. Welk deel is dat? En hoeveel ${welke} zijn dat?`,
       kaal: `${p}% van ${totaal} = … deel = … ${welke}`,
-      antwoord: `${t}/${n}`, rest: aantal, antwLabel: 'Welk deel?', restLabel: welke,
+      antwoord: `${t}/${n}`, rest: aantal, antwLabel: 'Welk deel?', restLabel: welke, figuur: { type: 'strook', pct: p, totaal },
       toon: `${t}/${n} deel, ${aantal} ${welke}`,
       uitleg: `${p}% = ${t}/${n} deel. ${t}/${n} van ${totaal} = ${aantal}.`,
     }
@@ -225,7 +230,7 @@ export function procentDeelAantal() {
   return {
     vraag: `${t}/${n} deel van ${totaal} ${wat} ${ww}. Hoeveel procent is dat? En hoeveel ${welke} zijn dat?`,
     kaal: `${t}/${n} deel van ${totaal} = … % = … ${welke}`,
-    antwoord: p, rest: aantal, antwLabel: 'Hoeveel procent?', restLabel: welke, eenheid: '%',
+    antwoord: p, rest: aantal, antwLabel: 'Hoeveel procent?', restLabel: welke, eenheid: '%', figuur: { type: 'breuk', vorm: 'strook', n, k: t },
     toon: `${p}%, ${aantal} ${welke}`,
     uitleg: `${t}/${n} deel = ${p}%. ${t}/${n} van ${totaal} = ${aantal}.`,
   }
@@ -281,7 +286,7 @@ export function oppervlakteToets() {
   if (Math.random() < 0.6) {
     const l = rnd(4, 12), b = rnd(3, 9) + 0.5
     return { vraag: `Een rechthoekige kamer is ${l} meter lang en ${komma(b)} meter breed. Hoe groot is de oppervlakte?`,
-             kaal: `Rechthoek ${l} m bij ${komma(b)} m = … m²`, antwoord: l * b, eenheid: 'm²',
+             kaal: `Rechthoek ${l} m bij ${komma(b)} m = … m²`, antwoord: l * b, eenheid: 'm²', figuur: { type: 'rechthoek', l, b, eenheid: 'm' },
              uitleg: `${l} × ${komma(b)} = ${komma(l * b)} m².` }
   }
   const ha = pick([0.5, 0.25, 1.5, 2, 0.75, 3])
@@ -293,11 +298,17 @@ export function oppervlakteToets() {
 // ── toets blok 7 (doelen blok 6) ──────────────────────────────────────────
 
 // Op een andere manier schrijven: 2.560.000 = … miljoen; afronden en als kommagetal.
-export function miljoenKomma() {
-  if (Math.random() < 0.5) {
+export function miljoenKomma(soort) {
+  if (soort === 'cijfers' || (soort !== 'afronden' && Math.random() < 0.5)) {
     const miljard = Math.random() < 0.35, u = miljard ? 1e9 : 1e6
     const x = miljard ? rnd(11, 99) / 10 + pick([0, rnd(1, 9) / 100]) : rnd(3, 99) / 100 + rnd(0, 9)
     const n = Math.round(x * u)
+    // Ook de andere kant op: "1,7 miljoen" in cijfers.
+    if (Math.random() < 0.5) {
+      return { vraag: `In de krant staat: "${komma(+x.toFixed(2))} ${miljard ? 'miljard' : 'miljoen'} bezoekers". Schrijf dat getal in cijfers.`,
+               kaal: `${komma(+x.toFixed(2))} ${miljard ? 'miljard' : 'miljoen'} = … (in cijfers)`, antwoord: n,
+               uitleg: `${komma(+x.toFixed(2))} ${miljard ? 'miljard' : 'miljoen'} = ${komma(+x.toFixed(2))} × ${getal(u)} = ${getal(n)}.` }
+    }
     return { vraag: `In de krant staat een groot getal. Schrijf het als kommagetal: ${getal(n)} = … ${miljard ? 'miljard' : 'miljoen'}`, kaal: `${getal(n)} = … ${miljard ? 'miljard' : 'miljoen'}`,
              antwoord: +x.toFixed(2), toon: komma(+x.toFixed(2)),
              uitleg: `${getal(n)} = ${komma(+x.toFixed(2))} ${miljard ? 'miljard' : 'miljoen'}.` }
@@ -398,7 +409,7 @@ export function heelMaalGemengd() {
   const totaalT = n * (h * d + t), heel = Math.floor(totaalT / d), r = totaalT % d
   const g = r ? ggd(r, d) : 1
   return {
-    vraag: `Reken uit. Schrijf de breuk zo klein mogelijk: ${n} × ${h} ${t}/${d} =`,
+    vraag: `Voor één pan soep heb je ${h} ${t}/${d} liter bouillon nodig. ${naam()} maakt ${n} pannen. Hoeveel liter bouillon is dat? Schrijf de breuk zo klein mogelijk.`,
     kaal: `${n} × ${h} ${t}/${d} =`, antwoord: heel, rest: r ? r / g : null,
     antwLabel: 'Hele', restLabel: r ? `…/${d / g}` : undefined, toon: r ? `${heel} ${r / g}/${d / g}` : `${heel}`,
     uitleg: `${n} × ${h} = ${n * h} en ${n} × ${t}/${d} = ${n * t}/${d}${n * t >= d ? ` = ${Math.floor(n * t / d)}${(n * t) % d ? ` ${breuk((n * t) % d, d)}` : ''}` : ''}. Samen ${heel}${r ? ` ${r / g}/${d / g}` : ''}.`,
@@ -406,8 +417,8 @@ export function heelMaalGemengd() {
 }
 
 // Korting van 12½%, en "nu 15% extra" bij een inhoud.
-export function kortingExtra() {
-  if (Math.random() < 0.5) {
+export function kortingExtra(soort) {
+  if (soort === 'korting' || (soort !== 'extra' && Math.random() < 0.5)) {
     const prijs = pick([80, 120, 160, 200, 240, 320, 400])
     return { vraag: `Een fiets kost ${euroRond(prijs)}. Je krijgt 12½% korting. Wat is de nieuwe prijs?`,
              kaal: `${euroRond(prijs)} met 12½% korting = €`, antwoord: prijs * 7 / 8, eenheid: '€',
@@ -415,7 +426,7 @@ export function kortingExtra() {
   }
   const inhoud = pick([200, 250, 300, 400, 500]), pct = pick([10, 15, 20, 25, 30, 50])
   const extra = inhoud * pct / 100
-  if (!Number.isInteger(extra)) return kortingExtra()
+  if (!Number.isInteger(extra)) return kortingExtra('extra')
   return { vraag: `Een pot pindakaas had ${inhoud} gram. Nu zit er ${pct}% extra in. Hoeveel gram zit er nu in de pot?`,
            kaal: `${inhoud} g + ${pct}% extra = … g`, antwoord: inhoud + extra, eenheid: 'g',
            uitleg: `${pct}% van ${inhoud} = ${extra} gram extra. ${inhoud} + ${extra} = ${inhoud + extra} gram.` }
