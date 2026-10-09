@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Neonhockey</title>
+<link href="/fonts/fonts.css" rel="stylesheet">
+<style>
+  :root{
+    --ink:#eef3ff; --dim:#8f9bc4; --cyaan:#3ef0ff; --magenta:#ff4fd8; --goud:#ffc83d; --violet:#9b6bff;
+    --disp:'Russo One',system-ui,sans-serif; --body:'Outfit','Nunito',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;height:100%;overflow:hidden;background:#05060f;}
+  body{font-family:var(--body);color:var(--ink);user-select:none;-webkit-user-select:none;touch-action:none;}
+  canvas{position:fixed;inset:0;width:100%;height:100%;display:block;}
+
+  #hud{position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:5;pointer-events:none;
+       display:flex;align-items:center;gap:14px;padding:6px 16px;border-radius:999px;
+       background:rgba(10,12,30,.72);border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(8px);}
+  #hud .sc{font-family:var(--disp);font-size:26px;min-width:26px;text-align:center;font-variant-numeric:tabular-nums;line-height:1;}
+  #s0{color:var(--cyaan);text-shadow:0 0 14px rgba(62,240,255,.7);}
+  #s1{color:var(--magenta);text-shadow:0 0 14px rgba(255,79,216,.7);}
+  #klok{font-family:var(--disp);font-size:15px;letter-spacing:.06em;color:var(--ink);min-width:44px;text-align:center;font-variant-numeric:tabular-nums;}
+  #klok.gouden{color:var(--goud);text-shadow:0 0 12px rgba(255,200,61,.7);}
+  #klok.krap{color:#ff6b8a;}
+
+  .rondknop{position:fixed;z-index:20;width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+            color:var(--ink);background:rgba(16,18,40,.75);border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(8px);cursor:pointer;padding:0;}
+  .rondknop svg{width:20px;height:20px;}
+  #geluid{top:10px;right:10px;}
+  #pauze{top:10px;right:60px;}
+  #terug{position:fixed;top:10px;left:10px;z-index:20;padding:9px 16px;font-size:14px;color:var(--ink);font-weight:800;
+         background:rgba(16,18,40,.75);border:1px solid rgba(255,255,255,.2);border-radius:999px;display:none;cursor:pointer;font-family:var(--body);}
+  #terug.aan{display:block;}
+
+  .scherm{position:fixed;inset:0;z-index:10;display:none;flex-direction:column;align-items:center;justify-content:center;
+          gap:14px;padding:24px 18px;overflow-y:auto;
+          background:radial-gradient(ellipse 70% 50% at 50% 22%,rgba(255,79,216,.18),transparent 70%),
+                     radial-gradient(ellipse 60% 45% at 50% 100%,rgba(62,240,255,.16),transparent 70%),rgba(5,6,15,.9);
+          backdrop-filter:blur(6px);}
+  .scherm.aan{display:flex;}
+  #menu{justify-content:flex-start;padding-top:60px;}
+  h1{font-family:var(--disp);font-size:clamp(34px,10vw,60px);margin:0;letter-spacing:.04em;text-transform:uppercase;text-align:center;
+     background:linear-gradient(100deg,var(--cyaan),#fff 45%,var(--magenta));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+     filter:drop-shadow(0 0 22px rgba(62,240,255,.35));}
+  h2{font-family:var(--disp);font-size:clamp(24px,7vw,36px);margin:0;letter-spacing:.06em;text-transform:uppercase;text-align:center;}
+  .onder{color:var(--dim);margin:0;font-size:15px;text-align:center;max-width:38ch;line-height:1.5;}
+  .groot{font-family:var(--disp);font-size:56px;color:#fff;margin:0;line-height:1;display:flex;gap:18px;align-items:center;}
+  .groot .a{color:var(--cyaan);text-shadow:0 0 24px rgba(62,240,255,.6);}
+  .groot .b{color:var(--magenta);text-shadow:0 0 24px rgba(255,79,216,.6);}
+  .groot .s{color:var(--dim);font-size:32px;}
+  .rij{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+  .nieuw{font-family:var(--disp);color:var(--goud);letter-spacing:.12em;text-transform:uppercase;text-shadow:0 0 14px rgba(255,200,61,.6);
+         animation:puls 1s ease-in-out infinite alternate;text-align:center;}
+  @keyframes puls{from{transform:scale(1)}to{transform:scale(1.08)}}
+  .munt{display:inline-flex;align-items:center;gap:6px;font-family:var(--disp);color:var(--goud);}
+  .munt::before{content:'';width:14px;height:14px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff3b0,#ffc83d 55%,#b8860b);
+                box-shadow:0 0 10px rgba(255,200,61,.6);}
+
+  button{font-family:var(--body);font-weight:800;cursor:pointer;border-radius:999px;border:0;}
+  .knop{padding:14px 32px;font-size:17px;color:#071018;letter-spacing:.04em;
+        background:linear-gradient(135deg,var(--cyaan),#7dfff0);box-shadow:0 10px 28px rgba(62,240,255,.32);transition:transform .12s;}
+  .knop:hover{transform:translateY(-2px);}
+  .knop2{padding:12px 24px;font-size:15px;color:var(--ink);background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);}
+  .knop2:hover{background:rgba(255,255,255,.15);}
+  .verborgen{display:none !important;}
+
+  .ladder{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;width:100%;max-width:640px;}
+  .tegen{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 8px 10px;border-radius:16px;
+         background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.12);color:var(--ink);font-family:var(--body);}
+  .tegen:not(:disabled):hover{background:rgba(255,255,255,.1);}
+  .tegen:disabled{opacity:.42;cursor:default;}
+  .tegen.volgende{border-color:var(--cyaan);box-shadow:0 0 0 1px var(--cyaan) inset,0 0 22px rgba(62,240,255,.25);}
+  .tegen canvas{position:static;width:56px;height:56px;}
+  .tegen .naam{font-family:var(--disp);font-size:13px;letter-spacing:.04em;}
+  .tegen .uitleg{font-size:11px;color:var(--dim);text-align:center;line-height:1.3;font-weight:600;min-height:28px;}
+  .tegen .vink{position:absolute;top:8px;right:9px;color:#8cff5a;font-size:15px;}
+  .tegen .nr{position:absolute;top:8px;left:10px;color:var(--dim);font-size:11px;font-family:var(--disp);}
+
+  .lijst{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;width:100%;max-width:640px;}
+  .kop{width:100%;max-width:640px;font-family:var(--disp);font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-top:6px;}
+  .kaart{display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 10px;border-radius:16px;
+         background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.12);}
+  .kaart.gekozen{border-color:var(--cyaan);box-shadow:0 0 0 1px var(--cyaan) inset,0 0 22px rgba(62,240,255,.25);}
+  .kaart canvas{position:static;width:110px;height:64px;}
+  .kaart .naam{font-family:var(--disp);font-size:13px;letter-spacing:.06em;text-transform:uppercase;text-align:center;}
+  .kaart button{padding:8px 14px;font-size:13px;min-width:96px;}
+  .koop{color:#20140a;background:linear-gradient(135deg,var(--goud),#ffe08a);}
+  .koop:disabled{background:rgba(255,255,255,.08);color:#6f7899;cursor:default;}
+  .kies{color:var(--ink);background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);}
+  .kies.aan{color:#071018;background:linear-gradient(135deg,var(--cyaan),#7dfff0);border-color:transparent;}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div id="hud"><span class="sc" id="s0">0</span><span id="klok">1:00</span><span class="sc" id="s1">0</span></div>
+<button id="terug">‹ Menu</button>
+<button class="rondknop" id="pauze" aria-label="Pauze"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></button>
+<button class="rondknop" id="geluid" aria-label="Geluid"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path id="golf" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg></button>
+
+<div class="scherm aan" id="menu">
+  <h1>Neonhockey</h1>
+  <p class="onder">Schuif je stick met je vinger of muis en schiet de puck in het doel. Elke wedstrijd duurt <strong>1 minuut</strong>. Versla alle 8 tegenstanders!</p>
+  <div class="ladder" id="ladder"></div>
+  <div class="rij">
+    <button class="knop2" id="tweespelers">2 spelers op één scherm</button>
+    <button class="knop2" id="naarwinkel">Winkel · <span class="munt" id="menumunten">0</span></button>
+  </div>
+</div>
+
+<div class="scherm" id="pauzescherm">
+  <h2>Pauze</h2>
+  <div class="rij"><button class="knop" id="hervat">Verder</button><button class="knop2" id="stop">Stoppen</button></div>
+</div>
+
+<div class="scherm" id="einde">
+  <h2 id="eindtitel">Gewonnen!</h2>
+  <p class="onder" id="eindsub"></p>
+  <p class="groot"><span class="a" id="e0">0</span><span class="s">–</span><span class="b" id="e1">0</span></p>
+  <div class="nieuw verborgen" id="ontgrendeld"></div>
+  <p class="onder" id="eindmunten">Verdiend: <span class="munt" id="verdiend">0</span></p>
+  <div class="rij">
+    <button class="knop" id="volgende">Volgende tegenstander</button>
+    <button class="knop" id="nogeens">Nog een keer</button>
+    <button class="knop verborgen" id="klaar">Klaar ✓</button>
+    <button class="knop2" id="naarmenu">Menu</button>
+  </div>
+</div>
+
+<div class="scherm" id="winkel">
+  <h2>Winkel</h2>
+  <p class="onder">Je hebt <span class="munt" id="winkelmunten">0</span> — munten verdien je met goals en overwinningen.</p>
+  <div class="kop">Sticks</div>
+  <div class="lijst" id="sticklijst"></div>
+  <div class="kop">Puck-sporen</div>
+  <div class="lijst" id="spoorlijst"></div>
+  <button class="knop2" id="uitwinkel">Terug</button>
+</div>
+
+<script src="kern.js"></script>
+<script src="spel.js"></script>
+</body>
+</html>

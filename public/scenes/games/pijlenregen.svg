@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200" width="320" height="200" role="img" aria-label="Pijlenregen">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0b0826"/><stop offset="100%" stop-color="#04040e"/></linearGradient>
+    <radialGradient id="halo" cx="50%" cy="42%" r="55%"><stop offset="0%" stop-color="#9b6bff" stop-opacity=".35"/><stop offset="100%" stop-color="#9b6bff" stop-opacity="0"/></radialGradient>
+    <radialGradient id="schijf" cx="50%" cy="35%" r="65%"><stop offset="0%" stop-color="#4a3480"/><stop offset="75%" stop-color="#2a1d52"/><stop offset="100%" stop-color="#5f45a8"/></radialGradient>
+    <filter id="gloed" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <g id="pijl"><rect x="-2" y="9" width="4" height="34" fill="#2fc8d8"/><path d="M0 0l5 11h-10z" fill="#3ef0ff"/><path d="M-2 39l-6 7v4l6-4zM2 39l6 7v4l-6-4z" fill="#ff4fd8"/></g>
+  </defs>
+  <rect width="320" height="200" fill="url(#bg)"/>
+  <rect width="320" height="200" fill="url(#halo)"/>
+  <g fill="#fff" opacity=".5"><circle cx="30" cy="30" r="1"/><circle cx="280" cy="40" r="1.2"/><circle cx="60" cy="150" r=".9"/><circle cx="295" cy="160" r="1"/><circle cx="250" cy="110" r=".8"/><circle cx="40" cy="95" r="1.1"/></g>
+  <!-- pijlen in de schijf (staart naar buiten) -->
+  <use href="#pijl" transform="translate(160 84) rotate(150) translate(0 30)"/>
+  <use href="#pijl" transform="translate(160 84) rotate(-120) translate(0 30)"/>
+  <use href="#pijl" transform="translate(160 84) rotate(-40) translate(0 30)"/>
+  <use href="#pijl" transform="translate(160 84) rotate(60) translate(0 30)"/>
+  <!-- schijf -->
+  <circle cx="160" cy="84" r="50" fill="url(#schijf)" stroke="#3ef0ff" stroke-width="3" filter="url(#gloed)"/>
+  <g fill="none" stroke="#3ef0ff" stroke-opacity=".3" stroke-width="1.5"><circle cx="160" cy="84" r="31"/><circle cx="160" cy="84" r="14"/>
+    <path d="M160 70v-15M160 98v15M146 84h-15M174 84h15M150 74l-10-10M170 94l10 10M170 74l10-10M150 94l-10 10"/></g>
+  <circle cx="160" cy="84" r="6" fill="#3ef0ff"/>
+  <!-- kristal op de rand -->
+  <path d="M110 58l6 8-6 9-6-9z" fill="#7ff7ff" filter="url(#gloed)"/>
+  <!-- vliegende pijl -->
+  <g opacity=".3"><use href="#pijl" transform="translate(160 168)"/></g>
+  <use href="#pijl" transform="translate(160 148)"/>
+</svg>

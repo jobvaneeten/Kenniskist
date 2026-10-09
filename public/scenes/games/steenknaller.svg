@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200" width="320" height="200" role="img" aria-label="Steenknaller">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0b0826"/><stop offset="100%" stop-color="#04040e"/></linearGradient>
+    <linearGradient id="glans" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fff" stop-opacity=".5"/><stop offset="45%" stop-color="#fff" stop-opacity="0"/><stop offset="100%" stop-color="#000" stop-opacity=".35"/></linearGradient>
+    <filter id="gloed" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="2.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <symbol id="s" viewBox="0 0 26 11"><rect x=".5" y=".5" width="25" height="10" rx="3" fill="currentColor"/><rect x=".5" y=".5" width="25" height="10" rx="3" fill="url(#glans)"/></symbol>
+  </defs>
+  <rect width="320" height="200" fill="url(#bg)"/>
+  <rect x="28" y="10" width="264" height="200" fill="none" stroke="#a0afff" stroke-opacity=".6" stroke-width="2" filter="url(#gloed)"/>
+  <g filter="url(#gloed)">
+    <g color="#3ef0ff"><use href="#s" x="32" y="22" width="26" height="11"/><use href="#s" x="61" y="22" width="26" height="11"/><use href="#s" x="90" y="22" width="26" height="11"/><use href="#s" x="119" y="22" width="26" height="11"/><use href="#s" x="148" y="22" width="26" height="11"/><use href="#s" x="177" y="22" width="26" height="11"/><use href="#s" x="206" y="22" width="26" height="11"/><use href="#s" x="235" y="22" width="26" height="11"/><use href="#s" x="264" y="22" width="26" height="11"/></g>
+    <g color="#ff4fd8"><use href="#s" x="32" y="36" width="26" height="11"/><use href="#s" x="61" y="36" width="26" height="11"/><use href="#s" x="90" y="36" width="26" height="11"/><use href="#s" x="148" y="36" width="26" height="11"/><use href="#s" x="177" y="36" width="26" height="11"/><use href="#s" x="235" y="36" width="26" height="11"/><use href="#s" x="264" y="36" width="26" height="11"/></g>
+    <g color="#ffc83d"><use href="#s" x="32" y="50" width="26" height="11"/><use href="#s" x="61" y="50" width="26" height="11"/><use href="#s" x="177" y="50" width="26" height="11"/><use href="#s" x="206" y="50" width="26" height="11"/><use href="#s" x="264" y="50" width="26" height="11"/></g>
+    <g color="#8cff5a"><use href="#s" x="61" y="64" width="26" height="11"/><use href="#s" x="206" y="64" width="26" height="11"/></g>
+    <g color="#9aa3c7"><use href="#s" x="119" y="36" width="26" height="11"/></g>
+  </g>
+  <!-- brokjes -->
+  <g fill="#ffc83d"><circle cx="128" cy="58" r="2"/><circle cx="140" cy="62" r="1.5"/><circle cx="118" cy="66" r="1.4"/></g>
+  <!-- spoor en bal -->
+  <g fill="#3ef0ff"><circle cx="186" cy="148" r="2" opacity=".2"/><circle cx="176" cy="132" r="3" opacity=".3"/><circle cx="166" cy="116" r="4" opacity=".4"/><circle cx="156" cy="100" r="5" opacity=".5"/></g>
+  <circle cx="146" cy="84" r="6.5" fill="#fff" filter="url(#gloed)"/>
+  <!-- power-up -->
+  <rect x="86" y="118" width="26" height="12" rx="6" fill="#8cff5a" filter="url(#gloed)"/>
+  <path d="M92 124h14M95 121l-3 3 3 3M103 121l3 3-3 3" stroke="#071018" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+  <!-- batje -->
+  <rect x="160" y="172" width="64" height="10" rx="5" fill="#3ef0ff" filter="url(#gloed)"/>
+  <rect x="168" y="174" width="48" height="2" rx="1" fill="#fff" opacity=".7"/>
+</svg>

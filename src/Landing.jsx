@@ -8,7 +8,8 @@ const GAMES = [
   'Voetbal', 'Supervoetbal', 'Jetpack', 'Astro Katapult', 'Spacerunner',
   'Doodle Sprong', 'Meteoorvlucht', 'Dier Evolutie', 'Brug Bouwen', 'Tower Defense',
   'Bergrijden', 'Paintball', 'Ballonnengevecht', 'Fruitsabel', 'Sterrenveer', 'Diepgravers',
-  'Neongolf', 'Blokkenblitz',
+  'Neongolf', 'Blokkenblitz', 'Neonhockey', 'Pijlenregen',
+  'Stapeltoren', 'Steenknaller',
 ]
 
 // Moet kloppen met VAKKEN in src/lib/tools.js en MODES in GameMenu.jsx.

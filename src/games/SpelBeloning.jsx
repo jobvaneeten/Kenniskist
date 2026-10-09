@@ -85,6 +85,10 @@ const SPELLEN = [
   { key: 'graven',     name: 'Diepgravers',    desc: 'Je krijgt 3 duiken',               img: '/scenes/games/graven.svg' },
   { key: 'neongolf',   name: 'Neongolf',       desc: 'Speel 1 hole',                     img: '/scenes/games/neongolf.svg' },
   { key: 'blokken',    name: 'Blokkenblitz',   desc: '1 minuut spelen, daarna ga je de volgende keer verder', img: '/scenes/games/blokkenblitz.svg' },
+  { key: 'neonhockey', name: 'Neonhockey',     desc: 'Speel 1 wedstrijd van 1 minuut',  img: '/scenes/games/neonhockey.svg' },
+  { key: 'pijlen',     name: 'Pijlenregen',    desc: 'Speel 1 level (5 schijven)',      img: '/scenes/games/pijlenregen.svg' },
+  { key: 'stapel',     name: 'Stapeltoren',    desc: 'Bouw 1 toren in 1 minuut',        img: '/scenes/games/stapeltoren.svg' },
+  { key: 'steen',      name: 'Steenknaller',   desc: 'Speel 1 level',                   img: '/scenes/games/steenknaller.svg' },
 ]
 
 export default function SpelBeloning({ title, sub, geld, addCuruntie, onDone }) {
@@ -124,6 +128,14 @@ export default function SpelBeloning({ title, sub, geld, addCuruntie, onDone }) 
   // Eén minuut per beloning. Het potje wordt na elke zet bewaard, dus bij de
   // volgende beloning ga je verder waar je was (zie public/blokkenblitz/spel.js).
   if (picked === 'blokken')    return <IframeEmbed src="/blokkenblitz/" title="Blokkenblitz" doneType="blokkenblitz-gameover" seconds={60} hint="1 minuut spelen — je potje wordt bewaard voor de volgende keer" onDone={onDone} />
+  // Eén wedstrijd tegen de volgende tegenstander op de ladder, dan Klaar.
+  if (picked === 'neonhockey') return <IframeEmbed src="/neonhockey/" title="Neonhockey" doneType="neonhockey-gameover" hint="Speel 1 wedstrijd — daarna tik je op Klaar" onDone={onDone} />
+  // Het volgende level (5 schijven, ongeveer een minuut), dan Klaar.
+  if (picked === 'pijlen')     return <IframeEmbed src="/pijlenregen/" title="Pijlenregen" doneType="pijlenregen-gameover" hint="Speel 1 level — daarna tik je op Klaar" onDone={onDone} />
+  // Eén toren (maximaal 1 minuut), dan Klaar.
+  if (picked === 'stapel')     return <IframeEmbed src="/stapeltoren/" title="Stapeltoren" doneType="stapeltoren-gameover" hint="Bouw 1 toren — daarna tik je op Klaar" onDone={onDone} />
+  // Het volgende level, dan Klaar.
+  if (picked === 'steen')      return <IframeEmbed src="/steenknaller/" title="Steenknaller" doneType="steenknaller-gameover" hint="Speel 1 level — daarna tik je op Klaar" onDone={onDone} />
 
   return (
     <div className="sb-screen">

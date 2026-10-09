@@ -92,6 +92,10 @@ const FREE_GAMES = [
   { key: 'graven',        name: 'Diepgravers',     desc: '8 aardlagen diep, 40 upgrades — maar doodgaan kost al je duiken!', img: '/scenes/games/graven.svg' },
   { key: 'neongolf',      name: 'Neongolf',        desc: 'Minigolf in 36 holes met portalen, magneten en lasers!', img: '/scenes/games/neongolf.svg' },
   { key: 'blokkenblitz',  name: 'Blokkenblitz',    desc: "Leg blokken, speel rijen weg en bouw combo's!", img: '/scenes/games/blokkenblitz.svg' },
+  { key: 'neonhockey',    name: 'Neonhockey',      desc: "Airhockey van 1 minuut: versla 8 tegenstanders of speel met z'n tweeën!", img: '/scenes/games/neonhockey.svg' },
+  { key: 'pijlenregen',   name: 'Pijlenregen',     desc: 'Schiet pijlen in draaiende schijven — 40 levels met bazen!', img: '/scenes/games/pijlenregen.svg' },
+  { key: 'stapeltoren',   name: 'Stapeltoren',     desc: 'Bouw in 1 minuut de hoogste toren — tik precies op tijd!', img: '/scenes/games/stapeltoren.svg' },
+  { key: 'steenknaller',  name: 'Steenknaller',    desc: 'Kaats de bal en knal alle stenen weg in 30 levels!', img: '/scenes/games/steenknaller.svg' },
 ]
 
 function RewardChips({ rewards }) {
@@ -203,6 +207,22 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
 
   if (directGame === 'blokkenblitz') {
     return vrij(<IframeSpel src="/blokkenblitz/" titel="Blokkenblitz" terugType="blokkenblitz-terug" achtergrond="#070816" onBack={onBack} />)
+  }
+
+  if (directGame === 'neonhockey') {
+    return vrij(<IframeSpel src="/neonhockey/" titel="Neonhockey" terugType="neonhockey-terug" onBack={onBack} />)
+  }
+
+  if (directGame === 'pijlenregen') {
+    return vrij(<IframeSpel src="/pijlenregen/" titel="Pijlenregen" terugType="pijlenregen-terug" achtergrond="#06061a" onBack={onBack} />)
+  }
+
+  if (directGame === 'stapeltoren') {
+    return vrij(<IframeSpel src="/stapeltoren/" titel="Stapeltoren" terugType="stapeltoren-terug" achtergrond="#07061a" onBack={onBack} />)
+  }
+
+  if (directGame === 'steenknaller') {
+    return vrij(<IframeSpel src="/steenknaller/" titel="Steenknaller" terugType="steenknaller-terug" achtergrond="#06061a" onBack={onBack} />)
   }
 
 
