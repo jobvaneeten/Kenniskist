@@ -3,7 +3,10 @@
 // wordt per 1000px afgelegde afstand. palette = kleuren voor het
 // programmatisch getekende terrein (grond, spikkels, oppervlakte-strip).
 
-export const LEVEL_ORDER = ['heuvels', 'woestijn', 'winter', 'grot', 'maan']
+export const LEVEL_ORDER = [
+  'heuvels', 'woestijn', 'winter', 'grot', 'maan',
+  'jungle', 'vulkaan', 'mars', 'diepzee', 'neonstad',
+]
 
 export const LEVELS = {
   heuvels: {
@@ -47,6 +50,53 @@ export const LEVELS = {
     palette: { dirt: 0x6f7480, speckle: 0x585d68, surface: 0x9aa1ae, surfaceLight: 0xc0c6d2 },
     friction: 1.0, gravityScale: 0.35,
     amplitude: 140, frequency: 0.0045, growth: 0.06, jaggedness: 0.10,
+    nextDistance: 1000,
+  },
+  // ── zelf getekend (proceduralArt.js). glow = gloeiende rand op het terrein,
+  //    ambient = zwevende deeltjes in beeld (GameScene._buildAmbient) ──
+  jungle: {
+    id: 'jungle', name: 'Nachtjungle', emoji: '🌴', order: 5, procedural: true,
+    bg: ['hc_bg_jungle_lucht', 'hc_bg_jungle_ver', 'hc_bg_jungle_dichtbij'],
+    palette: { dirt: 0x24180f, speckle: 0x1a110a, surface: 0x1d6b37, surfaceLight: 0x6dff9e },
+    glow: true, ambient: 'vuurvliegjes',
+    friction: 1.3, gravityScale: 1,
+    amplitude: 130, frequency: 0.0055, growth: 0.10, jaggedness: 0.18,
+    nextDistance: 1000,
+  },
+  vulkaan: {
+    id: 'vulkaan', name: 'Vulkaan', emoji: '🌋', order: 6, procedural: true,
+    bg: ['hc_bg_vulkaan_lucht', 'hc_bg_vulkaan_ver', 'hc_bg_vulkaan_dichtbij'],
+    palette: { dirt: 0x2b1512, speckle: 0x170a08, surface: 0x40201a, surfaceLight: 0xff6a2a },
+    glow: true, ambient: 'vonken',
+    friction: 1.3, gravityScale: 1,
+    amplitude: 170, frequency: 0.0065, growth: 0.10, jaggedness: 0.30,
+    nextDistance: 1000,
+  },
+  mars: {
+    id: 'mars', name: 'Mars', emoji: '🪐', order: 7, procedural: true,
+    bg: ['hc_bg_mars_lucht', 'hc_bg_mars_ver', 'hc_bg_mars_dichtbij'],
+    palette: { dirt: 0x8a3b1f, speckle: 0x6b2c16, surface: 0xc4572b, surfaceLight: 0xf08a4b },
+    ambient: 'stof',
+    friction: 1.1, gravityScale: 0.6,
+    amplitude: 150, frequency: 0.005, growth: 0.08, jaggedness: 0.14,
+    nextDistance: 1100,
+  },
+  diepzee: {
+    id: 'diepzee', name: 'Diepzee', emoji: '🐙', order: 8, procedural: true,
+    bg: ['hc_bg_diepzee_lucht', 'hc_bg_diepzee_ver', 'hc_bg_diepzee_dichtbij'],
+    palette: { dirt: 0x1b2a4a, speckle: 0x13203a, surface: 0x235b7a, surfaceLight: 0x5ef0ff },
+    glow: true, ambient: 'bellen',
+    friction: 1.0, gravityScale: 0.5,
+    amplitude: 130, frequency: 0.005, growth: 0.08, jaggedness: 0.12,
+    nextDistance: 1100,
+  },
+  neonstad: {
+    id: 'neonstad', name: 'Neonstad', emoji: '🌆', order: 9, procedural: true,
+    bg: ['hc_bg_neonstad_lucht', 'hc_bg_neonstad_ver', 'hc_bg_neonstad_dichtbij'],
+    palette: { dirt: 0x1a1238, speckle: 0x120c28, surface: 0x2a1d55, surfaceLight: 0xff2f8e },
+    glow: true, ambient: 'neon',
+    friction: 1.3, gravityScale: 1,
+    amplitude: 140, frequency: 0.006, growth: 0.10, jaggedness: 0.20,
     nextDistance: null,
   },
 }

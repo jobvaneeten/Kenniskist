@@ -3,6 +3,7 @@ import './App.css'
 import Wardrobe        from './Wardrobe'
 import Shop            from './Shop'
 import GameMenu        from './GameMenu'
+import { VEHICLE_ORDER } from './games/hillclimb/data/VehicleData.js'
 import Weektaak        from './Weektaak'
 import MijnWeek        from './MijnWeek'
 import { useOpenLescheck } from './lib/lescheck.js'
@@ -269,10 +270,7 @@ export default function App({ gast = false }) {
   // "auto1" code → alle Bergrijden-auto's ontgrendeld (zelfde sleutel als
   // VehicleData.loadUnlockedVehicles leest)
   const unlockHillclimbAutos = () => {
-    localStorage.setItem('kk_hillclimb_vehicles', JSON.stringify([
-      'jeep', 'quad', 'motor', 'tractor', 'raceauto',
-      'politie', 'monstertruck', 'brandweer', 'schoolbus', 'maanbuggy',
-    ]))
+    localStorage.setItem('kk_hillclimb_vehicles', JSON.stringify(VEHICLE_ORDER))
   }
 
   // "pieter" code → blaadjes in Dier Evolutie (eigen munt in kk_evo_state) plus

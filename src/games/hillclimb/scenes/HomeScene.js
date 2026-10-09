@@ -1,6 +1,7 @@
 import Phaser from 'phaser'
-import { drawBackdrop, makeButton, makeCuruntieChip, naarScene, blokkeerDoorklik } from '../ui.js'
-import { loadLevelProgress, LEVELS } from '../data/LevelData.js'
+import { drawBackdrop, makeButton, makeCuruntieChip, naarScene, blokkeerDoorklik, addVehiclePreview, kop, tekst, COL } from '../ui.js'
+import { loadLevelProgress, isLevelUnlocked, LEVEL_ORDER } from '../data/LevelData.js'
+import { loadSelectedVehicle, loadUnlockedVehicles, VEHICLE_ORDER } from '../data/VehicleData.js'
 
 export default class HomeScene extends Phaser.Scene {
   constructor() { super('HCHome') }
@@ -8,42 +9,40 @@ export default class HomeScene extends Phaser.Scene {
   create() {
     const W = this.scale.width, H = this.scale.height
     blokkeerDoorklik(this)
-    drawBackdrop(this, 0.5)
+    drawBackdrop(this, 0.25)
     makeCuruntieChip(this)
 
-    // Titel met binnenkomer-animatie
-    const titel = this.add.text(W / 2, H * 0.24, '🚗 BERGRIJDEN', {
-      fontSize: '72px', fontFamily: 'Arial Black', color: '#ffffff',
-      stroke: '#1a2030', strokeThickness: 12,
-    }).setOrigin(0.5).setDepth(5).setShadow(0, 6, '#000', 10).setScale(0.6).setAlpha(0)
-    this.tweens.add({ targets: titel, scale: 1, alpha: 1, duration: 420, ease: 'Back.Out' })
+    this.add.text(W / 2, H * 0.12, 'RACE  ·  STUNT  ·  UPGRADE', kop(15, COL.cyaanHex, { letterSpacing: 6 }))
+      .setOrigin(0.5).setDepth(5)
 
-    const sub = this.add.text(W / 2, H * 0.24 + 58, 'Race over de heuvels en versla je record!', {
-      fontSize: '19px', fontFamily: 'Arial', color: '#d8e0f0',
-    }).setOrigin(0.5).setDepth(5).setShadow(0, 2, '#000', 4).setAlpha(0)
-    this.tweens.add({ targets: sub, alpha: 1, delay: 220, duration: 320 })
+    // Titel met binnenkomer-animatie en neon-gloed
+    const titel = this.add.text(W / 2, H * 0.22, 'BERGRIJDEN', kop(88, '#ffd23f', { letterSpacing: 4 }))
+      .setOrigin(0.5).setDepth(5).setShadow(0, 0, '#ff2f8e', 28, false, true).setScale(0.6).setAlpha(0)
+    this.tweens.add({ targets: titel, scale: 1, alpha: 1, duration: 480, ease: 'Back.Out' })
+    this.tweens.add({ targets: titel, scale: 1.025, duration: 1400, yoyo: true, repeat: -1, ease: 'Sine.InOut', delay: 500 })
 
-    // Beste afstand over alle levels
+    // Kerngetallen in één regel
     const progress = loadLevelProgress()
     const beste = Math.max(0, ...Object.values(progress))
-    if (beste > 0) {
-      this.add.text(W / 2, H * 0.24 + 92, `🏆 Beste afstand: ${beste} m`, {
-        fontSize: '16px', fontFamily: 'Arial Black', color: '#ffd23f',
-      }).setOrigin(0.5).setDepth(5).setShadow(0, 2, '#000', 3)
-    }
+    const werelden = LEVEL_ORDER.filter(id => isLevelUnlocked(id, progress)).length
+    const autos = loadUnlockedVehicles().length
+    const regel = `${werelden}/${LEVEL_ORDER.length} werelden   ·   ${autos}/${VEHICLE_ORDER.length} auto's${beste > 0 ? `   ·   record ${beste} m` : ''}`
+    const sub = this.add.text(W / 2, H * 0.22 + 64, regel, tekst(17, '#e4dcff')).setOrigin(0.5).setDepth(5).setAlpha(0)
+    this.tweens.add({ targets: sub, alpha: 1, delay: 220, duration: 320 })
 
-    makeButton(this, W / 2, H * 0.56, 340, 74, '🎮  Speel Game', () => {
+    makeButton(this, W / 2, H * 0.52, 320, 70, '▶  SPELEN', () => {
       naarScene(this, 'HCVehicleSelect')
-    }, { color: 0x2f9e44, fontSize: 26, glow: true })
+    }, { color: COL.violet, fontSize: 28, glow: true, filled: true })
 
-    makeButton(this, W / 2, H * 0.56 + 96, 340, 64, '🛒  Shop', () => {
+    makeButton(this, W / 2, H * 0.52 + 88, 320, 58, 'GARAGE & SHOP', () => {
       naarScene(this, 'HCShop')
-    }, { color: 0xd9832a, fontSize: 22 })
+    }, { color: COL.roze, fontSize: 21, glow: true })
 
-    // Aantal vrijgespeelde levels als kleine teaser onderin
-    const unlockedLevels = Object.keys(LEVELS).filter(id => (progress[id] || 0) > 0).length
-    this.add.text(W / 2, H - 34, `🗺 ${Math.max(1, unlockedLevels)} van de ${Object.keys(LEVELS).length} werelden gespeeld`, {
-      fontSize: '14px', fontFamily: 'Arial', color: '#93a0b8',
-    }).setOrigin(0.5).setDepth(5)
+    // gekozen auto rijdt zacht wiebelend op de neonvloer
+    const id = loadSelectedVehicle()
+    const preview = addVehiclePreview(this, id, W / 2, H - 84, 230, 92, 6)
+    const schaduw = this.add.ellipse(W / 2, H - 36, 220, 18, 0x000000, 0.45).setDepth(5)
+    this.tweens.add({ targets: preview, y: '-=4', duration: 380, yoyo: true, repeat: -1, ease: 'Sine.InOut' })
+    this.tweens.add({ targets: schaduw, scaleX: 0.94, duration: 380, yoyo: true, repeat: -1, ease: 'Sine.InOut' })
   }
 }

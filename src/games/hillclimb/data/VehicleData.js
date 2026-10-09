@@ -9,6 +9,7 @@
 export const VEHICLE_ORDER = [
   'jeep', 'quad', 'motor', 'tractor', 'raceauto',
   'politie', 'monstertruck', 'brandweer', 'schoolbus', 'maanbuggy',
+  'rally', 'pickup', 'buggy', 'legertruck', 'neonracer', 'raketauto',
 ]
 
 export const VEHICLES = {
@@ -107,6 +108,69 @@ export const VEHICLES = {
     suspensionStiffness: 0.013, suspensionDamping: 0.022, suspensionLength: 36,
     grip: 1.15, airControl: 0.045,
     driver: { x: -0.02, lift: 0.6, scale: 1.6 },
+  },
+  // ── zelf getekend (proceduralArt.js): procedural = geen losse plaatjes ──
+  rally: {
+    id: 'rally', name: 'Rallyauto', emoji: '🏁', cost: 1100, procedural: true,
+    desc: 'Gebouwd voor gravel: snel én veel grip.',
+    chassisW: 120, chassisH: 34, wheelRadius: 22, wheelOffsetX: 42,
+    mass: 0.85, power: 0.036, maxFuel: 85, fuelBurn: 1,
+    suspensionStiffness: 0.016, suspensionDamping: 0.028, suspensionLength: 18,
+    grip: 1.1, airControl: 0.035,
+    art: { originX: 0.5, originY: 0.611, disp: 24 },
+    driver: { x: -0.05, lift: 0.06, scale: 0.9 },
+  },
+  pickup: {
+    id: 'pickup', name: 'Pick-up', emoji: '🛻', cost: 1200, procedural: true,
+    desc: 'Sterk en betrouwbaar, met een flinke tank.',
+    chassisW: 140, chassisH: 40, wheelRadius: 25, wheelOffsetX: 50,
+    mass: 1.3, power: 0.03, maxFuel: 120, fuelBurn: 1.1,
+    suspensionStiffness: 0.02, suspensionDamping: 0.036, suspensionLength: 20,
+    grip: 1.1, airControl: 0.024,
+    art: { originX: 0.5, originY: 0.634, disp: 27 },
+    driver: { x: 0.09, lift: 0.02, scale: 0.9 },
+  },
+  buggy: {
+    id: 'buggy', name: 'Strandbuggy', emoji: '🏖️', cost: 1300, procedural: true,
+    desc: 'Superlicht en veerkrachtig — ideaal voor flips.',
+    chassisW: 104, chassisH: 28, wheelRadius: 26, wheelOffsetX: 42,
+    mass: 0.6, power: 0.035, maxFuel: 70, fuelBurn: 0.85,
+    suspensionStiffness: 0.013, suspensionDamping: 0.022, suspensionLength: 30,
+    grip: 1.05, airControl: 0.05,
+    art: { originX: 0.5, originY: 0.703, disp: 28 },
+    driver: { x: -0.06, lift: 0.2, scale: 1.4 },
+  },
+  legertruck: {
+    id: 'legertruck', name: 'Legertruck', emoji: '🪖', cost: 1450, procedural: true,
+    desc: 'Een tank op wielen: klimt alles op, maar is zwaar.',
+    chassisW: 150, chassisH: 46, wheelRadius: 30, wheelOffsetX: 54,
+    mass: 1.8, power: 0.026, maxFuel: 150, fuelBurn: 1.2,
+    suspensionStiffness: 0.026, suspensionDamping: 0.044, suspensionLength: 22,
+    grip: 1.2, airControl: 0.018,
+    art: { originX: 0.5, originY: 0.644, disp: 32 },
+    driver: { x: 0.12, lift: 0.056, scale: 0.85 },
+  },
+  neonracer: {
+    id: 'neonracer', name: 'Neonracer', emoji: '⚡', cost: 1600, procedural: true,
+    desc: 'De snelste auto van de garage — gloeit in het donker.',
+    chassisW: 132, chassisH: 26, wheelRadius: 18, wheelOffsetX: 46,
+    mass: 0.7, power: 0.043, maxFuel: 70, fuelBurn: 1.1,
+    suspensionStiffness: 0.02, suspensionDamping: 0.03, suspensionLength: 10,
+    grip: 0.95, airControl: 0.04,
+    art: { originX: 0.5, originY: 0.567, disp: 20 },
+    driver: { x: -0.06, lift: 0.07, scale: 1.0 },
+  },
+  raketauto: {
+    id: 'raketauto', name: 'Raketauto', emoji: '🚀', cost: 1800, procedural: true,
+    desc: 'Raketmotor achterop: knalt vooruit, maar slurpt brandstof.',
+    chassisW: 136, chassisH: 32, wheelRadius: 22, wheelOffsetX: 46,
+    mass: 0.9, power: 0.045, maxFuel: 80, fuelBurn: 1.35,
+    suspensionStiffness: 0.018, suspensionDamping: 0.03, suspensionLength: 16,
+    grip: 1.0, airControl: 0.05,
+    art: { originX: 0.5, originY: 0.657, disp: 24 },
+    driver: { x: 0.07, lift: 0.1, scale: 1.15 },
+    // vlam uit de straalpijp bij gas (GameScene)
+    flame: { x: -0.66, y: -0.02 },
   },
 }
 

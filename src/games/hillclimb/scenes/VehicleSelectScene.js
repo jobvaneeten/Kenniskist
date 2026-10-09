@@ -3,82 +3,88 @@ import {
   VEHICLE_ORDER, VEHICLES, loadUnlockedVehicles, loadSelectedVehicle, saveSelectedVehicle,
 } from '../data/VehicleData.js'
 import {
-  COL, drawBackdrop, drawPanel, makeBackButton, makeCuruntieChip,
-  addVehiclePreview, drawStatBar, vehicleStatFracs, naarScene, blokkeerDoorklik,
+  COL, drawBackdrop, drawPanel, makeBackButton, makeCuruntieChip, makeArrow, drawDots, drawCoin, drawLock,
+  addVehiclePreview, drawStatBar, vehicleStatFracs, naarScene, blokkeerDoorklik, kop, tekst,
 } from '../ui.js'
 
-const COLS = 5, GAP = 14
-const CARD_W = 210, CARD_H = 240
+const COLS = 5, ROWS = 2, PER_PAGE = COLS * ROWS, GAP = 14
+const CARD_W = 196, CARD_H = 228
 
 export default class VehicleSelectScene extends Phaser.Scene {
   constructor() { super('HCVehicleSelect') }
 
+  init(data) { this.pagina = data?.pagina }
+
   create() {
-    const W = this.scale.width
+    const W = this.scale.width, H = this.scale.height
     blokkeerDoorklik(this)
-    drawBackdrop(this, 0.55)
+    drawBackdrop(this, 0.6)
     makeBackButton(this, () => naarScene(this, 'HCHome'))
     makeCuruntieChip(this)
 
-    this.add.text(W / 2, 38, '🚗 Kies je auto', {
-      fontSize: '30px', fontFamily: 'Arial Black', color: '#ffffff',
-    }).setOrigin(0.5).setDepth(5).setShadow(0, 3, '#000', 6)
+    this.add.text(W / 2, 40, 'KIES JE AUTO', kop(34, '#ffffff', { letterSpacing: 3 }))
+      .setOrigin(0.5).setDepth(5).setShadow(0, 0, '#7c3aed', 18, false, true)
 
     const unlocked = loadUnlockedVehicles()
     const selected = loadSelectedVehicle()
+    const paginas = Math.ceil(VEHICLE_ORDER.length / PER_PAGE)
+    // standaard de pagina waar je gekozen auto op staat
+    const p = Phaser.Math.Clamp(this.pagina ?? Math.floor(VEHICLE_ORDER.indexOf(selected) / PER_PAGE), 0, paginas - 1)
     const startX = W / 2 - (COLS * CARD_W + (COLS - 1) * GAP) / 2
 
-    VEHICLE_ORDER.forEach((id, i) => {
+    VEHICLE_ORDER.slice(p * PER_PAGE, (p + 1) * PER_PAGE).forEach((id, i) => {
       const col = i % COLS, row = Math.floor(i / COLS)
       const x = startX + col * (CARD_W + GAP)
-      const y = 74 + row * (CARD_H + GAP)
+      const y = 114 + row * (CARD_H + GAP)
       this._buildCard(id, x, y, unlocked.includes(id), id === selected, i)
     })
 
-    this.add.text(W / 2, 74 + 2 * CARD_H + GAP + 24, 'Klik op een auto om te racen · 🔒 auto’s koop je in de Shop', {
-      fontSize: '14px', fontFamily: 'Arial', color: COL.subtekst,
-    }).setOrigin(0.5).setDepth(5)
+    if (paginas > 1) {
+      if (p > 0) makeArrow(this, 30, H / 2 + 30, -1, () => naarScene(this, 'HCVehicleSelect', { pagina: p - 1 }))
+      if (p < paginas - 1) makeArrow(this, W - 30, H / 2 + 30, 1, () => naarScene(this, 'HCVehicleSelect', { pagina: p + 1 }))
+      drawDots(this, W / 2, H - 20, paginas, p)
+    } else {
+      this.add.text(W / 2, H - 20, "Klik op een auto om te racen · nieuwe auto's koop je in de Shop", tekst(14)).setOrigin(0.5).setDepth(5)
+    }
   }
 
   _buildCard(id, x, y, isUnlocked, isSelected, index) {
     const v = VEHICLES[id]
     const g = this.add.graphics().setDepth(2)
     drawPanel(g, x, y, CARD_W, CARD_H, {
-      border: isSelected ? COL.randActief : COL.rand,
-      borderW: isSelected ? 3 : 2,
+      border: isSelected ? COL.goud : isUnlocked ? COL.rand : 0x2a2550,
+      borderW: isSelected ? 2.5 : 1.5, glow: isSelected,
     })
+    // zachte spot achter de auto
+    g.fillStyle(isSelected ? COL.goud : COL.violet, isUnlocked ? 0.12 : 0.05); g.fillEllipse(x + CARD_W / 2, y + 96, CARD_W - 30, 26)
 
-    const preview = addVehiclePreview(this, id, x + CARD_W / 2, y + 66, CARD_W - 44, 96)
+    const preview = addVehiclePreview(this, id, x + CARD_W / 2, y + 64, CARD_W - 40, 92)
 
-    this.add.text(x + CARD_W / 2, y + 128, `${v.emoji} ${v.name}`, {
-      fontSize: '16px', fontFamily: 'Arial Black', color: '#ffffff',
-    }).setOrigin(0.5).setDepth(5).setShadow(0, 2, '#000', 3)
+    this.add.text(x + CARD_W / 2, y + 130, v.name.toUpperCase(), kop(17, '#ffffff', { letterSpacing: 1 }))
+      .setOrigin(0.5).setDepth(5)
 
     const fr = vehicleStatFracs(id)
     const sg = this.add.graphics().setDepth(5)
-    drawStatBar(this, sg, x + 22, y + 154, '⚡', fr.snelheid, 0x7ed957, CARD_W - 56)
-    drawStatBar(this, sg, x + 22, y + 172, '🛞', fr.grip, 0x4fb0ff, CARD_W - 56)
-    drawStatBar(this, sg, x + 22, y + 190, '⛽', fr.tank, 0xffb347, CARD_W - 56)
+    drawStatBar(this, sg, x + 18, y + 156, 'SNEL', fr.snelheid, COL.groenNeon, CARD_W - 52)
+    drawStatBar(this, sg, x + 18, y + 174, 'GRIP', fr.grip, COL.cyaan, CARD_W - 52)
+    drawStatBar(this, sg, x + 18, y + 192, 'TANK', fr.tank, COL.oranje, CARD_W - 52)
 
     if (isUnlocked) {
-      this.add.text(x + CARD_W / 2, y + 216, isSelected ? '✅ Gekozen — klik om te racen' : 'Klik om te racen →', {
-        fontSize: '12px', fontFamily: 'Arial Black', color: isSelected ? '#7ed957' : '#cfd6e6',
-      }).setOrigin(0.5).setDepth(5)
+      this.add.text(x + CARD_W / 2, y + 211, isSelected ? '● GEKOZEN — KLIK OM TE RACEN' : 'KLIK OM TE RACEN ›', kop(11, isSelected ? COL.goudHex : '#cfc8f5', { letterSpacing: 1 }))
+        .setOrigin(0.5).setDepth(5)
     } else {
-      // slot-overlay
       const ov = this.add.graphics().setDepth(6)
-      ov.fillStyle(0x0a0d14, 0.55); ov.fillRoundedRect(x, y, CARD_W, CARD_H, 16)
-      this.add.text(x + CARD_W / 2, y + 66, '🔒', { fontSize: '34px' }).setOrigin(0.5).setDepth(7)
-      this.add.text(x + CARD_W / 2, y + 216, `🪙 ${v.cost} · koop in de Shop`, {
-        fontSize: '12px', fontFamily: 'Arial Black', color: COL.goudHex,
-      }).setOrigin(0.5).setDepth(7)
-      preview.forEach(p => p.setAlpha(0.75))
+      ov.fillStyle(0x07061a, 0.55); ov.fillRoundedRect(x, y, CARD_W, CARD_H, 16)
+      drawLock(ov, x + CARD_W / 2, y + 60, 1.3)
+      drawCoin(ov, x + CARD_W / 2 - 40, y + 211, 7)
+      this.add.text(x + CARD_W / 2 - 28, y + 211, `${v.cost} · in de Shop`, kop(13, COL.goudHex)).setOrigin(0, 0.5).setDepth(7)
+      preview.forEach(p => p.setAlpha(0.6))
     }
 
     const zone = this.add.zone(x + CARD_W / 2, y + CARD_H / 2, CARD_W, CARD_H)
       .setInteractive({ useHandCursor: true }).setDepth(8)
-    zone.on('pointerover', () => this.tweens.add({ targets: preview, y: '-=4', duration: 110, ease: 'Sine.Out' }))
-    zone.on('pointerout',  () => this.tweens.add({ targets: preview, y: '+=4', duration: 110, ease: 'Sine.Out' }))
+    zone.on('pointerover', () => this.tweens.add({ targets: preview, y: '-=5', duration: 110, ease: 'Sine.Out' }))
+    zone.on('pointerout',  () => this.tweens.add({ targets: preview, y: '+=5', duration: 110, ease: 'Sine.Out' }))
     zone.on('pointerup', () => {
       if (!isUnlocked) {
         this.cameras.main.shake(120, 0.004)
@@ -90,7 +96,8 @@ export default class VehicleSelectScene extends Phaser.Scene {
 
     // rustige binnenkomer
     const alles = [g, ...preview]
-    alles.forEach(o => o.setAlpha(o.alpha * 0))
-    this.tweens.add({ targets: alles, alpha: { from: 0, to: 1 }, delay: index * 35, duration: 200 })
+    alles.forEach(o => o.setAlpha(0))
+    this.tweens.add({ targets: g, alpha: 1, delay: index * 35, duration: 200 })
+    this.tweens.add({ targets: preview, alpha: isUnlocked ? 1 : 0.6, delay: index * 35, duration: 200 })
   }
 }

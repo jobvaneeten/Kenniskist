@@ -1,8 +1,9 @@
 import Phaser from 'phaser'
-import { LEVELS, saveLevelBest } from '../data/LevelData.js'
+import { LEVELS, LEVEL_ORDER, saveLevelBest, loadLevelProgress } from '../data/LevelData.js'
 import { applyUpgrades, loadUpgrades } from '../data/VehicleData.js'
 import { TerrainManager, heightAt, CHUNK_WIDTH } from '../terrain.js'
 import { Vehicle } from '../vehicle.js'
+import { COL, FONT } from '../ui.js'
 
 const PPM = 12                 // pixels per "meter" (afstand-eenheid van de levels)
 const START_X = 140
@@ -92,6 +93,20 @@ export default class GameScene extends Phaser.Scene {
       emitting: false,
     }).setDepth(9.5)
 
+    // vonken/sterretjes voor munten, jerrycans en crashes
+    this.fxEmitter = this.add.particles(0, 0, 'hc_spark', {
+      speed: { min: 80, max: 260 }, angle: { min: 0, max: 360 },
+      scale: { start: 0.55, end: 0 }, alpha: { start: 1, end: 0 },
+      lifespan: { min: 300, max: 600 }, blendMode: 'ADD', emitting: false,
+    }).setDepth(11)
+    this._buildAmbient()
+
+    // raketvlam (alleen voertuigen met een flame-punt)
+    if (this.stats.flame) {
+      this.vlamImg = this.add.image(0, 0, 'hc_vlam').setOrigin(1, 0.5).setDepth(8.8)
+        .setBlendMode(Phaser.BlendModes.ADD).setVisible(false)
+    }
+
     this.propChunks = new Map()
     this._ensureProps(START_X - 400, START_X + 1600)
 
@@ -114,6 +129,38 @@ export default class GameScene extends Phaser.Scene {
     })
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, this._cleanup, this)
+  }
+
+  // Zwevende sfeer-deeltjes per wereld (vuurvliegjes, vonken, bellen…),
+  // vast aan het scherm zodat ze de camera niet hoeven te volgen.
+  _buildAmbient() {
+    const W = this.scale.width, H = this.scale.height
+    const cfg = {
+      vuurvliegjes: { tex: 'hc_spark', tint: [0xb6ff6a, 0x6affd0, 0xfff36a], speedX: { min: -12, max: 12 }, speedY: { min: -14, max: 8 }, scale: { start: 0.32, end: 0 }, lifespan: { min: 2500, max: 4500 }, frequency: 120 },
+      vonken: { tex: 'hc_spark', tint: [0xff8a3d, 0xffd23f, 0xff3b1f], speedX: { min: -30, max: 10 }, speedY: { min: -90, max: -30 }, scale: { start: 0.3, end: 0 }, lifespan: { min: 1500, max: 3000 }, frequency: 60, y: { min: H * 0.4, max: H } },
+      bellen: { tex: 'hc_bel', tint: [0xffffff], speedX: { min: -8, max: 8 }, speedY: { min: -70, max: -30 }, scale: { min: 0.4, max: 1 }, lifespan: { min: 3000, max: 6000 }, frequency: 140, y: { min: H * 0.5, max: H } },
+      stof: { tex: 'hc_spark', tint: [0xf0a070, 0xd08060], speedX: { min: -120, max: -60 }, speedY: { min: -6, max: 6 }, scale: { start: 0.25, end: 0.1 }, lifespan: { min: 3000, max: 5000 }, frequency: 50, alpha: { start: 0.45, end: 0 } },
+      neon: { tex: 'hc_spark', tint: [COL.roze, COL.cyaan, COL.violetLicht], speedX: { min: -10, max: 10 }, speedY: { min: -30, max: -10 }, scale: { start: 0.3, end: 0 }, lifespan: { min: 2000, max: 4000 }, frequency: 110 },
+    }[this.level.ambient]
+    if (!cfg) return
+    const { tex, ...rest } = cfg
+    this.add.particles(0, 0, tex, {
+      x: { min: 0, max: W * 1.1 }, y: { min: 0, max: H }, alpha: { start: 0.9, end: 0 },
+      blendMode: tex === 'hc_bel' ? 'NORMAL' : 'ADD', ...rest,
+    }).setScrollFactor(0).setDepth(4)
+  }
+
+  _burst(x, y, kleur, n = 14) {
+    this.fxEmitter.setParticleTint(kleur)
+    this.fxEmitter.emitParticleAt(x, y, n)
+  }
+
+  _zweefTekst(x, y, msg, kleur) {
+    const t = this.add.text(x, y, msg, {
+      fontSize: '22px', fontFamily: FONT, fontStyle: '800', color: kleur,
+      stroke: '#150d2b', strokeThickness: 5,
+    }).setOrigin(0.5).setDepth(12)
+    this.tweens.add({ targets: t, y: y - 60, alpha: 0, scale: 1.2, duration: 750, ease: 'Cubic.Out', onComplete: () => t.destroy() })
   }
 
   // Maakt van een achtergrond een naadloos herhaalbare texture door hem
@@ -221,7 +268,7 @@ export default class GameScene extends Phaser.Scene {
       const bordH = 96, bordW = 70
       const img = this.add.image(x, groundY, 'hc_bord').setOrigin(0.5, 1).setDepth(6).setDisplaySize(bordW, bordH)
       const txt = this.add.text(x, groundY - bordH * 0.72, `${meters}m`, {
-        fontSize: '17px', fontFamily: 'Arial Black', color: '#ffffff', stroke: '#000', strokeThickness: 4,
+        fontSize: '19px', fontFamily: FONT, fontStyle: '800', color: '#ffffff', stroke: '#150d2b', strokeThickness: 4,
       }).setOrigin(0.5).setDepth(6)
       this.signs.set(x, [img, txt])
     }
@@ -247,8 +294,15 @@ export default class GameScene extends Phaser.Scene {
         if (!s.active) continue
         const d = Math.min(...punten.map(p => Phaser.Math.Distance.Between(p.x, p.y, s.x, s.y)))
         if (d < 64) {
-          if (s._type === 'coin') { this.coins += 1 }
-          else if (s._type === 'fuel') { this.fuel = Math.min(this.stats.maxFuel, this.fuel + this.stats.maxFuel * 0.45) }
+          if (s._type === 'coin') {
+            this.coins += 1
+            this._burst(s.x, s.y, COL.goud, 10)
+            this._zweefTekst(s.x, s.y - 10, '+1', '#ffd23f')
+          } else if (s._type === 'fuel') {
+            this.fuel = Math.min(this.stats.maxFuel, this.fuel + this.stats.maxFuel * 0.45)
+            this._burst(s.x, s.y, COL.groenNeon, 22)
+            this._zweefTekst(s.x, s.y - 14, 'BRANDSTOF!', '#4ade80')
+          }
           s.setActive(false).setVisible(false)
           this.time.delayedCall(50, () => s.destroy())
         }
@@ -260,9 +314,10 @@ export default class GameScene extends Phaser.Scene {
 
   toast(msg) {
     const t = this.add.text(this.scale.width / 2, 90, msg, {
-      fontSize: '26px', fontFamily: 'Arial Black', color: '#ffe066', stroke: '#000', strokeThickness: 5,
-    }).setOrigin(0.5).setScrollFactor(0).setDepth(100)
-    this.tweens.add({ targets: t, y: 50, alpha: 0, duration: 1200, onComplete: () => t.destroy() })
+      fontSize: '32px', fontFamily: FONT, fontStyle: '800', color: '#ffd23f', stroke: '#150d2b', strokeThickness: 6,
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(100).setShadow(0, 0, '#ff2f8e', 16, false, true).setScale(0.4)
+    this.tweens.add({ targets: t, scale: 1, duration: 220, ease: 'Back.Out' })
+    this.tweens.add({ targets: t, y: 70, alpha: 0, delay: 500, duration: 900, onComplete: () => t.destroy() })
   }
 
   // Uitleg die blijft staan: langer dan een toast en lager op het scherm, zodat
@@ -270,8 +325,8 @@ export default class GameScene extends Phaser.Scene {
   _hint(msg, duur = 3200) {
     this._hintTekst?.destroy()
     const t = this.add.text(this.scale.width / 2, this.scale.height - 150, msg, {
-      fontSize: '20px', fontFamily: 'Arial Black', color: '#ffffff',
-      stroke: '#000', strokeThickness: 5, align: 'center',
+      fontSize: '22px', fontFamily: FONT, fontStyle: '800', color: '#ffffff',
+      stroke: '#150d2b', strokeThickness: 6, align: 'center',
       wordWrap: { width: this.scale.width - 320 },
     }).setOrigin(0.5).setScrollFactor(0).setDepth(100).setAlpha(0)
     this._hintTekst = t
@@ -292,7 +347,7 @@ export default class GameScene extends Phaser.Scene {
     if (this.vehicle.wheelieDruk < 0.3) return
     if (this._laatsteWaarschuwing && time - this._laatsteWaarschuwing < 2500) return
     this._laatsteWaarschuwing = time
-    this._hint('⚠️ Laat het gas even los, anders kantel je achterover!', 1800)
+    this._hint('Laat het gas even los, anders kantel je achterover!', 1800)
   }
 
   update(time, delta) {
@@ -332,9 +387,10 @@ export default class GameScene extends Phaser.Scene {
     } else if (this._airborneSince != null) {
       const airT = (time - this._airborneSince) / 1000
       const flips = Math.floor(this._spinAccum / (Math.PI * 2))
-      if (flips > 0) { this.addCoins(flips * 8); this.toast(`🤸 Flip ×${flips}! +${flips * 8}`) }
-      else if (airT > 1.0) { const b = Math.floor(airT * 3); this.addCoins(b); this.toast(`✈️ Airtime! +${b}`) }
+      if (flips > 0) { this.addCoins(flips * 8); this.toast(`FLIP ×${flips}!  +${flips * 8}`) }
+      else if (airT > 1.0) { const b = Math.floor(airT * 3); this.addCoins(b); this.toast(`AIRTIME!  +${b}`) }
       const impact = Math.min(1, this.vehicle.speed / 14)
+      if (impact > 0.6) this.cameras.main.shake(140, 0.004 * impact)
       if (impact > 0.15) {
         this._spawnDust(this.vehicle.wheelL.position.x, this.vehicle.wheelL.position.y, impact)
         this._spawnDust(this.vehicle.wheelR.position.x, this.vehicle.wheelR.position.y, impact)
@@ -416,6 +472,18 @@ export default class GameScene extends Phaser.Scene {
       v.chassis.position.x + lx * Math.cos(a) - ly * Math.sin(a),
       v.chassis.position.y + lx * Math.sin(a) + ly * Math.cos(a),
     ).setRotation(a)
+    if (this.vlamImg) {
+      const aan = this.vehicle.throttle > 0 && this.fuel > 0
+      this.vlamImg.setVisible(aan)
+      if (aan) {
+        const fx = this.stats.chassisW * this.stats.flame.x, fy = this.stats.chassisH * this.stats.flame.y
+        const flik = 0.75 + Math.random() * 0.4
+        this.vlamImg.setPosition(
+          v.chassis.position.x + fx * Math.cos(a) - fy * Math.sin(a),
+          v.chassis.position.y + fx * Math.sin(a) + fy * Math.cos(a),
+        ).setRotation(a).setDisplaySize(70 * flik, 26 * (0.85 + Math.random() * 0.3))
+      }
+    }
   }
 
   _pushHud() {
@@ -428,15 +496,29 @@ export default class GameScene extends Phaser.Scene {
   _endRun(reason) {
     if (this.gameOver) return
     this.gameOver = true
+    const vorigBest = loadLevelProgress()[this.levelId] || 0
     const best = saveLevelBest(this.levelId, this.distance)
+    const d = Math.round(this.distance)
+    const nieuwRecord = d > 0 && d > vorigBest
+    const volgende = LEVEL_ORDER[this.level.order + 1]
+    const vrijgespeeld = this.level.nextDistance && vorigBest < this.level.nextDistance && d >= this.level.nextDistance
+      ? LEVELS[volgende].name : null
+    if (reason === 'crash') {
+      const v = this.vehicle
+      this.cameras.main.shake(380, 0.014)
+      this.cameras.main.flash(160, 255, 80, 120)
+      this._burst(v.x, v.y, 0xff8a3d, 30)
+      this._burst(v.x, v.y, COL.goud, 20)
+      this._spawnDust(v.x, v.y + 10, 1)
+    }
     const curuntieEarned = this.coins * CURUNTIE_PER_COIN
     try {
       const cur = parseInt(localStorage.getItem('kk_curuntie') || '0', 10)
       localStorage.setItem('kk_curuntie', String(cur + curuntieEarned))
     } catch { /* localStorage niet beschikbaar */ }
     this.events.emit('hc_gameover', {
-      reason, distance: Math.round(this.distance), best: Math.round(best),
-      coins: this.coins, curuntieEarned,
+      reason, distance: d, best: Math.round(best),
+      coins: this.coins, curuntieEarned, nieuwRecord, vrijgespeeld,
     })
   }
 

@@ -119,6 +119,14 @@ export class TerrainManager {
     g.strokePoints(strip, false, false)
     g.lineStyle(5, pal.surfaceLight, 0.8)
     g.strokePoints(pts, false, false)
+    // neon-werelden: zachte gloed boven de rand + dunne felle lijn
+    if (level.glow) {
+      const boven = pts.map(p => ({ x: p.x, y: p.y - 3 }))
+      g.lineStyle(14, pal.surfaceLight, 0.12)
+      g.strokePoints(boven, false, false)
+      g.lineStyle(2.5, 0xffffff, 0.55)
+      g.strokePoints(pts, false, false)
+    }
 
     this.chunks.set(index, { bodies, gfx: g })
   }
