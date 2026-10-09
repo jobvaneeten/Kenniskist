@@ -480,3 +480,21 @@
 .wt-uitleg-vb-kop { font-size: var(--kk-fs-xs); font-weight: var(--kk-fw-bold); text-transform: uppercase; letter-spacing: .06em; color: var(--kk-cyan); }
 .wt-uitleg-doel { margin: 14px 0 0; font-size: var(--kk-fs-sm); color: var(--kk-text-soft); }
 .wt-uitleg > .kk-knop, .wt-uitleg > button { align-self: center; }
+
+/* Speciaal voor mij → Doelen: behaalde doelen onder een eigen gouden kopje */
+.wt-behaald-sectie { width: 100%; max-width: 900px; margin-top: 28px; display: flex; flex-direction: column; align-items: center; }
+.wt-behaald-kop {
+  display: flex; align-items: center; gap: 10px; margin: 0 0 14px;
+  font: var(--kk-fw-bold) 1.4rem/1.1 var(--kk-head); color: var(--kk-gold);
+  text-shadow: 0 0 16px color-mix(in srgb, var(--kk-gold) 55%, transparent);
+}
+.wt-behaald-kop svg { width: 26px; height: 26px; }
+.wt-behaald-kop span {
+  font: var(--kk-fw-bold) var(--kk-fs-sm)/1 var(--kk-body); color: #1a1300;
+  background: var(--kk-gold); border-radius: var(--kk-r-pill); padding: 4px 10px; text-shadow: none;
+}
+.mode-card.wt-behaald {
+  border-color: color-mix(in srgb, var(--kk-gold) 60%, transparent);
+  background: linear-gradient(160deg, color-mix(in srgb, var(--kk-gold) 14%, transparent), rgba(14, 12, 34, 0.75) 70%);
+  box-shadow: 0 0 22px -6px color-mix(in srgb, var(--kk-gold) 60%, transparent);
+}

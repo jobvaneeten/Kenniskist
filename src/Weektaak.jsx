@@ -2,6 +2,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { useSessie } from './lib/sessie.jsx'
 import { haalMijnWeektaak, zetActieveOpdracht, wisActieveOpdracht, soortVan, DOEL_MIN, DOEL_PCT } from './lib/weektaak.js'
 import DoelBalk from './DoelBalk.jsx'
+import DoelFeest from './DoelFeest.jsx'
+import { leesGevierd, markeerGevierd } from './lib/gevierd.js'
+import { supabase } from './lib/supabase.js'
 import { uitlegVoor } from './lib/doelUitleg.js'
 import { toolLabel, TOOL_BY_ID, VAKKEN } from './lib/tools.js'
 import { resterendeMinuten } from './lib/leestimerOpslag.js'
@@ -79,6 +82,7 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
   const [tab, setTab] = useState('taak')
   const [doelVak, setDoelVak] = useState(null)
   const [uitleg, setUitleg] = useState(null) // { opdracht, titel } — doel vóór het oefenen
+  const [feest, setFeest] = useState(null)   // doel dat tijdens het oefenen behaald werd
   const soort = persoonlijk ? tab : 'weektaak'
 
   useEffect(() => {
@@ -111,6 +115,28 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
   // Een doel krijgt eerst de uitleg; de rest start meteen.
   const kies = (opdracht, titel) => (soortVan(opdracht) === 'doel' ? setUitleg({ opdracht, titel }) : start(opdracht))
 
+  // Tijdens het oefenen van een doel dat nog niet behaald is: na elk opgeslagen
+  // antwoord (seintje uit kenniskist-login.js) kijken of het nu behaald is.
+  const lopendDoel = gekozen && soortVan(gekozen) === 'doel' && !gekozen.klaar ? gekozen : null
+  useEffect(() => {
+    if (!lopendDoel || !profiel?.id) return
+    let actief = true
+    const bijOpslaan = async (e) => {
+      if (e.detail?.opdrachtId !== lopendDoel.opdrachtId) return
+      const { data } = await supabase.from('doel_voortgang').select('gehaald')
+        .eq('opdracht_id', lopendDoel.opdrachtId).eq('leerling_id', profiel.id).maybeSingle()
+      if (!actief || !data?.gehaald || leesGevierd().has(lopendDoel.opdrachtId)) return
+      setFeest({ sleutel: lopendDoel.opdrachtId, opdrachtId: lopendDoel.opdrachtId, titel: lopendDoel.weektaak?.titel ?? toolLabel(lopendDoel.toolId) })
+    }
+    window.addEventListener('kk-resultaat-opgeslagen', bijOpslaan)
+    return () => { actief = false; window.removeEventListener('kk-resultaat-opgeslagen', bijOpslaan) }
+  }, [lopendDoel, profiel?.id])
+
+  const klaarMetFeest = () => {
+    markeerGevierd([feest.opdrachtId])
+    setFeest(null)
+  }
+
   const terugVanTool = () => {
     wisActieveOpdracht()
     setGekozen(null)
@@ -119,18 +145,55 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
 
   if (gekozen) {
     return (
-      <RenderTool
-        opdracht={gekozen}
-        groep={toegestaneGroepen?.[0]}
-        onBack={terugVanTool}
-        addBriefgeld={addBriefgeld}
-        addCuruntie={addCuruntie}
-      />
+      <>
+        <RenderTool
+          opdracht={gekozen}
+          groep={toegestaneGroepen?.[0]}
+          onBack={terugVanTool}
+          addBriefgeld={addBriefgeld}
+          addCuruntie={addCuruntie}
+        />
+        {feest && <DoelFeest doelen={[feest]} onKlaar={klaarMetFeest} knopTekst="Verder oefenen" />}
+      </>
     )
   }
 
   if (uitleg) {
     return <DoelUitleg opdracht={uitleg.opdracht} titel={uitleg.titel} onStart={() => start(uitleg.opdracht)} onBack={() => setUitleg(null)} />
+  }
+
+  // Doelen: een behaald doel verhuist naar het kopje "Behaalde doelen".
+  const isBehaald = (m) => m.opdrachten.every(o => o.klaar)
+  const openDoelen = soort === 'doel' ? mappen.filter(m => !isBehaald(m)) : mappen
+  const behaaldeDoelen = soort === 'doel' ? mappen.filter(isBehaald) : []
+
+  const mapKaart = (m, goud = false) => {
+    const af = m.opdrachten.filter(o => o.klaar).length
+    const alles = af === m.opdrachten.length
+    return (
+      // Een taak of doel met maar één oefening opent meteen die oefening.
+      <button
+        key={m.id} className={`mode-card wt-map${goud ? ' wt-behaald' : ''}`}
+        style={goud ? { '--kk-accent': 'var(--kk-gold)' } : alles ? { '--kk-accent': 'var(--kk-success)' } : undefined}
+        onClick={() => (persoonlijk && m.opdrachten.length === 1 ? kies(m.opdrachten[0], m.titel) : setOpenMap(m.id))}
+      >
+        <span className="mode-icoon"><Icoon naam={goud ? 'trofee' : alles ? 'goed' : persoonlijk ? PERSOONLIJK[tab].icoon : 'klembord'} /></span>
+        <span className="mode-name">{m.titel}</span>
+        <span className="mode-desc">
+          {goud
+            ? `${vakNaam(vakVan(m))} · je mag blijven oefenen`
+            : soort === 'doel'
+              ? (m.opdrachten.length === 1 ? null : `${af} van de ${m.opdrachten.length} behaald`)
+              : soort === 'taak' && m.opdrachten.length === 1 && m.opdrachten[0].doel != null
+                ? `${Math.min(m.opdrachten[0].somMax, m.opdrachten[0].doel)} / ${m.opdrachten[0].doel} gemaakt`
+                : `${af} van de ${m.opdrachten.length} af`}
+        </span>
+        {soort === 'doel' && m.opdrachten.length === 1 && <DoelBalk stand={m.opdrachten[0].doelStand} />}
+        {m.eindOp && !persoonlijk && (
+          <span className="wt-map-datum">tot en met {korteDatum(m.eindOp)}</span>
+        )}
+      </button>
+    )
   }
 
   // Het open mapje wordt per render opnieuw opgezocht in plaats van in state
@@ -216,12 +279,15 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
         </p>
       )}
       {/* Doelen: eerst de vakken, dan de doelen van het gekozen vak. */}
-      {soort === 'doel' && !doelVak && mappen.length > 0 && (
+      {soort === 'doel' && !doelVak && mappen.length > 0 && openDoelen.length === 0 && (
+        <p className="mode-desc">Al je doelen zijn behaald. Super!</p>
+      )}
+      {soort === 'doel' && !doelVak && openDoelen.length > 0 && (
         <div className="mode-grid">
           {VAKKEN.map(v => v.key).concat('overig')
-            .filter(key => mappen.some(m => vakVan(m) === key))
+            .filter(key => openDoelen.some(m => vakVan(m) === key))
             .map(key => {
-              const lijst = mappen.filter(m => vakVan(m) === key)
+              const lijst = openDoelen.filter(m => vakVan(m) === key)
               return (
                 <button key={key} className="mode-card wt-map" style={{ '--kk-accent': VAK_KLEUR[key] }} onClick={() => setDoelVak(key)}>
                   <span className="mode-icoon"><Icoon naam={VAK_ICOON[key] ?? 'doel'} /></span>
@@ -237,37 +303,19 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
           {vakNaam(doelVak)} · alle vakken
         </Knop>
       )}
-      {mappen.length > 0 && (soort !== 'doel' || doelVak) && (
+      {soort === 'doel' && doelVak && !openDoelen.some(m => vakVan(m) === doelVak) && (
+        <p className="mode-desc">Alle doelen van {vakNaam(doelVak)} zijn behaald!</p>
+      )}
+      {openDoelen.length > 0 && (soort !== 'doel' || doelVak) && (
         <div className="mode-grid">
-          {mappen.filter(m => soort !== 'doel' || vakVan(m) === doelVak).map(m => {
-            const af = m.opdrachten.filter(o => o.klaar).length
-            const alles = af === m.opdrachten.length
-            return (
-              // Een taak of doel met maar één oefening opent meteen die oefening.
-              <button
-                key={m.id} className="mode-card wt-map"
-                style={alles ? { '--kk-accent': 'var(--kk-success)' } : undefined}
-                onClick={() => (persoonlijk && m.opdrachten.length === 1 ? kies(m.opdrachten[0], m.titel) : setOpenMap(m.id))}
-              >
-                <span className="mode-icoon"><Icoon naam={alles ? 'goed' : persoonlijk ? PERSOONLIJK[tab].icoon : 'klembord'} /></span>
-                <span className="mode-name">{m.titel}</span>
-                <span className="mode-desc">
-                  {soort === 'doel'
-                    ? (m.opdrachten.length === 1
-                        ? (alles ? 'Je mag blijven oefenen' : null)
-                        : `${af} van de ${m.opdrachten.length} behaald`)
-                    : soort === 'taak' && m.opdrachten.length === 1 && m.opdrachten[0].doel != null
-                      ? `${Math.min(m.opdrachten[0].somMax, m.opdrachten[0].doel)} / ${m.opdrachten[0].doel} gemaakt`
-                      : `${af} van de ${m.opdrachten.length} af`}
-                </span>
-                {soort === 'doel' && m.opdrachten.length === 1 && <DoelBalk stand={m.opdrachten[0].doelStand} />}
-                {m.eindOp && !persoonlijk && (
-                  <span className="wt-map-datum">tot en met {korteDatum(m.eindOp)}</span>
-                )}
-              </button>
-            )
-          })}
+          {openDoelen.filter(m => soort !== 'doel' || vakVan(m) === doelVak).map(m => mapKaart(m))}
         </div>
+      )}
+      {soort === 'doel' && !doelVak && behaaldeDoelen.length > 0 && (
+        <section className="wt-behaald-sectie">
+          <h2 className="wt-behaald-kop"><Icoon naam="trofee" />Behaalde doelen <span>{behaaldeDoelen.length}</span></h2>
+          <div className="mode-grid">{behaaldeDoelen.map(m => mapKaart(m, true))}</div>
+        </section>
       )}
     </div>
   )

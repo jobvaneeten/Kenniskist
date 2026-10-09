@@ -106,7 +106,8 @@
 
 /* Feestmoment */
 .mw-feest {
-  position: fixed; inset: 0; z-index: 1000;
+  /* Boven oefeningen en hun beloningsspelletjes (terugknoppen op 9999). */
+  position: fixed; inset: 0; z-index: 10000;
   display: grid; place-items: center; padding: 16px;
   background: var(--kk-scrim, rgba(5, 4, 15, 0.78)); backdrop-filter: blur(6px);
   animation: mw-fade .3s ease both;
@@ -158,3 +159,57 @@
   .mw-confetti, .mw-item.behaald::after { display: none; }
   .mw-item.behaald.nieuw, .mw-feest-trofee, .mw-kolom, .mw-tegel, .mw-feest-kaart { animation: none; }
 }
+
+/* Aanklikbare onderdelen en het detailpaneel (WeekOverzicht.jsx) */
+.mw-items > li { display: contents; }
+button.mw-item { width: 100%; font: inherit; color: inherit; text-align: left; cursor: default; }
+button.mw-item.klikbaar { cursor: pointer; transition: transform var(--kk-dur), border-color var(--kk-dur), box-shadow var(--kk-dur); }
+button.mw-item.klikbaar:hover { transform: translateY(-2px); border-color: var(--kk-accent); box-shadow: 0 6px 20px -8px var(--kk-accent); }
+button.mw-item:focus-visible { outline: none; box-shadow: var(--kk-focus-ring); }
+.mw-item-meer { display: inline-flex; align-items: center; gap: 2px; margin-top: 2px; font-size: var(--kk-fs-xs); font-weight: var(--kk-fw-bold); color: var(--kk-accent); }
+.mw-item-meer svg { width: 14px; height: 14px; }
+
+.mw-detail {
+  position: fixed; inset: 0; z-index: 9000; display: grid; place-items: center; padding: 16px;
+  background: rgba(5, 4, 15, 0.72); backdrop-filter: blur(6px); animation: mw-fade .2s ease both;
+}
+.mw-detail-paneel {
+  position: relative; width: min(560px, 100%); max-height: calc(100vh - 32px); overflow-y: auto;
+  display: flex; flex-direction: column; gap: 10px;
+  padding: 24px 22px 22px; border-radius: var(--kk-r-lg);
+  background: rgba(18, 14, 40, 0.97);
+  border: 1px solid color-mix(in srgb, var(--kk-accent) 50%, transparent); border-top: 4px solid var(--kk-accent);
+  box-shadow: 0 0 40px -10px var(--kk-accent), var(--kk-shadow);
+  animation: mw-pop .35s cubic-bezier(.2, 1.4, .4, 1) both;
+}
+.mw-detail-paneel h2 { margin: 0 36px 0 0; font: var(--kk-fw-bold) 1.5rem/1.15 var(--kk-head); }
+.mw-detail-paneel h3 { margin: 10px 0 2px; font: var(--kk-fw-bold) 1.05rem/1.2 var(--kk-head); color: var(--kk-accent); }
+.mw-detail-paneel .kk-knop { align-self: center; margin-top: 4px; }
+.mw-detail-sluit {
+  position: absolute; top: 12px; right: 12px; width: 34px; height: 34px; display: grid; place-items: center;
+  border-radius: 50%; border: 1px solid var(--kk-border); background: rgba(255,255,255,0.06); color: var(--kk-text); cursor: pointer;
+}
+.mw-detail-sluit svg { width: 16px; height: 16px; }
+.mw-detail-sluit:hover { background: rgba(255,255,255,0.14); }
+
+.mw-onderdelen, .mw-opgaven { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.mw-onderdelen li { display: grid; grid-template-columns: minmax(0, 1fr) 90px auto; align-items: center; gap: 10px; font-size: var(--kk-fs-sm); }
+.mw-onderdeel-naam { font-weight: var(--kk-fw-bold); line-height: 1.25; }
+.mw-onderdeel-balk { height: 8px; border-radius: var(--kk-r-pill); background: rgba(255,255,255,0.1); overflow: hidden; }
+.mw-onderdeel-balk span { display: block; height: 100%; border-radius: inherit; }
+.mw-onderdeel-balk .goed { background: var(--kk-success); }
+.mw-onderdeel-balk .matig { background: var(--kk-gold); }
+.mw-onderdeel-balk .zwak { background: var(--kk-error); }
+.mw-onderdeel-cijfer { font-size: var(--kk-fs-xs); font-weight: var(--kk-fw-bold); color: var(--kk-text-soft); min-width: 38px; text-align: right; }
+
+.mw-opgaven li {
+  display: flex; align-items: flex-start; gap: 8px; padding: 7px 10px; border-radius: var(--kk-r-md);
+  background: rgba(255,255,255,0.04); font-size: var(--kk-fs-sm);
+}
+.mw-opgave-icoon { flex: none; display: grid; margin-top: 1px; }
+.mw-opgave-icoon svg { width: 16px; height: 16px; }
+.mw-opgaven li.goed .mw-opgave-icoon { color: var(--kk-success); }
+.mw-opgaven li.fout .mw-opgave-icoon { color: var(--kk-error); }
+.mw-opgave-tekst { display: flex; flex-direction: column; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
+.mw-opgave-tekst small { color: var(--kk-text-soft); }
+.mw-opgave-tekst small strong { color: var(--kk-success); }

@@ -15,7 +15,7 @@ export default function KlasWeekoverzicht({ leerlingen }) {
           <strong>{gekozen.weergavenaam}</strong>
         </div>
         <div className="portaal-week">
-          <WeekOverzicht key={gekozen.id} leerlingId={gekozen.id} />
+          <WeekOverzicht key={gekozen.id} leerlingId={gekozen.id} leerkracht />
         </div>
       </>
     )

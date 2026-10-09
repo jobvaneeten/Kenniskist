@@ -126,6 +126,16 @@
     })
   }
 
+  // Seintje aan de React-shell dat er een resultaat bij een opdracht is
+  // opgeslagen (Weektaak.jsx kijkt dan of een doel net behaald is). Op het
+  // bovenste venster, zodat het ook vanuit een iframe-oefening aankomt.
+  function meldOpgeslagen(opdrachtId, toolId) {
+    try {
+      var doel = window.top || window
+      doel.dispatchEvent(new CustomEvent('kk-resultaat-opgeslagen', { detail: { opdrachtId: opdrachtId, toolId: toolId } }))
+    } catch (e) { /* ander venster of oude browser: geen seintje */ }
+  }
+
   function slaResultaatOp(toolId, score, maxScore, detailsJson) {
     var ms = meetMs(toolId)
     var profiel = leesJson('kk_profiel_cache')
@@ -135,6 +145,7 @@
       if (!token) return { ok: false, reden: 'niet-ingelogd' }
       var opdrachtId = actieveOpdrachtVoor(toolId)
       return insertResultaat(token, profiel, toolId, score, maxScore, detailsJson, opdrachtId, ms).then(function (res) {
+        if (res.ok && opdrachtId) meldOpgeslagen(opdrachtId, toolId)
         if (res.ok || !opdrachtId) return { ok: res.ok }
         // Ongeldige/verlopen koppeling mag het resultaat nooit laten
         // verdwijnen — één keer opnieuw proberen, dan zonder opdracht_id.

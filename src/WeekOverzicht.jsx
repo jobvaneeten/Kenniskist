@@ -23,17 +23,20 @@ function Cijfers({ opgaven, pct, ms }) {
   if (!opgaven) return null
   return (
     <span className="mw-cijfers">
-      <span><strong>{Math.round(opgaven)}</strong> opgaven</span>
+      <span><strong>{Math.round(opgaven)}</strong> {Math.round(opgaven) === 1 ? 'opgave' : 'opgaven'}</span>
       {pct != null && <span><strong>{pct}%</strong> goed</span>}
       {ms > 0 && <span><strong>{minuten(ms)}</strong> min</span>}
     </span>
   )
 }
 
-function Item({ item }) {
+function Item({ item, onKies, tekst }) {
   const behaald = item.soort === 'doel' && item.af
+  const klikbaar = item.onderdelen.length > 0 || item.lijst.length > 0
   return (
-    <li className={`mw-item${behaald ? ' behaald' : ''}${item.behaaldDezeWeek ? ' nieuw' : ''}`}>
+    <li>
+     <button type="button" disabled={!klikbaar} onClick={() => onKies(item)}
+      className={`mw-item${behaald ? ' behaald' : ''}${item.behaaldDezeWeek ? ' nieuw' : ''}${klikbaar ? ' klikbaar' : ''}`}>
       <div className="mw-item-kop">
         <span className="mw-item-titel">{item.titel}</span>
         {behaald && <span className="mw-badge"><Icoon naam="trofee" />Behaald!</span>}
@@ -42,11 +45,79 @@ function Item({ item }) {
       {item.sub && <span className="mw-item-sub">{item.sub}</span>}
       <Cijfers opgaven={item.opgaven} pct={item.pct} ms={item.ms} />
       {item.soort === 'doel' && <DoelBalk stand={item.stand} />}
+      {klikbaar && <span className="mw-item-meer">{tekst.meer} <Icoon naam="verder" /></span>}
+     </button>
     </li>
   )
 }
 
-function Kolom({ soort, data }) {
+// Paneel met wat er binnen één onderdeel geoefend is: per onderwerp (bv. de
+// doelen van verhaaltjessommen of de tijden van werkwoordspelling) en de
+// gemaakte opgaven zelf.
+function Detail({ item, accent, onSluiten, tekst }) {
+  const [alleOpgaven, setAlleOpgaven] = useState(false)
+  useEffect(() => {
+    const esc = (e) => { if (e.key === 'Escape') onSluiten() }
+    window.addEventListener('keydown', esc)
+    return () => window.removeEventListener('keydown', esc)
+  }, [onSluiten])
+  const lijst = alleOpgaven ? item.lijst : item.lijst.slice(0, 8)
+  return (
+    <div className="mw-detail" role="dialog" aria-modal="true" aria-label={item.titel} onClick={onSluiten}>
+      <div className="mw-detail-paneel" style={{ '--kk-accent': accent }} onClick={e => e.stopPropagation()}>
+        <button type="button" className="mw-detail-sluit" aria-label="Sluiten" onClick={onSluiten}><Icoon naam="sluiten" /></button>
+        <h2>{item.titel}</h2>
+        {item.sub && <p className="mw-item-sub">{item.sub}</p>}
+        <Cijfers opgaven={item.opgaven} pct={item.pct} ms={item.ms} />
+        {item.soort === 'doel' && <DoelBalk stand={item.stand} />}
+
+        {item.onderdelen.length > 0 && (
+          <>
+            <h3>{tekst.onderdelen}</h3>
+            <ul className="mw-onderdelen">
+              {item.onderdelen.map(o => (
+                <li key={o.label}>
+                  <span className="mw-onderdeel-naam">{o.label}</span>
+                  <span className="mw-onderdeel-balk"><span style={{ width: `${o.pct}%` }} className={o.pct >= 80 ? 'goed' : o.pct >= 50 ? 'matig' : 'zwak'} /></span>
+                  <span className="mw-onderdeel-cijfer">{o.goed}/{o.totaal}</span>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+
+        {item.lijst.length > 0 && (
+          <>
+            <h3>{tekst.opgaven}</h3>
+            <ul className="mw-opgaven">
+              {lijst.map((o, i) => (
+                <li key={i} className={o.goed ? 'goed' : 'fout'}>
+                  <span className="mw-opgave-icoon"><Icoon naam={o.goed ? 'goed' : 'fout'} /></span>
+                  <span className="mw-opgave-tekst">
+                    <span>{o.vraag}</span>
+                    {!o.goed && (o.antwoord != null || o.juist != null) && (
+                      <small>
+                        {o.antwoord != null && <>{tekst.jij}: <s>{String(o.antwoord)}</s> </>}
+                        {o.juist != null && <>goed: <strong>{String(o.juist)}</strong></>}
+                      </small>
+                    )}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            {item.lijst.length > 8 && (
+              <Knop variant="secundair" maat="sm" onClick={() => setAlleOpgaven(v => !v)}>
+                {alleOpgaven ? 'Minder laten zien' : `Alle ${item.lijst.length} opgaven`}
+              </Knop>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function Kolom({ soort, data, onKies, tekst }) {
   const k = KOLOM[soort]
   return (
     <section className="mw-kolom" style={{ '--kk-accent': k.accent }}>
@@ -57,14 +128,22 @@ function Kolom({ soort, data }) {
       <Cijfers opgaven={data.opgaven} pct={data.pct} ms={data.ms} />
       {data.items.length === 0
         ? <p className="mw-leeg">{k.leeg}</p>
-        : <ul className="mw-items">{data.items.map(i => <Item key={i.sleutel} item={i} />)}</ul>}
+        : <ul className="mw-items">{data.items.map(i => <Item key={i.sleutel} item={i} onKies={onKies} tekst={tekst} />)}</ul>}
     </section>
   )
 }
 
-export default function WeekOverzicht({ leerlingId, onGeladen }) {
+// Teksten voor de leerling zelf, of neutraal voor de leerkracht in het portaal.
+const TEKST = {
+  leerling:   { meer: 'Bekijk wat je oefende', onderdelen: 'Waar je aan werkte', opgaven: 'Je opgaven', jij: 'jij' },
+  leerkracht: { meer: 'Bekijk details', onderdelen: 'Onderdelen', opgaven: 'Opgaven', jij: 'antwoord' },
+}
+
+export default function WeekOverzicht({ leerlingId, onGeladen, leerkracht = false }) {
+  const tekst = leerkracht ? TEKST.leerkracht : TEKST.leerling
   const [terug, setTerug] = useState(0)
   const [week, setWeek] = useState(null)
+  const [detail, setDetail] = useState(null) // { item, accent }
 
   useEffect(() => {
     let actief = true
@@ -108,10 +187,14 @@ export default function WeekOverzicht({ leerlingId, onGeladen }) {
           </div>
 
           <div className="mw-kolommen">
-            {Object.keys(KOLOM).map(s => <Kolom key={s} soort={s} data={week.kolommen[s]} />)}
+            {Object.keys(KOLOM).map(s => (
+              <Kolom key={s} soort={s} data={week.kolommen[s]} tekst={tekst} onKies={item => setDetail({ item, accent: KOLOM[s].accent })} />
+            ))}
           </div>
         </>
       )}
+
+      {detail && <Detail item={detail.item} accent={detail.accent} tekst={tekst} onSluiten={() => setDetail(null)} />}
     </>
   )
 }

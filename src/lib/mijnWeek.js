@@ -18,6 +18,33 @@ export function weekStart(terug = 0) {
 }
 
 const leeg = () => ({ opgaven: 0, goed: 0, ms: 0, items: [] })
+
+// Leesbare namen voor onderdelen die als code worden opgeslagen.
+const ONDERDEEL_LABEL = {
+  tt: 'Tegenwoordige tijd', vtZwak: 'Verleden tijd (zwak)', vtSterk: 'Verleden tijd (sterk)', vd: 'Voltooid deelwoord',
+}
+const MAX_OPGAVEN = 60
+
+// Telt de losse opgaven uit details_json bij een item op: per onderdeel
+// (cat/catLabel, of cats[] bij zinsdelen) en als lijstje om terug te kijken.
+function telOpgaven(item, r) {
+  const opgaven = r.details_json?.opgaven
+  if (!Array.isArray(opgaven)) return
+  for (const o of opgaven) {
+    const delen = Array.isArray(o.cats) ? o.cats : o.cat ? [{ cat: o.cat, catLabel: o.catLabel, goed: o.goed }] : []
+    for (const d of delen) {
+      if (!d?.cat) continue
+      const t = item.onderdelen.get(d.cat) ?? { label: d.catLabel ?? ONDERDEEL_LABEL[d.cat] ?? d.cat, goed: 0, totaal: 0 }
+      t.totaal++
+      if (d.goed) t.goed++
+      item.onderdelen.set(d.cat, t)
+    }
+    const vraag = o.vraag ?? o.werkwoord ?? o.woord ?? null
+    // Begrijpend lezen slaat punten op in plaats van goed/fout.
+    const goed = o.goed ?? (o.puntenMax != null ? Number(o.puntenBehaald) >= Number(o.puntenMax) : false)
+    if (vraag != null) item.lijst.push({ vraag: String(vraag), antwoord: o.antwoord ?? null, juist: o.juist ?? null, goed: !!goed, op: r.aangemaakt_op })
+  }
+}
 const pct = (goed, opgaven) => (opgaven > 0 ? Math.round((goed / opgaven) * 100) : null)
 
 export async function haalMijnWeek(profielId, terug = 0) {
@@ -25,7 +52,7 @@ export async function haalMijnWeek(profielId, terug = 0) {
   const tot = new Date(van); tot.setDate(tot.getDate() + 7)
 
   const [{ data: rijen }, { data: doelen }] = await Promise.all([
-    supabase.from('resultaten').select('tool_id, score, max_score, ms, opdracht_id, aangemaakt_op')
+    supabase.from('resultaten').select('tool_id, score, max_score, ms, opdracht_id, aangemaakt_op, details_json')
       .eq('leerling_id', profielId)
       .gte('aangemaakt_op', van.toISOString()).lt('aangemaakt_op', tot.toISOString()),
     supabase.from('doel_voortgang').select('opdracht_id, gemaakt, laatste_goed, laatste_aantal, gehaald, gehaald_op')
@@ -73,10 +100,11 @@ export async function haalMijnWeek(profielId, terug = 0) {
       item = { sleutel, soort, toolId: o?.tool_id ?? r.tool_id, opdrachtId: o?.id ?? null,
         titel: o ? (titelBij.get(o.weektaak_id) ?? toolLabel(o.tool_id)) : toolLabel(r.tool_id),
         sub: o && soort !== 'doel' ? toolLabel(o.tool_id) : null,
-        opgaven: 0, goed: 0, ms: 0, laatst: 0 }
+        opgaven: 0, goed: 0, ms: 0, laatst: 0, onderdelen: new Map(), lijst: [] }
       perItem.set(sleutel, item)
       kol.items.push(item)
     }
+    telOpgaven(item, r)
     item.opgaven += max; item.goed += score; item.ms += ms
     item.laatst = Math.max(item.laatst, new Date(r.aangemaakt_op).getTime())
   }
@@ -88,13 +116,18 @@ export async function haalMijnWeek(profielId, terug = 0) {
     const o = opdrachtBij.get(d.opdracht_id)
     if (!o) continue
     const item = { sleutel: o.id, soort: 'doel', toolId: o.tool_id, opdrachtId: o.id,
-      titel: titelBij.get(o.weektaak_id) ?? toolLabel(o.tool_id), sub: null, opgaven: 0, goed: 0, ms: 0, laatst: 0 }
+      titel: titelBij.get(o.weektaak_id) ?? toolLabel(o.tool_id), sub: null, opgaven: 0, goed: 0, ms: 0, laatst: 0, onderdelen: new Map(), lijst: [] }
     perItem.set(o.id, item)
     kolommen.doel.items.push(item)
   }
 
   for (const item of perItem.values()) {
     item.pct = pct(item.goed, item.opgaven)
+    // Zwakste onderdeel bovenaan; nieuwste opgaven eerst.
+    item.onderdelen = [...item.onderdelen.values()]
+      .map(t => ({ ...t, pct: pct(t.goed, t.totaal) }))
+      .sort((a, b) => a.pct - b.pct)
+    item.lijst = item.lijst.sort((a, b) => new Date(b.op) - new Date(a.op)).slice(0, MAX_OPGAVEN)
     if (item.soort === 'doel') {
       const d = doelBij.get(item.opdrachtId)
       item.stand = doelStandVan(d)
