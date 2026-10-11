@@ -5,6 +5,7 @@ import LeerlingDetail from './LeerlingDetail.jsx'
 import WeektaakTab from './WeektaakTab.jsx'
 import Werkblad from './Werkblad.jsx'
 import KlasWeekoverzicht from './KlasWeekoverzicht.jsx'
+import SpelInstelling from './SpelInstelling.jsx'
 import { TerugKnop, Icoon } from '../ui/index.jsx'
 
 // De leerkracht ziet alleen wat hij zelf klaarzet: de weektaak voor de klas en
@@ -17,11 +18,12 @@ const TABS = [
   { key: 'doel', label: 'Doelen', hint: 'per leerling', icoon: 'doel', accent: 'var(--kk-gold)' },
   { key: 'week', label: 'Weekoverzicht', hint: 'per leerling', icoon: 'grafiek', accent: 'var(--kk-primary-hi)' },
   { key: 'werkblad', label: 'Werkblad', hint: 'printen', icoon: 'printer', accent: 'var(--kk-success)' },
-  { key: 'leerlingen', label: 'Leerlingen', hint: 'inloggen & beheer', icoon: 'mensen', accent: 'var(--kk-text-soft)' },
+  { key: 'leerlingen', label: 'Leerlingen', hint: 'beheer & spelletjes', icoon: 'mensen', accent: 'var(--kk-text-soft)' },
 ]
 
-export default function KlasScherm({ klas, alleKlassen, onBack }) {
+export default function KlasScherm({ klas, alleKlassen, onBack, onKlasGewijzigd }) {
   const [tab, setTab] = useState('weektaak')
+  const [spelNa, setSpelNa] = useState(klas.spel_na ?? null)
   const [leerlingId, setLeerlingId] = useState(null)
   const [leerlingen, setLeerlingen] = useState(null)
   const [teller, setTeller] = useState(0)
@@ -78,6 +80,10 @@ export default function KlasScherm({ klas, alleKlassen, onBack }) {
             </div>
             <LeerlingDetail leerlingId={leerlingId} />
           </>
+        )}
+
+        {!leerlingId && tab === 'leerlingen' && (
+          <SpelInstelling klasId={klas.id} spelNa={spelNa} onOpgeslagen={(n) => { setSpelNa(n); onKlasGewijzigd?.() }} />
         )}
 
         {!leerlingId && tab === 'leerlingen' && (

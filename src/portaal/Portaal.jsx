@@ -152,7 +152,7 @@ export default function Portaal() {
     // Wie welke klas draait staat sinds migratie 0013 in klas_leerkrachten;
     // los opgehaald en hier samengevoegd, zodat er geen embed nodig is.
     const [{ data }, { data: lln }, { data: pers }, { data: kopp }] = await Promise.all([
-      supabase.from('klassen').select('id, school_id, naam, schooljaar, code, groepen').order('naam'),
+      supabase.from('klassen').select('id, school_id, naam, schooljaar, code, groepen, spel_na').order('naam'),
       supabase.from('profielen').select('klas_id').eq('rol', 'leerling'),
       supabase.from('profielen').select('id, weergavenaam').in('rol', ['leerkracht', 'icter']),
       supabase.from('klas_leerkrachten').select('klas_id, leerkracht_id'),
@@ -172,7 +172,7 @@ export default function Portaal() {
   if (profiel.rol === 'admin') return <AdminScholen />
 
   if (gekozenKlas) {
-    return <KlasScherm klas={gekozenKlas} alleKlassen={klassen} onBack={() => setGekozenKlas(null)} />
+    return <KlasScherm klas={gekozenKlas} alleKlassen={klassen} onBack={() => setGekozenKlas(null)} onKlasGewijzigd={laadKlassen} />
   }
 
   if (instellingenKlas) {

@@ -637,7 +637,8 @@ function next(){
   idx++;$('bar').style.width=`${(idx/queue.length)*100}%`;
   if(spellOk)goodAnswers++;
   if(idx>=queue.length){finish();return;}
-  if(goodAnswers>=lastBreakAt+5){lastBreakAt=goodAnswers;showBreak();return;}
+  const PER=(window.KennisKist && window.KennisKist.spelNa ? window.KennisKist.spelNa(5) : 5);  // 0 = deze klas krijgt geen spelletjes
+  if(PER&&goodAnswers>=lastBreakAt+PER){lastBreakAt=goodAnswers;showBreak();return;}
   showWord();
 }
 

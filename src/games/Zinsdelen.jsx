@@ -8,6 +8,7 @@ import { useGebruikOpdracht } from './gebruikOpdracht.js'
 import OpdrachtKlaarScherm from './OpdrachtKlaarScherm.jsx'
 import './taal-oefenen.css'
 import { TerugKnop, Icoon, Knop } from '../ui/index.jsx'
+import { spelNa, heeftSpel } from '../lib/beloning.js'
 
 // Zinsdelen ontleden door aan te klikken. De zin staat al in woordgroepen op
 // het scherm ("De juf" · "leest" · "de kinderen" · …); je klikt de groep aan
@@ -26,7 +27,10 @@ import { TerugKnop, Icoon, Knop } from '../ui/index.jsx'
 // Een zin telt als één opgave: goed als er bij geen enkele stap een misser was.
 // Na 5 goede zinnen volgt een spelletje.
 
-const GOED_VOOR_REWARD = 5
+const GOED_VOOR_REWARD_STD = 5
+// De leerkracht kan dit per klas anders zetten (src/lib/beloning.js). Een oefening
+// wordt pas geladen als hij geopend wordt, dus altijd na het inloggen.
+const GOED_VOOR_REWARD = spelNa(GOED_VOOR_REWARD_STD)
 
 // Vaste kleur per zinsdeel, zodat de vraag en de streep onder de zin dezelfde
 // kleur hebben.
@@ -304,12 +308,12 @@ export default function Zinsdelen({
         <TerugKnop onClick={onBack}>Stoppen</TerugKnop>
         <div className="tv-progress">
           <span className="tv-score-badge"><Icoon naam="goed" />{correctCount}</span>
-          <span className="tv-reward-meter">
+          {heeftSpel(GOED_VOOR_REWARD) && <span className="tv-reward-meter">
             <span className="tv-reward-track">
               <span className="tv-reward-fill" style={{ width: `${(naarBeloning / GOED_VOOR_REWARD) * 100}%` }} />
             </span>
             <span className="tv-reward-tekst">nog {GOED_VOOR_REWARD - naarBeloning}</span>
-          </span>
+          </span>}
         </div>
       </div>
 

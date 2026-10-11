@@ -3,8 +3,12 @@ import { shuffleGefilterd, checkAntwoord, uitlegVoor, tokeniseerZin, onderwerpIn
 import SpelBeloning, { BRIEFGELD } from './SpelBeloning'
 import './werkwoord-spelling.css'
 import { Knop, TerugKnop, VoortgangsBalk, Icoon, Feedback } from '../ui/index.jsx'
+import { spelNa, heeftSpel } from '../lib/beloning.js'
 
-const PER_BELONING = 5     // na elke 5 goede antwoorden een spel kiezen
+const PER_BELONING_STD = 5     // na elke 5 goede antwoorden een spel kiezen
+// De leerkracht kan dit per klas anders zetten (src/lib/beloning.js). Een oefening
+// wordt pas geladen als hij geopend wordt, dus altijd na het inloggen.
+const PER_BELONING = spelNa(PER_BELONING_STD)
 const PER_OVERZICHT = 20   // na elke 20 opgaven een overzichtsscherm
 
 // Tijd → label + kleur-klasse (tt, vt en vd elk een eigen kleur)
@@ -484,7 +488,7 @@ export default function WerkwoordSpelling({ groep, onBack, addBriefgeld, aantal,
               </p>
             )}
 
-            <VoortgangsBalk waarde={sinds} max={PER_BELONING} label={`nog ${PER_BELONING - sinds} goed tot een spelletje`} />
+            {heeftSpel(PER_BELONING) && <VoortgangsBalk waarde={sinds} max={PER_BELONING} label={`nog ${PER_BELONING - sinds} goed tot een spelletje`} />}
             <div className="ws-progress-label">
               <span className="ws-opgave-teller">Opgave {gemaakt + 1} / {doel}</span>
             </div>

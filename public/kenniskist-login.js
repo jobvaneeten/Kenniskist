@@ -172,6 +172,17 @@
     return !!(profiel && profiel.voorlezen)
   }
 
+  // Na hoeveel goede antwoorden een spelletje? Per klas in te stellen door de
+  // leerkracht (klassen.spel_na, migratie 0019), meegespiegeld in
+  // kk_profiel_cache. Geeft 0 als de klas geen spelletjes krijgt.
+  function spelNa(standaard) {
+    var profiel = leesJson('kk_profiel_cache')
+    var n = profiel && profiel.spelNa
+    if (n === 0) return 0
+    if (typeof n === 'number' && n > 0) return n
+    return standaard
+  }
+
   function toonInlogstatus(el) {
     if (!el) return
     if (getLeerling()) { el.style.display = 'none'; return }
@@ -190,6 +201,7 @@
     startOefening: startOefening,
     muziekDemp: muziekDemp,
     magVoorlezen: magVoorlezen,
+    spelNa: spelNa,
     toonInlogstatus: toonInlogstatus,
   }
 })()

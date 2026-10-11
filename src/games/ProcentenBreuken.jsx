@@ -4,9 +4,13 @@ import SpelBeloning, { BRIEFGELD } from './SpelBeloning'
 import OpdrachtKlaarScherm from './OpdrachtKlaarScherm.jsx'
 import './procenten.css'
 import { TerugKnop, Icoon } from '../ui/index.jsx'
+import { spelNa, heeftSpel } from '../lib/beloning.js'
 
 const PER_ROUND    = 4   // aantal vakjes (percentages) per ronde
-const PER_BELONING = 5   // na elke 5 opgeloste rondes een spelletje
+const PER_BELONING_STD = 5   // na elke 5 opgeloste rondes een spelletje
+// De leerkracht kan dit per klas anders zetten (src/lib/beloning.js). Een oefening
+// wordt pas geladen als hij geopend wordt, dus altijd na het inloggen.
+const PER_BELONING = spelNa(PER_BELONING_STD)
 
 // Bouw een ronde: kies 4 sets als vakjes en zet ALLE breuken én ALLE
 // kommagetallen in de sleep-bak (dus ook van de andere percentages → afleiders).
@@ -123,7 +127,7 @@ export default function ProcentenBreuken({ onBack, addBriefgeld, aantal }) {
           <p>Sleep de juiste breuk én het juiste kommagetal naar elk percentage-vakje.</p>
           <div className="pbk-stats">
             <span>Ronde {roundNo}</span>
-            <span>nog {PER_BELONING - sinds} tot een spelletje</span>
+            {heeftSpel(PER_BELONING) && <span>nog {PER_BELONING - sinds} tot een spelletje</span>}
             <span>💵 € {verdiend}</span>
           </div>
         </div>

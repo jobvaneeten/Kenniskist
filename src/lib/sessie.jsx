@@ -32,20 +32,18 @@ export function SessieProvider({ children }) {
 
   const haalProfiel = useCallback(async (uid) => {
     const { data } = await supabase.from('profielen').select('*').eq('id', uid).single()
+    // Leeg (of geen klas) betekent geen beperking — zie 0006_klas_leeftijdsgroepen.sql
+    let klas = null
+    if (data?.rol === 'leerling' && data.klas_id) {
+      ;({ data: klas } = await supabase.from('klassen').select('groepen, spel_na').eq('id', data.klas_id).single())
+    }
+    // voorlezen en spel_na gaan mee de spiegel in: de losse HTML-tools (begrijpend
+    // lezen, dictees) lezen ze daaruit, en src/lib/beloning.js ook.
+    if (data) localStorage.setItem('kk_profiel_cache', JSON.stringify({ id: data.id, weergavenaam: data.weergavenaam, voorlezen: !!data.voorlezen, spelNa: klas?.spel_na ?? null }))
+    else localStorage.removeItem('kk_profiel_cache')
+    setToegestaneGroepen(klas?.groepen?.length ? klas.groepen : null)
     setProfiel(data ?? null)
     setLaden(false)
-    // voorlezen gaat mee de spiegel in: de losse HTML-tools (begrijpend
-    // lezen) lezen 'm daaruit om de voorleesknop wel of niet te tonen.
-    if (data) localStorage.setItem('kk_profiel_cache', JSON.stringify({ id: data.id, weergavenaam: data.weergavenaam, voorlezen: !!data.voorlezen }))
-    else localStorage.removeItem('kk_profiel_cache')
-
-    // Leeg (of geen klas) betekent geen beperking — zie 0006_klas_leeftijdsgroepen.sql
-    if (data?.rol === 'leerling' && data.klas_id) {
-      const { data: klas } = await supabase.from('klassen').select('groepen').eq('id', data.klas_id).single()
-      setToegestaneGroepen(klas?.groepen?.length ? klas.groepen : null)
-    } else {
-      setToegestaneGroepen(null)
-    }
   }, [])
 
   useEffect(() => {

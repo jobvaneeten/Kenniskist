@@ -6,6 +6,7 @@ import { useGebruikOpdracht } from './gebruikOpdracht.js'
 import OpdrachtKlaarScherm from './OpdrachtKlaarScherm.jsx'
 import './topo-oefenen.css'
 import { TerugKnop, Knop, Icoon } from '../ui/index.jsx'
+import { spelNa, heeftSpel } from '../lib/beloning.js'
 
 // Topografie op de kaart: je krijgt een naam en wijst die aan (klikken), of je
 // sleept naamkaartjes naar de juiste plek. Na elke 10 goede antwoorden een
@@ -16,7 +17,10 @@ import { TerugKnop, Knop, Icoon } from '../ui/index.jsx'
 // op de topolijst staan — anders verraadt de kaart welke er gevraagd worden.
 // Kaart B is dezelfde tekening, maar ingezoomd op Noordwest-Europa.
 
-const GOED_VOOR_REWARD = 10
+const GOED_VOOR_REWARD_STD = 10
+// De leerkracht kan dit per klas anders zetten (src/lib/beloning.js). Een oefening
+// wordt pas geladen als hij geopend wordt, dus altijd na het inloggen.
+const GOED_VOOR_REWARD = spelNa(GOED_VOOR_REWARD_STD)
 const SLEEP_MARGE = 6
 // Stippen (steden) en lijnen (rivieren, gebergtes) worden beoordeeld met
 // "dichtstbijzijnde wint": van álle stippen op de kaart moet het gevraagde de
@@ -560,12 +564,12 @@ export default function TopoOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
         <TerugKnop onClick={() => (config ? onBack() : setScherm('menu'))}>Stoppen</TerugKnop>
         <div className="topo-progress">
           <span className="topo-score"><Icoon naam="goed" />{correctCount}</span>
-          <span className="topo-meter">
+          {heeftSpel(GOED_VOOR_REWARD) && <span className="topo-meter">
             <span className="topo-meter-track">
               <span className="topo-meter-fill" style={{ width: `${(naarBeloning / GOED_VOOR_REWARD) * 100}%` }} />
             </span>
             <span className="topo-meter-tekst">nog {GOED_VOOR_REWARD - naarBeloning}</span>
-          </span>
+          </span>}
         </div>
       </div>
 

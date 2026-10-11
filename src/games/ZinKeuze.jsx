@@ -6,8 +6,12 @@ import { ONDERDELEN, REGELS, vragenVoor, maakVraag } from './interpunctieData.js
 import { HULP, maakGebiedendVraag, gebiedendRonde } from './gebiedendeWijsData.js'
 import './taal-oefenen.css'
 import { TerugKnop, Icoon, Knop } from '../ui/index.jsx'
+import { spelNa, heeftSpel } from '../lib/beloning.js'
 
-const CORRECT_VOOR_REWARD = 10
+const CORRECT_VOOR_REWARD_STD = 10
+// De leerkracht kan dit per klas anders zetten (src/lib/beloning.js). Een oefening
+// wordt pas geladen als hij geopend wordt, dus altijd na het inloggen.
+const CORRECT_VOOR_REWARD = spelNa(CORRECT_VOOR_REWARD_STD)
 
 // Kern van beide oefeningen: vier zinnen, kies de goede. `volgende()` geeft
 // { opties: [{ tekst, goed, uitleg: [] }], cat }. Geen automatische
@@ -66,12 +70,12 @@ function KeuzeOefening({ toolId, titel, vraag, volgende, hulp, beloning, aantal,
         <TerugKnop onClick={onStop}>Stoppen</TerugKnop>
         <div className="tv-progress">
           <span className="tv-score-badge"><Icoon naam="goed" />{correctCount}</span>
-          <span className="tv-reward-meter">
+          {heeftSpel(CORRECT_VOOR_REWARD) && <span className="tv-reward-meter">
             <span className="tv-reward-track">
               <span className="tv-reward-fill" style={{ width: `${((correctCount % CORRECT_VOOR_REWARD) / CORRECT_VOOR_REWARD) * 100}%` }} />
             </span>
             <span className="tv-reward-tekst">nog {CORRECT_VOOR_REWARD - (correctCount % CORRECT_VOOR_REWARD)}</span>
-          </span>
+          </span>}
         </div>
       </div>
 

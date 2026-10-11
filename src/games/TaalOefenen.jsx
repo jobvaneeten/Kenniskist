@@ -9,9 +9,13 @@ import { useGebruikOpdracht } from './gebruikOpdracht.js'
 import OpdrachtKlaarScherm from './OpdrachtKlaarScherm.jsx'
 import './taal-oefenen.css'
 import { TerugKnop, Icoon, Knop } from '../ui/index.jsx'
+import { spelNa, heeftSpel } from '../lib/beloning.js'
 
 const BRIEFGELD_PER_AANGEVINKT = 5 // € per aangevinkt onderdeel, per beloning
-const CORRECT_VOOR_REWARD = 10
+const CORRECT_VOOR_REWARD_STD = 10
+// De leerkracht kan dit per klas anders zetten (src/lib/beloning.js). Een oefening
+// wordt pas geladen als hij geopend wordt, dus altijd na het inloggen.
+const CORRECT_VOOR_REWARD = spelNa(CORRECT_VOOR_REWARD_STD)
 
 function shuffle(arr) {
   const a = [...arr]
@@ -252,7 +256,7 @@ export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
           <TerugKnop onClick={() => setScreen('filter')}>Stoppen</TerugKnop>
           <div className="tv-progress">
             <span className="tv-score-badge"><Icoon naam="goed" />{correctCount}</span>
-            <span className="tv-reward-meter">
+            {heeftSpel(CORRECT_VOOR_REWARD) && <span className="tv-reward-meter">
               <span className="tv-reward-track">
                 <span
                   className="tv-reward-fill"
@@ -260,7 +264,7 @@ export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
                 />
               </span>
               <span className="tv-reward-tekst">nog {CORRECT_VOOR_REWARD - (correctCount % CORRECT_VOOR_REWARD)}</span>
-            </span>
+            </span>}
           </div>
         </div>
 

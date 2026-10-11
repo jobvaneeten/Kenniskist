@@ -5,6 +5,7 @@ import { useGebruikOpdracht } from './gebruikOpdracht.js'
 import OpdrachtKlaarScherm from './OpdrachtKlaarScherm.jsx'
 import './taal-oefenen.css'
 import { TerugKnop, Icoon } from '../ui/index.jsx'
+import { spelNa, heeftSpel } from '../lib/beloning.js'
 
 // Woordenschat per blok (blok 1 = thema 1, les 2/7/12; blok 2-8 = thema 2-8,
 // week 1-3) — alle 45 woorden van het blok door elkaar. Vier vraagvormen per woord, zodat hetzelfde begrip niet elke keer
@@ -15,7 +16,10 @@ import { TerugKnop, Icoon } from '../ui/index.jsx'
 // systeem als de andere oefeningen). Vrij oefenen loopt door tot de leerling
 // stopt; vanuit een weektaak-opdracht stopt het na `aantal` vragen.
 
-const GOED_VOOR_REWARD = 10
+const GOED_VOOR_REWARD_STD = 10
+// De leerkracht kan dit per klas anders zetten (src/lib/beloning.js). Een oefening
+// wordt pas geladen als hij geopend wordt, dus altijd na het inloggen.
+const GOED_VOOR_REWARD = spelNa(GOED_VOOR_REWARD_STD)
 const OPTIES = 4
 
 function shuffle(arr) {
@@ -190,12 +194,12 @@ export default function Woordenschat({ blok = 1, onBack, addBriefgeld, addCurunt
         <TerugKnop onClick={onBack}>Stoppen</TerugKnop>
         <div className="tv-progress">
           <span className="tv-score-badge"><Icoon naam="goed" />{correctCount}</span>
-          <span className="tv-reward-meter">
+          {heeftSpel(GOED_VOOR_REWARD) && <span className="tv-reward-meter">
             <span className="tv-reward-track">
               <span className="tv-reward-fill" style={{ width: `${(naarBeloning / GOED_VOOR_REWARD) * 100}%` }} />
             </span>
             <span className="tv-reward-tekst">nog {GOED_VOOR_REWARD - naarBeloning}</span>
-          </span>
+          </span>}
         </div>
       </div>
 

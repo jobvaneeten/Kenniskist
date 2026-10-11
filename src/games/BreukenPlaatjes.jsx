@@ -4,8 +4,12 @@ import { useGebruikOpdracht } from './gebruikOpdracht.js'
 import OpdrachtKlaarScherm from './OpdrachtKlaarScherm.jsx'
 import './breuken-plaatjes.css'
 import { TerugKnop, Icoon, Knop, VoortgangsBalk } from '../ui/index.jsx'
+import { spelNa, heeftSpel } from '../lib/beloning.js'
 
-const PER_BELONING = 5
+const PER_BELONING_STD = 5
+// De leerkracht kan dit per klas anders zetten (src/lib/beloning.js). Een oefening
+// wordt pas geladen als hij geopend wordt, dus altijd na het inloggen.
+const PER_BELONING = spelNa(PER_BELONING_STD)
 const BELONING     = 50
 
 const rnd = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a
@@ -109,7 +113,7 @@ export default function BreukenPlaatjes({ onBack, addBriefgeld, addCuruntie, aan
         <p className="bp-sub">Welke breuk is gekleurd? Vul de teller en de noemer in.</p>
       </div>
 
-      <VoortgangsBalk waarde={sinds} max={PER_BELONING} label={`nog ${PER_BELONING - sinds} goed tot een spelletje · 💵 € ${verdiend}`} />
+      {heeftSpel(PER_BELONING) && <VoortgangsBalk waarde={sinds} max={PER_BELONING} label={`nog ${PER_BELONING - sinds} goed tot een spelletje · 💵 € ${verdiend}`} />}
 
       <div className="bp-prompt"><BreukPlaatje shape={shape} m={m} n={n} size={150} /></div>
 

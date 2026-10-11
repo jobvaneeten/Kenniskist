@@ -5,8 +5,12 @@ import { useGebruikOpdracht } from './gebruikOpdracht.js'
 import OpdrachtKlaarScherm from './OpdrachtKlaarScherm.jsx'
 import './verhaaltjes-sommen.css'
 import { Knop, TerugKnop, VoortgangsBalk, Icoon } from '../ui/index.jsx'
+import { spelNa, heeftSpel } from '../lib/beloning.js'
 
-const PER_BELONING = 5
+const PER_BELONING_STD = 5
+// De leerkracht kan dit per klas anders zetten (src/lib/beloning.js). Een oefening
+// wordt pas geladen als hij geopend wordt, dus altijd na het inloggen.
+const PER_BELONING = spelNa(PER_BELONING_STD)
 const BELONING     = 50                     // vast bedrag per beloning
 const STATS_KEY    = 'kk_verhaal_stats_v2'  // blijvend overzicht per groep+doel
 
@@ -1087,7 +1091,7 @@ export default function VerhaaltjesSommen({ groep: eigenGroep = 7, onBack, addBr
         <Knop variant="secundair" maat="sm" icoon="grafiek" className="rs-ov-btn" onClick={() => openOverzicht('oefen')}>Overzicht</Knop>
         <span className="rs-verdiend">💵 € {verdiend}</span>
       </div>
-      <VoortgangsBalk waarde={sinds} max={PER_BELONING} label={`nog ${PER_BELONING - sinds} goed tot een spelletje`} />
+      {heeftSpel(PER_BELONING) && <VoortgangsBalk waarde={sinds} max={PER_BELONING} label={`nog ${PER_BELONING - sinds} goed tot een spelletje`} />}
       {opgave && <VraagKaart opgave={opgave} onNext={volgende} kaal={kaal} />}
     </div>
   )
