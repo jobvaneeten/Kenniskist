@@ -1,12 +1,14 @@
-import { useCallback, useEffect, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
 import Landing from './Landing'
-import App from './App'
 import Login from './Login'
-import Portaal from './portaal/Portaal.jsx'
-import WachtwoordResetten from './WachtwoordResetten.jsx'
 import { SessieProvider, useSessie } from './lib/sessie.jsx'
 import { wisAlles } from './lib/voortgangSync.js'
 import VersieBanner from './lib/versie.jsx'
+
+// Zware schermen (Babylon, spellen, portaal) pas laden als ze nodig zijn.
+const App = lazy(() => import('./App'))
+const Portaal = lazy(() => import('./portaal/Portaal.jsx'))
+const WachtwoordResetten = lazy(() => import('./WachtwoordResetten.jsx'))
 
 const ROUTES = {
   '/leerlingportaal':     'student',
@@ -140,7 +142,9 @@ function RootInhoud() {
 export default function Root() {
   return (
     <SessieProvider>
-      <RootInhoud />
+      <Suspense fallback={<Laadscherm />}>
+        <RootInhoud />
+      </Suspense>
       <VersieBanner />
     </SessieProvider>
   )

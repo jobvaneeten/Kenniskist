@@ -8,7 +8,6 @@ en wat de licentie toestaat. Bedoeld als checklist bij commercieel gebruik.
 | Onderdeel | Bron | Licentie | Naamsvermelding |
 |---|---|---|---|
 | `public/twemoji/` | Twemoji (Twitter/X) | CC-BY 4.0 | **Verplicht** — staat in de footer van de voorpagina |
-| `public/Towerdefence/` (tiles, UI, particles) | Kenney | CC0 | Niet verplicht, staat er wel |
 | `public/tex/`, `public/env/` | Poly Haven | CC0 | Niet verplicht, staat er wel |
 | Lettertypen Nunito, Baloo 2 | Google Fonts | SIL Open Font License | Niet verplicht |
 | React, Phaser, Colyseus, Supabase-client, Vite, Wrangler | npm | MIT | Licentietekst meeleveren in de bundel |
@@ -28,10 +27,8 @@ en wat de licentie toestaat. Bedoeld als checklist bij commercieel gebruik.
 
 ## Nog te bevestigen door de eigenaar
 
-- `public/Towerdefence/Map/` achtergronden en `Dieren/` — waarschijnlijk ook
-  Kenney, maar niet met zekerheid uit de bestandsnamen af te leiden.
 - De animaties bij Poppetje (`emote*.glb`, `rust.glb`, `hip_hop_dancing.glb`,
-  `Restpose.fbx`, `rijden.fbx`) — de namen wijzen op Mixamo (Adobe). Dat staat
+  `rijden.glb`) — de namen wijzen op Mixamo (Adobe). Dat staat
   royaltyvrij commercieel gebruik in een game toe, maar niet het los
   doorverkopen van de animatiebestanden zelf.
 - `map.glb`, `bos.glb`, `stad.glb` — de paintball-kaarten.

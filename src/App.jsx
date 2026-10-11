@@ -1,20 +1,22 @@
-import { useState } from 'react'
+import { lazy, useState } from 'react'
 import './App.css'
-import Wardrobe        from './Wardrobe'
-import Shop            from './Shop'
-import GameMenu        from './GameMenu'
 import { VEHICLE_ORDER } from './games/hillclimb/data/VehicleData.js'
-import Weektaak        from './Weektaak'
-import MijnWeek        from './MijnWeek'
 import { useOpenLescheck } from './lib/lescheck.js'
-import RocketGame      from './games/RocketGame'
-import PaintballGame   from './games/PaintballGame'
-import BotsenGame      from './games/BotsenGame'
 import { allUnlockedMap } from './itemsCatalog'
 import { COUNTRIES, DEFAULT_UNLOCKED } from './games/countries'
 import { useSessie } from './lib/sessie.jsx'
 import VrijSpelenBadge from './VrijSpelenBadge.jsx'
 import { Knop, TerugKnop, Paneel, Icoon } from './ui/index.jsx'
+
+// Schermen en spellen laden pas bij openen (Suspense staat in Root.jsx).
+const Wardrobe      = lazy(() => import('./Wardrobe'))
+const Shop          = lazy(() => import('./Shop'))
+const GameMenu      = lazy(() => import('./GameMenu'))
+const Weektaak      = lazy(() => import('./Weektaak'))
+const MijnWeek      = lazy(() => import('./MijnWeek'))
+const RocketGame    = lazy(() => import('./games/RocketGame'))
+const PaintballGame = lazy(() => import('./games/PaintballGame'))
+const BotsenGame    = lazy(() => import('./games/BotsenGame'))
 
 const CODES = { pabo: 100000 }
 const BRIEF_CODES = { start: 800 }   // eenmalige briefgeld-codes

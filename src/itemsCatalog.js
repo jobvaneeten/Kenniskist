@@ -403,10 +403,10 @@ export const CATALOG = {
     // wel een eigen UV-design; hun badge staat in het swatch-rondje.
     ultra('petny', 'Marine Baseballpet', 'pattern', { pattern: 'stripes', c1: '#14224a', c2: '#f4f4f4' }),
     { ...texmodel('petgiraffe', 'Giraffe Pet', '/Pet/petnormaal.glb', '/Pet/petgiraffe.png', '/Pet/petgiraffe.png'), badge: '🦒' },
-    { ...texmodel('pettara', 'Tara Pet', '/Pet/petnormaal.glb', '/Pet/pettara.png', '/Pet/pettara.png'), badge: '🌈' },
-    { ...texmodel('petnina', 'Nina Pet', '/Pet/petnormaal.glb', '/Pet/ninapet.png', '/Pet/ninapet.png'), badge: '💖' },
-    { ...texmodel('petpim', 'Pim Pet', '/Pet/petnormaal.glb', '/Pet/petpim.png', '/Pet/petpim.png'), badge: 'Pim' },
-    { ...texmodel('petvinn', 'Vinn Pet', '/Pet/petnormaal.glb', '/Pet/petvinn.png', '/Pet/petvinn.png'), badge: 'Vinn' },
+    { ...texmodel('pettara', 'Tara Pet', '/Pet/petnormaal.glb', '/Pet/pettara.jpg', '/Pet/pettara.jpg'), badge: '🌈' },
+    { ...texmodel('petnina', 'Nina Pet', '/Pet/petnormaal.glb', '/Pet/ninapet.jpg', '/Pet/ninapet.jpg'), badge: '💖' },
+    { ...texmodel('petpim', 'Pim Pet', '/Pet/petnormaal.glb', '/Pet/petpim.jpg', '/Pet/petpim.jpg'), badge: 'Pim' },
+    { ...texmodel('petvinn', 'Vinn Pet', '/Pet/petnormaal.glb', '/Pet/petvinn.jpg', '/Pet/petvinn.jpg'), badge: 'Vinn' },
     // ── 40 nieuwe petten ──
     color('bordeaux_h',  'Bordeaux',        'common', '#7a1f2b'),
     color('mint_h',      'Mint',            'common', '#3ddc97'),

@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import FootballGame, { loadToernooi } from './FootballGame'
 import HeadSoccer from './HeadSoccer'
-import TowerDefenseGame from './TowerDefenseGame'
 import BrugBouwen from './BrugBouwen'
 import HillClimbGame from './HillClimbGame'
 import SterrenveerGame from './SterrenveerGame'
@@ -77,7 +76,7 @@ const SPELLEN = [
   { key: 'doodle',     name: 'Doodle Sprong',  desc: 'Spring zo hoog mogelijk!',          img: '/scenes/games/doodlesprong.png' },
   { key: 'meteoor',    name: 'Meteoorvlucht',  desc: 'Ren weg voor de meteoor!',          img: '/scenes/games/meteoorvlucht.svg' },
   { key: 'evolutie',   name: 'Dier Evolutie',  desc: 'Voeg dieren samen',                 img: '/scenes/games/evolutie.png' },
-  { key: 'tower',      name: 'Tower Defense',  desc: 'Verdedig je toren!',               img: '/scenes/games/towerdefense.png' },
+  { key: 'tower',      name: 'Tower Defense',  desc: 'Hou 5 golven ballonnen tegen', img: '/scenes/games/towerdefense.svg' },
   { key: 'brug',       name: 'Brug Bouwen',    desc: 'Bouw 3 bruggen',                   img: '/scenes/games/brug.png' },
   { key: 'hillclimb',  name: 'Bergrijden',     desc: 'Rij tot je crasht',                img: '/scenes/games/hillclimb.png' },
   { key: 'fruitsabel', name: 'Fruitsabel',     desc: 'Snijd 60 seconden fruit',          img: '/scenes/games/fruitsabel.svg' },
@@ -110,7 +109,8 @@ export default function SpelBeloning({ title, sub, geld, addCuruntie, onDone }) 
   // Evolutie is een idle-spel zonder eigen 'potje', dus hier bepaalt de klok het
   // einde: 1 minuut spelen en dan automatisch terug naar de oefening.
   if (picked === 'evolutie')   return <IframeEmbed src="/evolutie/" title="Dier Evolutie" doneType="evolutie-klaar" seconds={60} hint="Tik op de dieren en raap poep — na 1 minuut ga je verder" onDone={onDone} />
-  if (picked === 'tower')      return wrap(<TowerDefenseGame onBack={onDone} onRoundDone={onDone} />)
+  // 5 golven op een level naar keuze, dan Klaar.
+  if (picked === 'tower')      return <IframeEmbed src="/towerdefense/" title="Tower Defense" doneType="towerdefense-gameover" hint="Hou 5 golven tegen — daarna tik je op Klaar" onDone={onDone} />
   if (picked === 'brug')       return wrap(<BrugBouwen reward onBack={onDone} />)
   if (picked === 'hillclimb')  return wrap(<HillClimbGame reward onBack={onDone} />)
   // Sterrenveer slaat in beloningsmodus het titelscherm over: je kiest één

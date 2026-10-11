@@ -4,6 +4,7 @@ import { COUNTRIES, getCountry, generateBracket, DEFAULT_UNLOCKED } from './coun
 import OrientationGate from '../OrientationGate'
 import './football.css'
 import { TerugKnop, Knop } from '../ui/index.jsx'
+import { TOERNOOI_KEY, loadToernooi } from './toernooiOpslag.js'
 
 // ── Field constants ───────────────────────────────────────────────
 const W = 800, H = 450
@@ -862,11 +863,7 @@ function JerseyCircle({ country, size = 32 }) {
 
 // ── Main component ────────────────────────────────────────────────
 // Toernooi-voortgang bewaren zodat je buiten de opgaves verder kunt spelen.
-const TOERNOOI_KEY = 'kk_toernooi_voetbal'
-export function loadToernooi() {
-  try { const v = JSON.parse(localStorage.getItem(TOERNOOI_KEY)); if (v && v.playerKey && v.opponents?.length) return v } catch { /* ignore */ }
-  return null
-}
+export { loadToernooi }
 function saveToernooi(b) {
   // alleen echte 1-speler-toernooien (geen 2-speler-potje, niet uitgespeeld)
   try { if (b && !b.p2Key && b.opponents?.length && b.currentRound <= 3) localStorage.setItem(TOERNOOI_KEY, JSON.stringify(b)) } catch { /* ignore */ }

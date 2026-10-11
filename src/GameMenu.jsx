@@ -1,35 +1,37 @@
-import { useState, useRef } from 'react'
-import FootballGame, { loadToernooi } from './games/FootballGame'
-import TowerDefenseGame from './games/TowerDefenseGame'
-import HillClimbGame from './games/HillClimbGame'
-import JetpackGame from './games/JetpackGame'
-import HeadSoccer from './games/HeadSoccer'
-import AstroKatapultGame from './games/AstroKatapultGame'
-import SterrenstroompGame from './games/SterrenstroompGame'
-import DoodleSprongGame from './games/DoodleSprongGame'
-import MeteoorvluchtGame from './games/MeteoorvluchtGame'
-import FruitsabelGame from './games/FruitsabelGame'
-import SterrenveerGame from './games/SterrenveerGame'
-import GraafGame from './games/GraafGame'
-import IframeSpel from './games/IframeSpel'
-import DierEvolutieGame from './games/DierEvolutieGame'
-import BrugBouwen from './games/BrugBouwen'
-import ProcentenBreuken from './games/ProcentenBreuken'
-import VerhaaltjesSommen from './games/VerhaaltjesSommen'
-import Denkvragen from './games/Denkvragen'
-import BreukenPlaatjes from './games/BreukenPlaatjes'
-import MaatenOmrekenen from './games/MaatenOmrekenen'
-import KlokKijken from './games/KlokKijken'
-import TafelsOefenen from './games/TafelsOefenen'
-import WerkwoordSpelling from './games/WerkwoordSpelling'
-import DicteeThema from './games/DicteeThema'
-import TaalOefenen from './games/TaalOefenen'
-import BegrijpendLezen from './games/BegrijpendLezen'
-import TopoOefenen from './games/TopoOefenen'
+import { lazy, useState, useRef } from 'react'
+import { loadToernooi } from './games/toernooiOpslag.js'
 import MenuScene from './MenuScenes'
 import VrijSpelenBadge from './VrijSpelenBadge.jsx'
 import { TerugKnop, Icoon } from './ui/index.jsx'
 import './game.css'
+
+// Spellen laden pas bij openen (Suspense staat in Root.jsx).
+const FootballGame       = lazy(() => import('./games/FootballGame'))
+const HillClimbGame      = lazy(() => import('./games/HillClimbGame'))
+const JetpackGame        = lazy(() => import('./games/JetpackGame'))
+const HeadSoccer         = lazy(() => import('./games/HeadSoccer'))
+const AstroKatapultGame  = lazy(() => import('./games/AstroKatapultGame'))
+const SterrenstroompGame = lazy(() => import('./games/SterrenstroompGame'))
+const DoodleSprongGame   = lazy(() => import('./games/DoodleSprongGame'))
+const MeteoorvluchtGame  = lazy(() => import('./games/MeteoorvluchtGame'))
+const FruitsabelGame     = lazy(() => import('./games/FruitsabelGame'))
+const SterrenveerGame    = lazy(() => import('./games/SterrenveerGame'))
+const GraafGame          = lazy(() => import('./games/GraafGame'))
+const IframeSpel         = lazy(() => import('./games/IframeSpel'))
+const DierEvolutieGame   = lazy(() => import('./games/DierEvolutieGame'))
+const BrugBouwen         = lazy(() => import('./games/BrugBouwen'))
+const ProcentenBreuken   = lazy(() => import('./games/ProcentenBreuken'))
+const VerhaaltjesSommen  = lazy(() => import('./games/VerhaaltjesSommen'))
+const Denkvragen         = lazy(() => import('./games/Denkvragen'))
+const BreukenPlaatjes    = lazy(() => import('./games/BreukenPlaatjes'))
+const MaatenOmrekenen    = lazy(() => import('./games/MaatenOmrekenen'))
+const KlokKijken         = lazy(() => import('./games/KlokKijken'))
+const TafelsOefenen      = lazy(() => import('./games/TafelsOefenen'))
+const WerkwoordSpelling  = lazy(() => import('./games/WerkwoordSpelling'))
+const DicteeThema        = lazy(() => import('./games/DicteeThema'))
+const TaalOefenen        = lazy(() => import('./games/TaalOefenen'))
+const BegrijpendLezen    = lazy(() => import('./games/BegrijpendLezen'))
+const TopoOefenen        = lazy(() => import('./games/TopoOefenen'))
 
 const YEARS = [
   { num: 4, color: 'var(--kk-vak-taal)' },
@@ -78,7 +80,7 @@ const GAMES = {
 const FREE_GAMES = [
   { key: 'football',      name: '1 tegen 1 voetbal', desc: 'Scoor tegen de computer of een vriend' },
   { key: 'headsoccer',    name: 'Supervoetbal',     desc: '1-tegen-1 met landen & special moves' },
-  { key: 'towerdefense',  name: 'Tower Defense',   desc: 'Bouw torens & stop de vijanden' },
+  { key: 'towerdefense',  name: 'Tower Defense',   desc: 'Bouw neon-torens en knal alle ballonnen — 5 levels van 15 golven!', img: '/scenes/games/towerdefense.svg' },
   { key: 'jetpack',       name: 'Jetpack',          desc: 'Vlieg zo ver mogelijk!' },
   { key: 'astrokatapult', name: 'Astro Katapult',   desc: 'Lanceer & versla de aliens in 50 levels!' },
   { key: 'sterrenstroom', name: 'Spacerunner',     desc: 'Ontwijk de asteroïden in de ruimte!' },
@@ -148,9 +150,8 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
   // klein spelcomputer-merkteken in beeld (zie VrijSpelenBadge).
   const vrij = (el) => <>{el}<VrijSpelenBadge /></>
 
-  // Tower defense (no mode selection needed)
   if (directGame === 'towerdefense') {
-    return vrij(<TowerDefenseGame onBack={onBack} />)
+    return vrij(<IframeSpel src="/towerdefense/" titel="Tower Defense" terugType="towerdefense-terug" achtergrond="#06061a" onBack={onBack} />)
   }
 
   if (directGame === 'jetpack') {
