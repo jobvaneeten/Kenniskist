@@ -21,6 +21,15 @@ function portalForPath(pathname) {
   return ROUTES[pathname] || null
 }
 
+// Elk onbekend adres krijgt (door de SPA-fallback van Cloudflare) gewoon de
+// voorpagina. Zonder dit ziet Google eindeloos veel kopieën van dezelfde pagina.
+if (typeof document !== 'undefined' && location.pathname !== '/' && !ROUTES[location.pathname]) {
+  const meta = document.createElement('meta')
+  meta.name = 'robots'
+  meta.content = 'noindex'
+  document.head.appendChild(meta)
+}
+
 function Laadscherm() {
   return (
     <div style={{

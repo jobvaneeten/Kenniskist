@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /leerkrachtenportaal
+Disallow: /wachtwoord-resetten
+
+Sitemap: https://kenniskist.nl/sitemap.xml

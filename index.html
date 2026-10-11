@@ -5,7 +5,46 @@
     <link rel="icon" type="image/png" href="/logo-rond.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>Kenniskist — Leren is leuk!</title>
-    <meta name="description" content="Kenniskist is de leukste plek om te leren! Rekenen, taal &amp; spelling, begrijpend lezen en Engels — met minigames en een eigen 3D-poppetje, voor groep 4 t/m 8." />
+    <meta name="description" content="Kenniskist is de leukste plek om te leren! Rekenen, taal &amp; spelling, begrijpend lezen en topografie — met minigames en een eigen 3D-poppetje, voor groep 4 t/m 8." />
+    <link rel="canonical" href="https://kenniskist.nl/" />
+
+    <!-- Voorbeeld als iemand de link deelt (WhatsApp, Teams, Facebook…) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Kenniskist" />
+    <meta property="og:url" content="https://kenniskist.nl/" />
+    <meta property="og:title" content="Kenniskist — Leren is leuk!" />
+    <meta property="og:description" content="Oefenen met rekenen, taal & spelling, begrijpend lezen en topografie, met minigames en een eigen 3D-poppetje. Voor groep 4 t/m 8." />
+    <meta property="og:image" content="https://kenniskist.nl/branding/og.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content="nl_NL" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <!-- Zodat Google de naam "Kenniskist" als merk/sitenaam herkent -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "https://kenniskist.nl/#website",
+            "name": "Kenniskist",
+            "alternateName": ["Kenniskist.nl", "Kennis kist"],
+            "url": "https://kenniskist.nl/",
+            "inLanguage": "nl"
+          },
+          {
+            "@type": "EducationalOrganization",
+            "@id": "https://kenniskist.nl/#organisatie",
+            "name": "Kenniskist",
+            "url": "https://kenniskist.nl/",
+            "logo": "https://kenniskist.nl/logo-rond.png",
+            "description": "Oefenplatform voor de basisschool (groep 4 t/m 8): rekenen, taal & spelling, begrijpend lezen en topografie, met minigames als beloning."
+          }
+        ]
+      }
+    </script>
+
     <link href="/fonts/fonts.css" rel="stylesheet" />
     <!-- Plain script, geen module/defer: window.KennisKist moet al bestaan
          vóórdat main.jsx (en WerkwoordSpelling.jsx daarin) draait. -->
@@ -13,11 +52,50 @@
     <!-- Muziekspeler: alleen in het hoofddocument, buiten React, zodat hij
          blijft spelen als je van oefening naar spel klikt. Zie het bestand. -->
     <script src="/kenniskist-muziek.js" defer></script>
+    <style>
+      /* Staat er alleen tot React de echte voorpagina tekent (meestal een fractie
+         van een seconde). Zoekmachines lezen deze tekst meteen, zonder JavaScript. */
+      .kk-voorlader{min-height:100vh;margin:0;padding:48px 20px;box-sizing:border-box;background:#1d1544;color:#fff;
+        font-family:'Nunito',system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px}
+      .kk-voorlader h1{font-size:44px;margin:0}
+      .kk-voorlader h2{font-size:20px;margin:18px 0 0}
+      .kk-voorlader p,.kk-voorlader li{max-width:640px;line-height:1.5;color:rgba(255,255,255,.8);margin:0}
+      .kk-voorlader ul{list-style:none;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:center;max-width:720px}
+      .kk-voorlader a{color:#7dfff0}
+    </style>
   </head>
   <body>
     <div id="root">
-      <div style="display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:'Nunito',system-ui,sans-serif;color:#fff;background:#1d1544;">Laden…</div>
+      <main class="kk-voorlader">
+        <h1>Kenniskist</h1>
+        <p><strong>Leren terwijl je speelt.</strong> Kenniskist is een oefenplatform voor de basisschool, groep 4 t/m 8.
+          Je maakt een rondje opgaves en krijgt na een paar goede antwoorden een kort spelletje als beloning.
+          Met je verdiende munten en briefgeld kleed je je eigen 3D-poppetje aan en open je lootboxen in de winkel.</p>
+        <h2>Vakken</h2>
+        <ul>
+          <li>Rekenen: sommen, tafels, verhaaltjessommen, breuken, procenten, klokkijken en maten omrekenen</li>
+          <li>Taal &amp; spelling: dictees, werkwoordspelling, woordenschat en zinsontleding</li>
+          <li>Begrijpend lezen</li>
+          <li>Topografie</li>
+        </ul>
+        <h2>Minigames</h2>
+        <ul>
+          <li>Voetbal</li><li>Supervoetbal</li><li>Jetpack</li><li>Astro Katapult</li><li>Spacerunner</li><li>Doodle Sprong</li>
+          <li>Meteoorvlucht</li><li>Dier Evolutie</li><li>Brug Bouwen</li><li>Tower Defense</li><li>Bergrijden</li><li>Paintball</li>
+          <li>Ballonnengevecht</li><li>Fruitsabel</li><li>Sterrenveer</li><li>Diepgravers</li><li>Neongolf</li><li>Blokkenblitz</li>
+          <li>Neonhockey</li><li>Pijlenregen</li><li>Stapeltoren</li><li>Steenknaller</li>
+        </ul>
+        <h2>Voor leerkrachten</h2>
+        <p>Zet weektaken en persoonlijke doelen klaar, volg per leerling wat er goed en fout gaat, en bepaal per klas hoe vaak er een spelletje komt.</p>
+        <p><a href="/leerlingportaal">Leerlingportaal</a> · <a href="/leerkrachtenportaal">Leerkrachtenportaal</a></p>
+      </main>
     </div>
+    <script>
+      // Alleen de voorpagina heeft deze tekst nodig voor zoekmachines; op de
+      // portalen (inloggen, spelen) gewoon "Laden…" tot de app er is.
+      if (location.pathname !== '/') document.getElementById('root').innerHTML =
+        '<div style="display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:\'Nunito\',system-ui,sans-serif;color:#fff;background:#1d1544;">Laden…</div>'
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
