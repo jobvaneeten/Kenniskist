@@ -16,6 +16,7 @@
     "stapel": "node tools/stapeltorenTest.js",
     "steen": "node tools/steenknallerTest.js",
     "td": "node tools/towerdefenseTest.js",
+    "astro": "node tools/astroStabiliteit.mjs && node tools/astroBot.mjs",
     "test:watch": "vitest",
     "validate-levels": "node tools/validate-levels.js",
     "economy": "node tools/economy.js",

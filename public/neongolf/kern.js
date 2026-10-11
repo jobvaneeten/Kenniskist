@@ -142,6 +142,45 @@ var NG = (function () {
       molen: [{ x: 460, y: 300, len: 80, armen: 4, snelheid: 1.3 }],
       water: [Rh(360, 470, 200, 90)], zand: [Rh(720, 40, 240, 100)],
       lasers: [{ a: [655, 40], b: [655, 160], periode: 2.6, aan: 0.5 }] },
+
+    // ── Baan 7: Golfkust — water, eilanden en bruggen ──
+    { naam: 'Golfbreker', par: 2, rand: Rh(120, 180, 760, 240), start: [200, 300], gat: [800, 300],
+      water: [Rh(420, 180, 160, 90), Rh(420, 330, 160, 90)] },
+    { naam: 'Boostbrug', par: 2, rand: Rh(80, 100, 840, 400), start: [150, 300], gat: [850, 300],
+      water: [Rh(330, 100, 340, 170), Rh(330, 330, 340, 170)], zand: [Rh(720, 100, 200, 120)],
+      boost: [{ p: Rh(360, 270, 120, 60), dir: [1, 0] }] },
+    { naam: 'Kustlijn', par: 2, rand: [[80, 80], [920, 80], [920, 520], [600, 520], [600, 260], [80, 260]], start: [150, 170], gat: [760, 460],
+      bumpers: [[450, 170, 22], [750, 170, 22]], zand: [Rh(620, 300, 120, 80)] },
+    { naam: 'Eilandhoppen', par: 2, rand: Rh(60, 80, 880, 440), start: [130, 300], gat: [870, 300],
+      water: [Rh(240, 80, 140, 440), Rh(560, 80, 140, 440)],
+      portalen: [[190, 300, 450, 300], [510, 300, 760, 300]] },
+    { naam: 'Spiegelpaleis', par: 3, rand: Rh(100, 120, 800, 360), start: [180, 420], gat: [820, 180],
+      blokken: [Rh(420, 120, 30, 240), Rh(580, 240, 30, 240)], bumpers: [[500, 420, 20], [500, 180, 20]] },
+    { naam: 'Getijde', par: 3, rand: Rh(80, 60, 840, 480), start: [140, 480], gat: [860, 120],
+      blokken: [Rh(300, 60, 30, 340), Rh(620, 200, 30, 340)], water: [Rh(330, 440, 290, 100)],
+      helling: [{ p: Rh(650, 60, 270, 140), dir: [-1, 0], kracht: 260 }] },
+
+    // ── Baan 8: Zwart gat — zwaartekracht, portalen en lasers ──
+    { naam: 'Waarnemingshorizon', par: 2, rand: Rh(100, 100, 800, 400), start: [170, 300], gat: [830, 300],
+      water: [Rh(470, 270, 60, 60)], magneten: [{ x: 500, y: 300, r: 180, kracht: 1100 }] },
+    { naam: 'Zwaartekrachtslinger', par: 3, rand: Rh(120, 70, 760, 460), start: [180, 450], gat: [820, 150],
+      blokken: [Rh(330, 230, 340, 140)],
+      magneten: [{ x: 500, y: 150, r: 140, kracht: 700 }, { x: 500, y: 450, r: 140, kracht: 700 }] },
+    { naam: 'Portaalnet', par: 3, rand: Rh(60, 80, 880, 440), start: [150, 300], gat: [850, 300],
+      blokken: [Rh(300, 80, 30, 440), Rh(500, 80, 30, 440), Rh(700, 80, 30, 440)],
+      portalen: [[250, 150, 380, 450], [450, 450, 580, 150], [650, 150, 780, 300]] },
+    { naam: 'Lasermolen', par: 3, rand: Rh(80, 120, 840, 360), start: [160, 300], gat: [850, 300],
+      molen: [{ x: 400, y: 300, len: 80, armen: 3, snelheid: 1.6 }], zand: [Rh(700, 120, 100, 100)],
+      lasers: [{ a: [620, 120], b: [620, 480], periode: 2.2, aan: 0.55 }] },
+    { naam: 'Sterrenstof', par: 3, rand: Rh(60, 60, 880, 480), start: [120, 120], gat: [880, 480],
+      ijs: [Rh(60, 60, 880, 480)], blokken: [Rh(320, 60, 30, 330), Rh(640, 210, 30, 330)],
+      bumpers: [[200, 300, 22], [500, 200, 22], [500, 420, 22], [800, 200, 22]],
+      magneten: [{ x: 800, y: 420, r: 110, kracht: 500 }] },
+    { naam: 'De kern', par: 3, rand: Rh(40, 40, 920, 520), start: [100, 480], gat: [500, 300],
+      blokken: [Rh(400, 200, 200, 20), Rh(400, 380, 200, 20), Rh(400, 200, 20, 200)],
+      molen: [{ x: 700, y: 300, len: 70, armen: 4, snelheid: 1.4 }],
+      lasers: [{ a: [600, 220], b: [600, 380], periode: 2.4, aan: 0.4 }],
+      magneten: [{ x: 200, y: 150, r: 120, kracht: -800 }], water: [Rh(700, 440, 200, 110)] },
   ]
   var BANEN = [
     { naam: 'Neonpark', kleur: '#3ef0ff', van: 0 },
@@ -150,6 +189,8 @@ var NG = (function () {
     { naam: 'Magneetmijn', kleur: '#ffb13d', van: 18 },
     { naam: 'Laserlab', kleur: '#8f9bff', van: 24 },
     { naam: 'Sterrenpoort', kleur: '#8cff5a', van: 30 },
+    { naam: 'Golfkust', kleur: '#3dffd0', van: 36 },
+    { naam: 'Zwart gat', kleur: '#ff7a2f', van: 42 },
   ]
 
   // vaste muren als lijnstukken (rand + blokken)

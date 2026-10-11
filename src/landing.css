@@ -1,6 +1,6 @@
-/* ── Landing / portal-keuze ───────────────────────────────
+/* ── Voorpagina ────────────────────────────────────────────
    Zelfde sterrenhemel als de rest van de site (body, App.css); alle kaarten
-   gebruiken de gedeelde glas-kaartstijl. */
+   gebruiken de gedeelde glas-kaartstijl met een neon-accent per onderdeel. */
 .landing-screen {
   width: 100vw;
   min-height: 100vh;
@@ -8,20 +8,74 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 56px 24px 40px;
+  padding: 0 24px 40px;
   font-family: var(--kk-body);
   color: var(--kk-text);
-  gap: var(--kk-s7);
+  gap: 56px;
   overflow-x: hidden;
 }
 
-/* ── Hero-banner met artwork ───────────────────────────── */
+/* ── Menubalk met tabbladen ─────────────────────────────
+   Zwevende glazen balk die over de hero heen ligt, zodat hij bij de rest
+   van de pagina hoort in plaats van er los bovenop te staan. */
+.lp-nav {
+  position: sticky; top: 14px; z-index: 20;
+  width: min(1180px, 100%); margin: 16px auto -138px;   /* hero loopt door tot bovenaan, achter de balk */
+  padding: 8px 8px 8px 16px;
+  display: flex; align-items: center; gap: 14px;
+  border-radius: 22px;
+  background: rgba(18, 15, 44, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 12px 34px rgba(0,0,0,0.38), 0 0 34px rgba(139,92,246,0.16), inset 0 1px 0 rgba(255,255,255,0.08);
+  backdrop-filter: blur(16px) saturate(1.2);
+}
+.lp-nav-merk {
+  display: flex; align-items: center; gap: 10px; flex: none;
+  background: none; border: 0; padding: 0; cursor: pointer; color: var(--kk-text);
+  font: var(--kk-fw-bold) 1.4rem/1 var(--kk-head);
+}
+.lp-nav-merk img { width: 44px; height: 44px; border-radius: 50%; box-shadow: 0 0 0 2px rgba(167,139,250,.5), 0 0 16px var(--kk-primary-glow); }
+.lp-nav-tabs { display: flex; gap: 4px; margin: 0 auto; overflow-x: auto; scrollbar-width: none; padding: 2px; }
+.lp-nav-tabs::-webkit-scrollbar { display: none; }
+.lp-tab {
+  padding: 12px 18px; border-radius: 14px; white-space: nowrap;
+  font: var(--kk-fw-bold) 1rem/1 var(--kk-body);
+  color: var(--kk-text-soft); text-decoration: none;
+  transition: background var(--kk-dur), color var(--kk-dur), box-shadow var(--kk-dur);
+}
+.lp-tab:hover { color: var(--kk-text); background: rgba(255,255,255,0.08); }
+.lp-tab.actief {
+  color: var(--kk-text);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--kk-primary) 55%, transparent), color-mix(in srgb, var(--kk-primary-hi) 30%, transparent));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--kk-primary-hi) 60%, transparent), 0 0 18px var(--kk-primary-glow);
+}
+.lp-nav-cta {
+  flex: none; display: inline-flex; align-items: center; gap: 6px;
+  min-height: 48px; padding: 0 20px; border: 0; border-radius: 14px; cursor: pointer;
+  font: var(--kk-fw-black) 1rem/1 var(--kk-body); color: #fff;
+  background: linear-gradient(135deg, var(--kk-pink), #ff6fb1);
+  box-shadow: 0 6px 20px rgba(255,47,142,0.38);
+  transition: transform var(--kk-dur) var(--kk-ease), box-shadow var(--kk-dur);
+}
+.lp-nav-cta svg { width: 18px; height: 18px; }
+.lp-nav-cta:hover { transform: translateY(-2px); box-shadow: 0 10px 26px rgba(255,47,142,0.5); }
+.lp-tab:focus-visible, .lp-nav-merk:focus-visible, .lp-nav-cta:focus-visible { outline: none; box-shadow: var(--kk-focus-ring); }
+
+/* ── Pagina per tabblad ─────────────────────────────────── */
+.lp-pagina { position: relative; z-index: 1; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 56px; }
+.lp-pagina:not(.lp-pagina-home) { max-width: 1120px; padding-top: 150px; min-height: 60vh; }
+.lp-paginakop { display: flex; flex-direction: column; align-items: center; text-align: center; margin-bottom: -24px; }
+.lp-paginatitel { font: var(--kk-fw-bold) 2.4rem/1.15 var(--kk-head); margin: 0 0 12px; }
+.lp-vragen-meer { margin-top: -32px; }
+.lp-vragen-meer a { color: var(--kk-cyan); font-weight: var(--kk-fw-bold); }
+
+/* ── Hero ───────────────────────────────────────────────── */
 .landing-hero-banner {
   position: relative;
   z-index: 1;
   width: calc(100% + 48px);
-  margin: -56px -24px 0;
-  padding: 64px 24px 36px;
+  margin: 0 -24px -40px;
+  padding: 130px 24px 36px;
   display: flex;
   justify-content: center;
   overflow: hidden;
@@ -73,32 +127,49 @@
   0%,100% { transform: translateY(0); }
   50%      { transform: translateY(-7px); }
 }
+.lp-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 13px;
+  border-radius: var(--kk-r-pill);
+  font-size: var(--kk-fs-xs); font-weight: var(--kk-fw-black);
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--kk-cyan);
+  background: rgba(14, 12, 34, 0.7);
+  border: 1px solid color-mix(in srgb, var(--kk-cyan) 45%, transparent);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--kk-cyan) 25%, transparent);
+  backdrop-filter: blur(6px);
+}
+.lp-badge svg { width: 15px; height: 15px; }
 .landing-title {
-  font: var(--kk-fw-bold) 3.4rem/1.05 var(--kk-head);
+  font: var(--kk-fw-bold) 3.6rem/1.05 var(--kk-head);
   letter-spacing: -0.5px;
-  color: var(--kk-text);
-  text-shadow: 0 0 28px var(--kk-primary-glow), 0 4px 16px rgba(0,0,0,0.55);
-  margin: 0;
+  margin: 2px 0 0;
+  background: linear-gradient(100deg, #fff 30%, #d9cbff 60%, var(--kk-cyan));
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 22px var(--kk-primary-glow)) drop-shadow(0 4px 12px rgba(0,0,0,0.55));
 }
 .landing-tagline {
   font: var(--kk-fw-bold) var(--kk-fs-sm)/1 var(--kk-body);
-  letter-spacing: 0.1em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--kk-gold);
   margin: 0;
-  text-shadow: 0 2px 10px rgba(0,0,0,0.6);
+  text-shadow: 0 0 14px rgba(255,210,63,0.45), 0 2px 10px rgba(0,0,0,0.6);
 }
 .landing-intro {
-  font-size: var(--kk-fs-md);
+  font-size: 1.08rem;
   line-height: 1.65;
-  color: rgba(255,255,255,0.88);
+  color: rgba(255,255,255,0.9);
   font-weight: var(--kk-fw-normal);
   margin: var(--kk-s3) 0 0;
+  max-width: 620px;
   text-shadow: 0 1px 8px rgba(0,0,0,0.7);
 }
 
-/* ── Gedeelde kaartvorm op deze pagina ─────────────────── */
-.stat-card, .step-card, .audience-card, .showcase-card, .portal-card, .landing-cta {
+/* ── Gedeelde kaartvorm ─────────────────────────────────── */
+.stat-card, .showcase-card, .portal-card, .landing-cta,
+.lp-vak, .lp-stap, .lp-spel, .lp-functie, .lp-vraag, .lp-contact {
   --kk-accent: var(--kk-primary-hi);
   background: rgba(14, 12, 34, 0.72);
   backdrop-filter: blur(10px);
@@ -108,53 +179,161 @@
   color: var(--kk-text);
 }
 .landing-icoon {
-  width: 52px; height: 52px;
+  width: 52px; height: 52px; flex: none;
   display: grid; place-items: center;
   border-radius: var(--kk-r-md);
   color: var(--kk-accent);
   background: color-mix(in srgb, var(--kk-accent) 16%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--kk-accent) 28%, transparent);
 }
 .landing-icoon svg { width: 28px; height: 28px; }
 
-/* ── Stats-strook ───────────────────────────────────────── */
+/* Secties */
+.lp-sectie { position: relative; z-index: 1; width: 100%; max-width: 1000px; text-align: center; display: flex; flex-direction: column; align-items: center; }
+.lp-sectie-breed { max-width: 1120px; }
+.lp-kicker {
+  font-size: var(--kk-fs-xs); font-weight: var(--kk-fw-black);
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--kk-pink);
+  text-shadow: 0 0 12px color-mix(in srgb, var(--kk-pink) 50%, transparent);
+  margin-bottom: 6px;
+}
+.landing-section-title { font: var(--kk-fw-bold) 2rem/1.15 var(--kk-head); margin: 0 0 var(--kk-s5); }
+.lp-sectie-sub { margin: calc(-1 * var(--kk-s3)) 0 var(--kk-s5); color: var(--kk-text-soft); font-weight: var(--kk-fw-normal); max-width: 560px; line-height: 1.5; }
+
+/* ── Portalen ───────────────────────────────────────────── */
+.portal-choice { position: relative; z-index: 1; width: 100%; max-width: 860px; text-align: center; }
+.portal-choice-top { margin-top: -28px; }
+.portal-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--kk-s5); }
+.portal-card {
+  display: flex; flex-direction: column; align-items: center;
+  gap: var(--kk-s2);
+  padding: 0 var(--kk-s5) var(--kk-s6);
+  overflow: hidden;
+  border-top: 4px solid var(--kk-accent);
+  cursor: pointer;
+  font-family: inherit;
+  transition: transform var(--kk-dur) var(--kk-ease), border-color var(--kk-dur), box-shadow var(--kk-dur), background var(--kk-dur);
+}
+.portal-card:hover {
+  transform: translateY(-4px);
+  background: rgba(24, 20, 52, 0.85);
+  border-color: color-mix(in srgb, var(--kk-accent) 60%, transparent);
+  box-shadow: var(--kk-shadow), 0 0 32px color-mix(in srgb, var(--kk-accent) 32%, transparent);
+}
+.portal-card:focus-visible { outline: none; box-shadow: var(--kk-focus-ring); }
+.portal-plaat {
+  display: block; width: calc(100% + 2 * var(--kk-s5)); margin: 0 calc(-1 * var(--kk-s5)) -26px;
+  aspect-ratio: 32 / 15; overflow: hidden; position: relative;
+}
+.portal-plaat img, .portal-plaat svg { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 400ms var(--kk-ease); }
+.portal-plaat::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 45%, rgba(14,12,34,.95)); }
+.portal-card:hover .portal-plaat img, .portal-card:hover .portal-plaat svg { transform: scale(1.05); }
+.portal-card .landing-icoon { position: relative; z-index: 1; background: rgba(14,12,34,.92); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--kk-accent) 45%, transparent), 0 0 18px color-mix(in srgb, var(--kk-accent) 35%, transparent); }
+.portal-student { --kk-accent: var(--kk-pink); }
+.portal-teacher { --kk-accent: var(--kk-cyan); }
+.portal-name { font: var(--kk-fw-bold) 1.45rem/1.2 var(--kk-head); margin-top: var(--kk-s1); }
+.portal-desc { font-size: var(--kk-fs-sm); color: var(--kk-text-soft); font-weight: var(--kk-fw-normal); line-height: 1.5; }
+.portal-arrow {
+  display: inline-flex; align-items: center; gap: 4px; margin-top: var(--kk-s2);
+  padding: 8px 16px; border-radius: var(--kk-r-pill);
+  font-weight: var(--kk-fw-black); font-size: var(--kk-fs-sm);
+  color: var(--kk-accent);
+  background: color-mix(in srgb, var(--kk-accent) 14%, transparent);
+}
+.portal-arrow svg { width: 18px; height: 18px; transition: transform var(--kk-dur) var(--kk-ease); }
+.portal-card:hover .portal-arrow svg { transform: translateX(3px); }
+
+/* ── Cijfers ────────────────────────────────────────────── */
 .landing-stats {
   position: relative; z-index: 1;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: var(--kk-s4);
   width: 100%;
-  max-width: 760px;
+  max-width: 860px;
+  margin-top: -36px;
 }
 .stat-card { padding: var(--kk-s4) 10px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
-.stat-value { font: var(--kk-fw-bold) 1.7rem/1.1 var(--kk-head); color: var(--kk-gold); }
-.stat-label { font-size: var(--kk-fs-xs); font-weight: var(--kk-fw-bold); color: var(--kk-text-soft); text-transform: uppercase; letter-spacing: 0.05em; }
+.stat-value { font: var(--kk-fw-bold) 2rem/1.1 var(--kk-head); color: var(--kk-gold); text-shadow: 0 0 16px rgba(255,210,63,0.35); }
+.stat-label { font-size: var(--kk-fs-xs); font-weight: var(--kk-fw-bold); color: var(--kk-text-soft); text-transform: uppercase; letter-spacing: 0.05em; text-align: center; }
 
-/* ── Vakken-chips ───────────────────────────────────────── */
-.landing-subjects {
-  position: relative; z-index: 1;
-  display: flex; flex-wrap: wrap; justify-content: center;
-  gap: 10px;
-}
-.landing-subjects .kk-chip { font-size: var(--kk-fs-sm); padding: 6px 14px; }
-.landing-subjects .kk-chip svg { width: 16px; height: 16px; }
-
-/* ── "Hoe werkt het" stappen ────────────────────────────── */
-.landing-steps { position: relative; z-index: 1; width: 100%; max-width: 980px; text-align: center; }
-.steps-row, .audience-row {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--kk-s5);
-}
-.step-card, .audience-card {
+/* ── Vakken ─────────────────────────────────────────────── */
+.lp-vakken { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--kk-s4); width: 100%; }
+.lp-vak {
   padding: var(--kk-s5) var(--kk-s4);
-  display: flex; flex-direction: column; align-items: center;
-  gap: var(--kk-s2);
+  text-align: left;
+  border-top: 3px solid var(--kk-accent);
+  display: flex; flex-direction: column; gap: 10px;
+  transition: transform var(--kk-dur) var(--kk-ease), box-shadow var(--kk-dur);
 }
-.step-title, .audience-title { font: var(--kk-fw-bold) 1.1rem/1.2 var(--kk-head); margin: var(--kk-s1) 0 0; }
-.step-desc, .audience-desc { font-size: var(--kk-fs-sm); color: var(--kk-text-soft); font-weight: var(--kk-fw-normal); line-height: 1.5; margin: 0; }
+.lp-vak:hover { transform: translateY(-3px); box-shadow: var(--kk-shadow), 0 0 26px color-mix(in srgb, var(--kk-accent) 25%, transparent); }
+.lp-vak-kop { display: flex; align-items: center; gap: 12px; }
+.lp-vak-kop .landing-icoon { width: 44px; height: 44px; }
+.lp-vak-kop .landing-icoon svg { width: 24px; height: 24px; }
+.lp-vak h2 { font: var(--kk-fw-bold) 1.2rem/1.2 var(--kk-head); margin: 0; }
+.lp-vak p { margin: 0; font-size: var(--kk-fs-sm); color: var(--kk-text-soft); font-weight: var(--kk-fw-normal); line-height: 1.5; }
+.lp-oefeningen { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.lp-oefeningen li {
+  font-size: 0.74rem; font-weight: var(--kk-fw-bold);
+  padding: 4px 10px; border-radius: var(--kk-r-pill);
+  color: color-mix(in srgb, var(--kk-accent) 80%, #fff);
+  background: color-mix(in srgb, var(--kk-accent) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--kk-accent) 30%, transparent);
+}
+
+/* ── Stappen ────────────────────────────────────────────── */
+.lp-stappen {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--kk-s5);
+  width: 100%; position: relative;
+}
+.lp-stappen::before {
+  /* lichtlijn die de drie stappen verbindt */
+  content: ''; position: absolute; left: 16%; right: 16%; top: 34px; height: 2px;
+  background: linear-gradient(90deg, var(--kk-pink), var(--kk-primary-hi), var(--kk-gold));
+  opacity: 0.55; box-shadow: 0 0 12px var(--kk-primary-glow);
+}
+.lp-stap { position: relative; padding: var(--kk-s6) var(--kk-s4) var(--kk-s5); display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.lp-stap:nth-child(1) { --kk-accent: var(--kk-pink); }
+.lp-stap:nth-child(2) { --kk-accent: var(--kk-primary-hi); }
+.lp-stap:nth-child(3) { --kk-accent: var(--kk-gold); }
+.lp-stap-nr {
+  position: absolute; top: -18px; left: 50%; transform: translateX(-50%);
+  width: 36px; height: 36px; border-radius: 50%;
+  display: grid; place-items: center;
+  font: var(--kk-fw-black) 1.05rem/1 var(--kk-head);
+  color: var(--kk-text-on-accent);
+  background: var(--kk-accent);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--kk-accent) 70%, transparent);
+}
+.lp-stap h3 { font: var(--kk-fw-bold) 1.2rem/1.2 var(--kk-head); margin: 4px 0 0; }
+.lp-stap p { margin: 0; font-size: var(--kk-fs-sm); color: var(--kk-text-soft); font-weight: var(--kk-fw-normal); line-height: 1.5; }
+
+/* ── Minigames ──────────────────────────────────────────── */
+.lp-spellen { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--kk-s4); width: 100%; }
+.lp-spel {
+  margin: 0; overflow: hidden; text-align: left;
+  display: flex; flex-direction: column;
+  transition: transform var(--kk-dur) var(--kk-ease), border-color var(--kk-dur), box-shadow var(--kk-dur);
+}
+.lp-spel:hover { transform: translateY(-4px) scale(1.01); border-color: color-mix(in srgb, var(--kk-pink) 55%, transparent); box-shadow: var(--kk-shadow), 0 0 26px rgba(255,47,142,0.25); }
+.lp-spel img { width: 100%; height: auto; aspect-ratio: 16/10; object-fit: cover; display: block; background: #120f2a; }
+.lp-spel figcaption { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 3px; }
+.lp-spel strong { font: var(--kk-fw-bold) 1rem/1.2 var(--kk-head); }
+.lp-spel span { font-size: 0.78rem; color: var(--kk-text-soft); font-weight: var(--kk-fw-normal); line-height: 1.4; }
+.lp-spel-3d {
+  grid-column: 1 / -1;
+  flex-direction: row; align-items: center;
+  border-color: color-mix(in srgb, var(--kk-gold) 45%, transparent);
+  background: linear-gradient(100deg, rgba(255,210,63,0.10), rgba(14,12,34,0.72) 55%);
+}
+.lp-spel-3d img { width: 34%; max-width: 360px; aspect-ratio: 16/10; flex: none; }
+.lp-spel-3d figcaption { padding: 16px 22px; gap: 6px; }
+.lp-spel-3d strong { color: var(--kk-gold); font-size: 1.3rem; }
+.lp-spel-3d span { font-size: var(--kk-fs-sm); }
 
 /* ── Showcase-kaarten (klikbaar) ────────────────────────── */
-.landing-showcase-wrap { position: relative; z-index: 1; width: 100%; max-width: 1040px; text-align: center; }
 .landing-showcase {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -190,49 +369,71 @@ button.showcase-card:hover { transform: translateY(-4px); border-color: color-mi
   from { opacity: 0; transform: translateY(-4px); }
   to   { opacity: 1; transform: none; }
 }
-.landing-faq { max-width: 780px; margin: 0 auto; grid-template-columns: 1fr; }
-.landing-faq .showcase-card { padding: 4px 0; }
-.landing-faq .showcase-title { margin-top: 18px; }
 
-/* ── Spellen-overzicht ──────────────────────────────────── */
-.landing-games { position: relative; z-index: 1; width: 100%; max-width: 900px; text-align: center; }
-.landing-section-title { font: var(--kk-fw-bold) var(--kk-fs-xl)/1.2 var(--kk-head); margin: 0 0 var(--kk-s4); }
-.landing-games-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
-.landing-games-grid .kk-chip { font-size: var(--kk-fs-sm); padding: 6px 14px; color: var(--kk-text-soft); }
+/* ── Voor leerkrachten ──────────────────────────────────── */
+.lp-leerkracht { display: grid; grid-template-columns: 0.85fr 1.15fr; gap: var(--kk-s6); align-items: center; text-align: left; }
+.lp-leerkracht-intro { display: flex; flex-direction: column; align-items: flex-start; }
+.lp-leerkracht-intro .lp-kicker { color: var(--kk-cyan); text-shadow: 0 0 12px color-mix(in srgb, var(--kk-cyan) 50%, transparent); }
+.lp-leerkracht { width: 100%; }
+.lp-leerkracht-intro .lp-paginatitel { margin-bottom: var(--kk-s3); }
+.lp-leerkracht-intro p { margin: 0 0 var(--kk-s5); color: var(--kk-text-soft); font-weight: var(--kk-fw-normal); line-height: 1.65; }
+.lp-functies { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--kk-s3); }
+.lp-functie { --kk-accent: var(--kk-cyan); padding: var(--kk-s4); display: flex; gap: 12px; align-items: flex-start; }
+.lp-functie .landing-icoon { width: 42px; height: 42px; }
+.lp-functie .landing-icoon svg { width: 22px; height: 22px; }
+.lp-functie h2 { font: var(--kk-fw-bold) 1rem/1.25 var(--kk-head); margin: 0 0 3px; }
+.lp-functie p { margin: 0; font-size: 0.82rem; color: var(--kk-text-soft); font-weight: var(--kk-fw-normal); line-height: 1.45; }
 
-/* ── Portaalkeuze ───────────────────────────────────────── */
-.portal-choice { position: relative; z-index: 1; width: 100%; max-width: 820px; text-align: center; }
-.portal-choice-top { margin-top: -8px; }
-.portal-cards {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--kk-s5);
+/* ── Veelgestelde vragen ────────────────────────────────── */
+.lp-vragen { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 780px; text-align: left; }
+.lp-vraag { padding: 0; overflow: hidden; transition: border-color var(--kk-dur); }
+.lp-vraag[open] { border-color: color-mix(in srgb, var(--kk-primary-hi) 55%, transparent); }
+.lp-vraag summary {
+  list-style: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 16px 20px;
+  font: var(--kk-fw-bold) 1.05rem/1.3 var(--kk-head);
 }
-.portal-card {
-  display: flex; flex-direction: column; align-items: center;
-  gap: var(--kk-s2);
-  padding: var(--kk-s6) var(--kk-s5);
-  border-top: 4px solid var(--kk-accent);
-  cursor: pointer;
-  font-family: inherit;
-  transition: transform var(--kk-dur) var(--kk-ease), border-color var(--kk-dur), box-shadow var(--kk-dur), background var(--kk-dur);
-}
-.portal-card:hover {
-  transform: translateY(-4px);
-  background: rgba(24, 20, 52, 0.85);
-  border-color: color-mix(in srgb, var(--kk-accent) 60%, transparent);
-  box-shadow: var(--kk-shadow), 0 0 28px color-mix(in srgb, var(--kk-accent) 30%, transparent);
-}
-.portal-card:focus-visible { outline: none; box-shadow: var(--kk-focus-ring); }
-.portal-student { --kk-accent: var(--kk-pink); }
-.portal-teacher { --kk-accent: var(--kk-cyan); }
-.portal-name { font: var(--kk-fw-bold) 1.35rem/1.2 var(--kk-head); margin-top: var(--kk-s1); }
-.portal-desc { font-size: var(--kk-fs-sm); color: var(--kk-text-soft); font-weight: var(--kk-fw-normal); line-height: 1.5; }
-.portal-arrow { display: inline-flex; align-items: center; gap: 4px; margin-top: var(--kk-s2); font-weight: var(--kk-fw-black); font-size: var(--kk-fs-sm); color: var(--kk-accent); }
-.portal-arrow svg { width: 18px; height: 18px; }
+.lp-vraag summary::-webkit-details-marker { display: none; }
+.lp-vraag summary svg { width: 20px; height: 20px; flex: none; color: var(--kk-primary-hi); transition: transform var(--kk-dur) var(--kk-ease); }
+.lp-vraag[open] summary svg { transform: rotate(90deg); }
+.lp-vraag summary:focus-visible { outline: none; box-shadow: inset var(--kk-focus-ring); }
+.lp-vraag p { margin: 0; padding: 0 20px 18px; color: var(--kk-text-soft); font-weight: var(--kk-fw-normal); line-height: 1.6; font-size: var(--kk-fs-sm); }
 
-/* ── Doelgroep ──────────────────────────────────────────── */
-.landing-audience { position: relative; z-index: 1; width: 100%; max-width: 980px; text-align: center; }
+/* ── Contact ────────────────────────────────────────────── */
+.lp-contact {
+  --kk-accent: var(--kk-gold);
+  position: relative; z-index: 1;
+  width: 100%; max-width: 880px;
+  display: grid; grid-template-columns: auto 1fr auto; gap: var(--kk-s5); align-items: center;
+  padding: var(--kk-s5) var(--kk-s6);
+  border-color: color-mix(in srgb, var(--kk-gold) 40%, transparent);
+  box-shadow: var(--kk-shadow), 0 0 34px rgba(255,210,63,0.12);
+}
+.lp-contact-icoon {
+  width: 64px; height: 64px; border-radius: 18px;
+  display: grid; place-items: center;
+  color: var(--kk-gold);
+  background: rgba(255,210,63,0.12);
+  box-shadow: inset 0 0 0 1px rgba(255,210,63,0.35), 0 0 22px rgba(255,210,63,0.2);
+}
+.lp-contact-icoon svg { width: 32px; height: 32px; }
+.lp-contact-tekst h2 { font: var(--kk-fw-bold) 1.5rem/1.2 var(--kk-head); margin: 0 0 4px; }
+.lp-contact-tekst p { margin: 0; color: var(--kk-text-soft); font-weight: var(--kk-fw-normal); line-height: 1.55; font-size: var(--kk-fs-sm); }
+.lp-contact-knoppen { display: flex; flex-direction: column; gap: 8px; align-items: stretch; }
+.lp-mailknop, .lp-kopieer {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: var(--kk-tap); padding: 0 18px; border-radius: var(--kk-r-md);
+  font: var(--kk-fw-black) var(--kk-fs-sm)/1 var(--kk-body);
+  text-decoration: none; cursor: pointer; white-space: nowrap;
+  transition: transform var(--kk-dur) var(--kk-ease), box-shadow var(--kk-dur), background var(--kk-dur);
+}
+.lp-mailknop svg, .lp-kopieer svg { width: 18px; height: 18px; }
+.lp-mailknop { color: var(--kk-text-on-accent); background: linear-gradient(135deg, var(--kk-gold), #ffe58a); box-shadow: 0 8px 22px rgba(255,210,63,0.3); }
+.lp-mailknop:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(255,210,63,0.45); }
+.lp-kopieer { color: var(--kk-text); background: rgba(255,255,255,0.07); border: 1px solid var(--kk-border); }
+.lp-kopieer:hover { background: rgba(255,255,255,0.13); }
+.lp-mailknop:focus-visible, .lp-kopieer:focus-visible { outline: none; box-shadow: var(--kk-focus-ring); }
 
 /* ── Slot-CTA ───────────────────────────────────────────── */
 .landing-cta {
@@ -246,34 +447,81 @@ button.showcase-card:hover { transform: translateY(-4px); border-color: color-mi
 }
 .landing-cta-title { font: var(--kk-fw-bold) var(--kk-fs-xl)/1.2 var(--kk-head); margin: 0 0 var(--kk-s4); }
 
+/* ── Footer ─────────────────────────────────────────────── */
 .landing-footer {
   position: relative; z-index: 1;
+  width: 100%; max-width: 1120px;
+  padding-top: var(--kk-s5);
+  border-top: 1px solid var(--kk-border);
   font-size: var(--kk-fs-xs);
   color: var(--kk-text-faint);
   font-weight: var(--kk-fw-normal);
-  margin-top: 8px;
   text-align: center;
+  margin-top: -32px;
 }
+.lp-footer-rij { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; }
+.lp-footer-logo { width: 34px; height: 34px; border-radius: 50%; }
+.lp-footer-naam { font: var(--kk-fw-bold) 1.1rem/1 var(--kk-head); color: var(--kk-text); margin-right: 8px; }
+.lp-footer-links { display: flex; gap: 6px 16px; flex-wrap: wrap; justify-content: center; }
+.lp-footer-links a, .lp-footer-links button {
+  background: none; border: 0; padding: 4px 0; cursor: pointer;
+  font: var(--kk-fw-bold) var(--kk-fs-sm)/1 var(--kk-body);
+  color: var(--kk-text-soft); text-decoration: none;
+}
+.lp-footer-links a:hover, .lp-footer-links button:hover { color: var(--kk-text); }
 .landing-credits {
   display: block;
-  margin-top: 6px;
+  margin-top: 14px;
   font-size: 0.68rem;
   font-weight: 500;
   color: rgba(255,255,255,0.4);
+  line-height: 1.6;
 }
 .landing-credits a { color: inherit; text-decoration: underline; }
 .landing-credits a:hover { color: var(--kk-text-soft); }
 
+/* ── Kleinere schermen ──────────────────────────────────── */
+@media (max-width: 960px) {
+  .lp-vakken { grid-template-columns: repeat(2, 1fr); }
+  .lp-leerkracht { grid-template-columns: 1fr; }
+  .lp-leerkracht-intro { align-items: center; text-align: center; }
+}
+@media (max-width: 1080px) {
+  .lp-nav-cta { display: none; }
+}
 @media (max-width: 820px) {
-  .landing-showcase { grid-template-columns: 1fr; max-width: 420px; margin: 0 auto; }
-  .landing-showcase-wrap { max-width: 420px; }
-  .steps-row, .audience-row { grid-template-columns: 1fr; max-width: 420px; margin: 0 auto; }
-  .landing-stats { grid-template-columns: repeat(2, 1fr); max-width: 420px; }
+  .lp-nav { flex-wrap: wrap; gap: 6px; padding: 8px; top: 8px; margin-top: 8px; margin-bottom: -172px; border-radius: 18px; }
+  .lp-nav-merk { padding-left: 6px; }
+  .lp-nav-tabs { width: 100%; margin: 0; }
+  .lp-tab { padding: 11px 14px; font-size: 0.95rem; }
+  .lp-pagina:not(.lp-pagina-home) { padding-top: 170px; }
+  .landing-hero-banner { padding-top: 170px; }
+  .lp-paginatitel { font-size: 1.9rem; }
+  .landing-showcase { grid-template-columns: 1fr; max-width: 440px; margin: 0 auto; }
+  .lp-stappen { grid-template-columns: 1fr; max-width: 440px; gap: var(--kk-s6); }
+  .lp-stappen::before { left: 50%; right: auto; top: 0; bottom: 0; width: 2px; height: auto; transform: translateX(-50%); }
+  .landing-stats { grid-template-columns: repeat(2, 1fr); max-width: 440px; }
   .portal-cards { grid-template-columns: 1fr; }
-  .landing-title { font-size: 2.3rem; }
+  .landing-title { font-size: 2.6rem; }
+  .landing-section-title { font-size: 1.6rem; }
   .landing-logo { width: 128px; height: 128px; }
+  .lp-contact { grid-template-columns: 1fr; text-align: center; justify-items: center; padding: var(--kk-s5); }
+  .lp-contact-knoppen { width: 100%; max-width: 320px; }
+}
+@media (max-width: 560px) {
+  .landing-screen { padding-left: 16px; padding-right: 16px; }
+  .landing-hero-banner { width: calc(100% + 32px); margin-left: -16px; margin-right: -16px; }
+  .lp-vakken { grid-template-columns: 1fr; }
+  .lp-functies { grid-template-columns: 1fr; }
+  .lp-spellen { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .lp-spel span { display: none; }
+  .lp-spel-3d { flex-direction: column; align-items: stretch; }
+  .lp-spel-3d img { width: 100%; max-width: none; }
+  .lp-spel-3d span { display: block; }
+  .lp-spel strong { font-size: 0.9rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .landing-logo { animation: none !important; }
+  .lp-spel, .lp-vak, .portal-card, button.showcase-card { transition: none; }
 }

@@ -1,5 +1,6 @@
 import { lazy, useState, useRef } from 'react'
 import { loadToernooi } from './games/toernooiOpslag.js'
+import { VRIJE_SPELLEN as FREE_GAMES } from './lib/spellen.js'
 import MenuScene from './MenuScenes'
 import VrijSpelenBadge from './VrijSpelenBadge.jsx'
 import { TerugKnop, Icoon } from './ui/index.jsx'
@@ -77,28 +78,6 @@ const GAMES = {
   '8-topo': 'topo',
 }
 
-const FREE_GAMES = [
-  { key: 'football',      name: '1 tegen 1 voetbal', desc: 'Scoor tegen de computer of een vriend' },
-  { key: 'headsoccer',    name: 'Supervoetbal',     desc: '1-tegen-1 met landen & special moves' },
-  { key: 'towerdefense',  name: 'Tower Defense',   desc: 'Bouw neon-torens en knal alle ballonnen — 5 levels van 15 golven!', img: '/scenes/games/towerdefense.svg' },
-  { key: 'jetpack',       name: 'Jetpack',          desc: 'Vlieg zo ver mogelijk!' },
-  { key: 'astrokatapult', name: 'Astro Katapult',   desc: 'Lanceer & versla de aliens in 50 levels!' },
-  { key: 'sterrenstroom', name: 'Spacerunner',     desc: 'Ontwijk de asteroïden in de ruimte!' },
-  { key: 'doodlesprong',  name: 'Doodle Sprong',   desc: 'Spring zo hoog mogelijk en shop nieuwe personages!' },
-  { key: 'meteoorvlucht', name: 'Meteoorvlucht',   desc: 'Ren weg voor de meteoor en spaar voor 49 poppetjes!', img: '/scenes/games/meteoorvlucht.svg' },
-  { key: 'evolutie',      name: 'Dier Evolutie',   desc: 'Voeg dieren samen en ontdek 24 evoluties per soort!' },
-  { key: 'brug',          name: 'Brug Bouwen',     desc: 'Bouw bruggen in 50 levels — weg, hout, metaal & touw!' },
-  { key: 'hillclimb',     name: 'Bergrijden',      desc: 'Race over heuvels, verzamel munten en upgrade je auto!' },
-  { key: 'fruitsabel',    name: 'Fruitsabel',      desc: 'Snijd 60 seconden fruit doormidden — en koop scherpere sabels!', img: '/scenes/games/fruitsabel.svg' },
-  { key: 'sterrenveer',   name: 'Sterrenveer',     desc: 'Ruimte-platformer: 16 levels, sterren verdienen en 12 personages kopen!', img: '/scenes/games/sterrenveer.svg' },
-  { key: 'graven',        name: 'Diepgravers',     desc: '8 aardlagen diep, 40 upgrades — maar doodgaan kost al je duiken!', img: '/scenes/games/graven.svg' },
-  { key: 'neongolf',      name: 'Neongolf',        desc: 'Minigolf in 36 holes met portalen, magneten en lasers!', img: '/scenes/games/neongolf.svg' },
-  { key: 'blokkenblitz',  name: 'Blokkenblitz',    desc: "Leg blokken, speel rijen weg en bouw combo's!", img: '/scenes/games/blokkenblitz.svg' },
-  { key: 'neonhockey',    name: 'Neonhockey',      desc: "Airhockey van 1 minuut: versla 8 tegenstanders of speel met z'n tweeën!", img: '/scenes/games/neonhockey.svg' },
-  { key: 'pijlenregen',   name: 'Pijlenregen',     desc: 'Schiet pijlen in draaiende schijven — 40 levels met bazen!', img: '/scenes/games/pijlenregen.svg' },
-  { key: 'stapeltoren',   name: 'Stapeltoren',     desc: 'Bouw in 1 minuut de hoogste toren — tik precies op tijd!', img: '/scenes/games/stapeltoren.svg' },
-  { key: 'steenknaller',  name: 'Steenknaller',    desc: 'Kaats de bal en knal alle stenen weg in 30 levels!', img: '/scenes/games/steenknaller.svg' },
-]
 
 function RewardChips({ rewards }) {
   if (!rewards?.length) return null

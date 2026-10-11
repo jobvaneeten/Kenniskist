@@ -4,6 +4,7 @@ import Login from './Login'
 import { SessieProvider, useSessie } from './lib/sessie.jsx'
 import { wisAlles } from './lib/voortgangSync.js'
 import VersieBanner from './lib/versie.jsx'
+import { tabVoorPad } from './lib/voorpaginaTabs.js'
 
 // Zware schermen (Babylon, spellen, portaal) pas laden als ze nodig zijn.
 const App = lazy(() => import('./App'))
@@ -23,7 +24,7 @@ function portalForPath(pathname) {
 
 // Elk onbekend adres krijgt (door de SPA-fallback van Cloudflare) gewoon de
 // voorpagina. Zonder dit ziet Google eindeloos veel kopieën van dezelfde pagina.
-if (typeof document !== 'undefined' && location.pathname !== '/' && !ROUTES[location.pathname]) {
+if (typeof document !== 'undefined' && !tabVoorPad(location.pathname) && !ROUTES[location.pathname]) {
   const meta = document.createElement('meta')
   meta.name = 'robots'
   meta.content = 'noindex'
@@ -89,7 +90,9 @@ function RootInhoud() {
   // de sessie nog geldig is): stuur meteen door naar het eigen portaal i.p.v.
   // de marketingpagina te tonen.
   useEffect(() => {
-    if (portal !== null || laden || !sessie || !profiel) return
+    // alleen vanaf de homepagina: de andere tabbladen (vragen, contact…) moet
+    // je ook ingelogd kunnen lezen
+    if (portal !== null || laden || !sessie || !profiel || window.location.pathname !== '/') return
     choose(profiel.rol === 'leerling' ? 'student' : 'teacher')
   }, [portal, laden, sessie, profiel, choose])
 
