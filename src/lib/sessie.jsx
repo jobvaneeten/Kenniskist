@@ -98,7 +98,10 @@ export function SessieProvider({ children }) {
   }, [])
 
   const uitloggen = useCallback(async () => {
-    await flush()
+    // Lukt opslaan niet (geen internet), dan zou wisAlles de voortgang weggooien.
+    // Eerst vragen; blijf je ingelogd, dan wordt het later vanzelf opgeslagen.
+    const opgeslagen = await flush()
+    if (!opgeslagen && !window.confirm('Je voortgang is nog niet opgeslagen — is er internet? Als je nu uitlogt, ben je je munten en voortgang van vandaag kwijt.\n\nToch uitloggen?')) return
     wisAlles()
     await supabase.auth.signOut()
     window.location.reload()
