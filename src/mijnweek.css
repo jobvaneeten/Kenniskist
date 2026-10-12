@@ -10,6 +10,21 @@
   display: flex; flex-direction: column; align-items: center; min-width: 150px;
   font: var(--kk-fw-bold) 1.15rem/1.2 var(--kk-head);
 }
+.mw-dagen {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 6px;
+  margin: -8px 0 22px;
+}
+.mw-dag {
+  min-width: 44px; padding: 7px 10px; border-radius: 999px; cursor: pointer;
+  font: var(--kk-fw-bold) var(--kk-fs-sm) var(--kk-body); color: var(--kk-text-soft);
+  background: rgba(14, 12, 34, 0.72); border: 1px solid rgba(255, 255, 255, 0.12);
+  transition: color .15s, border-color .15s, background .15s;
+}
+.mw-dag.breed { padding-inline: 14px; }
+.mw-dag:hover:not(:disabled) { color: var(--kk-text); border-color: var(--kk-gold); }
+.mw-dag.actief { color: var(--kk-text-on-accent); background: var(--kk-gold); border-color: var(--kk-gold); box-shadow: 0 0 14px rgba(255, 200, 60, 0.45); }
+.mw-dag:disabled { opacity: .35; cursor: default; }
+.mw-dag:focus-visible { outline: 2px solid var(--kk-gold); outline-offset: 2px; }
 .mw-weeklabel small { font: var(--kk-fw-bold) var(--kk-fs-xs) var(--kk-body); color: var(--kk-text-soft); margin-top: 2px; }
 
 /* Tegels bovenaan */

@@ -47,9 +47,11 @@ function telOpgaven(item, r) {
 }
 const pct = (goed, opgaven) => (opgaven > 0 ? Math.round((goed / opgaven) * 100) : null)
 
-export async function haalMijnWeek(profielId, terug = 0) {
+// dag: null voor de hele week, of 0 (maandag) t/m 6 (zondag) voor één dag.
+export async function haalMijnWeek(profielId, terug = 0, dag = null) {
   const van = weekStart(terug)
-  const tot = new Date(van); tot.setDate(tot.getDate() + 7)
+  if (dag != null) van.setDate(van.getDate() + dag)
+  const tot = new Date(van); tot.setDate(tot.getDate() + (dag != null ? 1 : 7))
 
   const [{ data: rijen }, { data: doelen }] = await Promise.all([
     supabase.from('resultaten').select('tool_id, score, max_score, ms, opdracht_id, aangemaakt_op, details_json')

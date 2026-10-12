@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { haalMijnWeek, minuten } from './lib/mijnWeek.js'
+import { haalMijnWeek, minuten, weekStart } from './lib/mijnWeek.js'
 import DoelBalk from './DoelBalk.jsx'
 import { Knop, Icoon } from './ui/index.jsx'
 import './game.css'
@@ -10,11 +10,14 @@ import './mijnweek.css'
 // onGeladen(data): na elke geladen week (MijnWeek gebruikt dat voor het feest).
 
 const KOLOM = {
-  weektaak: { titel: 'Weektaak',     icoon: 'klembord', accent: 'var(--kk-cyan)',    leeg: 'Deze week nog niets aan de weektaak gedaan.' },
-  taak:     { titel: 'Taken',        icoon: 'potlood',  accent: 'var(--kk-pink)',    leeg: 'Deze week geen taken gemaakt.' },
-  doel:     { titel: 'Doelen',       icoon: 'doel',     accent: 'var(--kk-gold)',    leeg: 'Deze week niet aan doelen gewerkt.' },
-  vrij:     { titel: 'Vrij oefenen', icoon: 'spel',     accent: 'var(--kk-primary)', leeg: 'Deze week niet vrij geoefend.' },
+  weektaak: { titel: 'Weektaak',     icoon: 'klembord', accent: 'var(--kk-cyan)',    leeg: 'nog niets aan de weektaak gedaan.' },
+  taak:     { titel: 'Taken',        icoon: 'potlood',  accent: 'var(--kk-pink)',    leeg: 'geen taken gemaakt.' },
+  doel:     { titel: 'Doelen',       icoon: 'doel',     accent: 'var(--kk-gold)',    leeg: 'niet aan doelen gewerkt.' },
+  vrij:     { titel: 'Vrij oefenen', icoon: 'spel',     accent: 'var(--kk-primary)', leeg: 'niet vrij geoefend.' },
 }
+
+const DAGEN = ['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo']
+const DAGNAMEN = ['maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag', 'zaterdag', 'zondag']
 
 const MAANDEN = ['jan', 'feb', 'mrt', 'apr', 'mei', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec']
 const dag = (d) => `${d.getDate()} ${MAANDEN[d.getMonth()]}`
@@ -117,7 +120,7 @@ function Detail({ item, accent, onSluiten, tekst }) {
   )
 }
 
-function Kolom({ soort, data, onKies, tekst }) {
+function Kolom({ soort, data, onKies, tekst, periode }) {
   const k = KOLOM[soort]
   return (
     <section className="mw-kolom" style={{ '--kk-accent': k.accent }}>
@@ -127,7 +130,7 @@ function Kolom({ soort, data, onKies, tekst }) {
       </header>
       <Cijfers opgaven={data.opgaven} pct={data.pct} ms={data.ms} />
       {data.items.length === 0
-        ? <p className="mw-leeg">{k.leeg}</p>
+        ? <p className="mw-leeg">{periode} {k.leeg}</p>
         : <ul className="mw-items">{data.items.map(i => <Item key={i.sleutel} item={i} onKies={onKies} tekst={tekst} />)}</ul>}
     </section>
   )
@@ -142,6 +145,7 @@ const TEKST = {
 export default function WeekOverzicht({ leerlingId, onGeladen, leerkracht = false }) {
   const tekst = leerkracht ? TEKST.leerkracht : TEKST.leerling
   const [terug, setTerug] = useState(0)
+  const [dagKeuze, setDagKeuze] = useState(null) // null = hele week, 0..6 = ma..zo
   const [week, setWeek] = useState(null)
   const [detail, setDetail] = useState(null) // { item, accent }
 
@@ -149,27 +153,42 @@ export default function WeekOverzicht({ leerlingId, onGeladen, leerkracht = fals
     let actief = true
     async function laad() {
       if (!leerlingId) return
-      const data = await haalMijnWeek(leerlingId, terug)
+      const data = await haalMijnWeek(leerlingId, terug, dagKeuze)
       if (!actief) return
       setWeek(data)
       onGeladen?.(data)
     }
     laad()
     return () => { actief = false }
-  }, [leerlingId, terug]) // eslint-disable-line react-hooks/exhaustive-deps -- onGeladen is een callback, geen reden om opnieuw te laden
+  }, [leerlingId, terug, dagKeuze]) // eslint-disable-line react-hooks/exhaustive-deps -- onGeladen is een callback, geen reden om opnieuw te laden
 
   const eind = week ? new Date(week.tot.getTime() - 1) : null
   const t = week?.totaal
+  // Dagen in de toekomst kun je nog niet kiezen.
+  const maandag = weekStart(terug)
+  const nu = new Date()
+  const inToekomst = (i) => { const d = new Date(maandag); d.setDate(d.getDate() + i); return d > nu }
+  const kiesWeek = (n) => { setWeek(null); setDagKeuze(null); setTerug(n) }
+  const kiesDag = (i) => { if (i === dagKeuze) return; setWeek(null); setDagKeuze(i) }
+  const periode = dagKeuze == null ? 'Deze week' : 'Deze dag'
 
   return (
     <>
       <div className="mw-weeknav">
-        <Knop variant="secundair" maat="sm" icoon="terug" onClick={() => { setWeek(null); setTerug(n => n + 1) }}>Vorige week</Knop>
+        <Knop variant="secundair" maat="sm" icoon="terug" onClick={() => kiesWeek(terug + 1)}>Vorige week</Knop>
         <span className="mw-weeklabel">
           {terug === 0 ? 'Deze week' : terug === 1 ? 'Vorige week' : `${terug} weken terug`}
-          {week && <small>{dag(week.van)} – {dag(eind)}</small>}
+          {week && <small>{dagKeuze == null ? `${dag(week.van)} – ${dag(eind)}` : `${DAGNAMEN[dagKeuze]} ${dag(week.van)}`}</small>}
         </span>
-        <Knop variant="secundair" maat="sm" icoonRechts="verder" disabled={terug === 0} onClick={() => { setWeek(null); setTerug(n => Math.max(0, n - 1)) }}>Volgende week</Knop>
+        <Knop variant="secundair" maat="sm" icoonRechts="verder" disabled={terug === 0} onClick={() => kiesWeek(Math.max(0, terug - 1))}>Volgende week</Knop>
+      </div>
+
+      <div className="mw-dagen" role="group" aria-label="Kies een dag">
+        <button type="button" className={`mw-dag breed${dagKeuze == null ? ' actief' : ''}`} aria-pressed={dagKeuze == null} onClick={() => kiesDag(null)}>Hele week</button>
+        {DAGEN.map((d, i) => (
+          <button key={d} type="button" className={`mw-dag${dagKeuze === i ? ' actief' : ''}`} aria-pressed={dagKeuze === i}
+            aria-label={DAGNAMEN[i]} disabled={inToekomst(i)} onClick={() => kiesDag(i)}>{d}</button>
+        ))}
       </div>
 
       {!week && <p className="mode-desc">Laden…</p>}
@@ -188,7 +207,7 @@ export default function WeekOverzicht({ leerlingId, onGeladen, leerkracht = fals
 
           <div className="mw-kolommen">
             {Object.keys(KOLOM).map(s => (
-              <Kolom key={s} soort={s} data={week.kolommen[s]} tekst={tekst} onKies={item => setDetail({ item, accent: KOLOM[s].accent })} />
+              <Kolom key={s} soort={s} data={week.kolommen[s]} tekst={tekst} periode={periode} onKies={item => setDetail({ item, accent: KOLOM[s].accent })} />
             ))}
           </div>
         </>
