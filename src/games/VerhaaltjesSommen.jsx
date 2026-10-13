@@ -140,15 +140,18 @@ export function Figuur({ figuur }) {
     )
   }
   if (figuur.type === 'getallenlijn') {
-    const x0 = 24, W = 300, y = 46
+    const label = (v) => (figuur.ruw ? String(v) : v.toLocaleString('nl-NL'))
+    const links = label(figuur.start), rechts = label(figuur.eind)
+    // Rand groot genoeg voor de helft van het langste getal (± 4,6 px per teken).
+    const x0 = Math.max(24, Math.ceil(Math.max(links.length, rechts.length) * 4.6) + 6), W = 300, y = 46
     const frac = (figuur.waarde - figuur.start) / (figuur.eind - figuur.start)
     const px = x0 + frac * W
     return (
-      <svg className="rs-figuur" viewBox={`0 0 ${W + 48} 78`} width={W + 48} height="78">
+      <svg className="rs-figuur" viewBox={`0 0 ${W + 2 * x0} 78`} width={W + 2 * x0} height="78">
         <line x1={x0} y1={y} x2={x0 + W} y2={y} stroke="#ffd23f" strokeWidth="3" />
         {[...Array(figuur.segs + 1)].map((_, i) => { const x = x0 + i * (W / figuur.segs); return <line key={i} x1={x} y1={y - 6} x2={x} y2={y + 6} stroke="#ffd23f" strokeWidth="2" /> })}
-        <text x={x0} y={y + 22} textAnchor="middle" fill="#fffbeb" fontSize="13" fontWeight="700">{figuur.ruw ? String(figuur.start) : figuur.start.toLocaleString('nl-NL')}</text>
-        <text x={x0 + W} y={y + 22} textAnchor="middle" fill="#fffbeb" fontSize="13" fontWeight="700">{figuur.ruw ? String(figuur.eind) : figuur.eind.toLocaleString('nl-NL')}</text>
+        <text x={x0} y={y + 22} textAnchor="middle" fill="#fffbeb" fontSize="13" fontWeight="700">{links}</text>
+        <text x={x0 + W} y={y + 22} textAnchor="middle" fill="#fffbeb" fontSize="13" fontWeight="700">{rechts}</text>
         <polygon points={`${px},${y - 8} ${px - 7},${y - 22} ${px + 7},${y - 22}`} fill="#f87171" />
         <text x={px} y={y - 26} textAnchor="middle" fill="#fca5a5" fontSize="15" fontWeight="900">?</text>
       </svg>
