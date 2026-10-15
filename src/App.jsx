@@ -36,6 +36,7 @@ const EVO_BONUS = 1e11
 const GRAVEN_CODE = '0001'              // 100 duiken in Diepgravers
 const GRAVEN_DUIKEN = 100
 const ESCAPE_CODE = 'vrijdag'           // opent de GLITCH-escaperoom
+const VIK_CODE = 'spelvik'              // opent Racelegends (public/vik.html)
 
 function fmt(n) { return n.toLocaleString('nl-NL') }
 
@@ -56,7 +57,7 @@ function CurrencyBadge({ munten, briefgeld, hideMunten }) {
   )
 }
 
-function CodeModal({ onClose, onRedeem, onRedeemBrief, onUnlockAll, onUnlockCountries, onUnlockSomalia, onUnlockTara, onUnlockNina, onUnlockPim, onUnlockVinn, onUnlockRb, onUnlockGroep7, onUnlockTeachers, onUnlockHillclimb, onUnlockEvo, onUnlockGraven, onEscape, usedCodes }) {
+function CodeModal({ onClose, onRedeem, onRedeemBrief, onUnlockAll, onUnlockCountries, onUnlockSomalia, onUnlockTara, onUnlockNina, onUnlockPim, onUnlockVinn, onUnlockRb, onUnlockGroep7, onUnlockTeachers, onUnlockHillclimb, onUnlockEvo, onUnlockGraven, onEscape, onVik, usedCodes }) {
   const [code, setCode] = useState('')
   const [msg,  setMsg]  = useState(null)
   const [ok,   setOk]   = useState(false)
@@ -65,6 +66,8 @@ function CodeModal({ onClose, onRedeem, onRedeemBrief, onUnlockAll, onUnlockCoun
     const key = code.trim().toLowerCase()
     if (key === ESCAPE_CODE) {
       onEscape()
+    } else if (key === VIK_CODE) {
+      onVik()
     } else if (key === UNLOCK_ALL_CODE) {
       onUnlockAll()
       setMsg('🎉 Alle kleding ontgrendeld!')
@@ -385,6 +388,14 @@ export default function App({ gast = false }) {
     </div>
   )
 
+  if (screen === 'vik') return (
+    <div style={{ position: 'fixed', inset: 0, background: '#111' }}>
+      <iframe src="/vik.html" title="Racelegends" style={{ width: '100%', height: '100%', border: 'none' }} />
+      <TerugKnop onClick={goMenu} />
+      <VrijSpelenBadge />
+    </div>
+  )
+
   if (screen === 'shop') return (
     <>
       <CurrencyBadge munten={curuntie} briefgeld={briefgeld} />
@@ -503,6 +514,7 @@ export default function App({ gast = false }) {
           onUnlockEvo={unlockEvoGeld}
           onUnlockGraven={unlockGraafDuiken}
           onEscape={() => { setShowCode(false); setScreen('escaperoom') }}
+          onVik={() => { setShowCode(false); setScreen('vik') }}
           usedCodes={usedCodes}
         />
       )}
