@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kwink-slag Kiezer</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Nunito+Sans:wght@400;700;800&display=swap">
+<style>
+/* Layout: één speelveld, situatiekaart boven, vijf gekleurde Kwink-slag-knoppen eronder, score vast rechtsboven */
+:root{
+  --bg:#F4F2EC; --surface:#FFFDF8; --fg:#1F2A44; --muted:#55607A; --line:#DEDACF;
+  --good:#2E7D4F; --good-bg:#E3F2E8; --bad:#B23A3A; --bad-bg:#F8E3E1;
+  --gold:#C98A12;
+  --a:#2F6FB0; --a-bg:#E4EDF7;
+  --b:#8A3C8F; --b-bg:#F1E6F1;
+  --c:#B85A14; --c-bg:#F8E9DC;
+  --d:#1F7A70; --d-bg:#E0F0EC;
+  --e:#B8323C; --e-bg:#F6E2E3;
+  --on-color:#FFFDF8;
+  --display:'Fredoka', 'Trebuchet MS', Arial, sans-serif;
+  --body:'Nunito Sans', Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141B2C; --surface:#1E2740; --fg:#EEF0F5; --muted:#A9B2C7; --line:#2F3A57;
+  --good:#6CCB92; --good-bg:#1D3A2B; --bad:#F08A84; --bad-bg:#40232A; --gold:#F2C14E;
+  --a:#7FB0E6; --a-bg:#1F3350; --b:#D08ED4; --b-bg:#3A2440; --c:#F0A060; --c-bg:#3E2A1A;
+  --d:#62C2B4; --d-bg:#163A36; --e:#EE7F87; --e-bg:#43222A; --on-color:#141B2C; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141B2C; --surface:#1E2740; --fg:#EEF0F5; --muted:#A9B2C7; --line:#2F3A57;
+  --good:#6CCB92; --good-bg:#1D3A2B; --bad:#F08A84; --bad-bg:#40232A; --gold:#F2C14E;
+  --a:#7FB0E6; --a-bg:#1F3350; --b:#D08ED4; --b-bg:#3A2440; --c:#F0A060; --c-bg:#3E2A1A;
+  --d:#62C2B4; --d-bg:#163A36; --e:#EE7F87; --e-bg:#43222A; --on-color:#141B2C; color-scheme:dark}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{min-height:100%;margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:clamp(16px,1.6vw,20px);line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:68px 40px}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:clamp(16px,2.4vw,28px)}
+h1,h2,h3{font-family:var(--display);font-weight:600;line-height:1.1;margin:0;text-wrap:balance}
+p{margin:0}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+
+/* kopbalk */
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.brand{font-family:var(--display);font-weight:600;font-size:clamp(20px,2.4vw,30px);display:flex;align-items:center;gap:10px}
+.dots{display:flex;gap:4px}
+.dots i{width:12px;height:12px;border-radius:50%;display:block}
+.score{display:flex;align-items:baseline;gap:8px;background:var(--surface);border:2px solid var(--line);border-radius:999px;padding:8px 22px;font-variant-numeric:tabular-nums;position:relative}
+.score b{font-family:var(--display);font-size:clamp(26px,3vw,40px);color:var(--fg)}
+.score span{font-weight:800;text-transform:uppercase;letter-spacing:.08em;font-size:.75em;color:var(--muted)}
+.plus{position:absolute;right:16px;top:-6px;font-family:var(--display);font-weight:600;color:var(--good);font-size:24px;opacity:0;pointer-events:none}
+.plus.go{animation:plus .9s ease-out}
+@keyframes plus{0%{opacity:0;transform:translateY(8px)}25%{opacity:1}100%{opacity:0;transform:translateY(-28px)}}
+
+/* voortgang */
+.progress{display:flex;flex-direction:column;gap:8px}
+.progress-label{display:flex;justify-content:space-between;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
+.bar{height:12px;background:var(--surface);border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.bar div{height:100%;width:0;background:var(--fg);border-radius:999px;transition:width .4s ease}
+
+/* situatie */
+.card{background:var(--surface);border:2px solid var(--line);border-radius:28px;padding:clamp(24px,4vw,48px);display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-weight:800;text-transform:uppercase;letter-spacing:.1em;font-size:.8em;color:var(--muted)}
+.situatie{font-family:var(--display);font-weight:500;font-size:clamp(24px,3.4vw,44px);line-height:1.25;text-wrap:pretty}
+.vraag{font-weight:700;color:var(--muted);font-size:1.05em}
+
+/* keuzeknoppen */
+.keuzes{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px}
+.keuze{--k:var(--a);--kbg:var(--a-bg);background:var(--kbg);border:3px solid var(--k);border-radius:22px;padding:18px 16px;text-align:left;display:flex;flex-direction:column;gap:6px;min-height:118px;transition:transform .12s ease,background .2s}
+.keuze:hover:not(:disabled){transform:translateY(-3px)}
+.keuze .naam{font-family:var(--display);font-weight:600;font-size:clamp(19px,1.9vw,26px);color:var(--k);line-height:1.1}
+.keuze .kort{font-size:.85em;color:var(--muted);font-weight:700}
+.keuze .toets{font-size:.75em;color:var(--muted);margin-top:auto;font-variant-numeric:tabular-nums}
+.keuze:disabled{cursor:default;opacity:.45}
+.keuze.goed{opacity:1;background:var(--k);color:var(--on-color)}
+.keuze.goed .naam,.keuze.goed .kort,.keuze.goed .toets{color:var(--on-color)}
+.keuze.fout{opacity:1;border-style:dashed}
+.k-a{--k:var(--a);--kbg:var(--a-bg)} .k-b{--k:var(--b);--kbg:var(--b-bg)} .k-c{--k:var(--c);--kbg:var(--c-bg)}
+.k-d{--k:var(--d);--kbg:var(--d-bg)} .k-e{--k:var(--e);--kbg:var(--e-bg)}
+
+/* feedback */
+.feedback{border-radius:24px;padding:clamp(20px,3vw,32px);display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px 28px;align-items:center}
+.feedback.ok{background:var(--good-bg)} .feedback.nok{background:var(--bad-bg)}
+.fb-tekst{display:flex;flex-direction:column;gap:8px;min-width:0}
+.fb-kop{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,32px)}
+.ok .fb-kop{color:var(--good)} .nok .fb-kop{color:var(--bad)}
+.stappen{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.stappen span{background:var(--surface);border-radius:999px;padding:4px 14px;font-weight:700;font-size:.85em}
+.btn{background:var(--fg);color:var(--bg);border:none;border-radius:999px;padding:16px 34px;font-family:var(--display);font-weight:600;font-size:clamp(20px,2vw,26px);white-space:nowrap}
+.btn:hover{filter:brightness(1.15)}
+.btn.licht{background:transparent;color:var(--fg);border:2px solid var(--line)}
+
+/* start & eind */
+.hero{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:clamp(20px,4vw,48px);align-items:center}
+.hero h1{font-size:clamp(40px,6vw,84px)}
+.hero p{font-size:1.15em;color:var(--muted);max-width:34em}
+.regels{display:flex;flex-direction:column;gap:12px;padding:0;margin:0;list-style:none}
+.regels li{display:flex;gap:14px;align-items:baseline;font-weight:700}
+.regels li b{font-family:var(--display);font-size:1.4em;color:var(--gold);min-width:1.4em}
+.lijst{display:flex;flex-direction:column;gap:10px}
+.lijst div{display:flex;gap:12px;align-items:center;background:var(--surface);border:2px solid var(--line);border-radius:16px;padding:12px 16px}
+.lijst i{width:16px;height:40px;border-radius:6px;flex:none}
+.lijst b{font-family:var(--display);font-weight:600;font-size:1.1em}
+.lijst span{color:var(--muted);font-size:.9em}
+.acties{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+.eind-score{font-family:var(--display);font-weight:600;font-size:clamp(64px,10vw,140px);line-height:1;font-variant-numeric:tabular-nums}
+.eind-score small{font-size:.3em;color:var(--muted)}
+.overzicht{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.overzicht div{border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:4px;background:var(--kbg);border:2px solid var(--k)}
+.overzicht b{font-family:var(--display);color:var(--k);font-size:1.05em;line-height:1.1}
+.overzicht span{font-weight:800;font-variant-numeric:tabular-nums}
+
+@media (max-width:900px){
+  .keuzes,.overzicht{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .hero{grid-template-columns:minmax(0,1fr)}
+  .keuze{min-height:0}
+  .keuze .toets{display:none}
+}
+@media (max-width:420px){
+  .keuzes{grid-template-columns:minmax(0,1fr)}
+  .feedback{grid-template-columns:minmax(0,1fr)}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <span class="dots"><i style="background:var(--a)"></i><i style="background:var(--b)"></i><i style="background:var(--c)"></i><i style="background:var(--d)"></i><i style="background:var(--e)"></i></span>
+      Kwink-slag Kiezer
+    </div>
+    <div class="score" id="scorebox" hidden><b id="score">0</b><span>punten</span><em class="plus" id="plus">+10</em></div>
+  </header>
+
+  <!-- START -->
+  <section id="start" class="hero">
+    <div style="display:flex;flex-direction:column;gap:22px">
+      <h1>Welke Kwink-slag past?</h1>
+      <p>Je krijgt 20 situaties. Lees ze goed en kies telkens de Kwink-slag die het beste helpt.</p>
+      <ul class="regels">
+        <li><b>+10</b>punten voor elk goed antwoord</li>
+        <li><b>20</b>situaties per ronde, steeds anders</li>
+      </ul>
+      <div class="acties"><button class="btn" id="startBtn" type="button">Start ronde</button></div>
+    </div>
+    <div class="lijst" id="startLijst"></div>
+  </section>
+
+  <!-- SPEL -->
+  <section id="spel" hidden style="display:flex;flex-direction:column;gap:clamp(16px,2.4vw,24px)">
+    <div class="progress">
+      <div class="progress-label"><span id="teller">Situatie 1 van 20</span><span id="goedTeller">0 goed</span></div>
+      <div class="bar"><div id="bar"></div></div>
+    </div>
+    <div class="card">
+      <p class="eyebrow">Situatie</p>
+      <p class="situatie" id="situatie"></p>
+      <p class="vraag">Welke Kwink-slag helpt hier het beste?</p>
+    </div>
+    <div class="keuzes" id="keuzes"></div>
+    <div class="feedback" id="feedback" hidden>
+      <div class="fb-tekst">
+        <p class="fb-kop" id="fbKop"></p>
+        <p id="fbTekst"></p>
+        <div class="stappen" id="fbStappen"></div>
+      </div>
+      <button class="btn" id="volgendeBtn" type="button">Volgende</button>
+    </div>
+  </section>
+
+  <!-- EINDE -->
+  <section id="einde" hidden style="display:flex;flex-direction:column;gap:24px">
+    <div class="card" style="gap:18px">
+      <p class="eyebrow">Ronde klaar</p>
+      <p class="eind-score"><span id="eindScore">0</span> <small>punten</small></p>
+      <h2 id="eindKop" style="font-size:clamp(26px,3vw,40px)"></h2>
+      <p id="eindTekst" style="color:var(--muted);font-size:1.1em"></p>
+    </div>
+    <div class="overzicht" id="overzicht"></div>
+    <div class="acties">
+      <button class="btn" id="opnieuwBtn" type="button">Nieuwe ronde</button>
+      <button class="btn licht" id="stopBtn" type="button">Stoppen</button>
+    </div>
+  </section>
+</div>
+
+<script>
+const KS = {
+  a:{naam:'De aardigspreker', kort:'Iets zeggen tegen een ander', stappen:['Denk na voordat je iets zegt','Zeg wat je ziet','Zeg het op een aardige manier']},
+  b:{naam:'De zelfvertrouwer', kort:'Iets spannend vinden', stappen:['Sta stevig','Gebruik een helpende gedachte','Doe wat je kunt']},
+  c:{naam:'De zelfontspanner', kort:'Onrust of boosheid in je lijf', stappen:['Sluit je je ogen?','Wees stil','Adem in','Adem uit','Voel je lijf','Kijk rustig om je heen']},
+  d:{naam:'De verderkijker', kort:'De ander proberen te begrijpen', stappen:['Wat ziet de ander?','Wat hoort de ander?','Wat voelt de ander?','Wat denkt de ander?']},
+  e:{naam:'De keuzechecker', kort:'Een keuze moeten maken', stappen:['Wat wil ik kiezen?','Wat kan ik kiezen?','Wat betekent dat voor de ander?','Dit is mijn keuze!']}
+};
+const ORDE = ['a','b','c','d','e'];
+
+const SIT = [
+ // aardigspreker
+ ['a','Je tafelgenoot laat een tekening zien die jij niet zo mooi vindt. Hij vraagt wat je ervan vindt.','Je wilt eerlijk zijn zonder hem te kwetsen. Zeg wat je ziet en zeg het op een aardige manier.'],
+ ['a','Een klasgenoot zit op jouw plek in de kring. Je wilt roepen dat hij moet opschieten.','Eerst nadenken voorkomt een snauw. Vertel rustig wat je ziet en vraag het vriendelijk.'],
+ ['a','Bij gym mist je teamgenoot steeds de bal. Je wilt zeggen dat hij er niks van kan.','Je wilt iets zeggen, maar het moet niet gemeen worden. Denk na en kies aardige woorden.'],
+ ['a','Iemand pakt per ongeluk jouw gum. Je wilt “Dief!” roepen.','Zeg wat je ziet, zonder meteen een oordeel: “Ik denk dat dat mijn gum is.”'],
+ ['a','Je maatje heeft het werk anders gedaan dan jullie hadden afgesproken. Je bent geïrriteerd en wilt het hem zeggen.','Je moet het wel zeggen, maar hoe je het zegt maakt het verschil. Denk eerst na en blijf vriendelijk.'],
+ ['a','Een klasgenoot praat steeds door terwijl jij aan het lezen bent. Je wilt dat ze ophoudt.','Je mag zeggen wat je last van haar hebt. Zeg wat je ziet en vraag het op een aardige manier.'],
+ ['a','Je broertje heeft jouw oplader geleend en niet teruggelegd. Je wilt hem erop aanspreken.','Aanspreken mag, uitvallen hoeft niet. Zeg wat er gebeurde en zeg het rustig.'],
+ ['a','Je vriendin heeft een nieuw kapsel dat jij een beetje raar vindt. Ze vraagt of je het mooi vindt.','Je kunt eerlijk én aardig zijn. Denk na over wat je zegt en hoe het bij haar aankomt.'],
+ ['a','Bij het voetballen in de pauze maakt iemand volgens jou een overtreding. Je wilt meteen gaan schreeuwen.','Schreeuwen maakt het vaak erger. Denk eerst na, zeg wat je zag en zeg het rustig.'],
+ ['a','Je moet tips geven op de spreekbeurt van een klasgenoot. Er ging niet alles goed.','Feedback geven is precies waar de aardigspreker voor is: zeg wat je zag, op een aardige manier.'],
+ ['a','Je tafelgenoot tikt de hele tijd met zijn pen op tafel. Je kunt je niet concentreren.','Je wilt dat hij stopt. Vertel wat je merkt en vraag het vriendelijk.'],
+ ['a','Je speelt online met klasgenoten. Iemand maakt een fout en jullie verliezen. Je wilt in de chat iets gemeens typen.','Ook online geldt: eerst nadenken, dan pas typen. En typ het op een aardige manier.'],
+ ['a','Je moeder vraagt waarom je kamer nog niet is opgeruimd. Je wilt een brutaal antwoord geven.','Een brutaal antwoord is snel gezegd. Denk eerst na en antwoord rustig.'],
+ ['a','Een klasgenoot heeft jouw idee in het groepswerk overgenomen zonder te vragen. Je wilt er iets van zeggen.','Je mag dit zeggen. Benoem wat je zag, zonder te beschuldigen, en blijf vriendelijk.'],
+ ['a','Je oma geeft je een trui voor je verjaardag die je echt niet mooi vindt.','Je wilt haar niet kwetsen. Denk na voordat je iets zegt en kies aardige woorden.'],
+ // zelfvertrouwer
+ ['b','Morgen houd je je boekbespreking voor de klas. Je hebt nu al buikpijn van de zenuwen.','Je vindt iets spannend. Sta stevig, denk aan wat je al goed kunt en doe wat je kunt.'],
+ ['b','Bij gym moet je over de bok springen. Je denkt: “Dat lukt mij toch nooit.”','Die gedachte helpt je niet. Kies een helpende gedachte, zoals “Ik probeer het gewoon.”'],
+ ['b','Je bent nieuw bij de voetbalclub en je kent nog niemand in je team.','Iets nieuws is spannend. Met de zelfvertrouwer sta je stevig en doe je wat je kunt.'],
+ ['b','Je hebt een onvoldoende voor de rekentoets. Je denkt: “Ik ben gewoon dom.”','Kijk eerlijk naar jezelf: wat kun je al en wat wil je nog leren? Dat is een helpende gedachte.'],
+ ['b','Je wilt meedoen aan de auditie voor de musical, maar je durft niet alleen te zingen.','Je twijfelt aan jezelf. Sta stevig en zeg tegen jezelf: “Ik ga het gewoon proberen.”'],
+ ['b','De juf vraagt wie het antwoord weet. Jij weet het, maar je durft je vinger niet op te steken.','Je weet meer dan je denkt. Een helpende gedachte geeft je het vertrouwen om het te proberen.'],
+ ['b','Volgende week ga je op kamp. Je bent nog nooit een nacht van huis geweest.','Iets voor het eerst doen is spannend. Denk aan wat je al kunt en doe wat je kunt.'],
+ ['b','Bijna alle kinderen in je straat kunnen al een trucje op het skateboard. Jij nog niet en je wilt het opgeven.','Iedereen leert in zijn eigen tempo. Denk aan wat je nog wilt leren en blijf oefenen.'],
+ ['b','Je moet een filmpje maken waarin je zelf in beeld komt. Dat vind je eng.','Sta stevig, gebruik een helpende gedachte en doe wat je kunt. Het hoeft niet perfect.'],
+ ['b','Je hebt een tekening gemaakt waar je trots op bent, maar je durft hem niet te laten zien.','Je mag trots zijn op wat je kunt. De zelfvertrouwer helpt je om dat te durven laten zien.'],
+ ['b','Op de sportdag loop je de estafette. Je bent bang dat je team door jou verliest.','Je kunt alleen je best doen. Een helpende gedachte: “Ik ren zo hard als ik kan.”'],
+ ['b','Je gaat naar de open dag van een middelbare school en vindt het spannend om vragen te stellen.','Sta stevig en denk: “Ik mag hier vragen stellen, daar is de open dag voor.”'],
+ ['b','Bij muziek moet je een stukje voorspelen op het keyboard.','Spannend! Denk aan hoe vaak je al hebt geoefend en doe wat je kunt.'],
+ ['b','Je moet een nieuwe leerling rondleiden door de school, maar je bent een beetje verlegen.','Je kent de school heel goed. Die helpende gedachte geeft je vertrouwen.'],
+ ['b','Je hebt je fiets-examen. Je bent bang dat je een fout maakt bij het oversteken.','Je hebt hiervoor geoefend. Sta stevig, denk aan wat je al kunt en doe wat je kunt.'],
+ // zelfontspanner
+ ['c','Na de pauze ben je nog zo boos dat je hart bonkt. Je kunt je niet concentreren.','Je lijf is nog vol spanning. Adem rustig in en uit en voel je lijf weer kalm worden.'],
+ ['c','Je ligt in bed en kunt niet slapen. Je hart klopt snel en je ligt maar te woelen.','Je lijf is onrustig. Wees stil, adem rustig in en uit en voel hoe je lijf ontspant.'],
+ ['c','Vlak voor je wedstrijd trillen je benen en gaat je ademhaling heel snel.','Spanning zit hier vooral in je lijf. De zelfontspanner helpt je om eerst rustig te worden.'],
+ ['c','Je hebt verloren met een spelletje. Je voelt de boosheid in je buik en je balt je vuisten.','Boosheid voel je in je lijf. Adem in, adem uit en laat de spanning los.'],
+ ['c','Het is heel druk en lawaaierig in de klas. Je wordt er onrustig van en kunt niet stilzitten.','Je lijf zit vol onrust. Even stil zijn en rustig ademen helpt je om weer verder te kunnen.'],
+ ['c','Je schrikt van een harde knal en je hart gaat tekeer.','Na een schrik moet je lijf weer tot rust komen. Adem rustig in en uit.'],
+ ['c','Na de gymles ben je nog helemaal druk. Nu moet je ineens rustig gaan lezen.','Je lijf moet even schakelen. De zelfontspanner helpt je om rustig te worden.'],
+ ['c','Je broer zit je thuis steeds te plagen. Je voelt dat je bijna ontploft.','Voordat je iets doet, moet de boosheid in je lijf eerst zakken. Wees stil en adem rustig.'],
+ ['c','Je game loopt vast vlak voordat je het level haalt. Je wordt zo boos dat je je controller wilt gooien.','Je lijf zit vol boosheid. Adem in, adem uit en kijk rustig om je heen.'],
+ ['c','Je zit in de wachtkamer bij de tandarts. Je handen zijn klam en je voelt je gespannen.','Spanning in je lijf? Sluit je ogen, adem rustig en voel je lijf.'],
+ ['c','Je zit in de bus naar het schoolreisje. Je voelt je onrustig en een beetje misselijk van de spanning.','De zelfontspanner helpt je lijf tot rust te komen met rustig ademen.'],
+ ['c','Na een ruzie in de pauze lukt het niet om aan je rekenwerk te beginnen. Je schouders voelen gespannen.','Je lijf houdt de spanning vast. Voel je lijf, adem rustig en begin dan pas.'],
+ ['c','Het heeft de hele dag geregend en je hebt niet buiten gespeeld. Je lijf voelt kriebelig en onrustig.','Even stil zijn, ademen en je lijf voelen helpt tegen die onrust.'],
+ ['c','Je zit klaar om aan een toets te beginnen. Je ademhaling gaat snel en je hoofd voelt vol.','Eerst rust in je lijf, dan kun je beter nadenken. Adem in, adem uit.'],
+ ['c','Je hebt de hele middag in een drukke speeltuin gestaan. Thuis voel je je nog helemaal opgejaagd.','Je lijf heeft veel prikkels gehad. De zelfontspanner helpt je om tot rust te komen.'],
+ // verderkijker
+ ['d','Je beste vriend wil in de pauze ineens niet meer met je spelen. Je snapt niet waarom.','Probeer je in hem te verplaatsen: wat ziet, hoort, voelt en denkt hij?'],
+ ['d','Een klasgenoot doet chagrijnig als je iets vraagt. Je weet dat haar opa ziek is.','Kijk verder dan je eigen gevoel. Wat voelt zij op dit moment?'],
+ ['d','Je zusje huilt omdat ze haar knuffel kwijt is. Jij vindt dat overdreven.','Voor haar is het iets groots. De verderkijker helpt je te snappen wat zij voelt.'],
+ ['d','Een nieuwe leerling zit in de pauze alleen op het bankje.','Hoe zou het voor hem zijn? Als je je in hem verplaatst, weet je beter wat je kunt doen.'],
+ ['d','Je vriendin stuurt al de hele avond geen berichtje terug. Jij vindt dat vervelend.','Misschien is het druk bij haar thuis. Bedenk wat zij ziet, hoort, voelt en denkt.'],
+ ['d','Je hebt ruzie met je broer over wie er op de bank mag zitten. Hij zegt dat hij er eerst zat.','Bij ruzie helpt het om te kijken hoe de ander het ziet.'],
+ ['d','Je hebt een grappig filmpje van een klasgenoot in de groepsapp gezet. Hij vindt het helemaal niet leuk.','Jij vond het grappig, hij niet. Verplaats je in hem: wat voelt en denkt hij?'],
+ ['d','De juf is vandaag strenger dan normaal. Je snapt niet waarom.','Ook de juf heeft gevoelens en gedachten. Wat zou zij zien en voelen?'],
+ ['d','Je teamgenoot is boos omdat hij niet mocht keepen. Jij vindt dat hij moet ophouden met zeuren.','Kijk verder dan je eigen mening. Hoe voelt het voor hem?'],
+ ['d','Je vriend wil niet mee naar een verjaardag, omdat hij daar niemand kent.','Wat voor jou normaal is, kan voor hem spannend zijn. Verplaats je in hem.'],
+ ['d','Een kind uit groep 4 durft niet over het klimrek. Jij vindt het juist heel makkelijk.','Voor een jonger kind ziet het er heel anders uit. Wat ziet en voelt hij?'],
+ ['d','Je moeder komt moe thuis van haar werk en heeft geen zin om een spelletje te doen.','Bedenk wat zij vandaag heeft gedaan en hoe zij zich nu voelt.'],
+ ['d','Twee klasgenoten hebben ruzie. Jij moet helpen om het op te lossen.','Om te helpen moet je snappen hoe ieder het ziet. Daar is de verderkijker voor.'],
+ ['d','Een klasgenoot lacht om iets wat jij zei. Jij voelt je uitgelachen.','Misschien bedoelde hij het anders. Wat dacht hij toen hij lachte?'],
+ ['d','Je vriend is fan van een andere voetbalclub dan jij. Jullie krijgen er ruzie over.','Hij kijkt er anders naar dan jij, en dat mag. Probeer zijn kant te zien.'],
+ // keuzechecker
+ ['e','Een paar klasgenoten willen een ander kind uitlachen en vragen of jij meedoet.','Je moet kiezen. Wat kun je kiezen, en wat betekent dat voor het kind dat wordt uitgelachen?'],
+ ['e','De rij bij het waterkraantje is lang. Je zou kunnen voordringen.','Wat wil je, wat kun je kiezen en wat betekent voordringen voor de anderen?'],
+ ['e','Je vriend vraagt of hij jouw huiswerk mag overschrijven.','Ja of nee? Denk na wat elke keuze betekent, voor jou en voor hem.'],
+ ['e','Iemand stuurt je een gênante foto van een klasgenoot en vraagt of jij hem ook doorstuurt.','Doorsturen of niet? Bedenk wat jouw keuze betekent voor die klasgenoot.'],
+ ['e','Je hebt beloofd met je vriendin te spelen. Nu vraagt iemand anders of je mee gaat zwemmen.','Je moet kiezen. Wat betekent jouw keuze voor je vriendin?'],
+ ['e','Je vindt een portemonnee op het schoolplein.','Wat ga je doen? Bedenk wat je kunt kiezen en wat dat betekent voor de eigenaar.'],
+ ['e','Je bal ligt in de tuin van de buren. Je kunt over het hek klimmen of aanbellen.','Twee mogelijkheden. Wat betekent elke keuze voor de buren?'],
+ ['e','Na school mag je zelf kiezen: eerst je huiswerk maken of eerst gamen.','Wat wil je, wat kun je kiezen en wat zijn de gevolgen? Dan maak je je keuze.'],
+ ['e','Bij een spelletje weet je hoe je kunt valsspelen zonder dat iemand het ziet.','Wat betekent valsspelen voor de anderen die meedoen? Daarna kies je.'],
+ ['e','In een online game zie je dat een ander kind steeds gepest wordt.','Doe je niks, zeg je er iets van of meld je het? Bedenk wat je keuze betekent voor dat kind.'],
+ ['e','Je vrienden willen een film kijken die jij van je ouders nog niet mag zien.','Je moet kiezen wat je doet. Denk aan de gevolgen, ook voor jezelf.'],
+ ['e','Je stoot per ongeluk de plant van de juf om. Niemand heeft het gezien.','Zeg je het of niet? De keuzechecker helpt je om eerlijk te kiezen.'],
+ ['e','Voor een project mag je een maatje kiezen: je beste vriend of het kind dat nog niemand heeft.','Wat betekent jouw keuze voor het kind dat nog alleen staat?'],
+ ['e','Je wordt toegevoegd aan een groepsapp waarin één klasgenoot expres niet zit.','Blijf je erin of stap je eruit? Bedenk wat het betekent voor die klasgenoot.'],
+ ['e','Er ligt nog één stuk cake. Je ziet dat je klasgenoot het ook graag wil.','Wat wil je, wat kun je kiezen en wat betekent dat voor de ander?'],
+ // --- extra situaties ---
+ // aardigspreker
+ ['a','Een klasgenoot laat per ongeluk jouw schrift in een plas vallen. Je wilt boos tegen hem uitvallen.','Het was per ongeluk. Denk eerst na, zeg wat er gebeurde en blijf vriendelijk.'],
+ ['a','Een kind uit groep 5 schopt steeds de bal weg tijdens jullie potje. Je wilt hem toeschreeuwen.','Zeg rustig wat je ziet en vraag op een aardige manier of hij wil stoppen.'],
+ ['a','Je teamgenoot klaagt de hele wedstrijd over de scheidsrechter. Je wilt zeggen dat hij zijn mond moet houden.','Je mag het zeggen, maar kies aardige woorden. Dan luistert hij eerder.'],
+ ['a','Je zus heeft zonder te vragen jouw shampoo gebruikt. Je wilt het haar zeggen.','Zeg wat je zag, zonder te snauwen, en vertel wat je liever wilt.'],
+ ['a','Een klasgenoot leest hardop voor en maakt veel foutjes. Na afloop wil je er iets over zeggen.','Denk na of en hoe je het zegt. Benoem ook wat goed ging en blijf vriendelijk.'],
+ ['a','Je vriend komt voor de derde keer te laat bij jullie afspraak. Je wilt laten weten dat je dat niet fijn vindt.','Zeg rustig wat je merkt en wat je daarvan vindt, zonder hem uit te schelden.'],
+ ['a','Je tafelgenoot kijkt bij de toets steeds op jouw blad. Je wilt dat hij stopt.','Zeg wat je ziet, rustig en vriendelijk. Zo los je het op zonder ruzie.'],
+ ['a','Jullie maken samen een poster. Je klasgenoot wil felroze letters en jij vindt dat lelijk.','Je mag je mening geven. Denk na en zeg het zo dat het niet kwetst.'],
+ ['a','In de groepsapp stelt iemand een vraag die jij heel dom vindt. Je wilt er een reactie onder typen.','Eerst nadenken, dan typen. En als je reageert, doe het dan aardig.'],
+ ['a','De buurjongen heeft zijn fiets zo neergezet dat jij er niet langs kunt.','Vertel wat je ziet en vraag vriendelijk of hij zijn fiets wil verzetten.'],
+ ['a','Je moet een klasgenoot vertellen dat zijn deel van de presentatie veel te lang is.','Dat is lastig om te zeggen. Zeg wat je ziet en zeg het op een aardige manier.'],
+ ['a','Je vriend wil steeds bepalen welk spel jullie spelen. Jij wilt ook weleens kiezen.','Zeg rustig wat je merkt en wat je graag wilt, zonder boos te worden.'],
+ ['a','Een klasgenoot heeft een grote vlek op zijn shirt. Je wilt het hem laten weten zonder dat hij zich schaamt.','Denk na hoe je het zegt: zachtjes, vriendelijk en zonder erom te lachen.'],
+ ['a','Je vader heeft het laatste stuk van jouw lievelingseten opgegeten. Je wilt gaan mopperen.','Zeg wat je jammer vindt, maar zeg het op een aardige manier.'],
+ ['a','Iemand heeft een flauwe reactie gezet onder jouw filmpje. Je wilt meteen iets terugschrijven.','Typ niet meteen. Denk eerst na en kies woorden die het niet erger maken.'],
+ // zelfvertrouwer
+ ['b','Je gaat voor het eerst alleen met de trein naar je tante.','Iets voor het eerst alleen doen is spannend. Denk aan wat je al kunt en doe wat je kunt.'],
+ ['b','Bij zwemles moet je van de hoge duikplank springen.','Sta stevig en gebruik een helpende gedachte: “Ik kan goed zwemmen.”'],
+ ['b','Je wilt meedoen aan de voorleeswedstrijd, maar je denkt dat de anderen veel beter zijn.','Kijk naar wat jij goed kunt. Een helpende gedachte geeft je moed.'],
+ ['b','Je hebt een rapportgesprek met de juf en je ouders. Je vindt het spannend wat ze gaan zeggen.','Denk aan waar je trots op bent en wat je nog wilt leren. Dat geeft vertrouwen.'],
+ ['b','Je hebt net gitaarles en het klinkt nog helemaal niet mooi. Je wilt stoppen.','Iedereen begint klein. Denk aan wat je al geleerd hebt en blijf oefenen.'],
+ ['b','In de klas moet je in je eentje een gedicht voordragen.','Sta stevig, adem rustig en denk: “Ik heb het geoefend, ik kan dit.”'],
+ ['b','Je wordt gekozen als aanvoerder van je team. Je twijfelt of je dat wel kunt.','Ze kozen jou niet voor niets. Denk aan wat je goed kunt en doe wat je kunt.'],
+ ['b','Je moet een moeilijke breuksom op het bord voordoen.','Fouten maken mag. Sta stevig en doe wat je kunt.'],
+ ['b','Na een verhuizing ga je naar een nieuwe school waar je niemand kent.','Spannend! Denk aan wat jij leuk aan jezelf vindt en stap op anderen af.'],
+ ['b','Je wilt je aanmelden voor de leerlingenraad, maar je denkt dat niemand op je stemt.','Een helpende gedachte: “Ik heb goede ideeën en ik probeer het gewoon.”'],
+ ['b','Je hebt een rol in het toneelstuk en je bent bang dat je je tekst vergeet.','Denk aan hoe vaak je al geoefend hebt. Sta stevig en doe wat je kunt.'],
+ ['b','Bij het schaatsen val je steeds, terwijl de anderen al rondjes rijden.','Iedereen leert op zijn eigen tempo. Kijk naar wat je al wel kunt.'],
+ ['b','Je moet in je eentje bij de bakker bestellen voor het hele gezin.','Je weet wat je moet vragen. Sta stevig en zeg het gewoon.'],
+ ['b','Je mag aan groep 4 iets vertellen over je hobby. Je vindt het eng om voor een groep te staan.','Je weet heel veel over je hobby. Die helpende gedachte geeft je vertrouwen.'],
+ ['b','Je hebt de vorige keer slecht gekeept. Vandaag moet je weer op doel.','Eén slechte wedstrijd zegt niet alles. Denk aan je goede reddingen en doe wat je kunt.'],
+ // zelfontspanner
+ ['c','Je wacht op de uitslag van de doorstroomtoets en je zit de hele tijd te wiebelen.','De spanning zit in je lijf. Wees stil, adem rustig en voel je lijf.'],
+ ['c','Iemand heeft je boterham afgepakt. Je voelt je gezicht heet worden van boosheid.','Laat eerst de boosheid in je lijf zakken. Adem in, adem uit.'],
+ ['c','Je kwam te laat op school en bent naar binnen gerend. Je hart klopt nog heel snel.','Je lijf is nog gehaast. Even stil zijn en rustig ademen helpt.'],
+ ['c','Je hebt lang achter een scherm gezeten en voelt je onrustig en prikkelbaar.','Je lijf heeft rust nodig. Sluit je ogen, adem rustig en voel je lijf.'],
+ ['c','Na een spannende film kun je niet slapen. Je lijf voelt helemaal gespannen.','Rustig ademen en je lijf voelen helpt je om te ontspannen.'],
+ ['c','Je hebt ruzie gehad met je moeder en je voelt je helemaal trillerig.','Eerst moet je lijf tot rust komen. Wees stil en adem rustig in en uit.'],
+ ['c','In de gymzaal is het heel lawaaierig en je krijgt een druk hoofd.','Even stil zijn en rustig ademen helpt tegen dat drukke gevoel.'],
+ ['c','Je bent zo zenuwachtig voor je verjaardagsfeestje dat je niet kunt stilzitten.','Ook blije spanning voel je in je lijf. Adem rustig om tot rust te komen.'],
+ ['c','Je hebt hard gerend om de bus te halen. In de klas voel je je nog helemaal opgejaagd.','Je lijf moet even bijkomen. Adem in, adem uit en kijk rustig om je heen.'],
+ ['c','Je komt niet uit een moeilijke som. Je merkt dat je je kaken op elkaar klemt.','Je lijf geeft een signaal van spanning. Ontspan eerst, dan gaat denken beter.'],
+ ['c','Je bent zo boos dat je even helemaal niks meer kunt zeggen.','Als boosheid zo groot is, helpt het om eerst je lijf tot rust te brengen.'],
+ ['c','Je wordt bang en bezweet wakker uit een nachtmerrie.','Adem rustig in en uit, voel je lijf en kijk rustig om je heen: je bent veilig.'],
+ ['c','Je bent op de kermis in een wilde attractie geweest. Je benen trillen nog na.','Je lijf is nog opgewonden. Wees stil en adem rustig.'],
+ ['c','Je zit in de auto in de file en wordt helemaal kriebelig van het stilzitten.','Onrust in je lijf? Adem rustig en voel je lijf ontspannen.'],
+ ['c','Na een fel potje trefbal ben je nog helemaal opgefokt. Nu begint de les.','Je lijf moet schakelen van druk naar rustig. Daar helpt de zelfontspanner bij.'],
+ // verderkijker
+ ['d','Je opa vertelt voor de vijfde keer hetzelfde verhaal. Jij vindt het saai.','Bedenk wat dat verhaal voor hem betekent. Hoe voelt hij zich als hij het vertelt?'],
+ ['d','Een klasgenoot is verdrietig omdat zijn huisdier is doodgegaan.','Verplaats je in hem: wat voelt en denkt hij nu? Dan weet je beter hoe je kunt helpen.'],
+ ['d','Je vriendin doet raar sinds jij een nieuwe telefoon hebt.','Misschien is ze jaloers of verdrietig. Wat ziet, voelt en denkt zij?'],
+ ['d','Een klasgenoot wil op kamp niet mee zwemmen. Anderen lachen erom.','Er kan een reden zijn die jij niet weet. Verplaats je in hem.'],
+ ['d','Je teamgenoot huilt na een verloren wedstrijd. Jij vindt het maar een spelletje.','Voor hem was het belangrijk. Kijk verder dan je eigen mening.'],
+ ['d','Een leerling die net in Nederland woont, snapt de opdracht niet.','Hoe zou het zijn als jij alles in een andere taal moest doen? Verplaats je in hem.'],
+ ['d','De buurvrouw klaagt dat jullie te hard tegen haar schutting voetballen.','Wat hoort en voelt zij als de bal steeds tegen haar schutting knalt?'],
+ ['d','Je vriend zegt dat hij zich buitengesloten voelt, omdat je vaak met iemand anders speelt.','Probeer te snappen hoe het voor hem voelt, ook al bedoelde jij het niet zo.'],
+ ['d','Je broertje wil steeds meedoen met jou en je vrienden. Jij vindt dat irritant.','Waarom zou hij dat willen? Wat denkt en voelt hij?'],
+ ['d','Een klasgenoot wordt verlegen als haar tekening in de klas wordt opgehangen.','Niet iedereen vindt aandacht fijn. Bedenk wat zij voelt.'],
+ ['d','De conciërge moppert omdat de gang na de pauze vol zand ligt.','Wat ziet hij en wat moet hij nu allemaal doen? Dan snap je zijn gemopper beter.'],
+ ['d','Je vriendin vond een film heel eng, terwijl jij hem juist leuk vond.','Zij beleeft het anders dan jij, en dat mag. Wat voelde zij tijdens de film?'],
+ ['d','Een klasgenoot zegt dat jij haar negeerde in de gang. Jij had haar niet eens gezien.','Kijk hoe het voor haar overkwam. Wat zag en dacht zij?'],
+ ['d','Een jongen in je klas wordt bij elk spelletje boos als hij verliest.','Wat zou er in hem omgaan? Als je dat snapt, kun je er beter mee omgaan.'],
+ ['d','Je nichtje van vier wil steeds hetzelfde boekje voorgelezen krijgen.','Voor een klein kind is dat fijn en vertrouwd. Bedenk wat zij voelt.'],
+ // keuzechecker
+ ['e','Iemands jas is van de kapstok gevallen. Laat je hem liggen of hang je hem op?','Een kleine keuze, maar wat betekent die voor de ander?'],
+ ['e','Je krijgt in de winkel te veel wisselgeld terug.','Houd je het of zeg je het? Bedenk wat je keuze betekent voor de winkel.'],
+ ['e','Je mag kiezen: naar de verjaardag van je oom of naar je voetbaltraining.','Wat wil je, wat kun je kiezen en wat betekent het voor de anderen?'],
+ ['e','Een klasgenoot vraagt om jouw wachtwoord van de leeromgeving.','Geef je het of niet? Denk na over de gevolgen voordat je kiest.'],
+ ['e','Je vrienden gaan belletje trekken en vragen of jij meedoet.','Wat betekent dit voor de mensen die steeds hun deur open moeten doen?'],
+ ['e','Je krijgt een berichtje van een onbekende met een spannende link. Klik je erop?','Denk eerst na wat er kan gebeuren als je klikt. Dan maak je je keuze.'],
+ ['e','Je huiswerk is niet af. Je kunt een smoes verzinnen of eerlijk zijn.','Wat kun je kiezen en wat zijn de gevolgen van elke keuze?'],
+ ['e','Je weet wie de ruit heeft ingegooid. De juf vraagt of iemand iets weet.','Moeilijke keuze! Bedenk wat elke keuze betekent, voor jou en voor anderen.'],
+ ['e','Je mag je zakgeld uitgeven aan snoep of sparen voor iets groots.','Wat wil je nu, en wat wil je later? Denk na en maak dan je keuze.'],
+ ['e','In de winkel stopt je vriend stiekem een snoepje in zijn zak. Hij zegt dat jij dat ook moet doen.','Wat betekent die keuze voor de winkel en voor jezelf? Dan kies je.'],
+ ['e','Je vrienden willen na school nog naar het park, maar je hebt beloofd op tijd thuis te zijn.','Wat wil je en wat betekent je keuze voor je ouders die op je wachten?'],
+ ['e','Jij mag bij voetbal de teams kiezen. Eén kind wordt altijd als laatste gekozen.','Wat betekent jouw keuze voor dat kind?'],
+ ['e','Je ziet dat het blad met de antwoorden op het bureau van de juf ligt.','Kijk je of niet? Denk na over wat je kunt kiezen en wat de gevolgen zijn.'],
+ ['e','Een vriend vraagt of je een nep-account wilt maken om iemand te plagen.','Wat betekent dit voor degene die geplaagd wordt? Pas daarna kies je.'],
+ ['e','Er liggen nog twee ijsjes in de vriezer. Jij wilt ze allebei, maar je zus heeft nog niks gehad.','Wat wil je, wat kun je kiezen en wat betekent dat voor je zus?']
+];
+
+const PER_RONDE = 20, PER_SLAG = 4, PUNTEN = 10;
+const OPSLAG = 'kwink-kiezer-gezien';
+const $ = id => document.getElementById(id);
+
+let st = {fase:'start', ronde:[], i:0, score:0, goed:0, beantwoord:false, perSlag:{}};
+
+function laad(){ try{ return JSON.parse(localStorage.getItem(OPSLAG)||'[]') }catch(e){ return [] } }
+function bewaar(lijst){ try{ localStorage.setItem(OPSLAG, JSON.stringify(lijst)) }catch(e){} }
+function schud(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]} return a }
+
+function maakRonde(){
+  let gezien = laad();
+  const gekozen = [];
+  ORDE.forEach(k=>{
+    const alle = SIT.map((s,i)=>s[0]===k?i:-1).filter(i=>i>=0);
+    let nieuw = schud(alle.filter(i=>!gezien.includes(i)));
+    if(nieuw.length < PER_SLAG){
+      // alles van deze Kwink-slag gezien: begin opnieuw, maar eerst de nog ongeziene
+      gezien = gezien.filter(i=>SIT[i][0]!==k);
+      nieuw = nieuw.concat(schud(alle.filter(i=>!nieuw.includes(i))));
+    }
+    gekozen.push(...nieuw.slice(0,PER_SLAG));
+  });
+  bewaar(gezien.concat(gekozen));
+  return schud(gekozen);
+}
+
+function toon(fase){
+  st.fase = fase;
+  $('start').hidden = fase!=='start';
+  $('spel').hidden = fase!=='spel';
+  $('einde').hidden = fase!=='einde';
+  $('scorebox').hidden = fase==='start';
+}
+
+function startRonde(){
+  st = {fase:'spel', ronde:maakRonde(), i:0, score:0, goed:0, beantwoord:false, perSlag:{}};
+  ORDE.forEach(k=>st.perSlag[k]={goed:0,totaal:0});
+  $('score').textContent = 0;
+  toon('spel');
+  toonSituatie();
+}
+
+function toonSituatie(){
+  const s = SIT[st.ronde[st.i]];
+  st.beantwoord = false;
+  $('teller').textContent = `Situatie ${st.i+1} van ${PER_RONDE}`;
+  $('goedTeller').textContent = `${st.goed} goed`;
+  $('bar').style.width = (st.i/PER_RONDE*100)+'%';
+  $('situatie').textContent = s[1];
+  $('feedback').hidden = true;
+  const box = $('keuzes'); box.innerHTML='';
+  ORDE.forEach((k,n)=>{
+    const b = document.createElement('button');
+    b.type='button'; b.className='keuze k-'+k; b.dataset.k=k; b.id='keuze-'+k;
+    b.innerHTML = `<span class="naam">${KS[k].naam}</span><span class="kort">${KS[k].kort}</span><span class="toets">toets ${n+1}</span>`;
+    b.addEventListener('click',()=>kies(k));
+    box.appendChild(b);
+  });
+}
+
+function kies(k){
+  if(st.beantwoord || st.fase!=='spel') return;
+  st.beantwoord = true;
+  const s = SIT[st.ronde[st.i]], juist = s[0], ok = k===juist;
+  st.perSlag[juist].totaal++;
+  if(ok){ st.score+=PUNTEN; st.goed++; st.perSlag[juist].goed++; plus(); }
+  $('score').textContent = st.score;
+  $('goedTeller').textContent = `${st.goed} goed`;
+  document.querySelectorAll('.keuze').forEach(b=>{
+    b.disabled = true;
+    if(b.dataset.k===juist) b.classList.add('goed');
+    else if(b.dataset.k===k) b.classList.add('fout');
+  });
+  const fb = $('feedback');
+  fb.className = 'feedback '+(ok?'ok':'nok');
+  $('fbKop').textContent = ok ? 'Goed zo! +10 punten' : `Niet helemaal. Hier past ${KS[juist].naam.toLowerCase()} het best.`;
+  $('fbTekst').textContent = s[2];
+  $('fbStappen').innerHTML = KS[juist].stappen.map(x=>`<span>${x}</span>`).join('');
+  $('volgendeBtn').textContent = st.i+1>=PER_RONDE ? 'Bekijk je score' : 'Volgende';
+  fb.hidden = false;
+  $('volgendeBtn').focus({preventScroll:true});
+  fb.scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth', block:'nearest'});
+}
+
+function plus(){ const p=$('plus'); p.classList.remove('go'); void p.offsetWidth; p.classList.add('go'); }
+
+function volgende(){
+  if(!st.beantwoord) return;
+  st.i++;
+  if(st.i>=PER_RONDE){ einde(); } else { toonSituatie(); window.scrollTo({top:0}); }
+}
+
+function einde(){
+  toon('einde');
+  $('bar').style.width='100%';
+  $('eindScore').textContent = st.score;
+  const g = st.goed;
+  let kop, tekst;
+  if(g>=18){ kop='Topscore! Jij kent de Kwink-slagen heel goed.'; tekst=`Je had ${g} van de ${PER_RONDE} situaties goed.`; }
+  else if(g>=14){ kop='Heel goed gedaan!'; tekst=`Je had ${g} van de ${PER_RONDE} situaties goed. Kijk hieronder welke Kwink-slag je nog wat lastiger vond.`; }
+  else if(g>=10){ kop='Goed bezig!'; tekst=`Je had ${g} van de ${PER_RONDE} situaties goed. Speel nog een ronde om beter te worden.`; }
+  else { kop='Blijf oefenen!'; tekst=`Je had ${g} van de ${PER_RONDE} situaties goed. Kijk nog eens naar de posters in de klas en probeer het opnieuw.`; }
+  $('eindKop').textContent = kop; $('eindTekst').textContent = tekst;
+  $('overzicht').innerHTML = ORDE.map(k=>`<div class="k-${k}"><b>${KS[k].naam}</b><span>${st.perSlag[k].goed} van ${st.perSlag[k].totaal} goed</span></div>`).join('');
+  $('opnieuwBtn').focus({preventScroll:true});
+  window.scrollTo({top:0});
+}
+
+// startscherm
+$('startLijst').innerHTML = ORDE.map(k=>`<div><i style="background:var(--${k})"></i><p><b>${KS[k].naam}</b><br><span>${KS[k].kort}</span></p></div>`).join('');
+$('startBtn').addEventListener('click', startRonde);
+$('volgendeBtn').addEventListener('click', volgende);
+$('opnieuwBtn').addEventListener('click', startRonde);
+$('stopBtn').addEventListener('click', ()=>toon('start'));
+
+// toetsenbord voor het digibord: 1–5 kiezen, Enter = volgende
+document.addEventListener('keydown', e=>{
+  if(st.fase!=='spel') return;
+  const n = parseInt(e.key,10);
+  if(n>=1 && n<=5 && !st.beantwoord){ kies(ORDE[n-1]); e.preventDefault(); }
+  else if((e.key==='Enter' || e.key===' ') && st.beantwoord && document.activeElement!==$('volgendeBtn')){ volgende(); e.preventDefault(); }
+});
+
+toon('start');
+</script>
+</body>
+</html>

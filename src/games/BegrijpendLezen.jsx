@@ -84,7 +84,7 @@ export default function BegrijpendLezen({ onBack, addBriefgeld, addCuruntie, sta
     return (
       <>
         <div className="game-screen dictee-screen">
-          <TerugKnop onClick={() => setLes(null)} />
+          <TerugKnop onClick={() => (startLes ? onBack() : setLes(null))} />
           <iframe
             ref={frameRef}
             className="dictee-frame"

@@ -211,7 +211,7 @@ export default function KlokKijken({ onBack, addBriefgeld, addCuruntie, aantal, 
   return (
     <div className="rs-screen rs-screen-oefen">
       <div className="rs-oefen-top">
-        <TerugKnop onClick={() => setLevel(null)}>Stoppen</TerugKnop>
+        <TerugKnop onClick={() => (config ? onBack() : setLevel(null))}>Stoppen</TerugKnop>
         <span className="rs-verdiend">Level {level}</span>
         <span className="rs-verdiend">💵 € {verdiend}</span>
       </div>

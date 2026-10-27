@@ -297,7 +297,7 @@ export default function TafelsOefenen({ groep, onBack, addBriefgeld, addCuruntie
           title="Goed gedaan!"
           geld={BRIEFGELD}
           addCuruntie={addCuruntie}
-          onDone={() => { addBriefgeld?.(BRIEFGELD); setVerdiend(v => v + BRIEFGELD); setFase('type') }}
+          onDone={() => { addBriefgeld?.(BRIEFGELD); setVerdiend(v => v + BRIEFGELD); if (config) onBack(); else setFase('type') }}
         />
       )}
 
@@ -321,7 +321,7 @@ export default function TafelsOefenen({ groep, onBack, addBriefgeld, addCuruntie
 
       {fase === 'spel' && (
         <div className="to-outer">
-          <TerugKnop onClick={() => setFase('selectie')}>Stoppen</TerugKnop>
+          <TerugKnop onClick={() => (config ? onBack() : setFase('selectie'))}>Stoppen</TerugKnop>
           <Oefenspel
             tafels={tafels} soort={soort} onKlaar={spelKlaar}
             weektaakModus={!!config} onOpslaanMislukt={() => setOpslaanMislukt(true)}

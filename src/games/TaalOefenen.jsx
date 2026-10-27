@@ -241,7 +241,7 @@ export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
         labels={checkedLabels}
         metSamengesteld={samengesteld}
         beloning={beloning}
-        onBack={() => setScreen(config ? 'menu' : 'filter')}
+        onBack={() => (config ? onBack() : setScreen('filter'))}
         addBriefgeld={addBriefgeld} addCuruntie={addCuruntie}
         aantal={aantal}
       />
@@ -253,7 +253,7 @@ export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
     return (
       <div className="tv-screen">
         <div className="tv-top-bar">
-          <TerugKnop onClick={() => setScreen('filter')}>Stoppen</TerugKnop>
+          <TerugKnop onClick={() => (config ? onBack() : setScreen('filter'))}>Stoppen</TerugKnop>
           <div className="tv-progress">
             <span className="tv-score-badge"><Icoon naam="goed" />{correctCount}</span>
             {heeftSpel(CORRECT_VOOR_REWARD) && <span className="tv-reward-meter">

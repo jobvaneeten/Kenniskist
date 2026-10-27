@@ -31,6 +31,8 @@
   #levenspil.au{animation:au .45s;}
   @keyframes au{0%,100%{transform:none}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
   #goudpil{color:var(--goud);}
+  #tijdpil{color:var(--cyaan);font-variant-numeric:tabular-nums;}
+  #tijdpil.bijna{color:#ff4f6a;animation:pop .5s infinite alternate;}
   #goudpil.op{animation:pop .3s;}
   @keyframes pop{50%{transform:scale(1.12)}}
   .rondknop{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;padding:0;
@@ -163,6 +165,7 @@
 <div id="bar">
   <button class="pil verborgen" id="terug">‹ Menu</button>
   <div class="pil" id="golfpil"><span id="levelnaam">Neonstad</span><span>Golf <b id="golfnr">0</b>/<span id="golftot">15</span></span></div>
+  <div class="pil verborgen" id="tijdpil"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/></svg><span id="tijd">1:00</span></div>
   <div class="ruimte"></div>
   <div class="pil" id="levenspil"><svg><use href="#hart"/></svg><span id="levens">20</span></div>
   <div class="pil" id="goudpil"><svg><use href="#munt"/></svg><span id="goud">0</span></div>

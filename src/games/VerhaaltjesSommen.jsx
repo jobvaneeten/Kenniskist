@@ -1090,7 +1090,7 @@ export default function VerhaaltjesSommen({ groep: eigenGroep = 7, onBack, addBr
   return (
     <div className="rs-screen rs-screen-oefen">
       <div className="rs-oefen-top">
-        <TerugKnop onClick={() => setScreen('kies')}>Stoppen</TerugKnop>
+        <TerugKnop onClick={() => (config ? onBack() : setScreen('kies'))}>Stoppen</TerugKnop>
         <Knop variant="secundair" maat="sm" icoon="grafiek" className="rs-ov-btn" onClick={() => openOverzicht('oefen')}>Overzicht</Knop>
         <span className="rs-verdiend">💵 € {verdiend}</span>
       </div>

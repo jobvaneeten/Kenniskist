@@ -36,7 +36,12 @@ const EVO_BONUS = 1e11
 const GRAVEN_CODE = '0001'              // 100 duiken in Diepgravers
 const GRAVEN_DUIKEN = 100
 const ESCAPE_CODE = 'vrijdag'           // opent de GLITCH-escaperoom
-const VIK_CODE = 'spelvik'              // opent Racelegends (public/vik.html)
+// Losse HTML-pagina's in public/ achter een code: code → pagina
+const HTML_CODES = {
+  spelvik: { src: '/vik.html', titel: 'Racelegends', achtergrond: '#111' },
+  schaal:  { src: '/schaal.html', titel: 'Rekenen met schaal', achtergrond: '#060a1d' },
+  kwink:   { src: '/kwink.html', titel: 'Kwink-slag Kiezer', achtergrond: '#F4F2EC' },
+}
 
 function fmt(n) { return n.toLocaleString('nl-NL') }
 
@@ -57,7 +62,7 @@ function CurrencyBadge({ munten, briefgeld, hideMunten }) {
   )
 }
 
-function CodeModal({ onClose, onRedeem, onRedeemBrief, onUnlockAll, onUnlockCountries, onUnlockSomalia, onUnlockTara, onUnlockNina, onUnlockPim, onUnlockVinn, onUnlockRb, onUnlockGroep7, onUnlockTeachers, onUnlockHillclimb, onUnlockEvo, onUnlockGraven, onEscape, onVik, usedCodes }) {
+function CodeModal({ onClose, onRedeem, onRedeemBrief, onUnlockAll, onUnlockCountries, onUnlockSomalia, onUnlockTara, onUnlockNina, onUnlockPim, onUnlockVinn, onUnlockRb, onUnlockGroep7, onUnlockTeachers, onUnlockHillclimb, onUnlockEvo, onUnlockGraven, onEscape, onHtmlPagina, usedCodes }) {
   const [code, setCode] = useState('')
   const [msg,  setMsg]  = useState(null)
   const [ok,   setOk]   = useState(false)
@@ -66,8 +71,8 @@ function CodeModal({ onClose, onRedeem, onRedeemBrief, onUnlockAll, onUnlockCoun
     const key = code.trim().toLowerCase()
     if (key === ESCAPE_CODE) {
       onEscape()
-    } else if (key === VIK_CODE) {
-      onVik()
+    } else if (HTML_CODES[key]) {
+      onHtmlPagina(HTML_CODES[key])
     } else if (key === UNLOCK_ALL_CODE) {
       onUnlockAll()
       setMsg('🎉 Alle kleding ontgrendeld!')
@@ -160,6 +165,7 @@ function CodeModal({ onClose, onRedeem, onRedeemBrief, onUnlockAll, onUnlockCoun
 export default function App({ gast = false }) {
   const { profiel, uitloggen, toegestaneGroepen } = useSessie()
   const [screen, setScreen] = useState('menu')
+  const [htmlPagina, setHtmlPagina] = useState(null) // pagina achter een code (HTML_CODES)
   // Staat er een lescheck klaar waarvan nog een les open is? Wordt herhaald
   // opgehaald: de juf zet hem klaar terwijl de kinderen al op dit scherm zitten.
   const { open: openLescheck } = useOpenLescheck(profiel)
@@ -388,9 +394,9 @@ export default function App({ gast = false }) {
     </div>
   )
 
-  if (screen === 'vik') return (
-    <div style={{ position: 'fixed', inset: 0, background: '#111' }}>
-      <iframe src="/vik.html" title="Racelegends" style={{ width: '100%', height: '100%', border: 'none' }} />
+  if (screen === 'htmlpagina' && htmlPagina) return (
+    <div style={{ position: 'fixed', inset: 0, background: htmlPagina.achtergrond }}>
+      <iframe src={htmlPagina.src} title={htmlPagina.titel} style={{ width: '100%', height: '100%', border: 'none' }} />
       <TerugKnop onClick={goMenu} />
       <VrijSpelenBadge />
     </div>
@@ -514,7 +520,7 @@ export default function App({ gast = false }) {
           onUnlockEvo={unlockEvoGeld}
           onUnlockGraven={unlockGraafDuiken}
           onEscape={() => { setShowCode(false); setScreen('escaperoom') }}
-          onVik={() => { setShowCode(false); setScreen('vik') }}
+          onHtmlPagina={(p) => { setShowCode(false); setHtmlPagina(p); setScreen('htmlpagina') }}
           usedCodes={usedCodes}
         />
       )}

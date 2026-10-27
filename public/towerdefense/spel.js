@@ -34,20 +34,29 @@ var D = (function () {
 })()
 function bewaar() { try { localStorage.setItem(OPSLAG, JSON.stringify(D)) } catch (e) {} }
 
-// ── beloning: verder waar je was ── na elke golf wordt het potje bewaard, zodat
-// je bij de volgende beloning met dezelfde torens doorgaat (5 golven per keer)
-var BEWAAR = 'td_beloning'
+// ── beloning: 1 minuut spelen, daarna weer oefenen ── het potje wordt steeds
+// bewaard (ook midden in een golf), zodat je de volgende keer precies verder gaat
+var BEWAAR = 'td_beloning', SPEELTIJD = 60
+var speeltijd = SPEELTIJD, tijdOp = false, bewaarOm = 0
 function leesBeloning() {
-  try { var b = JSON.parse(localStorage.getItem(BEWAAR) || 'null'); return b && b.golf > 0 && b.golf < TD.GOLVEN ? b : null } catch (e) { return null }
+  try { var b = JSON.parse(localStorage.getItem(BEWAAR) || 'null'); return b && b.torens && b.golf < TD.GOLVEN ? b : null } catch (e) { return null }
 }
 function bewaarBeloning() {
-  if (!BELONING || !S || S.actief || S.verloren) return
-  if (S.golf >= TD.GOLVEN) { wisBeloning(); return }
+  if (!BELONING || !S) return
+  if (S.verloren || S.gewonnen) { wisBeloning(); return }
   var b = { L: S.L, golf: S.golf, goud: S.goud, levens: S.levens, id: S.id, geknald: S.geknald, gezien: S.gezien,
-    torens: S.torens.map(function (t) { return { id: t.id, type: t.type, c: t.c, r: t.r, niveau: t.niveau, besteed: t.besteed, hoek: t.hoek, knallen: t.knallen } }) }
+    t: S.t, actief: S.actief, vijanden: S.vijanden, wachtrij: S.wachtrij,
+    stapels: S.stapels.map(function (p) { var q = Object.assign({}, p); q.toren = p.toren.id; return q }),
+    torens: S.torens.map(function (t) { return { id: t.id, type: t.type, c: t.c, r: t.r, niveau: t.niveau, besteed: t.besteed, hoek: t.hoek, knallen: t.knallen, wacht: t.wacht } }) }
   try { localStorage.setItem(BEWAAR, JSON.stringify(b)) } catch (e) {}
 }
 function wisBeloning() { try { localStorage.removeItem(BEWAAR) } catch (e) {} }
+function tekenTijd() {
+  var el = $('tijdpil'); if (!el) return
+  var s = Math.max(0, Math.ceil(speeltijd))
+  $('tijd').textContent = Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0')
+  el.classList.toggle('bijna', s <= 10)
+}
 
 // ── kleur ──
 function hex(h) { return [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)] }
@@ -671,17 +680,22 @@ var torenFx = {}   // per toren-id: terugslag
 
 function startLevel(nr, verder) {
   L = nr
-  S = TD.nieuwSpel(L, BELONING ? { golven: TD.BELONING_GOLVEN } : {})
+  S = TD.nieuwSpel(L)
   if (BELONING && !verder) wisBeloning()
   if (verder) {
     S.golf = verder.golf; S.goud = verder.goud; S.levens = verder.levens; S.id = verder.id
     S.geknald = verder.geknald || 0; S.gezien = verder.gezien || {}
-    S.maxGolf = Math.min(TD.GOLVEN, verder.golf + TD.BELONING_GOLVEN)
+    S.t = verder.t || 0; S.actief = !!verder.actief
+    S.vijanden = verder.vijanden || []; S.wachtrij = verder.wachtrij || []
     S.torens = verder.torens.map(function (t) {
-      return { id: t.id, type: t.type, c: t.c, r: t.r, x: t.c + 0.5, y: t.r + 0.5, niveau: t.niveau, wacht: 0.15, besteed: t.besteed,
+      return { id: t.id, type: t.type, c: t.c, r: t.r, x: t.c + 0.5, y: t.r + 0.5, niveau: t.niveau, wacht: t.wacht || 0.15, besteed: t.besteed,
         hoek: t.hoek, knallen: t.knallen || 0, s: TD.torenStats(t.type, t.niveau) }
     })
+    var perId = {}; S.torens.forEach(function (t) { perId[t.id] = t })
+    S.stapels = (verder.stapels || []).filter(function (p) { return perId[p.toren] }).map(function (p) { p.toren = perId[p.toren]; return p })
   }
+  speeltijd = SPEELTIJD; tijdOp = false; bewaarOm = 1
+  tekenTijd()
   actief = true; gepauzeerd = false; acc = 0
   kies = null; gekozen = null; deeltjes = []; ringen = []; lijnen = []; teksten = []; torenFx = {}
   eindeOm = 0; autoOm = 0; schud = 0; kernFlits = 0
@@ -692,7 +706,7 @@ function startLevel(nr, verder) {
   vorigeHud = {}
   tekenHud(); tekenPaneel()
   melding(verder
-    ? '<b>Welkom terug!</b> Je gaat verder bij golf ' + (S.golf + 1) + ' met al je torens.'
+    ? '<b>Welkom terug!</b> Je gaat precies verder waar je was' + (S.actief ? ', midden in golf ' + S.golf : ', voor golf ' + (S.golf + 1)) + '.'
     : '<b>' + S.kaart.naam + '</b> — kies een toren hiernaast en zet hem naast het pad. Klaar? Druk op <b>Start golf</b>.', null, 5200)
 }
 
@@ -1386,7 +1400,12 @@ function frame(nu) {
     werkEffectenBij(dt * Math.min(D.snel, 2))
     if (autoOm > 0) { autoOm -= dt; if (autoOm <= 0 && !S.actief && !S.gewonnen && !S.verloren) startGolf() }
     if (eindeOm > 0) { eindeOm -= dt; if (eindeOm <= 0) einde() }
-    tekenHud()
+    if (BELONING && actief && !eindeOm && !S.gewonnen && !S.verloren) {
+      speeltijd -= dt; tekenTijd()
+      bewaarOm -= dt; if (bewaarOm <= 0) { bewaarOm = 1; bewaarBeloning() }
+      if (speeltijd <= 0) tijdIsOp()
+    }
+    if (S) tekenHud()
   }
   teken(dt)
   requestAnimationFrame(frame)
@@ -1398,6 +1417,7 @@ function toonScherm(id) {
   var inSpel = !id
   $('paneel').classList.toggle('verborgen', !inSpel)
   ;['golfpil', 'levenspil', 'goudpil', 'snel', 'pauze'].forEach(function (s) { $(s).classList.toggle('verborgen', !inSpel) })
+  $('tijdpil').classList.toggle('verborgen', !inSpel || !BELONING)
   $('terug').classList.toggle('verborgen', BELONING)
   $('terug').textContent = inSpel ? '‹ Terug' : '‹ Menu'
   if (id) wisMeldingen()
@@ -1411,24 +1431,28 @@ document.addEventListener('visibilitychange', function () {
 })
 
 function sterSvg(aan, n) { var h = ''; for (var i = 0; i < 3; i++) h += '<svg class="' + (i < aan ? '' : 'leeg') + '"><use href="#ster"/></svg>'; return h }
+function tijdIsOp() {
+  tijdOp = true; bewaarBeloning(); einde()
+  setTimeout(function () { parent.postMessage({ type: 'towerdefense-gameover' }, '*') }, 1200)
+}
 function einde() {
   actief = false
-  var gewonnen = S.gewonnen, heel = !BELONING || S.golf >= TD.GOLVEN, st = heel ? TD.sterren(S) : 0, ontgrendeld = ''
-  if (BELONING && (S.verloren || heel)) wisBeloning()
-  if (gewonnen && heel) {
+  var gewonnen = S.gewonnen, st = TD.sterren(S), ontgrendeld = ''
+  if (BELONING && !tijdOp) wisBeloning()
+  if (gewonnen) {
     D.sterren[L] = Math.max(D.sterren[L] || 0, st)
     if (L === D.open && D.open < TD.KAARTEN.length - 1) { D.open++; ontgrendeld = 'Nieuw level: ' + TD.KAARTEN[D.open].naam }
     bewaar()
   }
-  if (gewonnen) Geluid.win(); else Geluid.verlies()
-  $('eindtitel').textContent = gewonnen
-    ? (!heel ? 'Tot golf ' + S.golf + ' gehaald! Volgende keer ga je verder.' : L === TD.KAARTEN.length - 1 ? 'Alles gehaald!' : 'Level gehaald!')
+  if (gewonnen || tijdOp) Geluid.win(); else Geluid.verlies()
+  $('eindtitel').textContent = tijdOp ? 'Tijd is op! Volgende keer ga je precies verder.'
+    : gewonnen ? (L === TD.KAARTEN.length - 1 ? 'Alles gehaald!' : 'Level gehaald!')
     : 'Je kern is kapot!'
   $('eindsterren').innerHTML = sterSvg(st)
-  $('eindsterren').classList.toggle('verborgen', !gewonnen || !heel)
+  $('eindsterren').classList.toggle('verborgen', !gewonnen)
   $('ontgrendeld').textContent = ontgrendeld
   $('ontgrendeld').classList.toggle('verborgen', !ontgrendeld)
-  $('st-golf').textContent = (gewonnen ? S.golf : S.golf - 1) + '/' + S.maxGolf
+  $('st-golf').textContent = (gewonnen || (tijdOp && !S.actief) ? S.golf : S.golf - 1) + '/' + S.maxGolf
   $('st-knal').textContent = S.geknald
   $('st-levens').textContent = S.levens
   $('volgende').classList.toggle('verborgen', BELONING || !gewonnen || L >= TD.KAARTEN.length - 1)
@@ -1466,11 +1490,11 @@ function toonMenu() {
   actief = false; S = null
   kies = null; gekozen = null
   $('menutekst').textContent = BELONING
-    ? 'Kies een level en hou ' + TD.BELONING_GOLVEN + ' golven ballonnen tegen. Daarna ga je verder met oefenen.'
+    ? 'Je mag 1 minuut spelen, daarna ga je weer oefenen. De volgende keer ga je precies verder waar je was.'
     : 'Bouw torens langs het pad en knal alle ballonnen kapot voordat ze je kern bereiken. Elk level heeft ' + TD.GOLVEN + ' golven.'
   var box = $('levels'); box.innerHTML = ''
   var verder = BELONING ? leesBeloning() : null
-  if (verder) $('menutekst').textContent = 'Ga verder waar je was, of begin opnieuw met een ander level.'
+  if (verder) $('menutekst').textContent = 'Je mag 1 minuut spelen. Ga verder waar je was, of begin opnieuw met een level.'
   TD.KAARTEN.forEach(function (def, i) {
     var open = i <= D.open, b = document.createElement('button'), hier = verder && verder.L === i
     b.className = 'lvkaart'; b.disabled = !open; b.style.setProperty('--k', def.kleur)

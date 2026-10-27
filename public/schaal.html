@@ -1,0 +1,917 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rekenen met schaal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg1:#060a1d;--bg2:#141846;--bg3:#2b1f63;
+  --glass:rgba(255,255,255,.07);--glass2:rgba(255,255,255,.12);--line:rgba(255,255,255,.16);
+  --text:#f2f5ff;--muted:#aab4dc;
+  --s1:#4ade80;--s2:#60a5fa;--s3:#c084fc;--gold:#fbbf24;--ok:#4ade80;--bad:#fb7185;
+  --acc:var(--s2);
+}
+body[data-star="1"]{--acc:var(--s1)}
+body[data-star="2"]{--acc:var(--s2)}
+body[data-star="3"]{--acc:var(--s3)}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{
+  font-family:Nunito,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--text);min-height:100vh;
+  background:radial-gradient(ellipse at 50% -10%,var(--bg3),transparent 60%),linear-gradient(180deg,var(--bg1),var(--bg2));
+  background-attachment:fixed;font-size:17px;line-height:1.5;
+}
+#sky{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+#sky span{position:absolute;width:2px;height:2px;border-radius:50%;background:#fff;opacity:.6;animation:tw 3s ease-in-out infinite}
+@keyframes tw{50%{opacity:.15}}
+.wrap{position:relative;z-index:1;max-width:920px;margin:0 auto;padding:68px 16px 60px}
+header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.logo{font-weight:900;font-size:1.25rem;letter-spacing:.3px;cursor:pointer}
+.logo small{display:block;font-weight:600;font-size:.78rem;color:var(--muted)}
+.card{background:var(--glass);border:1px solid var(--line);border-radius:22px;padding:22px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 10px 40px rgba(0,0,0,.35);margin-bottom:16px}
+h1{font-size:2rem;margin:.2em 0 .3em;font-weight:900}
+h2{font-size:1.45rem;margin:.1em 0 .5em;font-weight:900}
+p{margin:.4em 0 .8em}
+.muted{color:var(--muted)}
+.btn{background:var(--acc);color:#0a0f2a;font-weight:800;border:0;border-radius:14px;padding:12px 20px;font-size:1.05rem;cursor:pointer;font-family:inherit;transition:transform .1s,filter .15s}
+.btn:hover{filter:brightness(1.1)}
+.btn:active{transform:scale(.97)}
+.btn.ghost{background:rgba(255,255,255,.06);color:var(--text);border:1px solid var(--line)}
+.btn.small{padding:8px 14px;font-size:.95rem}
+.btn:disabled{opacity:.35;cursor:default;transform:none}
+.big-choices{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:14px}
+.choice{background:var(--glass2);border:2px solid var(--line);border-radius:20px;padding:20px;cursor:pointer;color:var(--text);font-family:inherit;text-align:left;transition:transform .15s,border-color .15s}
+.choice:hover{transform:translateY(-3px);border-color:var(--acc)}
+.choice .ic{font-size:2.2rem}
+.choice b{display:block;font-size:1.2rem;margin:.2em 0}
+.choice span{color:var(--muted);font-size:.95rem}
+.choice.sel{border-color:var(--acc);background:rgba(255,255,255,.16);box-shadow:0 0 0 3px color-mix(in srgb,var(--acc) 35%,transparent)}
+.choice.s1{--acc:var(--s1)}.choice.s2{--acc:var(--s2)}.choice.s3{--acc:var(--s3)}
+.chips{display:flex;flex-wrap:wrap;gap:10px}
+.chip{border:2px solid var(--line);background:rgba(255,255,255,.05);color:var(--text);border-radius:999px;padding:9px 16px;font-family:inherit;font-weight:700;font-size:1rem;cursor:pointer}
+.chip.on{border-color:var(--acc);background:color-mix(in srgb,var(--acc) 22%,transparent)}
+/* uitleg */
+.stepdots{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.stepdots button{width:34px;height:34px;border-radius:50%;border:2px solid var(--line);background:rgba(255,255,255,.05);color:var(--text);font-weight:800;font-family:inherit;cursor:pointer}
+.stepdots button.cur{background:var(--acc);color:#0a0f2a;border-color:var(--acc)}
+.stepdots button.seen{border-color:var(--acc)}
+.navrow{display:flex;justify-content:space-between;gap:10px;margin-top:18px;flex-wrap:wrap}
+.box{background:rgba(255,255,255,.06);border-left:5px solid var(--acc);border-radius:12px;padding:12px 16px;margin:12px 0}
+.box.gold{border-left-color:var(--gold)}
+.eq{display:flex;flex-wrap:wrap;align-items:center;gap:10px;font-weight:800;font-size:1.1rem;margin:14px 0}
+.pill{background:rgba(255,255,255,.1);border:1px solid var(--line);border-radius:14px;padding:8px 14px}
+.pill.acc{background:color-mix(in srgb,var(--acc) 25%,transparent);border-color:var(--acc)}
+.illu{width:100%;max-width:460px;display:block;margin:8px auto}
+.vt-flex{display:flex;align-items:center;gap:12px}
+.vt-arrow.bottom{margin-top:2px}
+.vt-arrow.bottom span{border-bottom:0;border-top:2px solid var(--gold);padding-top:2px}
+.vt-arrow.bottom span::after{bottom:auto;top:-6px}
+.vt-v{font-weight:900;color:var(--gold);font-size:1.05rem;white-space:nowrap}
+.vt tr.r-tek th{background:rgba(96,165,250,.18);border-left:6px solid #60a5fa}
+.vt tr.r-echt th{background:rgba(251,191,36,.15);border-left:6px solid #fbbf24}
+.rowtag{display:inline-block;font-weight:800;border-radius:8px;padding:2px 8px;margin:3px 6px 3px 0}
+.rowtag.tek{background:rgba(96,165,250,.22);border-left:5px solid #60a5fa}
+.rowtag.echt{background:rgba(251,191,36,.18);border-left:5px solid #fbbf24}
+.stapbar{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:6px 0 4px}
+.stapbar span{font-size:.78rem;font-weight:700;line-height:1.2;padding:6px 8px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--muted)}
+.stapbar span b{display:block;font-size:1rem;color:var(--text)}
+.stapbar span.on{background:color-mix(in srgb,var(--acc) 28%,transparent);border-color:var(--acc);color:var(--text)}
+.stapbar span.done{border-color:color-mix(in srgb,var(--acc) 50%,transparent)}
+.plan{display:grid;gap:8px;margin:10px 0}
+.plan div{display:flex;gap:12px;align-items:center;background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:14px;padding:10px 14px}
+.plan div>b{flex:none;width:34px;height:34px;border-radius:50%;background:var(--acc);color:#0a0f2a;display:flex;align-items:center;justify-content:center;font-size:1.1rem}
+.helpbox{margin-top:14px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:16px;padding:12px 14px}
+.helphead{font-weight:900;margin-bottom:4px}
+.say{background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.35);border-radius:14px;padding:12px 16px;margin-top:10px;min-height:3.2em}
+.anim-nav{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+.anim-count{color:var(--muted);font-weight:700;font-size:.9rem}
+.mini{margin-top:18px;background:rgba(255,255,255,.05);border:1px dashed var(--line);border-radius:16px;padding:14px 16px}
+.mini-q{font-weight:700;margin-bottom:8px}
+.mini-fb{margin-top:8px;font-weight:800;min-height:1.4em}
+.mini-fb.ok{color:var(--ok)}.mini-fb.bad{color:var(--bad)}
+/* verhoudingstabel */
+.vt-wrap{margin:12px 0;overflow-x:auto}
+.vt-arrow{margin-left:10.5em;width:8.4em;text-align:center;height:1.8em;font-weight:900;color:var(--gold);font-size:1.05rem}
+.vt-arrow span{display:inline-block;border-bottom:2px solid var(--gold);padding:0 10px;position:relative}
+.vt-arrow span::after{content:"";position:absolute;right:-6px;bottom:-6px;border-left:8px solid var(--gold);border-top:5px solid transparent;border-bottom:5px solid transparent}
+table.vt{border-collapse:collapse;font-size:1.05rem}
+.vt th{width:10.5em;text-align:left;font-weight:700;padding:8px 10px;background:rgba(255,255,255,.08);border:2px solid var(--line);font-size:.92rem}
+.vt td{width:4.2em;height:2.5em;text-align:center;font-weight:800;border:2px solid var(--line);background:rgba(255,255,255,.03)}
+.vt td.qm{color:var(--gold);font-size:1.3rem}
+.vt td.ms{color:var(--acc);font-size:.85rem}
+/* svg */
+.svgwrap{margin:12px 0;overflow:hidden}
+svg.msvg{width:100%;display:block;touch-action:none;background:rgba(255,255,255,.035);border:1px dashed var(--line);border-radius:14px;user-select:none;-webkit-user-select:none}
+svg text{font-family:Nunito,system-ui,sans-serif}
+.ruler-body{fill:#fde68a;stroke:#b45309;stroke-width:1.5}
+.tick{stroke:#3b2f0a;stroke-width:1}
+.rnum{font-size:12px;fill:#3b2f0a;text-anchor:middle;font-weight:800;pointer-events:none}
+.runit{font-size:11px;fill:#7c5a10;font-weight:700;pointer-events:none}
+#ruler.movable{cursor:grab}
+#ruler.drag{cursor:grabbing}
+#ruler.drag .ruler-body{fill:#fcd34d}
+.mline{stroke:var(--acc);stroke-width:4}
+.cap{stroke:var(--acc);stroke-width:3}
+.truth{stroke:var(--ok);stroke-width:4;stroke-dasharray:6 5}
+.sl{stroke:#fff;stroke-width:3}
+.lbl{fill:#f2f5ff;font-size:16px;font-weight:700}
+.lbl.small{font-size:14px;fill:#aab4dc}
+.guide{stroke:var(--acc);stroke-width:1.5;stroke-dasharray:4 4;opacity:.7}
+.ground{stroke:#64748b;stroke-width:2}
+.rotBtn{margin-top:8px}
+.handle{fill:var(--gold);stroke:#fff;stroke-width:3;cursor:ew-resize}
+.hint-note{font-size:.85rem;color:var(--muted);margin-top:4px}
+/* oefenen */
+.qhead{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.tag{background:color-mix(in srgb,var(--acc) 22%,transparent);border:1px solid var(--acc);border-radius:999px;padding:4px 12px;font-weight:800;font-size:.9rem}
+.qnum{color:var(--muted);font-weight:700}
+.qtext{display:flex;gap:12px;align-items:flex-start;font-size:1.15rem}
+.qemo{font-size:2.2rem;line-height:1}
+.ansrow{display:flex;align-items:center;gap:10px;margin:16px 0 6px;font-size:1.4rem;font-weight:900;flex-wrap:wrap}
+.ansrow input,.mini input{width:8ch;font-size:1.4rem;font-weight:800;font-family:inherit;text-align:center;padding:8px 10px;border-radius:12px;border:2px solid var(--line);background:rgba(255,255,255,.1);color:var(--text)}
+.mini input{font-size:1.15rem;width:7ch}
+.mini .ansrow{font-size:1.15rem;margin:6px 0}
+input:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 3px color-mix(in srgb,var(--acc) 30%,transparent)}
+.drawnote{margin:14px 0 4px;font-weight:700}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.hint{background:rgba(96,165,250,.1);border:1px solid rgba(96,165,250,.35);border-radius:14px;padding:10px 14px;margin:10px 0}
+.fb{border-radius:14px;padding:12px 16px;margin-top:14px;font-size:1.05rem}
+.fb.ok{background:rgba(74,222,128,.13);border:1px solid rgba(74,222,128,.5)}
+.fb.bad{background:rgba(251,113,133,.12);border:1px solid rgba(251,113,133,.5)}
+.fb.info{background:rgba(255,255,255,.07);border:1px solid var(--line)}
+.fb .small{font-size:.95rem;color:var(--muted)}
+.dots{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.dots i{width:28px;height:10px;border-radius:6px;background:rgba(255,255,255,.12)}
+.dots i.cur{background:var(--acc)}
+.dots i.r1{background:var(--ok)}.dots i.r5{background:var(--gold)}.dots i.r0{background:var(--bad)}
+.score{font-size:3rem;font-weight:900;text-align:center;margin:.1em 0}
+.bigstars{font-size:2.6rem;text-align:center;letter-spacing:6px}
+.res-table{width:100%;border-collapse:collapse;margin:12px 0}
+.res-table td{padding:8px 6px;border-bottom:1px solid var(--line)}
+.res-table td:last-child{text-align:right;font-weight:800}
+.modal{position:fixed;inset:0;background:rgba(3,6,20,.7);z-index:10;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal .card{max-width:560px;width:100%;max-height:90vh;overflow:auto;background:#1a1f52}
+.modal ul{padding-left:1.2em}.modal li{margin:.35em 0}
+.conf{position:fixed;top:-12px;width:10px;height:14px;z-index:20;pointer-events:none;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(105vh) rotate(720deg)}}
+@media (max-width:560px){
+  body{font-size:16px}
+  h1{font-size:1.6rem}
+  .card{padding:16px;border-radius:18px}
+  .vt th{width:8.5em;font-size:.8rem;padding:6px}
+  .vt-arrow{margin-left:8.5em;width:7.4em}
+  .vt td{width:3.7em}
+  .qtext{font-size:1.05rem}
+}
+</style>
+</head>
+<body data-star="2">
+<div id="sky"></div>
+<div class="wrap">
+  <header>
+    <div class="logo" id="goHome">📐 Rekenen met schaal<small>Pluspunt groep 7 · blok 2 · les 9</small></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn ghost small" id="bSpiek">📋 Spiekbriefje</button>
+      <button class="btn ghost small" id="bHome">🏠 Start</button>
+    </div>
+  </header>
+
+  <!-- HOME -->
+  <section class="screen" id="home">
+    <div class="card">
+      <h1>Hoe groot is het in het echt? 🌍</h1>
+      <p>Op een tekening of kaart is alles <b>kleiner</b> dan in het echt. Met de <b>schaal</b> kun je uitrekenen hoe groot iets echt is, of hoe groot je het moet tekenen.</p>
+      <div class="big-choices">
+        <button class="choice" id="toUitleg"><div class="ic">🧭</div><b>Uitleg stap voor stap</b><span>Leer in 8 kleine stappen hoe schaal werkt. Met oefenvraagjes tussendoor.</span></button>
+        <button class="choice" id="toKies"><div class="ic">🚀</div><b>Oefenen</b><span>Kies een niveau en maak 10 opgaven. Met liniaal, tekenen en hulp.</span></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- UITLEG -->
+  <section class="screen" id="uitleg" hidden>
+    <div class="card">
+      <div class="stepdots" id="stepDots"></div>
+      <div id="stepBody"></div>
+      <div class="navrow">
+        <button class="btn ghost" id="stepPrev">◀ Vorige</button>
+        <button class="btn" id="stepNext">Volgende ▶</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- KIES -->
+  <section class="screen" id="kies" hidden>
+    <div class="card">
+      <h2>1. Wat wil je oefenen?</h2>
+      <div class="chips" id="typeChips"></div>
+      <p class="muted" style="margin-top:10px;font-size:.92rem">Tik op een onderdeel om het aan of uit te zetten.</p>
+    </div>
+    <div class="card">
+      <h2>2. Kies je niveau</h2>
+      <div class="big-choices" id="starChoices">
+        <button class="choice s1" data-star="1"><div class="ic">⭐</div><b>Basis</b><span>Makkelijke schalen, alles in centimeters. De verhoudingstabel staat al klaar.</span></button>
+        <button class="choice s2" data-star="2"><div class="ic">⭐⭐</div><b>Gewoon</b><span>Met meters en halve centimeters, zoals in je werkboek.</span></button>
+        <button class="choice s3" data-star="3"><div class="ic">⭐⭐⭐</div><b>Uitdaging</b><span>Kilometers, grote schalen en zelfs schaal 10 : 1.</span></button>
+      </div>
+      <div class="actions" style="margin-top:18px"><button class="btn" id="startRound">Start met oefenen 🚀</button></div>
+    </div>
+  </section>
+
+  <!-- OEFENEN -->
+  <section class="screen" id="oefen" hidden>
+    <div class="dots" id="dots"></div>
+    <div class="card" id="qbox"></div>
+  </section>
+
+  <!-- KLAAR -->
+  <section class="screen" id="klaar" hidden>
+    <div class="card" id="endBox"></div>
+  </section>
+</div>
+
+<div class="modal" id="spiek" hidden>
+  <div class="card">
+    <h2>📋 Spiekbriefje schaal</h2>
+    <ul>
+      <li><b>1 m = 100 cm</b> &nbsp;·&nbsp; <b>1 km = 1000 m = 100&nbsp;000 cm</b></li>
+      <li>Bij schaal reken je altijd in <b>centimeters</b>.</li>
+      <li><b>1 : 200</b> betekent: 1 cm in de tekening = 200 cm (2 m) in het echt.</li>
+      <li>Schaallijntje <b>1 cm = 2 m</b> is hetzelfde als <b>1 : 200</b>.</li>
+      <li><b>Tekening → echt:</b> lengte in de tekening <b>×</b> het schaalgetal.</li>
+      <li><b>Echt → tekening:</b> eerst naar cm, dan <b>:</b> het schaalgetal.</li>
+      <li><b>Schaal berekenen:</b> echt (cm) <b>:</b> tekening (cm) = schaalgetal → 1 : ...</li>
+      <li><b>Stappenplan:</b> 1 schaal in de tabel · 2 wat weet je? (in cm) · 3 welke som? · 4 uitrekenen + eenheid</li>
+      <li><b>Gouden regel:</b> wat je in de ene rij doet, doe je in de andere rij ook.</li>
+      <li><b>Meten:</b> zet de <b>0</b> van de liniaal precies bij het begin van de lijn.</li>
+    </ul>
+    <div class="actions"><button class="btn" id="closeSpiek">Sluiten</button></div>
+  </div>
+</div>
+
+<script>
+//GEN-START
+const CM = 37.8, PAD = 26;
+const FAC = {cm:1, m:100, km:100000};
+const UW = {cm:'centimeter (cm)', m:'meter (m)', km:'kilometer (km)'};
+const rnd = (a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+const pick = a=>a[Math.floor(Math.random()*a.length)];
+const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+const cap = s=>s.charAt(0).toUpperCase()+s.slice(1);
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function fmt(n){
+  n = Math.round(n*1000)/1000;
+  let [i,d] = String(n).split('.');
+  if(i.replace('-','').length>=5) i = i.replace(/\B(?=(\d{3})+(?!\d))/g,'\u00a0');
+  return d ? i+','+d : i;
+}
+function parseNum(s){
+  s = String(s).trim().replace(/[\s\u00a0]/g,'');
+  if(/^\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g,'');
+  s = s.replace(',','.');
+  if(!/^\d*\.?\d+$/.test(s)) return NaN;
+  return parseFloat(s);
+}
+function near(a,b){return Math.abs(a-b) <= Math.max(1e-6, Math.abs(b)*1e-6);}
+function lenText(cm,u){return fmt(cm/FAC[u])+' '+u;}
+
+const CTX = [
+  {n:'de mier',a:'mier',min:.2,max:1.5},
+  {n:'het lieveheersbeestje',a:'lhb',min:.3,max:1.2},
+  {n:'de vlinder',a:'vlinder',min:2,max:9},
+  {n:'het potlood',a:'potlood',min:10,max:19},
+  {n:'het boek',a:'boek',min:15,max:35},
+  {n:'de stoel',a:'stoel',min:40,max:110},
+  {n:'de tafel',a:'tafel',min:80,max:220},
+  {n:'de deur',a:'deur',min:180,max:250},
+  {n:'de auto',a:'auto',min:300,max:500},
+  {n:'de giraf',a:'giraf',min:400,max:600},
+  {n:'het klaslokaal',a:'lokaal',min:500,max:1000},
+  {n:'de vlaggenstok',a:'vlag',min:400,max:1200},
+  {n:'de boom',a:'boom',min:300,max:2500},
+  {n:'het huis',a:'huis',min:600,max:1500},
+  {n:'de bus',a:'bus',min:1000,max:1500},
+  {n:'de walvis',a:'walvis',min:1000,max:3000},
+  {n:'het zwembad',a:'zwembad',min:1500,max:5000},
+  {n:'de toren',a:'toren',min:2000,max:10000},
+  {n:'het voetbalveld',a:'veld',min:9000,max:12000},
+  {n:'de brug',a:'brug',min:5000,max:100000},
+  {n:'de wandelroute',a:'kaart',min:100000,max:2000000},
+  {n:'de afstand tussen twee dorpen',a:'kaart',min:200000,max:5000000},
+  {n:'de afstand tussen twee steden',a:'kaart',min:1000000,max:60000000}
+];
+function ctxFor(cm){const m=CTX.filter(c=>cm>=c.min&&cm<=c.max);return m.length?pick(m):{n:'de lijn',a:'lijn'};}
+
+function sT(star){
+  if(star===1) return {s:pick([10,20,50,100]), t:rnd(2,9)};
+  if(star===2) return {s:pick([50,60,80,100,200,300,400,500]), t:Math.random()<.3? rnd(2,8)+.5 : rnd(2,9)};
+  return {s:pick([250,500,1000,2000,5000,25000,50000,100000]), t:Math.random()<.3? rnd(2,8)+.5 : rnd(2,9)};
+}
+function dispUnit(cm,star){
+  if(star===1) return 'cm';
+  if(star===2) return ((cm%100===0)||(cm%50===0&&cm>=200)) && Math.random()<.8 ? 'm' : 'cm';
+  if(cm>=100000 && cm%10000===0) return 'km';
+  if(cm%10===0 && cm>=100) return 'm';
+  return 'cm';
+}
+function ansUnit(cm,star){
+  if(star===1) return 'cm';
+  if(star===2){ if(cm%100===0) return Math.random()<.65?'m':'cm'; return (cm%50===0&&cm>=200)?'m':'cm'; }
+  if(cm>=100000) return 'km';
+  return (cm%100===0 || Math.random()<.5) ? 'm' : 'cm';
+}
+const STD = ['in de tekening (cm)','in het echt (cm)'];
+const MEET = 'meet!';
+
+function genA(star){
+  const {s,t}=sT(star); const echt=t*s; const du=dispUnit(echt,star); const c=ctxFor(echt);
+  const measure = Math.random() < (star===3?.35:.5);
+  const et = lenText(echt,du);
+  const conv = du!=='cm' ? `${et} = ${fmt(echt)} cm. ` : '';
+  return {type:'A',star,emoji:c.e,measure,ansKind:'schaal',answer:s,echtUnit:du,
+    text: measure
+      ? `${cap(c.n)} is hieronder getekend. <b>Meet de maatpijl</b> met de liniaal. In het echt is ${c.n} <b>${et}</b> lang. Wat is de schaal?`
+      : `${cap(c.n)} is in de tekening <b>${fmt(t)} cm</b> lang. In het echt is ${c.n} <b>${et}</b> lang. Wat is de schaal?`,
+    svg: measure ? {mode:'measure',len:t,naam:c.n,art:c.a} : null,
+    labels:STD, walk:f=>walkA(t,s,echt,du,measure,f),
+    hint: (measure?'Meet eerst heel precies hoe lang de maatpijl is. ':'') + (conv?`Maak eerst centimeters: ${conv}`:'') +
+      (measure?`Deel dan ${fmt(echt)} door de lengte van de maatpijl.`:`Deel dan: ${fmt(echt)} : ${fmt(t)}.`),
+    solution: (measure?`De maatpijl is ${fmt(t)} cm. `:'') + conv + `${fmt(echt)} : ${fmt(t)} = ${fmt(s)}. Dus 1 cm in de tekening is ${fmt(s)} cm in het echt. De schaal is <b>1 : ${fmt(s)}</b>.`
+  };
+}
+
+function genB(star){
+  if(star===3 && Math.random()<.2){
+    const k=pick([10,20]); const t = k===10 ? rnd(3,9) : pick([4,6,8,10,12]); const echt=t/k; const c=ctxFor(echt);
+    const measure = Math.random()<.4;
+    return {type:'B',star,emoji:c.e,measure,ansKind:'len',unit:'cm',answer:echt,
+      text:`De schaal is <b>${k} : 1</b>. Let op: deze tekening is juist <b>groter</b> dan in het echt! ${cap(c.n)} is ${measure?'hieronder getekend. <b>Meet de maatpijl.</b>':`in de tekening <b>${fmt(t)} cm</b> lang.`} Hoe lang is ${c.n} in het echt? Geef je antwoord in <b>centimeter (cm)</b>.`,
+      svg: measure?{mode:'measure',len:t,naam:c.n,art:c.a}:null,
+      labels:STD, walk:f=>walkK(k,t,echt,measure,f),
+      hint:`${k} cm in de tekening is maar 1 cm in het echt. Deel de lengte in de tekening dus door ${k}.`,
+      solution:`${measure?`De maatpijl is ${fmt(t)} cm. `:''}${fmt(t)} : ${k} = ${fmt(echt)}. In het echt is ${c.n} <b>${fmt(echt)} cm</b>.`
+    };
+  }
+  const {s,t}=sT(star); const echt=t*s; const u=ansUnit(echt,star); const ans=echt/FAC[u]; const c=ctxFor(echt);
+  const measure = Math.random() < (star===3?.4:.5);
+  const convTxt = u==='m' ? ' Je krijgt dan centimeters. Maak er daarna meters van: 100 cm = 1 m, dus deel door 100.'
+               : u==='km' ? ' Je krijgt dan centimeters. Maak er daarna kilometers van: 100 000 cm = 1 km.' : '';
+  return {type:'B',star,emoji:c.e,measure,ansKind:'len',unit:u,answer:ans,
+    text:`De schaal is <b>1 : ${fmt(s)}</b>. ${cap(c.n)} is ${measure?'hieronder getekend. <b>Meet de maatpijl.</b>':`in de tekening <b>${fmt(t)} cm</b> lang.`} Hoe lang is ${c.n} in het echt? Geef je antwoord in <b>${UW[u]}</b>.`,
+    svg: measure?{mode:'measure',len:t,naam:c.n,art:c.a}:null,
+    labels:STD, walk:f=>walkB(s,t,echt,u,measure,f),
+    hint:`1 cm in de tekening is ${fmt(s)} cm in het echt. ${measure?`Meet de maatpijl en reken: lengte × ${fmt(s)}.`:`Reken: ${fmt(t)} × ${fmt(s)}.`}${convTxt}`,
+    solution:`${measure?`De maatpijl is ${fmt(t)} cm. `:''}${fmt(t)} × ${fmt(s)} = ${u==='cm'?`<b>${fmt(echt)} cm</b>`:`${fmt(echt)} cm = <b>${fmt(ans)} ${u}</b>`}.`
+  };
+}
+
+function genC(star){
+  const {s,t}=sT(star); const echt=t*s; const du=dispUnit(echt,star); const c=ctxFor(echt);
+  const draw = Math.random()<.5; const et=lenText(echt,du);
+  const conv = du!=='cm' ? `${et} = ${fmt(echt)} cm. ` : '';
+  return {type:'C',star,emoji:c.e,measure:false,ansKind:draw?'draw':'len',unit:draw?null:'cm',answer:t,
+    text:`De schaal is <b>1 : ${fmt(s)}</b>. ${cap(c.n)} is in het echt <b>${et}</b> lang. ${draw?`<b>Teken ${c.n} op schaal:</b> sleep het gele bolletje tot de lijn precies lang genoeg is.`:`Hoe lang wordt ${c.n} in de tekening? Geef je antwoord in <b>centimeter (cm)</b>.`}`,
+    svg: draw?{mode:'draw',naam:c.n,art:c.a,answer:t}:null,
+    labels:STD, walk:f=>walkC(s,t,echt,du,draw,f),
+    hint:(conv?`Maak eerst centimeters: ${conv}`:'')+`Hoe vaak past ${fmt(s)} in ${fmt(echt)}? Reken: ${fmt(echt)} : ${fmt(s)}.`,
+    solution: conv + `${fmt(echt)} : ${fmt(s)} = ${fmt(t)}. ${cap(c.n)} wordt <b>${fmt(t)} cm</b> in de tekening.`
+  };
+}
+
+function genD(star){
+  let s;
+  if(star===1) s=pick([10,20,50,100,200]);
+  else if(star===2) s=pick([100,200,300,400,500,1000]);
+  else s=pick([2500,5000,25000,50000,100000,200000,500000]);
+  const u = s>=100000?'km': s>=100?'m':'cm';
+  const X = lenText(s,u);
+  const v = pick(star===1?['naarSchaal','meten']:['naarSchaal','meten','naarLijn']);
+  if(v==='naarSchaal'){
+    return {type:'D',star,emoji:'📏',measure:false,ansKind:'schaal',answer:s,echtUnit:u,schaallijn:`1 cm = ${X}`,
+      text:`Hierboven zie je een schaallijntje: <b>1 cm = ${X}</b>. Welke schaal hoort hierbij?`,
+      svg:null, labels:STD, walk:f=>walkDS(s,u,f),
+      hint: u==='cm' ? `1 cm in de tekening is ${X} in het echt. Wat is dan het getal achter 1 : ?` : `Reken ${X} om naar centimeters. ${u==='m'?'1 m = 100 cm.':'1 km = 100 000 cm.'}`,
+      solution: u==='cm' ? `1 cm is ${X} in het echt, dus de schaal is <b>1 : ${fmt(s)}</b>.` : `${X} = ${fmt(s)} cm. Dus 1 cm is ${fmt(s)} cm in het echt. De schaal is <b>1 : ${fmt(s)}</b>.`
+    };
+  }
+  if(v==='naarLijn'){
+    return {type:'D',star,emoji:'📏',measure:false,ansKind:'len',unit:u,answer:s/FAC[u],schaallijn:'1 cm = ?',
+      text:`De schaal is <b>1 : ${fmt(s)}</b>. Maak het schaallijntje af: 1 cm in de tekening is hoeveel <b>${UW[u]}</b> in het echt?`,
+      svg:null, labels:STD, walk:f=>walkDL(s,u,f),
+      hint:`1 cm is ${fmt(s)} cm in het echt. Reken dat om naar ${u==='m'?'meters (deel door 100)':'kilometers (deel door 100 000)'}.`,
+      solution:`1 cm in de tekening is ${fmt(s)} cm in het echt. ${fmt(s)} cm = <b>${fmt(s/FAC[u])} ${u}</b>. Het schaallijntje is: 1 cm = ${X}.`
+    };
+  }
+  const t = star===1 ? rnd(2,9) : (Math.random()<.35 ? rnd(2,8)+.5 : rnd(2,9));
+  const echt=t*s; const ans=echt/FAC[u]; const c=ctxFor(echt);
+  return {type:'D',star,emoji:c.e,measure:true,ansKind:'len',unit:u,answer:ans,schaallijn:`1 cm = ${X}`,
+    text:`Gebruik het schaallijntje: <b>1 cm = ${X}</b>. <b>Meet de maatpijl</b> van ${c.n}. Hoe lang is ${c.n} in het echt? Geef je antwoord in <b>${UW[u]}</b>.`,
+    svg:{mode:'measure',len:t,naam:c.n,art:c.a},
+    labels:['in de tekening (cm)',`in het echt (${u})`], walk:f=>walkDM(s,u,t,f),
+    hint:`Meet de maatpijl heel precies. Elke centimeter is ${X}. Reken dus: lengte van de maatpijl × ${fmt(s/FAC[u])}.`,
+    solution:`De maatpijl is ${fmt(t)} cm. ${fmt(t)} × ${fmt(s/FAC[u])} = <b>${fmt(ans)} ${u}</b>.`
+  };
+}
+
+/* ---------- stap-voor-stap in de verhoudingstabel ---------- */
+const W=(stap,top,bot,arrowH,say,arrowV)=>({stap,top,bot,arrowH,say,arrowV});
+const OM = (cm,du)=> du==='cm' ? `<b>${fmt(cm)} cm</b>` : `${lenText(cm,du)}. Maak er centimeters van: ${lenText(cm,du)} = <b>${fmt(cm)} cm</b>`;
+function walkA(t,s,echt,du,measure,final){
+  const hide=measure&&!final, tt=hide?MEET:fmt(t), tw=hide?'de lengte van de maatpijl':fmt(t);
+  const fr=[
+    W(1,['','1'],['','?'],null,'We zoeken de schaal. Een schaal begint altijd met <b>1</b>. Zet 1 in de bovenste rij (tekening). Eronder komt het <b>?</b>, dat is het schaalgetal.'),
+    W(2,[tt,'1'],[fmt(echt),'?'],null,(hide?'Meet de maatpijl en zet de lengte in de bovenste rij. ':`In de tekening is het <b>${fmt(t)} cm</b>. `)+'In het echt is het '+OM(echt,du)+'. Zet alles in de tabel.'),
+    W(3,[tt,'1'],[fmt(echt),'?'],hide?': pijl':': '+fmt(t),`Kijk naar de bovenste rij: van ${tw} naar 1 is <b>gedeeld door ${tw}</b>. Wat je boven doet, doe je onder ook!`)];
+  fr.push(final ? W(4,[tt,'1'],[fmt(echt),fmt(s)],': '+fmt(t),`${fmt(echt)} : ${fmt(t)} = <b>${fmt(s)}</b>. De schaal is <b>1 : ${fmt(s)}</b>. 🎉`)
+                : W(4,[tt,'1'],[fmt(echt),'?'],hide?': pijl':': '+fmt(t),`Reken nu zelf uit: <b>${fmt(echt)} : ${tw}</b> = ? Dat getal komt achter <b>1 : ...</b>`));
+  return fr;
+}
+function walkB(s,t,echt,u,measure,final){
+  const hide=measure&&!final, tt=hide?MEET:fmt(t), tw=hide?'de lengte van de maatpijl':fmt(t), ar=hide?'× pijl':'× '+fmt(t), ans=echt/FAC[u];
+  const fr=[
+    W(1,['1',''],[fmt(s),''],null,`De schaal is 1 : ${fmt(s)}. Zet dat in de tabel: <b>1 cm</b> in de tekening is <b>${fmt(s)} cm</b> in het echt.`),
+    W(2,['1',tt],[fmt(s),'?'],null,(hide?'Meet de maatpijl en zet de lengte in de bovenste rij.':`In de tekening is het <b>${fmt(t)} cm</b>. Zet dat in de bovenste rij.`)+' Eronder komt het <b>?</b>.'),
+    W(3,['1',tt],[fmt(s),'?'],ar,`Kijk naar de bovenste rij: van 1 naar ${tw} is <b>keer ${tw}</b>. Wat je boven doet, doe je onder ook!`)];
+  fr.push(final ? W(4,['1',tt],[fmt(s),fmt(echt)],ar,`${fmt(t)} × ${fmt(s)} = <b>${fmt(echt)} cm</b>.`+(u!=='cm'?` Er wordt gevraagd in ${UW[u]}: ${fmt(echt)} cm = <b>${fmt(ans)} ${u}</b>.`:''))
+                : W(4,['1',tt],[fmt(s),'?'],ar,`Reken nu zelf uit: <b>${tw} × ${fmt(s)}</b> = ? cm.`+(u!=='cm'?` Let op: maak er daarna <b>${UW[u]}</b> van!`:'')));
+  return fr;
+}
+function walkK(k,t,echt,measure,final){
+  const hide=measure&&!final, tt=hide?MEET:fmt(t), tw=hide?'de lengte van de maatpijl':fmt(t);
+  const fr=[
+    W(1,[String(k),''],['1',''],null,`De schaal is ${k} : 1. De tekening is hier <b>groter</b>! Zet in de tabel: <b>${k} cm</b> in de tekening is maar <b>1 cm</b> in het echt.`),
+    W(2,[String(k),tt],['1','?'],null,(hide?'Meet de maatpijl en zet de lengte in de bovenste rij.':`In de tekening is het <b>${fmt(t)} cm</b>. Zet dat in de bovenste rij.`)+' Eronder komt het <b>?</b>.'),
+    W(3,[String(k),tt],['1','?'],null,`Kijk naar de eerste kolom: van ${k} (boven) naar 1 (onder) is <b>gedeeld door ${k}</b>. Doe in de tweede kolom hetzelfde!`,`↓ : ${k}`)];
+  fr.push(final ? W(4,[String(k),tt],['1',fmt(echt)],null,`${fmt(t)} : ${k} = <b>${fmt(echt)} cm</b>.`,`↓ : ${k}`)
+                : W(4,[String(k),tt],['1','?'],null,`Reken nu zelf uit: <b>${tw} : ${k}</b> = ? cm.`,`↓ : ${k}`));
+  return fr;
+}
+function walkC(s,t,echt,du,draw,final){
+  const fr=[
+    W(1,['1',''],[fmt(s),''],null,`De schaal is 1 : ${fmt(s)}. Zet dat in de tabel: <b>1 cm</b> in de tekening is <b>${fmt(s)} cm</b> in het echt.`),
+    W(2,['1','?'],[fmt(s),fmt(echt)],null,'In het echt is het '+OM(echt,du)+'. Zet dat in de onderste rij. Erboven komt het <b>?</b>.'),
+    W(3,['1','?'],[fmt(s),fmt(echt)],final?'× '+fmt(t):'× ?',`Nu kijk je naar de <b>onderste</b> rij: hoe vaak past ${fmt(s)} in ${fmt(echt)}? Reken: <b>${fmt(echt)} : ${fmt(s)}</b>`+(final?` = <b>${fmt(t)}</b>. Dus keer ${fmt(t)}.`:' = ? Dat is de keersom.')+' Wat je onder doet, doe je boven ook!')];
+  fr.push(final ? W(4,['1',fmt(t)],[fmt(s),fmt(echt)],'× '+fmt(t),`1 × ${fmt(t)} = <b>${fmt(t)} cm</b>. Zo lang ${draw?'teken je de lijn':'wordt het in de tekening'}. ✏️`)
+                : W(4,['1','?'],[fmt(s),fmt(echt)],'× ?',`Reken nu zelf uit: ${fmt(echt)} : ${fmt(s)} = ? Doe dan boven: 1 × ? = je antwoord in cm.`));
+  return fr;
+}
+function walkDM(s,u,t,final){
+  const sv=fmt(s/FAC[u]), X=lenText(s,u), tt=final?fmt(t):MEET, tw=final?fmt(t):'de lengte van de maatpijl', ar=final?'× '+fmt(t):'× pijl';
+  const fr=[
+    W(1,['1',''],[sv,''],null,`Het schaallijntje zegt: <b>1 cm = ${X}</b>. Zet dat in de tabel. Let op: de onderste rij is hier in <b>${UW[u]}</b>.`),
+    W(2,['1',tt],[sv,'?'],null,(final?`De maatpijl is <b>${fmt(t)} cm</b>.`:'Meet de maatpijl.')+' Zet de lengte in de bovenste rij. Eronder komt het <b>?</b>.'),
+    W(3,['1',tt],[sv,'?'],ar,`Bovenste rij: van 1 naar ${tw} is <b>keer ${tw}</b>. Doe onder hetzelfde!`)];
+  fr.push(final ? W(4,['1',tt],[sv,fmt(t*s/FAC[u])],ar,`${fmt(t)} × ${sv} = <b>${fmt(t*s/FAC[u])} ${u}</b>.`)
+                : W(4,['1',tt],[sv,'?'],ar,`Reken nu zelf uit: <b>${tw} × ${sv}</b> = ? ${u}.`));
+  return fr;
+}
+function walkDS(s,u,final){
+  const X=lenText(s,u);
+  return [
+    W(1,['1',''],['',''],null,`Het schaallijntje zegt: <b>1 cm = ${X}</b>. Zet 1 in de bovenste rij.`),
+    W(2,['1',''],[(final||u==='cm')?fmt(s):'?',''],null,u==='cm'?`Onder de 1 komt ${X}. Dat is al in centimeters!`:`Onder de 1 komt ${X}, maar dan in <b>centimeters</b>. ${u==='m'?'1 m = 100 cm, dus keer 100.':'1 km = 100 000 cm, dus keer 100 000.'}`+(final?` ${X} = <b>${fmt(s)} cm</b>.`:'')),
+    W(3,['1',''],[(final||u==='cm')?fmt(s):'?',''],null,'Hier hoef je geen keer- of deelsom in de tabel te maken. Alleen omrekenen naar cm!'),
+    final ? W(4,['1',''],[fmt(s),''],null,`Het getal onder de 1 is het schaalgetal. De schaal is <b>1 : ${fmt(s)}</b>.`)
+          : W(4,['1',''],['?',''],null,`Het getal onder de 1 (in cm) is het schaalgetal. Vul het in achter <b>1 : ...</b>`)];
+}
+function walkDL(s,u,final){
+  return [
+    W(1,['1',''],[fmt(s),''],null,`De schaal is 1 : ${fmt(s)}. Zet dat in de tabel: 1 cm in de tekening is <b>${fmt(s)} cm</b> in het echt.`),
+    W(2,['1',''],[fmt(s),''],null,`Je weet nu hoeveel centimeter 1 cm in het echt is. Er wordt gevraagd in <b>${UW[u]}</b>.`),
+    W(3,['1',''],[fmt(s),''],null,`Geen som in de tabel nodig. Wel omrekenen: ${u==='m'?'van cm naar m is <b>gedeeld door 100</b>':'van cm naar km is <b>gedeeld door 100 000</b>'}.`),
+    final ? W(4,['1',''],[fmt(s),''],null,`${fmt(s)} cm = <b>${fmt(s/FAC[u])} ${u}</b>. Het schaallijntje is: 1 cm = ${lenText(s,u)}.`)
+          : W(4,['1',''],[fmt(s),''],null,`Reken nu zelf uit: <b>${fmt(s)} : ${u==='m'?'100':'100 000'}</b> = ? ${u}.`)];
+}
+const GEN = {A:genA,B:genB,C:genC,D:genD};
+
+function why(q,v){
+  if(q.ansKind==='draw') return v<q.answer ? 'Je lijn is te kort.' : 'Je lijn is te lang.';
+  if(q.ansKind==='schaal'){
+    if(q.echtUnit==='m' && near(v*100,q.answer)) return 'Let op: je hebt met meters gerekend. Maak eerst centimeters van de meters (× 100).';
+    if(q.echtUnit==='km' && near(v*100000,q.answer)) return 'Let op: je hebt met kilometers gerekend. Maak eerst centimeters (1 km = 100 000 cm).';
+    if(q.echtUnit==='km' && near(v*100,q.answer)) return 'Let op: je hebt met meters gerekend. Bij schaal reken je in centimeters.';
+  }
+  if(q.unit){
+    if(q.unit!=='cm' && near(v,q.answer*FAC[q.unit])) return `Je antwoord is in centimeters. Er wordt gevraagd in ${UW[q.unit]}.`;
+    if(q.unit==='km' && near(v,q.answer*1000)) return 'Je antwoord is in meters. Er wordt gevraagd in kilometers (1 km = 1000 m).';
+    if(q.unit==='cm' && near(v*100,q.answer)) return 'Je antwoord is in meters. Er wordt gevraagd in centimeters.';
+  }
+  if(q.measure && Math.abs(v-q.answer)/q.answer < .25) return 'Bijna! Meet de maatpijl nog eens heel precies: zet de 0 van de liniaal precies bij het begin van de lijn.';
+  return null;
+}
+//GEN-END
+
+/* ---------- tekenen ---------- */
+function cell(v){
+  if(v==='?') return '<td class="qm">?</td>';
+  if(v===MEET) return '<td class="ms">📏 meet</td>';
+  if(v===''||v==null) return '<td></td>';
+  return `<td>${v}</td>`;
+}
+function renderTable(t){
+  const ar = t.arrowH ? `<span>${t.arrowH}</span>` : '';
+  return `<div class="vt-wrap"><div class="vt-flex"><div>
+  <div class="vt-arrow">${ar}</div>
+  <table class="vt"><tr class="r-tek"><th>✏️ ${t.labels[0]}</th>${cell(t.top[0])}${cell(t.top[1])}</tr>
+  <tr class="r-echt"><th>🌍 ${t.labels[1]}</th>${cell(t.bot[0])}${cell(t.bot[1])}</tr></table>
+  <div class="vt-arrow bottom">${ar}</div></div>
+  ${t.arrowV?`<div class="vt-v">${t.arrowV}</div>`:''}</div></div>`;
+}
+const STAPPEN=['Schaal in de tabel','Wat weet je? (in cm)','Welke som?','Uitrekenen + eenheid'];
+function stapBar(n){return `<div class="stapbar">${STAPPEN.map((x,i)=>`<span class="${i+1===n?'on':i+1<n?'done':''}"><b>${i+1}</b>${x}</span>`).join('')}</div>`;}
+function setupAnim(el,labels,frames,start=0){
+  let i=start;
+  const draw=()=>{const f=frames[i];
+    el.innerHTML = stapBar(f.stap) + renderTable({labels,...f}) + `<div class="say"><b>Stap ${f.stap}:</b> ${f.say}</div>
+    <div class="anim-nav"><button class="btn ghost small" data-a="-1" ${i===0?'disabled':''}>◀ Terug</button>
+    <button class="btn small" data-a="1" ${i===frames.length-1?'disabled':''}>Volgende stap ▶</button>
+    <span class="anim-count">${i+1} van ${frames.length}</span></div>`;
+    el.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{i+=+b.dataset.a;draw();});
+  };
+  draw();
+}
+function rulerSVG(){
+  const w = 15.6*CM; let s = `<rect x="0" y="0" width="${w}" height="52" rx="6" class="ruler-body"/>`;
+  for(let mm=0; mm<=150; mm++){
+    const x = .3*CM + mm*CM/10; const h = mm%10===0?18 : mm%5===0?12 : 7;
+    s += `<line x1="${x}" y1="0" x2="${x}" y2="${h}" class="tick"/>`;
+    if(mm%10===0) s += `<text x="${x}" y="32" class="rnum">${mm/10}</text>`;
+  }
+  s += `<text x="${w-8}" y="47" class="runit" text-anchor="end">cm</text>`;
+  return s;
+}
+
+/* ---------- tekeningen op schaal (L = lengte in px) ---------- */
+const ART={
+ lijn:{o:'h',h:L=>0,f:L=>''},
+ auto:{o:'h',h:L=>.4*L,f:L=>{const H=.4*L,r=.1*L;return `<path d="M0 ${-.18*H} L0 ${-.55*H} Q0 ${-.62*H} ${.06*L} ${-.64*H} L${.24*L} ${-.66*H} L${.36*L} ${-H} L${.7*L} ${-H} L${.82*L} ${-.66*H} L${.96*L} ${-.62*H} Q${L} ${-.6*H} ${L} ${-.5*H} L${L} ${-.18*H} Z" fill="#ef4444"/><path d="M${.39*L} ${-.92*H} L${.52*L} ${-.92*H} L${.52*L} ${-.68*H} L${.31*L} ${-.68*H}Z" fill="#bfdbfe"/><path d="M${.56*L} ${-.92*H} L${.68*L} ${-.92*H} L${.77*L} ${-.68*H} L${.56*L} ${-.68*H}Z" fill="#bfdbfe"/><circle cx="${.22*L}" cy="${-r}" r="${r}" fill="#1f2937" stroke="#cbd5e1" stroke-width="${r*.35}"/><circle cx="${.78*L}" cy="${-r}" r="${r}" fill="#1f2937" stroke="#cbd5e1" stroke-width="${r*.35}"/>`;}},
+ bus:{o:'h',h:L=>.3*L,f:L=>{const H=.3*L,r=.065*L;let w='';for(let i=0;i<6;i++)w+=`<rect x="${(.05+i*.13)*L}" y="${-.9*H}" width="${.1*L}" height="${.3*H}" rx="${.01*L}" fill="#bfdbfe"/>`;return `<rect x="0" y="${-H}" width="${L}" height="${.82*H}" rx="${.04*L}" fill="#facc15"/><rect x="0" y="${-.42*H}" width="${L}" height="${.07*H}" fill="#ea580c"/>${w}<rect x="${.86*L}" y="${-.9*H}" width="${.08*L}" height="${.68*H}" fill="#fde68a" stroke="#b45309" stroke-width="${.004*L}"/><circle cx="${.2*L}" cy="${-r}" r="${r}" fill="#1f2937" stroke="#cbd5e1" stroke-width="${r*.35}"/><circle cx="${.78*L}" cy="${-r}" r="${r}" fill="#1f2937" stroke="#cbd5e1" stroke-width="${r*.35}"/>`;}},
+ potlood:{o:'h',h:L=>.09*L,f:L=>{const H=.09*L;return `<rect x="0" y="${-H}" width="${.07*L}" height="${H}" fill="#f9a8d4"/><rect x="${.07*L}" y="${-H}" width="${.04*L}" height="${H}" fill="#9ca3af"/><rect x="${.11*L}" y="${-H}" width="${.69*L}" height="${H}" fill="#facc15"/><rect x="${.11*L}" y="${-.6*H}" width="${.69*L}" height="${.2*H}" fill="#eab308"/><path d="M${.8*L} ${-H} L${.8*L} 0 L${L} ${-.5*H}Z" fill="#fcd9a8"/><path d="M${.94*L} ${-.65*H} L${.94*L} ${-.35*H} L${L} ${-.5*H}Z" fill="#374151"/>`;}},
+ boek:{o:'h',h:L=>.7*L,f:L=>{const H=.7*L;return `<rect x="0" y="${-H}" width="${L}" height="${H}" rx="${.03*L}" fill="#2563eb"/><rect x="0" y="${-H}" width="${.09*L}" height="${H}" fill="#1e40af"/><rect x="${.25*L}" y="${-.78*H}" width="${.55*L}" height="${.12*H}" rx="${.02*L}" fill="#fff" opacity=".85"/><rect x="${.32*L}" y="${-.58*H}" width="${.4*L}" height="${.05*H}" fill="#93c5fd"/>`;}},
+ tafel:{o:'h',h:L=>.45*L,f:L=>{const H=.45*L;return `<rect x="0" y="${-H}" width="${L}" height="${.1*H}" rx="${.01*L}" fill="#a16207"/><rect x="${.05*L}" y="${-.9*H}" width="${.05*L}" height="${.9*H}" fill="#854d0e"/><rect x="${.9*L}" y="${-.9*H}" width="${.05*L}" height="${.9*H}" fill="#854d0e"/>`;}},
+ walvis:{o:'h',h:L=>.4*L,f:L=>{const H=.4*L;return `<path d="M${.78*L} ${-.5*H} L${L} ${-.95*H} L${.92*L} ${-.5*H} L${L} ${-.05*H}Z" fill="#2563eb"/><ellipse cx="${.42*L}" cy="${-.48*H}" rx="${.42*L}" ry="${.44*H}" fill="#3b82f6"/><ellipse cx="${.4*L}" cy="${-.24*H}" rx="${.3*L}" ry="${.16*H}" fill="#93c5fd"/><circle cx="${.16*L}" cy="${-.58*H}" r="${.018*L}" fill="#0b1026"/>`;}},
+ brug:{o:'h',h:L=>.25*L,f:L=>{const H=.25*L;let hg='';for(let i=1;i<8;i++){const t=i/8;const ya=-.45*H+2*t*(1-t)*(-1.1*H);hg+=`<line x1="${t*L}" y1="${-.45*H}" x2="${t*L}" y2="${ya}" stroke="#fca5a5" stroke-width="${.006*L}"/>`;}return `<rect x="0" y="${-.45*H}" width="${.03*L}" height="${.45*H}" fill="#475569"/><rect x="${.97*L}" y="${-.45*H}" width="${.03*L}" height="${.45*H}" fill="#475569"/>${hg}<path d="M0 ${-.45*H} Q${.5*L} ${-1.55*H} ${L} ${-.45*H}" fill="none" stroke="#ef4444" stroke-width="${.015*L}"/><rect x="0" y="${-.5*H}" width="${L}" height="${.1*H}" fill="#64748b"/>`;}},
+ zwembad:{o:'h',h:L=>.45*L,f:L=>{const H=.45*L,b=.03*L;let ln='';for(let i=1;i<5;i++)ln+=`<line x1="${b}" y1="${-H+b+(H-2*b)*i/5}" x2="${L-b}" y2="${-H+b+(H-2*b)*i/5}" stroke="#fff" stroke-width="${.006*L}" stroke-dasharray="${.03*L} ${.02*L}"/>`;return `<rect x="0" y="${-H}" width="${L}" height="${H}" fill="#e0f2fe"/><rect x="${b}" y="${-H+b}" width="${L-2*b}" height="${H-2*b}" fill="#0ea5e9"/>${ln}`;}},
+ veld:{o:'h',h:L=>.65*L,f:L=>{const H=.65*L,b=.02*L,sw=Math.max(1.5,.006*L);return `<rect x="0" y="${-H}" width="${L}" height="${H}" fill="#16a34a"/><g fill="none" stroke="#fff" stroke-width="${sw}"><rect x="${b}" y="${-H+b}" width="${L-2*b}" height="${H-2*b}"/><line x1="${.5*L}" y1="${-H+b}" x2="${.5*L}" y2="${-b}"/><circle cx="${.5*L}" cy="${-.5*H}" r="${.09*L}"/><rect x="${b}" y="${-.72*H}" width="${.14*L}" height="${.44*H}"/><rect x="${L-b-.14*L}" y="${-.72*H}" width="${.14*L}" height="${.44*H}"/></g>`;}},
+ lokaal:{o:'h',h:L=>.7*L,f:L=>{const H=.7*L,b=.02*L;let t='';for(let i=0;i<3;i++)for(let j=0;j<2;j++)t+=`<rect x="${(.25+.22*i)*L}" y="${-H+(.22+.38*j)*H}" width="${.13*L}" height="${.14*H}" rx="${.01*L}" fill="#a16207"/>`;return `<rect x="0" y="${-H}" width="${L}" height="${H}" fill="#9ca3af"/><rect x="${b}" y="${-H+b}" width="${L-2*b}" height="${H-2*b}" fill="#fef3c7"/><rect x="${b+.02*L}" y="${-.72*H}" width="${.02*L}" height="${.44*H}" fill="#065f46"/>${t}`;}},
+ kaart:{o:'h',h:L=>34,f:L=>{const pin=x=>`<circle cx="${x}" cy="-24" r="9" fill="#ef4444"/><path d="M${x-7} -19 L${x} -6 L${x+7} -19Z" fill="#ef4444"/><circle cx="${x}" cy="-24" r="3.5" fill="#fff"/>`;return `<path d="M0 -8 C${.3*L} -30 ${.6*L} 12 ${L} -8" fill="none" stroke="#fbbf24" stroke-width="3" stroke-dasharray="7 6"/>${pin(0)}${pin(L)}`;}},
+ mier:{o:'h',h:L=>.4*L,f:L=>{const H=.4*L,c='#a8a29e',sw=.02*L;return `<g stroke="${c}" stroke-width="${sw}"><line x1="${.38*L}" y1="${-.55*H}" x2="${.22*L}" y2="0"/><line x1="${.4*L}" y1="${-.55*H}" x2="${.42*L}" y2="0"/><line x1="${.42*L}" y1="${-.55*H}" x2="${.62*L}" y2="0"/><line x1="${.1*L}" y1="${-.7*H}" x2="${.04*L}" y2="${-H}"/><line x1="${.14*L}" y1="${-.72*H}" x2="${.22*L}" y2="${-H}"/></g><circle cx="${.12*L}" cy="${-.55*H}" r="${.12*L}" fill="${c}"/><ellipse cx="${.38*L}" cy="${-.55*H}" rx="${.15*L}" ry="${.2*H}" fill="${c}"/><ellipse cx="${.76*L}" cy="${-.55*H}" rx="${.24*L}" ry="${.36*H}" fill="${c}"/>`;}},
+ lhb:{o:'h',h:L=>L,f:L=>{const sp=[[.3,-.35],[.7,-.35],[.25,-.6],[.75,-.6],[.38,-.82],[.62,-.82]].map(([x,y])=>`<circle cx="${x*L}" cy="${y*L}" r="${.08*L}" fill="#111"/>`).join('');return `<circle cx="${.5*L}" cy="${-.5*L}" r="${.5*L}" fill="#dc2626"/>${sp}<line x1="${.5*L}" y1="${-L}" x2="${.5*L}" y2="0" stroke="#111" stroke-width="${.03*L}"/><ellipse cx="${.5*L}" cy="${-.9*L}" rx="${.22*L}" ry="${.1*L}" fill="#111"/>`;}},
+ vlinder:{o:'h',h:L=>.7*L,f:L=>{const H=.7*L;return `<ellipse cx="${.25*L}" cy="${-.62*H}" rx="${.25*L}" ry="${.32*H}" fill="#a855f7"/><ellipse cx="${.75*L}" cy="${-.62*H}" rx="${.25*L}" ry="${.32*H}" fill="#a855f7"/><ellipse cx="${.32*L}" cy="${-.27*H}" rx="${.18*L}" ry="${.25*H}" fill="#f472b6"/><ellipse cx="${.68*L}" cy="${-.27*H}" rx="${.18*L}" ry="${.25*H}" fill="#f472b6"/><ellipse cx="${.5*L}" cy="${-.5*H}" rx="${.035*L}" ry="${.42*H}" fill="#1f2937"/>`;}},
+ toren:{o:'v',w:L=>.3*L,f:L=>{const w=.3*L;return `<path d="M0 0 L${w} 0 L${.62*w} ${-.55*L} L${.56*w} ${-.9*L} L${.5*w} ${-L} L${.44*w} ${-.9*L} L${.38*w} ${-.55*L} Z" fill="#94a3b8"/><path d="M${.2*w} 0 Q${.5*w} ${-.25*L} ${.8*w} 0Z" fill="#141846"/><rect x="${.22*w}" y="${-.57*L}" width="${.56*w}" height="${.025*L}" fill="#64748b"/><rect x="${.34*w}" y="${-.91*L}" width="${.32*w}" height="${.018*L}" fill="#64748b"/>`;}},
+ boom:{o:'v',w:L=>.62*L,f:L=>{const w=.62*L;return `<rect x="${.44*w}" y="${-.45*L}" width="${.12*w}" height="${.45*L}" fill="#92400e"/><circle cx="${.3*w}" cy="${-.55*L}" r="${.18*L}" fill="#15803d"/><circle cx="${.7*w}" cy="${-.55*L}" r="${.18*L}" fill="#15803d"/><circle cx="${.5*w}" cy="${-.69*L}" r="${.31*L}" fill="#22c55e"/>`;}},
+ vlag:{o:'v',w:L=>.42*L,f:L=>{const w=.42*L,p=.025*L;return `<rect x="0" y="${-L}" width="${p}" height="${L}" fill="#e2e8f0"/><rect x="${p}" y="${-.98*L}" width="${w-p}" height="${.07*L}" fill="#ef4444"/><rect x="${p}" y="${-.91*L}" width="${w-p}" height="${.07*L}" fill="#fff"/><rect x="${p}" y="${-.84*L}" width="${w-p}" height="${.07*L}" fill="#3b82f6"/>`;}},
+ huis:{o:'v',w:L=>.8*L,f:L=>{const w=.8*L;return `<rect x="${.7*w}" y="${-.92*L}" width="${.08*w}" height="${.25*L}" fill="#7f1d1d"/><rect x="${.06*w}" y="${-.6*L}" width="${.88*w}" height="${.6*L}" fill="#fca5a5"/><path d="M0 ${-.6*L} L${w} ${-.6*L} L${.5*w} ${-L}Z" fill="#b91c1c"/><rect x="${.42*w}" y="${-.3*L}" width="${.16*w}" height="${.3*L}" fill="#7c2d12"/><rect x="${.15*w}" y="${-.48*L}" width="${.18*w}" height="${.14*L}" fill="#bfdbfe"/><rect x="${.67*w}" y="${-.48*L}" width="${.18*w}" height="${.14*L}" fill="#bfdbfe"/>`;}},
+ giraf:{o:'v',w:L=>.7*L,f:L=>{const w=.7*L,c='#fbbf24',d='#b45309';const legs=[.26,.36,.6,.7].map(x=>`<rect x="${x*w}" y="${-.42*L}" width="${.05*w}" height="${.42*L}" fill="#f59e0b"/>`).join('');const spots=[[.4,-.46],[.55,-.42],[.32,-.42],[.8,-.6],[.84,-.75]].map(([x,y])=>`<circle cx="${x*w}" cy="${y*L}" r="${.025*L}" fill="${d}"/>`).join('');return `${legs}<line x1="${.2*w}" y1="${-.47*L}" x2="${.1*w}" y2="${-.3*L}" stroke="${d}" stroke-width="${.012*L}"/><ellipse cx="${.48*w}" cy="${-.46*L}" rx="${.3*w}" ry="${.1*L}" fill="${c}"/><path d="M${.66*w} ${-.5*L} L${.78*w} ${-.52*L} L${.88*w} ${-.9*L} L${.78*w} ${-.9*L}Z" fill="${c}"/><line x1="${.83*w}" y1="${-.94*L}" x2="${.82*w}" y2="${-L}" stroke="${d}" stroke-width="${.015*L}"/><line x1="${.9*w}" y1="${-.94*L}" x2="${.91*w}" y2="${-L}" stroke="${d}" stroke-width="${.015*L}"/><ellipse cx="${.88*w}" cy="${-.92*L}" rx="${.12*w}" ry="${.045*L}" fill="${c}"/>${spots}`;}},
+ deur:{o:'v',w:L=>.45*L,f:L=>{const w=.45*L;return `<rect x="0" y="${-L}" width="${w}" height="${L}" fill="#92400e"/><rect x="${.15*w}" y="${-.9*L}" width="${.7*w}" height="${.32*L}" fill="none" stroke="#78350f" stroke-width="${.012*L}"/><rect x="${.15*w}" y="${-.45*L}" width="${.7*w}" height="${.35*L}" fill="none" stroke="#78350f" stroke-width="${.012*L}"/><circle cx="${.82*w}" cy="${-.5*L}" r="${.03*L}" fill="#fbbf24"/>`;}},
+ stoel:{o:'v',w:L=>.5*L,f:L=>{const w=.5*L,c='#b45309';return `<rect x="${.05*w}" y="${-L}" width="${.09*w}" height="${L}" fill="${c}"/><rect x="${.05*w}" y="${-.95*L}" width="${.12*w}" height="${.05*L}" fill="#92400e"/><rect x="${.05*w}" y="${-.78*L}" width="${.12*w}" height="${.05*L}" fill="#92400e"/><rect x="${.05*w}" y="${-.52*L}" width="${.9*w}" height="${.06*L}" fill="#d97706"/><rect x="${.85*w}" y="${-.46*L}" width="${.09*w}" height="${.46*L}" fill="${c}"/>`;}}
+};
+function buildSVG(o){
+  const W = PAD*2 + 16.4*CM; let y = 10, g = '';
+  if(o.schaallijn){
+    g += `<text x="${PAD}" y="${y+18}" class="lbl">Schaallijntje:</text>
+      <g transform="translate(${PAD+118},${y+12})"><line x1="0" y1="0" x2="${CM}" y2="0" class="sl"/><line x1="0" y1="-8" x2="0" y2="8" class="sl"/><line x1="${CM}" y1="-8" x2="${CM}" y2="8" class="sl"/></g>
+      <text x="${PAD+132+CM}" y="${y+18}" class="lbl">${o.schaallijn}</text>`;
+    y += 42;
+  }
+  if(o.mode){
+    const A = ART[o.art]||ART.lijn; o.A=A; const V = A.o==='v'; o.V=V;
+    const draw = o.mode==='draw'; const L0 = (draw?1:o.len)*CM;
+    const resL = draw ? Math.min((V?12:15)*CM, Math.max((o.answer||5)*1.5,6)*CM) : L0;
+    const lab = o.naam ? (draw ? `${cap(o.naam)}: sleep het gele bolletje` : `${cap(o.naam)}: meet de maatpijl`) : '';
+    if(!V){
+      if(lab){ g += `<text x="${PAD}" y="${y+16}" class="lbl small">${lab}</text>`; y += 26; }
+      const yb = y + A.h(resL) + 4, x0 = draw ? PAD : PAD + rnd(7,25)/10*CM, ly = yb+16;
+      Object.assign(o,{x0,yb,ly});
+      g += `<g id="art" transform="translate(${x0},${yb})">${A.f(L0)}</g>`;
+      g += `<line x1="${x0}" y1="${yb}" x2="${x0}" y2="${ly}" class="guide"/><line id="gd2" x1="${x0+L0}" y1="${yb}" x2="${x0+L0}" y2="${ly}" class="guide"/>`;
+      g += `<line id="ml" x1="${x0}" y1="${ly}" x2="${x0+L0}" y2="${ly}" class="mline"/><line x1="${x0}" y1="${ly-9}" x2="${x0}" y2="${ly+9}" class="cap"/><line id="cap2" x1="${x0+L0}" y1="${ly-9}" x2="${x0+L0}" y2="${ly+9}" class="cap"/>`;
+      if(draw && o.answer) g += `<line id="truth" x1="${x0}" y1="${ly}" x2="${x0+o.answer*CM}" y2="${ly}" class="truth" visibility="hidden"/>`;
+      o.rx = PAD-.3*CM; o.ry = o.ry0 = ly+14; o.rot=false;
+      g += `<g id="ruler" transform="translate(${o.rx},${o.ry})" class="${draw?'':'movable'}">${rulerSVG()}</g>`;
+      if(draw) g += `<circle id="handle" cx="${x0+L0}" cy="${ly}" r="15" class="handle"/>`;
+      y = o.ry + 60;
+    } else {
+      const Lmax = draw ? 12*CM : L0;
+      const top = y + 14, yb = top + Lmax, xm = PAD + Math.max(A.w(resL),40) + 18;
+      Object.assign(o,{xm,yb});
+      g += `<line x1="${PAD-10}" y1="${yb}" x2="${xm}" y2="${yb}" class="ground"/>`;
+      g += `<g id="art" transform="translate(${xm-14-A.w(L0)},${yb})">${A.f(L0)}</g>`;
+      g += `<line id="gd2" x1="${xm-14}" y1="${yb-L0}" x2="${xm}" y2="${yb-L0}" class="guide"/>`;
+      g += `<line id="ml" x1="${xm}" y1="${yb}" x2="${xm}" y2="${yb-L0}" class="mline"/><line x1="${xm-9}" y1="${yb}" x2="${xm+9}" y2="${yb}" class="cap"/><line id="cap2" x1="${xm-9}" y1="${yb-L0}" x2="${xm+9}" y2="${yb-L0}" class="cap"/>`;
+      if(draw && o.answer) g += `<line id="truth" x1="${xm}" y1="${yb}" x2="${xm}" y2="${yb-o.answer*CM}" class="truth" visibility="hidden"/>`;
+      if(draw){
+        o.rx = xm+6; o.ry = yb+.3*CM; o.rot=true;
+        g += `<g id="ruler" transform="translate(${o.rx},${o.ry}) rotate(-90)">${rulerSVG()}</g>`;
+        g += `<circle id="handle" cx="${xm}" cy="${yb-L0}" r="15" class="handle"/>`;
+        y = yb + 20;
+      } else {
+        o.rx = PAD-.3*CM; o.ry = o.ry0 = yb+22; o.rot=false;
+        g += `<g id="ruler" transform="translate(${o.rx},${o.ry})" class="movable">${rulerSVG()}</g>`;
+        y = o.ry + 60;
+      }
+      if(lab){ g += `<text x="${PAD}" y="${y+14}" class="lbl small">${lab}</text>`; y += 22; }
+    }
+  }
+  o.W=W; o.H=y+6;
+  return `<svg class="msvg" viewBox="0 0 ${W} ${o.H}" style="max-width:${Math.round(W)}px">${g}</svg>`;
+}
+function rotBtn(o){ return o && o.mode==='measure' ? '<button class="btn ghost small rotBtn">🔄 Draai de liniaal</button>' : ''; }
+function pt(svg,e){const p=svg.createSVGPoint();p.x=e.clientX;p.y=e.clientY;return p.matrixTransform(svg.getScreenCTM().inverse());}
+function bindSVG(svg,o,q){
+  if(!o.mode) return;
+  const ruler = svg.querySelector('#ruler');
+  const setR = ()=>ruler.setAttribute('transform',`translate(${o.rx},${o.ry})${o.rot?' rotate(-90)':''}`);
+  if(o.mode==='measure'){
+    let d=null;
+    ruler.addEventListener('pointerdown',e=>{e.preventDefault();const p=pt(svg,e);d={dx:p.x-o.rx,dy:p.y-o.ry};ruler.setPointerCapture(e.pointerId);ruler.classList.add('drag');});
+    ruler.addEventListener('pointermove',e=>{if(!d)return;const p=pt(svg,e);
+      if(o.rot){o.rx=clamp(p.x-d.dx,-30,o.W-24);o.ry=clamp(p.y-d.dy,40,o.H+14*CM);}
+      else{o.rx=clamp(p.x-d.dx,-14*CM,o.W-1.5*CM);o.ry=clamp(p.y-d.dy,0,o.H-54);}
+      setR();});
+    const up=()=>{d=null;ruler.classList.remove('drag');};
+    ruler.addEventListener('pointerup',up); ruler.addEventListener('pointercancel',up);
+    const btn = svg.parentElement && svg.parentElement.querySelector('.rotBtn');
+    if(btn) btn.onclick=()=>{ o.rot=!o.rot; if(o.rot){o.rx=o.W-PAD-70;o.ry=o.H-6;} else {o.rx=PAD-.3*CM;o.ry=o.ry0;} setR(); };
+  }
+  if(o.mode==='draw'){
+    const h=svg.querySelector('#handle'), ml=svg.querySelector('#ml'), c2=svg.querySelector('#cap2'), gd=svg.querySelector('#gd2'), art=svg.querySelector('#art'); let d=false;
+    q.drawn = 1;
+    const set = p=>{ if(q.result!=null) return;
+      const L = o.V ? clamp(Math.round((o.yb-p.y)/CM*2)/2,.5,12) : clamp(Math.round((p.x-o.x0)/CM*2)/2,.5,15);
+      q.drawn = L; const Lp = L*CM;
+      art.innerHTML = o.A.f(Lp);
+      if(o.V){ const Y=o.yb-Lp; art.setAttribute('transform',`translate(${o.xm-14-o.A.w(Lp)},${o.yb})`);
+        ml.setAttribute('y2',Y); c2.setAttribute('y1',Y); c2.setAttribute('y2',Y); gd.setAttribute('y1',Y); gd.setAttribute('y2',Y); h.setAttribute('cy',Y); }
+      else { const X=o.x0+Lp; ml.setAttribute('x2',X); c2.setAttribute('x1',X); c2.setAttribute('x2',X); gd.setAttribute('x1',X); gd.setAttribute('x2',X); h.setAttribute('cx',X); }
+    };
+    h.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();d=true;h.setPointerCapture(e.pointerId);});
+    h.addEventListener('pointermove',e=>{if(d) set(pt(svg,e));});
+    h.addEventListener('pointerup',()=>d=false); h.addEventListener('pointercancel',()=>d=false);
+    svg.addEventListener('pointerdown',e=>{ if(e.target!==h) set(pt(svg,e)); });
+  }
+}
+
+/* ---------- algemeen ---------- */
+const $ = s=>document.querySelector(s);
+const S = {star:2, types:['A','B','C','D'], qs:[], qi:0, step:0, seen:new Set([0])};
+const TYPES = {A:{n:'Schaal berekenen',e:'🔍'},B:{n:'Tekening → echt',e:'📐'},C:{n:'Echt → tekening',e:'✏️'},D:{n:'Schaallijntje',e:'📏'}};
+const PRAISE = ['Goed zo! 🎉','Top! ⭐','Helemaal goed! 🚀','Knap gedaan! 💪','Super! 🌟','Yes, goed! ✅'];
+
+function show(id){document.querySelectorAll('.screen').forEach(e=>e.hidden=true);$('#'+id).hidden=false;window.scrollTo({top:0,behavior:'smooth'});}
+
+(function sky(){const sk=$('#sky');for(let i=0;i<90;i++){const s=document.createElement('span');s.style.left=Math.random()*100+'%';s.style.top=Math.random()*100+'%';s.style.animationDelay=(Math.random()*3)+'s';if(Math.random()<.2){s.style.width=s.style.height='3px';}sk.appendChild(s);}})();
+
+function mini(q,ans,pre='',unit=''){
+  return `<div class="mini" data-ans="${ans}"><div class="mini-q">✏️ Probeer zelf: ${q}</div>
+  <div class="ansrow">${pre?`<span>${pre}</span>`:''}<input inputmode="decimal" autocomplete="off" aria-label="antwoord"><span>${unit}</span><button class="btn small">Check</button></div>
+  <div class="mini-fb"></div></div>`;
+}
+function bindMinis(root){
+  root.querySelectorAll('.mini').forEach(m=>{
+    const inp=m.querySelector('input'), fb=m.querySelector('.mini-fb');
+    const go=()=>{const v=parseNum(inp.value);
+      if(isNaN(v)){fb.textContent='Vul eerst een getal in.';fb.className='mini-fb';return;}
+      if(near(v,+m.dataset.ans)){fb.textContent='✅ Goed zo!';fb.className='mini-fb ok';}
+      else{fb.textContent='❌ Nog niet. Kijk nog eens naar de uitleg hierboven.';fb.className='mini-fb bad';}};
+    m.querySelector('button').onclick=go; inp.onkeydown=e=>{if(e.key==='Enter')go();};
+  });
+}
+/* ---------- uitleg ---------- */
+const FLAG = `<svg class="illu" viewBox="0 0 440 250">
+  <rect x="40" y="226" width="110" height="6" rx="3" fill="#94a3b8"/>
+  <line x1="95" y1="226" x2="95" y2="22" stroke="#e2e8f0" stroke-width="6"/>
+  <rect x="98" y="24" width="72" height="16" fill="#ef4444"/><rect x="98" y="40" width="72" height="16" fill="#fff"/><rect x="98" y="56" width="72" height="16" fill="#3b82f6"/>
+  <text x="95" y="248" fill="#f2f5ff" font-size="15" font-weight="800" text-anchor="middle">in het echt: 9 m</text>
+  <path d="M190 120 C240 100 270 150 300 190" stroke="#fbbf24" stroke-width="3" fill="none"/><path d="M300 190 l-12 -2 l8 -9z" fill="#fbbf24"/>
+  <text x="250" y="100" fill="#fbbf24" font-size="14" font-weight="800" text-anchor="middle">200 keer</text>
+  <text x="250" y="116" fill="#fbbf24" font-size="14" font-weight="800" text-anchor="middle">zo klein</text>
+  <rect x="320" y="226" width="40" height="3" rx="1" fill="#94a3b8"/>
+  <line x1="338" y1="226" x2="338" y2="196" stroke="#e2e8f0" stroke-width="2"/>
+  <rect x="339" y="197" width="11" height="3" fill="#ef4444"/><rect x="339" y="200" width="11" height="3" fill="#fff"/><rect x="339" y="203" width="11" height="3" fill="#3b82f6"/>
+  <text x="340" y="248" fill="#f2f5ff" font-size="15" font-weight="800" text-anchor="middle">tekening: 4,5 cm</text>
+</svg>`;
+
+const STEPS = [
+  {t:'Wat is schaal?', h:()=>`
+    <p>Op een tekening of een kaart is alles <b>kleiner</b> dan in het echt. Een vlaggenstok van 9 meter past nooit op je papier! Daarom teken je hem kleiner.</p>
+    ${FLAG}
+    <p>Hoeveel keer kleiner? Dat zie je aan de <b>schaal</b>. In deze les leer je:</p>
+    <div class="box">🔍 de schaal uitrekenen<br>📐 van de tekening naar het echt rekenen<br>✏️ van het echt naar de tekening rekenen<br>📏 werken met een schaallijntje en een liniaal</div>`},
+  {t:'Centimeters en meters', h:()=>`
+    <p>Bij schaal reken je altijd in <b>centimeters</b>. Daarom moet je goed kunnen omrekenen:</p>
+    <div class="eq"><span class="pill acc">1 m = 100 cm</span><span class="pill">1 km = 1000 m = 100&nbsp;000 cm</span></div>
+    <div class="box">Van <b>meter naar centimeter</b>: keer 100 → 3 m = 300 cm<br>Van <b>centimeter naar meter</b>: gedeeld door 100 → 450 cm = 4,5 m</div>
+    ${mini('3 m = ... cm',300,'','cm')}
+    ${mini('450 cm = ... m',4.5,'','m')}`},
+  {t:'Wat betekent 1 : 200?', h:()=>`
+    <p>Bij een tekening staat bijvoorbeeld <b>schaal 1 : 200</b>. Je zegt: <i>één staat tot tweehonderd</i>.</p>
+    <div class="eq"><span class="pill">1 cm in de tekening</span> = <span class="pill acc">200 cm in het echt</span> = <span class="pill">2 m</span></div>
+    <div class="box gold">Alles is in het echt <b>200 keer zo groot</b> als in de tekening.<br>Het eerste getal is altijd <b>1</b>. Het tweede getal noemen we het <b>schaalgetal</b>.</div>
+    ${mini('De schaal is 1 : 500. 1 cm in de tekening is hoeveel meter in het echt?',5,'','m')}`},
+  {t:'Het schaallijntje', h:()=>`
+    <p>Soms staat er geen 1 : 200, maar een <b>schaallijntje</b>. Dat is een lijntje van precies 1 cm, met erbij hoe lang dat in het echt is:</p>
+    <svg class="illu" viewBox="0 0 300 60" style="max-width:300px"><g transform="translate(20,30)"><line x1="0" y1="0" x2="${CM}" y2="0" class="sl"/><line x1="0" y1="-9" x2="0" y2="9" class="sl"/><line x1="${CM}" y1="-9" x2="${CM}" y2="9" class="sl"/></g><text x="${36+CM}" y="36" class="lbl">1 cm = 2 m</text></svg>
+    <div class="box">1 cm = 2 m, en 2 m = 200 cm.<br>Dus dit schaallijntje betekent hetzelfde als <b>1 : 200</b>.</div>
+    ${mini('Een schaallijntje zegt: 1 cm = 3 m. Welke schaal is dat?',300,'1 :','')}`},
+  {t:'De verhoudingstabel', h:()=>`
+    <p>Met een <b>verhoudingstabel</b> kun je elke schaalsom uitrekenen. De tabel heeft twee rijen:</p>
+    <div class="box"><span class="rowtag tek">✏️ in de tekening (cm)</span> de bovenste rij<br><span class="rowtag echt">🌍 in het echt (cm)</span> de onderste rij</div>
+    ${renderTable({labels:STD,top:['1','3'],bot:['200','600'],arrowH:'× 3'})}
+    <div class="box gold">⭐ <b>De gouden regel:</b> wat je in de ene rij doet, doe je in de andere rij <b>ook</b>.<br>Boven keer 3? Dan onder ook keer 3!</div>
+    <p>Elke som reken je uit met dit <b>stappenplan</b>:</p>
+    <div class="plan">
+      <div><b>1</b><span><b>Schaal in de tabel.</b> 1 boven, het schaalgetal onder. (1 : 200 → 1 en 200)</span></div>
+      <div><b>2</b><span><b>Wat weet je?</b> Zet de andere lengte erbij. Altijd in <b>cm</b>! Meters? Eerst × 100.</span></div>
+      <div><b>3</b><span><b>Welke som?</b> Kijk in de rij waar <b>twee</b> getallen staan. Is het keer of gedeeld door? Doe hetzelfde in de andere rij.</span></div>
+      <div><b>4</b><span><b>Uitrekenen + eenheid.</b> Reken uit en kijk: wordt er gevraagd in cm, m of km?</span></div>
+    </div>
+    <p class="muted">In de volgende stappen zie je dit stappenplan bij drie soorten sommen.</p>
+    ${mini('Een tabel: boven 1 en 4, onder 50 en ?. Wat komt er op de plek van het vraagteken?',200,'','')}`},
+  {t:'Van tekening naar echt', h:()=>`
+    <p><b>Opdracht:</b> de vlaggenstok is in de tekening <b>4,5 cm</b>. De schaal is <b>1 : 200</b>. Hoe hoog is hij in het echt (in meters)?</p>
+    <p class="muted">Klik op <b>Volgende stap</b> en volg het stappenplan.</p>
+    <div id="anim"></div>
+    <div class="box">🧠 <b>Onthoud:</b> van tekening naar echt is altijd een <b>keersom</b>.</div>
+    ${mini('De schaal is 1 : 300. In de tekening is iets 3 cm. Hoeveel cm is het in het echt?',900,'','cm')}`,
+   after:root=>setupAnim(root.querySelector('#anim'),STD,walkB(200,4.5,900,'m',false,true))},
+  {t:'Van echt naar tekening', h:()=>`
+    <p><b>Opdracht:</b> een lijn is in het echt <b>3 m</b>. De schaal is <b>1 : 60</b>. Hoe lang moet je hem tekenen?</p>
+    <div id="anim"></div>
+    <div class="box">🧠 <b>Onthoud:</b> van echt naar tekening is altijd een <b>deelsom</b>: echt (cm) : schaalgetal.</div>
+    ${mini('In het echt is een lijn 2 m. De schaal is 1 : 40. Hoeveel cm teken je?',5,'','cm')}`,
+   after:root=>setupAnim(root.querySelector('#anim'),STD,walkC(60,5,300,'m',true,true))},
+  {t:'De schaal zelf berekenen', h:()=>`
+    <p><b>Opdracht:</b> de vlaggenstok is in de tekening <b>4 cm</b>. In het echt is hij <b>4 m</b>. Wat is de schaal?</p>
+    <div id="anim"></div>
+    <div class="box gold">🧠 <b>Onthoud:</b> echt (in cm) <b>:</b> tekening (in cm) = het schaalgetal.</div>
+    ${mini('In de tekening is iets 3 cm. In het echt is het 9 m. Wat is de schaal?',300,'1 :','')}`,
+   after:root=>setupAnim(root.querySelector('#anim'),STD,walkA(4,100,400,'m',false,true))},
+  {t:'Meten met de liniaal', h:()=>`
+    <p>Vaak moet je eerst <b>meten</b>. Naast de tekening staat een <b>maatpijl</b>: die meet je. Sleep de gele liniaal met je vinger of muis.</p>
+    <div class="box">1. Staat het rechtop? Klik op <b>🔄 Draai de liniaal</b>.<br>2. Zet de <b>0</b> precies bij het begin van de maatpijl (onderaan).<br>3. Lees af bij welk getal de maatpijl eindigt.</div>
+    <div class="svgwrap" id="demoSvg"></div>
+    <p class="hint-note">Let op: op een scherm is een centimeter niet altijd precies een echte centimeter. Gebruik daarom hier de liniaal op het scherm. Op papier gebruik je je eigen liniaal.</p>
+    ${mini('Hoe hoog is de vlaggenstok in de tekening?',6,'','cm')}`,
+   after:root=>{const o={mode:'measure',len:6,naam:'de vlaggenstok',art:'vlag'};const box=root.querySelector('#demoSvg');box.innerHTML=buildSVG(o)+rotBtn(o);bindSVG(box.querySelector('svg'),o,{});}},
+  {t:'Klaar voor het echte werk!', h:()=>`
+    <p>Je weet nu hoe schaal werkt. Hier nog een keer alles op een rij:</p>
+    <div class="box">🔍 <b>Schaal berekenen:</b> echt (cm) : tekening (cm)<br>📐 <b>Tekening → echt:</b> tekening × schaalgetal<br>✏️ <b>Echt → tekening:</b> echt (cm) : schaalgetal<br>📏 <b>Schaallijntje:</b> 1 cm = 2 m is hetzelfde als 1 : 200</div>
+    <p>Twijfel je tijdens het oefenen? Klik op <b>📋 Spiekbriefje</b> bovenaan of op <b>🪜 Laat zien hoe</b>. Dan zie je jouw som stap voor stap in de tabel.</p>
+    <div class="actions"><button class="btn" id="uitlegToKies">Ga oefenen 🚀</button></div>`,
+   after:root=>{root.querySelector('#uitlegToKies').onclick=()=>openKies();}}
+];
+function renderStep(){
+  const st=STEPS[S.step]; S.seen.add(S.step);
+  $('#stepDots').innerHTML = STEPS.map((x,i)=>`<button class="${i===S.step?'cur':S.seen.has(i)?'seen':''}" data-i="${i}" title="${x.t}">${i+1}</button>`).join('');
+  $('#stepDots').querySelectorAll('button').forEach(b=>b.onclick=()=>{S.step=+b.dataset.i;renderStep();});
+  const body=$('#stepBody');
+  body.innerHTML = `<div class="muted" style="font-weight:800">Stap ${S.step+1} van ${STEPS.length}</div><h2>${st.t}</h2>${st.h()}`;
+  if(st.after) st.after(body);
+  bindMinis(body);
+  $('#stepPrev').disabled = S.step===0;
+  $('#stepNext').textContent = S.step===STEPS.length-1 ? 'Ga oefenen 🚀' : 'Volgende ▶';
+}
+$('#stepPrev').onclick=()=>{if(S.step>0){S.step--;renderStep();window.scrollTo({top:0,behavior:'smooth'});}};
+$('#stepNext').onclick=()=>{if(S.step<STEPS.length-1){S.step++;renderStep();window.scrollTo({top:0,behavior:'smooth'});}else openKies();};
+
+/* ---------- kiezen ---------- */
+function renderChips(){
+  $('#typeChips').innerHTML = Object.entries(TYPES).map(([k,v])=>`<button class="chip ${S.types.includes(k)?'on':''}" data-k="${k}">${v.e} ${v.n}</button>`).join('');
+  $('#typeChips').querySelectorAll('.chip').forEach(b=>b.onclick=()=>{const k=b.dataset.k;
+    if(S.types.includes(k)){ if(S.types.length>1) S.types=S.types.filter(x=>x!==k); }
+    else S.types.push(k);
+    renderChips();});
+}
+function renderStars(){
+  document.querySelectorAll('#starChoices .choice').forEach(c=>c.classList.toggle('sel',+c.dataset.star===S.star));
+  document.body.dataset.star=S.star;
+}
+document.querySelectorAll('#starChoices .choice').forEach(c=>c.onclick=()=>{S.star=+c.dataset.star;renderStars();});
+function openKies(){renderChips();renderStars();show('kies');}
+
+/* ---------- oefenen ---------- */
+function makeRound(){
+  const list=[]; for(let i=0;i<10;i++) list.push(S.types[i%S.types.length]);
+  shuffle(list);
+  S.qs = list.map(tp=>{const q=GEN[tp](S.star);q.tries=0;q.result=null;return q;});
+  S.qi = 0;
+}
+function renderDots(){
+  $('#dots').innerHTML = S.qs.map((q,i)=>{let c='';if(q.result===1)c='r1';else if(q.result===.5)c='r5';else if(q.result===0)c='r0';else if(i===S.qi)c='cur';return `<i class="${c}"></i>`;}).join('');
+}
+function cur(){return S.qs[S.qi];}
+function renderQ(){
+  const q=cur(); const el=$('#qbox');
+  let svgHtml='', o=null;
+  if(q.svg||q.schaallijn){ o = Object.assign({}, q.svg||{}, {schaallijn:q.schaallijn}); svgHtml = buildSVG(o); }
+  const ansRow = q.ansKind==='draw'
+    ? `<div class="drawnote">✋ Sleep het gele bolletje (of tik op de plek). Klik daarna op <b>Check</b>.</div>`
+    : `<div class="ansrow">${q.ansKind==='schaal'?'<span>1 :</span>':''}<input id="ans" inputmode="decimal" autocomplete="off" aria-label="antwoord">${q.unit?`<span>${q.unit}</span>`:''}</div>`;
+  el.innerHTML = `
+    <div class="qhead"><span class="tag">${TYPES[q.type].e} ${TYPES[q.type].n}</span><span class="qnum">Opgave ${S.qi+1} van ${S.qs.length} · ${'⭐'.repeat(S.star)}</span></div>
+    <div class="qtext"><div>${q.text}</div></div>
+    ${svgHtml?`<div class="svgwrap">${svgHtml}${rotBtn(o)}</div>`:''}
+    ${q.measure?'<div class="hint-note">📏 Sleep de gele liniaal en zet de 0 precies bij het begin van de maatpijl. Staat het rechtop? Klik op 🔄 Draai de liniaal.</div>':''}
+    <div id="help" class="helpbox" hidden><div class="helphead">🪜 Zo reken je het uit</div><div id="walk"></div></div>
+    <div id="hint" class="hint" hidden></div>
+    ${ansRow}
+    <div class="actions" id="actRow"><button class="btn ghost" id="bHelp">🪜 Laat zien hoe</button><button class="btn" id="bCheck">Check ✔</button></div>
+    <div id="fb" class="fb" hidden></div>
+    <div class="actions" id="nextRow" hidden><button class="btn" id="bNext">${S.qi<S.qs.length-1?'Volgende opgave ▶':'Bekijk je score 🏁'}</button></div>`;
+  if(svgHtml) bindSVG(el.querySelector('svg'),o,q);
+  $('#bHelp').onclick=()=>openWalk(false,0);
+  if(S.star===1) openWalk(false,0);
+  $('#bCheck').onclick=check;
+  $('#bNext').onclick=next;
+  const inp=$('#ans'); if(inp){ inp.onkeydown=e=>{if(e.key==='Enter')check();}; if(window.matchMedia('(pointer:fine)').matches) inp.focus(); }
+  renderDots();
+}
+function openWalk(final,start){
+  const q=cur(); const fr=q.walk(final); $('#help').hidden=false;
+  setupAnim($('#walk'),q.labels,fr,start==='last'?fr.length-1:start);
+}
+function fb(html,kind){const f=$('#fb');f.innerHTML=html;f.className='fb '+kind;f.hidden=false;}
+function check(){
+  const q=cur(); if(q.result!=null) return;
+  let v;
+  if(q.ansKind==='draw') v=q.drawn;
+  else { v=parseNum($('#ans').value); if(isNaN(v)){fb('Vul eerst een getal in. ✏️','info');return;} }
+  q.tries++;
+  if(near(v,q.answer)){
+    q.result = q.tries===1 ? 1 : .5;
+    fb(`<b>${pick(PRAISE)}</b><br>${q.solution}`,'ok'); finish();
+  } else if(q.tries===1){
+    const w=why(q,v);
+    fb(`<b>Nog niet goed.</b> ${w||'Probeer het nog een keer!'}<br><span class="small">Volg het stappenplan hierboven. 👆</span>`,'bad');
+    openWalk(false,0);
+    const inp=$('#ans'); if(inp){inp.select();}
+  } else {
+    q.result = 0;
+    fb(`<b>Helaas, dat is niet goed.</b> Zo zit het:<br>${q.solution}<br><span class="small">Bekijk hierboven de stappen in de tabel. 👆</span>`,'bad');
+    finish();
+  }
+  renderDots();
+}
+function finish(){
+  const q=cur();
+  const inp=$('#ans'); if(inp) inp.disabled=true;
+  $('#actRow').hidden=true; $('#nextRow').hidden=false;
+  if(q.result!==1 || !$('#help').hidden) openWalk(true,0);
+  const tr=document.querySelector('#truth'); if(tr && q.result!==1) tr.setAttribute('visibility','visible');
+  $('#bNext').focus();
+}
+function next(){ if(S.qi<S.qs.length-1){S.qi++;renderQ();window.scrollTo({top:0,behavior:'smooth'});} else endRound(); }
+function startRound(){ makeRound(); show('oefen'); renderQ(); }
+$('#startRound').onclick=startRound;
+
+function endRound(){
+  const pts = S.qs.reduce((a,q)=>a+(q.result||0),0); const n=S.qs.length;
+  const stars = pts>=9?3:pts>=7?2:pts>=5?1:0;
+  let msg;
+  if(pts>=8 && S.star<3) msg='Super gedaan! Durf jij een ster hoger? 🚀';
+  else if(pts>=8) msg='Wauw, jij bent een echte schaal-expert! 🏆';
+  else if(pts>=5) msg='Goed bezig! Oefen nog een rondje, dan word je nog beter.';
+  else msg='Bekijk de uitleg nog eens rustig en probeer het daarna opnieuw. Gebruik ook de 💡 Hulp-knop!';
+  const per={}; S.qs.forEach(q=>{per[q.type]=per[q.type]||{p:0,n:0};per[q.type].p+=q.result||0;per[q.type].n++;});
+  $('#endBox').innerHTML = `
+    <h2 style="text-align:center">Klaar! ${'⭐'.repeat(S.star)}</h2>
+    <div class="bigstars">${'🌟'.repeat(stars)}${'☆'.repeat(3-stars)}</div>
+    <div class="score">${fmt(pts)} / ${n}</div>
+    <p style="text-align:center">${msg}</p>
+    <table class="res-table">${Object.entries(per).map(([k,v])=>`<tr><td>${TYPES[k].e} ${TYPES[k].n}</td><td>${fmt(v.p)} / ${v.n}</td></tr>`).join('')}</table>
+    <p class="muted" style="font-size:.9rem">Meteen goed = 1 punt · in de tweede keer goed = ½ punt</p>
+    <div class="actions" style="justify-content:center">
+      <button class="btn" id="eAgain">Nog een rondje 🔁</button>
+      ${S.star<3 && pts>=7 ? '<button class="btn ghost" id="eUp">Een ster hoger ⬆️</button>' : ''}
+      <button class="btn ghost" id="eUitleg">Uitleg bekijken 🧭</button>
+      <button class="btn ghost" id="eKies">Ander niveau</button>
+    </div>`;
+  show('klaar');
+  $('#eAgain').onclick=startRound;
+  const up=$('#eUp'); if(up) up.onclick=()=>{S.star++;renderStars();startRound();};
+  $('#eUitleg').onclick=()=>{S.step=0;renderStep();show('uitleg');};
+  $('#eKies').onclick=openKies;
+  if(pts>=8) confetti();
+}
+function confetti(){
+  const cols=['#4ade80','#60a5fa','#c084fc','#fbbf24','#fb7185'];
+  for(let i=0;i<90;i++){const d=document.createElement('div');d.className='conf';d.style.left=Math.random()*100+'vw';d.style.background=pick(cols);d.style.animationDuration=(2+Math.random()*2)+'s';d.style.animationDelay=(Math.random()*.6)+'s';document.body.appendChild(d);setTimeout(()=>d.remove(),5000);}
+}
+
+/* ---------- navigatie ---------- */
+const goHome=()=>show('home');
+$('#bHome').onclick=goHome; $('#goHome').onclick=goHome;
+$('#toUitleg').onclick=()=>{S.step=0;renderStep();show('uitleg');};
+$('#toKies').onclick=openKies;
+$('#bSpiek').onclick=()=>$('#spiek').hidden=false;
+$('#closeSpiek').onclick=()=>$('#spiek').hidden=true;
+$('#spiek').onclick=e=>{if(e.target.id==='spiek')$('#spiek').hidden=true;};
+document.addEventListener('keydown',e=>{if(e.key==='Escape')$('#spiek').hidden=true;});
+</script>
+</body>
+</html>

@@ -203,9 +203,8 @@ function VraagKaart({ oef, onNext, eerstOnderwerp }) {
 }
 
 // ── Overzichtsscherm (na `doel` opgaven) ──────────────────────────────────
-// weektaakTerug: alleen gezet als deze ronde uit een weektaak-opdracht komt
-// (config-prop op de hoofdcomponent) — toont een extra knop terug naar de
-// weektaak i.p.v. alleen "verder oefenen".
+// weektaakTerug: alleen gezet als deze ronde uit een weektaak-opdracht komt.
+// Dan gaat de knop terug naar de weektaak, niet naar het keuzemenu.
 function Overzicht({ stats, totaalGoed, doel, fouten, onVerder, weektaakTerug, opslaanMislukt }) {
   return (
     <div className="ws-overzicht">
@@ -253,8 +252,9 @@ function Overzicht({ stats, totaalGoed, doel, fouten, onVerder, weektaakTerug, o
       )}
 
       <div className="ws-ov-knoppen">
-        {weektaakTerug && <Knop variant="secundair" icoon="terug" onClick={weektaakTerug}>Terug</Knop>}
-        <Knop variant="primair" icoonRechts="verder" onClick={onVerder}>Verder oefenen</Knop>
+        {weektaakTerug
+          ? <Knop variant="primair" icoon="terug" onClick={weektaakTerug}>Terug naar je weektaak</Knop>
+          : <Knop variant="primair" icoonRechts="verder" onClick={onVerder}>Verder oefenen</Knop>}
       </div>
     </div>
   )
@@ -453,7 +453,7 @@ export default function WerkwoordSpelling({ groep, onBack, addBriefgeld, aantal,
       <div className="ws-wrap">
         <Overzicht
           stats={stats} totaalGoed={totaalGoed} doel={doel} fouten={fouten}
-          onVerder={nieuweRonde} weektaakTerug={config ? onBack : undefined}
+          onVerder={nieuweRonde} weektaakTerug={aantal != null || config ? onBack : undefined}
           opslaanMislukt={opslaanMislukt}
         />
       </div>
