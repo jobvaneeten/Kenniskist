@@ -11,6 +11,7 @@ export const VRIJE_SPELLEN = [
   { key: 'doodlesprong',  name: 'Doodle Sprong',   desc: 'Spring zo hoog mogelijk en shop nieuwe personages!' },
   { key: 'meteoorvlucht', name: 'Meteoorvlucht',   desc: 'Ren weg voor de meteoor en spaar voor 49 poppetjes!', img: '/scenes/games/meteoorvlucht.svg' },
   { key: 'evolutie',      name: 'Dier Evolutie',   desc: 'Voeg dieren samen en ontdek 24 evoluties per soort!' },
+  { key: 'planeet',       name: 'Planetenbouwer',  desc: 'Bouw je eigen planeet: van kale rots tot ruimtestation, in 8 tijdperken!', img: '/scenes/games/planeet.svg' },
   { key: 'brug',          name: 'Brug Bouwen',     desc: 'Bouw bruggen in 50 levels met weg, hout, metaal en touw!' },
   { key: 'hillclimb',     name: 'Bergrijden',      desc: 'Race over heuvels, verzamel munten en upgrade je auto!' },
   { key: 'fruitsabel',    name: 'Fruitsabel',      desc: 'Snijd 60 seconden fruit doormidden en koop scherpere sabels!', img: '/scenes/games/fruitsabel.svg' },

@@ -76,6 +76,7 @@ const SPELLEN = [
   { key: 'doodle',     name: 'Doodle Sprong',  desc: 'Spring zo hoog mogelijk!',          img: '/scenes/games/doodlesprong.png' },
   { key: 'meteoor',    name: 'Meteoorvlucht',  desc: 'Ren weg voor de meteoor!',          img: '/scenes/games/meteoorvlucht.svg' },
   { key: 'evolutie',   name: 'Dier Evolutie',  desc: 'Voeg dieren samen',                 img: '/scenes/games/evolutie.png' },
+  { key: 'planeet',    name: 'Planetenbouwer', desc: '1 minuut je planeet laten groeien', img: '/scenes/games/planeet.svg' },
   { key: 'tower',      name: 'Tower Defense',  desc: '1 minuut verder met je level', img: '/scenes/games/towerdefense.svg' },
   { key: 'brug',       name: 'Brug Bouwen',    desc: 'Bouw 3 bruggen',                   img: '/scenes/games/brug.png' },
   { key: 'hillclimb',  name: 'Bergrijden',     desc: 'Rij tot je crasht',                img: '/scenes/games/hillclimb.png' },
@@ -109,6 +110,8 @@ export default function SpelBeloning({ title, sub, geld, addCuruntie, onDone }) 
   // Evolutie is een idle-spel zonder eigen 'potje', dus hier bepaalt de klok het
   // einde: 1 minuut spelen en dan automatisch terug naar de oefening.
   if (picked === 'evolutie')   return <IframeEmbed src="/evolutie/" title="Dier Evolutie" doneType="evolutie-klaar" seconds={60} hint="Tik op de dieren en raap poep — na 1 minuut ga je verder" onDone={onDone} />
+  // Planetenbouwer is ook een idle-spel: 1 minuut bouwen, de planeet blijft bewaard.
+  if (picked === 'planeet')    return <IframeEmbed src="/planeet/" title="Planetenbouwer" doneType="planeet-klaar" seconds={60} hint="Tik op je planeet en bouw — na 1 minuut ga je verder" onDone={onDone} />
   // 5 golven op een level naar keuze, dan Klaar.
   if (picked === 'tower')      return <IframeEmbed src="/towerdefense/" title="Tower Defense" doneType="towerdefense-gameover" hint="Je speelt 1 minuut, daarna oefen je weer verder" onDone={onDone} />
   if (picked === 'brug')       return wrap(<BrugBouwen reward onBack={onDone} />)
