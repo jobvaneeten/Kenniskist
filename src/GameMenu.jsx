@@ -224,6 +224,10 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
     return vrij(<IframeSpel src="/pijlenregen/" titel="Pijlenregen" terugType="pijlenregen-terug" achtergrond="#06061a" onBack={onBack} />)
   }
 
+  if (directGame === 'dierentuin') {
+    return vrij(<IframeSpel src="/dierentuin/" titel="Dierentuinbaas" terugType="dierentuin-terug" achtergrond="#0d0b2e" onBack={onBack} />)
+  }
+
   if (directGame === 'planeet') {
     return vrij(<IframeSpel src="/planeet/" titel="Planetenbouwer" terugType="planeet-terug" achtergrond="#05051a" onBack={onBack} />)
   }
