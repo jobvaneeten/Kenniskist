@@ -6,6 +6,7 @@ import WeektaakTab from './WeektaakTab.jsx'
 import Werkblad from './Werkblad.jsx'
 import KlasWeekoverzicht from './KlasWeekoverzicht.jsx'
 import SpelInstelling from './SpelInstelling.jsx'
+import EigenOefeningen from './EigenOefeningen.jsx'
 import { TerugKnop, Icoon } from '../ui/index.jsx'
 
 // De leerkracht ziet alleen wat hij zelf klaarzet: de weektaak voor de klas en
@@ -18,6 +19,7 @@ const TABS = [
   { key: 'doel', label: 'Doelen', hint: 'per leerling', icoon: 'doel', accent: 'var(--kk-gold)' },
   { key: 'week', label: 'Weekoverzicht', hint: 'per leerling', icoon: 'grafiek', accent: 'var(--kk-primary-hi)' },
   { key: 'werkblad', label: 'Werkblad', hint: 'printen', icoon: 'printer', accent: 'var(--kk-success)' },
+  { key: 'eigen', label: 'Eigen oefeningen', hint: 'je eigen vragen', icoon: 'potlood', accent: 'var(--kk-cyan)' },
   { key: 'leerlingen', label: 'Leerlingen', hint: 'beheer & spelletjes', icoon: 'mensen', accent: 'var(--kk-text-soft)' },
 ]
 
@@ -99,9 +101,11 @@ export default function KlasScherm({ klas, alleKlassen, onBack, onKlasGewijzigd 
 
         {!leerlingId && tab === 'werkblad' && <Werkblad klas={klas} />}
 
+        {!leerlingId && tab === 'eigen' && <EigenOefeningen key={klas.id} klas={klas} />}
+
         {!leerlingId && tab === 'week' && <KlasWeekoverzicht key={klas.id} leerlingen={leerlingen} />}
 
-        {!leerlingId && !['leerlingen', 'werkblad', 'week'].includes(tab) && (
+        {!leerlingId && !['leerlingen', 'werkblad', 'week', 'eigen'].includes(tab) && (
           <WeektaakTab key={tab} klas={klas} soort={tab} onKiesLeerling={setLeerlingId} />
         )}
       </div>

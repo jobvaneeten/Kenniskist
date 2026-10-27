@@ -1,9 +1,11 @@
-import { lazy, useState, useRef } from 'react'
+import { lazy, useEffect, useState, useRef } from 'react'
 import { loadToernooi } from './games/toernooiOpslag.js'
 import { VRIJE_SPELLEN as FREE_GAMES } from './lib/spellen.js'
 import MenuScene from './MenuScenes'
 import VrijSpelenBadge from './VrijSpelenBadge.jsx'
 import { TerugKnop, Icoon } from './ui/index.jsx'
+import { useSessie } from './lib/sessie.jsx'
+import { haalEigenOefeningen } from './lib/eigenOefeningen.js'
 import './game.css'
 
 // Spellen laden pas bij openen (Suspense staat in Root.jsx).
@@ -33,6 +35,7 @@ const DicteeThema        = lazy(() => import('./games/DicteeThema'))
 const TaalOefenen        = lazy(() => import('./games/TaalOefenen'))
 const BegrijpendLezen    = lazy(() => import('./games/BegrijpendLezen'))
 const TopoOefenen        = lazy(() => import('./games/TopoOefenen'))
+const EigenVragen        = lazy(() => import('./games/EigenVragen'))
 
 const YEARS = [
   { num: 4, color: 'var(--kk-vak-taal)' },
@@ -99,6 +102,30 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
   const [spellingKeuze, setSpellingKeuze] = useState(null)   // null | 'werkwoord' | 'dictee'
   const [taSoonBlok,    setTaSoonBlok]    = useState(null)   // blok-nr met "komt binnenkort"
   const [dicteeNr,      setDicteeNr]      = useState(8)      // gekozen dictee-blok (7 of 8)
+
+  // Eigen oefeningen van de juf of meester (portaal, tab Eigen oefeningen):
+  // die staan per groep en vak tussen de gewone oefeningen.
+  const { profiel } = useSessie()
+  const [eigenLijst, setEigenLijst] = useState([])
+  const [eigen, setEigen] = useState(null)         // { oefening, ronde } die nu open staat
+  const [standaard, setStandaard] = useState(null) // year-subject waarvoor de gewone oefening gekozen is
+  useEffect(() => {
+    if (profiel?.rol !== 'leerling' || !profiel.klas_id) return
+    let actief = true
+    haalEigenOefeningen(profiel.klas_id).then(l => { if (actief) setEigenLijst(l) }).catch(() => {})
+    return () => { actief = false }
+  }, [profiel?.rol, profiel?.klas_id])
+  const eigenHier = year !== null && subject !== null ? eigenLijst.filter(o => o.groep === year && o.vak === subject) : []
+  const openEigen = (oefening) => setEigen({ oefening, ronde: 0 })
+  const eigenKaarten = () => eigenHier.map(o => (
+    <button key={o.id} className="mode-card" onClick={() => openEigen(o)}>
+      <span className="mode-icoon"><Icoon naam="potlood" /></span>
+      <span className="mode-name">{o.onderwerp}</span>
+      <span className="mode-desc">Van je juf of meester</span>
+      <span className="vb-line">{o.vragen.length} {o.vragen.length === 1 ? 'vraag' : 'vragen'}</span>
+      <RewardChips rewards={['💵 briefgeld']} />
+    </button>
+  ))
 
   // Leeg/undefined = geen beperking (gast, leerkracht-weergave, klas zonder groepen)
   const zichtbareJaren = toegestaneGroepen?.length ? YEARS.filter(y => toegestaneGroepen.includes(y.num)) : YEARS
@@ -264,6 +291,46 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
   // Active game (via year + subject)
   if (year !== null && subject !== null) {
     const gameId = `${year}-${subject}`
+    const s = SUBJECTS.find(s => s.key === subject)
+
+    if (eigen) {
+      return (
+        <EigenVragen
+          key={eigen.ronde} titel={eigen.oefening.onderwerp} aantal={eigen.oefening.vragen.length} config={eigen.oefening}
+          onBack={() => setEigen(null)} onOpnieuw={() => setEigen(e => ({ ...e, ronde: e.ronde + 1 }))}
+          addBriefgeld={addBriefgeld} addCuruntie={addCuruntie}
+        />
+      )
+    }
+
+    // Vakken met één eigen component (tafels, topo, begrijpend lezen): staan er
+    // eigen oefeningen, dan eerst kiezen tussen de gewone oefening en die.
+    if (eigenHier.length && standaard !== gameId && ['tafels', 'topo', 'begrijpend'].includes(GAMES[gameId])) {
+      const gewoon = {
+        tafels: ['Tafels oefenen', 'Keersommen en deelsommen'],
+        topo: ['Topografie Europa', 'Landen, hoofdsteden en meer'],
+        begrijpend: ['Begrijpend lezen', 'Duurzaam design · Fantastische families'],
+      }[GAMES[gameId]]
+      return (
+        <div className="game-screen game-screen-center">
+          <TerugKnop onClick={() => setSubject(null)} />
+          <div className="game-header">
+            <span className="game-header-icon" style={{ '--kk-accent': s.color }}><Icoon naam={s.icoon} /></span>
+            <h1 className="game-header-title">{s.label} — Groep {year}</h1>
+            <p className="game-header-sub">Wat wil je oefenen?</p>
+          </div>
+          <div className="mode-grid" style={{ '--kk-accent': s.color }}>
+            <button className="mode-card" onClick={() => setStandaard(gameId)}>
+              <MenuScene name={s.scene} />
+              <span className="mode-name">{gewoon[0]}</span>
+              <span className="mode-desc">{gewoon[1]}</span>
+              <RewardChips rewards={['💵 briefgeld']} />
+            </button>
+            {eigenKaarten()}
+          </div>
+        </div>
+      )
+    }
 
     if (GAMES[gameId] === 'taal') {
       return (
@@ -272,6 +339,7 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
           onBack={() => setSubject(null)}
           addBriefgeld={addBriefgeld}
           addCuruntie={addCuruntie}
+          eigen={eigenHier} onKiesEigen={openEigen}
         />
       )
     }
@@ -280,7 +348,7 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
       return (
         <TafelsOefenen
           groep={year}
-          onBack={() => setSubject(null)}
+          onBack={() => { setStandaard(null); setSubject(null) }}
           addBriefgeld={addBriefgeld}
           addCuruntie={addCuruntie}
         />
@@ -384,6 +452,7 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
               <span className="vb-line">"763 − 145 − 55 = ?"</span>
               <RewardChips rewards={['💵 briefgeld']} />
             </button>
+            {eigenKaarten()}
           </div>
         </div>
       )
@@ -392,7 +461,7 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
     if (GAMES[gameId] === 'topo') {
       return (
         <TopoOefenen
-          onBack={() => { clearGate('topo'); setSubject(null) }}
+          onBack={() => { clearGate('topo'); setStandaard(null); setSubject(null) }}
           addBriefgeld={makeGated('topo', addBriefgeld)}
           addCuruntie={makeGated('topo', addCuruntie)}
         />
@@ -402,7 +471,7 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
     if (GAMES[gameId] === 'begrijpend') {
       return (
         <BegrijpendLezen
-          onBack={() => { clearGate('begrijpend'); setSubject(null) }}
+          onBack={() => { clearGate('begrijpend'); setStandaard(null); setSubject(null) }}
           addBriefgeld={makeGated('begrijpend', addBriefgeld)}
           addCuruntie={makeGated('begrijpend', addCuruntie)}
           groep={year}
@@ -529,6 +598,7 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
               <span className="vb-line">Spellingblokken of een spellingregel</span>
               <RewardChips rewards={['💵 briefgeld']} />
             </button>
+            {eigenKaarten()}
           </div>
         </div>
       )
@@ -544,8 +614,22 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
       )
     }
 
+    // Nog geen spel voor dit vak in deze groep: wel de eigen oefeningen.
+    if (eigenHier.length) {
+      return (
+        <div className="game-screen game-screen-center">
+          <TerugKnop onClick={() => setSubject(null)} />
+          <div className="game-header">
+            <span className="game-header-icon" style={{ '--kk-accent': s.color }}><Icoon naam={s.icoon} /></span>
+            <h1 className="game-header-title">{s.label} — Groep {year}</h1>
+            <p className="game-header-sub">Wat wil je oefenen?</p>
+          </div>
+          <div className="mode-grid" style={{ '--kk-accent': s.color }}>{eigenKaarten()}</div>
+        </div>
+      )
+    }
+
     // Placeholder for not-yet-built games
-    const s = SUBJECTS.find(s => s.key === subject)
     return (
       <div className="game-screen game-screen-center">
         <TerugKnop onClick={() => setSubject(null)} />

@@ -46,7 +46,9 @@ function renderZin(zin, vraagWoord) {
 // aantal/config: alleen gezet vanuit een weektaak-opdracht (toolRender.jsx).
 // config = { mode: 'woordsoorten'|'zinsdelen', soorten?, zinsdelen? } — slaat
 // de menu/taalverkennen/filter-schermen over en start direct in de oefening.
-export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie, aantal, config, groep }) {
+// eigen/onKiesEigen: eigen oefeningen van de leerkracht voor Taal in deze
+// groep (GameMenu.jsx); die staan als extra kaarten in het menu.
+export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie, aantal, config, groep, eigen = [], onKiesEigen }) {
   const [screen, setScreen] = useState('menu')
   const [wsBlok, setWsBlok] = useState(null)   // gekozen woordenschat-blok
   const [mode, setMode] = useState(null)
@@ -436,6 +438,13 @@ export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
             <span className="tv-mode-desc">Blok 1 t/m 8 — 45 woorden per blok</span>
           </button>
         )}
+        {eigen.map(o => (
+          <button key={o.id} className="tv-mode-card" onClick={() => onKiesEigen(o)}>
+            <span className="tv-mode-emoji"><Icoon naam="potlood" /></span>
+            <span className="tv-mode-name">{o.onderwerp}</span>
+            <span className="tv-mode-desc">Van je juf of meester · {o.vragen.length} {o.vragen.length === 1 ? 'vraag' : 'vragen'}</span>
+          </button>
+        ))}
       </div>
     </div>
   )

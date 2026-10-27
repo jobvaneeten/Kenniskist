@@ -257,6 +257,13 @@ export const TOOL_FAMILIES = [
       { toolId: 'topo-europa-b', label: 'Kaart B — Noordwest-Europa', kaart: 'europa-b' },
     ],
   },
+  {
+    // Eigen oefening van de leerkracht (tabel eigen_oefeningen, migratie
+    // 0020): geen weektaak-tool, maar vrij oefenen via Speel Game. Staat hier
+    // alleen zodat resultaten met dit tool_id een naam hebben in het portaal.
+    familie: 'eigen-vragen', toolId: 'eigen-vragen', label: 'Eigen oefening', verborgen: true,
+    vak: null, groepen: [], aantalInstelbaar: false, standaardAantal: 1, eenheid: 'opgaven', configVelden: [],
+  },
 ]
 
 // Platgeslagen: elke concrete tool_id → { toolId, familie, label, vak,
@@ -290,6 +297,7 @@ export function toolVak(toolId) {
 // groepen van de klas. Lege lijst (klas.groepen = geen beperking, zie
 // migratie 0006) betekent: alles tonen.
 export function toolsVoorGroepen(groepen) {
-  if (!groepen?.length) return TOOL_FAMILIES
-  return TOOL_FAMILIES.filter(fam => fam.groepen.some(g => groepen.includes(g)))
+  const kiesbaar = TOOL_FAMILIES.filter(fam => !fam.verborgen)
+  if (!groepen?.length) return kiesbaar
+  return kiesbaar.filter(fam => fam.groepen.some(g => groepen.includes(g)))
 }

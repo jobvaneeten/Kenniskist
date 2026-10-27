@@ -23,7 +23,7 @@ const VAKKEN = [
 const AANTAL_SPELLEN = VRIJE_SPELLEN.length + KLEDINGKAST_SPELLEN.length
 
 const STATS = [
-  { value: String(TOOL_FAMILIES.length), label: 'soorten oefeningen' },
+  { value: String(TOOL_FAMILIES.filter(f => !f.verborgen).length), label: 'soorten oefeningen' },
   { value: String(AANTAL_SPELLEN), label: 'minigames' },
   { value: '300+', label: 'items te winnen' },
   { value: '4 t/m 8', label: 'groep' },
@@ -176,7 +176,7 @@ function Home({ onChoose }) {
 function Vakken() {
   return (
     <>
-      <Kop kicker="Wat oefen je?" titel={`Vier vakken, ${TOOL_FAMILIES.length} soorten oefeningen`}
+      <Kop kicker="Wat oefen je?" titel={`Vier vakken, ${TOOL_FAMILIES.filter(f => !f.verborgen).length} soorten oefeningen`}
         sub="Alle oefeningen sluiten aan bij de stof van groep 4 t/m 8. Nieuwe oefeningen komen er regelmatig bij." />
       <div className="lp-vakken">
         {VAKKEN.map(v => (
