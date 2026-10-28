@@ -267,7 +267,7 @@
     <p class="kicker">Spelling &middot; per categorie</p>
     <h1>Oefen spelling per categorie</h1>
     <p class="lead">Kies hieronder een spellingcategorie. Je oefent dan alleen woorden met die regel. Na elke 5 goed gespelde woorden mag je een spelletje spelen!</p>
-    <div class="voicepick" id="voicePick">
+    <div class="voicepick" id="voicePick" style="display:none">
       <label for="voiceSelect">Stem:</label>
       <select id="voiceSelect"></select>
       <button type="button" id="voiceTest" title="Probeer de stem">&#128266;</button>
@@ -414,11 +414,9 @@ const WORDS = [
   {w:"vermoeid",s:"Ik denk dat je een beetje vermoeid bent.",a:[["haai","oei: -moeid"],["hond_hert","eindigt op -d, hoor /t/"]]},
   {w:"veertig",s:"Volgens mij heb ik wel veertig graden koorts.",a:[["beer","-ee-"],["gevaarlijk","-ig"]]},
   {w:"behoorlijk",s:"Dat is behoorlijk hoog, zegt mijn moeder.",a:[["beer","-oo-"],["gevaarlijk","-lijk"]]},
-  {w:"drink",s:"Hier, drink dit op. Dan voel je je snel beter.",a:[["winterkoninkje","nk"]]},
   {w:"leeuwenrots",s:"De leeuwen liggen te slapen op de leeuwenrots.",a:[["leeuw","eeuw"],["reuzenschildpad","tussen-n: leeuwen-"],["stokstaart","leeuwen + rots"]]},
   {w:"zwaluwen",s:"In de lucht vliegen twee zwaluwen.",a:[["krekel","zwa-/lu- open lettergreep"]]},
   {w:"potloodje",s:"Een klein potlood is een potloodje.",a:[["beer","-lood, oo"],["muisje","verkleinwoord -je"],["stokstaart","pot + loodje"]]},
-  {w:"schrijven",s:"Wij schrijven een brief.",a:[["geit_bij","ij"],["duiven_ganzen","f → v: schrijf → schrijven"]]},
   {w:"achttien",s:"Na zeventien komt achttien.",a:[["specht","-cht-: acht"],["stokstaart","acht + tien"]]},
   {w:"emmertje",s:"Een klein emmer is een emmertje.",a:[["kikker","em→mm"],["muisje","verkleinwoord -tje"]]},
   {w:"eigenlijk",s:"Heb jij eigenlijk nog iets van Karim gehoord?",a:[["geit_bij","ei"],["gevaarlijk","-lijk"]]},
@@ -426,12 +424,10 @@ const WORDS = [
   {w:"meteen",s:"Ik ga hem meteen een berichtje sturen.",a:[["beer","-teen, ee"]]},
   {w:"lawaai",s:"Opeens horen de jongens een enorm lawaai.",a:[["haai","aai"],["krekel","la- open lettergreep"]]},
   {w:"kunststoffen",s:"Karim trommelt op het kunststoffen dak van de schuur.",a:[["kikker","stof→ff"],["stokstaart","kunst + stoffen"]]},
-  {w:"waarschuw",s:"Waarschuw me voortaan even als we afspreken.",a:[["leeuw","-schuw, uw"]]},
   {w:"jarige",s:"De jarige job mag de taart aansnijden.",a:[["krekel","ja-/ri- open lettergreep"]]},
   {w:"agenda",s:"Ik schrijf de afspraak in mijn agenda.",a:[["krekel","a-/da- open lettergreep"]]},
   {w:"koala's",s:"In de boom zitten twee koala's.",a:[["pandas","meervoud 's"],["krekel","ko-/a- open lettergreep"]]},
   {w:"zeehondje",s:"Op het strand ligt een klein zeehondje.",a:[["beer","zee, ee"],["muisje","verkleinwoord -je"],["stokstaart","zee + hondje"]]},
-  {w:"klauteren",s:"De kinderen klauteren via het touw omhoog.",a:[["pauw_goudvis","-lau-, au"]]},
   {w:"alfabetische",s:"In de bibliotheek staan boeken op alfabetische volgorde.",a:[["tropisch","-isch"],["krekel","fa-/ti- open lettergreep"]]},
   {w:"achtste",s:"Julia eindigt als achtste met verspringen.",a:[["specht","-cht-: acht"],["hoogte","-ste"]]},
   {w:"provincie",s:"Amsterdam ligt in de provincie Noord-Holland.",a:[["citroenvlinder","-cie, c = /s/"],["krekel","pro- open lettergreep"]]},
@@ -464,7 +460,6 @@ const WORDS = [
   {w:"keizerspinguïn",s:"De keizerspinguïn leeft op Antarctica.",a:[["geit_bij","kei, ei"],["pinguin","trema op de i: -guïn"],["stokstaart","keizers + pinguïn"]]},
   {w:"thuiswedstrijd",s:"Vanavond speelt ons team een thuiswedstrijd.",a:[["python","th: thuis"],["geit_bij","-strijd, ij"],["stokstaart","thuis + wedstrijd"],["hond_hert","eindigt op -d, hoor /t/"]]},
   {w:"slijtage",s:"Door veel gebruik ontstaat er slijtage.",a:[["geit_bij","slij, ij"],["page","-age = /zj/"]]},
-  {w:"miauwen",s:"De poezen miauwen om eten.",a:[["pauw_goudvis","-au-"],["krekel","mi- open lettergreep"]]},
   {w:"audio",s:"Bij de film hoort goede audio.",a:[["pauw_goudvis","au"],["krekel","di-/o- open lettergreep"]]},
   {w:"vertrouwelijke",s:"Dit zijn vertrouwelijke gegevens.",a:[["leeuw","-trouw → ou + w"],["gevaarlijk","-lijk"]]},
   {w:"baviaan",s:"De baviaan is een soort aap.",a:[["baviaan_leguaan","verborgen /j/: ba-vi-aan"],["krekel","ba-/vi- open lettergreep"]]},
@@ -552,7 +547,6 @@ const WORDS = [
   {w:"ingrediënten",s:"De ingrediënten voor zandkoekjes zijn bloem, suiker en boter.",a:[["pinguin","trema: -ië-"],["krekel","gre-/di- open lettergreep"]]},
   {w:"krab",s:"Geen kreeft, maar een krab.",a:[["krab","/p/ aan eind → b"]]},
   {w:"brunch",s:"Ontbijt en middageten tegelijk is een brunch.",a:[["jaguar","leenwoord (Engels)"]]},
-  {w:"bedankt",s:"Je krijgt iets. Dan zeg je: bedankt.",a:[["winterkoninkje","nk"]]},
   {w:"rieten",s:"Een boerderij met een rieten dak.",a:[["wollen","stoffelijk -en (van riet)"],["krekel","rie-/te- open lettergreep"]]},
   {w:"notitie",s:"Een aantekening is een notitie.",a:[["politiehond","-tie"],["krekel","no-/ti- open lettergreep"]]},
   {w:"auteur",s:"Een schrijver is een auteur.",a:[["pauw_goudvis","au"],["beer","-eur, eu"]]},
@@ -567,7 +561,6 @@ const WORDS = [
   {w:"helikopterpiloot",s:"De helikopterpiloot stijgt op.",a:[["beer","-loot, oo"],["stokstaart","helikopter + piloot"],["krekel","he-/li- open lettergreep"]]},
   {w:"architectenbureau",s:"De tekeningen worden gemaakt op het architectenbureau.",a:[["pechvogel","ch"],["jaguar","-eau"],["stokstaart","architecten + bureau"]]},
   {w:"frambozenpuddinkje",s:"Als toetje eten we een frambozenpuddinkje.",a:[["duiven_ganzen","s → z: framboos → frambozen"],["winterkoninkje","-inkje, nk"],["kikker","pud→dd"],["stokstaart","frambozen + puddinkje"]]},
-  {w:"passeren",s:"Wij passeren de auto op de snelweg.",a:[["kikker","pas→ss"],["krekel","se- open lettergreep"]]},
   {w:"orchidee",s:"Op de vensterbank bloeit een orchidee.",a:[["pechvogel","ch (weetwoord)"],["beer","-dee, ee"]]},
   {w:"discotheek",s:"In de discotheek wordt gedanst.",a:[["python","th"],["beer","-theek, ee"],["cavia","sco = /k/"],["krekel","co- open lettergreep"]]},
   {w:"collage",s:"Van de foto's maak ik een collage.",a:[["page","-ge = /zj/"],["kikker","col→ll"]]},
@@ -578,7 +571,6 @@ const WORDS = [
   {w:"coureur",s:"De coureur rijdt heel hard.",a:[["jaguar","leenwoord: ou en eu"]]},
   {w:"scheidsrechter",s:"De scheidsrechter geeft een rode kaart.",a:[["geit_bij","scheids, ei"],["pechvogel","ch"]]},
   {w:"advocaat",s:"De advocaat verdedigt de verdachte.",a:[["cavia","-caat, c = /k/"],["krekel","vo- open lettergreep"]]},
-  {w:"vernieuwen",s:"Onze buren vernieuwen het dak van hun schuur.",a:[["leeuw","ieuw"]]},
   {w:"medicijnen",s:"Na twee uur liggen de medicijnen klaar bij de apotheek.",a:[["citroenvlinder","-ci-, c = /s/"],["geit_bij","-cijn, ij"],["krekel","me-/di- open lettergreep"]]},
   {w:"Italië",s:"Rome is de hoofdstad van Italië.",a:[["pinguin","trema: -ië"],["krekel","I-/ta- open lettergreep"]]},
   {w:"koudste",s:"Met 10 graden vorst was het de koudste dag van het jaar.",a:[["pauw_goudvis","ou"],["hoogte","-ste"]]},
@@ -588,7 +580,6 @@ const WORDS = [
   {w:"inleiding",s:"Mijn werkstuk heeft een inleiding, een middenstuk en een slot.",a:[["geit_bij","-lei-, ei"],["slang","-ing = ng"]]},
   {w:"verstandig",s:"Omar heeft een verstandig besluit genomen.",a:[["gevaarlijk","-ig"]]},
   {w:"eventueel",s:"Kun je eventueel iets eerder bij mij zijn?",a:[["beer","-eel, ee"],["krekel","e- open lettergreep"]]},
-  {w:"adviseren",s:"Wij adviseren jullie om meteen naar huis te gaan.",a:[["krekel","vi-/se- open lettergreep"]]},
   {w:"Europeaan",s:"Een inwoner van Europa noem je een Europeaan.",a:[["baviaan_leguaan","verborgen /j/: -pe-aan"],["krekel","ro-/pe- open lettergreep"]]},
   {w:"automatisch",s:"De slagbomen van de camping sloten automatisch.",a:[["tropisch","-isch"],["pauw_goudvis","au"]]},
   {w:"eeuwigheid",s:"Het duurde een eeuwigheid voordat iedereen klaar was.",a:[["leeuw","eeuw"],["snelheid","-heid"],["gevaarlijk","-ig: eeuwig"]]},
@@ -600,7 +591,6 @@ const WORDS = [
   {w:"specialiteit",s:"De specialiteit van dit restaurant is de hamburger.",a:[["citroenvlinder","-cia-, c = /s/"],["snelheid","-teit"],["krekel","spe- open lettergreep"]]},
   {w:"primaire",s:"Rood, geel en blauw zijn primaire kleuren.",a:[["jaguar","leenwoord -air"],["krekel","pri- open lettergreep"]]},
   {w:"advertentie",s:"In deze advertentie staat een mooie aanbieding.",a:[["politiehond","-tie"]]},
-  {w:"verscheurd",s:"Elin heeft het papier tot snippers verscheurd.",a:[["beer","-eu-"],["hond_hert","eindigt op -d, hoor /t/"]]},
   {w:"kapitein",s:"De kapitein staat voor op het schip.",a:[["geit_bij","-ein, ei"],["krekel","ka-/pi- open lettergreep"]]},
   {w:"abdij",s:"De monniken wonen in een oude abdij.",a:[["geit_bij","-dij, ij"]]},
   {w:"circustent",s:"In de circustent treden clowns op.",a:[["citroenvlinder","cir-, c = /s/"],["cavia","-cus, c = /k/"],["stokstaart","circus + tent"]]},
@@ -611,7 +601,6 @@ const WORDS = [
   {w:"romantische",s:"Ik kijk graag naar romantische films.",a:[["tropisch","-isch"],["krekel","ro- open lettergreep"]]},
   {w:"obsessie",s:"Dat nieuwe spel is een obsessie voor je.",a:[["weetwoord","voorvoegsel ob-"],["kikker","ses→ss"]]},
   {w:"dichtst",s:"Is jouw huis het dichtst bij onze school?",a:[["specht","cht"]]},
-  {w:"kakelen",s:"Geluid dat kippen maken, is kakelen.",a:[["krekel","ka-/ke- open lettergreep"]]},
   {w:"expres",s:"Niet per ongeluk, maar expres.",a:[["axolotl","/ks/ → x"]]},
   {w:"torretje",s:"Een kleine tor is een torretje.",a:[["kikker","tor→rr"],["muisje","verkleinwoord -tje"]]},
   {w:"Lelystad",s:"De hoofdstad van Flevoland is Lelystad.",a:[["puppy","Griekse y"],["stokstaart","Lely + stad"],["krekel","Le- open lettergreep"]]},
@@ -665,7 +654,6 @@ const WORDS = [
   {w:"blozend",s:"Blozend neemt zij de prijs in ontvangst.",a:[["krekel","blo- open lettergreep"],["hond_hert","eindigt op -d, hoor /t/"]]},
   {w:"bangerd",s:"Ik ben geen bangerd meer!",a:[["slang","ng"],["hond_hert","eindigt op -d, hoor /t/"]]},
   {w:"oudste",s:"Zij is de oudste bewoner van de stad.",a:[["pauw_goudvis","ou"],["hoogte","-ste"]]},
-  {w:"omcirkelen",s:"Bij deze opdracht moet je het juiste antwoord omcirkelen.",a:[["citroenvlinder","cir, c = /s/"]]},
   {w:"overnachting",s:"Mijn ouders boekten een overnachting in een hotel.",a:[["specht","-nacht, cht"],["slang","-ing = ng"]]},
   {w:"frambozenjam",s:"Op mijn brood zit frambozenjam.",a:[["duiven_ganzen","s → z: framboos → frambozen"],["stokstaart","frambozen + jam"]]},
   {w:"meloenthee",s:"Ik drink een glas meloenthee.",a:[["python","th: thee"],["beer","-ee"],["stokstaart","meloen + thee"]]},
@@ -695,7 +683,6 @@ const WORDS = [
   {w:"populaire",s:"De populaire zangeres deelt handtekeningen uit.",a:[["jaguar","leenwoord -air"],["krekel","po-/pu- open lettergreep"]]},
   {w:"nationale",s:"Het nationale elftal eet pizza.",a:[["politiehond","-tio-"],["krekel","na-/ti-/o- open lettergreep"]]},
   {w:"elftal",s:"Het nationale elftal eet pizza.",a:[["stokstaart","elf + tal"]]},
-  {w:"schitteren",s:"De sterren schitteren aan de hemel.",a:[["kikker","schit→tt"]]},
   {w:"violen",s:"In het orkest spelen de violen.",a:[["baviaan_leguaan","verborgen /j/: vi-o-len"],["krekel","vi-/o-/len open lettergreep"]]},
   {w:"prairie",s:"Op de prairie grazen bizons.",a:[["jaguar","leenwoord -ai"],["bizon","-rie = /ie/ → i"]]},
   {w:"ballonnetje",s:"Een grote ballon en een klein ballonnetje.",a:[["kikker","bal→ll en lon→nn"],["biggetje","verkleinwoord -etje"]]},
@@ -703,14 +690,12 @@ const WORDS = [
   {w:"verwarminkje",s:"Aan de muur hangt een klein verwarminkje.",a:[["winterkoninkje","-inkje, nk"]]},
   {w:"geknipte",s:"Het meisje is blij met haar geknipte haar.",a:[["hoogte","-te"]]},
   {w:"sanitair",s:"In de badkamer staat het sanitair.",a:[["jaguar","leenwoord -air"]]},
-  {w:"geproefd",s:"Ik heb nog nooit zoiets lekkers geproefd!",a:[["hond_hert","eindigt op -d, hoor /t/"]]},
   {w:"couplet",s:"Na het refrein zongen wij het tweede couplet.",a:[["jaguar","leenwoord: ou"]]},
   {w:"engerd",s:"Sem is verkleed als spook. Wat een engerd is hij!",a:[["slang","ng"],["hond_hert","eindigt op -d, hoor /t/"]]},
   {w:"eetcafé",s:"Wij hebben heerlijk in het nieuwe eetcafé gegeten.",a:[["beer","eet, ee"],["jaguar","accent é"],["cavia","c = /k/"],["stokstaart","eet + café"]]},
   {w:"rennend",s:"Pien gaat rennend naar oma.",a:[["kikker","ren→nn"],["hond_hert","eindigt op -d, hoor /t/"]]},
   {w:"opleiding",s:"Mijn zus volgde een opleiding tot dierenarts.",a:[["geit_bij","-lei-, ei"],["slang","-ing = ng"]]},
   {w:"camper",s:"Wij reden met onze camper naar Luxemburg.",a:[["cavia","c = /k/"],["krekel","cam-per"]]},
-  {w:"gekregen",s:"De gekregen trui staat hem leuk.",a:[["krekel","kre- open lettergreep"]]},
   {w:"nauwkeurig",s:"Lin trok nauwkeurig de lijntjes over.",a:[["leeuw","auw → au + w"],["gevaarlijk","-ig"],["beer","-eur, eu"]]},
   {w:"'s zondags",s:"'s Zondags slapen mijn ouders altijd uit.",a:[["snachts","'s-woord"]]},
   {w:"koperen",s:"In de koperen ketel zit een gat.",a:[["wollen","stoffelijk -en (van koper)"],["krekel","ko- open lettergreep"]]},
@@ -722,7 +707,6 @@ const WORDS = [
   {w:"courgette",s:"In de soep zit een groene courgette.",a:[["jaguar","leenwoord: ou"],["page","-ge = /zj/"],["kikker","get→tt"]]},
   {w:"capuchon",s:"Het regent: ik doe de capuchon van mijn jas op.",a:[["chimpansee","/sj/ → ch"],["cavia","c = /k/"]]},
   {w:"goal",s:"Wat een prachtige goal!",a:[["jaguar","leenwoord"]]},
-  {w:"genezen",s:"Na een week ben je weer genezen.",a:[["krekel","ne-/ze- open lettergreep"]]},
   {w:"ravijn",s:"Diep in de bergen ligt een ravijn.",a:[["geit_bij","-ijn, ij"],["krekel","ra- open lettergreep"]]},
   {w:"skiën",s:"In de winter gaan we skiën.",a:[["reeen","-ën, trema"],["bizon","ski = /ie/ → i"]]},
   {w:"conditie",s:"Door te sporten krijg je een betere conditie.",a:[["politiehond","-tie"],["cavia","c = /k/"]]},
@@ -762,7 +746,6 @@ const WORDS = [
   {w:"zeeën",s:"Weet jij hoeveel zeeën er op aarde zijn?",a:[["reeen","-ën, trema"],["beer","zee, ee"]]},
   {w:"stethoscoop",s:"De dokter luistert met haar stethoscoop naar mijn hart.",a:[["python","th"],["beer","-scoop, oo"],["cavia","sco = /k/"]]},
   {w:"dressoir",s:"Op het dressoir staat een foto van opa.",a:[["jaguar","leenwoord -oir"],["kikker","dres→ss"]]},
-  {w:"gezonken",s:"De duikers onderzoeken het gezonken schip.",a:[["winterkoninkje","nk"]]},
   {w:"glazenwasser",s:"De glazenwasser klom op de ladder.",a:[["duiven_ganzen","s → z: glas → glazen"],["kikker","was→ss"],["stokstaart","glazen + wasser"]]},
   {w:"trottoir",s:"De auto staat met twee wielen op het trottoir.",a:[["jaguar","leenwoord -oir"],["kikker","trot→tt"]]},
   {w:"geëxporteerd",s:"Het vlees wordt naar Italië geëxporteerd.",a:[["pinguin","trema: ge-ë"],["axolotl","/ks/ → x"],["beer","-eerd, ee"],["hond_hert","eindigt op -d, hoor /t/"]]},
@@ -780,16 +763,13 @@ const WORDS = [
   {w:"halve",s:"Ik eet een halve appel.",a:[["duiven_ganzen","f → v: half → halve"]]},
   {w:"vriendinnetje",s:"Lotte speelt met haar nieuwe vriendinnetje.",a:[["kikker","din→nn"],["biggetje","verkleinwoord -etje"]]},
   {w:"puntenslijper",s:"Ik maak scherpe punten: ik ben een puntenslijper.",a:[["stokstaart","punten + slijper"],["reuzenschildpad","tussen-n: punten-"],["geit_bij","slijper, ij"]]},
-  {w:"geërfd",s:"Ik heb een kettinkje van mijn overleden oma geërfd.",a:[["pinguin","trema: ge-ë"],["hond_hert","eindigt op -d, hoor /t/"]]},
   {w:"jaloezieën",s:"Ik doe alle jaloezieën dicht, zodat de zon niet naar binnen schijnt.",a:[["reeen","meervoud -ën, trema"],["krekel","ja-/lo- open lettergreep"]]},
   {w:"waterreservoir",s:"Ik vul het waterreservoir van het koffiezetapparaat.",a:[["jaguar","leenwoord -oir"],["stokstaart","water + reservoir"],["krekel","wa-/re- open lettergreep"]]},
   {w:"lianen",s:"Houtige klimplanten in de jungle zijn lianen.",a:[["baviaan_leguaan","verborgen /j/: li-a-nen"],["krekel","li-/a- open lettergreep"]]},
   {w:"penalty",s:"De voetballer scoorde 1-0 vanuit een penalty.",a:[["jaguar","leenwoord (Engels)"],["puppy","Griekse y"]]},
   {w:"treincoupé",s:"We zoeken twee zitplaatsen in dezelfde treincoupé.",a:[["jaguar","leenwoord, accent é"],["geit_bij","trein, ei"],["stokstaart","trein + coupé"]]},
-  {w:"beëindigen",s:"Wij beëindigen het spel als de bel gaat.",a:[["pinguin","trema: be-ë"]]},
   {w:"chagrijnig",s:"Pino is vandaag een beetje chagrijnig.",a:[["chimpansee","/sj/ → ch"],["geit_bij","grijn, ij"],["gevaarlijk","-ig"]]},
   {w:"radijzen",s:"In de moestuin groeien rode radijzen.",a:[["geit_bij","dijz, ij"],["duiven_ganzen","s → z: radijs → radijzen"],["krekel","ra- open lettergreep"]]},
-  {w:"twijfelen",s:"Wij twijfelen over de goede keuze.",a:[["geit_bij","twijf, ij"],["krekel","fe-/len open lettergreep"]]},
   {w:"microscoop",s:"De microscoop vergroot alle bacteriën.",a:[["cavia","c = /k/"],["bizon","mi = /ie/ → i"],["beer","-scoop, oo"]]},
   {w:"bacteriën",s:"Welke bacteriën zitten er in het bedorven voedsel?",a:[["cavia","bac… c = /k/"],["reeen","meervoud -iën, trema"],["krekel","te- open lettergreep"]]},
   {w:"elektrisch",s:"Lara's blauwe auto is elektrisch.",a:[["tropisch","-isch"],["krekel","e-/le- open lettergreep"]]},
@@ -843,7 +823,6 @@ const WORDS = [
   {w:"minuten",s:"Er passen er zestig in een uur: minuten.",a:[["bizon","mi = /ie/ → i"],["krekel","nu- open lettergreep"]]},
   {w:"laptop",s:"Mijn moeder heeft een nieuwe laptop.",a:[["jaguar","leenwoord"]]},
   {w:"kippenhok",s:"Op zondag mogen de kippen uit het kippenhok.",a:[["reuzenschildpad","tussen-n: kippen-"],["kikker","kip→pp"],["stokstaart","kippen + hok"]]},
-  {w:"lachen",s:"We lachen ons slap!",a:[["pechvogel","ch"]]},
   {w:"beresterk",s:"Ik ben enorm sterk: ik ben beresterk.",a:[["stokstaart","beer + sterk"]]},
   {w:"primair",s:"Iets wat op de eerste plaats komt, noem je primair.",a:[["jaguar","leenwoord -air"]]},
   {w:"interview",s:"Ik heb het interview met de kroonprinses gezien.",a:[["jaguar","leenwoord"]]},
@@ -880,16 +859,30 @@ function loadVoices(){
 }
 function setActiveVoice(uri){userVoiceURI=uri;dutchVoice=voices.find(v=>v.voiceURI===uri)||null;}
 if('speechSynthesis' in window){loadVoices();speechSynthesis.onvoiceschanged=loadVoices;}
+/* Voorlezen: eerst de opname van Fenna (audio/, zie scripts/dictee-audio.py),
+   anders de browserstem. De bestandsnaam is een FNV-1a-hash van de tekst. */
+function kkHash(t){let h=0x811c9dc5;for(const b of new TextEncoder().encode(t)){h^=b;h=Math.imul(h,0x01000193)>>>0;}return h.toString(16).padStart(8,'0');}
+let kkRun=0,kkAudio=null;
+function kkStop(){kkRun++;if(kkAudio){kkAudio.pause();kkAudio=null;}if('speechSynthesis' in window)speechSynthesis.cancel();}
+function kkTts(p,klaar){
+  if(!('speechSynthesis' in window))return klaar();
+  const u=new SpeechSynthesisUtterance(p.t);
+  u.lang='nl-NL';u.rate=p.r||0.95;u.pitch=1;if(dutchVoice)u.voice=dutchVoice;
+  u.onend=klaar;u.onerror=klaar;speechSynthesis.speak(u);
+}
 function speakSeq(parts){
-  if(!('speechSynthesis' in window))return;
-  speechSynthesis.cancel();
-  parts.forEach((p,i)=>{
-    const u=new SpeechSynthesisUtterance(p.t);
-    u.lang='nl-NL';u.rate=p.r||0.95;u.pitch=1;if(dutchVoice)u.voice=dutchVoice;
-    if(i===0)u.onstart=()=>speakerEl.classList.add('talking');
-    if(i===parts.length-1){u.onend=()=>speakerEl.classList.remove('talking');u.onerror=()=>speakerEl.classList.remove('talking');}
-    speechSynthesis.speak(u);
-  });
+  kkStop();const run=kkRun;
+  speakerEl.classList.add('talking');
+  const volgende=i=>{
+    if(run!==kkRun)return;
+    if(i>=parts.length){speakerEl.classList.remove('talking');return;}
+    let klaar=false;const door=(pauze)=>{if(klaar)return;klaar=true;setTimeout(()=>volgende(i+1),pauze);};
+    const a=new Audio('audio/'+kkHash(parts[i].t)+'.mp3');kkAudio=a;
+    a.onended=()=>door(350);
+    a.onerror=()=>{if(klaar||run!==kkRun)return;klaar=true;kkTts(parts[i],()=>setTimeout(()=>volgende(i+1),100));};
+    a.play().catch(e=>{if(e.name!=='AbortError')a.onerror();});
+  };
+  volgende(0);
 }
 function speakPrompt(){const it=queue[idx];speakSeq([{t:it.s,r:0.96},{t:"Schrijf op.",r:0.95},{t:it.w,r:0.88}]);}
 function speakWord(){speakSeq([{t:queue[idx].w,r:0.88}]);}
@@ -1009,7 +1002,7 @@ function checkAnimals(){
 }
 
 function showBreak(){
-  speechSynthesis.cancel();
+  kkStop();
   $('breakTitle').textContent=`${goodAnswers} goede antwoorden!`;
   $('screen-break').classList.remove('hide');
 }
@@ -1026,7 +1019,7 @@ function next(){
 }
 
 function finish(){
-  speechSynthesis.cancel();
+  kkStop();
   screenGame.classList.add('hide');screenEnd.classList.remove('hide');
   const total=queue.length,pts=spellPts+animalPts,max=total*2;
   $('finalScore').textContent=pts;$('finalTotal').textContent=`/ ${max}`;

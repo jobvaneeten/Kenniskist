@@ -267,7 +267,7 @@
     <p class="kicker">Spelling &middot; Thema 4 &middot; groep 7</p>
     <h1>Hoor het, schrijf het, koppel het dier</h1>
     <p class="lead">Je hoort de hele zin en daarna het woord. Typ het woord. Daarna verschijnt het juiste woord en zoek je de dieren erbij: welke spellingregels zitten erin? Vast? Gebruik de hulpknop.</p>
-    <div class="voicepick" id="voicePick">
+    <div class="voicepick" id="voicePick" style="display:none">
       <label for="voiceSelect">Stem:</label>
       <select id="voiceSelect"></select>
       <button type="button" id="voiceTest" title="Probeer de stem">&#128266;</button>
@@ -417,7 +417,6 @@ const WORDS = [
   {w:"primaire", s:"Rood, geel en blauw zijn primaire kleuren.", a:[["jaguar","leenwoord -air"],["krekel","pri- open lettergreep"]]},
   {w:"advertentie", s:"In deze advertentie staat een mooie aanbieding.", a:[["politiehond","-tie"]]},
   {w:"advocaat", s:"De advocaat verdedigt de verdachte.", a:[["cavia","-caat, c = /k/"],["krekel","vo- open lettergreep"]]},
-  {w:"verscheurd", s:"Elin heeft het papier tot snippers verscheurd.", a:[["beer","-eu-"],["hond_hert","eindigt op -d, hoor /t/"]]},
   {w:"tapijt", s:"In de woonkamer ligt een nieuw tapijt.", a:[["geit_bij","-ijt, ij"],["krekel","ta- open lettergreep"]]},
   {w:"kapitein", s:"De kapitein staat voor op het schip.", a:[["geit_bij","-ein, ei"],["krekel","ka-/pi- open lettergreep"]]},
   {w:"abdij", s:"De monniken wonen in een oude abdij.", a:[["geit_bij","-dij, ij"]]},
@@ -431,7 +430,6 @@ const WORDS = [
   {w:"romantische", s:"Ik kijk graag naar romantische films.", a:[["tropisch","-isch"],["krekel","ro- open lettergreep"]]},
   {w:"obsessie", s:"Dat nieuwe spel is een obsessie voor je.", a:[["weetwoord","voorvoegsel ob-"],["kikker","ses→ss"]]},
   {w:"dichtst", s:"Is jouw huis het dichtst bij onze school?", a:[["specht","cht"]]},
-  {w:"kakelen", s:"Geluid dat kippen maken, is kakelen.", a:[["krekel","ka-/ke- open lettergreep"]]},
   {w:"expres", s:"Niet per ongeluk, maar expres.", a:[["axolotl","/ks/ → x"]]},
   {w:"torretje", s:"Een kleine tor is een torretje.", a:[["kikker","tor→rr"],["muisje","verkleinwoord -tje"]]},
   {w:"Lelystad", s:"De hoofdstad van Flevoland is Lelystad.", a:[["puppy","Griekse y"],["stokstaart","Lely + stad"],["krekel","Le- open lettergreep"]]},
@@ -501,16 +499,30 @@ function loadVoices(){
 }
 function setActiveVoice(uri){userVoiceURI=uri;dutchVoice=voices.find(v=>v.voiceURI===uri)||null;}
 if('speechSynthesis' in window){loadVoices();speechSynthesis.onvoiceschanged=loadVoices;}
+/* Voorlezen: eerst de opname van Fenna (audio/, zie scripts/dictee-audio.py),
+   anders de browserstem. De bestandsnaam is een FNV-1a-hash van de tekst. */
+function kkHash(t){let h=0x811c9dc5;for(const b of new TextEncoder().encode(t)){h^=b;h=Math.imul(h,0x01000193)>>>0;}return h.toString(16).padStart(8,'0');}
+let kkRun=0,kkAudio=null;
+function kkStop(){kkRun++;if(kkAudio){kkAudio.pause();kkAudio=null;}if('speechSynthesis' in window)speechSynthesis.cancel();}
+function kkTts(p,klaar){
+  if(!('speechSynthesis' in window))return klaar();
+  const u=new SpeechSynthesisUtterance(p.t);
+  u.lang='nl-NL';u.rate=p.r||0.95;u.pitch=1;if(dutchVoice)u.voice=dutchVoice;
+  u.onend=klaar;u.onerror=klaar;speechSynthesis.speak(u);
+}
 function speakSeq(parts){
-  if(!('speechSynthesis' in window))return;
-  speechSynthesis.cancel();
-  parts.forEach((p,i)=>{
-    const u=new SpeechSynthesisUtterance(p.t);
-    u.lang='nl-NL';u.rate=p.r||0.95;u.pitch=1;if(dutchVoice)u.voice=dutchVoice;
-    if(i===0)u.onstart=()=>speakerEl.classList.add('talking');
-    if(i===parts.length-1){u.onend=()=>speakerEl.classList.remove('talking');u.onerror=()=>speakerEl.classList.remove('talking');}
-    speechSynthesis.speak(u);
-  });
+  kkStop();const run=kkRun;
+  speakerEl.classList.add('talking');
+  const volgende=i=>{
+    if(run!==kkRun)return;
+    if(i>=parts.length){speakerEl.classList.remove('talking');return;}
+    let klaar=false;const door=(pauze)=>{if(klaar)return;klaar=true;setTimeout(()=>volgende(i+1),pauze);};
+    const a=new Audio('audio/'+kkHash(parts[i].t)+'.mp3');kkAudio=a;
+    a.onended=()=>door(350);
+    a.onerror=()=>{if(klaar||run!==kkRun)return;klaar=true;kkTts(parts[i],()=>setTimeout(()=>volgende(i+1),100));};
+    a.play().catch(e=>{if(e.name!=='AbortError')a.onerror();});
+  };
+  volgende(0);
 }
 function speakPrompt(){const it=queue[idx];speakSeq([{t:it.s,r:0.96},{t:"Schrijf op.",r:0.95},{t:it.w,r:0.88}]);}
 function speakWord(){speakSeq([{t:queue[idx].w,r:0.88}]);}
@@ -617,7 +629,7 @@ function checkAnimals(){
 }
 
 function showBreak(){
-  speechSynthesis.cancel();
+  kkStop();
   $('breakTitle').textContent=`${goodAnswers} goede antwoorden!`;
   $('screen-break').classList.remove('hide');
 }
@@ -634,7 +646,7 @@ function next(){
 }
 
 function finish(){
-  speechSynthesis.cancel();
+  kkStop();
   screenGame.classList.add('hide');screenEnd.classList.remove('hide');
   const total=queue.length,pts=spellPts+animalPts,max=total*2;
   $('finalScore').textContent=pts;$('finalTotal').textContent=`/ ${max}`;

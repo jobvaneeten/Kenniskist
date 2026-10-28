@@ -267,7 +267,7 @@
     <p class="kicker">Spelling &middot; Thema 7 &middot; groep 7</p>
     <h1>Hoor het, schrijf het, koppel het dier</h1>
     <p class="lead">Je hoort de hele zin en daarna het woord. Typ het woord. Daarna verschijnt het juiste woord en zoek je de dieren erbij: welke spellingregels zitten erin? Vast? Gebruik de hulpknop.</p>
-    <div class="voicepick" id="voicePick">
+    <div class="voicepick" id="voicePick" style="display:none">
       <label for="voiceSelect">Stem:</label>
       <select id="voiceSelect"></select>
       <button type="button" id="voiceTest" title="Probeer de stem">&#128266;</button>
@@ -428,17 +428,14 @@ const WORDS = [
   {w:"halve", s:"Ik eet een halve appel.", a:[["duiven_ganzen","f → v: half → halve"]]},
   {w:"vriendinnetje", s:"Lotte speelt met haar nieuwe vriendinnetje.", a:[["kikker","din→nn"],["biggetje","verkleinwoord -etje"]]},
   {w:"puntenslijper", s:"Ik maak scherpe punten: ik ben een puntenslijper.", a:[["stokstaart","punten + slijper"],["reuzenschildpad","tussen-n: punten-"],["geit_bij","slijper, ij"]]},
-  {w:"geërfd", s:"Ik heb een kettinkje van mijn overleden oma geërfd.", a:[["pinguin","trema: ge-ë"],["hond_hert","eindigt op -d, hoor /t/"]]},
   {w:"jaloezieën", s:"Ik doe alle jaloezieën dicht, zodat de zon niet naar binnen schijnt.", a:[["reeen","meervoud -ën, trema"],["krekel","ja-/lo- open lettergreep"]]},
   {w:"waterreservoir", s:"Ik vul het waterreservoir van het koffiezetapparaat.", a:[["jaguar","leenwoord -oir"],["stokstaart","water + reservoir"],["krekel","wa-/re- open lettergreep"]]},
   {w:"lianen", s:"Houtige klimplanten in de jungle zijn lianen.", a:[["baviaan_leguaan","verborgen /j/: li-a-nen"],["krekel","li-/a- open lettergreep"]]},
   {w:"penalty", s:"De voetballer scoorde 1-0 vanuit een penalty.", a:[["jaguar","leenwoord (Engels)"],["puppy","Griekse y"]]},
   {w:"treincoupé", s:"We zoeken twee zitplaatsen in dezelfde treincoupé.", a:[["jaguar","leenwoord, accent é"],["geit_bij","trein, ei"],["stokstaart","trein + coupé"]]},
-  {w:"beëindigen", s:"Wij beëindigen het spel als de bel gaat.", a:[["pinguin","trema: be-ë"]]},
   {w:"scheidsrechter", s:"De scheidsrechter fluit voor een vrije trap.", a:[["geit_bij","scheids, ei"],["pechvogel","ch"]]},
   {w:"chagrijnig", s:"Pino is vandaag een beetje chagrijnig.", a:[["chimpansee","/sj/ → ch"],["geit_bij","grijn, ij"],["gevaarlijk","-ig"]]},
   {w:"radijzen", s:"In de moestuin groeien rode radijzen.", a:[["geit_bij","dijz, ij"],["duiven_ganzen","s → z: radijs → radijzen"],["krekel","ra- open lettergreep"]]},
-  {w:"twijfelen", s:"Wij twijfelen over de goede keuze.", a:[["geit_bij","twijf, ij"],["krekel","fe-/len open lettergreep"]]},
   {w:"microscoop", s:"De microscoop vergroot alle bacteriën.", a:[["cavia","c = /k/"],["bizon","mi = /ie/ → i"],["beer","-scoop, oo"]]},
   {w:"bacteriën", s:"Welke bacteriën zitten er in het bedorven voedsel?", a:[["cavia","bac… c = /k/"],["reeen","meervoud -iën, trema"],["krekel","te- open lettergreep"]]},
   {w:"elektrisch", s:"Lara's blauwe auto is elektrisch.", a:[["tropisch","-isch"],["krekel","e-/le- open lettergreep"]]},
@@ -500,16 +497,30 @@ function loadVoices(){
 }
 function setActiveVoice(uri){userVoiceURI=uri;dutchVoice=voices.find(v=>v.voiceURI===uri)||null;}
 if('speechSynthesis' in window){loadVoices();speechSynthesis.onvoiceschanged=loadVoices;}
+/* Voorlezen: eerst de opname van Fenna (audio/, zie scripts/dictee-audio.py),
+   anders de browserstem. De bestandsnaam is een FNV-1a-hash van de tekst. */
+function kkHash(t){let h=0x811c9dc5;for(const b of new TextEncoder().encode(t)){h^=b;h=Math.imul(h,0x01000193)>>>0;}return h.toString(16).padStart(8,'0');}
+let kkRun=0,kkAudio=null;
+function kkStop(){kkRun++;if(kkAudio){kkAudio.pause();kkAudio=null;}if('speechSynthesis' in window)speechSynthesis.cancel();}
+function kkTts(p,klaar){
+  if(!('speechSynthesis' in window))return klaar();
+  const u=new SpeechSynthesisUtterance(p.t);
+  u.lang='nl-NL';u.rate=p.r||0.95;u.pitch=1;if(dutchVoice)u.voice=dutchVoice;
+  u.onend=klaar;u.onerror=klaar;speechSynthesis.speak(u);
+}
 function speakSeq(parts){
-  if(!('speechSynthesis' in window))return;
-  speechSynthesis.cancel();
-  parts.forEach((p,i)=>{
-    const u=new SpeechSynthesisUtterance(p.t);
-    u.lang='nl-NL';u.rate=p.r||0.95;u.pitch=1;if(dutchVoice)u.voice=dutchVoice;
-    if(i===0)u.onstart=()=>speakerEl.classList.add('talking');
-    if(i===parts.length-1){u.onend=()=>speakerEl.classList.remove('talking');u.onerror=()=>speakerEl.classList.remove('talking');}
-    speechSynthesis.speak(u);
-  });
+  kkStop();const run=kkRun;
+  speakerEl.classList.add('talking');
+  const volgende=i=>{
+    if(run!==kkRun)return;
+    if(i>=parts.length){speakerEl.classList.remove('talking');return;}
+    let klaar=false;const door=(pauze)=>{if(klaar)return;klaar=true;setTimeout(()=>volgende(i+1),pauze);};
+    const a=new Audio('audio/'+kkHash(parts[i].t)+'.mp3');kkAudio=a;
+    a.onended=()=>door(350);
+    a.onerror=()=>{if(klaar||run!==kkRun)return;klaar=true;kkTts(parts[i],()=>setTimeout(()=>volgende(i+1),100));};
+    a.play().catch(e=>{if(e.name!=='AbortError')a.onerror();});
+  };
+  volgende(0);
 }
 function speakPrompt(){const it=queue[idx];speakSeq([{t:it.s,r:0.96},{t:"Schrijf op.",r:0.95},{t:it.w,r:0.88}]);}
 function speakWord(){speakSeq([{t:queue[idx].w,r:0.88}]);}
@@ -616,7 +627,7 @@ function checkAnimals(){
 }
 
 function showBreak(){
-  speechSynthesis.cancel();
+  kkStop();
   $('breakTitle').textContent=`${goodAnswers} goede antwoorden!`;
   $('screen-break').classList.remove('hide');
 }
@@ -633,7 +644,7 @@ function next(){
 }
 
 function finish(){
-  speechSynthesis.cancel();
+  kkStop();
   screenGame.classList.add('hide');screenEnd.classList.remove('hide');
   const total=queue.length,pts=spellPts+animalPts,max=total*2;
   $('finalScore').textContent=pts;$('finalTotal').textContent=`/ ${max}`;
