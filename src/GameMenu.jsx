@@ -379,6 +379,14 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
       if (rekenKeuze === 'breuken') {
         return <BreukenPlaatjes onBack={() => setRekenKeuze(null)} addBriefgeld={addBriefgeld} addCuruntie={addCuruntie} />
       }
+      if (rekenKeuze === 'breukenhulp') {
+        return (
+          <div style={{ position: 'fixed', inset: 0, background: '#0E0F2E' }}>
+            <iframe src="/breukenkeuken.html" title="Breukenhulp" style={{ width: '100%', height: '100%', border: 'none' }} />
+            <TerugKnop onClick={() => setRekenKeuze(null)} />
+          </div>
+        )
+      }
       if (rekenKeuze === 'klok') {
         return <KlokKijken onBack={() => setRekenKeuze(null)} addBriefgeld={addBriefgeld} addCuruntie={addCuruntie} />
       }
@@ -411,6 +419,14 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
                 <span className="mode-desc">Koppel de breuk aan het plaatje</span>
                 <span className="vb-line">Ronde taarten en langwerpige repen</span>
                 <RewardChips rewards={['💵 briefgeld']} />
+              </button>
+            )}
+            {year >= 6 && (
+              <button className="mode-card" onClick={() => setRekenKeuze('breukenhulp')}>
+                <MenuScene name="breukenhulp" />
+                <span className="mode-name">Breukenhulp</span>
+                <span className="mode-desc">Leg pizza en chocola en vergelijk breuken</span>
+                <span className="vb-line">"2/4 = 1/2" · "1/2 + 1/4 = ?"</span>
               </button>
             )}
             {(year === 6 || year === 7) && (

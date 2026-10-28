@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Breukenkeuken</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap">
+<style>
+/* Layout: kenniskist-stijl. Pixel-art sterrenhemel als achtergrond, donkere glazen kaarten met gouden bovenrand, donkere tegels. Eén donkere look. */
+:root{
+  color-scheme: dark;
+  --sky:#0E0F2E; --glass:rgba(20,21,42,.86); --tile:#1E1F35; --tile-hi:#26284A; --line:#3A3C5E;
+  --ink:#FFFFFF; --muted:#B6B9DA;
+  --gold:#FFB52E; --gold-ink:#1A1426; --cyan:#3BE3F0; --cyan-ink:#0E0F2E;
+  --ok:#5BE695; --ok-soft:rgba(91,230,149,.14); --bad:#FF8FA6; --bad-soft:rgba(255,110,140,.15);
+  --font:'Nunito',system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+*{box-sizing:border-box}
+body{background:var(--sky);color:var(--ink);font-family:var(--font);font-size:17px;font-weight:700;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:72px 16px}
+#sky{position:fixed;inset:0;width:100%;height:100%;z-index:-1;image-rendering:pixelated;image-rendering:crisp-edges}
+.app{max-width:1120px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible{outline:3px solid var(--cyan);outline-offset:2px}
+
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px}
+.top h1{font-weight:900;font-size:30px;margin:0;flex:1 1 auto;text-shadow:0 2px 0 rgba(0,0,0,.35)}
+.seg{display:flex;background:var(--glass);border:1px solid var(--line);border-radius:14px;padding:4px;gap:4px}
+.seg button{min-height:44px;padding:0 18px;border:0;border-radius:10px;background:transparent;font-weight:800}
+.seg button.on{background:var(--cyan);color:var(--cyan-ink)}
+.toggles{display:flex;flex-wrap:wrap;gap:8px}
+.btn{min-height:46px;padding:0 16px;border:1px solid var(--line);border-radius:12px;background:var(--glass);font-weight:800}
+.btn[aria-pressed="true"]{border-color:var(--cyan);color:var(--cyan)}
+
+.tabs{display:flex;gap:6px;background:var(--glass);border:1px solid var(--line);border-radius:16px;padding:5px;align-self:flex-start}
+.tabs button{min-height:46px;padding:0 20px;border:0;border-radius:12px;background:transparent;font-weight:900;font-size:18px;color:var(--muted)}
+.tabs button[aria-selected="true"]{background:var(--gold);color:var(--gold-ink)}
+
+.card{background:var(--glass);border:1px solid rgba(255,255,255,.08);border-top:3px solid var(--gold);border-radius:22px;
+  box-shadow:0 18px 50px rgba(0,0,0,.4);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+
+.task{display:flex;align-items:center;gap:12px;padding:14px 16px}
+.arrow{width:52px;height:52px;flex:none;border-radius:12px;border:1px solid var(--line);background:var(--tile);display:flex;align-items:center;justify-content:center}
+.arrow:disabled{opacity:.35;cursor:default}
+.task-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.task-num{font-size:13px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--gold)}
+.task-text{margin:0;font-size:21px;font-weight:900;line-height:1.35;text-wrap:balance}
+.feed{margin:0;font-size:18px;font-weight:800;border-radius:10px;padding:6px 12px;align-self:flex-start}
+.feed.ok{background:var(--ok-soft);color:var(--ok)}
+.feed.bad{background:var(--bad-soft);color:var(--bad)}
+.check{min-height:52px;padding:0 24px;border:0;border-radius:12px;background:var(--gold);color:var(--gold-ink);font-weight:900;font-size:18px;flex:none;box-shadow:0 4px 0 #B87A10}
+.check:active{transform:translateY(2px);box-shadow:0 2px 0 #B87A10}
+
+.stage{padding:16px;gap:14px}
+.table{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+.reep .table{grid-template-columns:1fr}
+
+.board{background:var(--tile);border-radius:16px;padding:12px 14px;border:2px solid var(--line);display:flex;flex-direction:column;gap:8px;min-width:0;transition:border-color .15s,box-shadow .15s}
+.board.active{border-color:var(--gold);box-shadow:0 0 0 3px rgba(255,181,46,.18)}
+.board.over{border-color:var(--cyan);border-style:dashed;background:var(--tile-hi)}
+.b-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.b-name{font-weight:900;font-size:21px;background:none;border:0;padding:4px 0;text-align:left}
+.b-name small{font-size:12px;font-weight:900;color:var(--gold);margin-left:8px;letter-spacing:.06em}
+.b-clear{min-height:40px;padding:0 14px;border:1px solid var(--line);border-radius:10px;background:var(--glass);font-weight:800;font-size:15px}
+.b-svg{touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;min-height:60px}
+.b-svg svg{display:block;margin:0 auto;width:100%}
+.table .b-svg svg{max-width:330px}
+.reep .table .b-svg svg{max-width:none}
+.som .b-svg{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center}
+.som .b-svg svg{width:var(--ps,96px);margin:0}
+.reep .som .b-svg{display:grid;grid-template-columns:repeat(var(--rc,1),minmax(0,1fr));gap:6px;align-content:center}
+.reep .som .b-svg svg{width:100%}
+.pc{cursor:grab}
+.b-total{min-height:48px;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:4px 8px;font-size:20px;font-weight:900;font-variant-numeric:tabular-nums}
+.b-total.hide{visibility:hidden}
+.b-total .eq{color:var(--gold);white-space:nowrap}
+.b-total .tot{flex-basis:100%;text-align:center}
+.muted{color:var(--muted);font-weight:700;font-size:16px}
+.b-msg{min-height:22px;text-align:center;font-size:15px;font-weight:800;color:var(--bad)}
+.shake{animation:shake .35s}
+@keyframes shake{20%{transform:translateX(-7px)}40%{transform:translateX(7px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+@media (prefers-reduced-motion:reduce){.shake{animation:none}}
+
+.fr{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;line-height:1;margin:0 2px}
+.fr span:first-child{border-bottom:2px solid currentColor;padding:0 3px 2px}
+.fr span:last-child{padding:2px 3px 0}
+
+/* plus en min */
+.som{display:flex;flex-direction:column;padding:12px;gap:10px}
+.som .board{padding:8px 10px;gap:4px}
+.som .b-name{font-size:19px;padding:0}
+.som .b-clear{min-height:36px}
+.som .b-total{min-height:34px;font-size:18px}
+.som .b-msg{min-height:18px;font-size:14px}
+/* de hele som op één rij: A, teken, B, =, antwoord */
+.som-row{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) auto minmax(0,1fr);gap:10px;align-items:stretch}
+.som-row>div[id^="slot"]{display:flex;min-width:0}
+.som-row .board{flex:1}
+.sign{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+.sign-btns{display:flex;flex-direction:column;gap:6px;background:var(--tile);border:2px solid var(--line);border-radius:16px;padding:5px}
+.sign-btns button{width:54px;height:54px;border:0;border-radius:12px;background:transparent;font-size:36px;font-weight:900;line-height:1}
+.sign-btns button[aria-pressed="true"]{background:var(--gold);color:var(--gold-ink)}
+.sign small{font-size:13px;font-weight:800;color:var(--muted)}
+.eqsign{align-self:center;width:36px;text-align:center;font-size:42px;font-weight:900}
+.som-check{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:12px 16px}
+.som-check p.intro{margin:0;flex:1 1 280px;font-weight:900;font-size:18px;text-wrap:balance}
+
+.tray{position:sticky;bottom:0;z-index:20;border-radius:22px 22px 0 0;border-bottom:0;padding:8px 12px calc(10px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:6px;margin-bottom:-16px;box-shadow:0 -10px 30px rgba(0,0,0,.45)}
+.tray-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 12px}
+.tray-head h2{margin:0;font-weight:900;font-size:18px}
+.tray-head p{margin:0;color:var(--muted);font-weight:700;font-size:14px}
+.tray-items{display:grid;grid-template-columns:repeat(var(--cols,8),minmax(0,1fr));gap:8px}
+.tray-item{min-height:86px;border:1px solid var(--line);border-radius:12px;background:var(--tile);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:6px 2px;
+  touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;transition:border-color .15s,background .15s}
+.tray-item:hover{border-color:var(--cyan);background:var(--tile-hi)}
+.tray-item svg{width:100%;max-width:56px;display:block}
+.reep .tray-item svg{max-width:96px}
+.tray-item .lbl{font-size:17px;font-weight:900}
+
+.ghost{position:fixed;left:0;top:0;pointer-events:none;z-index:50;filter:drop-shadow(0 8px 14px rgba(0,0,0,.5))}
+
+@media (max-width:640px){
+  .tray-items{grid-template-columns:repeat(5,minmax(0,1fr))}
+  .tray-head p{display:none}
+}
+@media (max-width:820px){
+  .task{flex-wrap:wrap}
+  .task-body{flex-basis:100%;order:-1}
+}
+@media (max-width:700px){
+  .som-row{grid-template-columns:1fr}
+  .sign-btns{flex-direction:row}
+  .eqsign{width:auto}
+}
+@media (max-width:560px){
+  .table{grid-template-columns:1fr}
+  .stage{padding:10px}
+  .top h1{font-size:25px}
+  .task-text{font-size:18px}
+  .tabs button{padding:0 14px;font-size:16px}
+}
+</style>
+<style>[hidden]{display:none!important}html,body{margin:0}</style>
+</head>
+<body>
+
+<canvas id="sky" aria-hidden="true"></canvas>
+<div class="app" id="app">
+  <header class="top">
+    <h1>Breukenkeuken</h1>
+    <div class="tabs" role="tablist" aria-label="Kies een onderdeel">
+      <button id="tab-verg" role="tab" type="button" aria-selected="true" aria-controls="panel-verg">Vergelijken</button>
+      <button id="tab-som" role="tab" type="button" aria-selected="false" aria-controls="panel-som">Plus en min</button>
+    </div>
+    <div class="seg" role="group" aria-label="Kies wat je verdeelt">
+      <button id="m-pizza" class="on" type="button">Pizza</button>
+      <button id="m-reep" type="button">Chocolade</button>
+    </div>
+    <div class="toggles">
+      <button id="t-frac" class="btn" type="button" aria-pressed="true">Laat breuk zien</button>
+      <button id="t-over" class="btn" type="button" aria-pressed="false">Leg over elkaar</button>
+      <button id="t-clear" class="btn" type="button">Alles leeg</button>
+    </div>
+  </header>
+
+  <div id="panel-verg" role="tabpanel" aria-labelledby="tab-verg" style="display:flex;flex-direction:column;gap:14px">
+    <main class="table stage card" id="table"></main>
+  </div>
+
+  <div id="panel-som" role="tabpanel" aria-labelledby="tab-som" hidden style="flex-direction:column;gap:14px">
+    <section class="som-check card">
+      <p class="intro">Leg bord A en bord B, kies + of −, en leg zelf het antwoord.</p>
+      <button id="scheck" class="check" type="button">Kijk na</button>
+      <p class="feed" id="sfeed" aria-live="polite" hidden></p>
+    </section>
+    <section class="som card">
+      <div class="som-row">
+        <div id="slot-SA"></div>
+        <div class="sign">
+          <div class="sign-btns" role="group" aria-label="Kies het teken">
+            <button id="sg-plus" type="button" aria-pressed="true" aria-label="Plus">+</button>
+            <button id="sg-min" type="button" aria-pressed="false" aria-label="Min">−</button>
+          </div>
+          <small>Kies</small>
+        </div>
+        <div id="slot-SB"></div>
+        <div class="eqsign" aria-hidden="true">=</div>
+        <div id="slot-SC"></div>
+      </div>
+    </section>
+  </div>
+
+  <section class="tray card">
+    <div class="tray-head"><h2>Stukken</h2><p>Sleep een stuk naar een bord, of tik erop. Tik op een stuk op het bord om het weg te halen.</p></div>
+    <div class="tray-items" id="tray"></div>
+  </section>
+</div>
+<div class="ghost" id="ghost" hidden></div>
+
+<script>
+/* pixel-art sterrenhemel */
+(function(){
+const c=document.getElementById('sky'),x=c.getContext('2d');
+function hash(i,j,s){let h=(i*374761393+j*668265263+s*1442695041)|0;h=Math.imul(h^(h>>>13),1274126177);h=h^(h>>>16);return (h>>>0)/4294967295}
+function noise(px,py,s){const i=Math.floor(px),j=Math.floor(py),fx=px-i,fy=py-j;const u=fx*fx*(3-2*fx),v=fy*fy*(3-2*fy);
+  const a=hash(i,j,s),b=hash(i+1,j,s),e=hash(i,j+1,s),d=hash(i+1,j+1,s);return a+(b-a)*u+(e-a)*v+(a-b-e+d)*u*v}
+function fbm(px,py){return noise(px,py,1)*.55+noise(px*2,py*2,2)*.3+noise(px*4,py*4,3)*.15}
+function draw(){
+  const H=180,Wd=Math.max(200,Math.round(H*innerWidth/Math.max(1,innerHeight)));c.width=Wd;c.height=H;
+  const g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,'#0B0C2A');g.addColorStop(.6,'#15154A');g.addColorStop(1,'#241F66');
+  x.fillStyle=g;x.fillRect(0,0,Wd,H);
+  const img=x.getImageData(0,0,Wd,H),d=img.data;
+  const cols=[[40,32,100],[60,45,134],[88,66,172],[122,98,212],[164,146,236]];
+  for(let y=0;y<H;y++)for(let X=0;X<Wd;X++){
+    const fx=X/Wd,fy=y/H,n=fbm(X/26,y/20);
+    const b1=Math.max(0,1-Math.abs(fy-(0.32-0.3*fx))*3.4)*Math.max(0,1-fx*1.5);
+    const b2=Math.max(0,1-Math.abs(fy-(0.30+0.18*fx))*3.6)*Math.max(0,(fx-0.55)*2.4);
+    const v=n*Math.max(b1,b2);
+    if(v>0.27){const k=Math.min(4,Math.floor((v-0.27)*13));const p=(y*Wd+X)*4,cc=cols[k],a=.88;
+      d[p]=d[p]*(1-a)+cc[0]*a;d[p+1]=d[p+1]*(1-a)+cc[1]*a;d[p+2]=d[p+2]*(1-a)+cc[2]*a}}
+  x.putImageData(img,0,0);
+  let seed=7;const rnd=()=>{seed=(seed*16807)%2147483647;return seed/2147483647};
+  for(let i=0;i<Wd*H/50;i++){x.fillStyle=rnd()<.7?'rgba(255,255,255,.85)':'rgba(196,186,255,.8)';x.fillRect(rnd()*Wd|0,rnd()*H|0,1,1)}
+  for(let i=0;i<16;i++){const sx=rnd()*Wd|0,sy=rnd()*H*.9|0;x.fillStyle=rnd()<.6?'#FFFFFF':'#FFD98A';x.fillRect(sx,sy-1,1,3);x.fillRect(sx-1,sy,3,1)}
+  for(let i=0;i<5;i++){const sx=Wd*(.4+rnd()*.55)|0,sy=H*(.04+rnd()*.35)|0,L=10+rnd()*14|0;
+    for(let k=0;k<L;k++){x.fillStyle=`rgba(225,232,255,${((1-k/L)*.9).toFixed(2)})`;x.fillRect(sx-k,sy+Math.round(k*.55),1,1)}}
+  for(let i=0;i<7;i++){const bx=rnd()*Wd|0,bw=5+rnd()*9|0;const lg=x.createLinearGradient(0,H*.45,0,H);
+    lg.addColorStop(0,'rgba(140,130,255,0)');lg.addColorStop(1,'rgba(150,140,255,.22)');x.fillStyle=lg;x.fillRect(bx,H*.45|0,bw,H)}
+  x.fillStyle='#090A20';for(let X=0;X<Wd;X++){const t=Math.round(3+3*noise(X/6,0,9)+(noise(X/2,3,4)>.72?3:0));x.fillRect(X,H-t,1,t)}
+}
+draw();let rt;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(draw,200)});
+})();
+
+(function(){
+const KINDS=[2,3,4,5,6,8,10,20];
+const MAX={A:1,B:1,SA:4,SB:4,SC:8};
+const W=380, X0=10;
+const OVER='#22C9D6';
+const empty=()=>({A:[],B:[],SA:[],SB:[],SC:[]});
+const state={tab:'verg',mode:'pizza',boards:{pizza:empty(),reep:empty()},showFrac:true,overlay:false,active:{verg:'A',som:'SA'},sign:'+'};
+
+const $=s=>document.querySelector(s);
+const boardsNow=()=>state.boards[state.mode];
+const tabKeys=()=>state.tab==='verg'?['A','B']:['SA','SB','SC'];
+const tot=arr=>arr.reduce((s,n)=>s+120/n,0);
+const gcd=(a,b)=>b?gcd(b,a%b):a;
+const reduce=(a,b)=>{const g=gcd(a,b);return [a/g,b/g]};
+const fr=(a,b)=>`<span class="fr"><span>${a}</span><span>${b}</span></span>`;
+const mixedHTML=u=>{const w=Math.floor(u/120),r=u%120;if(!r)return String(w);const q=reduce(r,120);return (w?w+' ':'')+fr(q[0],q[1])};
+
+function title(k){
+  if(k==='SA')return 'Bord A';if(k==='SB')return 'Bord B';if(k==='SC')return 'Antwoord';
+  return (state.mode==='pizza'?'Bord ':'Reep ')+k}
+
+/* ---------- indelen: elk stuk op de eerste pizza/reep waar het past ---------- */
+function layout(arr,max){
+  const plates=[];
+  for(let i=0;i<arr.length;i++){const n=arr[i],u=120/n;
+    let p=plates.find(p=>p.used+u<=120);
+    if(!p){if(plates.length>=max)return null;p={used:0,items:[]};plates.push(p)}
+    p.items.push({n,i,start:p.used});p.used+=u}
+  return plates}
+
+/* ---------- tekenen ---------- */
+function pt(r,a){const t=a*Math.PI/180;return [100+r*Math.sin(t),100-r*Math.cos(t)]}
+function sector(r,a0,a1){const p0=pt(r,a0),p1=pt(r,a1);const large=(a1-a0)>180?1:0;
+  return `M100 100 L${p0[0].toFixed(2)} ${p0[1].toFixed(2)} A${r} ${r} 0 ${large} 1 ${p1[0].toFixed(2)} ${p1[1].toFixed(2)} Z`}
+function wholePizza(attrs){
+  const d=[[100,58],[130,78],[124,128],[76,128],[70,78],[100,100],[100,148],[146,104],[54,104]].map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="7" fill="#C2412D"/>`).join('');
+  return `<g ${attrs||''}><circle cx="100" cy="100" r="86" fill="#D99A45" stroke="#8A5A1F" stroke-width="1.4"/><circle cx="100" cy="100" r="77" fill="#F5CF63"/>${d}</g>`}
+function pizzaPiece(n,a0,a1,attrs){
+  if(n===1)return wholePizza(attrs);
+  const sweep=a1-a0;const k=n<=2?4:n<=4?3:n<=6?2:1;const dr=n>=20?3.5:n>=8?5.5:7;let dots='';
+  for(let i=0;i<k;i++){const a=a0+sweep*(i+1)/(k+1);const r=k===1?(n>=20?62:56):(i%2?36:58);const p=pt(r,a);
+    dots+=`<circle cx="${p[0].toFixed(2)}" cy="${p[1].toFixed(2)}" r="${dr}" fill="#C2412D"/>`}
+  return `<g ${attrs||''}><path d="${sector(86,a0,a1)}" fill="#D99A45"/><path d="${sector(77,a0,a1)}" fill="#F5CF63"/>${dots}<path d="${sector(86,a0,a1)}" fill="none" stroke="#8A5A1F" stroke-width="1.4" stroke-linejoin="round"/></g>`}
+function block(x,w,attrs){
+  const iw=Math.max(2,w-10);
+  return `<g ${attrs||''}><rect x="${(x+1.5).toFixed(2)}" y="17" width="${(w-3).toFixed(2)}" height="86" rx="4" fill="#5E3520"/><rect x="${(x+5).toFixed(2)}" y="23" width="${iw.toFixed(2)}" height="74" rx="3" fill="#7A4A2E"/></g>`}
+
+function plateSVG(items,overlayBounds,label){
+  if(state.mode==='pizza'){
+    let s=`<svg viewBox="0 0 200 200" role="img" aria-label="${label}"><circle cx="100" cy="100" r="97" fill="#F4F1EA" stroke="#9C95B8" stroke-width="1.5"/><circle cx="100" cy="100" r="86" fill="none" stroke="#B9A685" stroke-width="1.5" stroke-dasharray="4 4"/>`;
+    items.forEach(it=>{const u=120/it.n;s+=pizzaPiece(it.n,it.start*3,(it.start+u)*3,`class="pc" data-i="${it.i}"`)});
+    if(overlayBounds){s+=`<g stroke="${OVER}" stroke-width="3" stroke-dasharray="6 5" stroke-linecap="round">`;
+      overlayBounds.forEach(b=>{const p=pt(92,b*3);s+=`<line x1="100" y1="100" x2="${p[0].toFixed(2)}" y2="${p[1].toFixed(2)}"/>`});s+='</g>'}
+    return s+'</svg>'}
+  let s=`<svg viewBox="0 0 400 120" role="img" aria-label="${label}"><rect x="4" y="9" width="392" height="102" rx="8" fill="#D5D9DE" stroke="#AEB4BB" stroke-width="1.5"/><rect x="10" y="15" width="380" height="90" rx="5" fill="none" stroke="#8D96A0" stroke-width="1.5" stroke-dasharray="5 4"/>`;
+  items.forEach(it=>{const u=120/it.n;s+=block(X0+it.start/120*W,u/120*W,`class="pc" data-i="${it.i}"`)});
+  if(overlayBounds){s+=`<g stroke="${OVER}" stroke-width="3" stroke-dasharray="6 5" stroke-linecap="round">`;
+    overlayBounds.forEach(b=>{const x=X0+b/120*W;s+=`<line x1="${x.toFixed(2)}" y1="5" x2="${x.toFixed(2)}" y2="115"/>`});s+='</g>'}
+  return s+'</svg>'}
+
+function piecesHTML(arr){
+  if(!arr.length)return '<span class="muted">Nog leeg</span>';
+  return [...arr].sort((a,b)=>a-b).map(n=>n===1?'1':fr(1,n)).join(' + ')+totalHTML(arr)}
+/* totaal van wat er ligt: eerst in de stukken zelf (2/4), dan vereenvoudigd als dat anders is (1/2) */
+function totalHTML(arr){
+  const som=state.tab==='som';
+  if(!arr.length||(!som&&arr.length<2))return '';
+  const t=tot(arr),ks=[...new Set(arr)],simp=mixedHTML(t);let s=simp;
+  if(ks.length===1&&ks[0]!==1){const n=ks[0],c=arr.length,w=Math.floor(c/n),r=c%n;
+    const raw=r?(w?w+' ':'')+fr(r,n):String(w);s=raw===simp?raw:raw+' = '+simp}
+  return som?`<span class="eq tot">Totaal: ${s}</span>`:`<span class="eq">= ${s}</span>`}
+
+function boardHTML(k){
+  return `<div class="board" id="board-${k}" data-key="${k}"><div class="b-head"><button class="b-name" type="button"></button><button class="b-clear" type="button">Leeg</button></div><div class="b-svg"></div><div class="b-total"></div><div class="b-msg" aria-live="polite"></div></div>`}
+
+function renderBoard(k){
+  const B=boardsNow(),el=$('#board-'+k);if(!el)return;
+  const plates=layout(B[k],MAX[k])||[];
+  let ob=null;
+  if(state.tab==='verg'&&state.overlay){const other=B[k==='A'?'B':'A'];
+    if(other.length){const op=layout(other,1);if(op&&op[0]){ob=[0];op[0].items.forEach(it=>ob.push(it.start+120/it.n))}}}
+  let svgs=plates.map((p,j)=>plateSVG(p.items,ob,title(k)+' '+(j+1)));
+  const last=plates[plates.length-1];
+  if(!plates.length)svgs.push(plateSVG([],ob,title(k)));
+  else if(state.tab==='som'&&plates.length<MAX[k]&&last.used===120)svgs.push(plateSVG([],null,title(k)+' leeg'));
+  const bs=el.querySelector('.b-svg');bs.innerHTML=svgs.join('');
+  /* meer pizza's of repen op een bord: kleiner tekenen zodat de som in beeld blijft */
+  const c=svgs.length;bs.style.setProperty('--ps',c<=2?'92px':c<=4?'68px':'54px');bs.style.setProperty('--rc',c<=2?1:2);
+  const act=state.active[state.tab]===k;
+  el.classList.toggle('active',act);
+  el.querySelector('.b-name').innerHTML=title(k)+(act?'<small>GEKOZEN</small>':'');
+  const t=el.querySelector('.b-total');t.innerHTML=piecesHTML(B[k]);t.classList.toggle('hide',!state.showFrac);
+}
+function render(){
+  $('#app').classList.toggle('reep',state.mode==='reep');
+  $('#m-pizza').classList.toggle('on',state.mode==='pizza');
+  $('#m-reep').classList.toggle('on',state.mode==='reep');
+  $('#t-frac').setAttribute('aria-pressed',state.showFrac);
+  $('#t-over').setAttribute('aria-pressed',state.overlay);
+  $('#t-over').hidden=state.tab!=='verg';
+  $('#tab-verg').setAttribute('aria-selected',state.tab==='verg');
+  $('#tab-som').setAttribute('aria-selected',state.tab==='som');
+  $('#panel-verg').hidden=state.tab!=='verg';
+  const ps=$('#panel-som');ps.hidden=state.tab!=='som';ps.style.display=state.tab==='som'?'flex':'';
+  $('#sg-plus').setAttribute('aria-pressed',state.sign==='+');
+  $('#sg-min').setAttribute('aria-pressed',state.sign==='−');
+  tabKeys().forEach(renderBoard);
+}
+function renderTray(){
+  const kinds=state.tab==='som'?[1].concat(KINDS):KINDS;
+  $('#tray').style.setProperty('--cols',kinds.length);
+  $('#tray').innerHTML=kinds.map(n=>{
+    const pic=state.mode==='pizza'
+      ?`<svg viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="86" fill="none" stroke="#6E6A97" stroke-width="3" stroke-dasharray="7 6"/>${n===1?wholePizza():pizzaPiece(n,-180/n,180/n)}</svg>`
+      :`<svg viewBox="0 0 400 120" aria-hidden="true"><rect x="10" y="15" width="380" height="90" rx="5" fill="none" stroke="#6E6A97" stroke-width="3" stroke-dasharray="8 6"/>${block(X0,W/n)}</svg>`;
+    const lbl=n===1?'1 hele':fr(1,n);
+    return `<button class="tray-item" type="button" data-n="${n}" aria-label="${n===1?'Een hele':'Stuk van 1/'+n}">${pic}<span class="lbl">${lbl}</span></button>`}).join('');
+}
+
+function setFeed(el,html,ok){el=$(el);if(!html){el.hidden=true;return}el.hidden=false;el.innerHTML=html;el.className='feed '+(ok?'ok':'bad')}
+function clearFeeds(){setFeed('#sfeed',null)}
+
+/* ---------- leggen ---------- */
+let msgTimer={};
+function flash(k,msg){const el=$('#board-'+k);el.querySelector('.b-msg').textContent=msg;el.classList.remove('shake');void el.offsetWidth;el.classList.add('shake');
+  clearTimeout(msgTimer[k]);msgTimer[k]=setTimeout(()=>{el.querySelector('.b-msg').textContent=''},2600)}
+function addTo(k,n){
+  const arr=boardsNow()[k];
+  if(!layout(arr.concat(n),MAX[k])){
+    const thing=state.mode==='pizza'?['pizza','pizza\'s']:['reep','repen'];
+    flash(k,MAX[k]===1?`Past niet: dan wordt het meer dan 1 hele ${thing[0]}.`:`Past niet: er passen maximaal ${MAX[k]} ${thing[1]} op dit bord.`);return false}
+  arr.push(n);clearFeeds();render();return true}
+
+const ghost=$('#ghost');let drag=null;
+function plateRect(){const s=document.querySelector(`#board-${state.active[state.tab]} .b-svg svg`)||document.querySelector('.board .b-svg svg');return s?s.getBoundingClientRect().width:300}
+function makeGhost(n){
+  const bw=plateRect();
+  if(state.mode==='pizza'){const sc=bw/200;const rc=n===1?0:n===2?40:55;
+    ghost.innerHTML=`<svg width="${bw}" height="${bw}" viewBox="0 0 200 200">${n===1?wholePizza():pizzaPiece(n,-180/n,180/n)}</svg>`;
+    drag.off=[100*sc,(100-rc)*sc]}
+  else{const sc=bw/400,w=W/n;
+    ghost.innerHTML=`<svg width="${(w*sc).toFixed(1)}" height="${(90*sc).toFixed(1)}" viewBox="0 15 ${w.toFixed(2)} 90">${block(0,w)}</svg>`;
+    drag.off=[w*sc/2,45*sc]}
+  ghost.hidden=false}
+function moveGhost(x,y){ghost.style.transform=`translate(${(x-drag.off[0]).toFixed(1)}px,${(y-drag.off[1]).toFixed(1)}px)`}
+function trayTop(){return document.querySelector('.tray').getBoundingClientRect().top}
+function boardAt(x,y){if(y>=trayTop())return null;for(const k of tabKeys()){const r=$('#board-'+k).getBoundingClientRect();if(x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom)return k}return null}
+function markOver(k){tabKeys().forEach(b=>$('#board-'+b).classList.toggle('over',b===k))}
+
+function start(e,info){drag={...info,x0:e.clientX,y0:e.clientY,x:e.clientX,y:e.clientY,moved:false,id:e.pointerId}}
+$('#tray').addEventListener('pointerdown',e=>{const it=e.target.closest('.tray-item');if(!it)return;e.preventDefault();start(e,{n:+it.dataset.n,from:null})});
+$('#tray').addEventListener('click',e=>{if(e.detail!==0)return;const it=e.target.closest('.tray-item');if(it)addTo(state.active[state.tab],+it.dataset.n)});
+
+function wireBoard(k){
+  const el=$('#board-'+k);
+  el.querySelector('.b-svg').addEventListener('pointerdown',e=>{
+    const pc=e.target.closest('.pc');state.active[state.tab]=k;
+    if(pc){e.preventDefault();const i=+pc.dataset.i;start(e,{n:boardsNow()[k][i],from:{k,i}})}
+    else render()});
+  el.querySelector('.b-name').addEventListener('click',()=>{state.active[state.tab]=k;render()});
+  el.querySelector('.b-clear').addEventListener('click',()=>{boardsNow()[k]=[];clearFeeds();render()});
+}
+$('#table').innerHTML=boardHTML('A')+boardHTML('B');
+['SA','SB','SC'].forEach(k=>{$('#slot-'+k).innerHTML=boardHTML(k)});
+['A','B','SA','SB','SC'].forEach(wireBoard);
+
+let scrolling=false;
+document.addEventListener('pointermove',e=>{
+  if(!drag||e.pointerId!==drag.id)return;
+  if(!drag.moved){if(Math.hypot(e.clientX-drag.x0,e.clientY-drag.y0)<8)return;
+    drag.moved=true;
+    if(drag.from){boardsNow()[drag.from.k].splice(drag.from.i,1);render()}
+    makeGhost(drag.n)}
+  e.preventDefault();drag.x=e.clientX;drag.y=e.clientY;moveGhost(e.clientX,e.clientY);markOver(boardAt(e.clientX,e.clientY));
+  if(!scrolling){scrolling=true;requestAnimationFrame(autoScroll)}},{passive:false});
+/* automatisch meescrollen als je een stuk naar de rand van het scherm sleept */
+function autoScroll(){
+  if(!drag||!drag.moved){scrolling=false;return}
+  const y=drag.y,tt=trayTop(),edge=90;let dy=0;
+  if(y<edge)dy=-Math.ceil((edge-y)/6);
+  else if(y>tt-edge&&y<tt)dy=Math.ceil((y-(tt-edge))/6);
+  if(dy){window.scrollBy(0,dy);markOver(boardAt(drag.x,drag.y))}
+  requestAnimationFrame(autoScroll)}
+function endDrag(e,cancel){
+  if(!drag||e.pointerId!==drag.id)return;const d=drag;drag=null;ghost.hidden=true;markOver(null);
+  if(!d.moved){
+    if(cancel)return;
+    if(d.from){boardsNow()[d.from.k].splice(d.from.i,1);clearFeeds();render()}
+    else addTo(state.active[state.tab],d.n);
+    return}
+  const k=cancel?null:boardAt(e.clientX,e.clientY);
+  if(k){state.active[state.tab]=k;const ok=addTo(k,d.n);if(!ok&&d.from){boardsNow()[d.from.k].splice(d.from.i,0,d.n);render()}}
+  else if(cancel&&d.from){boardsNow()[d.from.k].splice(d.from.i,0,d.n);render()}
+  else{clearFeeds();render()}
+}
+document.addEventListener('pointerup',e=>endDrag(e,false));
+document.addEventListener('pointercancel',e=>endDrag(e,true));
+
+/* ---------- knoppen ---------- */
+function setTab(t){state.tab=t;renderTray();clearFeeds();render()}
+$('#tab-verg').addEventListener('click',()=>setTab('verg'));
+$('#tab-som').addEventListener('click',()=>setTab('som'));
+$('#m-pizza').addEventListener('click',()=>{state.mode='pizza';renderTray();clearFeeds();render()});
+$('#m-reep').addEventListener('click',()=>{state.mode='reep';renderTray();clearFeeds();render()});
+$('#t-frac').addEventListener('click',()=>{state.showFrac=!state.showFrac;render()});
+$('#t-over').addEventListener('click',()=>{state.overlay=!state.overlay;render()});
+$('#t-clear').addEventListener('click',()=>{const b=boardsNow();tabKeys().forEach(k=>b[k]=[]);clearFeeds();render()});
+$('#sg-plus').addEventListener('click',()=>{state.sign='+';setFeed('#sfeed',null);render()});
+$('#sg-min').addEventListener('click',()=>{state.sign='−';setFeed('#sfeed',null);render()});
+$('#scheck').addEventListener('click',()=>{
+  const B=boardsNow(),a=tot(B.SA),b=tot(B.SB),c=tot(B.SC),plus=state.sign==='+';
+  const say=(m,ok)=>setFeed('#sfeed',m,ok);
+  if(!a)return say('Leg eerst iets op bord A.',false);
+  if(!b)return say('Leg ook iets op bord B.',false);
+  if(!plus&&b>a)return say('Bij een minsom moet op bord A meer liggen dan op bord B.',false);
+  const exp=plus?a+b:a-b;
+  if(c===exp)return say(`Goed zo! ${mixedHTML(a)} ${state.sign} ${mixedHTML(b)} = ${mixedHTML(exp)}`,true);
+  if(!c)return say('Leg het antwoord op het antwoordbord.',false);
+  say(`Nog niet goed. Op het antwoordbord ligt ${mixedHTML(c)}. `+(c<exp?'Er moet nog wat bij.':'Dat is te veel.'),false);
+});
+
+/* voorbeeld bij openen: ½ naast 2/4, en een plussom om mee te beginnen */
+state.boards.pizza.A=[2];state.boards.pizza.B=[4,4];
+state.boards.pizza.SA=[1,2];state.boards.pizza.SB=[2];
+renderTray();render();
+})();
+</script>
+
+</body>
+</html>

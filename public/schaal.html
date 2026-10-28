@@ -844,6 +844,7 @@ function check(){
   q.tries++;
   if(near(v,q.answer)){
     q.result = q.tries===1 ? 1 : .5;
+    try { parent.postMessage({type:'kk-goed'}, location.origin); } catch(e) {}
     fb(`<b>${pick(PRAISE)}</b><br>${q.solution}`,'ok'); finish();
   } else if(q.tries===1){
     const w=why(q,v);

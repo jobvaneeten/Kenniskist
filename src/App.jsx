@@ -1,4 +1,4 @@
-import { lazy, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import './App.css'
 import { VEHICLE_ORDER } from './games/hillclimb/data/VehicleData.js'
 import { useOpenLescheck } from './lib/lescheck.js'
@@ -7,9 +7,11 @@ import { COUNTRIES, DEFAULT_UNLOCKED } from './games/countries'
 import { useSessie } from './lib/sessie.jsx'
 import VrijSpelenBadge from './VrijSpelenBadge.jsx'
 import { Knop, TerugKnop, Paneel, Icoon } from './ui/index.jsx'
+import { spelNa } from './lib/beloning.js'
 
 // Schermen en spellen laden pas bij openen (Suspense staat in Root.jsx).
 const Wardrobe      = lazy(() => import('./Wardrobe'))
+const SpelBeloning  = lazy(() => import('./games/SpelBeloning'))
 const Shop          = lazy(() => import('./Shop'))
 const GameMenu      = lazy(() => import('./GameMenu'))
 const Weektaak      = lazy(() => import('./Weektaak'))
@@ -36,11 +38,46 @@ const EVO_BONUS = 1e11
 const GRAVEN_CODE = '0001'              // 100 duiken in Diepgravers
 const GRAVEN_DUIKEN = 100
 const ESCAPE_CODE = 'vrijdag'           // opent de GLITCH-escaperoom
-// Losse HTML-pagina's in public/ achter een code: code → pagina
+// Losse HTML-pagina's in public/ achter een code: code → pagina. Met `beloning`
+// stuurt de pagina per goed antwoord { type: 'kk-goed' } en volgt na 5 goed
+// een spelletje (de iframe blijft eronder staan, dus je gaat precies verder).
 const HTML_CODES = {
   spelvik: { src: '/vik.html', titel: 'Racelegends', achtergrond: '#111' },
-  schaal:  { src: '/schaal.html', titel: 'Rekenen met schaal', achtergrond: '#060a1d' },
+  schaal:  { src: '/schaal.html', titel: 'Rekenen met schaal', achtergrond: '#060a1d', beloning: true },
   kwink:   { src: '/kwink.html', titel: 'Kwink-slag Kiezer', achtergrond: '#F4F2EC' },
+}
+const HTML_BELONING = 50
+
+function HtmlPagina({ pagina, onBack, addBriefgeld, addCuruntie }) {
+  const perBeloning = useRef(spelNa(5)).current
+  const sinds = useRef(0)
+  const [reward, setReward] = useState(false)
+
+  useEffect(() => {
+    if (!pagina.beloning) return
+    const h = (e) => {
+      if (e.origin !== window.location.origin || e.data?.type !== 'kk-goed') return
+      sinds.current += 1
+      if (sinds.current >= perBeloning) { sinds.current = 0; setReward(true) }
+    }
+    window.addEventListener('message', h)
+    return () => window.removeEventListener('message', h)
+  }, [pagina, perBeloning])
+
+  const naBeloning = () => { setReward(false); addBriefgeld(HTML_BELONING) }
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: pagina.achtergrond }}>
+      <iframe src={pagina.src} title={pagina.titel} style={{ width: '100%', height: '100%', border: 'none' }} />
+      <TerugKnop onClick={onBack} />
+      {!pagina.beloning && <VrijSpelenBadge />}
+      {reward && (
+        <Suspense fallback={null}>
+          <SpelBeloning title={`${perBeloning} goed!`} geld={HTML_BELONING} addCuruntie={addCuruntie} onDone={naBeloning} />
+        </Suspense>
+      )}
+    </div>
+  )
 }
 
 function fmt(n) { return n.toLocaleString('nl-NL') }
@@ -395,11 +432,7 @@ export default function App({ gast = false }) {
   )
 
   if (screen === 'htmlpagina' && htmlPagina) return (
-    <div style={{ position: 'fixed', inset: 0, background: htmlPagina.achtergrond }}>
-      <iframe src={htmlPagina.src} title={htmlPagina.titel} style={{ width: '100%', height: '100%', border: 'none' }} />
-      <TerugKnop onClick={goMenu} />
-      <VrijSpelenBadge />
-    </div>
+    <HtmlPagina pagina={htmlPagina} onBack={goMenu} addBriefgeld={addBriefgeld} addCuruntie={addCuruntie} />
   )
 
   if (screen === 'shop') return (

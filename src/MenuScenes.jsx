@@ -176,6 +176,21 @@ const SCENES = {
     </svg>
   ),
 
+  breukenhulp: (
+    <svg viewBox="0 0 160 90" preserveAspectRatio="xMidYMid slice">
+      <rect width="160" height="90" fill="#0E0F2E" />
+      <circle cx="46" cy="46" r="28" fill="#F4F1EA" />
+      <path d="M46 46 L46 20 A26 26 0 0 1 72 46 z" fill="#F5CF63" stroke="#8A5A1F" strokeWidth="1.5" />
+      <path d="M46 46 L72 46 A26 26 0 0 1 46 72 z" fill="#F5CF63" stroke="#8A5A1F" strokeWidth="1.5" />
+      <circle cx="58" cy="34" r="3" fill="#C2412D" /><circle cx="58" cy="58" r="3" fill="#C2412D" />
+      <g className="msi ms-bob">
+        <rect x="88" y="30" width="60" height="16" rx="3" fill="#D5D9DE" />
+        <rect x="90" y="32" width="28" height="12" rx="2" fill="#7A4A2E" />
+      </g>
+      <text x="92" y="70" fontSize="14" fontWeight="900" fill="#FFB52E" fontFamily={FONT}>2/4 = 1/2</text>
+    </svg>
+  ),
+
   maten: (
     <svg viewBox="0 0 160 90" preserveAspectRatio="xMidYMid slice">
       <rect width="160" height="90" fill="#16335c" />
