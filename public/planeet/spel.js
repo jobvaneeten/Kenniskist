@@ -10,6 +10,7 @@ var TAU = Math.PI * 2
 // (dan zet SpelBeloning er een klok van 1 minuut omheen)
 var params = new URLSearchParams(location.search)
 var BELONING = !params.has('terug')
+if (BELONING) document.body.classList.add('beloning')
 if (!BELONING) {
   $('terug').classList.add('aan')
   $('terug').onclick = function () { bewaar(); parent.postMessage({ type: 'planeet-terug' }, '*') }

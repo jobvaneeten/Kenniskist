@@ -9,6 +9,7 @@ var TAU = Math.PI * 2
 // ── inbedding ── met ?terug=1 vrij spelen, anders een beloning van 1 minuut
 var params = new URLSearchParams(location.search)
 var BELONING = !params.has('terug')
+if (BELONING) document.body.classList.add('beloning')
 if (!BELONING) {
   $('terug').classList.add('aan')
   $('terug').onclick = function () { bewaar(); parent.postMessage({ type: 'dierentuin-terug' }, '*') }
@@ -38,6 +39,7 @@ var I = { geluid: ruw.geluid !== false, doelen: !ruw.doelenDicht && !CREATIEF }
 var wegGeld = 0, wl = ruw.werelden[WID] && ruw.werelden[WID].laatst
 if (wl && !CREATIEF) { var weg = (Date.now() - wl) / 1000; if (weg > 30) wegGeld = DT.weg(S, weg).geld }
 function bewaar() {
+  if (gewist) return
   if (CREATIEF) S.geld = DT.ONEINDIG
   ruw.werelden[WID] = { tuin: DT.bewaarbaar(S), laatst: Date.now() }
   ruw.huidige = naarWereld || WID; ruw.geluid = I.geluid; ruw.doelenDicht = !I.doelen
@@ -921,7 +923,7 @@ function bouwItems() {
   var lijst = []
   setTimeout(function () { meet(); zetZoomKnoppen() }, 0)
   if (tab === 'pad') { box.innerHTML = '<div class="uitleg">Tik of sleep over het gras om <b>paden</b> te leggen. Een pad kost <b>' + DT.PAD_PRIJS + '</b> munten. Bezoekers lopen alleen over paden die aan de <b>ingang</b> vastzitten.</div>'; return }
-  if (tab === 'hek') { box.innerHTML = '<div class="uitleg"><b>Sleep</b> over het gras om een hok te tekenen, zo groot als je wilt (' + DT.MIN_HOK + ' tot ' + DT.MAX_HOK + ' vakjes per kant). Een stukje hek kost <b>' + DT.HEK_PRIJS + '</b> munten. Zet het hok naast een pad!</div>'; return }
+  if (tab === 'hek') { box.innerHTML = '<div class="uitleg"><b>Sleep</b> over het gras om een hok te tekenen (' + DT.MIN_HOK + ' tot ' + DT.MAX_HOK + ' vakjes per kant). Een stukje hek kost <b>' + DT.HEK_PRIJS + '</b> munten. Een hok <b>groter maken</b>? Begin te slepen ín het hok en trek naar buiten.</div>'; return }
   if (tab === 'sloop') { box.innerHTML = '<div class="uitleg">Tik op een pad, ding of iets in een hok om het weg te halen. Tik op een leeg stuk van een hok om het <b>hele hok</b> te slopen. Je krijgt <b>de helft</b> van het geld terug.</div>'; return }
   if (tab === 'grond') {
     var info = DT.grondInfo(S)
@@ -1000,12 +1002,21 @@ function toonInfo(v) {
   var soorten = dier ? (b.wensen.some(function (w) { return w.type === 'vriend' && !w.goed }) ? [] : [v.dieren[0]])
     : DT.dierenVan(S).filter(function (k) { return DT.ontgrendeld(S, DT.dierNiveau(S, k)) })
   soorten.forEach(function (k) { knoppen.push(knopHtml('data-dier="' + k + '"', '+ ' + DT.DIEREN[k].naam, DT.DIEREN[k].prijs, !DT.waaromNietDier(S, v, k))) })
-  html += '<div class="infoknoppen">' + knoppen.join('') + '<button class="knop rood" id="sloophok">Hok slopen</button></div>'
+  html += '<div class="infoknoppen">' + knoppen.join('') + '</div>'
+  // groter maken: in de schuine weergave wijst x naar rechtsonder en y naar linksonder
+  html += '<div class="groei"><span>Hok groter maken</span><div>' + GROEI.map(function (r) {
+    var m = groeiMaat(v, r.id), kan = !DT.waaromNietMaat(S, v, m.x, m.y, m.w, m.h)
+    return '<button class="knop2" data-groei="' + r.id + '"' + (kan ? '' : ' disabled') + ' title="' + r.naam + '">' + r.pijl + ' <span class="munt"></span>' + DT.kort(DT.maatPrijs(S, v, m.w, m.h)) + '</button>'
+  }).join('') + '</div></div>'
+  html += '<div class="infoknoppen"><button class="knop rood" id="sloophok">Hok slopen</button></div>'
   el.innerHTML = html; el.classList.remove('verborgen')
   el.style.bottom = ($('balk').getBoundingClientRect().height + 12) + 'px'
   el.querySelector('.sluit').onclick = sluitInfo
   Array.prototype.forEach.call(el.querySelectorAll('[data-dier]'), function (k) { k.onclick = function () { zetDier(v, k.dataset.dier); toonInfo(v) } })
   Array.prototype.forEach.call(el.querySelectorAll('[data-bodem]'), function (k) { k.onclick = function () { zetBodem(v, k.dataset.bodem); toonInfo(v) } })
+  Array.prototype.forEach.call(el.querySelectorAll('[data-groei]'), function (k) {
+    k.onclick = function () { var m = groeiMaat(v, k.dataset.groei); pasAan(v, m.x, m.y, m.w, m.h); toonInfo(v) }
+  })
   Array.prototype.forEach.call(el.querySelectorAll('[data-item]'), function (k) {
     k.onclick = function () {
       // zet het neer op een vrij vakje, het liefst achterin het hok
@@ -1025,6 +1036,27 @@ function meervoud(k) { return { konijn: 'konijnen', geit: 'geiten', flamingo: "f
   eend: 'eenden', schaap: 'schapen', varken: 'varkens', hert: 'herten', rendier: 'rendieren', vos: 'vossen', fennek: 'fenneks', poolvos: 'poolvossen',
   stokstaartje: 'stokstaartjes', struisvogel: 'struisvogels', kameel: 'kamelen', schildpad: 'schildpadden', nijlpaard: 'nijlpaarden', walrus: 'walrussen',
   mammoet: 'mammoeten', papegaai: 'papegaaien', tijger: 'tijgers' }[k] }
+
+var GROEI = [
+  { id: 'x-', pijl: '↖', naam: 'Een vakje erbij naar linksboven' },
+  { id: 'y-', pijl: '↗', naam: 'Een vakje erbij naar rechtsboven' },
+  { id: 'y+', pijl: '↙', naam: 'Een vakje erbij naar linksonder' },
+  { id: 'x+', pijl: '↘', naam: 'Een vakje erbij naar rechtsonder' },
+]
+function groeiMaat(v, r) {
+  if (r === 'x-') return { x: v.x - 1, y: v.y, w: v.w + 1, h: v.h }
+  if (r === 'x+') return { x: v.x, y: v.y, w: v.w + 1, h: v.h }
+  if (r === 'y-') return { x: v.x, y: v.y - 1, w: v.w, h: v.h + 1 }
+  return { x: v.x, y: v.y, w: v.w, h: v.h + 1 }
+}
+function pasAan(v, x, y, w, h) {
+  var waarom = DT.waaromNietMaat(S, v, x, y, w, h)
+  if (waarom) { melding(waarom + '.', true); Geluid.fout(); return false }
+  DT.pasHokAan(S, v, x, y, w, h); Geluid.bouw(); wijziging()
+  var c = scherm(x + w / 2, y + h / 2); spat(c[0], c[1], '#ffd27a', 18)
+  melding('Het hok is nu <b>' + w + ' × ' + h + '</b> vakjes.')
+  return true
+}
 
 // ── acties ──
 function wijziging() { if (CREATIEF) S.geld = DT.ONEINDIG; ST = DT.stats(S); syncDieren(); vuil = true; werkItemsBij(); werkHintBij(); bewaar() }
@@ -1053,8 +1085,17 @@ function zetItem(v, soort, x, y) {
 function hekRechthoek(a, b) {
   return { x: Math.min(a[0], b[0]), y: Math.min(a[1], b[1]), w: Math.abs(a[0] - b[0]) + 1, h: Math.abs(a[1] - b[1]) + 1 }
 }
+// begin je te slepen in een bestaand hok, dan groeit dat hok mee
+function hekPlan(a, b) {
+  var r = hekRechthoek(a, b), v = DT.verblijfOp(S, a[0], a[1])
+  if (!v) return { r: r }
+  var x0 = Math.min(r.x, v.x), y0 = Math.min(r.y, v.y), x1 = Math.max(r.x + r.w, v.x + v.w), y1 = Math.max(r.y + r.h, v.y + v.h)
+  return { r: { x: x0, y: y0, w: x1 - x0, h: y1 - y0 }, hok: v }
+}
 function bouwHekKlaar(a, b) {
-  var r = hekRechthoek(a, b), waarom = DT.waaromNietHok(S, r.x, r.y, r.w, r.h)
+  var plan = hekPlan(a, b)
+  if (plan.hok) { if (pasAan(plan.hok, plan.r.x, plan.r.y, plan.r.w, plan.r.h)) toonInfo(plan.hok); return }
+  var r = plan.r, waarom = DT.waaromNietHok(S, r.x, r.y, r.w, r.h)
   if (waarom) { melding(waarom + '.', true); Geluid.fout(); return }
   var v = DT.bouwHok(S, r.x, r.y, r.w, r.h); Geluid.bouw(); wijziging()
   var c = scherm(r.x + r.w / 2, r.y + r.h / 2); spat(c[0], c[1], '#ffd27a', 26)
@@ -1153,7 +1194,7 @@ function loslaten(e) {
   if (sleepPan && !aantalWijzers()) { if (sleepPan.bewogen <= 6) doeOp(sleepPan.vak[0], sleepPan.vak[1], true); sleepPan = null }
   if (drukt && hekStart && modus && modus.type === 'hek') {
     var eind = zweef || hekStart
-    if (eind[0] === hekStart[0] && eind[1] === hekStart[1]) melding('<b>Sleep</b> van de ene hoek naar de andere hoek van je hok.', true)
+    if (eind[0] === hekStart[0] && eind[1] === hekStart[1]) melding(DT.verblijfOp(S, eind[0], eind[1]) ? 'Sleep vanuit het hok <b>naar buiten</b> om het groter te maken.' : '<b>Sleep</b> van de ene hoek naar de andere hoek van je hok.', true)
     else bouwHekKlaar(hekStart, eind)
   }
   if (!aantalWijzers()) { drukt = false; hekStart = null }
@@ -1200,7 +1241,8 @@ function werkDoelenBij() {
       return '<div class="doel' + (d.klaar ? ' klaar' : '') + '"><div class="r"><span>' + d.t + '</span><span>' + DT.kort(Math.min(d.nu, d.n)) + '/' + DT.kort(d.n) + '</span></div><div class="b"><i style="width:' + Math.min(100, d.nu / d.n * 100) + '%"></i></div></div>'
     }).join('')
   }
-  if (el.dataset.html !== html) { el.innerHTML = html; el.dataset.html = html }
+  html += '<button class="wereldlink" id="doelwereld">Andere wereld kiezen of opnieuw beginnen</button>'
+  if (el.dataset.html !== html) { el.innerHTML = html; el.dataset.html = html; $('doelwereld').onclick = function () { audio(); toonWerelden() } }
   el.classList.toggle('dicht', !I.doelen)
   var deel = info.alles ? 1 : info.doelen.reduce(function (t, d) { return t + Math.min(1, d.nu / d.n) }, 0) / info.doelen.length
   $('niveautekst').textContent = CREATIEF ? 'Creatief' : info.alles ? 'Alles gehaald' : 'Level ' + info.nr
@@ -1230,8 +1272,16 @@ function toonWerelden() {
     var open = wereldOpen(w.id), b = document.createElement('button')
     b.className = 'wereldkaart' + (w.id === WID ? ' huidig' : '') + (open ? '' : ' dicht') + (w.creatief ? ' creatief' : '')
     var status = w.creatief ? 'Oneindig geld' : !open ? 'Haal level ' + w.open + ' in ' + DT.WERELDEN[i - 1].naam : ruw.werelden[w.id] ? 'Level ' + Math.min(levelVan(w.id), DT.LEVELS.length) : 'Nieuw'
-    b.innerHTML = '<canvas></canvas><span class="naam">' + w.naam + '</span><span class="zin">' + w.zin + '</span><span class="status">' + status + '</span>'
+    var gestart = !!ruw.werelden[w.id] || w.id === WID
+    b.innerHTML = '<canvas></canvas><span class="naam">' + w.naam + '</span><span class="zin">' + w.zin + '</span><span class="status">' + status + '</span>' +
+      (open && gestart ? '<span class="opnieuw" role="button" tabindex="0">Opnieuw beginnen</span>' : '')
     wereldPlaatje(b.querySelector('canvas'), w.id)
+    var opn = b.querySelector('.opnieuw')
+    if (opn) opn.onclick = function (e) {
+      e.stopPropagation()
+      if (!opn.classList.contains('zeker')) { opn.classList.add('zeker'); opn.textContent = 'Zeker weten? Alles in deze wereld is dan weg'; return }
+      opnieuwBeginnen(w.id)
+    }
     b.onclick = function () {
       if (!open) { melding('Deze wereld gaat open als je level ' + w.open + ' haalt in ' + DT.WERELDEN[i - 1].naam + '.', true); Geluid.fout(); return }
       if (w.id === WID) { $('wereldscherm').classList.remove('aan'); return }
@@ -1242,6 +1292,20 @@ function toonWerelden() {
   $('wereldscherm').classList.add('aan')
 }
 $('wereldknop').onclick = function () { audio(); toonWerelden() }
+$('wereldnaam').textContent = WERELD.naam
+// een wereld helemaal opnieuw: startgeld, level 1, een lege kaart
+var gewist = false
+function opnieuwBeginnen(id) {
+  delete ruw.werelden[id]
+  if (id === WID) {
+    gewist = true; ruw.huidige = id
+    try { localStorage.setItem(OPSLAG, JSON.stringify(ruw)) } catch (e) {}
+    location.reload()
+    return
+  }
+  try { localStorage.setItem(OPSLAG, JSON.stringify(ruw)) } catch (e) {}
+  toonWerelden(); melding(DT.wereld(id).naam + ' begint opnieuw.')
+}
 $('wereldsluit').onclick = function () { $('wereldscherm').classList.remove('aan') }
 function toonLevelUp(r) {
   Geluid.niveau()
@@ -1338,13 +1402,13 @@ function frame(nu) {
 
   // voorbeeld van wat je gaat bouwen
   if (zweef && modus && modus.type === 'hek') {
-    var sleept = drukt && hekStart, rh = sleept ? hekRechthoek(hekStart, zweef) : { x: zweef[0], y: zweef[1], w: 1, h: 1 }
-    var okh = sleept ? !DT.waaromNietHok(S, rh.x, rh.y, rh.w, rh.h) : DT.vrij(S, rh.x, rh.y)
+    var sleept = drukt && hekStart, hp = sleept ? hekPlan(hekStart, zweef) : null, rh = hp ? hp.r : { x: zweef[0], y: zweef[1], w: 1, h: 1 }
+    var okh = hp ? (hp.hok ? !DT.waaromNietMaat(S, hp.hok, rh.x, rh.y, rh.w, rh.h) : !DT.waaromNietHok(S, rh.x, rh.y, rh.w, rh.h)) : (DT.vrij(S, rh.x, rh.y) || !!DT.verblijfOp(S, rh.x, rh.y))
     pad4(g, [scherm(rh.x, rh.y), scherm(rh.x + rh.w, rh.y), scherm(rh.x + rh.w, rh.y + rh.h), scherm(rh.x, rh.y + rh.h)])
     g.fillStyle = okh ? 'rgba(255,210,122,.25)' : 'rgba(255,92,122,.28)'; g.fill()
     g.strokeStyle = okh ? '#ffd27a' : '#ff5c7a'; g.lineWidth = 2.5; g.setLineDash([7, 4]); g.stroke(); g.setLineDash([])
     if (sleept) {
-      var mc = scherm(rh.x + rh.w / 2, rh.y + rh.h / 2), lbl = rh.w + ' × ' + rh.h + '  ·  ' + DT.kort(DT.hekPrijs(rh.w, rh.h)) + ' munten'
+      var mc = scherm(rh.x + rh.w / 2, rh.y + rh.h / 2), lbl = rh.w + ' × ' + rh.h + '  ·  ' + DT.kort(hp.hok ? DT.maatPrijs(S, hp.hok, rh.w, rh.h) : DT.hekPrijs(rh.w, rh.h)) + ' munten' + (hp.hok ? ' (groter)' : '')
       g.font = '800 14px Outfit, Nunito, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'
       var bw = g.measureText(lbl).width + 18
       g.fillStyle = 'rgba(12,14,34,.85)'; g.beginPath(); g.roundRect ? g.roundRect(mc[0] - bw / 2, mc[1] - 13, bw, 26, 13) : g.rect(mc[0] - bw / 2, mc[1] - 13, bw, 26); g.fill()

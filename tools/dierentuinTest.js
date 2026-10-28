@@ -56,6 +56,19 @@ const fout = m => { fouten++; if (fouten < 15) console.log('✗ ' + m) }
   if (kapot.geld !== 0 || kapot.verblijven.length || kapot.objecten.length) fout('herstel laat kapotte of verkeerde dingen staan')
 }
 
+// ── hok groter maken ──
+{
+  const s = D.nieuw(), IX = D.INGANG.x, IY = D.INGANG.y
+  for (let y = IY - 1; y >= IY - 6; y--) D.legPad(s, IX, y)
+  const v = D.bouwHok(s, IX - 3, IY - 4, 3, 3)
+  D.plaatsItem(s, v, 'binnen', IX - 3, IY - 4)
+  const geld = s.geld, prijs = D.maatPrijs(s, v, 4, 3)
+  if (!D.pasHokAan(s, v, IX - 4, IY - 4, 4, 3) || v.w !== 4 || v.x !== IX - 4) fout('hok naar links groter maken lukt niet')
+  if (Math.abs(geld - s.geld - prijs) > 1e-9 || prijs !== 2 * D.HEK_PRIJS) fout('groter maken kost niet het extra hek')
+  if (D.waaromNietMaat(s, v, IX - 4, IY - 4, 5, 3) === null) fout('hok mag over het pad heen groeien')
+  if (D.waaromNietMaat(s, v, IX - 2, IY - 4, 2, 3) === null) fout('kleiner maken mag terwijl er inrichting op de plek staat die wegvalt')
+}
+
 // ── werelden en creatief ──
 {
   if (D.WERELDEN.length !== 5) fout('er zijn geen 5 werelden')

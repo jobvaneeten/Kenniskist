@@ -246,6 +246,34 @@ var DT = (function () {
     s.verblijven.push(v)
     return v
   }
+  // een hok een nieuwe maat geven (meestal groter): je betaalt het extra hek en
+  // de bodem van de nieuwe vakjes; kleiner maken kost niets
+  function maatPrijs(s, v, w, h) {
+    var nieuw = Math.max(0, w * h - v.w * v.h), bodem = v.bodem === wereld(s.wereld).bodem ? 0 : BODEMS[v.bodem].prijs
+    return Math.max(0, hekPrijs(w, h) - hekPrijs(v.w, v.h)) + nieuw * bodem
+  }
+  function waaromNietMaat(s, v, x, y, w, h) {
+    if (!v) return 'Kies een hok'
+    if (w < MIN_HOK || h < MIN_HOK) return 'Een hok is minstens ' + MIN_HOK + ' bij ' + MIN_HOK + ' vakjes'
+    if (w > MAX_HOK || h > MAX_HOK) return 'Een hok is hoogstens ' + MAX_HOK + ' bij ' + MAX_HOK + ' vakjes'
+    for (var i = 0; i < w; i++) for (var j = 0; j < h; j++) {
+      var px = x + i, py = y + j
+      if (!binnenHok(v, px, py) && !vrij(s, px, py)) return 'Daar staat al iets, of de grond is nog niet van jou'
+    }
+    var buiten = v.items.some(function (it) { return it.x < x || it.y < y || it.x >= x + w || it.y >= y + h })
+    if (buiten) return 'Er staat inrichting op de plek die wegvalt'
+    var ruimte = w * h - v.items.length
+    v.dieren.forEach(function (d) { ruimte -= DIEREN[d].ruimte })
+    if (ruimte < 0) return 'Dan is het hok te klein voor de dieren'
+    if (s.geld < maatPrijs(s, v, w, h)) return 'Te weinig geld'
+    return null
+  }
+  function pasHokAan(s, v, x, y, w, h) {
+    if (waaromNietMaat(s, v, x, y, w, h)) return false
+    s.geld -= maatPrijs(s, v, w, h)
+    v.x = x; v.y = y; v.w = w; v.h = h
+    return true
+  }
   // de eigen bodem van de wereld is gratis
   function bodemPrijs(s, v, bodem) { return bodem === wereld(s.wereld).bodem ? 0 : v.w * v.h * BODEMS[bodem].prijs }
   function waaromNietBodem(s, v, bodem) {
@@ -482,7 +510,7 @@ var DT = (function () {
     LEVELS: LEVELS, WERELDEN: WERELDEN, dierenVan: dierenVan, dierNiveau: dierNiveau, CREATIEF: CREATIEF, wereld: wereld, ONEINDIG: ONEINDIG, PAD_PRIJS: PAD_PRIJS, HEK_PRIJS: HEK_PRIJS, MIN_HOK: MIN_HOK, MAX_HOK: MAX_HOK, MAX_NIVEAU: MAX_NIVEAU, STER_GRENS: STER_GRENS,
     nieuw: nieuw, herstel: herstel, bewaarbaar: bewaarbaar, sleutel: sleutel,
     gebied: gebied, binnen: binnen, vrij: vrij, gebiedVrij: gebiedVrij, verblijfOp: verblijfOp, itemOp: itemOp, objectOp: objectOp, ontgrendeld: ontgrendeld,
-    kanPad: kanPad, legPad: legPad, hekPrijs: hekPrijs, waaromNietHok: waaromNietHok, bouwHok: bouwHok,
+    kanPad: kanPad, legPad: legPad, hekPrijs: hekPrijs, waaromNietHok: waaromNietHok, bouwHok: bouwHok, maatPrijs: maatPrijs, waaromNietMaat: waaromNietMaat, pasHokAan: pasHokAan,
     bodemPrijs: bodemPrijs, waaromNietBodem: waaromNietBodem, zetBodem: zetBodem,
     ruimteOver: ruimteOver, waaromNietItem: waaromNietItem, plaatsItem: plaatsItem, telItems: telItems,
     waaromNietDier: waaromNietDier, zetDier: zetDier, kanObject: kanObject, plaatsObject: plaatsObject, wat: wat, sloop: sloop, sloopHok: sloopHok,

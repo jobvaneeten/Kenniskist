@@ -121,7 +121,20 @@
   .scherm .doellijst{display:flex;flex-direction:column;gap:6px;text-align:left;font-size:14px;color:var(--ink);background:rgba(255,255,255,.05);
                      border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:12px 16px;max-width:360px;}
   .scherm .beloning{font-family:var(--disp);font-size:22px;color:var(--goud);text-shadow:0 0 14px rgba(255,200,61,.5);}
-  #wereldknop{gap:6px;font-size:13px;color:var(--cyaan);}
+  /* als beloning legt de site er een Stoppen-knop en een klok overheen: dan alles iets lager */
+  body.beloning #hud{top:66px;}
+  body.beloning #doelen{top:114px;}
+  #wereldknop{gap:6px;font-size:13px;color:var(--cyaan);border-color:rgba(62,240,255,.45);box-shadow:0 0 14px rgba(62,240,255,.18);}
+  #wereldknop:hover{background:rgba(62,240,255,.14);}
+  .groei{display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--dim);}
+  .groei div{display:flex;gap:6px;flex-wrap:wrap;}
+  .groei .knop2{display:flex;align-items:center;gap:4px;padding:7px 10px;font-size:13px;}
+  .groei .knop2:disabled{opacity:.4;cursor:default;}
+  .groei .munt{width:11px;height:11px;}
+  .wereldlink{align-self:flex-start;margin-top:2px;padding:0;background:none;color:var(--cyaan);font-size:12px;text-decoration:underline;}
+  .wereldkaart .opnieuw{align-self:flex-start;margin-top:2px;padding:5px 10px;border-radius:999px;font-size:11px;font-weight:800;color:#ffb3c1;
+                        background:rgba(255,92,122,.12);border:1px solid rgba(255,92,122,.4);cursor:pointer;}
+  .wereldkaart .opnieuw.zeker{background:rgba(255,92,122,.3);color:#fff;}
   #doelen .wereldnaam{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);font-weight:800;}
   #wereldscherm{justify-content:flex-start;overflow-y:auto;padding-top:40px;}
   #wereldlijst{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;width:100%;max-width:820px;}
@@ -155,7 +168,7 @@
   <button class="rondknop" id="terug" aria-label="Terug naar het menu">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
   </button>
-  <button class="pil klik" id="wereldknop" aria-label="Wereld kiezen"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/></svg>Werelden</button>
+  <button class="pil klik" id="wereldknop" aria-label="Wereld kiezen"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/></svg><span id="wereldnaam">Wereld</span><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
   <div class="pil"><span class="munt"></span><span id="geld">0</span></div>
   <div class="pil"><div id="sterren"><i></i><i></i><i></i><i></i><i></i></div></div>
   <div class="pil" id="bezoek"><b id="perMin">0</b>&nbsp;bezoekers per minuut</div>
