@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Vlotstrijd</title>
+<link href="/fonts/fonts.css" rel="stylesheet">
+<style>
+  :root{
+    --ink:#eef3ff; --dim:#8f9bc4; --cyaan:#3ef0ff; --magenta:#ff4fd8; --goud:#ffc83d; --violet:#9b6bff; --rood:#ff4f6a; --groen:#5bffa0;
+    --disp:'Russo One',system-ui,sans-serif; --body:'Outfit','Nunito',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;height:100%;overflow:hidden;background:#050617;}
+  body{font-family:var(--body);color:var(--ink);user-select:none;-webkit-user-select:none;touch-action:none;}
+  canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block;}
+
+  #hud{position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:5;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:6px;}
+  #lvl{font-family:var(--disp);font-size:13px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink);
+       padding:5px 14px;border-radius:99px;background:rgba(10,12,34,.6);border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(6px);}
+  #wind{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:800;color:var(--dim);padding:3px 10px;border-radius:99px;background:rgba(10,12,34,.5);}
+  #wind svg{width:42px;height:14px;}
+  #baasbalk{position:fixed;top:78px;left:50%;transform:translateX(-50%);z-index:5;width:min(420px,70vw);pointer-events:none;display:none;}
+  #baasbalk.aan{display:block;}
+  #baasnaam{font-family:var(--disp);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--magenta);text-align:center;margin-bottom:3px;text-shadow:0 0 10px rgba(255,79,216,.7);}
+  #baashp{height:12px;border-radius:99px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);overflow:hidden;}
+  #baashp i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#ff4f6a,#ff4fd8);box-shadow:0 0 12px #ff4fd8;transition:width .3s;}
+  #munten{position:fixed;top:12px;left:12px;z-index:5;pointer-events:none;}
+  #banner{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%);z-index:6;pointer-events:none;font-family:var(--disp);
+          font-size:clamp(22px,5vw,40px);letter-spacing:.08em;text-transform:uppercase;text-align:center;opacity:0;transition:opacity .25s, transform .25s;
+          text-shadow:0 0 24px rgba(62,240,255,.7),0 3px 0 rgba(0,0,0,.4);}
+  #banner.aan{opacity:1;transform:translate(-50%,-50%) scale(1.04);}
+  #banner small{display:block;font-family:var(--body);font-size:16px;letter-spacing:.02em;text-transform:none;color:var(--dim);font-weight:700;margin-top:4px;}
+  #wapens{position:fixed;bottom:10px;left:50%;transform:translateX(-50%);z-index:7;display:none;gap:8px;padding:7px;border-radius:20px;
+          background:rgba(10,12,34,.72);border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(8px);}
+  #wapens.aan{display:flex;}
+  .wp{position:relative;width:58px;height:58px;border-radius:14px;border:1.5px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);
+      display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;}
+  .wp canvas{width:40px;height:40px;}
+  .wp.aan{border-color:var(--cyaan);box-shadow:0 0 0 1px var(--cyaan) inset,0 0 16px rgba(62,240,255,.35);background:rgba(62,240,255,.1);}
+  .wp:disabled{opacity:.3;cursor:default;}
+  .wp b{position:absolute;right:3px;bottom:2px;font-family:var(--disp);font-size:11px;color:var(--goud);}
+  .rondknop{position:fixed;z-index:20;width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+            color:var(--ink);background:rgba(16,18,40,.75);border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(8px);cursor:pointer;padding:0;}
+  .rondknop svg{width:20px;height:20px;}
+  #geluid{top:10px;right:10px;}
+  #pauze{top:10px;right:60px;}
+  #terug{position:fixed;top:10px;left:10px;z-index:20;padding:9px 16px;font-size:14px;color:var(--ink);font-weight:800;
+         background:rgba(16,18,40,.75);border:1px solid rgba(255,255,255,.2);border-radius:999px;display:none;cursor:pointer;font-family:var(--body);}
+  #terug.aan{display:block;}
+
+  .scherm{position:fixed;inset:0;z-index:10;display:none;flex-direction:column;align-items:center;justify-content:center;
+          gap:14px;padding:24px 18px;overflow-y:auto;
+          background:radial-gradient(ellipse 70% 50% at 50% 18%,rgba(62,240,255,.18),transparent 70%),
+                     radial-gradient(ellipse 60% 45% at 50% 100%,rgba(255,79,216,.14),transparent 70%),rgba(5,6,23,.86);
+          backdrop-filter:blur(5px);}
+  .scherm.aan{display:flex;}
+  #menu,#winkel{justify-content:flex-start;padding-top:56px;}
+  h1{font-family:var(--disp);font-size:clamp(40px,11vw,74px);margin:0;letter-spacing:.05em;text-transform:uppercase;text-align:center;line-height:1;
+     background:linear-gradient(100deg,var(--cyaan),#fff 45%,var(--magenta));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+     filter:drop-shadow(0 0 24px rgba(62,240,255,.35));}
+  h2{font-family:var(--disp);font-size:clamp(26px,7vw,40px);margin:0;letter-spacing:.06em;text-transform:uppercase;text-align:center;}
+  .onder{color:var(--dim);margin:0;font-size:15px;text-align:center;max-width:44ch;line-height:1.5;}
+  .rij{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+  .munt{display:inline-flex;align-items:center;gap:6px;font-family:var(--disp);color:var(--goud);}
+  .munt::before{content:'';width:15px;height:15px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff3b0,#ffc83d 55%,#b8860b);
+                box-shadow:0 0 10px rgba(255,200,61,.6);}
+  .eindsterren{display:flex;gap:10px;}
+  .eindsterren svg{width:56px;height:56px;filter:drop-shadow(0 0 12px rgba(255,200,61,.6));animation:pop .5s cubic-bezier(.2,1.6,.4,1) both;}
+  .eindsterren svg:nth-child(2){animation-delay:.15s}.eindsterren svg:nth-child(3){animation-delay:.3s}
+  .eindsterren .leeg{filter:none;opacity:.2;}
+  @keyframes pop{from{transform:scale(0) rotate(-40deg)}to{transform:scale(1)}}
+  .stats{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+  .stat{min-width:92px;padding:9px 12px;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);text-align:center;}
+  .stat b{display:block;font-family:var(--disp);font-size:20px;}
+  .stat span{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);}
+
+  button{font-family:var(--body);font-weight:800;cursor:pointer;border-radius:999px;border:0;}
+  .knop{padding:14px 32px;font-size:17px;color:#071018;letter-spacing:.04em;
+        background:linear-gradient(135deg,var(--cyaan),#7dfff0);box-shadow:0 10px 28px rgba(62,240,255,.32);transition:transform .12s;}
+  .knop:hover{transform:translateY(-2px);}
+  .knop2{padding:12px 24px;font-size:15px;color:var(--ink);background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);}
+  .knop2:hover{background:rgba(255,255,255,.15);}
+  .verborgen{display:none !important;}
+
+  #werelden{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;}
+  .wtab{display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 6px 8px;border-radius:16px;background:rgba(255,255,255,.05);
+        border:1.5px solid rgba(255,255,255,.12);color:var(--ink);min-width:120px;}
+  .wtab canvas{width:120px;height:62px;border-radius:11px;}
+  .wtab span{font-family:var(--disp);font-size:12px;letter-spacing:.08em;text-transform:uppercase;}
+  .wtab small{font-size:11px;color:var(--goud);font-weight:800;}
+  .wtab.aan{border-color:var(--cyaan);box-shadow:0 0 0 1px var(--cyaan) inset,0 0 20px rgba(62,240,255,.3);}
+  .wtab:disabled{opacity:.4;cursor:default;}
+  #wzin{min-height:20px;}
+  .levels{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;width:100%;max-width:520px;}
+  .lv{position:relative;aspect-ratio:1;border-radius:15px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+      background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.12);color:var(--ink);font-family:var(--disp);font-size:19px;padding:0;}
+  .lv:not(:disabled):hover{background:rgba(255,255,255,.11);}
+  .lv:disabled{opacity:.33;cursor:default;}
+  .lv.volgende{border-color:var(--cyaan);box-shadow:0 0 0 1px var(--cyaan) inset,0 0 18px rgba(62,240,255,.3);}
+  .lv.baas{border-color:rgba(255,79,216,.6);background:rgba(255,79,216,.08);}
+  .lv.baas::after{content:'BAAS';position:absolute;top:4px;font-size:8px;letter-spacing:.14em;color:var(--magenta);}
+  .lv .st{display:flex;gap:1px;}
+  .lv .st svg{width:11px;height:11px;}
+  .lv .st .leeg{opacity:.2;}
+
+  .kop{font-family:var(--disp);font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin:6px 0 0;}
+  .lijst{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;width:100%;max-width:720px;}
+  .kaart{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 10px;border-radius:16px;text-align:center;
+         background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.12);}
+  .kaart canvas{width:64px;height:64px;}
+  .kaart .naam{font-family:var(--disp);font-size:13px;letter-spacing:.06em;text-transform:uppercase;}
+  .kaart .zin{font-size:12px;color:var(--dim);line-height:1.35;min-height:32px;}
+  .kaart .niv{display:flex;gap:3px;}
+  .kaart .niv i{width:12px;height:5px;border-radius:3px;background:rgba(255,255,255,.15);}
+  .kaart .niv i.aan{background:var(--cyaan);box-shadow:0 0 6px var(--cyaan);}
+  .kaart button{padding:8px 14px;font-size:13px;min-width:100px;}
+  .koop{color:#20140a;background:linear-gradient(135deg,var(--goud),#ffe08a);}
+  .koop:disabled{background:rgba(255,255,255,.08);color:#6f7899;cursor:default;}
+  .bezit{color:var(--groen);background:rgba(91,255,160,.1);border:1px solid rgba(91,255,160,.35);cursor:default;}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="ster" viewBox="0 0 24 24"><path fill="#ffc83d" d="M12 2.5l2.9 6.1 6.6.8-4.9 4.5 1.3 6.6L12 17.2l-5.9 3.3 1.3-6.6-4.9-4.5 6.6-.8z"/></symbol>
+</svg>
+
+<div id="hud"><div id="lvl">Level 1</div><div id="wind"></div></div>
+<div id="baasbalk"><div id="baasnaam"></div><div id="baashp"><i></i></div></div>
+<div id="banner"></div>
+<div id="wapens"></div>
+<button id="terug">‹ Menu</button>
+<button class="rondknop" id="pauze" aria-label="Pauze"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></button>
+<button class="rondknop" id="geluid" aria-label="Geluid"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path id="golf" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg></button>
+
+<div class="scherm aan" id="menu">
+  <h1>Vlotstrijd</h1>
+  <p class="onder">Mo en Pip verdedigen hun vlot! Sleep naar achteren om te mikken en laat los om te schieten. Wie het eerst alle tegenstanders raakt, wint.</p>
+  <div class="rij">
+    <button class="knop" id="speel">Speel level 1</button>
+    <button class="knop2" id="naarwinkel">Winkel · <span class="munt" id="menumunten">0</span></button>
+  </div>
+  <div id="werelden"></div>
+  <p class="onder" id="wzin"></p>
+  <div class="levels" id="levels"></div>
+</div>
+
+<div class="scherm" id="pauzescherm">
+  <h2>Pauze</h2>
+  <div class="rij"><button class="knop" id="hervat">Verder</button><button class="knop2" id="stop">Stoppen</button></div>
+</div>
+
+<div class="scherm" id="einde">
+  <h2 id="eindtitel">Gewonnen!</h2>
+  <div class="eindsterren" id="eindsterren"></div>
+  <div class="stats">
+    <div class="stat"><b id="st-schoten">0</b><span>schoten</span></div>
+    <div class="stat"><b id="st-raak">0</b><span>raak</span></div>
+  </div>
+  <p class="onder">Verdiend: <span class="munt" id="verdiend">0</span></p>
+  <div class="rij">
+    <button class="knop" id="volgende">Volgend level</button>
+    <button class="knop2" id="opnieuw">Opnieuw</button>
+    <button class="knop verborgen" id="klaar">Klaar ✓</button>
+    <button class="knop2" id="eindwinkel">Winkel</button>
+    <button class="knop2" id="naarmenu">Menu</button>
+  </div>
+</div>
+
+<div class="scherm" id="winkel">
+  <h2>Winkel</h2>
+  <p class="onder">Je hebt <span class="munt" id="winkelmunten">0</span>. Munten verdien je met raak schieten en levels winnen.</p>
+  <div class="kop">Wapens</div>
+  <div class="lijst" id="lijstwapens"></div>
+  <div class="kop">Upgrades</div>
+  <div class="lijst" id="lijstupgrades"></div>
+  <button class="knop2" id="uitwinkel">Terug</button>
+</div>
+
+<script src="kern.js"></script>
+<script src="spel.js"></script>
+</body>
+</html>

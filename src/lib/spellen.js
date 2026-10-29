@@ -24,6 +24,7 @@ export const VRIJE_SPELLEN = [
   { key: 'pijlenregen',   name: 'Pijlenregen',     desc: 'Schiet pijlen in draaiende schijven. 40 levels met bazen!', img: '/scenes/games/pijlenregen.svg' },
   { key: 'stapeltoren',   name: 'Stapeltoren',     desc: 'Bouw in 1 minuut de hoogste toren. Tik precies op tijd!', img: '/scenes/games/stapeltoren.svg' },
   { key: 'steenknaller',  name: 'Steenknaller',    desc: 'Kaats de bal en knal alle stenen weg in 30 levels!', img: '/scenes/games/steenknaller.svg' },
+  { key: 'vlotstrijd',    name: 'Vlotstrijd',      desc: 'Mik en schiet vanaf je vlot: 4 werelden, 40 levels en 4 eindbazen!', img: '/scenes/games/vlotstrijd.svg' },
 ]
 
 // De drie 3D-spellen start je vanuit de Kledingkast, met je eigen poppetje.
