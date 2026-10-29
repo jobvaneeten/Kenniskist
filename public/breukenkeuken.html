@@ -71,10 +71,6 @@ button:focus-visible{outline:3px solid var(--cyan);outline-offset:2px}
 .reep .som .b-svg{display:grid;grid-template-columns:repeat(var(--rc,1),minmax(0,1fr));gap:6px;align-content:center}
 .reep .som .b-svg svg{width:100%}
 .pc{cursor:grab}
-.b-total{min-height:48px;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:4px 8px;font-size:20px;font-weight:900;font-variant-numeric:tabular-nums}
-.b-total.hide{visibility:hidden}
-.b-total .eq{color:var(--gold);white-space:nowrap}
-.b-total .tot{flex-basis:100%;text-align:center}
 .muted{color:var(--muted);font-weight:700;font-size:16px}
 .b-msg{min-height:22px;text-align:center;font-size:15px;font-weight:800;color:var(--bad)}
 .shake{animation:shake .35s}
@@ -90,7 +86,6 @@ button:focus-visible{outline:3px solid var(--cyan);outline-offset:2px}
 .som .board{padding:8px 10px;gap:4px}
 .som .b-name{font-size:19px;padding:0}
 .som .b-clear{min-height:36px}
-.som .b-total{min-height:34px;font-size:18px}
 .som .b-msg{min-height:18px;font-size:14px}
 /* de hele som op één rij: A, teken, B, =, antwoord */
 .som-row{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) auto minmax(0,1fr);gap:10px;align-items:stretch}
@@ -157,7 +152,6 @@ button:focus-visible{outline:3px solid var(--cyan);outline-offset:2px}
       <button id="m-reep" type="button">Chocolade</button>
     </div>
     <div class="toggles">
-      <button id="t-frac" class="btn" type="button" aria-pressed="true">Laat breuk zien</button>
       <button id="t-over" class="btn" type="button" aria-pressed="false">Leg over elkaar</button>
       <button id="t-clear" class="btn" type="button">Alles leeg</button>
     </div>
@@ -237,7 +231,7 @@ const MAX={A:1,B:1,SA:4,SB:4,SC:8};
 const W=380, X0=10;
 const OVER='#22C9D6';
 const empty=()=>({A:[],B:[],SA:[],SB:[],SC:[]});
-const state={tab:'verg',mode:'pizza',boards:{pizza:empty(),reep:empty()},showFrac:true,overlay:false,active:{verg:'A',som:'SA'},sign:'+'};
+const state={tab:'verg',mode:'pizza',boards:{pizza:empty(),reep:empty()},overlay:false,active:{verg:'A',som:'SA'},sign:'+'};
 
 const $=s=>document.querySelector(s);
 const boardsNow=()=>state.boards[state.mode];
@@ -291,20 +285,8 @@ function plateSVG(items,overlayBounds,label){
     overlayBounds.forEach(b=>{const x=X0+b/120*W;s+=`<line x1="${x.toFixed(2)}" y1="5" x2="${x.toFixed(2)}" y2="115"/>`});s+='</g>'}
   return s+'</svg>'}
 
-function piecesHTML(arr){
-  if(!arr.length)return '<span class="muted">Nog leeg</span>';
-  return [...arr].sort((a,b)=>a-b).map(n=>n===1?'1':fr(1,n)).join(' + ')+totalHTML(arr)}
-/* totaal van wat er ligt: eerst in de stukken zelf (2/4), dan vereenvoudigd als dat anders is (1/2) */
-function totalHTML(arr){
-  const som=state.tab==='som';
-  if(!arr.length||(!som&&arr.length<2))return '';
-  const t=tot(arr),ks=[...new Set(arr)],simp=mixedHTML(t);let s=simp;
-  if(ks.length===1&&ks[0]!==1){const n=ks[0],c=arr.length,w=Math.floor(c/n),r=c%n;
-    const raw=r?(w?w+' ':'')+fr(r,n):String(w);s=raw===simp?raw:raw+' = '+simp}
-  return som?`<span class="eq tot">Totaal: ${s}</span>`:`<span class="eq">= ${s}</span>`}
-
 function boardHTML(k){
-  return `<div class="board" id="board-${k}" data-key="${k}"><div class="b-head"><button class="b-name" type="button"></button><button class="b-clear" type="button">Leeg</button></div><div class="b-svg"></div><div class="b-total"></div><div class="b-msg" aria-live="polite"></div></div>`}
+  return `<div class="board" id="board-${k}" data-key="${k}"><div class="b-head"><button class="b-name" type="button"></button><button class="b-clear" type="button">Leeg</button></div><div class="b-svg"></div><div class="b-msg" aria-live="polite"></div></div>`}
 
 function renderBoard(k){
   const B=boardsNow(),el=$('#board-'+k);if(!el)return;
@@ -322,13 +304,11 @@ function renderBoard(k){
   const act=state.active[state.tab]===k;
   el.classList.toggle('active',act);
   el.querySelector('.b-name').innerHTML=title(k)+(act?'<small>GEKOZEN</small>':'');
-  const t=el.querySelector('.b-total');t.innerHTML=piecesHTML(B[k]);t.classList.toggle('hide',!state.showFrac);
 }
 function render(){
   $('#app').classList.toggle('reep',state.mode==='reep');
   $('#m-pizza').classList.toggle('on',state.mode==='pizza');
   $('#m-reep').classList.toggle('on',state.mode==='reep');
-  $('#t-frac').setAttribute('aria-pressed',state.showFrac);
   $('#t-over').setAttribute('aria-pressed',state.overlay);
   $('#t-over').hidden=state.tab!=='verg';
   $('#tab-verg').setAttribute('aria-selected',state.tab==='verg');
@@ -435,7 +415,6 @@ $('#tab-verg').addEventListener('click',()=>setTab('verg'));
 $('#tab-som').addEventListener('click',()=>setTab('som'));
 $('#m-pizza').addEventListener('click',()=>{state.mode='pizza';renderTray();clearFeeds();render()});
 $('#m-reep').addEventListener('click',()=>{state.mode='reep';renderTray();clearFeeds();render()});
-$('#t-frac').addEventListener('click',()=>{state.showFrac=!state.showFrac;render()});
 $('#t-over').addEventListener('click',()=>{state.overlay=!state.overlay;render()});
 $('#t-clear').addEventListener('click',()=>{const b=boardsNow();tabKeys().forEach(k=>b[k]=[]);clearFeeds();render()});
 $('#sg-plus').addEventListener('click',()=>{state.sign='+';setFeed('#sfeed',null);render()});
