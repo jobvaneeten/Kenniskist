@@ -174,7 +174,7 @@ export function Figuur({ figuur }) {
         {parten.map((p, i) => (
           <g key={'l' + i}>
             <rect x="160" y={22 + i * 28} width="15" height="15" rx="3" fill={p.kleur} />
-            <text x="184" y={35 + i * 28} fill="#fffbeb" fontSize="15" fontWeight="700">{p.label} — {p.pct}%</text>
+            <text x="184" y={35 + i * 28} fill="#fffbeb" fontSize="15" fontWeight="700">{p.label} — {p.tekst ?? `${p.pct}%`}</text>
           </g>
         ))}
       </svg>

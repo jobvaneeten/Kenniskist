@@ -197,8 +197,8 @@ export function rekenmachineSom() {
 }
 
 // Breuk ↔ kommagetal, de breuk zo klein mogelijk.
-export function breukOfKomma() {
-  if (Math.random() < 0.5) {
+export function breukOfKomma(richting) {
+  if (richting === 'komma' || (richting !== 'breuk' && Math.random() < 0.5)) {
     const [t, n] = pick([[2, 5], [3, 5], [4, 5], [6, 100], [54, 100], [89, 100], [8, 10], [3, 4], [1, 4], [7, 20], [3, 25], [9, 100]])
     const w = t / n
     return { vraag: `Op het bord staat een breuk. ${naam()} schrijft die breuk als kommagetal: ${t}/${n} =`, kaal: `${t}/${n} = (als kommagetal)`, antwoord: w, toon: komma(w),
@@ -237,8 +237,7 @@ export function procentDeelAantal() {
 }
 
 // Snelheid in m/s, km per dag, en reistijd in uren en minuten.
-export function snelheidToets() {
-  const k = rnd(1, 4)
+export function snelheidToets(k = rnd(1, 4)) {
   if (k === 1) {
     const v = pick([2, 3, 4, 5, 6, 8, 10]), min = pick([5, 10, 15, 20, 25, 30])
     const m = v * min * 60
@@ -255,18 +254,20 @@ export function snelheidToets() {
   if (k === 3) {
     const v = pick([12, 16, 18, 20, 24]), [h, m] = pick([[1, 30], [1, 15], [2, 30], [1, 45], [2, 15], [0, 45]])
     const d = v * (h + m / 60)
-    if (!Number.isInteger(d)) return snelheidToets()
+    if (!Number.isInteger(d)) return snelheidToets(3)
     return { vraag: `${naam()} fietst gemiddeld ${v} km per uur. De rit is ${d} km. Hoelang duurt de rit?`,
              kaal: `${d} km met ${v} km/u = … uur en … minuten`, antwoord: h, rest: m, antwLabel: 'Uur', restLabel: 'minuten',
              toon: `${h} uur en ${m} minuten`,
              uitleg: `In 1 uur ${v} km, in ${m} minuten ${v * m / 60} km. ${h} × ${v} + ${v * m / 60} = ${d} km, dus ${h} uur en ${m} minuten.` }
   }
   const v = pick([4, 5, 6]), min = pick([15, 20, 30, 45]), d = v * min / 60, nm = naam()
-  if (!Number.isInteger(d * 10)) return snelheidToets()
+  if (!Number.isInteger(d * 10)) return snelheidToets(4)
   return { vraag: `${nm} loopt met een snelheid van ${v} km per uur. Hoelang doet ${nm} over ${komma(d)} km?`,
            kaal: `${komma(d)} km met ${v} km/u = … minuten`, antwoord: min, eenheid: 'minuten',
            uitleg: `In 60 minuten ${v} km, dus 1 km in ${60 / v} minuten. ${komma(d)} km duurt ${min} minuten.` }
 }
+// Rekenen mét de snelheid zoals de toets het vraagt: hoelang duurt de rit?
+export const reistijd = () => snelheidToets(rnd(3, 4))
 
 // ── toets blok 6 (doelen blok 5) ──────────────────────────────────────────
 
@@ -279,6 +280,34 @@ export function vanDeTotaal() {
   return { vraag: `Er zijn ${totaal} ${wie} ${plek}. ${t} van de ${n} ${wie} ${wat}. Hoeveel ${wie} zijn dat? Je mag een verhoudingstabel gebruiken.`,
            kaal: `${t} van de ${n} van ${totaal} = …`, antwoord: deel, eenheid: wie,
            uitleg: `${totaal} : ${n} = ${totaal / n}. ${t} × ${totaal / n} = ${deel}.` }
+}
+
+// Cirkeldiagram waarin de delen als "1 op de 5" staan, bij een groot totaal.
+const CIRKEL_OP_DE = [
+  { titel: 'leukste sport', wie: 'kinderen', zin: (x) => `vinden ${x} het leukst`, delen: [['hockey', 1, 5], ['voetbal', 1, 4], ['dansen', 3, 20], ['overig', 2, 5]] },
+  { titel: 'hoe naar school', wie: 'kinderen', zin: (x) => `komen ${x === 'lopend' ? 'lopend' : 'met de ' + x} naar school`, delen: [['fiets', 1, 2], ['lopend', 1, 4], ['auto', 1, 5], ['bus', 1, 20]] },
+  { titel: 'lievelingsdier', wie: 'bezoekers', zin: (x) => `kiezen de ${x}`, delen: [['olifant', 3, 10], ['leeuw', 1, 4], ['giraf', 1, 5], ['pinguïn', 1, 4]] },
+]
+export function cirkelOpDe() {
+  const set = pick(CIRKEL_OP_DE), totaal = 20 * rnd(4, 30)
+  // In het diagram staat "1 op de 5" bij elk deel (zoals in de toets), niet het percentage.
+  const delen = set.delen.map(([label, t, n]) => ({ label, pct: t * 100 / n, tekst: `${t} op de ${n}` }))
+  const k = rnd(0, set.delen.length - 1), [label, t, n] = set.delen[k]
+  return { vraag: `${getal(totaal)} ${set.wie} zijn gevraagd naar hun ${set.titel}. Kijk naar het cirkeldiagram. Hoeveel ${set.wie} ${set.zin(label)}?`,
+           kaal: `${t} op de ${n} van ${getal(totaal)} = …`, antwoord: totaal * t / n, eenheid: set.wie,
+           figuur: { type: 'cirkel', delen, titel: set.titel },
+           uitleg: `${getal(totaal)} : ${n} = ${getal(totaal / n)}. ${t} × ${getal(totaal / n)} = ${getal(totaal * t / n)}.` }
+}
+
+// Kaartjes die bij elkaar horen: 25% = 1/4 = 0,25 = 1 op de 4.
+const KOPPEL = [[25, '1/4', '0,25', 4], [75, '3/4', '0,75', null], [5, '1/20', '0,05', 20], [10, '1/10', '0,1', 10], [50, '1/2', '0,5', 2], [20, '1/5', '0,2', 5]]
+export function procentKoppel() {
+  const [pct, br, km, opDe] = pick(KOPPEL), k = rnd(1, opDe ? 4 : 3)
+  const uitleg = `${pct}% = ${br} = ${km}${opDe ? ` = 1 op de ${opDe}` : ''}.`
+  if (k === 1) return { vraag: `${naam()} zoekt kaartjes die bij elkaar horen. Op een kaartje staat ${pct}%. Welke breuk hoort erbij? Schrijf de breuk zo klein mogelijk.`, kaal: `${pct}% = …`, antwoord: br, uitleg }
+  if (k === 2) return { vraag: `${naam()} zoekt kaartjes die bij elkaar horen. Op een kaartje staat ${km}. Hoeveel procent hoort erbij?`, kaal: `${km} = … %`, antwoord: pct, eenheid: '%', uitleg }
+  if (k === 3) return { vraag: `${naam()} zoekt kaartjes die bij elkaar horen. Op een kaartje staat ${br}. Welk kommagetal hoort erbij?`, kaal: `${br} = …`, antwoord: km, uitleg }
+  return { vraag: `${naam()} zoekt kaartjes die bij elkaar horen. Op een kaartje staat "1 op de ${opDe}". Hoeveel procent hoort erbij?`, kaal: `1 op de ${opDe} = … %`, antwoord: pct, eenheid: '%', uitleg }
 }
 
 // Rechthoek met een kommagetal, en hectare.
@@ -371,6 +400,19 @@ export function inhoudM3() {
            kaal: `${l} m × ${b} m × ${h} m = … m³`, antwoord: l * b * h, eenheid: 'm³',
            figuur: { type: 'balk', l, b, h, eenheid: 'm' },
            uitleg: `${l} × ${b} × ${h} = ${l * b * h} m³.` }
+}
+
+// Hoeveel blokken passen in de doos? Zoals de toets: blokken van 1 bij 1 bij
+// 3 dm (of 1 bij 2 bij 2), en de doos is er een veelvoud van.
+export function blokkenInDoos() {
+  const [bl, bb, bh] = pick([[1, 1, 3], [1, 1, 2], [1, 2, 2], [2, 2, 1]])
+  const l = bl * rnd(2, 6), b = bb * rnd(1, 4), h = bh * rnd(1, 3)
+  const inh = l * b * h, blok = bl * bb * bh
+  if (inh / blok < 8) return blokkenInDoos()
+  return { vraag: `Een doos is ${l} dm lang, ${b} dm breed en ${h} dm hoog. ${naam()} vult de doos met blokken van ${bl} dm bij ${bb} dm bij ${bh} dm. Hoeveel blokken passen er in de doos?`,
+           kaal: `Doos ${l} × ${b} × ${h} dm, blok ${bl} × ${bb} × ${bh} dm. Hoeveel blokken?`, antwoord: inh / blok, eenheid: 'blokken',
+           figuur: { type: 'balk', l, b, h, eenheid: 'dm' },
+           uitleg: `Inhoud van de doos: ${l} × ${b} × ${h} = ${inh} dm³. Eén blok: ${bl} × ${bb} × ${bh} = ${blok} dm³. ${inh} : ${blok} = ${inh / blok} blokken.` }
 }
 
 // ── toets blok 9 (doelen blok 8) ──────────────────────────────────────────

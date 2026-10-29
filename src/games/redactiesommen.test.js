@@ -138,6 +138,20 @@ describe('groep 7 in het bijzonder', () => {
     }
   })
 
+  it('vraagt bij S+ alleen soorten sommen die in de toets staan, geen puzzels', () => {
+    // De toets vraagt gewoon de uitkomst: geen vlek op de som, geen kaartjes
+    // met cijfers, geen sprongen op de getallenlijn of losse geldbriefjes.
+    const blokken = onderdelenVan(7, 'S+', 'blok').filter((it) => it.key.startsWith('blok-') && it.key !== 'blok-10')
+    for (const it of blokken) {
+      for (const g of it.gens) {
+        for (let n = 0; n < 60; n++) {
+          expect(String(g.gen().vraag), g.doel.slice(0, 40))
+            .not.toMatch(/vlek|kaartjes met de cijfers|even grote sprongen|geld van de loterij|schoolreisje naar|zo dicht mogelijk bij|grootste en het kleinste getal/)
+        }
+      }
+    }
+  })
+
   it('rekent bij kommagetallen vergelijken 6,169 niet goed als 6,17 het antwoord is', () => {
     // Het instapdoel gaat over duizendsten: het verschil tussen twee getallen
     // is soms maar 0,001, dus het antwoord mag geen speling hebben.
