@@ -27,6 +27,7 @@ const ProcentenBreuken   = lazy(() => import('./games/ProcentenBreuken'))
 const VerhaaltjesSommen  = lazy(() => import('./games/VerhaaltjesSommen'))
 const Denkvragen         = lazy(() => import('./games/Denkvragen'))
 const BreukenPlaatjes    = lazy(() => import('./games/BreukenPlaatjes'))
+const BreukenRekenen     = lazy(() => import('./games/BreukenRekenen'))
 const MaatenOmrekenen    = lazy(() => import('./games/MaatenOmrekenen'))
 const KlokKijken         = lazy(() => import('./games/KlokKijken'))
 const TafelsOefenen      = lazy(() => import('./games/TafelsOefenen'))
@@ -379,6 +380,9 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
       if (rekenKeuze === 'breuken') {
         return <BreukenPlaatjes onBack={() => setRekenKeuze(null)} addBriefgeld={addBriefgeld} addCuruntie={addCuruntie} />
       }
+      if (rekenKeuze === 'breukenrekenen') {
+        return <BreukenRekenen onBack={() => setRekenKeuze(null)} addBriefgeld={addBriefgeld} addCuruntie={addCuruntie} />
+      }
       if (rekenKeuze === 'breukenhulp') {
         return (
           <div style={{ position: 'fixed', inset: 0, background: '#0E0F2E' }}>
@@ -418,6 +422,15 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
                 <span className="mode-name">Breuken &amp; plaatjes</span>
                 <span className="mode-desc">Koppel de breuk aan het plaatje</span>
                 <span className="vb-line">Ronde taarten en langwerpige repen</span>
+                <RewardChips rewards={['💵 briefgeld']} />
+              </button>
+            )}
+            {year >= 7 && (
+              <button className="mode-card" onClick={() => setRekenKeuze('breukenrekenen')}>
+                <MenuScene name="breukenrekenen" />
+                <span className="mode-name">Breuken rekenen</span>
+                <span className="mode-desc">Plus en min, keer en delen · 3 niveaus</span>
+                <span className="vb-line">"1/2 + 1/4 = ?" · "3/4 : 1/8 = ?"</span>
                 <RewardChips rewards={['💵 briefgeld']} />
               </button>
             )}

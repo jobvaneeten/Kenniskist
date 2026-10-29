@@ -176,6 +176,22 @@ const SCENES = {
     </svg>
   ),
 
+  breukenrekenen: (
+    <svg viewBox="0 0 160 90" preserveAspectRatio="xMidYMid slice">
+      <rect width="160" height="90" fill="#1a1240" />
+      <g fontFamily={FONT} fontWeight="900" textAnchor="middle">
+        <text x="30" y="38" fontSize="16" fill="#fff">1</text><rect x="22" y="42" width="16" height="3" rx="1.5" fill="#fff" /><text x="30" y="60" fontSize="16" fill="#fff">2</text>
+        <text x="54" y="52" fontSize="18" fill="#FFB52E">+</text>
+        <text x="78" y="38" fontSize="16" fill="#fff">1</text><rect x="70" y="42" width="16" height="3" rx="1.5" fill="#fff" /><text x="78" y="60" fontSize="16" fill="#fff">4</text>
+        <text x="102" y="52" fontSize="18" fill="#FFB52E">=</text>
+        <g className="msi ms-pop" style={{ transformOrigin: '128px 48px' }}>
+          <text x="128" y="38" fontSize="16" fill="#3BE3F0">3</text><rect x="120" y="42" width="16" height="3" rx="1.5" fill="#3BE3F0" /><text x="128" y="60" fontSize="16" fill="#3BE3F0">4</text>
+        </g>
+      </g>
+      <text x="80" y="80" textAnchor="middle" fontSize="10" fontWeight="800" fill="#B6B9DA" fontFamily={FONT}>+ − × :</text>
+    </svg>
+  ),
+
   breukenhulp: (
     <svg viewBox="0 0 160 90" preserveAspectRatio="xMidYMid slice">
       <rect width="160" height="90" fill="#0E0F2E" />
