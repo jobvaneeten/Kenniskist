@@ -71,7 +71,7 @@ const fout = m => { fouten++; if (fouten < 15) console.log('✗ ' + m) }
 
 // ── werelden en creatief ──
 {
-  if (D.WERELDEN.length !== 5) fout('er zijn geen 5 werelden')
+  if (D.WERELDEN.length !== 6) fout('er zijn geen 6 werelden')
   const w = D.nieuw('woestijn'), IX = D.INGANG.x, IY = D.INGANG.y
   for (let y = IY - 1; y >= IY - 5; y--) D.legPad(w, IX, y)
   const h = D.bouwHok(w, IX - 4, IY - 5, 4, 4)
@@ -95,6 +95,45 @@ const fout = m => { fouten++; if (fouten < 15) console.log('✗ ' + m) }
     if (l.length < 14) fout(w.naam + ' heeft minder dan 14 diersoorten (nodig voor level 14)')
     if (l.some(k => !D.DIEREN[k])) fout(w.naam + ' noemt een dier dat niet bestaat')
   }
+  // geen dier komt vrij voordat de bodem of de spullen die het wil er zijn
+  for (const w of D.WERELDEN.concat([D.CREATIEF])) {
+    const s = D.nieuw(w.id)
+    for (const k of D.dierenVan(s)) for (const wens of D.DIEREN[k].wil) {
+      const n = D.dierNiveau(s, k)
+      if (wens.bodem && !wens.bodem.some(b => b === w.bodem || D.BODEMS[b].niveau <= n)) fout(`${w.naam}: ${k} komt vrij voor zijn bodem`)
+      if (wens.item && !wens.item.some(i => D.INRICHTING[i].niveau <= n)) fout(`${w.naam}: ${k} komt vrij voor zijn inrichting`)
+    }
+  }
+}
+
+// ── oude opslag van de kleinere kaart (36 × 26) schuift mee ──
+{
+  const oud = { geld: 500, level: 3, pad: ['17,25', '17,24', '17,23'], verblijven: [{ x: 14, y: 21, w: 3, h: 3, bodem: 'gras', dieren: ['konijn', 'konijn'], items: [{ soort: 'binnen', x: 14, y: 21 }] }], objecten: [{ soort: 'boom', x: 18, y: 24 }] }
+  const s = D.herstel(oud, 'vallei'), v = s.verblijven[0]
+  if (!s.pad[D.sleutel(D.INGANG.x, D.INGANG.y - 2)] || Object.keys(s.pad).length !== 3) fout('oude paden staan niet meer aan de ingang')
+  if (!v || v.x !== 18 || v.y !== 27 || v.dieren.length !== 2 || v.items[0].x !== 18) fout('oud hok is na het groter maken van de kaart verdwenen of verschoven')
+  if (!s.objecten.length || s.objecten[0].x !== 22) fout('oude versiering is verdwenen')
+  const weer = D.herstel(JSON.parse(JSON.stringify(D.bewaarbaar(s))), 'vallei')
+  if (weer.verblijven[0].x !== 18) fout('nieuwe opslag schuift bij terugladen opnieuw op')
+}
+
+// ── baby's ──
+{
+  const s = D.nieuw(), IX = D.INGANG.x, IY = D.INGANG.y
+  for (let y = IY - 1; y >= IY - 5; y--) D.legPad(s, IX, y)
+  s.geld = 1e6
+  const v = D.bouwHok(s, IX - 5, IY - 5, 5, 5)
+  D.zetDier(s, v, 'konijn'); D.zetDier(s, v, 'konijn'); D.plaatsItem(s, v, 'binnen', v.x, v.y); D.plaatsItem(s, v, 'voerbak', v.x + 1, v.y)
+  D.stats(s)
+  if (!D.kanBaby(s, v)) fout('blije konijnen met ruimte krijgen geen baby')
+  const r = D.geboorte(s, () => 0)
+  if (!r || v.dieren.length !== 3 || s.babies !== 1) fout('geboorte zet geen jong in het hok')
+  if (D.levelInfo(s).doelen.length && D.doelWaarde(s, { type: 'baby' }) !== 1) fout('baby-doel telt niet')
+  const k = D.nieuw('vallei'); k.level = 99; k.geld = 1e6
+  for (let y = IY - 1; y >= IY - 5; y--) D.legPad(k, IX, y)
+  const kv = D.bouwHok(k, IX - 5, IY - 5, 5, 5)
+  D.zetDier(k, kv, 'vos'); D.stats(k)
+  if (D.kanBaby(k, kv)) fout('een dier dat alleen wil wonen krijgt een baby')
 }
 
 // ── bot ──

@@ -29,8 +29,9 @@ function wereldOpen(id) {
   if (id === 'creatief') return true
   var i = DT.WERELDEN.map(function (w) { return w.id }).indexOf(id)
   if (i <= 0) return i === 0
-  return levelVan(DT.WERELDEN[i - 1].id) > DT.WERELDEN[i].open
+  return levelVan(vorigeWereld(i).id) > DT.WERELDEN[i].open
 }
+function vorigeWereld(i) { var w = DT.WERELDEN[i]; return w.na ? DT.wereld(w.na) : DT.WERELDEN[i - 1] }
 var WID = DT.wereld(ruw.huidige || 'vallei').id
 if (!wereldOpen(WID)) WID = 'vallei'
 var WERELD = DT.wereld(WID), CREATIEF = !!WERELD.creatief
@@ -64,6 +65,7 @@ var THEMAS = {
   ijs:      { lucht: ['#03081e', '#0a2040', '#123656'], gloed: '120,255,210', gras: ['#e8f2fc', '#dfecf9', '#eef6ff'], blad: '#b8d4ee', zijL: ['#9cc8ee', '#94c0e6'], zijR: ['#7aa8d6', '#729fcd'], rand: 'rgba(255,255,255,.85)', pad: ['#8fa6c2', '#879eba', '#5c708c'], detail: 'ijs', sterren: true, noorderlicht: true, sneeuw: true },
   tropisch: { lucht: ['#0b2f55', '#0e4f76', '#137080'], gloed: '120,255,230', gras: ['#3fb85a', '#45c060', '#3ab055'], blad: '#2a8a40', zijL: ['#e8d29a', '#e0ca90'], zijR: ['#c9b07a', '#c0a872'], rand: 'rgba(255,240,190,.85)', pad: ['#e8dcc0', '#e0d4b6', '#a89870'], detail: 'gras', zee: true },
   maan:     { lucht: ['#000004', '#04041a', '#0a0a26'], gloed: '180,180,255', gras: ['#8e8e98', '#878791', '#94949e'], blad: '#6a6a74', zijL: ['#5a5a64', '#55555f'], zijR: ['#44444e', '#40404a'], rand: 'rgba(220,220,240,.55)', pad: ['#5a6078', '#545a72', '#3ef0ff'], detail: 'maan', sterren: true, aarde: true },
+  oertijd:  { lucht: ['#1a0a1e', '#4a1630', '#a8402a'], gloed: '255,120,60', gras: ['#3f8f3a', '#45963f', '#3a8636'], blad: '#2a6a2a', zijL: ['#6a3a2a', '#633626'], zijR: ['#4a2a20', '#45261d'], rand: 'rgba(255,170,110,.6)', pad: ['#8a6a5a', '#826252', '#5a3a2e'], detail: 'oer', vulkaan: true },
   creatief: { lucht: ['#140b2e', '#2a1050', '#3a1460'], gloed: '255,79,216', gras: ['#46a04e', '#4aa652', '#43994a'], blad: '#2f7a38', zijL: ['#7a5534', '#734f30'], zijR: ['#5e4128', '#583c25'], rand: 'rgba(150,230,140,.6)', pad: ['#d6ceba', '#cfc6b1', '#8f8673'], detail: 'gras', sterren: true },
 }
 var THEMA = THEMAS[WID] || THEMAS.vallei
@@ -457,10 +459,164 @@ var DIER2 = {
     oog(g, x + u * 0.42, y - u * 0.7, u * 0.55); oog(g, x + u * 0.52, y - u * 0.7, u * 0.55); cirkel(g, x + u * 0.58, y - u * 0.6, u * 0.035, '#5a2a10')
   },
 }
+// ── het Oertijdpark ──
+function vorm(g, pts, kleur) { g.beginPath(); g.moveTo(pts[0][0], pts[0][1]); for (var i = 1; i < pts.length; i++) g.lineTo(pts[i][0], pts[i][1]); g.closePath(); g.fillStyle = kleur; g.fill() }
+function staart(g, x1, y1, x2, y2, kleur, b) { g.strokeStyle = kleur; g.lineWidth = b; g.lineCap = 'round'; g.beginPath(); g.moveTo(x1, y1); g.quadraticCurveTo((x1 + x2) / 2, y1 + (y2 - y1) * 0.2, x2, y2); g.stroke() }
+var DIER3 = {
+  dodo: function (g, x, y, u, f) {
+    poten(g, x, y, u, '#e8b04a', 2, 0.18, f * 2)
+    cirkel(g, x - u * 0.36, y - u * 0.55, u * 0.11, '#f2efe6')
+    ellips(g, x - u * 0.05, y - u * 0.42, u * 0.34, u * 0.3, '#8a93a8')
+    ellips(g, x - u * 0.08, y - u * 0.46, u * 0.17, u * 0.12, '#737c92')
+    cirkel(g, x + u * 0.26, y - u * 0.72, u * 0.16, '#9aa3b8')
+    vorm(g, [[x + u * 0.36, y - u * 0.8], [x + u * 0.6, y - u * 0.74], [x + u * 0.6, y - u * 0.62], [x + u * 0.52, y - u * 0.66], [x + u * 0.38, y - u * 0.64]], '#e8c25a')
+    cirkel(g, x + u * 0.58, y - u * 0.64, u * 0.035, '#8a6a2a')
+    oog(g, x + u * 0.3, y - u * 0.76, u * 0.6)
+  },
+  oervogel: function (g, x, y, u, f) {
+    staart(g, x - u * 0.18, y - u * 0.45, x - u * 0.72, y - u * 0.42 + Math.sin(f) * u * 0.04, '#2e8a7a', u * 0.1)
+    for (var i = 0; i < 3; i++) ellips(g, x - u * (0.35 + i * 0.14), y - u * 0.46, u * 0.06, u * 0.025, '#e8c25a')
+    poten(g, x, y, u, '#6b5a3a', 2, 0.16, f * 2)
+    ellips(g, x, y - u * 0.46, u * 0.25, u * 0.17, '#3fa58f')
+    ellips(g, x - u * 0.06, y - u * 0.5, u * 0.2, u * 0.1, '#2a7a6a')
+    cirkel(g, x + u * 0.24, y - u * 0.66, u * 0.12, '#46b39b')
+    ellips(g, x + u * 0.38, y - u * 0.63, u * 0.11, u * 0.04, '#3a8f7c')
+    oog(g, x + u * 0.27, y - u * 0.69, u * 0.55)
+  },
+  pteranodon: function (g, x, y, u, f) {
+    var a = Math.sin(f * 2.5) * u * 0.18
+    y -= u * (0.45 + Math.sin(f) * 0.05)
+    vorm(g, [[x - u * 0.05, y - u * 0.22], [x - u * 0.78, y - u * 0.3 - a], [x - u * 0.55, y - u * 0.14 - a * 0.5], [x - u * 0.15, y - u * 0.08]], '#e0955a')
+    vorm(g, [[x + u * 0.05, y - u * 0.22], [x + u * 0.62, y - u * 0.36 - a], [x + u * 0.45, y - u * 0.16 - a * 0.5], [x + u * 0.15, y - u * 0.08]], '#d08448')
+    ellips(g, x, y - u * 0.17, u * 0.2, u * 0.08, '#c9773a')
+    cirkel(g, x + u * 0.22, y - u * 0.26, u * 0.08, '#c9773a')
+    vorm(g, [[x + u * 0.26, y - u * 0.3], [x + u * 0.58, y - u * 0.24], [x + u * 0.26, y - u * 0.22]], '#f2c35a')
+    vorm(g, [[x + u * 0.18, y - u * 0.3], [x - u * 0.06, y - u * 0.44], [x + u * 0.22, y - u * 0.33]], '#b0582a')
+    oog(g, x + u * 0.24, y - u * 0.28, u * 0.45)
+  },
+  parasaurolophus: function (g, x, y, u, f) {
+    staart(g, x - u * 0.2, y - u * 0.52, x - u * 0.78, y - u * 0.44, '#5aa86a', u * 0.15)
+    poten(g, x, y, u, '#3f8a52', 2, 0.22, f * 2)
+    ellips(g, x, y - u * 0.55, u * 0.36, u * 0.22, '#5fb873')
+    ellips(g, x + u * 0.05, y - u * 0.44, u * 0.24, u * 0.09, '#d6e8a0')
+    for (var i = 0; i < 3; i++) lijn(g, x - u * 0.15 + i * u * 0.13, y - u * 0.74, x - u * 0.12 + i * u * 0.13, y - u * 0.62, '#3f8a52', u * 0.04)
+    lijn(g, x + u * 0.25, y - u * 0.65, x + u * 0.4, y - u * 0.9, '#5fb873', u * 0.14)
+    ellips(g, x + u * 0.5, y - u * 0.95, u * 0.16, u * 0.09, '#5fb873')
+    lijn(g, x + u * 0.42, y - u * 1.0, x + u * 0.06, y - u * 1.16, '#e8743a', u * 0.08)
+    lijn(g, x + u * 0.22, y - u * 0.52, x + u * 0.32, y - u * 0.42, '#3f8a52', u * 0.05)
+    oog(g, x + u * 0.5, y - u * 0.98, u * 0.55)
+  },
+  velociraptor: function (g, x, y, u, f) {
+    staart(g, x - u * 0.2, y - u * 0.5, x - u * 0.82, y - u * 0.56 + Math.sin(f) * u * 0.06, '#c98a4a', u * 0.1)
+    poten(g, x, y, u, '#a86a32', 2, 0.18, f * 2.5)
+    ellips(g, x, y - u * 0.5, u * 0.3, u * 0.14, '#d99a56')
+    for (var i = 0; i < 3; i++) lijn(g, x - u * 0.15 + i * u * 0.12, y - u * 0.62, x - u * 0.12 + i * u * 0.12, y - u * 0.5, '#8a4a22', u * 0.035)
+    lijn(g, x + u * 0.22, y - u * 0.56, x + u * 0.38, y - u * 0.72, '#d99a56', u * 0.1)
+    ellips(g, x + u * 0.48, y - u * 0.74, u * 0.17, u * 0.07, '#d99a56')
+    lijn(g, x + u * 0.36, y - u * 0.7, x + u * 0.62, y - u * 0.72, '#8a4a22', u * 0.02)
+    lijn(g, x + u * 0.2, y - u * 0.46, x + u * 0.3, y - u * 0.36, '#a86a32', u * 0.05)
+    oog(g, x + u * 0.46, y - u * 0.77, u * 0.5)
+  },
+  stegosaurus: function (g, x, y, u, f) {
+    staart(g, x - u * 0.42, y - u * 0.48, x - u * 0.88, y - u * 0.3, '#7aa04a', u * 0.14)
+    lijn(g, x - u * 0.82, y - u * 0.34, x - u * 0.9, y - u * 0.5, '#f4ead0', u * 0.04); lijn(g, x - u * 0.86, y - u * 0.3, x - u * 1.0, y - u * 0.4, '#f4ead0', u * 0.04)
+    poten(g, x, y, u, '#5f7f3a', 4, 0.22, f * 1.6)
+    for (var i = 0; i < 5; i++) { var px = x - u * 0.34 + i * u * 0.16, ph = u * (0.2 + 0.08 * Math.sin(i * 1.3 + 1)); vorm(g, [[px - u * 0.08, y - u * 0.66], [px, y - u * 0.7 - ph], [px + u * 0.08, y - u * 0.66]], '#e8743a') }
+    ellips(g, x, y - u * 0.48, u * 0.5, u * 0.26, '#7aa04a')
+    ellips(g, x + u * 0.05, y - u * 0.36, u * 0.36, u * 0.1, '#c8d890')
+    ellips(g, x + u * 0.55, y - u * 0.34, u * 0.15, u * 0.09, '#7aa04a')
+    oog(g, x + u * 0.58, y - u * 0.37, u * 0.5)
+  },
+  ankylosaurus: function (g, x, y, u, f) {
+    staart(g, x - u * 0.45, y - u * 0.4, x - u * 0.85, y - u * 0.36 + Math.sin(f) * u * 0.05, '#8a7a4a', u * 0.1)
+    cirkel(g, x - u * 0.88, y - u * 0.36 + Math.sin(f) * u * 0.05, u * 0.11, '#5a4a2a')
+    poten(g, x, y, u, '#6a5a3a', 4, 0.24, f * 1.4)
+    ellips(g, x, y - u * 0.38, u * 0.52, u * 0.24, '#a08a5a')
+    for (var i = 0; i < 7; i++) vorm(g, [[x - u * 0.45 + i * u * 0.15, y - u * 0.2], [x - u * 0.41 + i * u * 0.15, y - u * 0.08], [x - u * 0.37 + i * u * 0.15, y - u * 0.2]], '#e8dcb0')
+    for (var j = 0; j < 6; j++) cirkel(g, x - u * 0.32 + j * u * 0.13, y - u * (0.5 + (j % 2) * 0.06), u * 0.045, '#6a5a3a')
+    ellips(g, x + u * 0.56, y - u * 0.32, u * 0.15, u * 0.1, '#a08a5a')
+    oog(g, x + u * 0.6, y - u * 0.35, u * 0.5)
+  },
+  triceratops: function (g, x, y, u, f) {
+    vorm(g, [[x - u * 0.45, y - u * 0.55], [x - u * 0.75, y - u * 0.4], [x - u * 0.45, y - u * 0.38]], '#6f9aa8')
+    poten(g, x, y, u, '#557f8c', 4, 0.22, f * 1.5)
+    ellips(g, x - u * 0.05, y - u * 0.5, u * 0.48, u * 0.28, '#6f9aa8')
+    ellips(g, x + u * 0.42, y - u * 0.7, u * 0.24, u * 0.28, '#e0a040')
+    ellips(g, x + u * 0.44, y - u * 0.7, u * 0.17, u * 0.21, '#c8862a')
+    ellips(g, x + u * 0.6, y - u * 0.5, u * 0.21, u * 0.14, '#7fa8b5')
+    lijn(g, x + u * 0.62, y - u * 0.62, x + u * 0.88, y - u * 0.84, '#f4ead0', u * 0.06)
+    lijn(g, x + u * 0.54, y - u * 0.64, x + u * 0.76, y - u * 0.9, '#f4ead0', u * 0.06)
+    lijn(g, x + u * 0.76, y - u * 0.52, x + u * 0.86, y - u * 0.6, '#f4ead0', u * 0.05)
+    oog(g, x + u * 0.62, y - u * 0.56, u * 0.55)
+  },
+  sabeltand: function (g, x, y, u, f) {
+    lijn(g, x - u * 0.4, y - u * 0.55, x - u * 0.52, y - u * 0.62, '#c49050', u * 0.08)
+    poten(g, x, y, u, '#b8864a', 4, 0.2, f * 2)
+    ellips(g, x, y - u * 0.5, u * 0.42, u * 0.21, '#d4a060')
+    ellips(g, x + u * 0.05, y - u * 0.38, u * 0.28, u * 0.08, '#f2dcb4')
+    cirkel(g, x + u * 0.44, y - u * 0.66, u * 0.19, '#d4a060')
+    cirkel(g, x + u * 0.34, y - u * 0.82, u * 0.06, '#d4a060'); cirkel(g, x + u * 0.52, y - u * 0.84, u * 0.06, '#d4a060')
+    ellips(g, x + u * 0.53, y - u * 0.6, u * 0.1, u * 0.07, '#f2dcb4')
+    lijn(g, x + u * 0.5, y - u * 0.56, x + u * 0.5, y - u * 0.4, '#ffffff', u * 0.04); lijn(g, x + u * 0.58, y - u * 0.56, x + u * 0.58, y - u * 0.41, '#ffffff', u * 0.04)
+    cirkel(g, x + u * 0.6, y - u * 0.63, u * 0.035, '#5a2a10')
+    oog(g, x + u * 0.42, y - u * 0.7, u * 0.55); oog(g, x + u * 0.52, y - u * 0.7, u * 0.55)
+  },
+  spinosaurus: function (g, x, y, u, f) {
+    staart(g, x - u * 0.25, y - u * 0.56, x - u * 0.98, y - u * 0.4 + Math.sin(f) * u * 0.05, '#4a6a8a', u * 0.16)
+    poten(g, x, y, u, '#3a5a7a', 2, 0.26, f * 1.6)
+    g.fillStyle = '#e0603a'; g.beginPath(); g.moveTo(x - u * 0.38, y - u * 0.7); g.quadraticCurveTo(x - u * 0.1, y - u * 1.4, x + u * 0.3, y - u * 0.78); g.closePath(); g.fill()
+    for (var i = 0; i < 4; i++) lijn(g, x - u * 0.25 + i * u * 0.14, y - u * 0.76, x - u * 0.2 + i * u * 0.12, y - u * (1.05 - Math.abs(i - 1.5) * 0.08), '#b0402a', u * 0.03)
+    ellips(g, x, y - u * 0.62, u * 0.42, u * 0.25, '#5a7fa6')
+    ellips(g, x + u * 0.05, y - u * 0.5, u * 0.3, u * 0.1, '#c8d6e6')
+    lijn(g, x + u * 0.3, y - u * 0.7, x + u * 0.46, y - u * 0.9, '#5a7fa6', u * 0.15)
+    ellips(g, x + u * 0.64, y - u * 0.92, u * 0.26, u * 0.07, '#5a7fa6')
+    lijn(g, x + u * 0.25, y - u * 0.56, x + u * 0.36, y - u * 0.44, '#3a5a7a', u * 0.05)
+    oog(g, x + u * 0.56, y - u * 0.96, u * 0.5)
+  },
+  brachiosaurus: function (g, x, y, u, f) {
+    staart(g, x - u * 0.45, y - u * 0.62, x - u * 0.98, y - u * 0.44, '#8aa8b8', u * 0.14)
+    poten(g, x, y, u, '#6a8a9a', 4, 0.26, f * 1.2)
+    for (var i = 0; i < 4; i++) lijn(g, x + (i - 1.5) * u * 0.26, y - u * 0.4, x + (i - 1.5) * u * 0.26, y, '#6a8a9a', u * 0.15)
+    ellips(g, x, y - u * 0.62, u * 0.5, u * 0.3, '#8aa8b8')
+    ellips(g, x + u * 0.05, y - u * 0.48, u * 0.36, u * 0.12, '#c4d6de')
+    g.strokeStyle = '#8aa8b8'; g.lineWidth = u * 0.2; g.lineCap = 'round'; g.beginPath(); g.moveTo(x + u * 0.32, y - u * 0.78)
+    g.quadraticCurveTo(x + u * 0.62, y - u * 1.2, x + u * 0.62 + Math.sin(f * 0.5) * u * 0.03, y - u * 1.7); g.stroke()
+    ellips(g, x + u * 0.72, y - u * 1.74, u * 0.19, u * 0.1, '#8aa8b8')
+    cirkel(g, x + u * 0.66, y - u * 1.82, u * 0.08, '#8aa8b8')
+    oog(g, x + u * 0.74, y - u * 1.77, u * 0.5)
+  },
+  trex: function (g, x, y, u, f) {
+    staart(g, x - u * 0.25, y - u * 0.62, x - u * 1.0, y - u * 0.55 + Math.sin(f) * u * 0.06, '#5a8a3a', u * 0.18)
+    ellips(g, x - u * 0.06, y - u * 0.38, u * 0.17, u * 0.22, '#4a7a32')
+    poten(g, x, y, u, '#4a7a32', 2, 0.26, f * 1.8)
+    ellips(g, x, y - u * 0.68, u * 0.4, u * 0.27, '#6aa040')
+    ellips(g, x + u * 0.08, y - u * 0.56, u * 0.26, u * 0.1, '#c8d890')
+    ellips(g, x + u * 0.5, y - u * 1.0, u * 0.32, u * 0.18, '#6aa040')
+    lijn(g, x + u * 0.28, y - u * 0.94, x + u * 0.8, y - u * 0.94, '#2a4a1a', u * 0.03)
+    for (var i = 0; i < 5; i++) vorm(g, [[x + u * (0.42 + i * 0.08), y - u * 0.95], [x + u * (0.45 + i * 0.08), y - u * 0.89], [x + u * (0.48 + i * 0.08), y - u * 0.95]], '#ffffff')
+    lijn(g, x + u * 0.32, y - u * 0.64, x + u * 0.42, y - u * 0.56, '#4a7a32', u * 0.05)
+    oog(g, x + u * 0.5, y - u * 1.06, u * 0.6)
+  },
+  megalodon: function (g, x, y, u, f) {
+    var b = Math.sin(f) * u * 0.05
+    vorm(g, [[x - u * 0.52, y - u * 0.3 + b], [x - u * 0.88, y - u * 0.62 + b], [x - u * 0.76, y - u * 0.3 + b], [x - u * 0.88, y - u * 0.04 + b]], '#5a6f8a')
+    vorm(g, [[x - u * 0.08, y - u * 0.46 + b], [x + u * 0.08, y - u * 0.8 + b], [x + u * 0.2, y - u * 0.44 + b]], '#5a6f8a')
+    ellips(g, x, y - u * 0.3 + b, u * 0.6, u * 0.2, '#6a7f9a')
+    ellips(g, x + u * 0.06, y - u * 0.23 + b, u * 0.46, u * 0.09, '#dfe6ee')
+    vorm(g, [[x + u * 0.05, y - u * 0.2 + b], [x - u * 0.1, y - u * 0.02 + b], [x + u * 0.18, y - u * 0.18 + b]], '#5a6f8a')
+    lijn(g, x + u * 0.32, y - u * 0.22 + b, x + u * 0.58, y - u * 0.25 + b, '#2a3a4a', u * 0.03)
+    for (var i = 0; i < 4; i++) vorm(g, [[x + u * (0.36 + i * 0.06), y - u * 0.23 + b], [x + u * (0.38 + i * 0.06), y - u * 0.18 + b], [x + u * (0.4 + i * 0.06), y - u * 0.23 + b]], '#ffffff')
+    for (var j = 0; j < 3; j++) lijn(g, x + u * (0.2 + j * 0.05), y - u * 0.36 + b, x + u * (0.18 + j * 0.05), y - u * 0.26 + b, '#4a5a6e', u * 0.02)
+    oog(g, x + u * 0.42, y - u * 0.34 + b, u * 0.5)
+  },
+}
 Object.keys(DIER2).forEach(function (k) { DIER[k] = DIER2[k] })
+Object.keys(DIER3).forEach(function (k) { DIER[k] = DIER3[k] })
 DIER.olifant = function (g, x, y, u, f) { olifantVorm(g, x, y, u, f, '#9ea6b8', false) }  // zelfde vorm als de mammoet
 Object.assign(GROOTTE, { eend: 0.4, schaap: 0.5, varken: 0.5, hert: 0.62, rendier: 0.66, vos: 0.48, fennek: 0.42, poolvos: 0.44,
-  stokstaartje: 0.4, struisvogel: 0.66, kameel: 0.74, schildpad: 0.42, nijlpaard: 0.78, walrus: 0.72, mammoet: 0.9, papegaai: 0.4, tijger: 0.66 })
+  stokstaartje: 0.4, struisvogel: 0.66, kameel: 0.74, schildpad: 0.42, nijlpaard: 0.78, walrus: 0.72, mammoet: 0.9, papegaai: 0.4, tijger: 0.66,
+  dodo: 0.45, oervogel: 0.42, pteranodon: 0.55, parasaurolophus: 0.62, velociraptor: 0.55, stegosaurus: 0.7, ankylosaurus: 0.68, triceratops: 0.74,
+  sabeltand: 0.62, spinosaurus: 0.8, brachiosaurus: 0.95, trex: 0.88, megalodon: 0.85 })
 
 // ── tekenhulp voor de schuine wereld ──
 function pad4(g, pts) { g.beginPath(); g.moveTo(pts[0][0], pts[0][1]); for (var i = 1; i < pts.length; i++) g.lineTo(pts[i][0], pts[i][1]); g.closePath() }
@@ -512,8 +668,8 @@ function tekenObject(g, soort, cx, cy, tijd) {
     g.fillStyle = gr; g.beginPath(); g.ellipse(cx, cy, t * 0.9, t * 0.45, 0, 0, TAU); g.fill()
     isoBlok(g, cx, cy, 0.04, 0.04, t * 0.62, '#4a5070', '#3a4060', '#2c3150')
     gloed(g, '#ffd98a', 16 * p); cirkel(g, cx, cy - t * 0.68, t * 0.09, '#fff1c4'); g.shadowBlur = 0
-  } else if (soort === 'ijskraam' || soort === 'snackbar') {
-    var ijs = soort === 'ijskraam', kleur = ijs ? '#ff6fb5' : '#ff8a3c'
+  } else if (soort === 'ijskraam' || soort === 'snackbar' || soort === 'souvenir') {
+    var ijs = soort === 'ijskraam', sou = soort === 'souvenir', kleur = ijs ? '#ff6fb5' : sou ? '#9b6bff' : '#ff8a3c'
     grondEllips(g, cx + t * 0.05, cy + t * 0.03, 0.45, 'rgba(0,0,0,.25)')
     isoBlok(g, cx, cy, 0.36, 0.36, t * 0.34, '#f4f1ea', '#e6e0d4', '#cfc8b8')
     isoBlok(g, cx, cy - t * 0.12, 0.38, 0.38, t * 0.05, '#ffffff', '#3ef0ff', '#2ad0dd')
@@ -526,10 +682,11 @@ function tekenObject(g, soort, cx, cy, tijd) {
     }
     var vx = scherm2(cx, dakY, -0.42, 0.42), vr = scherm2(cx, dakY, 0.42, 0.42), vb = scherm2(cx, dakY, 0.42, -0.42)
     pad4(g, [vx, vr, [vr[0], vr[1] + t * 0.07], [vx[0], vx[1] + t * 0.07]]); g.fillStyle = kleur; g.fill()
-    pad4(g, [vr, vb, [vb[0], vb[1] + t * 0.07], [vr[0], vr[1] + t * 0.07]]); g.fillStyle = mengKleur(ijs ? '#ff6fb5' : '#ff8a3c', -40); g.fill()
+    pad4(g, [vr, vb, [vb[0], vb[1] + t * 0.07], [vr[0], vr[1] + t * 0.07]]); g.fillStyle = mengKleur(kleur, -40); g.fill()
     // bord
     gloed(g, ijs ? '#7df9ff' : '#ffd84d', 10)
-    if (ijs) { g.fillStyle = '#e8b06a'; pad4(g, [[cx - t * 0.07, dakY - t * 0.12], [cx + t * 0.07, dakY - t * 0.12], [cx, dakY + t * 0.06]]); g.fill(); cirkel(g, cx, dakY - t * 0.15, t * 0.08, '#ffb3d9') }
+    if (sou) { cirkel(g, cx, dakY - t * 0.16, t * 0.1, '#c08a52'); cirkel(g, cx - t * 0.08, dakY - t * 0.25, t * 0.045, '#c08a52'); cirkel(g, cx + t * 0.08, dakY - t * 0.25, t * 0.045, '#c08a52'); cirkel(g, cx, dakY - t * 0.13, t * 0.04, '#f2dcb4') }
+    else if (ijs) { g.fillStyle = '#e8b06a'; pad4(g, [[cx - t * 0.07, dakY - t * 0.12], [cx + t * 0.07, dakY - t * 0.12], [cx, dakY + t * 0.06]]); g.fill(); cirkel(g, cx, dakY - t * 0.15, t * 0.08, '#ffb3d9') }
     else { g.fillStyle = '#d63a2a'; g.fillRect(cx - t * 0.08, dakY - t * 0.2, t * 0.16, t * 0.16); g.fillStyle = '#ffd84d'; for (var q = 0; q < 4; q++) g.fillRect(cx - t * 0.06 + q * t * 0.035, dakY - t * 0.3, t * 0.02, t * 0.12) }
     g.shadowBlur = 0
   } else if (soort === 'speeltuin') {
@@ -547,6 +704,45 @@ function tekenObject(g, soort, cx, cy, tijd) {
       cirkel(g, cx + Math.cos(ang) * t * 0.3 * fa, cy - t * 0.32 + Math.sin(ang) * t * 0.15 * fa + fa * fa * t * 0.32 - Math.sin(fa * Math.PI) * t * 0.12, t * 0.025, 'rgba(190,240,255,' + (1 - fa * 0.7) + ')')
     }
     gloed(g, '#7df9ff', 12); cirkel(g, cx, cy - t * 0.33, t * 0.05, '#e6fbff'); g.shadowBlur = 0
+  } else if (soort === 'draaimolen') {
+    grondEllips(g, cx, cy + t * 0.03, 0.48, 'rgba(0,0,0,.25)')
+    grondEllips(g, cx, cy, 0.44, '#c9cfe0'); grondEllips(g, cx, cy - t * 0.03, 0.4, '#ff4fd8')
+    var top = cy - t * 0.62
+    for (var h2 = 0; h2 < 3; h2++) {
+      var ha = tijd * 1.4 + h2 * TAU / 3, hx = cx + Math.cos(ha) * t * 0.26, hy = cy - t * 0.05 + Math.sin(ha) * t * 0.13, op = Math.sin(tijd * 4 + h2) * t * 0.04
+      lijn(g, hx, top + t * 0.1, hx, hy - t * 0.12 + op, '#ffd84d', Math.max(1, t * 0.02))
+      ellips(g, hx, hy - t * 0.14 + op, t * 0.09, t * 0.05, ['#ffffff', '#3ef0ff', '#ffd23f'][h2]); cirkel(g, hx + t * 0.07, hy - t * 0.19 + op, t * 0.035, ['#ffffff', '#3ef0ff', '#ffd23f'][h2])
+    }
+    isoBlok(g, cx, cy, 0.05, 0.05, t * 0.62, '#ffd84d', '#e0b830', '#c09a20')
+    for (var s2 = 0; s2 < 8; s2++) {
+      var a1 = s2 / 8 * TAU, a2 = (s2 + 1) / 8 * TAU
+      vorm(g, [[cx, top - t * 0.2], [cx + Math.cos(a1) * t * 0.44, top + Math.sin(a1) * t * 0.22], [cx + Math.cos(a2) * t * 0.44, top + Math.sin(a2) * t * 0.22]], s2 % 2 ? '#ffffff' : '#ff4fd8')
+    }
+    gloed(g, '#ff4fd8', 10); cirkel(g, cx, top - t * 0.22, t * 0.04, '#ffe9ff'); g.shadowBlur = 0
+  } else if (soort === 'restaurant') {
+    grondEllips(g, cx + t * 0.05, cy + t * 0.03, 0.5, 'rgba(0,0,0,.25)')
+    isoBlok(g, cx, cy, 0.42, 0.42, t * 0.42, '#f4e8d4', '#e6d8c0', '#cdbea4')
+    var rt = cy - t * 0.42, rn = scherm2(cx, rt, -0.46, -0.46), ro = scherm2(cx, rt, 0.46, -0.46), rz = scherm2(cx, rt, 0.46, 0.46), rw = scherm2(cx, rt, -0.46, 0.46)
+    var nk1 = scherm2(cx, rt - t * 0.22, -0.46, 0), nk2 = scherm2(cx, rt - t * 0.22, 0.46, 0)
+    pad4(g, [rw, rz, nk2, nk1]); g.fillStyle = '#d63a2a'; g.fill()
+    pad4(g, [rn, ro, nk2, nk1]); g.fillStyle = '#a82a20'; g.fill()
+    pad4(g, [rz, ro, nk2]); g.fillStyle = '#b8302a'; g.fill()
+    gloed(g, '#ffd98a', 10); g.fillStyle = '#ffe08a'
+    ;[-0.24, 0.18].forEach(function (a) { var rp = scherm2(cx, cy - t * 0.22, a, 0.42); g.fillRect(rp[0] - t * 0.05, rp[1] - t * 0.06, t * 0.1, t * 0.09) })
+    var rr = scherm2(cx, cy - t * 0.22, 0.42, 0); g.fillRect(rr[0] - t * 0.05, rr[1] - t * 0.06, t * 0.1, t * 0.09); g.shadowBlur = 0
+    cirkel(g, cx, rt - t * 0.34, t * 0.1, '#ffffff'); cirkel(g, cx, rt - t * 0.34, t * 0.07, '#ffb347'); cirkel(g, cx - t * 0.02, rt - t * 0.36, t * 0.02, '#d63a2a'); cirkel(g, cx + t * 0.03, rt - t * 0.32, t * 0.02, '#d63a2a')
+  } else if (soort === 'reuzenrad') {
+    grondEllips(g, cx, cy + t * 0.03, 0.46, 'rgba(0,0,0,.25)')
+    var wx = cx, wy = cy - t * 0.78, wr = t * 0.6
+    lijn(g, cx - t * 0.3, cy, wx, wy, '#8a90a8', Math.max(2, t * 0.05)); lijn(g, cx + t * 0.3, cy, wx, wy, '#8a90a8', Math.max(2, t * 0.05))
+    g.strokeStyle = '#3ef0ff'; g.lineWidth = Math.max(1.5, t * 0.03); gloed(g, '#3ef0ff', 8); g.beginPath(); g.arc(wx, wy, wr, 0, TAU); g.stroke(); g.shadowBlur = 0
+    for (var k3 = 0; k3 < 8; k3++) {
+      var ka = tijd * 0.4 + k3 / 8 * TAU, kx = wx + Math.cos(ka) * wr, ky = wy + Math.sin(ka) * wr
+      lijn(g, wx, wy, kx, ky, 'rgba(200,240,255,.6)', 1)
+      lijn(g, kx, ky, kx, ky + t * 0.06, '#c9cfe0', 1)
+      g.fillStyle = KLEUREN[k3 % KLEUREN.length]; g.fillRect(kx - t * 0.06, ky + t * 0.06, t * 0.12, t * 0.09)
+    }
+    cirkel(g, wx, wy, t * 0.06, '#ffd84d')
   }
 }
 // punt op een vlak dat op hoogte ligt: (cx, cy) midden, a/b in vakjes
@@ -554,8 +750,8 @@ function scherm2(cx, cy, a, b) { return [cx + (a - b) * TW / 2, cy + (a + b) * T
 function vulRuitPunt(g, cx, cy, r, kleur) { pad4(g, [scherm2(cx, cy, -r, -r), scherm2(cx, cy, r, -r), scherm2(cx, cy, r, r), scherm2(cx, cy, -r, r)]); g.fillStyle = kleur; g.fill() }
 
 // ── hokken ──
-var BODEM_KLEUR = { gras: ['#63bb58', '#5db352'], zand: ['#dcb862', '#d3ae58'], sneeuw: ['#eef6ff', '#e2eefb'], bos: ['#2f7c3f', '#2a733a'] }
-var HEK_GLOED = { gras: '#ffd27a', zand: '#ffd27a', sneeuw: '#bff6ff', bos: '#9cff7a' }
+var BODEM_KLEUR = { gras: ['#63bb58', '#5db352'], zand: ['#dcb862', '#d3ae58'], sneeuw: ['#eef6ff', '#e2eefb'], bos: ['#2f7c3f', '#2a733a'], vulkaan: ['#5a3a34', '#523530'] }
+var HEK_GLOED = { gras: '#ffd27a', zand: '#ffd27a', sneeuw: '#bff6ff', bos: '#9cff7a', vulkaan: '#ff9a5a' }
 function hekStuk(g, a, b, bodem, glans) {
   var hp = 0.34 * TW, lat = '#c8945e', paal = '#a8774a'
   lijn(g, a[0], a[1] - hp * 0.75, b[0], b[1] - hp * 0.75, lat, Math.max(1.5, TW * 0.035))
@@ -581,13 +777,14 @@ function tekenHokGrond(g, v) {
     else if (v.bodem === 'zand') { cirkel(g, p[0], p[1], TW * 0.018, '#b89640'); cirkel(g, p[0] + TW * 0.08, p[1] + TW * 0.03, TW * 0.012, '#c9a650') }
     else if (v.bodem === 'sneeuw') { cirkel(g, p[0], p[1], TW * 0.03, '#ffffff'); cirkel(g, p[0] + TW * 0.07, p[1] + TW * 0.02, TW * 0.02, '#d8eaff') }
     else if (v.bodem === 'bos') { ellips(g, p[0], p[1], TW * 0.07, TW * 0.03, '#1f6a32'); cirkel(g, p[0] + TW * 0.09, p[1] + TW * 0.03, TW * 0.018, '#7a5232') }
+    else if (v.bodem === 'vulkaan') { lijn(g, p[0] - TW * 0.06, p[1], p[0] + TW * 0.02, p[1] + TW * 0.02, '#ff7a3a', Math.max(1, TW * 0.018)); lijn(g, p[0] + TW * 0.02, p[1] + TW * 0.02, p[0] + TW * 0.08, p[1] - TW * 0.01, '#ffb35a', Math.max(1, TW * 0.012)); cirkel(g, p[0] + TW * 0.1, p[1] + TW * 0.04, TW * 0.02, '#2e1e1a') }
   }
   v.items.forEach(function (it) { if (it.soort === 'water') tekenWater(g, v, it) })
 }
 // een badje: water met een rand; aangrenzende badjes lopen in elkaar over
 function tekenWater(g, v, it) {
   var x = it.x, y = it.y, isW = function (a, b) { var o = DT.itemOp(v, a, b); return o && o.soort === 'water' }
-  var rand = v.bodem === 'sneeuw' ? '#cfe6fb' : v.bodem === 'zand' ? '#b89a5a' : '#8a7a5a'
+  var rand = v.bodem === 'sneeuw' ? '#cfe6fb' : v.bodem === 'zand' ? '#b89a5a' : v.bodem === 'vulkaan' ? '#3a2a26' : '#8a7a5a'
   vulRuit(g, x, y, rand)
   var inN = isW(x, y - 1) ? 0 : 0.12, inW = isW(x - 1, y) ? 0 : 0.12, inO = isW(x + 1, y) ? 0 : 0.12, inZ = isW(x, y + 1) ? 0 : 0.12
   pad4(g, [scherm(x + inW, y + inN), scherm(x + 1 - inO, y + inN), scherm(x + 1 - inO, y + 1 - inZ), scherm(x + inW, y + 1 - inZ)])
@@ -648,6 +845,16 @@ function tekenItem(g, soort, cx, cy, tijd) {
       for (var k2 = 1; k2 < 4; k2++) lijn(g, bp[0] - t * 0.02, bp[1] - bh * k2 / 4, bp[0] + t * 0.02, bp[1] - bh * k2 / 4, '#5f9a2a', 1)
       ellips(g, bp[0] + t * 0.06, bp[1] - bh, t * 0.09, t * 0.025, '#6fbf3a')
     }
+  } else if (soort === 'varens') {
+    grondEllips(g, cx, cy + t * 0.02, 0.3, 'rgba(0,0,0,.18)')
+    for (var v2 = 0; v2 < 6; v2++) {
+      var va = -1.1 + v2 * 0.44, vl = t * (0.32 + (v2 % 2) * 0.1), ex = cx + Math.sin(va) * vl, ey = cy - Math.cos(va) * vl * 0.9
+      g.strokeStyle = '#2f8a3a'; g.lineWidth = Math.max(1.5, t * 0.03); g.beginPath(); g.moveTo(cx, cy); g.quadraticCurveTo(cx + Math.sin(va) * vl * 0.4, cy - vl * 0.9, ex, ey); g.stroke()
+      for (var b2 = 1; b2 < 5; b2++) { var f2 = b2 / 5, lx = cx + (ex - cx) * f2, ly = cy + (ey - cy) * f2 - Math.sin(f2 * Math.PI) * vl * 0.25; ellips(g, lx, ly, t * 0.05 * (1 - f2 * 0.5), t * 0.018, '#4fb84a') }
+    }
+  } else if (soort === 'modder') {
+    grondEllips(g, cx, cy, 0.46, '#4a3420'); grondEllips(g, cx, cy - t * 0.01, 0.38, '#6b4a2a'); grondEllips(g, cx - t * 0.06, cy - t * 0.03, 0.16, 'rgba(160,120,80,.45)')
+    for (var m2 = 0; m2 < 3; m2++) { var mf = (tijd * 0.6 + m2 / 3) % 1, mp = scherm2(cx, cy, -0.2 + m2 * 0.2, (m2 % 2) * 0.15 - 0.05); g.globalAlpha = 1 - mf; cirkel(g, mp[0], mp[1] - mf * t * 0.06, t * (0.02 + mf * 0.03), '#8a6a44'); g.globalAlpha = 1 }
   }
 }
 
@@ -692,6 +899,17 @@ function tekenAchtergrond(g, mid, straal) {
       pad4(g, [scherm(gb.x0 - m, gb.y0 - m), scherm(gb.x1 + 1 + m, gb.y0 - m), scherm(gb.x1 + 1 + m, gb.y1 + 1 + m), scherm(gb.x0 - m, gb.y1 + 1 + m)].map(function (p) { return [p[0], p[1] + DIEPTE] }))
       g.fillStyle = l[1]; g.fill()
     })
+  }
+  if (THEMA.vulkaan) {
+    var vx = W * 0.82, vb = H * 0.78, vt = H * 0.3, vw = W * 0.2
+    var lg = g.createRadialGradient(vx, vt, 0, vx, vt, W * 0.22)
+    lg.addColorStop(0, 'rgba(255,140,60,.55)'); lg.addColorStop(1, 'rgba(255,90,40,0)'); g.fillStyle = lg; g.fillRect(0, 0, W, H)
+    g.fillStyle = '#2a1418'; g.beginPath(); g.moveTo(vx - vw, vb); g.lineTo(vx - vw * 0.18, vt); g.lineTo(vx + vw * 0.18, vt); g.lineTo(vx + vw, vb); g.closePath(); g.fill()
+    g.strokeStyle = '#ff6a2a'; g.lineWidth = Math.max(2, W * 0.004); g.lineCap = 'round'
+    ;[[-0.1, 0.35], [0.06, 0.5], [0.14, 0.28]].forEach(function (l) { g.beginPath(); g.moveTo(vx + vw * l[0], vt); g.quadraticCurveTo(vx + vw * (l[0] * 2 + 0.05), vt + (vb - vt) * l[1] * 0.6, vx + vw * l[0] * 3, vt + (vb - vt) * l[1]); g.stroke() })
+    gloed(g, '#ff7a3a', 20); ellips(g, vx, vt, vw * 0.18, H * 0.012, '#ffb35a'); g.shadowBlur = 0
+    for (var r2 = 0; r2 < 6; r2++) { var ry = vt - H * (0.04 + r2 * 0.035) - ((tijd * 8) % (H * 0.035)), rx = vx + Math.sin(r2 * 1.7 + tijd * 0.3) * W * 0.02 + r2 * W * 0.008; cirkel(g, rx, ry, W * (0.018 + r2 * 0.006), 'rgba(90,70,80,' + (0.35 - r2 * 0.05) + ')') }
+    g.fillStyle = 'rgba(40,16,24,.55)'; g.beginPath(); g.moveTo(0, H * 0.8); g.quadraticCurveTo(W * 0.2, H * 0.66, W * 0.45, H * 0.76); g.lineTo(W * 0.45, H); g.lineTo(0, H); g.fill()
   }
   if (THEMA.aarde) {
     var ax = W * 0.84, ay = H * 0.2, ar = Math.min(W, H) * 0.08
@@ -755,6 +973,9 @@ function bouwLaag() {
     } else if (THEMA.detail === 'ijs') {
       if (kans < 0.5) { cirkel(g, q[0], q[1], TW * 0.025, '#ffffff'); cirkel(g, q[0] + TW * 0.07, q[1] + TW * 0.02, TW * 0.015, '#cfe4fa') }
       if (extra < 0.05) { lijn(g, fl[0] - TW * 0.04, fl[1], fl[0] + TW * 0.04, fl[1], '#ffffff', 1); lijn(g, fl[0], fl[1] - TW * 0.04, fl[0], fl[1] + TW * 0.04, '#ffffff', 1) }
+    } else if (THEMA.detail === 'oer') {
+      if (kans < 0.35) { lijn(g, q[0], q[1], q[0] - TW * 0.05, q[1] - TW * 0.05, '#2a7a2a', lw); lijn(g, q[0], q[1], q[0], q[1] - TW * 0.07, '#2f8a30', lw); lijn(g, q[0], q[1], q[0] + TW * 0.05, q[1] - TW * 0.05, '#2a7a2a', lw) }
+      if (extra < 0.05) { ellips(g, fl[0], fl[1], TW * 0.06, TW * 0.03, '#5a4a44'); ellips(g, fl[0] - TW * 0.01, fl[1] - TW * 0.01, TW * 0.04, TW * 0.018, '#6e5e56') }
     } else if (THEMA.detail === 'maan') {
       if (kans < 0.25) { ellips(g, q[0], q[1], TW * 0.09, TW * 0.04, '#6e6e78'); ellips(g, q[0], q[1] - TW * 0.006, TW * 0.07, TW * 0.028, '#7c7c86') }
       if (extra < 0.15) cirkel(g, fl[0], fl[1], TW * 0.015, '#a6a6b0')
@@ -787,7 +1008,8 @@ function bouwLaag() {
 }
 
 // ── dieren die rondlopen ──
-var lopers = {}   // verblijf-id → [{ soort, x, y, nx, ny, wacht, rechts, f }]
+var lopers = {}   // verblijf-id → [{ soort, x, y, nx, ny, wacht, rechts, f, baby }]
+var babyHok = null   // hier is net een jong geboren (dat begint klein)
 function syncDieren() {
   var gezien = {}
   S.verblijven.forEach(function (v) {
@@ -796,7 +1018,7 @@ function syncDieren() {
     while (l.length > v.dieren.length) l.pop()
     while (l.length < v.dieren.length) {
       var x = v.x + 0.5 + Math.random() * (v.w - 1), y = v.y + 0.7 + Math.random() * (v.h - 1.2)
-      l.push({ x: x, y: y, nx: x, ny: y, wacht: Math.random() * 2, rechts: Math.random() < 0.5, f: Math.random() * 9 })
+      l.push({ x: x, y: y, nx: x, ny: y, wacht: Math.random() * 2, rechts: Math.random() < 0.5, f: Math.random() * 9, baby: v.id === babyHok ? 1 : 0 })
     }
     l.forEach(function (d, i) { d.soort = v.dieren[i] })
   })
@@ -805,13 +1027,14 @@ function syncDieren() {
 function beweegDieren(dt) {
   S.verblijven.forEach(function (v) {
     ;(lopers[v.id] || []).forEach(function (d) {
+      if (d.baby) d.baby = Math.max(0, d.baby - dt / 90)
       var dx = d.nx - d.x, dy = d.ny - d.y, af = Math.hypot(dx, dy)
       if (af < 0.03) {
         d.wacht -= dt
         if (d.wacht <= 0) { d.nx = v.x + 0.45 + Math.random() * (v.w - 0.9); d.ny = v.y + 0.75 + Math.random() * (v.h - 1.1); d.wacht = 1 + Math.random() * 3 }
         return
       }
-      var sn = Math.min(af, dt * (d.soort === 'kangoeroe' || d.soort === 'konijn' ? 0.9 : 0.5))
+      var sn = Math.min(af, dt * (d.soort === 'kangoeroe' || d.soort === 'konijn' || d.soort === 'velociraptor' ? 0.9 : 0.5))
       d.x += dx / af * sn; d.y += dy / af * sn; d.f += dt * 6
       if (Math.abs(dx) > 0.02) d.rechts = dx > 0
     })
@@ -906,7 +1129,8 @@ function itemIcoon(canvas, soort, type) {
   canvas.width = w * r; canvas.height = h * r
   var g = canvas.getContext('2d'); g.setTransform(r, 0, 0, r, 0, 0)
   var oud = [TW, TH, T, OX, OY]
-  if (type === 'dier') tekenDier(g, soort, w / 2, h * 0.92, h * (0.5 + GROOTTE[soort] * 0.35), true, 1)
+  // de brachiosaurus is zo lang dat zijn kop anders buiten het knopje valt
+  if (type === 'dier') tekenDier(g, soort, w / 2, h * 0.92, soort === 'brachiosaurus' ? h * 0.48 : h * (0.5 + GROOTTE[soort] * 0.35), true, 1)
   else if (type === 'object') { TW = 34; TH = 17; T = TW * 0.62; tekenObject(g, soort, w / 2, h * 0.74, 1) }
   else if (type === 'item') {
     TW = 34; TH = 17; T = TW * 0.62
@@ -939,8 +1163,8 @@ function bouwItems() {
   if (tab === 'item') lijst = Object.keys(DT.INRICHTING).map(function (k) { return { type: 'item', soort: k, def: DT.INRICHTING[k] } })
   // alleen de dieren die in deze wereld wonen, in de volgorde waarin ze vrijkomen
   if (tab === 'dier') lijst = DT.dierenVan(S).map(function (k) { var d = DT.DIEREN[k]; return { type: 'dier', soort: k, def: { naam: d.naam, prijs: d.prijs, niveau: DT.dierNiveau(S, k) } } })
-  if (tab === 'decor') lijst = ['boom', 'bloemen', 'bank', 'lantaarn', 'speeltuin', 'fontein'].map(function (k) { return { type: 'object', soort: k, def: DT.OBJECTEN[k] } })
-  if (tab === 'kraam') lijst = ['ijskraam', 'snackbar'].map(function (k) { return { type: 'object', soort: k, def: DT.OBJECTEN[k] } })
+  if (tab === 'decor') lijst = ['boom', 'bloemen', 'bank', 'lantaarn', 'speeltuin', 'fontein', 'draaimolen', 'reuzenrad'].map(function (k) { return { type: 'object', soort: k, def: DT.OBJECTEN[k] } })
+  if (tab === 'kraam') lijst = ['ijskraam', 'snackbar', 'souvenir', 'restaurant'].map(function (k) { return { type: 'object', soort: k, def: DT.OBJECTEN[k] } })
   lijst.forEach(function (it) {
     var b = document.createElement('button'); b.className = 'item'
     b.innerHTML = '<canvas></canvas><span class="naam">' + it.def.naam + '</span><span class="prijs"><span class="munt"></span>' + (it.prijsTekst || DT.kort(it.def.prijs)) + '</span>'
@@ -1035,7 +1259,9 @@ function meervoud(k) { return { konijn: 'konijnen', geit: 'geiten', flamingo: "f
   kangoeroe: 'kangoeroes', giraf: 'giraffen', krokodil: 'krokodillen', leeuw: 'leeuwen', ijsbeer: 'ijsberen', olifant: 'olifanten', panda: "panda's",
   eend: 'eenden', schaap: 'schapen', varken: 'varkens', hert: 'herten', rendier: 'rendieren', vos: 'vossen', fennek: 'fenneks', poolvos: 'poolvossen',
   stokstaartje: 'stokstaartjes', struisvogel: 'struisvogels', kameel: 'kamelen', schildpad: 'schildpadden', nijlpaard: 'nijlpaarden', walrus: 'walrussen',
-  mammoet: 'mammoeten', papegaai: 'papegaaien', tijger: 'tijgers' }[k] }
+  mammoet: 'mammoeten', papegaai: 'papegaaien', tijger: 'tijgers', dodo: "dodo's", oervogel: 'oervogels', pteranodon: 'pteranodons',
+  parasaurolophus: 'parasaurolophussen', velociraptor: 'velociraptors', stegosaurus: 'stegosaurussen', ankylosaurus: 'ankylosaurussen',
+  triceratops: 'triceratopsen', sabeltand: 'sabeltandtijgers', spinosaurus: 'spinosaurussen', brachiosaurus: 'brachiosaurussen', trex: 'T. rexen', megalodon: 'megalodons' }[k] }
 
 var GROEI = [
   { id: 'x-', pijl: '↖', naam: 'Een vakje erbij naar linksboven' },
@@ -1263,6 +1489,7 @@ function wereldPlaatje(canvas, id) {
   g.fillStyle = 'rgba(255,255,255,.12)'; g.beginPath(); g.moveTo(cx - a * 0.5, cy - b * 0.1); g.lineTo(cx, cy - b * 0.35); g.lineTo(cx + a * 0.15, cy - b * 0.28); g.lineTo(cx - a * 0.35, cy); g.fill()
   if (th.aarde) { g.fillStyle = '#3a8fe8'; g.beginPath(); g.arc(w * 0.85, h * 0.2, 8, 0, TAU); g.fill() }
   if (th.zon) { g.fillStyle = '#ffd27a'; g.beginPath(); g.arc(w * 0.85, h * 0.2, 9, 0, TAU); g.fill() }
+  if (th.vulkaan) { g.fillStyle = '#2a1418'; g.beginPath(); g.moveTo(w * 0.7, h * 0.48); g.lineTo(w * 0.82, h * 0.1); g.lineTo(w * 0.9, h * 0.1); g.lineTo(w * 1.02, h * 0.48); g.fill(); g.fillStyle = '#ff8a3a'; g.beginPath(); g.ellipse(w * 0.86, h * 0.1, 5, 2, 0, 0, TAU); g.fill() }
   if (th.noorderlicht) { g.strokeStyle = 'rgba(80,255,190,.4)'; g.lineWidth = 6; g.beginPath(); g.moveTo(0, h * 0.15); g.quadraticCurveTo(w / 2, h * 0.02, w, h * 0.18); g.stroke() }
 }
 function toonWerelden() {
@@ -1271,7 +1498,7 @@ function toonWerelden() {
   DT.WERELDEN.concat([DT.CREATIEF]).forEach(function (w, i) {
     var open = wereldOpen(w.id), b = document.createElement('button')
     b.className = 'wereldkaart' + (w.id === WID ? ' huidig' : '') + (open ? '' : ' dicht') + (w.creatief ? ' creatief' : '')
-    var status = w.creatief ? 'Oneindig geld' : !open ? 'Haal level ' + w.open + ' in ' + DT.WERELDEN[i - 1].naam : ruw.werelden[w.id] ? 'Level ' + Math.min(levelVan(w.id), DT.LEVELS.length) : 'Nieuw'
+    var status = w.creatief ? 'Oneindig geld' : !open ? 'Haal level ' + w.open + ' in ' + vorigeWereld(i).naam : ruw.werelden[w.id] ? 'Level ' + Math.min(levelVan(w.id), DT.LEVELS.length) : 'Nieuw'
     var gestart = !!ruw.werelden[w.id] || w.id === WID
     b.innerHTML = '<canvas></canvas><span class="naam">' + w.naam + '</span><span class="zin">' + w.zin + '</span><span class="status">' + status + '</span>' +
       (open && gestart ? '<span class="opnieuw" role="button" tabindex="0">Opnieuw beginnen</span>' : '')
@@ -1283,7 +1510,7 @@ function toonWerelden() {
       opnieuwBeginnen(w.id)
     }
     b.onclick = function () {
-      if (!open) { melding('Deze wereld gaat open als je level ' + w.open + ' haalt in ' + DT.WERELDEN[i - 1].naam + '.', true); Geluid.fout(); return }
+      if (!open) { melding('Deze wereld gaat open als je level ' + w.open + ' haalt in ' + vorigeWereld(i).naam + '.', true); Geluid.fout(); return }
       if (w.id === WID) { $('wereldscherm').classList.remove('aan'); return }
       gaNaarWereld(w.id)
     }
@@ -1344,6 +1571,17 @@ function werkHudBij(dt) {
 }
 $('niveauverder').onclick = function () { $('niveauscherm').classList.remove('aan') }
 
+// ── baby's ──
+var babyOm = 40
+function geboren() {
+  var r = DT.geboorte(S)
+  if (!r) return
+  babyHok = r.hok.id; wijziging(); babyHok = null
+  Geluid.dier(); toon(1320, 0.18, 'sine', 0.05, 0.25, 1760)
+  var p = scherm(r.hok.x + r.hok.w / 2, r.hok.y + r.hok.h / 2); spat(p[0], p[1], '#ff9fd0', 24); tekst(p[0], p[1] - 14, '+1 baby!', '#ffb3e6')
+  melding('Hoera! Er is een baby geboren bij de <b>' + meervoud(r.soort) + '</b>!')
+}
+
 // ── hoofdlus ──
 var tijd = 0, statsOm = 0
 function frame(nu) {
@@ -1356,6 +1594,8 @@ function frame(nu) {
     nieuweBezoeker()
     if (Math.random() < 0.35) { var ip = scherm(DT.INGANG.x + 0.5, DT.INGANG.y); tekst(ip[0], ip[1] - 6, '+' + Math.round(ST.entree + ST.kraam)); Geluid.kassa() }
   }
+  babyOm -= dt
+  if (babyOm <= 0) { babyOm = 30 + Math.random() * 30; geboren() }
   beweegDieren(dt); beweegBezoekers(dt)
   if (vuil) { bouwLaag(); vuil = false }
 
@@ -1380,7 +1620,7 @@ function frame(nu) {
       lijst.push({ d: it.x + it.y + 1, teken: function () { var p = scherm(it.x + 0.5, it.y + 0.5); tekenItem(g, it.soort, p[0], p[1], tijd) } })
     })
     ;(lopers[v.id] || []).forEach(function (dd) {
-      lijst.push({ d: dd.x + dd.y, teken: function () { var p = scherm(dd.x, dd.y); tekenDier(g, dd.soort, p[0], p[1], T * GROOTTE[dd.soort], dd.rechts, dd.f) } })
+      lijst.push({ d: dd.x + dd.y, teken: function () { var p = scherm(dd.x, dd.y); tekenDier(g, dd.soort, p[0], p[1], T * GROOTTE[dd.soort] * (1 - 0.45 * (dd.baby || 0)), dd.rechts, dd.f) } })
     })
     hekRanden(v).voor.forEach(function (e) {
       lijst.push({ d: (e[0] + e[2]) / 2 + (e[1] + e[3]) / 2 + 0.02, teken: function () { hekStuk(g, scherm(e[0], e[1]), scherm(e[2], e[3]), v.bodem, true) } })

@@ -14,8 +14,10 @@
 var DT = (function () {
   'use strict'
 
-  var BREED = 36, HOOG = 26
-  var INGANG = { x: 17, y: 25 }
+  var BREED = 44, HOOG = 32
+  var INGANG = { x: 21, y: 31 }
+  // de kaart was eerst 36 × 26; oude opslag (zonder v) schuift zoveel op
+  var VERSIE = 2, OUD_DX = 4, OUD_DY = 6
   // stukken grond: steeds groter, onderaan in het midden verankerd
   var GROND = [
     { w: 12, h: 9, prijs: 0 },
@@ -25,16 +27,19 @@ var DT = (function () {
     { w: 28, h: 19, prijs: 60000 },
     { w: 32, h: 22, prijs: 150000 },
     { w: 36, h: 26, prijs: 350000 },
+    { w: 40, h: 29, prijs: 800000 },
+    { w: 44, h: 32, prijs: 1600000 },
   ]
 
   var HEK_PRIJS = 4          // per stukje hek (de omtrek)
-  var MIN_HOK = 2, MAX_HOK = 10
+  var MIN_HOK = 2, MAX_HOK = 12
 
   var BODEMS = {
     gras:   { naam: 'Gras',      prijs: 0, niveau: 1 },
     zand:   { naam: 'Zand',      prijs: 2, niveau: 2 },
     sneeuw: { naam: 'Sneeuw',    prijs: 4, niveau: 3 },
     bos:    { naam: 'Bosgrond',  prijs: 3, niveau: 4 },
+    vulkaan: { naam: 'Vulkaangrond', prijs: 5, niveau: 6 },
   }
 
   // inrichting in een hok, elk één vakje
@@ -47,6 +52,8 @@ var DT = (function () {
     afdak:   { naam: 'Afdak',          prijs: 35, niveau: 3, zin: 'Overdekking tegen zon en regen' },
     klimrek: { naam: 'Klimrek',        prijs: 45, niveau: 4, zin: 'Touwen en planken' },
     bamboe:  { naam: 'Bamboe',         prijs: 25, niveau: 10, zin: 'Lekker eten voor panda\'s' },
+    varens:  { naam: 'Varens',         prijs: 18, niveau: 1, zin: 'Oerplanten om aan te knabbelen' },
+    modder:  { naam: 'Modderpoel',     prijs: 30, niveau: 5, zin: 'Heerlijk rollen in de modder' },
   }
 
   // wensen: { bodem: [...] } of { item: [...], aantal } of { vriend } of { alleen }
@@ -82,6 +89,20 @@ var DT = (function () {
     mammoet:     { naam: 'Mammoet',     prijs: 50000, trek: 60,  ruimte: 9, wil: [{ bodem: ['sneeuw'] }, { item: ['voerbak'] }, { item: ['binnen'] }, { vriend: 1 }] },
     papegaai:    { naam: 'Papegaai',    prijs: 50,    trek: 2,   ruimte: 1, wil: [{ bodem: ['bos'] }, { item: ['boom'], aantal: 2 }, { vriend: 1 }] },
     tijger:      { naam: 'Tijger',      prijs: 9000,  trek: 25,  ruimte: 6, wil: [{ bodem: ['bos'] }, { item: ['water'] }, { item: ['rots'] }, { alleen: 1 }] },
+    // het Oertijdpark
+    dodo:            { naam: 'Dodo',            prijs: 30,    trek: 1.3, ruimte: 2,  wil: [{ bodem: ['gras', 'bos'] }, { item: ['voerbak'] }, { vriend: 1 }] },
+    oervogel:        { naam: 'Oervogel',        prijs: 45,    trek: 2.2, ruimte: 1,  wil: [{ bodem: ['bos', 'vulkaan'] }, { item: ['boom'], aantal: 2 }, { vriend: 1 }] },
+    pteranodon:      { naam: 'Pteranodon',      prijs: 80,    trek: 3,   ruimte: 2,  wil: [{ bodem: ['vulkaan', 'zand'] }, { item: ['rots'], aantal: 2 }, { vriend: 1 }] },
+    parasaurolophus: { naam: 'Parasaurolophus', prijs: 140,   trek: 4.8, ruimte: 3,  wil: [{ bodem: ['bos', 'gras'] }, { item: ['varens'] }, { item: ['water'] }, { vriend: 1 }] },
+    velociraptor:    { naam: 'Velociraptor',    prijs: 220,   trek: 6.5, ruimte: 3,  wil: [{ bodem: ['vulkaan', 'zand'] }, { item: ['rots'] }, { item: ['binnen'] }, { vriend: 1 }] },
+    stegosaurus:     { naam: 'Stegosaurus',     prijs: 400,   trek: 8,   ruimte: 5,  wil: [{ bodem: ['bos', 'gras'] }, { item: ['varens'], aantal: 2 }, { vriend: 1 }] },
+    ankylosaurus:    { naam: 'Ankylosaurus',    prijs: 800,   trek: 9.5, ruimte: 5,  wil: [{ bodem: ['vulkaan', 'zand'] }, { item: ['varens'] }, { item: ['rots'] }, { vriend: 1 }] },
+    triceratops:     { naam: 'Triceratops',     prijs: 1600,  trek: 11.5, ruimte: 6, wil: [{ bodem: ['gras', 'bos'] }, { item: ['varens'], aantal: 2 }, { item: ['modder'] }, { vriend: 1 }] },
+    sabeltand:       { naam: 'Sabeltandtijger', prijs: 3000,  trek: 15,  ruimte: 5,  wil: [{ bodem: ['vulkaan', 'sneeuw'] }, { item: ['rots'] }, { item: ['binnen'] }, { vriend: 1 }] },
+    spinosaurus:     { naam: 'Spinosaurus',     prijs: 6000,  trek: 21,  ruimte: 7,  wil: [{ bodem: ['vulkaan', 'zand'] }, { item: ['water'], aantal: 3 }, { alleen: 1 }] },
+    brachiosaurus:   { naam: 'Brachiosaurus',   prijs: 12000, trek: 28,  ruimte: 10, wil: [{ bodem: ['bos', 'gras'] }, { item: ['boom'], aantal: 3 }, { item: ['varens'] }, { vriend: 1 }] },
+    trex:            { naam: 'T. rex',          prijs: 20000, trek: 36,  ruimte: 8,  wil: [{ bodem: ['vulkaan'] }, { item: ['rots'], aantal: 2 }, { item: ['modder'] }, { alleen: 1 }] },
+    megalodon:       { naam: 'Megalodon',       prijs: 60000, trek: 70,  ruimte: 8,  wil: [{ bodem: ['zand'] }, { item: ['water'], aantal: 4 }, { alleen: 1 }] },
   }
   // in welke volgorde de dieren per wereld vrijkomen (plek in de lijst → level)
   var ORDE_LEVEL = [1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
@@ -90,6 +111,7 @@ var DT = (function () {
     woestijn: ['stokstaartje', 'geit', 'fennek', 'flamingo', 'struisvogel', 'kameel', 'zebra', 'kangoeroe', 'schildpad', 'giraf', 'krokodil', 'leeuw', 'nijlpaard', 'olifant'],
     ijs:      ['konijn', 'eend', 'pinguin', 'poolvos', 'schaap', 'geit', 'rendier', 'zeehond', 'hert', 'vos', 'walrus', 'ijsbeer', 'panda', 'mammoet'],
     tropisch: ['papegaai', 'eend', 'schildpad', 'flamingo', 'aap', 'kangoeroe', 'zebra', 'krokodil', 'giraf', 'tijger', 'nijlpaard', 'leeuw', 'panda', 'olifant'],
+    oertijd:  ['dodo', 'oervogel', 'pteranodon', 'parasaurolophus', 'velociraptor', 'stegosaurus', 'ankylosaurus', 'triceratops', 'sabeltand', 'spinosaurus', 'brachiosaurus', 'trex', 'mammoet', 'megalodon'],
   }
 
   // losse dingen buiten de hokken, elk één vakje
@@ -102,6 +124,10 @@ var DT = (function () {
     snackbar:  { naam: 'Snackbar',   prijs: 300, niveau: 4, kraam: 5,  zin: 'Patat en limonade' },
     speeltuin: { naam: 'Speeltuin',  prijs: 500, niveau: 6, trek: 4,   zin: 'Klimrek en glijbaan' },
     fontein:   { naam: 'Fontein',    prijs: 900, niveau: 8, trek: 6,   zin: 'Een fontein met lichtjes' },
+    souvenir:  { naam: 'Souvenirwinkel', prijs: 1200,  niveau: 11, kraam: 8,  zin: 'Knuffels en petjes' },
+    draaimolen:{ naam: 'Draaimolen',     prijs: 3000,  niveau: 14, trek: 10,  zin: 'Rondjes op een dierenpaard' },
+    restaurant:{ naam: 'Restaurant',     prijs: 8000,  niveau: 17, kraam: 14, zin: 'Pannenkoeken en pizza' },
+    reuzenrad: { naam: 'Reuzenrad',      prijs: 15000, niveau: 19, trek: 18,  zin: 'Je dierentuin van bovenaf' },
   }
 
   // doel: { type, n }. Types: pad, hok, dieren, soorten, blij (hokken met 5
@@ -122,7 +148,13 @@ var DT = (function () {
     { naam: 'Vijf sterren',         beloning: 20000, doelen: [{ type: 'soorten', n: 12 }, { type: 'sterren', n: 5 }, { type: 'bezoekers', n: 7000 }] },
     { naam: 'Alle dieren',          beloning: 30000, doelen: [{ type: 'soorten', n: 14 }, { type: 'bezoekers', n: 9500 }, { type: 'grond', n: 5 }] },
     { naam: 'Topdierentuin',        beloning: 50000, doelen: [{ type: 'hok', n: 16 }, { type: 'blij', n: 14 }, { type: 'dieren', n: 40 }, { type: 'bezoekers', n: 14000 }] },
-    { naam: 'Dierentuin van de eeuw', beloning: 0,   doelen: [{ type: 'hok', n: 22 }, { type: 'grond', n: 7 }, { type: 'versiering', n: 60 }, { type: 'bezoekers', n: 25000 }] },
+    { naam: 'Dierentuin van de eeuw', beloning: 75000, doelen: [{ type: 'hok', n: 22 }, { type: 'grond', n: 7 }, { type: 'versiering', n: 60 }, { type: 'bezoekers', n: 25000 }] },
+    { naam: 'De draaimolen draait', beloning: 100000, doelen: [{ type: 'blij', n: 18 }, { type: 'kraam', n: 6 }, { type: 'baby', n: 3 }, { type: 'bezoekers', n: 35000 }] },
+    { naam: 'Nog meer grond',       beloning: 140000, doelen: [{ type: 'grond', n: 8 }, { type: 'hok', n: 26 }, { type: 'bezoekers', n: 50000 }] },
+    { naam: 'Babyboom',             beloning: 180000, doelen: [{ type: 'baby', n: 10 }, { type: 'dieren', n: 70 }, { type: 'bezoekers', n: 70000 }] },
+    { naam: 'Pretparkbaas',         beloning: 240000, doelen: [{ type: 'versiering', n: 90 }, { type: 'kraam', n: 10 }, { type: 'sterren', n: 5 }, { type: 'bezoekers', n: 95000 }] },
+    { naam: 'De allergrootste',     beloning: 320000, doelen: [{ type: 'grond', n: 9 }, { type: 'hok', n: 32 }, { type: 'blij', n: 26 }, { type: 'bezoekers', n: 130000 }] },
+    { naam: 'Legendarische dierentuin', beloning: 0, doelen: [{ type: 'hok', n: 36 }, { type: 'dieren', n: 110 }, { type: 'baby', n: 25 }, { type: 'bezoekers', n: 180000 }] },
   ]
   var DOEL_TEKST = {
     pad: function (n) { return 'Leg ' + n + ' stukjes pad' },
@@ -136,17 +168,19 @@ var DT = (function () {
     kraam: function (n) { return 'Open ' + n + (n === 1 ? ' kraampje' : ' kraampjes') },
     grond: function (n) { return 'Koop grond erbij (' + n + ' stukken)' },
     inrichting: function (n) { return 'Zet ' + n + ' dingen in je hokken' },
+    baby: function (n) { return 'Laat ' + n + (n === 1 ? ' baby' : " baby's") + ' geboren worden' },
   }
 
   // werelden: elk een eigen dierentuin. bodem = de bodem van een nieuw hok, en
   // die is in deze wereld gratis. drukte = hoeveel bezoekers er (extra) komen.
-  // open = welk level je in de vorige wereld moet halen.
+  // open = welk level je in de vorige wereld moet halen (of in wereld `na`).
   var WERELDEN = [
     { id: 'vallei',   naam: 'Groene Vallei',    zin: 'Groene heuvels: hier begint het.',             bodem: 'gras',   drukte: 1,    open: 0 },
     { id: 'woestijn', naam: 'Zonnige Woestijn', zin: 'Warm en droog. Zand is hier gratis.',          bodem: 'zand',   drukte: 1.15, open: 4 },
     { id: 'ijs',      naam: 'IJswereld',        zin: 'Noorderlicht en sneeuw. Sneeuw is gratis.',    bodem: 'sneeuw', drukte: 1.3,  open: 4 },
     { id: 'tropisch', naam: 'Tropisch Eiland',  zin: 'Een eiland in de zee. Bosgrond is gratis.',    bodem: 'bos',    drukte: 1.45, open: 4 },
     { id: 'maan',     naam: 'Maanbasis',        zin: 'Een dierentuin op de maan! Heel veel bezoekers.', bodem: 'gras', drukte: 1.7, open: 4 },
+    { id: 'oertijd',  naam: 'Oertijdpark',      zin: 'Dino\'s bij een vulkaan! Vulkaangrond is hier gratis.', bodem: 'vulkaan', drukte: 1.6, open: 6, na: 'vallei' },
   ]
   var CREATIEF = { id: 'creatief', naam: 'Creatief', zin: 'Oneindig geld en alles is vrij. Bouw wat je wilt!', bodem: 'gras', drukte: 1, creatief: true }
   function wereld(id) { return id === 'creatief' ? CREATIEF : WERELDEN.filter(function (w) { return w.id === id })[0] || WERELDEN[0] }
@@ -161,8 +195,14 @@ var DT = (function () {
   function dierNiveau(s, soort) {
     var l = dierenVan(s), i = l.indexOf(soort)
     if (i < 0) return Infinity
-    if (DIEREN_PER_WERELD[s.wereld]) return ORDE_LEVEL[i]
-    return 1 + Math.floor(i * 13 / l.length)
+    var n = DIEREN_PER_WERELD[s.wereld] ? ORDE_LEVEL[i] : 1 + Math.floor(i * 13 / l.length)
+    // niet eerder dan de bodem en de spullen die het dier wil (de eigen bodem van de wereld is er altijd)
+    var wb = wereld(s.wereld).bodem
+    DIEREN[soort].wil.forEach(function (w) {
+      if (w.bodem) n = Math.max(n, Math.min.apply(null, w.bodem.map(function (b) { return b === wb ? 1 : BODEMS[b].niveau })))
+      if (w.item) n = Math.max(n, Math.min.apply(null, w.item.map(function (k) { return INRICHTING[k].niveau })))
+    })
+    return n
   }
 
   var PAD_PRIJS = 2, START_GELD = 250, TERUG = 0.5
@@ -172,7 +212,7 @@ var DT = (function () {
   function sleutel(x, y) { return x + ',' + y }
   function nieuw(wereldId) {
     var w = wereld(wereldId)
-    var s = { wereld: w.id, geld: START_GELD, verdiend: 0, bezoekers: 0, grond: 0, level: 1, pad: {}, verblijven: [], objecten: [], id: 1, teller: 0 }
+    var s = { wereld: w.id, geld: START_GELD, verdiend: 0, bezoekers: 0, grond: 0, level: 1, babies: 0, pad: {}, verblijven: [], objecten: [], id: 1, teller: 0 }
     // creatief: alles vrij, alle grond, oneindig geld
     if (w.creatief) { s.geld = ONEINDIG; s.level = LEVELS.length + 1; s.grond = GROND.length - 1 }
     s.pad[sleutel(INGANG.x, INGANG.y)] = 1
@@ -183,10 +223,12 @@ var DT = (function () {
   function herstel(d, wereldId) {
     var s = nieuw(wereldId)
     if (!d || typeof d !== 'object') return s
+    if (!d.v) d = verschuif(d, OUD_DX, OUD_DY)
     if (wereld(wereldId).creatief) d = Object.assign({}, d, { geld: ONEINDIG, level: LEVELS.length + 1, grond: GROND.length - 1 })
     s.geld = getal(d.geld); s.verdiend = getal(d.verdiend); s.bezoekers = Math.floor(getal(d.bezoekers))
     s.grond = Math.min(GROND.length - 1, Math.floor(getal(d.grond)))
     s.level = Math.max(1, Math.min(LEVELS.length + 1, Math.floor(getal(d.level)) || 1))
+    s.babies = Math.floor(getal(d.babies))
     ;(Array.isArray(d.pad) ? d.pad : []).forEach(function (k) { var p = String(k).split(','); if (binnen(s, +p[0], +p[1])) s.pad[sleutel(+p[0], +p[1])] = 1 })
     ;(Array.isArray(d.verblijven) ? d.verblijven : []).forEach(function (v) {
       if (!v) return
@@ -204,8 +246,19 @@ var DT = (function () {
     ;(Array.isArray(d.objecten) ? d.objecten : []).forEach(function (o) { if (o && OBJECTEN[o.soort] && vrij(s, o.x, o.y)) s.objecten.push({ soort: o.soort, x: o.x, y: o.y }) })
     return s
   }
+  // oude opslag van de kleinere kaart: alles schuift mee met het midden-onder
+  function verschuif(d, dx, dy) {
+    var o = Object.assign({}, d), num = function (x, n) { return Number(x) + n }
+    o.pad = (Array.isArray(d.pad) ? d.pad : []).map(function (k) { var p = String(k).split(','); return num(p[0], dx) + ',' + num(p[1], dy) })
+    o.verblijven = (Array.isArray(d.verblijven) ? d.verblijven : []).map(function (v) {
+      if (!v) return v
+      return Object.assign({}, v, { x: num(v.x, dx), y: num(v.y, dy), items: (Array.isArray(v.items) ? v.items : []).map(function (i) { return i && Object.assign({}, i, { x: num(i.x, dx), y: num(i.y, dy) }) }) })
+    })
+    o.objecten = (Array.isArray(d.objecten) ? d.objecten : []).map(function (b) { return b && Object.assign({}, b, { x: num(b.x, dx), y: num(b.y, dy) }) })
+    return o
+  }
   function bewaarbaar(s) {
-    return { geld: s.geld, verdiend: s.verdiend, bezoekers: s.bezoekers, grond: s.grond, level: s.level, pad: Object.keys(s.pad),
+    return { v: VERSIE, babies: s.babies, geld: s.geld, verdiend: s.verdiend, bezoekers: s.bezoekers, grond: s.grond, level: s.level, pad: Object.keys(s.pad),
       wereld: s.wereld, verblijven: s.verblijven.map(function (v) {
         return { x: v.x, y: v.y, w: v.w, h: v.h, bodem: v.bodem, dieren: v.dieren.slice(), items: v.items.map(function (i) { return { soort: i.soort, x: i.x, y: i.y } }) }
       }),
@@ -446,6 +499,7 @@ var DT = (function () {
       case 'kraam': return s.objecten.filter(function (o) { return OBJECTEN[o.soort].kraam }).length
       case 'grond': return s.grond + 1
       case 'inrichting': return s.verblijven.reduce(function (n, v) { return n + v.items.length }, 0)
+      case 'baby': return s.babies
     }
     return 0
   }
@@ -473,6 +527,25 @@ var DT = (function () {
       Object.keys(p[0]).forEach(function (k) { if (p[0][k].niveau === nr && l.indexOf(p[0][k].naam) < 0) l.push(p[0][k].naam + (p[1] ? ' (bodem)' : '')) })
     })
     return l
+  }
+
+  // ── baby's ── in een hok met 5 hartjes, waar bezoekers langskomen en nog
+  // ruimte is, wordt af en toe een jong geboren (gratis). Niet bij dieren die
+  // graag alleen wonen.
+  var MAX_GEZIN = 8
+  function kanBaby(s, v) {
+    if (v.dieren.length < 2 || v.dieren.length >= MAX_GEZIN || !v.zichtbaar) return false
+    var d = DIEREN[v.dieren[0]]
+    if (d.wil.some(function (w) { return w.alleen })) return false
+    return ruimteOver(v) >= d.ruimte && blijheid(s, v).waarde > 0.999
+  }
+  function geboorte(s, rnd) {
+    stats(s)
+    var kan = s.verblijven.filter(function (v) { return kanBaby(s, v) })
+    if (!kan.length) return null
+    var v = kan[Math.floor((rnd || Math.random)() * kan.length)]
+    v.dieren.push(v.dieren[0]); s.babies++
+    return { hok: v, soort: v.dieren[0] }
   }
 
   // tijd laten lopen: geeft het aantal nieuwe bezoekers terug (voor het scherm)
@@ -515,6 +588,7 @@ var DT = (function () {
     ruimteOver: ruimteOver, waaromNietItem: waaromNietItem, plaatsItem: plaatsItem, telItems: telItems,
     waaromNietDier: waaromNietDier, zetDier: zetDier, kanObject: kanObject, plaatsObject: plaatsObject, wat: wat, sloop: sloop, sloopHok: sloopHok,
     grondInfo: grondInfo, koopGrond: koopGrond, verbondenPad: verbondenPad, raaktPad: raaktPad,
+    kanBaby: kanBaby, geboorte: geboorte,
     wensen: wensen, blijheid: blijheid, stats: stats, niveau: niveau, nieuwOp: nieuwOp, levelInfo: levelInfo, checkLevel: checkLevel, doelWaarde: doelWaarde, stap: stap, weg: weg, kort: kort,
   }
 })()
