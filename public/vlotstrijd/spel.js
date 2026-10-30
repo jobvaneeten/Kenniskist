@@ -100,6 +100,7 @@ var THEMA = [
   { lucht: ['#06050f', '#141228', '#2a2346'], zee: ['#1c2440', '#10162c', '#070a18'], golf: '#c08bff', glim: ['#c08bff', '#7df9ff', '#ffffff'], vlot: '#4a3a2a' },
 ]
 var verAf = null, verWereld = -1
+var MENU_STUK = ['vuurtoren', 'ijspiek', 'lavapiek', 'wrakmast']
 // de verte verandert niet: één keer tekenen per formaat en wereld
 function bouwVerte(w) {
   var c = document.createElement('canvas'); c.width = Math.floor(W * dpr); c.height = Math.floor(H * dpr)
@@ -194,13 +195,24 @@ function zee(achter) {
       ctx.fillStyle = rgba(T.glim[i % 3], a); ctx.fillRect(fx * W + Math.sin(tijd * 0.8 + i) * 12 * S, y, len * (1 + fy), 2.2 * S * (1 + fy))
     }
     golfLijn(0, rgba(T.golf, 0.35), 3)
+    golfLijn(4, rgba(T.golf, 0.15), -4)
   } else {
     // voorste golf over de onderkant van de vlotten
-    ctx.fillStyle = rgba(T.zee[1], 0.92)
+    var vg = ctx.createLinearGradient(0, zy, 0, H)
+    vg.addColorStop(0, rgba(T.zee[0], 0.95)); vg.addColorStop(0.25, rgba(T.zee[1], 0.97)); vg.addColorStop(1, T.zee[2])
+    ctx.fillStyle = vg
     ctx.beginPath(); ctx.moveTo(0, H)
-    for (var px = -20; px <= W + 20; px += 16) { var wx = (px - OX) / S; ctx.lineTo(px, OY + (golfY(wx, tijd, 2) + 8) * S) }
+    for (var px = -20; px <= W + 20; px += 14) { var wx = (px - OX) / S; ctx.lineTo(px, OY + (golfY(wx, tijd, 2) + 8) * S) }
     ctx.lineTo(W, H); ctx.fill()
-    golfLijn(2, rgba(T.golf, 0.7), 8, true)
+    golfLijn(2, rgba(T.golf, 0.75), 8, true)
+    // schuimvlokjes op de kam
+    for (var sf = 0; sf < 36; sf++) {
+      var fx = ((sf * 0.137 + tijd * 0.012 * (sf % 3 + 1)) % 1) * (W + 40) - 20, fwx = (fx - OX) / S
+      var fy = OY + (golfY(fwx, tijd, 2) + 9) * S
+      ellips(ctx, fx, fy, (5 + sf % 4 * 2) * S * 1.5, 2 * S * 1.5, 'rgba(255,255,255,' + (0.25 + 0.2 * Math.sin(tijd * 3 + sf)) + ')')
+    }
+    golfLijn(3, rgba(T.golf, 0.18), 30)
+    golfLijn(1, rgba(T.golf, 0.12), 70)
   }
 }
 function golfLijn(laag, kleur, dy, glow) {
@@ -264,10 +276,23 @@ function vlot(x0, x1, kant, w) {
     g.shadowBlur = 0
     if (kant === 'vijand') { cirkel(g, mx + dir * 22, y - 132 + wap * 0.5, 6, '#fff'); lijn(g, mx + dir * 16, y - 122, mx + dir * 28, y - 120, '#fff', 2) }
     else { g.fillStyle = '#071018'; g.font = '900 16px "Russo One"'; g.textAlign = 'center'; g.fillText('★', mx + dir * 22, y - 127 + wap * 0.5) }
+    var lt = 0.75 + 0.25 * Math.sin(tijd * 3 + (kant === 'speler' ? 0 : 2))
+    var lx = mx + dir * 10, ly = y - 78
+    lijn(g, mx, ly - 14, lx, ly - 14, '#5a3a1e', 3); lijn(g, lx, ly - 14, lx, ly - 6, '#3a2a1a', 2)
+    var lg = g.createRadialGradient(lx, ly + 4, 1, lx, ly + 4, 46); lg.addColorStop(0, 'rgba(255,214,120,' + 0.55 * lt + ')'); lg.addColorStop(1, 'rgba(255,214,120,0)')
+    g.fillStyle = lg; g.beginPath(); g.arc(lx, ly + 4, 46, 0, TAU); g.fill()
+    rr(g, lx - 7, ly - 6, 14, 20, 4); g.fillStyle = 'rgba(255,230,160,.95)'; g.fill(); g.strokeStyle = '#3a2a1a'; g.lineWidth = 2; g.stroke()
+    if (kant === 'speler') {
+      var tx = x1 - 34, ty = y - 44, tg2 = g.createLinearGradient(tx - 18, 0, tx + 18, 0)
+      tg2.addColorStop(0, '#6a3a1a'); tg2.addColorStop(0.5, '#b0703a'); tg2.addColorStop(1, '#5a2e14')
+      g.fillStyle = tg2; rr(g, tx - 18, ty, 36, 42, 10); g.fill()
+      g.save(); g.shadowColor = '#3ef0ff'; g.shadowBlur = 10; g.fillStyle = '#3ef0ff'; g.fillRect(tx - 18, ty + 9, 36, 4); g.fillRect(tx - 18, ty + 29, 36, 4); g.restore()
+    }
   }
   g.restore()
 }
 function blok(b) {
+  if (b.stuk) return   // obstakels in zee tekent tekenStuk
   var g = ctx, y = b.y + (b.kant === 'zee' ? 0 : bob(b.kant)), x = b.x, w = b.w, h = b.h, so = b.soort
   g.save()
   if (so === 'krat') {
@@ -349,6 +374,7 @@ function tekenFiguur(c, hoek) {
   var y = c.voetY + b + (c.zweef ? Math.sin(s.t * 1.7 + c.fase) * c.zweef : 0), adem = Math.sin(tijd * 2.4 + c.id) * 1.2
   var dood = vallen[c.id]
   g.save()
+  g.shadowColor = 'rgba(0,0,12,.6)'; g.shadowBlur = 7; g.shadowOffsetY = 2
   if (dood) {
     var t = Math.min(1.6, tijd - dood)
     g.translate(x, y); g.rotate(dir * -t * 1.6); g.translate(-x, -y); y += t * t * 140; g.globalAlpha = Math.max(0, 1 - t / 1.6)
@@ -535,8 +561,11 @@ var SPOOR = { bal: '#ffc83d', drie: '#ffc83d', water: '#3ef0ff', stuiter: '#5bff
 function kogels() {
   s.kogels.forEach(function (k) {
     var sp = k.spoor, kl = SPOOR[k.soort] || '#fff'
-    for (var i = 2; i < sp.length; i += 2) { ctx.globalAlpha = i / sp.length * 0.6; lijn(ctx, sp[i - 2], sp[i - 1], sp[i], sp[i + 1], kl, Math.max(1, k.r * 0.9 * i / sp.length)) }
-    ctx.globalAlpha = 1
+    ctx.save(); ctx.globalCompositeOperation = 'lighter'
+    for (var i = 2; i < sp.length; i += 2) { ctx.globalAlpha = i / sp.length * 0.7; lijn(ctx, sp[i - 2], sp[i - 1], sp[i], sp[i + 1], kl, Math.max(1, k.r * 1.6 * i / sp.length)) }
+    var hl = ctx.createRadialGradient(k.x, k.y, 0, k.x, k.y, k.r * 4); hl.addColorStop(0, rgba(kl, 0.5)); hl.addColorStop(1, rgba(kl, 0))
+    ctx.globalAlpha = 1; ctx.fillStyle = hl; ctx.beginPath(); ctx.arc(k.x, k.y, k.r * 4, 0, TAU); ctx.fill()
+    ctx.restore()
     tekenKogel(ctx, k, k.x, k.y, k.r * 1.3)
   })
 }
@@ -639,10 +668,15 @@ function tekenMik() {
   var m = mikWaarden(mik), held = s.helden[s.held], h = VS.hand(s, held)
   laatsteHoek[held.id] = m.hoek
   var pts = VS.voorspel(s, m.hoek, m.kracht, gekozen, VS.MIK_TIJD[Math.min(3, D.upgrades.mik || 0)])
-  for (var i = 0; i < pts.length; i += 4) {
+  ctx.save(); ctx.lineCap = 'round'; ctx.setLineDash([2, 16]); ctx.lineDashOffset = -tijd * 60
+  for (var i = 2; i < pts.length; i += 2) {
     var f = 1 - i / pts.length
-    cirkel(ctx, pts[i], pts[i + 1], 4 + f * 4, 'rgba(255,255,255,' + (0.25 + f * 0.7) + ')')
+    ctx.strokeStyle = 'rgba(255,255,255,' + (0.15 + f * 0.85) + ')'; ctx.lineWidth = 5 + f * 5
+    ctx.beginPath(); ctx.moveTo(pts[i - 2], pts[i - 1]); ctx.lineTo(pts[i], pts[i + 1]); ctx.stroke()
   }
+  ctx.restore()
+  var lx = pts[pts.length - 2], ly = pts[pts.length - 1]
+  if (lx != null) { ctx.save(); ctx.globalAlpha = 0.35 + 0.25 * Math.sin(tijd * 6); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(lx, ly, 10, 0, TAU); ctx.stroke(); ctx.restore() }
   // krachtmeter bij de held
   var kl = m.kracht < 0.5 ? '#5bffa0' : m.kracht < 0.8 ? '#ffc83d' : '#ff4f6a'
   ctx.save(); ctx.shadowColor = kl; ctx.shadowBlur = 12
@@ -759,9 +793,206 @@ function einde() {
   toonScherm('einde')
 }
 
+// ── obstakels in zee (veld-coördinaten). De vorm volgt de raakvlakken in kern.js ──
+var ZV = VS.ZEE + 34   // onderkant: verdwijnt achter de voorste golf
+function lichtBundel(x, y, kleur) {
+  // draaiende lichtbundel van de vuurtoren, achter alles in de lucht
+  var a = Math.sin(tijd * 0.7) * 1.25 - Math.PI / 2, len = 900, br = 0.12
+  ctx.save(); ctx.globalCompositeOperation = 'lighter'
+  var g = ctx.createRadialGradient(x, y, 10, x, y, len)
+  g.addColorStop(0, rgba(kleur, 0.38)); g.addColorStop(1, rgba(kleur, 0))
+  ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(x, y)
+  ctx.lineTo(x + Math.cos(a - br) * len, y + Math.sin(a - br) * len); ctx.lineTo(x + Math.cos(a + br) * len, y + Math.sin(a + br) * len); ctx.fill()
+  ctx.restore()
+}
+function steen(x, y, w, h, kleur, rand) {
+  var g = ctx.createLinearGradient(x, 0, x + w, 0)
+  g.addColorStop(0, tint(kleur, 0.18)); g.addColorStop(0.45, kleur); g.addColorStop(1, tint(kleur, -0.45))
+  ctx.fillStyle = g; rr(ctx, x, y, w, h, 6); ctx.fill()
+  if (rand) { ctx.save(); ctx.shadowColor = rand; ctx.shadowBlur = 10; ctx.strokeStyle = rgba(rand, 0.8); ctx.lineWidth = 2; rr(ctx, x, y, w, h, 6); ctx.stroke(); ctx.restore() }
+}
+function tekenStuk(st, achter) {
+  var g = ctx, x = st.x, top = VS.ZEE - st.h, so = st.soort
+  if (achter) { if (so === 'vuurtoren') lichtBundel(x, top + 18, '#fff3c0'); return }
+  g.save()
+  if (so === 'vuurtoren') {
+    // rotsen aan de voet
+    ;[[-46, 18, 30], [36, 22, 26], [-12, 26, 34]].forEach(function (r) { ellips(g, x + r[0], VS.ZEE + 4, r[2], r[1], '#2a2244'); ellips(g, x + r[0] - 6, VS.ZEE - 2, r[2] * 0.6, r[1] * 0.4, '#3a3260') })
+    var bw = 76, tw = 48, lampY = top + 18
+    var body = function () { g.beginPath(); g.moveTo(x - bw / 2, ZV); g.lineTo(x - tw / 2, top + 46); g.lineTo(x + tw / 2, top + 46); g.lineTo(x + bw / 2, ZV); g.closePath() }
+    body(); var tg = g.createLinearGradient(x - bw / 2, 0, x + bw / 2, 0); tg.addColorStop(0, '#e8e6ff'); tg.addColorStop(0.55, '#b8b4e0'); tg.addColorStop(1, '#5a5480'); g.fillStyle = tg; g.fill()
+    g.save(); body(); g.clip()
+    var n = 5, hh = (ZV - top - 46) / n
+    for (var i = 0; i < n; i += 2) { var sy = top + 46 + i * hh; g.fillStyle = i % 4 ? '#3ef0ff' : '#ff4fd8'; g.globalAlpha = 0.85; g.fillRect(x - bw, sy, bw * 2, hh) }
+    g.globalAlpha = 1; g.fillStyle = 'rgba(0,0,0,.28)'; g.fillRect(x + 6, top, bw, ZV)
+    g.restore()
+    for (var wv = 0; wv < 3; wv++) { var wy = top + 80 + wv * (ZV - top - 120) / 3; g.save(); g.shadowColor = '#ffc83d'; g.shadowBlur = 8; rr(g, x - 6, wy, 12, 16, 6); g.fillStyle = '#ffe08a'; g.fill(); g.restore() }
+    // omloop en lampenhuis
+    g.fillStyle = '#2a2448'; g.fillRect(x - 36, top + 40, 72, 8)
+    lijn(g, x - 34, top + 40, x - 34, top + 28, '#7a74a8', 2); lijn(g, x + 34, top + 40, x + 34, top + 28, '#7a74a8', 2); lijn(g, x - 34, top + 28, x + 34, top + 28, '#7a74a8', 2)
+    var p = 0.75 + 0.25 * Math.sin(tijd * 4)
+    var hal = g.createRadialGradient(x, lampY, 2, x, lampY, 70); hal.addColorStop(0, 'rgba(255,240,180,' + 0.75 * p + ')'); hal.addColorStop(1, 'rgba(255,240,180,0)')
+    g.fillStyle = hal; g.beginPath(); g.arc(x, lampY, 70, 0, TAU); g.fill()
+    rr(g, x - 18, top + 6, 36, 34, 6); g.fillStyle = 'rgba(255,246,200,.95)'; g.fill()
+    g.strokeStyle = '#2a2448'; g.lineWidth = 2; lijn(g, x, top + 6, x, top + 40, '#2a2448', 2)
+    g.fillStyle = '#2a2448'; g.beginPath(); g.moveTo(x - 24, top + 8); g.lineTo(x, top - 18); g.lineTo(x + 24, top + 8); g.fill()
+    cirkel(g, x, top - 20, 4, '#ff4f6a')
+  } else if (so === 'neonbrug' || so === 'ijsboog' || so === 'rotsboog' || so === 'scheepsboog') {
+    var L = x - st.span / 2, R = x + st.span / 2 - st.pw, bt = top - st.dik
+    // [pijler, balk]: allebei als #hex, want steen() rekent er tinten mee uit
+    var stijl = { neonbrug: ['#3a2e6a', '#463a7a'], ijsboog: ['#9fd6f4', '#b6e2f8'], rotsboog: ['#3a2626', '#463030'], scheepsboog: ['#3a2e26', '#4a3a2e'] }[so]
+    if (so === 'scheepsboog') {
+      // spookschip: ribben als pijlers, de kiel als balk
+      ;[L, R].forEach(function (px, i) {
+        g.strokeStyle = '#4a3a2e'; g.lineWidth = st.pw - 10; g.lineCap = 'round'
+        g.beginPath(); g.moveTo(px + st.pw / 2, ZV); g.quadraticCurveTo(px + st.pw / 2 + (i ? 14 : -14), (bt + ZV) / 2, px + st.pw / 2, bt + 10); g.stroke()
+        g.strokeStyle = '#6a5440'; g.lineWidth = 4; g.stroke()
+      })
+      steen(L - 6, bt, st.span + 12, st.dik, '#4a3a2e')
+      for (var bn = 0; bn < 6; bn++) cirkel(g, L + 20 + bn * (st.span - 30) / 5, bt + st.dik - 6, 4, '#8a8a7a')
+      var sp = 0.6 + 0.4 * Math.sin(tijd * 3)
+      g.save(); g.shadowColor = '#7df9ff'; g.shadowBlur = 18 * sp; lijn(g, x, bt + st.dik, x, bt + st.dik + 26, '#3a3044', 2); rr(g, x - 9, bt + st.dik + 24, 18, 22, 5); g.fillStyle = 'rgba(125,249,255,' + (0.5 + 0.4 * sp) + ')'; g.fill(); g.restore()
+    } else {
+      steen(L, top, st.pw, ZV - top, stijl[0], so === 'neonbrug' ? '#3ef0ff' : null)
+      steen(R, top, st.pw, ZV - top, stijl[0], so === 'neonbrug' ? '#3ef0ff' : null)
+      steen(L - 8, bt, st.span + 16, st.dik, stijl[1], so === 'neonbrug' ? '#ff4fd8' : null)
+      if (so === 'neonbrug') {
+        for (var lp = 0; lp < 7; lp++) { var lx = L + 4 + lp * (st.span - 8) / 6; lijn(g, lx, bt, lx, bt - 16, '#8a84c0', 2); g.save(); g.shadowColor = lp % 2 ? '#3ef0ff' : '#ff4fd8'; g.shadowBlur = 12; cirkel(g, lx, bt - 18, 3.5, lp % 2 ? '#3ef0ff' : '#ff4fd8'); g.restore() }
+        lijn(g, L - 4, bt - 12, R + st.pw + 4, bt - 12, '#8a84c0', 2)
+        g.save(); g.shadowColor = '#ffc83d'; g.shadowBlur = 14; g.fillStyle = '#ffc83d'; g.font = '900 20px "Russo One"'; g.textAlign = 'center'; g.fillText('HAVEN', x, bt + st.dik - 11); g.restore()
+      } else if (so === 'ijsboog') {
+        for (var ic = 0; ic < 9; ic++) { var ix = L + 10 + ic * (st.span - 20) / 8, il = 8 + (ic * 7 % 9); g.fillStyle = 'rgba(232,251,255,.9)'; g.beginPath(); g.moveTo(ix - 4, bt + st.dik); g.lineTo(ix, bt + st.dik + il); g.lineTo(ix + 4, bt + st.dik); g.fill() }
+        g.fillStyle = '#ffffff'; rr(g, L - 10, bt - 8, st.span + 20, 12, 6); g.fill()
+        g.save(); g.globalCompositeOperation = 'lighter'; g.fillStyle = 'rgba(125,255,207,' + (0.15 + 0.1 * Math.sin(tijd * 2)) + ')'; g.fillRect(L, top, st.pw, ZV - top); g.fillRect(R, top, st.pw, ZV - top); g.restore()
+      } else {
+        var gl = 0.6 + 0.4 * Math.sin(tijd * 2.5)
+        g.save(); g.shadowColor = '#ff6a1a'; g.shadowBlur = 16; g.strokeStyle = 'rgba(255,122,42,' + gl + ')'; g.lineWidth = 3
+        ;[L + st.pw / 2, R + st.pw / 2].forEach(function (px) { g.beginPath(); g.moveTo(px - 8, top + 10); g.lineTo(px + 6, top + (ZV - top) * 0.35); g.lineTo(px - 6, top + (ZV - top) * 0.7); g.lineTo(px + 4, ZV); g.stroke() })
+        g.beginPath(); g.moveTo(L, bt + st.dik / 2); g.lineTo(x - 20, bt + st.dik / 2 - 6); g.lineTo(x + 30, bt + st.dik / 2 + 4); g.lineTo(R + st.pw, bt + st.dik / 2); g.stroke(); g.restore()
+      }
+    }
+  } else if (so === 'ijspiek') {
+    var w2 = 96
+    var vorm = function () { g.beginPath(); g.moveTo(x - w2 / 2 - 16, ZV); g.lineTo(x - w2 / 2 + 2, top + st.h * 0.45); g.lineTo(x - 14, top + 30); g.lineTo(x - 4, top); g.lineTo(x + 12, top + 44); g.lineTo(x + w2 / 2 - 4, top + st.h * 0.35); g.lineTo(x + w2 / 2 + 18, ZV); g.closePath() }
+    vorm(); var ig = g.createLinearGradient(x - w2, top, x + w2, ZV); ig.addColorStop(0, '#ffffff'); ig.addColorStop(0.5, '#bfe8ff'); ig.addColorStop(1, '#4a8cbc'); g.fillStyle = ig; g.fill()
+    g.save(); vorm(); g.clip()
+    g.fillStyle = 'rgba(70,130,190,.45)'; g.beginPath(); g.moveTo(x - 4, top); g.lineTo(x + 12, top + 44); g.lineTo(x + w2 / 2 + 18, ZV); g.lineTo(x + 6, ZV); g.fill()
+    g.strokeStyle = 'rgba(255,255,255,.7)'; g.lineWidth = 2; g.beginPath(); g.moveTo(x - 20, top + 60); g.lineTo(x - 8, top + 120); g.moveTo(x + 18, top + 140); g.lineTo(x + 8, top + 190); g.stroke()
+    var sh = (tijd * 0.4) % 1
+    g.globalCompositeOperation = 'lighter'; g.fillStyle = 'rgba(200,255,240,.25)'; g.fillRect(x - w2, top + sh * st.h, w2 * 2, 10)
+    g.restore()
+    g.save(); g.shadowColor = '#9be8ff'; g.shadowBlur = 16; g.strokeStyle = 'rgba(232,251,255,.8)'; g.lineWidth = 2; vorm(); g.stroke(); g.restore()
+  } else if (so === 'lavapiek') {
+    var w3 = 90
+    var vorm2 = function () { g.beginPath(); g.moveTo(x - w3 / 2 - 14, ZV); g.lineTo(x - w3 / 2, top + st.h * 0.5); g.lineTo(x - 16, top + 22); g.lineTo(x + 2, top); g.lineTo(x + 20, top + 30); g.lineTo(x + w3 / 2 + 2, top + st.h * 0.55); g.lineTo(x + w3 / 2 + 16, ZV); g.closePath() }
+    vorm2(); var lg = g.createLinearGradient(x - w3, 0, x + w3, 0); lg.addColorStop(0, '#4a3434'); lg.addColorStop(0.5, '#2a1a1a'); lg.addColorStop(1, '#140a0a'); g.fillStyle = lg; g.fill()
+    var gl2 = 0.55 + 0.45 * Math.sin(tijd * 2.2)
+    g.save(); vorm2(); g.clip(); g.shadowColor = '#ff6a1a'; g.shadowBlur = 18; g.strokeStyle = 'rgba(255,138,58,' + gl2 + ')'; g.lineWidth = 3.5
+    g.beginPath(); g.moveTo(x + 2, top + 6); g.lineTo(x - 10, top + st.h * 0.3); g.lineTo(x + 14, top + st.h * 0.55); g.lineTo(x - 4, top + st.h * 0.85); g.lineTo(x + 6, ZV)
+    g.moveTo(x - 10, top + st.h * 0.3); g.lineTo(x - 30, top + st.h * 0.45); g.moveTo(x + 14, top + st.h * 0.55); g.lineTo(x + 34, top + st.h * 0.7); g.stroke(); g.restore()
+    var gloed2 = g.createRadialGradient(x + 2, top, 2, x + 2, top, 40); gloed2.addColorStop(0, 'rgba(255,170,80,' + 0.7 * gl2 + ')'); gloed2.addColorStop(1, 'rgba(255,90,30,0)')
+    g.fillStyle = gloed2; g.beginPath(); g.arc(x + 2, top, 40, 0, TAU); g.fill()
+    for (var rk = 0; rk < 4; rk++) { var f = (tijd * 0.25 + rk / 4) % 1; cirkel(g, x + 2 + Math.sin(f * 5 + rk) * 12 + f * 20, top - f * 120, 8 + f * 22, 'rgba(70,50,54,' + (0.5 * (1 - f)) + ')') }
+  } else if (so === 'wrakmast') {
+    g.fillStyle = '#2e2434'; g.beginPath(); g.moveTo(x - 70, ZV); g.lineTo(x - 54, VS.ZEE - 22); g.lineTo(x + 50, VS.ZEE - 34); g.lineTo(x + 76, ZV); g.fill()
+    g.strokeStyle = '#4a3c50'; g.lineWidth = 3; for (var pl = 0; pl < 3; pl++) { g.beginPath(); g.moveTo(x - 60, VS.ZEE - 12 + pl * 10); g.lineTo(x + 62, VS.ZEE - 22 + pl * 10); g.stroke() }
+    var mg = g.createLinearGradient(x - 9, 0, x + 9, 0); mg.addColorStop(0, '#6a5440'); mg.addColorStop(1, '#2e2418')
+    g.fillStyle = mg; g.fillRect(x - 9, top, 18, ZV - top)
+    // ra en zeil blijven binnen de breedte waar kogels tegenaan botsen
+    lijn(g, x - 30, top + 60, x + 30, top + 60, '#4a3a2e', 8)
+    var wap = Math.sin(tijd * 3) * 4
+    g.fillStyle = 'rgba(192,139,255,.38)'; g.beginPath(); g.moveTo(x - 27, top + 64); g.quadraticCurveTo(x - 8 + wap, top + 110, x - 25, top + 160); g.lineTo(x - 10, top + 132); g.lineTo(x + 4, top + 168); g.quadraticCurveTo(x + 16 + wap, top + 110, x + 27, top + 64); g.fill()
+    lijn(g, x, top, x - 64, VS.ZEE - 26, 'rgba(160,140,180,.5)', 1.5); lijn(g, x, top, x + 64, VS.ZEE - 34, 'rgba(160,140,180,.5)', 1.5)
+    g.fillStyle = '#3a2e26'; rr(g, x - 20, top - 4, 40, 18, 4); g.fill()
+    var lt = 0.6 + 0.4 * Math.sin(tijd * 5 + 1)
+    g.save(); g.shadowColor = '#7df9ff'; g.shadowBlur = 20 * lt; cirkel(g, x + 14, top - 10, 6, 'rgba(125,249,255,' + (0.6 + 0.4 * lt) + ')'); g.restore()
+  }
+  g.restore()
+}
+// weerspiegeling van een obstakel in het water
+function spiegel(x, breed, kleur) {
+  for (var i = 0; i < 7; i++) {
+    var y = VS.ZEE + 14 + i * 13, a = 0.22 * (1 - i / 7), off = Math.sin(tijd * 2 + i * 1.3) * 8
+    ctx.fillStyle = rgba(kleur, a); ctx.fillRect(x - breed / 2 + off, y, breed * (1 - i * 0.06), 3.5)
+  }
+}
+var SPIEGELKLEUR = { vuurtoren: '#ff4fd8', neonbrug: '#3ef0ff', ijspiek: '#e8fbff', ijsboog: '#bfe8ff', lavapiek: '#ff7a2a', rotsboog: '#ff7a2a', wrakmast: '#c08bff', scheepsboog: '#7df9ff' }
+
+// ── leven in de lucht: wolken, vallende sterren, meeuwen ──
+var wolken = null
+function lucht(dt, w) {
+  var zy = OY + VS.ZEE * S
+  if (!wolken) { wolken = []; for (var i = 0; i < 7; i++) wolken.push({ x: Math.random(), y: 0.08 + Math.random() * 0.32, s: 0.6 + Math.random() * 0.8, v: 0.004 + Math.random() * 0.006 }) }
+  if (w !== 1) {
+    var kl = w === 0 ? '120,80,200' : w === 2 ? '70,40,40' : '50,44,80', al = w === 3 ? 0.55 : 0.28
+    wolken.forEach(function (c) {
+      c.x += c.v * dt * (1 + (s ? s.wind / 80 : 0)); if (c.x > 1.3) c.x = -0.3; if (c.x < -0.3) c.x = 1.3
+      var cx = c.x * W, cy = c.y * zy, r = 110 * c.s * Math.max(0.6, S * 1.4)
+      ;[[0, 0, 1], [0.6, 0.12, 0.7], [-0.55, 0.1, 0.65], [0.2, -0.15, 0.6]].forEach(function (p) { ellips(ctx, cx + p[0] * r, cy + p[1] * r, r * p[2], r * p[2] * 0.42, 'rgba(' + kl + ',' + al * 0.5 + ')') })
+    })
+  }
+  if (w <= 1) {
+    if (!lucht.ster || lucht.ster.t > 1.2) { if (Math.random() < dt * 0.25) lucht.ster = { x: Math.random() * W * 0.8, y: Math.random() * zy * 0.35, t: 0 } }
+    var st = lucht.ster
+    if (st && st.t <= 1.2) { st.t += dt; var f = st.t / 1.2, sx = st.x + f * 260 * S * 2, sy = st.y + f * 120 * S * 2; ctx.save(); ctx.globalAlpha = Math.sin(f * Math.PI); lijn(ctx, sx, sy, sx - 70 * S * 2, sy - 32 * S * 2, 'rgba(255,255,255,.8)', 2); cirkel(ctx, sx, sy, 2.5, '#fff'); ctx.restore() }
+    if (!lucht.meeuwen) lucht.meeuwen = [0, 1, 2].map(function (i) { return { x: Math.random(), y: 0.2 + i * 0.07, v: 0.02 + i * 0.006, f: i } })
+    lucht.meeuwen.forEach(function (m) {
+      m.x += m.v * dt; if (m.x > 1.1) m.x = -0.1
+      var mx = m.x * W, my = m.y * zy + Math.sin(tijd + m.f) * 6, vl = Math.sin(tijd * 8 + m.f) * 5 * S * 2, b = 10 * S * 2
+      ctx.strokeStyle = w === 0 ? 'rgba(220,200,255,.7)' : 'rgba(255,255,255,.75)'; ctx.lineWidth = 2; ctx.beginPath()
+      ctx.moveTo(mx - b, my - vl); ctx.quadraticCurveTo(mx - b * 0.4, my - b * 0.5, mx, my); ctx.quadraticCurveTo(mx + b * 0.4, my - b * 0.5, mx + b, my - vl); ctx.stroke()
+    })
+  }
+}
+
+function kleinePlons(x) {
+  for (var i = 0; i < 6; i++) deeltje(x + (Math.random() - 0.5) * 10, VS.ZEE, (Math.random() - 0.5) * 120, -80 - Math.random() * 120, 'rgba(255,255,255,.8)', 1.5 + Math.random() * 2, 0.6)
+}
+// ── vissen die uit het water springen (veld-coördinaten, achter de vlotten) ──
+var vissen = []
+function springVissen(dt, w) {
+  if (Math.random() < dt * 0.35 && vissen.length < 2) vissen.push({ x: 520 + Math.random() * 560, t: 0, d: Math.random() < 0.5 ? 1 : -1 })
+  var kl = ['#3ef0ff', '#bff6ff', '#ffc83d', '#c08bff'][w]
+  for (var i = vissen.length - 1; i >= 0; i--) {
+    var v = vissen[i]; v.t += dt
+    if (v.t > 1.1) { vissen.splice(i, 1); continue }
+    var f = v.t / 1.1, x = v.x + v.d * f * 120, y = VS.ZEE + 10 - Math.sin(f * Math.PI) * 110
+    if (!v.uit) { v.uit = true; kleinePlons(x) }
+    if (v.t > 1.0 && !v.in) { v.in = true; kleinePlons(x) }
+    ctx.save(); ctx.translate(x, y); ctx.rotate(v.d * (f - 0.5) * 2.2); ctx.scale(v.d, 1)
+    ctx.shadowColor = kl; ctx.shadowBlur = 12
+    ellips(ctx, 0, 0, 16, 7, kl); ctx.fillStyle = kl; ctx.beginPath(); ctx.moveTo(-14, 0); ctx.lineTo(-26, -8); ctx.lineTo(-26, 8); ctx.fill()
+    cirkel(ctx, 8, -2, 2, '#141026')
+    ctx.restore()
+  }
+}
+
+// ── maan- of vulkaangloed die in het water schittert ──
+function glimpad(w) {
+  var zy = OY + VS.ZEE * S, x = w === 2 ? W * 0.78 : W * 0.8, kl = w === 0 ? '255,235,255' : w === 1 ? '125,255,207' : w === 2 ? '255,150,60' : '200,210,255'
+  if (w === 3) return
+  ctx.save(); ctx.globalCompositeOperation = 'lighter'
+  for (var i = 0; i < 16; i++) {
+    var y = zy + 10 + i * i * 2.4 * S * 2, br = (40 + i * 10) * S * 2 * (0.6 + 0.4 * Math.sin(tijd * 2.3 + i * 1.7))
+    ctx.fillStyle = 'rgba(' + kl + ',' + (0.3 - i * 0.016) + ')'; ctx.fillRect(x - br / 2 + Math.sin(tijd * 1.5 + i) * 10, y, br, Math.max(1.5, 3 * S))
+  }
+  ctx.restore()
+}
+
+function vignet() {
+  var g = ctx.createRadialGradient(W / 2, H * 0.48, Math.min(W, H) * 0.35, W / 2, H * 0.5, Math.max(W, H) * 0.78)
+  g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,10,.5)')
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H)
+}
+
 // ── tekenen ──
 var vorige = performance.now()
+// Eén fout in een tekening mag het spel nooit stilzetten: het volgende beeld komt altijd.
 function frame(nu) {
+  requestAnimationFrame(frame)
+  try { teken(nu) } catch (e) { if (!frame.gemeld) { frame.gemeld = true; console.error(e) } }
+}
+function teken(nu) {
   var dt = Math.min(0.05, (nu - vorige) / 1000); vorige = nu
   tijd += dt
   if (s && actief && !gepauzeerd) { verwerk(VS.stap(s, dt)); speelFase(dt) }
@@ -769,15 +1000,21 @@ function frame(nu) {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
   if (!verAf || verWereld !== w) { verAf = bouwVerte(w); verWereld = w }
   ctx.drawImage(verAf, 0, 0, W, H)
+  lucht(dt, w)
   if (w === 1) noorderlicht()
   if (w === 2) rookVulkaan()
   if (w === 3) { bliksem -= dt; if (bliksem < -4 - Math.random() * 6) { bliksem = 0.25; flits = Math.max(flits, 0.6); setTimeout(function () { ruis(1.2, 0.2, 60, 400) }, 200) } }
   ctx.save()
   if (schud > 0.3) { ctx.translate((Math.random() - 0.5) * schud * S, (Math.random() - 0.5) * schud * S); schud *= 0.88 } else schud = 0
-  zee(true)
+  var stukken = s ? s.def.stukken : [{ soort: MENU_STUK[w], x: 800, h: 250, w: 76 }]
+  ctx.save(); ctx.translate(OX, OY); ctx.scale(S, S); stukken.forEach(function (st) { tekenStuk(st, true) }); ctx.restore()
+  zee(true); glimpad(w)
   ctx.translate(OX, OY); ctx.scale(S, S)
+  stukken.forEach(function (st) { spiegel(st.x, st.span || 96, SPIEGELKLEUR[st.soort]) })
+  spiegel(280, 360, '#3ef0ff'); if (s) spiegel((s.def.raft.x0 + s.def.raft.x1) / 2, s.def.raft.x1 - s.def.raft.x0 - 40, THEMA[w].glim[0])
+  springVissen(dt, w)
+  stukken.forEach(function (st) { tekenStuk(st) })
   if (s) {
-    s.blokken.forEach(function (b) { if (b.kant === 'zee') blok(b) })
     vlot(90, 470, 'speler', w); vlot(s.def.raft.x0, s.def.raft.x1, 'vijand', w)
     s.blokken.forEach(function (b) { if (b.kant !== 'zee') blok(b) })
     s.vijanden.concat(s.helden).forEach(function (c) {
@@ -804,8 +1041,8 @@ function frame(nu) {
   zee(false)
   ctx.save(); ctx.translate(OX, OY); ctx.scale(S, S); effecten(dt); ctx.restore()
   weerDeeltjes(dt)
+  vignet()
   if (flits > 0) { ctx.fillStyle = w === 3 ? 'rgba(210,220,255,' + flits * 0.45 + ')' : 'rgba(255,200,120,' + flits * 0.3 + ')'; ctx.fillRect(0, 0, W, H); flits = Math.max(0, flits - dt * 2.5) }
-  requestAnimationFrame(frame)
 }
 
 // ── schermen ──

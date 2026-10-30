@@ -43,7 +43,7 @@ var VS = (function () {
     ijsreus:     { naam: 'IJsreus',         hp: 350, schade: 16, fout: 0.08,  r: 68, baas: true, schoten: 2 },
     vuurpiraat:  { naam: 'Vuurpiraat',      hp: 60,  schade: 17, fout: 0.075, r: 28 },
     lavakrab:    { naam: 'Lavakrab',        hp: 90,  schade: 19, fout: 0.075, r: 34 },
-    krabkoning:  { naam: 'Krabkoning',      hp: 430, schade: 18, fout: 0.075, r: 72, baas: true, schoten: 2 },
+    krabkoning:  { naam: 'Krabkoning',      hp: 390, schade: 18, fout: 0.075, r: 72, baas: true, schoten: 2 },
     spookpiraat: { naam: 'Spookpiraat',     hp: 70,  schade: 19, fout: 0.07,  r: 28, zweef: 34 },
     robot:       { naam: 'Robotpiraat',     hp: 120, schade: 23, fout: 0.065, r: 32 },
     kraken:      { naam: 'De Kraken',       hp: 580, schade: 21, fout: 0.07,  r: 78, baas: true, schoten: 2, zweef: 16 },
@@ -68,12 +68,14 @@ var VS = (function () {
     extra:  { naam: 'Extra munitie', prijzen: [250, 600],             zin: 'Je speciale wapens vaker per level' },
   }
   var BLOKKEN = { krat: 2, ijs: 2, rots: 3, ton: 1 }   // klappen voordat hij breekt
+  // wat er per wereld tussen de vlotten in zee staat: [toren, poort]
+  var STUKKEN = { baai: ['vuurtoren', 'neonbrug'], ijs: ['ijspiek', 'ijsboog'], vulkaan: ['lavapiek', 'rotsboog'], storm: ['wrakmast', 'scheepsboog'] }
 
   // ── levels ──
   function bouwLevel(L) {
     var w = Math.floor(L / 10), k = L % 10, W = WERELDEN[w], r = rng(1000 + L * 7919)
     var x0 = Math.min(1110, 1010 + k * 10 + w * 15), x1 = Math.min(1570, x0 + 450)
-    var def = { L: L, w: w, k: k, baas: k === 9, wereld: W, raft: { x0: x0, x1: x1 }, vijanden: [], blokken: [] }
+    var def = { L: L, w: w, k: k, baas: k === 9, wereld: W, raft: { x0: x0, x1: x1 }, vijanden: [], blokken: [], stukken: [] }
     def.wind = W.wind ? Math.round(W.wind * (0.45 + 0.55 * k / 9) * (r() < 0.5 ? -1 : 1)) : 0
     var muurSoort = function (j) { return W.id === 'storm' && j % 2 === 1 ? 'ton' : W.blok }
     function muur(x, hoog) { for (var j = 0; j < hoog; j++) def.blokken.push({ x: x, y: DEK - KRAT * (j + 1), w: KRAT, h: KRAT, soort: muurSoort(j) }) }
@@ -86,15 +88,31 @@ var VS = (function () {
       for (var i = 0; i < n; i++) {
         var tweede = (k >= 3 && i === n - 1) || (k >= 6 && i % 2 === 1)
         var hoog = k >= 5 && i === n - 1 ? (k >= 7 ? 2 : 1) : 0
-        def.vijanden.push({ soort: W.vijanden[tweede ? 1 : 0], x: Math.round(x0 + 105 + i * (x1 - x0 - 165) / Math.max(1, n - 1)) - (n === 1 ? 0 : 0), hoog: hoog })
+        def.vijanden.push({ soort: W.vijanden[tweede ? 1 : 0], x: Math.round(x0 + 135 + i * (x1 - x0 - 190) / Math.max(1, n - 1)), hoog: hoog })
       }
       if (n === 1) def.vijanden[0].x = Math.round((x0 + x1) / 2)
       if (k >= 1) muur(x0 + 22, k < 4 ? 1 : k < 7 ? 2 : 3)
       if (k >= 6 && n >= 3) muur(Math.round((def.vijanden[0].x + def.vijanden[1].x) / 2) - KRAT / 2, 1 + (k >= 8 ? 1 : 0))
-      if (k === 2 || k === 4 || (k >= 6 && r() < 0.75)) {
-        var ph = Math.round(130 + r() * 130 + w * 20)
-        def.blokken.push({ x: Math.round(700 + r() * 230), y: ZEE - ph, w: 74, h: ph + 40, soort: W.pilaar, vast: true, zee: true })
-      }
+    }
+    // Tussen de vlotten staat altijd iets in zee: een toren waar je met een
+    // boog overheen moet, of een poort waar je óók doorheen kunt schieten.
+    // Level 1 begint laag, daarna wordt het steeds hoger.
+    var ST = STUKKEN[W.id]
+    if (k === 0) toren(ST[0], 800, 120)
+    else if (k % 3 === 2) poort(ST[1], Math.round(760 + r() * 80), Math.round(150 + r() * 40 + w * 8), 230)
+    else toren(ST[0], Math.round(740 + r() * 140), Math.min(300, Math.round(170 + k * 11 + w * 12 + r() * 40)))
+    if (k >= 6 && !def.baas && r() < 0.65) toren(ST[0], r() < 0.5 ? 580 : 1000 - (k >= 8 ? 20 : 0), Math.round(130 + r() * 60))
+    function toren(soort, x, h) {
+      var bw = soort === 'wrakmast' ? 56 : 76
+      def.stukken.push({ soort: soort, x: x, h: h, w: bw })
+      def.blokken.push({ x: x - bw / 2, y: ZEE - h, w: bw, h: h + 40, soort: soort, vast: true, zee: true, stuk: true })
+    }
+    function poort(soort, x, h, span) {
+      var pw = 46, dik = 38
+      def.stukken.push({ soort: soort, x: x, h: h, span: span, pw: pw, dik: dik })
+      def.blokken.push({ x: x - span / 2, y: ZEE - h, w: pw, h: h + 40, soort: soort, vast: true, zee: true, stuk: true })
+      def.blokken.push({ x: x + span / 2 - pw, y: ZEE - h, w: pw, h: h + 40, soort: soort, vast: true, zee: true, stuk: true })
+      def.blokken.push({ x: x - span / 2, y: ZEE - h - dik, w: span, h: dik, soort: soort, vast: true, zee: true, stuk: true })
     }
     // palen onder de vijanden die hoger staan
     def.vijanden.forEach(function (v) { if (v.hoog) def.blokken.push({ x: v.x - 20, y: DEK - v.hoog * PAAL_HOOG, w: 40, h: v.hoog * PAAL_HOOG, soort: 'paal', vast: true }) })
@@ -119,7 +137,7 @@ var VS = (function () {
     })
     def.blokken.forEach(function (b) {
       var hp = b.vast ? Infinity : BLOKKEN[b.soort]
-      s.blokken.push({ id: s.id++, x: b.x, y: b.y, w: b.w, h: b.h, soort: b.soort, kant: b.zee ? 'zee' : 'vijand', hp: hp, max: hp })
+      s.blokken.push({ id: s.id++, x: b.x, y: b.y, w: b.w, h: b.h, soort: b.soort, kant: b.zee ? 'zee' : 'vijand', hp: hp, max: hp, stuk: !!b.stuk })
     })
     var sch = lvl(u, 'schild')
     for (var j = 0; j < (sch ? 1 + (sch >= 3 ? 1 : 0) : 0); j++) s.blokken.push({ id: s.id++, x: 430, y: DEK - KRAT * (j + 1), w: KRAT, h: KRAT, soort: 'krat', kant: 'speler', hp: 1 + sch, max: 1 + sch })
