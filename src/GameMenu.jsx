@@ -241,6 +241,10 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
     return vrij(<IframeSpel src="/vlotstrijd/" titel="Vlotstrijd" terugType="vlotstrijd-terug" achtergrond="#050617" onBack={onBack} />)
   }
 
+  if (directGame === 'tijdstrijd') {
+    return vrij(<IframeSpel src="/tijdstrijd/" titel="Tijdstrijd" terugType="tijdstrijd-terug" achtergrond="#050617" onBack={onBack} />)
+  }
+
   if (directGame === 'steenknaller') {
     return vrij(<IframeSpel src="/steenknaller/" titel="Steenknaller" terugType="steenknaller-terug" achtergrond="#06061a" onBack={onBack} />)
   }

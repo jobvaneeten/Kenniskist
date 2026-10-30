@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Tijdstrijd</title>
+<link href="/fonts/fonts.css" rel="stylesheet">
+<style>
+  :root{
+    --ink:#eef3ff; --dim:#8f9bc4; --cyaan:#3ef0ff; --magenta:#ff4fd8; --goud:#ffc83d; --violet:#9b6bff; --rood:#ff4f6a; --groen:#5bffa0;
+    --disp:'Russo One',system-ui,sans-serif; --body:'Outfit','Nunito',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;height:100%;overflow:hidden;background:#050617;}
+  body{font-family:var(--body);color:var(--ink);user-select:none;-webkit-user-select:none;touch-action:none;}
+  canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block;}
+
+  #hud{position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:5;pointer-events:none;display:none;flex-direction:column;align-items:center;gap:5px;}
+  #hud.aan{display:flex;}
+  #lvl{font-family:var(--disp);font-size:13px;letter-spacing:.16em;text-transform:uppercase;padding:5px 14px;border-radius:99px;
+       background:rgba(10,12,34,.6);border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(6px);white-space:nowrap;}
+  #kaart{width:min(380px,calc(100vw - 260px));height:34px;pointer-events:auto;cursor:pointer;touch-action:none;border-radius:9px;}
+  #xpbalk{position:relative;width:min(380px,calc(100vw - 260px));height:20px;border-radius:99px;overflow:hidden;
+           background:rgba(10,12,34,.72);border:1px solid rgba(255,200,61,.35);}
+  #xpvul{position:absolute;left:0;top:0;bottom:0;width:0;background:linear-gradient(90deg,#b8860b,var(--goud));box-shadow:0 0 12px rgba(255,200,61,.6);transition:width .3s;}
+  #xptekst{position:relative;display:block;text-align:center;font-size:11px;font-weight:800;line-height:18px;letter-spacing:.02em;text-shadow:0 1px 2px rgba(0,0,0,.8);}
+  #xpbalk.klaar{border-color:var(--goud);box-shadow:0 0 18px rgba(255,200,61,.7);animation:puls .8s ease-in-out infinite;}
+  #xpbalk.klaar #xptekst{color:#20140a;text-shadow:none;}
+  #evopijl{position:fixed;z-index:8;width:0;height:0;display:none;pointer-events:none;}
+  #evopijl.aan{display:block;}
+  #evopijl::before{content:'';position:absolute;left:-14px;bottom:0;border-left:14px solid transparent;border-right:14px solid transparent;border-top:20px solid var(--goud);
+                   filter:drop-shadow(0 0 8px rgba(255,200,61,.9));animation:wijs .7s ease-in-out infinite;}
+  @keyframes wijs{50%{transform:translateY(-10px)}}
+  #swipe{position:fixed;right:24px;top:46%;z-index:6;display:flex;align-items:center;gap:10px;padding:10px 16px;border-radius:99px;pointer-events:none;
+         font-weight:800;font-size:15px;background:rgba(10,12,34,.75);border:1px solid rgba(62,240,255,.5);box-shadow:0 0 24px rgba(62,240,255,.3);
+         opacity:0;transform:translateX(20px);transition:opacity .4s, transform .4s;}
+  #swipe.aan{opacity:1;transform:none;animation:swipe 1.4s ease-in-out infinite;}
+  #swipe b{font-family:var(--disp);font-size:22px;color:var(--cyaan);}
+  @keyframes swipe{50%{transform:translateX(-14px)}}
+  #goud{position:fixed;top:10px;left:10px;z-index:5;display:none;align-items:center;gap:8px;padding:6px 14px 6px 10px;border-radius:99px;
+        background:rgba(10,12,34,.7);border:1px solid rgba(255,200,61,.35);backdrop-filter:blur(6px);pointer-events:none;}
+  #goud.aan{display:flex;}
+  #goud b{font-family:var(--disp);font-size:20px;color:var(--goud);min-width:44px;}
+  #goud small{font-size:12px;color:var(--dim);font-weight:800;}
+  .muntje{width:18px;height:18px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff3b0,#ffc83d 55%,#b8860b);box-shadow:0 0 10px rgba(255,200,61,.6);flex:none;}
+  #banner{position:fixed;left:50%;top:30%;transform:translate(-50%,-50%);z-index:6;pointer-events:none;font-family:var(--disp);
+          font-size:clamp(22px,5vw,40px);letter-spacing:.08em;text-transform:uppercase;text-align:center;opacity:0;transition:opacity .25s, transform .25s;
+          text-shadow:0 0 24px rgba(62,240,255,.7),0 3px 0 rgba(0,0,0,.4);white-space:nowrap;}
+  #banner.aan{opacity:1;transform:translate(-50%,-50%) scale(1.04);}
+  #banner.groot{font-size:clamp(34px,8vw,68px);background:linear-gradient(100deg,var(--cyaan),#fff 40%,var(--goud));-webkit-background-clip:text;background-clip:text;
+                -webkit-text-fill-color:transparent;filter:drop-shadow(0 0 22px rgba(255,200,61,.55));text-shadow:none;}
+  #banner.groot small{-webkit-text-fill-color:var(--ink);font-size:17px;}
+  #goud.pop{animation:goudpop .25s ease-out;}
+  @keyframes goudpop{40%{transform:scale(1.12);border-color:var(--goud);box-shadow:0 0 22px rgba(255,200,61,.6)}}
+  #lvl.bijna{color:var(--goud);border-color:var(--goud);animation:puls .5s ease-in-out infinite;}
+  #banner small{display:block;font-family:var(--body);font-size:16px;letter-spacing:.02em;text-transform:none;color:var(--dim);font-weight:700;margin-top:4px;}
+
+  /* de knoppenbalk onderin */
+  #dock{position:fixed;left:50%;bottom:8px;transform:translateX(-50%);z-index:7;display:none;align-items:flex-end;gap:6px;padding:6px;border-radius:20px;
+        background:linear-gradient(180deg,rgba(26,28,64,.85),rgba(8,10,28,.88));border:1px solid rgba(255,255,255,.16);backdrop-filter:blur(10px);max-width:calc(100vw - 12px);
+        box-shadow:0 10px 30px rgba(0,0,0,.5),0 0 0 1px rgba(62,240,255,.08),inset 0 1px 0 rgba(255,255,255,.12);}
+  #dock.aan{display:flex;}
+  .groep{display:flex;gap:6px;}
+  .scheid{width:1px;align-self:stretch;background:rgba(255,255,255,.12);margin:4px 1px;}
+  .dk{position:relative;width:64px;height:66px;border-radius:14px;border:1.5px solid rgba(255,255,255,.16);color:var(--ink);
+      background:linear-gradient(180deg,rgba(255,255,255,.13),rgba(255,255,255,.03) 55%,rgba(0,0,0,.18));
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 4px 12px rgba(0,0,0,.35);transition:transform .1s, box-shadow .15s;
+      display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:0 0 4px;cursor:pointer;overflow:hidden;font-family:var(--body);}
+  .dk canvas{position:absolute;left:50%;top:2px;transform:translateX(-50%);width:46px;height:46px;pointer-events:none;}
+  .dk .pr{position:relative;font-family:var(--disp);font-size:12px;color:var(--goud);display:flex;align-items:center;gap:3px;}
+  .dk .pr::before{content:'';width:9px;height:9px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff3b0,#ffc83d 55%,#b8860b);}
+  .dk .nm{position:relative;font-size:9.5px;font-weight:800;letter-spacing:-.01em;white-space:nowrap;max-width:62px;overflow:hidden;text-overflow:ellipsis;color:var(--ink);line-height:1.1;text-align:center;}
+  .dk:disabled{cursor:default;}
+  .dk.arm{opacity:.45;}
+  .dk:not(:disabled):not(.arm):hover{transform:translateY(-2px);box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 0 0 1px rgba(62,240,255,.5),0 6px 18px rgba(62,240,255,.25);}
+  .dk:not(:disabled):not(.arm):active{transform:translateY(1px) scale(.97);}
+  .dk canvas{filter:drop-shadow(0 2px 3px rgba(0,0,0,.5));}
+  .dk.arm canvas{filter:grayscale(.7) brightness(.8);}
+  .dk .vul{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(0deg,rgba(62,240,255,.32),rgba(62,240,255,.08));pointer-events:none;}
+  .dk.klaar{border-color:var(--goud);box-shadow:0 0 0 1px var(--goud) inset,0 0 18px rgba(255,200,61,.45);animation:puls 1s ease-in-out infinite;}
+  .dk.klaar .vul{background:linear-gradient(0deg,rgba(255,200,61,.35),rgba(255,200,61,.1));}
+  .dk.houd{border-color:var(--groen);box-shadow:0 0 0 1px var(--groen) inset;}
+  .dk kbd{position:absolute;top:3px;left:5px;font-family:var(--disp);font-size:9px;color:var(--dim);opacity:.7;}
+  @keyframes puls{50%{transform:translateY(-2px)}}
+  #rij{position:fixed;left:50%;transform:translateX(-50%);z-index:7;display:none;gap:5px;pointer-events:none;}
+  #rij.aan{display:flex;}
+  #rij i{width:12px;height:12px;border-radius:50%;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);overflow:hidden;position:relative;}
+  #rij i.vol{background:rgba(62,240,255,.35);border-color:var(--cyaan);}
+  #rij i b{position:absolute;left:0;bottom:0;width:100%;background:var(--cyaan);}
+
+  .rondknop{position:fixed;z-index:20;width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+            color:var(--ink);background:rgba(16,18,40,.75);border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(8px);cursor:pointer;padding:0;}
+  .rondknop svg{width:20px;height:20px;}
+  #geluid{top:10px;right:10px;}
+  #pauze{top:10px;right:60px;display:none;}
+  #snel{top:10px;right:110px;display:none;font-family:var(--disp);font-size:13px;}
+  #snel.x2{color:#071018;background:var(--cyaan);}
+  #terug{position:fixed;top:10px;left:10px;z-index:20;padding:9px 16px;font-size:14px;color:var(--ink);font-weight:800;
+         background:rgba(16,18,40,.75);border:1px solid rgba(255,255,255,.2);border-radius:999px;display:none;cursor:pointer;font-family:var(--body);}
+  #terug.aan{display:block;}
+  #draai{position:fixed;inset:0;z-index:30;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:#050617;text-align:center;padding:24px;}
+  #draai svg{width:64px;height:64px;color:var(--cyaan);animation:draai 2s ease-in-out infinite;}
+  @keyframes draai{50%{transform:rotate(-90deg)}}
+  @media (orientation:portrait) and (max-width:600px){ #draai.mag{display:flex;} }
+  @media (max-height:500px){
+    #dock{bottom:4px;padding:4px;gap:4px;border-radius:16px;}
+    .groep{gap:4px;}
+    .dk{width:54px;height:52px;border-radius:12px;padding-bottom:2px;}
+    .dk canvas{width:34px;height:34px;top:1px;}
+    .dk .nm{font-size:8.5px;max-width:52px;}
+    .dk .pr{font-size:10.5px;}
+    .dk kbd{display:none;}
+    #hud{top:6px;flex-direction:row;}
+    #lvl{font-size:10px;padding:4px 10px;letter-spacing:.1em;}
+    #lvl{display:none;}
+    #hud{gap:8px;align-items:center;}
+    #kaart{height:26px;width:min(260px,calc(50vw - 150px));}
+    #xpbalk{height:20px;width:min(220px,calc(50vw - 150px));}
+    #xptekst{font-size:10px;line-height:16px;}
+    #goud{top:6px;left:6px;padding:4px 10px 4px 8px;}
+    #goud b{font-size:16px;}
+    .rondknop{width:36px;height:36px;top:6px !important;}
+    #pauze{right:48px;} #snel{right:90px;}
+  }
+
+  .scherm{position:fixed;inset:0;z-index:10;display:none;flex-direction:column;align-items:center;justify-content:center;
+          gap:14px;padding:24px 18px;overflow-y:auto;
+          background:radial-gradient(ellipse 70% 50% at 50% 18%,rgba(62,240,255,.18),transparent 70%),
+                     radial-gradient(ellipse 60% 45% at 50% 100%,rgba(255,79,216,.14),transparent 70%),rgba(5,6,23,.86);
+          backdrop-filter:blur(5px);}
+  .scherm.aan{display:flex;}
+  #menu,#winkel{justify-content:flex-start;padding-top:56px;}
+  h1{font-family:var(--disp);font-size:clamp(40px,11vw,74px);margin:0;letter-spacing:.05em;text-transform:uppercase;text-align:center;line-height:1;
+     background:linear-gradient(100deg,var(--cyaan),#fff 45%,var(--magenta));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+     filter:drop-shadow(0 0 24px rgba(62,240,255,.35));}
+  h2{font-family:var(--disp);font-size:clamp(26px,7vw,40px);margin:0;letter-spacing:.06em;text-transform:uppercase;text-align:center;}
+  .onder{color:var(--dim);margin:0;font-size:15px;text-align:center;max-width:52ch;line-height:1.5;}
+  .rij{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+  .munt{display:inline-flex;align-items:center;gap:6px;font-family:var(--disp);color:var(--goud);}
+  .munt::before{content:'';width:15px;height:15px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff3b0,#ffc83d 55%,#b8860b);
+                box-shadow:0 0 10px rgba(255,200,61,.6);}
+  .eindsterren{display:flex;gap:10px;}
+  .eindsterren svg{width:56px;height:56px;filter:drop-shadow(0 0 12px rgba(255,200,61,.6));animation:pop .5s cubic-bezier(.2,1.6,.4,1) both;}
+  .eindsterren svg:nth-child(2){animation-delay:.15s}.eindsterren svg:nth-child(3){animation-delay:.3s}
+  .eindsterren .leeg{filter:none;opacity:.2;}
+  @keyframes pop{from{transform:scale(0) rotate(-40deg)}to{transform:scale(1)}}
+  .stats{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+  .stat{min-width:92px;padding:9px 12px;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);text-align:center;}
+  .stat b{display:block;font-family:var(--disp);font-size:20px;}
+  .stat span{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);}
+
+  button{font-family:var(--body);font-weight:800;cursor:pointer;border-radius:999px;border:0;}
+  .knop{padding:14px 32px;font-size:17px;color:#071018;letter-spacing:.04em;
+        background:linear-gradient(135deg,var(--cyaan),#7dfff0);box-shadow:0 10px 28px rgba(62,240,255,.32);transition:transform .12s;}
+  .knop:hover{transform:translateY(-2px);}
+  .knop2{padding:12px 24px;font-size:15px;color:var(--ink);background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);}
+  .knop2:hover{background:rgba(255,255,255,.15);}
+  .verborgen{display:none !important;}
+
+  #tijdlijn{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;}
+  #tijdlijn canvas{width:96px;height:58px;border-radius:12px;border:1px solid rgba(255,255,255,.14);}
+  .levels{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;width:100%;max-width:560px;}
+  .lv{position:relative;aspect-ratio:1.1;border-radius:15px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+      background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.12);color:var(--ink);font-family:var(--disp);font-size:19px;padding:0;}
+  .lv:not(:disabled):hover{background:rgba(255,255,255,.11);}
+  .lv:disabled{opacity:.33;cursor:default;}
+  .lv.volgende{border-color:var(--cyaan);box-shadow:0 0 0 1px var(--cyaan) inset,0 0 18px rgba(62,240,255,.3);}
+  .lv small{font-family:var(--body);font-size:9px;font-weight:800;letter-spacing:.04em;color:var(--dim);text-transform:uppercase;}
+  .lv .st{display:flex;gap:1px;}
+  .lv .st svg{width:11px;height:11px;}
+  .lv .st .leeg{opacity:.2;}
+
+  .lijst{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;width:100%;max-width:720px;}
+  .kaart{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 10px;border-radius:16px;text-align:center;
+         background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.12);}
+  .kaart canvas{width:64px;height:64px;}
+  .kaart .naam{font-family:var(--disp);font-size:13px;letter-spacing:.06em;text-transform:uppercase;}
+  .kaart .zin{font-size:12px;color:var(--dim);line-height:1.35;min-height:32px;}
+  .kaart .niv{display:flex;gap:3px;}
+  .kaart .niv i{width:12px;height:5px;border-radius:3px;background:rgba(255,255,255,.15);}
+  .kaart .niv i.aan{background:var(--cyaan);box-shadow:0 0 6px var(--cyaan);}
+  .kaart button{padding:8px 14px;font-size:13px;min-width:100px;}
+  .koop{color:#20140a;background:linear-gradient(135deg,var(--goud),#ffe08a);}
+  .koop:disabled{background:rgba(255,255,255,.08);color:#6f7899;cursor:default;}
+  .bezit{color:var(--groen);background:rgba(91,255,160,.1);border:1px solid rgba(91,255,160,.35);cursor:default;}
+  .uitleg{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;width:100%;max-width:720px;}
+  .uitleg div{font-size:13px;line-height:1.4;color:var(--dim);padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);}
+  .uitleg b{color:var(--ink);font-family:var(--disp);font-weight:400;letter-spacing:.04em;}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="ster" viewBox="0 0 24 24"><path fill="#ffc83d" d="M12 2.5l2.9 6.1 6.6.8-4.9 4.5 1.3 6.6L12 17.2l-5.9 3.3 1.3-6.6-4.9-4.5 6.6-.8z"/></symbol>
+</svg>
+
+<div id="hud"><div id="lvl">Slag 1</div><canvas id="kaart"></canvas><div id="xpbalk"><i id="xpvul"></i><span id="xptekst"></span></div></div>
+<div id="evopijl"></div>
+<div id="swipe"><span class="hand"></span>Swipe naar rechts om de vijand te zien<b>→</b></div>
+<div id="goud"><span class="muntje"></span><b id="goudtal">0</b><small id="inkomen">+3/s</small></div>
+<div id="banner"></div>
+<div id="rij"></div>
+<div id="dock">
+  <div class="groep" id="soldaten"></div>
+  <div class="scheid"></div>
+  <div class="groep">
+    <button class="dk" id="ktoren"><kbd>T</kbd><canvas></canvas><span class="nm">Toren</span><span class="pr">0</span></button>
+    <button class="dk" id="kplek"><kbd>P</kbd><canvas></canvas><span class="nm">Extra plek</span><span class="pr">0</span></button>
+  </div>
+  <div class="scheid"></div>
+  <div class="groep">
+    <button class="dk" id="khoud"><kbd>H</kbd><canvas></canvas><span class="nm">Vooruit!</span></button>
+    <button class="dk" id="ksuper"><kbd>S</kbd><i class="vul"></i><canvas></canvas><span class="nm">Super</span></button>
+    <button class="dk" id="kevo"><kbd>E</kbd><i class="vul"></i><canvas></canvas><span class="nm">Volgend tijdperk</span></button>
+  </div>
+</div>
+<button id="terug">‹ Menu</button>
+<button class="rondknop" id="snel" aria-label="Snelheid">1×</button>
+<button class="rondknop" id="pauze" aria-label="Pauze"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></button>
+<button class="rondknop" id="geluid" aria-label="Geluid"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path id="golf" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg></button>
+<div id="draai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></svg><p class="onder">Draai je scherm om te spelen</p></div>
+
+<div class="scherm aan" id="menu">
+  <h1>Tijdstrijd</h1>
+  <p class="onder">Stuur je soldaten over de weg en sloop de basis van de computer. Verdien ervaring en reis door de tijd: van holbewoners tot ruimtesoldaten!</p>
+  <div class="rij">
+    <button class="knop" id="speel">Speel slag 1</button>
+    <button class="knop2" id="naarwinkel">Winkel · <span class="munt" id="menumunten">0</span></button>
+  </div>
+  <div id="tijdlijn"></div>
+  <div class="levels" id="levels"></div>
+  <div class="uitleg">
+    <div><b>Soldaten</b><br>Vechters slaan van dichtbij, schutters schieten van achteren en de zware houdt veel klappen tegen.</div>
+    <div><b>Houd stand</b><br>Je soldaten wachten bij de vlag. Zo verzamel je een groot leger en val je samen aan.</div>
+    <div><b>Tijdperken</b><br>Elke verslagen vijand geeft ervaring. Is de balk vol, dan ga je naar het volgende tijdperk.</div>
+    <div><b>Megabom</b><br>In het laatste tijdperk spaar je ervaring voor een megabom op de vijandelijke basis.</div>
+  </div>
+</div>
+
+<div class="scherm" id="pauzescherm">
+  <h2>Pauze</h2>
+  <div class="rij"><button class="knop" id="hervat">Verder</button><button class="knop2" id="stop">Stoppen</button></div>
+</div>
+
+<div class="scherm" id="einde">
+  <h2 id="eindtitel">Gewonnen!</h2>
+  <div class="eindsterren" id="eindsterren"></div>
+  <div class="stats">
+    <div class="stat"><b id="st-tijd">0</b><span>minuten</span></div>
+    <div class="stat"><b id="st-gedood">0</b><span>verslagen</span></div>
+    <div class="stat"><b id="st-tijdperk">-</b><span>tijdperk</span></div>
+  </div>
+  <p class="onder">Verdiend: <span class="munt" id="verdiend">0</span></p>
+  <div class="rij">
+    <button class="knop" id="volgende">Volgende slag</button>
+    <button class="knop2" id="opnieuw">Opnieuw</button>
+    <button class="knop verborgen" id="klaar">Klaar ✓</button>
+    <button class="knop2" id="eindwinkel">Winkel</button>
+    <button class="knop2" id="naarmenu">Menu</button>
+  </div>
+</div>
+
+<div class="scherm" id="winkel">
+  <h2>Winkel</h2>
+  <p class="onder">Je hebt <span class="munt" id="winkelmunten">0</span>. Munten verdien je met elke slag, ook als je verliest.</p>
+  <div class="lijst" id="lijstupgrades"></div>
+  <button class="knop2" id="uitwinkel">Terug</button>
+</div>
+
+<script src="kern.js"></script>
+<script src="spel.js"></script>
+</body>
+</html>

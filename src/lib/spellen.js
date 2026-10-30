@@ -25,6 +25,7 @@ export const VRIJE_SPELLEN = [
   { key: 'stapeltoren',   name: 'Stapeltoren',     desc: 'Bouw in 1 minuut de hoogste toren. Tik precies op tijd!', img: '/scenes/games/stapeltoren.svg' },
   { key: 'steenknaller',  name: 'Steenknaller',    desc: 'Kaats de bal en knal alle stenen weg in 30 levels!', img: '/scenes/games/steenknaller.svg' },
   { key: 'vlotstrijd',    name: 'Vlotstrijd',      desc: 'Mik en schiet vanaf je vlot: 4 werelden, 40 levels en 4 eindbazen!', img: '/scenes/games/vlotstrijd.svg' },
+  { key: 'tijdstrijd',    name: 'Tijdstrijd',      desc: 'Stuur je leger over de weg en reis van holbewoners tot ruimtesoldaten in 15 veldslagen!', img: '/scenes/games/tijdstrijd.png' },
 ]
 
 // De drie 3D-spellen start je vanuit de Kledingkast, met je eigen poppetje.
