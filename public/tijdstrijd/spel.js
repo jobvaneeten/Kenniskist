@@ -17,10 +17,15 @@ var OPSLAG = 'kk_tijd'
 var D = (function () {
   var d = {}
   try { d = JSON.parse(localStorage.getItem(OPSLAG) || '{}') || {} } catch (e) {}
-  return { munten: d.munten || 0, open: Math.min(TS.LEVELS.length - 1, d.open || 0), sterren: d.sterren || {}, upgrades: d.upgrades || {},
+  return { munten: d.munten || 0, niveau: Math.min(TS.NIVEAUS.length - 1, d.niveau || 0), sterren: d.sterren || {}, upgrades: d.upgrades || {},
     geluid: d.geluid !== false, snel: d.snel === 2 ? 2 : 1 }
 })()
 function bewaar() { try { localStorage.setItem(OPSLAG, JSON.stringify(D)) } catch (e) {} }
+// als beloning speel je 1 minuut; de slag wordt bewaard, zodat je de volgende keer verdergaat
+var SLAG_OPSLAG = 'kk_tijd_slag'
+function bewaarSlag() { try { localStorage.setItem(SLAG_OPSLAG, JSON.stringify(s, function (k, v) { return k === 'spoor' || k === 'def' ? undefined : v })) } catch (e) {} }
+function laadSlag() { try { return TS.herstel(JSON.parse(localStorage.getItem(SLAG_OPSLAG) || 'null')) } catch (e) { return null } }
+function wisSlag() { try { localStorage.removeItem(SLAG_OPSLAG) } catch (e) {} }
 
 // ── tekenhulp ──
 function hex(h) { return [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)] }
@@ -1715,38 +1720,51 @@ function toonScherm(id) {
   if (!(s && spel)) $('swipe').classList.remove('aan')
   if (s && spel) meet()
 }
-function startLevel(L) {
-  s = TS.nieuw(L, { upgrades: D.upgrades, seed: (Date.now() % 100000) + 1 })
+function startSlag(n, opgeslagen) {
+  s = opgeslagen || TS.nieuw(n, { upgrades: D.upgrades, seed: (Date.now() % 100000) + 1 })
   actief = true; gepauzeerd = false; deeltjes = []; teksten = []; geesten = []; schud = 0; flits = 0; lagen = null; sfeer = []; fx = []; rookjes = []; munten = []; lagenOud = null
   weer = { t: 0, vogels: [], vallend: [], regen: [] }
   camX = -MARGE; camV = 0; alarm = 0; vorigKan = false
   s.speeltijd = BELONING ? 60 : 0
+  s.gedoodStart = s.zij[0].gedood
+  $('klok').classList.toggle('aan', BELONING)
   if (!geswiped) setTimeout(function () { if (!geswiped && s && actief) $('swipe').classList.add('aan') }, 2200)
-  $('lvl').textContent = 'Slag ' + (L + 1) + ' · tot de ' + TS.TIJDPERKEN[s.def.maxE].naam
+  $('lvl').textContent = 'Niveau: ' + s.def.naam
   toonScherm(null)
   tekenIconen()
   audio()
-  banner('Slag ' + (L + 1), 1800, BELONING ? 'Je mag 1 minuut spelen. Tik op een soldaat!' : 'Tik op een soldaat om hem te trainen')
+  if (opgeslagen) banner('Verder met je slag!', 2000, 'Je mag weer 1 minuut spelen')
+  else banner(s.def.naam, 1800, BELONING ? 'Je mag 1 minuut spelen. Tik op een soldaat!' : 'Tik op een soldaat om hem te trainen')
+}
+// de minuut is om: slag bewaren, munten voor wat je versloeg, en terug naar de oefening
+function tijdOp() {
+  if (!s || !actief) return
+  actief = false
+  D.munten += Math.min(40, 5 + (s.zij[0].gedood - s.gedoodStart) * 2); bewaar()
+  bewaarSlag()
+  Geluid.win()
+  $('klok').classList.remove('aan')
+  banner('De minuut is om!', 2200, 'De volgende keer ga je hier verder')
+  setTimeout(function () { parent.postMessage({ type: 'tijdstrijd-gameover' }, '*') }, 2000)
 }
 function einde() {
   if (!s || !actief) return
   actief = false
-  var tijdOp = s.fase === 'spel', gewonnen = s.uitslag === 'gewonnen', st = TS.sterren(s)
-  var verdiend = tijdOp ? Math.min(40, 5 + s.zij[0].gedood * 2) : TS.beloning(s)
+  var gewonnen = s.uitslag === 'gewonnen', st = TS.sterren(s), verdiend = TS.beloning(s)
   D.munten += verdiend
-  if (tijdOp) Geluid.win()
-  else if (gewonnen) { D.sterren[s.L] = Math.max(D.sterren[s.L] || 0, st); if (s.L === D.open && D.open < TS.LEVELS.length - 1) D.open++; Geluid.win() }
+  if (gewonnen) { D.sterren[s.n] = Math.max(D.sterren[s.n] || 0, st); Geluid.win() }
   else Geluid.verlies()
   bewaar()
-  $('eindtitel').textContent = tijdOp ? 'De minuut is om!' : gewonnen ? (s.L === TS.LEVELS.length - 1 ? 'Alles gewonnen!' : 'Gewonnen!') : 'Je basis is gesloopt'
+  if (BELONING) { wisSlag(); $('klok').classList.remove('aan') }
+  $('eindtitel').textContent = gewonnen ? (s.n === TS.NIVEAUS.length - 1 ? 'Onmogelijk verslagen!' : 'Gewonnen!') : 'Je basis is gesloopt'
   var es = $('eindsterren'); es.innerHTML = ''
   for (var i = 0; i < 3; i++) es.innerHTML += '<svg class="' + (i < st ? '' : 'leeg') + '"><use href="#ster"/></svg>'
-  es.classList.toggle('verborgen', !gewonnen || tijdOp)
+  es.classList.toggle('verborgen', !gewonnen)
   $('st-tijd').textContent = Math.max(1, Math.round(s.t / 60))
   $('st-gedood').textContent = s.zij[0].gedood
   $('st-tijdperk').textContent = TS.TIJDPERKEN[s.zij[0].e].naam
   $('verdiend').textContent = verdiend
-  $('volgende').classList.toggle('verborgen', BELONING || !gewonnen || s.L + 1 >= TS.LEVELS.length)
+  $('volgende').classList.toggle('verborgen', BELONING || !gewonnen || s.n + 1 >= TS.NIVEAUS.length)
   $('opnieuw').className = BELONING ? 'verborgen' : gewonnen ? 'knop2' : 'knop'
   $('naarmenu').classList.toggle('verborgen', BELONING)
   $('eindwinkel').classList.toggle('verborgen', BELONING)
@@ -1756,7 +1774,7 @@ function einde() {
 function toonMenu() {
   s = null; actief = false; meet()
   $('menumunten').textContent = D.munten
-  $('speel').textContent = 'Speel slag ' + (D.open + 1)
+  $('speel').textContent = 'Speel · ' + TS.NIVEAUS[D.niveau].naam
   var tl = $('tijdlijn')
   if (!tl.childNodes.length) TS.TIJDPERKEN.forEach(function (T, e) {
     var c = document.createElement('canvas'); c.width = 192; c.height = 116; c.title = T.naam
@@ -1771,26 +1789,28 @@ function toonMenu() {
     tl.appendChild(c)
   })
   var lv = $('levels'); lv.innerHTML = ''
-  TS.LEVELS.forEach(function (def, L) {
-    var b = document.createElement('button'), st = D.sterren[L] || 0
-    b.className = 'lv' + (L === D.open ? ' volgende' : '')
-    b.disabled = L > D.open
+  // de vijf niveaus van de computer; je kiest er zelf een
+  TS.NIVEAUS.forEach(function (def, n) {
+    var b = document.createElement('button'), st = D.sterren[n] || 0
+    b.className = 'lv' + (n === D.niveau ? ' volgende' : '')
     var str = ''
     for (var i = 0; i < 3; i++) str += '<svg class="' + (i < st ? '' : 'leeg') + '" viewBox="0 0 24 24"><use href="#ster"/></svg>'
-    b.innerHTML = (L + 1) + '<small>tot ' + TS.TIJDPERKEN[def.maxE].naam + '</small><span class="st">' + str + '</span>'
-    b.onclick = function () { startLevel(L) }
+    var stippen = ''
+    for (i = 0; i <= n; i++) stippen += '<i></i>'
+    b.innerHTML = '<span class="moeite">' + stippen + '</span>' + def.naam + '<span class="st">' + str + '</span>'
+    b.onclick = function () { D.niveau = n; bewaar(); startSlag(n) }
     lv.appendChild(b)
   })
   toonScherm('menu')
 }
-$('speel').onclick = function () { startLevel(D.open) }
-$('volgende').onclick = function () { startLevel(s.L + 1) }
-$('opnieuw').onclick = function () { startLevel(s.L) }
+$('speel').onclick = function () { startSlag(D.niveau) }
+$('volgende').onclick = function () { D.niveau = s.n + 1; bewaar(); startSlag(D.niveau) }
+$('opnieuw').onclick = function () { startSlag(s.n) }
 $('naarmenu').onclick = toonMenu
 $('klaar').onclick = function () { parent.postMessage({ type: 'tijdstrijd-gameover' }, '*') }
 $('pauze').onclick = function (e) { if (e && e.stopPropagation) e.stopPropagation(); if (!actief) return; gepauzeerd = !gepauzeerd; toonScherm(gepauzeerd ? 'pauzescherm' : null) }
 $('hervat').onclick = function () { gepauzeerd = false; vorige = performance.now(); toonScherm(null) }
-$('stop').onclick = function () { gepauzeerd = false; s.uitslag = 'verloren'; s.fase = 'klaar'; einde() }
+$('stop').onclick = function () { gepauzeerd = false; toonScherm(null); if (BELONING) { tijdOp(); return } s.uitslag = 'verloren'; s.fase = 'klaar'; einde() }
 $('snel').onclick = function (e) { e.stopPropagation(); D.snel = D.snel === 2 ? 1 : 2; bewaar(); tekenSnel() }
 function tekenSnel() { $('snel').textContent = D.snel + '×'; $('snel').classList.toggle('x2', D.snel === 2) }
 $('naarwinkel').onclick = function () { tekenWinkel(); toonScherm('winkel') }
@@ -1832,7 +1852,7 @@ function tekenWinkel() {
 var vorige = performance.now(), knopT = 0
 function tekenMenuAchtergrond(dt) {
   camX += dt * 25; if (camX > camMax()) camX = -MARGE
-  tekenAchtergrond(Math.min(4, Math.floor(D.open / 3)))
+  tekenAchtergrond(D.niveau)
   ctx.setTransform(dpr * S, 0, 0, dpr * S, dpr * OX, dpr * OY)
   tekenGrond(ctx); werkSfeerBij(ctx, dt); tekenVignet()
 }
@@ -1846,9 +1866,9 @@ function frame(nu) {
       if (s.speeltijd) {
         s.speeltijd = Math.max(0, s.speeltijd - dt)
         var sec = Math.ceil(s.speeltijd)
-        $('lvl').textContent = 'Nog ' + Math.floor(sec / 60) + ':' + ('0' + sec % 60).slice(-2)
-        $('lvl').classList.toggle('bijna', s.speeltijd < 10)
-        if (s.speeltijd <= 0 && s.fase === 'spel') einde()
+        $('klok').textContent = 'Nog ' + Math.floor(sec / 60) + ':' + ('0' + sec % 60).slice(-2)
+        $('klok').classList.toggle('bijna', s.speeltijd < 10)
+        if (s.speeltijd <= 0 && s.fase === 'spel') tijdOp()
       }
     }
     tekenSlag(gepauzeerd ? 0 : dt)
@@ -1859,14 +1879,17 @@ function frame(nu) {
 }
 
 // alleen om te testen: ?debug geeft de spelstaat aan de console
-if (params.has('debug')) window.__tijd = { s: function () { return s }, D: D, start: startLevel, soldaat: tekenSoldaat, basis: tekenBasis, superIcoon: superIcoon, cam: zetCam, verwerk: verwerk,
+if (params.has('debug')) window.__tijd = { s: function () { return s }, D: D, start: startSlag, laadSlag: laadSlag, soldaat: tekenSoldaat, basis: tekenBasis, superIcoon: superIcoon, cam: zetCam, verwerk: verwerk,
   zoom: function (z) { S = z; OY = H - dockH - (ONDER - 30) * S; zetCam(camX); lagen = null } }
 
 maakKnoppen()
 meet()
 tekenGeluidKnop()
 tekenSnel()
-if (BELONING) startLevel(D.open)
+// wordt het spel tussendoor gesloten, dan bewaren we de slag ook
+window.addEventListener('pagehide', function () { if (BELONING && actief && s && s.fase === 'spel') bewaarSlag() })
+document.addEventListener('visibilitychange', function () { if (document.hidden && BELONING && actief && s && s.fase === 'spel') bewaarSlag() })
+if (BELONING) { var opgeslagen = laadSlag(); startSlag(opgeslagen ? opgeslagen.n : D.niveau, opgeslagen) }
 else toonMenu()
 requestAnimationFrame(frame)
 })()

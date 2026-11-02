@@ -27,7 +27,7 @@ import { spelNa, heeftSpel } from '../lib/beloning.js'
 // Een zin telt als één opgave: goed als er bij geen enkele stap een misser was.
 // Na 5 goede zinnen volgt een spelletje.
 
-const GOED_VOOR_REWARD_STD = 5
+const GOED_VOOR_REWARD_STD = 10
 // De leerkracht kan dit per klas anders zetten (src/lib/beloning.js). Een oefening
 // wordt pas geladen als hij geopend wordt, dus altijd na het inloggen.
 const GOED_VOOR_REWARD = spelNa(GOED_VOOR_REWARD_STD)

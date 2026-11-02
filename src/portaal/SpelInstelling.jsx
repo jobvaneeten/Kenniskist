@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabase.js'
 // Opslaan loopt via zet_spel_na (migratie 0019): klassen zelf aanpassen mag
 // alleen de icter, deze ene instelling hoort bij de leerkracht.
 const KEUZES = [
-  { waarde: '', tekst: 'Zoals de oefening het doet (meestal na 5 of 10)' },
+  { waarde: '', tekst: 'Zoals de oefening het doet (na 10, verhaaltjessommen na 5)' },
   { waarde: '3', tekst: 'Na 3 goede antwoorden' },
   { waarde: '5', tekst: 'Na 5 goede antwoorden' },
   { waarde: '10', tekst: 'Na 10 goede antwoorden' },

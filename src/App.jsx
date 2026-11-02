@@ -39,7 +39,7 @@ const GRAVEN_CODE = '0001'              // 100 duiken in Diepgravers
 const GRAVEN_DUIKEN = 100
 const ESCAPE_CODE = 'vrijdag'           // opent de GLITCH-escaperoom
 // Losse HTML-pagina's in public/ achter een code: code → pagina. Met `beloning`
-// stuurt de pagina per goed antwoord { type: 'kk-goed' } en volgt na 5 goed
+// stuurt de pagina per goed antwoord { type: 'kk-goed' } en volgt na 10 goed
 // een spelletje (de iframe blijft eronder staan, dus je gaat precies verder).
 const HTML_CODES = {
   spelvik: { src: '/vik.html', titel: 'Racelegends', achtergrond: '#111' },
@@ -49,7 +49,7 @@ const HTML_CODES = {
 const HTML_BELONING = 50
 
 function HtmlPagina({ pagina, onBack, addBriefgeld, addCuruntie }) {
-  const perBeloning = useRef(spelNa(5)).current
+  const perBeloning = useRef(spelNa(10)).current
   const sinds = useRef(0)
   const [reward, setReward] = useState(false)
 

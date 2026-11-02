@@ -52,6 +52,12 @@
   #banner.groot small{-webkit-text-fill-color:var(--ink);font-size:17px;}
   #goud.pop{animation:goudpop .25s ease-out;}
   @keyframes goudpop{40%{transform:scale(1.12);border-color:var(--goud);box-shadow:0 0 22px rgba(255,200,61,.6)}}
+  #klok{position:fixed;top:56px;left:10px;z-index:5;display:none;padding:5px 12px;border-radius:99px;font-family:var(--disp);font-size:14px;letter-spacing:.06em;
+        background:rgba(10,12,34,.7);border:1px solid rgba(255,255,255,.2);pointer-events:none;}
+  #klok.aan{display:block;}
+  #klok.bijna{color:var(--goud);border-color:var(--goud);animation:puls .5s ease-in-out infinite;}
+  .lv .moeite{display:flex;gap:3px;}
+  .lv .moeite i{width:7px;height:7px;border-radius:50%;background:var(--rood);box-shadow:0 0 6px var(--rood);}
   #lvl.bijna{color:var(--goud);border-color:var(--goud);animation:puls .5s ease-in-out infinite;}
   #banner small{display:block;font-family:var(--body);font-size:16px;letter-spacing:.02em;text-transform:none;color:var(--dim);font-weight:700;margin-top:4px;}
 
@@ -119,6 +125,7 @@
     #xptekst{font-size:10px;line-height:16px;}
     #goud{top:6px;left:6px;padding:4px 10px 4px 8px;}
     #goud b{font-size:16px;}
+    #klok{top:42px;left:6px;font-size:12px;padding:3px 10px;}
     .rondknop{width:36px;height:36px;top:6px !important;}
     #pauze{right:48px;} #snel{right:90px;}
   }
@@ -159,9 +166,9 @@
 
   #tijdlijn{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;}
   #tijdlijn canvas{width:96px;height:58px;border-radius:12px;border:1px solid rgba(255,255,255,.14);}
-  .levels{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;width:100%;max-width:560px;}
+  .levels{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;width:100%;max-width:640px;}
   .lv{position:relative;aspect-ratio:1.1;border-radius:15px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
-      background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.12);color:var(--ink);font-family:var(--disp);font-size:19px;padding:0;}
+      background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.12);color:var(--ink);font-family:var(--disp);font-size:15px;padding:4px;line-height:1.1;}
   .lv:not(:disabled):hover{background:rgba(255,255,255,.11);}
   .lv:disabled{opacity:.33;cursor:default;}
   .lv.volgende{border-color:var(--cyaan);box-shadow:0 0 0 1px var(--cyaan) inset,0 0 18px rgba(62,240,255,.3);}
@@ -198,6 +205,7 @@
 <div id="hud"><div id="lvl">Slag 1</div><canvas id="kaart"></canvas><div id="xpbalk"><i id="xpvul"></i><span id="xptekst"></span></div></div>
 <div id="evopijl"></div>
 <div id="swipe"><span class="hand"></span>Swipe naar rechts om de vijand te zien<b>→</b></div>
+<div id="klok">Nog 1:00</div>
 <div id="goud"><span class="muntje"></span><b id="goudtal">0</b><small id="inkomen">+3/s</small></div>
 <div id="banner"></div>
 <div id="rij"></div>
@@ -253,7 +261,7 @@
   </div>
   <p class="onder">Verdiend: <span class="munt" id="verdiend">0</span></p>
   <div class="rij">
-    <button class="knop" id="volgende">Volgende slag</button>
+    <button class="knop" id="volgende">Moeilijker niveau</button>
     <button class="knop2" id="opnieuw">Opnieuw</button>
     <button class="knop verborgen" id="klaar">Klaar ✓</button>
     <button class="knop2" id="eindwinkel">Winkel</button>

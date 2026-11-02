@@ -1574,7 +1574,7 @@ export default function FootballGame({ year, onBack, addCuruntie, noQuiz = false
           </h2>
           <p style={{ color:'rgba(255,255,255,0.7)', fontSize:'0.9rem', margin:'4px 0' }}>
             {won
-              ? (next ? 'Top! Na 5 goede antwoorden speel je de volgende ronde 🏆' : '🎉 Je hebt het hele toernooi gewonnen!')
+              ? (next ? 'Top! Bij je volgende spelletje speel je de volgende ronde 🏆' : '🎉 Je hebt het hele toernooi gewonnen!')
               : 'Volgende keer een nieuw toernooi 💪'}
           </p>
           <div className="fb-end-coins"><span>💵</span><span>+ € 50 briefgeld!</span></div>

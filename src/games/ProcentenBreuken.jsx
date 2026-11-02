@@ -7,7 +7,7 @@ import { TerugKnop, Icoon } from '../ui/index.jsx'
 import { spelNa, heeftSpel } from '../lib/beloning.js'
 
 const PER_ROUND    = 4   // aantal vakjes (percentages) per ronde
-const PER_BELONING_STD = 5   // na elke 5 opgeloste rondes een spelletje
+const PER_BELONING_STD = 10   // na elke 10 opgeloste rondes een spelletje
 // De leerkracht kan dit per klas anders zetten (src/lib/beloning.js). Een oefening
 // wordt pas geladen als hij geopend wordt, dus altijd na het inloggen.
 const PER_BELONING = spelNa(PER_BELONING_STD)

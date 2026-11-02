@@ -5,7 +5,7 @@ import './werkwoord-spelling.css'
 import { Knop, TerugKnop, VoortgangsBalk, Icoon, Feedback } from '../ui/index.jsx'
 import { spelNa, heeftSpel } from '../lib/beloning.js'
 
-const PER_BELONING_STD = 5     // na elke 5 goede antwoorden een spel kiezen
+const PER_BELONING_STD = 10     // na elke 10 goede antwoorden een spel kiezen
 // De leerkracht kan dit per klas anders zetten (src/lib/beloning.js). Een oefening
 // wordt pas geladen als hij geopend wordt, dus altijd na het inloggen.
 const PER_BELONING = spelNa(PER_BELONING_STD)

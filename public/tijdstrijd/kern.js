@@ -62,12 +62,15 @@ var TS = (function () {
       kracht: 1 + 0.08 * (up.kracht || 0), toren: 1 + 0.25 * (up.toren || 0), laad: 1 + 0.18 * (up.super || 0), xp: 1 }
   }
 
-  // 15 veldslagen. maxE = het hoogste tijdperk dat je (en de computer) kan halen.
-  var LEVELS = []
-  for (var l = 0; l < 15; l++) {
-    LEVELS.push({ L: l, maxE: l < 3 ? 1 : l < 6 ? 2 : l < 9 ? 3 : 4,
-      ai: { inkomen: 0.7 + 0.045 * l, xp: 0.9 + 0.01 * l, goud: 100 + 12 * l, kracht: 1 + 0.015 * l, basis: 1 + 0.03 * l, slim: Math.min(1, 0.3 + 0.06 * l) } })
-  }
+  // vijf niveaus van de computer. Je speelt altijd van de Oertijd tot de Ruimte (maxE).
+  var NIVEAUS = [
+    { naam: 'Makkelijk',     ai: { inkomen: 0.7,  xp: 0.9,  goud: 100, kracht: 1,    basis: 1,    slim: 0.3 } },
+    { naam: 'Normaal',       ai: { inkomen: 0.95, xp: 0.97, goud: 160, kracht: 1.08, basis: 1.2,  slim: 0.65 } },
+    { naam: 'Moeilijk',      ai: { inkomen: 1.16, xp: 1.01, goud: 200, kracht: 1.14, basis: 1.3,  slim: 0.85 } },
+    { naam: 'Heel moeilijk', ai: { inkomen: 1.26, xp: 1.04, goud: 240, kracht: 1.18, basis: 1.38, slim: 1 } },
+    { naam: 'Onmogelijk',    ai: { inkomen: 1.32, xp: 1.05, goud: 270, kracht: 1.21, basis: 1.42, slim: 1 } },
+  ]
+  NIVEAUS.forEach(function (d, i) { d.n = i; d.maxE = 4 })
 
   function eenheid(e, t) {
     var S = SOORTEN[t]
@@ -88,11 +91,11 @@ var TS = (function () {
       basis: { hp: basisMax(0, m), max: basisMax(0, m) }, gedood: 0 }
   }
 
-  function nieuw(L, opts) {
+  function nieuw(n, opts) {
     opts = opts || {}
-    var def = LEVELS[L], a = def.ai
-    var s = { L: L, def: def, t: 0, acc: 0, id: 1, eenheden: [], kogels: [], effecten: [], events: [], fase: 'spel', uitslag: null,
-      rnd: rng(opts.seed || L * 7919 + 13), aiT: 1, aiPlan: null }
+    var def = NIVEAUS[n], a = def.ai
+    var s = { n: n, def: def, t: 0, acc: 0, id: 1, eenheden: [], kogels: [], effecten: [], events: [], fase: 'spel', uitslag: null,
+      rnd: rng(opts.seed || n * 7919 + 13), aiT: 1, aiPlan: null }
     s.zij = [maakZij(0, mods(opts.upgrades)), maakZij(1, { goud: a.goud, inkomen: a.inkomen, basis: a.basis, kracht: a.kracht, toren: 1, laad: 1, xp: a.xp })]
     return s
   }
@@ -376,15 +379,22 @@ var TS = (function () {
     return r >= 0.6 ? 3 : r >= 0.3 ? 2 : 1
   }
   function beloning(s) {
-    if (s.uitslag === 'gewonnen') return 40 + 10 * s.L + 15 * sterren(s)
-    return 10 + 3 * s.L + Math.min(30, s.zij[0].gedood)
+    if (s.uitslag === 'gewonnen') return 50 + 30 * s.n + 15 * sterren(s)
+    return 10 + 4 * s.n + Math.min(30, s.zij[0].gedood)
+  }
+  // een opgeslagen slag (JSON) weer speelbaar maken: de toevalsgenerator en het niveau terugzetten
+  function herstel(d) {
+    if (!d || !d.zij || !NIVEAUS[d.n] || d.fase !== 'spel') return null
+    d.def = NIVEAUS[d.n]; d.rnd = rng(Math.floor(Math.random() * 1e6) + 1); d.events = []; d.acc = 0
+    d.kogels.forEach(function (b) { delete b.spoor })
+    return d
   }
 
   return {
     B: B, BASIS: BASIS, BASIS_HALF: BASIS_HALF, HOUD_X: HOUD_X, STAP: STAP, M: M, MAX_RIJ: MAX_RIJ, SUPER_LAAD: SUPER_LAAD,
-    TIJDPERKEN: TIJDPERKEN, SOORTEN: SOORTEN, SUPERS: SUPERS, UPGRADES: UPGRADES, LEVELS: LEVELS,
+    TIJDPERKEN: TIJDPERKEN, SOORTEN: SOORTEN, SUPERS: SUPERS, UPGRADES: UPGRADES, NIVEAUS: NIVEAUS,
     rng: rng, eenheid: eenheid, torenInfo: torenInfo, xpNodig: xpNodig, plekPrijs: plekPrijs, torenPlek: torenPlek, inkomen: inkomen,
     nieuw: nieuw, stap: stap, koop: koop, kanEvolueren: kanEvolueren, evolueer: evolueer, kanMegabom: kanMegabom, megabom: megabom, megaNodig: megaNodig, toren: toren, plek: plek,
-    superAanval: superAanval, houding: houding, sterren: sterren, beloning: beloning,
+    superAanval: superAanval, houding: houding, sterren: sterren, beloning: beloning, herstel: herstel,
   }
 })()

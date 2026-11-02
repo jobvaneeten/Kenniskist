@@ -86,7 +86,7 @@ export default function EigenVragen({ onBack, onOpnieuw, addBriefgeld, addCurunt
   const [verdiend, setVerdiend] = useState(0)
   const [beloning, setBeloning] = useState(false)
   const [eindGeld, setEindGeld] = useState(0)
-  const perBeloning = config?.spel_na === 0 ? Infinity : config?.spel_na > 0 ? config.spel_na : spelNa(5)
+  const perBeloning = config?.spel_na === 0 ? Infinity : config?.spel_na > 0 ? config.spel_na : spelNa(10)
 
   const volgendeVraag = () => {
     setNr(n => n + 1)

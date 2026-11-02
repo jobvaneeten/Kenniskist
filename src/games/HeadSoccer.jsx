@@ -2787,7 +2787,7 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
           <p className="wk-champ-sub"><FlagIcon emoji={playerCountry.flag} /> {score.L} — {score.R} <FlagIcon emoji={oppCountry.flag} /></p>
           <p className="wk-champ-sub">{menuTour
             ? (won ? 'Door naar de volgende ronde!' : 'Je speelt deze ronde opnieuw.')
-            : (won ? 'Geef weer 5 goede antwoorden voor de volgende ronde!' : 'Volgende keer speel je deze ronde opnieuw.')}</p>
+            : (won ? 'Bij je volgende spelletje speel je de volgende ronde!' : 'Volgende keer speel je deze ronde opnieuw.')}</p>
         </div>
         {menuTour
           ? <button className="mode-card hs-go" onClick={() => setPhase('reward_round')}>▶ Volgende ronde</button>

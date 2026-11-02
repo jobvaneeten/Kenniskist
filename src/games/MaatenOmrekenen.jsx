@@ -7,7 +7,7 @@ import './maten-omrekenen.css'
 import { Knop, TerugKnop, VoortgangsBalk, Icoon } from '../ui/index.jsx'
 import { spelNa, heeftSpel } from '../lib/beloning.js'
 
-const PER_BELONING_STD = 5
+const PER_BELONING_STD = 10
 // De leerkracht kan dit per klas anders zetten (src/lib/beloning.js). Een oefening
 // wordt pas geladen als hij geopend wordt, dus altijd na het inloggen.
 const PER_BELONING = spelNa(PER_BELONING_STD)
@@ -221,7 +221,7 @@ export default function MaatenOmrekenen({ onBack, addBriefgeld, addCuruntie, aan
   }
 
   if (showReward) {
-    return <SpelBeloning title="5 goed!" geld={BELONING} addCuruntie={addCuruntie} onDone={naBeloning} />
+    return <SpelBeloning title={`${PER_BELONING} goed!`} geld={BELONING} addCuruntie={addCuruntie} onDone={naBeloning} />
   }
 
   if (opdracht.klaar) {

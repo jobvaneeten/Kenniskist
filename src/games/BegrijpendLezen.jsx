@@ -5,6 +5,7 @@ import MenuScene from '../MenuScenes'
 import './dictee-thema.css'
 import { TerugKnop, Icoon } from '../ui/index.jsx'
 import { useSessie } from '../lib/sessie.jsx'
+import { spelNa } from '../lib/beloning.js'
 
 // startLes: alleen gezet vanuit een weektaak-opdracht (toolRender.jsx) — het
 // lesnummer binnen thema startThema (standaard "spullen"). Springt direct naar
@@ -34,7 +35,7 @@ export default function BegrijpendLezen({ onBack, addBriefgeld, addCuruntie, sta
     setBeloning(false)
   }, [])
 
-  // Elk goed antwoord levert 10 briefgeld op; na 5 goede antwoorden vraagt de
+  // Elk goed antwoord levert 10 briefgeld op; na 10 goede antwoorden vraagt de
   // les om een spelletje. De keuze en de "één potje"-regel zitten in
   // SpelBeloning, gedeeld met alle andere oefeningen.
   useEffect(() => {
@@ -50,7 +51,7 @@ export default function BegrijpendLezen({ onBack, addBriefgeld, addCuruntie, sta
   // `.game-screen > * { position: relative }` regel.
   const overlay = beloning && (
     <SpelBeloning
-      title="5 goede antwoorden!"
+      title={spelNa(10) + ' goede antwoorden!'}
       geld={50}
       addCuruntie={addCuruntie}
       onDone={() => { addBriefgeld?.(50); resume() }}

@@ -145,7 +145,7 @@ export default function SpelBeloning({ title, sub, geld, addCuruntie, onDone }) 
   // Het volgende level, dan Klaar.
   if (picked === 'steen')      return <IframeEmbed src="/steenknaller/" title="Steenknaller" doneType="steenknaller-gameover" hint="Speel 1 level — daarna tik je op Klaar" onDone={onDone} />
   if (picked === 'vlot')       return <IframeEmbed src="/vlotstrijd/" title="Vlotstrijd" doneType="vlotstrijd-gameover" hint="Speel 1 level — daarna tik je op Klaar" onDone={onDone} />
-  if (picked === 'tijd')       return <IframeEmbed src="/tijdstrijd/" title="Tijdstrijd" doneType="tijdstrijd-gameover" hint="Speel 1 minuut, daarna tik je op Klaar" onDone={onDone} />
+  if (picked === 'tijd')       return <IframeEmbed src="/tijdstrijd/" title="Tijdstrijd" doneType="tijdstrijd-gameover" hint="Je speelt 1 minuut, daarna ga je vanzelf terug" onDone={onDone} />
 
   return (
     <div className="sb-screen">

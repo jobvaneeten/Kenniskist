@@ -29,7 +29,7 @@ export default function DicteeThema({ onBack, addCuruntie, addBriefgeld, thema =
     setBeloning(false)
   }, [])
 
-  // Het dictee in het iframe vraagt na 5 goede woorden om een spelletje; de
+  // Het dictee in het iframe vraagt na 10 goede woorden om een spelletje; de
   // keuze zelf (en de reward-modus per spel) zit in SpelBeloning, zodat elke
   // oefening exact dezelfde spellen en dezelfde "één potje"-regel gebruikt.
   useEffect(() => {

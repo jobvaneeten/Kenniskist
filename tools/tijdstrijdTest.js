@@ -1,7 +1,8 @@
-// Tijdstrijd: een bot speelt alle 15 veldslagen op volgorde, koopt met zijn
-// munten upgrades en speelt redelijk maar niet perfect (zoals een kind dat
-// het spel een beetje kent). We kijken of elke slag te winnen is, niet te
-// makkelijk is en niet eindeloos duurt, en of de regels kloppen.
+// Tijdstrijd: een bot speelt elk van de 5 computerniveaus een paar keer, zonder
+// en met upgrades, en speelt redelijk maar niet perfect (zoals een kind dat
+// het spel een beetje kent). We kijken of de niveaus echt steeds moeilijker
+// worden, of het moeilijkste niveau met upgrades te halen is, of een slag niet
+// eindeloos duurt en of een opgeslagen slag verder kan.
 // Gebruik: node tools/tijdstrijdTest.js   (of: ... snel)
 import { readFileSync } from 'node:fs'
 import vm from 'node:vm'
@@ -15,7 +16,7 @@ let fouten = 0
 const fout = m => { fouten++; if (fouten < 20) console.log('✗ ' + m) }
 
 // ── regels ──
-if (T.LEVELS.length !== 15) fout('er zijn geen 15 veldslagen')
+if (T.NIVEAUS.length !== 5) fout('er zijn geen 5 niveaus')
 {
   const s = T.nieuw(0)
   if (!T.koop(s, 0, 0)) fout('kan geen holbewoner kopen')
@@ -26,7 +27,9 @@ if (T.LEVELS.length !== 15) fout('er zijn geen 15 veldslagen')
   if (s.eenheden.some(u => u.kant === 0 && u.x > T.HOUD_X + 1)) fout('"houd stand" houdt de soldaten niet tegen')
   s.zij[0].xp = 99999
   if (!T.evolueer(s, 0) || s.zij[0].e !== 1) fout('evolueren werkt niet')
-  if (T.evolueer(s, 0)) fout('slag 1 laat je verder dan de Ridders')
+  for (let i = 0; i < 5; i++) { s.zij[0].xp = 1e7; T.evolueer(s, 0) }
+  if (s.zij[0].e !== 4) fout('je komt niet tot de Ruimte')
+  s.zij[0].e = 0; s.zij[0].torens = [null]
   s.zij[0].goud = 5000
   if (!T.toren(s, 0) || !T.plek(s, 0) || !T.toren(s, 0)) fout('torens of plekken kopen werkt niet')
   if (T.toren(s, 0)) fout('een toren van hetzelfde tijdperk vervangt een andere')
@@ -35,7 +38,7 @@ if (T.LEVELS.length !== 15) fout('er zijn geen 15 veldslagen')
   // niets doen moet verliezen
   const s = T.nieuw(0)
   while (s.fase === 'spel' && s.t < 600) T.stap(s, 0.5)
-  if (s.uitslag !== 'verloren') fout('niets doen verliest slag 1 niet')
+  if (s.uitslag !== 'verloren') fout('niets doen verliest op Makkelijk niet')
 }
 
 // ── de bot ──
@@ -76,33 +79,41 @@ function koopUpgrades(up, munten) {
   }
 }
 
-let up = {}, munten = 0
-const pogingen = []
-for (let L = 0; L < T.LEVELS.length; L++) {
-  let n = 0, res
-  for (;;) {
-    n++
-    munten = koopUpgrades(up, munten)
-    res = speel(L, up, L * 100 + n, 0.75)
-    munten += T.beloning(res.s)
-    if (res.s.uitslag === 'gewonnen' || n >= 12) break
-  }
-  pogingen.push(n)
-  const s = res.s
-  if (s.uitslag !== 'gewonnen') fout(`slag ${L + 1}: na 12 pogingen nog niet gewonnen`)
-  if (s.t > 1200) fout(`slag ${L + 1}: duurt te lang (${Math.round(s.t)} s)`)
-  if (!SNEL || L % 3 === 2) console.log(`slag ${String(L + 1).padStart(2)}: ${(s.uitslag || 'gelijk').padEnd(9)} poging ${n}, ${Math.round(s.t / 6) / 10} min, ${T.sterren(s)} sterren, tijdperken op ${res.evo.join('/')} s, computer in ${T.TIJDPERKEN[s.zij[1].e].naam}, upgrades ${JSON.stringify(up)}`)
-}
-if (pogingen[0] > 1) fout('slag 1 lukt niet in één keer')
-if (pogingen.every(n => n === 1)) fout('elke slag lukt meteen: te makkelijk')
-
-// zonder upgrades moet de laatste slag een stuk zwaarder zijn dan met
+// een slag halverwege opslaan (JSON) en weer verder spelen
 {
-  let win = 0
-  for (let i = 0; i < 4; i++) if (speel(14, {}, 900 + i, 0.75).s.uitslag === 'gewonnen') win++
-  console.log(`slag 15 zonder upgrades: ${win}/4 gewonnen`)
-  if (win === 4) fout('slag 15 is zonder upgrades ook makkelijk')
+  const s = T.nieuw(1, { seed: 5 }), r = T.rng(9)
+  while (s.t < 120) { bot(s, r, 0.75); T.stap(s, 0.5) }
+  const terug = T.herstel(JSON.parse(JSON.stringify(s)))
+  if (!terug || terug.zij[0].e !== s.zij[0].e || terug.eenheden.length !== s.eenheden.length) fout('een opgeslagen slag komt niet goed terug')
+  else {
+    while (terug.fase === 'spel' && terug.t < 1500) { bot(terug, r, 0.75); T.stap(terug, 0.5) }
+    if (!terug.uitslag) fout('een herstelde slag speelt niet verder')
+  }
 }
+
+const VOL = {}
+Object.keys(T.UPGRADES).forEach(id => { VOL[id] = T.UPGRADES[id].prijzen.length })
+const HALF = { goud: 2, inkomen: 2, basis: 2, kracht: 2, toren: 1, super: 1 }
+const N = SNEL ? 3 : 6
+const winst = (n, up) => {
+  let w = 0, tijd = 0
+  for (let i = 0; i < N; i++) {
+    const res = speel(n, up, n * 100 + i + 1, 0.75)
+    if (res.s.uitslag === 'gewonnen') w++
+    tijd = Math.max(tijd, res.s.t)
+    if (res.s.t > 1200) fout(`${T.NIVEAUS[n].naam}: een slag duurt te lang (${Math.round(res.s.t)} s)`)
+  }
+  return { w, tijd }
+}
+const zonder = [], half = [], vol = []
+T.NIVEAUS.forEach((d, n) => {
+  zonder.push(winst(n, {})); half.push(winst(n, HALF)); vol.push(winst(n, VOL))
+  console.log(`${d.naam.padEnd(14)} zonder upgrades ${zonder[n].w}/${N}, half ${half[n].w}/${N}, alles ${vol[n].w}/${N}, langste slag ${Math.round(vol[n].tijd / 6) / 10} min`)
+})
+if (zonder[0].w < N - 1) fout('Makkelijk is zonder upgrades niet makkelijk')
+if (zonder[4].w > 0) fout('Onmogelijk is zonder upgrades te winnen')
+if (vol[4].w === 0) fout('Onmogelijk is zelfs met alle upgrades niet te winnen')
+for (let n = 1; n < 5; n++) if (zonder[n].w + half[n].w > zonder[n - 1].w + half[n - 1].w) fout(`${T.NIVEAUS[n].naam} is makkelijker dan ${T.NIVEAUS[n - 1].naam}`)
 
 console.log(fouten ? `\n${fouten} fout(en)` : '\n✓ Tijdstrijd klopt')
 process.exit(fouten ? 1 : 0)

@@ -6,7 +6,7 @@ import { TerugKnop, Icoon, Knop, VoortgangsBalk } from '../ui/index.jsx'
 import { spelNa, heeftSpel } from '../lib/beloning.js'
 import { maakSom, klopt, tekst, isZoKleinMogelijk } from './breukenRekenenData.js'
 
-const PER_BELONING = spelNa(5)
+const PER_BELONING = spelNa(10)
 const BELONING = 50
 
 const SOORTEN = {
@@ -134,7 +134,7 @@ function Oefenen({ soort, niveau, ops, onBack, addBriefgeld, addCuruntie }) {
   }
   const naBeloning = () => { setReward(false); addBriefgeld?.(BELONING); setVerdiend((v) => v + BELONING); setSom(nieuweSom()) }
 
-  if (reward) return <SpelBeloning title="5 goed!" geld={BELONING} addCuruntie={addCuruntie} onDone={naBeloning} />
+  if (reward) return <SpelBeloning title={`${PER_BELONING} goed!`} geld={BELONING} addCuruntie={addCuruntie} onDone={naBeloning} />
 
   const veld = (k, label, ref) => (
     <input ref={ref} className={'bp-input br-input' + (phase === 'fout' ? ' fout' : '') + (k === 'heel' ? ' br-input-heel' : '')}
