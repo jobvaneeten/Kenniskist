@@ -96,6 +96,13 @@ const SPELLEN = [
 
 export default function SpelBeloning({ title, sub, geld, addCuruntie, onDone }) {
   const [picked, setPicked] = useState(null)
+  // Speeltijd is geen oefentijd: bij het sluiten melden we van wanneer tot
+  // wanneer er gespeeld is, zodat de tijdmeting (kenniskist-login.js) die eraf
+  // haalt. Telt o.a. voor "Werk aan je doelen".
+  useEffect(() => {
+    const van = Date.now()
+    return () => window.KennisKist?.spelPauze?.(van, Date.now())
+  }, [])
   // Briefgeld wordt door de ouder-component uitgekeerd (via onDone); hier kies
   // je alleen het spel. Elk spel speelt één potje/ronde/level en gaat dan terug.
   // Wrapper = vast scherm-vullend overlay zodat het spel altijd bovenop het

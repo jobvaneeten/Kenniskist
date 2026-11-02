@@ -258,6 +258,18 @@ export const TOOL_FAMILIES = [
     ],
   },
   {
+    // Werk aan je doelen: de leerling oefent een ingesteld aantal minuten aan
+    // zijn eigen doelen, of zelf iets als ze allemaal behaald zijn. Geen
+    // aantal, de tijd telt (view doelwerk_voortgang, migratie 0021). Niet in de
+    // ToolKiezer: het weektaakformulier heeft er een eigen knop voor.
+    familie: 'doelen-werken', toolId: 'doelen-werken', label: 'Werk aan je doelen', verborgen: true,
+    vak: null, groepen: [4, 5, 6, 7, 8], aantalInstelbaar: false, standaardAantal: null, eenheid: 'minuten',
+    configVelden: [
+      { key: 'minuten', type: 'getal', label: 'Hoeveel minuten', min: 1, max: 120, placeholder: '15',
+        hint: 'Leeg laten = 15 minuten. Alleen echte oefentijd telt, spelletjes niet. Zijn al zijn doelen behaald, dan kiest de leerling zelf wat hij oefent.' },
+    ],
+  },
+  {
     // Eigen oefening van de leerkracht (tabel eigen_oefeningen, migratie
     // 0020): geen weektaak-tool, maar vrij oefenen via Speel Game. Staat hier
     // alleen zodat resultaten met dit tool_id een naam hebben in het portaal.

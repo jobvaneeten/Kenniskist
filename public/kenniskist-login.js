@@ -39,9 +39,27 @@
 
   function meetMs(toolId) {
     var vorige = laatsteMeting[toolId] || startMeting[toolId] || (losseToolPagina() ? paginaStart : null)
-    laatsteMeting[toolId] = Date.now()
+    var nu = Date.now()
+    laatsteMeting[toolId] = nu
     if (!vorige) return null
-    return Math.max(0, Math.min(MAX_MS, Date.now() - vorige))
+    return Math.max(0, Math.min(MAX_MS, nu - vorige - spelTijdTussen(vorige, nu)))
+  }
+
+  // Een beloningsspelletje tussen twee opgaven is geen oefentijd. SpelBeloning
+  // (React-shell) meldt van wanneer tot wanneer er gespeeld is; dat gaat via
+  // localStorage, omdat een oefening in een iframe een eigen kopie van dit
+  // script heeft. Bewust geen kk_-sleutel: die zou naar het account syncen.
+  var SPELPAUZES = 'kenniskist_spelpauzes'
+  function spelPauze(van, tot) {
+    if (!(tot > van)) return
+    var lijst = (leesJson(SPELPAUZES) || []).filter(function (p) { return p[1] > Date.now() - MAX_MS })
+    lijst.push([van, tot])
+    try { localStorage.setItem(SPELPAUZES, JSON.stringify(lijst)) } catch (e) { /* vol of geblokkeerd */ }
+  }
+  function spelTijdTussen(van, tot) {
+    var lijst = leesJson(SPELPAUZES)
+    if (!Array.isArray(lijst)) return 0
+    return lijst.reduce(function (som, p) { return som + Math.max(0, Math.min(tot, p[1]) - Math.max(van, p[0])) }, 0)
   }
 
   function leesJson(sleutel) {
@@ -99,7 +117,9 @@
 
   function actieveOpdrachtVoor(toolId) {
     var actief = leesJson('kk_actieve_opdracht')
-    if (!actief || actief.toolId !== toolId) return null
+    // toolId '*': "Werk aan je doelen" met alle doelen behaald, dan telt elke
+    // oefening die de leerling zelf kiest mee voor die opdracht.
+    if (!actief || (actief.toolId !== toolId && actief.toolId !== '*')) return null
     if (!actief.gezetOp || Date.now() - actief.gezetOp > OPDRACHT_TTL_MS) return null
     return actief.opdrachtId || null
   }
@@ -199,6 +219,7 @@
     getLeerling: getLeerling,
     slaResultaatOp: slaResultaatOp,
     startOefening: startOefening,
+    spelPauze: spelPauze,
     muziekDemp: muziekDemp,
     magVoorlezen: magVoorlezen,
     spelNa: spelNa,

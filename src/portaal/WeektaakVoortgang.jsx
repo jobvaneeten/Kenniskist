@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase.js'
 import { toolLabel } from '../lib/tools.js'
 import { doelStandVan, DOEL_MIN, DOEL_PCT } from '../lib/weektaak.js'
 import { scoreKlasse } from './resultaatHelpers.js'
+import { isDoelwerk, tijdStandVan } from '../lib/doelwerk.js'
 import {  } from '../ui/index.jsx'
 
 const sleutel = (opdrachtId, leerlingId) => `${opdrachtId}:${leerlingId}`
@@ -34,6 +35,11 @@ export function DoelCel({ stand }) {
   if (stand.genoeg) return <span className={scoreKlasse(stand.pct)}><strong>{stand.pct}%</strong> <span className="portaal-zacht">laatste {DOEL_MIN} · nodig {DOEL_PCT}%</span></span>
   return <span><strong>{stand.gemaakt}/{DOEL_MIN}</strong> <span className="portaal-zacht">gemaakt</span></span>
 }
+// Werk aan je doelen: gewerkte minuten van de ingestelde tijd.
+function TijdCel({ stand }) {
+  if (stand.klaar) return <span className="portaal-score-goed"><strong>Klaar</strong> · {stand.nodig} min</span>
+  return <span><strong>{stand.gewerkt}/{stand.nodig}</strong> <span className="portaal-zacht">min</span></span>
+}
 // Voor het sorteren: hoe ver de leerling is (0 = niets, 1 = behaald).
 const doelDeel = (st) => (st.gehaald ? 1 : st.genoeg ? 0.5 + st.pct / 200 : 0.5 * st.gemaakt / DOEL_MIN)
 
@@ -56,7 +62,8 @@ export default function WeektaakVoortgang({ weektaak, klasId, alleenNietAf, onKi
       if (!actief) return
       const opdrachtIds = (opd ?? []).map(o => o.id)
 
-      const [{ data: lln }, { data: vg }, { data: tw }, { data: dv }] = await Promise.all([
+      const doelwerkIds = (opd ?? []).filter(isDoelwerk).map(o => o.id)
+      const [{ data: lln }, { data: vg }, { data: tw }, { data: dv }, { data: dw }] = await Promise.all([
         supabase.from('profielen').select('id, weergavenaam')
           .eq('klas_id', klasId).eq('rol', 'leerling').order('weergavenaam'),
         supabase.from('weektaak_voortgang').select('opdracht_id, leerling_id, doel_aantal, som_score, som_max, som_ms, herkansingen, afgerond')
@@ -68,15 +75,23 @@ export default function WeektaakVoortgang({ weektaak, klasId, alleenNietAf, onKi
         opdrachtIds.length
           ? supabase.from('doel_voortgang').select('opdracht_id, leerling_id, gemaakt, laatste_goed, laatste_aantal, gehaald').in('opdracht_id', opdrachtIds)
           : Promise.resolve({ data: [] }),
+        // Werk aan je doelen: gewerkte minuten (migratie 0021).
+        doelwerkIds.length
+          ? supabase.from('doelwerk_voortgang').select('opdracht_id, leerling_id, minuten, som_ms, afgerond').in('opdracht_id', doelwerkIds)
+          : Promise.resolve({ data: [] }),
       ])
       if (!actief) return
       setOpdrachten(opd ?? [])
       setLeerlingen(lln ?? [])
       const isDoel = new Set((opd ?? []).filter(o => o.config?.persoonlijk === 'doel').map(o => o.id))
       const doelBij = new Map((dv ?? []).map(d => [sleutel(d.opdracht_id, d.leerling_id), d]))
+      const dwBij = new Map((dw ?? []).map(d => [sleutel(d.opdracht_id, d.leerling_id), d]))
+      const configBij = new Map((opd ?? []).map(o => [o.id, o.config]))
       setVoortgang((vg ?? []).map(v => isDoel.has(v.opdracht_id)
         ? { ...v, doelStand: doelStandVan(doelBij.get(sleutel(v.opdracht_id, v.leerling_id))) }
-        : v))
+        : doelwerkIds.includes(v.opdracht_id)
+          ? { ...v, tijdStand: tijdStandVan(dwBij.get(sleutel(v.opdracht_id, v.leerling_id)), configBij.get(v.opdracht_id)) }
+          : v))
       setStatussen(new Map((tw ?? []).map(t => [sleutel(t.opdracht_id, t.leerling_id), t.status])))
       setAangeraakt(new Set())
       setOpnieuwBezig(null)
@@ -99,10 +114,10 @@ export default function WeektaakVoortgang({ weektaak, klasId, alleenNietAf, onKi
     for (const l of leerlingen ?? []) {
       for (const o of opdrachten) {
         const vg = vind(l.id, o.id)
-        if (!vg || (!vg.doel_aantal && !vg.doelStand)) continue
+        if (!vg || (!vg.doel_aantal && !vg.doelStand && !vg.tijdStand)) continue
         const status = statusVan(l.id, o.id)
         const vrij = status === 'vrijgesteld'
-        const klaar = vg.doelStand ? vg.doelStand.gehaald : vg.afgerond || Number(vg.som_max) >= vg.doel_aantal
+        const klaar = vg.tijdStand ? vg.tijdStand.klaar : vg.doelStand ? vg.doelStand.gehaald : vg.afgerond || Number(vg.som_max) >= vg.doel_aantal
         if (klaar) continue
         if (vrij && !aangeraakt.has(sleutel(o.id, l.id))) continue
         regels.push({ leerling: l, opdracht: o, vg, vrij })
@@ -126,6 +141,7 @@ export default function WeektaakVoortgang({ weektaak, klasId, alleenNietAf, onKi
         const vg = vind(l.id, kolom)
         if (status === 'vrijgesteld' || !vg) return null
         if (vg.doelStand) return doelDeel(vg.doelStand)
+        if (vg.tijdStand) return vg.tijdStand.klaar ? 1 : vg.tijdStand.gewerkt / vg.tijdStand.nodig
         if (!vg.doel_aantal) return null
         if (vg.afgerond) return 1
         return Math.min(Number(vg.som_max), vg.doel_aantal) / vg.doel_aantal
@@ -205,10 +221,12 @@ export default function WeektaakVoortgang({ weektaak, klasId, alleenNietAf, onKi
                     </td>
                     <td>{toolLabel(opdracht.tool_id)}</td>
                     <td>
-                      {vg.doelStand
+                      {vg.tijdStand
+                        ? <TijdCel stand={vg.tijdStand} />
+                        : vg.doelStand
                         ? <DoelCel stand={vg.doelStand} />
                         : <strong>{Math.min(Number(vg.som_max), vg.doel_aantal)}/{vg.doel_aantal}</strong>}
-                      {Number(vg.som_max) === 0 && (
+                      {Number(vg.som_max) === 0 && !vg.tijdStand && (
                         <span className="portaal-score-slecht">
                           {vg.herkansingen > 0 ? ` opnieuw beginnen (poging ${vg.herkansingen + 1})` : ' nog niet begonnen'}
                         </span>
@@ -265,6 +283,7 @@ export default function WeektaakVoortgang({ weektaak, klasId, alleenNietAf, onKi
                     return <td key={o.id}><span className="portaal-zacht">hoeft niet</span></td>
                   }
                   if (v?.doelStand) return <td key={o.id}><DoelCel stand={v.doelStand} /></td>
+                  if (v?.tijdStand) return <td key={o.id}><TijdCel stand={v.tijdStand} /></td>
                   if (!v || !v.doel_aantal) return <td key={o.id} className="portaal-cel-leeg">—</td>
                   const gemaakt = Math.min(v.som_max, v.doel_aantal)
                   const pct = v.som_max > 0 ? Math.round((v.som_score / v.som_max) * 100) : 0

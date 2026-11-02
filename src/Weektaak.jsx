@@ -11,6 +11,9 @@ import { resterendeMinuten } from './lib/leestimerOpslag.js'
 import { isLescheck, lesLabel } from './lib/lescheck.js'
 import { groepeer, korteDatum } from './lib/weektaakMapjes.js'
 import RenderTool from './games/toolRender.jsx'
+import GameMenu from './GameMenu.jsx'
+import DoelenWerken, { TijdBalk, DoelwerkKlok } from './DoelenWerken.jsx'
+import { isDoelwerk } from './lib/doelwerk.js'
 import { Knop, TerugKnop, Icoon } from './ui/index.jsx'
 import './game.css'
 
@@ -83,6 +86,8 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
   const [doelVak, setDoelVak] = useState(null)
   const [uitleg, setUitleg] = useState(null) // { opdracht, titel } — doel vóór het oefenen
   const [feest, setFeest] = useState(null)   // doel dat tijdens het oefenen behaald werd
+  const [doelwerkId, setDoelwerkId] = useState(null) // "Werk aan je doelen" staat open
+  const [vrij, setVrij] = useState(false)            // ... en de leerling kiest zelf (alle doelen behaald)
   const soort = persoonlijk ? tab : 'weektaak'
 
   useEffect(() => {
@@ -112,8 +117,20 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
     zetActieveOpdracht(opdracht)
     setGekozen(opdracht)
   }
-  // Een doel krijgt eerst de uitleg; de rest start meteen.
-  const kies = (opdracht, titel) => (soortVan(opdracht) === 'doel' ? setUitleg({ opdracht, titel }) : start(opdracht))
+  // Een doel krijgt eerst de uitleg; "Werk aan je doelen" opent zijn eigen
+  // scherm; de rest start meteen.
+  const kies = (opdracht, titel) => (isDoelwerk(opdracht) ? setDoelwerkId(opdracht.opdrachtId)
+    : soortVan(opdracht) === 'doel' ? setUitleg({ opdracht, titel }) : start(opdracht))
+  const doelwerk = doelwerkId ? (opdrachten ?? []).find(o => o.opdrachtId === doelwerkId) : null
+
+  // Zelf kiezen binnen "Werk aan je doelen": elke oefening telt dan mee voor
+  // deze opdracht (toolId '*', zie kenniskist-login.js). Bij het verlaten weer
+  // weg, anders zou later vrij oefenen er ook aan blijven hangen.
+  useEffect(() => {
+    if (!vrij || !doelwerkId) return
+    zetActieveOpdracht({ opdrachtId: doelwerkId, toolId: '*' })
+    return () => wisActieveOpdracht()
+  }, [vrij, doelwerkId])
 
   // Tijdens het oefenen van een doel dat nog niet behaald is: na elk opgeslagen
   // antwoord (seintje uit kenniskist-login.js) kijken of het nu behaald is.
@@ -143,9 +160,24 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
     setVervers(v => v + 1) // haalt de bijgewerkte voortgang opnieuw op
   }
 
+  const klok = doelwerk && <DoelwerkKlok opdracht={doelwerk} profielId={profiel?.id} />
+
+  if (vrij && doelwerk) {
+    return (
+      <>
+        <GameMenu
+          onBack={() => { setVrij(false); setVervers(v => v + 1) }}
+          addCuruntie={addCuruntie} addBriefgeld={addBriefgeld} toegestaneGroepen={toegestaneGroepen}
+        />
+        {klok}
+      </>
+    )
+  }
+
   if (gekozen) {
     return (
       <>
+        {klok}
         <RenderTool
           opdracht={gekozen}
           groep={toegestaneGroepen?.[0]}
@@ -160,6 +192,17 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
 
   if (uitleg) {
     return <DoelUitleg opdracht={uitleg.opdracht} titel={uitleg.titel} onStart={() => start(uitleg.opdracht)} onBack={() => setUitleg(null)} />
+  }
+
+  if (doelwerk) {
+    return (
+      <DoelenWerken
+        opdracht={doelwerk} alle={opdrachten ?? []}
+        onKiesDoel={(o, titel) => setUitleg({ opdracht: o, titel })}
+        onVrij={() => setVrij(true)}
+        onBack={() => setDoelwerkId(null)}
+      />
+    )
   }
 
   // Doelen: een behaald doel verhuist naar het kopje "Behaalde doelen".
@@ -229,6 +272,8 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
                   ? (o.klaar ? 'Je som is gemaakt' : 'Eén som over de les van vandaag')
                   : leesRest(o) != null
                     ? `Nog ${leesRest(o)} min te lezen`
+                    : o.tijdStand
+                      ? null
                     : o.doelStand
                       ? null
                     : o.doel != null
@@ -236,6 +281,7 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
                       : `${o.pogingen}× gemaakt`}
               </span>
               {o.doelStand && <DoelBalk stand={o.doelStand} />}
+              {o.tijdStand && <TijdBalk stand={o.tijdStand} />}
               {/* Opnieuw gezet: door de juf of meester, of automatisch omdat er
                   minder dan de helft goed was. De teller staat dan weer op 0. */}
               {o.herkansingen > 0 && !o.klaar && (

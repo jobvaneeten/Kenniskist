@@ -6,6 +6,7 @@ import ToolKiezer from './ToolKiezer.jsx'
 import DoelKiezer from './DoelKiezer.jsx'
 import OpdrachtRij from './OpdrachtRij.jsx'
 import { slaWeektaakOp } from './weektaakOpslaan.js'
+import { DOELWERK } from '../lib/doelwerk.js'
 import { Knop } from '../ui/index.jsx'
 
 function vandaag() { return new Date().toLocaleDateString('sv-SE') }
@@ -105,7 +106,8 @@ export default function WeektaakForm({ klas, soort = 'weektaak', bestaand, onKla
   // wordt alleen ingevuld als de leerkracht er zelf nog niets heeft staan.
   const voegToe = ({ toolId, config = {}, titel: doelTitel }) => {
     const info = TOOL_BY_ID[toolId]
-    setOpdrachten(prev => [...prev, { toolId, aantal: info?.standaardAantal ?? 1, config }])
+    // Werk aan je doelen telt in minuten en heeft geen aantal (migratie 0021).
+    setOpdrachten(prev => [...prev, { toolId, aantal: info?.eenheid === 'minuten' ? null : info?.standaardAantal ?? 1, config }])
     if (doelTitel) setTitel(t => t.trim() ? t : doelTitel)
     setToonKiezer(false)
     setZelfKiezen(false)
@@ -207,9 +209,16 @@ export default function WeektaakForm({ klas, soort = 'weektaak', bestaand, onKla
             </div>
 
             {!toonKiezer && (
-              <Knop className="kk-mt-3" type="button" variant="primair" maat="sm" onClick={() => setToonKiezer(true)}>
-                {soort === 'doel' ? '+ Doel kiezen' : '+ Opdracht toevoegen'}
-              </Knop>
+              <div className="kk-rij kk-mt-3">
+                <Knop type="button" variant="primair" maat="sm" onClick={() => setToonKiezer(true)}>
+                  {soort === 'doel' ? '+ Doel kiezen' : '+ Opdracht toevoegen'}
+                </Knop>
+                {soort === 'weektaak' && !opdrachten.some(o => o.toolId === DOELWERK) && (
+                  <Knop type="button" variant="secundair" maat="sm" onClick={() => voegToe({ toolId: DOELWERK, config: { minuten: 15 } })}>
+                    + Werk aan je doelen
+                  </Knop>
+                )}
+              </div>
             )}
             {toonKiezer && soort === 'doel' && !zelfKiezen && (
               <DoelKiezer

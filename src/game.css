@@ -482,6 +482,18 @@
 .wt-uitleg-doel { margin: 14px 0 0; font-size: var(--kk-fs-sm); color: var(--kk-text-soft); }
 .wt-uitleg > .kk-knop, .wt-uitleg > button { align-self: center; }
 
+/* Werk aan je doelen: minutenbalk, keuze uit open doelen of zelf kiezen */
+.dw-tijd { width: 100%; max-width: 420px; margin: 10px auto 0; }
+.dw-uitleg { margin: 0 0 12px; }
+.dw-vrij { align-items: center; text-align: center; gap: 14px; }
+.dw-vrij .wt-uitleg-doel { margin: 0; font-size: var(--kk-fs-md, 1.05rem); color: var(--kk-text); }
+.dw-vrij-icoon { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; color: var(--kk-gold); background: color-mix(in srgb, var(--kk-gold) 14%, transparent); box-shadow: 0 0 24px color-mix(in srgb, var(--kk-gold) 40%, transparent); }
+.dw-vrij-icoon svg { width: 34px; height: 34px; }
+.dw-klok { position: fixed; left: 12px; bottom: 12px; z-index: 900; display: flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: var(--kk-r-pill); font-size: var(--kk-fs-sm); font-weight: var(--kk-fw-bold); color: var(--kk-text); background: color-mix(in srgb, var(--kk-bg, #0b0d24) 82%, transparent); border: 1px solid color-mix(in srgb, var(--kk-pink) 55%, transparent); pointer-events: none; }
+.dw-klok svg { width: 16px; height: 16px; color: var(--kk-pink); }
+.dw-klok.klaar { border-color: var(--kk-success); box-shadow: 0 0 14px color-mix(in srgb, var(--kk-success) 45%, transparent); }
+.dw-klok.klaar svg { color: var(--kk-success); }
+
 /* Speciaal voor mij → Doelen: behaalde doelen onder een eigen gouden kopje */
 .wt-behaald-sectie { width: 100%; max-width: 900px; margin-top: 28px; display: flex; flex-direction: column; align-items: center; }
 .wt-behaald-kop {

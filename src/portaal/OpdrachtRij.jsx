@@ -32,6 +32,8 @@ export default function OpdrachtRij({ opdracht, nummer, onWijzig, onVerwijder, z
   const eenheidNaam = info.eenheid === 'opgaven' ? 'opgaven' : info.eenheid === 'woorden' ? 'woorden' : null
   const samenvatting = zonderAantal
     ? 'behaald bij 80% goed van de laatste 20'
+    : info.eenheid === 'minuten'
+    ? `${opdracht.config?.minuten || 15} minuten aan de eigen doelen`
     : eenheidNaam
     ? `${aantal} ${eenheidNaam}`
     : aantal > 1 ? `${aantal} keer maken` : '1 keer maken'
