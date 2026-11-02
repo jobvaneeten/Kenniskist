@@ -1889,7 +1889,8 @@ tekenSnel()
 // wordt het spel tussendoor gesloten, dan bewaren we de slag ook
 window.addEventListener('pagehide', function () { if (BELONING && actief && s && s.fase === 'spel') bewaarSlag() })
 document.addEventListener('visibilitychange', function () { if (document.hidden && BELONING && actief && s && s.fase === 'spel') bewaarSlag() })
-if (BELONING) { var opgeslagen = laadSlag(); startSlag(opgeslagen ? opgeslagen.n : D.niveau, opgeslagen) }
+// als beloning kies je zelf een niveau (alle vijf staan open), of ga je verder met je bewaarde slag
+if (BELONING) { var opgeslagen = laadSlag(); if (opgeslagen) startSlag(opgeslagen.n, opgeslagen); else { $('naarwinkel').classList.add('verborgen'); toonMenu() } }
 else toonMenu()
 requestAnimationFrame(frame)
 })()

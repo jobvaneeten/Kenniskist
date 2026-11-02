@@ -64,7 +64,7 @@ var TS = (function () {
 
   // vijf niveaus van de computer. Je speelt altijd van de Oertijd tot de Ruimte (maxE).
   var NIVEAUS = [
-    { naam: 'Makkelijk',     ai: { inkomen: 0.7,  xp: 0.9,  goud: 100, kracht: 1,    basis: 1,    slim: 0.3 } },
+    { naam: 'Makkelijk',     ai: { inkomen: 0.85, xp: 0.94, goud: 140, kracht: 1.04, basis: 1.15, slim: 0.5 } },
     { naam: 'Normaal',       ai: { inkomen: 0.95, xp: 0.97, goud: 160, kracht: 1.08, basis: 1.2,  slim: 0.65 } },
     { naam: 'Moeilijk',      ai: { inkomen: 1.16, xp: 1.01, goud: 200, kracht: 1.14, basis: 1.3,  slim: 0.85 } },
     { naam: 'Heel moeilijk', ai: { inkomen: 1.26, xp: 1.04, goud: 240, kracht: 1.18, basis: 1.38, slim: 1 } },
