@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Opgesloten bij Rene</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0b0820; --card:rgba(22,18,52,.78); --card2:rgba(35,28,78,.85);
+  --gold:#f5c542; --gold2:#ffdf7e; --txt:#f3f0ff; --muted:#b9b2e0;
+  --ok:#4ade80; --bad:#f87171; --mark:#f5c542;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{font-family:'Nunito',system-ui,sans-serif;color:var(--txt);background:var(--bg);overflow-x:hidden}
+#sky{position:fixed;inset:0;z-index:0;image-rendering:pixelated;width:100%;height:100%}
+.wrap{position:relative;z-index:1;max-width:860px;margin:0 auto;padding:64px 16px 16px} /* ruimte voor de Terug-knop van Kenniskist */
+header{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.logo{font-weight:900;font-size:1.25rem;letter-spacing:.5px}
+.logo span{color:var(--gold)}
+.pills{display:flex;gap:8px;flex-wrap:wrap}
+.pill{background:var(--card);border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:6px 12px;font-weight:800;font-size:.9rem;backdrop-filter:blur(6px)}
+.pill.btn{cursor:pointer;color:var(--txt)}
+.pill.btn:hover{border-color:var(--gold)}
+.card{background:var(--card);border:1px solid rgba(255,255,255,.1);border-top:4px solid var(--gold);border-radius:18px;padding:22px;backdrop-filter:blur(8px);box-shadow:0 10px 40px rgba(0,0,0,.45);margin-bottom:16px}
+h1{font-size:2rem;margin:.1em 0 .3em;font-weight:900}
+h2{font-size:1.5rem;margin:0 0 .4em;font-weight:900}
+.room-ico{font-size:2.4rem;margin-right:8px;vertical-align:middle}
+p{line-height:1.55;margin:.5em 0}
+.story{color:var(--muted);font-style:italic}
+.task{background:rgba(245,197,66,.1);border-left:4px solid var(--gold);padding:12px 14px;border-radius:10px;margin:14px 0;font-weight:700}
+.note{background:#fdf6d8;color:#2b2416;border-radius:6px;padding:18px 20px;transform:rotate(-.6deg);box-shadow:0 6px 18px rgba(0,0,0,.4);font-size:1.15rem;line-height:1.9;margin:16px 0}
+.note.sms{background:#e8f6ff;border-radius:18px 18px 18px 4px;transform:none;font-size:1.05rem;line-height:1.8}
+.w{cursor:pointer;border-radius:4px;padding:0 2px;transition:background .15s}
+.w:hover{background:rgba(0,0,0,.08)}
+.w.on{background:var(--mark);color:#2b2416;font-weight:800}
+.lines{counter-reset:ln}
+.lines div{counter-increment:ln;padding-left:2em;position:relative}
+.lines div::before{content:counter(ln) ".";position:absolute;left:0;color:#9b8d5f;font-weight:800}
+.cards-row{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0 18px}
+.wcard{background:var(--card2);border:2px solid rgba(255,255,255,.15);border-radius:12px;padding:10px 14px;min-width:96px;text-align:center;font-weight:800;font-size:1.1rem}
+.wcard .num{display:block;font-size:.8rem;color:var(--gold);font-weight:900}
+.blank{display:inline-block;min-width:70px;border-bottom:3px dashed var(--gold);margin:0 3px}
+.sentence{font-size:1.2rem;font-weight:700;margin:8px 0}
+.mugs{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:12px 0}
+.mug{background:var(--card2);border-radius:12px;padding:8px 4px;text-align:center;border:1px solid rgba(255,255,255,.12)}
+.mug svg{width:100%;height:96px}
+.mug b{display:inline-block;background:var(--gold);color:#221a05;border-radius:50%;width:28px;height:28px;line-height:28px;font-weight:900}
+.clues{display:grid;gap:8px;margin:10px 0}
+.clue{background:#fdf6d8;color:#2b2416;border-radius:6px;padding:10px 14px;font-weight:700}
+.mc{margin:16px 0}
+.mc .q{font-weight:800;margin-bottom:8px}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.opt{display:flex;gap:10px;align-items:center;background:var(--card2);border-radius:10px;padding:10px 12px;border:1px solid rgba(255,255,255,.12)}
+.opt .lt{flex:0 0 34px;height:34px;border-radius:8px;background:var(--gold);color:#221a05;font-weight:900;font-size:1.2rem;display:flex;align-items:center;justify-content:center}
+.lock{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:18px;padding-top:16px;border-top:1px dashed rgba(255,255,255,.2)}
+.lock label{font-weight:900;font-size:1.05rem}
+.lock input{flex:1;min-width:160px;font:inherit;font-size:1.4rem;font-weight:900;letter-spacing:4px;text-transform:uppercase;padding:10px 14px;border-radius:12px;border:2px solid var(--gold);background:#120e2c;color:var(--gold2);outline:none}
+button.main{font:inherit;font-weight:900;font-size:1.05rem;padding:12px 20px;border-radius:12px;border:none;background:linear-gradient(180deg,var(--gold2),var(--gold));color:#221a05;cursor:pointer;box-shadow:0 4px 0 #a07c12}
+button.main:active{transform:translateY(2px);box-shadow:0 2px 0 #a07c12}
+button.ghost{font:inherit;font-weight:800;padding:10px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.25);background:transparent;color:var(--txt);cursor:pointer}
+.msg{width:100%;font-weight:800;min-height:1.4em}
+.msg.bad{color:var(--bad)} .msg.ok{color:var(--ok)}
+.shake{animation:shake .4s}
+@keyframes shake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+.hintbox{background:rgba(96,165,250,.12);border-left:4px solid #60a5fa;padding:10px 14px;border-radius:10px;margin-top:12px;display:none}
+.open{text-align:center;padding:30px 10px}
+.open .big{font-size:4rem}
+input.team{font:inherit;font-size:1.2rem;padding:10px 14px;border-radius:12px;border:2px solid var(--gold);background:#120e2c;color:var(--txt);width:100%;max-width:360px;margin:8px 0 14px}
+.modal{position:fixed;inset:0;background:rgba(5,3,15,.75);z-index:10;display:none;align-items:center;justify-content:center;padding:16px}
+.modal .card{max-width:560px;width:100%}
+.ex{background:var(--card2);border-radius:10px;padding:10px 14px;margin:8px 0}
+.ex em{color:var(--gold);font-style:normal;font-weight:800}
+.progress{display:flex;gap:6px;margin-bottom:14px}
+.progress i{flex:1;height:8px;border-radius:4px;background:rgba(255,255,255,.12)}
+.progress i.done{background:var(--gold)}
+.small{font-size:.85rem;color:var(--muted)}
+@media(max-width:600px){.opts{grid-template-columns:1fr}.mugs{grid-template-columns:repeat(2,1fr)}h1{font-size:1.6rem}}
+</style>
+</head>
+<body>
+<canvas id="sky"></canvas>
+<div class="wrap">
+  <header>
+    <div class="logo">🔒 Opgesloten bij <span>Rene</span></div>
+    <div class="pills">
+      <div class="pill" id="pTeam" style="display:none"></div>
+      <div class="pill">⏱️ <span id="pTime">00:00</span></div>
+      <button class="pill btn" onclick="openSpiek()">📒 Spiekbriefje</button>
+    </div>
+  </header>
+  <div class="progress" id="prog"></div>
+  <main id="app"></main>
+</div>
+
+<div class="modal" id="spiek" onclick="if(event.target===this)this.style.display='none'">
+  <div class="card">
+    <h2>📒 Spiekbriefje</h2>
+    <div class="ex">Een <b>zelfstandig naamwoord</b> is een mens, dier, ding of plaats. Je kunt er <em>de</em>, <em>het</em> of <em>een</em> voor zetten.<br>de <em>hond</em> · het <em>huis</em> · een <em>bal</em></div>
+    <div class="ex">Een <b>bijvoeglijk naamwoord</b> zegt <b>hoe</b> iets is. Het staat vlak vóór het zelfstandig naamwoord.<br>de <em>grote</em> hond</div>
+    <div class="ex">Je kunt <b>meer</b> bijvoeglijke naamwoorden voor een zelfstandig naamwoord zetten.<br>de <em>grote</em>, <em>zwarte</em>, <em>blije</em> hond</div>
+    <div class="ex">Zet een <b>komma</b> tussen de bijvoeglijke naamwoorden.<br>Na het <b>laatste</b> bijvoeglijk naamwoord komt <b>géén</b> komma.<br>✅ een grote, zwarte hond &nbsp; ❌ een grote, zwarte, hond</div>
+    <button class="main" onclick="document.getElementById('spiek').style.display='none'">Sluiten</button>
+  </div>
+</div>
+
+<script>
+/* ---------- Sterrenhemel ---------- */
+(function(){
+  const c=document.getElementById('sky'),x=c.getContext('2d');let W,H,stars=[],shoot=null;
+  function rs(){W=c.width=Math.ceil(innerWidth/3);H=c.height=Math.ceil(innerHeight/3);
+    stars=Array.from({length:Math.round(W*H/180)},()=>({x:Math.random()*W,y:Math.random()*H,t:Math.random()*6,s:Math.random()<.15?2:1}))}
+  rs();addEventListener('resize',rs);
+  function draw(ts){
+    const g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,'#0a0620');g.addColorStop(1,'#1a0f3d');x.fillStyle=g;x.fillRect(0,0,W,H);
+    [[.25,.3,'rgba(140,60,200,.22)'],[.75,.6,'rgba(90,40,170,.2)'],[.5,.9,'rgba(200,80,180,.12)']].forEach(([a,b,col])=>{
+      const r=x.createRadialGradient(W*a,H*b,0,W*a,H*b,W*.45);r.addColorStop(0,col);r.addColorStop(1,'transparent');x.fillStyle=r;x.fillRect(0,0,W,H)});
+    stars.forEach(s=>{const a=.4+.6*Math.abs(Math.sin(ts/900+s.t));x.fillStyle=`rgba(255,250,230,${a})`;x.fillRect(Math.round(s.x),Math.round(s.y),s.s,s.s)});
+    if(!shoot&&Math.random()<.006)shoot={x:Math.random()*W,y:Math.random()*H*.4,l:0};
+    if(shoot){shoot.l+=2;for(let i=0;i<12;i++){x.fillStyle=`rgba(255,240,200,${1-i/12})`;x.fillRect(Math.round(shoot.x+shoot.l-i*2),Math.round(shoot.y+shoot.l*.5-i),1,1)}if(shoot.l>70)shoot=null}
+    requestAnimationFrame(draw)}
+  requestAnimationFrame(draw);
+})();
+
+/* ---------- Opslag ---------- */
+const KEY='escaperoom-rene-v1';
+let S={room:-1,team:'',start:0,penalty:0,hints:{}};
+try{const s=localStorage.getItem(KEY);if(s)S=Object.assign(S,JSON.parse(s))}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+
+/* Codes staan omgedraaid opgeslagen */
+const rev=s=>s.split('').reverse().join('');
+const norm=s=>s.toUpperCase().replace(/[^A-Z0-9]/g,'');
+
+/* ---------- Hulpjes ---------- */
+function clickable(text){
+  return text.split(' ').map(t=>`<span class="w" onclick="this.classList.toggle('on')">${t}</span>`).join(' ');
+}
+function mugSVG(big,color,pat){
+  const col={blauw:'#4a8fe7',rood:'#e5534b',groen:'#43b26a'}[color];
+  const w=big?54:36,h=big?66:42,x=(100-w)/2-6,y=92-h;
+  let deco='';
+  if(pat==='gestreept'){for(let i=1;i<4;i++)deco+=`<rect x="${x}" y="${y+i*h/4-3}" width="${w}" height="6" fill="#fff" opacity=".85"/>`}
+  if(pat==='gestippeld'){for(let r=0;r<3;r++)for(let k=0;k<3;k++)deco+=`<circle cx="${x+w*(k+.5)/3}" cy="${y+h*(r+.5)/3}" r="${big?4:3}" fill="#fff" opacity=".9"/>`}
+  return `<svg viewBox="0 0 100 100"><path d="M${x+w} ${y+h*.2} q${big?24:17} 0 ${big?24:17} ${h*.3} q0 ${h*.3} -${big?24:17} ${h*.3}" fill="none" stroke="${col}" stroke-width="${big?7:5}"/>
+  <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6" fill="${col}"/>${deco}<ellipse cx="${x+w/2}" cy="${y+2}" rx="${w/2}" ry="4" fill="#3b2a1a"/></svg>`;
+}
+
+/* ---------- Ruimtes ---------- */
+const ROOMS=[
+{ico:'🏫',name:'Het klaslokaal',code:rev('SLEUTEL'),label:'Code (woord):',
+ story:'Jullie bleven na schooltijd nog even in de klas om jullie project af te maken. Ineens hoor je: KLIK! Conciërge Rene heeft de school op slot gedaan en is naar huis gegaan. Hij heeft jullie niet gezien! Op elke deur zit een codeslot. Gelukkig verstopt Rene zijn codes altijd in zinnen… Naast de deur van de klas hangt dit briefje:',
+ body:()=>`<div class="note lines">
+   <div>${clickable('In de stille, lege klas zijn alleen jullie nog.')}</div>
+   <div>${clickable('Op het bord hangt een enge tekening van een uitgeputte meester.')}</div>
+   <div>${clickable('In de kast zit een trage, eenzame slak.')}</div>
+   <div>${clickable('Hij kruipt over een lange liniaal.')}</div></div>
+   <div class="task">🔍 Zoek alle bijvoeglijke naamwoorden. Schrijf van elk bijvoeglijk naamwoord de eerste letter op, van boven naar beneden. Samen vormen ze de code.<br><span class="small">Tip: klik op een woord om het te markeren.</span></div>`,
+ hint:'Een bijvoeglijk naamwoord zegt hoe iets is en staat vlak vóór een zelfstandig naamwoord. Kijk bijvoorbeeld wat er vóór "klas" staat. Er zijn er in totaal 7.'},
+
+{ico:'🚪',name:'De gang',code:rev('2359'),label:'Code (4 cijfers):',
+ story:'De klasdeur zwaait open! Jullie staan in de gang. Het is er donker en stil. Op de deur naar de trap hangen twee zinnen met gaten erin, en een stapel kaartjes.',
+ body:()=>`<p class="sentence">A. Jullie lopen door de <span class="blank"></span>, <span class="blank"></span> gang.</p>
+  <div class="cards-row">${[['3','donkere'],['8','rennen'],['5','lange'],['1','lamp']].map(([n,w])=>`<div class="wcard"><span class="num">${n}</span>${w}</div>`).join('')}</div>
+  <p class="sentence">B. Jullie horen een <span class="blank"></span>, <span class="blank"></span> geluid.</p>
+  <div class="cards-row">${[['2','hard'],['6','horen'],['9','gek'],['4','deur']].map(([n,w])=>`<div class="wcard"><span class="num">${n}</span>${w}</div>`).join('')}</div>
+  <div class="task">🧩 Welke kaartjes passen op de lege plekken? Dat zijn de bijvoeglijke naamwoorden. Zet de cijfers van álle goede kaartjes op volgorde van <b>klein naar groot</b>. Dat is de code.</div>`,
+ hint:'Probeer elk kaartje in de zin. "de rennen gang" klinkt raar, want rennen is iets wat je doet. Per zin zijn er 2 kaartjes goed, dus 4 cijfers in totaal.'},
+
+{ico:'🏀',name:'De gymzaal',code:rev('1021'),label:'Code (4 cijfers):',
+ story:'Jullie sluipen de gymzaal in. Ook hier zit een slot op de deur. Op het whiteboard heeft de gymmeester zinnen geschreven, maar hij is een paar komma\'s vergeten…',
+ body:()=>`<div class="note lines">
+   <div>Er ligt een grote zware bal.</div>
+   <div>Er ligt een oude, vieze, gescheurde mat.</div>
+   <div>Daar staat de hoge smalle wiebelige kast.</div>
+   <div>Op de bank ligt een stinkende vergeten gymschoen.</div></div>
+  <div class="task">✏️ Hoeveel komma's <b>ontbreken</b> er in elke zin? Schrijf voor elke zin het aantal op, van zin 1 tot zin 4. Die 4 cijfers zijn de code.<br><span class="small">Weet je het niet meer? Kijk in het 📒 spiekbriefje.</span></div>`,
+ hint:'Tussen twee bijvoeglijke naamwoorden hoort een komma. Tussen het laatste bijvoeglijk naamwoord en het zelfstandig naamwoord niet. Eén zin is al helemaal goed!'},
+
+{ico:'☕',name:'De lerarenkamer',code:rev('725'),label:'Code (3 cijfers):',
+ story:'Via de gymzaal komen jullie in de lerarenkamer. Op het slot staan 3 cijfers. Op het prikbord hangen briefjes. De code bestaat uit de nummers van drie mokken!',
+ body:()=>{
+   const m=[[1,1,'blauw','effen'],[2,0,'rood','gestippeld'],[3,1,'rood','gestippeld'],[4,0,'blauw','gestreept'],[5,1,'rood','gestreept'],[6,1,'rood','effen'],[7,1,'blauw','gestreept'],[8,0,'groen','gestreept']];
+   return `<div class="mugs">${m.map(([n,b,c,p])=>`<div class="mug">${mugSVG(b,c,p)}<b>${n}</b></div>`).join('')}</div>
+   <div class="clues">
+    <div class="clue">1️⃣ Rene drinkt zijn koffie uit de grote, blauwe, gestreepte mok.</div>
+    <div class="clue">2️⃣ De directeur drinkt thee uit de kleine, rode, gestippelde mok.</div>
+    <div class="clue">3️⃣ De gymmeester drinkt uit de grote, rode, gestreepte mok.</div></div>
+   <div class="task">☕ Zoek de mok van Rene, dan die van de directeur en dan die van de gymmeester. De nummers op volgorde zijn de code.<br><span class="small">Zie je? Door meer bijvoeglijke naamwoorden weet je precies welke mok bedoeld wordt!</span></div>`},
+ hint:'Lees alle drie de bijvoeglijke naamwoorden. Er zijn meer grote blauwe mokken, maar maar één is ook gestreept.'},
+
+{ico:'🧹',name:'Het hok van Rene',code:rev('VRIJ'),label:'Code (woord):',
+ story:'Jullie hebben het hok van conciërge Rene gevonden! Hier hangen alle sleutels. Op de sleutelkast staat: "Maak mijn saaie zinnen mooier. Kies steeds de goede zin. De letters vormen de code."',
+ body:()=>{
+   const Q=[
+    ['Rene pakt de sleutel.',[['K','Rene pakt de sleutel heel snel.'],['V','Rene pakt de gouden, kleine sleutel.'],['M','Rene pakt, de gouden sleutel.'],['P','Rene pakt de gouden, kleine, sleutel.']]],
+    ['Er staat een emmer.',[['R','Er staat een grote, natte emmer.'],['S','Er staat een grote emmer.'],['T','Er staat een grote, natte, emmer.'],['B','Er staat, een grote natte emmer.']]],
+    ['Rene heeft een bezem.',[['L','Rene heeft een bezem die lang is.'],['D','Rene veegt met een bezem.'],['O','Rene heeft een lange stoffige, bezem.'],['I','Rene heeft een lange, stoffige bezem.']]],
+    ['Ik zie een deur.',[['A','Ik zie een deur heel goed.'],['J','Ik zie een zware, groene deur.'],['N','Ik zie een zware groene, deur.'],['E','Ik zie, een zware deur.']]]];
+   return Q.map((q,i)=>`<div class="mc"><div class="q">${i+1}. Saaie zin: <i>"${q[0]}"</i></div><div class="opts">${q[1].map(([l,t])=>`<div class="opt"><span class="lt">${l}</span><span>${t}</span></div>`).join('')}</div></div>`).join('')+
+   `<div class="task">✨ Kies bij elke saaie zin de goede mooiere zin: met <b>twee bijvoeglijke naamwoorden</b> vóór het zelfstandig naamwoord en de <b>komma op de goede plek</b>. Schrijf de letters op van 1 tot 4.</div>`},
+ hint:'Een goede zin heeft 2 bijvoeglijke naamwoorden vlak vóór het zelfstandig naamwoord, met precies één komma ertussen. Geen komma vlak voor het zelfstandig naamwoord!'},
+
+{ico:'🔑',name:'De hoofdingang',code:rev('96'),label:'Code (2 cijfers):',
+ story:'Met de sleutels uit het hok komen jullie bij de voordeur. Maar ook hier zit nog een codeslot! Op de schooltelefoon komt een berichtje binnen van Rene…',
+ body:()=>`<div class="note sms">💬 ${clickable('Hoi! Ik heb net de grote, zware voordeur op slot gedaan. Daarna ben ik op mijn oude, rammelende fiets naar huis gefietst. Ik hoorde wel gekke geluiden in het donkere gebouw… Waren jullie dat?! Sorry! De gouden reservesleutel ligt onder de bruine, rubberen deurmat. Groetjes, Rene')}</div>
+  <div class="task">🔢 Het eerste cijfer van de code = het aantal <b>bijvoeglijke naamwoorden</b> in het bericht.<br>Het tweede cijfer = het aantal <b>zelfstandige naamwoorden</b> waar een bijvoeglijk naamwoord vóór staat.<br><span class="small">Tip: klik op woorden om ze te markeren.</span></div>`,
+ hint:'Let op: vóór "voordeur" staan er twee, en vóór "deurmat" ook. Ook "gouden" telt mee. Het eerste cijfer is groter dan 8.'}
+];
+
+/* ---------- Tijd ---------- */
+function elapsed(){return S.start?Math.floor((Date.now()-S.start)/1000)+S.penalty:0}
+function fmt(s){return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')}
+setInterval(()=>{if(S.room>=0&&S.room<ROOMS.length)document.getElementById('pTime').textContent=fmt(elapsed())},500);
+
+/* ---------- Schermen ---------- */
+const app=document.getElementById('app');
+function progress(){document.getElementById('prog').innerHTML=ROOMS.map((r,i)=>`<i class="${i<S.room||S.room>=ROOMS.length?'done':''}"></i>`).join('');
+  const pt=document.getElementById('pTeam');if(S.team){pt.style.display='';pt.textContent='👥 '+S.team}else pt.style.display='none';
+  document.getElementById('pTime').textContent=fmt(elapsed())}
+
+function render(){
+  progress();window.scrollTo(0,0);
+  if(S.room<0)return startScreen();
+  if(S.room>=ROOMS.length)return endScreen();
+  const r=ROOMS[S.room];
+  app.innerHTML=`<div class="card">
+    <div class="small">Ruimte ${S.room+1} van ${ROOMS.length}</div>
+    <h2><span class="room-ico">${r.ico}</span>${r.name}</h2>
+    <p class="story">${r.story}</p>
+    ${r.body()}
+    <div class="lock" id="lock">
+      <label for="code">🔒 ${r.label}</label>
+      <input id="code" autocomplete="off" autocapitalize="characters" spellcheck="false">
+      <button class="main" onclick="check()">Openen</button>
+      <button class="ghost" onclick="hint()">💡 Hint (+2 min)</button>
+      <div class="msg" id="msg"></div>
+    </div>
+    <div class="hintbox" id="hint">💡 ${r.hint}</div>
+  </div>`;
+  if(S.hints[S.room])document.getElementById('hint').style.display='block';
+  const inp=document.getElementById('code');inp.addEventListener('keydown',e=>{if(e.key==='Enter')check()});
+}
+
+function startScreen(){
+  app.innerHTML=`<div class="card">
+    <h1>🔒 Opgesloten bij Rene!</h1>
+    <p>Het is al laat. Jullie groepje zit nog in de klas, maar conciërge Rene heeft de hele school op slot gedaan! Kunnen jullie ontsnappen?</p>
+    <p>Jullie moeten door <b>6 ruimtes</b>. Elke deur heeft een codeslot. De codes vind je alleen als je goed weet hoe <b>bijvoeglijke naamwoorden</b> werken.</p>
+    <div class="task">⚠️ Een foute code kost <b>1 minuut</b> extra. Een hint kost <b>2 minuten</b>. Overleg dus goed met elkaar!</div>
+    <label style="font-weight:800">Naam van jullie team:</label><br>
+    <input class="team" id="team" maxlength="24" placeholder="bijv. De Sluipers">
+    <br><button class="main" onclick="startGame()">Start de ontsnapping ▶</button>
+  </div>`;
+}
+function startGame(){const t=document.getElementById('team').value.trim();S={room:0,team:t||'Team zonder naam',start:Date.now(),penalty:0,hints:{}};save();render()}
+
+function check(){
+  const r=ROOMS[S.room],inp=document.getElementById('code'),msg=document.getElementById('msg');
+  const v=norm(inp.value);if(!v)return;
+  if(v===rev(r.code)){
+    S.room++;save();
+    app.innerHTML=`<div class="card open"><div class="big">🔓</div><h2>KLIK! De deur gaat open!</h2>
+      <p>${S.room<ROOMS.length?'Snel, op naar de volgende ruimte: '+ROOMS[S.room].ico+' <b>'+ROOMS[S.room].name+'</b>':'Dit was de laatste deur…'}</p>
+      <button class="main" onclick="render()">Verder ▶</button></div>`;progress();
+  }else{
+    S.penalty+=60;save();
+    msg.className='msg bad';msg.textContent='❌ Fout! Het slot blijft dicht. (+1 minuut)';
+    const l=document.getElementById('lock');l.classList.remove('shake');void l.offsetWidth;l.classList.add('shake');
+    inp.select();
+  }
+}
+function hint(){
+  if(S.hints[S.room])return;
+  if(!confirm('Een hint kost 2 minuten extra. Weet je het zeker?'))return;
+  S.hints[S.room]=1;S.penalty+=120;save();document.getElementById('hint').style.display='block';
+}
+function endScreen(){
+  const t=elapsed();const h=Object.keys(S.hints).length;
+  app.innerHTML=`<div class="card open"><div class="big">🎉</div>
+    <h1>Jullie zijn VRIJ!</h1>
+    <p>Team <b>${S.team.replace(/</g,'&lt;')}</b> is ontsnapt uit de school.<br>Rene schrikt zich morgen een hoedje als hij hoort dat jullie er nog waren!</p>
+    <div class="task" style="text-align:left">⏱️ Totale tijd: <b>${fmt(t)}</b><br>💡 Hints gebruikt: <b>${h}</b></div>
+    <p class="small">Laat dit scherm zien aan je juf of meester.</p>
+    <button class="ghost" onclick="if(confirm('Opnieuw beginnen? Jullie tijd wordt gewist.')){S.room=-1;save();render()}">Opnieuw spelen</button></div>`;
+}
+function openSpiek(){document.getElementById('spiek').style.display='flex'}
+
+render();
+</script>
+</body>
+</html>

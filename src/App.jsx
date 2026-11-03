@@ -45,6 +45,7 @@ const HTML_CODES = {
   spelvik: { src: '/vik.html', titel: 'Racelegends', achtergrond: '#111' },
   schaal:  { src: '/schaal.html', titel: 'Rekenen met schaal', achtergrond: '#060a1d', beloning: true },
   kwink:   { src: '/kwink.html', titel: 'Kwink-slag Kiezer', achtergrond: '#F4F2EC' },
+  taalles3: { src: '/escaperoom-rene.html', titel: 'Opgesloten bij Rene', achtergrond: '#0b0820' },
 }
 const HTML_BELONING = 50
 
