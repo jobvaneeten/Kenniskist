@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSessie } from './lib/sessie.jsx'
 import { haalMijnWeektaak, zetActieveOpdracht, wisActieveOpdracht, soortVan, doelStandVan, DOEL_MIN, DOEL_PCT } from './lib/weektaak.js'
 import DoelBalk from './DoelBalk.jsx'
@@ -71,6 +71,40 @@ function DoelUitleg({ opdracht, titel, onStart, onBack }) {
   )
 }
 
+// Drie foute antwoorden achter elkaar bij een doel: dan eerst de uitleg met een
+// voorbeeld, en pas na een paar seconden lezen weer verder oefenen.
+const HULP_NA = 3, HULP_LEZEN = 5
+function DoelHulp({ opdracht, titel, onVerder }) {
+  const { regels, voorbeeld } = uitlegVoor(opdracht)
+  const [wacht, setWacht] = useState(HULP_LEZEN)
+  useEffect(() => {
+    const id = setInterval(() => setWacht(w => Math.max(0, w - 1)), 1000)
+    return () => clearInterval(id)
+  }, [])
+  return (
+    <div className="wt-hulp" role="dialog" aria-modal="true" aria-label="Even uitleg">
+      <div className="wt-hulp-kaart" style={{ '--kk-accent': VAK_KLEUR[TOOL_BY_ID[opdracht.toolId]?.vak] ?? 'var(--kk-pink)' }}>
+        <span className="wt-hulp-icoon"><Icoon naam="lamp" /></span>
+        <h2>Even uitleg</h2>
+        <p className="wt-hulp-sub">Dit ging een paar keer mis bij <strong>{titel}</strong>. Lees rustig hoe het werkt, dan lukt het beter.</p>
+        <ul className="wt-uitleg-regels">
+          {regels.map((r, i) => <li key={i}>{r}</li>)}
+        </ul>
+        {voorbeeld && (
+          <div className="wt-uitleg-vb">
+            <span className="wt-uitleg-vb-kop">Voorbeeld</span>
+            <span>{voorbeeld.vraag}</span>
+            <strong>{voorbeeld.antwoord}</strong>
+          </div>
+        )}
+        <Knop variant="primair" icoon="spelen" disabled={wacht > 0} onClick={onVerder}>
+          {wacht > 0 ? `Lees even goed (${wacht})` : 'Verder oefenen'}
+        </Knop>
+      </div>
+    </div>
+  )
+}
+
 const PERSOONLIJK = {
   taak: { icoon: 'potlood', meervoud: 'Taken', leeg: 'Je hebt nu geen taken.' },
   doel: { icoon: 'doel',    meervoud: 'Doelen', leeg: 'Je hebt nu geen doelen.' },
@@ -86,6 +120,7 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
   const [doelVak, setDoelVak] = useState(null)
   const [uitleg, setUitleg] = useState(null) // { opdracht, titel } — doel vóór het oefenen
   const [feest, setFeest] = useState(null)   // doel dat tijdens het oefenen behaald werd
+  const [hulp, setHulp] = useState(false)      // uitleg na een paar foute antwoorden achter elkaar
   const [doelNu, setDoelNu] = useState(null) // stand van het doel dat nu geoefend wordt, na elk antwoord bijgewerkt
   const [doelwerkId, setDoelwerkId] = useState(null) // "Werk aan je doelen" staat open
   const [vrij, setVrij] = useState(false)            // ... en de leerling kiest zelf (alle doelen behaald)
@@ -152,12 +187,30 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
     return () => { actief = false; window.removeEventListener('kk-resultaat-opgeslagen', bijOpslaan) }
   }, [lopendDoel, profiel?.id])
 
+  // Bij elk doel (ook een behaald doel waar je mee doorgaat) tellen we de foute
+  // antwoorden achter elkaar; een goed antwoord zet de teller weer op 0.
+  const oefenDoel = gekozen && soortVan(gekozen) === 'doel' ? gekozen : null
+  const fouteReeks = useRef(0)
+  useEffect(() => {
+    if (!oefenDoel) return
+    fouteReeks.current = 0
+    const bijOpslaan = (e) => {
+      if (e.detail?.opdrachtId !== oefenDoel.opdrachtId || e.detail.goed == null) return
+      if (e.detail.goed) { fouteReeks.current = 0; return }
+      fouteReeks.current += 1
+      if (fouteReeks.current >= HULP_NA) { fouteReeks.current = 0; setHulp(true) }
+    }
+    window.addEventListener('kk-resultaat-opgeslagen', bijOpslaan)
+    return () => window.removeEventListener('kk-resultaat-opgeslagen', bijOpslaan)
+  }, [oefenDoel])
+
   const klaarMetFeest = () => {
     markeerGevierd([feest.opdrachtId])
     setFeest(null)
   }
 
   const terugVanTool = () => {
+    setHulp(false)
     wisActieveOpdracht()
     setGekozen(null)
     setVervers(v => v + 1) // haalt de bijgewerkte voortgang opnieuw op
@@ -197,6 +250,9 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
           addCuruntie={addCuruntie}
         />
         {feest && <DoelFeest doelen={[feest]} onKlaar={klaarMetFeest} knopTekst="Verder oefenen" />}
+        {hulp && !feest && (
+          <DoelHulp opdracht={gekozen} titel={gekozen.weektaak?.titel ?? toolLabel(gekozen.toolId)} onVerder={() => setHulp(false)} />
+        )}
       </>
     )
   }
