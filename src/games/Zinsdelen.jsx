@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import {
   ZINSDELEN, TIP_ZINSDEEL, splitZin, woordIndexen, zinsdeelFrase,
 } from './taalData.js'
@@ -162,6 +162,13 @@ function verdeelBanen(plekken) {
 
 // labels: de aangevinkte zinsdelen. aantal: gezet vanuit een weektaak-opdracht
 // (dan stopt de oefening na dat aantal zinnen), anders vrij oefenen.
+// Tegen gokken: per stap (en na een foute poging opnieuw) minstens zoveel tijd
+// voordat je kunt nakijken. Klik je eerder op "Verder", dan telt die klik niet
+// en vragen we eerst de zin goed te lezen.
+const STAP_MIN_MS = 5000
+// buiten het component: Date.now() hoort niet in de render-scope (zie lib/weektaak.js)
+const nu = () => Date.now()
+
 export default function Zinsdelen({
   labels, metSamengesteld = false, onBack, addBriefgeld, addCuruntie, aantal, beloning = BRIEFGELD,
 }) {
@@ -179,6 +186,8 @@ export default function Zinsdelen({
   const [showReward, setShowReward] = useState(false)
   const [tipOpen, setTipOpen] = useState(false)
   const [wachtOpAfronden, setWachtOpAfronden] = useState(null) // laatste opgave van een weektaak
+  const [teSnel, setTeSnel] = useState(false)          // te snel op "Verder" geklikt
+  const stapStart = useRef(0)
 
   const opdracht = useGebruikOpdracht({ toolId: 'taal-zinsdelen', aantal })
   const huidig = pool[poolIdx]
@@ -190,7 +199,11 @@ export default function Zinsdelen({
     : []
   const banen = verdeelBanen(gedaanPlekken)
 
+  // Nieuwe zin of volgende stap: de klok begint opnieuw.
+  useEffect(() => { stapStart.current = nu() }, [poolIdx, stapIdx])
+
   function volgendeZin() {
+    setTeSnel(false)
     setGedaan({})
     setGekozen([])
     setStapIdx(0)
@@ -217,10 +230,13 @@ export default function Zinsdelen({
 
   // "Verder": pas hier wordt de stap nagekeken.
   function kijkStapNa() {
+    if (nu() - stapStart.current < STAP_MIN_MS) { setTeSnel(true); return }
+    setTeSnel(false)
     const mijn = [...gekozen].sort((a, b) => a - b)
     const verwacht = [...goedeSegmenten].sort((a, b) => a - b)
     const goed = mijn.length === verwacht.length && mijn.every((s, i) => s === verwacht[i])
     if (!goed) {
+      stapStart.current = nu()
       setStapFout(true)
       setMisgeklikt(prev => new Set(prev).add(stap.zinsdeel))
       return
@@ -385,8 +401,10 @@ export default function Zinsdelen({
           </div>
 
           {!zinKlaar && stap && (
-            <p className={`tv-vraag${stapFout ? ' tv-vraag-fout' : ''}`}>
-              {stapFout
+            <p className={`tv-vraag${stapFout || teSnel ? ' tv-vraag-fout' : ''}`}>
+              {teSnel
+                ? 'Niet zo snel! Lees eerst de hele zin goed en denk na. Over een paar tellen kun je nakijken.'
+                : stapFout
                 ? 'Nog niet goed — klik een woordgroep uit of juist aan en probeer het opnieuw.'
                 : (
                   <>
