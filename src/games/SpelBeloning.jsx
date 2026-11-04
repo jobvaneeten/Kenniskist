@@ -76,22 +76,22 @@ const SPELLEN = [
   { key: 'doodle',     name: 'Doodle Sprong',  desc: 'Spring zo hoog mogelijk!',          img: '/scenes/games/doodlesprong.png' },
   { key: 'meteoor',    name: 'Meteoorvlucht',  desc: 'Ren weg voor de meteoor!',          img: '/scenes/games/meteoorvlucht.svg' },
   { key: 'evolutie',   name: 'Dier Evolutie',  desc: 'Voeg dieren samen',                 img: '/scenes/games/evolutie.png' },
-  { key: 'dierentuin', name: 'Dierentuinbaas', desc: '1 minuut aan je dierentuin bouwen', img: '/scenes/games/dierentuin.svg' },
-  { key: 'planeet',    name: 'Planetenbouwer', desc: '1 minuut je planeet laten groeien', img: '/scenes/games/planeet.svg' },
-  { key: 'tower',      name: 'Tower Defense',  desc: '1 minuut verder met je level', img: '/scenes/games/towerdefense.svg' },
+  { key: 'dierentuin', name: 'Dierentuinbaas', desc: '45 seconden aan je dierentuin bouwen', img: '/scenes/games/dierentuin.svg' },
+  { key: 'planeet',    name: 'Planetenbouwer', desc: '45 seconden je planeet laten groeien', img: '/scenes/games/planeet.svg' },
+  { key: 'tower',      name: 'Tower Defense',  desc: '45 seconden verder met je level', img: '/scenes/games/towerdefense.svg' },
   { key: 'brug',       name: 'Brug Bouwen',    desc: 'Bouw 3 bruggen',                   img: '/scenes/games/brug.png' },
   { key: 'hillclimb',  name: 'Bergrijden',     desc: 'Rij tot je crasht',                img: '/scenes/games/hillclimb.png' },
-  { key: 'fruitsabel', name: 'Fruitsabel',     desc: 'Snijd 60 seconden fruit',          img: '/scenes/games/fruitsabel.svg' },
+  { key: 'fruitsabel', name: 'Fruitsabel',     desc: 'Snijd 45 seconden fruit',          img: '/scenes/games/fruitsabel.svg' },
   { key: 'sterrenveer', name: 'Sterrenveer',   desc: 'Speel 1 level',                    img: '/scenes/games/sterrenveer.svg' },
   { key: 'graven',     name: 'Diepgravers',    desc: 'Je krijgt 3 duiken',               img: '/scenes/games/graven.svg' },
   { key: 'neongolf',   name: 'Neongolf',       desc: 'Speel 1 hole',                     img: '/scenes/games/neongolf.svg' },
-  { key: 'blokken',    name: 'Blokkenblitz',   desc: '1 minuut spelen, daarna ga je de volgende keer verder', img: '/scenes/games/blokkenblitz.svg' },
-  { key: 'neonhockey', name: 'Neonhockey',     desc: 'Speel 1 wedstrijd van 1 minuut',  img: '/scenes/games/neonhockey.svg' },
+  { key: 'blokken',    name: 'Blokkenblitz',   desc: '45 seconden spelen, daarna ga je de volgende keer verder', img: '/scenes/games/blokkenblitz.svg' },
+  { key: 'neonhockey', name: 'Neonhockey',     desc: 'Speel 1 wedstrijd van 45 seconden',  img: '/scenes/games/neonhockey.svg' },
   { key: 'pijlen',     name: 'Pijlenregen',    desc: 'Speel 1 level (5 schijven)',      img: '/scenes/games/pijlenregen.svg' },
-  { key: 'stapel',     name: 'Stapeltoren',    desc: 'Bouw 1 toren in 1 minuut',        img: '/scenes/games/stapeltoren.svg' },
+  { key: 'stapel',     name: 'Stapeltoren',    desc: 'Bouw 1 toren in 45 seconden',        img: '/scenes/games/stapeltoren.svg' },
   { key: 'steen',      name: 'Steenknaller',   desc: 'Speel 1 level',                   img: '/scenes/games/steenknaller.svg' },
   { key: 'vlot',       name: 'Vlotstrijd',     desc: 'Speel 1 level',                   img: '/scenes/games/vlotstrijd.svg' },
-  { key: 'tijd',       name: 'Tijdstrijd',     desc: 'Speel 1 minuut',                  img: '/scenes/games/tijdstrijd.png' },
+  { key: 'tijd',       name: 'Tijdstrijd',     desc: 'Speel 45 seconden',                  img: '/scenes/games/tijdstrijd.png' },
 ]
 
 export default function SpelBeloning({ title, sub, geld, addCuruntie, onDone }) {
@@ -118,14 +118,14 @@ export default function SpelBeloning({ title, sub, geld, addCuruntie, onDone }) 
   if (picked === 'doodle')     return <IframeEmbed src="/doodlesprong/" title="Doodle Sprong" doneType="doodlesprong-gameover" hint="Je gaat automatisch verder na het spel" onDone={onDone} />
   if (picked === 'meteoor')    return <IframeEmbed src="/meteoorvlucht/" title="Meteoorvlucht" doneType="meteoorvlucht-gameover" hint="Je gaat automatisch verder na het spel" onDone={onDone} />
   // Evolutie is een idle-spel zonder eigen 'potje', dus hier bepaalt de klok het
-  // einde: 1 minuut spelen en dan automatisch terug naar de oefening.
-  if (picked === 'evolutie')   return <IframeEmbed src="/evolutie/" title="Dier Evolutie" doneType="evolutie-klaar" seconds={60} hint="Tik op de dieren en raap poep — na 1 minuut ga je verder" onDone={onDone} />
-  // Dierentuinbaas: 1 minuut verder bouwen aan je eigen dierentuin, die blijft bewaard.
-  if (picked === 'dierentuin') return <IframeEmbed src="/dierentuin/" title="Dierentuinbaas" doneType="dierentuin-klaar" seconds={60} hint="Bouw aan je dierentuin — na 1 minuut ga je verder" onDone={onDone} />
-  // Planetenbouwer is ook een idle-spel: 1 minuut bouwen, de planeet blijft bewaard.
-  if (picked === 'planeet')    return <IframeEmbed src="/planeet/" title="Planetenbouwer" doneType="planeet-klaar" seconds={60} hint="Tik op je planeet en bouw — na 1 minuut ga je verder" onDone={onDone} />
+  // einde: 45 seconden spelen en dan automatisch terug naar de oefening.
+  if (picked === 'evolutie')   return <IframeEmbed src="/evolutie/" title="Dier Evolutie" doneType="evolutie-klaar" seconds={45} hint="Tik op de dieren en raap poep, na 45 seconden ga je verder" onDone={onDone} />
+  // Dierentuinbaas: 45 seconden verder bouwen aan je eigen dierentuin, die blijft bewaard.
+  if (picked === 'dierentuin') return <IframeEmbed src="/dierentuin/" title="Dierentuinbaas" doneType="dierentuin-klaar" seconds={45} hint="Bouw aan je dierentuin, na 45 seconden ga je verder" onDone={onDone} />
+  // Planetenbouwer is ook een idle-spel: 45 seconden bouwen, de planeet blijft bewaard.
+  if (picked === 'planeet')    return <IframeEmbed src="/planeet/" title="Planetenbouwer" doneType="planeet-klaar" seconds={45} hint="Tik op je planeet en bouw, na 45 seconden ga je verder" onDone={onDone} />
   // 5 golven op een level naar keuze, dan Klaar.
-  if (picked === 'tower')      return <IframeEmbed src="/towerdefense/" title="Tower Defense" doneType="towerdefense-gameover" hint="Je speelt 1 minuut, daarna oefen je weer verder" onDone={onDone} />
+  if (picked === 'tower')      return <IframeEmbed src="/towerdefense/" title="Tower Defense" doneType="towerdefense-gameover" hint="Je speelt 45 seconden, daarna oefen je weer verder" onDone={onDone} />
   if (picked === 'brug')       return wrap(<BrugBouwen reward onBack={onDone} />)
   if (picked === 'hillclimb')  return wrap(<HillClimbGame reward onBack={onDone} />)
   // Sterrenveer slaat in beloningsmodus het titelscherm over: je kiest één
@@ -140,19 +140,19 @@ export default function SpelBeloning({ title, sub, geld, addCuruntie, onDone }) 
   if (picked === 'graven')     return <IframeEmbed src="/graven/" title="Diepgravers" doneType="graven-gameover" hint="Je krijgt 3 duiken — daarna kun je upgraden en op Verder klikken" onDone={onDone} />
   // Eén hole naar keuze; na de hole tik je op Klaar.
   if (picked === 'neongolf')   return <IframeEmbed src="/neongolf/" title="Neongolf" doneType="neongolf-gameover" hint="Speel 1 hole — daarna tik je op Klaar" onDone={onDone} />
-  // Eén minuut per beloning. Het potje wordt na elke zet bewaard, dus bij de
+  // 45 seconden per beloning. Het potje wordt na elke zet bewaard, dus bij de
   // volgende beloning ga je verder waar je was (zie public/blokkenblitz/spel.js).
-  if (picked === 'blokken')    return <IframeEmbed src="/blokkenblitz/" title="Blokkenblitz" doneType="blokkenblitz-gameover" seconds={60} hint="1 minuut spelen — je potje wordt bewaard voor de volgende keer" onDone={onDone} />
+  if (picked === 'blokken')    return <IframeEmbed src="/blokkenblitz/" title="Blokkenblitz" doneType="blokkenblitz-gameover" seconds={45} hint="45 seconden spelen, je potje wordt bewaard voor de volgende keer" onDone={onDone} />
   // Eén wedstrijd tegen de volgende tegenstander op de ladder, dan Klaar.
   if (picked === 'neonhockey') return <IframeEmbed src="/neonhockey/" title="Neonhockey" doneType="neonhockey-gameover" hint="Speel 1 wedstrijd — daarna tik je op Klaar" onDone={onDone} />
   // Het volgende level (5 schijven, ongeveer een minuut), dan Klaar.
   if (picked === 'pijlen')     return <IframeEmbed src="/pijlenregen/" title="Pijlenregen" doneType="pijlenregen-gameover" hint="Speel 1 level — daarna tik je op Klaar" onDone={onDone} />
-  // Eén toren (maximaal 1 minuut), dan Klaar.
+  // Eén toren (maximaal 45 seconden), dan Klaar.
   if (picked === 'stapel')     return <IframeEmbed src="/stapeltoren/" title="Stapeltoren" doneType="stapeltoren-gameover" hint="Bouw 1 toren — daarna tik je op Klaar" onDone={onDone} />
   // Het volgende level, dan Klaar.
   if (picked === 'steen')      return <IframeEmbed src="/steenknaller/" title="Steenknaller" doneType="steenknaller-gameover" hint="Speel 1 level — daarna tik je op Klaar" onDone={onDone} />
   if (picked === 'vlot')       return <IframeEmbed src="/vlotstrijd/" title="Vlotstrijd" doneType="vlotstrijd-gameover" hint="Speel 1 level — daarna tik je op Klaar" onDone={onDone} />
-  if (picked === 'tijd')       return <IframeEmbed src="/tijdstrijd/" title="Tijdstrijd" doneType="tijdstrijd-gameover" hint="Je speelt 1 minuut, daarna ga je vanzelf terug" onDone={onDone} />
+  if (picked === 'tijd')       return <IframeEmbed src="/tijdstrijd/" title="Tijdstrijd" doneType="tijdstrijd-gameover" hint="Je speelt 45 seconden, daarna ga je vanzelf terug" onDone={onDone} />
 
   return (
     <div className="sb-screen">

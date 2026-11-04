@@ -34,9 +34,9 @@ var D = (function () {
 })()
 function bewaar() { try { localStorage.setItem(OPSLAG, JSON.stringify(D)) } catch (e) {} }
 
-// ── beloning: 1 minuut spelen, daarna weer oefenen ── het potje wordt steeds
+// ── beloning: 45 seconden spelen, daarna weer oefenen ── het potje wordt steeds
 // bewaard (ook midden in een golf), zodat je de volgende keer precies verder gaat
-var BEWAAR = 'td_beloning', SPEELTIJD = 60
+var BEWAAR = 'td_beloning', SPEELTIJD = 45
 var speeltijd = SPEELTIJD, tijdOp = false, bewaarOm = 0
 function leesBeloning() {
   try { var b = JSON.parse(localStorage.getItem(BEWAAR) || 'null'); return b && b.torens && b.golf < TD.GOLVEN ? b : null } catch (e) { return null }
@@ -1490,11 +1490,11 @@ function toonMenu() {
   actief = false; S = null
   kies = null; gekozen = null
   $('menutekst').textContent = BELONING
-    ? 'Je mag 1 minuut spelen, daarna ga je weer oefenen. De volgende keer ga je precies verder waar je was.'
+    ? 'Je mag 45 seconden spelen, daarna ga je weer oefenen. De volgende keer ga je precies verder waar je was.'
     : 'Bouw torens langs het pad en knal alle ballonnen kapot voordat ze je kern bereiken. Elk level heeft ' + TD.GOLVEN + ' golven.'
   var box = $('levels'); box.innerHTML = ''
   var verder = BELONING ? leesBeloning() : null
-  if (verder) $('menutekst').textContent = 'Je mag 1 minuut spelen. Ga verder waar je was, of begin opnieuw met een level.'
+  if (verder) $('menutekst').textContent = 'Je mag 45 seconden spelen. Ga verder waar je was, of begin opnieuw met een level.'
   TD.KAARTEN.forEach(function (def, i) {
     var open = i <= D.open, b = document.createElement('button'), hier = verder && verder.L === i
     b.className = 'lvkaart'; b.disabled = !open; b.style.setProperty('--k', def.kleur)

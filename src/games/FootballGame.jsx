@@ -24,6 +24,7 @@ const DRIBBLE_FACTOR = 0.52   // speed multiplier when dribbling
 const AI_SPD_BY_DIFF = { 1: 155, 2: 180, 3: 215, 4: 248, 5: 272 }
 const GAME_TIME_NORMAL   = 60
 const GAME_TIME_TWOPLAYER = 60
+const GAME_TIME_REWARD = 45     // als beloning een wedstrijd van 45 seconden
 
 // ── Stadion-indeling (van boven naar beneden) ─────────────────────
 // De bal kan tot bovenin het beeld vliegen, dus de bovenste helft blijft
@@ -890,7 +891,7 @@ export default function FootballGame({ year, onBack, addCuruntie, noQuiz = false
   const [input,       setInput]      = useState('')
   const [feedback,    setFeedback]   = useState(null)
   const [score,       setScore]      = useState({ p: 0, ai: 0 })
-  const gameDuration = twoPlayer ? GAME_TIME_TWOPLAYER : GAME_TIME_NORMAL
+  const gameDuration = rewardMode ? GAME_TIME_REWARD : twoPlayer ? GAME_TIME_TWOPLAYER : GAME_TIME_NORMAL
   const [timeLeft,    setTimeLeft]   = useState(gameDuration)
   const [goalInfo,    setGoalInfo]   = useState(null) // { isPlayer: bool }
   const [earnedCoins, setEarnedCoins] = useState(0)
@@ -979,6 +980,7 @@ export default function FootballGame({ year, onBack, addCuruntie, noQuiz = false
     const canvas = canvasRef.current; if (!canvas) return
     const ctx = canvas.getContext('2d')
     const state = newState(twoPlayer)
+    state.time = gameDuration
     state.running = true
     gameRef.current = state
     const aiSpd = aiSpeed

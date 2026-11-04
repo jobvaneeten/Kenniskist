@@ -21,7 +21,7 @@ var D = (function () {
     geluid: d.geluid !== false, snel: d.snel === 2 ? 2 : 1 }
 })()
 function bewaar() { try { localStorage.setItem(OPSLAG, JSON.stringify(D)) } catch (e) {} }
-// als beloning speel je 1 minuut; de slag wordt bewaard, zodat je de volgende keer verdergaat
+// als beloning speel je 45 seconden; de slag wordt bewaard, zodat je de volgende keer verdergaat
 var SLAG_OPSLAG = 'kk_tijd_slag'
 function bewaarSlag() { try { localStorage.setItem(SLAG_OPSLAG, JSON.stringify(s, function (k, v) { return k === 'spoor' || k === 'def' ? undefined : v })) } catch (e) {} }
 function laadSlag() { try { return TS.herstel(JSON.parse(localStorage.getItem(SLAG_OPSLAG) || 'null')) } catch (e) { return null } }
@@ -1725,7 +1725,7 @@ function startSlag(n, opgeslagen) {
   actief = true; gepauzeerd = false; deeltjes = []; teksten = []; geesten = []; schud = 0; flits = 0; lagen = null; sfeer = []; fx = []; rookjes = []; munten = []; lagenOud = null
   weer = { t: 0, vogels: [], vallend: [], regen: [] }
   camX = -MARGE; camV = 0; alarm = 0; vorigKan = false
-  s.speeltijd = BELONING ? 60 : 0
+  s.speeltijd = BELONING ? 45 : 0
   s.gedoodStart = s.zij[0].gedood
   $('klok').classList.toggle('aan', BELONING)
   if (!geswiped) setTimeout(function () { if (!geswiped && s && actief) $('swipe').classList.add('aan') }, 2200)
@@ -1733,10 +1733,10 @@ function startSlag(n, opgeslagen) {
   toonScherm(null)
   tekenIconen()
   audio()
-  if (opgeslagen) banner('Verder met je slag!', 2000, 'Je mag weer 1 minuut spelen')
-  else banner(s.def.naam, 1800, BELONING ? 'Je mag 1 minuut spelen. Tik op een soldaat!' : 'Tik op een soldaat om hem te trainen')
+  if (opgeslagen) banner('Verder met je slag!', 2000, 'Je mag weer 45 seconden spelen')
+  else banner(s.def.naam, 1800, BELONING ? 'Je mag 45 seconden spelen. Tik op een soldaat!' : 'Tik op een soldaat om hem te trainen')
 }
-// de minuut is om: slag bewaren, munten voor wat je versloeg, en terug naar de oefening
+// de tijd is om: slag bewaren, munten voor wat je versloeg, en terug naar de oefening
 function tijdOp() {
   if (!s || !actief) return
   actief = false
@@ -1744,7 +1744,7 @@ function tijdOp() {
   bewaarSlag()
   Geluid.win()
   $('klok').classList.remove('aan')
-  banner('De minuut is om!', 2200, 'De volgende keer ga je hier verder')
+  banner('De tijd is om!', 2200, 'De volgende keer ga je hier verder')
   setTimeout(function () { parent.postMessage({ type: 'tijdstrijd-gameover' }, '*') }, 2000)
 }
 function einde() {
@@ -1862,7 +1862,7 @@ function frame(nu) {
   if (s) {
     if (actief && !gepauzeerd) {
       verwerk(TS.stap(s, dt * D.snel))
-      // beloning: na 1 minuut (echte tijd) is het klaar
+      // beloning: na 45 seconden (echte tijd) is het klaar
       if (s.speeltijd) {
         s.speeltijd = Math.max(0, s.speeltijd - dt)
         var sec = Math.ceil(s.speeltijd)

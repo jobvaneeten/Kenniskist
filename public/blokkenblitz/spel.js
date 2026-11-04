@@ -14,7 +14,7 @@ if (!BELONING) {
 }
 
 // ── opslag (kk_-prefix ⇒ synct mee naar het account) ──
-// Beloning (1 minuut per keer) heeft een eigen potje dat bewaard blijft: bij de
+// Beloning (45 seconden per keer) heeft een eigen potje dat bewaard blijft: bij de
 // volgende beloning ga je verder waar je was. Los van het vrij-spelen-potje.
 var OPSLAG = 'kk_bb', SPELOPSLAG = BELONING ? 'kk_bb_beloning' : 'kk_bb_spel'
 var D = (function () {
@@ -26,6 +26,8 @@ function bewaar() { try { localStorage.setItem(OPSLAG, JSON.stringify(D)) } catc
 
 // ── blokstijlen (winkel) ──
 var PALET = ['#3ef0ff', '#ff4fd8', '#ffc83d', '#8cff5a', '#9b6bff', '#ff8a3d', '#ff4f6a', '#4f8cff']
+// in regenboogvolgorde, zodat het doorschuiven van de kleuren een lopende regenboog geeft
+var REGENBOOG = ['#ff4f6a', '#ff8a3d', '#ffc83d', '#8cff5a', '#3ef0ff', '#4f8cff', '#9b6bff', '#ff4fd8']
 var STIJLEN = [
   { id: 'neon', naam: 'Neon', uitleg: 'Gloeiend glas — de klassieker', prijs: 0, palet: PALET, vorm: 'glas' },
   { id: 'pixel', naam: 'Retro pixel', uitleg: 'Zoals in een oude arcadekast', prijs: 150, palet: PALET, vorm: 'pixel' },
@@ -34,7 +36,7 @@ var STIJLEN = [
   { id: 'ijs', naam: 'IJs', uitleg: 'Bevroren blokken die glinsteren', prijs: 750, palet: ['#b3f5ff', '#80deea', '#4dd0e1', '#a7c7ff', '#cfe8ff', '#7fb3ff', '#9ee7ff', '#d6f7ff'], vorm: 'ijs' },
   { id: 'galaxy', naam: 'Sterrenstelsel', uitleg: 'Elk blok een stukje heelal', prijs: 1100, palet: ['#7c4dff', '#d500f9', '#2979ff', '#00e5ff', '#651fff', '#f50057', '#3d5afe', '#e040fb'], vorm: 'galaxy' },
   { id: 'goud', naam: 'Goud', uitleg: 'Massief goud, voor kampioenen', prijs: 1600, palet: ['#ffd54f', '#ffca28', '#ffc107', '#ffb300', '#ffe082', '#ffa000', '#ffd740', '#ffe9a8'], vorm: 'goud' },
-  { id: 'regenboog', naam: 'Regenboog', uitleg: 'Kleuren die steeds verschuiven', prijs: 2400, palet: PALET, vorm: 'glas', regenboog: true },
+  { id: 'regenboog', naam: 'Regenboog', uitleg: 'Elk blok een regenboog die steeds doorloopt', prijs: 2400, palet: REGENBOOG, vorm: 'regenboog', regenboog: true },
 ]
 function stijl() { return STIJLEN.find(function (s) { return s.id === D.keuze }) || STIJLEN[0] }
 
@@ -108,6 +110,19 @@ function tekenBlok(g, x, y, s, col, vorm, k) {
     rr(g, x + 1, y + 1, s - 2, s - 2, r); g.fillStyle = gi; g.fill()
     g.strokeStyle = 'rgba(255,255,255,.75)'; g.lineWidth = 1
     for (i = 0; i < 2; i++) { var sx = x + s * (0.25 + rnd() * 0.5), sy = y + s * (0.25 + rnd() * 0.5), l = s * 0.1; g.beginPath(); g.moveTo(sx - l, sy); g.lineTo(sx + l, sy); g.moveTo(sx, sy - l); g.lineTo(sx, sy + l); g.stroke() }
+    rr(g, x + 1.5, y + 1.5, s - 3, s - 3, r); g.strokeStyle = 'rgba(255,255,255,.8)'; g.lineWidth = 1.5; g.stroke()
+  } else if (vorm === 'regenboog') {
+    // schuin verloop over een flink stuk van de regenboog, met glans en een sterretje
+    var gb = g.createLinearGradient(x, y + s, x + s, y)
+    gb.addColorStop(0, REGENBOOG[k % 8]); gb.addColorStop(0.5, REGENBOOG[(k + 2) % 8]); gb.addColorStop(1, REGENBOOG[(k + 4) % 8])
+    rr(g, x + 1, y + 1, s - 2, s - 2, r); g.fillStyle = gb; g.fill()
+    var gw = g.createLinearGradient(x, y, x, y + s)
+    gw.addColorStop(0, 'rgba(255,255,255,.45)'); gw.addColorStop(0.45, 'rgba(255,255,255,0)'); gw.addColorStop(1, 'rgba(0,0,0,.22)')
+    rr(g, x + 1, y + 1, s - 2, s - 2, r); g.fillStyle = gw; g.fill()
+    var sx2 = x + s * 0.72, sy2 = y + s * 0.28, l2 = s * 0.13
+    g.fillStyle = 'rgba(255,255,255,.95)'; g.beginPath()
+    g.moveTo(sx2, sy2 - l2); g.lineTo(sx2 + l2 * 0.28, sy2 - l2 * 0.28); g.lineTo(sx2 + l2, sy2); g.lineTo(sx2 + l2 * 0.28, sy2 + l2 * 0.28)
+    g.lineTo(sx2, sy2 + l2); g.lineTo(sx2 - l2 * 0.28, sy2 + l2 * 0.28); g.lineTo(sx2 - l2, sy2); g.lineTo(sx2 - l2 * 0.28, sy2 - l2 * 0.28); g.closePath(); g.fill()
     rr(g, x + 1.5, y + 1.5, s - 3, s - 3, r); g.strokeStyle = 'rgba(255,255,255,.8)'; g.lineWidth = 1.5; g.stroke()
   } else if (vorm === 'galaxy') {
     rr(g, x + 1, y + 1, s - 2, s - 2, r); g.fillStyle = '#0a0620'; g.fill()

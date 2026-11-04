@@ -188,7 +188,7 @@ function lv(k){ return D.lv[k] | 0; }
 function puntPer(){ return 2 + lv('sabel'); }
 function schilden(){ return lv('schild'); }
 function banaanKans(){ return lv('banaan') * 0.05; }
-function speeltijd(){ return 60; }
+function speeltijd(){ return BELONING ? 45 : 60; }   // als beloning 45 seconden
 function muntF(){ return 1 + lv('bonus') * 0.05; }
 function extraFruit(){ return lv('meer'); }
 function goudKans(){ return lv('goud') * 0.05; }

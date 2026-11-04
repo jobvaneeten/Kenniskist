@@ -97,6 +97,7 @@ var invoer = [null, null], vingers = {}
 function start(nr) {
   tegenNr = nr
   w = HK.nieuweWedstrijd({ tegen: nr < 0 ? null : nr })
+  if (BELONING) w.klok = 45   // als beloning een wedstrijd van 45 seconden
   actief = true; gepauzeerd = false
   deeltjes = []; teksten = []; flits = 0; schud = 0
   invoer = [null, null]; vingers = {}

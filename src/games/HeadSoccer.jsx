@@ -24,6 +24,7 @@ const BALL_BOUNCE = 0.62     // bal verliest meer energie
 const KICK_RANGE = PR + BR + 16
 const KICK_ANIM = 0.24       // iets langere schop-animatie (zwaarder gevoel)
 const MATCH_TIME = 60        // 1 minuut per potje
+const REWARD_MATCH_TIME = 45 // als beloning 45 seconden
 const KICK_POWER = 340       // zwakker, rustiger basis-schot
 // Basis-AI = "hard" (de sterke AI van vóór). Per niveau wordt dit geschaald.
 // diff 6 = de baas-tegenstanders van het klas-toernooi (Meester Luuk/Job): extra
@@ -1381,7 +1382,7 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
       decoys: [], tornado: null, mascots: [], rockets: [], bolts: [],
       wall: null, bumpers: [], gravityT: 0, waveT: 0, waveNext: 0, waveDir: 0, waveCol: '#38b6ff', pulseSeq: null,
       cutin: { t: 0, dur: 0 },
-      score: { L: 0, R: 0 }, time: MATCH_TIME, golden: false,
+      score: { L: 0, R: 0 }, time: reward ? REWARD_MATCH_TIME : MATCH_TIME, golden: false,
       kickoffT: 0.8, msg: '', msgT: 0, ended: false, particles: [],
       shockwaves: [], shake: { t: 0, mag: 0 }, goalFlash: { t: 0, color: '#fff' }, specFlash: { t: 0, color: '#fff' },
       sunburst: { t: 0, dur: 0.55, x: 0, y: 0, color: '#fff' }, goalText: { t: 0, dur: 1.1 },
@@ -2711,7 +2712,7 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
   }, [phase, playerKey, oppKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // HUD charge poll
-  const [hud, setHud] = useState({ L: 0, R: 0, sL: 0, sR: 0, time: MATCH_TIME })
+  const [hud, setHud] = useState({ L: 0, R: 0, sL: 0, sR: 0, time: reward ? REWARD_MATCH_TIME : MATCH_TIME })
   useEffect(() => {
     if (phase !== 'match') return
     const id = setInterval(() => {

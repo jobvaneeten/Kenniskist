@@ -7,6 +7,7 @@ var $ = function (id) { return document.getElementById(id) }
 // ── inbedding ──
 var params = new URLSearchParams(location.search)
 var BELONING = !params.has('terug')
+var DUUR = BELONING ? 45 : ST.DUUR
 if (!BELONING) {
   $('terug').classList.add('aan')
   $('terug').onclick = function () { parent.postMessage({ type: 'stapeltoren-terug' }, '*') }
@@ -78,6 +79,7 @@ var vallers = [], golven = [], deeltjes = [], teksten = [], schud = 0, laatsteTi
 
 function start() {
   s = ST.nieuw(); actief = true; gepauzeerd = false
+  if (BELONING) s.klok = DUUR   // als beloning 45 seconden
   vallers = []; golven = []; deeltjes = []; teksten = []; camY = 0; zak = 0
   toonScherm(null)
   tekenHud()
@@ -121,7 +123,7 @@ function tekenHud() {
   $('hoogte').textContent = ST.hoogte(s)
   var sec = Math.ceil(s.klok)
   $('tijd').textContent = '0:' + String(sec).padStart(2, '0')
-  $('balkvul').style.transform = 'scaleX(' + (s.klok / ST.DUUR) + ')'
+  $('balkvul').style.transform = 'scaleX(' + (s.klok / DUUR) + ')'
   $('balk').classList.toggle('krap', s.klok <= 10)
   $('record').textContent = D.record ? 'Record ' + D.record : ''
 }
