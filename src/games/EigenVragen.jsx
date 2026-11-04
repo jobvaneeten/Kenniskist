@@ -115,7 +115,7 @@ export default function EigenVragen({ onBack, onOpnieuw, addBriefgeld, addCurunt
 
   if (beloning) {
     return (
-      <SpelBeloning title={`${perBeloning} goed!`} geld={BRIEFGELD} addCuruntie={addCuruntie}
+      <SpelBeloning geld={BRIEFGELD} addCuruntie={addCuruntie}
         onDone={() => { setBeloning(false); addBriefgeld?.(BRIEFGELD); setVerdiend(v => v + BRIEFGELD) }} />
     )
   }

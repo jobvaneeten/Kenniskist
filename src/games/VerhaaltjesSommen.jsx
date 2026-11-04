@@ -956,7 +956,7 @@ export default function VerhaaltjesSommen({ groep: eigenGroep = 7, onBack, addBr
   }
 
   if (showReward) {
-    return <SpelBeloning title="5 sommen goed!" geld={BELONING} addCuruntie={addCuruntie} onDone={naBeloning} />
+    return <SpelBeloning geld={BELONING} addCuruntie={addCuruntie} onDone={naBeloning} />
   }
 
   if (opdracht.klaar) {

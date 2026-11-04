@@ -1051,7 +1051,7 @@ function restartQuiz() {
     if(ov) return;
     ov = document.createElement('div');
     ov.className = 'bl-break-ov hide';
-    ov.innerHTML = '<div class="bl-break-card"><div class="bl-break-stars">⭐⭐⭐⭐⭐</div><h2 class="bl-break-title">' + PER + ' goede antwoorden!</h2><p class="bl-break-sub">Kies een spelletje. Daarna ga je verder met lezen.</p><div class="bl-break-games">'+GAMES.map(function(g){return '<button class="bl-break-game" data-game="'+g[0]+'"><span>'+g[1]+'</span>'+g[2]+'</button>';}).join('')+'</div><button class="bl-break-skip" id="bl-break-skip">Doorgaan zonder spelletje →</button></div>';
+    ov.innerHTML = '<div class="bl-break-card"><div class="bl-break-stars">⭐⭐⭐⭐⭐</div><h2 class="bl-break-title">Goed gedaan!</h2><p class="bl-break-sub">Kies een spelletje. Daarna ga je verder met lezen.</p><div class="bl-break-games">'+GAMES.map(function(g){return '<button class="bl-break-game" data-game="'+g[0]+'"><span>'+g[1]+'</span>'+g[2]+'</button>';}).join('')+'</div><button class="bl-break-skip" id="bl-break-skip">Doorgaan zonder spelletje →</button></div>';
     document.body.appendChild(ov);
     ov.querySelectorAll('.bl-break-game').forEach(function(b){
       b.onclick = function(){ try{ window.parent.postMessage({type:'begrijpend-game',game:b.dataset.game},'*'); }catch(e){} };

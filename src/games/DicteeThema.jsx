@@ -55,7 +55,6 @@ export default function DicteeThema({ onBack, addCuruntie, addBriefgeld, thema =
           door de `.game-screen > * { position: relative }` regel. */}
       {beloning && (
         <SpelBeloning
-          title="5 woorden goed!"
           geld={50}
           addCuruntie={addCuruntie}
           onDone={() => { addBriefgeld?.(50); resume() }}

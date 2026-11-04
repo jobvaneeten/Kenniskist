@@ -272,7 +272,6 @@ export default function Zinsdelen({
   if (showReward) {
     return (
       <SpelBeloning
-        title={`Knap — ${GOED_VOOR_REWARD} zinnen helemaal ontleed!`}
         geld={beloning}
         addCuruntie={addCuruntie}
         onDone={() => { setShowReward(false); addBriefgeld?.(beloning); volgendeZin() }}

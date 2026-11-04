@@ -134,7 +134,7 @@ function Oefenen({ soort, niveau, ops, onBack, addBriefgeld, addCuruntie }) {
   }
   const naBeloning = () => { setReward(false); addBriefgeld?.(BELONING); setVerdiend((v) => v + BELONING); setSom(nieuweSom()) }
 
-  if (reward) return <SpelBeloning title={`${PER_BELONING} goed!`} geld={BELONING} addCuruntie={addCuruntie} onDone={naBeloning} />
+  if (reward) return <SpelBeloning geld={BELONING} addCuruntie={addCuruntie} onDone={naBeloning} />
 
   const veld = (k, label, ref) => (
     <input ref={ref} className={'bp-input br-input' + (phase === 'fout' ? ' fout' : '') + (k === 'heel' ? ' br-input-heel' : '')}

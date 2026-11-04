@@ -75,7 +75,7 @@ function HtmlPagina({ pagina, onBack, addBriefgeld, addCuruntie }) {
       {!pagina.beloning && <VrijSpelenBadge />}
       {reward && (
         <Suspense fallback={null}>
-          <SpelBeloning title={`${perBeloning} goed!`} geld={HTML_BELONING} addCuruntie={addCuruntie} onDone={naBeloning} />
+          <SpelBeloning geld={HTML_BELONING} addCuruntie={addCuruntie} onDone={naBeloning} />
         </Suspense>
       )}
     </div>

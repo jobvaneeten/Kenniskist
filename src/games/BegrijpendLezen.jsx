@@ -5,7 +5,6 @@ import MenuScene from '../MenuScenes'
 import './dictee-thema.css'
 import { TerugKnop, Icoon } from '../ui/index.jsx'
 import { useSessie } from '../lib/sessie.jsx'
-import { spelNa } from '../lib/beloning.js'
 
 // startLes: alleen gezet vanuit een weektaak-opdracht (toolRender.jsx) — het
 // lesnummer binnen thema startThema (standaard "spullen"). Springt direct naar
@@ -51,7 +50,6 @@ export default function BegrijpendLezen({ onBack, addBriefgeld, addCuruntie, sta
   // `.game-screen > * { position: relative }` regel.
   const overlay = beloning && (
     <SpelBeloning
-      title={spelNa(10) + ' goede antwoorden!'}
       geld={50}
       addCuruntie={addCuruntie}
       onDone={() => { addBriefgeld?.(50); resume() }}

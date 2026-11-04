@@ -470,7 +470,6 @@ export default function TopoOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
   if (showReward) {
     return (
       <SpelBeloning
-        title={`Knap — ${GOED_VOOR_REWARD} goed op de kaart!`}
         geld={BRIEFGELD}
         addCuruntie={addCuruntie}
         onDone={() => { setShowReward(false); addBriefgeld?.(BRIEFGELD); volgende() }}

@@ -47,7 +47,6 @@ function KeuzeOefening({ toolId, titel, vraag, volgende, hulp, beloning, aantal,
   if (showReward) {
     return (
       <SpelBeloning
-        title={`Geweldig — ${CORRECT_VOOR_REWARD} keer goed!`}
         geld={beloning} addCuruntie={addCuruntie}
         onDone={() => { setShowReward(false); addBriefgeld?.(beloning); setGekozen(null); setV(volgende()) }}
       />

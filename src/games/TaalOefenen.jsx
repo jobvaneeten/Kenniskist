@@ -181,7 +181,6 @@ export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
   if (showReward) {
     return (
       <SpelBeloning
-        title={`Geweldig — ${CORRECT_VOOR_REWARD} keer goed!`}
         geld={beloning}
         addCuruntie={addCuruntie}
         onDone={afterReward}

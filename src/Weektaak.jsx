@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSessie } from './lib/sessie.jsx'
-import { haalMijnWeektaak, zetActieveOpdracht, wisActieveOpdracht, soortVan, DOEL_MIN, DOEL_PCT } from './lib/weektaak.js'
+import { haalMijnWeektaak, zetActieveOpdracht, wisActieveOpdracht, soortVan, doelStandVan, DOEL_MIN, DOEL_PCT } from './lib/weektaak.js'
 import DoelBalk from './DoelBalk.jsx'
 import DoelFeest from './DoelFeest.jsx'
 import { leesGevierd, markeerGevierd } from './lib/gevierd.js'
@@ -86,6 +86,7 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
   const [doelVak, setDoelVak] = useState(null)
   const [uitleg, setUitleg] = useState(null) // { opdracht, titel } — doel vóór het oefenen
   const [feest, setFeest] = useState(null)   // doel dat tijdens het oefenen behaald werd
+  const [doelNu, setDoelNu] = useState(null) // stand van het doel dat nu geoefend wordt, na elk antwoord bijgewerkt
   const [doelwerkId, setDoelwerkId] = useState(null) // "Werk aan je doelen" staat open
   const [vrij, setVrij] = useState(false)            // ... en de leerling kiest zelf (alle doelen behaald)
   const soort = persoonlijk ? tab : 'weektaak'
@@ -114,6 +115,7 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
   // vrij, dan mag dát resultaat nooit aan deze opdracht blijven hangen.
   const start = (opdracht) => {
     setUitleg(null)
+    setDoelNu(null)
     zetActieveOpdracht(opdracht)
     setGekozen(opdracht)
   }
@@ -140,8 +142,9 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
     let actief = true
     const bijOpslaan = async (e) => {
       if (e.detail?.opdrachtId !== lopendDoel.opdrachtId) return
-      const { data } = await supabase.from('doel_voortgang').select('gehaald')
+      const { data } = await supabase.from('doel_voortgang').select('gemaakt, laatste_goed, laatste_aantal, gehaald')
         .eq('opdracht_id', lopendDoel.opdrachtId).eq('leerling_id', profiel.id).maybeSingle()
+      if (actief && data) setDoelNu(doelStandVan(data))
       if (!actief || !data?.gehaald || leesGevierd().has(lopendDoel.opdrachtId)) return
       setFeest({ sleutel: lopendDoel.opdrachtId, opdrachtId: lopendDoel.opdrachtId, titel: lopendDoel.weektaak?.titel ?? toolLabel(lopendDoel.toolId) })
     }
@@ -160,7 +163,15 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
     setVervers(v => v + 1) // haalt de bijgewerkte voortgang opnieuw op
   }
 
-  const klok = doelwerk && <DoelwerkKlok opdracht={doelwerk} profielId={profiel?.id} />
+  // Tijdens het oefenen linksonder in beeld: hoe ver het doel is (zelfde balk
+  // als op de doelkaart) en bij "Werk aan je doelen" hoeveel minuten er nog liggen.
+  const doelStandNu = gekozen && soortVan(gekozen) === 'doel' ? (doelNu ?? gekozen.doelStand) : null
+  const klok = (doelwerk || doelStandNu) && (
+    <div className="wt-pillen">
+      {doelStandNu && <div className="dw-klok wt-doelpil"><Icoon naam="doel" /><DoelBalk stand={doelStandNu} /></div>}
+      {doelwerk && <DoelwerkKlok opdracht={doelwerk} profielId={profiel?.id} />}
+    </div>
+  )
 
   if (vrij && doelwerk) {
     return (

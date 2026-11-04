@@ -221,7 +221,7 @@ export default function MaatenOmrekenen({ onBack, addBriefgeld, addCuruntie, aan
   }
 
   if (showReward) {
-    return <SpelBeloning title={`${PER_BELONING} goed!`} geld={BELONING} addCuruntie={addCuruntie} onDone={naBeloning} />
+    return <SpelBeloning geld={BELONING} addCuruntie={addCuruntie} onDone={naBeloning} />
   }
 
   if (opdracht.klaar) {

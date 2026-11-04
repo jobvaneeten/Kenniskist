@@ -111,7 +111,6 @@ export default function ProcentenBreuken({ onBack, addBriefgeld, aantal }) {
     <>
       {phase === 'keuze' && (
         <SpelBeloning
-          title="5 rondes opgelost!"
           geld={BRIEFGELD}
           addCuruntie={() => {}}
           onDone={() => { addBriefgeld?.(BRIEFGELD); setVerdiend(v => v + BRIEFGELD); nieuweRonde() }}

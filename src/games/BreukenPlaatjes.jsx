@@ -91,7 +91,7 @@ export default function BreukenPlaatjes({ onBack, addBriefgeld, addCuruntie, aan
     setVraag(maakVraag())
   }
 
-  if (reward) return <SpelBeloning title={`${PER_BELONING} goed!`} geld={BELONING} addCuruntie={addCuruntie} onDone={naBeloning} />
+  if (reward) return <SpelBeloning geld={BELONING} addCuruntie={addCuruntie} onDone={naBeloning} />
 
   if (opdracht.klaar) {
     return (

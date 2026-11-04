@@ -102,6 +102,7 @@ var ZOOM = null, PANX = 0, PANY = 0, BASIS = { tw: 40, cx: 0, cy: 0, mx: 0, my: 
 var MIN_TW = 16, MAX_TW = 150
 function meet() {
   dpr = Math.min(2, window.devicePixelRatio || 1)
+  inhoudVuil = true; PLS = {}; PL_N = 0; PL_LAATST = 0
   W = innerWidth; H = innerHeight
   cv.width = Math.floor(W * dpr); cv.height = Math.floor(H * dpr)
   var boven = $('hud').getBoundingClientRect().bottom + 6
@@ -151,6 +152,85 @@ function rng(seed) { return function () { seed |= 0; seed = seed + 0x6D2B79F5 | 
 function gloed(g, k, b) { g.shadowColor = k; g.shadowBlur = b }
 function ellips(g, x, y, rx, ry, kleur) { g.fillStyle = kleur; g.beginPath(); g.ellipse(x, y, Math.max(0.1, rx), Math.max(0.1, ry), 0, 0, TAU); g.fill() }
 function cirkel(g, x, y, r, kleur) { g.fillStyle = kleur; g.beginPath(); g.arc(x, y, Math.max(0.1, r), 0, TAU); g.fill() }
+// ── plaatjes: één keer tekenen, daarna plakken ──
+// Een grote dierentuin heeft honderden dieren, hekken en spullen. Die elke
+// frame opnieuw uit vormen en gloed opbouwen liep vast op een iPad. Wat stil
+// staat (en een dier per loopstapje) tekenen we daarom één keer op een los
+// canvasje en plakken het daarna. De plaatjes horen bij een zoomstap; tussen
+// twee stappen in schalen we ze een klein beetje bij. Ver ingezoomd staat er
+// weinig in beeld en tekenen we gewoon direct (anders worden de plaatjes groot).
+var PLS = {}, PL_N = 0, PL_LAATST = 0, PL_RAND = 10
+function plaatjesSchaal() { return Math.pow(1.15, Math.round(Math.log(TW) / Math.log(1.15))) }
+function metMaat(tw, fn) { var o = [TW, TH, T, DIEPTE]; TW = tw; TH = tw / 2; T = tw * 0.78; DIEPTE = tw * 0.34; try { fn() } finally { TW = o[0]; TH = o[1]; T = o[2]; DIEPTE = o[3] } }
+// (x, y) = ankerpunt op het scherm; bw × bh = maat van het plaatje en (ax, ay) het
+// ankerpunt erin, alles in vakjes (TW). teken(g, x, y) tekent met het anker op (x, y).
+function plak(g, sleutel, x, y, bw, bh, ax, ay, teken, spiegel) {
+  if (TW * dpr > 160) {
+    if (spiegel) { g.save(); g.translate(x, y); g.scale(-1, 1); teken(g, 0, 0); g.restore() } else teken(g, x, y)
+    return
+  }
+  var sc = plaatjesSchaal(), c = PLS[sc] && PLS[sc][sleutel]
+  // midden in het zoomen: het plaatje van de vorige zoomstap, bijgeschaald (anders
+  // tekent elke zoomstap alles opnieuw); als je stilstaat komen de scherpe
+  if (!c && zoomRust < 0.15 && PLS[PL_LAATST] && PLS[PL_LAATST][sleutel]) { sc = PL_LAATST; c = PLS[sc][sleutel] }
+  if (!c) {
+    if (PL_N > 700) { PLS = {}; PL_N = 0 }
+    c = document.createElement('canvas')
+    c.width = Math.ceil((bw * sc + 2 * PL_RAND) * dpr); c.height = Math.ceil((bh * sc + 2 * PL_RAND) * dpr)
+    var pg = c.getContext('2d'); pg.setTransform(dpr, 0, 0, dpr, 0, 0)
+    metMaat(sc, function () { teken(pg, PL_RAND + ax * sc, PL_RAND + ay * sc) })
+    if (DEBUG) randCheck(c, sleutel)
+    ;(PLS[sc] = PLS[sc] || {})[sleutel] = c; PL_N++
+  }
+  if (zoomRust >= 0.15) PL_LAATST = sc
+  var k = TW / sc, w = c.width / dpr * k, h = c.height / dpr * k, lx = (PL_RAND + ax * sc) * k, ly = (PL_RAND + ay * sc) * k
+  if (spiegel) { g.save(); g.translate(x, y); g.scale(-1, 1); g.drawImage(c, -lx, -ly, w, h); g.restore() }
+  else g.drawImage(c, x - lx, y - ly, w, h)
+}
+// ?debug: meldt plaatjes waarvan de tekening tegen de rand komt (dan is het vak te klein)
+var DEBUG = params.has('debug'), TE_KRAP = {}
+if (DEBUG) window.__tuin = { krap: TE_KRAP, bezoekers: function () { return bezoekers.length },
+  // tekent elk dier, elk ding en elk hek één keer als plaatje, zodat krap alles naloopt
+  alles: function () {
+    var c = document.createElement('canvas').getContext('2d'), z = zoomRust; zoomRust = 1
+    Object.keys(DIER).forEach(function (d) { for (var n = 0; n < 16; n++) plakDier(c, d, [100, 100], true, n * Math.PI / 4) })
+    Object.keys(DT.OBJECTEN).forEach(function (o) { plakObject(c, o, [100, 100]) })
+    Object.keys(DT.INRICHTING).forEach(function (i) { plakItem(c, i, [100, 100]) })
+    Object.keys(DT.BODEMS).forEach(function (b) { plakHek(c, [100, 100], [100 + TW / 2, 100 + TH / 2], b); plakHek(c, [100, 100], [100 - TW / 2, 100 + TH / 2], b) })
+    zoomRust = z; return { krap: Object.keys(TE_KRAP), plaatjes: PL_N, tw: TW, dpr: dpr, zonderMaat: Object.keys(DIER).filter(function (d) { return !GROOTTE[d] }) }
+  } }
+function randCheck(c, sleutel) {
+  var d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data, w = c.width, h = c.height, raak = false
+  for (var x = 0; x < w && !raak; x++) if (d[(x) * 4 + 3] > 8 || d[((h - 1) * w + x) * 4 + 3] > 8) raak = true
+  for (var y = 0; y < h && !raak; y++) if (d[(y * w) * 4 + 3] > 8 || d[(y * w + w - 1) * 4 + 3] > 8) raak = true
+  if (raak) TE_KRAP[sleutel.replace(/:\d+$/, '')] = 1
+}
+// staat dit ankerpunt (ongeveer) in beeld? Alles steekt hooguit ~3 vakjes omhoog.
+function inBeeld(p) { return p[0] > -1.6 * TW && p[0] < W + 1.6 * TW && p[1] > -0.7 * TW && p[1] < H + 3.2 * TW }
+// wat beweegt, tekenen we elke keer echt
+var BEWEEGT = { lantaarn: 1, fontein: 1, draaimolen: 1, reuzenrad: 1, modder: 1 }
+function plakObject(g, soort, p) {
+  if (BEWEEGT[soort]) { tekenObject(g, soort, p[0], p[1], tijd); return }
+  plak(g, 'o:' + soort, p[0], p[1], 2.4, 3.4, 1.2, 2.9, function (pg, x, y) { tekenObject(pg, soort, x, y, 0) })
+}
+function plakItem(g, soort, p) {
+  if (BEWEEGT[soort]) { tekenItem(g, soort, p[0], p[1], tijd); return }
+  plak(g, 'i:' + soort, p[0], p[1], 2.4, 3.4, 1.2, 2.9, function (pg, x, y) { tekenItem(pg, soort, x, y, 0) })
+}
+// een stukje hek loopt altijd een half vakje schuin naar beneden, naar rechts of naar links
+function plakHek(g, a, b, bodem) {
+  var r = b[0] > a[0]
+  plak(g, 'h:' + bodem + (r ? 'r' : 'l'), a[0], a[1], 0.8, 0.95, r ? 0.15 : 0.65, 0.6, function (pg, x, y) {
+    hekStuk(pg, [x, y], [x + (r ? TW / 2 : -TW / 2), y + TH / 2], bodem, true)
+  })
+}
+// een dier per loopstapje: 16 standen over 4π (de poten gebruiken f, f/2 en 1,5f)
+function plakDier(g, soort, p, rechts, f) {
+  var stap = Math.PI / 4, n = Math.round((((f % (4 * Math.PI)) + 4 * Math.PI) % (4 * Math.PI)) / stap) % 16
+  plak(g, 'd:' + soort + ':' + n, p[0], p[1], 2, 2.2, 1, 1.85, function (pg, x, y) {
+    tekenDier(pg, soort, x, y, T * GROOTTE[soort], true, n * stap)
+  }, !rechts)
+}
 function lijn(g, x1, y1, x2, y2, kleur, b) { g.strokeStyle = kleur; g.lineWidth = b; g.lineCap = 'round'; g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke() }
 
 // ── dieren tekenen: (x, y) = tussen de voeten, u = grootte, kijkt naar rechts ──
@@ -931,19 +1011,39 @@ function tekenSneeuw(g, dt) {
 }
 
 // ── vaste laag: lucht, eiland, gras, paden en de grond van de verblijven ──
-var laag = document.createElement('canvas'), vuil = true, ST = DT.stats(S)
+// De lucht hoort bij het scherm; de wereld (eiland, gras, paden, hokgrond en
+// achterste hekken) tekenen we op een eigen laag met wat marge eromheen. Bij
+// schuiven plakken we die laag op een andere plek, bij zoomen schalen we hem
+// tot je even stilstaat. Alleen als er iets verandert of je buiten de marge
+// komt, wordt hij opnieuw getekend.
+var laag = document.createElement('canvas'), lucht = document.createElement('canvas'), vuil = true, inhoudVuil = true, LG = null, laatsteTW = 0, zoomRust = 1, wereldOm = 0, ST = DT.stats(S)
 var STERREN = (function () { var r = rng(5), l = []; for (var i = 0; i < 120; i++) l.push([r(), r(), r() * 1.3 + 0.3]); return l })()
-function bouwLaag() {
-  laag.width = cv.width; laag.height = cv.height
-  var g = laag.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0)
-  var lucht = g.createLinearGradient(0, 0, 0, H)
-  lucht.addColorStop(0, THEMA.lucht[0]); lucht.addColorStop(0.6, THEMA.lucht[1]); lucht.addColorStop(1, THEMA.lucht[2])
-  g.fillStyle = lucht; g.fillRect(0, 0, W, H)
+function bouwLucht() {
+  lucht.width = cv.width; lucht.height = cv.height
+  var g = lucht.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0)
+  var lg = g.createLinearGradient(0, 0, 0, H)
+  lg.addColorStop(0, THEMA.lucht[0]); lg.addColorStop(0.6, THEMA.lucht[1]); lg.addColorStop(1, THEMA.lucht[2])
+  g.fillStyle = lg; g.fillRect(0, 0, W, H)
   if (THEMA.sterren) STERREN.forEach(function (s) { g.fillStyle = 'rgba(255,255,255,' + (0.3 + s[2] * 0.3) + ')'; g.fillRect(s[0] * W, s[1] * H, s[2], s[2]) })
   var geb = DT.gebied(S), mid = scherm((geb.x0 + geb.x1 + 1) / 2, (geb.y0 + geb.y1 + 1) / 2), straal = (geb.x1 - geb.x0 + geb.y1 - geb.y0) * TW * 0.4
   tekenAchtergrond(g, mid, straal)
   var gl = g.createRadialGradient(mid[0], mid[1], 0, mid[0], mid[1], straal)
   gl.addColorStop(0, 'rgba(' + THEMA.gloed + ',.18)'); gl.addColorStop(1, 'rgba(' + THEMA.gloed + ',0)'); g.fillStyle = gl; g.fillRect(0, 0, W, H)
+}
+// waar het eiland op het scherm ligt (met ruimte voor hekken en de aarde-rand)
+function eilandVak() {
+  var geb = DT.gebied(S), h = [scherm(geb.x0, geb.y0), scherm(geb.x1 + 1, geb.y0), scherm(geb.x0, geb.y1 + 1), scherm(geb.x1 + 1, geb.y1 + 1)]
+  var xs = h.map(function (p) { return p[0] }), ys = h.map(function (p) { return p[1] })
+  return { x0: Math.min.apply(null, xs) - 0.3 * TW, y0: Math.min.apply(null, ys) - 0.6 * TW - 12, x1: Math.max.apply(null, xs) + 0.3 * TW, y1: Math.max.apply(null, ys) + DIEPTE + 0.3 * TW }
+}
+function bouwWereld() {
+  var e = eilandVak(), M = 220
+  var rx0 = Math.floor(Math.max(e.x0, -M)), ry0 = Math.floor(Math.max(e.y0, -M)), rx1 = Math.ceil(Math.min(e.x1, W + M)), ry1 = Math.ceil(Math.min(e.y1, H + M))
+  if (rx1 <= rx0 || ry1 <= ry0) { rx1 = rx0 + 1; ry1 = ry0 + 1 }
+  laag.width = Math.ceil((rx1 - rx0) * dpr); laag.height = Math.ceil((ry1 - ry0) * dpr)
+  var g = laag.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, -rx0 * dpr, -ry0 * dpr)
+  LG = { tw: TW, ox: OX, oy: OY, rx: rx0, ry: ry0, rw: laag.width / dpr, rh: laag.height / dpr }
+  var geb = DT.gebied(S)
 
   // aarde-rand onder het eiland
   for (var x = geb.x0; x <= geb.x1; x++) {
@@ -1003,8 +1103,17 @@ function bouwLaag() {
   // verblijven: grond, inrichting en het achterste hek
   S.verblijven.forEach(function (v) {
     tekenHokGrond(g, v)
-    hekRanden(v).achter.forEach(function (e) { hekStuk(g, scherm(e[0], e[1]), scherm(e[2], e[3]), v.bodem, true) })
+    hekRanden(v).achter.forEach(function (r) { plakHek(g, scherm(r[0], r[1]), scherm(r[2], r[3]), v.bodem) })
   })
+}
+
+// waar de wereldlaag nu op het scherm hoort (bij zoomen geschaald)
+function wereldPlek() { var k = TW / LG.tw; return { x: OX + (LG.rx - LG.ox) * k, y: OY + (LG.ry - LG.oy) * k, w: LG.rw * k, h: LG.rh * k } }
+// dekt de laag nog alles van het eiland dat in beeld is?
+function wereldDekt() {
+  var p = wereldPlek(), e = eilandVak(), x0 = Math.max(e.x0, 0), y0 = Math.max(e.y0, 0), x1 = Math.min(e.x1, W), y1 = Math.min(e.y1, H)
+  if (x1 <= x0 || y1 <= y0) return true
+  return p.x <= x0 + 1 && p.y <= y0 + 1 && p.x + p.w >= x1 - 1 && p.y + p.h >= y1 - 1
 }
 
 // ── dieren die rondlopen ──
@@ -1285,7 +1394,7 @@ function pasAan(v, x, y, w, h) {
 }
 
 // ── acties ──
-function wijziging() { if (CREATIEF) S.geld = DT.ONEINDIG; ST = DT.stats(S); syncDieren(); vuil = true; werkItemsBij(); werkHintBij(); bewaar() }
+function wijziging() { if (CREATIEF) S.geld = DT.ONEINDIG; ST = DT.stats(S); syncDieren(); vuil = true; inhoudVuil = true; werkItemsBij(); werkHintBij(); bewaar() }
 function zetDier(v, soort) {
   var waarom = DT.waaromNietDier(S, v, soort)
   if (waarom) { melding(waarom + '.', true); Geluid.fout(); return false }
@@ -1597,33 +1706,45 @@ function frame(nu) {
   babyOm -= dt
   if (babyOm <= 0) { babyOm = 30 + Math.random() * 30; geboren() }
   beweegDieren(dt); beweegBezoekers(dt)
-  if (vuil) { bouwLaag(); vuil = false }
+  if (TW !== laatsteTW) { laatsteTW = TW; zoomRust = 0 } else zoomRust += dt
+  if (vuil) { bouwLucht(); vuil = false }
+  // tijdens het zoomen de wereldlaag hooguit 8× per seconde opnieuw, daarna scherp
+  wereldOm -= dt
+  var stil = zoomRust > 0.15
+  if (inhoudVuil || !LG || (LG.tw !== TW ? stil || (wereldOm <= 0 && !wereldDekt()) : !wereldDekt())) { bouwWereld(); inhoudVuil = false; wereldOm = 0.12 }
 
   var g = ctx
-  g.setTransform(1, 0, 0, 1, 0, 0); g.drawImage(laag, 0, 0)
+  g.setTransform(1, 0, 0, 1, 0, 0); g.drawImage(lucht, 0, 0)
   g.setTransform(dpr, 0, 0, dpr, 0, 0)
+  var wp = wereldPlek(); g.drawImage(laag, wp.x, wp.y, wp.w, wp.h)
   // golfjes in de badjes
   S.verblijven.forEach(function (v) {
     v.items.forEach(function (it, n) {
       if (it.soort !== 'water') return
       var c = scherm(it.x + 0.5, it.y + 0.5), rp = (tijd * 0.5 + n * 0.37 + v.id * 0.21) % 1
+      if (!inBeeld(c)) return
       g.strokeStyle = 'rgba(210,245,255,' + (0.6 * (1 - rp)) + ')'; g.lineWidth = 1.2
       g.beginPath(); g.ellipse(c[0], c[1], 0.32 * rp * TW / 2 + 1, 0.32 * rp * TH / 2 + 0.5, 0, 0, TAU); g.stroke()
     })
   })
   // alles wat hoogte heeft, van achter naar voor
   var lijst = []
-  S.objecten.forEach(function (o) { lijst.push({ d: o.x + o.y + 1, teken: function () { var p = scherm(o.x + 0.5, o.y + 0.5); tekenObject(g, o.soort, p[0], p[1], tijd) } }) })
+  S.objecten.forEach(function (o) { var p = scherm(o.x + 0.5, o.y + 0.5); if (inBeeld(p)) lijst.push({ d: o.x + o.y + 1, teken: function () { plakObject(g, o.soort, p) } }) })
   S.verblijven.forEach(function (v) {
     v.items.forEach(function (it) {
       if (it.soort === 'water') return
-      lijst.push({ d: it.x + it.y + 1, teken: function () { var p = scherm(it.x + 0.5, it.y + 0.5); tekenItem(g, it.soort, p[0], p[1], tijd) } })
+      var p = scherm(it.x + 0.5, it.y + 0.5)
+      if (inBeeld(p)) lijst.push({ d: it.x + it.y + 1, teken: function () { plakItem(g, it.soort, p) } })
     })
     ;(lopers[v.id] || []).forEach(function (dd) {
-      lijst.push({ d: dd.x + dd.y, teken: function () { var p = scherm(dd.x, dd.y); tekenDier(g, dd.soort, p[0], p[1], T * GROOTTE[dd.soort] * (1 - 0.45 * (dd.baby || 0)), dd.rechts, dd.f) } })
+      var p = scherm(dd.x, dd.y)
+      if (!inBeeld(p)) return
+      // een jong groeit nog, dat tekenen we direct; de rest komt uit de plaatjes
+      lijst.push({ d: dd.x + dd.y, teken: dd.baby ? function () { tekenDier(g, dd.soort, p[0], p[1], T * GROOTTE[dd.soort] * (1 - 0.45 * dd.baby), dd.rechts, dd.f) } : function () { plakDier(g, dd.soort, p, dd.rechts, dd.f) } })
     })
     hekRanden(v).voor.forEach(function (e) {
-      lijst.push({ d: (e[0] + e[2]) / 2 + (e[1] + e[3]) / 2 + 0.02, teken: function () { hekStuk(g, scherm(e[0], e[1]), scherm(e[2], e[3]), v.bodem, true) } })
+      var a = scherm(e[0], e[1])
+      if (inBeeld(a)) lijst.push({ d: (e[0] + e[2]) / 2 + (e[1] + e[3]) / 2 + 0.02, teken: function () { plakHek(g, a, scherm(e[2], e[3]), v.bodem) } })
     })
     if (v.dieren.length && v.zichtbaar && DT.blijheid(S, v).waarde >= 0.85) {
       var z = 0.6 + 0.4 * Math.sin(tijd * 3 + v.id)
@@ -1635,7 +1756,7 @@ function frame(nu) {
       } })
     }
   })
-  bezoekers.forEach(function (b) { lijst.push({ d: b.x + b.y + 1, teken: function () { tekenBezoeker(g, b) } }) })
+  bezoekers.forEach(function (b) { if (inBeeld(scherm(b.x + 0.5, b.y + 0.5))) lijst.push({ d: b.x + b.y + 1, teken: function () { tekenBezoeker(g, b) } }) })
   lijst.push({ d: DT.INGANG.x + DT.INGANG.y + 1.6, teken: function () { tekenIngang(g, tijd) } })
   lijst.sort(function (a, b) { return a.d - b.d })
   lijst.forEach(function (l) { l.teken() })

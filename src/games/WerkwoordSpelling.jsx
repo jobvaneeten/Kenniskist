@@ -466,7 +466,6 @@ export default function WerkwoordSpelling({ groep, onBack, addBriefgeld, aantal,
       {/* Beloningkeuze — gedeeld reward-systeem met alle spellen */}
       {phase === 'keuze' && (
         <SpelBeloning
-          title="5 goed gedaan!"
           geld={beloning}
           addCuruntie={() => {}}
           onDone={() => { addBriefgeld?.(beloning); setVerdiend(v => v + beloning); setPhase('play') }}

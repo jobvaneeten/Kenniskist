@@ -169,7 +169,6 @@ export default function Woordenschat({ blok = 1, onBack, addBriefgeld, addCurunt
   if (showReward) {
     return (
       <SpelBeloning
-        title="Top — 10 woorden goed!"
         geld={BRIEFGELD}
         addCuruntie={addCuruntie}
         onDone={() => { setShowReward(false); addBriefgeld?.(BRIEFGELD); volgende() }}

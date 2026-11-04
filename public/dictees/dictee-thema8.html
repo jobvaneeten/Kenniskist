@@ -343,7 +343,7 @@
   <div class="break-card">
     <div class="break-stars">⭐⭐⭐⭐⭐</div>
     <p class="kicker">Pauze verdiend!</p>
-    <h2 class="break-title" id="breakTitle">5 goede antwoorden!</h2>
+    <h2 class="break-title" id="breakTitle">Goed gedaan!</h2>
     <p class="break-sub">Kies een spelletje. Daarna ga je verder met de spelling.</p>
     <div class="break-games break-games-one">
       <button class="break-game" data-game="kies">
@@ -530,6 +530,20 @@ function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor
 // 15 doen in plaats van de hele lijst. Zonder de parameter verandert er niets.
 const KK_WOORDEN=(()=>{const n=parseInt(new URLSearchParams(location.search).get('woorden'),10);return Number.isFinite(n)&&n>0?n:null;})();
 function kkBeperk(lijst){return KK_WOORDEN?lijst.slice(0,KK_WOORDEN):lijst;}
+// Elk woord telt meteen (één resultaat per woord), ook als de leerling
+// halverwege stopt. Alleen het spellen telt; de regels zoeken niet. Per woord
+// onthouden we hoe vaak het gemaakt is en of het de laatste keer goed ging
+// (kk_-sleutel, dus het gaat mee naar het account). Bij het starten komen eerst
+// de nieuwe en de vorige keer foute woorden, daarna pas wat al goed ging: zo
+// ga je verder waar je was.
+const KK_TOOL='dictee-thema8',KK_HIST='kk_dictee_'+KK_TOOL;
+function kkHist(){try{return JSON.parse(localStorage.getItem(KK_HIST)||'{}')||{};}catch(e){return {};}}
+function kkVolgorde(lijst){const h=kkHist(),eerst=[],later=[];lijst.forEach(it=>{const r=h[it.w];(r&&r[1]?later:eerst).push(it);});return shuffle(eerst).concat(shuffle(later));}
+function kkBewaar(item,getypt,ok,extra){
+  const h=kkHist(),r=h[item.w]||[0,0];h[item.w]=[r[0]+1,ok?1:0];
+  try{localStorage.setItem(KK_HIST,JSON.stringify(h));}catch(e){}
+  window.KennisKist?.slaResultaatOp?.(KK_TOOL,ok?1:0,1,{opgaven:[Object.assign({vraag:item.w,antwoord:getypt,juist:item.w,goed:ok},extra||{})]});
+}
 
 function buildGrid(){
   grid.innerHTML='';
@@ -545,7 +559,7 @@ function buildGrid(){
 }
 
 function startGame(){
-  queue=kkBeperk(shuffle(WORDS));idx=0;spellPts=0;animalPts=0;goodAnswers=0;lastBreakAt=0;spellOk=false;animalOk=false;
+  queue=kkBeperk(kkVolgorde(WORDS));idx=0;spellPts=0;animalPts=0;goodAnswers=0;lastBreakAt=0;spellOk=false;animalOk=false;
   screenStart.classList.add('hide');screenEnd.classList.add('hide');screenGame.classList.remove('hide');
   buildGrid();showWord();
 }
@@ -556,7 +570,7 @@ function showWord(){
   answerEl.value='';answerEl.disabled=false;
   $('helpBox').classList.remove('show');
   $('counter').textContent=`Woord ${idx+1} van ${queue.length}`;
-  $('scoreLbl').textContent=`${spellPts+animalPts} punten`;
+  $('scoreLbl').textContent=`${spellPts} goed gespeld`;
   $('bar').style.width=`${(idx/queue.length)*100}%`;
   $('checkAnimalsBtn').classList.remove('hide');
   $('nextBtn').classList.add('hide');
@@ -576,6 +590,7 @@ function checkSpelling(){
   const target=norm(item.w);
   const ok=typed===target||typed.toLowerCase()===target.toLowerCase();
   if(ok){spellPts++;spellOk=true;}
+  kkBewaar(item,answerEl.value.trim(),ok);
   answerEl.blur();
   phaseA.classList.add('hide');phaseB.classList.remove('hide');
   $('verdict').textContent=ok?'Goed gespeld!':'Bijna!';
@@ -583,7 +598,7 @@ function checkSpelling(){
   $('correctWord').textContent=item.w;
   $('correctWord').style.color=ok?'var(--green)':'var(--coral)';
   $('youTyped').textContent=ok?'':`Jij typte: ${answerEl.value.trim()}`;
-  $('scoreLbl').textContent=`${spellPts+animalPts} punten`;
+  $('scoreLbl').textContent=`${spellPts} goed gespeld`;
   [...grid.children].forEach(c=>c.className='animal');
   window.scrollTo({top:0,behavior:'smooth'});
 }
@@ -602,7 +617,7 @@ function checkAnimals(){
   });
   if(allGood){animalPts++;animalOk=true;}
   locked=true;
-  $('scoreLbl').textContent=`${spellPts+animalPts} punten`;
+  $('scoreLbl').textContent=`${spellPts} goed gespeld`;
   $('phaseSub').textContent=allGood?'Helemaal goed gekoppeld! 🎉':'Dit zijn de juiste categorieën — en waarom:';
   $('legend').classList.add('hide');
   grid.classList.add('hide');
@@ -620,7 +635,7 @@ function checkAnimals(){
 
 function showBreak(){
   kkStop();
-  $('breakTitle').textContent=`${goodAnswers} goede antwoorden!`;
+  $('breakTitle').textContent='Goed gedaan!';
   $('screen-break').classList.remove('hide');
 }
 function hideBreak(){
@@ -638,16 +653,12 @@ function next(){
 function finish(){
   kkStop();
   screenGame.classList.add('hide');screenEnd.classList.remove('hide');
-  const total=queue.length,pts=spellPts+animalPts,max=total*2;
+  const total=queue.length,pts=spellPts,max=total;
   $('finalScore').textContent=pts;$('finalTotal').textContent=`/ ${max}`;
   $('spellScore').textContent=`\u270f\ufe0f spelling ${spellPts}/${total}`;
-  $('animalScore').textContent=`\ud83d\udc3e dieren ${animalPts}/${total}`;
+  $('animalScore').textContent=`\ud83d\udc3e regels gevonden ${animalPts}/${total}`;
   const r=pts/max;
   $('endTitle').textContent=r>=.9?'Topspeller!':r>=.7?'Knap gedaan':r>=.5?'Goed bezig':'Blijf oefenen';
-  // Naar het portaal gaat het aantal woorden, niet de punten: de weektaak
-  // telt in woorden ("8/12"), en het scherm hierboven blijft de punten
-  // tonen inclusief het dierenspel.
-  window.KennisKist?.slaResultaatOp?.('dictee-thema8', spellPts, total, null);
   window.KennisKist?.toonInlogstatus?.(document.getElementById('kkStatus'));
 }
 
