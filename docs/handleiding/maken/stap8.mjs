@@ -1,0 +1,12 @@
+import { start, pagina, foto, BASIS } from './demo.mjs'
+const browser = await start()
+let p = await pagina(browser, 'P71', { breed: 1180, hoog: 820 })
+await p.goto(BASIS + '/leerlingportaal'); await p.waitForTimeout(3500)
+await p.locator('.zijkaart-speciaal').click(); await p.waitForTimeout(1500)
+await foto(p, '97-speciaal-taken')
+p = await pagina(browser, 'L1')
+await p.goto(BASIS + '/leerkrachtenportaal'); await p.waitForTimeout(1300)
+await p.getByText('Groep 7a').first().click(); await p.waitForTimeout(900)
+await p.locator('.portaal-tab-knop', { hasText: 'Taken' }).first().click(); await p.waitForTimeout(1200)
+await foto(p, '30-klas-taken', { heel: true })
+await browser.close()

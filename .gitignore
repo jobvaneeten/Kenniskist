@@ -34,3 +34,7 @@ screenshots/
 test-results/
 playwright-report/
 *.blend1
+
+# gemaakte handleiding (de bron staat in docs/handleiding, de online versie in public/handleiding)
+docs/handleiding/handleiding.html
+docs/handleiding/handleiding.pdf

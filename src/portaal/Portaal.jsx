@@ -223,6 +223,8 @@ export default function Portaal() {
               {alsLeerkracht ? 'Terug naar icter-weergave' : 'Bekijk als leerkracht'}
             </Knop>
           )}
+          {/* De handleiding (met plaatjes) staat los in public/handleiding, zie docs/handleiding. */}
+          <Knop variant="secundair" maat="sm" icoon="boek" onClick={() => window.open('/handleiding/handleiding.html', '_blank', 'noopener')}>Handleiding</Knop>
           <Knop variant="secundair" maat="sm" onClick={uitloggen}>Uitloggen</Knop>
         </div>
       </header>

@@ -1,0 +1,12 @@
+import { start, pagina, foto, BASIS, onbekend } from './demo.mjs'
+const browser = await start()
+let p = await pagina(browser, null)
+await p.goto(BASIS + '/'); await foto(p, '01-voorpagina', { wacht: 1500 })
+await p.goto(BASIS + '/leerkrachtenportaal'); await foto(p, '02-inloggen-leerkracht', { wacht: 1200 })
+await p.goto(BASIS + '/leerlingportaal'); await foto(p, '03-inloggen-leerling', { wacht: 1200 })
+p = await pagina(browser, 'L1')
+await p.goto(BASIS + '/leerkrachtenportaal'); await foto(p, '10-portaal-leerkracht', { wacht: 2000 })
+p = await pagina(browser, 'I1')
+await p.goto(BASIS + '/leerkrachtenportaal'); await foto(p, '11-portaal-icter', { wacht: 2000 })
+console.log('onbekende tabellen:', [...onbekend])
+await browser.close()
