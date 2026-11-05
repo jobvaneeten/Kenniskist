@@ -439,7 +439,7 @@ export default function App({ gast = false }) {
 
   if (screen === 'shop') return (
     <>
-      <CurrencyBadge munten={curuntie} briefgeld={briefgeld} />
+      <CurrencyBadge munten={curuntie} briefgeld={briefgeld} hideMunten />
       <Shop
         briefgeld={briefgeld}
         addBriefgeld={addBriefgeld}
