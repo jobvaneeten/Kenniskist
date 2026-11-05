@@ -2,7 +2,8 @@
 // (base64), zodat je hem kunt openen, mailen of printen zonder de map erbij.
 // Daarna maakt maak-pdf.mjs er een pdf van.
 // Gebruik: node docs/handleiding/maak-html.mjs
-import { readFileSync, writeFileSync } from 'node:fs'
+import { readFileSync, writeFileSync, readdirSync } from 'node:fs'
+import { execFileSync } from 'node:child_process'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -17,7 +18,7 @@ function inline(s) {
   return esc(s)
     .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_, alt, src) => {
       const data = readFileSync(join(MAP, src)).toString('base64')
-      const hoog = /(15-klas-instellingen|21-weektaak|28-weektaak|25-nieuwe|27-oefening|41-doel|31-nieuwe|23-leerling|102-mijn)/.test(src) ? ' hoog' : ''
+      const hoog = /(15-klas-instellingen|21-weektaak|28-weektaak|25-nieuwe|27-oefening|41-doel|31-nieuwe|23-leerling|102-mijn|111-rekenen)/.test(src) ? ' hoog' : ''
       figNr++
       return `<figure class="fig${hoog}"><div class="venster"><div class="balk"><i></i><i></i><i></i><span>${alt}</span></div><img src="data:image/jpeg;base64,${data}" alt="${alt}"></div><figcaption><b>Afbeelding ${figNr}</b> ${alt}</figcaption></figure>`
     })
@@ -27,10 +28,16 @@ function inline(s) {
 }
 
 // kleur per hoofdstuk: algemeen, ICT'er, leerkracht en leerling
-const KLEUR = { 1: 'paars', 2: 'paars', 3: 'paars', 4: 'cyaan', 5: 'blauw', 6: 'blauw', 7: 'blauw', 8: 'goud', 9: 'blauw', 10: 'groen', 11: 'blauw', 12: 'roze', 13: 'paars' }
-const ROL = { 4: "ICT'er", 5: 'Leerkracht', 6: 'Leerkracht', 7: 'Leerkracht', 8: 'Leerkracht', 9: 'Leerkracht', 10: 'Leerkracht', 11: 'Leerkracht', 12: 'Leerling' }
+const KLEUR = { 1: 'paars', 2: 'paars', 3: 'paars', 4: 'cyaan', 5: 'blauw', 6: 'blauw', 7: 'blauw', 8: 'goud', 9: 'blauw', 10: 'groen', 11: 'blauw', 12: 'roze', 13: 'roze', 14: 'goud', 15: 'roze', 16: 'cyaan', 17: 'paars', 18: 'roze' }
+const ROL = { 4: "ICT'er", 5: 'Leerkracht', 6: 'Leerkracht', 7: 'Leerkracht', 8: 'Leerkracht', 9: 'Leerkracht', 10: 'Leerkracht', 11: 'Leerkracht', 12: 'Leerling', 13: 'Leerling', 14: 'Leerling', 15: 'Leerling', 16: 'Leerling' }
 
 const regels = md.split(/\r?\n/), uit = []
+// filmpjes staan in public/handleiding/videos (zie video/maak-videos.mjs)
+const SITE = 'https://kenniskist.nl', VIDEOS = join(MAP, '../../public/handleiding/videos')
+const DUUR = {}
+for (const f of readdirSync(VIDEOS).filter(f => f.endsWith('.mp4'))) {
+  try { DUUR[f.slice(0, -4)] = +execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', join(VIDEOS, f)]).toString() } catch {}
+}
 let i = 0, inHoofdstuk = false, inhoud = []
 // voorpagina: alles tot de eerste ---
 const voor = []
@@ -89,6 +96,18 @@ while (i < regels.length) {
     continue
   }
   if (r.startsWith('![')) { uit.push(inline(r)); i++; continue }
+  // @film naam | titel | korte uitleg  →  een filmpje (in de pdf: plaatje met link naar de site)
+  if (r.startsWith('@film ')) {
+    const films = []
+    while (i < regels.length && regels[i].startsWith('@film ')) { films.push(regels[i].slice(6).split('|').map(x => x.trim())); i++ }
+    uit.push(`<div class="films">${films.map(([naam, t, uitleg]) => {
+      const nr = naam.split('-')[0], duur = DUUR[naam] ? ` · ${Math.floor(DUUR[naam] / 60)}:${String(Math.round(DUUR[naam] % 60)).padStart(2, '0')}` : ''
+      return `<figure class="film" id="film-${nr}"><video controls preload="none" playsinline poster="videos/${naam}.jpg"><source src="videos/${naam}.mp4" type="video/mp4"><track kind="subtitles" srclang="nl" label="Nederlands" src="videos/${naam}.vtt"></video>`
+        + `<a class="film-print" href="${SITE}/handleiding/handleiding#film-${nr}"><img src="data:image/jpeg;base64,${readFileSync(join(VIDEOS, naam + '.jpg')).toString('base64')}" alt=""><span>▶ Bekijk online</span></a>`
+        + `<figcaption><b>${nr}. ${esc(t)}</b><span class="duur">${duur}</span><br>${esc(uitleg || '')}</figcaption></figure>`
+    }).join('')}</div>`)
+    continue
+  }
   // vraag-en-antwoord bij de veelgestelde vragen: een losse vetgedrukte regel
   if (/^\*\*[^*]+\*\*$/.test(r.trim())) { uit.push(`<h4 class="vraag">${inline(r.trim().slice(2, -2))}</h4>`); i++; continue }
   const alinea = []
@@ -132,6 +151,16 @@ const html = `<!doctype html>
   .rollen .r1 { color: #7df9ff; border-color: rgba(125, 249, 255, .6); background: rgba(8, 169, 200, .12); }
   .rollen .r2 { color: #a9bcff; border-color: rgba(120, 150, 255, .6); background: rgba(59, 107, 255, .14); }
   .rollen .r3 { color: #ff9bd0; border-color: rgba(255, 120, 190, .6); background: rgba(232, 48, 143, .14); }
+  .films { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 18px; margin: 18px 0 26px; }
+  .film { margin: 0; border-radius: 14px; overflow: hidden; background: var(--vlak); border: 1px solid var(--lijn); }
+  .film video { display: block; width: 100%; aspect-ratio: 16 / 10; background: var(--nacht); }
+  .film figcaption { margin: 0; padding: 10px 14px 14px; font-size: 14px; }
+  .film figcaption b { color: var(--inkt); }
+  .film .duur { color: var(--zacht); font-weight: 700; }
+  .film-print { display: none; }
+  .knoppen { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 40px; }
+  .knoppen .pdf-knop { margin-top: 0; }
+  .pdf-knop.film-knop { background: rgba(255, 255, 255, .12); border: 1px solid rgba(255, 255, 255, .4); box-shadow: none; }
   .pdf-knop { align-self: flex-start; margin-top: 40px; padding: 12px 24px; border-radius: 999px; border: 0; background: linear-gradient(90deg, #7b3cff, #e8308f); color: #fff; font-weight: 800; box-shadow: 0 8px 30px rgba(123, 60, 255, .5); }
   .voorpagina .noot { margin-top: auto; max-width: 62ch; font-size: 14px; color: #b9b2e0; border-top: 1px solid rgba(255,255,255,.15); padding-top: 22px; }
   .voorpagina .datum { font-weight: 800; color: #fff; }
@@ -202,6 +231,12 @@ const html = `<!doctype html>
     h3, h4 { break-after: avoid; }
     a { border: 0; }
     .pdf-knop { display: none; }
+    .films { grid-template-columns: 1fr 1fr; }
+    .film { break-inside: avoid; }
+    .film video { display: none; }
+    .film-print { display: block; position: relative; }
+    .film-print img { display: block; width: 100%; }
+    .film-print span { position: absolute; left: 10px; bottom: 10px; padding: 4px 12px; border-radius: 999px; background: #7b3cff; color: #fff; font-weight: 800; font-size: 13px; }
   }
 </style></head>
 <body><div class="blad">
@@ -211,7 +246,7 @@ const html = `<!doctype html>
   <h1>${esc(titel)}</h1>
   <p class="sub">${esc(onder)}</p>
   <div class="rollen"><span class="r1">ICT'er</span><span class="r2">Leerkracht</span><span class="r3">Leerling</span></div>
-  <a class="pdf-knop" href="handleiding.pdf" download="Handleiding Kenniskist.pdf">Download als pdf</a>
+  <div class="knoppen"><a class="pdf-knop" href="handleiding.pdf" download="Handleiding Kenniskist.pdf">Download als pdf</a><a class="pdf-knop film-knop" href="#18-uitlegfilmpjes">▶ Uitlegfilmpjes</a></div>
   <p class="noot"><span class="datum">November 2026.</span> ${inline(noot)}</p>
 </section>
 ${uit.join('\n')}

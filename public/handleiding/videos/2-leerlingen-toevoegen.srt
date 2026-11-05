@@ -1,0 +1,27 @@
+1
+00:00:04,746 --> 00:00:09,642
+Klik op + Leerling.
+
+2
+00:00:09,643 --> 00:00:16,800
+Vul de voornaam en de eerste letter van de achternaam in.
+
+3
+00:00:16,801 --> 00:00:26,915
+Met de gebruikersnaam en het wachtwoord logt de leerling in. Kies iets wat een kind makkelijk onthoudt.
+
+4
+00:00:26,917 --> 00:00:31,991
+Kies de klas en klik op Aanmaken.
+
+5
+00:00:31,993 --> 00:00:38,619
+Geef de leerling de drie inloggegevens: de klascode, de gebruikersnaam en het wachtwoord.
+
+6
+00:00:38,620 --> 00:00:51,084
+Wachtwoord vergeten? Open de klas en ga naar Leerlingen.
+
+7
+00:00:51,085 --> 00:01:03,113
+Klik op Wachtwoord resetten, typ een nieuw wachtwoord en klik op Opslaan.

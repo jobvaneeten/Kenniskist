@@ -51,22 +51,42 @@ function filter(rijen, params) {
   return rijen
 }
 export const onbekend = new Set()
-async function beantwoord(route, wie) {
+let teller = 100
+async function beantwoord(route, wieRef) {
+  const wie = wieRef.id
   const req = route.request(), url = new URL(req.url()), pad = url.pathname, m = req.method()
   const json = (data, status = 200, headers = {}) => route.fulfill({ status, contentType: 'application/json', headers: { 'access-control-allow-origin': '*', ...headers }, body: JSON.stringify(data) })
   if (m === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' } })
   if (pad.startsWith('/auth/v1/')) {
     if (pad.endsWith('/user')) return json(sessie(wie).user)
-    if (pad.endsWith('/token')) return json(sessie(wie))
+    if (pad.endsWith('/token')) { if (!wieRef.id && wieRef.inlogAls) wieRef.id = wieRef.inlogAls; return json(sessie(wieRef.id)) }
     if (pad.endsWith('/logout')) return route.fulfill({ status: 204 })
     return json({})
   }
   if (pad.startsWith('/rest/v1/rpc/')) return json(null)
   if (pad.startsWith('/rest/v1/')) {
     const tabel = pad.slice('/rest/v1/'.length)
-    if (m !== 'GET' && m !== 'HEAD') return json([], 201)
+    if (m !== 'GET' && m !== 'HEAD') {
+      TABELLEN[tabel] = TABELLEN[tabel] ?? []
+      let body = []; try { body = JSON.parse(req.postData() || '[]') } catch {}
+      const lijst = Array.isArray(body) ? body : [body], een = (req.headers()['accept'] || '').includes('vnd.pgrst.object')
+      let rijen = []
+      if (m === 'POST') {
+        rijen = lijst.map(r => ({ id: r.id ?? tabel.slice(0, 2).toUpperCase() + (++teller), school_id: 'S1', ...r }))
+        if (tabel === 'opdrachten') rijen = rijen.map(r => ({ config: {}, volgorde: 0, ...r }))
+        TABELLEN[tabel].push(...rijen)
+        if (tabel === 'toewijzingen') rijen.forEach(t => { const o = TABELLEN.opdrachten.find(x => x.id === t.opdracht_id); if (o) TABELLEN.weektaak_voortgang.push({ opdracht_id: t.opdracht_id, leerling_id: t.leerling_id, weektaak_id: o.weektaak_id, doel_aantal: o.aantal, som_max: 0, som_score: 0, som_ms: 0, pogingen: 0, herkansingen: 0, afgerond: false }) })
+      } else if (m === 'PATCH') {
+        rijen = filter(TABELLEN[tabel], url.searchParams); rijen.forEach(r => Object.assign(r, lijst[0]))
+      } else if (m === 'DELETE') {
+        rijen = filter(TABELLEN[tabel], url.searchParams); TABELLEN[tabel] = TABELLEN[tabel].filter(r => !rijen.includes(r))
+      }
+      return een ? json(rijen[0] ?? null, 201) : json(rijen, 201)
+    }
     if (!TABELLEN[tabel]) onbekend.add(tabel)
     let bron = TABELLEN[tabel] ?? []
+    if (tabel === 'weektaken') bron = bron.map(w => ({ ...w, opdrachten: TABELLEN.opdrachten.filter(o => o.weektaak_id === w.id).map(o => ({ id: o.id, persoonlijk: o.config?.persoonlijk ?? null })) }))
+    if (tabel === 'opdrachten') bron = bron.map(o => ({ ...o, weektaken: TABELLEN.weektaken.find(w => w.id === o.weektaak_id) }))
     // eenvoudige RLS: een leerkracht ziet alleen zijn eigen klas
     const ik = PROFIELEN.find(x => x.id === wie)
     if (ik && ik.rol === 'leerkracht') {
@@ -88,10 +108,22 @@ export async function start() {
   return browser
 }
 // Een pagina als `wie` (profiel-id, of null voor niet ingelogd), op `breed` × `hoog`.
-export async function pagina(browser, wie, { breed = 1280, hoog = 800, mobiel = false } = {}) {
-  const ctx = await browser.newContext({ viewport: { width: breed, height: hoog }, deviceScaleFactor: 1, isMobile: mobiel, hasTouch: mobiel, locale: 'nl-NL' })
-  await ctx.route(SB + '/**', (route) => beantwoord(route, wie))
-  await ctx.route('**/api/**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: '{}' }))
+export async function pagina(browser, wie, { breed = 1280, hoog = 800, mobiel = false, video = null, inlogAls = null, init = null } = {}) {
+  const ctx = await browser.newContext({ viewport: { width: breed, height: hoog }, deviceScaleFactor: 1, isMobile: mobiel, hasTouch: mobiel, locale: 'nl-NL',
+    ...(video ? { recordVideo: { dir: video, size: { width: breed, height: hoog } } } : {}) })
+  const wieRef = { id: wie, inlogAls }
+  await ctx.route(SB + '/**', (route) => beantwoord(route, wieRef))
+  // de Worker (leerling aanmaken, wachtwoord resetten): doen alsof het lukt
+  await ctx.route('**/api/**', (route) => {
+    let b = {}; try { b = JSON.parse(route.request().postData() || '{}') } catch {}
+    if (route.request().url().includes('leerling-aanmaken')) {
+      const klas = TABELLEN.klassen.find(k => k.id === b.klasId)
+      TABELLEN.profielen.push({ id: 'PN' + (++teller), rol: 'leerling', school_id: 'S1', klas_id: b.klasId, weergavenaam: b.voornaam + (b.achternaamLetter ? ' ' + b.achternaamLetter + '.' : ''), gebruikersnaam: b.gebruikersnaam, klassen: { code: klas?.code } })
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ klasCode: klas?.code, gebruikersnaam: b.gebruikersnaam }) })
+    }
+    return route.fulfill({ status: 200, contentType: 'application/json', body: '{}' })
+  })
+  for (const s of [].concat(init ?? [])) await ctx.addInitScript(s)
   if (wie) {
     const p = PROFIELEN.find(x => x.id === wie)
     await ctx.addInitScript(([sleutel, s, profiel]) => {

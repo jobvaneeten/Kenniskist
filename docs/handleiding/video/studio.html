@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inspreekstudio</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root { --nacht: #0d0a26; --kaart: rgba(255,255,255,.06); --lijn: rgba(255,255,255,.14); --cyaan: #7df9ff; --roze: #ff4fd8; --goud: #ffd23f; --groen: #3ddc84; --tekst: #f3f0ff; --zacht: #b9b2e0; }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; color: var(--tekst); font: 17px/1.5 Nunito, system-ui, sans-serif;
+    background: radial-gradient(800px 500px at 85% 0%, rgba(232,48,143,.3), transparent 60%), radial-gradient(800px 600px at 0% 100%, rgba(8,169,200,.28), transparent 60%), linear-gradient(160deg, #1d1450, var(--nacht) 70%); }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 18px 60px; }
+  h1 { font-family: "Baloo 2", sans-serif; font-size: 40px; margin: 0 0 4px; }
+  .uitleg { color: var(--zacht); margin: 0 0 22px; max-width: 70ch; }
+  .rij { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+  select, button { font: inherit; border-radius: 14px; }
+  select { padding: 10px 14px; background: #17123d; color: var(--tekst); border: 1px solid var(--lijn); min-width: 320px; }
+  button { padding: 12px 20px; border: 1px solid var(--lijn); background: var(--kaart); color: var(--tekst); font-weight: 800; cursor: pointer; }
+  button:hover { border-color: var(--cyaan); }
+  button:disabled { opacity: .4; cursor: default; }
+  .opnemen { background: linear-gradient(90deg, #ff4f6a, #ff4fd8); border: 0; min-width: 190px; }
+  .opnemen.bezig { background: #ff4f6a; animation: puls 1s infinite; }
+  @keyframes puls { 50% { box-shadow: 0 0 0 10px rgba(255,79,106,.25) } }
+  .opslaan { background: linear-gradient(90deg, #7b3cff, #08a9c8); border: 0; }
+  .zin { margin: 24px 0 18px; padding: 28px 30px; border-radius: 22px; background: rgba(10,8,36,.7); border: 1.5px solid rgba(125,249,255,.45); box-shadow: 0 12px 40px rgba(0,0,0,.4); }
+  .zin .nr { color: var(--cyaan); font-weight: 800; letter-spacing: .12em; text-transform: uppercase; font-size: 13px; }
+  .zin p { font-size: 30px; line-height: 1.35; font-weight: 700; margin: 8px 0 0; }
+  .zin.kaart p { color: var(--goud); }
+  .meter { height: 10px; border-radius: 99px; background: var(--kaart); overflow: hidden; margin: 14px 0 0; }
+  .meter i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--groen), var(--goud), #ff4f6a); transition: width .08s; }
+  .lijst { margin-top: 26px; display: grid; gap: 8px; }
+  .item { display: flex; gap: 12px; align-items: center; padding: 10px 14px; border-radius: 12px; background: var(--kaart); border: 1px solid transparent; cursor: pointer; }
+  .item.nu { border-color: var(--cyaan); }
+  .item .stip { flex: 0 0 22px; height: 22px; border-radius: 50%; border: 2px solid var(--zacht); }
+  .item.klaar .stip { background: var(--groen); border-color: var(--groen); }
+  .item span { flex: 1; color: var(--zacht); }
+  .item.klaar span { color: var(--tekst); }
+  .tips { margin-top: 28px; padding: 16px 20px; border-radius: 16px; background: rgba(255,210,63,.08); border: 1px solid rgba(255,210,63,.35); color: #ffe9b0; }
+  .melding { min-height: 1.5em; color: var(--cyaan); font-weight: 700; margin-top: 10px; }
+  kbd { padding: 1px 7px; border-radius: 6px; border: 1px solid var(--lijn); background: #17123d; font-family: inherit; }
+</style></head>
+<body><main>
+  <h1>Inspreekstudio</h1>
+  <p class="uitleg">Spreek de uitleg van de filmpjes in, zin voor zin. Kies een filmpje, druk op <b>Opnemen</b> (of de <kbd>spatiebalk</kbd>), lees de zin rustig voor en druk nog een keer om te stoppen. Ben je klaar met alle zinnen, klik dan op <b>Opslaan</b>.</p>
+  <div class="rij">
+    <select id="filmpje"></select>
+    <span id="voortgang" style="color: var(--zacht); font-weight: 700"></span>
+  </div>
+  <div class="zin" id="zin"><span class="nr" id="nr"></span><p id="tekst">Laden…</p><div class="meter"><i id="niveau"></i></div></div>
+  <div class="rij">
+    <button class="opnemen" id="opnemen">● Opnemen</button>
+    <button id="afspelen" disabled>▶ Afspelen</button>
+    <button id="vorige">← Vorige</button>
+    <button id="volgende">Volgende →</button>
+    <span style="flex:1"></span>
+    <button class="opslaan" id="opslaan" disabled>Opslaan</button>
+  </div>
+  <div class="melding" id="melding"></div>
+  <div class="lijst" id="lijst"></div>
+  <div class="tips"><b>Tips:</b> neem op in een stil lokaal, met een headset of een goede microfoon. Spreek rustig en duidelijk, alsof je het aan een collega uitlegt. Een zin opnieuw doen? Klik op de zin in de lijst en neem hem nog een keer op. De gele zinnen staan op de titelkaart aan het begin en eind van het filmpje.</div>
+</main>
+<script>
+const $ = (id) => document.getElementById(id)
+let teksten = {}, naam = '', zinnen = [], nu = 0, opnames = {}, recorder = null, stroom = null, analyser = null
+const OPSLAG = 'inspreekstudio'
+try { opnames = JSON.parse(localStorage.getItem(OPSLAG) || '{}') } catch (e) {}
+const bewaarLokaal = () => { try { localStorage.setItem(OPSLAG, JSON.stringify(opnames)) } catch (e) { $('melding').textContent = 'Let op: de browser kan niet alles onthouden. Sla tussendoor op.' } }
+const titel = (n) => n.replace(/^\d+-/, '').replace(/-/g, ' ').replace(/^./, c => c.toUpperCase())
+const mijn = () => (opnames[naam] = opnames[naam] || {})
+
+async function laad() {
+  teksten = await (await fetch('teksten.json', { cache: 'no-store' })).json()
+  $('filmpje').innerHTML = Object.keys(teksten).map(n => `<option value="${n}">${n.split('-')[0]}. ${titel(n)}</option>`).join('')
+  kies(Object.keys(teksten)[0])
+}
+function kies(n) { naam = n; zinnen = teksten[n]; nu = 0; $('filmpje').value = n; toon() }
+function toon() {
+  const t = zinnen[nu], kaart = nu === 0 || nu === zinnen.length - 1
+  $('nr').textContent = `Zin ${nu + 1} van ${zinnen.length}${kaart ? ' · titelkaart' : ''}`
+  $('tekst').textContent = t.replace(/→/g, '')
+  $('zin').classList.toggle('kaart', kaart)
+  $('afspelen').disabled = !mijn()[t]
+  const klaar = zinnen.filter(z => mijn()[z]).length
+  $('voortgang').textContent = `${klaar} van de ${zinnen.length} ingesproken`
+  $('opslaan').disabled = klaar === 0
+  $('lijst').innerHTML = zinnen.map((z, i) => `<div class="item${mijn()[z] ? ' klaar' : ''}${i === nu ? ' nu' : ''}" data-i="${i}"><i class="stip"></i><span>${z.replace(/→/g, '')}</span></div>`).join('')
+  $('lijst').querySelectorAll('.item').forEach(el => el.onclick = () => { nu = +el.dataset.i; toon() })
+}
+let ctx
+async function micro() {
+  if (stroom) return stroom
+  stroom = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } })
+  ctx = ctx || new AudioContext()
+  const bron = ctx.createMediaStreamSource(stroom)
+  analyser = ctx.createAnalyser(); analyser.fftSize = 1024; bron.connect(analyser)
+  const data = new Float32Array(analyser.fftSize)
+  // gevoeliger: niveau in dB (-60 dB = leeg, -6 dB = vol)
+  const tik = () => { analyser.getFloatTimeDomainData(data); let s = 0; for (const v of data) s += v * v; const db = 20 * Math.log10(Math.sqrt(s / data.length) + 1e-9); $('niveau').style.width = Math.max(0, Math.min(100, (db + 60) / 54 * 100)) + '%'; requestAnimationFrame(tik) }
+  tik()
+  return stroom
+}
+async function wissel() {
+  if (recorder && recorder.state === 'recording') { recorder.stop(); return }
+  // AudioContext direct bij de klik maken, anders blijft hij 'suspended' en beweegt de balk niet
+  ctx = ctx || new AudioContext(); ctx.resume().catch(() => {})
+  try { await micro() } catch (e) { $('melding').textContent = 'Geen toegang tot de microfoon. Sta de microfoon toe in de browser.'; return }
+  const stukjes = [], tekst = zinnen[nu]
+  recorder = new MediaRecorder(stroom, { mimeType: 'audio/webm' })
+  recorder.ondataavailable = (e) => stukjes.push(e.data)
+  recorder.onstop = () => {
+    const lezer = new FileReader()
+    lezer.onload = () => {
+      mijn()[tekst] = lezer.result; bewaarLokaal()
+      $('opnemen').classList.remove('bezig'); $('opnemen').textContent = '● Opnemen'
+      $('melding').textContent = 'Opgenomen. Luister terug met Afspelen, of ga door naar de volgende zin.'
+      if (nu < zinnen.length - 1) nu++
+      toon()
+    }
+    lezer.readAsDataURL(new Blob(stukjes, { type: 'audio/webm' }))
+  }
+  recorder.start()
+  $('opnemen').classList.add('bezig'); $('opnemen').textContent = '■ Stop'
+  $('melding').textContent = 'Aan het opnemen… lees de zin voor.'
+}
+$('opnemen').onclick = wissel
+$('afspelen').onclick = () => { const d = mijn()[zinnen[nu]]; if (d) new Audio(d).play() }
+$('vorige').onclick = () => { if (nu > 0) { nu--; toon() } }
+$('volgende').onclick = () => { if (nu < zinnen.length - 1) { nu++; toon() } }
+$('filmpje').onchange = (e) => kies(e.target.value)
+$('opslaan').onclick = () => {
+  const blob = new Blob([JSON.stringify({ filmpje: naam, opnames: mijn() })], { type: 'application/json' })
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'stem-' + naam + '.json'; a.click()
+  $('melding').textContent = 'Opgeslagen in je Downloads-map als stem-' + naam + '.json.'
+}
+document.addEventListener('keydown', (e) => { if (e.code === 'Space' && e.target.tagName !== 'SELECT') { e.preventDefault(); wissel() } })
+laad()
+</script>
+</body></html>

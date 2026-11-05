@@ -4,6 +4,7 @@ import { getCatalog } from './itemsCatalog'
 import CrateArtwork from './CrateArtwork'
 import KledingPreview from './KledingPreview'
 import { isMuted, setMuted, playKlik, playMunten, playSluiten, playSter } from './lootboxSound'
+import './game.css'   // game-header (titel met icoon); anders is het tasje reusachtig als je meteen naar de winkel gaat
 import './shop.css'
 // 3D-poppetje pas laden als er echt iets gewonnen is (Babylon is groot)
 const ItemViewer3D = lazy(() => import('./ItemViewer3D'))

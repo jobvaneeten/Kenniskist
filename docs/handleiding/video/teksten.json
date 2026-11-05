@@ -1,0 +1,123 @@
+{
+  "1-inloggen-en-je-klas": [
+    "Inloggen en je klas openen. Voor leerkrachten.",
+    "Ga naar kenniskist.nl/leerkrachtenportaal. Je logt in met je e-mailadres en wachtwoord.",
+    "Je ziet de klassen waar je bij hoort. Op de kaart staat ook de inlogcode van de klas: die hebben je leerlingen nodig.",
+    "Klik op de klas om hem te openen.",
+    "Weektaak: opdrachten voor de hele klas, met een begin- en einddatum.",
+    "Taken: een losse opdracht voor één of een paar leerlingen.",
+    "Doelen: een leerdoel per leerling. Behaald bij 80% goed van de laatste 20 opgaven.",
+    "Weekoverzicht: wat een leerling per week heeft gedaan.",
+    "Werkblad: een werkblad op papier om te printen.",
+    "Eigen oefeningen: een oefening met je eigen vragen.",
+    "Leerlingen: je leerlingen, en hoe vaak er een spelletje komt.",
+    "Klaar! In de volgende filmpjes zie je hoe je dit allemaal gebruikt."
+  ],
+  "2-leerlingen-toevoegen": [
+    "Leerlingen toevoegen. En een vergeten wachtwoord opnieuw instellen.",
+    "Klik op + Leerling.",
+    "Vul de voornaam en de eerste letter van de achternaam in.",
+    "Met de gebruikersnaam en het wachtwoord logt de leerling in. Kies iets wat een kind makkelijk onthoudt.",
+    "Kies de klas en klik op Aanmaken.",
+    "Geef de leerling de drie inloggegevens: de klascode, de gebruikersnaam en het wachtwoord.",
+    "Wachtwoord vergeten? Open de klas en ga naar Leerlingen.",
+    "Klik op Wachtwoord resetten, typ een nieuw wachtwoord en klik op Opslaan.",
+    "Klaar! Je leerlingen kunnen nu inloggen."
+  ],
+  "3-weektaak-klaarzetten": [
+    "Een weektaak klaarzetten. Opdrachten voor de hele klas.",
+    "Kies het tabblad Weektaak en klik op + Nieuwe weektaak.",
+    "Stap 1: geef hem een titel en kies de start- en einddatum. De leerlingen zien de opdrachten alleen tussen die datums.",
+    "Stap 2: klik op + Opdracht toevoegen, kies een vak en dan een oefening.",
+    "Elke opdracht heeft eigen instellingen. Hier: hoeveel opgaven, en welke woordsoorten.",
+    "Je kunt zoveel opdrachten toevoegen als je wilt. Bijvoorbeeld ook verhaaltjessommen.",
+    "Met + Werk aan je doelen werkt elke leerling een aantal minuten aan zijn eigen doelen.",
+    "Stap 3: standaard krijgt de hele klas hem. Vink uit wie hem niet hoeft te maken.",
+    "Stap 4: klik op Weektaak klaarzetten. Klaar!",
+    "De nieuwe weektaak staat in de lijst. Vanaf de startdatum zien de leerlingen hem bij Mijn weektaak.",
+    "Klaar! Tip: met Kopiëren maak je volgende week in een paar klikken dezelfde weektaak."
+  ],
+  "4-voortgang-volgen": [
+    "De voortgang volgen. Zien wie klaar is en waar het misgaat.",
+    "Klik op een weektaak om de voortgang te zien.",
+    "Per leerling en per opdracht zie je hoeveel er gemaakt is, hoeveel procent goed en hoe lang eraan gewerkt is.",
+    "Groen is goed, oranje gaat redelijk, rood vraagt aandacht.",
+    "Klik op fout → of op de naam om te zien wat er misging.",
+    "Bij de foutanalyse zie je per onderdeel hoeveel er goed ging. De zwakste plek staat bovenaan.",
+    "Met Differentiëren geef je per leerling andere opdrachten of een ander aantal opgaven.",
+    "Klik daarna op Opslaan.",
+    "Met Alleen niet af zie je wat nog openstaat. Daar kun je een opdracht op \"hoeft niet\" zetten.",
+    "Klaar! Zo zie je in één oogopslag hoe je klas ervoor staat."
+  ],
+  "5-taken-en-doelen": [
+    "Taken en doelen per leerling. Extra oefenen voor wie dat nodig heeft.",
+    "Een doel is een leerdoel voor één of meer leerlingen. Het is behaald bij 80% goed van de laatste 20 opgaven.",
+    "Klik op + Nieuw doel en daarna op een vak.",
+    "Kies het onderdeel en dan het doel. Bijvoorbeeld: komma’s zetten.",
+    "Vink aan voor wie het doel is. Zij zien het bij Speciaal voor mij.",
+    "Klik op een doel om per leerling de stand te zien: hoeveel er gemaakt is, of het percentage goed.",
+    "Een taak werkt hetzelfde, maar dan met een vast aantal opgaven. Die zet je klaar bij het tabblad Taken.",
+    "Klaar! Je leerlingen vinden hun taken en doelen bij Speciaal voor mij."
+  ],
+  "6-voor-de-icter": [
+    "Voor de ICT’er. Klassen en leerkrachten beheren.",
+    "Als ICT’er zie je alle klassen van de school, en de knoppen + Leerkracht en + Klas.",
+    "De klascode is de inlogcode voor de leerlingen. Kies iets korts.",
+    "Vink de leeftijdsgroep aan: dan zie je bij een weektaak meteen de oefeningen voor die groep.",
+    "Een nieuwe leerkracht voeg je toe met + Leerkracht: naam, e-mailadres en wachtwoord.",
+    "Koppel de leerkracht daarna aan een klas, via het tandwiel op de klaskaart.",
+    "Hier pas je de klas aan, schuif je leerlingen door naar een nieuw schooljaar en koppel je leerkrachten.",
+    "Alleen gekoppelde leerkrachten zien de klas, de leerlingen en hun resultaten.",
+    "Bij Voorlezen zet je de luidsprekerknop aan voor leerlingen die moeite hebben met lezen.",
+    "Klaar! Je school is ingericht."
+  ],
+  "7-zo-werkt-het-voor-de-leerling": [
+    "Zo werkt het voor de leerling. Inloggen, de weektaak en eigen doelen.",
+    "De leerling gaat naar kenniskist.nl/leerlingportaal en vult de klascode, de gebruikersnaam en het wachtwoord in.",
+    "Dit is het startscherm. Bij Mijn weektaak staan de opdrachten van deze week.",
+    "Een groen vinkje betekent: af. Bij de andere opdrachten staat hoe ver je bent.",
+    "Lees de zin en kies de goede woordsoort.",
+    "Je ziet meteen of het goed was, en waarom. Na een aantal goede antwoorden krijg je een spelletje.",
+    "Bij Speciaal voor mij staan de taken en doelen die de juf of meester alleen voor jou heeft klaargezet.",
+    "Eerst zie je kort hoe het werkt, met een voorbeeld. Het doel is gehaald bij 80% goed van je laatste 20 opgaven.",
+    "Linksonder zie je hoe ver je bent met je doel.",
+    "Veel plezier met oefenen! Vergeet niet uit te loggen op een gedeelde iPad."
+  ],
+  "8-vrij-oefenen": [
+    "Vrij oefenen. Zelf kiezen wat je oefent.",
+    "Naast de weektaak mag je ook zelf kiezen wat je oefent. Tik op Speel Game.",
+    "Tik op je groep. Daar staan alle vakken.",
+    "Kies een vak. Bij rekenen zie je bijvoorbeeld breuken, maten omrekenen en klokkijken.",
+    "Een groen label briefgeld betekent dat je met die oefening briefgeld verdient.",
+    "Bij taal staan ook de eigen oefeningen van je juf of meester.",
+    "We kiezen Taalverkennen en dan Woordsoorten.",
+    "Tik aan wat je wilt oefenen en tik op Start oefenen.",
+    "Ook bij vrij oefenen krijg je na een aantal goede antwoorden een spelletje en briefgeld.",
+    "Heb je een code van je juf of meester gekregen? Tik op Code invoeren.",
+    "Tik op Activeren, dan opent wat bij de code hoort.",
+    "Klaar! Wat je vrij oefent, ziet je juf of meester ook terug."
+  ],
+  "9-munten-briefgeld-en-de-winkel": [
+    "Munten, briefgeld en de winkel. Wat verdien je waarmee?.",
+    "Kenniskist heeft twee soorten geld. Tik op Winkel.",
+    "💵 Briefgeld verdien je met oefenen. Daarmee koop je hier een kist met kleding.",
+    "🪙 Munten verdien je met de spelletjes. Die geef je in de spelletjes zelf uit.",
+    "Er is een kist voor shirts, broeken, sokken, schoenen en petten. Tik op een kist.",
+    "Je ziet de kans op elke zeldzaamheid: hoe zeldzamer, hoe kleiner de kans.",
+    "Hieronder zie je welke kleding je al hebt. Een kist kost 100 briefgeld.",
+    "Tik een paar keer op de kist om hem open te maken.",
+    "Daar is je nieuwe kledingstuk! Je krijgt nooit iets dubbel.",
+    "Klaar! Je nieuwe kleding trek je aan in de kledingkast."
+  ],
+  "10-kledingkast-en-samen-spelen": [
+    "De kledingkast en samen spelen. Je eigen poppetje.",
+    "In de Kledingkast kleed je je eigen poppetje aan.",
+    "Kies links een soort kleding en tik op een kledingstuk om het aan te trekken.",
+    "Met Verras me! krijg je in één keer een nieuwe outfit.",
+    "Bovenaan laat je je poppetje dansen.",
+    "Met Speel een spel speel je met je eigen poppetje samen met klasgenoten.",
+    "Eén leerling tikt op Lobby aanmaken en krijgt een code van een paar cijfers.",
+    "De anderen typen die lobbycode in en tikken op Joinen. Dan spelen jullie samen.",
+    "Veel plezier! Alleen wie dezelfde code invult, speelt met je mee."
+  ]
+}

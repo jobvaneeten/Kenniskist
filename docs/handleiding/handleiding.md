@@ -20,7 +20,12 @@ De plaatjes in deze handleiding komen uit de testomgeving van Kenniskist. Alle n
 10. [Weekoverzicht, werkblad en eigen oefeningen](#10-weekoverzicht-werkblad-en-eigen-oefeningen)
 11. [Leerlingen en spelletjes](#11-leerlingen-en-spelletjes)
 12. [Wat de leerling doet](#12-wat-de-leerling-doet)
-13. [Veelgestelde vragen](#13-veelgestelde-vragen)
+13. [Vrij oefenen](#13-vrij-oefenen)
+14. [Munten en briefgeld](#14-munten-en-briefgeld)
+15. [De winkel en de lootboxen](#15-de-winkel-en-de-lootboxen)
+16. [De kledingkast en samen spelen](#16-de-kledingkast-en-samen-spelen)
+17. [Veelgestelde vragen](#17-veelgestelde-vragen)
+18. [Uitlegfilmpjes](#18-uitlegfilmpjes)
 
 ---
 
@@ -429,7 +434,7 @@ Bij **Mijn week** ziet de leerling wat hij deze week gedaan heeft: het aantal op
 
 ### 12.8 Speel Game en spelletjes als beloning
 
-Bij **Speel Game** kiest de leerling zijn groep en daarna een vak om vrij te oefenen. Daaronder staan spelletjes die de leerling vrij mag spelen. Ook de eigen oefeningen van de leerkracht staan hier, bij de juiste groep en het juiste vak.
+Bij **Speel Game** kiest de leerling zijn groep en daarna een vak om vrij te oefenen (zie [hoofdstuk 13](#13-vrij-oefenen)). Daaronder staan spelletjes die de leerling vrij mag spelen.
 
 ![Speel Game](plaatjes/103-speel-game.jpg)
 
@@ -439,7 +444,111 @@ Na een aantal goede antwoorden (standaard 10, bij verhaaltjessommen 5) verschijn
 
 ---
 
-## 13. Veelgestelde vragen
+## 13. Vrij oefenen
+
+Naast de weektaak, taken en doelen mag een leerling ook **zelf kiezen** wat hij oefent. Dat heet vrij oefenen. Wat de leerling vrij oefent, wordt ook bewaard. Jij ziet het terug in het **Weekoverzicht**, in het vak **Vrij oefenen**.
+
+### Zo werkt het
+
+1. Tik op het startscherm op **Speel Game**.
+2. Tik op je **groep** (bijvoorbeeld Groep 7). Bij de groep staan de vakken die er zijn.
+3. Kies een **vak**: Taal, Spelling, Rekenen, Begrijpend lezen of Topografie.
+4. Kies een **oefening**. Bij elke oefening staat kort wat je oefent, met een voorbeeld.
+
+![Groep 7: kies een vak](plaatjes/110-vakken.jpg)
+
+Bij **Rekenen** zie je bijvoorbeeld breuken, maten omrekenen, denkvragen, klokkijken en verhaaltjessommen. Een groen label **briefgeld** betekent dat je met die oefening briefgeld verdient.
+
+![De oefeningen van rekenen](plaatjes/111-rekenen.jpg)
+
+Bij **Taal** kies je eerst een onderdeel: **Taalverkennen** (zinsdelen, woordsoorten, interpunctie en gebiedende wijs) of **Woordenschat**. Ook de **eigen oefeningen** van de leerkracht staan hier, met "Van je juf of meester" eronder.
+
+![De onderdelen van taal, met een eigen oefening van de juf](plaatjes/112-taal.jpg)
+
+Ook bij vrij oefenen krijgt de leerling na een aantal goede antwoorden een spelletje als beloning, en verdient hij briefgeld.
+
+### Code invoeren
+
+Linksonder op het startscherm staat **Code invoeren**. Hier vult een leerling een code in die hij van de leerkracht krijgt, bijvoorbeeld voor een extra opdracht, een escaperoom of een spel. Je hoeft als leerkracht niets in te stellen: geef de leerling de code en hij tikt hem hier in.
+
+![Code invoeren](plaatjes/113-code-invoeren.jpg)
+
+---
+
+## 14. Munten en briefgeld
+
+Kenniskist heeft twee soorten geld. Rechtsboven in beeld ziet de leerling hoeveel hij heeft.
+
+| | Hoe verdien je het? | Waar geef je het uit? |
+|---|---|---|
+| **💵 Briefgeld** | Met **oefenen**: bij elke beloning na een aantal goede antwoorden, met lezen (10 per gelezen minuut) en met het afmaken van een eigen oefening van de leerkracht. | In de **Winkel**: een kist met nieuwe kleding kost 100 briefgeld. |
+| **🪙 Munten** | Met de **spelletjes**: goals maken, levels halen, verder komen. | In de spelletjes zelf, bijvoorbeeld voor upgrades, nieuwe wapens of skins. |
+
+Zo is het eerlijk verdeeld: **wie oefent, verdient briefgeld** voor kleding, en wie speelt, verdient munten voor de spelletjes. Een leerling kan dus niet alleen door spelletjes te spelen nieuwe kleding kopen.
+
+Het geld hoort bij het account van de leerling. Het gaat mee naar een andere iPad en blijft bewaard als de leerling uitlogt.
+
+> **Goed om te weten:** het geld is alleen een beloning binnen Kenniskist. Er wordt nooit echt geld gebruikt en er is niets echt te koop.
+
+---
+
+## 15. De winkel en de lootboxen
+
+In de **Winkel** koopt de leerling met briefgeld een **kist** (lootbox) met kleding voor zijn poppetje. Er is een kist voor elk kledingstuk: **Shirt**, **Broek**, **Sokken**, **Schoenen** en **Pet**. Onder elke kist staat hoeveel er al gewonnen is, bijvoorbeeld "3/89".
+
+![De winkel met de vijf kisten](plaatjes/120-winkel.jpg)
+
+### Wat zit erin?
+
+Tik op een kist. Je ziet dan:
+
+- **De kansen per zeldzaamheid:** Gewoon 34%, Zeldzaam 27%, Episch 20%, Legendarisch 13% en Ultra Legendarisch 6%. Hoe zeldzamer, hoe kleiner de kans. Bij de Shirt-kist staat **ULTRA KANS**: daar zitten ook ultra legendarische shirts in.
+- **Je collectie:** welke kleding je uit deze kist al hebt (in kleur) en wat je nog kunt winnen (grijs).
+- **De knop 100 · Openen.** Heb je te weinig briefgeld, dan staat er "Te weinig 💵".
+
+![Een kist met de kansen en de collectie](plaatjes/121-kist-details.jpg)
+
+### De kist openen
+
+Na **Openen** verschijnt de kist. De leerling tikt een paar keer op de kist en dan springt hij open: het nieuwe kledingstuk komt eruit, met sterren voor de zeldzaamheid. Een leerling krijgt **nooit iets dubbel**: elke kist geeft iets wat hij nog niet had. Heeft hij alles uit een kist, dan staat er **Compleet**.
+
+![De kist gaat open](plaatjes/123-kist-open.jpg)
+
+---
+
+## 16. De kledingkast en samen spelen
+
+### De kledingkast
+
+In de **Kledingkast** kleedt de leerling zijn eigen 3D-poppetje aan met de kleding die hij in de winkel heeft gewonnen.
+
+- **Links** staan de soorten kleding: Shirt, Broek, Sokken, Schoenen en Pet, met hoeveel je er al hebt. Een vinkje betekent dat je er een aan hebt.
+- Daaronder kies je de **zeldzaamheid** (Alles, Ultra Legendarisch, Legendarisch, Episch, Zeldzaam, Gewoon) en tik je op een kledingstuk om het **aan te trekken**.
+- **Verras me!** trekt je in één keer een willekeurige outfit aan.
+- **Bovenaan** staan dansjes en bewegingen voor je poppetje: Rust, Hip Hop, Breakdance, Lopen en Verloren.
+- Het poppetje draai je rond door erover te slepen.
+
+![De kledingkast](plaatjes/130-kledingkast.jpg)
+
+### Samen spelen
+
+Met **Speel een spel** (onderaan) speelt de leerling **met zijn eigen poppetje, in zijn eigen kleding**, een spel samen met klasgenoten: **Voetbal**, **Paintball** of **Ballonnengevecht**.
+
+![Kies een spel om samen te spelen](plaatjes/132-speel-een-spel.jpg)
+
+Zo speel je samen:
+
+1. Eén leerling vult zijn naam in, kiest een veld of map en tikt op **Lobby aanmaken**. Hij krijgt dan een **lobbycode** van een paar cijfers.
+2. De anderen kiezen hetzelfde spel, vullen die **lobbycode** in en tikken op **Joinen**.
+3. Is iedereen er, dan start het spel. Bij Ballonnengevecht kun je ook computerspelers (bots) toevoegen als er weinig spelers zijn.
+
+![De lobby van Paintball](plaatjes/133-paintball-lobby.jpg)
+
+> **Goed om te weten:** samen spelen gaat via internet. De eerste keer op een dag kan het verbinden even duren, tot ongeveer een minuut. Alleen leerlingen met dezelfde lobbycode spelen met elkaar, en er wordt niet gechat.
+
+---
+
+## 17. Veelgestelde vragen
 
 **Een leerling kan niet inloggen.**
 Controleer de drie gegevens: de klascode (de inlogcode van de klas, zie bovenaan het klasscherm), de gebruikersnaam en het wachtwoord. Weet de leerling het wachtwoord niet meer, reset het dan (zie [hoofdstuk 9](#9-een-leerling-bekijken)).
@@ -459,5 +568,38 @@ Kenniskist laat zien hoeveel er goed is, niet alleen hoeveel er gemaakt is. Bij 
 **Kunnen spelletjes uit?**
 Ja. Op het tabblad **Leerlingen** stel je per klas in hoe vaak er een spelletje komt, of zet je ze helemaal uit.
 
+**Kan een leerling met spelletjes zijn kleding verdienen?**
+Nee. Kleding koop je met briefgeld, en briefgeld verdien je alleen met oefenen. In spelletjes verdien je munten, die je in de spelletjes zelf uitgeeft (zie [hoofdstuk 14](#14-munten-en-briefgeld)).
+
+**Kost Kenniskist of de winkel echt geld?**
+Nee. Munten en briefgeld zijn alleen een beloning binnen Kenniskist. Er wordt nooit om echt geld gevraagd.
+
+**Met wie spelen leerlingen samen?**
+Alleen met wie dezelfde lobbycode invult. Meestal spreek je dat in de klas af: één leerling maakt een lobby en noemt de code (zie [hoofdstuk 16](#16-de-kledingkast-en-samen-spelen)).
+
 **Wat gebeurt er aan het eind van het schooljaar?**
 De ICT'er maakt de nieuwe klassen aan en schuift de leerlingen door (zie [4.4](#44-de-instellingen-van-een-klas)). Het gemaakte werk en de munten gaan mee. Daarna kan de oude klas verwijderd worden.
+
+---
+
+## 18. Uitlegfilmpjes
+
+Liever kijken dan lezen? Deze korte filmpjes laten stap voor stap zien waar je op klikt. Elk filmpje heeft ondertitels, dus je kunt ze ook zonder geluid bekijken.
+
+### Voor de leerkracht en de ICT'er
+
+@film 1-inloggen-en-je-klas | Inloggen en je klas | Inloggen, het leerkrachtenportaal en je klas.
+@film 2-leerlingen-toevoegen | Leerlingen toevoegen | Leerlingen aan je klas toevoegen en de inloggegevens uitdelen.
+@film 3-weektaak-klaarzetten | Een weektaak klaarzetten | Opdrachten voor de hele klas klaarzetten.
+@film 4-voortgang-volgen | De voortgang volgen | Zien wie wat heeft gedaan, per leerling en per opdracht.
+@film 5-taken-en-doelen | Taken en doelen | Een taak of een doel voor één leerling.
+@film 6-voor-de-icter | Voor de ICT'er | Klassen, leerkrachten en leerlingen voor de hele school.
+
+### Voor de leerling
+
+Deze filmpjes kun je ook in de klas laten zien.
+
+@film 7-zo-werkt-het-voor-de-leerling | Zo werkt het voor de leerling | Inloggen, de weektaak en oefenen.
+@film 8-vrij-oefenen | Vrij oefenen | Zelf kiezen wat je oefent, en een code invoeren.
+@film 9-munten-briefgeld-en-de-winkel | Munten, briefgeld en de winkel | Wat verdien je waarmee, en een kist openen.
+@film 10-kledingkast-en-samen-spelen | De kledingkast en samen spelen | Je poppetje aankleden en samen een spel spelen.

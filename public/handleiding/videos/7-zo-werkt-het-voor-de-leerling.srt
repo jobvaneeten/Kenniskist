@@ -1,0 +1,31 @@
+1
+00:00:04,143 --> 00:00:22,504
+De leerling gaat naar kenniskist.nl/leerlingportaal en vult de klascode, de gebruikersnaam en het wachtwoord in.
+
+2
+00:00:22,505 --> 00:00:32,389
+Dit is het startscherm. Bij Mijn weektaak staan de opdrachten van deze week.
+
+3
+00:00:32,390 --> 00:00:39,835
+Een groen vinkje betekent: af. Bij de andere opdrachten staat hoe ver je bent.
+
+4
+00:00:39,836 --> 00:00:45,574
+Lees de zin en kies de goede woordsoort.
+
+5
+00:00:45,575 --> 00:00:58,082
+Je ziet meteen of het goed was, en waarom. Na een aantal goede antwoorden krijg je een spelletje.
+
+6
+00:00:58,083 --> 00:01:14,214
+Bij Speciaal voor mij staan de taken en doelen die de juf of meester alleen voor jou heeft klaargezet.
+
+7
+00:01:14,215 --> 00:01:26,584
+Eerst zie je kort hoe het werkt, met een voorbeeld. Het doel is gehaald bij 80% goed van je laatste 20 opgaven.
+
+8
+00:01:26,585 --> 00:01:29,795
+Linksonder zie je hoe ver je bent met je doel.
