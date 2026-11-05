@@ -20,6 +20,7 @@ export const ONDERDELEN = [
   { id: 'aanhalingstekens', label: 'Aanhalingstekens', emoji: '“ ”' },
   { id: 'afbreekstreepje', label: 'Afbreekstreepje', emoji: '-↵' },
   { id: 'hoofdletters', label: 'Hoofdletters', emoji: 'Aa' },
+  { id: 'tussenvoegsels', label: 'Hoofdletters bij tussenvoegsels', emoji: 'vD' },
   { id: 'punten', label: 'Punten', emoji: '.' },
 ]
 
@@ -52,6 +53,11 @@ export const REGELS = {
     'Dagen, maanden, seizoenen en windrichtingen níet: dinsdag, maart, het noorden.',
     'Mevrouw De Jong (zonder voornaam: hoofdletter), maar Lisa de Vries (met voornaam: kleine letter).',
   ],
+  tussenvoegsels: [
+    'Zonder voornaam of voorletter krijgt het eerste tussenvoegsel een hoofdletter: meneer Van Dijk, De Vries.',
+    'Met een voornaam of voorletter ervoor schrijf je het tussenvoegsel klein: Sanne van Dijk, A. de Vries.',
+    'Alleen het eerste tussenvoegsel krijgt een hoofdletter: Van der Berg, niet Van Der Berg.',
+  ],
   punten: [
     'Een zin eindigt met een punt (of ? of !).',
     'Afkortingen krijgen punten: o.a., enz., d.w.z., ca., dhr.',
@@ -65,6 +71,10 @@ const a = (van, naar, uitleg) => ({ cat: 'aanhalingstekens', van, naar, uitleg }
 const af = (van, naar, uitleg) => ({ cat: 'afbreekstreepje', van, naar, uitleg })
 const h = (van, naar, uitleg) => ({ cat: 'hoofdletters', van, naar, uitleg })
 const p = (van, naar, uitleg) => ({ cat: 'punten', van, naar, uitleg })
+const tv = (van, naar, uitleg) => ({ cat: 'tussenvoegsels', van, naar, uitleg })
+const TV_GROOT = 'Zonder voornaam ervoor krijgt het tussenvoegsel een hoofdletter.'
+const TV_KLEIN = 'Met een voornaam of voorletter ervoor schrijf je het tussenvoegsel klein.'
+const TV_EERSTE = 'Alleen het eerste tussenvoegsel krijgt een hoofdletter.'
 
 const BEGIN = 'Een zin begint met een hoofdletter.'
 const GEEN_NAAM = 'Dit is geen naam, dus een kleine letter.'
@@ -338,6 +348,49 @@ export const ZINNEN = [
     h('Tweede Wereldoorlog', 'tweede wereldoorlog', 'De Tweede Wereldoorlog is een naam: hoofdletters.'),
     h('Nederland', 'nederland', 'Landen krijgen een hoofdletter.'),
     h('bezet', 'Bezet', GEEN_NAAM),
+  ] },
+  // ── hoofdletters bij tussenvoegsels ─────────────────────────────────────
+  { zin: 'Meneer Van Dijk en Sanne van der Meer wonen in dezelfde straat.', fouten: [
+    tv('Meneer Van Dijk', 'Meneer van Dijk', TV_GROOT),
+    tv('Sanne van der Meer', 'Sanne Van der Meer', TV_KLEIN),
+  ] },
+  { zin: 'De brief is van mevrouw De Boer, niet van Ilse de Groot.', fouten: [
+    tv('mevrouw De Boer', 'mevrouw de Boer', TV_GROOT),
+    tv('Ilse de Groot', 'Ilse De Groot', TV_KLEIN),
+  ] },
+  { zin: 'Juf Van den Berg leest voor uit een boek van Paul van Loon.', fouten: [
+    tv('Juf Van den Berg', 'Juf van den Berg', TV_GROOT),
+    tv('Van den Berg', 'Van Den Berg', TV_EERSTE),
+    tv('Paul van Loon', 'Paul Van Loon', TV_KLEIN),
+  ] },
+  { zin: 'Vincent van Gogh was een schilder, vertelt meester De Wit.', fouten: [
+    tv('Vincent van Gogh', 'Vincent Van Gogh', TV_KLEIN),
+    tv('meester De Wit', 'meester de Wit', TV_GROOT),
+  ] },
+  { zin: 'Ik speel vaak bij Tim de Jong en daarna bij de familie Van Rijn.', fouten: [
+    tv('Tim de Jong', 'Tim De Jong', TV_KLEIN),
+    tv('familie Van Rijn', 'familie van Rijn', TV_GROOT),
+  ] },
+  { zin: 'Dokter Van der Linden helpt Fatima ter Horst met haar knie.', fouten: [
+    tv('Dokter Van der Linden', 'Dokter van der Linden', TV_GROOT),
+    tv('Van der Linden', 'Van Der Linden', TV_EERSTE),
+    tv('Fatima ter Horst', 'Fatima Ter Horst', TV_KLEIN),
+  ] },
+  { zin: 'A. de Wit en B. van Dam zijn de nieuwe buren.', fouten: [
+    tv('A. de Wit', 'A. De Wit', TV_KLEIN),
+    tv('B. van Dam', 'B. Van Dam', TV_KLEIN),
+  ] },
+  { zin: 'Volgens Emma van Beek is De Vries een heel gewone achternaam.', fouten: [
+    tv('Emma van Beek', 'Emma Van Beek', TV_KLEIN),
+    tv('is De Vries', 'is de Vries', TV_GROOT),
+  ] },
+  { zin: 'Wij logeren bij oom Ten Brink en tante Els van der Veen.', fouten: [
+    tv('oom Ten Brink', 'oom ten Brink', TV_GROOT),
+    tv('Els van der Veen', 'Els Van der Veen', TV_KLEIN),
+  ] },
+  { zin: 'Het doelpunt van Virgil van Dijk kwam na een pass van De Ligt.', fouten: [
+    tv('Virgil van Dijk', 'Virgil Van Dijk', TV_KLEIN),
+    tv('pass van De Ligt', 'pass van de Ligt', TV_GROOT),
   ] },
   { zin: 'Lisa de Vries woont in een Amsterdams grachtenpand.', fouten: [
     h('Lisa de Vries', 'Lisa De Vries', 'Met de voornaam ervoor krijgt "de" een kleine letter: Lisa de Vries.'),

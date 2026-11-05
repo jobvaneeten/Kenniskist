@@ -13,9 +13,12 @@ import { Knop, TerugKnop, Icoon } from './ui/index.jsx'
 // sterren per zeldzaamheid op het onthul-scherm
 const STERREN = { common: 1, rare: 2, epic: 3, legendary: 4, ultra_legendary: 5 }
 
-// Higher legendary/ultra chance. Effective odds also depend on how many
-// items each rarity has (see rarityOdds, computed from the real pool).
-const RARITY_WEIGHTS = { common: 12, rare: 10, epic: 9, legendary: 8, ultra_legendary: 5 }
+// Kans per zeldzaamheid (in procenten), niet per item: eerst wordt de
+// zeldzaamheid getrokken, daarna een item daarbinnen. Eerder telde het gewicht
+// per item, waardoor een kist met veel ultra-items vaker ultra gaf dan
+// legendarisch. Ontbreekt een zeldzaamheid in de kist, dan worden de andere
+// kansen naar verhouding groter (zie rarityOdds).
+const RARITY_KANS = { common: 34, rare: 27, epic: 20, legendary: 13, ultra_legendary: 6 }
 
 // Confetti / particle colours (SHIRT_COLORS import was removed)
 const CONFETTI = ['#e63946','#1d6fa4','#2d9e4f','#f4c430','#f77f00','#7b2d8b','#ffd23f','#ffffff']
@@ -25,12 +28,17 @@ function fmt(n) { return n.toLocaleString('nl-NL') }
 // ── Real drop chances per rarity, computed from the actual pool ───
 const RARITY_ORDER = ['common','rare','epic','legendary','ultra_legendary']
 function rarityOdds(pool) {
-  const weightByRarity = {}
-  pool.forEach(c => { weightByRarity[c.rarity] = (weightByRarity[c.rarity] || 0) + (RARITY_WEIGHTS[c.rarity] || 0) })
-  const total = Object.values(weightByRarity).reduce((s, w) => s + w, 0) || 1
-  return RARITY_ORDER
-    .filter(k => weightByRarity[k])
-    .map(k => ({ key: k, pct: (weightByRarity[k] / total) * 100 }))
+  const aanwezig = RARITY_ORDER.filter(k => pool.some(c => c.rarity === k))
+  const total = aanwezig.reduce((s, k) => s + RARITY_KANS[k], 0) || 1
+  return aanwezig.map(k => ({ key: k, pct: (RARITY_KANS[k] / total) * 100 }))
+}
+// eerst de zeldzaamheid (met de kansen hierboven), dan een willekeurig item daarvan
+function trekItem(pool) {
+  const odds = rarityOdds(pool)
+  let r = Math.random() * 100, gekozen = odds[odds.length - 1].key
+  for (const o of odds) { if (r < o.pct) { gekozen = o.key; break } r -= o.pct }
+  const binnen = pool.filter(c => c.rarity === gekozen)
+  return binnen[Math.floor(Math.random() * binnen.length)]
 }
 function fmtPct(p) {
   return p < 1 ? p.toFixed(1).replace('.', ',') : String(Math.round(p))
@@ -126,12 +134,7 @@ export default function Shop({ briefgeld, addBriefgeld, unlockedColors, onUnlock
     const isDuplicate = newItems.length === 0
     const drawPool    = isDuplicate ? pool : newItems
 
-    const bag = []
-    drawPool.forEach(c => {
-      const w = RARITY_WEIGHTS[c.rarity] || 10
-      for (let i = 0; i < w; i++) bag.push(c)
-    })
-    const won = bag[Math.floor(Math.random() * bag.length)]
+    const won = trekItem(drawPool)
 
     if (isDuplicate) {
       // item al in bezit → volledige teruggave, niets afschrijven

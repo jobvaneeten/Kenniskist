@@ -314,6 +314,19 @@ function blok(b) {
     g.fillStyle = tg; rr(g, x + 3, y, w - 6, h, 12); g.fill()
     ;[0.2, 0.8].forEach(function (f) { g.fillStyle = '#2a2430'; g.fillRect(x + 2, y + h * f - 3, w - 4, 6) })
     g.shadowColor = '#ffc83d'; g.shadowBlur = 10; g.fillStyle = '#ffc83d'; g.font = '900 20px "Russo One"'; g.textAlign = 'center'; g.fillText('!', x + w / 2, y + h / 2 + 7)
+  } else if (so === 'dak') {
+    // luifel van zeildoek op een balk, in de kleur van de wereld
+    var dk = [['#ff4fd8', '#ffe9ff'], ['#9be8ff', '#ffffff'], ['#ff7a2a', '#2a1a1a'], ['#c08bff', '#2a2230']][s.def.w]
+    var hang = Math.sin(tijd * 2.2) * 2
+    g.fillStyle = '#5a3a1e'; rr(g, x - 4, y + h - 5, w + 8, 7, 3); g.fill()
+    g.save(); g.beginPath(); g.moveTo(x - 6, y + h - 2); g.lineTo(x + w + 6, y + h - 2); g.lineTo(x + w, y - 6); g.lineTo(x, y - 6); g.closePath(); g.clip()
+    for (var st2 = 0; st2 < 8; st2++) { g.fillStyle = st2 % 2 ? dk[1] : dk[0]; g.fillRect(x - 6 + st2 * (w + 12) / 8, y - 6, (w + 12) / 8 + 1, h + 4) }
+    g.restore()
+    for (var sl = 0; sl < 8; sl++) { var sx2 = x - 6 + (sl + 0.5) * (w + 12) / 8; g.fillStyle = sl % 2 ? dk[1] : dk[0]; g.beginPath(); g.arc(sx2, y + h - 2 + hang * (sl % 2 ? 1 : -1) * 0.4, (w + 12) / 16, 0, Math.PI); g.fill() }
+    g.shadowColor = dk[0]; g.shadowBlur = 10; g.strokeStyle = rgba(dk[0], 0.9); g.lineWidth = 1.5; g.beginPath(); g.moveTo(x, y - 6); g.lineTo(x + w, y - 6); g.stroke()
+  } else if (so === 'dakpaal') {
+    var dg = g.createLinearGradient(x, 0, x + w, 0); dg.addColorStop(0, '#7a5232'); dg.addColorStop(1, '#3a2414')
+    g.fillStyle = dg; g.fillRect(x, y, w, h)
   } else if (so === 'paal') {
     var pg = g.createLinearGradient(x, 0, x + w, 0); pg.addColorStop(0, '#5a3a1e'); pg.addColorStop(0.5, '#9a6a3a'); pg.addColorStop(1, '#4a2e16')
     g.fillStyle = pg; g.fillRect(x + 6, y, w - 12, h)
@@ -369,13 +382,19 @@ function benen(g, x, y, kleur, f) {
   rr(g, x + 2, y - 18, 9, 18 - z, 4); g.fill()
   ellips(g, x - 7, y, 8, 4, '#1a1426'); ellips(g, x + 7, y, 8, 4, '#1a1426')
 }
+var overboord = {}, inZee = {}
 function tekenFiguur(c, hoek) {
-  var g = ctx, m = VS.midden(s, c), dir = c.kant === 'speler' ? 1 : -1, x = c.x, b = bob(c.kant)
+  // op een eilandje deint niets mee; op het vlot wel
+  var g = ctx, m = VS.midden(s, c), dir = c.kant === 'speler' ? 1 : -1, x = c.x, b = c.eiland ? 0 : bob(c.kant)
   var y = c.voetY + b + (c.zweef ? Math.sin(s.t * 1.7 + c.fase) * c.zweef : 0), adem = Math.sin(tijd * 2.4 + c.id) * 1.2
   var dood = vallen[c.id]
   g.save()
   g.shadowColor = 'rgba(0,0,12,.6)'; g.shadowBlur = 7; g.shadowOffsetY = 2
-  if (dood) {
+  if (dood && overboord[c.id]) {
+    // van het vlot gevallen: tuimelen tot in het water, daar snel weg
+    var tv = tijd - dood, nat = inZee[c.id]
+    g.translate(x, y - c.r); g.rotate(dir * tv * 3.2); g.translate(-x, -y + c.r); g.globalAlpha = nat ? Math.max(0, 1 - (tijd - nat) * 4) : 1
+  } else if (dood) {
     var t = Math.min(1.6, tijd - dood)
     g.translate(x, y); g.rotate(dir * -t * 1.6); g.translate(-x, -y); y += t * t * 140; g.globalAlpha = Math.max(0, 1 - t / 1.6)
   }
@@ -622,8 +641,12 @@ function verwerk(ev) {
       for (var i = 0; i < 10; i++) deeltje(e.x, e.y + 20, (Math.random() - 0.5) * 240, -100 - Math.random() * 200, e.kant === 'speler' ? '#ff4f6a' : '#ffc83d', 2 + Math.random() * 3, 0.5)
       schud = Math.max(schud, 6)
       if (e.kant === 'speler') Geluid.au(); else Geluid.raak()
-    } else if (e.type === 'dood') { vallen[e.id] = tijd; setTimeout(function () { plons(e.x, true); Geluid.plons() }, 700) }
-    else if (e.type === 'plons') { plons(e.x, e.groot); Geluid.plons() }
+    } else if (e.type === 'dood') {
+      vallen[e.id] = tijd
+      if (e.valt) { overboord[e.id] = true; zweefTekst(e.x, e.y - 90, 'Overboord!', e.kant === 'speler' ? '#ff4f6a' : '#3ef0ff', true); schud = Math.max(schud, 4) }
+      else setTimeout(function () { plons(e.x, true); Geluid.plons() }, 700)
+    }
+    else if (e.type === 'plons') { if (e.id) inZee[e.id] = tijd; plons(e.x, e.groot); Geluid.plons() }
     else if (e.type === 'stuit') { plons(e.x, false); Geluid.stuit() }
     else if (e.type === 'boem') { boem(e.x, e.y, e.r); Geluid.boem() }
     else if (e.type === 'blok') { splinters(e.x, e.y, e.soort, e.kapot); Geluid.blok() }
@@ -742,21 +765,44 @@ function werkWapensBij() {
 
 // ── spelverloop ──
 var actief = false
-function startLevel(L) {
+// Als beloning speel je 45 seconden. Is het level dan nog niet af, dan bewaren
+// we het en ga je de volgende keer precies daar verder.
+var SPEELTIJD = 45, SLAG = 'kk_vlot_slag', speeltijd = 0, raakStart = 0
+function bewaarSlag() { try { localStorage.setItem(SLAG, JSON.stringify(s, function (k, v) { return k === 'def' || k === 'wereld' || k === 'rnd' || k === 'events' || k === 'spoor' ? undefined : v })) } catch (e) {} }
+function laadSlag() { try { return VS.herstel(JSON.parse(localStorage.getItem(SLAG) || 'null')) } catch (e) { return null } }
+function wisSlag() { try { localStorage.removeItem(SLAG) } catch (e) {} }
+function tijdOp() {
+  if (!s || !actief) return
+  actief = false; gepauzeerd = false; mik = null
+  D.munten += Math.min(40, 5 + (s.raak - raakStart) * 3); bewaar()
+  bewaarSlag()
+  Geluid.win()
+  banner('De tijd is om!<small>De volgende keer ga je hier verder</small>', 2200)
+  setTimeout(function () { parent.postMessage({ type: 'vlotstrijd-gameover' }, '*') }, 2000)
+}
+function lvlTekst() {
+  var t = s.wereld.naam + ' · ' + (s.def.k + 1)
+  if (BELONING) { var sec = Math.ceil(speeltijd); t += ' · nog 0:' + ('0' + sec).slice(-2) }
+  $('lvl').textContent = t
+  $('lvl').classList.toggle('bijna', BELONING && speeltijd < 10)
+}
+function startLevel(L, opgeslagen) {
   audio()
-  s = VS.nieuw(L, { upgrades: D.upgrades, wapens: D.wapens })
+  s = opgeslagen || VS.nieuw(L, { upgrades: D.upgrades, wapens: D.wapens })
+  speeltijd = SPEELTIJD; raakStart = s.raak
   wereld = s.def.w; actief = true; gepauzeerd = false; mik = null
-  deeltjes = []; teksten = []; ringen = []; vallen = {}; flitsFig = {}; laatsteHoek = {}; weer = []
+  deeltjes = []; teksten = []; ringen = []; vallen = {}; overboord = {}; inZee = {}; flitsFig = {}; laatsteHoek = {}; weer = []
   gekozen = D.wapens.indexOf(D.wapen) >= 0 ? D.wapen : 'bal'
   if (s.gebruik[gekozen] != null && s.gebruik[gekozen] <= 0) gekozen = 'bal'
-  $('lvl').textContent = s.wereld.naam + ' · ' + (s.def.k + 1)
+  lvlTekst()
   windTekst(); bouwWapens(); toonScherm(null); werkBaasBij()
-  if (s.def.baas) { banner('Eindbaas!<small>' + VS.SOORTEN[s.vijanden[0].soort].naam + '</small>', 2200); Geluid.boem() }
+  if (opgeslagen) banner('Verder waar je was!<small>Je mag weer 45 seconden spelen</small>', 2000)
+  else if (s.def.baas) { banner('Eindbaas!<small>' + VS.SOORTEN[s.vijanden[0].soort].naam + '</small>', 2200); Geluid.boem() }
   else banner('Level ' + (L + 1) + '<small>' + s.wereld.zin + '</small>', 1800)
   setTimeout(function () { if (s && s.L === L) toonHint() }, 1900)
 }
 function speelFase(dt) {
-  if (s.fase === 'vlucht') { if (!s.kogels.length) { vijandWacht = 0.55; VS.naVlucht(s); naFase() } }
+  if (s.fase === 'vlucht') { if (!s.kogels.length && VS.rustig(s)) { vijandWacht = 0.55; VS.naVlucht(s); naFase() } }
   else if (s.fase === 'vijand') {
     vijandWacht -= dt
     if (vijandWacht <= 0) { var r = VS.vijandSchiet(s); if (r) { Geluid.vijand(); laatsteHoek[r.id] = 0.7 } naFase() }
@@ -774,6 +820,7 @@ function naFase() {
 function einde() {
   if (!s || !actief) return
   actief = false
+  if (BELONING) wisSlag()   // level af: de volgende keer een nieuw level
   var gewonnen = s.uitslag === 'gewonnen', st = VS.sterren(s), verdiend = VS.beloning(s)
   D.munten += verdiend
   if (gewonnen) { D.sterren[s.L] = Math.max(D.sterren[s.L] || 0, st); if (s.L === D.open && D.open < VS.LEVELS - 1) D.open++; Geluid.win() }
@@ -893,6 +940,29 @@ function tekenStuk(st, achter) {
     var gloed2 = g.createRadialGradient(x + 2, top, 2, x + 2, top, 40); gloed2.addColorStop(0, 'rgba(255,170,80,' + 0.7 * gl2 + ')'); gloed2.addColorStop(1, 'rgba(255,90,30,0)')
     g.fillStyle = gloed2; g.beginPath(); g.arc(x + 2, top, 40, 0, TAU); g.fill()
     for (var rk = 0; rk < 4; rk++) { var f = (tijd * 0.25 + rk / 4) % 1; cirkel(g, x + 2 + Math.sin(f * 5 + rk) * 12 + f * 20, top - f * 120, 8 + f * 22, 'rgba(70,50,54,' + (0.5 * (1 - f)) + ')') }
+  } else if (so === 'eiland') {
+    // een plat eilandje waar een vijand op staat: steiger, ijsschots, lavasteen of wrakdek
+    var ew = st.w / 2, w4 = s ? s.def.w : wereld
+    var kl = [['#3a3260', '#5a4e90', '#3ef0ff'], ['#bfe8ff', '#ffffff', '#9be8ff'], ['#2a1818', '#4a3030', '#ff7a2a'], ['#2e2434', '#4a3c50', '#c08bff']][w4]
+    g.fillStyle = kl[0]; g.beginPath(); g.moveTo(x - ew - 16, ZV); g.lineTo(x - ew, top + 10); g.lineTo(x - ew + 8, top); g.lineTo(x + ew - 6, top); g.lineTo(x + ew + 2, top + 12); g.lineTo(x + ew + 18, ZV); g.fill()
+    g.fillStyle = 'rgba(0,0,0,.25)'; g.beginPath(); g.moveTo(x + 4, top + 6); g.lineTo(x + ew + 2, top + 12); g.lineTo(x + ew + 18, ZV); g.lineTo(x + 10, ZV); g.fill()
+    g.fillStyle = kl[1]; rr(g, x - ew - 2, top - 4, st.w + 4, 10, 4); g.fill()
+    if (w4 === 0) {
+      // houten steiger met een neonlamp
+      for (var pp = 0; pp < 3; pp++) lijn(g, x - ew + 8 + pp * (st.w - 16) / 2, top + 6, x - ew + 8 + pp * (st.w - 16) / 2, ZV, '#5a3a1e', 6)
+      g.save(); g.shadowColor = '#ffc83d'; g.shadowBlur = 14; cirkel(g, x - ew + 4, top - 22, 5, '#ffe08a'); g.restore(); lijn(g, x - ew + 4, top - 4, x - ew + 4, top - 18, '#8a84c0', 2)
+    } else if (w4 === 1) {
+      g.fillStyle = 'rgba(255,255,255,.75)'; g.fillRect(x - ew, top - 4, st.w, 3)
+      for (var ij = 0; ij < 4; ij++) { var ix2 = x - ew + 8 + ij * (st.w - 16) / 3; g.fillStyle = 'rgba(232,251,255,.9)'; g.beginPath(); g.moveTo(ix2 - 3, top + 6); g.lineTo(ix2, top + 14 + ij * 3); g.lineTo(ix2 + 3, top + 6); g.fill() }
+    } else if (w4 === 2) {
+      var gl3 = 0.55 + 0.45 * Math.sin(tijd * 2.4 + x)
+      g.save(); g.shadowColor = '#ff6a1a'; g.shadowBlur = 12; g.strokeStyle = 'rgba(255,138,58,' + gl3 + ')'; g.lineWidth = 2.5
+      g.beginPath(); g.moveTo(x - ew + 10, top + 8); g.lineTo(x - 4, top + st.h * 0.4); g.lineTo(x + 10, top + st.h * 0.8); g.stroke(); g.restore()
+    } else {
+      g.strokeStyle = '#5a4a60'; g.lineWidth = 2; for (var pl2 = 0; pl2 < 3; pl2++) { g.beginPath(); g.moveTo(x - ew, top + 2 + pl2 * 3); g.lineTo(x + ew, top + 2 + pl2 * 3); g.stroke() }
+      g.save(); g.shadowColor = '#7df9ff'; g.shadowBlur = 12; cirkel(g, x + ew - 8, top + 22, 4, 'rgba(125,249,255,.85)'); g.restore()
+    }
+    g.save(); g.shadowColor = kl[2]; g.shadowBlur = 10; g.strokeStyle = rgba(kl[2], 0.7); g.lineWidth = 1.5; rr(g, x - ew - 2, top - 4, st.w + 4, 10, 4); g.stroke(); g.restore()
   } else if (so === 'wrakmast') {
     g.fillStyle = '#2e2434'; g.beginPath(); g.moveTo(x - 70, ZV); g.lineTo(x - 54, VS.ZEE - 22); g.lineTo(x + 50, VS.ZEE - 34); g.lineTo(x + 76, ZV); g.fill()
     g.strokeStyle = '#4a3c50'; g.lineWidth = 3; for (var pl = 0; pl < 3; pl++) { g.beginPath(); g.moveTo(x - 60, VS.ZEE - 12 + pl * 10); g.lineTo(x + 62, VS.ZEE - 22 + pl * 10); g.stroke() }
@@ -916,7 +986,7 @@ function spiegel(x, breed, kleur) {
     ctx.fillStyle = rgba(kleur, a); ctx.fillRect(x - breed / 2 + off, y, breed * (1 - i * 0.06), 3.5)
   }
 }
-var SPIEGELKLEUR = { vuurtoren: '#ff4fd8', neonbrug: '#3ef0ff', ijspiek: '#e8fbff', ijsboog: '#bfe8ff', lavapiek: '#ff7a2a', rotsboog: '#ff7a2a', wrakmast: '#c08bff', scheepsboog: '#7df9ff' }
+var SPIEGELKLEUR = { eiland: '#3ef0ff', vuurtoren: '#ff4fd8', neonbrug: '#3ef0ff', ijspiek: '#e8fbff', ijsboog: '#bfe8ff', lavapiek: '#ff7a2a', rotsboog: '#ff7a2a', wrakmast: '#c08bff', scheepsboog: '#7df9ff' }
 
 // ── leven in de lucht: wolken, vallende sterren, meeuwen ──
 var wolken = null
@@ -995,7 +1065,10 @@ function frame(nu) {
 function teken(nu) {
   var dt = Math.min(0.05, (nu - vorige) / 1000); vorige = nu
   tijd += dt
-  if (s && actief && !gepauzeerd) { verwerk(VS.stap(s, dt)); speelFase(dt) }
+  if (s && actief && !gepauzeerd) {
+    verwerk(VS.stap(s, dt)); speelFase(dt)
+    if (BELONING && actief && !s.uitslag) { var oud = Math.ceil(speeltijd); speeltijd -= dt; if (Math.ceil(speeltijd) !== oud) lvlTekst(); if (speeltijd <= 0) tijdOp() }
+  }
   var w = s ? s.def.w : wereld
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
   if (!verAf || verWereld !== w) { verAf = bouwVerte(w); verWereld = w }
@@ -1106,7 +1179,7 @@ $('naarmenu').onclick = function () { menuWereld = Math.floor((s ? s.L : D.open)
 $('klaar').onclick = function () { parent.postMessage({ type: 'vlotstrijd-gameover' }, '*') }
 $('pauze').onclick = function (e) { e.stopPropagation(); if (!actief) return; gepauzeerd = true; toonScherm('pauzescherm') }
 $('hervat').onclick = function () { gepauzeerd = false; vorige = performance.now(); toonScherm(null) }
-$('stop').onclick = function () { gepauzeerd = false; if (BELONING) { s.uitslag = 'verloren'; einde() } else toonMenu() }
+$('stop').onclick = function () { gepauzeerd = false; toonScherm(null); if (BELONING) tijdOp(); else toonMenu() }
 $('naarwinkel').onclick = function () { tekenWinkel(); toonScherm('winkel') }
 $('eindwinkel').onclick = function () { tekenWinkel(); toonScherm('winkel') }
 $('uitwinkel').onclick = toonMenu
@@ -1161,7 +1234,10 @@ if (params.has('debug')) window.__vlot = { s: function () { return s }, D: D, st
 
 meet()
 tekenGeluidKnop()
-if (BELONING) startLevel(D.open)
+if (BELONING) { var opgeslagen = laadSlag(); startLevel(opgeslagen ? opgeslagen.L : D.open, opgeslagen) }
 else toonMenu()
+// wordt het spel tussendoor gesloten, dan bewaren we het level ook
+window.addEventListener('pagehide', function () { if (BELONING && actief && s && !s.uitslag) bewaarSlag() })
+document.addEventListener('visibilitychange', function () { if (document.hidden && BELONING && actief && s && !s.uitslag) bewaarSlag() })
 requestAnimationFrame(frame)
 })()

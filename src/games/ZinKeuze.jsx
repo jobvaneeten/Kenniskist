@@ -153,6 +153,8 @@ function interpunctieVolgende(cats) {
   }
 }
 
+const KAART_KLEUR = ['var(--kk-cyan)', 'var(--kk-pink)', 'var(--kk-gold)', 'var(--kk-success)', 'var(--kk-primary-hi, #9b6bff)', 'var(--kk-cyan)']
+
 // config.onderdelen: vanuit een weektaak, taak of doel (zie tools.js) — dan
 // geen keuzescherm.
 export function Interpunctie({ onBack, addBriefgeld, addCuruntie, aantal, config }) {
@@ -193,15 +195,19 @@ export function Interpunctie({ onBack, addBriefgeld, addCuruntie, aantal, config
         <h1>Interpunctie</h1>
         <p>Kies wat je wilt oefenen — meerdere tegelijk mag</p>
       </div>
-      <div className="tv-filter-list">
-        {ONDERDELEN.map(o => (
-          <label key={o.id} className="tv-filter-item">
-            <input type="checkbox" checked={cats.includes(o.id)} onChange={() => toggel(o.id)} />
-            <span className="tv-filter-label">
-              <span className="zk-teken">{o.emoji}</span> {o.label}
-            </span>
-          </label>
-        ))}
+      <div className="tv-kies-grid">
+        {ONDERDELEN.map((o, i) => {
+          const aan = cats.includes(o.id)
+          return (
+            <div key={o.id} className={`tv-kies${aan ? ' aan' : ''}`} style={{ '--kk-accent': KAART_KLEUR[i % KAART_KLEUR.length] }}>
+              <button type="button" className="tv-kies-knop" aria-pressed={aan} onClick={() => toggel(o.id)}>
+                <span className="tv-kies-vink"><Icoon naam={aan ? 'goed' : 'plus'} /></span>
+                <span className="zk-teken">{o.emoji}</span>
+                <span className="tv-kies-naam">{o.label}</span>
+              </button>
+            </div>
+          )
+        })}
       </div>
       {cats.length === 0 && <p className="tv-filter-warn">Kies minstens 1 onderdeel</p>}
       <Knop variant="primair" icoonRechts="verder" disabled={cats.length === 0} onClick={start}>Start oefenen</Knop>

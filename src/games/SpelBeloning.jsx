@@ -90,7 +90,7 @@ const SPELLEN = [
   { key: 'pijlen',     name: 'Pijlenregen',    desc: 'Speel 1 level (5 schijven)',      img: '/scenes/games/pijlenregen.svg' },
   { key: 'stapel',     name: 'Stapeltoren',    desc: 'Bouw 1 toren in 45 seconden',        img: '/scenes/games/stapeltoren.svg' },
   { key: 'steen',      name: 'Steenknaller',   desc: 'Speel 1 level',                   img: '/scenes/games/steenknaller.svg' },
-  { key: 'vlot',       name: 'Vlotstrijd',     desc: 'Speel 1 level',                   img: '/scenes/games/vlotstrijd.svg' },
+  { key: 'vlot',       name: 'Vlotstrijd',     desc: 'Speel 45 seconden, de volgende keer ga je verder', img: '/scenes/games/vlotstrijd.svg' },
   { key: 'tijd',       name: 'Tijdstrijd',     desc: 'Speel 45 seconden',                  img: '/scenes/games/tijdstrijd.png' },
 ]
 
@@ -151,7 +151,7 @@ export default function SpelBeloning({ title, sub, geld, addCuruntie, onDone }) 
   if (picked === 'stapel')     return <IframeEmbed src="/stapeltoren/" title="Stapeltoren" doneType="stapeltoren-gameover" hint="Bouw 1 toren — daarna tik je op Klaar" onDone={onDone} />
   // Het volgende level, dan Klaar.
   if (picked === 'steen')      return <IframeEmbed src="/steenknaller/" title="Steenknaller" doneType="steenknaller-gameover" hint="Speel 1 level — daarna tik je op Klaar" onDone={onDone} />
-  if (picked === 'vlot')       return <IframeEmbed src="/vlotstrijd/" title="Vlotstrijd" doneType="vlotstrijd-gameover" hint="Speel 1 level — daarna tik je op Klaar" onDone={onDone} />
+  if (picked === 'vlot')       return <IframeEmbed src="/vlotstrijd/" title="Vlotstrijd" doneType="vlotstrijd-gameover" hint="Je speelt 45 seconden, daarna ga je vanzelf terug" onDone={onDone} />
   if (picked === 'tijd')       return <IframeEmbed src="/tijdstrijd/" title="Tijdstrijd" doneType="tijdstrijd-gameover" hint="Je speelt 45 seconden, daarna ga je vanzelf terug" onDone={onDone} />
 
   return (

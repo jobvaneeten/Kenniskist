@@ -676,3 +676,52 @@ mark.tv-highlight {
 .zk-regels { margin-bottom: 8px; }
 .zk-regels strong { display: block; margin-bottom: 2px; }
 .zk-regels p { margin: 2px 0; }
+
+/* ── Keuzescherm (woordsoorten en zinsdelen): kaarten om aan te tikken ── */
+.tv-kies-snel { display: flex; gap: 8px; margin: -6px 0 14px; }
+.tv-kies-snel button {
+  padding: 6px 14px; border-radius: var(--kk-r-pill); border: 1px solid var(--kk-border);
+  background: rgba(14, 12, 34, 0.6); color: var(--kk-text-soft); font: inherit; font-size: var(--kk-fs-sm); font-weight: var(--kk-fw-bold); cursor: pointer;
+}
+.tv-kies-snel button:hover { color: var(--kk-text); border-color: var(--kk-cyan); }
+.tv-kies-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px;
+  width: 100%; max-width: 780px; margin: 0 0 18px;
+}
+.tv-kies {
+  position: relative; display: flex; flex-direction: column; border-radius: var(--kk-r-lg, 16px);
+  background: rgba(14, 12, 34, 0.72); border: 1.5px solid var(--kk-border);
+  transition: border-color .15s, background .15s, box-shadow .15s, transform .15s;
+}
+.tv-kies:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--kk-accent) 55%, transparent); }
+.tv-kies.aan {
+  border-color: var(--kk-accent);
+  background: linear-gradient(160deg, color-mix(in srgb, var(--kk-accent) 18%, rgba(14,12,34,.85)), rgba(14,12,34,.85) 70%);
+  box-shadow: 0 0 22px color-mix(in srgb, var(--kk-accent) 28%, transparent);
+}
+.tv-kies-knop {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 4px; text-align: left;
+  padding: 14px 14px 12px; background: none; border: 0; color: var(--kk-text); font: inherit; cursor: pointer; width: 100%;
+}
+.tv-kies-vink {
+  position: absolute; top: 10px; right: 10px; width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%;
+  border: 1.5px solid color-mix(in srgb, var(--kk-text-faint, #8a8fb5) 60%, transparent); color: var(--kk-text-soft);
+}
+.tv-kies-vink svg { width: 15px; height: 15px; }
+.tv-kies.aan .tv-kies-vink { background: var(--kk-accent); border-color: var(--kk-accent); color: #0b0d24; }
+.tv-kies-naam { font-family: var(--kk-head); font-size: 1.05rem; font-weight: var(--kk-fw-black, 800); padding-right: 28px; line-height: 1.15; }
+.tv-kies.aan .tv-kies-naam { color: var(--kk-accent); }
+.tv-kies-vb { font-size: var(--kk-fs-xs); color: var(--kk-text-soft); }
+.tv-kies-keuze { display: flex; flex-direction: column; gap: 6px; padding: 0 10px 12px; }
+.tv-kies-keuze button {
+  padding: 7px 10px; border-radius: var(--kk-r-md, 10px); border: 1px solid color-mix(in srgb, var(--kk-accent) 35%, transparent);
+  background: rgba(0, 0, 0, .25); color: var(--kk-text-soft); font: inherit; font-size: var(--kk-fs-xs); font-weight: var(--kk-fw-bold); text-align: left; cursor: pointer;
+}
+.tv-kies-keuze button.aan { background: color-mix(in srgb, var(--kk-accent) 26%, transparent); border-color: var(--kk-accent); color: var(--kk-text); }
+.tv-kies-som { margin: 0 0 10px; max-width: 640px; text-align: center; font-size: var(--kk-fs-sm); color: var(--kk-text-soft); }
+@media (max-width: 480px) {
+  .tv-kies-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .tv-kies-knop { padding: 12px 10px 10px; }
+  .tv-kies-naam { font-size: .95rem; }
+}
+@media (prefers-reduced-motion: reduce) { .tv-kies, .tv-kies:hover { transition: none; transform: none; } }

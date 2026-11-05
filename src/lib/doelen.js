@@ -27,6 +27,7 @@ export const DOEL_VAKKEN = [
         d('Aanhalingstekens', 'taal-interpunctie', { onderdelen: ['aanhalingstekens'] }),
         d('Afbreekstreepje (woord afbreken aan het eind van de regel)', 'taal-interpunctie', { onderdelen: ['afbreekstreepje'] }),
         d('Hoofdletters', 'taal-interpunctie', { onderdelen: ['hoofdletters'] }),
+        d('Hoofdletters bij tussenvoegsels', 'taal-interpunctie', { onderdelen: ['tussenvoegsels'] }),
         d('Punten', 'taal-interpunctie', { onderdelen: ['punten'] }),
       ] },
       { titel: 'Zinsdelen', doelen: [
@@ -40,9 +41,11 @@ export const DOEL_VAKKEN = [
         d('Zelfstandig naamwoord, werkwoord en lidwoord', 'taal-woordsoorten', { soorten: ['zelfstandig naamwoord', 'werkwoord', 'lidwoord'] }),
         d('Bijvoeglijk naamwoord en bijwoord', 'taal-woordsoorten', { soorten: ['bijvoeglijk naamwoord', 'bijwoord'] }),
         d('Voornaamwoorden', 'taal-woordsoorten', { soorten: ['voornaamwoord', 'zelfstandig naamwoord', 'lidwoord'] }),
+        d('Persoonlijk en bezittelijk voornaamwoord', 'taal-woordsoorten', { soorten: ['persoonlijk voornaamwoord', 'bezittelijk voornaamwoord', 'zelfstandig naamwoord'] }),
+        d('Hulpwerkwoord en voltooid deelwoord', 'taal-woordsoorten', { soorten: ['hulpwerkwoord', 'voltooid deelwoord', 'zelfstandig naamwoord'] }),
         d('Telwoorden', 'taal-woordsoorten', { soorten: ['telwoord', 'lidwoord', 'bijvoeglijk naamwoord'] }),
         d('Voorzetsel en voegwoord', 'taal-woordsoorten', { soorten: ['voorzetsel', 'voegwoord'] }),
-        d('Alle woordsoorten', 'taal-woordsoorten', { soorten: TOOL_BY_ID['taal-woordsoorten'].configVelden[0].opties }),
+        d('Alle woordsoorten', 'taal-woordsoorten', { soorten: TOOL_BY_ID['taal-woordsoorten'].configVelden[0].opties.slice(0, 9) }),
       ] },
       { titel: 'Gebiedende wijs', doelen: [
         d('De gebiedende wijs herkennen', 'taal-gebiedende-wijs'),

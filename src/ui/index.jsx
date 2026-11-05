@@ -12,6 +12,7 @@ const PADEN = {
   pauze:   'M8 5v14M16 5v14',
   spelen:  'M7 4l13 8-13 8z',
   goed:    'M4 12.5l5 5L20 6.5',
+  plus:     'M12 5v14M5 12h14',
   fout:    'M6 6l12 12M18 6L6 18',
   sluiten: 'M6 6l12 12M18 6L6 18',
   ster:    'M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z',

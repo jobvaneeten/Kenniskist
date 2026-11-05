@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useGebruikOpdracht } from './gebruikOpdracht.js'
+import { zetActieveOpdracht } from '../lib/weektaak.js'
 import {
   doelMinuten, leesStand, schrijfStand, wisStand, verstreken, haalServerStand, bewaarServerStand, besteStand,
 } from '../lib/leestimerOpslag.js'
@@ -79,7 +80,11 @@ export default function LeesTimer({ onBack, addBriefgeld, aantal, config, opdrac
   // Scherm weg (slaapstand, app wisselen): de stand nog een keer naar de
   // database, voor het geval het opslaan bij het starten mislukte.
   useEffect(() => {
-    const weg = () => { if (document.visibilityState === 'hidden') bewaarServerStand(opdrachtId, standRef.current) }
+    // Een lege stand niet opnieuw wegschrijven: na het afronden is de rij net gewist.
+    const weg = () => {
+      const s = standRef.current
+      if (document.visibilityState === 'hidden' && (s.gebankt > 0 || s.startOp)) bewaarServerStand(opdrachtId, s)
+    }
     document.addEventListener('visibilitychange', weg)
     return () => document.removeEventListener('visibilitychange', weg)
   }, [opdrachtId])
@@ -155,6 +160,11 @@ export default function LeesTimer({ onBack, addBriefgeld, aantal, config, opdrac
     schrijfStand(opdrachtId, doelSeconden, vol)
     if (!eerder) addBriefgeld?.(minuten * BRIEFGELD_PER_MINUUT)
     setFase('af')
+    // De koppeling met de weektaak-opdracht vervalt na 4 uur (kenniskist-login.js).
+    // Liep de timer door in de slaapstand, bijvoorbeeld tot de volgende ochtend,
+    // dan kwam het resultaat los van de opdracht te staan en bleef de leestaak
+    // open. Dit scherm hoort nog bij deze opdracht, dus de koppeling opnieuw zetten.
+    if (opdrachtId) zetActieveOpdracht({ opdrachtId, toolId: 'lezen-timer' })
     Promise.resolve(opdracht.registreer(true, { vraag: `${minutenTekst(minuten)} lezen`, antwoord: 'uitgelezen' }))
       .then((res) => {
         if (!opdrachtId || res?.ok) {

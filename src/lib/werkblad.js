@@ -64,7 +64,7 @@ function verhaaltjes(config, n) {
 }
 
 function interpunctie(config, n) {
-  const cats = config.onderdelen?.length ? config.onderdelen : ['komma', 'aanhalingstekens', 'afbreekstreepje', 'hoofdletters', 'punten']
+  const cats = config.onderdelen?.length ? config.onderdelen : ['komma', 'aanhalingstekens', 'afbreekstreepje', 'hoofdletters', 'tussenvoegsels', 'punten']
   return vragenVoor(cats).slice(0, n).map(item => {
     const v = interpunctieVraag(item, cats)
     const letter = 'abcd'[v.opties.findIndex(o => o.goed)]

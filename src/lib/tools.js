@@ -39,6 +39,8 @@ export const TOOL_FAMILIES = [
       { key: 'soorten', type: 'checkboxes', label: 'Woordsoorten', min: 2, opties: [
         'lidwoord', 'zelfstandig naamwoord', 'werkwoord', 'bijvoeglijk naamwoord',
         'bijwoord', 'voornaamwoord', 'voorzetsel', 'telwoord', 'voegwoord',
+        // fijnere soorten: staat er ook "werkwoord" of "voornaamwoord" bij, dan gaan deze voor
+        'hulpwerkwoord', 'voltooid deelwoord', 'persoonlijk voornaamwoord', 'bezittelijk voornaamwoord',
       ] },
     ],
   },
@@ -61,6 +63,7 @@ export const TOOL_FAMILIES = [
         { value: 'aanhalingstekens', label: 'Aanhalingstekens' },
         { value: 'afbreekstreepje', label: 'Afbreekstreepje' },
         { value: 'hoofdletters', label: 'Hoofdletters' },
+        { value: 'tussenvoegsels', label: 'Hoofdletters bij tussenvoegsels' },
         { value: 'punten', label: 'Punten' },
       ] },
     ],

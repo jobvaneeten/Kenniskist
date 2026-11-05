@@ -2617,6 +2617,98 @@ export const VRAGEN = [
     zinsdeel:   null },
 ]
 
+// ── Fijnere woordsoorten ─────────────────────────────────────────────────────
+// Naast "werkwoord" en "voornaamwoord" kun je ook kiezen voor hulpwerkwoord en
+// voltooid deelwoord, en voor persoonlijk en bezittelijk voornaamwoord. Een
+// vraag houdt zijn gewone woordsoort; `ww` en `vnw` zeggen welke fijnere soort
+// het is. Welk antwoord goed is, hangt af van wat er gekozen is (antwoordVoor).
+const HULP = [122, 127, 137, 311, 357, 423, 504]     // heeft, is, mogen … bij een ander werkwoord
+const VD = [314, 359, 427]                           // gemaakt, nagekeken, bezocht
+const PERS = [11, 22, 33, 66, 85, 111, 117, 121, 126, 136, 258, 407, 525, 540, 549, 576]
+const BEZ = [15, 37, 45, 53, 239, 280, 301, 459, 590]
+VRAGEN.forEach(q => {
+  if (HULP.includes(q.id)) q.ww = 'hulp'
+  else if (VD.includes(q.id)) q.ww = 'vd'
+  else if (PERS.includes(q.id)) q.vnw = 'pers'
+  else if (BEZ.includes(q.id)) q.vnw = 'bez'
+})
+
+// Extra zinnen met een hulpwerkwoord en een voltooid deelwoord: elke zin geeft
+// twee vragen. Alleen voor woordsoorten (zinsdeel: null).
+const HULP_ZINNEN = [
+  ['Sara heeft een mooie tekening gemaakt.', 'heeft', 'gemaakt'],
+  ['De trein is net vertrokken.', 'is', 'vertrokken'],
+  ['Wij hebben de hele middag gezwommen.', 'hebben', 'gezwommen'],
+  ['Opa is in de tuin gevallen.', 'is', 'gevallen'],
+  ['De kinderen hebben een hut gebouwd.', 'hebben', 'gebouwd'],
+  ['Mijn moeder heeft een taart gebakken.', 'heeft', 'gebakken'],
+  ['De kat is op het dak geklommen.', 'is', 'geklommen'],
+  ['Jullie hebben goed opgelet.', 'hebben', 'opgelet'],
+  ['Daan heeft de fiets in de schuur gezet.', 'heeft', 'gezet'],
+  ['De bal is in de sloot gerold.', 'is', 'gerold'],
+  ['Ik heb een spannend boek gelezen.', 'heb', 'gelezen'],
+  ['Het vliegtuig is veilig geland.', 'is', 'geland'],
+  ['De juf heeft de schriften uitgedeeld.', 'heeft', 'uitgedeeld'],
+  ['Wij zijn met de bus naar Amsterdam gereisd.', 'zijn', 'gereisd'],
+]
+const hoofd = (w) => w[0].toUpperCase() + w.slice(1)
+HULP_ZINNEN.forEach(([zin, hulp, vd], i) => {
+  VRAGEN.push({ id: 2000 + i * 2, zin, vraagWoord: hulp, ww: 'hulp', zinsdeel: null, woordsoort: 'werkwoord',
+    uitleg_ws: `"${hoofd(hulp)}" is een werkwoord: het hoort bij "${vd}".` })
+  VRAGEN.push({ id: 2001 + i * 2, zin, vraagWoord: vd, ww: 'vd', zinsdeel: null, woordsoort: 'werkwoord',
+    uitleg_ws: `"${hoofd(vd)}" is een werkwoord: het zegt wat er gebeurd is.` })
+})
+// Extra persoonlijke en bezittelijke voornaamwoorden.
+;[
+  ['Jouw jas hangt aan de kapstok.', 'Jouw', 'bez'],
+  ['Hun hond blaft de hele dag.', 'Hun', 'bez'],
+  ['De kinderen zoeken hun schoenen.', 'hun', 'bez'],
+  ['Waar staat jullie tent?', 'jullie', 'bez'],
+  ['Uw bestelling ligt klaar.', 'Uw', 'bez'],
+  ['Noor laat haar konijn in de tuin lopen.', 'haar', 'bez'],
+  ['Wij wassen onze auto.', 'onze', 'bez'],
+  ['Jullie mogen nu naar buiten.', 'Jullie', 'pers'],
+  ['De juf helpt hem met de som.', 'hem', 'pers'],
+  ['Wil jij de deur dichtdoen?', 'jij', 'pers'],
+  ['Papa belt haar elke avond.', 'haar', 'pers'],
+  ['Ik geef jou een cadeautje.', 'jou', 'pers'],
+].forEach(([zin, woord, vnw], i) => {
+  VRAGEN.push({ id: 2100 + i, zin, vraagWoord: woord, vnw, zinsdeel: null, woordsoort: 'voornaamwoord',
+    uitleg_ws: `"${hoofd(woord)}" is een voornaamwoord: ${vnw === 'bez' ? 'het zegt van wie iets is' : 'het staat in de plaats van een naam'}.` })
+})
+
+export const FIJNE_SOORTEN = {
+  hulpwerkwoord: 'hulpwerkwoord', vd: 'voltooid deelwoord',
+  pers: 'persoonlijk voornaamwoord', bez: 'bezittelijk voornaamwoord',
+}
+// Welk antwoord bij deze vraag goed is als deze woordsoorten gekozen zijn, of
+// null als de vraag er niet bij hoort. Een fijnere soort gaat voor: staat
+// "hulpwerkwoord" aan, dan is "heeft" een hulpwerkwoord en geen werkwoord.
+export function antwoordVoor(q, labels) {
+  if (!q.woordsoort) return null
+  const heeft = (l) => labels.includes(l)
+  if (q.woordsoort === 'werkwoord') {
+    if (q.ww === 'hulp' && heeft('hulpwerkwoord')) return 'hulpwerkwoord'
+    if (q.ww === 'vd' && heeft('voltooid deelwoord')) return 'voltooid deelwoord'
+    return heeft('werkwoord') ? 'werkwoord' : null
+  }
+  if (q.woordsoort === 'voornaamwoord') {
+    if (q.vnw === 'pers' && heeft('persoonlijk voornaamwoord')) return 'persoonlijk voornaamwoord'
+    if (q.vnw === 'bez' && heeft('bezittelijk voornaamwoord')) return 'bezittelijk voornaamwoord'
+    return heeft('voornaamwoord') ? 'voornaamwoord' : null
+  }
+  return heeft(q.woordsoort) ? q.woordsoort : null
+}
+// Uitleg bij het goede antwoord: bij een fijnere soort een eigen zin.
+export function uitlegVoorAntwoord(q, antwoord) {
+  const w = `"${hoofd(q.vraagWoord)}"`
+  if (antwoord === 'hulpwerkwoord') return `${w} is een hulpwerkwoord: het helpt een ander werkwoord in de zin.`
+  if (antwoord === 'voltooid deelwoord') return `${w} is een voltooid deelwoord: het hoort bij een hulpwerkwoord (heeft, is) en zegt wat er al gebeurd is.`
+  if (antwoord === 'persoonlijk voornaamwoord') return `${w} is een persoonlijk voornaamwoord: het staat in de plaats van een persoon (ik, jij, hij, zij, wij, hem, haar).`
+  if (antwoord === 'bezittelijk voornaamwoord') return `${w} is een bezittelijk voornaamwoord: het zegt van wie iets is (mijn, jouw, zijn, haar, onze, hun).`
+  return q.uitleg_ws
+}
+
 // Zinnen met twee deelzinnen. De zinsdelen-oefening laat ze alleen zien als
 // "ook samengestelde zinnen" aanstaat; elke deelzin heeft dan een eigen
 // onderwerp en persoonsvorm om neer te leggen.
@@ -2686,6 +2778,10 @@ export const TIP_WOORDSOORT = {
   'bijvoeglijk naamwoord': 'Het zegt hoe iets is. Pas het in: de ___ auto → de blauwe auto.',
   'bijwoord':              'Het zegt iets over het werkwoord: hoe, wanneer of waar iets gebeurt — snel, gisteren, hard.',
   'voornaamwoord':         'Een woordje in plaats van een naam: ik, jij, hij, zij, wij, mijn, zijn.',
+  'persoonlijk voornaamwoord': 'Staat in de plaats van een persoon: ik, jij, hij, zij, wij, jullie, mij, hem, haar, ons.',
+  'bezittelijk voornaamwoord': 'Zegt van wie iets is. Er komt een zelfstandig naamwoord achter: mijn fiets, jouw tas, hun huis.',
+  'hulpwerkwoord':         'Een werkwoord dat een ander werkwoord helpt: heeft, hebben, is, zijn, mag, kan, moet.',
+  'voltooid deelwoord':    'Zegt wat er al gebeurd is, samen met heeft of is: gemaakt, gelopen, vertrokken.',
   'voorzetsel':            'De kast-truc: je kunt het voor "de kast" zetten — in, op, onder, naast, door, bij.',
   'telwoord':              'Het zegt hoeveel of de hoeveelste: twee, tien, vijf, eerste.',
   'voegwoord':             'Het verbindt twee stukken zin: en, maar, want, omdat, terwijl.',

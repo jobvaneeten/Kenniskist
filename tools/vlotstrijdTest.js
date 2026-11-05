@@ -19,19 +19,38 @@ for (let L = 0; L < V.LEVELS; L++) {
   const d = V.bouwLevel(L)
   if ((L % 10 === 9) !== d.vijanden.some(v => V.SOORTEN[v.soort].baas)) fout(`level ${L + 1}: eindbaas klopt niet`)
   if (!d.vijanden.length) fout(`level ${L + 1}: geen vijanden`)
-  d.vijanden.forEach(v => { if (v.x < d.raft.x0 || v.x > d.raft.x1) fout(`level ${L + 1}: vijand staat naast het vlot`) })
+  d.vijanden.forEach(v => { if (!v.eiland && (v.x < d.raft.x0 || v.x > d.raft.x1)) fout(`level ${L + 1}: vijand staat naast het vlot`) })
 }
 {
   const s = V.nieuw(0, { seed: 1 })
   s.vijanden[0].hp = 1
   // recht vooruit schieten valt in zee
   V.schiet(s, 0.05, 0.3, 'bal')
-  let ev = []; for (let i = 0; i < 400 && s.kogels.length; i++) ev = ev.concat(V.stap(s, 1 / 60))
+  let ev = []; for (let i = 0; i < 400 && (s.kogels.length || !V.rustig(s)); i++) ev = ev.concat(V.stap(s, 1 / 60))
   if (!ev.some(e => e.type === 'plons')) fout('een slap schot valt niet in zee')
   V.naVlucht(s)
   if (s.fase !== 'vijand') fout('na jouw schot is de vijand niet aan de beurt')
-  V.vijandSchiet(s); for (let i = 0; i < 600 && s.kogels.length; i++) V.stap(s, 1 / 60); V.naVlucht(s)
+  V.vijandSchiet(s); for (let i = 0; i < 600 && (s.kogels.length || !V.rustig(s)); i++) V.stap(s, 1 / 60); V.naVlucht(s)
   if (s.fase !== 'speler' || s.held !== 1) fout('na de vijand is de tweede held niet aan de beurt')
+}
+
+// terugslag: een vijand vlak bij de rand van zijn eilandje valt er na een harde klap af en is dan af
+{
+  const L = [...Array(V.LEVELS).keys()].find(l => V.bouwLevel(l).vijanden.some(v => v.eiland))
+  if (L == null) fout('er is geen level met een vijand op een eilandje')
+  else {
+    const s = V.nieuw(L, { seed: 3 }), v = s.vijanden.find(x => s.def.vijanden.find(d => d.eiland && d.x === x.x))
+    const hp = v.hp
+    v.vx = 600
+    for (let i = 0; i < 240 && !V.rustig(s); i++) V.stap(s, 1 / 60)
+    if (v.hp !== 0 || !v.overboord) fout('een vijand die van zijn eilandje valt, is niet meteen af')
+    if (hp <= 0) fout('de vijand op het eilandje had geen leven')
+  }
+  const s2 = V.nieuw(0, { seed: 4 }), h = s2.helden[1], x = h.x
+  h.vx = -150
+  for (let i = 0; i < 300; i++) V.stap(s2, 1 / 60)
+  if (h.hp <= 0) fout('een kleine duw gooit een held van het vlot')
+  if (Math.abs(h.x - x) > 2) fout('een held loopt na een duw niet terug naar zijn plek')
 }
 
 // ── de bot ──
@@ -46,8 +65,11 @@ function proef(s, hoek, kracht, wapen, doelId) {
   const p = kloon(s)
   if (!V.schiet(p, hoek, kracht, wapen)) return null
   let schade = 0, doel = false
-  for (let i = 0; i < 500 && p.kogels.length; i++) {
-    V.stap(p, 1 / 60).forEach(e => { if (e.type === 'raak' && e.kant === 'vijand') { schade += e.schade; if (e.id === doelId) doel = true } })
+  for (let i = 0; i < 500 && (p.kogels.length || !V.rustig(p)); i++) {
+    V.stap(p, 1 / 60).forEach(e => {
+      if (e.type === 'raak' && e.kant === 'vijand') { schade += e.schade; if (e.id === doelId) doel = true }
+      if (e.type === 'dood' && e.valt && e.kant === 'vijand') { schade += 80; if (e.id === doelId) doel = true }
+    })
   }
   return { schade, doel }
 }
@@ -80,7 +102,7 @@ function speelLevel(L, opties, seed) {
       const fh = (r() + r() + r() - 1.5) * 0.02, fk = (r() + r() + r() - 1.5) * 0.02
       V.schiet(s, (b ? b.a : 0.7) + fh, (b ? b.k : 0.7) * (1 + fk), wapen)
     } else if (s.fase === 'vijand') V.vijandSchiet(s)
-    for (let i = 0; i < 900 && s.kogels.length; i++) V.stap(s, 1 / 60)
+    for (let i = 0; i < 900 && (s.kogels.length || !V.rustig(s)); i++) V.stap(s, 1 / 60)
     V.naVlucht(s)
   }
   return s
