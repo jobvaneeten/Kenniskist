@@ -253,3 +253,25 @@ ${uit.join('\n')}
 </div></body></html>`
 writeFileSync(join(MAP, 'handleiding.html'), html)
 console.log('handleiding.html: ' + Math.round(html.length / 1024) + ' kB, ' + figNr + ' afbeeldingen')
+
+// Losse pagina met alleen de uitlegfilmpjes (knop "Uitleg video's" in het leerkrachtenportaal)
+const kop = html.slice(0, html.indexOf('</style>')).replace(`<title>${esc(titel)}</title>`, "<title>Uitleg video's · Kenniskist</title>")
+const begin = uit.findIndex(x => x.includes('id="18-uitlegfilmpjes"')), eind = uit.indexOf('</section>', begin)
+const filmsHtml = uit.slice(begin + 1, eind).join('\n').replace(/<a class="film-print"[\s\S]*?<\/a>/g, '')
+const videos = `${kop}
+  .vkop { display: flex; align-items: center; gap: 20px; padding: 44px 56px 36px; color: #fff;
+    background: radial-gradient(600px 300px at 85% 0%, rgba(232,48,143,.45), transparent 60%), radial-gradient(500px 300px at 0% 100%, rgba(8,169,200,.35), transparent 60%), linear-gradient(160deg, #1d1450, #0d0a26 75%); }
+  .vkop img { width: 74px; height: 74px; border-radius: 50%; box-shadow: 0 0 40px rgba(123,60,255,.7); }
+  .vkop h1 { margin: 0; font: 800 40px/1.1 "Baloo 2", Nunito, sans-serif; }
+  .vkop p { margin: 4px 0 0; color: #d9d2ff; }
+  .vkop a { margin-left: auto; color: #fff; border: 1px solid rgba(255,255,255,.4); border-radius: 999px; padding: 8px 18px; font-weight: 800; white-space: nowrap; }
+  .vlijf { padding: 26px 56px 50px; --k: var(--roze); }
+  .vlijf h3 { font-size: 22px; margin: 26px 0 0; padding-left: 14px; border-left: 5px solid var(--roze); }
+  @media (max-width: 640px) { .vkop { flex-wrap: wrap; padding: 30px 16px; } .vkop a { margin-left: 0; } .vlijf { padding: 16px 16px 40px; } }
+</style></head>
+<body><div class="blad">
+<header class="vkop"><img src="data:image/png;base64,${LOGO}" alt=""><div><h1>Uitleg video's</h1><p>Korte filmpjes over Kenniskist, met ondertitels</p></div><a href="handleiding.html">Naar de handleiding</a></header>
+<main class="vlijf">${filmsHtml}</main>
+</div></body></html>`
+writeFileSync(join(MAP, '../../public/handleiding/uitleg-videos.html'), videos)
+console.log("uitleg-videos.html: " + Math.round(videos.length / 1024) + ' kB')

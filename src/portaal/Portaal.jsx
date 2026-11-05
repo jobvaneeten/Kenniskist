@@ -225,6 +225,7 @@ export default function Portaal() {
           )}
           {/* De handleiding (met plaatjes) staat los in public/handleiding, zie docs/handleiding. */}
           <Knop variant="secundair" maat="sm" icoon="boek" onClick={() => window.open('/handleiding/handleiding.html', '_blank', 'noopener')}>Handleiding</Knop>
+          <Knop variant="secundair" maat="sm" icoon="spelen" onClick={() => window.open('/handleiding/uitleg-videos.html', '_blank', 'noopener')}>Uitleg video's</Knop>
           <Knop variant="secundair" maat="sm" onClick={uitloggen}>Uitloggen</Knop>
         </div>
       </header>
