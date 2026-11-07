@@ -22,6 +22,7 @@ const ART = {
   zwembad: { o: 'h', h: (L) => .4 * L, f: (L) => { const H = .4 * L; let ln = ''; for (let i = 1; i < 5; i++) ln += `<line x1="6" y1="${-H + 6 + (H - 12) * i / 5}" x2="${L - 6}" y2="${-H + 6 + (H - 12) * i / 5}" stroke="#fff" stroke-width="1.5" stroke-dasharray="8 5"/>`; return `<rect x="0" y="${-H}" width="${L}" height="${H}" fill="#e0f2fe"/><rect x="5" y="${-H + 5}" width="${L - 10}" height="${H - 10}" fill="#0ea5e9"/>${ln}` } },
   flat: { o: 'v', w: () => 64, f: (L) => { const w = 64, n = Math.max(2, Math.round(L / 45)); let v = ''; for (let i = 0; i < n; i++) { const y = -L + i * L / n; v += `<rect x="6" y="${y + 6}" width="30" height="${L / n - 16}" fill="#7dd3fc"/><rect x="42" y="${y + 6}" width="14" height="${L / n - 10}" fill="#92400e"/><rect x="0" y="${y + L / n - 6}" width="${w}" height="4" fill="#a8a29e"/>` } return `<rect x="0" y="${-L}" width="${w}" height="${L}" fill="#e7c9a9"/>${v}` } },
   boom: { o: 'v', w: (L) => .62 * L, f: (L) => { const w = .62 * L; return `<rect x="${.44 * w}" y="${-.45 * L}" width="${.12 * w}" height="${.45 * L}" fill="#92400e"/><circle cx="${.3 * w}" cy="${-.55 * L}" r="${.18 * L}" fill="#15803d"/><circle cx="${.7 * w}" cy="${-.55 * L}" r="${.18 * L}" fill="#15803d"/><circle cx="${.5 * w}" cy="${-.69 * L}" r="${.31 * L}" fill="#22c55e"/>` } },
+  lijn: { o: 'h', h: () => 10, geenPijl: true, f: (L) => `<line x1="0" y1="-5" x2="${L}" y2="-5" stroke="#7dd3fc" stroke-width="4"/>` },
   vlag: { o: 'v', w: (L) => .42 * L, f: (L) => { const w = .42 * L, p = 4; return `<rect x="0" y="${-L}" width="${p}" height="${L}" fill="#e2e8f0"/><rect x="${p}" y="${-.98 * L}" width="${w - p}" height="${.07 * L}" fill="#ef4444"/><rect x="${p}" y="${-.91 * L}" width="${w - p}" height="${.07 * L}" fill="#fff"/><rect x="${p}" y="${-.84 * L}" width="${w - p}" height="${.07 * L}" fill="#3b82f6"/>` } },
 }
 
@@ -74,7 +75,7 @@ function Tekenblad({ st, modus, lijn, setLijn, klaar }) {
       const yb = ybH
       tekening = (<g>
         <g transform={`translate(${x0},${yb})`} dangerouslySetInnerHTML={{ __html: art.f(Lp) }} />
-        <line x1={x0} y1={yb + 18} x2={x0 + Lp} y2={yb + 18} className="st-pijl" markerStart="url(#st-pk)" markerEnd="url(#st-pk)" />
+        {!art.geenPijl && <line x1={x0} y1={yb + 18} x2={x0 + Lp} y2={yb + 18} className="st-pijl" markerStart="url(#st-pk)" markerEnd="url(#st-pk)" />}
       </g>)
     }
   } else {
@@ -97,7 +98,7 @@ function Tekenblad({ st, modus, lijn, setLijn, klaar }) {
         <g transform={`translate(${rul.x},${rul.y})${rul.rot ? ' rotate(-90)' : ''}`} className="st-liniaal-g" onPointerDown={rulDown}><Liniaal /></g>
       </svg>
       <div className="st-blad-acties">
-        <span className="st-tip"><Icoon naam="liniaal" />Sleep de liniaal en zet de 0 precies bij het begin{modus === 'tekenen' ? '. Sleep het gele bolletje om de lijn te tekenen.' : ' van de pijl.'}</span>
+        <span className="st-tip"><Icoon naam="liniaal" />Sleep de liniaal en zet de 0 precies bij het begin{modus === 'tekenen' ? '. Sleep het gele bolletje om de lijn te tekenen.' : (art.geenPijl ? ' van de lijn.' : ' van de pijl.')}</span>
         {modus === 'meten' && <button type="button" className="st-draai" onClick={draai}>Draai de liniaal</button>}
       </div>
     </div>
@@ -109,6 +110,23 @@ function Vak({ id, w, set, status, breed, label }) {
     value={w[id] ?? ''} onChange={(e) => set(id, e.target.value.replace(/[=＝]/g, ''))} disabled={!!status} />
 }
 
+
+// Kaartje bij "Hoe lang in het echt?" (F-toets groep 8): alleen ter illustratie,
+// de lengte op de kaart staat erbij.
+function Kaartje({ kleur, lijntje }) {
+  const KL = { gele: '#facc15', blauwe: '#38bdf8', oranje: '#fb923c', rode: '#f87171' }
+  return (
+    <svg viewBox="0 0 300 200" className="st-kaart" aria-hidden="true">
+      <rect width="300" height="200" rx="10" fill="#86efac" />
+      <path d="M0 40 Q80 10 150 30 T300 25 V0 H0Z" fill="#bae6fd" />
+      <ellipse cx="60" cy="150" rx="38" ry="24" fill="#7dd3fc" />
+      <rect x="215" y="0" width="85" height="200" fill="#4d7c0f" opacity=".45" />
+      <polyline points="30,70 80,95 70,130 120,150 160,110 210,140 250,90" fill="none" stroke={KL[kleur] || '#facc15'} strokeWidth="5" strokeLinejoin="round" />
+      <g transform="translate(222,170)"><line x1="0" y1="0" x2={CM} y2="0" stroke="#111" strokeWidth="2" /><line x1="0" y1="-5" x2="0" y2="5" stroke="#111" strokeWidth="2" /><line x1={CM} y1="-5" x2={CM} y2="5" stroke="#111" strokeWidth="2" /><text x={CM / 2} y="20" textAnchor="middle" className="st-kaart-tekst">{lijntje}</text></g>
+    </svg>
+  )
+}
+
 // juiste verhoudingstabel: de kolommen (1, N) en (t, echt), in elke volgorde
 function tabelGoed(w, st) {
   const k1 = [w.a1, w.b1], k2 = [w.a2, w.b2]
@@ -116,8 +134,45 @@ function tabelGoed(w, st) {
   return (is(k1, 1, st.N) && is(k2, st.t, st.echt)) || (is(k2, 1, st.N) && is(k1, st.t, st.echt))
 }
 
+// Wat er bij elke soort in beeld staat en welke vakjes er zijn.
+function opzet(st) {
+  const Wat = st.wat ? st.wat[0].toUpperCase() + st.wat.slice(1) : ''
+  const lengteZin = ['De lijn is ', { vak: 'lengte' }, ' cm lang.']
+  switch (st.soort) {
+    case 'schaal': return {   // groep 7, toets 4a
+      opdracht: 'Bereken de schaal. Meet met de liniaal.', gegeven: <>{Wat} is <b>{getal(st.L)} m</b> {st.maat}.</>,
+      blad: 'meten', lijntje: { vak: 'lijntje', eenheid: 'cm' }, schaal: { vak: 'schaal' }, maatZin: true, tabel: true,
+      antw: { maat: st.t, lijntje: st.N, schaal: st.N },
+      uitleg: `De pijl is ${getal(st.t)} cm. In de tabel: 1 cm is ${getal(st.N)} cm en ${getal(st.t)} cm is ${getal(st.echt)} cm. ${getal(st.echt)} : ${getal(st.t)} = ${getal(st.N)}, dus het schaallijntje is ${getal(st.N)} cm en de schaal is 1 : ${getal(st.N)}.` }
+    case 'echt': return {     // groep 7, toets 4c
+      opdracht: 'Hoe groot in het echt? Meet met de liniaal.', gegeven: <>Meet hoe {st.maat} {st.wat} in de tekening is.</>,
+      blad: 'meten', lijntje: { tekst: `${getal(st.N)} cm` }, schaal: { tekst: getal(st.N) }, maatZin: true, tabel: true,
+      zinnen: [[`${Wat} is in het echt `, { vak: 'cm', breed: true }, ' cm. Dat is ', { vak: 'm' }, ' m.']],
+      antw: { maat: st.t, cm: st.echt, m: st.L },
+      uitleg: `De pijl is ${getal(st.t)} cm. In de tabel: 1 cm is ${getal(st.N)} cm en ${getal(st.t)} cm is ${getal(st.echt)} cm. ${getal(st.t)} × ${getal(st.N)} = ${getal(st.echt)} cm = ${getal(st.L)} m.` }
+    case 'tekenen': return {  // groep 7 toets 4b, groep 8 F-toets 3 (4b) en 7 (1a)
+      opdracht: st.opdracht ?? 'Teken op schaal. Gebruik de liniaal.', gegeven: <>Een lijn die in het echt <b>{st.echtTekst ?? `${st.Lf} m`}</b> is.</>,
+      blad: 'tekenen', lijntje: { tekst: st.lijntje ?? `${getal(st.N)} cm` }, schaal: st.lijntje ? null : { tekst: getal(st.N) },
+      zinnen: [lengteZin], antw: { lengte: st.t }, tekenLijn: st.t,
+      uitleg: st.uitleg ?? `${st.Lf} m = ${getal(st.echt)} cm. 1 cm in de tekening is ${getal(st.N)} cm in het echt. ${getal(st.echt)} : ${getal(st.N)} = ${getal(st.t)}, dus de lijn is ${getal(st.t)} cm lang.` }
+    case 'kaart': return {    // groep 8 F-toets 3 (4a)
+      opdracht: 'Hoe lang in het echt?', kaart: true, gegeven: <>De {st.kleur} route is op de kaart <b>{getal(st.t)} cm</b>.</>,
+      lijntje: { tekst: st.lijntje }, zinnen: [['In het echt is dit ', { vak: 'km' }, ' km.']], antw: { km: st.km }, uitleg: st.uitleg }
+    case 'lijn-meten': return {   // groep 8 F-toets 7 (1a, tweede deel)
+      opdracht: 'Meet de lijn en reken uit. Gebruik een liniaal.', blad: 'meten', lijntje: { tekst: st.lijntje },
+      zinnen: [lengteZin, ['De lijn is in het echt ', { vak: 'km' }, ' km.']], antw: { lengte: st.t, km: st.km }, uitleg: st.uitleg }
+    case 'lijn-lijntje': return {  // groep 8 F-toets 7 (1b)
+      opdracht: 'Bereken de schaal. Meet met een liniaal.', gegeven: <>De lijn is in het echt <b>{st.echtTekst}</b>.</>,
+      blad: 'meten', lijntje: { vak: 'lijntje', eenheid: 'm' }, zinnen: [lengteZin], antw: { lengte: st.t, lijntje: st.per }, uitleg: st.uitleg }
+    default: return {         // groep 8 S-toets: één getal, met een vak om in te rekenen
+      opdracht: st.opdracht, gegeven: <>{st.gegeven.map((r, i) => <span key={i} className="st-regel">{r}</span>)}</>, gegevenVak: true,
+      zinnen: [[st.zin[0], { vak: 'antw', breed: true }, st.zin[1]]], klad: true, antw: { antw: st.antw }, uitleg: st.uitleg }
+  }
+}
+
 export default function SchaalToets({ opgave, onNext }) {
   const st = opgave.schaalToets
+  const o = opzet(st)
   const [w, setW] = useState({})
   const [lijn, setLijn] = useState(0)
   const [uitslag, setUitslag] = useState(null)   // { velden: {id: 'goed'|'fout'}, goed }
@@ -126,69 +181,60 @@ export default function SchaalToets({ opgave, onNext }) {
   const [voor, setVoor] = useState(opgave)
   const [nr, setNr] = useState(0)
   if (voor !== opgave) { setVoor(opgave); setNr(n => n + 1); setW({}); setLijn(0); setUitslag(null); setMelding('') }
-  const set = (id, v) => setW(o => ({ ...o, [id]: v }))
-
-  const velden = st.soort === 'schaal' ? ['maat', 'a1', 'b1', 'a2', 'b2', 'lijntje', 'schaal']
-    : st.soort === 'echt' ? ['maat', 'a1', 'b1', 'a2', 'b2', 'cm', 'm'] : ['lengte']
+  const set = (id, v) => setW(x => ({ ...x, [id]: v }))
   const s = (id) => uitslag?.velden[id]
+  const vak = (id, extra = {}) => <Vak id={id} w={w} set={set} status={s(id)} breed={extra.breed} label={extra.label ?? id} />
 
+  const velden = [...Object.keys(o.antw), ...(o.tabel ? ['a1', 'b1', 'a2', 'b2'] : [])]
   const check = () => {
-    if (velden.some(id => !String(w[id] ?? '').trim()) || (st.soort === 'tekenen' && !lijn)) { setMelding(st.soort === 'tekenen' && !lijn ? 'Teken eerst de lijn.' : 'Vul eerst alle vakjes in.'); return }
+    const leeg = velden.some(id => !String(w[id] ?? '').trim())
+    if (leeg || (o.tekenLijn && !lijn)) { setMelding(o.tekenLijn && !lijn ? 'Teken eerst de lijn.' : 'Vul eerst alle vakjes in.'); return }
     setMelding('')
     const v = {}
-    const zet = (id, ok) => { v[id] = ok ? 'goed' : 'fout' }
-    if (st.soort !== 'tekenen') {
-      zet('maat', checkAntwoord(w.maat, st.t))
-      const tg = tabelGoed(w, st); for (const id of ['a1', 'b1', 'a2', 'b2']) zet(id, tg)
-    }
-    if (st.soort === 'schaal') { zet('lijntje', checkAntwoord(w.lijntje, st.N)); zet('schaal', checkAntwoord(w.schaal, st.N)) }
-    if (st.soort === 'echt') { zet('cm', checkAntwoord(w.cm, st.echt)); zet('m', checkAntwoord(w.m, st.L)) }
-    if (st.soort === 'tekenen') { zet('lengte', checkAntwoord(w.lengte, st.t)); zet('lijn', Math.abs(lijn - st.t) < 0.15) }
+    for (const [id, a] of Object.entries(o.antw)) v[id] = checkAntwoord(w[id], a) ? 'goed' : 'fout'
+    if (o.tabel) { const tg = tabelGoed(w, st) ? 'goed' : 'fout'; for (const id of ['a1', 'b1', 'a2', 'b2']) v[id] = tg }
+    if (o.tekenLijn) v.lijn = Math.abs(lijn - o.tekenLijn) < 0.15 ? 'goed' : 'fout'
     setUitslag({ velden: v, goed: Object.values(v).every(x => x === 'goed') })
   }
+  const ingevuld = () => [
+    o.tekenLijn ? `lijn ${getal(lijn)} cm getekend` : null,
+    ...velden.map(id => `${id} ${w[id]}`),
+  ].filter(Boolean).join(', ')
 
-  const ingevuld = () => st.soort === 'tekenen'
-    ? `lijn ${getal(lijn)} cm getekend, ${w.lengte} cm`
-    : st.soort === 'schaal'
-      ? `gemeten ${w.maat} cm, tabel ${w.a1}/${w.b1} en ${w.a2}/${w.b2}, lijntje ${w.lijntje} cm, 1 : ${w.schaal}`
-      : `gemeten ${w.maat} cm, tabel ${w.a1}/${w.b1} en ${w.a2}/${w.b2}, ${w.cm} cm = ${w.m} m`
-
-  const opdracht = st.soort === 'schaal' ? 'Bereken de schaal. Meet met de liniaal.'
-    : st.soort === 'echt' ? 'Hoe groot in het echt? Meet met de liniaal.' : 'Teken op schaal. Gebruik de liniaal.'
-  const Wat = st.wat ? st.wat[0].toUpperCase() + st.wat.slice(1) : ''
-
-  const tabel = st.soort !== 'tekenen' && (
-    <table className="rs-vtabel st-tabel"><tbody>
-      <tr><th>in de tekening (cm)</th><td><Vak id="a1" w={w} set={set} status={s('a1')} label="tekening, eerste vakje" /></td><td><Vak id="a2" w={w} set={set} status={s('a2')} label="tekening, tweede vakje" /></td></tr>
-      <tr><th>in het echt (cm)</th><td><Vak id="b1" w={w} set={set} status={s('b1')} label="echt, eerste vakje" /></td><td><Vak id="b2" w={w} set={set} status={s('b2')} label="echt, tweede vakje" /></td></tr>
-    </tbody></table>
+  const zin = (delen, i) => (
+    <div key={i} className="st-zin">{delen.map((d, j) => typeof d === 'string' ? <span key={j}>{d}</span> : <span key={j}>{vak(d.vak, { breed: d.breed })}</span>)}
+      {i === 0 && s('lijn') && <span className={`st-lijn-oordeel st-${s('lijn')}`}>{s('lijn') === 'goed' ? 'Je lijn is goed getekend.' : `Je lijn is ${getal(lijn)} cm.`}</span>}
+    </div>
   )
 
   return (
     <div className="st">
-      <p className="st-opdracht">{opdracht}</p>
-      <p className="st-gegeven">{st.soort === 'tekenen' ? <>Een lijn die in het echt <b>{st.Lf} m</b> is.</> : st.soort === 'schaal' ? <>{Wat} is <b>{getal(st.L)} m</b> {st.maat === 'lang' ? 'lang' : st.maat}.</> : <>Meet hoe {st.maat} {st.wat} in de tekening is.</>}</p>
+      <p className="st-opdracht">{o.opdracht}</p>
+      {o.gegeven && <p className={o.gegevenVak ? 'st-gegeven-vak' : 'st-gegeven'}>{o.gegeven}</p>}
 
-      <div className="st-rij">
-        <Tekenblad key={nr} st={st} modus={st.soort === 'tekenen' ? 'tekenen' : 'meten'} lijn={lijn} setLijn={setLijn} klaar={!!uitslag} />
-        <div className="st-schaal">
-          <div className="st-lijntje"><span className="st-streep" style={{ width: CM }} />
-            {st.soort === 'schaal' ? <><Vak id="lijntje" w={w} set={set} status={s('lijntje')} label="schaallijntje in cm" /> cm</> : <span>{getal(st.N)} cm</span>}
-          </div>
-          <div className="st-schaalgetal">1 : {st.soort === 'schaal' ? <Vak id="schaal" w={w} set={set} status={s('schaal')} label="schaal" /> : getal(st.N)}</div>
+      {(o.blad || o.kaart || o.lijntje || o.schaal) && (
+        <div className="st-rij">
+          {o.blad && <Tekenblad key={nr} st={st} modus={o.blad} lijn={lijn} setLijn={setLijn} klaar={!!uitslag} />}
+          {o.kaart && <Kaartje kleur={st.kleur} lijntje={st.lijntje} />}
+          {!o.kaart && (o.lijntje || o.schaal) && (
+            <div className="st-schaal">
+              {o.lijntje && <div className="st-lijntje"><span className="st-streep" style={{ width: CM }} />
+                {o.lijntje.vak ? <>{vak('lijntje', { label: 'schaallijntje' })} {o.lijntje.eenheid}</> : <span>{o.lijntje.tekst}</span>}</div>}
+              {o.schaal && <div className="st-schaalgetal">1 : {o.schaal.vak ? vak('schaal', { label: 'schaal' }) : o.schaal.tekst}</div>}
+            </div>
+          )}
         </div>
-      </div>
+      )}
 
-      {st.soort !== 'tekenen' && (
-        <div className="st-zin">De pijl in de tekening is <Vak id="maat" w={w} set={set} status={s('maat')} label="gemeten lengte in cm" /> cm.</div>
+      {o.maatZin && <div className="st-zin">De pijl in de tekening is {vak('maat', { label: 'gemeten lengte in cm' })} cm.</div>}
+      {o.tabel && (
+        <table className="rs-vtabel st-tabel"><tbody>
+          <tr><th>in de tekening (cm)</th><td>{vak('a1')}</td><td>{vak('a2')}</td></tr>
+          <tr><th>in het echt (cm)</th><td>{vak('b1')}</td><td>{vak('b2')}</td></tr>
+        </tbody></table>
       )}
-      {tabel}
-      {st.soort === 'echt' && (
-        <div className="st-zin">{Wat} is in het echt <Vak id="cm" w={w} set={set} status={s('cm')} breed label="in het echt in cm" /> cm. Dat is <Vak id="m" w={w} set={set} status={s('m')} label="in het echt in m" /> m.</div>
-      )}
-      {st.soort === 'tekenen' && (
-        <div className="st-zin">De lijn is <Vak id="lengte" w={w} set={set} status={s('lengte')} label="lengte van de lijn in cm" /> cm lang.{s('lijn') && <span className={`st-lijn-oordeel st-${s('lijn')}`}>{s('lijn') === 'goed' ? 'Je lijn is goed getekend.' : `Je lijn is ${getal(lijn)} cm.`}</span>}</div>
-      )}
+      {(o.zinnen || []).map(zin)}
+      {o.klad && <textarea className="st-klad" placeholder="Hier mag je rekenen" disabled={!!uitslag} />}
 
       {!uitslag && (
         <div className="st-acties">
@@ -199,10 +245,7 @@ export default function SchaalToets({ opgave, onNext }) {
       {uitslag && (
         <div className={`rs-feedback ${uitslag.goed ? 'rs-goed' : 'rs-fout'}`}>
           <span className="rs-feedback-kop"><Icoon naam={uitslag.goed ? 'goed' : 'fout'} />{uitslag.goed ? 'Goed!' : 'Nog niet helemaal goed. De rode vakjes kloppen niet.'}</span>
-          <div className="rs-uitleg"><Icoon naam="lamp" />{st.soort === 'tekenen'
-            ? <>{st.Lf} m = {getal(st.echt)} cm. 1 cm in de tekening is {getal(st.N)} cm in het echt. {getal(st.echt)} : {getal(st.N)} = {getal(st.t)}, dus de lijn is {getal(st.t)} cm lang.</>
-            : <>De pijl is {getal(st.t)} cm. In de tabel: 1 cm is {getal(st.N)} cm en {getal(st.t)} cm is {getal(st.echt)} cm. {st.soort === 'schaal' ? <>{getal(st.echt)} : {getal(st.t)} = {getal(st.N)}, dus het schaallijntje is {getal(st.N)} cm en de schaal is 1 : {getal(st.N)}.</> : <>{getal(st.t)} × {getal(st.N)} = {getal(st.echt)} cm = {getal(st.L)} m.</>}</>}
-          </div>
+          <div className="rs-uitleg"><Icoon naam="lamp" />{o.uitleg}</div>
           <Knop enter variant="primair" icoonRechts="verder" className="rs-verder-btn" onClick={() => onNext(uitslag.goed, ingevuld())}>{uitslag.goed ? 'Verder' : 'Volgende'}</Knop>
         </div>
       )}

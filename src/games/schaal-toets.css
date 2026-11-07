@@ -37,3 +37,8 @@
 .st-lijn-oordeel.st-fout { color: var(--kk-error, #f43f5e); }
 .st-acties { display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
 .st-melding { color: var(--kk-gold, #ffd23f); font-weight: 700; }
+.st-gegeven-vak { margin: 0; padding: 12px 16px; border-radius: 12px; background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.3); color: var(--kk-text); font-size: 16px; line-height: 1.5; }
+.st-regel { display: block; }
+.st-klad { width: 100%; min-height: 90px; padding: 10px 12px; border-radius: 12px; border: 1px dashed var(--kk-border-strong); background: rgba(56, 189, 248, 0.06); color: var(--kk-text); font: 600 15px Nunito, sans-serif; resize: vertical; box-sizing: border-box; }
+.st-kaart { width: 100%; max-width: 340px; height: auto; border-radius: 10px; }
+.st-kaart-tekst { font: 700 13px Nunito, sans-serif; fill: #111; }

@@ -206,20 +206,86 @@ export const pctVerhouding = (s) => () => {
     antwoord: leden / n * t, uitleg: `1/${n} van ${leden} = ${leden / n}. ${t}/${n} = ${t} × ${leden / n} = ${leden / n * t}.` }
 }
 
-// Schaal: met een schaallijntje (F) of met 1 : … (S).
-export const schaal = (s) => () => {
+// Schaal zoals de toets het vraagt (SchaalToets.jsx tekent en kijkt na).
+//   F-toets blok 3 (4a/4b): route op een kaart met schaallijntje → km, en een
+//     lijn op schaal tekenen.
+//   F-toets blok 7 (1a/1b): lijn tekenen, een lijn meten → km, en een lijn
+//     meten → het schaallijntje in m.
+//   S-toets blok 3 en 7: met 1 : … naar km of naar cm op de kaart, en de schaal
+//     uitrekenen. Eén getal, met een vak om in te rekenen.
+// toets = 3 of 7 (de toets van blok 3 of 7); soort = 'omrekenen' | 'schaal' | undefined.
+const kmOfM = (m) => (m >= 1000 ? `${komma(m / 1000)} km` : `${getal(m)} m`)
+// Verhoudingstabel als plaatje voor het werkblad op papier (online tekent
+// SchaalToets de opgave zelf).
+const metTabel = (o) => {
+  const st = o.schaalToets, k = st.soort
+  if (k === 's') return { ...o, figuur: { type: 'schaal', N: null, tabel: [['op de kaart (cm)', '', ''], ['in het echt (cm)', '', '']] } }
+  const per = st.per ?? parseInt(st.lijntje)
+  const tabel = [['op de kaart (cm)', 1, k === 'tekenen' ? '?' : komma(st.t)],
+    ['in het echt (m)', k === 'lijn-lijntje' ? '?' : getal(per), k === 'tekenen' ? getal(st.t * per) : k === 'lijn-lijntje' ? st.echtTekst : '?']]
+  return { ...o, figuur: { type: 'schaal', N: null, tabel } }
+}
+export const schaal8 = (s, toets = 3, soort) => () => metTabel(schaal8Opgave(s, toets, soort))
+const schaal8Opgave = (s, toets, soort) => {
+  const lijntjeM = () => pick([100, 200, 250, 500])
   if (!s) {
-    const per = pick([200, 250, 500]), cm = rnd(2, 12), echt = cm * per
-    const lijntje = (kaart, inEcht) => ({ type: 'schaal', N: per * 100, tabel: [['op de kaart (cm)', 1, kaart], ['in het echt (m)', per, inEcht]] })
-    if (Math.random() < 0.5) return { figuur: lijntje(cm, '?'), vraag: `Op de kaart staat een schaallijntje: 1 cm is ${per} m. De route is op de kaart ${cm} cm. Hoeveel km is de route in het echt?`, kaal: `${cm} × ${per} m = … km`, antwoord: komma(echt / 1000), eenheid: 'km', uitleg: `${cm} × ${per} = ${getal(echt)} m = ${komma(echt / 1000)} km.` }
-    const km = pick([1, 2, 3]), lijn = km * 1000 / per
-    if (!Number.isInteger(lijn * 2)) return schaal(s)()
-    return { figuur: lijntje('?', getal(km * 1000)), vraag: `Op de kaart is 1 cm in het echt ${per} m. Een weg is in het echt ${km} km. Hoe lang teken je de weg op de kaart?`, kaal: `${km} km : ${per} m = … cm`, antwoord: komma(lijn), eenheid: 'cm', uitleg: `${km} km = ${km * 1000} m. ${km * 1000} : ${per} = ${komma(lijn)} cm.` }
+    const keuzes = soort === 'schaal' ? ['lijn-lijntje']
+      : toets === 3 ? (soort === 'omrekenen' ? ['kaart', 'tekenen'] : ['kaart', 'tekenen', 'lijn-lijntje'])
+        : (soort === 'omrekenen' ? ['tekenen', 'lijn-meten'] : ['tekenen', 'lijn-meten', 'lijn-lijntje'])
+    const k = pick(keuzes)
+    if (k === 'kaart') {
+      const per = pick([200, 250, 500]), cm = rnd(2, 12), km = cm * per / 1000, kleur = pick(['gele', 'blauwe', 'oranje', 'rode'])
+      const uitleg = `1 cm op de kaart is ${per} m. ${cm} × ${per} = ${getal(cm * per)} m = ${komma(km)} km.`
+      return { vraag: `Op de kaart staat een schaallijntje: 1 cm is ${per} m. De ${kleur} route is op de kaart ${cm} cm. Hoeveel km is de route in het echt?`, kaal: `${cm} × ${per} m = … km`,
+        antwoord: km, eenheid: 'km', uitleg, schaalToets: { soort: 'kaart', t: cm, lijntje: `${per} m`, kleur, km, uitleg } }
+    }
+    if (k === 'tekenen') {
+      let per, m, t
+      do { per = lijntjeM(); m = pick(toets === 3 ? [1000, 1500, 2000, 2500, 3000] : [400, 600, 800, 1000, 1200, 1500, 2000]); t = m / per } while (t < 2 || t > 12 || !Number.isInteger(t * 2))
+      const uitleg = `${kmOfM(m)} = ${getal(m)} m. 1 cm is ${per} m. ${getal(m)} : ${per} = ${komma(t)}, dus de lijn is ${komma(t)} cm lang.`
+      return { vraag: `Op de kaart is 1 cm in het echt ${per} m. Een lijn is in het echt ${kmOfM(m)}. Hoe lang teken je de lijn?`, kaal: `${kmOfM(m)} : ${per} m = … cm`,
+        antwoord: t, eenheid: 'cm', uitleg,
+        schaalToets: { soort: 'tekenen', opdracht: toets === 3 ? 'Teken de lijn op schaal. Gebruik een liniaal.' : 'Reken uit en teken. Gebruik een liniaal.', t, echtTekst: kmOfM(m), lijntje: `${per} m`, uitleg } }
+    }
+    if (k === 'lijn-meten') {
+      let per, t
+      do { per = pick([250, 500, 1000]); t = rnd(4, 24) / 2 } while (!Number.isInteger(t * per / 10))
+      const km = t * per / 1000, uitleg = `De lijn is ${komma(t)} cm. 1 cm is ${per} m. ${komma(t)} × ${per} = ${getal(t * per)} m = ${komma(km)} km.`
+      return { vraag: `Een lijn op de kaart is ${komma(t)} cm. 1 cm is in het echt ${per} m. Hoeveel km is de lijn in het echt?`, kaal: `${komma(t)} × ${per} m = … km`,
+        antwoord: km, eenheid: 'km', uitleg, schaalToets: { soort: 'lijn-meten', art: 'lijn', t, lijntje: `${per} m`, km, uitleg } }
+    }
+    let per, m, t
+    do { per = lijntjeM(); m = pick([1000, 1500, 2000, 3000]); t = m / per } while (t < 2 || t > 12 || !Number.isInteger(t * 2))
+    const uitleg = `De lijn is ${komma(t)} cm. In het echt is hij ${kmOfM(m)} = ${getal(m)} m. ${getal(m)} : ${komma(t)} = ${per}, dus 1 cm is ${per} m.`
+    return { vraag: `Een lijn is op de kaart ${komma(t)} cm. In het echt is de lijn ${kmOfM(m)}. Hoeveel meter is 1 cm op de kaart?`, kaal: `${getal(m)} m : ${komma(t)} = … m`,
+      antwoord: per, eenheid: 'm', uitleg, schaalToets: { soort: 'lijn-lijntje', art: 'lijn', t, per, echtTekst: kmOfM(m), uitleg } }
   }
-  const sch = pick([50000, 100000, 200000, 250000, 500000, 750000]), cm = rnd(2, 24), km = cm * sch / 100000
-  if (Math.random() < 0.5) return { figuur: { type: 'schaal', N: sch, tabel: [['op de kaart (cm)', 1, cm], ['in het echt (km)', komma(sch / 100000), '?']] }, vraag: `Een kaart heeft schaal 1 : ${getal(sch)}. De route is op de kaart ${cm} cm. Hoeveel km is de route in het echt?`, kaal: `${cm} cm × ${getal(sch)} = … km`, antwoord: komma(km), eenheid: 'km', uitleg: `1 cm = ${getal(sch)} cm = ${komma(sch / 100000)} km. ${cm} × ${komma(sch / 100000)} = ${komma(km)} km.` }
-  return { figuur: { type: 'schaal', N: null, tabel: [['op de kaart (cm)', cm, 1], ['in het echt (cm)', getal(km * 100000), '?']] }, vraag: `Een route is op de kaart ${cm} cm. In het echt is de route ${komma(km)} km. Wat is de schaal? Schrijf alleen het getal na 1 : …`, kaal: `${cm} cm = ${komma(km)} km. Schaal 1 : …`,
-    antwoord: sch, uitleg: `${komma(km)} km = ${getal(km * 100000)} cm. ${getal(km * 100000)} : ${cm} = ${getal(sch)}, dus 1 : ${getal(sch)}.` }
+  // S-toets
+  const keuzes = soort === 'schaal' ? ['s-schaal'] : soort === 'omrekenen' ? (toets === 7 ? ['s-km', 's-cm'] : ['s-km'])
+    : toets === 7 ? ['s-km', 's-cm', 's-schaal'] : ['s-km', 's-schaal']
+  const k = pick(keuzes)
+  const sch = pick([25000, 50000, 100000, 200000, 250000, 500000])
+  if (k === 's-km') {
+    let cm, km
+    do { cm = pick([rnd(2, 24), rnd(2, 15) + 0.5]); km = cm * sch / 100000 } while (!Number.isInteger(Math.round(km * 1e6) / 1e4))
+    const uitleg = `1 cm op de kaart is ${getal(sch)} cm = ${komma(sch / 100000)} km. ${komma(cm)} × ${komma(sch / 100000)} = ${komma(km)} km.`
+    return { vraag: `Een kaart heeft schaal 1 : ${getal(sch)}. De route is op de kaart ${komma(cm)} cm. Hoeveel km is de route in het echt?`, kaal: `${komma(cm)} cm × ${getal(sch)} = … km`,
+      antwoord: km, eenheid: 'km', uitleg,
+      schaalToets: { soort: 's', opdracht: 'Hoe lang in het echt?', gegeven: [`Een kaart heeft schaal 1:${getal(sch)}.`, `De route is op de kaart ${komma(cm)} cm.`], zin: ['In het echt is dit ', ' km.'], antw: km, uitleg } }
+  }
+  if (k === 's-cm') {
+    let km, cm
+    do { km = pick([2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 25, 30]); cm = km * 100000 / sch } while (cm < 2 || cm > 30 || !Number.isInteger(cm * 2))
+    const uitleg = `1 cm op de kaart is ${komma(sch / 100000)} km. ${km} : ${komma(sch / 100000)} = ${komma(cm)} cm.`
+    return { vraag: `Een kaart heeft schaal 1 : ${getal(sch)}. Een route is in het echt ${km} km lang. Hoeveel cm is de route op de kaart?`, kaal: `${km} km op schaal 1 : ${getal(sch)} = … cm`,
+      antwoord: cm, eenheid: 'cm', uitleg,
+      schaalToets: { soort: 's', opdracht: 'Hoe lang op de kaart?', gegeven: [`Een kaart heeft schaal 1:${getal(sch)}.`, `Een route is in het echt ${km} km lang.`], zin: ['De route is op de kaart ', ' cm.'], antw: cm, uitleg } }
+  }
+  const cm = pick([4, 5, 6, 8, 10, 12, 16, 20, 40]), km = cm * sch / 100000
+  const uitleg = `${komma(km)} km = ${getal(km * 100000)} cm. ${getal(km * 100000)} : ${cm} = ${getal(sch)}, dus de schaal is 1 : ${getal(sch)}.`
+  return { vraag: `Een route is op de kaart ${cm} cm. In het echt is de route ${komma(km)} km. Wat is de schaal? Schrijf alleen het getal na 1 : …`, kaal: `${cm} cm = ${komma(km)} km. Schaal 1 : …`,
+    antwoord: sch, uitleg,
+    schaalToets: { soort: 's', opdracht: 'Bereken de schaal.', gegeven: [`De route is op de kaart ${cm} cm.`, `In het echt is dit ${komma(km)} km.`], zin: ['De schaal is 1 : ', '.'], antw: sch, uitleg } }
 }
 
 // ── groep 8 blok 3 (toets blok 4) ────────────────────────────────────────
@@ -408,7 +474,7 @@ export const diagramTrend = (s) => () => {
 
 // Schaal, en omtrek en oppervlakte.
 export const schaalOmtrek = (s) => () => {
-  if (Math.random() < 0.6) return schaal(s)()
+  if (Math.random() < 0.6) return schaal8(s, 7)()
   const l = rnd(3, 12), b = rnd(2, l)
   return { vraag: `Een moestuin is ${l} m lang en ${b} m breed. Wat is de oppervlakte en wat is de omtrek?`, kaal: `${l} m bij ${b} m: oppervlakte en omtrek?`,
     antwoord: l * b, rest: 2 * (l + b), antwLabel: 'Oppervlakte (m²)', restLabel: 'm omtrek', toon: `${l * b} m² en omtrek ${2 * (l + b)} m`,
@@ -520,7 +586,7 @@ export const toetsGroep8 = (s) => ({
   1: [volgorde(s), prijsPerKilo(s), kortingTotaal(s), tijdzone(s)],
   // Doel 2 (kommagetallen optellen en aftrekken) wordt in toets 3 als breuken
   // optellen gevraagd; dat past niet bij het doel, dus geen toetsvorm.
-  2: [groteGetallen(s), null, pctVerhouding(s), schaal(s)],
+  2: [groteGetallen(s), null, pctVerhouding(s), schaal8(s, 3)],
   3: [schattenContext(s), breukKeer(s), procentRekenen(s), gewichtPrijs(s)],
   4: [cijferenKeerDeel(s), glazenBreuk(s), aanbieding(s), prijsGewicht(s)],
   5: [deelbaar(s), delenKommaSplits(s), contextProcent(s), diagramTrend(s)],

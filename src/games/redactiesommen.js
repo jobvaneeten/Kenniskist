@@ -10,7 +10,7 @@ const DINGEN = [['knikker', 'knikkers'], ['sticker', 'stickers'], ['kaart', 'kaa
 
 import * as T from './toetsvormen7.js'
 import { TOETS_GROEP5, TOETS_GROEP6, maatKiezen } from './toetsvormen6.js'
-import { toetsGroep7, toetsGroep8 } from './toetsvormen8.js'
+import { toetsGroep7, toetsGroep8, schaal8 } from './toetsvormen8.js'
 
 const rnd  = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a
 const pick = a => a[Math.floor(Math.random() * a.length)]
@@ -495,25 +495,6 @@ const kommaKeerV = () => {   // vermenigvuldigen met benoemd kommagetal
   return { vraag: `${naam()} tilt ${n} zakken potgrond in de kar. Elke zak weegt ${komma(g)} kg. Hoeveel kilogram gaat er in de kar?`,
            kaal: `${n} × ${komma(g)} =`,
            antwoord: tot, eenheid: 'kg', uitleg: `${n} × ${komma(g)} = ${komma(tot)} kg` }
-}
-// Schaal: van de kaart naar het echt, van het echt naar de kaart, en de schaal
-// zelf uitrekenen — het doel noemt die laatste met zoveel woorden.
-const schaalV = (soort) => {
-  const N = pick([100, 500, 1000, 2500]), cm = rnd(2, 9), nm = naam(), m = cm * N / 100
-  const k = soort === 'omrekenen' ? rnd(1, 2) : soort === 'schaal' ? 3 : rnd(1, 3)
-  if (k === 1) {
-    return { vraag: `${nm} maakt een fietsroute op een kaart met schaallijntje 1 : ${getal(N)}. Op de kaart is het stuk langs het kanaal ${cm} cm lang. Hoeveel meter fietst ${nm} daar in het echt?`,
-             kaal: `Schaal 1 : ${getal(N)}. ${cm} cm op de kaart = … m in het echt`, figuur: schaalTabel(N, [1, cm], [getal(N), '?']),
-             antwoord: m, eenheid: 'm', uitleg: `${cm} cm × ${getal(N)} = ${getal(cm * N)} cm = ${getal(m)} m` }
-  }
-  if (k === 2) {
-    return { vraag: `${nm} tekent de speelplaats op schaal 1 : ${getal(N)}. In het echt is het voetbalveldje ${getal(m)} m lang. Hoeveel centimeter wordt dat op de tekening van ${nm}?`,
-             kaal: `Schaal 1 : ${getal(N)}. ${getal(m)} m in het echt = … cm op de kaart`, figuur: schaalTabel(N, [1, '?'], [getal(N), getal(m * 100)]),
-             antwoord: cm, eenheid: 'cm', uitleg: `${getal(m)} m = ${getal(m * 100)} cm. ${getal(m * 100)} : ${getal(N)} = ${cm} cm` }
-  }
-  return { vraag: `Op de plattegrond van het park is de vijver ${cm} cm lang. In het echt is diezelfde vijver ${getal(m)} m lang. De plattegrond heeft schaal 1 : ?. Welk getal hoort op de plaats van het vraagteken?`,
-           kaal: `${cm} cm op de kaart is ${getal(m)} m in het echt. Schaal 1 : …?`, figuur: schaalTabel(null, [cm, 1], [getal(m * 100), '?']),
-           antwoord: N, uitleg: `${getal(m)} m = ${getal(m * 100)} cm. ${getal(m * 100)} : ${cm} = ${getal(N)}, dus schaal 1 : ${getal(N)}.` }
 }
 // ── Extra bouwers voor groep 6 en 8 (elk doel krijgt een echte som) ──
 const deelVanGeheelV = () => {   // deel van een geheel: a/b van een getal
@@ -2707,8 +2688,8 @@ function maakGroep8(plus) {
         { label: 'verhoudingen', gen: () => verhoudingV() },
       ]),
       D('Je leert met een schaallijntje een lengte op schaal omrekenen naar een lengte in het echt en omgekeerd, en de schaal berekenen.', [
-        { label: 'kaart ↔ in het echt', gen: () => schaalV('omrekenen') },
-        { label: 'de schaal uitrekenen', gen: () => schaalV('schaal') },
+        { label: 'kaart ↔ in het echt', gen: () => schaal8(plus, 3, 'omrekenen')() },
+        { label: 'de schaal uitrekenen', gen: () => schaal8(plus, 3, 'schaal')() },
       ]),
     ],
     3: plus ? [
@@ -2792,7 +2773,7 @@ function maakGroep8(plus) {
     ],
     6: [
       D('Je herhaalt het rekenen met een schaallijntje, het omrekenen van lengtes op schaal en in het echt, het berekenen van een schaal en van de omtrek en oppervlakte.', [
-        { label: 'schaal', gen: () => schaalV() },
+        { label: 'schaal', gen: () => schaal8(plus, 7)() },
         { label: 'omtrek', gen: () => omtrekV(plus ? 30 : 16, plus ? 20 : 11) },
       ]),
       D('Je herhaalt het berekenen van de inhoud van een balk in dm³ en liter en het aantal blokken dat in een grotere doos past.', [
