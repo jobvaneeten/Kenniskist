@@ -32,14 +32,14 @@ const STATS = [
 const STAPPEN = [
   { icoon: 'potlood', title: 'Oefenen', desc: 'Kies een oefening en maak een rondje opgaves, passend bij jouw groep.' },
   { icoon: 'spel', title: 'Spelletje', desc: 'Na een paar goede antwoorden volgt een kort spelletje als beloning. Daarna ga je weer verder.' },
-  { icoon: 'munt', title: 'Verdienen', desc: 'Met je munten en briefgeld open je lootboxen en kleed je je eigen 3D-poppetje aan.' },
+  { icoon: 'munt', title: 'Verdienen', desc: 'Met oefenen verdien je briefgeld. Daarmee open je lootboxen en kleed je je eigen 3D-poppetje aan.' },
 ]
 
 const SHOWCASE = [
   {
     key: 'game', img: '/scenes/games/klein/game.webp', icoon: 'spel', title: 'Speel Game',
     desc: 'Oefenen met spelletjes als beloning.',
-    detail: 'Je begint met een setje opgaves, bijvoorbeeld sommen, een dictee of een tafelrij. Na een paar goede antwoorden krijg je een kort spelletje als afwisseling en beloning. Daarna ga je verder met oefenen. Elk goed antwoord levert munten en briefgeld op.',
+    detail: 'Je begint met een setje opgaves, bijvoorbeeld sommen, een dictee of een tafelrij. Na een paar goede antwoorden krijg je een kort spelletje als afwisseling en beloning. Daarna ga je verder met oefenen. Met oefenen verdien je briefgeld, in de spelletjes verdien je munten.',
   },
   {
     key: 'kledingkast', img: '/scenes/games/klein/kledingkast.webp', icoon: 'shirt', title: 'Kledingkast',
@@ -137,7 +137,7 @@ function Home({ onChoose }) {
           <p className="landing-tagline">Leren terwijl je speelt</p>
           <p className="landing-intro">
             Oefen rekenen, taal, spelling, lezen en topografie en speel tussendoor een van de {AANTAL_SPELLEN} minigames.
-            Met de munten die je verdient, kleed je je eigen 3D-poppetje aan.
+            Met het briefgeld dat je met oefenen verdient, kleed je je eigen 3D-poppetje aan.
           </p>
         </div>
       </header>

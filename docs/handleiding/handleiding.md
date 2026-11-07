@@ -390,6 +390,8 @@ Na elk antwoord ziet de leerling meteen of het goed was, en waarom. Het goede an
 
 > **Goed om te weten:** bij zinsdelen moet een leerling per stap minstens 5 seconden kijken voordat hij kan nakijken. Zo wordt er minder gegokt.
 
+Rechtsonder staat bij een opgave de knop **Lees voor**. Die leest de vraag, de zin en de uitleg voor met de stem van de iPad of computer. Dat helpt jonge leerlingen en leerlingen met dyslexie. Bij begrijpend lezen en het dictee staat de knop er niet: daar oefen je juist het lezen, en het dictee heeft eigen opnames.
+
 ### 12.4 Lezen met een timer
 
 Bij een leesopdracht pakt de leerling zijn boek en tikt op **Start de timer**. De timer loopt door, ook als het scherm uitgaat. Met de pauzeknop of de terugknop stopt de leerling tussendoor; de gelezen minuten blijven bewaard, ook op een andere iPad. De leestaak is pas af als alle minuten gelezen zijn.
@@ -477,7 +479,7 @@ Linksonder op het startscherm staat **Code invoeren**. Hier vult een leerling ee
 
 ## 14. Munten en briefgeld
 
-Kenniskist heeft twee soorten geld. Rechtsboven in beeld ziet de leerling hoeveel hij heeft.
+Kenniskist heeft twee soorten geld. Rechtsboven in beeld ziet de leerling hoeveel briefgeld hij heeft. Hoeveel munten hij heeft, ziet hij in de spelletjes zelf.
 
 | | Hoe verdien je het? | Waar geef je het uit? |
 |---|---|---|

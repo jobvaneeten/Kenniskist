@@ -267,7 +267,6 @@ const FILMPJES = {
     await r.klik(p.locator('.btn-shop'), 2200)
     await r.wijs(p.locator('.shop-saldo'))
     await r.ot('💵 <b>Briefgeld</b> verdien je met oefenen. Daarmee koop je hier een kist met kleding.', 3800)
-    await r.wijs(p.locator('.curuntie-badge').first())
     await r.ot('🪙 <b>Munten</b> verdien je met de spelletjes. Die geef je in de spelletjes zelf uit.', 3800)
     await r.ot('Er is een kist voor shirts, broeken, sokken, schoenen en petten. Tik op een kist.', 3200)
     await r.klik(p.locator('.shopcard', { hasText: 'Shirt' }), 1600)
@@ -315,7 +314,7 @@ const teksten = existsSync(TEKSTEN) ? JSON.parse(readFileSync(TEKSTEN, 'utf8')) 
 const tijd = (ms) => { const t = Math.max(0, ms); const h = Math.floor(t / 3600000), m = Math.floor(t / 60000) % 60, s = Math.floor(t / 1000) % 60; return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')},${String(Math.floor(t % 1000)).padStart(3, '0')}` }
 const browser = await start()
 for (const [naam, f] of Object.entries(FILMPJES)) {
-  if (kies.length && !kies.some(k => naam.startsWith(k))) continue
+  if (kies.length && !kies.some(k => naam === k || naam.startsWith(k + '-'))) continue
   console.log('🎬', naam)
   // ingesproken zinnen van dit filmpje (als die er zijn): duur per tekst
   const duren = {}, wavs = {}

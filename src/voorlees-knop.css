@@ -1,0 +1,17 @@
+.voorlees-knop {
+  position: fixed; right: 16px; bottom: 84px; z-index: 900;
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 16px 10px 12px; border-radius: 999px;
+  border: 1.5px solid var(--kk-cyan, #38bdf8);
+  background: rgba(11, 10, 26, 0.88); color: #fff;
+  font: 800 15px/1 Nunito, system-ui, sans-serif; cursor: pointer;
+  box-shadow: 0 0 18px rgba(56, 189, 248, 0.35);
+  -webkit-tap-highlight-color: transparent;
+}
+.voorlees-knop svg { width: 22px; height: 22px; fill: var(--kk-cyan, #38bdf8); stroke: var(--kk-cyan, #38bdf8); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.voorlees-knop:hover { background: rgba(56, 189, 248, 0.16); }
+.voorlees-knop:focus-visible { outline: 3px solid var(--kk-cyan, #38bdf8); outline-offset: 3px; }
+.voorlees-knop.bezig { border-color: var(--kk-gold, #ffd23f); box-shadow: 0 0 22px rgba(255, 210, 63, 0.45); }
+.voorlees-knop.bezig svg { fill: var(--kk-gold, #ffd23f); stroke: var(--kk-gold, #ffd23f); }
+@media (max-width: 600px) { .voorlees-knop span { display: none; } .voorlees-knop { padding: 12px; } }
+@media print { .voorlees-knop { display: none; } }

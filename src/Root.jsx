@@ -4,6 +4,7 @@ import Login from './Login'
 import { SessieProvider, useSessie } from './lib/sessie.jsx'
 import { wisAlles } from './lib/voortgangSync.js'
 import VersieBanner from './lib/versie.jsx'
+import VoorleesKnop from './VoorleesKnop.jsx'
 import { tabVoorPad } from './lib/voorpaginaTabs.js'
 
 // Zware schermen (Babylon, spellen, portaal) pas laden als ze nodig zijn.
@@ -158,6 +159,7 @@ export default function Root() {
         <RootInhoud />
       </Suspense>
       <VersieBanner />
+      <VoorleesKnop />
     </SessieProvider>
   )
 }

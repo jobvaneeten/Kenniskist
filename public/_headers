@@ -1,3 +1,13 @@
 # Het workers.dev-adres is een kopie van kenniskist.nl: niet indexeren.
 https://kenniskist.jobvaneeten.workers.dev/*
   X-Robots-Tag: noindex
+
+# grote spelbestanden en filmpjes: een dag in de browser bewaren (scheelt op schoolwifi)
+/Hillclimb/*
+  Cache-Control: public, max-age=86400
+/jetpack/*
+  Cache-Control: public, max-age=86400
+/dictees/audio/*
+  Cache-Control: public, max-age=86400
+/handleiding/videos/*
+  Cache-Control: public, max-age=86400

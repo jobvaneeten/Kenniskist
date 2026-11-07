@@ -1,15 +1,27 @@
-// Zet handleiding.md om naar één los HTML-bestand met de plaatjes erin
-// (base64), zodat je hem kunt openen, mailen of printen zonder de map erbij.
+// Zet handleiding.md om naar public/handleiding/handleiding.html. De plaatjes
+// gaan als losse bestanden mee (public/handleiding/plaatjes) en laden pas als
+// je erheen scrolt: zo opent de handleiding ook op trage schoolwifi snel.
 // Daarna maakt maak-pdf.mjs er een pdf van.
 // Gebruik: node docs/handleiding/maak-html.mjs
-import { readFileSync, writeFileSync, readdirSync } from 'node:fs'
+import { readFileSync, writeFileSync, readdirSync, copyFileSync, mkdirSync } from 'node:fs'
 import { execFileSync } from 'node:child_process'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const MAP = dirname(fileURLToPath(import.meta.url))
 const md = readFileSync(join(MAP, 'handleiding.md'), 'utf8')
-const LOGO = readFileSync(join(MAP, '../../public/logo-rond.png')).toString('base64')
+// klein logo naast de handleiding (public/handleiding/logo.png, 320 px)
+const WEB = join(MAP, '../../public/handleiding')
+mkdirSync(join(WEB, 'plaatjes'), { recursive: true })
+// breedte en hoogte van een jpg (dan springt de pagina niet als plaatjes later laden)
+function jpgMaat(buf) {
+  for (let i = 2; i < buf.length;) {
+    const m = buf[i + 1], len = buf.readUInt16BE(i + 2)
+    if (m >= 0xc0 && m <= 0xcf && ![0xc4, 0xc8, 0xcc].includes(m)) return [buf.readUInt16BE(i + 7), buf.readUInt16BE(i + 5)]
+    i += 2 + len
+  }
+  return [0, 0]
+}
 
 const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 const slug = (s) => s.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().replace(/[*`]/g, '').replace(/[^\p{L}\p{N}\s-]/gu, '').trim().replace(/\s+/g, '-')
@@ -17,10 +29,11 @@ let figNr = 0
 function inline(s) {
   return esc(s)
     .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_, alt, src) => {
-      const data = readFileSync(join(MAP, src)).toString('base64')
+      const buf = readFileSync(join(MAP, src)), [b, h] = jpgMaat(buf)
+      copyFileSync(join(MAP, src), join(WEB, src))
       const hoog = /(15-klas-instellingen|21-weektaak|28-weektaak|25-nieuwe|27-oefening|41-doel|31-nieuwe|23-leerling|102-mijn|111-rekenen)/.test(src) ? ' hoog' : ''
       figNr++
-      return `<figure class="fig${hoog}"><div class="venster"><div class="balk"><i></i><i></i><i></i><span>${alt}</span></div><img src="data:image/jpeg;base64,${data}" alt="${alt}"></div><figcaption><b>Afbeelding ${figNr}</b> ${alt}</figcaption></figure>`
+      return `<figure class="fig${hoog}"><div class="venster"><div class="balk"><i></i><i></i><i></i><span>${alt}</span></div><img src="${src}" width="${b}" height="${h}" loading="lazy" decoding="async" alt="${alt}"></div><figcaption><b>Afbeelding ${figNr}</b> ${alt}</figcaption></figure>`
     })
     .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>')
     .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
@@ -103,7 +116,7 @@ while (i < regels.length) {
     uit.push(`<div class="films">${films.map(([naam, t, uitleg]) => {
       const nr = naam.split('-')[0], duur = DUUR[naam] ? ` · ${Math.floor(DUUR[naam] / 60)}:${String(Math.round(DUUR[naam] % 60)).padStart(2, '0')}` : ''
       return `<figure class="film" id="film-${nr}"><video controls preload="none" playsinline poster="videos/${naam}.jpg"><source src="videos/${naam}.mp4" type="video/mp4"><track kind="subtitles" srclang="nl" label="Nederlands" src="videos/${naam}.vtt"></video>`
-        + `<a class="film-print" href="${SITE}/handleiding/handleiding#film-${nr}"><img src="data:image/jpeg;base64,${readFileSync(join(VIDEOS, naam + '.jpg')).toString('base64')}" alt=""><span>▶ Bekijk online</span></a>`
+        + `<a class="film-print" href="${SITE}/handleiding/handleiding#film-${nr}"><img src="videos/${naam}.jpg" loading="lazy" alt=""><span>▶ Bekijk online</span></a>`
         + `<figcaption><b>${nr}. ${esc(t)}</b><span class="duur">${duur}</span><br>${esc(uitleg || '')}</figcaption></figure>`
     }).join('')}</div>`)
     continue
@@ -241,7 +254,7 @@ const html = `<!doctype html>
 </style></head>
 <body><div class="blad">
 <section class="voorpagina">
-  <img class="logo" src="data:image/png;base64,${LOGO}" alt="Kenniskist">
+  <img class="logo" src="logo.png" alt="Kenniskist">
   <div class="boventitel">Kenniskist · leren terwijl je speelt</div>
   <h1>${esc(titel)}</h1>
   <p class="sub">${esc(onder)}</p>
@@ -251,7 +264,7 @@ const html = `<!doctype html>
 </section>
 ${uit.join('\n')}
 </div></body></html>`
-writeFileSync(join(MAP, 'handleiding.html'), html)
+writeFileSync(join(WEB, 'handleiding.html'), html)
 console.log('handleiding.html: ' + Math.round(html.length / 1024) + ' kB, ' + figNr + ' afbeeldingen')
 
 // Losse pagina met alleen de uitlegfilmpjes (knop "Uitleg video's" in het leerkrachtenportaal)
@@ -270,8 +283,8 @@ const videos = `${kop}
   @media (max-width: 640px) { .vkop { flex-wrap: wrap; padding: 30px 16px; } .vkop a { margin-left: 0; } .vlijf { padding: 16px 16px 40px; } }
 </style></head>
 <body><div class="blad">
-<header class="vkop"><img src="data:image/png;base64,${LOGO}" alt=""><div><h1>Uitleg video's</h1><p>Korte filmpjes over Kenniskist, met ondertitels</p></div><a href="handleiding.html">Naar de handleiding</a></header>
+<header class="vkop"><img src="logo.png" alt=""><div><h1>Uitleg video's</h1><p>Korte filmpjes over Kenniskist, met ondertitels</p></div><a href="handleiding.html">Naar de handleiding</a></header>
 <main class="vlijf">${filmsHtml}</main>
 </div></body></html>`
-writeFileSync(join(MAP, '../../public/handleiding/uitleg-videos.html'), videos)
+writeFileSync(join(WEB, 'uitleg-videos.html'), videos)
 console.log("uitleg-videos.html: " + Math.round(videos.length / 1024) + ' kB')
