@@ -1061,14 +1061,14 @@ const grootsteKleinsteV = () => {
 // Doel 4: schaal met schaallijntje en verhoudingstabel, in centimeters.
 const SCHALEN = [20, 25, 40, 50, 60, 80, 100, 200, 250, 300, 400, 500]
 const SCHAAL_DINGEN = [
-  { wat: 'de schutting', maat: 'lang', m: [8, 10, 12, 15, 16, 20, 24] },
-  { wat: 'de flat', maat: 'hoog', m: [15, 18, 20, 24, 30, 36] },
-  { wat: 'de vlaggenstok', maat: 'lang', m: [6, 8, 9, 10, 12] },
-  { wat: 'de bus', maat: 'lang', m: [10, 12, 15] },
-  { wat: 'het klaslokaal', maat: 'lang', m: [7, 8, 9, 10, 12] },
-  { wat: 'het zwembad', maat: 'lang', m: [25, 50] },
-  { wat: 'de boom', maat: 'hoog', m: [6, 9, 12, 15, 18] },
-  { wat: 'de winkel', maat: 'breed', m: [10, 12, 16, 20] },
+  { wat: 'de schutting', art: 'schutting', maat: 'lang', m: [8, 10, 12, 15, 16, 20, 24] },
+  { wat: 'de flat', art: 'flat', maat: 'hoog', m: [15, 18, 20, 24, 30, 36] },
+  { wat: 'de vlaggenstok', art: 'vlag', maat: 'lang', m: [6, 8, 9, 10, 12] },
+  { wat: 'de bus', art: 'bus', maat: 'lang', m: [10, 12, 15] },
+  { wat: 'het klaslokaal', art: 'lokaal', maat: 'lang', m: [7, 8, 9, 10, 12] },
+  { wat: 'het zwembad', art: 'zwembad', maat: 'lang', m: [25, 50] },
+  { wat: 'de boom', art: 'boom', maat: 'hoog', m: [6, 9, 12, 15, 18] },
+  { wat: 'de winkel', art: 'winkel', maat: 'breed', m: [10, 12, 16, 20] },
 ]
 const RUIMTES = ['de slaapkamer', 'het klaslokaal', 'de schuur', 'de keuken', 'de woonkamer']
 const schaalTabel = (N, tekening, echt) => ({ type: 'schaal', N, tabel: [['in de tekening (cm)', ...tekening], ['in het echt (cm)', ...echt]] })
@@ -1076,10 +1076,12 @@ const schaalBlok2V = (k) => {
   if (k === 2) {   // van het echt naar de tekening
     const N = pick([20, 25, 40, 50, 60, 80, 100]); let c, L
     do { c = rnd(4, 24) / 2; L = c * N / 100 } while (L < 2)
-    const Lf = kf(L * 1000, 2), ruimte = pick(RUIMTES)
+    const Lf = Number.isInteger(L) ? String(L) : kf(L * 1000, 2), ruimte = pick(RUIMTES)
     return { vraag: `${naam()} tekent een plattegrond van ${ruimte} op schaal 1 : ${N}. Eén muur is in het echt ${Lf} m lang. Hoeveel cm wordt die muur in de tekening?`,
              kaal: `Schaal 1 : ${N}. In het echt ${Lf} m. In de tekening … cm?`, antwoord: c, eenheid: 'cm',
              figuur: schaalTabel(N, ['1', '?'], [pp(N), pp(L * 100)]),
+             // zoals toets blok 3 vraag 4b: zelf de lijn tekenen en invullen hoe lang hij is
+             schaalToets: { soort: 'tekenen', N, t: c, echt: L * 100, L, Lf },
              uitleg: `${Lf} m = ${pp(L * 100)} cm. 1 cm in de tekening is ${N} cm in het echt. ${pp(L * 100)} : ${N} = ${komma(c)} cm.` }
   }
   let d, L, N, c
@@ -1088,11 +1090,15 @@ const schaalBlok2V = (k) => {
     return { vraag: `Op een tekening met schaal 1 : ${N} is ${d.wat} ${komma(c)} cm ${d.maat}. Hoeveel meter is ${d.wat} in het echt?`,
              kaal: `Schaal 1 : ${N}. In de tekening ${komma(c)} cm. In het echt … m?`, antwoord: L, eenheid: 'm',
              figuur: schaalTabel(N, ['1', komma(c)], [pp(N), '?']),
+             // toets 4c: meten met de liniaal, tabel invullen, in het echt in cm en in m
+             schaalToets: { soort: 'echt', N, t: c, echt: L * 100, L, wat: d.wat, maat: d.maat, art: d.art },
              uitleg: `1 cm in de tekening is ${N} cm in het echt. ${komma(c)} × ${N} = ${pp(L * 100)} cm = ${L} m.` }
   }
   return { vraag: `In een tekening is ${d.wat} ${komma(c)} cm ${d.maat}. In het echt is ${d.wat} ${L} m ${d.maat}. Wat is de schaal? 1 : …`,
            kaal: `${komma(c)} cm in de tekening is ${L} m in het echt. Schaal 1 : …?`, antwoord: N,
            figuur: schaalTabel(null, [komma(c), '1'], [pp(L * 100), '?']),
+           // toets 4a: meten, tabel invullen, schaallijntje en de schaal
+           schaalToets: { soort: 'schaal', N, t: c, echt: L * 100, L, wat: d.wat, maat: d.maat, art: d.art },
            uitleg: `${L} m = ${pp(L * 100)} cm. ${pp(L * 100)} : ${komma(c)} = ${N}. Dus 1 cm is ${N} cm in het echt: schaal 1 : ${N}.` }
 }
 

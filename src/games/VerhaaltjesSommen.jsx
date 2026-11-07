@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { onderdelenVan, gensVoorDeel, maakOpgaveUit, GROEPEN, HEEFT_ROUTE, checkAntwoord, checkSom, checkTijd, GROEP_DOELEN, doelKey, LEERLIJN_LABEL, LEERLIJN_VOLGORDE } from './redactiesommen'
 import SpelBeloning from './SpelBeloning'
+import SchaalToets from './SchaalToets.jsx'
 import { useGebruikOpdracht } from './gebruikOpdracht.js'
 import OpdrachtKlaarScherm from './OpdrachtKlaarScherm.jsx'
 import './verhaaltjes-sommen.css'
@@ -610,6 +611,14 @@ function VraagKaart({ opgave, onNext, kaal = false }) {
   const label = opgave.groep === 7 ? `${blokLabel} · ${opgave.doel}`
     : opgave.groep === 8 ? `Groep 8 · ${blokLabel} · ${opgave.doel}`
     : `Herhaling groep ${opgave.groep} · ${blokLabel} · ${opgave.doel}`
+
+  // Schaal zoals in de toets: meten, tabel en schaallijntje invullen (SchaalToets.jsx)
+  if (opgave.schaalToets) return (
+    <div className="rs-card">
+      <div className={`rs-doel${opgave.groep !== 7 ? ' rs-doel-herhaling' : ''}`}>{label}</div>
+      <SchaalToets opgave={opgave} onNext={onNext} />
+    </div>
+  )
 
   return (
     <div className="rs-card">
