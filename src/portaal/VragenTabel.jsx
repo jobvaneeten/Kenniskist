@@ -155,7 +155,7 @@ export default function VragenTabel({ vragen, onWijzig }) {
       <p className="portaal-veld-hint kk-m-0">
         Vul je foute antwoorden in, dan wordt het meerkeuze. Laat je ze leeg, dan typt de leerling het antwoord zelf.
         Meer goede antwoorden mogen met " / " ertussen, bv. <i>Den Haag / 's-Gravenhage</i>.
-        Uit Excel of Word? Kopieer de cellen en plak ze in de eerste cel.
+        Uit Excel of Word? Kopieer de cellen en plak ze in de eerste cel. Een CSV-bestand van Blooket kun je zo inladen.
         Een plaatje bij een vraag? Klik op <i>+ plaatje</i>, of plak een afbeelding in een cel van die regel.
       </p>
 

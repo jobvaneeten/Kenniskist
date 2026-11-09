@@ -52,15 +52,52 @@ export function leesRijen(tekst) {
   let scheiding = null
   const sep = invoer.match(/^sep=(.)\r?\n/i)
   if (sep) { scheiding = sep[1]; invoer = invoer.slice(sep[0].length) }
-  return splitsRijen(invoer, scheiding ?? kiesScheiding(invoer))
-    .map(rij => {
-      const cellen = rij.map(schoon)
+  let rijen = splitsRijen(invoer, scheiding ?? kiesScheiding(invoer))
+    .map(rij => rij.map(schoon))
+    .filter(cellen => cellen.some(Boolean))
+  rijen = kolommenGoed(rijen)
+  return rijen
+    .map(cellen => {
       while (cellen.length && !cellen[cellen.length - 1]) cellen.pop()
       return cellen
     })
     .filter(cellen => cellen.length)
-    // kopregel ("Vraag; Goed antwoord; ..." of "Vragen; Antwoorden") niet als vraag meenemen
-    .filter((cellen, i) => !(i === 0 && /^vra(ag|gen)\b/i.test(cellen[0]) && /antwoord/i.test(cellen[1] ?? '')))
+}
+
+// Zet de kolommen in de volgorde vraag, antwoord, fout... :
+// - Met een kopregel ("Nr; Vraag; Goed antwoord; Fout 1; ...") volgen we de
+//   kopjes, in welke volgorde ze ook staan, en valt de kopregel weg.
+// - Zonder kopregel: staat er vooraan een kolom met alleen nummers (1, 2, 3
+//   of 1. 2. 3.), dan valt die weg.
+const isVraagKop = (c) => /^vra(ag|gen)\b/i.test(c)
+const isAntwKop = (c) => /antwoord/i.test(c) && !/fout|onjuist/i.test(c)
+const isFoutKop = (c) => /fout|onjuist|afleider|keuze/i.test(c)
+function kolommenGoed(rijen) {
+  if (!rijen.length) return rijen
+  // Blooket-sjabloon: een titelregel, dan "Question #, Question Text, Answer 1..4,
+  // Time Limit, Correct Answer(s)" met het nummer van het goede antwoord.
+  for (let h = 0; h < Math.min(3, rijen.length); h++) {
+    const kop = rijen[h].map(c => c.toLowerCase())
+    const vi = kop.findIndex(c => /question text/.test(c)), ci = kop.findIndex(c => /correct answer/.test(c))
+    if (vi < 0 || ci < 0) continue
+    const ant = kop.map((c, i) => (/^answer \d/.test(c) ? i : -1)).filter(i => i >= 0)
+    return rijen.slice(h + 1).map(r => {
+      const goedNr = parseInt(String(r[ci] ?? '').match(/\d+/)?.[0] ?? '', 10)
+      const opties = ant.map(i => r[i] ?? '')
+      const goed = opties[goedNr - 1] ?? ''
+      return [r[vi] ?? '', goed, ...opties.filter((o, i) => o && i !== goedNr - 1)]
+    })
+  }
+  const kop = rijen[0], vi = kop.findIndex(isVraagKop), ai = kop.findIndex((c, i) => i !== vi && isAntwKop(c))
+  if (vi >= 0 && ai >= 0) {
+    let fi = kop.map((c, i) => (i !== vi && i !== ai && isFoutKop(c) ? i : -1)).filter(i => i >= 0)
+    if (!fi.length) fi = kop.map((c, i) => i).filter(i => i > ai && i !== vi)
+    // kolommen rechts van de kopregel (zonder kopje) tellen als extra foute keuzes
+    return rijen.slice(1).map(r => [r[vi] ?? '', r[ai] ?? '', ...fi.map(i => r[i] ?? ''), ...r.slice(kop.length)])
+  }
+  const nummer = (c) => /^\d{1,3}[.)]?$/.test(c)
+  if (rijen.every(r => nummer(r[0] ?? '')) && rijen.some(r => r.length > 2 && r[1] && r[2])) return rijen.map(r => r.slice(1))
+  return rijen
 }
 
 // Geeft { vragen: [{ vraag, antwoord, fout: [] }], meldingen: [tekst] }.

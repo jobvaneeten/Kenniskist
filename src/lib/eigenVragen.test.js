@@ -61,3 +61,34 @@ describe('CSV uit Excel', () => {
     expect(leesVragen('Vragen;Antwoorden\nA?;b\n').vragen).toHaveLength(1)
   })
 })
+
+describe('nummerkolom en kopjes', () => {
+  it('laat een nummerkolom vooraan weg (met kopregel)', () => {
+    const { vragen } = leesVragen('Nr;Vraag;Goed antwoord;Fout 1\r\n1;Hoofdstad?;Parijs;Lyon\r\n2;7 x 8?;56;\r\n')
+    expect(vragen).toEqual([{ vraag: 'Hoofdstad?', antwoord: 'Parijs', fout: ['Lyon'] }, { vraag: '7 x 8?', antwoord: '56', fout: [] }])
+  })
+  it('laat een nummerkolom vooraan weg (zonder kopregel)', () => {
+    const { vragen } = leesVragen('1.;Hoofdstad?;Parijs\n2.;Hoeveel poten heeft een spin?;8\n')
+    expect(vragen.map(v => v.vraag)).toEqual(['Hoofdstad?', 'Hoeveel poten heeft een spin?'])
+  })
+  it('volgt de kopjes in een andere volgorde', () => {
+    const { vragen } = leesVragen('Antwoord;Vraag\nParijs;Hoofdstad?\n')
+    expect(vragen).toEqual([{ vraag: 'Hoofdstad?', antwoord: 'Parijs', fout: [] }])
+  })
+  it('een rij antwoorden plakken blijft gewoon staan', () => {
+    const { vragen } = leesVragen('Wat is 2 x 2?;4\nWat is 3 x 3?;9\n')
+    expect(vragen).toHaveLength(2)
+  })
+})
+
+describe('Blooket-sjabloon', () => {
+  it('leest vraag, goed antwoord (nummer) en de foute keuzes', () => {
+    const csv = '"Blooket\nImport Template",,,,,,,,,\nQuestion #,Question Text,Answer 1,Answer 2,"Answer 3\n(Optional)","Answer 4\n(Optional)","Time Limit (sec)\n(Max: 300 seconds)","Correct Answer(s)\n(Only include Answer #)",,,\n1,Mijn opa houdt ... wandelen.,van,op,aan,naar,20,1,,,\n2,Wij kijken ... een film.,op,naar,aan,voor,20,2,,,\n'
+    const { vragen, meldingen } = leesVragen(csv)
+    expect(meldingen).toEqual([])
+    expect(vragen).toEqual([
+      { vraag: 'Mijn opa houdt ... wandelen.', antwoord: 'van', fout: ['op', 'aan', 'naar'] },
+      { vraag: 'Wij kijken ... een film.', antwoord: 'naar', fout: ['op', 'aan', 'voor'] },
+    ])
+  })
+})
