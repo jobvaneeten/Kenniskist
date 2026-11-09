@@ -77,6 +77,21 @@ async function beantwoord(route, wieRef) {
     for (const r of (TABELLEN.resultaten ?? []).slice(h.vanaf).filter(r => r.opdracht_id === h.opdracht)) { if (aantal >= 5) break; goed += r.score; aantal += r.max_score }
     return json(aantal < 5 ? { klaar: false, goed, aantal, ronde: 1 } : { klaar: true, goed, aantal, ronde: 1, geslaagd: goed >= 0.8 * aantal })
   }
+  // groepsoverzicht (0025): per leerling per vaardigheid goed/totaal
+  if (pad === '/rest/v1/rpc/klas_vaardigheden') {
+    const b = JSON.parse(req.postData() || '{}'), lln = new Set(TABELLEN.profielen.filter(x => x.klas_id === b.p_klas).map(x => x.id)), per = new Map()
+    for (const r of TABELLEN.resultaten ?? []) {
+      if (!lln.has(r.leerling_id) || (r.aangemaakt_op && r.aangemaakt_op < b.p_vanaf)) continue
+      const ops = (r.details_json?.opgaven ?? []).filter(o => typeof o.goed === 'boolean')
+      for (const o of ops.length ? ops : [{ cat: null, goed: null }]) {
+        const k = r.leerling_id + '|' + r.tool_id + '|' + (o.cat ?? '')
+        if (!per.has(k)) per.set(k, { leerling_id: r.leerling_id, tool_id: r.tool_id, cat: o.cat ?? null, cat_label: o.catLabel ?? null, goed: 0, totaal: 0 })
+        const x = per.get(k)
+        if (ops.length) { x.goed += o.goed ? 1 : 0; x.totaal += 1 } else { x.goed += r.score; x.totaal += r.max_score }
+      }
+    }
+    return json([...per.values()])
+  }
   if (pad.startsWith('/rest/v1/rpc/')) return json(null)
   if (pad.startsWith('/rest/v1/')) {
     const tabel = pad.slice('/rest/v1/'.length)

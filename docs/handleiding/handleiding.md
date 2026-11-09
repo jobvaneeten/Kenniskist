@@ -17,7 +17,7 @@ De plaatjes in deze handleiding komen uit de testomgeving van Kenniskist. Alle n
 7. [De voortgang volgen](#7-de-voortgang-volgen)
 8. [Taken en doelen per leerling](#8-taken-en-doelen-per-leerling)
 9. [Eén leerling bekijken](#9-een-leerling-bekijken)
-10. [Weekoverzicht, werkblad en eigen oefeningen](#10-weekoverzicht-werkblad-en-eigen-oefeningen)
+10. [Weekoverzicht, groepsoverzicht, werkblad en eigen oefeningen](#10-weekoverzicht-groepsoverzicht-werkblad-en-eigen-oefeningen)
 11. [Leerlingen en spelletjes](#11-leerlingen-en-spelletjes)
 12. [Wat de leerling doet](#12-wat-de-leerling-doet)
 13. [Vrij oefenen](#13-vrij-oefenen)
@@ -318,7 +318,7 @@ Met **Gemaakt werk wissen** wis je het gemaakte werk van alleen deze leerling.
 
 ---
 
-## 10. Weekoverzicht, werkblad en eigen oefeningen
+## 10. Weekoverzicht, groepsoverzicht, werkblad en eigen oefeningen
 
 ### Weekoverzicht
 
@@ -327,6 +327,23 @@ Op het tabblad **Weekoverzicht** kies je een leerling. Je ziet dan per week, of 
 Dit is precies hetzelfde overzicht dat de leerling zelf ziet bij **Mijn week**. Handig voor een gesprekje met de leerling of met ouders.
 
 ![Het weekoverzicht van een leerling](plaatjes/51-weekoverzicht-fleur.jpg)
+
+### Groepsoverzicht
+
+Op het tabblad **Groepsoverzicht** zie je per vaardigheid in één oogopslag wie het beheerst en wie verlengde instructie nodig heeft. Een vaardigheid is bijvoorbeeld een rekendoel van het blok, de tafel van 8, komma's zetten of de verleden tijd van zwakke werkwoorden. Elk blokje is een leerling:
+
+- **Rood:** minder dan 60% goed. Deze leerling heeft verlengde instructie nodig.
+- **Oranje:** 60 tot 80% goed. Nog niet zeker.
+- **Groen:** 80% of meer goed. Beheerst.
+- **Grijs:** minder dan 5 opgaven gemaakt. Te weinig om iets over te zeggen.
+
+Al het oefenwerk telt mee, ook vrij oefenen. Kies bovenaan de periode (2, 4 of 8 weken) en eventueel een vak. Bovenaan staan de vaardigheden waar de meeste leerlingen hulp bij nodig hebben. Ga met de muis op een blokje staan om de naam en het percentage te zien.
+
+![Het groepsoverzicht van de klas](plaatjes/52-groepsoverzicht.jpg)
+
+Klik op een vaardigheid om de leerlingen per groep te zien. De leerlingen onder 60% staan al aangevinkt; klik op een naam om iemand erbij te zetten of weg te halen. Met **Zet klaar als doel** krijgt dit groepje het doel meteen bij **Speciaal voor mij**. Leerlingen die het doel al hebben staan, zie je met "doel staat klaar". Zo heb je meteen je groepje voor de verlengde instructie, en oefenen de kinderen daarna precies wat ze nog niet beheersen.
+
+![Een vaardigheid opengeklapt, met het groepje voor verlengde instructie](plaatjes/53-groepsoverzicht-open.jpg)
 
 ### Werkblad
 

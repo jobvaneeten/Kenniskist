@@ -5,6 +5,7 @@ import LeerlingDetail from './LeerlingDetail.jsx'
 import WeektaakTab from './WeektaakTab.jsx'
 import Werkblad from './Werkblad.jsx'
 import KlasWeekoverzicht from './KlasWeekoverzicht.jsx'
+import GroepsOverzicht from './GroepsOverzicht.jsx'
 import SpelInstelling from './SpelInstelling.jsx'
 import EigenOefeningen from './EigenOefeningen.jsx'
 import { TerugKnop, Icoon } from '../ui/index.jsx'
@@ -18,6 +19,7 @@ const TABS = [
   { key: 'taak', label: 'Taken', hint: 'per leerling', icoon: 'potlood', accent: 'var(--kk-pink)' },
   { key: 'doel', label: 'Doelen', hint: 'per leerling', icoon: 'doel', accent: 'var(--kk-gold)' },
   { key: 'week', label: 'Weekoverzicht', hint: 'per leerling', icoon: 'grafiek', accent: 'var(--kk-primary-hi)' },
+  { key: 'groep', label: 'Groepsoverzicht', hint: 'hulp per doel', icoon: 'menu', accent: 'var(--kk-error)' },
   { key: 'werkblad', label: 'Werkblad', hint: 'printen', icoon: 'printer', accent: 'var(--kk-success)' },
   { key: 'eigen', label: 'Eigen oefeningen', hint: 'je eigen vragen', icoon: 'potlood', accent: 'var(--kk-cyan)' },
   { key: 'leerlingen', label: 'Leerlingen', hint: 'beheer & spelletjes', icoon: 'mensen', accent: 'var(--kk-text-soft)' },
@@ -105,7 +107,9 @@ export default function KlasScherm({ klas, alleKlassen, onBack, onKlasGewijzigd 
 
         {!leerlingId && tab === 'week' && <KlasWeekoverzicht key={klas.id} leerlingen={leerlingen} />}
 
-        {!leerlingId && !['leerlingen', 'werkblad', 'week', 'eigen'].includes(tab) && (
+        {!leerlingId && tab === 'groep' && <GroepsOverzicht key={klas.id} klas={klas} leerlingen={leerlingen} />}
+
+        {!leerlingId && !['leerlingen', 'werkblad', 'week', 'groep', 'eigen'].includes(tab) && (
           <WeektaakTab key={tab} klas={klas} soort={tab} onKiesLeerling={setLeerlingId} />
         )}
       </div>

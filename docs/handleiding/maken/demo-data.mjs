@@ -81,6 +81,19 @@ export const RESULTATEN = L7.flatMap((l, li) => Array.from({ length: 26 }, (_, i
       : tool === 'tafels' ? { vraag: `${3 + (i % 7)} × ${6 + (i % 3)}`, antwoord: String((3 + (i % 7)) * (6 + (i % 3)) + (goed ? 0 : 1)), juist: String((3 + (i % 7)) * (6 + (i % 3))), goed }
       : { vraag: 'koning', antwoord: goed ? 'koning' : 'koninng', juist: 'koning', goed }] } }
 }))
+// Groepsoverzicht: wat extra oefenwerk per vaardigheid, per kind anders (migratie 0025)
+const VAARD = [
+  ['taal-interpunctie', 'komma', 'komma', 0.55], ['taal-interpunctie', 'hoofdletters', 'hoofdletters', 0.9],
+  ['werkwoordspelling', 'vtZwak', 'vtZwak', 0.7], ['werkwoordspelling', 'tt', 'tt', 0.88],
+  ['tafels', 'tafel-7', 'Tafel van 7', 0.75], ['tafels', 'tafel-8', 'Tafel van 8', 0.62],
+  ['verhaaltjessommen', 'g7::Je leert sommen als 22 × 64 cijferend uitrekenen of met splitsen, en je herhaalt sommen als 6 × 346.', 'Je leert sommen als 22 × 64 cijferend uitrekenen of met splitsen, en je herhaalt sommen als 6 × 346.', 0.6],
+]
+export const OEFENWERK = L7.flatMap((l, li) => VAARD.flatMap(([tool, cat, label, basis], vi) => {
+  const n = (li + vi) % 6 === 0 ? 3 : 8 + ((li * 7 + vi * 3) % 14)
+  const kans = Math.min(0.98, Math.max(0.2, basis + (((li * 13 + vi * 5) % 9) - 4) * 0.07))
+  return Array.from({ length: n }, (_, i) => ({ id: 'G' + l + '-' + vi + '-' + i, leerling_id: l, tool_id: tool, score: (i * 37 % 100) / 100 < kans ? 1 : 0, max_score: 1,
+    opdracht_id: null, aangemaakt_op: dag(-(i % 12)), details_json: { opgaven: [{ vraag: '...', cat, catLabel: label, goed: (i * 37 % 100) / 100 < kans }] } }))
+}))
 export const EIGEN = [
   { id: 'E1', school_id: 'S1', klas_id: 'K7', groep: 7, vak: 'taal', onderwerp: 'Spreekwoorden', spel_na: null, geld: 50, aangemaakt_op: dag(-6),
     vragen: [{ vraag: 'Wat betekent: de kat uit de boom kijken?', antwoord: 'eerst afwachten', fout: ['snel weglopen', 'boos worden'] }, { vraag: 'Maak af: Wie A zegt, moet ook ... zeggen', antwoord: 'B', fout: [] }, { vraag: 'Wat betekent: iets onder de knie hebben?', antwoord: 'iets goed kunnen', fout: ['pijn hebben', 'iets kwijt zijn'] }] },
@@ -92,5 +105,5 @@ export const TABELLEN = {
   weektaken: WEEKTAKEN.map(w => ({ ...w, opdrachten: OPDRACHTEN.filter(o => o.weektaak_id === w.id).map(o => ({ id: o.id, persoonlijk: o.config.persoonlijk ?? null })) })),
   opdrachten: OPDRACHTEN.map(o => ({ ...o, school_id: 'S1', weektaken: WEEKTAKEN.find(w => w.id === o.weektaak_id) })),
   toewijzingen: TOEWIJZINGEN, weektaak_voortgang: VOORTGANG, doel_voortgang: DOELSTAND, doelwerk_voortgang: DOELWERK, doel_herhaling: HERHALING,
-  resultaten: RESULTATEN, eigen_oefeningen: EIGEN, leesstanden: LEESSTANDEN, game_voortgang: [],
+  resultaten: [...RESULTATEN, ...OEFENWERK], eigen_oefeningen: EIGEN, leesstanden: LEESSTANDEN, game_voortgang: [],
 }

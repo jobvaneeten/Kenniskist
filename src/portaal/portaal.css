@@ -703,3 +703,45 @@
 .portaal-eigen-weg svg { width: 14px; height: 14px; }
 .portaal-eigen-status { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: baseline; font-size: 0.85rem; }
 .portaal-eigen-kaartweg { position: absolute; top: 8px; right: 8px; width: 30px; height: 30px; border-radius: 8px; }
+
+/* ── Groepsoverzicht (GroepsOverzicht.jsx) ───────────────────────────────── */
+.go-legenda { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 4px 0 16px; font-size: 0.82rem; color: var(--kk-text-soft); }
+.go-legenda span { display: inline-flex; align-items: center; gap: 6px; }
+.go-blok { display: inline-block; width: 14px; height: 14px; border-radius: 3px; flex: none; }
+.go-blok.rood { background: var(--kk-error); }
+.go-blok.oranje { background: var(--kk-warning); }
+.go-blok.groen { background: var(--kk-success); }
+.go-blok.weinig { background: rgba(255,255,255,0.22); }
+.go-blok.geen { background: transparent; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.18); }
+.go-lijst { display: flex; flex-direction: column; gap: 8px; }
+.go-rij { border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; background: rgba(255,255,255,0.02); }
+.go-rij.open { border-color: color-mix(in srgb, var(--kk-cyan) 45%, transparent); }
+.go-kop {
+  width: 100%; display: grid; grid-template-columns: minmax(200px, 1.3fr) minmax(160px, 1fr) auto; align-items: center; gap: 14px;
+  padding: 10px 14px; background: none; border: 0; color: inherit; font: inherit; text-align: left; cursor: pointer;
+}
+.go-kop:hover { background: rgba(255,255,255,0.03); border-radius: 12px; }
+.go-naam { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.go-naam strong { font-size: 0.92rem; line-height: 1.3; }
+.go-naam .portaal-zacht { font-size: 0.78rem; }
+.go-strip { display: flex; flex-wrap: wrap; gap: 3px; }
+.go-tel { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; font-size: 0.8rem; white-space: nowrap; }
+.go-tel-rood { color: var(--kk-error); font-weight: 800; }
+.go-tel-oranje { color: var(--kk-warning); font-weight: 800; }
+.go-paneel { padding: 4px 14px 14px; border-top: 1px solid rgba(255,255,255,0.07); }
+.go-groep h4 { display: flex; align-items: center; gap: 8px; margin: 12px 0 8px; font-size: 0.88rem; }
+.go-namen { display: flex; flex-wrap: wrap; gap: 6px; }
+.go-naamchip {
+  display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 999px; font: inherit; font-size: 0.84rem;
+  color: var(--kk-text); background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); cursor: pointer;
+}
+.go-naamchip span { font-size: 0.75rem; color: var(--kk-text-soft); }
+.go-naamchip em { font-style: normal; font-size: 0.72rem; color: var(--kk-cyan); }
+.go-naamchip:disabled { cursor: default; opacity: 0.85; }
+.go-naamchip.rood.aan { background: color-mix(in srgb, var(--kk-error) 22%, transparent); border-color: var(--kk-error); }
+.go-naamchip.oranje.aan { background: color-mix(in srgb, var(--kk-warning) 20%, transparent); border-color: var(--kk-warning); }
+.go-actie { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-top: 14px; padding-top: 12px; border-top: 1px dashed rgba(255,255,255,0.1); }
+@media (max-width: 760px) {
+  .go-kop { grid-template-columns: 1fr; gap: 8px; }
+  .go-tel { flex-direction: row; align-items: center; gap: 10px; }
+}
