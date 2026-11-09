@@ -187,7 +187,6 @@ function Oefenspel({ tafels, soort, onKlaar, weektaakModus, onOpslaanMislukt }) 
 // ── Overzicht ─────────────────────────────────────────────────────────────
 function Overzicht({ tafels, resultaten, onSpelletje }) {
   const goed  = resultaten.filter(r => r.goed).length
-  const fout  = resultaten.length - goed
   const [vorigeHighscore] = useState(() => leesHighscore())
   const [highscore] = useState(() => schrijfHighscore(goed))
   const nieuwRecord = goed > 0 && goed > vorigeHighscore
@@ -271,7 +270,6 @@ export default function TafelsOefenen({ groep, onBack, addBriefgeld, addCuruntie
   const [soort, setSoort] = useState(null)   // 'keer' | 'deel'
   const [tafels, setTafels] = useState([])
   const [resultaten, setResultaten] = useState([])
-  const [verdiend, setVerdiend] = useState(0)
   const [opslaanMislukt, setOpslaanMislukt] = useState(false)
 
   useEffect(() => {
@@ -297,7 +295,7 @@ export default function TafelsOefenen({ groep, onBack, addBriefgeld, addCuruntie
           title="Goed gedaan!"
           geld={BRIEFGELD}
           addCuruntie={addCuruntie}
-          onDone={() => { addBriefgeld?.(BRIEFGELD); setVerdiend(v => v + BRIEFGELD); if (config) onBack(); else setFase('type') }}
+          onDone={() => { addBriefgeld?.(BRIEFGELD); if (config) onBack(); else setFase('type') }}
         />
       )}
 

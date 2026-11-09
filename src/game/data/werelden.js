@@ -73,8 +73,6 @@ export const WERELDEN = [
 export const TOTAAL_LEVELS = WERELDEN.length * LEVELS_PER_WERELD
 export const TOTAAL_STERREN = TOTAAL_LEVELS * 3
 
-export const wereldVan = (nummer) => WERELDEN.find((w) => w.nummer === nummer)
-
 export function levelId(wereld, index) {
   return `w${wereld}-l${String(index).padStart(2, '0')}`
 }

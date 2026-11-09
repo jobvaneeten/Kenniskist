@@ -881,7 +881,7 @@ function saveUnlocked(arr) {
   try { localStorage.setItem(UNLOCK_KEY, JSON.stringify([...new Set(arr)])) } catch { /* ignore */ }
 }
 
-export default function FootballGame({ year, onBack, addCuruntie, noQuiz = false, twoPlayer = false,
+export default function FootballGame({ onBack, addCuruntie, noQuiz = false, twoPlayer = false,
                                        rewardMode = false, initialBracket = null, resumeBracket = null, onMatchDone, onMatchEnd }) {
   const [phase,       setPhase]      = useState((rewardMode && initialBracket) || resumeBracket ? 'match_preview' : 'country_select')
   const [bracket,     setBracket]    = useState(rewardMode ? initialBracket : resumeBracket)
@@ -1107,7 +1107,7 @@ export default function FootballGame({ year, onBack, addCuruntie, noQuiz = false
         // ── Player/AI separation ──
         const sep = Math.sqrt((state.player.x - state.ai.x) ** 2 + (state.player.y - state.ai.y) ** 2)
         if (sep < PR * 2 && sep > 0.1) {
-          const nx = (state.player.x - state.ai.x) / sep, ny = (state.player.y - state.ai.y) / sep
+          const nx = (state.player.x - state.ai.x) / sep
           const push = (PR * 2 - sep) / 2
           state.player.x += nx * push; state.ai.x -= nx * push
         }
@@ -1443,7 +1443,6 @@ export default function FootballGame({ year, onBack, addCuruntie, noQuiz = false
   // Quiz
   if (phase === 'quiz') {
     const q = questions[qIndex]
-    const opp = currentOpponent
     return (
       <div className="fb-screen">
         <TerugKnop onClick={() => setPhase('match_preview')} />
@@ -1487,12 +1486,6 @@ export default function FootballGame({ year, onBack, addCuruntie, noQuiz = false
     const secs   = String(timeLeft % 60).padStart(2, '0')
     const urgent = timeLeft <= 20
     const pl = playerCountry, opp = currentOpponent
-    const leaveGame = () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current)
-      if (gameRef.current) gameRef.current.running = false
-      setGoalInfo(null)
-      setPhase('match_preview')
-    }
     return (
       <div className="fb-screen" style={{ gap: 0, paddingTop: 56 }}>
         <OrientationGate />

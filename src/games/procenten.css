@@ -110,4 +110,3 @@
 @keyframes pbk-fade { from { opacity: 0; } to { opacity: 1; } }
 
 /* Beloning-keuze wrapper (hergebruikt de ws-* stijlen uit werkwoord-spelling.css) */
-.pbk-belonen-wrap { position: fixed; inset: 0; z-index: 60; }

@@ -1,180 +1,20 @@
 import { useEffect, useState } from 'react'
-import { supabase } from './supabase.js'
 import { haalMijnWeektaak } from './weektaak.js'
-import { onderdelenVan, delenVanDoel, gensVoorDeel } from '../games/redactiesommen.js'
-import { DOEL_VAN_LES, DEEL_VAN_LES, LESSEN_PER_BLOK, isHerhalingsles } from '../games/denkvragenData.js'
-import { slaWeektaakOp } from '../portaal/weektaakOpslaan.js'
 
 // ══════════════════════════════════════════════════════════════════════════
 // Lescheck: één som aan het eind van een rekenles
 // ══════════════════════════════════════════════════════════════════════════
 //
-// Een lescheck is géén nieuw datamodel maar een weektaak in een vaste vorm:
-// één weektaak per blok ("Lescheck Blok 3"), daarin één opdracht per les
-// (verhaaltjessommen, aantal 1, precies één doel aangevinkt). De leerkracht
-// zet vooraf een paar lessen klaar, de leerling klikt na de les op "Les 3" en
-// krijgt daar zijn eigen som over het doel van díe les.
-//
-// Herkenbaar aan `lescheck` in de config van de opdracht — daar hangt ook de
-// migratie 0011 aan (nooit automatisch opnieuw laten maken).
-
-export const LESCHECK_TOOL = 'verhaaltjessommen'
+// Een lescheck is een weektaak in een vaste vorm: één weektaak per blok
+// ("Lescheck Blok 3"), daarin één opdracht per les. Klaarzetten kan niet meer
+// vanuit het portaal; leerlingen met een lopende lescheck zien hem nog wel.
+// Herkenbaar aan `lescheck` in de config van de opdracht (migratie 0011).
 
 export const isLescheck = (opdracht) => !!opdracht?.config?.lescheck
 
 export const lesLabel = (opdracht) => {
   const l = opdracht?.config?.lescheck
   return l ? `Les ${l.les}` : ''
-}
-
-// Wat de som van die les toetst: het stuk van het doel dat in díe les aan bod
-// kwam ("plus en min", "keer en delen").
-export const deelLabel = (opdracht) => opdracht?.config?.lescheck?.deelLabel ?? ''
-
-// Hoeveel sommen een lesdeel oplevert. Gaat het over twee bewerkingen (plus én
-// min), dan krijgt het kind er twee — één van elk, zodat je van allebei weet of
-// het is blijven hangen.
-export function aantalSommen(groep, route, key, deelNr) {
-  return gensVoorDeel(groep, route, key, deelNr)?.length ?? 1
-}
-
-export const blokLabel = (blok) => (Number(blok) === 0 ? 'Instap' : `Blok ${blok}`)
-export const lescheckTitel = (blok) => `Lescheck ${blokLabel(blok)}`
-
-// YYYY-MM-DD in lokale tijd — zelfde afspraak als lib/weektaak.js, bewust
-// geen UTC (zie migratie 0007).
-export const datumStr = (d = new Date()) => d.toLocaleDateString('sv-SE')
-
-export function datumOver(dagen) {
-  const d = new Date()
-  d.setDate(d.getDate() + dagen)
-  return datumStr(d)
-}
-
-// De doelen van één blok, in de volgorde van de methode, mét de sleutel die
-// VerhaaltjesSommen gebruikt om er sommen bij te maken. Precies dezelfde
-// bron als de denkvragen (doelenVanBlok) en de weektaak-config, zodat de
-// doeltekst bij de leerkracht, bij het kind en in het resultaat één en
-// hetzelfde is.
-export function doelenVanBlokMetKey(groep, route, blok) {
-  const item = onderdelenVan(groep, route, 'blok').find(o => o.key === `blok-${blok}`)
-  return (item?.gens ?? []).map(g => ({ key: g.key, doel: g.doel }))
-}
-
-// Welk doel hoort bij welke les (1-2 → doel 1, 3-4 → doel 2, …) én welk stuk
-// van dat doel. Les 5 en 10 zijn herhalingslessen zonder eigen doel: daar
-// kiest de leerkracht zelf.
-export function doelVoorLes(groep, route, blok, les) {
-  const doelen = doelenVanBlokMetKey(groep, route, blok)
-  const nr = DOEL_VAN_LES[les]
-  if (!nr || !doelen[nr - 1]) return null
-  const deelNr = DEEL_VAN_LES[les] ?? 1
-  return { doelNr: nr, deelNr, ...doelen[nr - 1] }
-}
-
-// De twee onderdelen van een doel, met hun naam — voor het keuzemenu bij het
-// klaarzetten.
-export function delenVoorDoel(groep, route, blok, doelNr) {
-  const doel = doelenVanBlokMetKey(groep, route, blok)[doelNr - 1]
-  return doel ? delenVanDoel(groep, route, doel.key) : []
-}
-
-export function bouwLesOpdracht({ groep, route, blok, les, doelNr, deelNr = 1, id }) {
-  const doelen = doelenVanBlokMetKey(groep, route, blok)
-  const gekozen = doelen[doelNr - 1]
-  if (!gekozen) return null
-  const delen = delenVanDoel(groep, route, gekozen.key)
-  const deel = delen[deelNr - 1]
-  const soorten = deel?.soorten ?? []
-  return {
-    id,
-    toolId: LESCHECK_TOOL,
-    // Eén som per soort: bij "plus en min" dus twee.
-    aantal: Math.max(1, soorten.length),
-    config: {
-      groep, route,
-      doelen: [gekozen.key],
-      // deel = welk stuk van het doel; kaal = een som zonder verhaal, want de
-      // lescheck moet meten of ze de bewerking snappen, niet of ze hem uit een
-      // verhaaltje kunnen vissen.
-      deel: deel ? deelNr : undefined,
-      kaal: true,
-      lescheck: {
-        blok, les, doelNr, deelNr, doel: gekozen.doel, deelLabel: deel?.label ?? null,
-        soorten: soorten.map(x => x.label),
-      },
-    },
-  }
-}
-
-export const LESSEN = Array.from({ length: LESSEN_PER_BLOK }, (_, i) => i + 1)
-
-// Groepen waarvoor de doelen in lesdelen zijn opgeknipt (zie D() in
-// redactiesommen.js). Alleen daar kan een lescheck precies het stuk toetsen dat
-// in díe les is uitgelegd; groep 5 heeft die indeling niet.
-export const GROEPEN_MET_LESDELEN = [6, 7, 8]
-export { isHerhalingsles }
-
-// Zet de lessen van één blok klaar. Bestaande opdrachten gaan mét hun id mee,
-// want slaWeektaakOp gooit alles weg wat er niet meer in zit — zonder dat zou
-// "les 6 toevoegen" de resultaten van les 1 t/m 4 wissen (resultaten blijven
-// staan, maar hun opdracht_id gaat op NULL en dan tellen ze als vrij oefenen).
-export async function slaLescheckOp({
-  weektaakId, klas, leerlingIds, groep, route, blok, lessen, eindOp, bestaandeOpdrachten = [],
-}) {
-  const opdrachten = [
-    ...bestaandeOpdrachten,
-    ...lessen.map(l => bouwLesOpdracht({ groep, route, blok, les: l.les, doelNr: l.doelNr, deelNr: l.deelNr })),
-  ].filter(Boolean)
-  // Op lesnummer sorteren: slaWeektaakOp nummert `volgorde` op arrayvolgorde,
-  // en zo staan de lessen bij het kind (en in het portaal) op les 1, 2, 3…
-  opdrachten.sort((a, b) => (a.config.lescheck.les - b.config.lescheck.les))
-
-  const wtId = await slaWeektaakOp({
-    weektaakId,
-    schoolId: klas.school_id,
-    klasId: klas.id,
-    titel: lescheckTitel(blok),
-    startOp: datumStr(),
-    eindOp,
-    opdrachten,
-    leerlingIds,
-  })
-  return wtId
-}
-
-// Alle leschecks van een klas, gegroepeerd per blok (= per weektaak).
-export async function haalLeschecks(klasId) {
-  const { data } = await supabase
-    .from('opdrachten')
-    .select('id, weektaak_id, config, volgorde, weektaken(id, titel, start_op, eind_op)')
-    .eq('klas_id', klasId)
-    .order('volgorde')
-  const perBlok = new Map()
-  // Op `lescheck` filteren doen we hier en niet in de query: een klas heeft
-  // hooguit een paar honderd opdrachten, en een jsonb-filter in PostgREST is
-  // het soort ding dat stilletjes een lege lijst oplevert als de notatie ooit
-  // verandert.
-  for (const o of (data ?? []).filter(x => x.config?.lescheck)) {
-    const wt = o.weektaken
-    if (!wt) continue
-    if (!perBlok.has(wt.id)) {
-      perBlok.set(wt.id, {
-        weektaakId: wt.id, titel: wt.titel, startOp: wt.start_op, eindOp: wt.eind_op,
-        blok: o.config?.lescheck?.blok ?? null,
-        groep: o.config?.groep ?? null,
-        route: o.config?.route ?? null,
-        opdrachten: [],
-      })
-    }
-    perBlok.get(wt.id).opdrachten.push({
-      id: o.id, les: o.config?.lescheck?.les, doelNr: o.config?.lescheck?.doelNr,
-      deelNr: o.config?.lescheck?.deelNr, deelLabel: o.config?.lescheck?.deelLabel,
-      soorten: o.config?.lescheck?.soorten ?? [],
-      doel: o.config?.lescheck?.doel, config: o.config,
-    })
-  }
-  return [...perBlok.values()].sort((a, b) => String(b.startOp).localeCompare(String(a.startOp)))
 }
 
 // Leerlingkant: lopen er leschecks, en staat er nog een les open? Herhaalt

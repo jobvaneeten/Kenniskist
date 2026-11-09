@@ -61,13 +61,6 @@ function loadRewardTour() {
 function saveRewardTour(v) { localStorage.setItem(REWARD_KEY, JSON.stringify(v)) }
 function clearRewardTour() { localStorage.removeItem(REWARD_KEY) }
 
-// ── Drawing helpers ───────────────────────────────────────────────
-function isLight(hex) {
-  const r = parseInt(hex.slice(1, 3), 16)
-  const g = parseInt(hex.slice(3, 5), 16)
-  const b = parseInt(hex.slice(5, 7), 16)
-  return 0.299 * r + 0.587 * g + 0.114 * b > 140
-}
 function hexA(hex, a) {
   const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16)
   return `rgba(${r},${g},${b},${a})`
@@ -723,7 +716,7 @@ function SpecialDemo({ countryKey }) {
     const newBall = () => ({ x: p.x + 46, y: G - 26, vx: 0, vy: 0, angle: 0, spin: 0, scale: 1, scaleT: 0, ghostT: 0, bouncyT: 0, floatT: 0, homing: 0, homingStr: 4, homeT: 0, held: false, superT: 0, superColor: null, dark: false, laser: false, superKind: null, superOwner: null, trail: [], fx: { t: 0, type: 'energy', color: '#fff' } })
     let ball = newBall()
     let shocks = [], parts = [], decoys = [], tornado = null, mascots = [], rockets = [], bolts = [], sun = null, superSeq = null, tt = 0, triggered = false
-    let wall = null, bumpers = [], gravityT = 0, waveT = 0, waveNext = 0, waveDir = 1, waveCol = '#fff', pulseSeq = null
+    let wall = null, bumpers = [], gravityT = 0, waveT = 0, waveNext = 0, waveDir = 1, pulseSeq = null
     const period = 4.0
 
     const reset = () => {
@@ -735,7 +728,6 @@ function SpecialDemo({ countryKey }) {
       wall = null; bumpers = []; gravityT = 0; waveT = 0; waveNext = 0; pulseSeq = null
     }
     const burst = (x, y, color, n = 20) => { for (let i = 0; i < n; i++) { const a = Math.random() * Math.PI * 2, v = 300 * (0.4 + Math.random()); parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 120, life: 0.5 + Math.random() * 0.4, color, r: 2 + Math.random() * 3 }) } }
-    const goalDir = () => { const gx = W - 4, gy = (G - 175) + 90; const dx = gx - ball.x, dy = gy - ball.y, d = Math.hypot(dx, dy) || 1; return { x: dx / d, y: dy / d } }
     const trigger = () => {
       triggered = true
       const su = getSuper(countryKey)
@@ -1255,7 +1247,6 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
   const dashRef = useRef(null)        // door de match-engine gezet; aangeroepen door dubbel-tik (toets + schermknop)
   const dpadTapRef = useRef({ '-1': 0, '1': 0 })
 
-  const isWK = !!bracket
   const playerCountry = playerKey ? getCountry(playerKey) : null
   const oppCountry = oppKey ? getCountry(oppKey) : null
 
@@ -2160,7 +2151,7 @@ export default function HeadSoccer({ onBack, addCuruntie, reward = false }) {
         if (p.kickCD > 0) p.kickCD -= dt
         if (p.kickAnim > 0) p.kickAnim -= dt
         if (p.powerKick > 0) p.powerKick -= dt
-        if (p.buried > 0) { p.buried -= dt; p.vx = 0; p.x = p.x }   // vastgeramd in de grond
+        if (p.buried > 0) { p.buried -= dt; p.vx = 0 }   // vastgeramd in de grond
         if (p.meleeCD > 0) p.meleeCD -= dt
         if (p.dashCD > 0) p.dashCD -= dt   // recharge-tijd voordat je weer kan dashen
         if (p.chargeCD > 0) p.chargeCD -= dt   // cooldown op super-laden via bal-contact

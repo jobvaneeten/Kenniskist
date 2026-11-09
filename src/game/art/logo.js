@@ -37,8 +37,6 @@ const LETTERS = {
 
 const WOORD = 'STERRENVEER'
 export const LOGO_SCHAAL = 3
-export const LOGO_BREEDTE = WOORD.length * (BREED + 1) * LOGO_SCHAAL
-export const LOGO_HOOGTE = (HOOG + 3) * LOGO_SCHAAL
 
 const cache = new Map()
 
@@ -138,12 +136,3 @@ export function tekenLogo(ctx, midX, y, tijd, gloed = UI.accent) {
   }
 }
 
-// Klein logo voor de wereldkaart en het pauzescherm.
-export function tekenLogoKlein(ctx, midX, y, gloed = UI.accent) {
-  const schaal = 1
-  const stap = (BREED + 1) * schaal
-  const startX = Math.round(midX - (WOORD.length * stap) / 2)
-  for (let i = 0; i < WOORD.length; i++) {
-    ctx.drawImage(bakLetter(WOORD[i], schaal, gloed), startX + i * stap - schaal, y)
-  }
-}

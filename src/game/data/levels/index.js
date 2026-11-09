@@ -116,10 +116,6 @@ export function muntenInLevel(level) {
   return n
 }
 
-export function muntenPerWereld(wereld) {
-  return levelsVanWereld(wereld).reduce((som, l) => som + muntenInLevel(l), 0)
-}
-
 // Stabiele vingerafdruk van de kaart. Verandert de kaart, dan verandert deze
 // hash — tools/validate-levels.js gebruikt dat om te waarschuwen dat opgeslagen
 // muntmaskers niet meer kloppen.

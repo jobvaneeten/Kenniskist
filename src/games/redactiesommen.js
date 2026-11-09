@@ -938,14 +938,6 @@ const splitsKeerV = () => {
            kaal: `${t} × ${b} = 10 × ${b} + ${e} × ${b} =`, antwoord: t * b,
            uitleg: `${t} × ${b} = 10 × ${b} + ${e} × ${b} = ${10 * b} + ${e * b} = ${pp(t * b)}` }
 }
-// S+: een rekenverhaal in stappen (personen × prijs per persoon + de bus).
-const schoolreisV = () => {
-  const k = rnd(38, 64), bg = rnd(4, 9), kaartje = rnd(9, 14), snack = rnd(2, 5), bus = rnd(60, 120) * 5
-  const n = k + bg, per = kaartje + snack, tot = n * per + bus
-  return { vraag: `Groep 7 en 8 van basisschool ${pick(SCHOLEN)} gaan op schoolreisje naar ${pick(UITJES)}. Er gaan ${k} kinderen en ${bg} begeleiders mee. De bus kost ${heleEuro(bus)} voor de hele dag. Iedereen betaalt ${heleEuro(kaartje)} entree en krijgt een snack van ${heleEuro(snack)}. Wat kost het schoolreisje?`,
-           kaal: `(${k} + ${bg}) × (${kaartje} + ${snack}) + ${bus} =`, antwoord: tot,
-           uitleg: `${k} + ${bg} = ${n} personen. Per persoon € ${kaartje} + € ${snack} = € ${per}. ${n} × € ${per} = € ${pp(n * per)}. Met de bus erbij: € ${pp(n * per)} + € ${bus} = € ${pp(tot)}.` }
-}
 
 // Doel 2: tweecijferig × tweecijferig, cijferend onder elkaar.
 const tweeKeerV = (bMin, oMin, oMax) => {
@@ -957,17 +949,6 @@ const tweeKeerV = (bMin, oMin, oMax) => {
   const boven = geenTiental(bMin, 99), onder = geenTiental(oMin, oMax)
   return { vraag: pick(KEER_KLEIN)(onder, boven), kaal: `${boven} × ${onder} =`, antwoord: boven * onder,
            figuur: cijferFiguur(boven, onder), uitleg: cijferUitleg(boven, onder) }
-}
-// S+: wat staat er onder de vlek? De hele uitwerking staat er, op één getal na.
-const vlekV = () => {
-  const boven = geenTiental(21, 99), onder = geenTiental(21, 59), e = onder % 10, t = onder - e
-  const vlek = rnd(0, 1)
-  const uitleg = vlek === 0
-    ? `${e} × ? = ${pp(e * boven)}, dus ? = ${pp(e * boven)} : ${e} = ${boven}. Controle: ${t} × ${boven} = ${pp(t * boven)}.`
-    : `De eerste regel is ${pp(e * boven)} = ${e} × ${boven}, de tweede ${pp(t * boven)} = ${t} × ${boven}. Onder de vlek staat ${onder}.`
-  return { vraag: `${naam()} heeft deze som cijferend uitgerekend, maar er is een vlek op het blad gekomen. Welk getal staat er onder de vlek?`,
-           kaal: 'Welk getal staat er onder de vlek?', antwoord: vlek === 0 ? boven : onder, uitleg,
-           figuur: { type: 'cijferend', vlek, rijen: [{ t: boven }, { t: onder, op: '×' }, { t: e * boven }, { t: t * boven, op: '+' }, { t: boven * onder }] } }
 }
 // FS: herhaling 6 × 346, cijferend of kolomsgewijs.
 const drieKeerV = () => {
@@ -1029,14 +1010,6 @@ const samenRondV = (plus) => {
            uitleg: stap1 && stap2
              ? `Aanvullen: ${A} + ${kf(stap1, dec)} = ${heel / 1000}, en ${heel / 1000} + ${stap2 / 1000} = ${T}. Samen ${kf(b, dec)} ${maat}.`
              : `${A} + ${kf(b, dec)} = ${T}, dus ${kf(b, dec)} ${maat}.` }
-}
-// S+: grootste en kleinste getal met 1 cijfer achter de komma, en het verschil.
-const grootsteKleinsteV = () => {
-  const c = []; while (c.length < 3) { const x = rnd(1, 9); if (!c.includes(x)) c.push(x) }
-  const [x, y, z] = [...c].sort((p, q) => p - q), G = z * 100 + y * 10 + x, K = x * 100 + y * 10 + z
-  return { vraag: `${naam()} krijgt drie kaartjes met de cijfers ${c.join(', ')}. Daarmee maak je het grootste en het kleinste getal met 1 cijfer achter de komma. Wat is het verschil tussen die twee getallen?`,
-           kaal: `Cijfers ${c.join(', ')}: grootste getal − kleinste getal (1 cijfer achter de komma) =`, antwoord: (G - K) / 10,
-           uitleg: `Grootste: ${kf(G * 100, 1)}. Kleinste: ${kf(K * 100, 1)}. ${kf(G * 100, 1)} − ${kf(K * 100, 1)} = ${kf((G - K) * 100, 1)}.` }
 }
 
 // Doel 4: schaal met schaallijntje en verhoudingstabel, in centimeters.
@@ -1167,29 +1140,6 @@ const cijferKeer3V = (soort) => {
            kaal: `${boven} × ${onder} =`, antwoord: boven * onder, figuur: cijferFiguur(boven, onder),
            uitleg: soort === 'kolom' ? kolomUitleg(boven, onder) : cijferStappen(boven, onder) }
 }
-const vlek3V = () => {
-  const boven = drieCijfers(), onder = rnd(3, 9), vlek = rnd(0, 1)
-  return { vraag: `${naam()} heeft deze som cijferend uitgerekend, maar er is een vlek op het blad gekomen. Welk getal staat er onder de vlek?`,
-           kaal: 'Welk getal staat er onder de vlek?', antwoord: vlek ? onder : boven,
-           figuur: { type: 'cijferend', vlek, rijen: [{ t: boven }, { t: onder, op: '×' }, { t: boven * onder }] },
-           uitleg: vlek ? `${pp(boven * onder)} : ${boven} = ${onder}.` : `${pp(boven * onder)} : ${onder} = ${boven}.` }
-}
-const grootsteSomV = () => {
-  const c = []; while (c.length < 4) { const x = rnd(2, 9); if (!c.includes(x)) c.push(x) }
-  const groot = Math.random() < 0.5, opties = []
-  for (const d of c) {
-    const rest = c.filter(x => x !== d)
-    for (const p of [[0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0]]) {
-      const b = rest[p[0]] * 100 + rest[p[1]] * 10 + rest[p[2]]
-      opties.push([b, d, b * d])
-    }
-  }
-  opties.sort((p, q) => (groot ? q[2] - p[2] : p[2] - q[2]))
-  const [b, d, uit] = opties[0], w = groot ? 'grootste' : 'kleinste'
-  return { vraag: `${naam()} krijgt kaartjes met de cijfers ${c.join(', ')}. Maak daarmee een keersom van drie cijfers keer één cijfer, met de ${w} uitkomst. Wat is die uitkomst?`,
-           kaal: `Cijfers ${c.join(', ')}: ${w} uitkomst van drie cijfers × één cijfer =`, antwoord: uit,
-           uitleg: `De ${w} som is ${b} × ${d} = ${pp(uit)}.` }
-}
 
 // Kommagetallen tot duizendsten vergelijken en ordenen. Alles in duizendsten,
 // met het aantal decimalen zoals het er staat (35,3 en 35,03). Het antwoord
@@ -1216,15 +1166,6 @@ const kommaGroterV = (plus) => {
   return { vraag: MAAT_ZIN[maat](naam(), kommaTekst(x), kommaTekst(y)), kaal: `Welk getal is groter: ${kommaTekst(x)} of ${kommaTekst(y)}?`,
            antwoord: kommaTekst(groot), opties: [kommaTekst(x), kommaTekst(y)],
            uitleg: `Maak ze even lang en vergelijk cijfer voor cijfer: ${kf(x[0], 3)} en ${kf(y[0], 3)}. ${kommaTekst(groot)} is groter.` }
-}
-const dichtstbijV = () => {
-  const t = rnd(0, 20) * 1000 + rnd(11, 99) * 10, dichtst = pick([1, 2]) * pick([-1, 1])
-  const afw = [dichtst, ...[5, 10, 20, 40, 100].sort(() => Math.random() - 0.5).slice(0, 4).map(v => v * pick([-1, 1]))]
-  const opties = afw.map(v => t + v).filter(v => v > 0).sort(() => Math.random() - 0.5)
-  const toon = v => kf(v, v % 10 ? 3 : 2), n = naam()
-  return { vraag: `${n} moet bij een spel zo dicht mogelijk bij ${kf(t, 2)} kg zand scheppen. De kinderen scheppen ${opties.map(v => toon(v) + ' kg').join(' – ')}. Welk gewicht ligt het dichtst bij ${kf(t, 2)} kg?`,
-           kaal: `Welk getal ligt het dichtst bij ${kf(t, 2)}? Kies uit: ${opties.map(toon).join(' – ')}`, antwoord: toon(t + dichtst),
-           uitleg: `${toon(t + dichtst)} scheelt maar ${kf(Math.abs(dichtst), 3)} met ${kf(t, 2)}. De andere getallen liggen verder weg.` }
 }
 const kommaOrdenenV = (plus) => {
   const W = plus ? rnd(0, 50) : rnd(0, 9), a = rnd(1, 9), b = rnd(1, 9), w = W * 1000
@@ -1373,14 +1314,6 @@ const miljoenLijnV = () => {
            uitleg: tussen
              ? `De pijl staat precies tussen ${pp(waarde - 50000)} en ${pp(waarde + 50000)}, dus op ${pp(waarde)}.`
              : `Elk streepje is 100.000 verder. De pijl staat op ${pp(waarde)}.` }
-}
-const sprongV = () => {
-  const n = pick([3, 3, 4]), sprong = rnd(8, 30) * 5000, start = rnd(2, Math.floor((1000000 - n * sprong) / 5000)) * 5000
-  const eind = start + n * sprong
-  return { vraag: `${naam()} maakt ${n} even grote sprongen op de getallenlijn, van ${pp(start)} naar ${pp(eind)}. Hoe groot is één sprong?`,
-           kaal: `${n} sprongen van ${pp(start)} naar ${pp(eind)}. Hoe groot is de sprong?`, antwoord: sprong,
-           figuur: { type: 'sprongen', start, eind, n },
-           uitleg: `${pp(eind)} − ${pp(start)} = ${pp(n * sprong)}. ${pp(n * sprong)} : ${n} = ${pp(sprong)}.` }
 }
 
 // Plus en min: HULP 45.300 + 3700 (300 + 700 = 1000) en 56.000 − 2800.
@@ -2998,14 +2931,6 @@ export function onderdelenVan(groep, route, mode = 'leerlijn') {
     items.push({ key: 'll-' + lijn.key, label: lijn.label, gens })
   }
   return items
-}
-
-// ── Lesdelen ───────────────────────────────────────────────────────────────
-// Een doel loopt over twee lessen en die doen vaak elk een ander stuk (zie D()
-// in maakBlokken). Deze twee helpers geven de lescheck toegang tot één zo'n
-// stuk, zonder dat de rest van het spel er iets van merkt.
-export function delenVanDoel(groep, route, key) {
-  return alleDoelen(groep, route).find(a => a.key === key)?.delen ?? []
 }
 
 // De generatoren van één lesdeel: één per soort som, in vaste volgorde. Twee

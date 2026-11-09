@@ -155,11 +155,6 @@ export function loadClothingDonor(scene, mesh, skeleton, type, item, onReady) {
   })
 }
 
-// Back-compat wrapper (shirt only)
-export function loadShirtDonor(scene, shirtMesh, skeleton, item, onReady) {
-  return loadClothingDonor(scene, shirtMesh, skeleton, 'shirt', item, onReady)
-}
-
 // ── Hoofd (pet) ───────────────────────────────────────────────────────
 // The pet is one GLB rigged to the Head bone of Poppetje's skeleton, in two
 // orientations (normaal / achterstevoren). There is no Poppetje head mesh, so

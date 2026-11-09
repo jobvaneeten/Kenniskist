@@ -243,7 +243,6 @@
   padding: var(--kk-s4) var(--kk-s4) var(--kk-s5);
   border-radius: var(--kk-r-lg);
 }
-.mode-emoji { font-size: 2.6rem; line-height: 1; }
 /* Icoon-tegel bovenaan een kaart (vak, map, status) */
 .mode-icoon {
   width: 52px; height: 52px;
@@ -296,7 +295,6 @@
 /* ── Begrijpend Lezen: thema-kaarten ─────── */
 .bl-thema-grid { flex-wrap: wrap; justify-content: center; }
 .bl-thema-card { --kk-accent: var(--bl-kleur, var(--kk-vak-lezen)); }
-.bl-thema-emoji { font-size: 2.6rem; line-height: 1; }
 .bl-wissel { background: none; border: none; padding: 0; color: inherit; font: inherit; text-decoration: underline; cursor: pointer; opacity: .85; }
 .bl-thema-go {
   margin-top: 4px;
@@ -305,15 +303,6 @@
 }
 
 /* ── Spellingblokken ─────────────────────── */
-.ta-section-title {
-  width: 100%;
-  max-width: 480px;
-  margin: 26px 0 12px;
-  font-size: 1rem;
-  font-weight: var(--kk-fw-black);
-  letter-spacing: 0.04em;
-  color: var(--kk-vak-spelling);
-}
 .blok-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));

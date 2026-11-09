@@ -287,11 +287,4 @@ export function tekenZeroG(ctx, x, y, w, h, tijd) {
 // De deurtegel zelf zit in art/tegels.js; dit is het lampje ernaast dat laat
 // zien of hij open of dicht is.
 
-export function tekenDeurLamp(ctx, x, y, open, tijd) {
-  ctx.fillStyle = '#161b26'
-  ctx.fillRect(x, y, 4, 4)
-  ctx.fillStyle = open ? '#3ef0ff' : (Math.sin(tijd * 6) > 0 ? '#ff3ec8' : '#7a1f3a')
-  ctx.fillRect(x + 1, y + 1, 2, 2)
-}
-
 export { lichter }

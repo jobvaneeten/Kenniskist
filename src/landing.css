@@ -168,8 +168,7 @@
 }
 
 /* ── Gedeelde kaartvorm ─────────────────────────────────── */
-.stat-card, .showcase-card, .portal-card, .landing-cta,
-.lp-vak, .lp-stap, .lp-spel, .lp-functie, .lp-vraag, .lp-contact {
+.stat-card, .showcase-card, .portal-card, .lp-vak, .lp-stap, .lp-spel, .lp-functie, .lp-vraag, .lp-contact {
   --kk-accent: var(--kk-primary-hi);
   background: rgba(14, 12, 34, 0.72);
   backdrop-filter: blur(10px);
@@ -436,16 +435,6 @@ button.showcase-card:hover { transform: translateY(-4px); border-color: color-mi
 .lp-mailknop:focus-visible, .lp-kopieer:focus-visible { outline: none; box-shadow: var(--kk-focus-ring); }
 
 /* ── Slot-CTA ───────────────────────────────────────────── */
-.landing-cta {
-  position: relative; z-index: 1;
-  width: 100%;
-  max-width: 720px;
-  text-align: center;
-  padding: var(--kk-s6) var(--kk-s5);
-  border-color: color-mix(in srgb, var(--kk-primary-hi) 40%, transparent);
-  box-shadow: var(--kk-shadow), 0 0 34px var(--kk-primary-glow);
-}
-.landing-cta-title { font: var(--kk-fw-bold) var(--kk-fs-xl)/1.2 var(--kk-head); margin: 0 0 var(--kk-s4); }
 
 /* ── Footer ─────────────────────────────────────────────── */
 .landing-footer {

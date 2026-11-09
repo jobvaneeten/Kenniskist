@@ -6,7 +6,7 @@
 
 import { Lichaam, beweeg, BASIS } from '../engine/physics.js'
 import { TEGEL, isVast } from '../engine/tilemap.js'
-import { slijmBlad, spoorBlad, kwalBlad, keverBlad, SLIJM, SPOOR, KWAL, KEVER } from '../art/objecten.js'
+import { slijmBlad, spoorBlad, kwalBlad, keverBlad } from '../art/objecten.js'
 import { pinguinBlad, ijskegelBlad, kanonBlad, sneeuwbalBlad, vrieskwalBlad } from '../art/objecten2.js'
 import { spetterBlad, vleermuisBlad, krabBlad, asvliegBlad } from '../art/objecten3.js'
 import { droneBlad, torretBlad, kortsluiterBlad, patrouilleBlad } from '../art/objecten4.js'
@@ -1052,4 +1052,3 @@ export function maakVijand(soort, x, y, palet, opties) {
   return new Klasse(x, y, palet, opties)
 }
 
-export const AFMETINGEN = { SLIJM, SPOOR, KWAL, KEVER }

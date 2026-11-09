@@ -186,8 +186,6 @@ export function tekstBreedte(tekst, schaal = 1) {
   return Math.max(0, w - LETTER_SPATIE * schaal)
 }
 
-export const tekstHoogte = (schaal = 1) => HOOGTE * schaal
-
 // x/y is linksboven. Geeft de eindbreedte terug zodat aanroepers kunnen
 // doorschrijven zonder opnieuw te meten.
 export function tekst(ctx, tekst_, x, y, kleur = '#ffffff', schaal = 1) {

@@ -304,10 +304,6 @@ export function toolLabel(toolId) {
   return TOOL_BY_ID[toolId]?.label ?? toolId
 }
 
-export function toolVak(toolId) {
-  return TOOL_BY_ID[toolId]?.vak ?? null
-}
-
 // Voor de ToolKiezer in het leerkrachtenportaal: standaard filteren op de
 // groepen van de klas. Lege lijst (klas.groepen = geen beperking, zie
 // migratie 0006) betekent: alles tonen.

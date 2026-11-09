@@ -103,10 +103,6 @@
 .rs-doel-badge.herh, .rs-doel-herh { --kk-accent: var(--kk-cyan); }
 .rs-doel-herh { border-style: dashed; }
 .rs-doel-herh.aan { border-style: solid; }
-.rs-blok-herh { --kk-accent: var(--kk-cyan); }
-.rs-blok-herh .rs-blok-kop { border-style: dashed; }
-.rs-blok-herh .rs-blok-kop.aan { border-style: solid; }
-.rs-blok-herh .rs-blok-naam { color: var(--kk-cyan); }
 
 /* ── Tabs + weergave-schakelaar ── */
 .rs-mode-toggle { display: flex; flex-wrap: wrap; gap: var(--kk-s2); justify-content: center; width: 100%; }
@@ -131,7 +127,6 @@
 
 /* ── Oefenscherm ── */
 .rs-oefen-top { display: flex; align-items: center; justify-content: flex-end; gap: var(--kk-s3); width: 100%; min-height: var(--kk-tap); }
-.rs-oefen-titel { flex: 1; text-align: center; font-size: var(--kk-fs-sm); font-weight: var(--kk-fw-bold); color: var(--kk-text-soft); }
 .rs-verdiend { color: var(--kk-text-soft); font-weight: var(--kk-fw-bold); font-size: var(--kk-fs-sm); white-space: nowrap; }
 .rs-screen .kk-voortgang { --kk-accent: var(--kk-vak-rekenen); }
 
@@ -220,7 +215,6 @@
 .rs-jouw b { color: var(--kk-text); }
 
 /* ── Overzicht ── */
-.rs-ov-leeg { color: var(--kk-text-soft); font-size: 0.95rem; text-align: center; max-width: 360px; }
 .rs-ov-tip { font-size: var(--kk-fs-sm); color: var(--kk-text-soft); text-align: center; margin: 0; }
 .rs-ov-groepen { display: flex; flex-direction: column; gap: 10px; width: 100%; }
 .rs-ov-groep { border: 1px solid var(--kk-border); border-radius: var(--kk-r-md); overflow: hidden; background: rgba(14, 12, 34, 0.72); }

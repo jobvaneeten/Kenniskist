@@ -87,8 +87,6 @@ const werelden = [
   },
 ]
 
-export const PALETTEN = Object.fromEntries(werelden.map((w) => [w.id, w]))
-
 export function paletVoorWereld(nummer) {
   return werelden[nummer - 1] ?? werelden[0]
 }

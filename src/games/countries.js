@@ -84,7 +84,6 @@ export const CLASS_COUNTRIES = [
   { key: 'vinn',     name: 'Vinn',         flag: '🚀',  c1: '#1D6FA4', c2: '#FF8200', c3: '#1a1a1a', pattern: 'h3', diff: 3, abbr: 'VN' },
   { key: 'suze',     name: 'Suze',         flag: '☀️',  c1: '#E2001A', c2: '#FFFFFF', c3: '#1D6FA4', pattern: 'v3', diff: 3, abbr: 'SU' },
 ]
-export const CLASS_KEYS = CLASS_COUNTRIES.map(c => c.key)
 
 // Bewust NIET in COUNTRIES gemengd: Groep 7 is een apart menu (zie HeadSoccer.jsx),
 // geen extra vergrendelde vlaggen tussen de echte landen. getCountry kent ze wel

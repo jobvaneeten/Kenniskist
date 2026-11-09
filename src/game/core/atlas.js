@@ -71,23 +71,6 @@ export class Blad {
   }
 }
 
-// frames: array van pixeldata-blokken (elk een array strings van gelijke lengte)
-export function bakFrames(frames, palet) {
-  const h = frames[0].length
-  const w = frames[0][0].length
-  const blad = new Blad(w, h, frames.length)
-  frames.forEach((rijen, i) => tekenPixels(blad.ctx, rijen, palet, i * w, 0))
-  return blad
-}
-
-// Bakt een enkel plaatje dat door een tekenfunctie wordt gevuld (tiles,
-// achtergronden, logo). Handig waar pixeldata-strings onhandig zouden worden.
-export function bakGetekend(w, h, tekenFn) {
-  const { canvas, ctx } = nieuwCanvas(w, h)
-  tekenFn(ctx, w, h)
-  return canvas
-}
-
 // Zet een lijst losse canvases naast elkaar in één blad, zodat er per animatie
 // maar één textuur is. Alle bronnen moeten even groot zijn.
 export function bundel(canvases) {

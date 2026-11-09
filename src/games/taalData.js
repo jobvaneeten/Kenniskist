@@ -2677,10 +2677,6 @@ HULP_ZINNEN.forEach(([zin, hulp, vd], i) => {
     uitleg_ws: `"${hoofd(woord)}" is een voornaamwoord: ${vnw === 'bez' ? 'het zegt van wie iets is' : 'het staat in de plaats van een naam'}.` })
 })
 
-export const FIJNE_SOORTEN = {
-  hulpwerkwoord: 'hulpwerkwoord', vd: 'voltooid deelwoord',
-  pers: 'persoonlijk voornaamwoord', bez: 'bezittelijk voornaamwoord',
-}
 // Welk antwoord bij deze vraag goed is als deze woordsoorten gekozen zijn, of
 // null als de vraag er niet bij hoort. Een fijnere soort gaat voor: staat
 // "hulpwerkwoord" aan, dan is "heeft" een hulpwerkwoord en geen werkwoord.
