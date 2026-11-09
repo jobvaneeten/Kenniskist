@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import './voorlees-knop.css'
 
-// Voorleesknop voor de oefeningen (stem van de browser of iPad). Verschijnt
+// Voorleesknop voor de oefeningen (stem van de browser of iPad), alleen bij
+// leerlingen voor wie de leerkracht voorlezen heeft aangezet. Verschijnt
 // vanzelf zodra er een opgave in beeld is en leest de vraag, de zin en de
 // uitleg voor. Niet bij begrijpend lezen (daar oefen je juist het lezen) en
 // niet bij het dictee (dat heeft eigen opnames).
@@ -48,6 +49,12 @@ function uitspraak(t) {
     .replace(/\s+/g, ' ').trim()
 }
 
+// Alleen als de leerkracht voorlezen voor deze leerling heeft aangezet
+// (profielen.voorlezen, klasinstellingen). Niet ingelogd: geen knop.
+function magVoorlezen() {
+  try { return !!JSON.parse(localStorage.getItem('kk_profiel_cache') || 'null')?.voorlezen } catch { return false }
+}
+
 let stemNl = null
 function kiesStem() {
   const stemmen = window.speechSynthesis?.getVoices() || []
@@ -64,7 +71,7 @@ export default function VoorleesKnop() {
     if (!kan) return
     kiesStem(); speechSynthesis.addEventListener?.('voiceschanged', kiesStem)
     const tik = setInterval(() => {
-      const t = location.pathname === '/leerlingportaal' ? tekstInBeeld() : ''
+      const t = location.pathname === '/leerlingportaal' && magVoorlezen() ? tekstInBeeld() : ''
       setToon(!!t)
       // nieuwe opgave in beeld: stoppen met voorlezen van de vorige
       if (laatste.current && t !== laatste.current && speechSynthesis.speaking) { speechSynthesis.cancel(); setBezig(false) }

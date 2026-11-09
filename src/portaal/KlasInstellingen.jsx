@@ -97,7 +97,7 @@ function Voorlezen({ leerlingen, onGewijzigd }) {
     <div className="portaal-kaart">
       <h2>Voorlezen ({aan} van de {leerlingen.length})</h2>
       <p className="portaal-zacht">
-        Deze leerlingen krijgen bij Begrijpend lezen een luidsprekerknop bij de tekst en de vraag. Ze mogen
+        Deze leerlingen krijgen bij Begrijpend lezen een luidsprekerknop bij de tekst en de vraag, en bij de andere oefeningen de knop Lees voor. Ze mogen
         zichzelf alles laten voorlezen, ook tijdens een weektaak-opdracht.
       </p>
       {leerlingen.length === 0 && <p className="portaal-leeg">Deze klas is leeg.</p>}

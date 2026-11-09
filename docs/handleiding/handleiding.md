@@ -125,7 +125,7 @@ Klik op het **tandwiel** op een klaskaart. Je ziet dan van boven naar beneden:
 - **Leerlingen doorschuiven:** aan het eind van het schooljaar. Maak eerst de nieuwe klas aan, kies die hier en klik op **Doorschuiven**. Het gemaakte werk en de munten van de leerlingen gaan gewoon mee; alleen de klas verandert.
 - **Leerkrachten van deze klas:** kies een leerkracht en klik op **Koppelen**. Alleen gekoppelde leerkrachten zien de klas, de leerlingen en hun resultaten. Met het rode kruisje haal je een koppeling weg.
 - **Gemaakt werk wissen:** wist de opgaven, fouten en sessies van de hele klas, bijvoorbeeld aan het begin van een nieuw blok. Weektaken, taken en doelen blijven staan.
-- **Voorlezen:** vink de leerlingen aan die bij begrijpend lezen een luidsprekerknop krijgen, zodat ze de tekst en de vragen kunnen laten voorlezen.
+- **Voorlezen:** vink de leerlingen aan die mogen laten voorlezen. Ze krijgen bij begrijpend lezen een luidsprekerknop bij de tekst en de vragen, en bij de andere oefeningen de knop **Lees voor**.
 - **Leerlingen:** met het rode kruisje verwijder je een leerling.
 - **Klas verwijderen:** kan alleen als er geen leerlingen meer in de klas zitten. Schuif ze dus eerst door.
 
@@ -391,7 +391,7 @@ Na elk antwoord ziet de leerling meteen of het goed was, en waarom. Het goede an
 
 > **Goed om te weten:** bij zinsdelen moet een leerling per stap minstens 2 seconden kijken voordat hij kan nakijken. Zo wordt er minder gegokt.
 
-Rechtsonder staat bij een opgave de knop **Lees voor**. Die leest de vraag, de zin en de uitleg voor met de stem van de iPad of computer. Dat helpt jonge leerlingen en leerlingen met dyslexie. Bij begrijpend lezen en het dictee staat de knop er niet: daar oefen je juist het lezen, en het dictee heeft eigen opnames.
+Heeft de leerkracht voorlezen voor een leerling aangezet (bij de instellingen van de klas), dan staat bij een opgave rechtsonder de knop **Lees voor**. Die leest de vraag, de zin en de uitleg voor met de stem van de iPad of computer. Dat helpt jonge leerlingen en leerlingen met dyslexie. Bij begrijpend lezen en het dictee staat de knop er niet: daar oefen je juist het lezen, en het dictee heeft eigen opnames.
 
 ### 12.4 Lezen met een timer
 
