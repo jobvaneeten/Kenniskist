@@ -207,7 +207,7 @@ export default function App({ gast = false }) {
   const [htmlPagina, setHtmlPagina] = useState(null) // pagina achter een code (HTML_CODES)
   // Staat er een lescheck klaar waarvan nog een les open is? Wordt herhaald
   // opgehaald: de juf zet hem klaar terwijl de kinderen al op dit scherm zitten.
-  const { open: openLescheck } = useOpenLescheck(profiel)
+  const { open: openLescheck, herhalen } = useOpenLescheck(profiel)
   // Welk mapje er open staat, apart bewaard: als het kind zijn laatste les
   // afmaakt verdwijnt `openLescheck` bij de eerstvolgende ronde, en dan zou
   // het eindscherm onder zijn handen wegklappen naar het menu.
@@ -476,7 +476,7 @@ export default function App({ gast = false }) {
           <span className="zijkaart-emoji"><Icoon naam="ster" /></span>
           <span className="zijkaart-titel">Speciaal voor mij</span>
           <span className="zijkaart-desc">Taken en doelen die je juf of meester alleen voor jou klaarzet</span>
-          <span className="zijkaart-chips"><span className="kk-chip">Taken</span><span className="kk-chip">Doelen</span></span>
+          <span className="zijkaart-chips"><span className="kk-chip">Taken</span><span className="kk-chip">Doelen</span>{herhalen > 0 && <span className="kk-chip kk-chip-herhaal">Herhalen ({herhalen})</span>}</span>
           <span className="zijkaart-pijl"><Icoon naam="verder" /></span>
         </button>
       )}

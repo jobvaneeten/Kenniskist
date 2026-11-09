@@ -11,3 +11,10 @@ export function markeerGevierd(opdrachtIds) {
   opdrachtIds.forEach(id => set.add(id))
   try { localStorage.setItem(GEVIERD, JSON.stringify([...set])) } catch { /* privé-venster */ }
 }
+// Doel weggezakt bij een herhaling: als hij opnieuw behaald wordt, mag het
+// feest er weer bij.
+export function vergeetGevierd(opdrachtId) {
+  const set = leesGevierd()
+  if (!set.delete(opdrachtId)) return
+  try { localStorage.setItem(GEVIERD, JSON.stringify([...set])) } catch { /* privé-venster */ }
+}

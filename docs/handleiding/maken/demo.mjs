@@ -52,6 +52,7 @@ function filter(rijen, params) {
 }
 export const onbekend = new Set()
 const OPSLAG = new Map()
+const HERHALINGEN = new Map()
 let teller = 100
 async function beantwoord(route, wieRef) {
   const wie = wieRef.id
@@ -68,6 +69,14 @@ async function beantwoord(route, wieRef) {
   if (pad.startsWith('/storage/v1/object/sign/')) { const b = JSON.parse(req.postData() || '{}'); return json((b.paths ?? []).map(x => ({ path: x, signedURL: '/object/nep/' + x, error: null }))) }
   if (pad.startsWith('/storage/v1/object/nep/')) { const f = OPSLAG.get(decodeURIComponent(pad.slice('/storage/v1/object/nep/'.length))); return f ? route.fulfill({ status: 200, contentType: f.type, body: f.data, headers: { 'access-control-allow-origin': '*' } }) : route.fulfill({ status: 404 }) }
   if (pad.startsWith('/storage/v1/object/') && m === 'POST') { const naam = decodeURIComponent(pad.slice('/storage/v1/object/'.length)).split('/').slice(1).join('/'); { const buf = req.postDataBuffer() || Buffer.alloc(0), a = buf.indexOf(Buffer.from([0xff, 0xd8, 0xff])), z = buf.lastIndexOf(Buffer.from([0xff, 0xd9])); OPSLAG.set(naam, { data: a >= 0 && z > a ? buf.subarray(a, z + 2) : buf, type: 'image/jpeg' }) }; return json({ Key: naam, Id: naam }) }
+  // herhaling van een doel (0024): telt de resultaten die na de start binnenkomen
+  if (pad === '/rest/v1/rpc/herhaling_start') { const b = JSON.parse(req.postData() || '{}'); const id = 'H' + (++teller); HERHALINGEN.set(id, { opdracht: b.p_opdracht, vanaf: (TABELLEN.resultaten ?? []).length }); return json(id) }
+  if (pad === '/rest/v1/rpc/herhaling_stand') {
+    const b = JSON.parse(req.postData() || '{}'), h = HERHALINGEN.get(b.p_id)
+    let goed = 0, aantal = 0
+    for (const r of (TABELLEN.resultaten ?? []).slice(h.vanaf).filter(r => r.opdracht_id === h.opdracht)) { if (aantal >= 5) break; goed += r.score; aantal += r.max_score }
+    return json(aantal < 5 ? { klaar: false, goed, aantal, ronde: 1 } : { klaar: true, goed, aantal, ronde: 1, geslaagd: goed >= 0.8 * aantal })
+  }
   if (pad.startsWith('/rest/v1/rpc/')) return json(null)
   if (pad.startsWith('/rest/v1/')) {
     const tabel = pad.slice('/rest/v1/'.length)

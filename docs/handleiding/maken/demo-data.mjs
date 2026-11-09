@@ -58,6 +58,15 @@ export const DOELSTAND = TOEWIJZINGEN.filter(t => ['O9', 'O10', 'O11'].includes(
   const lg = Math.min(goed, Math.min(20, gemaakt)), gehaald = gemaakt >= 20 && lg >= 16
   return { opdracht_id: t.opdracht_id, leerling_id: t.leerling_id, gemaakt, laatste_goed: lg, laatste_aantal: Math.min(20, gemaakt), gehaald, gehaald_op: gehaald ? dag(-2) : null }
 })
+// Fleur (P71): tafels-doel 16 dagen geleden behaald, dus nu herhalen (migratie 0024).
+Object.assign(DOELSTAND.find(d => d.opdracht_id === 'O10' && d.leerling_id === 'P71'), { gehaald_op: dag(-16) })
+const DAG = 864e5
+export const HERHALING = DOELSTAND.map(d => ({
+  opdracht_id: d.opdracht_id, leerling_id: d.leerling_id, gehaald: d.gehaald, gehaald_op: d.gehaald_op, rondes_ok: 0,
+  volgende_op: d.gehaald ? new Date(new Date(d.gehaald_op).getTime() + 14 * DAG).toISOString() : null, vast: false,
+  // Fleur zakte bij de herhaling van ng/nk door: dat doel staat weer open
+  mislukt_op: d.opdracht_id === 'O11' && d.leerling_id === 'P71' ? dag(-1) : null,
+}))
 export const DOELWERK = TOEWIJZINGEN.filter(t => t.opdracht_id === 'O5').map((t, i) => ({ opdracht_id: 'O5', leerling_id: t.leerling_id, weektaak_id: 'W45', minuten: 20, som_ms: [6, 20, 14, 0, 11, 20, 3, 17, 9, 20][i] * 60000, afgerond: false }))
 
 // resultaten (voor leerlingdetail en weekoverzicht)
@@ -82,6 +91,6 @@ export const TABELLEN = {
   scholen: [SCHOOL], klassen: KLASSEN, profielen: PROFIELEN, klas_leerkrachten: KLAS_LEERKRACHTEN,
   weektaken: WEEKTAKEN.map(w => ({ ...w, opdrachten: OPDRACHTEN.filter(o => o.weektaak_id === w.id).map(o => ({ id: o.id, persoonlijk: o.config.persoonlijk ?? null })) })),
   opdrachten: OPDRACHTEN.map(o => ({ ...o, school_id: 'S1', weektaken: WEEKTAKEN.find(w => w.id === o.weektaak_id) })),
-  toewijzingen: TOEWIJZINGEN, weektaak_voortgang: VOORTGANG, doel_voortgang: DOELSTAND, doelwerk_voortgang: DOELWERK,
+  toewijzingen: TOEWIJZINGEN, weektaak_voortgang: VOORTGANG, doel_voortgang: DOELSTAND, doelwerk_voortgang: DOELWERK, doel_herhaling: HERHALING,
   resultaten: RESULTATEN, eigen_oefeningen: EIGEN, leesstanden: LEESSTANDEN, game_voortgang: [],
 }

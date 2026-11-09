@@ -3,12 +3,21 @@ import { supabase } from '../lib/supabase.js'
 import { doelStandVan } from '../lib/weektaak.js'
 import { toolLabel } from '../lib/tools.js'
 import { DoelCel } from './WeektaakVoortgang.jsx'
+import { herhalingVan } from '../lib/herhaling.js'
 
 // Bij één leerling (LeerlingDetail): welke doelen er voor hem klaarstaan en
 // welke hij al behaald heeft. Een doel is een "weektaak" met config
 // persoonlijk = 'doel' (zie lib/weektaak.js); behaald als al zijn opdrachten
 // behaald zijn (doel_voortgang, 0016/0018).
 const datum = (d) => (d ? new Date(d).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long' }) : '')
+
+// Behaald doel: wanneer de volgende herhaling is, of dat hij vastzit.
+function herhaalCel(h) {
+  if (!h) return null
+  if (h.vast) return <span className="portaal-score-goed">Zit vast (2 keer goed herhaald)</span>
+  if (h.nu) return <strong>Ronde {h.ronde} staat klaar</strong>
+  return h.volgendeOp ? <span className="portaal-zacht">Ronde {h.ronde} op {datum(h.volgendeOp)}</span> : null
+}
 
 export default function LeerlingDoelen({ leerlingId, teller }) {
   const [doelen, setDoelen] = useState(null)
@@ -21,18 +30,24 @@ export default function LeerlingDoelen({ leerlingId, teller }) {
         .eq('leerling_id', leerlingId)
       const rijen = (tw ?? []).filter(t => t.status !== 'vrijgesteld' && t.opdrachten?.config?.persoonlijk === 'doel')
       const ids = rijen.map(t => t.opdracht_id)
-      const { data: dv } = ids.length
-        ? await supabase.from('doel_voortgang').select('opdracht_id, gemaakt, laatste_goed, laatste_aantal, gehaald, gehaald_op')
-          .eq('leerling_id', leerlingId).in('opdracht_id', ids)
-        : { data: [] }
+      const [{ data: dv }, { data: hh }] = ids.length
+        ? await Promise.all([
+          supabase.from('doel_voortgang').select('opdracht_id, gemaakt, laatste_goed, laatste_aantal, gehaald, gehaald_op')
+            .eq('leerling_id', leerlingId).in('opdracht_id', ids),
+          // herhaling na 2 en 6 weken (migratie 0024)
+          supabase.from('doel_herhaling').select('opdracht_id, gehaald_op, rondes_ok, volgende_op, vast, mislukt_op')
+            .eq('leerling_id', leerlingId).in('opdracht_id', ids),
+        ])
+        : [{ data: [] }, { data: [] }]
       if (!actief) return
       const stand = new Map((dv ?? []).map(d => [d.opdracht_id, d]))
+      const herh = new Map((hh ?? []).map(h => [h.opdracht_id, herhalingVan(h)]))
       const perDoel = new Map()
       for (const t of rijen) {
         const wt = t.opdrachten.weektaken ?? { id: t.opdrachten.weektaak_id, titel: '' }
         if (!perDoel.has(wt.id)) perDoel.set(wt.id, { id: wt.id, titel: wt.titel, sinds: wt.start_op, opdrachten: [] })
         const d = stand.get(t.opdracht_id)
-        perDoel.get(wt.id).opdrachten.push({ id: t.opdracht_id, tool: toolLabel(t.opdrachten.tool_id), stand: doelStandVan(d), gehaaldOp: d?.gehaald_op })
+        perDoel.get(wt.id).opdrachten.push({ id: t.opdracht_id, tool: toolLabel(t.opdrachten.tool_id), stand: doelStandVan(d), gehaaldOp: d?.gehaald_op, herhaling: herh.get(t.opdracht_id) })
       }
       const lijst = [...perDoel.values()].map(d => ({
         ...d,
@@ -51,13 +66,17 @@ export default function LeerlingDoelen({ leerlingId, teller }) {
 
   const tabel = (rijen, isBehaald) => (
     <table className="portaal-tabel">
-      <thead><tr><th>Doel</th><th>Oefening</th><th>{isBehaald ? 'Behaald op' : 'Stand'}</th><th>Klaargezet</th></tr></thead>
+      <thead><tr><th>Doel</th><th>Oefening</th><th>{isBehaald ? 'Behaald op' : 'Stand'}</th>{isBehaald && <th>Herhaling</th>}<th>Klaargezet</th></tr></thead>
       <tbody>
         {rijen.flatMap(d => d.opdrachten.map((o, i) => (
           <tr key={o.id}>
             {i === 0 && <td rowSpan={d.opdrachten.length}><strong>{d.titel}</strong></td>}
             <td>{o.tool}</td>
-            <td>{isBehaald ? <span className="portaal-score-goed"><strong>{datum(o.gehaaldOp) || 'Gehaald'}</strong></span> : <DoelCel stand={o.stand} />}</td>
+            <td>
+              {isBehaald ? <span className="portaal-score-goed"><strong>{datum(o.gehaaldOp) || 'Gehaald'}</strong></span> : <DoelCel stand={o.stand} />}
+              {!isBehaald && o.herhaling?.misluktOp && <div className="portaal-zacht">Weggezakt bij herhaling op {datum(o.herhaling.misluktOp)}</div>}
+            </td>
+            {isBehaald && <td>{herhaalCel(o.herhaling)}</td>}
             {i === 0 && <td rowSpan={d.opdrachten.length} className="portaal-zacht">{datum(d.sinds)}</td>}
           </tr>
         )))}

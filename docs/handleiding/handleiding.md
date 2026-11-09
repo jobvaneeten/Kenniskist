@@ -265,6 +265,8 @@ Ga naar het tabblad **Taken** en klik op **+ Nieuwe taak**. Je vult hetzelfde in
 
 Een **doel** is een leerdoel, bijvoorbeeld "Komma bij opsommingen" of "Tafels van 6, 7 en 8". Een doel heeft geen vast aantal opgaven. Het is **behaald als de leerling van zijn laatste 20 opgaven er minstens 80% goed heeft**. Een behaald doel blijft behaald, ook als het daarna een keer misgaat. Het doel blijft staan tot jij het verwijdert.
 
+**Herhalen na 2 en 6 weken.** Een behaald doel komt vanzelf terug als korte herhaling van 5 opgaven: twee weken na het behalen, en na een geslaagde herhaling nog een keer vier weken later. Heeft de leerling er 4 of 5 goed, dan blijft het doel behaald. Na twee geslaagde herhalingen zit het doel vast. Gaat het minder goed, dan staat het doel vanzelf weer open en oefent de leerling opnieuw tot 80% van de laatste 20. Zo zie je of de stof ook op de lange termijn blijft hangen.
+
 Op het tabblad **Doelen** zie je alle doelen van de klas, voor wie ze zijn en hoeveel leerlingen het doel al behaald hebben.
 
 ![De doelen van de klas](plaatjes/40-klas-doelen.jpg)
@@ -283,6 +285,8 @@ Klik op een doel om per leerling de stand te zien:
 - **6/20 gemaakt:** de leerling heeft nog geen 20 opgaven gemaakt.
 - **90% laatste 20 · nodig 80%:** van de laatste 20 opgaven was 90% goed.
 - **Gehaald:** het doel is behaald.
+
+Bij een leerling (tabblad **Leerlingen**, klik op de naam) zie je bij de behaalde doelen wanneer de volgende herhaling is, of dat het doel vastzit. Bij een doel dat weer openstaat, staat op welke dag het bij de herhaling wegzakte.
 
 ![De stand van een doel](plaatjes/43-doel-voortgang.jpg)
 
@@ -425,6 +429,8 @@ Voor het oefenen ziet de leerling eerst kort hoe het werkt, met een voorbeeld en
 
 Tijdens het oefenen staat linksonder de **doelbalk**. Eerst telt hij tot 20 opgaven; daarna laat hij het percentage goed van de laatste 20 zien. Bij 80% verschijnt het scherm "Doel behaald!".
 
+Is het tijd om een behaald doel te herhalen, dan staat er bij **Speciaal voor mij** een seintje en staat bovenaan de doelen het kopje **Weet je het nog?**. De leerling maakt dan 5 opgaven, zonder uitleg vooraf, en ziet daarna of het doel behaald blijft. De herhaling staat ook bij **Werk aan je doelen**.
+
 Maakt de leerling drie fouten achter elkaar, dan verschijnt eerst **Even uitleg** met de regels en een voorbeeld. Pas na een paar seconden lezen kan de leerling verder.
 
 ![Oefenen aan een doel, met de doelbalk linksonder](plaatjes/101-doel-oefenen.jpg)
@@ -566,7 +572,7 @@ Kijk of de startdatum al begonnen is en de einddatum nog niet voorbij is, en of 
 Nee. Het gemaakte werk, de munten, de leestimer en de spelletjes worden bewaard bij het account van de leerling. Laat leerlingen op een gedeeld apparaat wel altijd uitloggen.
 
 **Kan een leerling gokken?**
-Kenniskist laat zien hoeveel er goed is, niet alleen hoeveel er gemaakt is. Bij doelen telt alleen 80% goed van de laatste 20 opgaven. Bij zinsdelen moet een leerling per stap even kijken voordat hij kan nakijken. En na drie fouten op rij krijgt de leerling eerst uitleg.
+Kenniskist laat zien hoeveel er goed is, niet alleen hoeveel er gemaakt is. Bij doelen telt alleen 80% goed van de laatste 20 opgaven, en een behaald doel komt na 2 en 6 weken terug als herhaling. Bij zinsdelen moet een leerling per stap even kijken voordat hij kan nakijken. En na drie fouten op rij krijgt de leerling eerst uitleg.
 
 **Kunnen spelletjes uit?**
 Ja. Op het tabblad **Leerlingen** stel je per klas in hoe vaak er een spelletje komt, of zet je ze helemaal uit.

@@ -1,6 +1,7 @@
 import { supabase } from './supabase.js'
 import { vanServer } from './leestimerOpslag.js'
 import { isDoelwerk, tijdStandVan } from './doelwerk.js'
+import { herhalingVan } from './herhaling.js'
 
 // kk_actieve_opdracht: gelezen door public/kenniskist-login.js om een
 // resultaat aan de juiste opdracht te hangen (toolId moet matchen — zie
@@ -69,7 +70,8 @@ export async function haalMijnWeektaak(profielId, klasId) {
   // die de leerkracht heeft vrijgesteld ("hoeft niet") hoort niet meer in het
   // lijstje van de leerling te staan.
   const doelwerkIds = opdrachten.filter(isDoelwerk).map(o => o.id)
-  const [{ data: voortgang }, { data: toewijzingen }, { data: leesstanden }, { data: doelen }, { data: doelwerk }] = await Promise.all([
+  const doelIds = opdrachten.filter(o => soortVan(o) === 'doel').map(o => o.id)
+  const [{ data: voortgang }, { data: toewijzingen }, { data: leesstanden }, { data: doelen }, { data: doelwerk }, { data: herhalingen }] = await Promise.all([
     supabase.from('weektaak_voortgang').select('opdracht_id, doel_aantal, som_score, som_max, pogingen, herkansingen, afgerond')
       .eq('leerling_id', profielId).in('opdracht_id', opdrachtIds),
     supabase.from('toewijzingen').select('opdracht_id, status')
@@ -85,6 +87,11 @@ export async function haalMijnWeektaak(profielId, klasId) {
       ? supabase.from('doelwerk_voortgang').select('opdracht_id, minuten, som_ms, afgerond')
         .eq('leerling_id', profielId).in('opdracht_id', doelwerkIds)
       : Promise.resolve({ data: [] }),
+    // Herhalen van behaalde doelen (migratie 0024).
+    doelIds.length
+      ? supabase.from('doel_herhaling').select('opdracht_id, gehaald_op, rondes_ok, volgende_op, vast, mislukt_op')
+        .eq('leerling_id', profielId).in('opdracht_id', doelIds)
+      : Promise.resolve({ data: [] }),
   ])
 
   const weektaakBij = new Map(weektaken.map(w => [w.id, w]))
@@ -92,6 +99,7 @@ export async function haalMijnWeektaak(profielId, klasId) {
   const leesstandBij = new Map((leesstanden ?? []).map(l => [l.opdracht_id, vanServer(l)]))
   const doelBij = new Map((doelen ?? []).map(d => [d.opdracht_id, d]))
   const doelwerkBij = new Map((doelwerk ?? []).map(d => [d.opdracht_id, d]))
+  const herhalingBij = new Map((herhalingen ?? []).map(h => [h.opdracht_id, h]))
   const vrijgesteld = new Set((toewijzingen ?? []).filter(t => t.status === 'vrijgesteld').map(t => t.opdracht_id))
 
   return opdrachten
@@ -123,6 +131,7 @@ export async function haalMijnWeektaak(profielId, klasId) {
           : soortVan(o) === 'doel' ? !!doelBij.get(o.id)?.gehaald : v.afgerond || (doel != null && v.som_max >= doel),
         tijdStand,
         doelStand: soortVan(o) === 'doel' ? doelStandVan(doelBij.get(o.id)) : null,
+        herhaling: soortVan(o) === 'doel' ? herhalingVan(herhalingBij.get(o.id)) : null,
       }
     })
 }

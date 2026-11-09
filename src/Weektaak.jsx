@@ -3,7 +3,9 @@ import { useSessie } from './lib/sessie.jsx'
 import { haalMijnWeektaak, zetActieveOpdracht, wisActieveOpdracht, soortVan, doelStandVan, DOEL_MIN, DOEL_PCT } from './lib/weektaak.js'
 import DoelBalk from './DoelBalk.jsx'
 import DoelFeest from './DoelFeest.jsx'
-import { leesGevierd, markeerGevierd } from './lib/gevierd.js'
+import { leesGevierd, markeerGevierd, vergeetGevierd } from './lib/gevierd.js'
+import { startHerhaling, herhalingStand, korteDag } from './lib/herhaling.js'
+import { HerhaalKaarten, HerhalingIntro, HerhalingPil, HerhalingKlaar } from './Herhaling.jsx'
 import { supabase } from './lib/supabase.js'
 import { uitlegVoor } from './lib/doelUitleg.js'
 import { toolLabel, TOOL_BY_ID, VAKKEN } from './lib/tools.js'
@@ -124,6 +126,8 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
   const [doelNu, setDoelNu] = useState(null) // stand van het doel dat nu geoefend wordt, na elk antwoord bijgewerkt
   const [doelwerkId, setDoelwerkId] = useState(null) // "Werk aan je doelen" staat open
   const [vrij, setVrij] = useState(false)            // ... en de leerling kiest zelf (alle doelen behaald)
+  const [herhaalIntro, setHerhaalIntro] = useState(null) // { opdracht, titel } — vóór een herhaling
+  const [herhaling, setHerhaling] = useState(null)       // { id, titel, stand } — herhaling loopt
   const soort = persoonlijk ? tab : 'weektaak'
 
   useEffect(() => {
@@ -161,6 +165,32 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
     : soortVan(opdracht) === 'doel' ? setUitleg({ opdracht, titel }) : start(opdracht))
   const doelwerk = doelwerkId ? (opdrachten ?? []).find(o => o.opdrachtId === doelwerkId) : null
 
+  // Herhaling van een behaald doel: eerst starten in de database (die bepaalt
+  // vanaf wanneer de 5 opgaven tellen), dan gewoon de oefening van het doel.
+  const kiesHerhaling = (opdracht, titel) => setHerhaalIntro({ opdracht, titel })
+  const startHerhalingNu = async () => {
+    const { opdracht, titel } = herhaalIntro
+    const id = await startHerhaling(opdracht.opdrachtId)
+    setHerhaalIntro(null)
+    setHerhaling({ id, titel, stand: { goed: 0, aantal: 0, klaar: false } })
+    start(opdracht)
+  }
+  useEffect(() => {
+    if (!herhaling?.id || !gekozen) return
+    let actief = true
+    const bijOpslaan = async (e) => {
+      if (e.detail?.opdrachtId !== gekozen.opdrachtId) return
+      try {
+        const stand = await herhalingStand(herhaling.id)
+        if (!actief) return
+        if (stand.klaar && !stand.geslaagd) vergeetGevierd(gekozen.opdrachtId)
+        setHerhaling(h => (h ? { ...h, stand } : h))
+      } catch { /* netwerk: bij het volgende antwoord opnieuw */ }
+    }
+    window.addEventListener('kk-resultaat-opgeslagen', bijOpslaan)
+    return () => { actief = false; window.removeEventListener('kk-resultaat-opgeslagen', bijOpslaan) }
+  }, [herhaling?.id, gekozen])
+
   // Zelf kiezen binnen "Werk aan je doelen": elke oefening telt dan mee voor
   // deze opdracht (toolId '*', zie kenniskist-login.js). Bij het verlaten weer
   // weg, anders zou later vrij oefenen er ook aan blijven hangen.
@@ -190,7 +220,7 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
 
   // Bij elk doel (ook een behaald doel waar je mee doorgaat) tellen we de foute
   // antwoorden achter elkaar; een goed antwoord zet de teller weer op 0.
-  const oefenDoel = gekozen && soortVan(gekozen) === 'doel' ? gekozen : null
+  const oefenDoel = gekozen && soortVan(gekozen) === 'doel' && !herhaling ? gekozen : null
   const fouteReeks = useRef(0)
   useEffect(() => {
     if (!oefenDoel) return
@@ -212,6 +242,7 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
 
   const terugVanTool = () => {
     setHulp(false)
+    setHerhaling(null)
     wisActieveOpdracht()
     setGekozen(null)
     setVervers(v => v + 1) // haalt de bijgewerkte voortgang opnieuw op
@@ -219,9 +250,10 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
 
   // Tijdens het oefenen linksonder in beeld: hoe ver het doel is (zelfde balk
   // als op de doelkaart) en bij "Werk aan je doelen" hoeveel minuten er nog liggen.
-  const doelStandNu = gekozen && soortVan(gekozen) === 'doel' ? (doelNu ?? gekozen.doelStand) : null
-  const klok = (doelwerk || doelStandNu) && (
+  const doelStandNu = gekozen && soortVan(gekozen) === 'doel' && !herhaling ? (doelNu ?? gekozen.doelStand) : null
+  const klok = (doelwerk || doelStandNu || herhaling) && (
     <div className="wt-pillen">
+      {herhaling && gekozen && <HerhalingPil stand={herhaling.stand} />}
       {doelStandNu && <div className="dw-klok wt-doelpil"><Icoon naam="doel" /><DoelBalk stand={doelStandNu} /></div>}
       {doelwerk && <DoelwerkKlok opdracht={doelwerk} profielId={profiel?.id} />}
     </div>
@@ -251,11 +283,16 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
           addCuruntie={addCuruntie}
         />
         {feest && <DoelFeest doelen={[feest]} onKlaar={klaarMetFeest} knopTekst="Verder oefenen" />}
-        {hulp && !feest && (
+        {herhaling?.stand?.klaar && <HerhalingKlaar stand={herhaling.stand} titel={herhaling.titel} onKlaar={terugVanTool} />}
+        {hulp && !feest && !herhaling && (
           <DoelHulp opdracht={gekozen} titel={gekozen.weektaak?.titel ?? toolLabel(gekozen.toolId)} onVerder={() => setHulp(false)} />
         )}
       </>
     )
+  }
+
+  if (herhaalIntro) {
+    return <HerhalingIntro opdracht={herhaalIntro.opdracht} titel={herhaalIntro.titel} onStart={startHerhalingNu} onBack={() => setHerhaalIntro(null)} />
   }
 
   if (uitleg) {
@@ -267,6 +304,7 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
       <DoelenWerken
         opdracht={doelwerk} alle={opdrachten ?? []}
         onKiesDoel={(o, titel) => setUitleg({ opdracht: o, titel })}
+        onKiesHerhaling={kiesHerhaling}
         onVrij={() => setVrij(true)}
         onBack={() => setDoelwerkId(null)}
       />
@@ -277,6 +315,15 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
   const isBehaald = (m) => m.opdrachten.every(o => o.klaar)
   const openDoelen = soort === 'doel' ? mappen.filter(m => !isBehaald(m)) : mappen
   const behaaldeDoelen = soort === 'doel' ? mappen.filter(isBehaald) : []
+
+  // Behaald doel: wanneer hij terugkomt als herhaling, of dat hij vastzit.
+  const herhaalTekst = (m) => {
+    const h = m.opdrachten.map(o => o.herhaling).filter(Boolean)
+    if (h.some(x => x.nu)) return 'tijd om te herhalen'
+    if (h.length && h.every(x => x.vast)) return 'zit vast in je hoofd'
+    const volgende = h.map(x => x.volgendeOp).filter(Boolean).sort()[0]
+    return volgende ? `herhaling op ${korteDag(volgende)}` : 'je mag blijven oefenen'
+  }
 
   const mapKaart = (m, goud = false) => {
     const af = m.opdrachten.filter(o => o.klaar).length
@@ -292,7 +339,7 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
         <span className="mode-name">{m.titel}</span>
         <span className="mode-desc">
           {goud
-            ? `${vakNaam(vakVan(m))} · je mag blijven oefenen`
+            ? `${vakNaam(vakVan(m))} · ${herhaalTekst(m)}`
             : soort === 'doel'
               ? (m.opdrachten.length === 1 ? null : `${af} van de ${m.opdrachten.length} behaald`)
               : soort === 'taak' && m.opdrachten.length === 1 && m.opdrachten[0].doel != null
@@ -300,6 +347,9 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
                 : `${af} van de ${m.opdrachten.length} af`}
         </span>
         {soort === 'doel' && m.opdrachten.length === 1 && <DoelBalk stand={m.opdrachten[0].doelStand} />}
+        {soort === 'doel' && !goud && m.opdrachten.some(o => !o.klaar && o.herhaling?.misluktOp) && (
+          <span className="wt-opnieuw">Weggezakt bij de herhaling: oefen hem nog een keer</span>
+        )}
         {m.eindOp && !persoonlijk && (
           <span className="wt-map-datum">tot en met {korteDatum(m.eindOp)}</span>
         )}
@@ -392,6 +442,7 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
           {persoonlijk ? PERSOONLIJK[tab].leeg : 'Nog geen weektaak — vraag het aan je juf of meester.'}
         </p>
       )}
+      {soort === 'doel' && !doelVak && <HerhaalKaarten mappen={mappen} onKies={kiesHerhaling} />}
       {/* Doelen: eerst de vakken, dan de doelen van het gekozen vak. */}
       {soort === 'doel' && !doelVak && mappen.length > 0 && openDoelen.length === 0 && (
         <p className="mode-desc">Al je doelen zijn behaald. Super!</p>

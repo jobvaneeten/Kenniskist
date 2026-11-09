@@ -19,16 +19,19 @@ export const lesLabel = (opdracht) => {
 
 // Leerlingkant: lopen er leschecks, en staat er nog een les open? Herhaalt
 // zichzelf, want de juf zet de les klaar terwijl de kinderen al op het
-// startscherm kijken.
+// startscherm kijken. Geeft ook hoeveel behaalde doelen nu herhaald moeten
+// worden (voor het seintje op "Speciaal voor mij").
 export function useOpenLescheck(profiel, intervalMs = 15000) {
   const [mappen, setMappen] = useState([])
+  const [herhalen, setHerhalen] = useState(0)
 
   useEffect(() => {
-    if (profiel?.rol !== 'leerling' || !profiel?.id || !profiel?.klas_id) { setMappen([]); return }
+    if (profiel?.rol !== 'leerling' || !profiel?.id || !profiel?.klas_id) { setMappen([]); setHerhalen(0); return }
     let actief = true
     async function laad() {
       const alles = await haalMijnWeektaak(profiel.id, profiel.klas_id)
       if (!actief) return
+      setHerhalen(alles.filter(o => o.herhaling?.nu).length)
       const perWeektaak = new Map()
       for (const o of alles.filter(isLescheck)) {
         const id = o.weektaak?.id
@@ -53,5 +56,5 @@ export function useOpenLescheck(profiel, intervalMs = 15000) {
   }, [profiel?.id, profiel?.klas_id, profiel?.rol, intervalMs])
 
   const open = mappen.find(m => m.opdrachten.some(o => !o.klaar)) ?? null
-  return { mappen, open }
+  return { mappen, open, herhalen }
 }

@@ -357,3 +357,4 @@ body::before {
   .menu-btn, .zijkaart { animation-duration: 0.01s !important; }
   * { transition-duration: 0.01s !important; }
 }
+.kk-chip-herhaal { --kk-accent: var(--kk-cyan); }

@@ -488,7 +488,7 @@
 .dw-vrij .wt-uitleg-doel { margin: 0; font-size: var(--kk-fs-md, 1.05rem); color: var(--kk-text); }
 .dw-vrij-icoon { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; color: var(--kk-gold); background: color-mix(in srgb, var(--kk-gold) 14%, transparent); box-shadow: 0 0 24px color-mix(in srgb, var(--kk-gold) 40%, transparent); }
 .dw-vrij-icoon svg { width: 34px; height: 34px; }
-.wt-pillen { position: fixed; left: 12px; bottom: 12px; z-index: 900; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; pointer-events: none; }
+.wt-pillen { position: fixed; left: 12px; bottom: 66px; z-index: 900; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; pointer-events: none; }
 .dw-klok { display: flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: var(--kk-r-pill); font-size: var(--kk-fs-sm); font-weight: var(--kk-fw-bold); color: var(--kk-text); background: color-mix(in srgb, var(--kk-bg, #0b0d24) 82%, transparent); border: 1px solid color-mix(in srgb, var(--kk-pink) 55%, transparent); pointer-events: none; }
 .dw-klok svg { width: 16px; height: 16px; color: var(--kk-pink); }
 .dw-klok.klaar { border-color: var(--kk-success); box-shadow: 0 0 14px color-mix(in srgb, var(--kk-success) 45%, transparent); }
@@ -514,3 +514,20 @@
   background: linear-gradient(160deg, color-mix(in srgb, var(--kk-gold) 14%, transparent), rgba(14, 12, 34, 0.75) 70%);
   box-shadow: 0 0 22px -6px color-mix(in srgb, var(--kk-gold) 60%, transparent);
 }
+
+/* Herhalen van behaalde doelen: "Weet je het nog?" (Herhaling.jsx) */
+.wt-herhaal-sectie { width: 100%; max-width: 900px; margin: 0 0 24px; display: flex; flex-direction: column; align-items: center; }
+.wt-herhaal-sectie > .mode-desc { margin: 0 0 14px; text-align: center; }
+.wt-herhaal-kop {
+  display: flex; align-items: center; gap: 10px; margin: 0 0 6px;
+  font: var(--kk-fw-bold) 1.4rem/1.1 var(--kk-head); color: var(--kk-cyan);
+  text-shadow: 0 0 16px color-mix(in srgb, var(--kk-cyan) 55%, transparent);
+}
+.wt-herhaal-kop svg { width: 24px; height: 24px; }
+.mode-card.wt-herhaal {
+  --kk-accent: var(--kk-cyan);
+  border-color: color-mix(in srgb, var(--kk-cyan) 60%, transparent);
+  box-shadow: 0 0 22px -6px color-mix(in srgb, var(--kk-cyan) 60%, transparent);
+}
+.wt-herhaal-pil { border-color: color-mix(in srgb, var(--kk-cyan) 60%, transparent); }
+.wt-herhaal-pil svg { color: var(--kk-cyan); }

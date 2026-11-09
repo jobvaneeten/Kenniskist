@@ -5,6 +5,7 @@ import { groepeer } from './lib/weektaakMapjes.js'
 import { haalDoelwerkStand, tijdStandVan } from './lib/doelwerk.js'
 import { toolLabel } from './lib/tools.js'
 import { Knop, TerugKnop, Icoon } from './ui/index.jsx'
+import { HerhaalKaarten } from './Herhaling.jsx'
 
 const minuten = (n) => `${n} ${n === 1 ? 'minuut' : 'minuten'}`
 
@@ -25,7 +26,7 @@ export function TijdBalk({ stand }) {
 // "Werk aan je doelen" aan de leerlingkant: de open doelen om uit te kiezen,
 // of, als ze allemaal behaald zijn, zelf een oefening kiezen. De tijd telt
 // alleen als er echt geoefend wordt (zie migratie 0021).
-export default function DoelenWerken({ opdracht, alle, onKiesDoel, onVrij, onBack }) {
+export default function DoelenWerken({ opdracht, alle, onKiesDoel, onKiesHerhaling, onVrij, onBack }) {
   const doelen = alle.filter(o => soortVan(o) === 'doel')
   const open = groepeer(doelen.filter(o => !o.klaar))
   const stand = opdracht.tijdStand
@@ -42,6 +43,8 @@ export default function DoelenWerken({ opdracht, alle, onKiesDoel, onVrij, onBac
         </p>
         <div className="dw-tijd"><TijdBalk stand={stand} /></div>
       </div>
+
+      <HerhaalKaarten mappen={groepeer(doelen)} onKies={onKiesHerhaling} />
 
       {open.length > 0 ? (
         <>
