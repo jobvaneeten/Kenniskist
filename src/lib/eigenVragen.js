@@ -46,15 +46,21 @@ const schoon = (s) => String(s ?? '').replace(/\s+/g, ' ').trim().slice(0, MAX_L
 // Ruwe rijen uit geplakte tekst of een bestand: [[vraag, antwoord, fout...]],
 // zonder lege regels en zonder kopregel ("Vraag; Antwoord; ...").
 export function leesRijen(tekst) {
-  const invoer = String(tekst ?? '').replace(/^\uFEFF/, '')
+  let invoer = String(tekst ?? '').replace(/^\uFEFF/, '')
   if (!invoer.trim()) return []
-  return splitsRijen(invoer, kiesScheiding(invoer))
+  // Excel zet soms eerst een regel "sep=;" neer: die zegt welk scheidingsteken het is.
+  let scheiding = null
+  const sep = invoer.match(/^sep=(.)\r?\n/i)
+  if (sep) { scheiding = sep[1]; invoer = invoer.slice(sep[0].length) }
+  return splitsRijen(invoer, scheiding ?? kiesScheiding(invoer))
     .map(rij => {
       const cellen = rij.map(schoon)
       while (cellen.length && !cellen[cellen.length - 1]) cellen.pop()
       return cellen
     })
-    .filter((cellen, i) => cellen.length && !(i === 0 && /^vraag\b/i.test(cellen[0]) && /^(goed )?antwoord\b/i.test(cellen[1] ?? '')))
+    .filter(cellen => cellen.length)
+    // kopregel ("Vraag; Goed antwoord; ..." of "Vragen; Antwoorden") niet als vraag meenemen
+    .filter((cellen, i) => !(i === 0 && /^vra(ag|gen)\b/i.test(cellen[0]) && /antwoord/i.test(cellen[1] ?? '')))
 }
 
 // Geeft { vragen: [{ vraag, antwoord, fout: [] }], meldingen: [tekst] }.

@@ -51,3 +51,13 @@ describe('isGoed', () => {
     expect(isGoed('3/4', '3/4')).toBe(true)
   })
 })
+
+describe('CSV uit Excel', () => {
+  it('slaat een regel sep=; en de kopregel over', () => {
+    const { vragen } = leesVragen('sep=;\r\nVraag;Goed antwoord;Fout 1\r\nHoofdstad?;Parijs;Lyon\r\n;;\r\n')
+    expect(vragen).toEqual([{ vraag: 'Hoofdstad?', antwoord: 'Parijs', fout: ['Lyon'] }])
+  })
+  it('herkent ook een kopregel "Vragen; Antwoorden"', () => {
+    expect(leesVragen('Vragen;Antwoorden\nA?;b\n').vragen).toHaveLength(1)
+  })
+})

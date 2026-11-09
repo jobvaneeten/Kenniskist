@@ -29,6 +29,10 @@ const metLegeRegel = (rijen) => (rijen.length && isLeeg(rijen[rijen.length - 1])
 // en ë als vreemde tekens binnenkomen.
 async function leesBestand(file) {
   const buf = await file.arrayBuffer()
+  const b = new Uint8Array(buf)
+  // Excel "Unicode-tekst" is UTF-16 (begint met FF FE of FE FF)
+  if (b[0] === 0xff && b[1] === 0xfe) return new TextDecoder('utf-16le').decode(buf)
+  if (b[0] === 0xfe && b[1] === 0xff) return new TextDecoder('utf-16be').decode(buf)
   try { return new TextDecoder('utf-8', { fatal: true }).decode(buf) }
   catch { return new TextDecoder('windows-1252').decode(buf) }
 }
@@ -130,7 +134,7 @@ export default function VragenTabel({ vragen, onWijzig }) {
     }
     const ingelezen = leesRijen(await leesBestand(file))
     if (!ingelezen.length) { setMelding('Er stonden geen vragen in dit bestand.'); return }
-    werkBij([...rijen.filter(r => !isLeeg(r)), ...ingelezen.map(vanCellen)])
+    werkBij([...rijen.filter(r => !isLeeg(r)), ...ingelezen.map(c => vanCellen(c))])
     setMelding(`${ingelezen.length} ${ingelezen.length === 1 ? 'regel' : 'regels'} ingeladen uit ${file.name}.`)
   }
 
