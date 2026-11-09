@@ -7,10 +7,13 @@ import { isDoelwerk, tijdStandVan } from './doelwerk.js'
 // aldaar). Losse helpers i.p.v. losse localStorage-calls in Weektaak.jsx,
 // puur zodat het zetten van de sleutel (en de niet-pure Date.now()) niet in
 // de render-scope van het component staat.
-export function zetActieveOpdracht(opdracht) {
+// via: de opdracht "Werk aan je doelen" als het doel vanuit die opdracht
+// geopend is; alleen dan telt de oefentijd daarvoor (migratie 0022).
+export function zetActieveOpdracht(opdracht, via = null) {
   localStorage.setItem('kk_actieve_opdracht', JSON.stringify({
     opdrachtId: opdracht.opdrachtId,
     toolId: opdracht.toolId,
+    ...(via ? { via } : {}),
     gezetOp: Date.now(),
   }))
 }

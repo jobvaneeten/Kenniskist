@@ -196,7 +196,7 @@ Elke opdracht verschijnt daarna als blok met zijn eigen instellingen. Bij **Woor
 
 Je kunt zoveel opdrachten toevoegen als je wilt. Met **Verwijderen** haal je er een weg.
 
-**Werk aan je doelen:** met deze knop voeg je een opdracht toe waarbij de leerling een ingesteld aantal minuten aan zijn eigen doelen werkt (zie [hoofdstuk 8](#8-taken-en-doelen-per-leerling)). Alleen echte oefentijd telt mee, spelletjes niet. Heeft een leerling al zijn doelen behaald, dan kiest hij zelf wat hij oefent.
+**Werk aan je doelen:** met deze knop voeg je een opdracht toe waarbij de leerling een ingesteld aantal minuten aan zijn eigen doelen werkt (zie [hoofdstuk 8](#8-taken-en-doelen-per-leerling)). Alleen echte oefentijd telt mee, spelletjes niet, en alleen als de leerling het doel vanuit deze opdracht opent. Oefent hij een doel los via "Speciaal voor mij", dan telt die tijd hier niet. Heeft een leerling al zijn doelen behaald, dan kiest hij zelf wat hij oefent.
 
 ![Een ingevulde weektaak](plaatjes/28-weektaak-ingevuld.jpg)
 
@@ -335,6 +335,7 @@ Op het tabblad **Werkblad** maak je een werkblad op papier. Geef het een titel e
 Op het tabblad **Eigen oefeningen** maak je een oefening met je eigen vragen, bijvoorbeeld de woorden van het thema of spreekwoorden. Je kiest zelf onder welke groep en welk vak hij komt te staan. Je leerlingen vinden hem bij **Speel Game**, tussen de andere oefeningen van dat vak.
 
 - Geef je bij een vraag ook foute antwoorden op, dan wordt het een meerkeuzevraag. Zonder foute antwoorden typt de leerling het antwoord zelf.
+- Bij elke vraag kun je een **plaatje** zetten: klik op **+ plaatje** in die regel, of plak een afbeelding (bijvoorbeeld een schermafbeelding) in een cel van die regel. De leerling ziet het plaatje boven de vraag. Plaatjes worden verkleind en alleen leerlingen en personeel van je eigen school kunnen ze zien.
 - Je kunt instellen na hoeveel goede antwoorden er een spelletje komt, en hoeveel briefgeld de leerling krijgt als hij alle vragen gemaakt heeft.
 
 ![Eigen oefeningen](plaatjes/70-eigen-oefeningen.jpg)
@@ -388,7 +389,7 @@ Na elk antwoord ziet de leerling meteen of het goed was, en waarom. Het goede an
 
 ![Feedback na een antwoord](plaatjes/94-oefening-feedback.jpg)
 
-> **Goed om te weten:** bij zinsdelen moet een leerling per stap minstens 5 seconden kijken voordat hij kan nakijken. Zo wordt er minder gegokt.
+> **Goed om te weten:** bij zinsdelen moet een leerling per stap minstens 2 seconden kijken voordat hij kan nakijken. Zo wordt er minder gegokt.
 
 Rechtsonder staat bij een opgave de knop **Lees voor**. Die leest de vraag, de zin en de uitleg voor met de stem van de iPad of computer. Dat helpt jonge leerlingen en leerlingen met dyslexie. Bij begrijpend lezen en het dictee staat de knop er niet: daar oefen je juist het lezen, en het dictee heeft eigen opnames.
 
@@ -400,7 +401,7 @@ Bij een leesopdracht pakt de leerling zijn boek en tikt op **Start de timer**. D
 
 ### 12.5 Werk aan je doelen
 
-Bij **Werk aan je doelen** kiest de leerling een van zijn open doelen om aan te werken. Bovenaan staat een balk met de gewerkte minuten. Tijdens het oefenen staat linksonder een klokje met hoeveel minuten er nog over zijn. Alleen echte oefentijd telt, spelletjes niet. Heeft de leerling al zijn doelen behaald, dan kiest hij zelf wat hij oefent.
+Bij **Werk aan je doelen** kiest de leerling een van zijn open doelen om aan te werken. Bovenaan staat een balk met de gewerkte minuten. Tijdens het oefenen staat linksonder een klokje met hoeveel minuten er nog over zijn. Alleen echte oefentijd telt, spelletjes niet, en alleen als je het doel hier vanuit de weektaak kiest. Heeft de leerling al zijn doelen behaald, dan kiest hij zelf wat hij oefent.
 
 ![Werk aan je doelen](plaatjes/96-werk-aan-je-doelen.jpg)
 

@@ -51,6 +51,7 @@ function filter(rijen, params) {
   return rijen
 }
 export const onbekend = new Set()
+const OPSLAG = new Map()
 let teller = 100
 async function beantwoord(route, wieRef) {
   const wie = wieRef.id
@@ -63,6 +64,10 @@ async function beantwoord(route, wieRef) {
     if (pad.endsWith('/logout')) return route.fulfill({ status: 204 })
     return json({})
   }
+  // opslag (afbeeldingen bij eigen oefeningen): in het geheugen
+  if (pad.startsWith('/storage/v1/object/sign/')) { const b = JSON.parse(req.postData() || '{}'); return json((b.paths ?? []).map(x => ({ path: x, signedURL: '/object/nep/' + x, error: null }))) }
+  if (pad.startsWith('/storage/v1/object/nep/')) { const f = OPSLAG.get(decodeURIComponent(pad.slice('/storage/v1/object/nep/'.length))); return f ? route.fulfill({ status: 200, contentType: f.type, body: f.data, headers: { 'access-control-allow-origin': '*' } }) : route.fulfill({ status: 404 }) }
+  if (pad.startsWith('/storage/v1/object/') && m === 'POST') { const naam = decodeURIComponent(pad.slice('/storage/v1/object/'.length)).split('/').slice(1).join('/'); { const buf = req.postDataBuffer() || Buffer.alloc(0), a = buf.indexOf(Buffer.from([0xff, 0xd8, 0xff])), z = buf.lastIndexOf(Buffer.from([0xff, 0xd9])); OPSLAG.set(naam, { data: a >= 0 && z > a ? buf.subarray(a, z + 2) : buf, type: 'image/jpeg' }) }; return json({ Key: naam, Id: naam }) }
   if (pad.startsWith('/rest/v1/rpc/')) return json(null)
   if (pad.startsWith('/rest/v1/')) {
     const tabel = pad.slice('/rest/v1/'.length)
@@ -87,6 +92,7 @@ async function beantwoord(route, wieRef) {
     let bron = TABELLEN[tabel] ?? []
     if (tabel === 'weektaken') bron = bron.map(w => ({ ...w, opdrachten: TABELLEN.opdrachten.filter(o => o.weektaak_id === w.id).map(o => ({ id: o.id, persoonlijk: o.config?.persoonlijk ?? null })) }))
     if (tabel === 'opdrachten') bron = bron.map(o => ({ ...o, weektaken: TABELLEN.weektaken.find(w => w.id === o.weektaak_id) }))
+    if (tabel === 'toewijzingen' && (url.searchParams.get('select') || '').includes('opdrachten(')) bron = bron.map(t => { const o = TABELLEN.opdrachten.find(x => x.id === t.opdracht_id); return { ...t, opdrachten: o ? { ...o, weektaken: TABELLEN.weektaken.find(w => w.id === o.weektaak_id) } : null } })
     // eenvoudige RLS: een leerkracht ziet alleen zijn eigen klas
     const ik = PROFIELEN.find(x => x.id === wie)
     if (ik && ik.rol === 'leerkracht') {

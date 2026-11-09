@@ -165,7 +165,7 @@ function verdeelBanen(plekken) {
 // Tegen gokken: per stap (en na een foute poging opnieuw) minstens zoveel tijd
 // voordat je kunt nakijken. Klik je eerder op "Verder", dan telt die klik niet
 // en vragen we eerst de zin goed te lezen.
-const STAP_MIN_MS = 5000
+const STAP_MIN_MS = 2000
 // buiten het component: Date.now() hoort niet in de render-scope (zie lib/weektaak.js)
 const nu = () => Date.now()
 

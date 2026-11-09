@@ -288,3 +288,7 @@
 @media (max-width: 600px) {
   .rs-oefen-top { padding-right: 84px; }
 }
+
+/* plaatje bij een eigen vraag van de leerkracht (EigenVragen.jsx) */
+.ev-plaatje { display: block; max-width: 100%; max-height: 320px; margin: 0 auto 14px; border-radius: 12px; object-fit: contain; background: #fff; }
+.ev-plaatje-laden { width: 100%; max-width: 360px; height: 200px; background: var(--kk-surface); }

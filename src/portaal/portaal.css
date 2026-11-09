@@ -665,6 +665,12 @@
 .portaal-eigen-tabel col.antw { width: 19%; }
 .portaal-eigen-tabel col.soort { width: 86px; }
 .portaal-eigen-tabel col.weg { width: 36px; }
+.portaal-eigen-tabel col.plaatje { width: 92px; }
+.portaal-eigen-tabel td.plaatje { text-align: center; }
+.portaal-eigen-plaatje { display: inline-flex; align-items: center; gap: 4px; }
+.portaal-eigen-plaatje img { width: 54px; height: 40px; object-fit: cover; border-radius: 6px; border: 1px solid var(--kk-border); }
+.portaal-eigen-plus { padding: 4px 8px; border-radius: 8px; border: 1px dashed var(--kk-border-strong); background: transparent; color: var(--kk-text-soft); font-family: inherit; font-weight: 700; font-size: 0.75rem; cursor: pointer; white-space: nowrap; }
+.portaal-eigen-plus:hover { color: var(--kk-text); border-color: var(--kk-cyan, #3ef0ff); }
 .portaal-eigen-tabel th {
   position: sticky; top: 0; padding: 8px 10px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.72rem; font-weight: 800;
   letter-spacing: 0.04em; text-transform: uppercase; color: rgba(255,255,255,0.6);

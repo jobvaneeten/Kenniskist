@@ -54,7 +54,9 @@ export const VOORTGANG = TOEWIJZINGEN.map(t => {
 })
 export const DOELSTAND = TOEWIJZINGEN.filter(t => ['O9', 'O10', 'O11'].includes(t.opdracht_id)).map((t, i) => {
   const gemaakt = [6, 24, 31, 14, 40, 22, 9, 27, 35, 18][i % 10], goed = [5, 14, 18, 10, 17, 19, 7, 15, 17, 13][i % 10]
-  return { opdracht_id: t.opdracht_id, leerling_id: t.leerling_id, gemaakt, laatste_goed: Math.min(goed, Math.min(20, gemaakt)), laatste_aantal: Math.min(20, gemaakt), gehaald: i % 4 === 1, gehaald_op: i % 4 === 1 ? dag(-2) : null }
+  // behaald zoals in de echte view: minstens 20 gemaakt en 16 van de laatste 20 goed (80%)
+  const lg = Math.min(goed, Math.min(20, gemaakt)), gehaald = gemaakt >= 20 && lg >= 16
+  return { opdracht_id: t.opdracht_id, leerling_id: t.leerling_id, gemaakt, laatste_goed: lg, laatste_aantal: Math.min(20, gemaakt), gehaald, gehaald_op: gehaald ? dag(-2) : null }
 })
 export const DOELWERK = TOEWIJZINGEN.filter(t => t.opdracht_id === 'O5').map((t, i) => ({ opdracht_id: 'O5', leerling_id: t.leerling_id, weektaak_id: 'W45', minuten: 20, som_ms: [6, 20, 14, 0, 11, 20, 3, 17, 9, 20][i] * 60000, afgerond: false }))
 

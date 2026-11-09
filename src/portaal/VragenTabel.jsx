@@ -1,6 +1,7 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { leesRijen, VOORBEELD_CSV, MAX_VRAGEN, MAX_LENGTE, MAX_FOUT } from '../lib/eigenVragen.js'
 import { Knop, Icoon } from '../ui/index.jsx'
+import { uploadAfbeelding, linksVoor } from '../lib/eigenAfbeeldingen.js'
 
 // Invultabel voor een eigen oefening (EigenOefeningen.jsx), met per regel de
 // vraag, het goede antwoord en eventueel foute keuzes. Plakken uit Excel,
@@ -12,15 +13,15 @@ import { Knop, Icoon } from '../ui/index.jsx'
 // Excel doet hetzelfde.
 
 const KOLOMMEN = ['vraag', 'antwoord', ...Array.from({ length: MAX_FOUT }, (_, i) => `fout${i}`)]
-const leeg = () => ({ vraag: '', antwoord: '', fout: Array(MAX_FOUT).fill('') })
-const vanCellen = ([vraag = '', antwoord = '', ...fout]) => ({
-  vraag, antwoord, fout: Array.from({ length: MAX_FOUT }, (_, i) => fout[i] ?? ''),
+const leeg = () => ({ vraag: '', antwoord: '', fout: Array(MAX_FOUT).fill(''), afbeelding: null })
+const vanCellen = ([vraag = '', antwoord = '', ...fout], afbeelding = null) => ({
+  vraag, antwoord, fout: Array.from({ length: MAX_FOUT }, (_, i) => fout[i] ?? ''), afbeelding,
 })
-const isLeeg = (r) => !r.vraag.trim() && !r.antwoord.trim() && r.fout.every(f => !f.trim())
+const isLeeg = (r) => !r.vraag.trim() && !r.antwoord.trim() && r.fout.every(f => !f.trim()) && !r.afbeelding
 const naarVragen = (rijen) => rijen
   .filter(r => r.vraag.trim() && r.antwoord.trim())
   .slice(0, MAX_VRAGEN)
-  .map(r => ({ vraag: r.vraag.trim(), antwoord: r.antwoord.trim(), fout: r.fout.map(f => f.trim()).filter(Boolean) }))
+  .map(r => ({ vraag: r.vraag.trim(), antwoord: r.antwoord.trim(), fout: r.fout.map(f => f.trim()).filter(Boolean), ...(r.afbeelding ? { afbeelding: r.afbeelding } : {}) }))
 // Er staat altijd één lege regel onderaan, om verder te typen.
 const metLegeRegel = (rijen) => (rijen.length && isLeeg(rijen[rijen.length - 1]) ? rijen : [...rijen, leeg()])
 
@@ -42,10 +43,38 @@ function downloadVoorbeeld() {
 
 export default function VragenTabel({ vragen, onWijzig }) {
   const [rijen, setRijen] = useState(() => metLegeRegel((vragen.length ? vragen : [leeg(), leeg()])
-    .map(v => vanCellen([v.vraag, v.antwoord, ...(v.fout ?? [])]))))
+    .map(v => vanCellen([v.vraag, v.antwoord, ...(v.fout ?? [])], v.afbeelding ?? null))))
   const [melding, setMelding] = useState(null)
   const bestandRef = useRef(null)
   const tabelRef = useRef(null)
+  const plaatjeRef = useRef(null)
+  const [plaatjeRij, setPlaatjeRij] = useState(null)   // voor welke regel de bestandskiezer openstaat
+  const [bezig, setBezig] = useState(new Set())        // regels waarvan een plaatje uploadt
+  const [links, setLinks] = useState({})               // pad → link om te tonen
+
+  // Tijdelijke links voor de plaatjes die er al in stonden.
+  useEffect(() => {
+    let actief = true
+    linksVoor((vragen ?? []).map(v => v.afbeelding)).then(l => { if (actief) setLinks(x => ({ ...l, ...x })) })
+    return () => { actief = false }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Plaatje bij regel i: verkleinen, uploaden en het pad in de regel zetten.
+  const voegPlaatjeToe = async (i, file) => {
+    setBezig(b => new Set(b).add(i)); setMelding(null)
+    try {
+      const { pad, url } = await uploadAfbeelding(file)
+      setLinks(l => ({ ...l, [pad]: url }))
+      setRijen(huidig => { const nieuw = huidig.map((r, idx) => (idx === i ? { ...r, afbeelding: pad } : r)); const m = metLegeRegel(nieuw); onWijzig(naarVragen(m)); return m })
+    } catch (e) { setMelding(e.message) }
+    setBezig(b => { const n = new Set(b); n.delete(i); return n })
+  }
+  const kiesPlaatje = (e) => {
+    const file = e.target.files?.[0]; e.target.value = ''
+    if (file && plaatjeRij != null) voegPlaatjeToe(plaatjeRij, file)
+  }
+  const haalPlaatjeWeg = (i) => werkBij(rijen.map((r, idx) => (idx === i ? { ...r, afbeelding: null } : r)))
 
   // Elke wijziging in de tabel gaat meteen door naar boven.
   const werkBij = (nieuw) => {
@@ -63,6 +92,9 @@ export default function VragenTabel({ vragen, onWijzig }) {
   // Plakken van meer dan één cel: vanaf deze cel naar rechts en naar beneden
   // invullen, zoals in Excel.
   const plak = (e, i, k) => {
+    // Een plaatje plakken (bv. een schermafbeelding) zet het bij deze regel.
+    const plaatje = [...(e.clipboardData.files ?? [])].find(f => f.type.startsWith('image/'))
+    if (plaatje) { e.preventDefault(); voegPlaatjeToe(i, plaatje); return }
     const tekst = e.clipboardData.getData('text')
     if (!/[\t\n]/.test(tekst.trim())) return
     e.preventDefault()
@@ -73,7 +105,7 @@ export default function VragenTabel({ vragen, onWijzig }) {
       const bestaand = nieuw[i + n] ?? leeg()
       const vlak = [bestaand.vraag, bestaand.antwoord, ...bestaand.fout]
       cellen.forEach((c, j) => { if (k + j < KOLOMMEN.length) vlak[k + j] = c })
-      nieuw[i + n] = vanCellen(vlak)
+      nieuw[i + n] = vanCellen(vlak, bestaand.afbeelding)
     })
     werkBij(nieuw)
     setMelding(`${geplakt.length} ${geplakt.length === 1 ? 'regel' : 'regels'} geplakt.`)
@@ -112,6 +144,7 @@ export default function VragenTabel({ vragen, onWijzig }) {
         <div className="portaal-eigen-knoppen">
           <Knop type="button" variant="secundair" maat="sm" onClick={() => bestandRef.current?.click()}>Bestand inladen</Knop>
           <Knop type="button" variant="secundair" maat="sm" icoon="tekst" onClick={downloadVoorbeeld}>Voorbeeldbestand</Knop>
+          <input ref={plaatjeRef} type="file" accept="image/*" hidden onChange={kiesPlaatje} />
           <input ref={bestandRef} type="file" accept=".csv,.txt,.tsv,.xlsx,.xls,text/csv,text/plain" hidden onChange={kiesBestand} />
         </div>
       </div>
@@ -119,6 +152,7 @@ export default function VragenTabel({ vragen, onWijzig }) {
         Vul je foute antwoorden in, dan wordt het meerkeuze. Laat je ze leeg, dan typt de leerling het antwoord zelf.
         Meer goede antwoorden mogen met " / " ertussen, bv. <i>Den Haag / 's-Gravenhage</i>.
         Uit Excel of Word? Kopieer de cellen en plak ze in de eerste cel.
+        Een plaatje bij een vraag? Klik op <i>+ plaatje</i>, of plak een afbeelding in een cel van die regel.
       </p>
 
       <div className="portaal-eigen-scroll">
@@ -126,13 +160,13 @@ export default function VragenTabel({ vragen, onWijzig }) {
           <colgroup>
             <col className="nr" /><col className="vraag" /><col className="antw" />
             {Array.from({ length: MAX_FOUT }, (_, i) => <col key={i} className="fout" />)}
-            <col className="soort" /><col className="weg" />
+            <col className="plaatje" /><col className="soort" /><col className="weg" />
           </colgroup>
           <thead>
             <tr>
               <th>#</th><th>Vraag</th><th className="goed">Goed antwoord</th>
               {Array.from({ length: MAX_FOUT }, (_, i) => <th key={i} className="fout">Fout {i + 1}</th>)}
-              <th /><th />
+              <th>Plaatje</th><th /><th />
             </tr>
           </thead>
           <tbody>
@@ -158,6 +192,17 @@ export default function VragenTabel({ vragen, onWijzig }) {
                       />
                     </td>
                   ))}
+                  <td className="plaatje">
+                    {r.afbeelding ? (
+                      <span className="portaal-eigen-plaatje">
+                        {links[r.afbeelding] ? <img src={links[r.afbeelding]} alt={`Plaatje bij regel ${i + 1}`} /> : <span className="portaal-zacht">plaatje</span>}
+                        <button type="button" className="portaal-eigen-weg" aria-label={`Plaatje bij regel ${i + 1} weghalen`} onClick={() => haalPlaatjeWeg(i)}><Icoon naam="sluiten" /></button>
+                      </span>
+                    ) : bezig.has(i) ? <span className="portaal-zacht">uploaden…</span> : (
+                      <button type="button" className="portaal-eigen-plus" aria-label={`Plaatje toevoegen bij regel ${i + 1}`}
+                        onClick={() => { setPlaatjeRij(i); plaatjeRef.current?.click() }}>+ plaatje</button>
+                    )}
+                  </td>
                   <td className="soort">
                     {ingevuld && !mistVraag && !mistAntw && (
                       <span className={`portaal-eigen-label ${isMk ? 'mk' : 'open'}`}>{isMk ? 'meerkeuze' : 'open'}</span>

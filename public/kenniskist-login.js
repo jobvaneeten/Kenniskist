@@ -124,7 +124,14 @@
     return actief.opdrachtId || null
   }
 
-  function insertResultaat(token, profiel, toolId, score, maxScore, detailsJson, opdrachtId, ms) {
+  // Doel geopend vanuit "Werk aan je doelen" in de weektaak: die opdracht.
+  // Alleen dan telt de oefentijd daarvoor (resultaten.via_opdracht_id, 0022).
+  function viaOpdrachtVoor(toolId) {
+    var actief = leesJson('kk_actieve_opdracht')
+    return actieveOpdrachtVoor(toolId) && actief && actief.via ? actief.via : null
+  }
+
+  function insertResultaat(token, profiel, toolId, score, maxScore, detailsJson, opdrachtId, ms, viaId) {
     var body = {
       leerling_id: profiel.id,
       tool_id: toolId,
@@ -133,6 +140,7 @@
       details_json: detailsJson,
     }
     if (opdrachtId) body.opdracht_id = opdrachtId
+    if (viaId) body.via_opdracht_id = viaId
     if (ms !== null && ms !== undefined) body.ms = ms
     return fetch(SUPABASE_URL + '/rest/v1/resultaten', {
       method: 'POST',
@@ -166,7 +174,8 @@
     return geldigToken().then(function (token) {
       if (!token) return { ok: false, reden: 'niet-ingelogd' }
       var opdrachtId = actieveOpdrachtVoor(toolId)
-      return insertResultaat(token, profiel, toolId, score, maxScore, detailsJson, opdrachtId, ms).then(function (res) {
+      var viaId = viaOpdrachtVoor(toolId)
+      return insertResultaat(token, profiel, toolId, score, maxScore, detailsJson, opdrachtId, ms, viaId).then(function (res) {
         if (res.ok && opdrachtId) meldOpgeslagen(opdrachtId, toolId, maxScore > 0 ? score >= maxScore : null)
         if (res.ok || !opdrachtId) return { ok: res.ok }
         // Ongeldige/verlopen koppeling mag het resultaat nooit laten

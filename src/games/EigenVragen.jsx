@@ -7,6 +7,7 @@ import './klok-kijken.css'
 import { Knop, TerugKnop, VoortgangsBalk, Icoon, EindScherm } from '../ui/index.jsx'
 import { spelNa, heeftSpel } from '../lib/beloning.js'
 import { alBeloond, markeerBeloond } from '../lib/eigenOefeningen.js'
+import { linksVoor } from '../lib/eigenAfbeeldingen.js'
 
 // Een eigen oefening van de leerkracht (zie src/portaal/EigenOefeningen.jsx),
 // geopend via Speel Game → groep → vak. Met foute keuzes erbij is een vraag
@@ -23,7 +24,7 @@ function schud(a) {
   return a
 }
 
-function VraagKaart({ vraag, onNext }) {
+function VraagKaart({ vraag, onNext, plaatje }) {
   const meerkeuze = vraag.fout?.length > 0
   const [opties] = useState(() => (meerkeuze ? schud([vraag.antwoord, ...vraag.fout]) : []))
   const [invoer, setInvoer] = useState('')
@@ -36,6 +37,9 @@ function VraagKaart({ vraag, onNext }) {
 
   return (
     <div className="rs-card">
+      {vraag.afbeelding && (plaatje
+        ? <img className="ev-plaatje" src={plaatje} alt="" />
+        : <div className="ev-plaatje ev-plaatje-laden" aria-hidden="true" />)}
       <div className="rs-vraag klk-vraag">{vraag.vraag}</div>
 
       {meerkeuze ? (
@@ -86,6 +90,13 @@ export default function EigenVragen({ onBack, onOpnieuw, addBriefgeld, addCurunt
   const [verdiend, setVerdiend] = useState(0)
   const [beloning, setBeloning] = useState(false)
   const [eindGeld, setEindGeld] = useState(0)
+  // tijdelijke links voor de plaatjes bij de vragen (lib/eigenAfbeeldingen.js)
+  const [links, setLinks] = useState({})
+  useEffect(() => {
+    let actief = true
+    linksVoor(lijst.map(v => v.afbeelding)).then(l => { if (actief) setLinks(l) })
+    return () => { actief = false }
+  }, [lijst])
   const perBeloning = config?.spel_na === 0 ? Infinity : config?.spel_na > 0 ? config.spel_na : spelNa(10)
 
   const volgendeVraag = () => {
@@ -155,7 +166,7 @@ export default function EigenVragen({ onBack, onOpnieuw, addBriefgeld, addCurunt
         <span className="rs-verdiend">💵 € {verdiend}</span>
       </div>
       {heeftSpel(perBeloning) && <VoortgangsBalk waarde={sinds} max={perBeloning} label={`nog ${perBeloning - sinds} goed tot een spelletje`} />}
-      <VraagKaart key={nr} vraag={rij[pos]} onNext={volgende} />
+      <VraagKaart key={nr} vraag={rij[pos]} onNext={volgende} plaatje={links[rij[pos]?.afbeelding]} />
     </div>
   )
 }

@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase.js'
 import { roepWorkerAan } from '../lib/worker.js'
 import { toolLabel } from '../lib/tools.js'
 import FoutenLijst from './FoutenLijst.jsx'
+import LeerlingDoelen from './LeerlingDoelen.jsx'
 import GegevensWissen from './GegevensWissen.jsx'
 import Balk from './Balk.jsx'
 import { groepeerSessies, scoreKlasse, kortMoment } from './resultaatHelpers.js'
@@ -329,6 +330,8 @@ export default function LeerlingDetail({ leerlingId, opdrachtIds = null, kop = n
           )}
         </div>
       </div>
+
+      {beheer && <LeerlingDoelen leerlingId={leerlingId} teller={teller} />}
 
       {resultaten === null && <p className="portaal-leeg">Laden…</p>}
 

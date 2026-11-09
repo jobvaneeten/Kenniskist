@@ -151,7 +151,8 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
   const start = (opdracht) => {
     setUitleg(null)
     setDoelNu(null)
-    zetActieveOpdracht(opdracht)
+    // Doel geopend vanuit "Werk aan je doelen": alleen dan telt de tijd daarvoor.
+    zetActieveOpdracht(opdracht, doelwerkId && soortVan(opdracht) === 'doel' ? doelwerkId : null)
     setGekozen(opdracht)
   }
   // Een doel krijgt eerst de uitleg; "Werk aan je doelen" opent zijn eigen
