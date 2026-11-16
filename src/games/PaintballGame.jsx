@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import * as Colyseus from '@colyseus/sdk'
 import {
   Engine, Scene, FreeCamera,
   Color3, Color4, Vector3, Quaternion, Ray, Matrix,
@@ -10,15 +9,18 @@ import {
 import { SceneLoader } from '@babylonjs/core/Loading/sceneLoader'
 import '@babylonjs/loaders/glTF'
 import { findItem } from '../itemsCatalog'
-import { applyItemToMesh, loadClothingDonor, usesDonor, loadHeadItem, zetLegeOnderdelenUit, ruimAnimatieBronOp } from '../applyClothing'
+import { applyItemToMesh, loadClothingDonor, usesDonor, loadHeadItem, zetLegeOnderdelenUit } from '../applyClothing'
 import OrientationGate from '../OrientationGate'
 import { nachtOmgeving, glowLaag, nachtLucht } from './neonOmgeving'
 import { laadGebakkenMap } from './gebakkenMap'
 import './rocket-game.css'
 import './paintball.css'
 import { TerugKnop } from '../ui/index.jsx'
-
-const SERVER_URL = 'wss://kenniskist-server.onrender.com'
+import { maakOfJoin, nieuweCode, FOUT_TEKST } from './online/verbinding.js'
+import VerbindingsMelding, { VerbindStatus } from './online/VerbindingsMelding.jsx'
+import Joystick from './online/Joystick.jsx'
+import { laadAnimatieBron, kopieVoorSpeler } from './online/animaties.js'
+import { autoKwaliteit } from './online/kwaliteit.js'
 
 // ── Arena constants (mirror the server exactly) ────────────────────────
 let ARENA_X = 24    // wordt per map gezet
@@ -255,16 +257,11 @@ class PlayerInstance {
         if (--pending > 0) return
         this._ready = true; this._playIdle(); this.setBodyVisible(true); this._onReady?.()
       }
+      // elk bestand één keer per potje geladen (online/animaties.js), per speler een kopie
       ANIMS.forEach(({ key, file }) => {
-        SceneLoader.ImportMesh('', '/', file, this.scene, (aM, _p, aSk, aG) => {
-          aM.forEach(m => m.setEnabled(false))
-          if (!aG.length) { done(); return }
-          const orig = aG[0]
-          const srcRests = {}
-          orig.targetedAnimations.forEach(ta => {
-            srcRests[ta.target.name] = ta.target.rotationQuaternion ? ta.target.rotationQuaternion.clone() : Quaternion.Identity()
-          })
-          const rt = orig.clone(key, t => RETARGET_BONES.has(t.name) ? (this._nodeMap[t.name] ?? t) : t)
+        laadAnimatieBron(this.scene, file).then(({ groep: orig, srcRests }) => {
+          if (this._disposed) return
+          const rt = kopieVoorSpeler({ groep: orig }, key, this.scene, t => RETARGET_BONES.has(t.name) ? (this._nodeMap[t.name] ?? null) : null)
           const tas = rt.targetedAnimations
           for (let i = tas.length - 1; i >= 0; i--) {
             const { animation: anim, target } = tas[i]
@@ -277,8 +274,8 @@ class PlayerInstance {
             const corr = Quaternion.Inverse(dst).multiply(src)
             anim.getKeys().forEach(kf => kf.value.copyFrom(corr.multiply(kf.value)))
           }
-          rt.stop(); this._anims[key] = rt; orig.dispose(); ruimAnimatieBronOp(aM, aSk); done()
-        }, null, () => done())
+          rt.stop(); this._anims[key] = rt; done()
+        }).catch(() => done())
       })
     }, null, (_, msg, err) => console.error('Poppetje load error:', msg, err))
   }
@@ -294,6 +291,9 @@ class PlayerInstance {
   _playCrouchMove() { this._setLoop('hurkenlopen', 'crouchmove') }
   _locomotion(moving, crouch) {
     this._lastMoving = !!moving; this._lastCrouch = !!crouch
+    // nog niet alle animaties binnen: geen stand onthouden die nergens speelt
+    // (anders bleef het poppetje in een T-houding staan)
+    if (!this._ready) return
     if (this._dead || this._state === 'shoot' || this._state === 'reload' || this._state === 'jump') return
     if (crouch) { if (moving) this._playCrouchMove(); else this._playCrouchIdle() }
     else        { if (moving) this._playMove(); else this._playIdle() }
@@ -395,6 +395,7 @@ class PlayerInstance {
   }
   onReady(cb) { if (this._ready) cb(); else this._onReady = cb }
   dispose() {
+    this._disposed = true   // animaties die nog binnenkomen niet meer koppelen
     clearTimeout(this._stateTimer)
     this._stopAll()
     Object.values(this._anims).forEach(g => { try { g.dispose() } catch {} })
@@ -615,33 +616,6 @@ function buildWorld(scene, mapCfg, onObstacles) {
   return sg
 }
 
-function VirtualJoystick({ joyRef }) {
-  const baseRef = useRef(null), knobRef = useRef(null), active = useRef(false)
-  const RADIUS = 52
-  const apply = (dx, dy) => {
-    const len = Math.hypot(dx, dy)
-    if (len > RADIUS) { dx = dx / len * RADIUS; dy = dy / len * RADIUS }
-    joyRef.current.x = dx / RADIUS; joyRef.current.z = dy / RADIUS
-    if (knobRef.current) knobRef.current.style.transform = `translate(${dx}px,${dy}px)`
-  }
-  const release = () => { active.current = false; joyRef.current.x = 0; joyRef.current.z = 0; if (knobRef.current) knobRef.current.style.transform = 'translate(0,0)' }
-  const center = () => { const r = baseRef.current.getBoundingClientRect(); return { cx: r.left + r.width / 2, cy: r.top + r.height / 2 } }
-  useEffect(() => {
-    const onMove = e => { if (!active.current) return; const { cx, cy } = center(); apply(e.clientX - cx, e.clientY - cy) }
-    const onUp = () => { if (active.current) release() }
-    window.addEventListener('mousemove', onMove); window.addEventListener('mouseup', onUp)
-    return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp) }
-  }, [])
-  return (
-    <div ref={baseRef} className="rg-joy-base"
-      onTouchStart={e => { e.preventDefault(); active.current = true; const t = e.targetTouches[0]; const { cx, cy } = center(); apply(t.clientX - cx, t.clientY - cy) }}
-      onTouchMove={e => { e.preventDefault(); if (!active.current) return; const t = e.targetTouches[0]; const { cx, cy } = center(); apply(t.clientX - cx, t.clientY - cy) }}
-      onTouchEnd={release} onTouchCancel={release}
-      onMouseDown={e => { active.current = true; const { cx, cy } = center(); apply(e.clientX - cx, e.clientY - cy) }}
-    ><div ref={knobRef} className="rg-joy-knob" /></div>
-  )
-}
-
 function fmtTime(s) { const m = Math.floor(s / 60); const sec = Math.floor(s) % 60; return `${m}:${String(sec).padStart(2, '0')}` }
 
 // ── Scene init ─────────────────────────────────────────────────────────
@@ -666,8 +640,9 @@ function initScene(canvas, { localSessionId, getRoomState, sendState, sendShoot,
     return flat
   }
   const sg = buildWorld(scene, mapCfg, (obstacles) => sendObstacles?.(packObstacles(obstacles)))
+  let pipe = null
   try {
-    const pipe = new DefaultRenderingPipeline('pipe', true, scene, [camera])   // HDR → mooiere bloom
+    pipe = new DefaultRenderingPipeline('pipe', true, scene, [camera])   // HDR → mooiere bloom
     // Contrast/exposure/tonemapping staan al op de scene via nachtOmgeving —
     // hier alleen bloom (pakt neon en muzzle flashes) en vignet.
     pipe.imageProcessingEnabled = true
@@ -691,6 +666,7 @@ function initScene(canvas, { localSessionId, getRoomState, sendState, sendShoot,
   const camModeRef = { current: 'third' }   // 'third' | 'first'
   const look = { yaw: 0, pitch: 0 }
   const keys = {}
+  const laatsteState = { t: 0, sprong: -1 }   // wanneer de eigen positie voor het laatst naar de server ging
 
   const onKD = e => {
     keys[e.code] = true
@@ -862,8 +838,13 @@ function initScene(canvas, { localSessionId, getRoomState, sendState, sendShoot,
       if (collider.position.y < -5 && lp) { collider.position.set(lp.x, lp.y ?? 0, lp.z); vy = 0 }
     } else { vy = 0; jumpRef.current = false }
 
-    // Report our authoritative position to the server (relay).
-    sendState({ x: collider.position.x, y: Math.max(0, collider.position.y), z: collider.position.z, rotY: look.yaw, moving, crouch, jumpSeq: jumpCount })
+    // Eigen positie naar de server, 20× per seconde (niet elk beeldje: dat
+    // waren er 60-120 per seconde per speler). Een sprong gaat meteen mee.
+    const nuMs = performance.now()
+    if (nuMs - laatsteState.t > 50 || jumpCount !== laatsteState.sprong) {
+      laatsteState.t = nuMs; laatsteState.sprong = jumpCount
+      sendState({ x: collider.position.x, y: Math.max(0, collider.position.y), z: collider.position.z, rotY: look.yaw, moving, crouch, jumpSeq: jumpCount })
+    }
 
     // ── Fire (hold of korte tik; server bewaakt de cooldown) ──
     const now = performance.now() / 1000
@@ -989,11 +970,13 @@ function initScene(canvas, { localSessionId, getRoomState, sendState, sendShoot,
   engine.runRenderLoop(() => scene.render())
   const onResize = () => engine.resize()
   window.addEventListener('resize', onResize)
+  const stopKwaliteit = autoKwaliteit(engine, scene, { pipe, schaduw: sg })
 
   return {
     joyRef, fireRef, jumpRef, crouchRef, camModeRef,
     pushSplat: (d) => addSplat(d.x, d.y, d.z, d.nx, d.ny, d.nz, d.team),
     dispose: () => {
+      stopKwaliteit()
       window.removeEventListener('keydown', onKD); window.removeEventListener('keyup', onKU)
       window.removeEventListener('pointerup', onPU); window.removeEventListener('resize', onResize)
       window.removeEventListener('pointermove', onPM); document.removeEventListener('pointerlockchange', onLock)
@@ -1005,24 +988,24 @@ function initScene(canvas, { localSessionId, getRoomState, sendState, sendShoot,
 }
 
 // ── Lobby ──────────────────────────────────────────────────────────────
-function Lobby({ onBack, onJoined }) {
+function Lobby({ onBack, onJoined, melding }) {
   const [code, setCode] = useState('')
   const [name, setName] = useState(() => localStorage.getItem('kk_playername') || '')
   const [mapKey, setMapKey] = useState('dorp')
-  const [error, setError] = useState(null)
+  const [error, setError] = useState(melding ?? null)
   const [loading, setLoading] = useState(false)
+  const [status, setStatus] = useState(null)
   const connect = async (create) => {
     setLoading(true); setError(null)
     try {
       const shirt = localStorage.getItem('kk_shirt') || ''
       const wearing = localStorage.getItem('kk_wearing') || '{}'
-      const client = new Colyseus.Client(SERVER_URL)
-      const joinCode = create ? String(Math.floor(10000 + Math.random() * 90000)) : code.trim()
+      const joinCode = create ? nieuweCode(5) : code.trim()
       const opts = { joinCode, shirt, wearing, name: name || 'Speler', map: mapKey }
-      const room = create ? await client.create('paintball', opts) : await client.join('paintball', opts)
+      const room = await maakOfJoin('paintball', opts, { maak: create, onStatus: setStatus })
       if (name) localStorage.setItem('kk_playername', name)
       onJoined(room, joinCode)
-    } catch { setError(create ? 'Kan geen lobby aanmaken.' : 'Lobby niet gevonden.'); setLoading(false) }
+    } catch (e) { setError(FOUT_TEKST[e?.soort] ?? FOUT_TEKST.server); setLoading(false); setStatus(null) }
   }
   return (
     <div className="rg-lobby">
@@ -1048,7 +1031,7 @@ function Lobby({ onBack, onJoined }) {
           <input className="rg-input rg-input-code" placeholder="12345" value={code} maxLength={5} inputMode="numeric"
             onChange={e => setCode(e.target.value.replace(/\D/g, ''))} onKeyDown={e => e.key === 'Enter' && connect(false)} /></div>
         <button className="rg-lobby-btn rg-lobby-join" disabled={loading || !code.trim()} onClick={() => connect(false)}>{loading ? '…' : '→ Joinen'}</button>
-        {loading && <p className="rg-lobby-sub">⏳ Verbinden… de server kan even wakker worden (~1 min de eerste keer).</p>}
+        {loading && <VerbindStatus status={status} />}
         {error && <p className="rg-lobby-error">{error}</p>}
       </div>
     </div>
@@ -1095,6 +1078,7 @@ export default function PaintballGame({ onBack }) {
   const [lobbyCode, setLobbyCode] = useState('')
   const [camMode, setCamMode] = useState('third')
   const [crouchOn, setCrouchOn] = useState(false)
+  const [melding, setMelding] = useState(null)
 
   const canvasRef = useRef(null)
   const sceneRef = useRef(null)
@@ -1115,9 +1099,15 @@ export default function PaintballGame({ onBack }) {
       setPlayers(arr)
       if (state.phase === 'playing' || state.phase === 'countdown') setScreen('playing')
       if (state.phase === 'gameover') setScreen('gameover')
+      // nog een keer: de server zet het potje terug in de wachtkamer
+      if (state.phase === 'lobby') setScreen(s => (s === 'gameover' ? 'waiting' : s))
     })
     r.onMessage('splat', d => sceneRef.current?.pushSplat?.(d))
-    r.onLeave(() => { setScreen('lobby'); setRoom(null) })
+    r.onLeave((code) => {
+      // 4000 = zelf weggegaan; anders lukte terugkomen na wegvallen niet
+      if (code !== 4000 && code !== 1000) setMelding('De verbinding met het potje is verbroken. Maak een nieuw potje of join opnieuw met de code.')
+      setScreen('lobby'); setRoom(null)
+    })
     setScreen('waiting')
   }, [])
 
@@ -1154,8 +1144,13 @@ export default function PaintballGame({ onBack }) {
     else (document.exitFullscreen || document.webkitExitFullscreen)?.call(document)
   }
 
-  if (screen === 'lobby') return <Lobby onBack={onBack} onJoined={handleJoined} />
-  if (screen === 'waiting') return <WaitingRoom code={lobbyCode} room={room} players={players} onBack={() => { room?.leave(); setScreen('lobby') }} />
+  if (screen === 'lobby') return <Lobby onBack={onBack} onJoined={(r, c) => { setMelding(null); handleJoined(r, c) }} melding={melding} />
+  if (screen === 'waiting') return (
+    <>
+      <WaitingRoom code={lobbyCode} room={room} players={players} onBack={() => { room?.leave(); setScreen('lobby') }} />
+      <VerbindingsMelding room={room} />
+    </>
+  )
   if (screen === 'gameover') {
     const rs = roomState
     return (
@@ -1166,6 +1161,7 @@ export default function PaintballGame({ onBack }) {
           <div className="rg-go-winner">
             {(rs?.scoreA ?? 0) > (rs?.scoreB ?? 0) ? '🔴 Rood wint!' : (rs?.scoreB ?? 0) > (rs?.scoreA ?? 0) ? '🔵 Blauw wint!' : '🤝 Gelijkspel!'}
           </div>
+          {room && <button className="on-knop goud" onClick={() => room.send('opnieuw')}>Nog een keer</button>}
           <button className="rg-lobby-btn rg-lobby-create" onClick={() => { room?.leave(); onBack() }}>← Terug</button>
         </div>
       </div>
@@ -1178,6 +1174,7 @@ export default function PaintballGame({ onBack }) {
     <div className="rg-outer">
       <OrientationGate />
       <canvas ref={canvasRef} className="rg-canvas" />
+      <VerbindingsMelding room={room} />
       <TerugKnop onClick={() => { room?.leave(); onBack() }} />
 
       <div className="rg-score">
@@ -1205,7 +1202,7 @@ export default function PaintballGame({ onBack }) {
         </>
       )}
 
-      {sceneRef.current && <VirtualJoystick joyRef={sceneRef.current.joyRef} />}
+      {sceneRef.current && <Joystick joyRef={sceneRef.current.joyRef} />}
 
       <button className={'pb-crouch-btn' + (crouchOn ? ' pb-crouch-on' : '')}
         onPointerDown={e => { e.preventDefault(); const n = !crouchOn; setCrouchOn(n); if (sceneRef.current) sceneRef.current.crouchRef.current = n }}

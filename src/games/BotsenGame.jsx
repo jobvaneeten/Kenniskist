@@ -6,14 +6,22 @@ import {
   MeshBuilder, StandardMaterial, DynamicTexture, ParticleSystem,
   DefaultRenderingPipeline,
 } from '@babylonjs/core'
-import * as Colyseus from '@colyseus/sdk'
 import OrientationGate from '../OrientationGate'
 import { KART_COLORS, AV_Y, AV_Z, buildKart, loadAvatar, safeJSON } from './kartShared'
+import {
+  ARENA_HALF, CAR_RADIUS, BOMB_RADIUS, BOMB_FUSE, DEK_Y, heightAt, clampHeightStep,
+  BOXES_GROND, BOXES_BOVEN, collideBoxes,
+} from './online/gedeeld/botsenArena.js'
 import { maakItemBlok, maakProjectiel, maakBom } from './botsenItems'
 import { nachtOmgeving, glowLaag, nachtLucht } from './neonOmgeving'
 import { laadGebakkenMap } from './gebakkenMap'
 import './botsen-game.css'
 import { TerugKnop } from '../ui/index.jsx'
+import Joystick, { ActieKnop } from './online/Joystick.jsx'
+import { heeftAanraak } from './online/apparaat.js'
+import { maakOfJoin, nieuweCode, FOUT_TEKST } from './online/verbinding.js'
+import { autoKwaliteit } from './online/kwaliteit.js'
+import VerbindingsMelding, { VerbindStatus } from './online/VerbindingsMelding.jsx'
 
 // ═══════════════════════════════════════════════════════════════════════
 //  BALLONNENGEVECHT (intern "botsen", moet matchen met de server) — kart +
@@ -22,137 +30,10 @@ import { TerugKnop } from '../ui/index.jsx'
 //  laat er één knappen. Bij 0 ballonnen lig je eruit. Laatste kart wint.
 // ═══════════════════════════════════════════════════════════════════════
 
-const SERVER_URL = 'wss://kenniskist-server.onrender.com'
 const ROOM_TYPE = 'botsen'
 
-// ── Vier-kwadranten-arena: vier gekleurde platforms (blauw/rood/groen/geel)
-//    in een 2×2-grid, verbonden door bruggen die in het midden een kruising
-//    vormen (een centrale hub-tegel), elk platform ook bereikbaar via een
-//    helling naar de grond. Grens is ONZICHTBAAR (geen muur-mesh, alleen
-//    botsing). MOET kloppen met de server (BotsenRoom.ts). ────────────────
-const ARENA_HALF = 58            // speelveld: -58..58 in x en z (geeft de hellingen ruimte tot de rand)
-const CAR_RADIUS = 1.5
-const PLAT_H     = 4.2           // hoogte van alle vier platforms (gelijk)
-const PLAT_SIZE  = 22            // breedte/diepte per platform
-const CORRIDOR   = 20            // volledige open ruimte tussen twee platforms
-const BRIDGE_W   = 8             // breedte van het brug-dek zelf (smaller dan CORRIDOR,
-                                  // zodat er aan weerszijden grond overblijft om onderdoor te rijden)
-const OFF        = PLAT_SIZE / 2 + CORRIDOR / 2   // 21 — afstand vanaf midden tot elk platform
-const RAMP_LEN   = 14
-// Elk platform: kleur + welke kant (x-richting) de buiten-helling op wijst.
-const QUADRANTS = [
-  // body/top zijn tints op een betontextuur — donker houden, anders wordt het
-  // weer een vlak gekleurd blok. De teamkleur zit in `rail`, het neon.
-  { key: 'nw', x: -OFF, z: -OFF, body: '#4a7fd4', top: '#6b7893', rail: '#19e6ff', name: 'Blauw',  rampDir: -1 },
-  { key: 'ne', x: OFF, z: -OFF, body: '#d1454f', top: '#94707c', rail: '#ff2f6e', name: 'Rood',   rampDir: 1 },
-  { key: 'sw', x: -OFF, z: OFF, body: '#3fbe78', top: '#6e8f7e', rail: '#39ff88', name: 'Groen',  rampDir: -1 },
-  { key: 'se', x: OFF, z: OFF, body: '#e0ae2e', top: '#94875f', rail: '#ffc21a', name: 'Geel',   rampDir: 1 },
-]
-// Decoratieve dekking in de open grond-ring rond de vier platforms (in de
-// diagonale hoeken, ver van de platforms/bruggen zelf).
-const DIAG = OFF + PLAT_SIZE / 2 + 5
-const OBSTACLES = [
-  { x: -DIAG, z: -DIAG, w: 6, d: 6, color: '#9b5de5' },
-  { x: DIAG, z: -DIAG, w: 6, d: 6, color: '#f4a261' },
-  { x: -DIAG, z: DIAG, w: 6, d: 6, color: '#43aa8b' },
-  { x: DIAG, z: DIAG, w: 6, d: 6, color: '#ff6b9d' },
-]
+// Arena-vorm en botsingen: één bron met de server (online/gedeeld/botsenArena.js).
 const BALLOON_COLORS = ['#ff4d6d', '#ffd23f', '#4dd2ff']
-// (De item-boxen staan op elk platformmidden; de server stuurt hun posities
-// mee in de state, dus de client heeft er geen eigen lijst van nodig.)
-
-// Hoogte van de grond op (x,z). De vier platforms liggen op PLAT_H. De vier
-// bruggen ertussen zijn SMALLER dan de volledige opening (BRIDGE_W < CORRIDOR)
-// — aan weerszijden van elke brug blijft dus grond op hoogte 0 over, zodat je
-// er onderdoor kunt rijden i.p.v. dat de brug de hele opening vult.
-// Alleen de buiten-hellingen per platform lopen af naar de grond (0).
-function inRect(x, z, cx, cz, hw, hd) { return x >= cx - hw && x <= cx + hw && z >= cz - hd && z <= cz + hd }
-function heightAt(x, z) {
-  const hp = PLAT_SIZE / 2, hc = CORRIDOR / 2, hb = BRIDGE_W / 2
-  for (const q of QUADRANTS) if (inRect(x, z, q.x, q.z, hp, hp)) return PLAT_H
-  // horizontale bruggen (boven-/onderrij, tussen linker- en rechterplatform):
-  // dek loopt de volle corridor-lengte in x, maar is smal in z
-  if (inRect(x, z, 0, -OFF, hc, hb)) return PLAT_H
-  if (inRect(x, z, 0, OFF, hc, hb)) return PLAT_H
-  // verticale bruggen (linker-/rechterkolom): smal in x, volle lengte in z
-  if (inRect(x, z, -OFF, 0, hb, hc)) return PLAT_H
-  if (inRect(x, z, OFF, 0, hb, hc)) return PLAT_H
-  // buiten-helling per platform (op de rampDir-zijde, x-richting)
-  for (const q of QUADRANTS) {
-    const rx0 = q.x + q.rampDir * hp
-    const t = q.rampDir > 0 ? (x - rx0) / RAMP_LEN : (rx0 - x) / RAMP_LEN
-    if (t >= 0 && t <= 1 && z >= q.z - hp && z <= q.z + hp) return PLAT_H * (1 - t)
-  }
-  return 0
-}
-// Bruggen/platforms hebben GEEN muur om je heen (dat is expres, zodat je op
-// de grond onder een brug door kunt rijden) — maar heightAt() geeft op die
-// zelfde (x,z) toch PLAT_H terug zodra je dat vlakke stuk raakt. Zonder
-// correctie zou je dus vanaf de grond zomaar "omhoog glitchen". Deze functie
-// laat een hoogtesprong alleen toe als je 'm via een helling opbouwt (of al
-// zo goed als boven was) — een plotselinge sprong van laag naar het volle,
-// vlakke PLAT_H wordt genegeerd, zodat je er gewoon onderdoor blijft rijden.
-function clampHeightStep(rawTarget, prevY) {
-  if (rawTarget <= prevY + 0.05) return rawTarget          // gelijk blijven of dalen mag altijd
-  if (prevY > PLAT_H - 0.3) return rawTarget                // je was al zo goed als boven (bv. platform → brug)
-  if (rawTarget > 0.02 && rawTarget < PLAT_H - 0.02) return rawTarget   // een helling-tussenwaarde: gewoon volgen
-  return prevY                                               // "cliff"-sprong vanaf de grond: geblokkeerd
-}
-// Botsingswanden per platform: de buitenrand is volledig dicht, de
-// helling-zijde heeft leuningen langs de opening, en de twee zijden die naar
-// een brug leiden zijn dicht BEHALVE precies waar het (smalle) brug-dek zelf
-// zit — zo kun je nergens zomaar tegen de platform-rand op rijden, alleen
-// via de helling of de brug, en blijft de grond ernaast/eronder wél vrij.
-function platformWalls(q) {
-  const hp = PLAT_SIZE / 2, hb = BRIDGE_W / 2
-  const isTop = q.z < 0
-  const outerZ = isTop ? q.z - hp : q.z + hp        // buitenrand (dicht)
-  const innerZ = isTop ? q.z + hp : q.z - hp        // rand naar boven-/onderbuur (brug)
-  const rampX0 = q.x + q.rampDir * hp
-  const innerX = q.x - q.rampDir * hp               // rand naar linker-/rechterbuur (brug)
-  const railMidX = rampX0 + q.rampDir * (RAMP_LEN / 2)
-  const flankLen = hp - hb, flankOff = hb + flankLen / 2
-  return [
-    { x: q.x, z: outerZ, hw: hp, hd: 0.4 },                              // buitenrand (dicht)
-    { x: railMidX, z: q.z - hp, hw: RAMP_LEN / 2, hd: 0.4 },             // helling-leuning noordkant
-    { x: railMidX, z: q.z + hp, hw: RAMP_LEN / 2, hd: 0.4 },             // helling-leuning zuidkant
-    { x: q.x - flankOff, z: innerZ, hw: flankLen / 2, hd: 0.4 },         // flankwand naast de Z-brug-opening
-    { x: q.x + flankOff, z: innerZ, hw: flankLen / 2, hd: 0.4 },
-    { x: innerX, z: q.z - flankOff, hw: 0.4, hd: flankLen / 2 },         // flankwand naast de X-brug-opening
-    { x: innerX, z: q.z + flankOff, hw: 0.4, hd: flankLen / 2 },
-  ]
-}
-// Zijwanden van de vier bruggen, exact onder de zichtbare leuningen. Deze
-// gelden alléén als je bovenop rijdt — op de grond moet je er juist onderdoor
-// kunnen. Zonder deze wanden kon je zijwaarts van een brug af rijden terwijl
-// er wel een leuning stond.
-function bridgeWalls() {
-  const hc = CORRIDOR / 2, hb = BRIDGE_W / 2
-  const bruggen = [
-    { x: 0, z: -OFF, horizontaal: true }, { x: 0, z: OFF, horizontaal: true },
-    { x: -OFF, z: 0, horizontaal: false }, { x: OFF, z: 0, horizontaal: false },
-  ]
-  return bruggen.flatMap(b => b.horizontaal
-    ? [{ x: b.x, z: b.z - hb, hw: hc, hd: 0.35 }, { x: b.x, z: b.z + hb, hw: hc, hd: 0.35 }]
-    : [{ x: b.x - hb, z: b.z, hw: 0.35, hd: hc }, { x: b.x + hb, z: b.z, hw: 0.35, hd: hc }])
-}
-// Massieve voetafdruk per platform. Vanaf de grond gezien is een platform een
-// dicht blok; de randen-met-openingen uit platformWalls() gelden pas als je
-// erbovenop staat. Zonder dit reed je via een brug-opening zo de voetafdruk
-// binnen en stond je middenin de pilaar.
-function platformFootprints() {
-  const hp = PLAT_SIZE / 2
-  return QUADRANTS.map(q => ({ x: q.x, z: q.z, hw: hp, hd: hp }))
-}
-// Vanaf deze hoogte gelden de wanden van het bovendek i.p.v. die van de grond.
-// Ruim onder PLAT_H, zodat je bovenaan de helling al op de dek-regels zit: pal
-// voor de platformrand duwde de voetafdruk je anders elke frame een halve
-// meter terug de helling af.
-const DEK_Y = PLAT_H - 1.2
-
-const BOMB_RADIUS = 4.5   // gelijk aan de server (BotsenRoom.ts)
-const BOMB_FUSE = 2.0
-
 const ITEM_INFO = {
   schild:  { emoji: '🛡️', label: 'Schild' },
   bom:     { emoji: '💣', label: 'Bom' },
@@ -353,45 +234,8 @@ function buildArena(scene) {
   laadGebakkenMap(scene, ARENA_MAP)
   buildClouds(scene)
 
-  const boxes = OBSTACLES.map(o => ({ x: o.x, z: o.z, hw: o.w / 2, hd: o.d / 2 }))
-  // ── Onzichtbare grens (alleen botsing, geen mesh) ──
-  const invisWalls = [
-    { x: 0, z: half + 1, hw: half + 1, hd: 1 },
-    { x: 0, z: -half - 1, hw: half + 1, hd: 1 },
-    { x: half + 1, z: 0, hw: 1, hd: half + 1 },
-    { x: -half - 1, z: 0, hw: 1, hd: half + 1 },
-  ]
-  // Twee botsingssets: welke geldt hangt af van je hoogte. Op de grond zijn de
-  // platforms dichte blokken en bestaan de bruggen niet; op het bovendek gelden
-  // de platformranden (met hun openingen) plus de brugleuningen.
-  const gemeen = boxes.concat(invisWalls)
-  return {
-    boxesGrond: gemeen.concat(platformFootprints()),
-    boxesBoven: gemeen.concat(QUADRANTS.flatMap(platformWalls), bridgeWalls()),
-  }
-}
-
-// Cirkel-vs-AABB botsing: duwt een punt (met straal r) uit een blok.
-function collideBoxes(pos, r, boxes) {
-  for (const b of boxes) {
-    const x0 = b.x - b.hw, x1 = b.x + b.hw, z0 = b.z - b.hd, z1 = b.z + b.hd
-    const cx = Math.max(x0, Math.min(pos.x, x1)), cz = Math.max(z0, Math.min(pos.z, z1))
-    const dx = pos.x - cx, dz = pos.z - cz, d2 = dx * dx + dz * dz
-    const inside = pos.x > x0 && pos.x < x1 && pos.z > z0 && pos.z < z1
-    if (!inside && d2 >= r * r) continue
-    if (inside) {
-      const dL = pos.x - x0, dR = x1 - pos.x, dT = pos.z - z0, dB = z1 - pos.z
-      const m = Math.min(dL, dR, dT, dB)
-      if (m === dT) pos.z = z0 - r
-      else if (m === dB) pos.z = z1 + r
-      else if (m === dL) pos.x = x0 - r
-      else pos.x = x1 + r
-    } else {
-      const d = Math.sqrt(d2) || 0.0001
-      pos.x += (dx / d) * (r - d)
-      pos.z += (dz / d) * (r - d)
-    }
-  }
+  // Botsingsblokken per hoogte: zie BOXES_GROND / BOXES_BOVEN (gedeeld met de server).
+  return { boxesGrond: BOXES_GROND, boxesBoven: BOXES_BOVEN }
 }
 
 function BotsenMatch({ onBack, room, sessionId, joinCode, myNameProp, myColorProp }) {
@@ -410,6 +254,10 @@ function BotsenMatch({ onBack, room, sessionId, joinCode, myNameProp, myColorPro
   const [players, setPlayers] = useState([])
   const stateRef = useRef({})
   const useItemRef = useRef(() => {})
+  // Aanraakbesturing (iPad): duim op de stick = gas, opzij = sturen, naar je toe = remmen.
+  const joyRef = useRef({ x: 0, z: 0, actief: false })
+  const slipRef = useRef(false)
+  const [aanraak] = useState(heeftAanraak)
 
   const startMatch = () => { room.send('start') }
 
@@ -479,16 +327,8 @@ function BotsenMatch({ onBack, room, sessionId, joinCode, myNameProp, myColorPro
     pipeline.imageProcessing.vignetteWeight = 2.6
     pipeline.imageProcessing.vignetteColor = new Color4(0.04, 0.01, 0.10, 1)
 
-    // Trage computer? Na een paar seconden zelf terugschakelen: eerst gloed en
-    // bloom uit, daarna minder pixels. Liever vloeiend dan mooi-en-schokkerig.
-    let kwaliteitStap = 0
-    const kwaliteitTimer = setInterval(() => {
-      const fps = engine.getFps()
-      if (fps >= 45 || kwaliteitStap >= 2) return
-      kwaliteitStap++
-      if (kwaliteitStap === 1) { scene.effectLayers.forEach(l => { l.isEnabled = false }); pipeline.bloomEnabled = false }
-      else engine.setHardwareScalingLevel(1.4)
-    }, 3000)
+    // Trage computer? Zelf terugschakelen (online/kwaliteit.js).
+    const stopKwaliteit = autoKwaliteit(engine, scene, { pipe: pipeline })
 
     // ── Slip-vonken (Shift + sturen): puur visuele feedback tijdens het driften ──
     const driftPs = new ParticleSystem('driftPs', 60, scene)
@@ -593,6 +433,11 @@ function BotsenMatch({ onBack, room, sessionId, joinCode, myNameProp, myColorPro
         }
       }
       if (state.phase !== lastPhase) {
+        // nog een keer: iedereen staat weer op een startplek
+        if (state.phase === 'lobby' && me) {
+          outer.position.set(me.x, heightAt(me.x, me.z), me.z)
+          outer.rotation.y = me.rotY; phys.heading = me.rotY; phys.vel = 0
+        }
         lastPhase = state.phase
         setPhase(state.phase)
         if (state.phase === 'gameover') setWinnerName(state.winnerName || '')
@@ -678,11 +523,12 @@ function BotsenMatch({ onBack, room, sessionId, joinCode, myNameProp, myColorPro
       }
 
       if (playing && meNow?.alive && !stunned) {
-        const gas   = keys['w'] || keys['arrowup']
-        const brake = keys['s'] || keys['arrowdown']
+        const joy = joyRef.current
+        const gas   = keys['w'] || keys['arrowup'] || (joy.actief && joy.z <= 0.45)
+        const brake = keys['s'] || keys['arrowdown'] || (joy.actief && joy.z > 0.45)
         const left  = keys['a'] || keys['arrowleft']
         const right = keys['d'] || keys['arrowright']
-        const driftKey = keys['shift']
+        const driftKey = keys['shift'] || slipRef.current
 
         if (gas)        phys.vel += phys.accel * dt
         else if (brake) phys.vel -= phys.brakeForce * dt
@@ -691,7 +537,9 @@ function BotsenMatch({ onBack, room, sessionId, joinCode, myNameProp, myColorPro
         // Slippen (Shift + sturen, met genoeg vaart): scherpere bocht, bouwt
         // een boost op. Loslaten (of stoppen met sturen) geeft een korte
         // snelheidsboost als er genoeg is opgebouwd — mini-turbo-gevoel.
-        const steer = (right ? 1 : 0) - (left ? 1 : 0)
+        // toetsen sturen vol; de stick stuurt traploos (met een kleine dode zone)
+        const stick = Math.abs(joy.x) > 0.15 ? Math.sign(joy.x) * Math.min(1, (Math.abs(joy.x) - 0.15) / 0.6) : 0
+        const steer = (right ? 1 : 0) - (left ? 1 : 0) || stick
         const canDrift = driftKey && steer !== 0 && Math.abs(phys.vel) > phys.maxSpeed * 0.45
         if (canDrift) {
           phys.drifting = true
@@ -847,7 +695,7 @@ function BotsenMatch({ onBack, room, sessionId, joinCode, myNameProp, myColorPro
     window.addEventListener('resize', onResize)
 
     return () => {
-      clearInterval(kwaliteitTimer)
+      stopKwaliteit()
       window.removeEventListener('keydown', kd)
       window.removeEventListener('keyup', ku)
       window.removeEventListener('resize', onResize)
@@ -860,6 +708,7 @@ function BotsenMatch({ onBack, room, sessionId, joinCode, myNameProp, myColorPro
     <div className="botsen-wrap">
       <OrientationGate />
       <canvas ref={canvasRef} className="botsen-canvas" />
+      <VerbindingsMelding room={room} />
       <TerugKnop onClick={onBack}>Stoppen</TerugKnop>
 
       {phase === 'lobby' && (
@@ -895,7 +744,25 @@ function BotsenMatch({ onBack, room, sessionId, joinCode, myNameProp, myColorPro
 
       {phase === 'countdown' && <div className="botsen-count">{count > 0 ? count : 'GO!'}</div>}
 
-      {phase === 'playing' && amAlive && (
+      {aanraak && phase === 'playing' && amAlive && (
+        <>
+          <Joystick joyRef={joyRef} hint={amStunned ? null : 'Rijden'} />
+          <div className="on-acties">
+            <ActieKnop label="Slip" kleur="var(--kk-cyan)" onIn={() => { slipRef.current = true }} onUit={() => { slipRef.current = false }}>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 16c4 0 5-8 9-8s4 4 7 4M4 20c5 0 6-4 9-4" /></svg>
+            </ActieKnop>
+            <ActieKnop
+              className="groot" kleur="var(--kk-pink)" uit={!heldItem}
+              label={heldItem ? ITEM_INFO[heldItem]?.label : 'Geen item'} sub={heldItem ? '×' + heldCount : null}
+              onTik={() => useItemRef.current()}
+            >
+              <span key={heldItem || 'leeg'} className="botsen-item-emoji">{heldItem ? ITEM_INFO[heldItem]?.emoji : '❔'}</span>
+            </ActieKnop>
+          </div>
+        </>
+      )}
+
+      {!aanraak && phase === 'playing' && amAlive && (
         <button
           className={'botsen-item-btn' + (heldItem ? ' has-item' : '')}
           onClick={() => useItemRef.current()}
@@ -916,12 +783,17 @@ function BotsenMatch({ onBack, room, sessionId, joinCode, myNameProp, myColorPro
           <h1>🏆 Einde!</h1>
           <p>{winnerName ? `${winnerName} wint!` : 'Gelijkspel!'}</p>
           <div className="botsen-finish-btns">
+            <button className="botsen-opnieuw" onClick={() => room.send('opnieuw')}>Nog een keer</button>
             <button onClick={onBack}>👕 Kledingkast</button>
           </div>
         </div>
       )}
 
-      <div className="botsen-help">W/↑ gas · S/↓ rem · A/← D/→ sturen · spatie = item gebruiken · pak de ❔-blokken!</div>
+      <div className="botsen-help">
+        {aanraak
+          ? 'Duim op de stick = rijden · opzij = sturen · naar je toe = remmen · pak de ❔-blokken!'
+          : 'W/↑ gas · S/↓ rem · A/← D/→ sturen · Shift = slippen · spatie = item gebruiken · pak de ❔-blokken!'}
+      </div>
     </div>
   )
 }
@@ -934,6 +806,19 @@ export default function BotsenGame({ onBack }) {
   const [joinCode, setJoinCode] = useState(null)
   const [myName, setMyName] = useState('')
   const [myColor, setMyColor] = useState('')
+  const [melding, setMelding] = useState(null)
+
+  // Lukt terugkomen na wegvallen niet, dan terug naar het menu met uitleg.
+  useEffect(() => {
+    if (!room) return
+    const weg = (code) => {
+      if (code === 4000 || code === 1000) return
+      setMelding('De verbinding met het potje is verbroken. Maak een nieuw potje of join opnieuw met de code.')
+      setRoom(null); setScreen('lobby')
+    }
+    room.onLeave(weg)
+    return () => room.onLeave.remove(weg)
+  }, [room])
 
   if (screen === 'match' && room) {
     return <BotsenMatch onBack={() => { try { room.leave() } catch {} ; setRoom(null); setScreen('menu') }} room={room} sessionId={sessionId} joinCode={joinCode} myNameProp={myName} myColorProp={myColor} />
@@ -941,7 +826,8 @@ export default function BotsenGame({ onBack }) {
 
   if (screen === 'lobby') {
     return <BotsenLobby
-      onBack={() => setScreen('menu')}
+      melding={melding}
+      onBack={() => { setMelding(null); setScreen('menu') }}
       onJoined={(r, jc, name, color) => { setRoom(r); setSessionId(r.sessionId); setJoinCode(jc); setMyName(name); setMyColor(color); setScreen('match') }}
     />
   }
@@ -959,26 +845,26 @@ export default function BotsenGame({ onBack }) {
   )
 }
 
-function BotsenLobby({ onBack, onJoined }) {
+function BotsenLobby({ onBack, onJoined, melding }) {
   const [code, setCode] = useState('')
   const [name, setName] = useState(() => localStorage.getItem('kk_playername') || '')
   const [color, setColor] = useState(() => localStorage.getItem('kk_botsen_color') || KART_COLORS[0])
-  const [error, setError] = useState(null)
+  const [error, setError] = useState(melding ?? null)
   const [loading, setLoading] = useState(false)
+  const [status, setStatus] = useState(null)
 
   const connect = async (create) => {
     setLoading(true); setError(null)
     try {
       const shirt = localStorage.getItem('kk_shirt') || ''
       const wearing = localStorage.getItem('kk_wearing') || '{}'
-      const client = new Colyseus.Client(SERVER_URL)
-      const joinCode = create ? String(Math.floor(1000 + Math.random() * 9000)) : code.trim()
+      const joinCode = create ? nieuweCode(4) : code.trim()
       const opts = { joinCode, shirt, wearing, name: name || 'Speler', color }
-      const room = create ? await client.create(ROOM_TYPE, opts) : await client.join(ROOM_TYPE, opts)
+      const room = await maakOfJoin(ROOM_TYPE, opts, { maak: create, onStatus: setStatus })
       if (name) localStorage.setItem('kk_playername', name)
       localStorage.setItem('kk_botsen_color', color)
       onJoined(room, joinCode, name || 'Speler', color)
-    } catch { setError(create ? 'Kan geen potje aanmaken.' : 'Potje niet gevonden.'); setLoading(false) }
+    } catch (e) { setError(FOUT_TEKST[e?.soort] ?? FOUT_TEKST.server); setLoading(false); setStatus(null) }
   }
 
   return (
@@ -1007,7 +893,7 @@ function BotsenLobby({ onBack, onJoined }) {
         </div>
         <button className="botsen-menu-btn solo" disabled={loading || code.trim().length < 1} onClick={() => connect(false)}>🔑 Join potje</button>
         {error && <p className="botsen-lobby-err">{error}</p>}
-        {loading && <p className="botsen-lobby-info">Verbinden…</p>}
+        {loading && <VerbindStatus status={status} />}
       </div>
     </div>
   )

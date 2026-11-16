@@ -1,0 +1,94 @@
+/* Gedeelde bediening en schermen van de online spellen (voetbal, paintball,
+   ballonnengevecht): donker glas met neonranden, tokens uit theme.css. */
+
+/* ── Joystick ─────────────────────────────────────────────────────────── */
+.on-joy {
+  position: fixed; bottom: max(28px, env(safe-area-inset-bottom)); z-index: 100;
+  width: 132px; height: 132px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(circle at 50% 50%, rgba(56,189,248,0.10), rgba(11,10,26,0.55) 70%);
+  border: 2px solid color-mix(in srgb, var(--kk-cyan) 45%, transparent);
+  box-shadow: 0 0 22px -6px var(--kk-cyan), inset 0 0 22px -10px var(--kk-cyan);
+  touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; cursor: pointer;
+  transition: box-shadow var(--kk-dur-fast), border-color var(--kk-dur-fast);
+}
+.on-joy-links { left: max(84px, env(safe-area-inset-left)); }   /* rechts van de muziekknop */
+.on-joy-rechts { right: max(28px, env(safe-area-inset-right)); }
+.on-joy.actief { border-color: var(--kk-cyan); box-shadow: 0 0 30px -4px var(--kk-cyan), inset 0 0 26px -8px var(--kk-cyan); }
+.on-joy-knop {
+  width: 54px; height: 54px; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle at 35% 30%, #ffffff, var(--kk-cyan) 55%, #0b6a96);
+  box-shadow: 0 0 16px var(--kk-cyan), 0 4px 10px rgba(0,0,0,0.5);
+}
+.on-joy-hint {
+  position: absolute; top: -26px; left: 50%; transform: translateX(-50%); white-space: nowrap; pointer-events: none;
+  font: var(--kk-fw-bold) var(--kk-fs-xs)/1 var(--kk-body); letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--kk-text-soft); text-shadow: 0 1px 4px #000;
+}
+
+/* ── Actieknoppen (rechtsonder) ───────────────────────────────────────── */
+.on-acties {
+  position: fixed; right: max(24px, env(safe-area-inset-right)); bottom: max(28px, env(safe-area-inset-bottom)); z-index: 100;
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+}
+.on-acties.rij { flex-direction: row; align-items: flex-end; }
+.on-actie {
+  --on-kleur: var(--kk-gold);
+  width: 84px; height: 84px; border-radius: 50%; padding: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+  background: radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--on-kleur) 30%, #14122b), #0f0d22 75%);
+  border: 2px solid var(--on-kleur); color: #fff; font-family: var(--kk-body); cursor: pointer;
+  box-shadow: 0 0 18px -4px var(--on-kleur), inset 0 0 18px -8px var(--on-kleur), 0 6px 16px rgba(0,0,0,0.45);
+  touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+  transition: transform var(--kk-dur-fast), box-shadow var(--kk-dur-fast), background var(--kk-dur-fast);
+}
+.on-actie.groot { width: 104px; height: 104px; }
+.on-actie svg { width: 30px; height: 30px; fill: none; stroke: var(--on-kleur); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 5px var(--on-kleur)); }
+.on-actie-label { font-size: 0.68rem; font-weight: var(--kk-fw-black); letter-spacing: 0.08em; text-transform: uppercase; }
+.on-actie-sub { font-size: 0.72rem; font-weight: var(--kk-fw-bold); color: var(--on-kleur); }
+.on-actie:active, .on-actie.aan {
+  transform: scale(0.93);
+  background: radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--on-kleur) 70%, #14122b), color-mix(in srgb, var(--on-kleur) 25%, #0f0d22) 80%);
+  box-shadow: 0 0 30px -2px var(--on-kleur), inset 0 0 22px -6px #fff;
+}
+.on-actie:disabled { opacity: 0.4; cursor: default; box-shadow: none; }
+
+@media (max-height: 520px) {
+  .on-joy { width: 112px; height: 112px; bottom: 16px; }
+  .on-actie { width: 70px; height: 70px; }
+  .on-actie.groot { width: 86px; height: 86px; }
+  .on-acties { bottom: 16px; gap: 10px; }
+}
+
+/* ── Verbinden en verbinding kwijt ────────────────────────────────────── */
+.on-verbind {
+  display: flex; align-items: center; gap: 12px; margin-top: 14px; padding: 12px 16px;
+  border-radius: var(--kk-r-md); background: rgba(11,10,26,0.6); border: 1px solid var(--kk-border);
+  color: var(--kk-text-soft); font: var(--kk-fw-normal) var(--kk-fs-sm)/1.4 var(--kk-body); text-align: left;
+}
+.on-verbind.wekken { border-color: color-mix(in srgb, var(--kk-gold) 55%, transparent); box-shadow: 0 0 18px -6px var(--kk-gold); }
+.on-verbind strong { color: var(--kk-gold); }
+.on-spinner {
+  flex: none; width: 22px; height: 22px; border-radius: 50%;
+  border: 3px solid rgba(255,255,255,0.15); border-top-color: var(--kk-cyan);
+  animation: on-draai 0.9s linear infinite;
+}
+.on-spinner.groot { width: 44px; height: 44px; border-width: 4px; }
+@keyframes on-draai { to { transform: rotate(360deg); } }
+.on-melding-scrim {
+  position: fixed; inset: 0; z-index: 400; display: flex; align-items: center; justify-content: center;
+  background: var(--kk-scrim); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+}
+.on-melding {
+  display: flex; flex-direction: column; align-items: center; gap: 10px; max-width: 360px; padding: 28px 30px;
+  border-radius: var(--kk-r-lg); background: var(--kk-surface-solid); border: 1px solid color-mix(in srgb, var(--kk-cyan) 45%, transparent);
+  box-shadow: 0 0 40px -10px var(--kk-cyan), var(--kk-shadow-lg); color: var(--kk-text); text-align: center; font-family: var(--kk-body);
+}
+.on-melding h2 { margin: 6px 0 0; font: var(--kk-fw-black) var(--kk-fs-lg)/1.2 var(--kk-head); letter-spacing: 0.04em; text-transform: uppercase; }
+.on-melding p { margin: 0; color: var(--kk-text-soft); font-size: var(--kk-fs-sm); }
+.on-knop {
+  margin-top: 8px; min-height: var(--kk-tap); padding: 10px 26px; border-radius: var(--kk-r-pill); border: 0; cursor: pointer;
+  background: var(--kk-primary); color: #fff; font: var(--kk-fw-black) var(--kk-fs-md)/1 var(--kk-body);
+  box-shadow: 0 0 18px -4px var(--kk-primary-glow);
+}
+.on-knop.goud { background: var(--kk-gold); color: var(--kk-text-on-accent); box-shadow: 0 0 20px -4px var(--kk-gold); }

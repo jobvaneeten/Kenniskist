@@ -277,9 +277,3 @@ export function zetLegeOnderdelenUit(meshes) {
     if (m.skeleton && n > 0 && n <= 8) m.setEnabled(false)
   })
 }
-// Een animatie-GLB brengt een compleet eigen poppetje + skelet mee. Na het
-// retargeten (alleen nog Poppetje-botten als doel) mag dat helemaal weg.
-export function ruimAnimatieBronOp(aM, skels) {
-  aM.forEach(m => { if (!m.isDisposed()) m.dispose(false, true) })
-  skels?.forEach(s => s.dispose())
-}

@@ -172,3 +172,4 @@
   70%  { transform: scale(1.35) rotate(15deg); filter: brightness(1.5); }
   100% { transform: scale(1) rotate(0); filter: none; }
 }
+.botsen-finish-btns button.botsen-opnieuw { background: var(--kk-gold); color: var(--kk-text-on-accent); box-shadow: 0 0 20px -4px var(--kk-gold); }

@@ -6,12 +6,14 @@ import {
 import { SceneLoader, LoadAssetContainerAsync } from '@babylonjs/core/Loading/sceneLoader'
 import '@babylonjs/loaders/glTF'
 import { findItem } from '../itemsCatalog'
-import { applyItemToMesh, loadClothingDonor, usesDonor, loadHeadItem, zetLegeOnderdelenUit, ruimAnimatieBronOp } from '../applyClothing'
+import { applyItemToMesh, loadClothingDonor, usesDonor, loadHeadItem, zetLegeOnderdelenUit } from '../applyClothing'
+import { laadAnimatieBron, kopieVoorSpeler } from './online/animaties.js'
 
 export const KART_VISUAL = 0.6   // hele kart+poppetje kleiner in de wereld
 export const AV_Y = -0.12        // zithoogte avatar in de kart
 export const AV_Z = 0            // voor/achter-positie avatar (kart.glb is rond het poppetje gebouwd)
-export const KART_COLORS = ['#e63946', '#1d6fd0', '#2a9d8f', '#e9c46a', '#9b5de5', '#f4a261', '#43aa8b', '#ff6b6b']
+// kart-kleuren: één bron met de server (online/gedeeld/botsenArena.js)
+export { KART_KLEUREN as KART_COLORS } from './online/gedeeld/botsenArena.js'
 
 export const RETARGET_BONES = new Set([
   'Root','Hips','Spine','Spine1','Neck','Head',
@@ -119,11 +121,11 @@ export function loadAvatar(scene, shirt, wearing, onReady, animBestand = 'rijden
     })
 
     // Rij-animatie — retarget naar Poppetje (zelfde Mixamo-skelet, ruwe keys direct)
-    SceneLoader.ImportMesh('', '/', animBestand, scene, (aM, _p, aSk, aG) => {
-      aM.forEach(m => m.setEnabled(false))
-      if (aG.length) {
-        const orig = aG[0]
-        const rt = orig.clone('kartrijden', t => RETARGET_BONES.has(t.name) ? (nodeMap[t.name] ?? t) : t)
+    // één keer per scene geladen (online/animaties.js), per kart een kopie
+    laadAnimatieBron(scene, animBestand).then(({ groep: orig }) => {
+      if (root.isDisposed()) return
+      if (orig) {
+        const rt = kopieVoorSpeler({ groep: orig }, 'kartrijden', scene, t => RETARGET_BONES.has(t.name) ? (nodeMap[t.name] ?? null) : null)
         const tas = rt.targetedAnimations
         for (let i = tas.length - 1; i >= 0; i--) {
           const { animation: anim, target } = tas[i]
@@ -133,12 +135,9 @@ export function loadAvatar(scene, shirt, wearing, onReady, animBestand = 'rijden
           if (!RETARGET_BONES.has(name)) { tas.splice(i, 1); continue }
           if (name === 'Root') { tas.splice(i, 1); continue }
         }
-        orig.stop()
         rt.play(true)
-        orig.dispose()
       }
-      ruimAnimatieBronOp(aM, aSk)
       onReady?.(root)
-    }, null, () => onReady?.(root))
+    }).catch(() => onReady?.(root))
   }, null, (_, msg, err) => console.error('Kart avatar load error:', msg, err))
 }

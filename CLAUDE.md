@@ -29,6 +29,8 @@ You are a senior engineer. Follow these rules strictly to minimize token usage:
 - Stack: React + Vite, Babylon.js (3D), localStorage for state
 - Key files: src/App.jsx (schermen + munten), src/GameMenu.jsx (vakken + FREE_GAMES), src/Wardrobe.jsx, src/Landing.jsx (voorpagina — spellijst en vakken moeten kloppen met GameMenu/tools.js), src/applyClothing.js, src/itemsCatalog.js
 - 3D-spellen: src/games/RocketGame.jsx (voetbal), PaintballGame.jsx, BotsenGame.jsx (heet in de UI Ballonnengevecht). Gedeelde nacht/neon-look via src/games/neonOmgeving.js; multiplayer draait op Colyseus (repo kenniskist-server, wss://kenniskist-server.onrender.com)
+- Online spellen, gedeeld: src/games/online/ (joystick, verbinden + server wekken, melding bij wegvallen, animaties één keer per potje, automatische kwaliteit). Arena-vorm en botsingen staan in kenniskist-server/src/gedeeld/ en worden met `npm run gedeeld` (in de server) gekopieerd naar src/games/online/gedeeld/: daar niet aanpassen. Lokaal testen tegen je eigen server: localStorage.kk_spelserver = 'ws://localhost:2567'
+- Animatie-GLB's voor het poppetje: na exporteren uit Blender/Mixamo `node tools/glb-uitkleden.mjs public/<bestand>.glb` (haalt de meegeleverde kopie van het poppetje eruit, ~2 MB → ~150 KB)
 - 3D character: Poppetje.glb with skeleton (44 bones). Kleding (shirt, broek, pet) laadt een donor-GLB — correct approach is to load GLB mesh, detach from __root__ (parent=null) before disposing container, assign Poppetje's skeleton, then parent to the character root. Zie applyClothing.js
 - Currency: "curuntie" stored in kk_curuntie localStorage
 - Unlocked items: kk_unlocked (object), kk_shirt (string), kk_wearing (object)

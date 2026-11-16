@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import * as Colyseus from '@colyseus/sdk'
 import {
   Engine, Scene, FreeCamera,
   Color3, Vector3, Quaternion,
@@ -9,57 +8,22 @@ import {
 import { SceneLoader } from '@babylonjs/core/Loading/sceneLoader'
 import '@babylonjs/loaders/glTF'
 import { findItem } from '../itemsCatalog'
-import { applyItemToMesh, loadClothingDonor, usesDonor, loadHeadItem, zetLegeOnderdelenUit, ruimAnimatieBronOp } from '../applyClothing'
+import { applyItemToMesh, loadClothingDonor, usesDonor, loadHeadItem, zetLegeOnderdelenUit } from '../applyClothing'
 import OrientationGate from '../OrientationGate'
 import { bouwStadion } from './voetbalStadion'
 import './rocket-game.css'
 import { TerugKnop } from '../ui/index.jsx'
+import { maakOfJoin, nieuweCode, FOUT_TEKST } from './online/verbinding.js'
+import VerbindingsMelding, { VerbindStatus } from './online/VerbindingsMelding.jsx'
+import Joystick from './online/Joystick.jsx'
+import { laadAnimatieBron, kopieVoorSpeler } from './online/animaties.js'
+import { autoKwaliteit } from './online/kwaliteit.js'
 
-const SERVER_URL = 'wss://kenniskist-server.onrender.com'
-
-// ── Field constants (identical to FootballScene3D) ─────────────────────
-const FIELD_HALF  = 38
-const GOAL_Z      = 36
-const GOAL_HALF_W = 3.65
-const GOAL_H      = 2.44
-const BALL_RADIUS = 0.22
-const PLAYER_SPEED  = 4.8   // must match server
-const BOOST_SPEED   = 9.0
-const PLAYER_RADIUS = 0.6
-const GOAL_DEPTH    = 1.6
-const BOUND         = GOAL_Z          // walls on the white line (±36)
-const CORNER_R      = 8               // rounded-corner radius
-const GOAL_BACK     = BOUND + GOAL_DEPTH
-const GAME_DURATION = 120             // seconds (matches server)
-
-// Rounded arena boundary + open goal mouths (mirrors the server)
-function resolveBoundary(x, z, rad) {
-  let ax = Math.abs(x), az = Math.abs(z)
-  const sx = x < 0 ? -1 : 1, sz = z < 0 ? -1 : 1
-  let nx = 0, nz = 0
-  if (ax < GOAL_HALF_W - rad && az > BOUND - rad) {
-    const sideLim = GOAL_HALF_W - rad, backLim = GOAL_BACK - rad
-    if (ax > sideLim) { ax = sideLim; nx = -sx }
-    if (az > backLim) { az = backLim; nz = -sz }
-    return { x: sx*ax, z: sz*az, nx, nz }
-  }
-  const C = BOUND - CORNER_R
-  if (ax > C && az > C) {
-    const dx = ax - C, dz = az - C
-    const d  = Math.hypot(dx, dz) || 1
-    const maxd = CORNER_R - rad
-    if (d > maxd) {
-      const fr = maxd / d
-      ax = C + dx*fr; az = C + dz*fr
-      nx = -sx*(dx/d); nz = -sz*(dz/d)
-    }
-    return { x: sx*ax, z: sz*az, nx, nz }
-  }
-  const lim = BOUND - rad
-  if (ax > lim) { ax = lim; nx = -sx }
-  if (az > lim && !(ax < GOAL_HALF_W - rad)) { az = lim; nz = -sz }
-  return { x: sx*ax, z: sz*az, nx, nz }
-}
+// Veld, doelen en rand: één bron met de server (online/gedeeld/voetbalVeld.js).
+import {
+  FIELD_HALF, GOAL_Z, GOAL_HALF_W, GOAL_H, BALL_RADIUS,
+  GOAL_DEPTH, BOUND, CORNER_R, bewegSpeler,
+} from './online/gedeeld/voetbalVeld.js'
 
 const RETARGET_BONES = new Set([
   'Root','Hips','Spine','Spine1','Neck','Head',
@@ -246,18 +210,12 @@ class PlayerInstance {
         this._ready = true
         this._onReady?.()
       }
+      // elk bestand één keer per potje geladen (online/animaties.js), per speler een kopie
       ANIMS.forEach(({ key, file, stripRoot }) => {
-        SceneLoader.ImportMesh('', '/', file, this.scene, (aM, _p, aSk, aG) => {
-          aM.forEach(m => m.setEnabled(false))
-          if (!aG.length) { done(); return }
-          const orig = aG[0]
-          const srcRests = {}
-          orig.targetedAnimations.forEach(ta => {
-            const n = ta.target
-            srcRests[n.name] = n.rotationQuaternion ? n.rotationQuaternion.clone() : Quaternion.Identity()
-          })
-          const rt = orig.clone(key, t =>
-            RETARGET_BONES.has(t.name) ? (this._nodeMap[t.name] ?? t) : t
+        laadAnimatieBron(this.scene, file).then(({ groep: orig, srcRests }) => {
+          if (this._disposed) return
+          const rt = kopieVoorSpeler({ groep: orig }, key, this.scene, t =>
+            RETARGET_BONES.has(t.name) ? (this._nodeMap[t.name] ?? null) : null
           )
           const tas = rt.targetedAnimations
           for (let i = tas.length - 1; i >= 0; i--) {
@@ -274,8 +232,8 @@ class PlayerInstance {
               anim.getKeys().forEach(kf => kf.value.copyFrom(corr.multiply(kf.value)))
             }
           }
-          rt.stop(); this._anims[key] = rt; orig.dispose(); ruimAnimatieBronOp(aM, aSk); done()
-        }, null, () => done())
+          rt.stop(); this._anims[key] = rt; done()
+        }).catch(() => done())
       })
     }, null, (_, msg, err) => { console.error('Poppetje load error:', msg, err) })
   }
@@ -308,7 +266,8 @@ class PlayerInstance {
   }
   // Choose locomotion anim from speed + sprint flag
   _locomotion(spd, sprinting) {
-    if (this._state === 'emote') return
+    // nog niet alle animaties binnen: geen stand onthouden die nergens speelt
+    if (!this._ready || this._state === 'emote') return
     if (spd > 0.3) {
       if (sprinting) this._playSprint()
       else           this._playWalk(spd)
@@ -360,6 +319,7 @@ class PlayerInstance {
   onReady(cb) { if (this._ready) cb(); else this._onReady = cb }
 
   dispose() {
+    this._disposed = true   // animaties die nog binnenkomen niet meer koppelen
     this._stopAll()
     Object.values(this._anims).forEach(g => { try { g.dispose() } catch {} })
     this._donors.forEach(g => { try { g.dispose() } catch {} })
@@ -397,44 +357,6 @@ function createBallMesh(scene, sg) {
   return { ball, disc }
 }
 
-// ── Virtual joystick (identical to FootballScene3D) ────────────────────
-function VirtualJoystick({ joyRef }) {
-  const baseRef = useRef(null)
-  const knobRef = useRef(null)
-  const active  = useRef(false)
-  const RADIUS  = 52
-
-  const apply = (dx, dy) => {
-    const len = Math.hypot(dx, dy)
-    if (len > RADIUS) { dx=dx/len*RADIUS; dy=dy/len*RADIUS }
-    joyRef.current.x = dx/RADIUS; joyRef.current.z = dy/RADIUS
-    if (knobRef.current) knobRef.current.style.transform = `translate(${dx}px,${dy}px)`
-  }
-  const release = () => {
-    active.current = false; joyRef.current.x=0; joyRef.current.z=0
-    if (knobRef.current) knobRef.current.style.transform = 'translate(0,0)'
-  }
-  const center = () => { const r=baseRef.current.getBoundingClientRect(); return { cx:r.left+r.width/2, cy:r.top+r.height/2 } }
-
-  useEffect(() => {
-    const onMove = e => { if (!active.current) return; const {cx,cy}=center(); apply(e.clientX-cx,e.clientY-cy) }
-    const onUp   = () => { if (active.current) release() }
-    window.addEventListener('mousemove', onMove); window.addEventListener('mouseup', onUp)
-    return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp) }
-  }, [])
-
-  return (
-    <div ref={baseRef} className="rg-joy-base"
-      onTouchStart={e => { e.preventDefault(); active.current=true; const t=e.targetTouches[0]; const {cx,cy}=center(); apply(t.clientX-cx,t.clientY-cy) }}
-      onTouchMove={e  => { e.preventDefault(); if (!active.current) return; const t=e.targetTouches[0]; const {cx,cy}=center(); apply(t.clientX-cx,t.clientY-cy) }}
-      onTouchEnd={() => release()} onTouchCancel={() => release()}
-      onMouseDown={e => { active.current=true; const {cx,cy}=center(); apply(e.clientX-cx,e.clientY-cy) }}
-    >
-      <div ref={knobRef} className="rg-joy-knob" />
-    </div>
-  )
-}
-
 // ── fmtTime helper ─────────────────────────────────────────────────────
 function fmtTime(s) {
   const m = Math.floor(s / 60)
@@ -456,8 +378,9 @@ function initScene(canvas, { localSessionId, getRoomState, sendInput, sendEmote,
   const { ball, disc } = createBallMesh(scene, sg)
   const particles  = new ParticlePool(scene, 50)
 
+  let pipe = null
   try {
-    const pipe = new DefaultRenderingPipeline('pipe', false, scene, [camera])   // no MSAA
+    pipe = new DefaultRenderingPipeline('pipe', false, scene, [camera])   // no MSAA
     pipe.bloomEnabled = true; pipe.bloomThreshold = 0.8; pipe.bloomWeight = 0.3
     pipe.bloomKernel  = 32;   pipe.bloomScale = 0.5    // lighter bloom
     pipe.vignetteEnabled = true; pipe.vignetteWeight = 1.0
@@ -471,6 +394,7 @@ function initScene(canvas, { localSessionId, getRoomState, sendInput, sendEmote,
   const boostRef = { current: false }   // on-screen boost button
   const passRef  = { current: false }   // pass-mode toggle (harder kick on contact)
   const keys     = {}
+  const laatsteInput = { t: 0, inp: null }   // wanneer de besturing voor het laatst naar de server ging
   const lastEmoteSeq = new Map()   // sessionId → last emoteSeq we played
   const onKD   = e => {
     keys[e.code] = true
@@ -549,7 +473,15 @@ function initScene(canvas, { localSessionId, getRoomState, sendInput, sendEmote,
     if (wlen > 1) { wx /= wlen; wz /= wlen }
 
     const inp = { x: wx, z: wz, boost: !!keys['Space'] || boostRef.current, pass: passRef.current }
-    sendInput(inp)
+    // Niet elk beeldje een bericht (60-120 per seconde): alleen als de
+    // besturing echt verandert, en anders 15× per seconde. De server onthoudt
+    // de laatste besturing.
+    const nuMs = performance.now(), vorig = laatsteInput.inp
+    const anders = !vorig || vorig.boost !== inp.boost || vorig.pass !== inp.pass ||
+      Math.abs(vorig.x - inp.x) > 0.08 || Math.abs(vorig.z - inp.z) > 0.08
+    if ((anders && nuMs - laatsteInput.t > 33) || nuMs - laatsteInput.t > 66) {
+      sendInput(inp); laatsteInput.inp = inp; laatsteInput.t = nuMs
+    }
 
     // ── Players ──
     rs.players.forEach((p, sid) => {
@@ -566,20 +498,12 @@ function initScene(canvas, { localSessionId, getRoomState, sendInput, sendEmote,
         // Client-side prediction — same movement math as the server
         if (!pred.init) { pred.x = p.x; pred.z = p.z; pred.rotY = p.rotY; pred.init = true }
         const moving = rs.phase === 'playing'
-        const canBoost = inp.boost && (p.stamina ?? 0) > 0
-        const spd = canBoost ? BOOST_SPEED : PLAYER_SPEED
-        const vx = moving ? inp.x * spd : 0
-        const vz = moving ? inp.z * spd : 0
-        const pr = resolveBoundary(pred.x + vx*dt, pred.z + vz*dt, PLAYER_RADIUS)
-        pred.x = pr.x; pred.z = pr.z
-        const ms = Math.hypot(vx, vz)
-        if (ms > 0.05) {
-          const target = Math.atan2(vx, vz)
-          let diff = target - pred.rotY
-          while (diff >  Math.PI) diff -= Math.PI*2
-          while (diff < -Math.PI) diff += Math.PI*2
-          pred.rotY += diff * Math.min(1, 14*dt)
-        }
+        // zelfde stap als de server (online/gedeeld/voetbalVeld.js), op een kopie:
+        // de sprint-energie zelf blijft van de server komen
+        const q = { x: pred.x, z: pred.z, rotY: pred.rotY, stamina: p.stamina ?? 0, vx: 0, vz: 0, boosting: false }
+        bewegSpeler(q, moving ? inp : { x: 0, z: 0, boost: false }, dt)
+        pred.x = q.x; pred.z = q.z; pred.rotY = q.rotY
+        const vx = q.vx, vz = q.vz, canBoost = q.boosting
         // gentle reconcile toward server (corrects drift without snapping)
         const Lr = 1 - Math.exp(-dt * 3)
         pred.x += (p.x - pred.x) * Lr
@@ -663,15 +587,19 @@ function initScene(canvas, { localSessionId, getRoomState, sendInput, sendEmote,
   })
 
   engine.runRenderLoop(() => scene.render())
-  window.addEventListener('resize', () => engine.resize())
+  const onResize = () => engine.resize()
+  window.addEventListener('resize', onResize)
+  const stopKwaliteit = autoKwaliteit(engine, scene, { pipe, schaduw: sg })
 
   return {
     joyRef,
     boostRef,
     passRef,
     dispose: () => {
+      stopKwaliteit()
       window.removeEventListener('keydown', onKD)
       window.removeEventListener('keyup',   onKU)
+      window.removeEventListener('resize',  onResize)
       playerInstances.forEach(inst => inst.dispose())
       particles.dispose()
       engine.stopRenderLoop()
@@ -681,204 +609,28 @@ function initScene(canvas, { localSessionId, getRoomState, sendInput, sendEmote,
   }
 }
 
-// ── Solo offline room ──────────────────────────────────────────────────
-// Mirrors the Colyseus RocketRoom physics in-browser for a single player,
-// so "Speel in 3D" gives the same world as Potje Voetballen but alone.
-// Exposes the same minimal API the component/scene use: sessionId, send,
-// onStateChange, onLeave, leave — and a live, in-place mutated state object.
-class LocalRoom {
-  constructor({ shirt, wearing, name }) {
-    this.sessionId = 'solo'
-    this._inp = { x: 0, z: 0, boost: false, pass: false }
-    this._cb = null
-    this._cbLeave = null
-    this._prev = { x: 0, z: 12 }
-    this._stopped = false
-    this._cdAcc = 0
-    this._goalPause = 0
-    this._last = performance.now()
-    const p = {
-      x: 0, z: 12, y: 0, rotY: Math.PI, vx: 0, vz: 0,
-      team: 0, stamina: 1, boosting: false,
-      shirt: shirt || '', wearing: wearing || '{}', name: name || 'Speler',
-      emote: '', emoteSeq: 0,
-    }
-    this.state = {
-      phase: 'countdown', countdown: 3, timeLeft: GAME_DURATION,
-      scoreA: 0, scoreB: 0,
-      ball: { x: 0, y: BALL_RADIUS, z: 0, vx: 0, vz: 0 },
-      players: new Map([['solo', p]]),
-    }
-    this._iv = setInterval(() => this._tick(), 1000 / 60)
-  }
-  onStateChange(cb) { this._cb = cb; cb(this.state) }
-  onLeave(cb) { this._cbLeave = cb }
-  send(type, msg) {
-    if (type === 'input') {
-      this._inp = {
-        x: Math.max(-1, Math.min(1, msg.x || 0)),
-        z: Math.max(-1, Math.min(1, msg.z || 0)),
-        boost: !!msg.boost, pass: !!msg.pass,
-      }
-    } else if (type === 'emote') {
-      const p = this.state.players.get('solo')
-      if (p) { p.emote = msg; p.emoteSeq++ }
-    }
-  }
-  leave() { this._stopped = true; clearInterval(this._iv); this._cbLeave?.() }
-  _emit() { this._cb?.(this.state) }
-  _reset() {
-    const s = this.state, b = s.ball
-    b.x = 0; b.y = BALL_RADIUS; b.z = 0; b.vx = 0; b.vz = 0
-    const p = s.players.get('solo')
-    p.x = 0; p.z = 12; p.rotY = Math.PI; p.vx = 0; p.vz = 0
-  }
-  _goalScored(team) {
-    const s = this.state
-    s.phase = 'goal'
-    if (team === 'A') s.scoreA++; else s.scoreB++
-    this._goalPause = 2.5
-    this._emit()
-  }
-  _tick() {
-    if (this._stopped) return
-    const now = performance.now()
-    const dt = Math.min((now - this._last) / 1000, 0.05)
-    this._last = now
-    const s = this.state
-
-    if (s.phase === 'countdown') {
-      this._cdAcc += dt
-      if (this._cdAcc >= 1) {
-        this._cdAcc -= 1; s.countdown--
-        if (s.countdown <= 0) s.phase = 'playing'
-        this._emit()
-      }
-      return
-    }
-    if (s.phase === 'goal') {
-      this._goalPause -= dt
-      if (this._goalPause <= 0) {
-        this._reset(); s.phase = 'countdown'; s.countdown = 3; this._cdAcc = 0
-        this._emit()
-      }
-      return
-    }
-    if (s.phase !== 'playing') return
-
-    s.timeLeft -= dt
-    if (s.timeLeft <= 0) { s.timeLeft = 0; s.phase = 'gameover'; this._emit(); return }
-
-    // ── Player ──
-    const p = s.players.get('solo')
-    this._prev.x = p.x; this._prev.z = p.z
-    const inp = this._inp
-    const wantBoost = inp.boost && p.stamina > 0
-    if (wantBoost) p.stamina = Math.max(0, p.stamina - dt * 0.5)
-    else           p.stamina = Math.min(1, p.stamina + dt * 0.1)
-    const spd = wantBoost ? BOOST_SPEED : PLAYER_SPEED
-    p.boosting = wantBoost
-    const vx = inp.x * spd, vz = inp.z * spd
-    const pres = resolveBoundary(p.x + vx * dt, p.z + vz * dt, PLAYER_RADIUS)
-    p.x = pres.x; p.z = pres.z; p.y = 0
-    const speed = Math.hypot(vx, vz)
-    if (speed > 0.05) {
-      const tr = Math.atan2(vx, vz)
-      let d = tr - p.rotY
-      while (d >  Math.PI) d -= Math.PI * 2
-      while (d < -Math.PI) d += Math.PI * 2
-      p.rotY += d * Math.min(1, 14 * dt)
-    }
-    p.vx = vx; p.vz = vz
-
-    // ── Ball ──
-    const ball = s.ball, prevZ = ball.z, prevX = ball.x
-    ball.x += ball.vx * dt; ball.z += ball.vz * dt; ball.y = BALL_RADIUS
-    const fr = Math.pow(0.91, dt * 60); ball.vx *= fr; ball.vz *= fr
-    const bres = resolveBoundary(ball.x, ball.z, BALL_RADIUS)
-    ball.x = bres.x; ball.z = bres.z
-    if (bres.nx || bres.nz) {
-      const dot = ball.vx * bres.nx + ball.vz * bres.nz
-      if (dot < 0) { ball.vx -= 1.5 * dot * bres.nx; ball.vz -= 1.5 * dot * bres.nz }
-    }
-
-    // ── Ball ↔ player swept collision ──
-    const R = PLAYER_RADIUS + BALL_RADIUS
-    const pp = this._prev
-    const ax = prevX - pp.x, az = prevZ - pp.z
-    const bx = ball.x - p.x, bz = ball.z - p.z
-    const ex = bx - ax, ez = bz - az
-    const a = ex * ex + ez * ez
-    const bq = 2 * (ax * ex + az * ez)
-    const c = ax * ax + az * az - R * R
-    let hit = false, tHit = 0
-    if (c < 0) { hit = true; tHit = 0 }
-    else if (a > 1e-9) {
-      const disc = bq * bq - 4 * a * c
-      if (disc >= 0) {
-        const t1 = (-bq - Math.sqrt(disc)) / (2 * a)
-        if (t1 >= 0 && t1 <= 1) { hit = true; tHit = t1 }
-      }
-    }
-    if (hit) {
-      let nx = ax + ex * tHit, nz = az + ez * tHit
-      let nl = Math.hypot(nx, nz)
-      if (nl < 1e-4) { nx = bx; nz = bz; nl = Math.hypot(nx, nz) || 1 }
-      nx /= nl; nz /= nl
-      ball.x = p.x + nx * R; ball.z = p.z + nz * R
-      const passMult = inp.pass ? 2.7 : 1
-      const pspd = Math.hypot(p.vx, p.vz)
-      const fwdX = Math.sin(p.rotY), fwdZ = Math.cos(p.rotY)
-      const L = (u, v, t) => u + (v - u) * t
-      const dx = L(fwdX, nx, 0.3), dz = L(fwdZ, nz, 0.3)
-      const dl = Math.hypot(dx, dz) || 1
-      const force = Math.max(pspd * 3 + 10, 14) * passMult
-      ball.vx = (dx / dl) * force; ball.vz = (dz / dl) * force
-      ball.x = p.x + nx * (R + 0.15); ball.z = p.z + nz * (R + 0.15)
-    }
-
-    // Safety clamp
-    const cl = resolveBoundary(ball.x, ball.z, BALL_RADIUS)
-    ball.x = cl.x; ball.z = cl.z
-    if (cl.nx || cl.nz) {
-      const dot = ball.vx * cl.nx + ball.vz * cl.nz
-      if (dot < 0) { ball.vx -= 1.5 * dot * cl.nx; ball.vz -= 1.5 * dot * cl.nz }
-    }
-
-    // ── Goal detection ──
-    const inX = Math.abs(ball.x) < GOAL_HALF_W - 0.05
-    const inY = ball.y > 0.05 && ball.y < GOAL_H + 0.1
-    if (inX && inY) {
-      if (prevZ > -GOAL_Z && ball.z <= -GOAL_Z) { this._goalScored('A'); return }
-      if (prevZ <  GOAL_Z && ball.z >=  GOAL_Z) { this._goalScored('B'); return }
-    }
-  }
-}
-
 // ── Lobby ──────────────────────────────────────────────────────────────
-function Lobby({ onBack, onJoined }) {
+function Lobby({ onBack, onJoined, melding }) {
   const [code,    setCode]    = useState('')
   const [name,    setName]    = useState(() => localStorage.getItem('kk_playername') || '')
-  const [error,   setError]   = useState(null)
+  const [error,   setError]   = useState(melding ?? null)
   const [loading, setLoading] = useState(false)
+  const [status,  setStatus]  = useState(null)
 
   const connect = async (create) => {
     setLoading(true); setError(null)
     try {
       const shirt    = localStorage.getItem('kk_shirt') || ''
       const wearing  = localStorage.getItem('kk_wearing') || '{}'
-      const client   = new Colyseus.Client(SERVER_URL)
-      // Numeric 5-digit lobby code (host generates one, joiner types it)
-      const joinCode = create ? String(Math.floor(10000 + Math.random() * 90000)) : code.trim()
+      // Code van 5 cijfers (maker krijgt er een, de rest typt hem over)
+      const joinCode = create ? nieuweCode(5) : code.trim()
       const opts     = { joinCode, shirt, wearing, name: name || 'Speler' }
-      const room     = create
-        ? await client.create('rocket', opts)
-        : await client.join('rocket', opts)   // joins only an existing matching room
+      const room     = await maakOfJoin('rocket', opts, { maak: create, onStatus: setStatus })
       if (name) localStorage.setItem('kk_playername', name)
       onJoined(room, joinCode)
-    } catch {
-      setError(create ? 'Kan geen lobby aanmaken.' : 'Lobby niet gevonden.')
-      setLoading(false)
+    } catch (e) {
+      setError(FOUT_TEKST[e?.soort] ?? FOUT_TEKST.server)
+      setLoading(false); setStatus(null)
     }
   }
 
@@ -914,6 +666,7 @@ function Lobby({ onBack, onJoined }) {
           {loading ? '…' : '→ Joinen'}
         </button>
 
+        {loading && <VerbindStatus status={status} />}
         {error && <p className="rg-lobby-error">{error}</p>}
       </div>
     </div>
@@ -958,8 +711,8 @@ function WaitingRoom({ code, players, room, onBack }) {
 }
 
 // ── Main component ─────────────────────────────────────────────────────
-export default function RocketGame({ onBack, solo = false }) {
-  const [screen,     setScreen]     = useState(solo ? 'playing' : 'lobby')
+export default function RocketGame({ onBack }) {
+  const [screen,     setScreen]     = useState('lobby')
   const [room,       setRoom]       = useState(null)
   const [roomState,  setRoomState]  = useState(null)
   const [players,    setPlayers]    = useState([])
@@ -969,6 +722,7 @@ export default function RocketGame({ onBack, solo = false }) {
   const [showHint,   setShowHint]   = useState(true)
   const [lobbyCode,  setLobbyCode]  = useState('')
   const [passMode,   setPassMode]   = useState(false)
+  const [melding,    setMelding]    = useState(null)
 
   const canvasRef      = useRef(null)
   const sceneRef       = useRef(null)
@@ -981,7 +735,7 @@ export default function RocketGame({ onBack, solo = false }) {
   useEffect(() => { roomStateRef.current = roomState }, [roomState])
   useEffect(() => { roomRef.current = room }, [room])
 
-  const handleJoined = useCallback((r, code, isSolo = false) => {
+  const handleJoined = useCallback((r, code) => {
     setRoom(r); roomRef.current = r
     setLobbyCode(code || '')
 
@@ -992,24 +746,19 @@ export default function RocketGame({ onBack, solo = false }) {
       setPlayers(arr)
       if (state.phase === 'playing' || state.phase === 'countdown') setScreen('playing')
       if (state.phase === 'gameover') setScreen('gameover')
+      // nog een keer: de server zet het potje terug in de wachtkamer
+      if (state.phase === 'lobby') setScreen(s => (s === 'gameover' ? 'waiting' : s))
       if (state.phase === 'goal') {
         setGoalFlash(true); setTimeout(() => setGoalFlash(false), 2200)
       }
     })
-    r.onLeave(() => { setScreen(isSolo ? 'gameover' : 'lobby'); setRoom(null) })
-    setScreen(isSolo ? 'playing' : 'waiting')
+    r.onLeave((code) => {
+      // 4000 = zelf weggegaan; anders lukte terugkomen na wegvallen niet
+      if (code !== 4000 && code !== 1000) setMelding('De verbinding met het potje is verbroken. Maak een nieuw potje of join opnieuw met de code.')
+      setScreen('lobby'); setRoom(null)
+    })
+    setScreen('waiting')
   }, [])
-
-  // Solo (offline) mode: spawn a local simulator and jump straight into play.
-  useEffect(() => {
-    if (!solo) return
-    const shirt   = localStorage.getItem('kk_shirt')   || ''
-    const wearing = localStorage.getItem('kk_wearing') || '{}'
-    const name    = localStorage.getItem('kk_playername') || 'Speler'
-    const r = new LocalRoom({ shirt, wearing, name })
-    handleJoined(r, '', true)
-    return () => { r.leave() }
-  }, [solo, handleJoined])
 
   useEffect(() => {
     if (screen !== 'playing' || !canvasRef.current || !room) return
@@ -1045,10 +794,13 @@ export default function RocketGame({ onBack, solo = false }) {
     }
   }
 
-  if (screen === 'lobby')   return <Lobby onBack={onBack} onJoined={handleJoined} />
+  if (screen === 'lobby')   return <Lobby onBack={onBack} onJoined={(r, c) => { setMelding(null); handleJoined(r, c) }} melding={melding} />
   if (screen === 'waiting') return (
-    <WaitingRoom code={lobbyCode} room={room} players={players}
-      onBack={() => { room?.leave(); setScreen('lobby') }} />
+    <>
+      <WaitingRoom code={lobbyCode} room={room} players={players}
+        onBack={() => { room?.leave(); setScreen('lobby') }} />
+      <VerbindingsMelding room={room} />
+    </>
   )
 
   if (screen === 'gameover') {
@@ -1062,6 +814,9 @@ export default function RocketGame({ onBack, solo = false }) {
             {(rs?.scoreA??0) > (rs?.scoreB??0) ? '🔴 Rood wint!'
             : (rs?.scoreB??0) > (rs?.scoreA??0) ? '🔵 Blauw wint!' : '🤝 Gelijkspel!'}
           </div>
+          {room && (
+            <button className="on-knop goud" onClick={() => room.send('opnieuw')}>Nog een keer</button>
+          )}
           <button className="rg-lobby-btn rg-lobby-create" onClick={() => { room?.leave(); onBack() }}>
             ← Terug
           </button>
@@ -1077,6 +832,7 @@ export default function RocketGame({ onBack, solo = false }) {
       <canvas ref={canvasRef} className="rg-canvas" />
 
       <TerugKnop onClick={() => { room?.leave(); onBack() }} />
+      <VerbindingsMelding room={room} />
 
       <div className="rg-score">
         <span className="rg-score-a">🔴 {rs?.scoreA ?? 0}</span>
@@ -1103,7 +859,7 @@ export default function RocketGame({ onBack, solo = false }) {
         </div>
       </div>
 
-      {sceneRef.current && <VirtualJoystick joyRef={sceneRef.current.joyRef} />}
+      {sceneRef.current && <Joystick joyRef={sceneRef.current.joyRef} />}
 
       {/* Touch action buttons: Pass + Boost (right side) */}
       <div className="rg-actions">

@@ -14,6 +14,7 @@ import { zetResolutie } from './skins'
 import { RARITIES, CRATE_ACCENTS } from './data'
 import './wardrobe.css'
 import { Knop, TerugKnop } from './ui/index.jsx'
+import { wekServer } from './games/online/server.js'
 
 // Category tabs — same accent colours as the shop's lootboxes. Icons are
 // real Nano Banana Pro illustrations (public/icons/).
@@ -163,6 +164,10 @@ export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlay
   const [newItems,   setNewItems]   = useState({})
   const [burstTile,  setBurstTile]  = useState(null)
   const [shuffling,  setShuffling]  = useState(false)
+
+  // De spelserver slaapt na een kwartier: alvast wekken, dan is hij er
+  // meestal al als het kind op een online spel klikt.
+  useEffect(() => { wekServer() }, [])
 
   // "Nieuw sinds laatste bezoek": vergelijk met wat er de vorige keer al
   // ontgrendeld was, toon dat verschil deze sessie, en sla dan de huidige
