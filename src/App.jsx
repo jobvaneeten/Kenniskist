@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import './App.css'
 import { VEHICLE_ORDER } from './games/hillclimb/data/VehicleData.js'
 import { useOpenLescheck } from './lib/lescheck.js'
+import { useOpenDictee } from './lib/controleDictee.js'
 import { allUnlockedMap } from './itemsCatalog'
 import { COUNTRIES, DEFAULT_UNLOCKED } from './games/countries'
 import { useSessie } from './lib/sessie.jsx'
@@ -21,6 +22,7 @@ const RocketGame    = lazy(() => import('./games/RocketGame'))
 const PaintballGame = lazy(() => import('./games/PaintballGame'))
 const BotsenGame    = lazy(() => import('./games/BotsenGame'))
 const VloerQuiz     = lazy(() => import('./games/VloerQuiz'))
+const ControleDictee = lazy(() => import('./ControleDictee'))
 
 const CODES = { pabo: 100000 }
 const BRIEF_CODES = { start: 800 }   // eenmalige briefgeld-codes
@@ -243,6 +245,8 @@ export default function App({ gast = false }) {
   // afmaakt verdwijnt `openLescheck` bij de eerstvolgende ronde, en dan zou
   // het eindscherm onder zijn handen wegklappen naar het menu.
   const [lescheckMap, setLescheckMap] = useState(null)
+  // Controledictee dat de leerkracht heeft opengezet (portaal, tab Dictee).
+  const openDictee = useOpenDictee(profiel)
 
   const [curuntie, setCuruntie] = useState(() => {
     try { return parseInt(localStorage.getItem('kk_curuntie') || '0', 10) } catch { return 0 }
@@ -413,6 +417,8 @@ export default function App({ gast = false }) {
 
   if (screen === 'mijnweek') return <MijnWeek onBack={goMenu} />
 
+  if (screen === 'dictee') return <ControleDictee onBack={goMenu} />
+
   // Lescheck: hetzelfde weektaakscherm, maar direct in het mapje van de les.
   if (screen === 'lescheck' && lescheckMap) return (
     <>
@@ -497,6 +503,16 @@ export default function App({ gast = false }) {
         </div>
         <p className="hero-sub">Leren terwijl je speelt</p>
       </div>
+
+      {profiel?.rol === 'leerling' && openDictee && (
+        <button className="dictee-btn" onClick={() => setScreen('dictee')}>
+          <span className="dictee-btn-icoon"><Icoon naam="potlood" /></span>
+          <span className="dictee-btn-tekst">
+            <span className="dictee-btn-titel">Dictee</span>
+            <span className="dictee-btn-sub">{openDictee.titel}: klik hier en luister naar je juf of meester</span>
+          </span>
+        </button>
+      )}
 
       {profiel?.rol === 'leerling' && openLescheck && (
         <button className="lescheck-btn" onClick={() => { setLescheckMap(openLescheck.id); setScreen('lescheck') }}>

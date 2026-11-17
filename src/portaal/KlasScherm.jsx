@@ -9,6 +9,7 @@ import GroepsOverzicht from './GroepsOverzicht.jsx'
 import SpelInstelling from './SpelInstelling.jsx'
 import EigenOefeningen from './EigenOefeningen.jsx'
 import VloerQuizTab from './VloerQuizTab.jsx'
+import DicteeTab from './DicteeTab.jsx'
 import { TerugKnop, Icoon } from '../ui/index.jsx'
 
 // De leerkracht ziet alleen wat hij zelf klaarzet: de weektaak voor de klas en
@@ -23,6 +24,7 @@ const TABS = [
   { key: 'groep', label: 'Groepsoverzicht', hint: 'hulp per doel', icoon: 'menu', accent: 'var(--kk-error)' },
   { key: 'werkblad', label: 'Werkblad', hint: 'printen', icoon: 'printer', accent: 'var(--kk-success)' },
   { key: 'eigen', label: 'Eigen oefeningen', hint: 'je eigen vragen', icoon: 'potlood', accent: 'var(--kk-cyan)' },
+  { key: 'dictee', label: 'Dictee', hint: 'controledictee', icoon: 'potlood', accent: 'var(--kk-vak-spelling)' },
   { key: 'vloer', label: 'Vloerquiz', hint: 'samen op het bord', icoon: 'spelen', accent: 'var(--kk-gold)' },
   { key: 'leerlingen', label: 'Leerlingen', hint: 'beheer & spelletjes', icoon: 'mensen', accent: 'var(--kk-text-soft)' },
 ]
@@ -107,6 +109,7 @@ export default function KlasScherm({ klas, alleKlassen, onBack, onKlasGewijzigd 
 
         {!leerlingId && tab === 'eigen' && <EigenOefeningen key={klas.id} klas={klas} />}
 
+        {!leerlingId && tab === 'dictee' && <DicteeTab key={klas.id} klas={klas} leerlingen={leerlingen} />}
         {!leerlingId && tab === 'vloer' && <VloerQuizTab key={klas.id} klas={klas} />}
 
         {!leerlingId && tab === 'week' && <KlasWeekoverzicht key={klas.id} leerlingen={leerlingen} />}

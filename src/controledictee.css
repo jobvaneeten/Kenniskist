@@ -1,0 +1,65 @@
+/* Controledictee (leerling): rustig toetsscherm, geen spelversiering. */
+.cd-scherm {
+  min-height: 100dvh;
+  padding: 72px 16px 48px;
+  max-width: 640px;
+  margin: 0 auto;
+  color: var(--kk-text);
+}
+.cd-midden { display: grid; place-items: center; }
+.cd-kop h1 { margin: 0 0 6px; font-size: 1.6rem; font-weight: var(--kk-fw-black); }
+.cd-zacht { margin: 0; color: var(--kk-text-soft); line-height: 1.45; }
+
+.cd-tekens {
+  position: sticky; top: 0; z-index: 2;
+  display: flex; flex-wrap: wrap; gap: 6px;
+  margin: 18px 0 10px; padding: 8px 0;
+  background: var(--kk-bg);
+}
+.cd-teken {
+  min-width: 44px; height: 44px; padding: 0 10px;
+  border-radius: var(--kk-r-md);
+  border: 1px solid var(--kk-border-strong);
+  background: var(--kk-surface);
+  color: var(--kk-text);
+  font: var(--kk-fw-bold) 1.25rem/1 var(--kk-body);
+  cursor: pointer;
+}
+.cd-teken:hover { border-color: var(--kk-primary-hi); }
+
+.cd-lijst { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.cd-zinkop { display: block; margin: 14px 0 4px; font-weight: var(--kk-fw-black); color: var(--kk-text-soft); }
+.cd-veld { display: flex; align-items: center; gap: 12px; }
+.cd-nr {
+  flex: 0 0 40px; text-align: right;
+  font-weight: var(--kk-fw-black); font-size: 1.1rem; color: var(--kk-text-soft);
+  font-variant-numeric: tabular-nums;
+}
+.cd-veld input {
+  flex: 1; min-width: 0; height: 52px; padding: 0 14px;
+  border-radius: var(--kk-r-md);
+  border: 1px solid var(--kk-border-strong);
+  background: var(--kk-surface);
+  color: var(--kk-text);
+  font: 500 1.35rem/1 var(--kk-body);
+  letter-spacing: 0.02em;
+}
+.cd-veld input:focus { outline: 2px solid var(--kk-primary-hi); outline-offset: 1px; }
+.cd-veld input:disabled { opacity: 0.7; }
+
+.cd-onder { margin-top: 24px; display: flex; justify-content: flex-end; }
+.cd-zeker {
+  width: 100%; padding: 16px;
+  border-radius: var(--kk-r-lg);
+  border: 1px solid var(--kk-border-strong);
+  background: var(--kk-surface);
+}
+.cd-zeker p { margin: 0 0 12px; line-height: 1.45; }
+.cd-knoppen { display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; }
+.cd-fout { margin: 16px 0 0; color: var(--kk-error); font-weight: var(--kk-fw-bold); }
+
+.cd-klaar { text-align: center; display: grid; gap: 12px; justify-items: center; }
+.cd-klaar h1 { margin: 0; font-size: 1.8rem; }
+.cd-klaar p { margin: 0; color: var(--kk-text-soft); }
+.cd-klaar-icoon { display: inline-flex; width: 56px; height: 56px; color: var(--kk-success); }
+.cd-klaar-icoon svg { width: 100%; height: 100%; }

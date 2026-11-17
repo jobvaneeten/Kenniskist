@@ -1,0 +1,83 @@
+/* Tab Dictee in het portaal (DicteeTab.jsx) */
+.pd-klein { font-size: 0.82rem; }
+.pd-nieuw { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.pd-nieuw select { min-height: 40px; padding: 0 10px; border-radius: 10px; background: var(--kk-surface); color: var(--kk-text); border: 1px solid var(--kk-border-strong); font: inherit; }
+.pd-lijst { display: grid; gap: 8px; }
+.pd-dictee {
+  display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: center; text-align: left;
+  padding: 12px 14px; border-radius: 12px; cursor: pointer; font: inherit; color: var(--kk-text);
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+}
+.pd-dictee:hover { border-color: var(--kk-cyan); }
+.pd-status { font-size: 0.78rem; font-weight: 800; padding: 3px 10px; border-radius: 999px; background: rgba(255,255,255,0.06); color: var(--kk-text-soft); }
+.pd-status.open { background: color-mix(in srgb, var(--kk-success) 20%, transparent); color: var(--kk-success); }
+
+.pd-kop { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.pd-kop h2 { margin: 0; flex: 1; }
+.pd-acties { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 12px; }
+.pd-zeker { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 0.88rem; }
+
+.pd-voorlezen { list-style: none; margin: 14px 0 0; padding: 12px; display: grid; gap: 4px; border-radius: 12px; background: rgba(255,255,255,0.03); }
+.pd-voorlezen li { display: grid; grid-template-columns: 56px minmax(140px, auto) 1fr; gap: 10px; align-items: baseline; }
+.pd-nr { color: var(--kk-text-soft); font-variant-numeric: tabular-nums; font-size: 0.85rem; }
+
+.pd-blok { margin-top: 22px; }
+.pd-blok h3 { margin: 0 0 6px; font-size: 1rem; }
+.pd-namen { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.pd-naam { font-size: 0.8rem; padding: 3px 10px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.12); color: var(--kk-text-soft); background: transparent; font-family: inherit; }
+.pd-naam.klaar { color: var(--kk-success); border-color: color-mix(in srgb, var(--kk-success) 50%, transparent); }
+.pd-naam.bezig { color: var(--kk-warning); border-color: color-mix(in srgb, var(--kk-warning) 50%, transparent); }
+.pd-naam.fout { color: var(--kk-text); border-color: color-mix(in srgb, var(--kk-error) 50%, transparent); cursor: pointer; }
+.pd-naam.fout:hover { background: color-mix(in srgb, var(--kk-error) 15%, transparent); }
+
+.pd-cats { display: grid; gap: 12px; margin-top: 8px; }
+.pd-cat { padding: 10px 12px; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); }
+.pd-cat-kop { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; }
+.pd-cat-kop .portaal-zacht { font-size: 0.82rem; flex: 1; }
+.pd-cat-pct { font-weight: 800; font-variant-numeric: tabular-nums; }
+.pd-balk { height: 8px; margin-top: 6px; border-radius: 999px; background: rgba(255,255,255,0.08); overflow: hidden; }
+.pd-balk i { display: block; height: 100%; border-radius: inherit; }
+.pd-balk i.goed { background: var(--kk-success); }
+.pd-balk i.matig { background: var(--kk-warning); }
+.pd-balk i.slecht { background: var(--kk-error); }
+
+.pd-tabelscroll { overflow-x: auto; margin-top: 8px; }
+.pd-tabel { border-collapse: collapse; font-size: 0.85rem; }
+.pd-tabel th, .pd-tabel td { padding: 5px 8px; border-bottom: 1px solid rgba(255,255,255,0.06); text-align: left; }
+.pd-tabel th { font-size: 0.78rem; color: var(--kk-text-soft); font-weight: 700; vertical-align: bottom; }
+.pd-schuin { height: 120px; white-space: nowrap; padding: 0 !important; width: 30px; }
+.pd-schuin span { display: inline-block; transform: translate(10px, -6px) rotate(-55deg); transform-origin: left bottom; width: 30px; }
+.pd-cel { text-align: center !important; font-weight: 800; min-width: 30px; }
+.pd-cel.fout { background: color-mix(in srgb, var(--kk-error) 30%, transparent); }
+.pd-score { font-weight: 800; font-variant-numeric: tabular-nums; }
+.pd-score.goed { color: var(--kk-success); }
+.pd-score.matig { color: var(--kk-warning); }
+.pd-score.onvoldoende { color: var(--kk-error); }
+.pd-tabel td:first-child { white-space: nowrap; }
+.pd-link { background: none; border: 0; padding: 0; color: var(--kk-text); font: inherit; cursor: pointer; text-decoration: underline; text-decoration-color: rgba(255,255,255,0.25); }
+
+.pd-woorden { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 4px; }
+.pd-woorden li { display: grid; grid-template-columns: 56px minmax(120px, auto) 110px 1fr; gap: 10px; align-items: baseline; font-size: 0.88rem; }
+.pd-telfout { color: var(--kk-error); font-weight: 800; }
+.pd-varianten { font-size: 0.82rem; }
+
+.pd-kindtabel { width: 100%; margin-top: 10px; }
+.pd-woord { font-size: 1.05rem; letter-spacing: 0.02em; }
+.pd-woord mark { background: color-mix(in srgb, var(--kk-error) 45%, transparent); color: var(--kk-text); border-radius: 3px; padding: 0 1px; }
+.pd-woord mark.pd-invoeg { background: none; color: var(--kk-error); font-weight: 900; }
+.pd-rij-fout td { background: rgba(255, 80, 80, 0.04); }
+.pd-chip { display: inline-block; margin: 0 4px 2px 0; padding: 2px 8px; border-radius: 999px; font-size: 0.76rem; font-weight: 700; background: color-mix(in srgb, var(--kk-error) 20%, transparent); }
+.pd-chip.overig { background: rgba(255,255,255,0.08); color: var(--kk-text-soft); }
+.pd-goed { color: var(--kk-success); display: inline-flex; width: 20px; height: 20px; }
+.pd-goed svg { width: 100%; height: 100%; }
+.pd-reken { text-align: right !important; }
+
+@media (max-width: 640px) {
+  .pd-woorden li, .pd-voorlezen li { grid-template-columns: 48px 1fr; }
+  .pd-woorden li .pd-varianten, .pd-voorlezen li .portaal-zacht { grid-column: 2; }
+}
+
+@media print {
+  .pd-acties, .pd-kop .kk-knop, .pd-reken { display: none !important; }
+  .pd-afname { background: #fff !important; color: #000 !important; }
+}

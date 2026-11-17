@@ -358,3 +358,25 @@ body::before {
   * { transition-duration: 0.01s !important; }
 }
 .kk-chip-herhaal { --kk-accent: var(--kk-cyan); }
+
+/* controledictee: grote knop op het beginscherm zodra de leerkracht het
+   dictee klaarzet (src/ControleDictee.jsx) */
+.dictee-btn {
+  display: flex; align-items: center; gap: 18px;
+  width: min(560px, 92vw); margin: 0 auto 20px; padding: 22px 26px;
+  border-radius: var(--kk-r-lg); cursor: pointer; font-family: inherit; text-align: left;
+  color: var(--kk-text);
+  background: color-mix(in srgb, var(--kk-cyan) 16%, transparent);
+  border: 2px solid var(--kk-cyan);
+  box-shadow: 0 0 28px color-mix(in srgb, var(--kk-cyan) 35%, transparent);
+  animation: dictee-pols 2.4s ease-in-out infinite;
+  transition: transform var(--kk-dur-fast);
+}
+.dictee-btn:hover { transform: translateY(-2px); }
+.dictee-btn-icoon { width: 52px; height: 52px; color: var(--kk-cyan); flex: none; display: grid; }
+.dictee-btn-icoon svg { width: 100%; height: 100%; }
+.dictee-btn-tekst { display: flex; flex-direction: column; gap: 4px; }
+.dictee-btn-titel { font-size: 1.7rem; font-weight: var(--kk-fw-black); line-height: 1.1; }
+.dictee-btn-sub { font-size: 1rem; color: var(--kk-text-soft); font-weight: var(--kk-fw-bold); }
+@keyframes dictee-pols { 50% { box-shadow: 0 0 44px color-mix(in srgb, var(--kk-cyan) 55%, transparent); } }
+@media (prefers-reduced-motion: reduce) { .dictee-btn { animation: none; } }

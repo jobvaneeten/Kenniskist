@@ -1,0 +1,237 @@
+[
+ {
+  "id": "slang",
+  "naam": "slang",
+  "regel": "ng"
+ },
+ {
+  "id": "stinkdier",
+  "naam": "stinkdier",
+  "regel": "nk"
+ },
+ {
+  "id": "specht",
+  "naam": "specht",
+  "regel": "cht"
+ },
+ {
+  "id": "pechvogel",
+  "naam": "pechvogel",
+  "regel": "ch (weetwoord)"
+ },
+ {
+  "id": "stokstaart",
+  "naam": "stokstaart",
+  "regel": "samenstelling"
+ },
+ {
+  "id": "beer",
+  "naam": "beer",
+  "regel": "ee / oo / eu"
+ },
+ {
+  "id": "haai",
+  "naam": "haai",
+  "regel": "aai / ooi / oei"
+ },
+ {
+  "id": "leeuw",
+  "naam": "leeuw",
+  "regel": "uw / eeuw / ieuw"
+ },
+ {
+  "id": "hond_hert",
+  "naam": "hond / hert",
+  "regel": "/t/ aan eind: maak langer"
+ },
+ {
+  "id": "gestreept",
+  "naam": "gestreept",
+  "regel": "stomme klank → e"
+ },
+ {
+  "id": "krekel",
+  "naam": "krekel",
+  "regel": "lange klank open lettergreep: 1 letter"
+ },
+ {
+  "id": "kikker",
+  "naam": "kikker",
+  "regel": "korte klank: dubbele medeklinker"
+ },
+ {
+  "id": "duiven_ganzen",
+  "naam": "duiven / ganzen",
+  "regel": "f → v en s → z"
+ },
+ {
+  "id": "pauw_goudvis",
+  "naam": "pauw / goudvis",
+  "regel": "/au/ (au of ou)"
+ },
+ {
+  "id": "geit_bij",
+  "naam": "geit / bij",
+  "regel": "/ei/ (ei of ij)"
+ },
+ {
+  "id": "muisje",
+  "naam": "muisje",
+  "regel": "verkleinwoord -je/-tje/-pje"
+ },
+ {
+  "id": "biggetje",
+  "naam": "biggetje",
+  "regel": "verkleinwoord -etje"
+ },
+ {
+  "id": "lamaatje",
+  "naam": "lamaatje",
+  "regel": "verkleinwoord -aatje/-ootje/-uutje"
+ },
+ {
+  "id": "winterkoninkje",
+  "naam": "winterkoninkje",
+  "regel": "verkleinwoord -inkje (nk)"
+ },
+ {
+  "id": "ara",
+  "naam": "ara",
+  "regel": "eindigt op /aa/: 1 a"
+ },
+ {
+  "id": "gevaarlijk",
+  "naam": "giftig / gevaarlijk",
+  "regel": "-ig en -lijk"
+ },
+ {
+  "id": "kameel",
+  "naam": "kameel",
+  "regel": "onduidelijke a/aa: 1 letter"
+ },
+ {
+  "id": "pandas",
+  "naam": "panda's",
+  "regel": "meervoud/bezit 's"
+ },
+ {
+  "id": "krab",
+  "naam": "krab",
+  "regel": "/p/ aan eind → b"
+ },
+ {
+  "id": "eieren",
+  "naam": "eieren",
+  "regel": "-eren: twee e"
+ },
+ {
+  "id": "citroenvlinder",
+  "naam": "citroenvlinder",
+  "regel": "c = /s/"
+ },
+ {
+  "id": "hoogte",
+  "naam": "hoogte",
+  "regel": "-te / -ste"
+ },
+ {
+  "id": "bizon",
+  "naam": "bizon",
+  "regel": "/ie/ → i"
+ },
+ {
+  "id": "tropisch",
+  "naam": "tropisch",
+  "regel": "-isch"
+ },
+ {
+  "id": "snachts",
+  "naam": "'s nachts",
+  "regel": "'s-woord"
+ },
+ {
+  "id": "politiehond",
+  "naam": "politiehond",
+  "regel": "-tie"
+ },
+ {
+  "id": "cavia",
+  "naam": "cavia",
+  "regel": "c = /k/"
+ },
+ {
+  "id": "baviaan_leguaan",
+  "naam": "baviaan / leguaan",
+  "regel": "verborgen /j/ of /w/"
+ },
+ {
+  "id": "chimpansee",
+  "naam": "chimpansee",
+  "regel": "/sj/ → ch"
+ },
+ {
+  "id": "puppy",
+  "naam": "puppy",
+  "regel": "Griekse y"
+ },
+ {
+  "id": "jaguar",
+  "naam": "jaguar",
+  "regel": "leenwoord (é, eau, ou, air, oir)"
+ },
+ {
+  "id": "page",
+  "naam": "page",
+  "regel": "g = /zj/"
+ },
+ {
+  "id": "axolotl",
+  "naam": "axolotl",
+  "regel": "/ks/ → x"
+ },
+ {
+  "id": "weetwoord",
+  "naam": "weetwoord (uil)",
+  "regel": "uit je hoofd (ook ab-/ad-/ob-/sub-)"
+ },
+ {
+  "id": "python",
+  "naam": "python",
+  "regel": "th"
+ },
+ {
+  "id": "snelheid",
+  "naam": "snelheid",
+  "regel": "-heid / -teit"
+ },
+ {
+  "id": "wollen",
+  "naam": "wollen",
+  "regel": "stoffelijk -en"
+ },
+ {
+  "id": "gespleten",
+  "naam": "gespleten",
+  "regel": "voltooid deelwoord -en/-e"
+ },
+ {
+  "id": "reeen",
+  "naam": "reeën",
+  "regel": "meervoud -ën (trema)"
+ },
+ {
+  "id": "reuzenschildpad",
+  "naam": "reuzenschildpad",
+  "regel": "tussen-n (paarden-, kippen-)"
+ },
+ {
+  "id": "zee_egel",
+  "naam": "zee-egel",
+  "regel": "koppelteken"
+ },
+ {
+  "id": "pinguin",
+  "naam": "pinguïn",
+  "regel": "trema bij klinkerbotsing (op de i)"
+ }
+]
