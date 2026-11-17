@@ -94,7 +94,9 @@ function RewardChips({ rewards }) {
   )
 }
 
-export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestaneGroepen }) {
+// alleenOefenen: vanuit "Werk aan je doelen" (alle doelen behaald). Dan geen
+// vrije spelletjes: die tellen niet voor de tijd, en kinderen kozen ze toch.
+export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestaneGroepen, alleenOefenen = false }) {
   const [year,       setYear]       = useState(null)
   const [subject,    setSubject]    = useState(null)
   const [directGame, setDirectGame] = useState(null)
@@ -746,8 +748,8 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
       <TerugKnop onClick={onBack} />
       <div className="game-header">
         <span className="game-header-icon" style={{ '--kk-accent': 'var(--kk-vak-spel)' }}><Icoon naam="spel" /></span>
-        <h1 className="game-header-title">Games</h1>
-        <p className="game-header-sub">Kies jouw groep</p>
+        <h1 className="game-header-title">{alleenOefenen ? 'Kies een oefening' : 'Games'}</h1>
+        <p className="game-header-sub">{alleenOefenen ? 'Kies je groep en een oefening. Alleen oefenen telt voor je tijd.' : 'Kies jouw groep'}</p>
       </div>
       <div className="year-grid">
         {zichtbareJaren.map(y => {
@@ -774,7 +776,7 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
         })}
       </div>
 
-      <div className="free-games-section">
+      {!alleenOefenen && <div className="free-games-section">
         <p className="free-games-label">Vrij spelen</p>
         <div className="free-games-grid">
           {FREE_GAMES.map(g => (
@@ -786,7 +788,7 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
             </button>
           ))}
         </div>
-      </div>
+      </div>}
     </div>
   )
 }

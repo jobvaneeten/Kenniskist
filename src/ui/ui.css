@@ -156,3 +156,8 @@ button.kk-kaart:disabled { opacity: 0.45; cursor: not-allowed; }
 .kk-mb-0 { margin-bottom: 0 !important; }
 .kk-mb-3 { margin-bottom: var(--kk-s3) !important; }
 .kk-mb-4 { margin-bottom: var(--kk-s4) !important; }
+
+/* Code invoeren: spellen die je al met een code opende (App.jsx) */
+.codespellen { margin-top: 16px; display: flex; flex-direction: column; gap: 8px; }
+.codespellen-kop { font-size: 0.78rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--kk-text-soft); }
+.codespellen-lijst { display: flex; flex-wrap: wrap; gap: 8px; }

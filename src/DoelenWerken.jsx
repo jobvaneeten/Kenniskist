@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import DoelBalk from './DoelBalk.jsx'
 import { soortVan } from './lib/weektaak.js'
 import { groepeer } from './lib/weektaakMapjes.js'
@@ -76,13 +76,20 @@ export default function DoelenWerken({ opdracht, alle, onKiesDoel, onKiesHerhali
 // Klein klokje in beeld tijdens het oefenen: hoeveel minuten er nog liggen. Na
 // elk opgeslagen antwoord (seintje uit kenniskist-login.js) halen we de stand
 // opnieuw op, dus dit is de echte oefentijd zonder spelletjes.
-export function DoelwerkKlok({ opdracht, profielId }) {
+// onKlaar: de tijd is net vol geraakt (Weektaak.jsx laat dan een feestje zien).
+export function DoelwerkKlok({ opdracht, profielId, onKlaar }) {
   const [stand, setStand] = useState(opdracht.tijdStand)
+  const wasKlaar = useRef(!!opdracht.tijdStand?.klaar)
+  const meld = useRef(onKlaar)
+  useEffect(() => { meld.current = onKlaar })
   useEffect(() => {
     let actief = true
     const bijOpslaan = async () => {
       const rij = await haalDoelwerkStand(opdracht.opdrachtId, profielId)
-      if (actief && rij) setStand(tijdStandVan(rij, opdracht.config))
+      if (!actief || !rij) return
+      const nieuw = tijdStandVan(rij, opdracht.config)
+      setStand(nieuw)
+      if (nieuw.klaar && !wasKlaar.current) { wasKlaar.current = true; meld.current?.(nieuw) }
     }
     window.addEventListener('kk-resultaat-opgeslagen', bijOpslaan)
     return () => { actief = false; window.removeEventListener('kk-resultaat-opgeslagen', bijOpslaan) }

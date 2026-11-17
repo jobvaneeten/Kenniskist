@@ -53,6 +53,21 @@ const HTML_CODES = {
 }
 const HTML_BELONING = 50
 
+// Codespellen die een kind al eens opende, zodat het ze terugvindt zonder de
+// code opnieuw te typen (kk_-sleutel: gaat mee met de voortgang naar het account).
+const CODESPELLEN = 'kk_codespellen'
+function bewaardeCodespellen() {
+  try {
+    const lijst = JSON.parse(localStorage.getItem(CODESPELLEN) || '[]')
+    return Array.isArray(lijst) ? lijst.filter(k => HTML_CODES[k]) : []
+  } catch { return [] }
+}
+function bewaarCodespel(key) {
+  const lijst = bewaardeCodespellen()
+  if (lijst.includes(key)) return
+  try { localStorage.setItem(CODESPELLEN, JSON.stringify([...lijst, key])) } catch { /* niet op te slaan: dan alleen nu */ }
+}
+
 function HtmlPagina({ pagina, onBack, addBriefgeld, addCuruntie }) {
   const perBeloning = useRef(spelNa(10)).current
   const sinds = useRef(0)
@@ -108,12 +123,14 @@ function CodeModal({ onClose, onRedeem, onRedeemBrief, onUnlockAll, onUnlockCoun
   const [code, setCode] = useState('')
   const [msg,  setMsg]  = useState(null)
   const [ok,   setOk]   = useState(false)
+  const [bewaard] = useState(bewaardeCodespellen)
 
   const submit = () => {
     const key = code.trim().toLowerCase()
     if (key === ESCAPE_CODE) {
       onEscape()
     } else if (HTML_CODES[key]) {
+      bewaarCodespel(key)
       onHtmlPagina(HTML_CODES[key])
     } else if (key === UNLOCK_ALL_CODE) {
       onUnlockAll()
@@ -200,6 +217,16 @@ function CodeModal({ onClose, onRedeem, onRedeemBrief, onUnlockAll, onUnlockCoun
           autoFocus
         />
         {msg && <p style={{ marginTop: 12, fontWeight: 800, color: ok ? 'var(--kk-success)' : 'var(--kk-error)' }}>{msg}</p>}
+        {bewaard.length > 0 && (
+          <div className="codespellen">
+            <span className="codespellen-kop">Jouw codespellen</span>
+            <div className="codespellen-lijst">
+              {bewaard.map(k => (
+                <Knop key={k} variant="secundair" maat="sm" icoon="spel" onClick={() => onHtmlPagina(HTML_CODES[k])}>{HTML_CODES[k].titel}</Knop>
+              ))}
+            </div>
+          </div>
+        )}
     </Paneel>
   )
 }

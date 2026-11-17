@@ -128,6 +128,8 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
   const [vrij, setVrij] = useState(false)            // ... en de leerling kiest zelf (alle doelen behaald)
   const [herhaalIntro, setHerhaalIntro] = useState(null) // { opdracht, titel } — vóór een herhaling
   const [herhaling, setHerhaling] = useState(null)       // { id, titel, stand } — herhaling loopt
+  const [tijdFeest, setTijdFeest] = useState(null)       // de tijd van Werk aan je doelen is net vol (minuten)
+  const tijdGevierd = useRef(new Set())
   const soort = persoonlijk ? tab : 'weektaak'
 
   useEffect(() => {
@@ -251,18 +253,31 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
   // Tijdens het oefenen linksonder in beeld: hoe ver het doel is (zelfde balk
   // als op de doelkaart) en bij "Werk aan je doelen" hoeveel minuten er nog liggen.
   const doelStandNu = gekozen && soortVan(gekozen) === 'doel' && !herhaling ? (doelNu ?? gekozen.doelStand) : null
+  // De tijd van "Werk aan je doelen" is net vol: één keer een feestje.
+  const tijdVol = (stand) => {
+    if (!doelwerk || tijdGevierd.current.has(doelwerk.opdrachtId)) return
+    tijdGevierd.current.add(doelwerk.opdrachtId)
+    setTijdFeest(stand.nodig)
+  }
   const klok = (doelwerk || doelStandNu || herhaling) && (
-    <div className="wt-pillen">
-      {herhaling && gekozen && <HerhalingPil stand={herhaling.stand} />}
-      {doelStandNu && <div className="dw-klok wt-doelpil"><Icoon naam="doel" /><DoelBalk stand={doelStandNu} /></div>}
-      {doelwerk && <DoelwerkKlok opdracht={doelwerk} profielId={profiel?.id} />}
-    </div>
+    <>
+      <div className="wt-pillen">
+        {herhaling && gekozen && <HerhalingPil stand={herhaling.stand} />}
+        {doelStandNu && <div className="dw-klok wt-doelpil"><Icoon naam="doel" /><DoelBalk stand={doelStandNu} /></div>}
+        {doelwerk && <DoelwerkKlok opdracht={doelwerk} profielId={profiel?.id} onKlaar={tijdVol} />}
+      </div>
+      {tijdFeest && (
+        <DoelFeest kop="Je tijd zit erop!" knopTekst="Verder oefenen" onKlaar={() => setTijdFeest(null)}
+          tekst={`Je hebt ${tijdFeest} minuten aan je doelen gewerkt. Goed gedaan! Je mag stoppen of nog even doorgaan.`} />
+      )}
+    </>
   )
 
   if (vrij && doelwerk) {
     return (
       <>
         <GameMenu
+          alleenOefenen
           onBack={() => { setVrij(false); setVervers(v => v + 1) }}
           addCuruntie={addCuruntie} addBriefgeld={addBriefgeld} toegestaneGroepen={toegestaneGroepen}
         />
