@@ -168,7 +168,7 @@ export default function VloerQuiz({ onBack }) {
         laden={laden} status={status} fout={fout} onJoin={meedoen} />
     )
   }
-  return <LeerlingSpel room={room} onStop={() => { room.leave(); setRoom(null) }} />
+  return <LeerlingSpel room={room} onStop={() => { if (room.connection?.isOpen) room.leave(); setRoom(null) }} />
 }
 
 function LeerlingSpel({ room, onStop }) {
@@ -177,10 +177,14 @@ function LeerlingSpel({ room, onStop }) {
   const zelfWeg = useRef(false)
   const aanraak = heeftAanraak()
 
+  // De leerkracht stopt: de server stuurt 'gestopt' en we gaan zelf netjes weg
+  // (anders blijft de SDK een minuut lang opnieuw verbinden).
   useEffect(() => {
+    const stopt = () => { zelfWeg.current = true; setGestopt(true); room.leave() }
     const weg = (code) => { if (!zelfWeg.current && (code === 1000 || code === 4000)) setGestopt(true) }
+    const uit = room.onMessage('gestopt', stopt)
     room.onLeave(weg)
-    return () => room.onLeave.remove(weg)
+    return () => { uit?.(); room.onLeave.remove(weg) }
   }, [room])
   const stop = () => { zelfWeg.current = true; onStop() }
 
