@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
 import {
   haalSjablonen, haalDictees, maakDictee, zetDicteeOpen, verwijderDictee,
   haalAntwoorden, zetCorrecties, wisAntwoordenVan,
@@ -135,8 +136,15 @@ function Afname({ dictee, leerlingen, onTerug, onVeranderd }) {
   const [kind, setKind] = useState(null)
   const [zeker, setZeker] = useState(false)
   const [fout, setFout] = useState('')
+  const [printen, setPrinten] = useState(null)   // 'antwoorden' | 'analyse'
   const woorden = dictee.woorden
   const nrs = useMemo(() => labels(woorden), [woorden])
+  // Eerst de afdruk in de pagina zetten, dan het printvenster openen.
+  useEffect(() => {
+    if (!printen) return
+    const t = setTimeout(() => { window.print(); setPrinten(null) }, 60)
+    return () => clearTimeout(t)
+  }, [printen])
   const naam = useCallback((id) => leerlingen.find(l => l.id === id)?.weergavenaam ?? 'Onbekend', [leerlingen])
 
   const laad = useCallback(() => { haalAntwoorden(dictee.id).then(setRijen).catch(() => setFout('Antwoorden laden lukt niet.')) }, [dictee.id])
@@ -180,7 +188,8 @@ function Afname({ dictee, leerlingen, onTerug, onVeranderd }) {
         <Knop variant={open ? 'secundair' : 'primair'} onClick={wissel}>{open ? 'Dictee sluiten' : 'Klaarzetten voor de klas'}</Knop>
         <Knop variant="subtiel" onClick={() => setToonWoorden(v => !v)}>{toonWoorden ? 'Woorden verbergen' : 'Woorden om voor te lezen'}</Knop>
         {(rijen ?? []).length > 0 && <Knop variant="secundair" icoon="uit" onClick={() => download(dictee, rijen, leerlingen, nrs)}>Download alle antwoorden</Knop>}
-        {ingeleverd.length > 0 && <Knop variant="subtiel" icoon="printer" onClick={() => window.print()}>Printen</Knop>}
+        {ingeleverd.length > 0 && <Knop variant="subtiel" icoon="printer" onClick={() => setPrinten('antwoorden')}>Antwoorden printen</Knop>}
+        {ingeleverd.length > 0 && <Knop variant="subtiel" icoon="printer" onClick={() => setPrinten('analyse')}>Analyse printen</Knop>}
         {!zeker
           ? <Knop variant="subtiel" icoon="prullenbak" onClick={() => setZeker(true)}>Verwijderen</Knop>
           : <span className="pd-zeker">Alles van dit dictee wissen? <Knop variant="subtiel" onClick={() => setZeker(false)}>Nee</Knop> <Knop variant="secundair" onClick={weg}>Ja, wissen</Knop></span>}
@@ -281,6 +290,113 @@ function Afname({ dictee, leerlingen, onTerug, onVeranderd }) {
           </section>
         </>
       )}
+      {printen && createPortal(
+        <Afdruk soort={printen} dictee={dictee} rijen={ingeleverd} a={a} cats={cats} nrs={nrs} naam={naam} aantalKlas={leerlingen.length} />,
+        document.body,
+      )}
+    </div>
+  )
+}
+
+// Witte afdruk (zie @media print in dicteetab.css): de antwoorden van elke
+// leerling, of de analyse van de toets.
+function Afdruk({ soort, dictee, rijen, a, cats, nrs, naam, aantalKlas }) {
+  const vandaag = new Date().toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })
+  const opNaam = [...rijen].sort((x, y) => naam(x.leerling_id).localeCompare(naam(y.leerling_id), 'nl'))
+  const kop = (
+    <header className="pdp-kop">
+      <h1>{dictee.titel}: {soort === 'antwoorden' ? 'antwoorden' : 'analyse'}</h1>
+      <p>Afgenomen op {datum(dictee.aangemaakt_op)} · {rijen.length} van {aantalKlas} leerlingen ingeleverd · geprint op {vandaag}</p>
+    </header>
+  )
+
+  if (soort === 'antwoorden') return (
+    <div className="pd-print">
+      {kop}
+      {opNaam.map(r => {
+        const p = a.perLeerling[r.leerling_id]
+        return (
+          <section key={r.leerling_id} className="pdp-kind">
+            <h2>{naam(r.leerling_id)} <span>{p.score} van {p.aantal} goed · ingeleverd {new Date(r.ingeleverd_op).toLocaleString('nl-NL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span></h2>
+            <table>
+              <thead><tr><th>Nr</th><th>Geschreven</th><th /><th>Goed woord</th><th>Categorie fout</th></tr></thead>
+              <tbody>
+                {p.per.map((x, i) => (
+                  <tr key={i} className={x.goed ? '' : 'pdp-fout'}>
+                    <td>{nrs[i]}</td>
+                    <td className="pdp-woord">{x.leeg ? '(leeg)' : x.ingevuld}</td>
+                    <td>{x.goed ? '\u2713' : '\u2717'}{x.handmatig ? '*' : ''}</td>
+                    <td className="pdp-woord">{x.goed ? '' : dictee.woorden[i].w}</td>
+                    <td>{x.goed ? '' : [...x.fout.map(categorieNaam), ...(x.overig ? ['overig'] : [])].join(', ')}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+        )
+      })}
+      <p className="pdp-voet">* zelf goed of fout gerekend door de leerkracht</p>
+    </div>
+  )
+
+  const gemiddeld = rijen.length ? rijen.reduce((s, r) => s + a.perLeerling[r.leerling_id].score, 0) / rijen.length : 0
+  const tel = (o) => rijen.filter(r => a.perLeerling[r.leerling_id].oordeel === o).length
+  return (
+    <div className="pd-print">
+      {kop}
+      <p>Gemiddeld {gemiddeld.toFixed(1).replace('.', ',')} van {dictee.woorden.length} goed · goed (vanaf {Math.round(NORM.goed * 100)}%): {tel('goed')} · matig (vanaf {Math.round(NORM.matig * 100)}%): {tel('matig')} · onvoldoende: {tel('onvoldoende')}</p>
+
+      <h2>Per spellingcategorie</h2>
+      <table>
+        <thead><tr><th>Categorie</th><th>Regel</th><th>Goed</th><th>Extra instructie</th></tr></thead>
+        <tbody>
+          {cats.map(id => {
+            const g = a.groepCat[id]
+            return (
+              <tr key={id}>
+                <td><b>{categorieNaam(id)}</b></td>
+                <td>{categorieRegel(id)}</td>
+                <td>{100 - pct(g.fout, g.kansen)}%</td>
+                <td>{[...g.leerlingen].sort((x, y) => y.fout - x.fout).map(l => `${naam(l.id)}${l.fout > 1 ? ` (${l.fout}x)` : ''}`).join(', ')}</td>
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
+      {a.overig > 0 && <p>Daarnaast {a.overig} {a.overig === 1 ? 'fout' : 'fouten'} buiten de getoetste categorieën.</p>}
+
+      <h2>Per leerling</h2>
+      <table>
+        <thead><tr><th>Leerling</th><th>Goed</th><th>Oordeel</th><th>Fouten per categorie</th></tr></thead>
+        <tbody>
+          {[...rijen].sort((x, y) => a.perLeerling[x.leerling_id].score - a.perLeerling[y.leerling_id].score).map(r => {
+            const p = a.perLeerling[r.leerling_id]
+            return (
+              <tr key={r.leerling_id}>
+                <td>{naam(r.leerling_id)}</td>
+                <td>{p.score}/{p.aantal}</td>
+                <td>{p.oordeel}</td>
+                <td>{cats.filter(id => p.cat[id]).map(id => `${categorieNaam(id)}${p.cat[id] > 1 ? ` (${p.cat[id]})` : ''}`).join(', ')}</td>
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
+
+      <h2>Per woord</h2>
+      <table>
+        <thead><tr><th>Nr</th><th>Woord</th><th>Fout</th><th>Zo geschreven</th></tr></thead>
+        <tbody>
+          {dictee.woorden.map((w, i) => (
+            <tr key={i}>
+              <td>{nrs[i]}</td>
+              <td className="pdp-woord">{w.w}</td>
+              <td>{a.perWoord[i].fout}x</td>
+              <td>{Object.entries(a.perWoord[i].varianten).sort((x, y) => y[1] - x[1]).map(([v, n]) => `${v}${n > 1 ? ` (${n})` : ''}`).join(', ')}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   )
 }

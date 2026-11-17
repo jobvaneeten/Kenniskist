@@ -77,7 +77,25 @@
   .pd-woorden li .pd-varianten, .pd-voorlezen li .portaal-zacht { grid-column: 2; }
 }
 
+/* Afdruk (Afdruk in DicteeTab.jsx): alleen die, zwart op wit */
+.pd-print { display: none; }
 @media print {
-  .pd-acties, .pd-kop .kk-knop, .pd-reken { display: none !important; }
-  .pd-afname { background: #fff !important; color: #000 !important; }
+  @page { margin: 14mm; }
+  html, body { background: #fff !important; }
+  body > *:not(.pd-print) { display: none !important; }
+  .pd-print { display: block; color: #000; font: 10pt/1.35 system-ui, sans-serif; }
+  .pd-print h1 { font-size: 15pt; margin: 0 0 2px; }
+  .pd-print h2 { font-size: 12pt; margin: 14px 0 6px; }
+  .pd-print h2 span { font-size: 9.5pt; font-weight: 400; color: #444; margin-left: 8px; }
+  .pd-print p { margin: 0 0 8px; }
+  .pdp-kop { border-bottom: 1.5px solid #000; padding-bottom: 6px; margin-bottom: 10px; }
+  .pdp-kop p { color: #444; font-size: 9pt; }
+  .pd-print table { width: 100%; border-collapse: collapse; }
+  .pd-print th, .pd-print td { border-bottom: 1px solid #ccc; padding: 2px 6px; text-align: left; vertical-align: top; }
+  .pd-print th { font-size: 8.5pt; color: #444; }
+  .pd-print tr { break-inside: avoid; }
+  .pdp-woord { font-size: 10.5pt; }
+  .pdp-fout td { background: #f2f2f2; }
+  .pdp-kind { break-inside: avoid; margin-bottom: 10px; }
+  .pdp-voet { margin-top: 10px; font-size: 8.5pt; color: #444; }
 }
