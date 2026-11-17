@@ -14,7 +14,7 @@ const sleutel = (id) => `kk_dictee_${id}`
 export default function ControleDictee({ onBack }) {
   const [dictee, setDictee] = useState(undefined)   // undefined = laden, null = geen
   const [antw, setAntw] = useState([])
-  const [stap, setStap] = useState('maken')         // maken | zeker | klaar
+  const [stap, setStap] = useState('maken')         // maken | zeker | klaar | ingetrokken
   const [fout, setFout] = useState('')
   const [bezig, setBezig] = useState(false)
   const velden = useRef([])
@@ -34,6 +34,15 @@ export default function ControleDictee({ onBack }) {
       bewaard.current = JSON.stringify(d.antwoorden ?? [])
     }).catch(() => setDictee(null))
   }, [])
+
+  // Trekt de leerkracht het dictee in, dan verdwijnt het ook hier.
+  useEffect(() => {
+    if (!dictee || stap === 'klaar' || stap === 'ingetrokken') return
+    const t = setInterval(() => {
+      haalMijnDictee().then(d => { if (d?.id !== dictee.id) setStap('ingetrokken') }).catch(() => {})
+    }, 10000)
+    return () => clearInterval(t)
+  }, [dictee, stap])
 
   // Lokaal bij elke letter, op de server bij het verlaten van een vakje.
   const zet = (i, waarde) => {
@@ -74,6 +83,18 @@ export default function ControleDictee({ onBack }) {
   }
 
   if (dictee === undefined) return <div className="cd-scherm"><p className="cd-zacht">Even laden…</p></div>
+
+  if (stap === 'ingetrokken') return (
+    <div className="cd-scherm cd-midden">
+      <TerugKnop onClick={onBack} />
+      <div className="cd-klaar">
+        <span className="cd-klaar-icoon"><Icoon naam="slot" /></span>
+        <h1>Dictee gestopt</h1>
+        <p>Je juf of meester heeft het dictee weggehaald.</p>
+        <Knop variant="primair" onClick={onBack}>Terug naar het begin</Knop>
+      </div>
+    </div>
+  )
 
   if (!dictee || stap === 'klaar') return (
     <div className="cd-scherm cd-midden">

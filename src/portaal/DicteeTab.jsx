@@ -85,7 +85,7 @@ export default function DicteeTab({ klas, leerlingen }) {
           <button key={d.id} type="button" className="pd-dictee" onClick={() => setOpenId(d.id)}>
             <b>{d.titel}</b>
             <span className="portaal-zacht">{datum(d.aangemaakt_op)} · {d.woorden.length} woorden</span>
-            <span className={d.open ? 'pd-status open' : 'pd-status'}>{d.open ? 'Open' : 'Gesloten'}</span>
+            <span className={d.open ? 'pd-status open' : 'pd-status'}>{d.open ? 'Klaargezet' : 'Niet klaargezet'}</span>
           </button>
         ))}
       </div>
@@ -173,7 +173,7 @@ function Afname({ dictee, leerlingen, onTerug, onVeranderd }) {
 
   if (kind) {
     const r = ingeleverd.find(x => x.leerling_id === kind)
-    if (r) return <Kind dictee={dictee} rij={r} naam={naam(kind)} nrs={nrs} onTerug={() => setKind(null)} onVeranderd={laad} />
+    if (r) return <Kind dictee={dictee} open={open} rij={r} naam={naam(kind)} nrs={nrs} onTerug={() => setKind(null)} onVeranderd={laad} />
   }
 
   return (
@@ -181,11 +181,11 @@ function Afname({ dictee, leerlingen, onTerug, onVeranderd }) {
       <div className="pd-kop">
         <Knop variant="subtiel" icoon="terug" onClick={onTerug}>Alle dictees</Knop>
         <h2>{dictee.titel}</h2>
-        <span className={open ? 'pd-status open' : 'pd-status'}>{open ? 'Open' : 'Gesloten'}</span>
+        <span className={open ? 'pd-status open' : 'pd-status'}>{open ? 'Klaargezet' : 'Niet klaargezet'}</span>
       </div>
 
       <div className="pd-acties">
-        <Knop variant={open ? 'secundair' : 'primair'} onClick={wissel}>{open ? 'Dictee sluiten' : 'Klaarzetten voor de klas'}</Knop>
+        <Knop variant={open ? 'secundair' : 'primair'} onClick={wissel}>{open ? 'Dictee intrekken' : 'Klaarzetten voor de klas'}</Knop>
         <Knop variant="subtiel" onClick={() => setToonWoorden(v => !v)}>{toonWoorden ? 'Woorden verbergen' : 'Woorden om voor te lezen'}</Knop>
         {(rijen ?? []).length > 0 && <Knop variant="secundair" icoon="uit" onClick={() => download(dictee, rijen, leerlingen, nrs)}>Download alle antwoorden</Knop>}
         {ingeleverd.length > 0 && <Knop variant="subtiel" icoon="printer" onClick={() => setPrinten('antwoorden')}>Antwoorden printen</Knop>}
@@ -194,6 +194,11 @@ function Afname({ dictee, leerlingen, onTerug, onVeranderd }) {
           ? <Knop variant="subtiel" icoon="prullenbak" onClick={() => setZeker(true)}>Verwijderen</Knop>
           : <span className="pd-zeker">Alles van dit dictee wissen? <Knop variant="subtiel" onClick={() => setZeker(false)}>Nee</Knop> <Knop variant="secundair" onClick={weg}>Ja, wissen</Knop></span>}
       </div>
+      <p className="portaal-zacht pd-klein kk-mt-2">
+        {open
+          ? 'De leerlingen zien nu de knop Dictee. Met Dictee intrekken haal je hem weg, ook bij kinderen die het al open hebben.'
+          : 'De leerlingen zien dit dictee nu niet.'}
+      </p>
       {fout && <p className="portaal-fout">{fout}</p>}
 
       {toonWoorden && (
@@ -401,7 +406,7 @@ function Afdruk({ soort, dictee, rijen, a, cats, nrs, naam, aantalKlas }) {
   )
 }
 
-function Kind({ dictee, rij, naam, nrs, onTerug, onVeranderd }) {
+function Kind({ dictee, open, rij, naam, nrs, onTerug, onVeranderd }) {
   const [correcties, setCorrecties] = useState(rij.correcties ?? {})
   const [zeker, setZeker] = useState(false)
   const [fout, setFout] = useState('')
@@ -460,8 +465,11 @@ function Kind({ dictee, rij, naam, nrs, onTerug, onVeranderd }) {
       </table>
       <div className="pd-acties kk-mt-3">
         {!zeker
-          ? <Knop variant="subtiel" onClick={() => setZeker(true)}>Opnieuw laten maken</Knop>
-          : <span className="pd-zeker">De antwoorden van {naam} wissen, zodat het opnieuw kan (alleen als het dictee open staat)? <Knop variant="subtiel" onClick={() => setZeker(false)}>Nee</Knop> <Knop variant="secundair" onClick={opnieuw}>Ja</Knop></span>}
+          ? <Knop variant="secundair" icoon="prullenbak" onClick={() => setZeker(true)}>Resultaat verwijderen</Knop>
+          : <span className="pd-zeker">
+              Het resultaat van {naam} verwijderen? Dan kan {naam} het dictee opnieuw maken{open ? '' : ' zodra je het weer klaarzet'}. Terughalen kan niet.
+              <Knop variant="subtiel" onClick={() => setZeker(false)}>Nee</Knop> <Knop variant="secundair" onClick={opnieuw}>Ja, verwijderen</Knop>
+            </span>}
       </div>
     </div>
   )
