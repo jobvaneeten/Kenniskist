@@ -79,7 +79,7 @@ function useVloer(room, ikId) {
       const s = room.state
       if (klokRef.current) klokRef.current.textContent = Math.ceil(s.timeLeft ?? 0)
       if (balkRef.current) balkRef.current.style.transform = `scaleX(${Math.max(0, (s.timeLeft ?? 0) / (s.tijd || 20))})`
-      if (doorRef.current) doorRef.current.style.transform = `scaleX(${Math.min(1, Math.max(0, (s.timeLeft ?? 0) / 5))})`
+      if (doorRef.current) doorRef.current.style.transform = `scaleX(${Math.min(1, Math.max(0, (s.timeLeft ?? 0) / 8))})`
       raf = requestAnimationFrame(klok)
     }
     raf = requestAnimationFrame(klok)
