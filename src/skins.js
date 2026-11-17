@@ -325,6 +325,56 @@ const EMBLEEM = {
     ctx.beginPath(); ctx.ellipse(0, 0, 0.55, 0.14, -0.35, Math.PI, Math.PI * 2); ctx.stroke()
     ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, 0.3, 0, Math.PI * 2); ctx.fill()
     ctx.beginPath(); ctx.ellipse(0, 0, 0.55, 0.14, -0.35, 0, Math.PI); ctx.stroke()
+  },  ster(ctx) {
+    ctx.fillStyle = '#ffd34d'; ster(ctx, 0, 0.03, 0.5); ctx.fill()
+    ctx.strokeStyle = '#a86a00'; ctx.lineWidth = 0.05; ctx.lineJoin = 'round'; ctx.stroke()
+    ctx.fillStyle = 'rgba(255,255,255,0.55)'; ster(ctx, -0.04, -0.02, 0.18); ctx.fill()
+  },
+  hart(ctx) {
+    ctx.fillStyle = '#e02a4a'
+    ctx.beginPath(); ctx.moveTo(0, 0.42)
+    ctx.bezierCurveTo(-0.55, 0.05, -0.5, -0.45, 0, -0.18)
+    ctx.bezierCurveTo(0.5, -0.45, 0.55, 0.05, 0, 0.42); ctx.fill()
+    ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 0.05; ctx.stroke()
+    ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.beginPath(); ctx.ellipse(-0.2, -0.12, 0.08, 0.05, -0.6, 0, Math.PI * 2); ctx.fill()
+  },
+  kroon(ctx) {
+    ctx.fillStyle = '#ffd34d'
+    ctx.beginPath(); ctx.moveTo(-0.45, 0.3); ctx.lineTo(-0.45, -0.25); ctx.lineTo(-0.22, 0.02); ctx.lineTo(0, -0.38)
+    ctx.lineTo(0.22, 0.02); ctx.lineTo(0.45, -0.25); ctx.lineTo(0.45, 0.3); ctx.closePath(); ctx.fill()
+    ctx.strokeStyle = '#a86a00'; ctx.lineWidth = 0.04; ctx.lineJoin = 'round'; ctx.stroke()
+    ;[['#e02a4a', 0, 0.16], ['#2ee6ff', -0.26, 0.17], ['#2ecc71', 0.26, 0.17]]
+      .forEach(([c, x, y]) => { ctx.fillStyle = c; ctx.beginPath(); ctx.arc(x, y, 0.065, 0, Math.PI * 2); ctx.fill() })
+    ;[-0.45, 0, 0.45].forEach((x, i) => { ctx.fillStyle = '#fff4c2'; ctx.beginPath(); ctx.arc(x, i === 1 ? -0.38 : -0.25, 0.05, 0, Math.PI * 2); ctx.fill() })
+  },
+  voetbal(ctx) {
+    ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(0, 0, 0.46, 0, Math.PI * 2); ctx.fill()
+    ctx.strokeStyle = '#111'; ctx.lineWidth = 0.04; ctx.stroke()
+    const vijfhoek = (cx, cy, r, d) => {
+      ctx.beginPath()
+      for (let i = 0; i < 5; i++) { const a = d + i * Math.PI * 2 / 5; ctx.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r) }
+      ctx.closePath(); ctx.fill()
+    }
+    ctx.fillStyle = '#111'; vijfhoek(0, 0, 0.15, -Math.PI / 2)
+    ctx.save(); ctx.beginPath(); ctx.arc(0, 0, 0.46, 0, Math.PI * 2); ctx.clip()
+    for (let i = 0; i < 5; i++) {
+      const a = -Math.PI / 2 + i * Math.PI * 2 / 5
+      ctx.beginPath(); ctx.moveTo(Math.cos(a) * 0.15, Math.sin(a) * 0.15); ctx.lineTo(Math.cos(a) * 0.36, Math.sin(a) * 0.36); ctx.stroke()
+      vijfhoek(Math.cos(a) * 0.48, Math.sin(a) * 0.48, 0.13, a + Math.PI)
+    }
+    ctx.restore()
+  },
+  raket(ctx) {
+    ctx.fillStyle = '#ff9a00'; ctx.beginPath(); ctx.moveTo(-0.1, 0.32); ctx.lineTo(0, 0.55); ctx.lineTo(0.1, 0.32); ctx.fill()
+    ctx.fillStyle = '#e02a4a'
+    ctx.beginPath(); ctx.moveTo(-0.14, 0.1); ctx.lineTo(-0.3, 0.36); ctx.lineTo(-0.14, 0.3); ctx.fill()
+    ctx.beginPath(); ctx.moveTo(0.14, 0.1); ctx.lineTo(0.3, 0.36); ctx.lineTo(0.14, 0.3); ctx.fill()
+    ctx.fillStyle = '#f4f5f8'
+    ctx.beginPath(); ctx.moveTo(0, -0.5); ctx.bezierCurveTo(0.2, -0.3, 0.16, 0.1, 0.14, 0.32); ctx.lineTo(-0.14, 0.32)
+    ctx.bezierCurveTo(-0.16, 0.1, -0.2, -0.3, 0, -0.5); ctx.fill()
+    ctx.fillStyle = '#e02a4a'; ctx.beginPath(); ctx.moveTo(0, -0.5); ctx.bezierCurveTo(0.1, -0.42, 0.13, -0.34, 0.14, -0.28); ctx.lineTo(-0.14, -0.28); ctx.bezierCurveTo(-0.13, -0.34, -0.1, -0.42, 0, -0.5); ctx.fill()
+    ctx.fillStyle = '#2ee6ff'; ctx.beginPath(); ctx.arc(0, -0.08, 0.075, 0, Math.PI * 2); ctx.fill()
+    ctx.strokeStyle = '#14224a'; ctx.lineWidth = 0.03; ctx.stroke()
   },
 }
 
@@ -480,7 +530,88 @@ export const SKINS = {
   lavasneaker: { basis: 'lava', zones: onder(1, 0.035, '#ff6a00') },
   basketbalsneaker: { basis: 'wit', zones: [...onder(1, 0.035, '#e02a4a'), ...Z('#e02a4a', [2, '>', 0.13], [1, '<', 0.09]), ...boven(1, 0.15, '#14224a')] },
   tijgersneaker: { basis: 'tijger', zones: onder(1, 0.035, '#1a0f08') },
-  brandweerlaars: { basis: 'zwart', zones: [...band(1, 0.1, 0.12, '#f2d21b'), ...onder(1, 0.035, '#5a2a10')] },
+  brandweerlaars: { basis: 'zwart', zones: [...band(1, 0.1, 0.12, '#f2d21b'), ...onder(1, 0.035, '#5a2a10')] },  // ── nieuwe skins (batch 4) ──
+  ninja: {
+    basis: 'zwart',
+    zones: [...band(1, 0.93, 0.975, '#e02a4a'), ...buiten(0.285, '#1c1c24')],
+    voor: { embleem: 'ster', x: 0.075, y: 1.25, maat: 0.07 },
+    rug: [{ tekst: 'NINJA', y: -0.06, grootte: 0.036, kleur: '#e02a4a' }],
+  },
+  lavaheld: {
+    basis: 'lava',
+    zones: [...buiten(0.27, '#1a0f08'), ...onder(1, 0.885, '#1a0f08')],
+    voor: { embleem: 'vlam', x: 0, y: 1.2, maat: 0.13 },
+    rug: [{ tekst: 'LAVA', y: -0.06, grootte: 0.04, kleur: '#ffd34d', rand: '#1a0f08' }],
+  },
+  goudkampioen: {
+    basis: 'goud',
+    zones: [...buiten(0.27, '#14224a'), ...onder(1, 0.875, '#14224a')],
+    voor: { embleem: 'kroon', x: 0, y: 1.2, maat: 0.12 },
+    rug: [{ tekst: 'KAMPIOEN', y: -0.085, grootte: 0.034, kleur: '#14224a' },
+      { tekst: '1', y: 0.0, grootte: 0.15, kleur: '#14224a', rand: '#ffffff' }],
+  },
+  neonracer: {
+    basis: 'neonraster',
+    zones: [...tussenX(0.14, 0.19, '#2ee6ff'), ...buiten(0.27, '#ff3fd2')],
+    voor: { embleem: 'bliksemcirkel', x: 0, y: 1.2, maat: 0.12 },
+    rug: [{ tekst: '07', y: 0.0, grootte: 0.15, kleur: '#2ee6ff', gloed: true }],
+  },
+  robotpak: {
+    basis: 'circuit',
+    zones: [...buiten(0.27, '#c4cdd6'), ...band(1, 0.9, 0.93, '#c4cdd6')],
+    voor: { embleem: 'raket', x: 0, y: 1.2, maat: 0.13 },
+    rug: [{ tekst: 'ROBO', y: -0.06, grootte: 0.04, kleur: '#2ee6ff', gloed: true }],
+  },
+  voetbalster: {
+    basis: 'wit',
+    zones: [...buiten(0.27, '#ff7a1a'), ...onder(1, 0.875, '#ff7a1a'), ...band(1, 1.3, 1.33, '#ff7a1a')],
+    voor: { embleem: 'voetbal', x: 0.075, y: 1.25, maat: 0.075 },
+    rug: [{ tekst: 'KENNISKIST', y: -0.085, grootte: 0.035, kleur: '#ff7a1a' },
+      { tekst: '9', y: 0.0, grootte: 0.15, kleur: '#ff7a1a', rand: '#14224a' }],
+  },
+  sterrenridder: {
+    basis: 'maliën',
+    zones: [...Z('#1d3f9e', [0, '>', -0.12], [0, '<', 0.12], [1, '<', 1.33]), ...onder(1, 0.88, '#ffd34d')],
+    voor: { embleem: 'ster', x: 0, y: 1.17, maat: 0.13 },
+  },
+  hartendief: {
+    basis: 'rood',
+    zones: [...buiten(0.27, '#ffffff'), ...onder(1, 0.88, '#ffffff')],
+    voor: { embleem: 'hart', x: 0, y: 1.2, maat: 0.13 },
+    rug: [{ tekst: 'HARTJE', y: -0.06, grootte: 0.036, kleur: '#ffffff' }],
+  },
+  pet_ninja: { basis: 'zwart', zones: klep('#e02a4a'), petEmbleem: 'ster' },
+  pet_voetbalster: { basis: 'wit', zones: klep('#ff7a1a'), petEmbleem: 'voetbal' },
+  pet_koning: { basis: 'paars', zones: klep('#ffd34d'), petEmbleem: 'kroon' },
+  pet_hartje: { basis: 'rood', zones: klep('#ffffff'), petEmbleem: 'hart' },
+  pet_raket: { basis: 'navy', zones: klep('#ff7a1a'), petEmbleem: 'raket' },
+  pet_lavaheld: { basis: 'lava', zones: klep('#1a0f08'), petEmbleem: 'vlam' },
+  pet_robot: { basis: 'circuit', zones: klep('#c4cdd6'), petEmbleem: 'raket' },
+  pet_neonracer: { basis: 'neonraster', zones: klep('#2ee6ff'), petEmbleem: 'bliksemcirkel' },
+  circuitbroek: { basis: 'circuit', zones: bies(0.95, '#2ee6ff') },
+  goudbroek: { basis: 'goud', zones: bies(0.95, '#ffffff') },
+  ridderbroek: { basis: 'maliën' },
+  breibroek: { basis: 'brei', zones: boven(1, 0.875, '#f4f5f8') },
+  ruimtebroek: { basis: 'ruimtepak', zones: bies(0.95, '#ff7a1a') },
+  ninjabroek: { basis: 'zwart', zones: [...boven(1, 0.875, '#e02a4a'), ...bies(0.97, '#e02a4a')] },
+  voetbalbroek: { basis: 'wit', zones: [...bies(0.95, '#ff7a1a'), ...boven(1, 0.875, '#ff7a1a')] },
+  koningsbroek: { basis: 'paars', zones: bies(0.95, '#ffd34d') },
+  neonsok2: { basis: 'neonraster', zones: strepen([[0.41, 0.46, '#2ee6ff']]) },
+  goudsok: { basis: 'goud', zones: strepen([[0.39, 0.41, '#ffffff'], [0.42, 0.44, '#ffffff']]) },
+  lavasok: { basis: 'lava', zones: strepen([[0.41, 0.46, '#1a0f08']]) },
+  circuitsok: { basis: 'circuit', zones: strepen([[0.41, 0.46, '#2ee6ff']]) },
+  ruimtesok: { basis: 'ruimtepak', zones: strepen([[0.38, 0.41, '#ff7a1a'], [0.42, 0.45, '#1d3f9e']]) },
+  voetbalsok: { basis: 'oranje', zones: strepen([[0.36, 0.38, '#ffffff'], [0.4, 0.42, '#ffffff'], [0.44, 0.46, '#14224a']]) },
+  ninjasok: { basis: 'zwart', zones: strepen([[0.41, 0.46, '#e02a4a']]) },
+  koningssok: { basis: 'paars', zones: strepen([[0.38, 0.40, '#ffd34d'], [0.42, 0.46, '#ffd34d']]) },
+  circuitsneaker: { basis: 'circuit', zones: onder(1, 0.035, '#2ee6ff') },
+  ruimtesneaker: { basis: 'ruimtepak', zones: [...onder(1, 0.035, '#ff7a1a'), ...boven(1, 0.15, '#1d3f9e')] },
+  ninjasneaker: { basis: 'zwart', zones: [...onder(1, 0.035, '#e02a4a'), ...Z('#e02a4a', [2, '>', 0.13], [1, '<', 0.09])] },
+  koningssneaker: { basis: 'paars', zones: onder(1, 0.035, '#ffd34d') },
+  hartsneaker: { basis: 'rood', zones: [...onder(1, 0.035, '#ffffff'), ...boven(1, 0.15, '#ffffff')] },
+  oceaansneaker: { basis: 'blauw', zones: [...onder(1, 0.035, '#ffffff'), ...Z('#2ee6ff', [2, '>', 0.13], [1, '<', 0.09])] },
+  neonrastersneaker: { basis: 'neonraster', zones: onder(1, 0.035, '#ff3fd2') },
+  ridderlaars: { basis: 'maliën', zones: [...onder(1, 0.035, '#3a2a1a'), ...boven(1, 0.15, '#a4161a')] },
 }
 
 // ── GLB inlezen (alleen posities, UV en driehoeken) ────────────────────────

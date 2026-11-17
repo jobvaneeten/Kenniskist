@@ -1,5 +1,5 @@
 import { Color3, Quaternion, MeshBuilder, StandardMaterial, DynamicTexture } from '@babylonjs/core'
-import { SceneLoader } from '@babylonjs/core/Loading/sceneLoader'
+import { LoadAssetContainerAsync } from '@babylonjs/core/Loading/sceneLoader'
 import '@babylonjs/loaders/glTF'
 import { findItem } from '../../itemsCatalog'
 import { applyItemToMesh, loadClothingDonor, usesDonor, loadHeadItem, zetLegeOnderdelenUit } from '../../applyClothing'
@@ -35,6 +35,17 @@ export const ANIMATIES = {
 Object.entries(EMOTES).forEach(([k, e]) => { ANIMATIES[k] = { file: e.bestand, stripRoot: !!e.stripRoot } })
 const BASIS = ['rust', 'rennen', 'geraakt']
 
+// Een poppetje staat altijd op de vloer in beeld: niet per beeld uitrekenen of
+// het zichtbaar is en geen omhullende bijwerken (scheelt met 35 poppetjes de
+// helft van de rekentijd per beeld).
+const snel = (m) => { m.alwaysSelectAsActiveMesh = true; m.doNotSyncBoundingInfo = true }
+
+const bronnen = new WeakMap()   // scene → Promise<AssetContainer>
+function laadBron(scene) {
+  if (!bronnen.has(scene)) bronnen.set(scene, LoadAssetContainerAsync('/Poppetje.glb', scene))
+  return bronnen.get(scene)
+}
+
 const kaal = (naam) => String(naam || 'Speler').replace(/^\u{1F916}\s*/u, '').slice(0, 14)
 
 // Naamkaartje boven het hoofd: donker plaatje met een rand in de kleur.
@@ -56,6 +67,7 @@ function naamKaartje(scene, naam, kleur, ik) {
   m.emissiveColor = Color3.White(); m.disableLighting = true; m.backFaceCulling = false
   const plane = MeshBuilder.CreatePlane('naam', { width: 3, height: 0.75 }, scene)
   plane.material = m; plane.billboardMode = 7; plane.isPickable = false
+  plane.alwaysSelectAsActiveMesh = true; plane.doNotSyncBoundingInfo = true
   plane.onDisposeObservable.add(() => { tex.dispose(); m.dispose() })
   scene.effectLayers?.forEach(l => l.addExcludedMesh?.(plane))
   return plane
@@ -78,13 +90,27 @@ export default class Poppetje {
     this._laad()
   }
 
+  // Poppetje.glb één keer per scene laden; elke speler krijgt een kopie die de
+  // vorm deelt (eigen botten, eigen materialen). Met 35 kinderen scheelt dat
+  // 35 keer uitpakken en honderden losse geometrieën.
   _laad() {
-    SceneLoader.ImportMesh('', '/', 'Poppetje.glb', this.scene, (meshes, _ps, skels) => {
-      if (this._weg) { meshes.forEach(m => m.dispose()); return }
+    laadBron(this.scene).then(container => {
+      const inst = container.instantiateModelsToScene(n => n, true, { doNotInstantiate: true })
+      inst.animationGroups.forEach(g => g.dispose())
+      const wortel = inst.rootNodes[0]
+      const meshes = [wortel, ...wortel.getChildMeshes(false)]
+      const skels = inst.skeletons
+      if (this._weg) { wortel.dispose(); skels.forEach(sk => sk.dispose()); return }
       zetLegeOnderdelenUit(meshes)
+      // lege onderdelen (hoed, bril, handschoenen, ...) weggooien in plaats van
+      // uitzetten: anders loopt de scene ze met 35 poppetjes elk beeld langs
+      for (let i = meshes.length - 1; i > 0; i--) {
+        const m = meshes[i]
+        if (!m.isEnabled(false) && !KLEDING.has(m.name) && !m.getChildMeshes(false).length) { m.dispose(); meshes.splice(i, 1) }
+      }
       this.root = meshes[0]
       this._skelet = skels[0] ?? null
-      meshes.forEach(m => { this.opts.schaduw?.addShadowCaster(m); m.isPickable = false })
+      meshes.forEach(m => { this.opts.schaduw?.addShadowCaster(m); m.isPickable = false; snel(m) })
 
       // botten van dít poppetje (niet die van een ander met dezelfde naam)
       this.root.getDescendants(false).forEach(n => { if (!this._nodes[n.name]) this._nodes[n.name] = n })
@@ -101,13 +127,13 @@ export default class Poppetje {
         const kleur = key === 'shirt' ? this.opts.shirt : draagt[key]
         const item = kleur && findItem(key, kleur)
         if (!item) { m.setEnabled(false); return }
-        if (usesDonor(key, item)) loadClothingDonor(this.scene, m, this._skelet, key, item, g => this._donors.push(g))
+        if (usesDonor(key, item)) loadClothingDonor(this.scene, m, this._skelet, key, item, g => { snel(g); this._donors.push(g) })
         else { applyItemToMesh(this.scene, m, item); m.setEnabled(true) }
       })
       const pet = draagt.hoofd && findItem('hoofd', draagt.hoofd)
       if (pet) {
         const ouder = meshes.find(m => KLEDING.has(m.name))?.parent || this.root
-        loadHeadItem(this.scene, ouder, this._skelet, pet, draagt.hoofdStance || 'normaal', g => this._donors.push(g))
+        loadHeadItem(this.scene, ouder, this._skelet, pet, draagt.hoofdStance || 'normaal', g => { [g, ...(g.getChildMeshes?.(false) ?? [])].forEach(snel); this._donors.push(g) })
       }
       meshes.forEach(m => {
         if (!GEZICHT.has(m.name) || !m.material) return
@@ -123,7 +149,7 @@ export default class Poppetje {
       if (this._zicht === false) this.root.setEnabled(false)
       if (this._pose) this.zet(...this._pose)
       this._laadAnimaties()
-    }, null, (_s, msg) => console.error('Poppetje laden mislukt:', msg))
+    }).catch(e => console.error('Poppetje laden mislukt:', e?.message))
   }
 
   // Eerst de basis (staan, lopen, vallen) en wat opts.anims vraagt; de rest
@@ -227,6 +253,12 @@ export default class Poppetje {
     Object.values(this._anims).forEach(g => { try { g.dispose() } catch { /* al weg */ } })
     this._donors.forEach(g => { try { g.dispose() } catch { /* al weg */ } })
     this.naam?.dispose()
-    this.root?.dispose?.()
+    if (this.root) {
+      // eigen materialen weg, de gedeelde texturen van Poppetje.glb blijven
+      const mats = new Set([this.root, ...this.root.getChildMeshes(false)].map(m => m.material).filter(Boolean))
+      this.root.dispose()
+      mats.forEach(m => m.dispose(false, false))
+    }
+    this._skelet?.dispose()
   }
 }

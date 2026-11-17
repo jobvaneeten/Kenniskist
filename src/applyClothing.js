@@ -8,9 +8,38 @@ import { buildSkinTexture } from './skins'
 import { bouwKledingTextuur } from './kledingTextuur'
 import { verfijnMesh } from './verfijnMesh'
 
-function applyCanvasTex(scene, mesh, canvas) {
-  const tex = new Texture(canvas.toDataURL(), scene, false, false)
-  tex.anisotropicFilteringLevel = 8   // scherp, ook als je schuin op de stof kijkt
+// ── Lichte stand (online spellen met 35 kinderen) ────────────────────────
+// Zet een scene `scene.metadata = { kledingLicht: true }`, dan: geen fijner
+// gemaakte kledingmodellen (een broek ging van ~550 naar 8800 driehoeken) en
+// getekende texturen op 256 px, gedeeld per kledingstuk. Met 35 kinderen was
+// dat ~860 MB aan texturen: een iPad laadt de pagina dan gewoon opnieuw.
+const LICHT_MAAT = 256
+const licht = (scene) => !!scene?.metadata?.kledingLicht
+const verfijn = (scene, mesh) => { if (!licht(scene)) verfijnMesh(mesh) }
+
+function verklein(cv, maat) {
+  if (!cv || (cv.width <= maat && cv.height <= maat)) return cv
+  const k = document.createElement('canvas')
+  k.width = maat; k.height = Math.max(1, Math.round(maat * cv.height / cv.width))
+  k.getContext('2d').drawImage(cv, 0, 0, k.width, k.height)
+  return k
+}
+
+// Textuur uit een getekend canvas; in de lichte stand één keer per kledingstuk.
+function textuurVoor(scene, sleutel, maakCanvas) {
+  const maak = () => maakCanvas().then(cv => {
+    const tex = new Texture((licht(scene) ? verklein(cv, LICHT_MAAT) : cv).toDataURL(), scene, false, false)
+    tex.anisotropicFilteringLevel = 8   // scherp, ook als je schuin op de stof kijkt
+    return tex
+  })
+  if (!licht(scene)) return maak()
+  scene.metadata.kledingTex ??= new Map()
+  const cache = scene.metadata.kledingTex
+  if (!cache.has(sleutel)) cache.set(sleutel, maak())
+  return cache.get(sleutel)
+}
+
+function zetTex(mesh, tex) {
   const mat = mesh.material
   if (mat) {
     if (mat.albedoColor !== undefined) { mat.albedoTexture = tex; mat.albedoColor = Color3.White() }
@@ -18,32 +47,31 @@ function applyCanvasTex(scene, mesh, canvas) {
   }
 }
 
+// Emoji-afbeelding laden (null als het niet lukt).
+const laadEmoji = (item) => new Promise(klaar => {
+  if (item.kind !== 'print') { klaar(null); return }
+  const img = new Image()
+  img.crossOrigin = 'anonymous'
+  img.onload  = () => klaar(img)
+  img.onerror = () => klaar(null)
+  img.src = emojiUrl(item.emoji)
+})
+
 // Build + apply the generated texture. Prints load the Twemoji image first so
 // they render identically on every device (iOS can't draw emoji to a texture).
 function applyGeneratedTexture(scene, mesh, type, item, donor) {
-  if (item.kind === 'skin') {
-    buildSkinTexture(item, donor, type).then(cv => { if (!mesh.isDisposed()) applyCanvasTex(scene, mesh, cv) })
-    return
+  const maakCanvas = () => {
+    if (item.kind === 'skin') return buildSkinTexture(item, donor, type)
+    // Eerst op het lijf tekenen (rechtop, op maat, zie kledingTextuur.js); lukt
+    // het model lezen niet, dan de oude lap over de hele UV.
+    const oud = (img) => type === 'shirt'
+      ? buildShirtPrintTexture(item, img)
+      : buildTextureCanvas(item, img)
+    return laadEmoji(item).then(img => bouwKledingTextuur(item, type, donor, img)
+      .then(cv => cv || oud(img))
+      .catch(() => oud(img)))
   }
-  // Eerst op het lijf tekenen (rechtop, op maat, zie kledingTextuur.js); lukt
-  // het model lezen niet, dan de oude lap over de hele UV.
-  const oud = (img) => type === 'shirt'
-    ? buildShirtPrintTexture(item, img)
-    : buildTextureCanvas(item, img)
-  const build = (img) => {
-    bouwKledingTextuur(item, type, donor, img)
-      .then(cv => { if (!mesh.isDisposed()) applyCanvasTex(scene, mesh, cv || oud(img)) })
-      .catch(() => { if (!mesh.isDisposed()) applyCanvasTex(scene, mesh, oud(img)) })
-  }
-  if (item.kind === 'print') {
-    const img = new Image()
-    img.crossOrigin = 'anonymous'
-    img.onload  = () => build(img)
-    img.onerror = () => build(null)
-    img.src = emojiUrl(item.emoji)
-  } else {
-    build(null)   // pattern
-  }
+  textuurVoor(scene, `${type}|${item.key}`, maakCanvas).then(tex => { if (!mesh.isDisposed()) zetTex(mesh, tex) })
 }
 
 function walk(node, fn) {
@@ -81,7 +109,7 @@ function applyTexture(mesh, tex) {
 //  exactly like the wardrobe — their UV can't show a print.)
 export function applyItemToMesh(scene, mesh, item) {
   if (!mesh || !item) return
-  verfijnMesh(mesh)
+  verfijn(scene, mesh)
   if (item.kind === 'color') { applyColor(mesh, item.hex); return }
   if (item.kind === 'pattern' || item.kind === 'print') {
     const tex = new Texture(buildTextureCanvas(item).toDataURL(), scene, false, false)
@@ -126,7 +154,7 @@ export function loadClothingDonor(scene, mesh, skeleton, type, item, onReady) {
       g.scaling            = new Vector3(1, 1, 1)
       const srcSkel = srcSkels?.[0]
       if (srcSkel) remapBoneIndices(g, srcSkel, skeleton)
-      verfijnMesh(g)
+      verfijn(scene, g)
       g.skeleton           = skeleton
       if (item.kind === 'texmodel') {
         // donor mesh + a custom designed texture image (its UV matches the file)
@@ -164,11 +192,6 @@ export function loadClothingDonor(scene, mesh, skeleton, type, item, onReady) {
 const HEAD_FILES = { normaal: 'Pet/petnormaal.glb', achter: 'Pet/petachter.glb' }
 // Beide pet-standen hebben dezelfde UV-indeling; textuur bouwen op de normale.
 const PET_UV = '/Pet/petnormaal.glb'
-const scherpeTex = (scene, cv) => {
-  const tex = new Texture(cv.toDataURL(), scene, false, false)
-  tex.anisotropicFilteringLevel = 8
-  return tex
-}
 
 // Remap a mesh's per-vertex bone indices from srcSkel's order to dstSkel's
 // order, matching by bone name (so it can share dstSkel and follow the right
@@ -195,29 +218,20 @@ export function loadHeadItem(scene, parentNode, skeleton, item, stance, onReady)
   SceneLoader.ImportMesh('', '/', file, scene, (loaded, _ps, srcSkels) => {
     const g = loaded.find(lm => (lm.getTotalVertices?.() ?? 0) > 0)
     if (!g) { loaded.forEach(lm => { try { lm.dispose() } catch {} }); srcSkels?.[0]?.dispose(); return }
-    verfijnMesh(g)
+    verfijn(scene, g)
 
     if (item.kind === 'texmodel') {
       applyTexture(g, new Texture(item.texture, scene, false, false))
     } else if (item.kind === 'color') {
       applyColor(g, item.hex)
-    } else if (item.kind === 'skin') {
+    } else if (item.kind === 'skin' || item.kind === 'pattern' || item.kind === 'print') {
       // Beide standen delen de uitvouwing van petnormaal.glb: één textuur.
-      buildSkinTexture(item, PET_UV, 'hoofd').then(cv => { if (!g.isDisposed()) applyTexture(g, scherpeTex(scene, cv)) })
-    } else if (item.kind === 'pattern' || item.kind === 'print') {
       // Patroon-/print-petten: op het lijf getekend (kledingTextuur.js), op de
       // pet-UV. Prints laden eerst de Twemoji-afbeelding (iOS-proof).
-      const toTex = (img) => bouwKledingTextuur(item, 'hoofd', PET_UV, img)
-        .then(cv => { if (!g.isDisposed()) applyTexture(g, scherpeTex(scene, cv || buildTextureCanvas(item, img))) })
-      if (item.kind === 'print') {
-        const img = new Image()
-        img.crossOrigin = 'anonymous'
-        img.onload  = () => toTex(img)
-        img.onerror = () => toTex(null)
-        img.src = emojiUrl(item.emoji)
-      } else {
-        toTex(null)
-      }
+      const maakCanvas = () => item.kind === 'skin'
+        ? buildSkinTexture(item, PET_UV, 'hoofd')
+        : laadEmoji(item).then(img => bouwKledingTextuur(item, 'hoofd', PET_UV, img).then(cv => cv || buildTextureCanvas(item, img)))
+      textuurVoor(scene, `hoofd|${item.key}`, maakCanvas).then(tex => { if (!g.isDisposed()) applyTexture(g, tex) })
     }
 
     // The pet is rigid (100% Head bone). Skinning onto Poppetje's skeleton is

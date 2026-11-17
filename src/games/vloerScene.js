@@ -248,6 +248,7 @@ function maakSchaduw(scene) {
   }
   const d = MeshBuilder.CreateGround('blob', { width: 2, height: 2 }, scene)
   d.material = schaduwMat; d.isPickable = false
+  d.alwaysSelectAsActiveMesh = true; d.doNotSyncBoundingInfo = true
   return d
 }
 
@@ -264,6 +265,8 @@ export function maakVloerScene(canvas, { ikId = null, haalState, stuur, invoerRe
   }
   const scene = new Scene(engine)
   scene.clearColor = new Color4(0.02, 0.012, 0.06, 1)
+  scene.metadata = { kledingLicht: true }   // 35 poppetjes: lichte kleding (applyClothing.js)
+  scene.skipPointerMovePicking = true
 
   const host = !ikId
   // de camera staat aan de -z-kant: zo is +x rechts in beeld en +z boven
@@ -299,6 +302,8 @@ export function maakVloerScene(canvas, { ikId = null, haalState, stuur, invoerRe
   const podium = maakPodium(scene)
   const ikRing = maakRing(scene)
   ;[...neon, ...podium.getChildMeshes()].forEach(m => glow.addIncludedOnlyMesh(m))
+  // wat stilstaat hoeft niet elk beeld opnieuw doorgerekend te worden
+  neon.forEach(m => m.freezeWorldMatrix())
 
   // camera van het bord: overzicht, of ingezoomd op het goede vlak
   const camStand = { pos: camera.position.clone(), doel: new Vector3(0, 0, host ? -1.5 : 0) }
@@ -498,6 +503,7 @@ export function maakVloerScene(canvas, { ikId = null, haalState, stuur, invoerRe
   })
 
   engine.runRenderLoop(() => scene.render())
+  if (import.meta.env.DEV) window.__vloer = { engine, scene, spelers }   // meten tijdens het ontwikkelen
   const resize = () => { engine.resize(); pasCamera() }
   window.addEventListener('resize', resize)
 

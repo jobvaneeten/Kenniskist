@@ -12,7 +12,7 @@ import './emotes.css'
 const leesJSON = (k) => { try { return JSON.parse(localStorage.getItem(k) || '{}') } catch { return {} } }
 
 // children = plaatje dat zichtbaar is tot het poppetje geladen is
-export default function EmoteViewer3D({ emote, gloed = '#facc15', children }) {
+export default function EmoteViewer3D({ emote, gloed = '#facc15', hoek = -Math.PI / 2, children }) {
   const canvasRef = useRef(null)
   const [klaar, setKlaar] = useState(false)
 
@@ -23,7 +23,7 @@ export default function EmoteViewer3D({ emote, gloed = '#facc15', children }) {
     const scene = new Scene(engine)
     scene.clearColor = new Color4(0, 0, 0, 0)
 
-    const cam = new ArcRotateCamera('cam', -Math.PI / 2, 1.3, 4.2, new Vector3(0, 1.0, 0), scene)
+    const cam = new ArcRotateCamera('cam', hoek, 1.3, 4.2, new Vector3(0, 1.0, 0), scene)
     cam.attachControl(canvas, true)
     cam.lowerRadiusLimit = 3; cam.upperRadiusLimit = 8; cam.panningSensibility = 0
     cam.lowerBetaLimit = 0.5; cam.upperBetaLimit = 1.6
@@ -50,7 +50,7 @@ export default function EmoteViewer3D({ emote, gloed = '#facc15', children }) {
     const onResize = () => engine.resize()
     window.addEventListener('resize', onResize)
     return () => { clearInterval(kijk); window.removeEventListener('resize', onResize); pop.dispose(); engine.dispose() }
-  }, [emote, gloed])
+  }, [emote, gloed, hoek])
 
   return (
     <div className="ev3d">
