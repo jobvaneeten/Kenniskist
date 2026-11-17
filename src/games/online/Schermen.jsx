@@ -36,7 +36,8 @@ export function Titel({ icoon, children, sub }) {
 }
 
 // Start: naam invullen, dan een nieuw potje maken of met een code meedoen.
-// children = extra keuzes van het spel (map, kart-kleur).
+// children = extra keuzes van het spel (map, kart-kleur). Zonder onMaak
+// alleen meedoen (de leerkracht maakt het potje, Vloerquiz).
 export function StartScherm({
   accent, icoon, titel, sub, onBack, naam, setNaam, codeLengte = 5,
   laden, status, fout, onMaak, onJoin, children,
@@ -53,10 +54,14 @@ export function StartScherm({
             autoComplete="off" onChange={e => setNaam(e.target.value)} />
         </div>
         {children}
-        <button type="button" className="on-btn" disabled={laden} onClick={onMaak}>
-          <Icoon naam="plus" />Nieuw potje
-        </button>
-        <div className="on-of"><span>of doe mee met een code</span></div>
+        {onMaak ? (
+          <>
+            <button type="button" className="on-btn" disabled={laden} onClick={onMaak}>
+              <Icoon naam="plus" />Nieuw potje
+            </button>
+            <div className="on-of"><span>of doe mee met een code</span></div>
+          </>
+        ) : <span className="on-label">Code</span>}
         <div className="on-join">
           <input className="on-invoer code" placeholder={'12345'.slice(0, codeLengte)} value={code} maxLength={codeLengte}
             inputMode="numeric" aria-label="Code van het potje" autoComplete="off"
@@ -88,7 +93,7 @@ function SpelerKaart({ s }) {
 // Wachtkamer. spelers = [{ sid, naam, kleur, ik, bot, team }]. Met `teams`
 // staan ze in twee kolommen (rood tegen blauw). `niveaus`: de server kent
 // makkelijke/normale/moeilijke bots (voetbal en paintball).
-export function Wachtkamer({ accent, over, code, spelers, teams, niveaus, room, onStart, onBack, terugTekst }) {
+export function Wachtkamer({ accent, over, code, spelers, teams, niveaus, room, onStart, onBack, terugTekst, uitleg }) {
   const [niveau, setNiveau] = useState('normaal')
   const cijfers = String(code || '').split('')
   return (
@@ -99,7 +104,7 @@ export function Wachtkamer({ accent, over, code, spelers, teams, niveaus, room, 
           <div className="on-code" aria-label={'Code ' + cijfers.join(' ')}>
             {cijfers.map((c, i) => <span key={i} style={{ animationDelay: i * 70 + 'ms' }}>{c}</span>)}
           </div>
-          <span className="on-sub">Geef de code door. Wie hem intypt doet mee.</span>
+          <span className="on-sub">{uitleg ?? 'Geef de code door. Wie hem intypt doet mee.'}</span>
         </div>
 
         {teams ? (

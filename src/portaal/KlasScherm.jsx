@@ -8,6 +8,7 @@ import KlasWeekoverzicht from './KlasWeekoverzicht.jsx'
 import GroepsOverzicht from './GroepsOverzicht.jsx'
 import SpelInstelling from './SpelInstelling.jsx'
 import EigenOefeningen from './EigenOefeningen.jsx'
+import VloerQuizTab from './VloerQuizTab.jsx'
 import { TerugKnop, Icoon } from '../ui/index.jsx'
 
 // De leerkracht ziet alleen wat hij zelf klaarzet: de weektaak voor de klas en
@@ -22,6 +23,7 @@ const TABS = [
   { key: 'groep', label: 'Groepsoverzicht', hint: 'hulp per doel', icoon: 'menu', accent: 'var(--kk-error)' },
   { key: 'werkblad', label: 'Werkblad', hint: 'printen', icoon: 'printer', accent: 'var(--kk-success)' },
   { key: 'eigen', label: 'Eigen oefeningen', hint: 'je eigen vragen', icoon: 'potlood', accent: 'var(--kk-cyan)' },
+  { key: 'vloer', label: 'Vloerquiz', hint: 'samen op het bord', icoon: 'spelen', accent: 'var(--kk-gold)' },
   { key: 'leerlingen', label: 'Leerlingen', hint: 'beheer & spelletjes', icoon: 'mensen', accent: 'var(--kk-text-soft)' },
 ]
 
@@ -105,11 +107,13 @@ export default function KlasScherm({ klas, alleKlassen, onBack, onKlasGewijzigd 
 
         {!leerlingId && tab === 'eigen' && <EigenOefeningen key={klas.id} klas={klas} />}
 
+        {!leerlingId && tab === 'vloer' && <VloerQuizTab key={klas.id} klas={klas} />}
+
         {!leerlingId && tab === 'week' && <KlasWeekoverzicht key={klas.id} leerlingen={leerlingen} />}
 
         {!leerlingId && tab === 'groep' && <GroepsOverzicht key={klas.id} klas={klas} leerlingen={leerlingen} />}
 
-        {!leerlingId && !['leerlingen', 'werkblad', 'week', 'groep', 'eigen'].includes(tab) && (
+        {!leerlingId && !['leerlingen', 'werkblad', 'week', 'groep', 'eigen', 'vloer'].includes(tab) && (
           <WeektaakTab key={tab} klas={klas} soort={tab} onKiesLeerling={setLeerlingId} />
         )}
       </div>

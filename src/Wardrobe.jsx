@@ -136,7 +136,7 @@ function SwatchTile({ item, slot, active, isNew, bursting, onClick }) {
 
 
 // ── Component ─────────────────────────────────────────────────────
-export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlayBotsen, onGoShop, unlockedColors = {} }) {
+export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlayBotsen, onPlayVloer, onGoShop, unlockedColors = {} }) {
   const canvasRef      = useRef(null)
   const sceneRef       = useRef(null)
   const skeletonRef    = useRef(null)
@@ -740,6 +740,7 @@ export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlay
               <Knop variant="secundair" maat="lg" icoonRechts="verder" onClick={onPlayRocket}>Voetbal</Knop>
               <Knop variant="secundair" maat="lg" icoonRechts="verder" onClick={onPlayPaintball}>Paintball</Knop>
               <Knop variant="secundair" maat="lg" icoonRechts="verder" onClick={onPlayBotsen}>Ballonnengevecht</Knop>
+              <Knop variant="secundair" maat="lg" icoonRechts="verder" onClick={onPlayVloer}>Vloerquiz</Knop>
               <Knop variant="subtiel" icoon="sluiten" onClick={() => setShowGames(false)}>Sluiten</Knop>
             </div>
           ) : (

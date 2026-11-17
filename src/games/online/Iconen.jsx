@@ -7,6 +7,7 @@ const PAD = {
   bot: <><rect x="5" y="8" width="14" height="11" rx="3" /><path d="M12 8V5M3 12.5v3M21 12.5v3M9.5 16h5" /><circle cx="12" cy="3.8" r="1.2" /><circle cx="9.3" cy="12.3" r="1.2" fill="currentColor" stroke="none" /><circle cx="14.7" cy="12.3" r="1.2" fill="currentColor" stroke="none" /></>,
   speler: <><circle cx="12" cy="8" r="4" /><path d="M4.5 20.5c.6-4 3.6-6 7.5-6s6.9 2 7.5 6" /></>,
   plus: <path d="M12 5v14M5 12h14" />,
+  vink: <path d="M4.5 12.5l5 5L19.5 7" />,
   min: <path d="M5 12h14" />,
   speel: <path d="M7 4.5v15l12.5-7.5z" fill="currentColor" />,
   camera: <><path d="M3 8.5a2 2 0 012-2h2.2l1.5-2h6.6l1.5 2H19a2 2 0 012 2V18a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><circle cx="12" cy="13" r="3.6" /></>,

@@ -19,6 +19,7 @@ const MijnWeek      = lazy(() => import('./MijnWeek'))
 const RocketGame    = lazy(() => import('./games/RocketGame'))
 const PaintballGame = lazy(() => import('./games/PaintballGame'))
 const BotsenGame    = lazy(() => import('./games/BotsenGame'))
+const VloerQuiz     = lazy(() => import('./games/VloerQuiz'))
 
 const CODES = { pabo: 100000 }
 const BRIEF_CODES = { start: 800 }   // eenmalige briefgeld-codes
@@ -403,6 +404,7 @@ export default function App({ gast = false }) {
         onPlayRocket={() => setScreen('rocket')}
         onPlayPaintball={() => setScreen('paintball')}
         onPlayBotsen={() => setScreen('botsen')}
+        onPlayVloer={() => setScreen('vloer')}
         onGoShop={() => setScreen('shop')}
         unlockedColors={unlockedColors}
       />
@@ -414,6 +416,9 @@ export default function App({ gast = false }) {
   if (screen === 'rocket') return (
     <><RocketGame onBack={() => setScreen('wardrobe')} /><VrijSpelenBadge /></>
   )
+
+  // Vloerquiz: de leerkracht zet de vragen klaar, dus geen vrij spelen.
+  if (screen === 'vloer') return <VloerQuiz onBack={() => setScreen('wardrobe')} />
 
   if (screen === 'botsen') return (
     <><BotsenGame onBack={() => setScreen('wardrobe')} /><VrijSpelenBadge /></>
@@ -499,7 +504,7 @@ export default function App({ gast = false }) {
           <div className="btn-text">
             <span className="btn-label"><Icoon naam="shirt" />Kledingkast</span>
             <span className="btn-desc">Pas je poppetje aan in 3D</span>
-            <span className="btn-examples">Paintball · Ballonnengevecht · Voetbal</span>
+            <span className="btn-examples">Vloerquiz · Paintball · Ballonnengevecht · Voetbal</span>
           </div>
           <span className="btn-arrow"><Icoon naam="verder" /></span>
         </button>

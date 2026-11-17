@@ -745,3 +745,32 @@
   .go-kop { grid-template-columns: 1fr; gap: 8px; }
   .go-tel { flex-direction: row; align-items: center; gap: 10px; }
 }
+
+/* ── Vloerquiz klaarzetten (VloerQuizTab.jsx) ─────────────────────────── */
+.vq-soorten { display: flex; flex-wrap: wrap; gap: 8px; }
+.vq-soort, .vq-reeks {
+  cursor: pointer; border-radius: 12px; border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.05);
+  color: #fff; font: 800 0.85rem/1.2 var(--kk-body); padding: 8px 14px; transition: border-color var(--kk-dur), background var(--kk-dur);
+}
+.vq-soort:hover, .vq-reeks:hover { border-color: rgba(255,255,255,0.35); }
+.vq-soort.aan { background: color-mix(in srgb, var(--kk-gold) 22%, transparent); border-color: var(--kk-gold); }
+.vq-reeksen { display: flex; flex-wrap: wrap; gap: 8px; }
+.vq-reeks { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left; }
+.vq-reeks span { font-size: 0.72rem; font-weight: 700; color: rgba(255,255,255,0.55); }
+.vq-reeks.aan { background: color-mix(in srgb, var(--kk-cyan) 18%, transparent); border-color: var(--kk-cyan); }
+.vq-vragenlijst { border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; overflow: hidden; }
+.vq-lijstkop { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.08); }
+.vq-lijstkop span { flex: 1; font-size: 0.8rem; color: rgba(255,255,255,0.6); font-weight: 700; }
+.vq-vragenlijst ul { list-style: none; margin: 0; padding: 4px 0; max-height: 340px; overflow: auto; }
+.vq-vraagregel {
+  display: grid; grid-template-columns: auto minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1.4fr); gap: 12px; align-items: center;
+  padding: 7px 14px; cursor: pointer; font-size: 0.86rem;
+}
+.vq-vraagregel:hover { background: rgba(255,255,255,0.04); }
+.vq-vraagtekst { font-weight: 700; }
+.vq-goed { color: #3dff9a; font-weight: 800; }
+.vq-fout { color: rgba(255,255,255,0.45); font-size: 0.78rem; }
+@media (max-width: 640px) {
+  .vq-vraagregel { grid-template-columns: auto 1fr; }
+  .vq-goed, .vq-fout { grid-column: 2; }
+}

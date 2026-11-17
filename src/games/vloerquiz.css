@@ -1,0 +1,174 @@
+/* Vloerquiz: HUD over de 3D-vloer. Schermen (start, wachtkamer) komen uit
+   online/schermen.css; hier alleen wat tijdens het spel in beeld staat. */
+
+.vq-spel {
+  position: fixed; inset: 0; overflow: hidden; background: #05030f; color: #fff;
+  font-family: var(--kk-body); touch-action: none; user-select: none; -webkit-user-select: none;
+}
+.vq-canvas { display: block; width: 100%; height: 100%; outline: none; touch-action: none; }
+.vq-hud { position: absolute; inset: 0; pointer-events: none; }
+.vq-hud button, .vq-hud .on-joy, .vq-zijpaneel { pointer-events: auto; }
+
+.vq-glas {
+  background: linear-gradient(180deg, rgba(30,26,58,0.86), rgba(13,11,30,0.92));
+  border: 1px solid color-mix(in srgb, var(--on-accent) 45%, transparent);
+  box-shadow: 0 0 40px -16px var(--on-accent), inset 0 1px 0 rgba(255,255,255,0.1);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+}
+
+/* ── Vraag bovenin ───────────────────────────────────────────────────── */
+.vq-vraag {
+  position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+  width: min(760px, calc(100% - 360px)); box-sizing: border-box; padding: 12px 18px 14px;
+  border-radius: 20px; text-align: center;
+  background: linear-gradient(180deg, rgba(30,26,58,0.88), rgba(13,11,30,0.94));
+  border: 1px solid color-mix(in srgb, var(--on-accent) 45%, transparent);
+  box-shadow: 0 0 40px -16px var(--on-accent), inset 0 1px 0 rgba(255,255,255,0.1);
+  animation: vq-zak 0.45s var(--kk-ease) both;
+}
+.vq-vraag h2 {
+  margin: 6px 0 0; font: 900 clamp(1.15rem, 3vw, 1.9rem)/1.15 var(--kk-head); letter-spacing: 0.01em;
+  text-shadow: 0 0 18px color-mix(in srgb, var(--on-accent) 50%, transparent); overflow-wrap: anywhere;
+}
+.vq-vraag.groot { width: min(1180px, calc(100% - 400px)); padding: 16px 26px 18px; }
+.vq-vraag.groot h2 { font-size: clamp(1.6rem, 3.4vw, 3.2rem); }
+.vq-vraag-rij { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.vq-chip {
+  padding: 5px 11px; border-radius: 999px; background: rgba(255,255,255,0.08); border: 1px solid var(--kk-border-strong);
+  font: 800 0.72rem/1 var(--kk-body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--kk-text-soft);
+}
+.vq-klok { display: flex; align-items: center; gap: 6px; color: var(--kk-gold); }
+.vq-klok .on-icoon { width: 20px; height: 20px; }
+.vq-klok b { font: 900 1.5rem/1 var(--kk-head); min-width: 2ch; text-align: right; text-shadow: 0 0 14px var(--kk-gold); }
+.vq-vraag.groot .vq-klok b { font-size: 2.4rem; }
+.vq-tijdbalk { height: 6px; margin-top: 10px; border-radius: 99px; background: rgba(255,255,255,0.08); overflow: hidden; }
+.vq-tijdbalk div {
+  height: 100%; transform-origin: left; border-radius: inherit;
+  background: linear-gradient(90deg, var(--kk-gold), var(--on-accent)); box-shadow: 0 0 12px var(--on-accent);
+}
+
+/* ── Antwoorden onderin ──────────────────────────────────────────────── */
+.vq-antwoorden {
+  position: absolute; bottom: 14px; right: 14px; width: min(560px, calc(100% - 200px));
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+}
+.vq-antw {
+  position: relative; display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 8px 12px; box-sizing: border-box;
+  border-radius: 14px; border: 2px solid var(--vk);
+  background: color-mix(in srgb, var(--vk) 22%, rgba(11,10,26,0.88));
+  box-shadow: 0 0 18px -8px var(--vk);
+  font: 800 clamp(0.85rem, 1.8vw, 1.05rem)/1.15 var(--kk-body); overflow-wrap: anywhere;
+  transition: transform var(--kk-dur-fast), box-shadow var(--kk-dur), opacity var(--kk-dur);
+}
+.vq-vorm { flex: none; width: 22px; height: 22px; fill: var(--vk); filter: drop-shadow(0 0 6px var(--vk)); }
+.vq-antw-tekst { flex: 1; }
+/* het vlak waar jij op staat licht op (de scene zet data-vak) */
+.vq-hud[data-vak="0"] .vq-antw.a0, .vq-hud[data-vak="1"] .vq-antw.a1,
+.vq-hud[data-vak="2"] .vq-antw.a2, .vq-hud[data-vak="3"] .vq-antw.a3 {
+  transform: scale(1.04); background: color-mix(in srgb, var(--vk) 45%, rgba(11,10,26,0.88));
+  box-shadow: 0 0 0 3px #fff, 0 0 26px var(--vk);
+}
+.vq-antw.goed { background: color-mix(in srgb, var(--vk) 55%, rgba(11,10,26,0.85)); box-shadow: 0 0 0 3px #fff, 0 0 34px var(--vk); }
+.vq-antw.fout { opacity: 0.32; }
+.vq-vink { width: 26px; height: 26px; flex: none; color: #fff; stroke-width: 3; filter: drop-shadow(0 0 6px #fff); }
+
+.vq-antwoorden.groot { left: 50%; right: auto; transform: translateX(-50%); width: min(1180px, calc(100% - 32px)); gap: 12px; bottom: 16px; }
+.vq-antwoorden.groot .vq-antw { min-height: 68px; padding: 10px 18px; border-radius: 18px; font-size: clamp(1.05rem, 2.2vw, 1.9rem); font-family: var(--kk-head); font-weight: 800; }
+.vq-antwoorden.groot .vq-vorm { width: 38px; height: 38px; }
+.vq-telling { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; height: 56px; width: 46px; flex: none; }
+.vq-telbalk { width: 100%; min-height: 4px; border-radius: 6px 6px 2px 2px; background: rgba(255,255,255,0.75); transition: height 0.6s var(--kk-ease); }
+.vq-telling b { font: 900 1.2rem/1 var(--kk-head); }
+
+/* ── Leerling: score, berichten, uitslag ─────────────────────────────── */
+.vq-mijnscore {
+  position: absolute; top: 12px; left: 12px; display: flex; align-items: center; gap: 8px; padding: 8px 14px;
+  border-radius: 14px; background: rgba(11,10,26,0.8); border: 1px solid color-mix(in srgb, var(--kk-gold) 55%, transparent);
+  color: var(--kk-gold); box-shadow: 0 0 22px -8px var(--kk-gold);
+}
+.vq-mijnscore .on-icoon { width: 20px; height: 20px; }
+.vq-mijnscore b { font: 900 1.3rem/1 var(--kk-head); animation: vq-tik 0.5s var(--kk-ease); }
+
+.vq-bericht {
+  position: absolute; top: 76px; left: 50%; transform: translateX(-50%); width: min(520px, calc(100% - 32px)); box-sizing: border-box;
+  display: flex; flex-direction: column; gap: 4px; padding: 14px 20px; border-radius: 18px; text-align: center;
+  background: rgba(11,10,26,0.82); border: 1px solid color-mix(in srgb, var(--on-accent) 45%, transparent);
+  box-shadow: 0 0 30px -12px var(--on-accent); animation: vq-zak 0.45s var(--kk-ease) both;
+}
+.vq-bericht b { font: 900 1.4rem/1.1 var(--kk-head); letter-spacing: 0.06em; text-transform: uppercase; color: var(--on-accent); }
+.vq-bericht span { color: var(--kk-text-soft); font-weight: 700; }
+.vq-bericht.klein { top: auto; bottom: 170px; }
+
+.vq-uitslag {
+  position: absolute; top: 128px; left: 50%; transform: translateX(-50%); width: min(440px, calc(100% - 32px)); box-sizing: border-box;
+  display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 18px 24px; border-radius: 22px; text-align: center;
+  background: rgba(11,10,26,0.86); border: 2px solid var(--uk); box-shadow: 0 0 50px -10px var(--uk);
+  font-weight: 800; animation: vq-pop 0.5s cubic-bezier(.2,1.4,.4,1) both;
+}
+.vq-uitslag.goed { --uk: #3dff9a; }
+.vq-uitslag.fout { --uk: #ff3d6e; }
+.vq-uitslag-kop {
+  font: 900 clamp(2rem, 7vw, 3rem)/1 var(--kk-head); letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--uk); text-shadow: 0 0 24px var(--uk);
+}
+.vq-uitslag b { color: #fff; }
+.vq-uitslag-plek { color: var(--kk-text-soft); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.08em; }
+
+/* ── Ranglijst ───────────────────────────────────────────────────────── */
+.vq-rang { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; width: 100%; }
+.vq-rang li {
+  display: flex; align-items: center; gap: 10px; padding: 7px 12px; border-radius: 12px;
+  background: rgba(255,255,255,0.05); border: 1px solid var(--kk-border); font-weight: 800;
+  animation: on-in 0.35s var(--kk-ease) both;
+}
+.vq-rang li:nth-child(1) { border-color: color-mix(in srgb, var(--kk-gold) 70%, transparent); box-shadow: 0 0 18px -8px var(--kk-gold); }
+.vq-rang li.ik { background: color-mix(in srgb, var(--on-accent, #3df2ff) 18%, transparent); border-color: var(--on-accent, #3df2ff); }
+.vq-plek { display: grid; place-items: center; flex: none; width: 26px; height: 26px; border-radius: 8px; background: rgba(255,255,255,0.1); font: 900 0.9rem/1 var(--kk-head); }
+.vq-rang li:nth-child(1) .vq-plek { background: var(--kk-gold); color: #1a1300; }
+.vq-naam { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vq-erbij { color: #3dff9a; font-size: 0.85rem; }
+.vq-rang b { color: var(--kk-gold); font: 900 1.05rem/1 var(--kk-head); }
+
+.vq-zijpaneel.einde > .on-btn { width: 100%; }
+
+/* ── Leerkracht: bediening en zijpaneel ──────────────────────────────── */
+.vq-bediening {
+  position: absolute; right: 16px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 10px; align-items: stretch;
+}
+.vq-teller {
+  display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 14px; font-weight: 800;
+  background: rgba(11,10,26,0.82); border: 1px solid var(--kk-border-strong);
+}
+.vq-teller .on-icoon { width: 20px; height: 20px; color: var(--on-accent); }
+.vq-teller b { font: 900 1.4rem/1 var(--kk-head); color: var(--on-accent); }
+.vq-zijpaneel {
+  position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+  width: min(330px, calc(100% - 32px)); max-height: calc(100% - 340px); overflow: auto; box-sizing: border-box;
+  display: flex; flex-direction: column; gap: 12px; padding: 18px; border-radius: 22px;
+  background: linear-gradient(180deg, rgba(30,26,58,0.9), rgba(13,11,30,0.94));
+  border: 1px solid color-mix(in srgb, var(--on-accent) 45%, transparent);
+  box-shadow: 0 0 40px -16px var(--on-accent); animation: on-in 0.4s var(--kk-ease) both;
+}
+.vq-zijpaneel.einde { max-height: calc(100% - 100px); width: min(400px, calc(100% - 32px)); align-items: center; top: 54%; }
+.vq-zijpaneel .on-titel { font-size: clamp(1.4rem, 3vw, 2.1rem); }
+.vq-zijpaneel .on-rij { width: 100%; }
+
+@keyframes vq-zak { from { opacity: 0; translate: 0 -16px; } }
+@keyframes vq-pop { from { opacity: 0; scale: 0.6; } }
+@keyframes vq-tik { 40% { transform: scale(1.35); } }
+
+/* telefoon en klein scherm */
+@media (max-width: 760px) {
+  .vq-vraag { top: 64px; width: calc(100% - 24px); }
+  .vq-antwoorden { width: calc(100% - 24px); right: 12px; bottom: 172px; gap: 6px; }
+  .vq-antw { min-height: 40px; padding: 6px 10px; }
+  .vq-bericht { top: 64px; }
+}
+@media (max-height: 520px) {
+  .vq-vraag { padding: 8px 14px 10px; }
+  .vq-antwoorden { bottom: 10px; }
+  .vq-uitslag { top: 64px; padding: 8px 16px; gap: 2px; }
+  .vq-uitslag-kop { font-size: 1.6rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vq-vraag, .vq-uitslag, .vq-bericht, .vq-rang li { animation: none; }
+}

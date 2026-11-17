@@ -33,6 +33,7 @@ export const KLEDINGKAST_SPELLEN = [
   { key: 'voetbal3d', name: '3D-Voetbal', desc: 'Voetballen met je eigen aangeklede poppetje' },
   { key: 'paintball', name: 'Paintball', desc: 'Verf je tegenstanders af in een 3D-arena' },
   { key: 'ballonnen', name: 'Ballonnengevecht', desc: 'Elke kart heeft 3 ballonnen. Wie houdt ze het langst heel?' },
+  { key: 'vloerquiz', name: 'Vloerquiz', desc: 'De quiz van je leerkracht: ren met je poppetje naar het goede antwoord' },
 ]
 
 export function spelPlaatje(spel) {
