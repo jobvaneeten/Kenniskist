@@ -10,6 +10,7 @@ import { skinPreview } from './skins'
 //   patroon (strepen/stippen/…)      → rare   (regenboogprint → ultra)
 //   emoji-print                      → epic   (premium emoji → legendary,
 //                                              🦄/🌈 → ultra_legendary)
+//   ontworpen skin                   → legendary (topskins skinU → ultra)
 //   texmodel (echte 3D-skins)        → ultra_legendary
 // De rarity-parameter in de item-regels hieronder wordt bewust genegeerd —
 // zo blijft de verdeling overal logisch en consistent.
@@ -24,11 +25,13 @@ const pat     = (key, label, _rarity, pattern, c1, c2)  => ({ key, label, rarity
 const print   = (key, label, _rarity, emoji, bg)        => ({ key, label, rarity: printRarity(emoji), kind: 'print', emoji, bg })
 // Donor GLB with a custom baked texture image (a designed clothing skin)
 const texmodel = (key, label, file, texture, preview)  => ({ key, label, rarity: 'ultra_legendary', kind: 'texmodel', file, texture, preview })
-// Ultra legendary zonder eigen 3D-skin: een gewoon patroon/print-item dat toch
-// in de hoogste zeldzaamheid valt.
-const ultra   = (key, label, kind, rest)               => ({ key, label, rarity: 'ultra_legendary', kind, ...rest })
-// Ontworpen skin: een getekend ontwerp met embleem/rugnummer/zones (zie skins.js)
-const skin    = (key, label, design)                   => ({ key, label, rarity: 'ultra_legendary', kind: 'skin', design })
+// Legendarisch zonder eigen 3D-skin: een gewoon patroon-item (teamshirts).
+const legend  = (key, label, kind, rest)               => ({ key, label, rarity: 'legendary', kind, ...rest })
+// Ontworpen skin: een getekend ontwerp met embleem/rugnummer/zones (zie skins.js).
+// Gewoon legendarisch; alleen een paar topskins per soort zijn ultra (skinU),
+// zodat ultra echt zeldzaam blijft.
+const skin    = (key, label, design)                   => ({ key, label, rarity: 'legendary', kind: 'skin', design })
+const skinU   = (key, label, design)                   => ({ key, label, rarity: 'ultra_legendary', kind: 'skin', design })
 
 // Base colours shared by every clothing type (keeps existing saved unlocks)
 const BASE = () => [
@@ -117,14 +120,14 @@ export const CATALOG = {
     print('clown_sh',   'Clowns',               'legendary', '🤡',     '#202038'),
     // Eigen teamshirts zonder clubnamen of logo's. De sleutels zijn van vroeger
     // en blijven gelijk, zodat wie ze al ontgrendeld had ze houdt.
-    ultra('ajax', 'Rood-Wit Teamshirt',   'pattern', { pattern: 'stripes', c1: '#c8102e', c2: '#f4f4f4' }),
-    ultra('psv',  'Rood-Zwart Teamshirt', 'pattern', { pattern: 'stripes', c1: '#cc2222', c2: '#141414' }),
-    ultra('rb',   'Navy-Zilver Teamshirt','pattern', { pattern: 'stripes', c1: '#14224a', c2: '#c9d2dc' }),
+    legend('ajax', 'Rood-Wit Teamshirt',   'pattern', { pattern: 'stripes', c1: '#c8102e', c2: '#f4f4f4' }),
+    legend('psv',  'Rood-Zwart Teamshirt', 'pattern', { pattern: 'stripes', c1: '#cc2222', c2: '#141414' }),
+    legend('rb',   'Navy-Zilver Teamshirt','pattern', { pattern: 'stripes', c1: '#14224a', c2: '#c9d2dc' }),
     skin('skin_topscorer', 'Topscorer 10',   'topscorer'),
     skin('skin_astronaut', 'Astronaut',      'astronaut'),
     skin('skin_ridder',    'Ridder',         'ridder'),
     skin('skin_gamer',     'Neon Gamer',     'gamer'),
-    skin('skin_galaxy',    'Sterrenstelsel', 'sterrenstelsel'),
+    skinU('skin_galaxy',    'Sterrenstelsel', 'sterrenstelsel'),
     skin('skin_superheld', 'Superheld',      'superheld'),
     skin('skin_piraat',    'Piratenkapitein','piraat'),
     skin('skin_basketbal', 'Basketbal 23',   'basketbal'),
@@ -146,7 +149,7 @@ export const CATALOG = {
     print('vos_sh',      'Vosjes',               'epic', '🦊',      '#20140a'),
     skin('skin_ninja',         'Ninja',           'ninja'),
     skin('skin_lavaheld',      'Lavaheld',        'lavaheld'),
-    skin('skin_goudkampioen',  'Gouden kampioen', 'goudkampioen'),
+    skinU('skin_goudkampioen',  'Gouden kampioen', 'goudkampioen'),
     skin('skin_neonracer',     'Neonracer 07',    'neonracer'),
     skin('skin_robotpak',      'Robotpak',        'robotpak'),
     skin('skin_voetbalster',   'Voetbalster 9',   'voetbalster'),
@@ -224,9 +227,9 @@ export const CATALOG = {
     print('schild_br',  'Schilden',             'legendary', '🛡',     '#1a1030'),
     print('engel_br',   'Engeltjes',            'legendary', '👼',     '#1a2a3a'),
     // Eigen sportbroeken in plaats van de clubbroekjes (zie shirt hierboven).
-    ultra('ajaxbroek', 'Wit Sportbroekje',  'pattern', { pattern: 'stripes', c1: '#f4f4f4', c2: '#c8102e' }),
-    ultra('psvbroek',  'Zwart Sportbroekje','pattern', { pattern: 'stripes', c1: '#141414', c2: '#cc2222' }),
-    skin('skin_galaxybroek', 'Galaxy broek',  'galaxybroek'),
+    legend('ajaxbroek', 'Wit Sportbroekje',  'pattern', { pattern: 'stripes', c1: '#f4f4f4', c2: '#c8102e' }),
+    legend('psvbroek',  'Zwart Sportbroekje','pattern', { pattern: 'stripes', c1: '#141414', c2: '#cc2222' }),
+    skinU('skin_galaxybroek', 'Galaxy broek',  'galaxybroek'),
     skin('skin_sportbroek',  'Sportbroek met bies', 'sportbroek'),
     skin('skin_neonbroek',   'Neon raster',   'neonbroek'),
     skin('skin_tijgerbroek', 'Tijgerbroek',   'tijgerbroek'),
@@ -246,7 +249,7 @@ export const CATALOG = {
     print('donut_br',    'Donuts',               'epic', '🍩',      '#2a1020'),
     print('schildpad_br','Schildpadden',         'epic', '🐢',      '#0a2a1a'),
     skin('skin_circuitbroek', 'Circuitbroek',     'circuitbroek'),
-    skin('skin_goudbroek',    'Gouden broek',     'goudbroek'),
+    skinU('skin_goudbroek',    'Gouden broek',     'goudbroek'),
     skin('skin_ridderbroek',  'Ridderbroek',      'ridderbroek'),
     skin('skin_breibroek',    'Gebreide broek',   'breibroek'),
     skin('skin_ruimtebroek',  'Ruimtebroek',      'ruimtebroek'),
@@ -325,7 +328,7 @@ export const CATALOG = {
     print('flamingo_s', 'Flamingos',            'legendary', '🦩',     '#0a2a2a'),
     print('taart_s',    'Taartjes',             'legendary', '🍰',     '#3a1a2a'),
     skin('skin_sportsok',  'Sportsokken',    'sportsok'),
-    skin('skin_galaxysok', 'Galaxy sokken',  'galaxysok'),
+    skinU('skin_galaxysok', 'Galaxy sokken',  'galaxysok'),
     skin('skin_regenboogsok', 'Regenboogsokken', 'regenboogsok'),
     skin('skin_kerstsok',  'Kerstsokken',    'kerstsok'),
     skin('skin_tijgersok', 'Tijgersokken',   'tijgersok'),
@@ -343,7 +346,7 @@ export const CATALOG = {
     print('schildpad_so','Schildpadden',         'epic', '🐢',      '#0a2a1a'),
     print('octopus_so',  'Octopussen',           'epic', '🐙',      '#200a2a'),
     skin('skin_neonsok2',    'Neon raster sok',   'neonsok2'),
-    skin('skin_goudsok',     'Gouden sok',        'goudsok'),
+    skinU('skin_goudsok',     'Gouden sok',        'goudsok'),
     skin('skin_lavasok',     'Lavasok',           'lavasok'),
     skin('skin_circuitsok',  'Circuitsok',        'circuitsok'),
     skin('skin_ruimtesok',   'Ruimtesok',         'ruimtesok'),
@@ -422,8 +425,8 @@ export const CATALOG = {
     print('medaille_sch','Medailles',           'legendary', '🥈',     '#20202a'),
     print('schild_sch', 'Schilden',             'legendary', '🛡',     '#1a1030'),
     skin('skin_neonsneaker',   'Neon sneakers',   'neonsneaker'),
-    skin('skin_goudsneaker',   'Gouden sneakers', 'goudsneaker'),
-    skin('skin_galaxysneaker', 'Galaxy sneakers', 'galaxysneaker'),
+    skinU('skin_goudsneaker',   'Gouden sneakers', 'goudsneaker'),
+    skinU('skin_galaxysneaker', 'Galaxy sneakers', 'galaxysneaker'),
     skin('skin_lavasneaker',   'Lava sneakers',   'lavasneaker'),
     skin('skin_basketbalsneaker', 'Basketbalschoenen', 'basketbalsneaker'),
     skin('skin_tijgersneaker', 'Tijger sneakers', 'tijgersneaker'),
@@ -485,7 +488,7 @@ export const CATALOG = {
     // MLB, dus vervangen door een eigen ontwerp. Sleutel blijft gelijk, zodat
     // wie 'm al ontgrendeld had 'm houdt. De andere petten hieronder hebben
     // wel een eigen UV-design; hun badge staat in het swatch-rondje.
-    ultra('petny', 'Marine Baseballpet', 'pattern', { pattern: 'stripes', c1: '#14224a', c2: '#f4f4f4' }),
+    legend('petny', 'Marine Baseballpet', 'pattern', { pattern: 'stripes', c1: '#14224a', c2: '#f4f4f4' }),
     { ...texmodel('petgiraffe', 'Giraffe Pet', '/Pet/petnormaal.glb', '/Pet/petgiraffe.png', '/Pet/petgiraffe.png'), badge: '🦒' },
     { ...texmodel('pettara', 'Tara Pet', '/Pet/petnormaal.glb', '/Pet/pettara.jpg', '/Pet/pettara.jpg'), badge: '🌈' },
     { ...texmodel('petnina', 'Nina Pet', '/Pet/petnormaal.glb', '/Pet/ninapet.jpg', '/Pet/ninapet.jpg'), badge: '💖' },
