@@ -142,14 +142,32 @@
   max-width: calc(100% - 200px);   /* links blijft ruimte voor de joystick */
 }
 .vq-emote {
-  min-width: 104px; min-height: 52px; padding: 10px 16px; border-radius: 16px; cursor: pointer;
-  font: 900 1.05rem/1 var(--kk-head); color: #fff; letter-spacing: 0.02em;
-  background: rgba(11,10,26,0.86); border: 2px solid var(--on-accent);
-  box-shadow: 0 0 14px color-mix(in srgb, var(--on-accent) 40%, transparent);
-  transition: transform 0.12s var(--kk-ease), background 0.12s;
+  --ek: var(--on-accent);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  width: 92px; height: 92px; padding: 0; border-radius: 24px; cursor: pointer;
+  font: 900 0.82rem/1 var(--kk-head); color: #fff; letter-spacing: 0.03em; text-transform: uppercase;
+  background: radial-gradient(circle at 50% 28%, color-mix(in srgb, var(--ek) 38%, transparent), rgba(11,10,26,0.92) 72%);
+  border: 2px solid var(--ek);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--ek) 55%, transparent), inset 0 0 14px color-mix(in srgb, var(--ek) 25%, transparent);
+  transition: scale 0.12s var(--kk-ease), filter 0.12s;
+  animation: vq-emote-in 0.55s var(--kk-ease) backwards;
+  animation-delay: calc(var(--i, 0) * 90ms);
 }
-.vq-emote:hover { background: color-mix(in srgb, var(--on-accent) 22%, rgba(11,10,26,0.86)); }
-.vq-emote:active { transform: scale(0.94); }
+.vq-emote .on-icoon { width: 36px; height: 36px; color: var(--ek); filter: drop-shadow(0 0 6px var(--ek)); }
+.vq-emote:hover { filter: brightness(1.25); scale: 1.05; }
+.vq-emote:active { scale: 0.86; filter: brightness(1.6); }
+.vq-emotes.aandacht .vq-emote {
+  animation: vq-emote-in 0.55s var(--kk-ease) backwards, vq-emote-puls 1.1s ease-in-out 0.7s infinite;
+  animation-delay: calc(var(--i, 0) * 90ms), calc(0.7s + var(--i, 0) * 150ms);
+}
+@keyframes vq-emote-in {
+  0%   { transform: translateY(46px) scale(0.3) rotate(-14deg); opacity: 0; }
+  65%  { transform: translateY(-8px) scale(1.12) rotate(4deg); opacity: 1; }
+  100% { transform: none; }
+}
+@keyframes vq-emote-puls {
+  50% { box-shadow: 0 0 34px var(--ek), inset 0 0 22px color-mix(in srgb, var(--ek) 45%, transparent); filter: brightness(1.2); }
+}
 /* ── Leerkracht: bediening en zijpaneel ──────────────────────────────── */
 .vq-bediening {
   position: absolute; right: 16px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 10px; align-items: stretch;
@@ -182,6 +200,8 @@
   .vq-antwoorden { width: calc(100% - 24px); right: 12px; bottom: 172px; gap: 6px; }
   .vq-antw { min-height: 40px; padding: 6px 10px; }
   .vq-bericht { top: 64px; }
+  .vq-emote { width: 76px; height: 76px; border-radius: 20px; font-size: 0.72rem; }
+  .vq-emote .on-icoon { width: 30px; height: 30px; }
 }
 @media (max-height: 520px) {
   .vq-vraag { padding: 8px 14px 10px; }
@@ -190,5 +210,5 @@
   .vq-uitslag-kop { font-size: 1.6rem; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .vq-vraag, .vq-uitslag, .vq-bericht, .vq-rang li { animation: none; }
+  .vq-vraag, .vq-uitslag, .vq-bericht, .vq-rang li, .vq-emote, .vq-emotes.aandacht .vq-emote { animation: none; }
 }

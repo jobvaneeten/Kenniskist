@@ -23,6 +23,7 @@ import { HALF, MIDDEN, SNELHEID, KLEUREN, VORMEN, vakVan, klem } from './online/
 const ACCENT = '#3df2ff'
 const DIK = 0.6           // dikte van de vloer
 const NAAD = 0.35         // ruimte tussen de vlakken
+const VAL_TIJD = 2600     // ms, zoals op de server: dan staan de gevallen kinderen weer op het startvlak
 const PODIUM = [{ x: 0, z: 0.6, h: 1.5 }, { x: -2.4, z: 0, h: 1.0 }, { x: 2.4, z: 0, h: 0.7 }]
 
 // ── Vormen (zoals de knoppen in de HUD) ──────────────────────────────────
@@ -290,7 +291,9 @@ export function maakVloerScene(canvas, { ikId = null, haalState, stuur, invoerRe
   const stopKwaliteit = autoKwaliteit(engine, scene)
 
   const vlakken = [0, 1, 2, 3].map(i => maakVlak(scene, i))
-  maakStartvlak(scene)
+  const startvlak = maakStartvlak(scene)
+  const START_Y = startvlak.position.y
+  const start = { y: 0, vy: 0, sinds: 0 }
   const neon = maakRand(scene)
   maakDiepte(scene)
   const podium = maakPodium(scene)
@@ -346,9 +349,16 @@ export function maakVloerScene(canvas, { ikId = null, haalState, stuur, invoerRe
       if (s.phase === 'uitslag' && v.i === s.goed) v.bm.emissiveColor = Color3.FromHexString(v.kleur).scale(0.7 + Math.sin(performance.now() / 120) * 0.15)
     })
 
+    // startvlak valt mee met de foute vlakken en komt terug als de gevallen
+    // kinderen er weer op worden gezet (VAL_TIJD op de server)
+    const startValt = s.phase === 'uitslag' && performance.now() - start.sinds < VAL_TIJD
+    if (startValt) { start.vy -= 26 * dt; start.y = Math.max(-60, start.y + start.vy * dt) }
+    else if (start.y < 0) { if (start.y < -6) start.y = -6; start.vy = 0; start.y += (0 - start.y) * Math.min(1, dt * 6); if (start.y > -0.01) start.y = 0 }
+    startvlak.position.y = START_Y + start.y
+
     // ── fase-overgangen ────────────────────────────────────────────────
     if (s.phase !== fase) {
-      if (s.phase === 'uitslag') uitslagGedaan = false
+      if (s.phase === 'uitslag') { uitslagGedaan = false; start.sinds = performance.now(); start.vy = 0 }
       podium.setEnabled(s.phase === 'einde')
       fase = s.phase
     }

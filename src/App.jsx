@@ -8,6 +8,7 @@ import { useSessie } from './lib/sessie.jsx'
 import VrijSpelenBadge from './VrijSpelenBadge.jsx'
 import { Knop, TerugKnop, Paneel, Icoon } from './ui/index.jsx'
 import { spelNa } from './lib/beloning.js'
+import { KIST_EMOTES } from './games/online/emotes.js'
 
 // Schermen en spellen laden pas bij openen (Suspense staat in Root.jsx).
 const Wardrobe      = lazy(() => import('./Wardrobe'))
@@ -301,7 +302,7 @@ export default function App({ gast = false }) {
 
   // "joop" code → unlock every clothing item
   const unlockAll = () => {
-    const all = allUnlockedMap()
+    const all = { ...allUnlockedMap(), emote: KIST_EMOTES.map(e => e.key) }   // ook alle dansjes
     localStorage.setItem('kk_unlocked', JSON.stringify(all))
     setUnlockedColors(all)
   }

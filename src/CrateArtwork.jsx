@@ -7,6 +7,7 @@ const CRATE_IMAGES = {
   sokken:   '/crates/crate_sokken.webp',
   schoenen: '/crates/crate_schoenen.webp',
   hoofd:    '/crates/crate_hoofd.webp',
+  emote:    '/crates/crate_emote.webp',
 }
 
 const TWINKLE_OFFSETS = [

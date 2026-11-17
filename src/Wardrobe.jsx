@@ -15,6 +15,9 @@ import { RARITIES, CRATE_ACCENTS } from './data'
 import './wardrobe.css'
 import { Knop, TerugKnop } from './ui/index.jsx'
 import { wekServer } from './games/online/server.js'
+import { EMOTES, bezitEmotes, mijnEmotes, bewaarEmotes } from './games/online/emotes.js'
+import EmoteTegel from './games/online/EmoteTegel.jsx'
+import EmoteIcoon from './games/online/Iconen.jsx'
 
 // Category tabs — same accent colours as the shop's lootboxes. Icons are
 // real Nano Banana Pro illustrations (public/icons/).
@@ -60,21 +63,6 @@ const RETARGET_BONES = new Set([
   'RightUpLeg','RightLeg','RightFoot','RightToeBase',
 ])
 
-// Each file has one animation; we store it under a stable key (not the internal name).
-const ANIM_FILES = [
-  { key: 'rust',       file: 'rust.glb'              },
-  { key: 'hip_hop',    file: 'hip_hop_dancing.glb'   },
-  { key: 'breakdance', file: 'emote_breakdance.glb'  },
-  { key: 'lopen',      file: 'emote_lopen.glb'       },
-  { key: 'verloren',   file: 'emote_verloren.glb'    },
-]
-
-const EMOTE_META = {
-  hip_hop:    { emoji: '💃', label: 'Hip Hop'    },
-  breakdance: { emoji: '🕺', label: 'Breakdance' },
-  lopen:      { emoji: '🚶', label: 'Lopen'      },
-  verloren:   { emoji: '😢', label: 'Verloren'   },
-}
 
 // Kledingstuk-silhouetten (viewBox 0 0 100 100) → als CSS-mask, zodat de
 // tegel de vorm van het échte kledingstuk krijgt i.p.v. een rondje/emoji.
@@ -164,6 +152,9 @@ export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlay
   const [newItems,   setNewItems]   = useState({})
   const [burstTile,  setBurstTile]  = useState(null)
   const [shuffling,  setShuffling]  = useState(false)
+  const [mijnDans,   setMijnDans]   = useState(mijnEmotes)       // de 3 gekozen emotes
+  const [kiezen,     setKiezen]     = useState(null)             // vakje (0-2) dat je aan het kiezen bent
+  const laadAnimRef = useRef(null)
 
   // De spelserver slaapt na een kwartier: alvast wekken, dan is hij er
   // meestal al als het kind op een online spel klikt.
@@ -319,15 +310,22 @@ export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlay
     setActiveAnim('rust')
   }
 
-  const pickEmote = (name) => {
+  const pickEmote = async (name) => {
     const groups = animGroupsRef.current
+    if (!groups[name] && EMOTES[name]) {
+      setActiveAnim(name)
+      await laadAnimRef.current?.(name, EMOTES[name].bestand)
+      if (!groups[name]) return
+      Object.values(groups).forEach(g => { try { g?.stop() } catch { /* al gestopt */ } })
+      groups[name].play(true)
+      return
+    }
     if (activeAnim === name) {
       // Toggle off → go back to rust
       groups[name]?.stop()
       playRust()
     } else {
-      if (activeAnim && activeAnim !== 'rust') groups[activeAnim]?.stop()
-      groups['rust']?.stop()
+      Object.values(groups).forEach(g => { try { g?.stop() } catch { /* al gestopt */ } })
       groups[name]?.play(true)
       setActiveAnim(name)
     }
@@ -513,88 +511,88 @@ export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlay
       })
       scene.meshes.forEach(m2 => { if (!nodeMap[m2.name]) nodeMap[m2.name] = m2 })
 
-      // ── Load all animation files with rest-pose-corrected retargeting ──
-      const groups = {}
-      let pending = ANIM_FILES.length
+      // ── Animaties: rust en de gekozen emotes meteen, de rest pas als je hem kiest ──
+      animGroupsRef.current = {}
+      const bezig = {}
+      const laadAnim = (key, file) => {
+        if (bezig[key]) return bezig[key]
+        bezig[key] = new Promise(klaar => {
+            SceneLoader.ImportMesh('', '/', file, scene,
+              (aMeshes, _ps, _sk, aGroups) => {
+                aMeshes.forEach(m2 => m2.setEnabled(false))
+                if (aGroups.length > 0) {
+                  const orig = aGroups[0]
 
-      const onFileLoaded = () => {
-        pending--
-        if (pending === 0) {
-          animGroupsRef.current = groups
-          setAnimsReady(true)
-          playRust(groups)
-          // Pose is nu actief → meet de zolen en zet het podium eronder.
-          scene.onAfterRenderObservable.addOnce(() => positionStageRef.current?.())
-          setTimeout(() => positionStageRef.current?.(), 300)
-        }
-      }
-
-      ANIM_FILES.forEach(({ key, file }) => {
-        SceneLoader.ImportMesh('', '/', file, scene,
-          (aMeshes, _ps, _sk, aGroups) => {
-            aMeshes.forEach(m2 => m2.setEnabled(false))
-            if (aGroups.length > 0) {
-              const orig = aGroups[0]
-
-              // Capture SOURCE rest rotations before cloning remaps the targets
-              const srcRestRots = {}
-              orig.targetedAnimations.forEach(ta => {
-                const n = ta.target
-                srcRestRots[n.name] = n.rotationQuaternion
-                  ? n.rotationQuaternion.clone()
-                  : Quaternion.Identity()
-              })
-
-              // Clone and remap targets to Poppetje's nodes
-              const retargeted = orig.clone(key, target => {
-                if (!RETARGET_BONES.has(target.name)) return target
-                return nodeMap[target.name] ?? target
-              })
-
-              // Process each track
-              const tas = retargeted.targetedAnimations
-              for (let i = tas.length - 1; i >= 0; i--) {
-                const ta   = tas[i]
-                const prop = ta.animation.targetProperty
-                const name = ta.target.name
-
-                // Strip scale always
-                if (prop === 'scaling' || prop === 'scale') { tas.splice(i, 1); continue }
-
-                // Strip position for all bones except Root (Root carries the actual movement)
-                if (prop === 'position') {
-                  if (name !== 'Root') { tas.splice(i, 1); continue }
-                  // Keep Root position as-is (no rotation correction needed for translation)
-                  continue
-                }
-
-                // Rotation tracks: only keep retargeted bones
-                if (!RETARGET_BONES.has(name)) { tas.splice(i, 1); continue }
-
-                // Strip Root rotation for rust – the raw Z-up in rust.glb would
-                // lay the character flat; keeping it out lets Hips drive the pose.
-                if (key === 'rust' && name === 'Root') { tas.splice(i, 1); continue }
-
-                // Apply rest-pose correction for emote animations only, not the base rust animation
-                if (key !== 'rust') {
-                  const srcRest = srcRestRots[name] ?? Quaternion.Identity()
-                  const dstRest = dstRestRots[name] ?? Quaternion.Identity()
-                  const correction = Quaternion.Inverse(dstRest).multiply(srcRest)
-                  ta.animation.getKeys().forEach(kf => {
-                    kf.value.copyFrom(correction.multiply(kf.value))
+                  // Capture SOURCE rest rotations before cloning remaps the targets
+                  const srcRestRots = {}
+                  orig.targetedAnimations.forEach(ta => {
+                    const n = ta.target
+                    srcRestRots[n.name] = n.rotationQuaternion
+                      ? n.rotationQuaternion.clone()
+                      : Quaternion.Identity()
                   })
-                }
-              }
 
-              retargeted.stop()
-              groups[key] = retargeted
-              orig.dispose()
-            }
-            onFileLoaded()
-          },
-          null,
-          (_, msg) => { console.warn(file + ' load error:', msg); onFileLoaded() }
-        )
+                  // Clone and remap targets to Poppetje's nodes
+                  const retargeted = orig.clone(key, target => {
+                    if (!RETARGET_BONES.has(target.name)) return target
+                    return nodeMap[target.name] ?? target
+                  })
+
+                  // Process each track
+                  const tas = retargeted.targetedAnimations
+                  for (let i = tas.length - 1; i >= 0; i--) {
+                    const ta   = tas[i]
+                    const prop = ta.animation.targetProperty
+                    const name = ta.target.name
+
+                    // Strip scale always
+                    if (prop === 'scaling' || prop === 'scale') { tas.splice(i, 1); continue }
+
+                    // Strip position for all bones except Root (Root carries the actual movement)
+                    if (prop === 'position') {
+                      if (name !== 'Root') { tas.splice(i, 1); continue }
+                      // Keep Root position as-is (no rotation correction needed for translation)
+                      continue
+                    }
+
+                    // Rotation tracks: only keep retargeted bones
+                    if (!RETARGET_BONES.has(name)) { tas.splice(i, 1); continue }
+
+                    // Strip Root rotation for rust – the raw Z-up in rust.glb would
+                    // lay the character flat; keeping it out lets Hips drive the pose.
+                    if (key === 'rust' && name === 'Root') { tas.splice(i, 1); continue }
+
+                    // Apply rest-pose correction for emote animations only, not the base rust animation
+                    if (key !== 'rust') {
+                      const srcRest = srcRestRots[name] ?? Quaternion.Identity()
+                      const dstRest = dstRestRots[name] ?? Quaternion.Identity()
+                      const correction = Quaternion.Inverse(dstRest).multiply(srcRest)
+                      ta.animation.getKeys().forEach(kf => {
+                        kf.value.copyFrom(correction.multiply(kf.value))
+                      })
+                    }
+                  }
+
+                  retargeted.stop()
+                  animGroupsRef.current[key] = retargeted
+                  orig.dispose()
+                }
+                klaar()
+              },
+              null,
+              (_, msg) => { console.warn(file + ' load error:', msg); klaar() }
+            )
+        })
+        return bezig[key]
+      }
+      laadAnimRef.current = laadAnim
+      const eerst = [['rust', 'rust.glb'], ...mijnEmotes().map(k => [k, EMOTES[k].bestand])]
+      Promise.all(eerst.map(([k, f]) => laadAnim(k, f))).then(() => {
+        setAnimsReady(true)
+        playRust(animGroupsRef.current)
+        // Pose is nu actief → meet de zolen en zet het podium eronder.
+        scene.onAfterRenderObservable.addOnce(() => positionStageRef.current?.())
+        setTimeout(() => positionStageRef.current?.(), 300)
       })
     }, null, (_, msg, err) => {
       console.error('Poppetje load error:', msg, err)
@@ -751,32 +749,104 @@ export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlay
         )}
       </div>
 
-      {/* ── Emote-knoppen los bovenin (geen balk) ── */}
+      {/* ── Emotes bovenin: rust en je 3 gekozen dansjes, en kiezen ── */}
       <div className="emote-bar">
-        {/* Rust button — speelt rust.glb in lus */}
         <button
           className={`emote-btn ${activeAnim === 'rust' ? 'emote-on' : ''}`}
           onClick={() => playRust()}
           disabled={!animsReady}
           title={!animsReady ? 'Laden…' : 'Rust'}
         >
-          <span className="emote-emoji">🧍</span>
+          <span className="emote-ico"><EmoteIcoon naam="speler" /></span>
           <span className="emote-label">Rust</span>
         </button>
 
-        {Object.entries(EMOTE_META).map(([name, meta]) => (
+        {mijnDans.map((name, i) => (
           <button
-            key={name}
+            key={name + i}
             className={`emote-btn ${activeAnim === name ? 'emote-on' : ''}`}
+            style={{ '--ek': EMOTES[name].kleur }}
             onClick={() => pickEmote(name)}
             disabled={!animsReady}
-            title={!animsReady ? 'Laden…' : meta.label}
+            title={!animsReady ? 'Laden…' : EMOTES[name].naam}
           >
-            <span className="emote-emoji">{meta.emoji}</span>
-            <span className="emote-label">{meta.label}</span>
+            <span className="emote-ico"><EmoteIcoon naam={EMOTES[name].icoon} /></span>
+            <span className="emote-label">{EMOTES[name].naam}</span>
           </button>
         ))}
+
+        <button className="emote-btn emote-kies" onClick={() => setKiezen(0)} title="Kies je dansjes">
+          <span className="emote-ico"><EmoteIcoon naam="wissel" /></span>
+          <span className="emote-label">Kiezen</span>
+        </button>
       </div>
+
+      {kiezen !== null && (
+        <EmoteKiezer
+          gekozen={mijnDans}
+          vakje={kiezen}
+          setVakje={setKiezen}
+          onKies={(name) => {
+            const nu = [...mijnDans]
+            const al = nu.indexOf(name)
+            if (al >= 0) nu[al] = nu[kiezen]   // stond al in een ander vakje: ruilen
+            nu[kiezen] = name
+            setMijnDans(nu); bewaarEmotes(nu)
+            pickEmote(name)
+            setKiezen((kiezen + 1) % 3)
+          }}
+          onSluit={() => setKiezen(null)}
+          onGoShop={onGoShop}
+        />
+      )}
     </div>
+  )
+}
+
+// Paneel om je 3 dansjes te kiezen: bovenin de vakjes, daaronder alle emotes
+// (nog niet gewonnen = dicht, met de zeldzaamheid).
+function EmoteKiezer({ gekozen, vakje, setVakje, onKies, onSluit, onGoShop }) {
+  const heb = new Set(bezitEmotes())
+  const volgorde = ['gratis', 'common', 'rare', 'epic', 'legendary', 'ultra_legendary']
+  const lijst = Object.keys(EMOTES).sort((a, b) =>
+    volgorde.indexOf(EMOTES[a].rarity || 'gratis') - volgorde.indexOf(EMOTES[b].rarity || 'gratis'))
+  return (
+    <>
+      <div className="ek-achter" onClick={onSluit} />
+      <div className="ek-paneel" role="dialog" aria-label="Kies je dansjes">
+        <div className="ek-kop">
+          <h3>Jouw dansjes</h3>
+          <Knop variant="secundair" maat="sm" alleenIcoon icoon="sluiten" aria-label="Sluiten" onClick={onSluit} />
+        </div>
+        <p className="ek-uitleg">Kies een vakje en tik dan op een dansje. Deze drie gebruik je in de online spellen.</p>
+        <div className="ek-vakjes">
+          {gekozen.map((k, i) => (
+            <button key={i} className={`ek-vakje ${vakje === i ? 'ek-vakje-aan' : ''}`} onClick={() => setVakje(i)}>
+              <span className="ek-nr">{i + 1}</span>
+              <EmoteTegel emote={k} size={64} metNaam />
+            </button>
+          ))}
+        </div>
+        <div className="ek-raster">
+          {lijst.map(k => {
+            const open = heb.has(k)
+            const r = EMOTES[k].rarity
+            return (
+              <button
+                key={k}
+                className={`ek-keuze ${gekozen.includes(k) ? 'ek-gekozen' : ''}`}
+                disabled={!open}
+                onClick={() => onKies(k)}
+                title={open ? EMOTES[k].naam : 'Win deze in de Emote-kist'}
+              >
+                <EmoteTegel emote={k} size={58} dicht={!open} metNaam />
+                <span className="ek-zeld" style={{ color: r ? RARITIES[r].color : '#4ade80' }}>{r ? RARITIES[r].label : 'Gratis'}</span>
+              </button>
+            )
+          })}
+        </div>
+        <Knop variant="beloning" breed onClick={onGoShop}>Meer dansjes in de Emote-kist</Knop>
+      </div>
+    </>
   )
 }

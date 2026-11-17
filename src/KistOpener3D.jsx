@@ -19,6 +19,7 @@ import {
 import { LoadAssetContainerAsync } from '@babylonjs/core/Loading/sceneLoader'
 import '@babylonjs/loaders/glTF'
 import { RARITIES } from './data'
+import EmoteTegel from './games/online/EmoteTegel.jsx'
 import KledingPreview from './KledingPreview'
 import { playTapSound, playTierSound, playBurstSound, playRumble, playLanding, startSfeer, playOnthulling } from './lootboxSound'
 
@@ -447,7 +448,9 @@ export default function KistOpener3D({ type, item, rarity, onOpen, onKlaar }) {
       {fase === 'open' && (
         <div className={`ko-item ${kleurOnthuld ? 'ko-item-kleur' : ''}`}>
           <div className="ko-item-gloed" />
-          <KledingPreview type={type} item={item} size={150} glans={kleurOnthuld} />
+          {type === 'emote'
+            ? <EmoteTegel emote={item.key} size={150} />
+            : <KledingPreview type={type} item={item} size={150} glans={kleurOnthuld} />}
         </div>
       )}
       {fase === 'tikken' && tikken < TIKKEN && (

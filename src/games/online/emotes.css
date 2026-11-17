@@ -1,0 +1,19 @@
+/* Emote-tegel (Winkel, Kledingkast, kist openen) */
+.em-tegel {
+  --ek: #3df2ff;
+  position: relative; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  width: var(--em-maat, 64px); height: var(--em-maat, 64px); box-sizing: border-box; border-radius: 22%;
+  background: radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--ek) 36%, transparent), rgba(11,10,26,0.92) 72%);
+  border: 2px solid var(--ek);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--ek) 50%, transparent), inset 0 0 10px color-mix(in srgb, var(--ek) 22%, transparent);
+  color: #fff;
+}
+.em-tegel .on-icoon { width: 46%; height: 46%; color: var(--ek); filter: drop-shadow(0 0 5px var(--ek)); }
+.em-naam { font: 900 0.68rem/1 var(--kk-head, sans-serif); letter-spacing: 0.03em; text-transform: uppercase; max-width: 92%; text-align: center; }
+.em-dicht { filter: grayscale(0.85) brightness(0.6); }
+.em-vraag { font: 900 calc(var(--em-maat, 64px) * 0.42)/1 var(--kk-head, sans-serif); color: color-mix(in srgb, var(--ek) 70%, #fff); }
+
+/* 3D-viewer: het poppetje doet de emote */
+.ev3d { position: relative; width: 100%; height: 100%; min-height: 220px; }
+.ev3d-canvas { width: 100%; height: 100%; display: block; outline: none; touch-action: none; }
+.ev3d-plaatje { position: absolute; inset: 0; display: grid; place-items: center; }

@@ -305,13 +305,55 @@
 }
 .emote-btn:active:not(:disabled) { transform: scale(0.96); }
 .emote-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-.emote-on {
-  background: rgba(255,62,200,0.22) !important;
-  border-color: #ff3ec8 !important;
-  box-shadow: 0 0 18px rgba(255,62,200,0.45);
+.emote-btn { --ek: #ff3ec8; }
+.emote-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--ek) 18%, transparent);
+  border-color: color-mix(in srgb, var(--ek) 70%, transparent);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--ek) 35%, transparent);
 }
-.emote-emoji { font-size: 1rem; line-height: 1; flex-shrink: 0; }
+.emote-on {
+  background: color-mix(in srgb, var(--ek) 22%, transparent) !important;
+  border-color: var(--ek) !important;
+  box-shadow: 0 0 18px color-mix(in srgb, var(--ek) 45%, transparent);
+}
+.emote-ico { display: inline-flex; width: 18px; height: 18px; flex-shrink: 0; color: var(--ek); filter: drop-shadow(0 0 4px var(--ek)); }
+.emote-ico .on-icoon { width: 100%; height: 100%; }
 .emote-label { line-height: 1; }
+.emote-kies { --ek: #ffd23d; border-style: dashed; }
+
+/* ── Dansjes kiezen ── */
+.ek-achter { position: fixed; inset: 0; z-index: 40; background: rgba(5,4,15,0.6); backdrop-filter: blur(3px); }
+.ek-paneel {
+  position: fixed; z-index: 41; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - 48px); overflow: auto; box-sizing: border-box;
+  display: flex; flex-direction: column; gap: 14px; padding: 20px;
+  background: linear-gradient(160deg, #17143a, #0c0a22); border: 1.5px solid rgba(255,62,200,0.45); border-radius: 24px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 40px rgba(255,62,200,0.18);
+  animation: ek-in 0.25s ease-out;
+}
+@keyframes ek-in { from { opacity: 0; transform: translate(-50%, -46%) scale(0.96); } }
+.ek-kop { display: flex; align-items: center; justify-content: space-between; }
+.ek-kop h3 { margin: 0; font: 900 1.4rem/1 var(--kk-head, inherit); color: #fff; }
+.ek-uitleg { margin: 0; color: rgba(255,255,255,0.7); font-weight: 700; font-size: 0.9rem; }
+.ek-vakjes { display: flex; gap: 12px; justify-content: center; }
+.ek-vakje {
+  position: relative; padding: 8px; border-radius: 20px; cursor: pointer;
+  background: rgba(255,255,255,0.04); border: 2px dashed rgba(255,255,255,0.18); transition: border-color 0.15s, transform 0.15s;
+}
+.ek-vakje-aan { border: 2px solid #ffd23d; box-shadow: 0 0 18px rgba(255,210,61,0.4); transform: translateY(-3px); }
+.ek-nr {
+  position: absolute; top: -9px; left: -9px; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center;
+  background: #ffd23d; color: #17143a; font: 900 0.8rem/1 var(--kk-head, inherit); z-index: 1;
+}
+.ek-raster { display: grid; grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); gap: 10px; }
+.ek-keuze {
+  display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 2px; border-radius: 16px; cursor: pointer;
+  background: none; border: 2px solid transparent; color: #fff; transition: transform 0.12s, border-color 0.12s;
+}
+.ek-keuze:hover:not(:disabled) { transform: translateY(-2px); }
+.ek-keuze:disabled { cursor: not-allowed; }
+.ek-gekozen { border-color: rgba(255,255,255,0.35); background: rgba(255,255,255,0.05); }
+.ek-zeld { font: 800 0.62rem/1 var(--kk-head, inherit); letter-spacing: 0.04em; text-transform: uppercase; }
 
 /* ── Speel-knop(pen) ───────────────────────── */
 
@@ -386,7 +428,7 @@
   /* Emote-knoppen compact bovenin, naast de muntenbadge weg */
   .emote-bar { top: 10px; left: auto; right: 8px; transform: none; max-width: 52vw; justify-content: flex-end; gap: 5px; }
   .emote-btn { padding: 5px 8px; font-size: 0.66rem; gap: 4px; }
-  .emote-emoji { font-size: 0.9rem; }
+  .emote-ico { width: 15px; height: 15px; }
   .wd-game-menu, .wd-speel { bottom: calc(46dvh + 16px); }
   .surprise-btn { margin: 0 0 8px; }
 }

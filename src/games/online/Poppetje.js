@@ -4,6 +4,7 @@ import '@babylonjs/loaders/glTF'
 import { findItem } from '../../itemsCatalog'
 import { applyItemToMesh, loadClothingDonor, usesDonor, loadHeadItem, zetLegeOnderdelenUit } from '../../applyClothing'
 import { laadAnimatieBron, kopieVoorSpeler } from './animaties.js'
+import { EMOTES } from './emotes.js'
 
 // Eén poppetje met de kleding uit de Kledingkast en een naamkaartje, voor de
 // Vloerquiz. Laadt Poppetje.glb, trekt de kleding aan en zet de animaties om
@@ -22,16 +23,17 @@ const BOTTEN = new Set([
 const KLEDING = new Set(['Shirt', 'Broek', 'Sokken', 'Schoenen'])
 const GEZICHT = new Set(['Gezicht', 'Face', 'Ogen', 'Eyes', 'Wenkbrauwen', 'Eyebrows', 'Mond', 'Mouth', 'Neus', 'Nose'])
 
-// key → bestand; stripRoot: de verplaatsing in de animatie zelf weglaten
+// key → bestand; stripRoot: de verplaatsing in de animatie zelf weglaten;
+// tempo: sneller of langzamer afspelen (lopen: zoals bij voetbal).
+// De emotes komen uit emotes.js en worden pas geladen als iemand ze doet.
 export const ANIMATIES = {
   rust:       { file: 'rust.glb',             stripRoot: true },
-  rennen:     { file: 'emoterennen.glb',      stripRoot: true },
+  rennen:     { file: 'emotelopen.glb',       stripRoot: true, tempo: 1.5 },
   geraakt:    { file: 'emotegeraakt.glb',     stripRoot: true },
-  hip_hop:    { file: 'hip_hop_dancing.glb',  stripRoot: false },
-  breakdance: { file: 'emote_breakdance.glb', stripRoot: false },
   verloren:   { file: 'emote_verloren.glb',   stripRoot: false },
-  springen:   { file: 'emotespringen.glb',    stripRoot: true },
 }
+Object.entries(EMOTES).forEach(([k, e]) => { ANIMATIES[k] = { file: e.bestand, stripRoot: !!e.stripRoot } })
+const BASIS = ['rust', 'rennen', 'geraakt']
 
 const kaal = (naam) => String(naam || 'Speler').replace(/^\u{1F916}\s*/u, '').slice(0, 14)
 
@@ -64,8 +66,9 @@ export default class Poppetje {
     this.scene = scene
     this.opts = opts          // { shirt, wearing (object), naam, kleur, ik, schaal, schaduw, anims }
     this.root = null
-    this.naam = naamKaartje(scene, opts.naam, opts.kleur || '#ffffff', opts.ik)
-    this.naam.setEnabled(false)
+    // zonderNaam: geen naamkaartje (Winkel, Kledingkast)
+    this.naam = opts.zonderNaam ? null : naamKaartje(scene, opts.naam, opts.kleur || '#ffffff', opts.ik)
+    this.naam?.setEnabled(false)
     this._nodes = {}
     this._rest = {}
     this._anims = {}
@@ -116,54 +119,66 @@ export default class Poppetje {
 
       const s = this.opts.schaal ?? 1
       if (s !== 1) this.root.scaling.scaleInPlace(s)
-      this.naam.setEnabled(this._zicht !== false)
+      this.naam?.setEnabled(this._zicht !== false)
       if (this._zicht === false) this.root.setEnabled(false)
       if (this._pose) this.zet(...this._pose)
       this._laadAnimaties()
     }, null, (_s, msg) => console.error('Poppetje laden mislukt:', msg))
   }
 
+  // Eerst de basis (staan, lopen, vallen) en wat opts.anims vraagt; de rest
+  // pas als het poppetje hem moet doen (speel laadt hem dan na).
   _laadAnimaties() {
-    const keys = this.opts.anims ?? Object.keys(ANIMATIES)
-    let nog = keys.length
-    const klaar = () => {
-      if (--nog > 0) return
+    const keys = [...new Set([...BASIS, ...(this.opts.anims ?? [])])].filter(k => ANIMATIES[k])
+    Promise.all(keys.map(k => this._laadEen(k))).then(() => {
+      if (this._weg) return
       this._klaar = true
       const wil = this._wil ?? ['rust', true]
       this._stand = ''
       this.speel(...wil)
-    }
-    keys.forEach(key => {
-      const { file, stripRoot } = ANIMATIES[key]
-      laadAnimatieBron(this.scene, file).then(({ groep, srcRests }) => {
-        if (this._weg) return
-        const rt = kopieVoorSpeler({ groep }, key, this.scene, t => (BOTTEN.has(t.name) ? (this._nodes[t.name] ?? null) : null))
-        const tas = rt.targetedAnimations
-        for (let i = tas.length - 1; i >= 0; i--) {
-          const { animation: anim, target } = tas[i]
-          const prop = anim.targetProperty, naam = target.name
-          if (prop === 'scaling' || prop === 'scale') { tas.splice(i, 1); continue }
-          if (prop === 'position') { if (stripRoot || naam !== 'Root') tas.splice(i, 1); continue }
-          if (key === 'rust' && naam === 'Root') { tas.splice(i, 1); continue }
-          if (key !== 'rust') {
-            const corr = Quaternion.Inverse(this._rest[naam] ?? Quaternion.Identity()).multiply(srcRests[naam] ?? Quaternion.Identity())
-            anim.getKeys().forEach(kf => kf.value.copyFrom(corr.multiply(kf.value)))
-          }
-        }
-        rt.stop()
-        // welke botten deze animatie draait en of hij Root verplaatst (zie speel)
-        rt._draait = new Set(tas.filter(ta => ta.animation.targetProperty !== 'position').map(ta => ta.target.name))
-        rt._verplaatst = tas.some(ta => ta.animation.targetProperty === 'position')
-        this._anims[key] = rt
-        klaar()
-      }).catch(e => { console.warn('animatie niet geladen:', key, e?.message); klaar() })
     })
+  }
+
+  _laadEen(key) {
+    this._bezig ??= {}
+    if (this._bezig[key]) return this._bezig[key]
+    const { file, stripRoot, tempo = 1 } = ANIMATIES[key]
+    this._bezig[key] = laadAnimatieBron(this.scene, file).then(({ groep, srcRests }) => {
+      if (this._weg) return
+      const rt = kopieVoorSpeler({ groep }, key, this.scene, t => (BOTTEN.has(t.name) ? (this._nodes[t.name] ?? null) : null))
+      const tas = rt.targetedAnimations
+      for (let i = tas.length - 1; i >= 0; i--) {
+        const { animation: anim, target } = tas[i]
+        const prop = anim.targetProperty, naam = target.name
+        if (prop === 'scaling' || prop === 'scale') { tas.splice(i, 1); continue }
+        if (prop === 'position') { if (stripRoot || naam !== 'Root') tas.splice(i, 1); continue }
+        if (key === 'rust' && naam === 'Root') { tas.splice(i, 1); continue }
+        if (key !== 'rust') {
+          const corr = Quaternion.Inverse(this._rest[naam] ?? Quaternion.Identity()).multiply(srcRests[naam] ?? Quaternion.Identity())
+          anim.getKeys().forEach(kf => kf.value.copyFrom(corr.multiply(kf.value)))
+        }
+      }
+      rt.stop()
+      rt.speedRatio = tempo
+      // welke botten deze animatie draait en of hij Root verplaatst (zie speel)
+      rt._draait = new Set(tas.filter(ta => ta.animation.targetProperty !== 'position').map(ta => ta.target.name))
+      rt._verplaatst = tas.some(ta => ta.animation.targetProperty === 'position')
+      this._anims[key] = rt
+    }).catch(e => { console.warn('animatie niet geladen:', key, e?.message) })
+    return this._bezig[key]
   }
 
   // Animatie afspelen; nog niet geladen: onthouden voor straks.
   speel(naam, herhaal = true) {
     this._wil = [naam, herhaal]
     if (!this._klaar || this._stand === naam) return
+    // nog niet geladen: eerst laden, dan afspelen als dit nog steeds de wens is
+    if (!this._anims[naam] && ANIMATIES[naam]) {
+      this._laadEen(naam).then(() => {
+        if (!this._weg && this._anims[naam] && this._wil?.[0] === naam) { this._stand = ''; this.speel(...this._wil) }
+      })
+      return
+    }
     Object.values(this._anims).forEach(g => g.stop())
     const g = this._anims[naam] ?? this._anims.rust
     // botten die de nieuwe animatie niet aanstuurt terug naar de ruststand:
@@ -186,7 +201,7 @@ export default class Poppetje {
     this._zicht = aan
     if (!this.root) return
     this.root.setEnabled(aan)
-    this.naam.setEnabled(aan)
+    this.naam?.setEnabled(aan)
     const g = this._anims[this._stand]
     if (g) aan ? g.restart() : g.pause()
   }
@@ -203,7 +218,7 @@ export default class Poppetje {
     this._pose = [x, y, z, rotY]
     if (!this.root) return
     this.root.position.set(x, y, z)
-    this.naam.position.set(x, y + 2.25 * (this.opts.schaal ?? 1) + 0.35, z)
+    this.naam?.position.set(x, y + 2.25 * (this.opts.schaal ?? 1) + 0.35, z)
     this.root.rotationQuaternion = Quaternion.RotationYawPitchRoll(rotY + Math.PI, 0, 0)
   }
 
@@ -211,7 +226,7 @@ export default class Poppetje {
     this._weg = true
     Object.values(this._anims).forEach(g => { try { g.dispose() } catch { /* al weg */ } })
     this._donors.forEach(g => { try { g.dispose() } catch { /* al weg */ } })
-    this.naam.dispose()
+    this.naam?.dispose()
     this.root?.dispose?.()
   }
 }

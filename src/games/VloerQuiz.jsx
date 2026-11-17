@@ -229,9 +229,13 @@ function LeerlingSpel({ room, onStop }) {
           </div>
         )}
         {emoteMag && ik && (
-          <div className="vq-emotes" role="group" aria-label="Dansjes">
-            {emotes.map(k => (
-              <button key={k} type="button" className="vq-emote" onClick={() => room.send('emote', k)}>{EMOTES[k].naam}</button>
+          // key: bij elke uitslag springen de knoppen opnieuw in beeld
+          <div key={stand.phase + stand.nr} className={'vq-emotes' + (stand.phase === 'uitslag' && ik.goed === 1 ? ' aandacht' : '')} role="group" aria-label="Dansjes">
+            {emotes.map((k, i) => (
+              <button key={k} type="button" className="vq-emote" style={{ '--ek': EMOTES[k].kleur, '--i': i }} onClick={() => room.send('emote', k)}>
+                <Icoon naam={EMOTES[k].icoon} />
+                <span>{EMOTES[k].naam}</span>
+              </button>
             ))}
           </div>
         )}

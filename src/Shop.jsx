@@ -9,6 +9,15 @@ import './shop.css'
 // 3D-poppetje pas laden als er echt iets gewonnen is (Babylon is groot)
 const ItemViewer3D = lazy(() => import('./ItemViewer3D'))
 const KistOpener3D = lazy(() => import('./KistOpener3D'))
+const EmoteViewer3D = lazy(() => import('./games/online/EmoteViewer3D.jsx'))
+import EmoteTegel from './games/online/EmoteTegel.jsx'
+import { KIST_EMOTES, EMOTE_KOSTEN } from './games/online/emotes.js'
+
+// alle kisten: kleding (100) en de Emote-kist (2000)
+const KISTEN = [
+  ...CLOTHING_ITEMS.map(i => ({ ...i, kost: LOOTBOX_COST })),
+  { key: 'emote', label: 'Emote', emoji: '', kost: EMOTE_KOSTEN },
+]
 import { Knop, TerugKnop, Icoon } from './ui/index.jsx'
 
 // sterren per zeldzaamheid op het onthul-scherm
@@ -123,10 +132,10 @@ export default function Shop({ briefgeld, addBriefgeld, unlockedColors, onUnlock
     }
   }, [overlay?.phase])
 
-  const getPool = (itemKey) => getCatalog(itemKey)
+  const getPool = (itemKey) => itemKey === 'emote' ? KIST_EMOTES : getCatalog(itemKey)
 
   const openLootbox = (item) => {
-    if (briefgeld < LOOTBOX_COST) return
+    if (briefgeld < item.kost) return
     setSelectedKey(null)
 
     const pool    = getPool(item.key)
@@ -140,7 +149,7 @@ export default function Shop({ briefgeld, addBriefgeld, unlockedColors, onUnlock
     if (isDuplicate) {
       // item al in bezit → volledige teruggave, niets afschrijven
     } else {
-      addBriefgeld(-LOOTBOX_COST)
+      addBriefgeld(-item.kost)
       playMunten()
       onUnlock(item.key, won.key)
     }
@@ -151,6 +160,7 @@ export default function Shop({ briefgeld, addBriefgeld, unlockedColors, onUnlock
       itemKey:      item.key,
       itemEmoji:    item.emoji,
       itemLabel:    item.label,
+      kost:         item.kost,
       wonItem:      won,
       isDuplicate,
       phase:        'kist',
@@ -187,19 +197,19 @@ export default function Shop({ briefgeld, addBriefgeld, unlockedColors, onUnlock
       <div className="game-header" style={{ '--kk-accent': 'var(--kk-gold)', marginBottom: 0 }}>
         <span className="game-header-icon"><Icoon naam="tas" /></span>
         <h1 className="game-header-title">Winkel</h1>
-        <p className="game-header-sub">Kies een kist — in elke kist zit nieuwe kleding voor je poppetje</p>
+        <p className="game-header-sub">Kies een kist en win nieuwe kleding of een dansje voor je poppetje</p>
       </div>
       <div className="shop-saldo"><span className="shop-saldo-icoon">💵</span><b>{fmt(briefgeld)}</b><span>briefgeld</span></div>
 
       <div className="shop-grid">
-        {CLOTHING_ITEMS.map(item => {
+        {KISTEN.map(item => {
           const pool      = getPool(item.key)
           const unlocked  = (unlockedColors[item.key] || []).length
           const total     = pool.length
           const { accent } = CRATE_ACCENTS[item.key] || CRATE_ACCENTS.shirt
           const isSelected = selectedKey === item.key
           const compleet  = unlocked >= total
-          const kanKopen  = briefgeld >= LOOTBOX_COST
+          const kanKopen  = briefgeld >= item.kost
 
           return (
             <button
@@ -215,13 +225,14 @@ export default function Shop({ briefgeld, addBriefgeld, unlockedColors, onUnlock
               </div>
               <div className="shopcard-shine" />
               {item.hasFeatured && <div className="shopcard-ultra-badge">⚡ ULTRA KANS</div>}
+              {item.key === 'emote' && <div className="shopcard-ultra-badge">NIEUW · DANSJES</div>}
               <div className="shopcard-name">{item.emoji} {item.label}</div>
               <div className="shopcard-voortgang" title={`${unlocked} van ${total} gewonnen`}>
                 <div className="shopcard-voortgang-balk" style={{ width: `${(unlocked / Math.max(1, total)) * 100}%` }} />
                 <span>{unlocked}/{total}</span>
               </div>
               <div className={`shopcard-prijs ${compleet ? 'is-compleet' : kanKopen ? '' : 'te-duur'}`}>
-                {compleet ? '✓ Compleet' : <>💵 {fmt(LOOTBOX_COST)} <span>· Openen</span></>}
+                {compleet ? '✓ Compleet' : <>💵 {fmt(item.kost)} <span>· Openen</span></>}
               </div>
             </button>
           )
@@ -230,12 +241,12 @@ export default function Shop({ briefgeld, addBriefgeld, unlockedColors, onUnlock
 
       {/* ── Detail panel ── */}
       {selectedKey && (() => {
-        const item      = CLOTHING_ITEMS.find(i => i.key === selectedKey)
+        const item      = KISTEN.find(i => i.key === selectedKey)
         const pool      = getPool(item.key)
         const unlocked  = (unlockedColors[item.key] || []).length
         const total     = pool.length
         const allDone   = unlocked >= total
-        const canAfford = briefgeld >= LOOTBOX_COST
+        const canAfford = briefgeld >= item.kost
         const odds      = rarityOdds(pool)
         const { accent } = CRATE_ACCENTS[item.key] || CRATE_ACCENTS.shirt
 
@@ -257,7 +268,7 @@ export default function Shop({ briefgeld, addBriefgeld, unlockedColors, onUnlock
                   <h3 className="shop-detail-title">{item.label} lootbox</h3>
                   {item.hasFeatured && <span className="shopcard-ultra-badge shop-detail-ultra-badge">ULTRA KANS</span>}
                 </div>
-                <p className="shop-detail-sub">Open en win een nieuwe kleur — of iets legendarisch!</p>
+                <p className="shop-detail-sub">{item.key === 'emote' ? 'Open en win een nieuw dansje voor je poppetje!' : 'Open en win een nieuwe kleur, of iets legendarisch!'}</p>
 
                 <div className="shop-detail-oddsbar">
                   {odds.map(o => (
@@ -285,7 +296,9 @@ export default function Shop({ briefgeld, addBriefgeld, unlockedColors, onUnlock
                         title={owned ? c.label : 'Nog niet gewonnen'}
                         style={{ '--rc': RARITIES[c.rarity].color }}
                       >
-                        <KledingPreview type={item.key} item={owned ? c : null} size={30} />
+                        {item.key === 'emote'
+                          ? <EmoteTegel emote={c.key} size={30} dicht={!owned} />
+                          : <KledingPreview type={item.key} item={owned ? c : null} size={30} />}
                       </div>
                     )
                   })}
@@ -297,7 +310,7 @@ export default function Shop({ briefgeld, addBriefgeld, unlockedColors, onUnlock
                   onClick={() => openLootbox(item)}
                   disabled={allDone || !canAfford}
                 >
-                  {allDone ? 'Compleet!' : !canAfford ? 'Te weinig 💵' : `💵 ${fmt(LOOTBOX_COST)} · Openen`}
+                  {allDone ? 'Compleet!' : !canAfford ? 'Te weinig 💵' : `💵 ${fmt(item.kost)} · Openen`}
                 </Knop>
               </div>
             </div>
@@ -334,7 +347,7 @@ export default function Shop({ briefgeld, addBriefgeld, unlockedColors, onUnlock
                     <KistOpener3D type={overlay.itemKey} item={won} rarity={won.rarity} onKlaar={naarOnthulling} />
                   </Suspense>
                   <div className="lb-box-hint">
-                    Bevat kleuren · zeldzaam · episch · legendarisch
+                    {overlay.itemKey === 'emote' ? 'Bevat dansjes · zeldzaam · episch · legendarisch · ultra' : 'Bevat kleuren · zeldzaam · episch · legendarisch'}
                     {overlay.itemKey === 'shirt' && <span className="lb-box-hint-ultra"> · ⚡ ultra</span>}
                   </div>
                 </div>
@@ -375,11 +388,19 @@ export default function Shop({ briefgeld, addBriefgeld, unlockedColors, onUnlock
 
                   <div className="lb-rv-item">
                     {/* eerst het plaatje (pop-in), dan het echte item op het poppetje, draaibaar */}
-                    <Suspense fallback={<div className="lb-rv-zweef"><KledingPreview type={overlay.itemKey} item={won} size={170} glans /></div>}>
-                      <ItemViewer3D type={overlay.itemKey} itemKey={won.key} gloed={rc}>
-                        <div className="lb-rv-zweef"><KledingPreview type={overlay.itemKey} item={won} size={170} glans /></div>
-                      </ItemViewer3D>
-                    </Suspense>
+                    {overlay.itemKey === 'emote' ? (
+                      <Suspense fallback={<div className="lb-rv-zweef"><EmoteTegel emote={won.key} size={150} /></div>}>
+                        <EmoteViewer3D emote={won.key} gloed={rc}>
+                          <div className="lb-rv-zweef"><EmoteTegel emote={won.key} size={150} /></div>
+                        </EmoteViewer3D>
+                      </Suspense>
+                    ) : (
+                      <Suspense fallback={<div className="lb-rv-zweef"><KledingPreview type={overlay.itemKey} item={won} size={170} glans /></div>}>
+                        <ItemViewer3D type={overlay.itemKey} itemKey={won.key} gloed={rc}>
+                          <div className="lb-rv-zweef"><KledingPreview type={overlay.itemKey} item={won} size={170} glans /></div>
+                        </ItemViewer3D>
+                      </Suspense>
+                    )}
                   </div>
 
                   <div className="lb-rv-sterren">
@@ -395,7 +416,7 @@ export default function Shop({ briefgeld, addBriefgeld, unlockedColors, onUnlock
                   {showEnd && (
                     <>
                       <div className={`lb-wc-message ${isUltra ? 'lb-msg-ultra' : ''}`}>
-                        {overlay.isDuplicate ? `🔄 Al in bezit! Geld terug 💵 ${fmt(LOOTBOX_COST)}` : isUltra ? '🎆 GEWELDIG! JE HEBT HET! 🎆' : '🎉 NIEUW GEWONNEN!'}
+                        {overlay.isDuplicate ? `🔄 Al in bezit! Geld terug 💵 ${fmt(overlay.kost)}` : isUltra ? '🎆 GEWELDIG! JE HEBT HET! 🎆' : overlay.itemKey === 'emote' ? '🎉 NIEUW DANSJE! Kies hem in de Kledingkast' : '🎉 NIEUW GEWONNEN!'}
                       </div>
                       <Knop variant="beloning" maat="lg" icoonRechts="verder" className="lb-continue-btn" onClick={close}>
                         {isUltra ? 'Fantastisch! Verder' : 'Verder'}
