@@ -1,17 +1,22 @@
 import {
   Engine, Scene, FreeCamera, Camera, Vector3, Color3, Color4,
   HemisphericLight, DirectionalLight, MeshBuilder, StandardMaterial, DynamicTexture,
-  TransformNode, DefaultRenderingPipeline,
+  TransformNode,
 } from '@babylonjs/core'
 import Poppetje from './online/Poppetje.js'
 import { nachtOmgeving, glowLaag, nachtLucht } from './neonOmgeving.js'
 import { autoKwaliteit } from './online/kwaliteit.js'
+import { EMOTE_DUUR } from './online/emotes.js'
 import { HALF, MIDDEN, SNELHEID, KLEUREN, VORMEN, vakVan, klem } from './online/gedeeld/vloerArena.js'
 
 // De 3D-vloer van de Vloerquiz: vier neonvlakken met de antwoorden, het
 // startvlak in het midden, de poppetjes, vallen bij een fout antwoord en het
 // podium aan het eind. Dezelfde scene voor de leerkracht (bord, kijkt alleen)
 // en de kinderen (lopen met joystick of pijltjes).
+//
+// Wie is te zien: tijdens een vraag niemand (een kind alleen zichzelf), bij de
+// uitslag alleen wie het goed had (en jezelf). Het bord zoomt dan in op het
+// goede vlak.
 //
 // opties: { ikId, haalState, stuur(type, data), invoerRef, hudRef, opUitslag(aantallen) }
 
@@ -73,6 +78,7 @@ function tekenVlak(scene, v, br, dp, stand, tekst) {
   if (!v.tex || v.tex.getSize().width !== W || v.tex.getSize().height !== H) {
     v.tex?.dispose()
     v.tex = new DynamicTexture('vlakTex' + v.i, { width: W, height: H }, scene, true)
+    v.tex.anisotropicFilteringLevel = 8   // scherpe tekst, ook schuin van boven
     v.tm.emissiveTexture = v.tex
   }
   const c = v.tex.getContext()
@@ -157,12 +163,14 @@ function maakStartvlak(scene) {
 
 // Neonrand om de hele vloer en vier lichtzuilen op de hoeken.
 function maakRand(scene) {
+  const neon = []
   const m = new StandardMaterial('randMat', scene)
   m.diffuseColor = Color3.Black(); m.specularColor = Color3.Black(); m.emissiveColor = Color3.FromHexString(ACCENT)
   const L = HALF * 2 + 0.4
   ;[[0, -HALF - 0.1, L, 0.12], [0, HALF + 0.1, L, 0.12], [-HALF - 0.1, 0, 0.12, L], [HALF + 0.1, 0, 0.12, L]].forEach(([x, z, w, d], i) => {
     const b = MeshBuilder.CreateBox('rand' + i, { width: w, height: 0.12, depth: d }, scene)
     b.position.set(x, -0.04, z); b.material = m; b.isPickable = false
+    neon.push(b)
   })
   ;[[-1, 1, 0], [1, 1, 1], [-1, -1, 2], [1, -1, 3]].forEach(([sx, sz, k]) => {
     const z = MeshBuilder.CreateCylinder('zuil' + k, { diameter: 0.5, height: 7, tessellation: 12 }, scene)
@@ -170,7 +178,9 @@ function maakRand(scene) {
     const zm = new StandardMaterial('zuilMat' + k, scene)
     zm.diffuseColor = Color3.Black(); zm.specularColor = Color3.Black(); zm.emissiveColor = Color3.FromHexString(KLEUREN[k])
     z.material = zm
+    neon.push(z)
   })
+  return neon
 }
 
 // Diepte: een raster ver onder de vloer, zodat vallen ook écht vallen is.
@@ -244,7 +254,13 @@ const draagt = (json) => { try { return JSON.parse(json || '{}') } catch { retur
 
 export function maakVloerScene(canvas, { ikId = null, haalState, stuur, invoerRef, hudRef, opUitslag }) {
   const engine = new Engine(canvas, true, { adaptToDeviceRatio: true, stencil: true, powerPreference: 'high-performance' })
-  if (window.devicePixelRatio > 1.5) engine.setHardwareScalingLevel(window.devicePixelRatio / 1.5)
+  // Scherp maar niet te zwaar: hooguit 1,5 pixel per CSS-pixel en hooguit
+  // ~2560x1440 (een 4K-digibord met een trage pc haalt anders geen 30 beelden).
+  {
+    const dpr = window.devicePixelRatio || 1
+    const px = (canvas.clientWidth || innerWidth) * (canvas.clientHeight || innerHeight) * dpr * dpr
+    engine.setHardwareScalingLevel(Math.max(1, dpr / 1.5, Math.sqrt(px / 3.7e6)))
+  }
   const scene = new Scene(engine)
   scene.clearColor = new Color4(0.02, 0.012, 0.06, 1)
 
@@ -262,28 +278,29 @@ export function maakVloerScene(canvas, { ikId = null, haalState, stuur, invoerRe
 
   nachtOmgeving(scene, { intensiteit: 0.7, contrast: 1.2, belichting: 1.1 })
   nachtLucht(scene, 300, { midden: '#0b0722', horizon: '#120a2c', gloed: '#3a1670' })
-  const glow = glowLaag(scene, 0.55)
+  // alleen de neonrand, de zuilen en het podium gloeien: de poppetjes niet nog een keer tekenen
+  const glow = glowLaag(scene, 0.6)
   const hemi = new HemisphericLight('hemi', new Vector3(0, 1, 0.3), scene)
   hemi.intensity = 0.75; hemi.groundColor = new Color3(0.15, 0.1, 0.3)
   const zon = new DirectionalLight('zon', new Vector3(-0.4, -1, -0.5), scene)
   zon.intensity = 1.1
 
-  let pipe = null
-  try {
-    pipe = new DefaultRenderingPipeline('vloerPipe', true, scene, [camera])
-    pipe.bloomEnabled = true; pipe.bloomThreshold = 0.75; pipe.bloomWeight = 0.35; pipe.bloomKernel = 48; pipe.bloomScale = 0.5
-    pipe.imageProcessingEnabled = false
-  } catch { /* oud apparaat: zonder nabewerking */ }
-  const stopKwaliteit = autoKwaliteit(engine, scene, { pipe })
+  // geen nabewerking (bloom): die tekende alles zonder anti-aliasing (wazig)
+  // en kostte op een groot bord veel te veel
+  const stopKwaliteit = autoKwaliteit(engine, scene)
 
   const vlakken = [0, 1, 2, 3].map(i => maakVlak(scene, i))
-  const startvlak = maakStartvlak(scene)
-  maakRand(scene)
+  maakStartvlak(scene)
+  const neon = maakRand(scene)
   maakDiepte(scene)
   const podium = maakPodium(scene)
   const ikRing = maakRing(scene)
-  ;[ikRing, startvlak].forEach(m => glow.addExcludedMesh(m))
-  vlakken.forEach(v => glow.addExcludedMesh(v.top))
+  ;[...neon, ...podium.getChildMeshes()].forEach(m => glow.addIncludedOnlyMesh(m))
+
+  // camera van het bord: overzicht, of ingezoomd op het goede vlak
+  const camStand = { pos: camera.position.clone(), doel: new Vector3(0, 0, host ? -1.5 : 0) }
+  const camDoel = { pos: camStand.pos.clone(), doel: camStand.doel.clone() }
+  const camKijk = camStand.doel.clone()
 
   const spelers = new Map()   // sid → { pop, schaduw, x, y, z, rot, val, plek, valt, vy }
   const lokaal = { x: 0, z: 0, rot: 0, loopt: false, verstuurd: 0, laatst: '' }
@@ -326,7 +343,7 @@ export function maakVloerScene(canvas, { ikId = null, haalState, stuur, invoerRe
       if (v.valt) { v.vy -= 26 * dt; v.y += v.vy * dt; if (v.y < -60) v.y = -60 }
       else if (v.y < 0) { v.y += (0 - v.y) * Math.min(1, dt * 6); if (v.y > -0.01) v.y = 0 }
       v.node.position.y = v.y
-      if (s.phase === 'uitslag' && v.i === s.goed) v.bm.emissiveColor = Color3.FromHexString(v.kleur).scale(0.8 + Math.sin(performance.now() / 120) * 0.25)
+      if (s.phase === 'uitslag' && v.i === s.goed) v.bm.emissiveColor = Color3.FromHexString(v.kleur).scale(0.7 + Math.sin(performance.now() / 120) * 0.15)
     })
 
     // ── fase-overgangen ────────────────────────────────────────────────
@@ -334,6 +351,20 @@ export function maakVloerScene(canvas, { ikId = null, haalState, stuur, invoerRe
       if (s.phase === 'uitslag') uitslagGedaan = false
       podium.setEnabled(s.phase === 'einde')
       fase = s.phase
+    }
+    if (host) {
+      const v = s.phase === 'uitslag' ? vlakken[s.goed] : null
+      if (v) {
+        // recht van voren, zo ver dat het hele vlak in beeld is
+        const { x, z } = v.node.position
+        const d = Math.max(v.br, v.dp) * 0.75 + 3
+        // iets vóór het midden richten: het vlak komt dan boven de antwoordknoppen
+        camDoel.doel.set(x, 0.8, z - d * 0.22); camDoel.pos.set(x, 0.8 + d * 0.8, z - d * 0.95)
+      } else { camDoel.doel.copyFrom(camStand.doel); camDoel.pos.copyFrom(camStand.pos) }
+      const L = 1 - Math.exp(-dt * 3.5)
+      camera.position.addInPlace(camDoel.pos.subtract(camera.position).scaleInPlace(L))
+      camKijk.addInPlace(camDoel.doel.subtract(camKijk).scaleInPlace(L))
+      camera.setTarget(camKijk)
     }
     if (s.phase === 'uitslag' && !uitslagGedaan) {
       uitslagGedaan = true
@@ -353,6 +384,7 @@ export function maakVloerScene(canvas, { ikId = null, haalState, stuur, invoerRe
           pop: new Poppetje(scene, { schaal: 1.6, shirt: p.shirt, wearing: draagt(p.wearing), naam: p.name, kleur: ik ? ACCENT : '#b9b4ff', ik }),
           schaduw: maakSchaduw(scene),
           x: p.x, y: 0, z: p.z, rot: p.rotY, val: p.valSeq, plek: p.plekSeq, valt: false, vy: 0,
+          emote: p.emoteSeq, emoteTot: 0,
         }
         spelers.set(sid, pl)
         if (ik) { lokaal.x = p.x; lokaal.z = p.z }
@@ -362,8 +394,23 @@ export function maakVloerScene(canvas, { ikId = null, haalState, stuur, invoerRe
       // de server zette dit poppetje ergens neer (start, weer terug na vallen, podium)
       if (p.plekSeq !== pl.plek) {
         pl.plek = p.plekSeq; pl.x = p.x; pl.z = p.z; pl.y = 0; pl.valt = false; pl.vy = 0; pl.rot = p.rotY
-        pl.pop.vast(null)
+        pl.pop.vast(null); pl.emoteTot = 0
         if (ik) { lokaal.x = p.x; lokaal.z = p.z; lokaal.rot = p.rotY }
+      }
+      // wie mag je zien
+      const zien = s.phase === 'vraag' ? ik : s.phase === 'uitslag' ? (ik || p.goed === 1) : true
+      pl.pop.zichtbaar(zien)
+      // emote: een paar seconden dansen, daarna (of bij weglopen) weer gewoon
+      const nu = performance.now()
+      if (p.emoteSeq !== pl.emote) {
+        pl.emote = p.emoteSeq
+        if (!pl.valt && p.emote) { pl.pop.vast(p.emote); pl.emoteTot = nu + EMOTE_DUUR }
+      }
+      const loopt = ik ? lokaal.loopt : p.loopt
+      if (pl.emoteTot && (nu > pl.emoteTot || loopt || pl.valt)) {
+        pl.emoteTot = 0
+        if (!pl.valt) pl.pop.vast(null)
+        if (s.phase === 'einde') dansSleutel = ''   // weer het podiumdansje
       }
 
       if (pl.valt) {
@@ -379,13 +426,13 @@ export function maakVloerScene(canvas, { ikId = null, haalState, stuur, invoerRe
         const len = Math.hypot(ix, iz)
         if (len > 1) { ix /= len; iz /= len }
         const loopt = len > 0.15
+        lokaal.loopt = loopt
         if (loopt) {
           const k = klem(lokaal.x + ix * SNELHEID * dt, lokaal.z + iz * SNELHEID * dt)
           lokaal.x = k.x; lokaal.z = k.z; lokaal.rot = Math.atan2(ix, iz)
         }
-        const nu = performance.now()
         const bericht = `${lokaal.x.toFixed(2)},${lokaal.z.toFixed(2)},${loopt}`
-        if (bericht !== lokaal.laatst && nu - lokaal.verstuurd > 75) {
+        if (bericht !== lokaal.laatst && nu - lokaal.verstuurd > 90) {
           stuur('plek', { x: lokaal.x, z: lokaal.z, r: lokaal.rot, l: loopt, s: pl.plek })
           lokaal.laatst = bericht; lokaal.verstuurd = nu
         }
@@ -409,7 +456,7 @@ export function maakVloerScene(canvas, { ikId = null, haalState, stuur, invoerRe
       }
       if (!pl.valt) pl.y = vloerY
       pl.pop.zet(pl.x, pl.y, pl.z, pl.rot)
-      pl.schaduw.setEnabled(!pl.valt)
+      pl.schaduw.setEnabled(!pl.valt && zien)
       pl.schaduw.position.set(pl.x, vloerY + 0.08, pl.z)   // boven het startvlak (dat steekt 6 cm uit)
       if (ik) {
         ikRing.setEnabled(!pl.valt)
@@ -432,7 +479,7 @@ export function maakVloerScene(canvas, { ikId = null, haalState, stuur, invoerRe
       const ds = rij.map(([sid]) => sid).join(',')
       if (ds !== dansSleutel) {
         dansSleutel = ds
-        rij.forEach(([sid], i) => spelers.get(sid)?.pop.vast(i === 0 ? 'hip_hop' : i < 3 ? 'breakdance' : 'hip_hop'))
+        rij.forEach(([sid], i) => { const pl = spelers.get(sid); if (pl && !pl.emoteTot) pl.pop.vast(i === 0 ? 'hip_hop' : i < 3 ? 'breakdance' : 'hip_hop') })
       }
     } else if (dansSleutel) {
       dansSleutel = ''

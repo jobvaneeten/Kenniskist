@@ -10,6 +10,7 @@ const PAD = {
   vink: <path d="M4.5 12.5l5 5L19.5 7" />,
   min: <path d="M5 12h14" />,
   speel: <path d="M7 4.5v15l12.5-7.5z" fill="currentColor" />,
+  pauze: <path d="M8.5 5v14M15.5 5v14" />,
   camera: <><path d="M3 8.5a2 2 0 012-2h2.2l1.5-2h6.6l1.5 2H19a2 2 0 012 2V18a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><circle cx="12" cy="13" r="3.6" /></>,
   vol: <path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5" />,
   bliksem: <path d="M13.5 2L5 13.5h6L10 22l9-12h-6.2z" />,

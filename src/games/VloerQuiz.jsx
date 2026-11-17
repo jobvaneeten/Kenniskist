@@ -7,6 +7,7 @@ import { heeftAanraak, schermVol } from './online/apparaat.js'
 import { NeonScherm, Titel, StartScherm, Wachtkamer, Aftelling, HudKnoppen, HudKnop } from './online/Schermen.jsx'
 import { KLEUREN, VORMEN } from './online/gedeeld/vloerArena.js'
 import { maakVloerScene } from './vloerScene.js'
+import { EMOTES, mijnEmotes } from './online/emotes.js'
 import './vloerquiz.css'
 
 // Vloerquiz: Kahoot met je eigen poppetje. De leerkracht zet in het portaal
@@ -40,7 +41,7 @@ function momentopname(s, ikId) {
   if (!s?.players) return { phase: 'laden', opties: [], spelers: [] }
   return {
     phase: s.phase, countdown: s.countdown, nr: s.nr, aantal: s.aantal, vraag: s.vraag,
-    opties: [...s.opties], goed: s.goed, tijd: s.tijd, hostWeg: s.hostWeg, spelers,
+    opties: [...s.opties], goed: s.goed, tijd: s.tijd, hostWeg: s.hostWeg, pauze: s.pauze, spelers,
   }
 }
 
@@ -51,6 +52,7 @@ function useVloer(room, ikId) {
   const joyRef = useRef({ x: 0, z: 0 })
   const klokRef = useRef(null)
   const balkRef = useRef(null)
+  const doorRef = useRef(null)
   const [stand, setStand] = useState(() => momentopname(room.state, ikId))
   const [aantallen, setAantallen] = useState([])
 
@@ -77,13 +79,14 @@ function useVloer(room, ikId) {
       const s = room.state
       if (klokRef.current) klokRef.current.textContent = Math.ceil(s.timeLeft ?? 0)
       if (balkRef.current) balkRef.current.style.transform = `scaleX(${Math.max(0, (s.timeLeft ?? 0) / (s.tijd || 20))})`
+      if (doorRef.current) doorRef.current.style.transform = `scaleX(${Math.min(1, Math.max(0, (s.timeLeft ?? 0) / 5))})`
       raf = requestAnimationFrame(klok)
     }
     raf = requestAnimationFrame(klok)
     return () => { cancelAnimationFrame(raf); scene.dispose() }
   }, [room, ikId])
 
-  return { canvasRef, hudRef, joyRef, klokRef, balkRef, stand, aantallen }
+  return { canvasRef, hudRef, joyRef, klokRef, balkRef, doorRef, stand, aantallen }
 }
 
 function VraagKop({ stand, klokRef, balkRef, groot }) {
@@ -121,14 +124,13 @@ function Antwoorden({ stand, aantallen, groot }) {
   )
 }
 
-function Ranglijst({ spelers, max = 5, metLaatste }) {
+function Ranglijst({ spelers, max = 5 }) {
   return (
     <ol className="vq-rang">
       {spelers.slice(0, max).map((s, i) => (
         <li key={s.sid} className={s.ik ? 'ik' : ''}>
           <span className="vq-plek">{i + 1}</span>
           <span className="vq-naam">{s.naam}</span>
-          {metLaatste && s.laatste > 0 && <span className="vq-erbij">+{s.laatste}</span>}
           <b>{s.score}</b>
         </li>
       ))}
@@ -191,6 +193,8 @@ function LeerlingSpel({ room, onStop }) {
   const ik = stand.spelers.find(s => s.ik)
   const plek = stand.spelers.findIndex(s => s.ik) + 1
   const goedTekst = stand.opties[stand.goed] ?? ''
+  const [emotes] = useState(mijnEmotes)
+  const emoteMag = stand.phase === 'lobby' || stand.phase === 'uitslag' || stand.phase === 'einde'
 
   return (
     <div className="vq-spel" style={{ '--on-accent': ACCENT }}>
@@ -221,7 +225,14 @@ function LeerlingSpel({ room, onStop }) {
             {ik.goed === 1
               ? <span>+{ik.laatste} punten{ik.reeks > 1 ? ` · ${ik.reeks} op rij` : ''}</span>
               : <span>Het goede antwoord was <b>{goedTekst}</b></span>}
-            <span className="vq-uitslag-plek">Je staat op plek {plek}</span>
+            <span className="vq-uitslag-plek">{ik.goed === 1 ? 'Je staat op het bord: doe een dansje!' : `Je staat op plek ${plek}`}</span>
+          </div>
+        )}
+        {emoteMag && ik && (
+          <div className="vq-emotes" role="group" aria-label="Dansjes">
+            {emotes.map(k => (
+              <button key={k} type="button" className="vq-emote" onClick={() => room.send('emote', k)}>{EMOTES[k].naam}</button>
+            ))}
           </div>
         )}
         {stand.hostWeg && <div className="vq-bericht klein">De leerkracht is even weg. Even wachten…</div>}
@@ -285,9 +296,15 @@ export function VloerHost({ vragen, tijd, onBack }) {
 }
 
 function HostSpel({ room, code, onBack }) {
-  const { canvasRef, hudRef, klokRef, balkRef, stand, aantallen } = useVloer(room, null)
+  const { canvasRef, hudRef, klokRef, balkRef, doorRef, stand, aantallen } = useVloer(room, null)
   const s = stand
   const laatste = s.nr >= s.aantal
+  const goedAantal = s.spelers.filter(p => p.goed === 1).length
+  const pauzeKnop = (
+    <button type="button" className={'on-btn lijn' + (s.pauze ? ' vq-pauze-aan' : '')} onClick={() => room.send('pauze')}>
+      <Icoon naam={s.pauze ? 'speel' : 'pauze'} />{s.pauze ? 'Verder' : 'Pauze'}
+    </button>
+  )
 
   return (
     <div className="vq-spel host" style={{ '--on-accent': ACCENT }}>
@@ -309,16 +326,18 @@ function HostSpel({ room, code, onBack }) {
           <div className="vq-bediening">
             <span className="vq-teller"><Icoon naam="speler" /><b className="vq-opvlak" /> van {s.spelers.length} op een vlak</span>
             <button type="button" className="on-btn lijn" onClick={() => room.send('klaar')}><Icoon naam="klok" />Tijd stoppen</button>
+            {pauzeKnop}
           </div>
         )}
         {s.phase === 'uitslag' && (
-          <aside className="vq-zijpaneel">
-            <span className="on-label">Tussenstand</span>
-            <Ranglijst spelers={s.spelers} metLaatste />
-            <button type="button" className="on-btn" onClick={() => room.send('volgende')}>
-              <Icoon naam="speel" />{laatste ? 'Naar de eindstand' : 'Volgende vraag'}
-            </button>
-          </aside>
+          <div className="vq-bediening">
+            <span className="vq-teller"><Icoon naam="vink" /><b>{goedAantal}</b> van {s.spelers.length} goed</span>
+            <div className="vq-door">
+              <span>{s.pauze ? 'Gepauzeerd' : laatste ? 'Zo naar de eindstand' : 'Zo de volgende vraag'}</span>
+              <div className="vq-tijdbalk"><div ref={doorRef} /></div>
+            </div>
+            {pauzeKnop}
+          </div>
         )}
         {s.phase === 'einde' && (
           <aside className="vq-zijpaneel einde">

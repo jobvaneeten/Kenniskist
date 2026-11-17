@@ -30,6 +30,7 @@ export const ANIMATIES = {
   hip_hop:    { file: 'hip_hop_dancing.glb',  stripRoot: false },
   breakdance: { file: 'emote_breakdance.glb', stripRoot: false },
   verloren:   { file: 'emote_verloren.glb',   stripRoot: false },
+  springen:   { file: 'emotespringen.glb',    stripRoot: true },
 }
 
 const kaal = (naam) => String(naam || 'Speler').replace(/^\u{1F916}\s*/u, '').slice(0, 14)
@@ -115,7 +116,8 @@ export default class Poppetje {
 
       const s = this.opts.schaal ?? 1
       if (s !== 1) this.root.scaling.scaleInPlace(s)
-      this.naam.setEnabled(true)
+      this.naam.setEnabled(this._zicht !== false)
+      if (this._zicht === false) this.root.setEnabled(false)
       if (this._pose) this.zet(...this._pose)
       this._laadAnimaties()
     }, null, (_s, msg) => console.error('Poppetje laden mislukt:', msg))
@@ -174,7 +176,19 @@ export default class Poppetje {
       if (!g._verplaatst && this._rootPos) this._nodes.Root?.position.copyFrom(this._rootPos)
     }
     g?.play(herhaal)
+    if (this._zicht === false) g?.pause()
     this._stand = naam
+  }
+
+  // Tonen of verbergen. Verborgen kost niets: geen tekenen, geen animatie.
+  zichtbaar(aan) {
+    if (this._zicht === aan) return
+    this._zicht = aan
+    if (!this.root) return
+    this.root.setEnabled(aan)
+    this.naam.setEnabled(aan)
+    const g = this._anims[this._stand]
+    if (g) aan ? g.restart() : g.pause()
   }
 
   beweeg(loopt) {

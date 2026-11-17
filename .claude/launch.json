@@ -8,6 +8,12 @@
       "port": 5173
     },
     {
+      "name": "Spelserver (lokaal)",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "../kenniskist-server", "run", "dev"],
+      "port": 2567
+    },
+    {
       "name": "Wrangler Preview (build + CF Workers)",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "preview"],
