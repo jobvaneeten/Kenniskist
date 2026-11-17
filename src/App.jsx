@@ -47,6 +47,8 @@ const HTML_CODES = {
   kwink:   { src: '/kwink.html', titel: 'Kwink-slag Kiezer', achtergrond: '#F4F2EC' },
   taalles3: { src: '/escaperoom-rene.html', titel: 'Opgesloten bij Rene', achtergrond: '#0b0820' },
   morteun: { src: '/morteun.html', titel: 'Road Rush', achtergrond: '#0a081c' },
+  senndjim: { src: '/voetbal-2-tegen-2.html', titel: 'Voetbal 2 tegen 2', achtergrond: '#0b1226' },
+  daantijn: { src: '/bijlengooien.html', titel: 'Bijlengooien', achtergrond: '#0b0826' },
 }
 const HTML_BELONING = 50
 

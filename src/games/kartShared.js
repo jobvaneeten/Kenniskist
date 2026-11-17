@@ -39,7 +39,7 @@ function laadKartModel(scene) {
 }
 
 function kartMaterialen(scene, hex, id) {
-  const c = Color3.FromHexString(hex)
+  const c = Color3.FromHexString(hex).toLinearSpace()   // PBR rekent lineair: anders verbleekt rood tot roze
   const pbr = (naam, kleur, metaal, ruw) => {
     const m = new PBRMaterial(naam + id, scene)
     m.albedoColor = kleur; m.metallic = metaal; m.roughness = ruw
@@ -49,7 +49,7 @@ function kartMaterialen(scene, hex, id) {
   lak.clearCoat.isEnabled = true; lak.clearCoat.intensity = 0.8; lak.clearCoat.roughness = 0.08   // autolak-glans
   const lakDonker = pbr('klakd', c.scale(0.4), 0.2, 0.4)
   const neon = new StandardMaterial('kneon' + id, scene)
-  neon.disableLighting = true; neon.emissiveColor = Color3.Lerp(c, Color3.White(), 0.25).scale(1.3)
+  neon.disableLighting = true; neon.emissiveColor = Color3.Lerp(Color3.FromHexString(hex), Color3.White(), 0.25).scale(1.3)
   return {
     lak, lak_donker: lakDonker, neon,
     zwart: pbr('kzwart', new Color3(0.035, 0.035, 0.04), 0, 0.55),

@@ -17,10 +17,15 @@ import './rocket-game.css'
 import './paintball.css'
 import { TerugKnop } from '../ui/index.jsx'
 import { maakOfJoin, nieuweCode, FOUT_TEKST } from './online/verbinding.js'
-import VerbindingsMelding, { VerbindStatus } from './online/VerbindingsMelding.jsx'
-import Joystick from './online/Joystick.jsx'
+import VerbindingsMelding from './online/VerbindingsMelding.jsx'
+import Joystick, { ActieKnop } from './online/Joystick.jsx'
+import Icoon from './online/Iconen.jsx'
+import { schermVol } from './online/apparaat.js'
+import { StartScherm, Wachtkamer, TeamEinde, ScoreBalk, HudKnoppen, HudKnop, Aftelling, Balk } from './online/Schermen.jsx'
 import { laadAnimatieBron, kopieVoorSpeler } from './online/animaties.js'
 import { autoKwaliteit } from './online/kwaliteit.js'
+
+const ACCENT = 'var(--kk-pink)'   // neonroze: de kleur van paintball in menu en HUD
 
 // ── Arena constants (mirror the server exactly) ────────────────────────
 let ARENA_X = 24    // wordt per map gezet
@@ -880,7 +885,10 @@ function initScene(canvas, { localSessionId, getRoomState, sendState, sendShoot,
 
     // HP bar
     if (hpDomRef?.current) hpDomRef.current.style.width = Math.max(0, Math.min(100, lp?.hp ?? 0)) + '%'
-    if (ammoDomRef?.current) ammoDomRef.current.textContent = lp ? (lp.reloading ? '⟳ Herladen…' : `🔫 ${lp.ammo}/10`) : ''
+    if (ammoDomRef?.current) {
+      ammoDomRef.current.textContent = lp ? (lp.reloading ? 'Herladen' : `${lp.ammo}/10`) : ''
+      ammoDomRef.current.parentElement.classList.toggle('leeg', !!lp && (lp.reloading || lp.ammo === 0))
+    }
 
     // ── Players ──
     rs.players.forEach((p, sid) => {
@@ -989,13 +997,12 @@ function initScene(canvas, { localSessionId, getRoomState, sendState, sendShoot,
 
 // ── Lobby ──────────────────────────────────────────────────────────────
 function Lobby({ onBack, onJoined, melding }) {
-  const [code, setCode] = useState('')
   const [name, setName] = useState(() => localStorage.getItem('kk_playername') || '')
   const [mapKey, setMapKey] = useState('dorp')
   const [error, setError] = useState(melding ?? null)
   const [loading, setLoading] = useState(false)
   const [status, setStatus] = useState(null)
-  const connect = async (create) => {
+  const connect = async (create, code = '') => {
     setLoading(true); setError(null)
     try {
       const shirt = localStorage.getItem('kk_shirt') || ''
@@ -1008,64 +1015,23 @@ function Lobby({ onBack, onJoined, melding }) {
     } catch (e) { setError(FOUT_TEKST[e?.soort] ?? FOUT_TEKST.server); setLoading(false); setStatus(null) }
   }
   return (
-    <div className="rg-lobby">
-      <TerugKnop onClick={onBack} />
-      <div className="rg-lobby-box">
-        <div className="rg-lobby-icon">🎯</div>
-        <h1 className="rg-lobby-title">Paint<span>ball</span></h1>
-        <p className="rg-lobby-sub">Speel met vrienden</p>
-        <div className="rg-lobby-field"><label>Jouw naam</label>
-          <input className="rg-input" placeholder="Speler" value={name} maxLength={12} onChange={e => setName(e.target.value)} /></div>
-        <div className="rg-lobby-field"><label>Kies een map</label>
-          <div className="pb-map-pick">
-            {[['dorp', 'Dorp', '/mapshot_dorp.jpg'], ['bos', 'Bos', '/mapshot_bos.jpg'], ['stad', 'Industrieterrein', '/mapshot_stad.jpg']].map(([k, lbl, img]) => (
-              <button key={k} type="button" className={'pb-map-card' + (mapKey === k ? ' on' : '')} onClick={() => setMapKey(k)}>
-                <img src={img} alt={lbl} />
-                <span>{lbl}</span>
-              </button>
-            ))}
-          </div></div>
-        <button className="rg-lobby-btn rg-lobby-create" disabled={loading} onClick={() => connect(true)}>{loading ? '…' : '＋ Lobby aanmaken'}</button>
-        <div className="rg-lobby-divider">of</div>
-        <div className="rg-lobby-field"><label>Lobby-code</label>
-          <input className="rg-input rg-input-code" placeholder="12345" value={code} maxLength={5} inputMode="numeric"
-            onChange={e => setCode(e.target.value.replace(/\D/g, ''))} onKeyDown={e => e.key === 'Enter' && connect(false)} /></div>
-        <button className="rg-lobby-btn rg-lobby-join" disabled={loading || !code.trim()} onClick={() => connect(false)}>{loading ? '…' : '→ Joinen'}</button>
-        {loading && <VerbindStatus status={status} />}
-        {error && <p className="rg-lobby-error">{error}</p>}
-      </div>
-    </div>
-  )
-}
-
-function WaitingRoom({ code, players, room, onBack }) {
-  const [botDiff, setBotDiff] = useState('normaal')
-  return (
-    <div className="rg-waiting">
-      <TerugKnop onClick={onBack} />
-      <div className="rg-waiting-box">
-        <p className="rg-waiting-label">Lobby-code</p>
-        <div className="rg-waiting-code">{code ?? '?????'}</div>
-        <p className="rg-waiting-hint">Deel deze code met vrienden</p>
-        <div className="rg-waiting-players">
-          {players.map((p, i) => (
-            <div key={i} className="rg-waiting-player"><span className={`rg-team-dot rg-team-${p.team}`} /><span>{p.name || 'Speler'}</span></div>
-          ))}
-        </div>
-        <div className="rg-diff-row">
-          {['makkelijk', 'normaal', 'moeilijk'].map(d => (
-            <button key={d} className={'rg-diff-btn' + (botDiff === d ? ' on' : '')} onClick={() => setBotDiff(d)}>
-              {d === 'makkelijk' ? '😊 Makkelijk' : d === 'normaal' ? '😐 Normaal' : '😈 Moeilijk'}
+    <StartScherm
+      accent={ACCENT} icoon="richt" titel={<>Paint<span>ball</span></>}
+      sub="Rood tegen blauw. Elke treffer met verf is een punt voor je team."
+      onBack={onBack} naam={name} setNaam={setName} laden={loading} status={status} fout={error}
+      onMaak={() => connect(true)} onJoin={c => connect(false, c)}>
+      <div className="on-veld">
+        <span className="on-label">Kies een map</span>
+        <div className="on-kaarten">
+          {[['dorp', 'Dorp', '/mapshot_dorp.jpg'], ['bos', 'Bos', '/mapshot_bos.jpg'], ['stad', 'Industrieterrein', '/mapshot_stad.jpg']].map(([k, lbl, img]) => (
+            <button key={k} type="button" className={'on-kaart' + (mapKey === k ? ' aan' : '')} aria-pressed={mapKey === k} onClick={() => setMapKey(k)}>
+              <img src={img} alt="" />
+              <span>{lbl}</span>
             </button>
           ))}
         </div>
-        <div className="rg-bot-row">
-          <button className="rg-bot-btn" onClick={() => room?.send('addBot', botDiff)}>🤖 Bot erbij</button>
-          <button className="rg-bot-btn" onClick={() => room?.send('removeBot')}>➖ Bot eraf</button>
-        </div>
-        <button className="rg-lobby-btn rg-lobby-create" onClick={() => room?.send('start')}>▶ Start spel</button>
       </div>
-    </div>
+    </StartScherm>
   )
 }
 
@@ -1095,7 +1061,7 @@ export default function PaintballGame({ onBack }) {
     setRoom(r); roomRef.current = r; setLobbyCode(code || '')
     r.onStateChange(state => {
       setRoomState(state); roomStateRef.current = state
-      const arr = []; state.players.forEach((p, sid) => arr.push({ sid, name: p.name, team: p.team }))
+      const arr = []; state.players.forEach((p, sid) => arr.push({ sid, name: p.name, team: p.team, bot: p.isBot }))
       setPlayers(arr)
       if (state.phase === 'playing' || state.phase === 'countdown') setScreen('playing')
       if (state.phase === 'gameover') setScreen('gameover')
@@ -1138,38 +1104,25 @@ export default function PaintballGame({ onBack }) {
     setCamMode(next)
     if (sceneRef.current) sceneRef.current.camModeRef.current = next
   }
-  const toggleFullscreen = () => {
-    const el = document.documentElement
-    if (!document.fullscreenElement) (el.requestFullscreen || el.webkitRequestFullscreen)?.call(el)
-    else (document.exitFullscreen || document.webkitExitFullscreen)?.call(document)
-  }
+  const spelers = players.map(p => ({ sid: p.sid, naam: p.name, team: p.team, bot: p.bot, ik: p.sid === room?.sessionId }))
 
   if (screen === 'lobby') return <Lobby onBack={onBack} onJoined={(r, c) => { setMelding(null); handleJoined(r, c) }} melding={melding} />
   if (screen === 'waiting') return (
     <>
-      <WaitingRoom code={lobbyCode} room={room} players={players} onBack={() => { room?.leave(); setScreen('lobby') }} />
+      <Wachtkamer accent={ACCENT} teams niveaus code={lobbyCode} room={room} spelers={spelers}
+        onStart={() => room?.send('start')} onBack={() => { room?.leave(); setScreen('lobby') }} />
       <VerbindingsMelding room={room} />
     </>
   )
-  if (screen === 'gameover') {
-    const rs = roomState
-    return (
-      <div className="rg-gameover">
-        <div className="rg-gameover-box">
-          <div className="rg-go-title">Tijd is om! 🎯</div>
-          <div className="rg-go-score">🔴 {rs?.scoreA ?? 0} — {rs?.scoreB ?? 0} 🔵</div>
-          <div className="rg-go-winner">
-            {(rs?.scoreA ?? 0) > (rs?.scoreB ?? 0) ? '🔴 Rood wint!' : (rs?.scoreB ?? 0) > (rs?.scoreA ?? 0) ? '🔵 Blauw wint!' : '🤝 Gelijkspel!'}
-          </div>
-          {room && <button className="on-knop goud" onClick={() => room.send('opnieuw')}>Nog een keer</button>}
-          <button className="rg-lobby-btn rg-lobby-create" onClick={() => { room?.leave(); onBack() }}>← Terug</button>
-        </div>
-      </div>
-    )
-  }
 
   const rs = roomState
+  if (screen === 'gameover') return (
+    <TeamEinde a={rs?.scoreA ?? 0} b={rs?.scoreB ?? 0}
+      onOpnieuw={room ? () => room.send('opnieuw') : null} onTerug={() => { room?.leave(); onBack() }} />
+  )
+
   const me = rs?.players?.get(room?.sessionId)
+  const zet = (ref, v) => { if (sceneRef.current) sceneRef.current[ref].current = v }
   return (
     <div className="rg-outer">
       <OrientationGate />
@@ -1177,46 +1130,48 @@ export default function PaintballGame({ onBack }) {
       <VerbindingsMelding room={room} />
       <TerugKnop onClick={() => { room?.leave(); onBack() }} />
 
-      <div className="rg-score">
-        <span className="rg-score-a">🔴 {rs?.scoreA ?? 0}</span>
-        <span ref={timerDomRef} className="rg-score-timer">2:00</span>
-        <span className="rg-score-b">{rs?.scoreB ?? 0} 🔵</span>
-      </div>
+      <ScoreBalk a={rs?.scoreA ?? 0} b={rs?.scoreB ?? 0} timerRef={timerDomRef} />
+      <HudKnoppen>
+        <HudKnop icoon="vol" onClick={schermVol} title="Volledig scherm" aria-label="Volledig scherm" />
+        <HudKnop icoon="camera" onClick={toggleCamera} title="Camera wisselen">{camMode === 'third' ? 'Achter' : 'Ogen'}</HudKnop>
+      </HudKnoppen>
 
-      <button className="rg-cam-btn" onClick={toggleCamera}>{camMode === 'third' ? '📷 3e p.' : '📷 1e p.'}</button>
-      <button className="rg-fs-btn" onClick={toggleFullscreen} title="Volledig scherm">⛶</button>
+      {rs?.phase === 'countdown' && <Aftelling n={rs.countdown} />}
 
-      {rs?.phase === 'countdown' && <div className="rg-countdown">{rs.countdown}</div>}
+      <svg className="pb-crosshair" viewBox="0 0 40 40" aria-hidden="true">
+        <path d="M20 5v8M20 27v8M5 20h8M27 20h8" /><circle cx="20" cy="20" r="1.8" />
+      </svg>
 
-      <div className="pb-crosshair">+</div>
+      {/* Kogels (boven, tik = herladen) en levens (onder) */}
+      <button type="button" className="on-pil" title="Herladen (R)"
+        onPointerDown={e => { e.preventDefault(); room?.send('reload') }}>
+        <Icoon naam="herlaad" /><span ref={ammoDomRef}>10/10</span>
+      </button>
+      <Balk icoon="hart" kleur="#ff4d6d" vulRef={hpDomRef} />
 
-      {/* Ammo (boven, midden) + HP bar (onder) */}
-      <div ref={ammoDomRef} className="pb-ammo" title="Herladen (R)"
-        onPointerDown={e => { e.preventDefault(); room?.send('reload') }}>🔫 10/10</div>
-      <div className="pb-hp"><span className="pb-hp-icon">❤️</span><div className="pb-hp-track"><div ref={hpDomRef} className="pb-hp-fill" /></div></div>
-
+      {/* geraakt: rode rand flitst (key = nieuwe treffer speelt de animatie opnieuw) */}
+      {me?.alive && me.hitSeq > 0 && <div key={me.hitSeq} className="pb-raak" />}
       {me && !me.alive && (
         <>
           <div className="pb-dead-overlay" />
-          <div className="pb-respawn">Uitgeschakeld! 💥<br /><span>Respawn in {Math.ceil(me.respawnIn)}…</span></div>
+          <div className="on-bericht">Uitgeschakeld<small>Je doet weer mee over {Math.ceil(me.respawnIn)}…</small></div>
         </>
       )}
 
       {sceneRef.current && <Joystick joyRef={sceneRef.current.joyRef} />}
 
-      <button className={'pb-crouch-btn' + (crouchOn ? ' pb-crouch-on' : '')}
-        onPointerDown={e => { e.preventDefault(); const n = !crouchOn; setCrouchOn(n); if (sceneRef.current) sceneRef.current.crouchRef.current = n }}
-      >🦆<span>Hurk{crouchOn ? ' AAN' : ''}</span></button>
+      <ActieKnop className="pb-hurk" label="Hurk" kleur="var(--kk-cyan)" aan={crouchOn}
+        onTik={() => { const n = !crouchOn; setCrouchOn(n); zet('crouchRef', n) }}>
+        <Icoon naam="hurk" />
+      </ActieKnop>
 
-      <div className="rg-actions">
-        <button className="pb-fire-btn"
-          onPointerDown={e => { e.preventDefault(); if (sceneRef.current) sceneRef.current.fireRef.current = true }}
-          onPointerUp={() => { if (sceneRef.current) sceneRef.current.fireRef.current = false }}
-          onPointerLeave={() => { if (sceneRef.current) sceneRef.current.fireRef.current = false }}
-        >🎯<span>Schiet</span></button>
-        <button className="pb-jump-btn"
-          onPointerDown={e => { e.preventDefault(); if (sceneRef.current) sceneRef.current.jumpRef.current = true }}
-        >⬆️<span>Spring</span></button>
+      <div className="on-acties">
+        <ActieKnop label="Spring" kleur="var(--kk-cyan)" onTik={() => zet('jumpRef', true)}>
+          <Icoon naam="omhoog" />
+        </ActieKnop>
+        <ActieKnop className="groot" label="Schiet" kleur="var(--kk-pink)" onIn={() => zet('fireRef', true)} onUit={() => zet('fireRef', false)}>
+          <Icoon naam="richt" />
+        </ActieKnop>
       </div>
     </div>
   )

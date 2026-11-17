@@ -1,120 +1,33 @@
-/* Paintball-specifieke UI (bovenop rocket-game.css) */
-
+/* Paintball: richtkruis, hurkknop en de effecten bij geraakt/uitgeschakeld
+   (de rest van de HUD staat in online/schermen.css). */
 .pb-crosshair {
-  position: fixed;
-  left: 50%; top: 50%;
-  transform: translate(-50%, -50%);
-  color: rgba(255, 255, 255, 0.85);
-  font-size: 1.6rem; font-weight: 700;
-  text-shadow: 0 0 4px rgba(0, 0, 0, 0.7);
-  pointer-events: none; z-index: 50;
+  position: fixed; left: 50%; top: 50%; z-index: 50; width: 34px; height: 34px; margin: -17px 0 0 -17px; pointer-events: none;
+  fill: #fff; stroke: #fff; stroke-width: 2.4; stroke-linecap: round;
+  filter: drop-shadow(0 0 3px var(--kk-pink)) drop-shadow(0 0 1px #000);
 }
 
-.pb-hp {
-  position: fixed;
-  left: 50%; bottom: 18px;
-  transform: translateX(-50%);
-  display: flex; align-items: center; gap: 8px;
-  z-index: 60; pointer-events: none;
+/* hurken: linksboven de joystick */
+.on-actie.pb-hurk {
+  position: fixed; z-index: 100; width: 68px; height: 68px;
+  left: max(20px, env(safe-area-inset-left)); bottom: calc(max(28px, env(safe-area-inset-bottom)) + 142px);
 }
-.pb-hp-icon { font-size: 1.1rem; }
-.pb-hp-track {
-  width: 180px; height: 14px;
-  background: rgba(0, 0, 0, 0.45);
-  border: 1.5px solid rgba(255, 255, 255, 0.3);
-  border-radius: 8px; overflow: hidden;
-}
-.pb-hp-fill {
-  width: 100%; height: 100%;
-  background: linear-gradient(90deg, #e84343, #ff7b7b);
-  transition: width 0.12s linear;
-}
+.on-actie.pb-hurk svg { width: 24px; height: 24px; }
 
-.pb-ammo {
-  position: fixed;
-  left: 50%; top: 58px;
-  transform: translateX(-50%);
-  z-index: 90; cursor: pointer;
-  color: #fff; font-weight: 900; font-size: 1.15rem;
-  background: rgba(0, 0, 0, 0.5);
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: 12px; padding: 6px 16px;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+/* geraakt: rode rand die kort opflitst */
+.pb-raak {
+  position: fixed; inset: 0; z-index: 64; pointer-events: none;
+  background: radial-gradient(ellipse at center, transparent 45%, rgba(255,47,90,0.55) 100%);
+  box-shadow: inset 0 0 60px 10px rgba(255,47,90,0.6);
+  animation: pb-raak 0.55s ease-out both;
 }
+@keyframes pb-raak { from { opacity: 1; } to { opacity: 0; } }
 
-.pb-crouch-btn {
-  position: fixed;
-  left: 26px; bottom: 168px;
-  z-index: 100;
-  width: 74px; height: 74px;
-  border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.25);
-  color: #fff; font-size: 1.5rem; font-weight: 900;
-  font-family: inherit; cursor: pointer;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  background: radial-gradient(circle at 50% 35%, #6a7180, #444b58);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
-}
-.pb-crouch-btn span { font-size: 0.58rem; font-weight: 800; letter-spacing: 0.03em; }
-.pb-crouch-btn:active { transform: scale(0.92); }
-.pb-crouch-btn.pb-crouch-on {
-  background: radial-gradient(circle at 50% 35%, #4dff7a, #16a34a);
-  box-shadow: 0 0 14px rgba(74, 255, 122, 0.7);
-}
-
-.pb-jump-btn {
-  width: 84px; height: 84px;
-  border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.25);
-  color: #fff; font-size: 1.7rem; font-weight: 900;
-  font-family: inherit; cursor: pointer;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  background: radial-gradient(circle at 50% 35%, #4dd0ff, #1f86d6);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
-}
-.pb-jump-btn span { font-size: 0.62rem; font-weight: 800; letter-spacing: 0.04em; }
-.pb-jump-btn:active { transform: scale(0.92); }
-
+/* uitgeschakeld: beeld verliest kleur tot je weer meedoet */
 .pb-dead-overlay {
-  position: fixed; inset: 0;
-  background: rgba(210, 210, 215, 0.42);
-  backdrop-filter: grayscale(0.85) brightness(1.05);
-  -webkit-backdrop-filter: grayscale(0.85) brightness(1.05);
-  z-index: 65; pointer-events: none;
+  position: fixed; inset: 0; z-index: 65; pointer-events: none;
+  background: rgba(20,16,40,0.45);
+  -webkit-backdrop-filter: grayscale(0.9) brightness(0.8); backdrop-filter: grayscale(0.9) brightness(0.8);
 }
-
-.pb-respawn {
-  position: fixed;
-  left: 50%; top: 42%;
-  transform: translate(-50%, -50%);
-  text-align: center;
-  color: #fff; font-weight: 900; font-size: 1.8rem;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
-  z-index: 70; pointer-events: none;
+@media (max-height: 520px) {
+  .on-actie.pb-hurk { width: 58px; height: 58px; bottom: 136px; }
 }
-.pb-respawn span { font-size: 1.1rem; font-weight: 700; color: #ffd23f; }
-
-.pb-fire-btn {
-  width: 84px; height: 84px;
-  border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.25);
-  color: #fff; font-size: 1.7rem; font-weight: 900;
-  font-family: inherit; cursor: pointer;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  background: radial-gradient(circle at 50% 35%, #ff5a7a, #d61f44);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
-}
-.pb-fire-btn span { font-size: 0.62rem; font-weight: 800; letter-spacing: 0.04em; }
-.pb-fire-btn:active { transform: scale(0.92); }
-
-/* Map-keuze in de lobby (plaatjes-kaarten) */
-.pb-map-pick { display: flex; gap: 8px; }
-.pb-map-card {
-  flex: 1; padding: 0; border-radius: 12px; overflow: hidden;
-  border: 3px solid rgba(255,255,255,0.18);
-  background: rgba(0,0,0,0.25); color: #fff; cursor: pointer;
-  font-family: inherit; display: flex; flex-direction: column; align-items: stretch;
-}
-.pb-map-card img { width: 100%; height: 64px; object-fit: cover; display: block; background: #2a3a2a; }
-.pb-map-card span { padding: 5px 0; font-weight: 800; font-size: 0.9rem; }
-.pb-map-card.on { border-color: #4dff7a; box-shadow: 0 0 12px rgba(74,255,122,0.5); }

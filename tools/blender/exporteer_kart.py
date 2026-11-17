@@ -13,9 +13,13 @@ def samenvoegen(o, kaart):
     doel = [kaart.get(n, n) for n in namen]
     uniek = list(dict.fromkeys(doel))
     idx = [uniek.index(d) for d in doel]
-    for p in me.polygons: p.material_index = idx[p.material_index]
+    # eerst onthouden, dan pas de materialen wisselen: materials.clear() zet in
+    # nieuwere Blender-versies elk vlak terug op materiaal 0 (dan werd de hele
+    # kart zwart en deed de gekozen kart-kleur niets)
+    nieuw = [idx[p.material_index] for p in me.polygons]
     me.materials.clear()
     for n in uniek: me.materials.append(bpy.data.materials[n])
+    for p, i in zip(me.polygons, nieuw): p.material_index = i
 
 for o in COL.objects:
     if o.name.startswith('wiel_'): samenvoegen(o, {'lak': 'chroom', 'zwart': 'band'})

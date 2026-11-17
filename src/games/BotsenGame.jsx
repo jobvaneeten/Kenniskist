@@ -21,7 +21,9 @@ import Joystick, { ActieKnop } from './online/Joystick.jsx'
 import { heeftAanraak } from './online/apparaat.js'
 import { maakOfJoin, nieuweCode, FOUT_TEKST } from './online/verbinding.js'
 import { autoKwaliteit } from './online/kwaliteit.js'
-import VerbindingsMelding, { VerbindStatus } from './online/VerbindingsMelding.jsx'
+import VerbindingsMelding from './online/VerbindingsMelding.jsx'
+import Icoon from './online/Iconen.jsx'
+import { StartScherm, Wachtkamer, EindScherm, Aftelling } from './online/Schermen.jsx'
 
 // ═══════════════════════════════════════════════════════════════════════
 //  BALLONNENGEVECHT (intern "botsen", moet matchen met de server) — kart +
@@ -35,10 +37,11 @@ const ROOM_TYPE = 'botsen'
 // Arena-vorm en botsingen: één bron met de server (online/gedeeld/botsenArena.js).
 const BALLOON_COLORS = ['#ff4d6d', '#ffd23f', '#4dd2ff']
 const ITEM_INFO = {
-  schild:  { emoji: '🛡️', label: 'Schild' },
-  bom:     { emoji: '💣', label: 'Bom' },
-  vuurtje: { emoji: '🔥', label: 'Vuurtje' },
+  schild:  { icoon: 'schild', label: 'Schild' },
+  bom:     { icoon: 'bom', label: 'Bom' },
+  vuurtje: { icoon: 'vuur', label: 'Vuurtje' },
 }
+const ACCENT = '#ff9a3d'   // neonoranje: de kleur van het ballonnengevecht in menu en HUD
 
 // ── Ballonnen: 3 bolletjes op een dun mastje achter de kart ─────────────
 function buildBalloons(scene, idSuffix) {
@@ -77,18 +80,45 @@ function maakSchaduw(scene, ouder) {
   return d
 }
 
+// ── Neongloed onder de kart, in de kart-kleur: zo herken je elkaar van ver
+//    en straalt de lak ook op de (gebakken, donkere) vloer. ───────────────
+let gloedTex = null
+function maakOnderGloed(scene, ouder, hex) {
+  if (!gloedTex || gloedTex.getScene() !== scene) {
+    gloedTex = new DynamicTexture('kartGloedTex', { width: 128, height: 128 }, scene, false)
+    const c = gloedTex.getContext(), g = c.createRadialGradient(64, 64, 10, 64, 64, 64)
+    g.addColorStop(0, 'rgba(255,255,255,0.9)'); g.addColorStop(0.45, 'rgba(255,255,255,0.45)'); g.addColorStop(1, 'rgba(255,255,255,0)')
+    c.fillStyle = g; c.fillRect(0, 0, 128, 128); gloedTex.update(); gloedTex.hasAlpha = true
+  }
+  const m = new StandardMaterial('kartGloed', scene)
+  m.diffuseTexture = gloedTex; m.useAlphaFromDiffuseTexture = true
+  m.disableLighting = true; m.diffuseColor = Color3.Black(); m.specularColor = Color3.Black()
+  m.emissiveColor = Color3.FromHexString(hex); m.alphaMode = 1   // optellend: licht, geen verf
+  m.alpha = 0.5
+  const d = MeshBuilder.CreateGround('kartGloed', { width: 4.6, height: 5.8 }, scene)
+  d.material = m; d.parent = ouder; d.position.y = 0.06; d.isPickable = false
+  scene.effectLayers.forEach(l => l.addExcludedMesh?.(d))   // al zacht genoeg: niet nog eens door de gloedlaag
+  d.onDisposeObservable.add(() => m.dispose())
+  return d
+}
+
 // ── Naamkaartje: zwevend, altijd naar de camera gericht, boven de kart ──
-function makeNameTag(scene, name) {
+function makeNameTag(scene, name, kleur = '#ffffff') {
   const plane = MeshBuilder.CreatePlane('bnametag', { width: 3.2, height: 0.8 }, scene)
   plane.billboardMode = 7 // Mesh.BILLBOARDMODE_ALL
   plane.isPickable = false
   const tex = new DynamicTexture('bnametagTex', { width: 256, height: 64 }, scene, false)
   const c = tex.getContext()
   c.clearRect(0, 0, 256, 64)
-  c.fillStyle = 'rgba(10,10,20,0.55)'
-  c.beginPath(); c.roundRect ? c.roundRect(4, 12, 248, 40, 16) : c.rect(4, 12, 248, 40); c.fill()
-  c.fillStyle = '#fff'; c.font = 'bold 30px Arial'; c.textAlign = 'center'; c.textBaseline = 'middle'
-  c.fillText((name || 'Speler').slice(0, 14), 128, 33)
+  // donker plaatje met een rand in de kart-kleur; bots zonder het robotje van de server
+  const tekst = String(name || 'Speler').replace(/^\u{1F916}\s*/u, '').slice(0, 14)
+  c.font = '900 28px "Baloo 2", Nunito, Arial'; c.textAlign = 'center'; c.textBaseline = 'middle'
+  const br = Math.min(244, c.measureText(tekst).width + 36), x0 = 128 - br / 2
+  c.fillStyle = 'rgba(11,10,26,0.78)'
+  c.beginPath(); c.roundRect ? c.roundRect(x0, 12, br, 40, 14) : c.rect(x0, 12, br, 40); c.fill()
+  c.strokeStyle = kleur; c.lineWidth = 3; c.stroke()
+  c.fillStyle = '#fff'
+  c.fillText(tekst, 128, 34)
   tex.update(); tex.hasAlpha = true
   const m = new StandardMaterial('bnametagMat', scene)
   // Emissive via de textuur, niet als vlakke witte kleur — anders licht het
@@ -238,7 +268,7 @@ function buildArena(scene) {
   return { boxesGrond: BOXES_GROND, boxesBoven: BOXES_BOVEN }
 }
 
-function BotsenMatch({ onBack, room, sessionId, joinCode, myNameProp, myColorProp }) {
+function BotsenMatch({ onBack, room, sessionId, joinCode, myColorProp }) {
   const canvasRef = useRef(null)
   const minimapRef = useRef(null)
   const [phase, setPhase] = useState('lobby')       // lobby | countdown | playing | gameover
@@ -303,10 +333,9 @@ function BotsenMatch({ onBack, room, sessionId, joinCode, myNameProp, myColorPro
     const { root: kartRoot, wheels } = buildKart(scene, myColor, 'me')
     kartRoot.parent = outer
     maakSchaduw(scene, outer)
+    maakOnderGloed(scene, outer, myColor)
     const myBalloonMeshes = buildBalloons(scene, 'me')
     myBalloonMeshes.forEach(b => { b.parent = kartRoot })
-    const myNameTag = makeNameTag(scene, myNameProp || myP?.name)
-    myNameTag.parent = outer
 
     const cam = new FollowCamera('cam', new Vector3(0, 6, -12), scene)
     cam.lockedTarget = outer
@@ -365,9 +394,10 @@ function BotsenMatch({ onBack, room, sessionId, joinCode, myNameProp, myColorPro
       const built = buildKart(scene, col, 'r' + sid)
       built.root.parent = outerR
       maakSchaduw(scene, outerR)
+      maakOnderGloed(scene, outerR, col)
       const balloons = buildBalloons(scene, 'r' + sid)
       balloons.forEach(b => { b.parent = built.root })
-      const nameTag = makeNameTag(scene, p.name)
+      const nameTag = makeNameTag(scene, p.name, col)
       nameTag.parent = outerR
       const ent = { outer: outerR, visual: built.root, wheels: built.wheels, balloons, tx: outerR.position.x, tz: outerR.position.z, trot: outerR.rotation.y, tvel: 0, lastBalloons: 3, lastHitSeq: p.hitSeq ?? 0 }
       loadAvatar(scene, p.shirt || '', safeJSON(p.wearing), (av) => {
@@ -415,7 +445,10 @@ function BotsenMatch({ onBack, room, sessionId, joinCode, myNameProp, myColorPro
     let spawnedFromServer = false
     const sync = (state) => {
       const arr = []
-      state.players?.forEach((p, sid) => arr.push({ sid, name: p.name, me: sid === sessionId, bot: p.isBot }))
+      state.players?.forEach((p, sid) => arr.push({
+        sid, name: p.name, me: sid === sessionId, bot: p.isBot,
+        color: (sid === sessionId && myColorProp) || p.color || KART_COLORS[(p.grid ?? 0) % KART_COLORS.length],
+      }))
       setPlayers(arr)
       setCount(state.countdown)
       setTimeLeft(Math.max(0, Math.ceil(state.timeLeft ?? 0)))
@@ -440,7 +473,7 @@ function BotsenMatch({ onBack, room, sessionId, joinCode, myNameProp, myColorPro
         }
         lastPhase = state.phase
         setPhase(state.phase)
-        if (state.phase === 'gameover') setWinnerName(state.winnerName || '')
+        if (state.phase === 'gameover') setWinnerName((state.winnerName || '').replace(/^\u{1F916}\s*/u, ''))
       }
     }
     sync(room.state)
@@ -704,59 +737,52 @@ function BotsenMatch({ onBack, room, sessionId, joinCode, myNameProp, myColorPro
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  const spelers = players.map(p => ({ sid: p.sid, naam: p.name, kleur: p.color, ik: p.me, bot: p.bot }))
+  const itemIcoon = <Icoon key={heldItem || 'leeg'} className="botsen-item-icoon" naam={heldItem ? ITEM_INFO[heldItem]?.icoon : 'vraag'} />
   return (
     <div className="botsen-wrap">
       <OrientationGate />
       <canvas ref={canvasRef} className="botsen-canvas" />
       <VerbindingsMelding room={room} />
-      <TerugKnop onClick={onBack}>Stoppen</TerugKnop>
+      {phase !== 'lobby' && phase !== 'gameover' && <TerugKnop onClick={onBack}>Stoppen</TerugKnop>}
 
       {phase === 'lobby' && (
-        <div className="botsen-lobby-wait">
-          <h1>💥 Wachtkamer</h1>
-          {joinCode && <p className="botsen-lobby-code">Code: <strong>{joinCode}</strong></p>}
-          <p>Deel de code en wacht tot iedereen er is.</p>
-          <ul className="botsen-lobby-list">
-            {players.map(p => <li key={p.sid} className={p.me ? 'me' : ''}>{p.me ? '⭐ ' : (p.bot ? '🤖 ' : '💥 ')}{p.name}</li>)}
-          </ul>
-          <div className="botsen-bot-row">
-            <button className="botsen-bot-btn" onClick={() => room.send('addBot')}>🤖 Bot erbij</button>
-            <button className="botsen-bot-btn" onClick={() => room.send('removeBot')}>➖ Bot eraf</button>
-          </div>
-          <button className="botsen-start-btn" onClick={startMatch}>Start! ({players.length})</button>
-        </div>
+        <Wachtkamer over accent={ACCENT} code={joinCode} room={room} spelers={spelers}
+          onStart={startMatch} onBack={onBack} terugTekst="Stoppen" />
       )}
 
       {phase !== 'lobby' && phase !== 'gameover' && (
         <div className="botsen-hud">
-          <div className="botsen-hud-time">⏱ {timeLeft}s</div>
-          <div className="botsen-hud-alive">{aliveCount} over</div>
-          <div className="botsen-hud-balloons">
-            {[0, 1, 2].map(i => <span key={i} className={i < myBalloons ? '' : 'popped'}>🎈</span>)}
+          <div className="botsen-hud-rij">
+            <span className="botsen-hud-tijd" title="Tijd over"><Icoon naam="klok" />{timeLeft}</span>
+            <span className="botsen-hud-over" title="Spelers over"><Icoon naam="speler" />{aliveCount}</span>
+          </div>
+          <div className="botsen-hud-balloons" aria-label={myBalloons + ' ballonnen over'}>
+            {[0, 1, 2].map(i => (
+              <span key={i} className={i < myBalloons ? '' : 'popped'} style={{ '--sp': BALLOON_COLORS[i] }}><Icoon naam="ballon" /></span>
+            ))}
           </div>
           <canvas ref={minimapRef} className="botsen-minimap" width={140} height={140} />
         </div>
       )}
 
-      {phase === 'playing' && amStunned && (
-        <div className="botsen-stunned">😵 Tollen… even onkwetsbaar!</div>
-      )}
+      {phase === 'playing' && amStunned && <div className="on-bericht klein">Je tolt! Even onkwetsbaar</div>}
 
-      {phase === 'countdown' && <div className="botsen-count">{count > 0 ? count : 'GO!'}</div>}
+      {phase === 'countdown' && <Aftelling n={count} />}
 
       {aanraak && phase === 'playing' && amAlive && (
         <>
           <Joystick joyRef={joyRef} hint={amStunned ? null : 'Rijden'} />
           <div className="on-acties">
             <ActieKnop label="Slip" kleur="var(--kk-cyan)" onIn={() => { slipRef.current = true }} onUit={() => { slipRef.current = false }}>
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 16c4 0 5-8 9-8s4 4 7 4M4 20c5 0 6-4 9-4" /></svg>
+              <Icoon naam="slip" />
             </ActieKnop>
             <ActieKnop
-              className="groot" kleur="var(--kk-pink)" uit={!heldItem}
+              className={'groot' + (heldItem ? ' botsen-heeft-item' : '')} kleur="var(--kk-pink)" uit={!heldItem}
               label={heldItem ? ITEM_INFO[heldItem]?.label : 'Geen item'} sub={heldItem ? '×' + heldCount : null}
               onTik={() => useItemRef.current()}
             >
-              <span key={heldItem || 'leeg'} className="botsen-item-emoji">{heldItem ? ITEM_INFO[heldItem]?.emoji : '❔'}</span>
+              {itemIcoon}
             </ActieKnop>
           </div>
         </>
@@ -768,92 +794,70 @@ function BotsenMatch({ onBack, room, sessionId, joinCode, myNameProp, myColorPro
           onClick={() => useItemRef.current()}
           disabled={!heldItem}
         >
-          <span key={heldItem || 'leeg'} className="botsen-item-emoji">{heldItem ? ITEM_INFO[heldItem]?.emoji : '❔'}</span>
+          {itemIcoon}
           <span className="botsen-item-label">{heldItem ? ITEM_INFO[heldItem]?.label : 'Geen item'}</span>
-          {heldItem && <span className="botsen-item-count">×{heldCount}</span>}
+          {heldItem && <span className="botsen-item-count">×{heldCount} · spatie</span>}
         </button>
       )}
 
       {phase === 'playing' && !amAlive && (
-        <div className="botsen-out">💥 Uitgeschakeld — kijk toe tot het einde!</div>
+        <div className="on-bericht">Uitgeschakeld<small>Kijk mee tot het einde</small></div>
       )}
 
       {phase === 'gameover' && (
-        <div className="botsen-finish">
-          <h1>🏆 Einde!</h1>
-          <p>{winnerName ? `${winnerName} wint!` : 'Gelijkspel!'}</p>
-          <div className="botsen-finish-btns">
-            <button className="botsen-opnieuw" onClick={() => room.send('opnieuw')}>Nog een keer</button>
-            <button onClick={onBack}>👕 Kledingkast</button>
-          </div>
-        </div>
+        <EindScherm over kop="Einde" kleur={(winnerName && players.find(p => p.name.endsWith(winnerName))?.color) || 'var(--kk-gold)'}
+          winnaar={winnerName ? <><span>{winnerName}</span> wint</> : 'Gelijkspel'}
+          onOpnieuw={() => room.send('opnieuw')} onTerug={onBack} />
       )}
 
-      <div className="botsen-help">
-        {aanraak
-          ? 'Duim op de stick = rijden · opzij = sturen · naar je toe = remmen · pak de ❔-blokken!'
-          : 'W/↑ gas · S/↓ rem · A/← D/→ sturen · Shift = slippen · spatie = item gebruiken · pak de ❔-blokken!'}
-      </div>
+      {phase === 'playing' && (
+        <div className="on-tip">
+          {aanraak
+            ? 'Duim op de stick = rijden · opzij = sturen · naar je toe = remmen · pak de blokken met het vraagteken'
+            : 'W/↑ gas · S/↓ rem · A/← D/→ sturen · Shift = slippen · spatie = item gebruiken · pak de blokken met het vraagteken'}
+        </div>
+      )}
     </div>
   )
 }
 
-// ── Menu + lobby-connect (zelfde server als Karten/Voetbal/Paintball) ───
+// ── Start (naam, kleur, potje maken of meedoen) en daarna het potje ─────
 export default function BotsenGame({ onBack }) {
-  const [screen, setScreen] = useState('menu')   // menu | lobby | match
   const [room, setRoom] = useState(null)
   const [sessionId, setSessionId] = useState(null)
   const [joinCode, setJoinCode] = useState(null)
-  const [myName, setMyName] = useState('')
   const [myColor, setMyColor] = useState('')
   const [melding, setMelding] = useState(null)
 
-  // Lukt terugkomen na wegvallen niet, dan terug naar het menu met uitleg.
+  // Lukt terugkomen na wegvallen niet, dan terug naar het startscherm met uitleg.
   useEffect(() => {
     if (!room) return
     const weg = (code) => {
       if (code === 4000 || code === 1000) return
-      setMelding('De verbinding met het potje is verbroken. Maak een nieuw potje of join opnieuw met de code.')
-      setRoom(null); setScreen('lobby')
+      setMelding('De verbinding met het potje is verbroken. Maak een nieuw potje of doe opnieuw mee met de code.')
+      setRoom(null)
     }
     room.onLeave(weg)
     return () => room.onLeave.remove(weg)
   }, [room])
 
-  if (screen === 'match' && room) {
-    return <BotsenMatch onBack={() => { try { room.leave() } catch {} ; setRoom(null); setScreen('menu') }} room={room} sessionId={sessionId} joinCode={joinCode} myNameProp={myName} myColorProp={myColor} />
+  if (room) {
+    return <BotsenMatch onBack={() => { try { room.leave() } catch {} ; setRoom(null) }} room={room} sessionId={sessionId} joinCode={joinCode} myColorProp={myColor} />
   }
-
-  if (screen === 'lobby') {
-    return <BotsenLobby
-      melding={melding}
-      onBack={() => { setMelding(null); setScreen('menu') }}
-      onJoined={(r, jc, name, color) => { setRoom(r); setSessionId(r.sessionId); setJoinCode(jc); setMyName(name); setMyColor(color); setScreen('match') }}
-    />
-  }
-
-  return (
-    <div className="botsen-menu">
-      <TerugKnop onClick={onBack} />
-      <div className="botsen-menu-box">
-        <div className="botsen-menu-icon">🎈</div>
-        <h1 className="botsen-menu-title">Ballonnengevecht</h1>
-        <p className="botsen-menu-sub">Knal ballonnen in de arena — de laatste met ballonnen wint!</p>
-        <button className="botsen-menu-btn online" onClick={() => setScreen('lobby')}>🌍 Online — knal ballonnen (of tegen bots)</button>
-      </div>
-    </div>
-  )
+  return <BotsenLobby
+    melding={melding} onBack={onBack}
+    onJoined={(r, jc, color) => { setMelding(null); setRoom(r); setSessionId(r.sessionId); setJoinCode(jc); setMyColor(color) }}
+  />
 }
 
 function BotsenLobby({ onBack, onJoined, melding }) {
-  const [code, setCode] = useState('')
   const [name, setName] = useState(() => localStorage.getItem('kk_playername') || '')
   const [color, setColor] = useState(() => localStorage.getItem('kk_botsen_color') || KART_COLORS[0])
   const [error, setError] = useState(melding ?? null)
   const [loading, setLoading] = useState(false)
   const [status, setStatus] = useState(null)
 
-  const connect = async (create) => {
+  const connect = async (create, code = '') => {
     setLoading(true); setError(null)
     try {
       const shirt = localStorage.getItem('kk_shirt') || ''
@@ -863,38 +867,25 @@ function BotsenLobby({ onBack, onJoined, melding }) {
       const room = await maakOfJoin(ROOM_TYPE, opts, { maak: create, onStatus: setStatus })
       if (name) localStorage.setItem('kk_playername', name)
       localStorage.setItem('kk_botsen_color', color)
-      onJoined(room, joinCode, name || 'Speler', color)
+      onJoined(room, joinCode, color)
     } catch (e) { setError(FOUT_TEKST[e?.soort] ?? FOUT_TEKST.server); setLoading(false); setStatus(null) }
   }
 
   return (
-    <div className="botsen-menu">
-      <TerugKnop onClick={onBack} />
-      <div className="botsen-menu-box">
-        <div className="botsen-menu-icon">🌍</div>
-        <h1 className="botsen-menu-title">Online ballonnengevecht</h1>
-        <div className="botsen-lobby-field">
-          <label>Jouw naam</label>
-          <input className="botsen-input" placeholder="Speler" value={name} maxLength={12} onChange={e => setName(e.target.value)} />
+    <StartScherm
+      accent={ACCENT} icoon="ballon" codeLengte={4} titel={<>Ballonnen<br /><span>gevecht</span></>}
+      sub="Knal de ballonnen van de anderen. Wie als laatste nog ballonnen heeft, wint."
+      onBack={onBack} naam={name} setNaam={setName} laden={loading} status={status} fout={error}
+      onMaak={() => connect(true)} onJoin={c => connect(false, c)}>
+      <div className="on-veld">
+        <span className="on-label">Kleur van je kart</span>
+        <div className="on-kleuren">
+          {KART_COLORS.map((c, i) => (
+            <button key={c} type="button" className={'on-kleur' + (c === color ? ' aan' : '')} style={{ '--sp': c }}
+              aria-pressed={c === color} aria-label={'Kleur ' + (i + 1)} onClick={() => setColor(c)} />
+          ))}
         </div>
-        <div className="botsen-lobby-field">
-          <label>Kart-kleur</label>
-          <div className="botsen-color-row">
-            {KART_COLORS.map(c => (
-              <button key={c} type="button" className={'botsen-color-swatch' + (c === color ? ' on' : '')}
-                style={{ background: c }} onClick={() => setColor(c)} aria-label={c} />
-            ))}
-          </div>
-        </div>
-        <button className="botsen-menu-btn online" disabled={loading} onClick={() => connect(true)}>➕ Nieuw potje (maak code)</button>
-        <div className="botsen-lobby-field">
-          <label>Of join met code</label>
-          <input className="botsen-input" placeholder="bv. 1234" value={code} maxLength={6} onChange={e => setCode(e.target.value.replace(/\D/g, ''))} />
-        </div>
-        <button className="botsen-menu-btn solo" disabled={loading || code.trim().length < 1} onClick={() => connect(false)}>🔑 Join potje</button>
-        {error && <p className="botsen-lobby-err">{error}</p>}
-        {loading && <VerbindStatus status={status} />}
       </div>
-    </div>
+    </StartScherm>
   )
 }
