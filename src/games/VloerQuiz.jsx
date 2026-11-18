@@ -105,7 +105,7 @@ function BeeldWeg() {
   return (
     <div className="vq-beeldweg" role="alert">
       <b>Het beeld doet het niet</b>
-      <span>Dit apparaat kan het 3D-beeld nu niet laten zien. Laad de pagina opnieuw, of sluit andere tabbladen en apps.</span>
+      <span>Dit apparaat kan het 3D-beeld nu niet laten zien. Laad de pagina opnieuw. Blijft het zwart, sluit dan dit tabblad helemaal (en andere tabbladen en apps) en open de site opnieuw.</span>
       <button type="button" className="on-knop" onClick={() => window.location.reload()}>Opnieuw laden</button>
     </div>
   )

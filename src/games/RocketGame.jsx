@@ -412,7 +412,7 @@ function fmtTime(s) {
 
 // ── Main 3D scene init ─────────────────────────────────────────────────
 function initScene(canvas, { localSessionId, getRoomState, sendInput, sendEmote, timerDomRef, staminaDomRef, followBallRef }) {
-  const engine = new Engine(canvas, true, { adaptToDeviceRatio: true, stencil: true, powerPreference: 'high-performance' })
+  const engine = new Engine(canvas, true, { adaptToDeviceRatio: true, stencil: true, powerPreference: 'high-performance', loseContextOnDispose: true })
   // Cap render resolution on very high-DPI screens (phones) to save GPU.
   if (window.devicePixelRatio > 1.5) engine.setHardwareScalingLevel(window.devicePixelRatio / 1.5)
   const scene  = new Scene(engine)

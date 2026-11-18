@@ -29,6 +29,12 @@ const VAL_TIJD = 2600     // ms, zoals op de server: dan staan de gevallen kinde
 const PODIUM = [{ x: 0, z: 0.6, h: 1.5 }, { x: -2.4, z: 0, h: 1.0 }, { x: 2.4, z: 0, h: 0.7 }]
 const PODIUM_KLEUR = ['#ffd23d', '#c9d6ff', '#ff9a5a']
 const SCHAAL = HALF / 13   // de camera stond goed bij een vloer van 26 m
+// Geheugen op een tablet: nooit de hele klas tegelijk laden. Een kind ziet
+// zichzelf en hooguit ANDEREN anderen, en nieuwe poppetjes komen er één voor
+// één bij (een iPad liet het 3D-beeld anders wegvallen bij het meedoen).
+const ANDEREN = 12
+const MAX_GELADEN = 16
+const STAP_KIND = 350, STAP_BORD = 90   // ms tussen twee nieuwe poppetjes
 
 // ── Vormen (zoals de knoppen in de HUD) ──────────────────────────────────
 export function tekenVorm(c, vorm, cx, cy, r) {
@@ -300,16 +306,16 @@ function maakSchaduw(scene) {
 const draagt = (json) => { try { return JSON.parse(json || '{}') } catch { return {} } }
 
 export function maakVloerScene(canvas, { ikId = null, haalState, stuur, invoerRef, hudRef, opUitslag, opBeeldWeg }) {
-  const engine = new Engine(canvas, true, { adaptToDeviceRatio: true, stencil: true, powerPreference: 'high-performance' })
+  const engine = new Engine(canvas, true, { adaptToDeviceRatio: true, stencil: true, powerPreference: 'high-performance', loseContextOnDispose: true })
   const host = !ikId
   // Scherpte: zoveel pixels als het scherm echt heeft (hooguit 2 per CSS-pixel),
   // tot een maximum: het bord tot 4K (van ver lezen, tijdens een vraag staat er
-  // weinig in beeld), een tablet tot ~2,6 miljoen pixels. Een schaal-level van
+  // weinig in beeld), een tablet tot ~1,6 miljoen (geheugen). Een schaal-level van
   // 0,5 betekent 2 beeldpunten per CSS-pixel.
   const zetScherpte = () => {
     const dpr = Math.min(2, window.devicePixelRatio || 1)
     const css = (canvas.clientWidth || innerWidth) * (canvas.clientHeight || innerHeight)
-    const max = host ? 3840 * 2160 : 2.6e6
+    const max = host ? 3840 * 2160 : 1.6e6
     engine.setHardwareScalingLevel(Math.max(1 / dpr, Math.sqrt(css / max)))
   }
   zetScherpte()
@@ -368,7 +374,7 @@ export function maakVloerScene(canvas, { ikId = null, haalState, stuur, invoerRe
   window.addEventListener('keydown', kd)
   window.addEventListener('keyup', ku)
 
-  let fase = '', vraagSleutel = '', indeling = 0, uitslagGedaan = false, dansSleutel = ''
+  let fase = '', vraagSleutel = '', indeling = 0, uitslagGedaan = false, dansSleutel = '', volgendePop = 0
 
   scene.registerBeforeRender(() => {
     const dt = Math.min(engine.getDeltaTime() / 1000, 0.1)   // ook op een traag apparaat even snel lopen
@@ -444,10 +450,28 @@ export function maakVloerScene(canvas, { ikId = null, haalState, stuur, invoerRe
     // ── poppetjes ──────────────────────────────────────────────────────
     const magLopen = s.phase === 'lobby' || s.phase === 'vraag' || s.phase === 'uitslag'
     let opVlak = 0
+    const nu0 = performance.now()
+    // welke anderen een kind te zien krijgt (het bord: iedereen)
+    let toegestaan = null
+    if (!host) {
+      const anderen = [...s.players.entries()].filter(([sid]) => sid !== ikId)
+      const lijst = s.phase === 'vraag' ? []
+        : s.phase === 'uitslag' ? anderen.filter(([, p]) => p.goed === 1)
+        : s.phase === 'einde' ? anderen.sort((a, b) => b[1].score - a[1].score)
+        : anderen   // wachtkamer: op volgorde van binnenkomst, dan wisselt het niet
+      toegestaan = new Set(lijst.slice(0, ANDEREN).map(([sid]) => sid))
+    }
     s.players.forEach((p, sid) => {
       let pl = spelers.get(sid)
       const ik = sid === ikId
+      if (!ik && toegestaan && !toegestaan.has(sid)) {
+        if (pl) { pl.pop.zichtbaar(false); pl.schaduw.setEnabled(false) }
+        return
+      }
       if (!pl) {
+        // één voor één: zelf altijd meteen
+        if (!ik && nu0 < volgendePop) return
+        if (!ik) volgendePop = nu0 + (host ? STAP_BORD : STAP_KIND)
         pl = {
           pop: new Poppetje(scene, { schaal: 1.6, shirt: p.shirt, wearing: draagt(p.wearing), naam: p.name, kleur: ik ? ACCENT : '#b9b4ff', ik }),
           schaduw: maakSchaduw(scene),
@@ -538,6 +562,13 @@ export function maakVloerScene(canvas, { ikId = null, haalState, stuur, invoerRe
     spelers.forEach((pl, sid) => {
       if (!s.players.has(sid)) { pl.pop.dispose(); pl.schaduw.dispose(); spelers.delete(sid) }
     })
+    // te veel poppetjes geladen op een tablet: wie nu niet in beeld hoort, weg
+    if (toegestaan && spelers.size - 1 > MAX_GELADEN) {
+      for (const [sid, pl] of spelers) {
+        if (spelers.size - 1 <= MAX_GELADEN) break
+        if (sid !== ikId && !toegestaan.has(sid)) { pl.pop.dispose(); pl.schaduw.dispose(); spelers.delete(sid) }
+      }
+    }
     const tel = host && hudRef?.current?.querySelector('.vq-opvlak')
     if (tel && tel.textContent !== String(opVlak)) tel.textContent = opVlak
 

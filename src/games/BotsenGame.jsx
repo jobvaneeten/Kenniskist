@@ -294,7 +294,7 @@ function BotsenMatch({ onBack, room, sessionId, joinCode, myColorProp }) {
   useEffect(() => {
     const canvas = canvasRef.current
     // geen preserveDrawingBuffer (kost op veel GPU's flink wat) en vraag de snelle GPU
-    const engine = new Engine(canvas, true, { stencil: true, powerPreference: 'high-performance' })
+    const engine = new Engine(canvas, true, { stencil: true, powerPreference: 'high-performance', loseContextOnDispose: true })
     const scene = new Scene(engine)
 
     // Nachtbelichting: het meeste licht komt uit de HDRI-omgeving en het neon

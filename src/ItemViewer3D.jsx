@@ -24,7 +24,7 @@ export default function ItemViewer3D({ type, itemKey, gloed = '#facc15', childre
 
   useEffect(() => {
     const canvas = canvasRef.current
-    const engine = new Engine(canvas, true, { preserveDrawingBuffer: false, stencil: false })
+    const engine = new Engine(canvas, true, { preserveDrawingBuffer: false, stencil: false, loseContextOnDispose: true })
     engine.setHardwareScalingLevel(1 / Math.min(2, window.devicePixelRatio || 1))
     const scene = new Scene(engine)
     scene.clearColor = new Color4(0, 0, 0, 0)

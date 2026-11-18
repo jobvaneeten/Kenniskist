@@ -82,7 +82,7 @@ export default function KistOpener3D({ type, item, rarity, onOpen, onKlaar }) {
 
   useEffect(() => {
     const canvas = canvasRef.current
-    const engine = new Engine(canvas, true, { stencil: true, powerPreference: 'high-performance' })
+    const engine = new Engine(canvas, true, { stencil: true, powerPreference: 'high-performance', loseContextOnDispose: true })
     engine.setHardwareScalingLevel(1 / Math.min(1.5, window.devicePixelRatio || 1))   // scherp genoeg, en 60 fps op Chromebooks
     const scene = new Scene(engine)
     scene.clearColor = new Color4(0, 0, 0, 0)

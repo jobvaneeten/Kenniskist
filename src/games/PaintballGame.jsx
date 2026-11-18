@@ -625,7 +625,7 @@ function fmtTime(s) { const m = Math.floor(s / 60); const sec = Math.floor(s) % 
 
 // ── Scene init ─────────────────────────────────────────────────────────
 function initScene(canvas, { localSessionId, getRoomState, sendState, sendShoot, sendReload, sendObstacles, onCrouchToggle, mapCfg, hpDomRef, timerDomRef, ammoDomRef }) {
-  const engine = new Engine(canvas, true, { adaptToDeviceRatio: true, stencil: true, powerPreference: 'high-performance' })
+  const engine = new Engine(canvas, true, { adaptToDeviceRatio: true, stencil: true, powerPreference: 'high-performance', loseContextOnDispose: true })
   if (window.devicePixelRatio > 1.5) engine.setHardwareScalingLevel(window.devicePixelRatio / 1.5)
   canvas.style.cursor = 'none'   // only the crosshair shows
   const scene = new Scene(engine)

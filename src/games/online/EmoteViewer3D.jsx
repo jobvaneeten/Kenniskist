@@ -18,7 +18,7 @@ export default function EmoteViewer3D({ emote, gloed = '#facc15', hoek = -Math.P
 
   useEffect(() => {
     const canvas = canvasRef.current
-    const engine = new Engine(canvas, true, { stencil: false })
+    const engine = new Engine(canvas, true, { stencil: false, loseContextOnDispose: true })
     engine.setHardwareScalingLevel(1 / Math.min(2, window.devicePixelRatio || 1))
     const scene = new Scene(engine)
     scene.clearColor = new Color4(0, 0, 0, 0)

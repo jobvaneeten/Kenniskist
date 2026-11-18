@@ -335,7 +335,9 @@ export default function Wardrobe({ onBack, onPlayRocket, onPlayPaintball, onPlay
     const canvas = canvasRef.current
     if (!canvas) return
 
-    const engine = new Engine(canvas, true)
+    // loseContextOnDispose: bij weggaan het grafische geheugen echt vrijgeven
+    // (anders houdt een iPad het vast en wordt het volgende 3D-scherm zwart)
+    const engine = new Engine(canvas, true, { loseContextOnDispose: true })
     const scene  = new Scene(engine)
     sceneRef.current = scene
     zetResolutie(2048)   // één poppetje van dichtbij: dubbel zo scherpe stof
