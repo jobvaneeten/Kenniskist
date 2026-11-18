@@ -26,12 +26,13 @@ h3{margin:14px 0 8px;font-size:14px;text-transform:uppercase;letter-spacing:1.5p
 .tab{background:var(--tile);border:2px solid var(--line);border-radius:14px;padding:8px 6px 10px;cursor:pointer;color:#fff;font:inherit;font-weight:900;font-size:16px;text-align:center}
 .tab canvas{display:block;margin:0 auto 4px;width:100%;max-width:110px;height:70px}
 .tab.sel{border-color:var(--gold);background:rgba(245,180,30,.14)}
-.models{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.models{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
 .model{background:var(--tile);border:2px solid var(--line);border-radius:14px;padding:10px;text-align:center}
 .model.sel{border-color:var(--gold)}
 .model canvas{display:block;margin:0 auto;width:100%;max-width:150px;height:96px}
 .model .nm{font-weight:900;font-size:16px;margin:4px 0 2px}
-.model .bonus{font-size:12px;color:var(--muted);min-height:16px;margin-bottom:6px}
+.model .bonus{font-size:12px;color:var(--muted);min-height:32px;margin-bottom:6px;line-height:1.35}
+.model .nm{line-height:1.15}
 .btn{font:inherit;font-weight:900;border:0;border-radius:12px;padding:9px 14px;cursor:pointer;color:#1b1200;background:linear-gradient(#ffd45a,#f5a90c);box-shadow:0 3px 0 #a86a00;font-size:15px;display:inline-flex;align-items:center;gap:6px;justify-content:center}
 .btn:active{transform:translateY(2px);box-shadow:0 1px 0 #a86a00}
 .btn.ghost{background:rgba(255,255,255,.1);color:#fff;box-shadow:0 3px 0 rgba(0,0,0,.4)}
@@ -123,13 +124,43 @@ addEventListener('resize',resize);resize();
 const TYPES={
   auto:{name:'Auto',surface:'road',base:40,wheelie:false,models:[
     {name:'Standaard auto',body:'#e23b3b',price:0},
-    {name:'Sportauto',body:'#ffc81e',price:2000,pro:true}]},
+    {name:'Sportauto',body:'#ffc81e',price:2000,pro:true},
+    {name:'Dacia Duster',body:'#6f7f6a',stijl:'suv',price:500,bonus:0,info:'SUV · 4x4'},
+    {name:'Fiat Panda',body:'#d9262f',stijl:'stad',price:500,bonus:0,info:'Stadsauto'},
+    {name:'Ford Ranger',body:'#ff7a1a',stijl:'pickup',price:1200,bonus:1,info:'Pick-up · 4x4'},
+    {name:'Volkswagen Golf',body:'#2f7fe0',stijl:'hatch',price:1200,bonus:1,info:'Hatchback'},
+    {name:'Mercedes-Benz G-Klasse',body:'#4f7a2a',stijl:'terrein',price:2500,bonus:1,info:'Terreinwagen · 4x4'},
+    {name:'Audi A6',body:'#8a8f98',stijl:'sedan',price:2500,bonus:1,info:'Sedan · AWD'},
+    {name:'BMW X5',body:'#1f3f8f',stijl:'suv',price:2500,bonus:1,info:'SUV · AWD'},
+    {name:'Porsche 911',body:'#f2f2f2',stijl:'porsche',price:4500,bonus:2,info:'Sportwagen'},
+    {name:'Ferrari SF90',body:'#e0141e',stijl:'ferrari',price:4500,bonus:2,info:'Sportwagen'},
+    {name:'Lamborghini Aventador',body:'#ffd21e',stijl:'lambo',price:4500,bonus:2,info:'Sportwagen'}]},
   motor:{name:'Motor',surface:'bike',base:36,wheelie:true,models:[
     {name:'Standaard motor',body:'#d8262f',jacket:'#2a2a2a',helmet:'#d8262f',price:0},
-    {name:'Racemotor',body:'#35c23a',jacket:'#1e7a24',helmet:'#e8ff3a',price:1500,pro:true}]},
+    {name:'Racemotor',body:'#35c23a',jacket:'#1e7a24',helmet:'#e8ff3a',price:1500,pro:true},
+    {name:'Sym Orbit',body:'#e8e8ea',jacket:'#3a3f55',helmet:'#e8e8ea',stijl:'scooter',price:500,bonus:0,info:'Scooter'},
+    {name:'Piaggio Zip',body:'#2f6fe0',jacket:'#22283c',helmet:'#2f6fe0',stijl:'scooter',price:500,bonus:0,info:'Scooter'},
+    {name:'Royal Enfield Himalayan',body:'#3f6a3a',jacket:'#4a3a2a',helmet:'#3f6a3a',stijl:'adventure',price:1200,bonus:1,info:'Adventure · offroad'},
+    {name:'Suzuki V-Strom 650',body:'#f2c400',jacket:'#2a2a2a',helmet:'#f2c400',stijl:'adventure',price:1200,bonus:1,info:'Tour / adventure'},
+    {name:'Kawasaki Z900',body:'#39b54a',jacket:'#1b1b1b',helmet:'#39b54a',stijl:'naked',price:1200,bonus:1,info:'Naked'},
+    {name:'Honda Africa Twin',body:'#f4f4f4',accent:'#d8262f',jacket:'#22305a',helmet:'#d8262f',stijl:'adventure',price:2500,bonus:1,info:'Adventure'},
+    {name:'Yamaha R1',body:'#1f3fbf',jacket:'#14205a',helmet:'#1f3fbf',stijl:'sport',price:2500,bonus:1,info:'Sportmotor'},
+    {name:'KTM 450 EXC',body:'#ff6a00',jacket:'#2a2a2a',helmet:'#ff6a00',stijl:'enduro',price:2500,bonus:1,info:'Enduro / cross'},
+    {name:'BMW M 1000 RR',body:'#f2f2f2',accent:'#1f5fd8',jacket:'#14205a',helmet:'#1f5fd8',stijl:'sport',price:4500,bonus:2,info:'Sportmotor'},
+    {name:'Ducati Panigale V4',body:'#d8141e',jacket:'#2a2a2a',helmet:'#d8141e',stijl:'sport',price:4500,bonus:2,info:'Sportmotor'}]},
   fiets:{name:'Fiets',surface:'bike',base:30,wheelie:true,models:[
     {name:'Standaard fiets',body:'#2f7fe0',jacket:'#2f7fe0',helmet:'#ffffff',price:0},
-    {name:'Downhill fiets',body:'#151515',accent:'#d9a514',jacket:'#1b1b1b',helmet:'#d9a514',price:1000,pro:true}]}
+    {name:'Downhill fiets',body:'#151515',accent:'#d9a514',jacket:'#1b1b1b',helmet:'#d9a514',price:1000,pro:true},
+    {name:'Popal Daily FS',body:'#2f6fe0',jacket:'#e85a5a',helmet:'#2f6fe0',stijl:'kind',price:500,bonus:0,info:'Kinderfiets'},
+    {name:'Alpina Yabber FS',body:'#ff5fb0',jacket:'#9b6bff',helmet:'#ff5fb0',stijl:'kind',price:500,bonus:0,info:'Kinderfiets'},
+    {name:'Decathlon Rockrider FS',body:'#d8262f',jacket:'#2a2a2a',helmet:'#d8262f',stijl:'mtb',price:1200,bonus:1,info:'Mountainbike'},
+    {name:'Cortina E-U4',body:'#1f2f5a',jacket:'#5a6a8a',helmet:'#1f2f5a',stijl:'stad',accu:true,price:1200,bonus:1,info:'Stadsfiets · e-bike'},
+    {name:'Batavus Finez E-go',body:'#efe4cc',accent:'#7a4a2a',jacket:'#3a4a6a',helmet:'#efe4cc',stijl:'stad',accu:true,price:1200,bonus:1,info:'Stadsfiets · e-bike'},
+    {name:'Gazelle Ultimate C380',body:'#2a2c33',jacket:'#4a5a7a',helmet:'#2a2c33',stijl:'stad',accu:true,price:2500,bonus:1,info:'Elektrische fiets'},
+    {name:'Cube Stereo',body:'#2f7fe0',accent:'#ff7a1a',jacket:'#1b1b1b',helmet:'#2f7fe0',stijl:'mtb',price:2500,bonus:1,info:'Mountainbike'},
+    {name:'Cannondale Scalpel',body:'#5fb83a',jacket:'#1b1b1b',helmet:'#5fb83a',stijl:'mtb',price:2500,bonus:1,info:'Mountainbike'},
+    {name:'Specialized S-Works Epic',body:'#1b1b1b',accent:'#e0141e',jacket:'#e0141e',helmet:'#1b1b1b',stijl:'mtb',price:4500,bonus:2,info:'Mountainbike'},
+    {name:'Trek Madone',body:'#d8141e',jacket:'#1b1b1b',helmet:'#d8141e',stijl:'race',price:4500,bonus:2,info:'Racefiets'}]}
 };
 const ORDER=['auto','motor','fiets'];
 const UPG=[
@@ -142,9 +173,11 @@ const KEY='roadrush_v1';
 let S={coins:0,best:0,type:'fiets',model:{auto:0,motor:0,fiets:0},owned:{auto:[1,0],motor:[1,0],fiets:[1,0]},
   up:{auto:{spd:0,coin:0,grip:0},motor:{spd:0,coin:0,grip:0},fiets:{spd:0,coin:0,grip:0}}};
 try{const d=JSON.parse(localStorage.getItem(KEY));if(d&&d.up&&d.owned)S=Object.assign(S,d);}catch(e){}
+ORDER.forEach(k=>{const n=TYPES[k].models.length;while(S.owned[k].length<n)S.owned[k].push(0);if(S.model[k]>=n)S.model[k]=0;});
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 
-function stats(type=S.type){const T=TYPES[type],m=T.models[S.model[type]],pro=m.pro?1:0,u=S.up[type];
+function bonusVan(m){return m.bonus!=null?m.bonus:(m.pro?1:0);}
+function stats(type=S.type){const T=TYPES[type],m=T.models[S.model[type]],pro=bonusVan(m),u=S.up[type];
   return{spd:u.spd+pro,coin:u.coin+pro,grip:u.grip+pro,model:m,T};}
 
 /* ---------- helpers ---------- */
@@ -155,38 +188,86 @@ function ell(c,x,y,rx,ry){c.beginPath();c.ellipse(x,y,Math.max(.1,rx),Math.max(.
 const rnd=(a,b)=>a+Math.random()*(b-a), pick=a=>a[Math.floor(Math.random()*a.length)];
 
 /* ---------- drawing: vehicles (seen from behind) ---------- */
+// vorm per stijl: breedte, hoogte, dak, lampen en extra's (van achteren gezien)
+const AUTOSTIJL={
+  stad:{wf:.68,hf:.8,roof:.3},
+  hatch:{wf:.78,hf:.7,roof:.33},
+  sedan:{wf:.82,hf:.6,roof:.3,licht:'balk'},
+  suv:{wf:.84,hf:.8,roof:.36,rails:true},
+  terrein:{wf:.82,hf:.88,roof:.4,hoekig:true,reserve:true},
+  pickup:{wf:.86,hf:.82,roof:.3,laadbak:true},
+  porsche:{wf:.84,hf:.54,roof:.26,licht:'balk',spoiler:true},
+  ferrari:{wf:.88,hf:.5,roof:.24,licht:'rond'},
+  lambo:{wf:.92,hf:.47,roof:.22,licht:'lambo',vleugel:true,strepen:true}};
 function drawCar(c,x,y,lw,m){
-  const w=lw*.8,h=w*.66,col=m.body;
+  const A=AUTOSTIJL[m.stijl]||{wf:.8,hf:.66,roof:.31};
+  const w=lw*A.wf,h=w*A.hf,col=m.body,rf=A.roof,ro=A.hoekig?.04:.09;
   c.fillStyle='rgba(0,0,0,.28)';ell(c,x,y,w*.6,w*.07);c.fill();
-  c.fillStyle='#151515';rr(c,x-w*.48,y-w*.17,w*.18,w*.17,w*.03);c.fill();rr(c,x+w*.30,y-w*.17,w*.18,w*.17,w*.03);c.fill();
-  c.fillStyle=shade(col,-.28);c.beginPath();c.moveTo(x-w*.43,y-h*.8);c.lineTo(x-w*.31,y-h*1.2);c.lineTo(x+w*.31,y-h*1.2);c.lineTo(x+w*.43,y-h*.8);c.closePath();c.fill();
-  const wg=c.createLinearGradient(x,y-h*1.15,x,y-h*.84);wg.addColorStop(0,'#7894b8');wg.addColorStop(1,'#1d2a3f');c.fillStyle=wg;
-  c.beginPath();c.moveTo(x-w*.36,y-h*.84);c.lineTo(x-w*.28,y-h*1.14);c.lineTo(x+w*.28,y-h*1.14);c.lineTo(x+w*.36,y-h*.84);c.closePath();c.fill();
-  {const bg=c.createLinearGradient(0,y-h*.84,0,y-h*.16);bg.addColorStop(0,shade(col,.3));bg.addColorStop(.45,col);bg.addColorStop(1,shade(col,-.35));c.fillStyle=bg;}rr(c,x-w/2,y-h*.84,w,h*.68,w*.09);c.fill();
-  if(m.pro){c.fillStyle='#111';rr(c,x-w*.07,y-h*.84,w*.05,h*.68,1);c.fill();rr(c,x+w*.02,y-h*.84,w*.05,h*.68,1);c.fill();}
+  // banden (breder bij sportwagens en terreinwagens)
+  const bb=A.licht==='lambo'||A.licht==='rond'||A.hoekig||A.laadbak?.21:.18;
+  c.fillStyle='#151515';rr(c,x-w*.48,y-w*.17,w*bb,w*.17,w*.03);c.fill();rr(c,x+w*(.48-bb),y-w*.17,w*bb,w*.17,w*.03);c.fill();
+  // cabine en achterruit
+  const dakY=A.laadbak?h*1.32:h*1.2;
+  c.fillStyle=shade(col,-.28);c.beginPath();c.moveTo(x-w*(rf+.12),y-h*.8);c.lineTo(x-w*rf,y-dakY);c.lineTo(x+w*rf,y-dakY);c.lineTo(x+w*(rf+.12),y-h*.8);c.closePath();c.fill();
+  const wg=c.createLinearGradient(x,y-dakY,x,y-h*.84);wg.addColorStop(0,'#7894b8');wg.addColorStop(1,'#1d2a3f');c.fillStyle=wg;
+  const rv=A.laadbak?.55:1;
+  c.beginPath();c.moveTo(x-w*(rf+.05)*rv,y-h*(A.laadbak?1.0:.84));c.lineTo(x-w*(rf-.03)*rv,y-dakY+h*.06);c.lineTo(x+w*(rf-.03)*rv,y-dakY+h*.06);c.lineTo(x+w*(rf+.05)*rv,y-h*(A.laadbak?1.0:.84));c.closePath();c.fill();
+  if(A.rails){c.fillStyle='#2a2a2a';rr(c,x-w*rf,y-dakY-h*.07,w*.05,h*.07,2);c.fill();rr(c,x+w*rf-w*.05,y-dakY-h*.07,w*.05,h*.07,2);c.fill();rr(c,x-w*rf,y-dakY-h*.08,w*rf*2,h*.03,2);c.fill();}
+  // carrosserie
+  {const bg=c.createLinearGradient(0,y-h*.84,0,y-h*.16);bg.addColorStop(0,shade(col,.3));bg.addColorStop(.45,col);bg.addColorStop(1,shade(col,-.35));c.fillStyle=bg;}rr(c,x-w/2,y-h*.84,w,h*.68,w*ro);c.fill();
+  if(A.laadbak){c.strokeStyle=shade(col,-.4);c.lineWidth=Math.max(1,w*.012);rr(c,x-w*.42,y-h*.8,w*.84,h*.42,w*.02);c.stroke();}
+  if(m.pro||A.strepen){c.fillStyle='#111';rr(c,x-w*.07,y-h*.84,w*.05,h*.68,1);c.fill();rr(c,x+w*.02,y-h*.84,w*.05,h*.68,1);c.fill();}
   c.fillStyle='rgba(255,255,255,.2)';rr(c,x-w*.44,y-h*.8,w*.88,h*.07,h*.035);c.fill();
-  c.fillStyle='#ff2d2d';rr(c,x-w*.47,y-h*.68,w*.18,h*.14,h*.04);c.fill();rr(c,x+w*.29,y-h*.68,w*.18,h*.14,h*.04);c.fill();
-  c.fillStyle='#ffd0d0';rr(c,x-w*.44,y-h*.65,w*.06,h*.05,2);c.fill();rr(c,x+w*.38,y-h*.65,w*.06,h*.05,2);c.fill();
+  // achterlichten
+  c.fillStyle='#ff2d2d';
+  if(A.licht==='balk'){rr(c,x-w*.47,y-h*.68,w*.94,h*.09,h*.04);c.fill();c.fillStyle='#ffb0b0';rr(c,x-w*.45,y-h*.66,w*.9,h*.025,2);c.fill();}
+  else if(A.licht==='rond'){[-.4,-.29,.29,.4].forEach(f=>{ell(c,x+w*f,y-h*.62,w*.045,w*.045);c.fill();});c.fillStyle='#ffd0d0';[-.4,.4].forEach(f=>{ell(c,x+w*f,y-h*.62,w*.018,w*.018);c.fill();});}
+  else if(A.licht==='lambo'){c.lineWidth=Math.max(1.5,w*.022);c.strokeStyle='#ff2d2d';[-1,1].forEach(z=>{c.beginPath();c.moveTo(x+z*w*.46,y-h*.72);c.lineTo(x+z*w*.33,y-h*.62);c.lineTo(x+z*w*.46,y-h*.52);c.moveTo(x+z*w*.33,y-h*.62);c.lineTo(x+z*w*.2,y-h*.62);c.stroke();});}
+  else{rr(c,x-w*.47,y-h*.68,w*.18,h*.14,h*.04);c.fill();rr(c,x+w*.29,y-h*.68,w*.18,h*.14,h*.04);c.fill();
+    c.fillStyle='#ffd0d0';rr(c,x-w*.44,y-h*.65,w*.06,h*.05,2);c.fill();rr(c,x+w*.38,y-h*.65,w*.06,h*.05,2);c.fill();}
+  // kenteken en bumper
   c.fillStyle='#f4c300';rr(c,x-w*.13,y-h*.5,w*.26,h*.12,h*.02);c.fill();
   c.fillStyle='#222';rr(c,x-w*.49,y-h*.3,w*.98,h*.11,h*.04);c.fill();
-  if(m.pro){c.fillStyle='#111';rr(c,x-w*.48,y-h*.98,w*.96,h*.07,2);c.fill();c.fillRect(x-w*.36,y-h*.92,w*.04,h*.1);c.fillRect(x+w*.32,y-h*.92,w*.04,h*.1);}
+  if(A.licht==='lambo'||A.licht==='rond'){c.fillStyle='#111';[-.12,-.04,.04,.12].forEach(f=>{rr(c,x+w*f-w*.025,y-h*.33,w*.05,h*.1,2);c.fill();});}
+  // reservewiel achterop
+  if(A.reserve){c.fillStyle='#151515';ell(c,x,y-h*.62,w*.17,w*.17);c.fill();c.fillStyle='#555';ell(c,x,y-h*.62,w*.08,w*.08);c.fill();c.fillStyle=col;ell(c,x,y-h*.62,w*.05,w*.05);c.fill();}
+  // spoilers
+  if(A.spoiler){c.fillStyle=shade(col,-.15);rr(c,x-w*.36,y-h*.9,w*.72,h*.07,3);c.fill();}
+  if(m.pro||A.vleugel){c.fillStyle='#111';rr(c,x-w*.48,y-h*.98-(A.vleugel?h*.12:0),w*.96,h*.07,2);c.fill();c.fillRect(x-w*.36,y-h*.92-(A.vleugel?h*.12:0),w*.04,h*.1+(A.vleugel?h*.12:0));c.fillRect(x+w*.32,y-h*.92-(A.vleugel?h*.12:0),w*.04,h*.1+(A.vleugel?h*.12:0));}
 }
+const RIJSTIJL={
+  race:{band:.06,laag:true},mtb:{band:.13,vering:true},stad:{band:.1,rek:true},kind:{band:.1,klein:.8},
+  sport:{band:.24,kuip:true,laag:true},adventure:{band:.2,koffers:true,scherm:true},naked:{band:.22,rond:true},
+  enduro:{band:.14,bord:true},scooter:{band:.17,scooter:true}};
 function drawRider(c,x,y,lw,m,isMoto,wheelie,lean){
-  const w=lw*(isMoto?.52:.46);
+  const R=RIJSTIJL[m.stijl]||{};
+  const w=lw*(isMoto?.52:.46)*(R.klein||1);
   c.save();c.translate(x,y);c.rotate(lean||0);
   c.fillStyle='rgba(0,0,0,.28)';ell(c,0,0,w*.45,w*.07);c.fill();
-  const tw=isMoto?w*.2:w*.09;
+  const tw=R.band?w*R.band:(isMoto?w*.2:w*.09);
   if(wheelie){ // voorwiel in de lucht, piept boven het hoofd uit
     c.fillStyle='#111';rr(c,-tw*.55,-w*1.75,tw*1.1,w*.5,tw*.5);c.fill();
     c.fillStyle=m.accent||'#9aa';rr(c,-tw*.75,-w*1.38,tw*1.5,w*.08,2);c.fill();
   }
   c.fillStyle='#111';rr(c,-tw/2,-w*.5,tw,w*.5,tw/2);c.fill();
-  if(isMoto){
+  if(R.koffers){c.fillStyle='#3a3d45';rr(c,-w*.42,-w*.66,w*.2,w*.28,w*.04);c.fill();rr(c,w*.22,-w*.66,w*.2,w*.28,w*.04);c.fill();
+    c.fillStyle='rgba(255,255,255,.18)';rr(c,-w*.4,-w*.64,w*.16,w*.04,2);c.fill();rr(c,w*.24,-w*.64,w*.16,w*.04,2);c.fill();}
+  if(R.scooter){c.fillStyle=m.body;rr(c,-w*.26,-w*.78,w*.52,w*.4,w*.16);c.fill();
+    c.fillStyle='rgba(255,255,255,.25)';rr(c,-w*.2,-w*.75,w*.14,w*.3,w*.06);c.fill();
+    c.fillStyle='#ff2d2d';rr(c,-w*.12,-w*.72,w*.24,w*.06,3);c.fill();c.fillStyle='#f4c300';rr(c,-w*.08,-w*.6,w*.16,w*.06,2);c.fill();}
+  if(R.vering){c.strokeStyle=m.accent||'#f0b400';c.lineWidth=Math.max(1,w*.03);c.beginPath();for(let q=0;q<4;q++){c.moveTo(-w*.05,-w*(.52+q*.04));c.lineTo(w*.05,-w*(.54+q*.04));}c.stroke();}
+  if(R.rek){c.fillStyle=m.accent||'#333';rr(c,-w*.14,-w*.6,w*.28,w*.05,2);c.fill();c.fillStyle=shade(m.body,-.2);rr(c,-tw*.8,-w*.56,tw*1.6,w*.16,tw*.5);c.fill();}
+  if(m.accu){c.fillStyle='#1b1b1f';rr(c,-w*.07,-w*.7,w*.14,w*.12,3);c.fill();c.fillStyle='#4fe08a';rr(c,-w*.04,-w*.66,w*.08,w*.02,1);c.fill();}
+  if(isMoto&&!R.scooter){
     c.fillStyle='#8d8d8d';rr(c,w*.17,-w*.36,w*.12,w*.2,w*.05);c.fill();
     c.fillStyle=m.body;c.beginPath();c.moveTo(-w*.25,-w*.44);c.lineTo(-w*.18,-w*.72);c.lineTo(w*.18,-w*.72);c.lineTo(w*.25,-w*.44);c.closePath();c.fill();
-    c.fillStyle='#ff2d2d';rr(c,-w*.09,-w*.55,w*.18,w*.07,3);c.fill();
-    c.fillStyle='#f4c300';rr(c,-w*.08,-w*.46,w*.16,w*.06,2);c.fill();
-  }else{
+    if(m.accent){c.fillStyle=m.accent;rr(c,-w*.2,-w*.7,w*.4,w*.06,2);c.fill();}
+    if(R.kuip){c.fillStyle=shade(m.body,-.2);c.beginPath();c.moveTo(-w*.1,-w*.72);c.lineTo(0,-w*.86);c.lineTo(w*.1,-w*.72);c.closePath();c.fill();}
+    if(R.rond){c.fillStyle='#ff2d2d';ell(c,0,-w*.52,w*.07,w*.05);c.fill();}
+    else{c.fillStyle='#ff2d2d';rr(c,-w*.09,-w*.55,w*.18,w*.07,3);c.fill();}
+    if(R.bord){c.fillStyle='#fff';rr(c,-w*.1,-w*.47,w*.2,w*.12,2);c.fill();c.fillStyle='#111';c.font='bold '+Math.max(6,w*.09)+'px sans-serif';c.textAlign='center';c.fillText('45',0,-w*.38);}
+    else{c.fillStyle='#f4c300';rr(c,-w*.08,-w*.46,w*.16,w*.06,2);c.fill();}
+  }else if(!isMoto){
     c.fillStyle=m.body;rr(c,-w*.045,-w*.66,w*.09,w*.22,3);c.fill();
     if(m.accent){c.fillStyle=m.accent;rr(c,-w*.05,-w*.55,w*.1,w*.06,2);c.fill();}
     c.fillStyle='#ff2d2d';rr(c,-w*.04,-w*.46,w*.08,w*.04,2);c.fill();
@@ -202,6 +283,7 @@ function drawRider(c,x,y,lw,m,isMoto,wheelie,lean){
   c.strokeStyle=m.jacket;c.lineWidth=w*.11;
   c.beginPath();c.moveTo(-w*.17,-w*1.0);c.lineTo(-w*.37,-w*.93);c.moveTo(w*.17,-w*1.0);c.lineTo(w*.37,-w*.93);c.stroke();
   c.fillStyle='#111';rr(c,-w*.45,-w*.97,w*.11,w*.08,3);c.fill();rr(c,w*.34,-w*.97,w*.11,w*.08,3);c.fill();
+  if(R.scherm){c.fillStyle='rgba(170,200,230,.45)';rr(c,-w*.2,-w*1.28,w*.4,w*.2,w*.05);c.fill();}
   c.fillStyle=m.jacket;rr(c,-w*.22,-w*1.1,w*.44,w*.46,w*.14);c.fill();
   c.fillStyle='rgba(255,255,255,.12)';rr(c,-w*.18,-w*1.06,w*.1,w*.36,w*.05);c.fill();
   // helm
@@ -567,7 +649,7 @@ function renderGarage(){
     const own=S.owned[S.type][i],sel=S.model[S.type]===i;
     const btn=sel?'<button class="btn done">Gekozen</button>':own?`<button class="btn ghost" data-pick="${i}">Kies</button>`:
       `<button class="btn" data-buy="${i}" ${S.coins<m.price?'disabled':''}>Koop <span class="coin"></span>${m.price}</button>`;
-    return`<div class="model ${sel?'sel':''}"><canvas></canvas><div class="nm">${m.name}</div><div class="bonus">${m.pro?'Bonus: +1 op alle upgrades':'Startvoertuig'}</div>${btn}</div>`;}).join('');
+    return`<div class="model ${sel?'sel':''}"><canvas></canvas><div class="nm">${m.name}</div><div class="bonus">${m.info?m.info+'<br>':''}${bonusVan(m)?'Bonus: +'+bonusVan(m)+' op alle upgrades':(m.price?'Geen bonus':'Startvoertuig')}</div>${btn}</div>`;}).join('');
   [...$('models').children].forEach((d,i)=>preview(d.querySelector('canvas'),S.type,T.models[i],.95));
   const u=S.up[S.type];
   $('ups').innerHTML=UPG.map(g=>{const l=u[g.k],cost=UPCOST[l];

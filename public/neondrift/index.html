@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Neondrift</title>
+<link href="/fonts/fonts.css" rel="stylesheet">
+<link href="/neonkit/neonkit.css" rel="stylesheet">
+<style>
+  :root{ --accent:#ff4fd8; --titel1:#ff4fd8; --titel2:#3ef0ff; }
+  #afstand{font-family:var(--disp);font-size:clamp(34px,9vw,52px);line-height:1;text-shadow:0 0 22px rgba(255,79,216,.6);font-variant-numeric:tabular-nums;}
+  #afstand small{font-size:.45em;opacity:.7;margin-left:3px;}
+  #midden{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;}
+  #ritinfo{display:flex;gap:12px;align-items:center;font-size:14px;color:var(--dim);}
+  #ritinfo .munt{font-size:16px;}
+  .schild{width:18px;height:18px;color:#3ef0ff;filter:drop-shadow(0 0 6px rgba(62,240,255,.7));}
+  .missies{display:grid;gap:8px;width:min(420px,100%);}
+  .missie{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);font-size:14px;}
+  .missie .balk{flex:none;width:70px;height:7px;border-radius:99px;background:rgba(255,255,255,.12);overflow:hidden;}
+  .missie .balk i{display:block;height:100%;background:linear-gradient(90deg,var(--magenta),var(--cyaan));}
+  .missie.klaar{border-color:var(--goud);box-shadow:0 0 16px rgba(255,200,61,.25);}
+  .missie span{flex:1;}
+  .upgr{display:grid;gap:10px;width:min(460px,100%);}
+  .upg{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:16px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);}
+  .upg b{font-family:var(--disp);font-size:15px;letter-spacing:.04em;}
+  .upg .uitl{font-size:13px;color:var(--dim);margin-top:2px;}
+  .upg .bolletjes{display:flex;gap:4px;margin-top:6px;}
+  .upg .bolletjes i{width:14px;height:6px;border-radius:99px;background:rgba(255,255,255,.14);}
+  .upg .bolletjes i.aan{background:var(--cyaan);box-shadow:0 0 8px rgba(62,240,255,.6);}
+  .upg > div{flex:1;}
+  .upg button{padding:10px 14px;font-size:13px;min-width:96px;min-height:42px;}
+  #houd{position:fixed;left:50%;bottom:calc(30px + var(--onder));transform:translateX(-50%);z-index:4;display:none;padding:12px 20px;border-radius:999px;
+        background:rgba(16,18,44,.75);border:1px solid rgba(255,255,255,.2);font-weight:800;color:var(--ink);pointer-events:none;text-align:center;}
+  #houd.aan{display:block;animation:knipper 1.2s ease-in-out infinite alternate;}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div class="hud" id="hud">
+  <div class="hudrij">
+    <button class="rond" id="naarmenu" aria-label="Naar het menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <div id="midden"><div id="afstand">0<small>m</small></div><div id="ritinfo"><span class="munt" id="ritmunten">0</span><span id="schilden"></span></div></div>
+    <button class="rond" id="pauze" aria-label="Pauze"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></button>
+  </div>
+</div>
+<div id="houd">Houd vast om te draaien, laat los om terug te sturen</div>
+<div class="melding" id="melding" role="status" style="bottom:auto;top:calc(110px + var(--boven))"></div>
+
+<div class="menutop" id="menutop"><button class="terug" id="terug">‹ Menu</button><span class="munt" id="topmunten">0</span></div>
+
+<div class="scherm" id="menu">
+  <h1>Neondrift</h1>
+  <p class="onder">Drift over de neonweg door de ruimte. Houd vast om te draaien, laat los om terug te sturen.</p>
+  <div class="menuknoppen">
+    <button class="knop goud verborgen" id="verder">Verder</button>
+    <button class="knop" id="speel">Rijden</button>
+    <button class="knop2" id="naargarage">Garage</button>
+  </div>
+  <p class="onder" id="menurecord"></p>
+  <div class="missies" id="menumissies"></div>
+  <div class="instel">
+    <button class="schakel" id="s-geluid"><i></i>Geluid</button>
+    <button class="schakel" id="s-rustig"><i></i>Rustig beeld</button>
+  </div>
+</div>
+
+<div class="scherm dicht midden" id="pauzescherm">
+  <h2>Pauze</h2>
+  <div class="rij"><button class="knop" id="hervat">Verder</button><button class="knop2" id="stop">Stoppen</button></div>
+</div>
+
+<div class="scherm dicht midden" id="einde">
+  <h2>Eraf!</h2>
+  <p class="groot" id="eindafstand">0</p>
+  <p class="onder" style="margin-top:-6px">meter</p>
+  <div class="nieuw verborgen" id="nieuwrecord">Nieuw record!</div>
+  <div class="stats">
+    <div class="stat"><b id="st-munten">0</b><span>munten</span></div>
+    <div class="stat"><b id="st-perfect">0</b><span>perfecte bochten</span></div>
+    <div class="stat"><b id="st-reeks">0</b><span>beste reeks</span></div>
+  </div>
+  <p class="onder" id="verdiend"></p>
+  <div class="missies" id="eindmissies"></div>
+  <div class="rij">
+    <button class="knop" id="nogeens">Nog een rit</button>
+    <button class="knop2" id="eindgarage">Garage</button>
+    <button class="knop2" id="eindmenu">Menu</button>
+  </div>
+</div>
+
+<div class="scherm dicht" id="garage">
+  <h2>Garage</h2>
+  <p class="onder">Je hebt <span class="munt" id="garagemunten">0</span>. Munten pak je op de weg, en elke 25 meter is er een.</p>
+  <div class="tabs"><button id="tab-auto" class="aan">Auto's</button><button id="tab-upg">Upgrades</button></div>
+  <div class="lijst" id="lijst"></div>
+  <div class="upgr verborgen" id="upgrlijst"></div>
+</div>
+
+<script src="/neonkit/neonkit.js"></script>
+<script src="kern.js"></script>
+<script src="spel.js"></script>
+</body>
+</html>

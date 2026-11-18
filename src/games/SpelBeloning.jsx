@@ -88,6 +88,13 @@ const SPELLEN = [
   { key: 'blokken',    name: 'Blokkenblitz',   desc: '45 seconden spelen, daarna ga je de volgende keer verder', img: '/scenes/games/blokkenblitz.svg' },
   { key: 'neonhockey', name: 'Neonhockey',     desc: 'Speel 1 wedstrijd van 45 seconden',  img: '/scenes/games/neonhockey.svg' },
   { key: 'pijlen',     name: 'Pijlenregen',    desc: 'Speel 1 level (5 schijven)',      img: '/scenes/games/pijlenregen.svg' },
+  { key: 'neonglij',   name: 'Neonglij',       desc: '45 seconden puzzelen, de volgende keer ga je verder', img: '/scenes/games/neonglij.svg' },
+  { key: 'lichtlab',   name: 'Lichtlab',       desc: '45 seconden puzzelen, de volgende keer ga je verder', img: '/scenes/games/lichtlab.svg' },
+  { key: 'komeet',     name: 'Komeetstaart',   desc: '45 seconden spelen, de volgende keer ga je verder', img: '/scenes/games/komeetstaart.svg' },
+  { key: 'kristal',    name: 'Kristalsmelt',   desc: '45 seconden spelen, de volgende keer ga je verder', img: '/scenes/games/kristalsmelt.svg' },
+  { key: 'monster',    name: 'Monsterteam',    desc: '45 seconden spelen, de volgende keer ga je verder', img: '/scenes/games/monsterteam.svg' },
+  { key: 'drift',      name: 'Neondrift',      desc: '45 seconden rijden, de volgende keer ga je verder', img: '/scenes/games/neondrift.svg' },
+  { key: 'boer',       name: 'Boerenleven',    desc: '45 seconden boeren, de volgende keer ga je verder', img: '/scenes/games/boerenleven.svg' },
   { key: 'stapel',     name: 'Stapeltoren',    desc: 'Bouw 1 toren in 45 seconden',        img: '/scenes/games/stapeltoren.svg' },
   { key: 'steen',      name: 'Steenknaller',   desc: 'Speel 1 level',                   img: '/scenes/games/steenknaller.svg' },
   { key: 'vlot',       name: 'Vlotstrijd',     desc: 'Speel 45 seconden, de volgende keer ga je verder', img: '/scenes/games/vlotstrijd.svg' },
@@ -148,6 +155,13 @@ export default function SpelBeloning({ title, sub, geld, addCuruntie, onDone }) 
   // Het volgende level (5 schijven, ongeveer een minuut), dan Klaar.
   if (picked === 'pijlen')     return <IframeEmbed src="/pijlenregen/" title="Pijlenregen" doneType="pijlenregen-gameover" hint="Speel 1 level — daarna tik je op Klaar" onDone={onDone} />
   // Eén toren (maximaal 45 seconden), dan Klaar.
+  if (picked === 'neonglij')   return <IframeEmbed src="/neonglij/" title="Neonglij" doneType="neonglij-gameover" seconds={45} hint="45 seconden puzzelen, de volgende keer ga je verder waar je was" onDone={onDone} />
+  if (picked === 'lichtlab')   return <IframeEmbed src="/lichtlab/" title="Lichtlab" doneType="lichtlab-gameover" seconds={45} hint="45 seconden puzzelen, de volgende keer ga je verder waar je was" onDone={onDone} />
+  if (picked === 'komeet')     return <IframeEmbed src="/komeetstaart/" title="Komeetstaart" doneType="komeetstaart-gameover" seconds={45} hint="45 seconden spelen, de volgende keer ga je verder waar je was" onDone={onDone} />
+  if (picked === 'kristal')    return <IframeEmbed src="/kristalsmelt/" title="Kristalsmelt" doneType="kristalsmelt-gameover" seconds={45} hint="45 seconden spelen, de volgende keer ga je verder waar je was" onDone={onDone} />
+  if (picked === 'monster')    return <IframeEmbed src="/monsterteam/" title="Monsterteam" doneType="monsterteam-gameover" seconds={45} hint="45 seconden spelen, de volgende keer ga je verder waar je was" onDone={onDone} />
+  if (picked === 'drift')      return <IframeEmbed src="/neondrift/" title="Neondrift" doneType="neondrift-gameover" seconds={45} hint="45 seconden rijden, de volgende keer ga je verder waar je was" onDone={onDone} />
+  if (picked === 'boer')       return <IframeEmbed src="/boerenleven/" title="Boerenleven" doneType="boerenleven-gameover" seconds={45} hint="45 seconden boeren, de volgende keer ga je verder waar je was" onDone={onDone} />
   if (picked === 'stapel')     return <IframeEmbed src="/stapeltoren/" title="Stapeltoren" doneType="stapeltoren-gameover" hint="Bouw 1 toren — daarna tik je op Klaar" onDone={onDone} />
   // Het volgende level, dan Klaar.
   if (picked === 'steen')      return <IframeEmbed src="/steenknaller/" title="Steenknaller" doneType="steenknaller-gameover" hint="Speel 1 level — daarna tik je op Klaar" onDone={onDone} />

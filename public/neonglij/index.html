@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Neonglij</title>
+<link href="/fonts/fonts.css" rel="stylesheet">
+<style>
+  :root{
+    --ink:#eef3ff; --dim:#8f9bc4; --cyaan:#3ef0ff; --magenta:#ff4fd8; --goud:#ffc83d; --violet:#9b6bff; --rood:#ff5a7a;
+    --disp:'Russo One',system-ui,sans-serif; --body:'Outfit','Nunito',system-ui,sans-serif;
+    --boven:env(safe-area-inset-top,0px); --onder:env(safe-area-inset-bottom,0px);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;height:100%;overflow:hidden;background:#060618;}
+  body{font-family:var(--body);color:var(--ink);user-select:none;-webkit-user-select:none;touch-action:none;}
+  canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block;}
+  button{font-family:var(--body);font-weight:800;cursor:pointer;border-radius:999px;border:0;color:var(--ink);}
+  button:focus-visible{outline:3px solid var(--cyaan);outline-offset:3px;}
+  svg{display:block;}
+
+  /* ── spel-HUD ── */
+  #hud{position:fixed;left:0;right:0;top:0;z-index:5;padding:calc(10px + var(--boven)) 12px 0;display:none;pointer-events:none;}
+  #hud.aan{display:block;}
+  .hudrij{display:flex;align-items:center;gap:10px;}
+  .hudrij > *{pointer-events:auto;}
+  #titel{flex:1;text-align:center;font-family:var(--disp);font-size:clamp(16px,4.4vw,22px);letter-spacing:.06em;text-transform:uppercase;
+         text-shadow:0 0 16px rgba(62,240,255,.45);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  #zetinfo{margin-top:6px;text-align:center;font-size:14px;color:var(--dim);display:flex;justify-content:center;align-items:center;gap:8px;}
+  #zetinfo b{font-family:var(--disp);color:var(--ink);font-size:17px;font-variant-numeric:tabular-nums;}
+  #kristalinfo{display:inline-flex;align-items:center;gap:5px;}
+  .rond{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none;
+        background:rgba(16,18,44,.78);border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(8px);padding:0;}
+  .rond svg{width:22px;height:22px;}
+
+  #onderbalk{position:fixed;left:0;right:0;bottom:0;z-index:5;padding:0 12px calc(14px + var(--onder));display:none;justify-content:center;gap:12px;}
+  #onderbalk.aan{display:flex;}
+  .actie{display:flex;align-items:center;gap:8px;padding:0 22px;height:54px;font-size:16px;
+         background:rgba(16,18,44,.82);border:1px solid rgba(255,255,255,.2);backdrop-filter:blur(8px);}
+  .actie svg{width:22px;height:22px;}
+  .actie:disabled{opacity:.35;cursor:default;}
+
+  #melding{position:fixed;left:50%;bottom:calc(84px + var(--onder));transform:translateX(-50%);z-index:6;display:none;
+           padding:12px 18px;border-radius:16px;background:rgba(40,8,24,.88);border:1px solid rgba(255,90,122,.6);
+           font-weight:800;text-align:center;max-width:min(92vw,420px);line-height:1.35;}
+  #melding.aan{display:block;animation:in .25s ease-out;}
+  #tip{position:fixed;left:50%;bottom:calc(86px + var(--onder));transform:translateX(-50%);z-index:4;color:var(--dim);font-size:14px;
+       text-align:center;pointer-events:none;display:none;max-width:90vw;}
+  #tip.aan{display:block;animation:knipper 1.6s ease-in-out infinite alternate;}
+  @keyframes zweef{from{transform:translateY(0)}to{transform:translateY(-6px)}}
+  .grootster{position:relative;}
+  .grootster::before{content:'';position:absolute;inset:-30px -40px;background:radial-gradient(closest-side,rgba(255,200,61,.28),transparent);z-index:-1;}
+  @keyframes knipper{from{opacity:.45}to{opacity:1}}
+  @keyframes in{from{opacity:0;transform:translate(-50%,10px)}to{opacity:1;transform:translate(-50%,0)}}
+
+  /* ── schermen ── */
+  .scherm{position:fixed;inset:0;z-index:10;display:none;flex-direction:column;align-items:center;justify-content:flex-start;
+          gap:14px;padding:calc(64px + var(--boven)) 16px calc(28px + var(--onder));overflow-y:auto;touch-action:pan-y;
+          background:radial-gradient(ellipse 70% 50% at 50% 18%,rgba(62,240,255,.15),transparent 70%),
+                     radial-gradient(ellipse 60% 45% at 50% 100%,rgba(255,79,216,.13),transparent 70%),rgba(6,6,24,.9);
+          backdrop-filter:blur(6px);}
+  .scherm.aan{display:flex;}
+  #menu,#werelden,#levelkeuze{background:radial-gradient(ellipse 80% 55% at 50% 20%,rgba(6,6,24,.35),rgba(6,6,24,.78) 70%),rgba(6,6,24,.45);backdrop-filter:blur(2.5px);}
+  .scherm.midden{justify-content:center;}
+  h1{font-family:var(--disp);font-size:clamp(44px,13vw,84px);animation:zweef 4s ease-in-out infinite alternate;margin:0;letter-spacing:.04em;text-transform:uppercase;text-align:center;
+     background:linear-gradient(100deg,var(--cyaan),#fff 45%,var(--magenta));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+     filter:drop-shadow(0 0 22px rgba(62,240,255,.35));}
+  h2{font-family:var(--disp);font-size:clamp(24px,7vw,36px);margin:0;letter-spacing:.06em;text-transform:uppercase;text-align:center;}
+  .onder{color:var(--dim);margin:0;font-size:15px;text-align:center;max-width:40ch;line-height:1.5;}
+  .rij{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+  .knop{padding:15px 34px;font-size:18px;color:#071018;letter-spacing:.03em;min-height:52px;
+        background:linear-gradient(135deg,var(--cyaan),#7dfff0);box-shadow:0 10px 28px rgba(62,240,255,.3);transition:transform .12s;}
+  .knop:hover{transform:translateY(-2px);}
+  .knop2{padding:13px 24px;font-size:16px;min-height:52px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);}
+  .knop2:hover{background:rgba(255,255,255,.15);}
+  .knop.goud{color:#20140a;background:linear-gradient(135deg,var(--goud),#ffe08a);box-shadow:0 10px 28px rgba(255,200,61,.3);}
+  .verborgen{display:none !important;}
+  .munt{display:inline-flex;align-items:center;gap:6px;font-family:var(--disp);color:var(--goud);}
+  .munt::before{content:'';width:15px;height:15px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff3b0,#ffc83d 55%,#b8860b);
+                box-shadow:0 0 10px rgba(255,200,61,.6);}
+  .ster{width:18px;height:18px;color:var(--goud);filter:drop-shadow(0 0 6px rgba(255,200,61,.55));}
+  .ster.uit{color:rgba(255,255,255,.16);filter:none;}
+  .sterren{display:flex;gap:2px;justify-content:center;}
+  #menutop{position:fixed;top:calc(10px + var(--boven));left:12px;right:12px;z-index:11;display:none;justify-content:space-between;align-items:center;pointer-events:none;}
+  #menutop.aan{display:flex;}
+  #menutop > *{pointer-events:auto;}
+  #terug{padding:11px 18px;font-size:15px;min-height:48px;background:rgba(16,18,44,.78);border:1px solid rgba(255,255,255,.2);display:none;}
+  #terug.aan{display:block;}
+  .menuknoppen{display:grid;gap:12px;width:min(340px,100%);}
+  .menuknoppen button{width:100%;}
+  .dagkaart{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;}
+  .instel{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+  .schakel{display:flex;align-items:center;gap:8px;padding:10px 16px;font-size:14px;min-height:46px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.16);}
+  .schakel i{width:34px;height:20px;border-radius:99px;background:rgba(255,255,255,.18);position:relative;flex:none;transition:background .15s;}
+  .schakel i::after{content:'';position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:#fff;transition:left .15s;}
+  .schakel.aan i{background:var(--cyaan);}
+  .schakel.aan i::after{left:17px;}
+  .uitleg{display:grid;gap:8px;width:min(440px,100%);}
+  .regel{display:flex;gap:12px;align-items:center;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.05);font-size:14px;line-height:1.35;}
+  .regel canvas{flex:none;width:40px;height:40px;}
+
+  /* werelden en levels */
+  .werelden{display:grid;gap:12px;width:min(520px,100%);}
+  .wereld{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:18px;text-align:left;min-height:76px;
+          background:linear-gradient(120deg,hsla(var(--h),90%,55%,.18),rgba(255,255,255,.04));border:1.5px solid hsla(var(--h),90%,60%,.5);}
+  .wereld:disabled{opacity:.42;cursor:default;filter:saturate(.3);}
+  .wereld .wtekst{flex:1;min-width:0;}
+  .wereld .mini{flex:none;width:72px;height:auto;border-radius:6px;opacity:.9;filter:drop-shadow(0 0 8px hsla(var(--h),95%,60%,.45));}
+  .wereld .nr{font-family:var(--disp);font-size:30px;color:hsl(var(--h),95%,66%);text-shadow:0 0 14px hsla(var(--h),95%,60%,.6);min-width:30px;text-align:center;}
+  .wereld .wnaam{font-family:var(--disp);font-size:18px;letter-spacing:.05em;text-transform:uppercase;}
+  .wereld .wsub{font-size:13px;color:var(--dim);margin-top:3px;display:flex;align-items:center;gap:6px;}
+  .wereld .wsub .ster{width:14px;height:14px;}
+  .levels{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;width:min(440px,100%);}
+  .lvl{aspect-ratio:1;border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+       background:rgba(255,255,255,.06);border:1.5px solid hsla(var(--h),90%,60%,.45);font-family:var(--disp);font-size:22px;}
+  .lvl:disabled{opacity:.35;cursor:default;border-color:rgba(255,255,255,.1);}
+  .lvl .ster{width:13px;height:13px;}
+  .lvl.volgende{box-shadow:0 0 0 2px hsl(var(--h),95%,62%),0 0 22px hsla(var(--h),95%,60%,.45);}
+
+  /* gewonnen */
+  .grootster{display:flex;gap:10px;justify-content:center;}
+  .grootster .ster{width:58px;height:58px;transform:scale(0);animation:plop .45s cubic-bezier(.3,1.6,.5,1) forwards;}
+  .grootster .ster:nth-child(2){animation-delay:.18s;} .grootster .ster:nth-child(3){animation-delay:.36s;}
+  @keyframes plop{to{transform:scale(1)}}
+  .stats{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+  .stat{min-width:96px;padding:9px 12px;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);text-align:center;}
+  .stat b{display:block;font-family:var(--disp);font-size:22px;}
+  .stat span{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);}
+
+  /* winkel */
+  .tabs{display:flex;gap:8px;}
+  .tabs button{padding:10px 20px;font-size:15px;min-height:46px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);}
+  .tabs button.aan{color:#071018;background:linear-gradient(135deg,var(--cyaan),#7dfff0);border-color:transparent;}
+  .lijst{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;width:100%;max-width:640px;}
+  .kaart{display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 10px;border-radius:16px;
+         background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.12);}
+  .kaart.gekozen{border-color:var(--cyaan);box-shadow:0 0 0 1px var(--cyaan) inset,0 0 22px rgba(62,240,255,.25);}
+  .kaart canvas{width:96px;height:72px;}
+  .kaart .naam{font-family:var(--disp);font-size:13px;letter-spacing:.06em;text-transform:uppercase;text-align:center;}
+  .kaart button{padding:9px 14px;font-size:13px;min-width:100px;min-height:40px;}
+  .koop{color:#20140a;background:linear-gradient(135deg,var(--goud),#ffe08a);}
+  .koop:disabled{background:rgba(255,255,255,.08);color:#6f7899;cursor:default;}
+  .kies{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);}
+  .kies.aan{color:#071018;background:linear-gradient(135deg,var(--cyaan),#7dfff0);border-color:transparent;}
+  @media (prefers-reduced-motion:reduce){ .grootster .ster{animation:none;transform:none;} #tip.aan{animation:none;} h1{animation:none;} }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<!-- spel -->
+<div id="hud">
+  <div class="hudrij">
+    <button class="rond" id="naarlevels" aria-label="Naar de levels"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <div id="titel">Neonglij</div>
+    <button class="rond" id="geluid" aria-label="Geluid aan of uit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path id="golf" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg></button>
+  </div>
+  <div id="zetinfo"><span>Zetten <b id="zetten">0</b></span><span id="drie"></span><span id="kristalinfo"></span></div>
+</div>
+<div id="onderbalk">
+  <button class="actie" id="terugzet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg>Zet terug</button>
+  <button class="actie" id="opnieuw"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v5h-5"/></svg>Opnieuw</button>
+</div>
+<div id="melding" role="status"></div>
+<div id="tip">Veeg over het scherm of gebruik de pijltjes</div>
+
+<div id="menutop"><button id="terug">‹ Menu</button><span class="munt" id="topmunten">0</span></div>
+
+<!-- hoofdmenu -->
+<div class="scherm aan" id="menu">
+  <h1>Neonglij</h1>
+  <p class="onder">Je glijdt over het ijs tot je ergens tegenaan botst. Pak alle kristallen en glij dan naar de uitgang.</p>
+  <div class="menuknoppen">
+    <button class="knop verborgen" id="verder">Verder</button>
+    <button class="knop" id="speel">Spelen</button>
+    <button class="knop2 dagkaart" id="dag"><span>Uitdaging van vandaag</span><span class="sterren" id="dagsterren"></span></button>
+    <button class="knop2" id="naarwinkel">Winkel</button>
+    <button class="knop2" id="naaruitleg">Hoe werkt het?</button>
+  </div>
+  <div class="instel">
+    <button class="schakel" id="s-geluid"><i></i>Geluid</button>
+    <button class="schakel" id="s-rustig"><i></i>Rustig beeld</button>
+  </div>
+</div>
+
+<div class="scherm" id="werelden">
+  <h2>Kies een wereld</h2>
+  <p class="onder" id="totaalsterren"></p>
+  <div class="werelden" id="wereldlijst"></div>
+</div>
+
+<div class="scherm" id="levelkeuze">
+  <h2 id="wereldnaam">Wereld</h2>
+  <p class="onder" id="wereldsub"></p>
+  <div class="levels" id="levellijst"></div>
+</div>
+
+<div class="scherm midden" id="gewonnen">
+  <h2 id="wintitel">Gelukt!</h2>
+  <div class="grootster" id="winsterren"></div>
+  <p class="onder" id="wintekst"></p>
+  <div class="stats">
+    <div class="stat"><b id="w-zetten">0</b><span>zetten</span></div>
+    <div class="stat"><b id="w-min">0</b><span>3 sterren bij</span></div>
+  </div>
+  <p class="onder" id="w-munten"></p>
+  <div class="rij">
+    <button class="knop" id="volgende">Volgende level</button>
+    <button class="knop verborgen" id="klaar">Klaar</button>
+    <button class="knop2" id="nogeens">Nog een keer</button>
+    <button class="knop2" id="winlevels">Levels</button>
+  </div>
+</div>
+
+<div class="scherm" id="winkel">
+  <h2>Winkel</h2>
+  <p class="onder">Je hebt <span class="munt" id="winkelmunten">0</span>. Elke nieuwe ster is 5 munten waard, de uitdaging van vandaag 15.</p>
+  <div class="tabs"><button id="tab-bal" class="aan">Bolletjes</button><button id="tab-spoor">Sporen</button></div>
+  <div class="lijst" id="lijst"></div>
+</div>
+
+<div class="scherm" id="uitleg">
+  <h2>Hoe werkt het?</h2>
+  <div class="uitleg" id="uitleglijst"></div>
+  <button class="knop" id="snapik">Ik snap het</button>
+</div>
+
+<script src="kern.js"></script>
+<script src="levels.js"></script>
+<script src="spel.js"></script>
+</body>
+</html>

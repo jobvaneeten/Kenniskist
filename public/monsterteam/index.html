@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Monsterteam</title>
+<link href="/fonts/fonts.css" rel="stylesheet">
+<link href="/neonkit/neonkit.css" rel="stylesheet">
+<style>
+  :root{ --accent:#5be37a; --titel1:#5be37a; --titel2:#ffd23d; }
+  #menu{background:radial-gradient(ellipse 80% 45% at 50% 20%,rgba(6,6,24,.55),transparent 75%);backdrop-filter:none;}
+  .t-vuur{--k:#ff6a3d} .t-water{--k:#3fa8ff} .t-plant{--k:#5be37a} .t-bliksem{--k:#ffd23d} .t-schaduw{--k:#a56bff} .t-normaal{--k:#c9cfe8}
+  .type{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+        color:#0a0a1a;background:var(--k);}
+  .kopbalk{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;}
+  .badges{display:flex;gap:6px;}
+  .badge{width:26px;height:26px;border-radius:50%;border:2px solid rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;}
+  .badge.aan{border-color:var(--k);background:radial-gradient(circle at 35% 35%,#fff,var(--k) 60%);box-shadow:0 0 12px var(--k);}
+  .gebieden{display:grid;gap:12px;width:min(520px,100%);}
+  .gebied{border-radius:18px;padding:14px;background:linear-gradient(120deg,color-mix(in srgb,var(--k) 18%,transparent),rgba(255,255,255,.03));border:1.5px solid color-mix(in srgb,var(--k) 55%,transparent);}
+  .gebied.dicht{opacity:.45;filter:saturate(.3);}
+  .gebied h3{margin:0 0 10px;font-family:var(--disp);letter-spacing:.05em;text-transform:uppercase;font-size:18px;display:flex;justify-content:space-between;align-items:center;}
+  .gebied h3 small{font-family:var(--body);font-size:12px;color:var(--dim);letter-spacing:0;text-transform:none;font-weight:700;}
+  .plekken{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;}
+  .plek{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:14px;background:rgba(10,10,30,.55);border:1px solid rgba(255,255,255,.14);font-size:14px;text-align:left;min-height:52px;}
+  .plek:disabled{opacity:.4;cursor:default;}
+  .plek svg{width:22px;height:22px;flex:none;color:var(--k);}
+  .plek.klaar{border-color:rgba(255,200,61,.5);}
+  .onderknoppen{position:fixed;left:0;right:0;bottom:0;z-index:12;display:none;justify-content:center;gap:8px;padding:8px 12px calc(10px + var(--onder));
+        background:linear-gradient(transparent,rgba(5,4,15,.95) 30%);}
+  .onderknoppen.aan{display:flex;}
+  .onderknoppen button{padding:10px 16px;font-size:14px;min-height:46px;background:rgba(16,18,44,.88);border:1px solid rgba(255,255,255,.2);}
+  #kaart{padding-bottom:calc(90px + var(--onder));}
+
+  /* wezenkaartjes */
+  .wezens{display:grid;gap:8px;width:min(520px,100%);}
+  .wezen{display:flex;align-items:center;gap:12px;padding:8px 12px;border-radius:16px;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.12);text-align:left;width:100%;}
+  .wezen.eerste{border-color:var(--accent);box-shadow:0 0 16px rgba(91,227,122,.25);}
+  .wezen canvas{width:64px;height:64px;flex:none;}
+  .wezen .info{flex:1;min-width:0;}
+  .wezen .naam{font-family:var(--disp);font-size:16px;letter-spacing:.03em;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .balkje{height:7px;border-radius:99px;background:rgba(255,255,255,.12);overflow:hidden;margin-top:5px;}
+  .balkje i{display:block;height:100%;border-radius:99px;background:#5be37a;transition:width .3s;}
+  .balkje.xp{height:4px;} .balkje.xp i{background:#3fa8ff;}
+  .klein{font-size:12px;color:var(--dim);}
+  .startkeuze{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:min(560px,100%);}
+  .start{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 8px;border-radius:18px;background:rgba(255,255,255,.05);border:1.5px solid color-mix(in srgb,var(--k) 55%,transparent);}
+  .start canvas{width:100%;max-width:130px;aspect-ratio:1;}
+  .start b{font-family:var(--disp);font-size:16px;}
+  .dex{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;width:min(560px,100%);}
+  .dexvak{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;border-radius:14px;background:rgba(255,255,255,.05);font-size:12px;text-align:center;}
+  .dexvak canvas{width:64px;height:64px;}
+  .winkelrij{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:16px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);width:min(460px,100%);}
+  .winkelrij canvas{width:44px;height:44px;flex:none;}
+  .winkelrij > div{flex:1;}
+  .winkelrij button{padding:9px 14px;font-size:13px;min-height:42px;}
+
+  /* gevecht */
+  canvas#c{image-rendering:pixelated;}
+  #wereldhud{position:fixed;inset:0;z-index:6;display:none;pointer-events:none;}
+  #wereldhud.aan{display:block;}
+  #gebiednaam{position:absolute;top:calc(14px + var(--boven));left:50%;transform:translateX(-50%);padding:10px 22px;border-radius:999px;
+     background:rgba(16,18,44,.85);border:1px solid rgba(255,255,255,.2);font-family:var(--disp);letter-spacing:.06em;text-transform:uppercase;transition:opacity .4s;}
+  #wterug{position:absolute;top:calc(12px + var(--boven));left:12px;pointer-events:auto;}
+  #wmenu{position:absolute;top:calc(12px + var(--boven));right:12px;pointer-events:auto;}
+  #dpad{position:fixed;left:0;right:0;bottom:calc(14px + var(--onder));z-index:6;display:none;justify-content:space-between;align-items:flex-end;padding:0 16px;pointer-events:none;}
+  #dpad.aan{display:flex;}
+  .kruis{display:grid;grid-template-columns:repeat(3,52px);grid-template-rows:repeat(3,52px);pointer-events:auto;opacity:.85;}
+  .kruis button{width:52px;height:52px;border-radius:12px;padding:0;display:flex;align-items:center;justify-content:center;background:rgba(16,18,44,.75);border:1px solid rgba(255,255,255,.2);touch-action:none;}
+  .kruis button svg{width:24px;height:24px;}
+  .kruis [data-r="0"]{grid-column:2;grid-row:1;} .kruis [data-r="3"]{grid-column:1;grid-row:2;} .kruis [data-r="1"]{grid-column:3;grid-row:2;} .kruis [data-r="2"]{grid-column:2;grid-row:3;}
+  #aknop{pointer-events:auto;width:70px;height:70px;border-radius:50%;font-family:var(--disp);font-size:26px;color:#0a0a1a;background:radial-gradient(circle at 35% 35%,#fff,#8dff4f 60%,#3fbf2a);box-shadow:0 6px 20px rgba(141,255,79,.35);margin-bottom:14px;touch-action:none;}
+  #dialoog{position:fixed;left:50%;bottom:calc(190px + var(--onder));transform:translateX(-50%);z-index:9;width:min(560px,calc(100% - 24px));display:none;flex-direction:column;gap:4px;
+     padding:14px 18px 10px;border-radius:18px;background:rgba(250,248,240,.97);color:#14142a;border:3px solid #14142a;box-shadow:0 10px 30px rgba(0,0,0,.4);cursor:pointer;font-size:17px;font-weight:700;line-height:1.4;}
+  #dialoog.aan{display:flex;}
+  #dialoog b{font-family:var(--disp);font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:#2f6fe0;}
+  #dialoog i{align-self:flex-end;font-size:11px;color:#6a6a8a;font-style:normal;animation:knipper 1s infinite alternate;}
+  #paneel{position:fixed;left:0;right:0;bottom:0;z-index:8;display:none;flex-direction:column;gap:8px;padding:10px 12px calc(12px + var(--onder));
+          background:linear-gradient(transparent,rgba(5,4,15,.92) 18%);}
+  #paneel.aan{display:flex;}
+  #tekst{min-height:58px;padding:12px 16px;border-radius:16px;background:rgba(16,18,44,.9);border:1px solid rgba(255,255,255,.18);font-weight:700;font-size:16px;line-height:1.35;cursor:pointer;}
+  #acties{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  #acties button{min-height:54px;padding:8px 12px;border-radius:14px;font-size:15px;text-align:left;background:rgba(16,18,44,.9);border:1.5px solid rgba(255,255,255,.18);}
+  #acties button.aanval{border-color:var(--k);background:linear-gradient(120deg,color-mix(in srgb,var(--k) 22%,rgba(16,18,44,.9)),rgba(16,18,44,.9));}
+  #acties button small{display:block;font-size:11px;color:var(--dim);font-weight:700;margin-top:2px;}
+  #acties button .sterk{color:#8dff4f;} #acties button .zwak{color:#ff8a8a;}
+  #acties button:disabled{opacity:.4;}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div class="menutop" id="menutop"><button class="terug" id="terug">‹ Menu</button><span class="munt" id="topmunten">0</span></div>
+
+<div class="scherm" id="menu">
+  <h1>Monster&shy;team</h1>
+  <p class="onder">Vang wezens, train ze, laat ze veranderen en versla de zes leiders!</p>
+  <div class="menuknoppen">
+    <button class="knop" id="speel">Spelen</button>
+  </div>
+  <div class="instel">
+    <button class="schakel" id="s-geluid"><i></i>Geluid</button>
+    <button class="schakel" id="s-rustig"><i></i>Rustig beeld</button>
+  </div>
+</div>
+
+<div class="scherm dicht" id="starter">
+  <h2>Kies je eerste wezen</h2>
+  <p class="onder">Vuur wint van plant, plant van water, water van vuur. Kies er een!</p>
+  <div class="startkeuze" id="startkeuze"></div>
+</div>
+
+<div class="scherm dicht" id="team">
+  <h2>Je team</h2>
+  <p class="onder">Het bovenste wezen vecht als eerste. Tik op een wezen voor meer.</p>
+  <div class="wezens" id="teamlijst"></div>
+  <h2 style="font-size:20px;margin-top:10px" id="opslagkop">Opslag</h2>
+  <div class="wezens" id="opslaglijst"></div>
+</div>
+
+<div class="scherm dicht midden" id="details">
+  <canvas id="c-details" width="320" height="320" style="width:180px;height:180px"></canvas>
+  <h2 id="d-naam">Naam</h2>
+  <div id="d-type"></div>
+  <div class="stats" id="d-stats"></div>
+  <div class="wezens" id="d-aanvallen"></div>
+  <div class="rij" id="d-knoppen"></div>
+</div>
+
+<div class="scherm dicht" id="dex">
+  <h2>Wezenboek</h2>
+  <p class="onder" id="dexsub"></p>
+  <div class="dex" id="dexlijst"></div>
+</div>
+
+<div class="scherm dicht" id="winkel">
+  <h2>Winkel</h2>
+  <p class="onder">Je hebt <span class="munt" id="winkelmunten">0</span>. Munten krijg je door gevechten te winnen.</p>
+  <div id="winkellijst" style="display:grid;gap:8px;justify-items:center;width:100%"></div>
+</div>
+
+<div class="scherm dicht midden" id="kies">
+  <h2 id="kieskop">Kies een wezen</h2>
+  <div class="wezens" id="kieslijst"></div>
+  <button class="knop2" id="kiesterug">Terug</button>
+</div>
+
+<div class="onderknoppen" id="onderknoppen">
+  <button id="naarkaart">Terug naar de wereld</button><button id="naarteam">Team</button><button id="naardex">Wezenboek</button><button id="naarwinkel" class="verborgen">Winkel</button>
+</div>
+
+<div id="wereldhud">
+  <button class="rond" id="wterug" aria-label="Terug naar het menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+  <div id="gebiednaam">Morgenrood</div>
+  <button class="rond" id="wmenu" aria-label="Menu: team en wezenboek"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+</div>
+<div id="dpad">
+  <div class="kruis">
+    <button data-r="0" aria-label="Omhoog"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 6l7 9H5z"/></svg></button>
+    <button data-r="3" aria-label="Links"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 12l9-7v14z"/></svg></button>
+    <button data-r="1" aria-label="Rechts"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18 12l-9 7V5z"/></svg></button>
+    <button data-r="2" aria-label="Omlaag"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 18l-7-9h14z"/></svg></button>
+  </div>
+  <button id="aknop" aria-label="Praten of bekijken">A</button>
+</div>
+<div id="dialoog" role="dialog"><b id="dnaam"></b><span id="dtekst"></span><i>tik om verder te gaan</i></div>
+
+<div id="paneel">
+  <div id="tekst" role="status"></div>
+  <div id="acties"></div>
+</div>
+
+<script src="/neonkit/neonkit.js"></script>
+<script src="kern.js"></script>
+<script src="wereld.js"></script>
+<script src="spel.js"></script>
+</body>
+</html>

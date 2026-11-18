@@ -235,6 +235,34 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
     return vrij(<IframeSpel src="/planeet/" titel="Planetenbouwer" terugType="planeet-terug" achtergrond="#05051a" onBack={onBack} />)
   }
 
+  if (directGame === 'neonglij') {
+    return vrij(<IframeSpel src="/neonglij/" titel="Neonglij" terugType="neonglij-terug" achtergrond="#05040f" onBack={onBack} />)
+  }
+
+  if (directGame === 'lichtlab') {
+    return vrij(<IframeSpel src="/lichtlab/" titel="Lichtlab" terugType="lichtlab-terug" achtergrond="#05040f" onBack={onBack} />)
+  }
+
+  if (directGame === 'komeetstaart') {
+    return vrij(<IframeSpel src="/komeetstaart/" titel="Komeetstaart" terugType="komeetstaart-terug" achtergrond="#05040f" onBack={onBack} />)
+  }
+
+  if (directGame === 'kristalsmelt') {
+    return vrij(<IframeSpel src="/kristalsmelt/" titel="Kristalsmelt" terugType="kristalsmelt-terug" achtergrond="#05040f" onBack={onBack} />)
+  }
+
+  if (directGame === 'monsterteam') {
+    return vrij(<IframeSpel src="/monsterteam/" titel="Monsterteam" terugType="monsterteam-terug" achtergrond="#05040f" onBack={onBack} />)
+  }
+
+  if (directGame === 'neondrift') {
+    return vrij(<IframeSpel src="/neondrift/" titel="Neondrift" terugType="neondrift-terug" achtergrond="#05040f" onBack={onBack} />)
+  }
+
+  if (directGame === 'boerenleven') {
+    return vrij(<IframeSpel src="/boerenleven/" titel="Boerenleven" terugType="boerenleven-terug" achtergrond="#5aa8ff" onBack={onBack} />)
+  }
+
   if (directGame === 'stapeltoren') {
     return vrij(<IframeSpel src="/stapeltoren/" titel="Stapeltoren" terugType="stapeltoren-terug" achtergrond="#07061a" onBack={onBack} />)
   }

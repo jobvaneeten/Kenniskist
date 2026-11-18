@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200" width="320" height="200" role="img" aria-label="Neondrift">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1a0838"/><stop offset="100%" stop-color="#05040f"/></linearGradient>
+    <linearGradient id="zon" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ffe14f"/><stop offset="50%" stop-color="#ff7a3d"/><stop offset="100%" stop-color="#ff2d9a"/></linearGradient>
+    <clipPath id="zc"><circle cx="78" cy="52" r="36"/></clipPath>
+    <filter id="g" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <rect width="320" height="200" fill="url(#bg)"/>
+  <g stroke="#9b50ff" stroke-opacity=".35" stroke-width="1">
+    <path d="M0 120 L320 200 M0 90 L320 170 M0 60 L320 140 M40 0 L320 110 M100 0 L320 80 M0 150 L180 200"/>
+    <path d="M320 120 L0 200 M320 90 L0 170 M320 60 L0 140 M280 0 L0 110 M220 0 L0 80 M320 150 L140 200"/>
+  </g>
+  <g clip-path="url(#zc)"><rect x="40" y="14" width="80" height="80" fill="url(#zon)"/><g fill="#1a0838"><rect x="40" y="58" width="80" height="2"/><rect x="40" y="66" width="80" height="3"/><rect x="40" y="75" width="80" height="4"/><rect x="40" y="84" width="80" height="5"/></g></g>
+  <!-- weg: zigzag -->
+  <path d="M60 200 L170 136 L120 108 L250 32 L290 54 L170 124 L220 152 L110 200 Z" fill="#241a4c"/>
+  <path d="M60 200 L170 136 L120 108 L250 32" fill="none" stroke="#ff4fd8" stroke-width="3" filter="url(#g)"/>
+  <path d="M110 200 L220 152 L170 124 L290 54" fill="none" stroke="#3ef0ff" stroke-width="3" filter="url(#g)"/>
+  <!-- lantaarns -->
+  <g filter="url(#g)" fill="#3ef0ff"><circle cx="150" cy="118" r="3"/><circle cx="205" cy="76" r="3"/><circle cx="95" cy="168" r="3"/></g>
+  <!-- auto -->
+  <g transform="translate(150 150) rotate(-30)" filter="url(#g)">
+    <rect x="-22" y="-11" width="44" height="22" rx="6" fill="#ff4fd8"/>
+    <rect x="-8" y="-8" width="16" height="16" rx="3" fill="#16203a"/>
+    <rect x="18" y="-9" width="4" height="5" fill="#fff8d8"/><rect x="18" y="4" width="4" height="5" fill="#fff8d8"/>
+    <rect x="-22" y="-10" width="3" height="20" fill="#3ef0ff"/>
+  </g>
+  <path d="M120 170 L80 192" stroke="#ff2d5a" stroke-width="3" stroke-opacity=".6" filter="url(#g)"/>
+</svg>

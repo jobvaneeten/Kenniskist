@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200" width="320" height="200" role="img" aria-label="Boerenleven">
+  <defs>
+    <linearGradient id="lucht" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#5aa8ff"/><stop offset="100%" stop-color="#cfe9ff"/></linearGradient>
+    <radialGradient id="boom" cx="35%" cy="30%" r="70%"><stop offset="0%" stop-color="#9ae07a"/><stop offset="100%" stop-color="#3e9a3a"/></radialGradient>
+    <radialGradient id="water" cx="40%" cy="40%" r="70%"><stop offset="0%" stop-color="#9fe0ff"/><stop offset="100%" stop-color="#2f7fd8"/></radialGradient>
+  </defs>
+  <rect width="320" height="200" fill="url(#lucht)"/>
+  <ellipse cx="70" cy="34" rx="30" ry="9" fill="#fff" opacity=".85"/><ellipse cx="250" cy="24" rx="26" ry="8" fill="#fff" opacity=".85"/>
+  <!-- eiland -->
+  <path d="M160 40 L300 110 L160 180 L20 110 Z" fill="#7ccf5a"/>
+  <path d="M20 110 L160 180 L160 196 L20 126 Z" fill="#7a4e2e"/><path d="M300 110 L160 180 L160 196 L300 126 Z" fill="#5e3a22"/>
+  <!-- akker -->
+  <g fill="#8a5a34" stroke="#5e3a1e" stroke-width="1">
+    <path d="M118 104 L136 95 L154 104 L136 113 Z"/><path d="M136 113 L154 104 L172 113 L154 122 Z"/>
+    <path d="M100 113 L118 104 L136 113 L118 122 Z"/><path d="M118 122 L136 113 L154 122 L136 131 Z"/>
+  </g>
+  <g fill="#4fbf3a"><circle cx="136" cy="100" r="5"/><circle cx="154" cy="109" r="5"/><circle cx="118" cy="109" r="5"/><circle cx="136" cy="118" r="5"/></g>
+  <g fill="#ff3d4a"><circle cx="133" cy="98" r="2"/><circle cx="139" cy="101" r="2"/><circle cx="152" cy="107" r="2"/><circle cx="157" cy="110" r="2"/></g>
+  <!-- huis -->
+  <path d="M120 66 L150 51 L150 76 L120 91 Z" fill="#f2e6d0"/><path d="M150 51 L170 61 L170 86 L150 76 Z" fill="#d8c8aa"/>
+  <path d="M116 66 L140 40 L154 49 L150 54 Z" fill="#d0504a"/><path d="M116 66 L140 40 L174 58 L150 54 Z" fill="#d0504a"/><path d="M140 40 L174 58 L170 62 L150 54 Z" fill="#a83a36"/>
+  <rect x="130" y="70" width="7" height="8" fill="#8ac8ff" transform="skewY(-26)" transform-origin="133 74"/>
+  <!-- schuur -->
+  <path d="M196 72 L232 54 L232 82 L196 100 Z" fill="#c23a32"/><path d="M232 54 L258 67 L258 95 L232 82 Z" fill="#a02a24"/>
+  <path d="M192 72 L222 42 L262 64 L232 54 Z" fill="#5a3a2a"/><path d="M222 42 L262 64 L258 68 L232 54 Z" fill="#45291c"/>
+  <path d="M206 92 L220 85 L220 72 L206 79 Z" fill="#7a1e18" stroke="#fff" stroke-width="1.5"/>
+  <!-- bomen -->
+  <circle cx="60" cy="98" r="13" fill="url(#boom)"/><rect x="58" y="108" width="4" height="8" fill="#6b4426"/>
+  <circle cx="268" cy="118" r="12" fill="url(#boom)"/><rect x="266" y="127" width="4" height="8" fill="#6b4426"/>
+  <circle cx="92" cy="80" r="10" fill="url(#boom)"/><g fill="#ffc2e0"><circle cx="56" cy="94" r="2"/><circle cx="64" cy="100" r="2"/><circle cx="90" cy="77" r="2"/></g>
+  <!-- vijver -->
+  <ellipse cx="200" cy="146" rx="26" ry="11" fill="url(#water)"/>
+  <!-- boer -->
+  <rect x="173" y="120" width="8" height="10" rx="2" fill="#e85a4a"/><rect x="173" y="126" width="8" height="7" fill="#3f6fd8"/>
+  <circle cx="177" cy="116" r="4" fill="#f4c9a0"/><ellipse cx="177" cy="113" rx="7" ry="2" fill="#e8c45a"/>
+  <!-- kip -->
+  <circle cx="228" cy="124" r="5" fill="#fff"/><circle cx="232" cy="119" r="3" fill="#fff"/><circle cx="232" cy="116" r="1.5" fill="#e83a3a"/>
+</svg>

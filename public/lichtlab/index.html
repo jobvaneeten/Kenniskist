@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Lichtlab</title>
+<link href="/fonts/fonts.css" rel="stylesheet">
+<link href="/neonkit/neonkit.css" rel="stylesheet">
+<style>
+  :root{ --accent:#ff4fd8; --titel1:#ff4fd8; --titel2:#3ef0ff; }
+  .levels{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;width:min(460px,100%);}
+  .lvl{aspect-ratio:1;border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+       background:rgba(255,255,255,.06);border:1.5px solid rgba(255,79,216,.45);font-family:var(--disp);font-size:20px;}
+  .lvl .ster{width:12px;height:12px;}
+  .lvl.volgende{box-shadow:0 0 0 2px var(--accent),0 0 22px rgba(255,79,216,.45);}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div class="hud" id="hud">
+  <div class="hudrij">
+    <button class="rond" id="naarmenu" aria-label="Naar het menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <div class="hudtitel" id="titel">Level 1</div>
+    <button class="rond" id="geluid" aria-label="Geluid aan of uit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path id="golf" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg></button>
+  </div>
+  <div class="hudinfo"><span>Tikken <b id="tikken">0</b></span><span id="drie"></span><span id="doelinfo"></span></div>
+</div>
+<div class="onderbalk" id="onderbalk">
+  <button class="actie" id="terugzet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg>Terug</button>
+  <button class="actie" id="opnieuw"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v5h-5"/></svg>Opnieuw</button>
+</div>
+<div class="melding" id="melding" role="status"></div>
+<div class="tip" id="tip">Tik op een spiegel om hem te draaien</div>
+
+<div class="menutop" id="menutop"><button class="terug" id="terug">‹ Menu</button><span class="munt" id="topmunten">0</span></div>
+
+<div class="scherm aan" id="menu">
+  <h1>Lichtlab</h1>
+  <p class="onder">Draai de spiegels en stuur elke lichtstraal naar het kristal met dezelfde kleur.</p>
+  <div class="menuknoppen">
+    <button class="knop" id="speel">Spelen</button>
+    <button class="knop2" id="naarlevels">Kies een level</button>
+    <button class="knop2" id="naarwinkel">Winkel</button>
+    <button class="knop2" id="naaruitleg">Hoe werkt het?</button>
+  </div>
+  <div class="instel">
+    <button class="schakel" id="s-geluid"><i></i>Geluid</button>
+    <button class="schakel" id="s-rustig"><i></i>Rustig beeld</button>
+  </div>
+</div>
+
+<div class="scherm" id="levels">
+  <h2>Levels</h2>
+  <p class="onder" id="levelsub"></p>
+  <div class="levels" id="levellijst"></div>
+</div>
+
+<div class="scherm dicht midden" id="gewonnen">
+  <h2 id="wintitel">Gelukt!</h2>
+  <div class="grootster" id="winsterren"></div>
+  <p class="onder" id="wintekst"></p>
+  <div class="stats">
+    <div class="stat"><b id="w-tikken">0</b><span>tikken</span></div>
+    <div class="stat"><b id="w-min">0</b><span>3 sterren bij</span></div>
+  </div>
+  <p class="onder" id="w-munten"></p>
+  <div class="rij">
+    <button class="knop" id="volgende">Volgende level</button>
+    <button class="knop2" id="nogeens">Nog een keer</button>
+    <button class="knop2" id="winmenu">Menu</button>
+  </div>
+</div>
+
+<div class="scherm dicht" id="winkel">
+  <h2>Winkel</h2>
+  <p class="onder">Je hebt <span class="munt" id="winkelmunten">0</span>. Elk level geeft munten, sterren geven extra.</p>
+  <div class="lijst" id="lijst"></div>
+</div>
+
+<div class="scherm dicht" id="uitleg">
+  <h2>Hoe werkt het?</h2>
+  <div class="uitleg" id="uitleglijst"></div>
+  <button class="knop" id="snapik">Ik snap het</button>
+</div>
+
+<script src="/neonkit/neonkit.js"></script>
+<script src="kern.js"></script>
+<script src="spel.js"></script>
+</body>
+</html>

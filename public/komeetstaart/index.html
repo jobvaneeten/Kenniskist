@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Komeetstaart</title>
+<link href="/fonts/fonts.css" rel="stylesheet">
+<link href="/neonkit/neonkit.css" rel="stylesheet">
+<style>
+  :root{ --accent:#3ef0ff; --titel1:#3ef0ff; --titel2:#ffc83d; }
+  h1{font-size:clamp(36px,10.5vw,72px);}
+  #score{font-family:var(--disp);font-size:clamp(34px,9vw,48px);line-height:1;text-shadow:0 0 20px rgba(62,240,255,.55);font-variant-numeric:tabular-nums;}
+  #midden{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;}
+  #record{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--goud);}
+  #effecten{display:flex;gap:8px;justify-content:center;margin-top:8px;min-height:30px;}
+  .effect{display:flex;align-items:center;gap:6px;padding:4px 10px 4px 6px;border-radius:999px;font-size:13px;font-weight:800;
+          background:rgba(16,18,44,.8);border:1px solid var(--k);box-shadow:0 0 14px color-mix(in srgb,var(--k) 40%,transparent);}
+  .effect i{width:18px;height:18px;border-radius:50%;background:conic-gradient(var(--k) calc(var(--p)*1%),rgba(255,255,255,.12) 0);}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div class="hud" id="hud">
+  <div class="hudrij">
+    <button class="rond" id="naarmenu" aria-label="Naar het menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <div id="midden"><div id="score">0</div><div id="record"></div></div>
+    <button class="rond" id="pauze" aria-label="Pauze"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></button>
+  </div>
+  <div id="effecten"></div>
+</div>
+<div class="tip" id="tip">Veeg om te sturen, of gebruik de pijltjes</div>
+
+<div class="menutop" id="menutop"><button class="terug" id="terug">‹ Menu</button><span class="munt" id="topmunten">0</span></div>
+
+<div class="scherm" id="menu">
+  <h1>Komeet&shy;staart</h1>
+  <p class="onder">Stuur je komeet door de ruimte, eet sterrenstof en word steeds langer. Raak je eigen staart niet!</p>
+  <div class="menuknoppen">
+    <button class="knop goud verborgen" id="verder">Verder</button>
+    <button class="knop" id="speel">Spelen</button>
+    <button class="knop2" id="naarwinkel">Winkel</button>
+    <button class="knop2" id="naaruitleg">Hoe werkt het?</button>
+  </div>
+  <p class="onder" id="menurecord"></p>
+  <div class="instel">
+    <button class="schakel" id="s-geluid"><i></i>Geluid</button>
+    <button class="schakel" id="s-rustig"><i></i>Rustig beeld</button>
+  </div>
+</div>
+
+<div class="scherm dicht midden" id="pauzescherm">
+  <h2>Pauze</h2>
+  <div class="rij"><button class="knop" id="hervat">Verder</button><button class="knop2" id="stop">Stoppen</button></div>
+  <div class="instel"><button class="schakel" id="p-geluid"><i></i>Geluid</button></div>
+</div>
+
+<div class="scherm dicht midden" id="einde">
+  <h2 id="eindtitel">Boem!</h2>
+  <p class="groot" id="eindscore">0</p>
+  <p class="onder" style="margin-top:-6px">sterrenstof</p>
+  <div class="nieuw verborgen" id="nieuwrecord">Nieuw record!</div>
+  <div class="stats">
+    <div class="stat"><b id="st-lengte">0</b><span>langste staart</span></div>
+    <div class="stat"><b id="st-combo">0</b><span>beste reeks</span></div>
+  </div>
+  <p class="onder" id="verdiend"></p>
+  <div class="rij">
+    <button class="knop" id="nogeens">Nog een keer</button>
+    <button class="knop2" id="eindmenu">Menu</button>
+  </div>
+</div>
+
+<div class="scherm dicht" id="winkel">
+  <h2>Kometen</h2>
+  <p class="onder">Je hebt <span class="munt" id="winkelmunten">0</span>. Elke 5 sterrenstof is 1 munt waard.</p>
+  <div class="lijst" id="lijst"></div>
+</div>
+
+<div class="scherm dicht" id="uitleg">
+  <h2>Hoe werkt het?</h2>
+  <div class="uitleg" id="uitleglijst"></div>
+  <button class="knop" id="snapik">Ik snap het</button>
+</div>
+
+<script src="/neonkit/neonkit.js"></script>
+<script src="kern.js"></script>
+<script src="spel.js"></script>
+</body>
+</html>

@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Kristalsmelt</title>
+<link href="/fonts/fonts.css" rel="stylesheet">
+<link href="/neonkit/neonkit.css" rel="stylesheet">
+<style>
+  :root{ --accent:#c77dff; --titel1:#ffc83d; --titel2:#c77dff; }
+  h1{font-size:clamp(36px,10.5vw,72px);}
+  #score{font-family:var(--disp);font-size:clamp(30px,8vw,42px);line-height:1;text-shadow:0 0 20px rgba(199,125,255,.6);font-variant-numeric:tabular-nums;}
+  #midden{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;}
+  #record{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--goud);}
+  #stukken{position:fixed;left:0;right:0;bottom:0;z-index:5;display:none;justify-content:center;align-items:flex-end;gap:12px;padding:0 12px calc(12px + var(--onder));}
+  #stukken.aan{display:flex;}
+  .vak{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 10px 6px;border-radius:18px;
+       background:rgba(16,18,44,.82);border:1px solid rgba(255,255,255,.16);backdrop-filter:blur(8px);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);font-weight:800;}
+  .vak canvas{width:56px;height:56px;}
+  .vak.nu{border-color:var(--accent);box-shadow:0 0 22px rgba(199,125,255,.35);}
+  .vak.nu canvas{width:76px;height:76px;}
+  button.vak{cursor:pointer;}
+  button.vak:disabled{opacity:.45;cursor:default;}
+  .vak .naam{color:var(--ink);font-size:12px;letter-spacing:.04em;text-transform:none;}
+  #terugzet{align-self:center;}
+  .hoogste{display:flex;align-items:center;gap:12px;padding:10px 16px;border-radius:16px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);}
+  .hoogste canvas{width:56px;height:56px;}
+  .ladder{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:460px;}
+  .ladder canvas{width:44px;height:44px;}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div class="hud" id="hud">
+  <div class="hudrij">
+    <button class="rond" id="naarmenu" aria-label="Naar het menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <div id="midden"><div id="score">0</div><div id="record"></div></div>
+    <button class="rond" id="geluid" aria-label="Geluid aan of uit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path id="golf" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg></button>
+  </div>
+</div>
+<div id="stukken">
+  <button class="vak" id="opzij" aria-label="Opzij leggen of ruilen"><canvas id="c-opzij" width="112" height="112"></canvas>Opzij</button>
+  <div class="vak nu"><canvas id="c-nu" width="152" height="152"></canvas><span class="naam" id="nunaam">Stof</span></div>
+  <div class="vak"><canvas id="c-straks" width="112" height="112"></canvas>Daarna</div>
+  <button class="rond" id="terugzet" aria-label="Zet terug"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg></button>
+</div>
+<div class="melding" id="melding" role="status" style="bottom:calc(150px + var(--onder))"></div>
+<div class="tip" id="tip" style="bottom:calc(150px + var(--onder))">Tik op een leeg vakje. Drie dezelfde naast elkaar smelten samen!</div>
+
+<div class="menutop" id="menutop"><button class="terug" id="terug">‹ Menu</button><span class="munt" id="topmunten">0</span></div>
+
+<div class="scherm" id="menu">
+  <h1>Kristal&shy;smelt</h1>
+  <p class="onder">Leg drie dezelfde kristallen tegen elkaar en ze smelten samen tot iets groters. Kom jij tot een sterrenstelsel?</p>
+  <div class="menuknoppen">
+    <button class="knop goud verborgen" id="verder">Verder</button>
+    <button class="knop" id="speel">Spelen</button>
+    <button class="knop2" id="naarwinkel">Winkel</button>
+    <button class="knop2" id="naaruitleg">Hoe werkt het?</button>
+  </div>
+  <p class="onder" id="menurecord"></p>
+  <div class="instel">
+    <button class="schakel" id="s-geluid"><i></i>Geluid</button>
+    <button class="schakel" id="s-rustig"><i></i>Rustig beeld</button>
+  </div>
+</div>
+
+<div class="scherm dicht midden" id="einde">
+  <h2>Bord vol!</h2>
+  <p class="groot" id="eindscore">0</p>
+  <p class="onder" style="margin-top:-6px">punten</p>
+  <div class="nieuw verborgen" id="nieuwrecord">Nieuw record!</div>
+  <div class="hoogste"><canvas id="c-hoogste" width="112" height="112"></canvas><span>Hoogste stuk:<br><b id="hoogstenaam" style="font-family:var(--disp);font-size:18px">Stof</b></span></div>
+  <p class="onder" id="verdiend"></p>
+  <div class="rij">
+    <button class="knop" id="nogeens">Nog een keer</button>
+    <button class="knop2" id="eindmenu">Menu</button>
+  </div>
+</div>
+
+<div class="scherm dicht" id="winkel">
+  <h2>Kristalsets</h2>
+  <p class="onder">Je hebt <span class="munt" id="winkelmunten">0</span>. Hoe hoger je smelt, hoe meer munten.</p>
+  <div class="lijst" id="lijst"></div>
+</div>
+
+<div class="scherm dicht" id="uitleg">
+  <h2>Hoe werkt het?</h2>
+  <div class="uitleg" id="uitleglijst"></div>
+  <p class="onder">Van klein naar groot:</p>
+  <div class="ladder" id="ladder"></div>
+  <button class="knop" id="snapik">Ik snap het</button>
+</div>
+
+<script src="/neonkit/neonkit.js"></script>
+<script src="kern.js"></script>
+<script src="spel.js"></script>
+</body>
+</html>

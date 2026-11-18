@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Boerenleven</title>
+<link href="/fonts/fonts.css" rel="stylesheet">
+<link href="/neonkit/neonkit.css" rel="stylesheet">
+<style>
+  :root{ --accent:#8dff4f; --titel1:#8dff4f; --titel2:#ffd23d; }
+  #menu{background:radial-gradient(ellipse 80% 45% at 50% 20%,rgba(6,6,24,.6),transparent 75%);backdrop-filter:none;}
+  #hudrij{display:flex;align-items:center;gap:10px;}
+  #klok{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;}
+  #dagtekst{font-family:var(--disp);font-size:clamp(15px,4vw,20px);letter-spacing:.05em;text-transform:uppercase;text-shadow:0 0 12px rgba(0,0,0,.6);}
+  #tijdbalk{width:min(220px,50vw);height:7px;border-radius:99px;background:rgba(255,255,255,.15);overflow:hidden;}
+  #tijdbalk i{display:block;height:100%;background:linear-gradient(90deg,#ffd23d,#ff8a3d 70%,#6b5bff);}
+  .hudmunt{padding:8px 12px;border-radius:999px;background:rgba(16,18,44,.78);border:1px solid rgba(255,255,255,.18);}
+  #zoom{position:fixed;left:12px;bottom:calc(96px + var(--onder));z-index:5;display:none;flex-direction:column;gap:8px;}
+  #zoom.aan{display:flex;}
+  #zoom button{font-size:24px;font-weight:800;}
+  #balk{position:fixed;left:0;right:0;bottom:0;z-index:5;display:none;justify-content:center;gap:8px;padding:0 8px calc(10px + var(--onder));flex-wrap:wrap;}
+  #balk.aan{display:flex;}
+  #balk button{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:64px;padding:6px 10px;border-radius:14px;font-size:12px;
+     background:rgba(16,18,44,.86);border:1px solid rgba(255,255,255,.2);backdrop-filter:blur(8px);position:relative;}
+  #balk button canvas{width:32px;height:32px;}
+  #balk button svg{width:30px;height:30px;}
+  #balk .stip{position:absolute;top:-4px;right:-4px;min-width:20px;height:20px;border-radius:99px;background:var(--rood);font-size:12px;display:flex;align-items:center;justify-content:center;padding:0 5px;}
+  .lijstje{display:grid;gap:8px;width:min(480px,100%);}
+  .rijtje{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:16px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);}
+  .rijtje canvas{width:40px;height:40px;flex:none;}
+  .rijtje > div{flex:1;min-width:0;}
+  .rijtje b{font-family:var(--disp);font-size:15px;}
+  .rijtje .klein{font-size:12px;color:var(--dim);}
+  .rijtje button{padding:9px 14px;font-size:13px;min-height:42px;}
+  .rijtje.gekozen{border-color:var(--accent);box-shadow:0 0 14px rgba(141,255,79,.25);}
+  .rijtje.uit{opacity:.5;}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div class="hud" id="hud">
+  <div class="hudrij" id="hudrij">
+    <button class="rond" id="naarmenu" aria-label="Naar het menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <div id="klok"><div id="dagtekst">Lente · dag 1</div><div id="tijdbalk"><i id="tijdvul"></i></div></div>
+    <span class="munt hudmunt" id="hudmunten">0</span>
+  </div>
+</div>
+<div id="balk">
+  <button id="b-zaad"><canvas id="c-zaad" width="64" height="64"></canvas><span id="zaadtekst">Zaad</span></button>
+  <button id="b-winkel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 9l2-5h12l2 5M4 9v11h16V9M4 9h16M9 20v-6h6v6"/></svg>Winkel</button>
+  <button id="b-dorp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M5 4h14v16l-7-4-7 4z"/><path d="M9 9h6M9 12h4"/></svg>Opdrachten<span class="stip verborgen" id="dorpstip">0</span></button>
+  <button id="b-schuur"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 10l9-6 9 6v10H3z"/><path d="M8 20v-6h8v6M8 14l8 6M16 14l-8 6"/></svg>Schuur</button>
+  <button id="b-slaap"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 15A8 8 0 1 1 9 4a7 7 0 0 0 11 11z"/></svg>Slapen</button>
+</div>
+<div id="zoom"><button class="rond" id="z-in" aria-label="Inzoomen">+</button><button class="rond" id="z-uit" aria-label="Uitzoomen">−</button><button class="rond" id="z-pas" aria-label="Alles in beeld"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button></div>
+<div class="melding" id="melding" role="status" style="bottom:calc(96px + var(--onder))"></div>
+
+<div class="menutop" id="menutop"><button class="terug" id="terug">‹ Menu</button></div>
+
+<div class="scherm" id="menu">
+  <h1>Boeren&shy;leven</h1>
+  <p class="onder">Zaai, geef water, oogst en help het dorp. Elk seizoen groeit er iets anders!</p>
+  <div class="menuknoppen">
+    <button class="knop" id="speel">Spelen</button>
+    <button class="knop2" id="nieuw">Opnieuw beginnen</button>
+  </div>
+  <div class="instel">
+    <button class="schakel" id="s-geluid"><i></i>Geluid</button>
+    <button class="schakel" id="s-rustig"><i></i>Rustig beeld</button>
+  </div>
+</div>
+
+<div class="scherm dicht" id="paneel">
+  <h2 id="paneelkop">Winkel</h2>
+  <p class="onder" id="paneelsub"></p>
+  <div class="tabs" id="paneeltabs"></div>
+  <div class="lijstje" id="paneellijst"></div>
+  <button class="knop2" id="paneeldicht">Terug naar de boerderij</button>
+</div>
+
+<script src="/neonkit/neonkit.js"></script>
+<script src="kern.js"></script>
+<script src="spel.js"></script>
+</body>
+</html>
