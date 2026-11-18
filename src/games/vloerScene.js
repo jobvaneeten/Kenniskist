@@ -1,7 +1,7 @@
 import {
   Engine, Scene, FreeCamera, Camera, Vector3, Color3, Color4,
   HemisphericLight, DirectionalLight, MeshBuilder, StandardMaterial, DynamicTexture,
-  TransformNode,
+  TransformNode, Mesh,
 } from '@babylonjs/core'
 import Poppetje from './online/Poppetje.js'
 import { nachtOmgeving, glowLaag, nachtLucht } from './neonOmgeving.js'
@@ -18,13 +18,17 @@ import { HALF, MIDDEN, SNELHEID, KLEUREN, VORMEN, vakVan, klem } from './online/
 // uitslag alleen wie het goed had (en jezelf). Het bord zoomt dan in op het
 // goede vlak.
 //
-// opties: { ikId, haalState, stuur(type, data), invoerRef, hudRef, opUitslag(aantallen) }
+// opties: { ikId, haalState, stuur(type, data), invoerRef, hudRef, opUitslag(aantallen), opBeeldWeg() }
+// opBeeldWeg: het 3D-beeld is weggevallen (WebGL-context kwijt, bv. een iPad
+// met te weinig geheugen); VloerQuiz.jsx bouwt de scene dan opnieuw op.
 
 const ACCENT = '#3df2ff'
 const DIK = 0.6           // dikte van de vloer
 const NAAD = 0.35         // ruimte tussen de vlakken
 const VAL_TIJD = 2600     // ms, zoals op de server: dan staan de gevallen kinderen weer op het startvlak
 const PODIUM = [{ x: 0, z: 0.6, h: 1.5 }, { x: -2.4, z: 0, h: 1.0 }, { x: 2.4, z: 0, h: 0.7 }]
+const PODIUM_KLEUR = ['#ffd23d', '#c9d6ff', '#ff9a5a']
+const SCHAAL = HALF / 13   // de camera stond goed bij een vloer van 26 m
 
 // ── Vormen (zoals de knoppen in de HUD) ──────────────────────────────────
 export function tekenVorm(c, vorm, cx, cy, r) {
@@ -204,18 +208,59 @@ function maakDiepte(scene) {
   g.material = m
 }
 
+// Podium: drie treden met een groot cijfer aan de voorkant, een gloeiende
+// rand bovenop, een lichtbundel van boven en een gloeiende ring eromheen.
 function maakPodium(scene) {
   const node = new TransformNode('podium', scene)
-  const kleuren = ['#ffd23d', '#c9d6ff', '#ff9a5a']
+  const gloed = []
   PODIUM.forEach((p, i) => {
+    const kleur = PODIUM_KLEUR[i]
     const b = MeshBuilder.CreateBox('podium' + i, { width: 2.2, height: p.h, depth: 2.2 }, scene)
     b.position.set(p.x, p.h / 2, p.z); b.parent = node; b.isPickable = false
     const m = new StandardMaterial('podiumMat' + i, scene)
     m.diffuseColor = Color3.FromHexString('#141233'); m.specularColor = Color3.Black()
-    m.emissiveColor = Color3.FromHexString(kleuren[i]).scale(0.45)
+    m.emissiveColor = Color3.FromHexString('#1a1640')
     b.material = m
+    // rand bovenop
+    const rand = MeshBuilder.CreateBox('podiumRand' + i, { width: 2.32, height: 0.1, depth: 2.32 }, scene)
+    rand.position.set(p.x, p.h, p.z); rand.parent = node; rand.isPickable = false
+    const rm = new StandardMaterial('podiumRandMat' + i, scene)
+    rm.diffuseColor = Color3.Black(); rm.specularColor = Color3.Black(); rm.emissiveColor = Color3.FromHexString(kleur)
+    rand.material = rm
+    gloed.push(rand)
+    // cijfer aan de voorkant (de camera staat aan de -z-kant)
+    const tex = new DynamicTexture('podiumCijfer' + i, { width: 256, height: 256 }, scene, true)
+    const c = tex.getContext()
+    c.clearRect(0, 0, 256, 256)
+    c.font = '900 200px "Baloo 2", Nunito, Arial'; c.textAlign = 'center'; c.textBaseline = 'middle'
+    c.shadowColor = kleur; c.shadowBlur = 30; c.fillStyle = kleur
+    c.fillText(String(i + 1), 128, 142)
+    tex.update(); tex.hasAlpha = true
+    const vlak = MeshBuilder.CreatePlane('podiumVoor' + i, { width: 1.5, height: 1.5 }, scene)
+    const h = Math.min(1.5, p.h * 0.9)
+    vlak.scaling.set(h / 1.5, h / 1.5, 1)
+    vlak.position.set(p.x, p.h / 2, p.z - 1.115); vlak.parent = node; vlak.isPickable = false
+    const vm = new StandardMaterial('podiumVoorMat' + i, scene)
+    vm.diffuseTexture = tex; vm.useAlphaFromDiffuseTexture = true; vm.disableLighting = true
+    vm.emissiveColor = Color3.White(); vm.diffuseColor = Color3.Black(); vm.specularColor = Color3.Black()
+    vlak.material = vm
+    // lichtbundel van boven: een open kegel die naar onderen toe vervaagt
+    const bundel = MeshBuilder.CreateCylinder('podiumBundel' + i, { diameterTop: 0.5, diameterBottom: 2.4, height: 9, tessellation: 24, cap: Mesh.NO_CAP }, scene)
+    bundel.position.set(p.x, p.h + 4.5, p.z); bundel.parent = node; bundel.isPickable = false
+    const bm = new StandardMaterial('podiumBundelMat' + i, scene)
+    bm.diffuseColor = Color3.Black(); bm.specularColor = Color3.Black(); bm.emissiveColor = Color3.FromHexString(kleur)
+    bm.alpha = 0.13; bm.backFaceCulling = false; bm.disableLighting = true
+    bundel.material = bm
   })
+  // gloeiende ring om het podium
+  const ring = MeshBuilder.CreateTorus('podiumRing', { diameter: 9.4, thickness: 0.12, tessellation: 64 }, scene)
+  ring.position.set(0, 0.05, 0.3); ring.parent = node; ring.isPickable = false
+  const ringMat = new StandardMaterial('podiumRingMat', scene)
+  ringMat.diffuseColor = Color3.Black(); ringMat.specularColor = Color3.Black(); ringMat.emissiveColor = Color3.FromHexString('#ffd23d')
+  ring.material = ringMat
+  gloed.push(ring)
   node.setEnabled(false)
+  node.metadata = { gloed }
   return node
 }
 
@@ -254,23 +299,27 @@ function maakSchaduw(scene) {
 
 const draagt = (json) => { try { return JSON.parse(json || '{}') } catch { return {} } }
 
-export function maakVloerScene(canvas, { ikId = null, haalState, stuur, invoerRef, hudRef, opUitslag }) {
+export function maakVloerScene(canvas, { ikId = null, haalState, stuur, invoerRef, hudRef, opUitslag, opBeeldWeg }) {
   const engine = new Engine(canvas, true, { adaptToDeviceRatio: true, stencil: true, powerPreference: 'high-performance' })
-  // Scherp maar niet te zwaar: hooguit 1,5 pixel per CSS-pixel en hooguit
-  // ~2560x1440 (een 4K-digibord met een trage pc haalt anders geen 30 beelden).
-  {
-    const dpr = window.devicePixelRatio || 1
-    const px = (canvas.clientWidth || innerWidth) * (canvas.clientHeight || innerHeight) * dpr * dpr
-    engine.setHardwareScalingLevel(Math.max(1, dpr / 1.5, Math.sqrt(px / 3.7e6)))
+  const host = !ikId
+  // Scherpte: zoveel pixels als het scherm echt heeft (hooguit 2 per CSS-pixel),
+  // tot een maximum: het bord tot 4K (van ver lezen, tijdens een vraag staat er
+  // weinig in beeld), een tablet tot ~2,6 miljoen pixels. Een schaal-level van
+  // 0,5 betekent 2 beeldpunten per CSS-pixel.
+  const zetScherpte = () => {
+    const dpr = Math.min(2, window.devicePixelRatio || 1)
+    const css = (canvas.clientWidth || innerWidth) * (canvas.clientHeight || innerHeight)
+    const max = host ? 3840 * 2160 : 2.6e6
+    engine.setHardwareScalingLevel(Math.max(1 / dpr, Math.sqrt(css / max)))
   }
+  zetScherpte()
   const scene = new Scene(engine)
   scene.clearColor = new Color4(0.02, 0.012, 0.06, 1)
   scene.metadata = { kledingLicht: true }   // 35 poppetjes: lichte kleding (applyClothing.js)
   scene.skipPointerMovePicking = true
 
-  const host = !ikId
   // de camera staat aan de -z-kant: zo is +x rechts in beeld en +z boven
-  const camera = new FreeCamera('cam', new Vector3(0, 26, -24), scene)
+  const camera = new FreeCamera('cam', new Vector3(0, 26 * SCHAAL, -24 * SCHAAL), scene)
   camera.inputs.clear(); camera.minZ = 0.5; camera.maxZ = 600
   camera.setTarget(new Vector3(0, 0, host ? -1.5 : 0))
   const pasCamera = () => {
@@ -291,7 +340,8 @@ export function maakVloerScene(canvas, { ikId = null, haalState, stuur, invoerRe
 
   // geen nabewerking (bloom): die tekende alles zonder anti-aliasing (wazig)
   // en kostte op een groot bord veel te veel
-  const stopKwaliteit = autoKwaliteit(engine, scene)
+  // het bord nooit grover maken (dan is het van achter in de klas niet te lezen)
+  const stopKwaliteit = autoKwaliteit(engine, scene, { pixels: !host, wacht: 10000 })
 
   const vlakken = [0, 1, 2, 3].map(i => maakVlak(scene, i))
   const startvlak = maakStartvlak(scene)
@@ -301,7 +351,7 @@ export function maakVloerScene(canvas, { ikId = null, haalState, stuur, invoerRe
   maakDiepte(scene)
   const podium = maakPodium(scene)
   const ikRing = maakRing(scene)
-  ;[...neon, ...podium.getChildMeshes()].forEach(m => glow.addIncludedOnlyMesh(m))
+  ;[...neon, ...podium.metadata.gloed].forEach(m => glow.addIncludedOnlyMesh(m))
   // wat stilstaat hoeft niet elk beeld opnieuw doorgerekend te worden
   neon.forEach(m => m.freezeWorldMatrix())
 
@@ -336,7 +386,7 @@ export function maakVloerScene(canvas, { ikId = null, haalState, stuur, invoerRe
       vlakken.forEach(v => {
         if (n === 2 && v.i > 1) return
         const heeft = v.i < opties.length && (s.phase === 'vraag' || s.phase === 'uitslag')
-        let stand = 'leeg'
+        let stand = s.phase === 'einde' ? 'uit' : 'leeg'   // eindstand: donkere vloer, het podium valt op
         if (s.phase === 'vraag') stand = heeft ? 'antwoord' : 'uit'
         else if (s.phase === 'uitslag') stand = !heeft ? 'uit' : v.i === s.goed ? 'goed' : 'fout'
         tekenVlak(scene, v, v.br, v.dp, stand, heeft ? opties[v.i] : '')
@@ -367,14 +417,17 @@ export function maakVloerScene(canvas, { ikId = null, haalState, stuur, invoerRe
       podium.setEnabled(s.phase === 'einde')
       fase = s.phase
     }
-    if (host) {
-      const v = s.phase === 'uitslag' ? vlakken[s.goed] : null
+    {
+      const v = host && s.phase === 'uitslag' ? vlakken[s.goed] : null
       if (v) {
         // recht van voren, zo ver dat het hele vlak in beeld is
         const { x, z } = v.node.position
-        const d = Math.max(v.br, v.dp) * 0.75 + 3
-        // iets vóór het midden richten: het vlak komt dan boven de antwoordknoppen
-        camDoel.doel.set(x, 0.8, z - d * 0.22); camDoel.pos.set(x, 0.8 + d * 0.8, z - d * 0.95)
+        const d = Math.max(v.br, v.dp) * 0.62 + 3
+        camDoel.doel.set(x, 0.6, z - d * 0.12); camDoel.pos.set(x, 0.6 + d * 0.85, z - d * 0.9)
+      } else if (s.phase === 'einde') {
+        // het podium van dichtbij, het publiek erachter
+        // iets naar rechts kijken: het podium schuift naar links, naast het eindstand-paneel
+        camDoel.doel.set(2.2, 1.9, 1.2); camDoel.pos.set(2.2, 5.2, -10.5)
       } else { camDoel.doel.copyFrom(camStand.doel); camDoel.pos.copyFrom(camStand.pos) }
       const L = 1 - Math.exp(-dt * 3.5)
       camera.position.addInPlace(camDoel.pos.subtract(camera.position).scaleInPlace(L))
@@ -488,13 +541,14 @@ export function maakVloerScene(canvas, { ikId = null, haalState, stuur, invoerRe
     const tel = host && hudRef?.current?.querySelector('.vq-opvlak')
     if (tel && tel.textContent !== String(opVlak)) tel.textContent = opVlak
 
-    // eindstand: de top drie danst op het podium, de rest danst mee
+    // eindstand: de top drie juicht op het podium (en kiest daarna zelf een
+    // dansje), het publiek klapt
     if (s.phase === 'einde') {
       const rij = [...s.players.entries()].sort((a, b) => b[1].score - a[1].score)
       const ds = rij.map(([sid]) => sid).join(',')
       if (ds !== dansSleutel) {
         dansSleutel = ds
-        rij.forEach(([sid], i) => { const pl = spelers.get(sid); if (pl && !pl.emoteTot) pl.pop.vast(i === 0 ? 'hip_hop' : i < 3 ? 'breakdance' : 'hip_hop') })
+        rij.forEach(([sid], i) => { const pl = spelers.get(sid); if (pl && !pl.emoteTot) pl.pop.vast(i < 3 ? 'juichen' : 'klappen') })
       }
     } else if (dansSleutel) {
       dansSleutel = ''
@@ -502,13 +556,32 @@ export function maakVloerScene(canvas, { ikId = null, haalState, stuur, invoerRe
     }
   })
 
-  engine.runRenderLoop(() => scene.render())
+  // Beeld kwijt (WebGL-context weg): even wachten of de browser hem
+  // terugzet, anders de scene opnieuw laten opbouwen. Gooit het tekenen
+  // steeds een fout, dan ook.
+  let wegTimer = null, fouten = 0
+  engine.onContextLostObservable.add(() => {
+    clearTimeout(wegTimer)
+    wegTimer = setTimeout(() => opBeeldWeg?.(), 1500)
+  })
+  engine.onContextRestoredObservable.add(() => {
+    clearTimeout(wegTimer)
+    vlakken.forEach(v => { v.sleutel = '' })   // de getekende vlakken opnieuw tekenen
+    vraagSleutel = ''
+  })
+  engine.runRenderLoop(() => {
+    try { scene.render(); fouten = 0 } catch (e) {
+      if (++fouten === 1) console.error('Vloerquiz: tekenen mislukt', e)
+      if (fouten === 30) opBeeldWeg?.()
+    }
+  })
   if (import.meta.env.DEV) window.__vloer = { engine, scene, spelers }   // meten tijdens het ontwikkelen
-  const resize = () => { engine.resize(); pasCamera() }
+  const resize = () => { engine.resize(); zetScherpte(); pasCamera() }
   window.addEventListener('resize', resize)
 
   return {
     dispose() {
+      clearTimeout(wegTimer)
       window.removeEventListener('resize', resize)
       window.removeEventListener('keydown', kd)
       window.removeEventListener('keyup', ku)

@@ -4,10 +4,14 @@
 //   1. bloom en gloed uit, geen MSAA
 //   2. schaduwen uit
 //   3. minder pixels (1,4× zo grof)
-export function autoKwaliteit(engine, scene, { pipe = null, schaduw = null } = {}) {
+// pixels: false = stap 3 nooit (het digibord: daar moet je het van ver kunnen
+// lezen). wacht: de eerste zoveel ms niet meten (tijdens het laden hapert alles).
+export function autoKwaliteit(engine, scene, { pipe = null, schaduw = null, pixels = true, wacht = 0 } = {}) {
   let stap = 0
+  const begin = performance.now()
   const timer = setInterval(() => {
     if (engine.isDisposed || stap >= 3) return
+    if (performance.now() - begin < wacht) return
     if (engine.getFps() >= 45) return
     stap++
     if (stap === 1) {
@@ -19,7 +23,7 @@ export function autoKwaliteit(engine, scene, { pipe = null, schaduw = null } = {
         if (licht) licht.shadowEnabled = false
       } else stap++                       // geen schaduwen: meteen door naar stap 3
     }
-    if (stap === 3) engine.setHardwareScalingLevel(engine.getHardwareScalingLevel() * 1.4)
+    if (stap === 3 && pixels) engine.setHardwareScalingLevel(engine.getHardwareScalingLevel() * 1.4)
   }, 3000)
   return () => clearInterval(timer)
 }

@@ -190,6 +190,52 @@
 .vq-zijpaneel .on-titel { font-size: clamp(1.4rem, 3vw, 2.1rem); }
 .vq-zijpaneel .on-rij { width: 100%; }
 
+/* ── Uitslag: vraag en foute antwoorden doorzichtig, dan zie je het vlak ── */
+.vq-vraag, .vq-antwoorden { transition: opacity 0.6s var(--kk-ease); }
+.vq-vraag.doorzichtig { opacity: 0.22; }
+.vq-antwoorden.doorzichtig .vq-antw.fout { opacity: 0.12; }
+.vq-antwoorden.doorzichtig .vq-antw.goed { opacity: 0.9; }
+
+/* ── Leerkracht: zelf verder klikken of vanzelf door ─────────────────── */
+.vq-verder {
+  justify-content: center; gap: 10px; min-height: 64px; font-size: 1.25rem;
+  animation: vq-pop 0.45s cubic-bezier(.2,1.4,.4,1) both;
+}
+.vq-schakel {
+  display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 14px; cursor: pointer;
+  background: rgba(11,10,26,0.82); border: 1px solid var(--kk-border-strong); font-weight: 800; font-size: 0.9rem;
+  pointer-events: auto;
+}
+.vq-schakel input { width: 20px; height: 20px; accent-color: var(--on-accent); }
+
+/* ── Beeld doet het niet ─────────────────────────────────────────────── */
+.vq-beeldweg {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 5;
+  width: min(440px, calc(100% - 32px)); box-sizing: border-box; padding: 22px; border-radius: 22px;
+  display: flex; flex-direction: column; gap: 10px; align-items: center; text-align: center;
+  background: rgba(11,10,26,0.94); border: 1px solid var(--on-accent); box-shadow: 0 0 40px -12px var(--on-accent);
+}
+.vq-beeldweg b { font: 900 1.4rem/1.1 var(--kk-head); color: var(--on-accent); }
+.vq-beeldweg span { color: var(--kk-text-soft); font-weight: 700; line-height: 1.4; }
+
+/* ── Podium: de top drie kiest een dansje ────────────────────────────── */
+.vq-emotes.podium {
+  left: 50%; right: auto; bottom: 22px; translate: -50% 0; max-width: calc(100% - 32px); justify-content: center;
+  padding: 14px 16px 16px; border-radius: 26px;
+  background: linear-gradient(180deg, rgba(40,32,10,0.82), rgba(13,11,30,0.92));
+  border: 2px solid var(--pk); box-shadow: 0 0 48px -10px var(--pk);
+  --pk: #ffd23d;
+}
+.vq-emotes.podium.p2 { --pk: #c9d6ff; }
+.vq-emotes.podium.p3 { --pk: #ff9a5a; }
+.vq-emotes-kop {
+  flex-basis: 100%; text-align: center; margin-bottom: 2px;
+  font: 900 1.3rem/1 var(--kk-head); letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--pk); text-shadow: 0 0 18px var(--pk);
+}
+.vq-emotes.podium .vq-emote { width: 104px; height: 104px; }
+.vq-spel:has(.vq-emotes.podium) .vq-zijpaneel.einde { top: 42%; max-height: calc(100% - 300px); }
+
 @keyframes vq-zak { from { opacity: 0; translate: 0 -16px; } }
 @keyframes vq-pop { from { opacity: 0; scale: 0.6; } }
 @keyframes vq-tik { 40% { transform: scale(1.35); } }

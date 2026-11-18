@@ -41,7 +41,7 @@ function momentopname(s, ikId) {
   if (!s?.players) return { phase: 'laden', opties: [], spelers: [] }
   return {
     phase: s.phase, countdown: s.countdown, nr: s.nr, aantal: s.aantal, vraag: s.vraag,
-    opties: [...s.opties], goed: s.goed, tijd: s.tijd, hostWeg: s.hostWeg, pauze: s.pauze, spelers,
+    opties: [...s.opties], goed: s.goed, tijd: s.tijd, hostWeg: s.hostWeg, pauze: s.pauze, handmatig: s.handmatig, spelers,
   }
 }
 
@@ -55,6 +55,10 @@ function useVloer(room, ikId) {
   const doorRef = useRef(null)
   const [stand, setStand] = useState(() => momentopname(room.state, ikId))
   const [aantallen, setAantallen] = useState([])
+  // Het 3D-beeld viel weg (of kon niet starten): opnieuw opbouwen, na drie
+  // keer een melding in plaats van een zwart scherm.
+  const [herstart, setHerstart] = useState(0)
+  const [beeldFout, setBeeldFout] = useState(false)
 
   useEffect(() => {
     let vorige = ''
@@ -69,10 +73,18 @@ function useVloer(room, ikId) {
   }, [room, ikId])
 
   useEffect(() => {
-    const scene = maakVloerScene(canvasRef.current, {
-      ikId, haalState: () => room.state, stuur: (t, d) => room.send(t, d),
-      invoerRef: joyRef, hudRef, opUitslag: setAantallen,
-    })
+    let scene
+    const opnieuw = () => setHerstart(n => { if (n >= 2) setBeeldFout(true); return n < 2 ? n + 1 : n })
+    try {
+      scene = maakVloerScene(canvasRef.current, {
+        ikId, haalState: () => room.state, stuur: (t, d) => room.send(t, d),
+        invoerRef: joyRef, hudRef, opUitslag: setAantallen, opBeeldWeg: opnieuw,
+      })
+    } catch (e) {
+      console.error('Vloerquiz: 3D starten mislukt', e)
+      setBeeldFout(true)
+      return
+    }
     // klok en tijdbalk: elk beeld, zonder React
     let raf
     const klok = () => {
@@ -84,14 +96,25 @@ function useVloer(room, ikId) {
     }
     raf = requestAnimationFrame(klok)
     return () => { cancelAnimationFrame(raf); scene.dispose() }
-  }, [room, ikId])
+  }, [room, ikId, herstart])
 
-  return { canvasRef, hudRef, joyRef, klokRef, balkRef, doorRef, stand, aantallen }
+  return { canvasRef, hudRef, joyRef, klokRef, balkRef, doorRef, stand, aantallen, herstart, beeldFout }
 }
 
+function BeeldWeg() {
+  return (
+    <div className="vq-beeldweg" role="alert">
+      <b>Het beeld doet het niet</b>
+      <span>Dit apparaat kan het 3D-beeld nu niet laten zien. Laad de pagina opnieuw, of sluit andere tabbladen en apps.</span>
+      <button type="button" className="on-knop" onClick={() => window.location.reload()}>Opnieuw laden</button>
+    </div>
+  )
+}
+
+// Bij de uitslag wordt de vraag doorzichtig: dan zie je het vlak eronder.
 function VraagKop({ stand, klokRef, balkRef, groot }) {
   return (
-    <div className={'vq-vraag' + (groot ? ' groot' : '')}>
+    <div className={'vq-vraag' + (groot ? ' groot' : '') + (stand.phase === 'uitslag' ? ' doorzichtig' : '')}>
       <div className="vq-vraag-rij">
         <span className="vq-chip">Vraag {stand.nr} van {stand.aantal}</span>
         {stand.phase === 'vraag' && <span className="vq-klok"><Icoon naam="klok" /><b ref={klokRef}>{stand.tijd}</b></span>}
@@ -106,7 +129,7 @@ function Antwoorden({ stand, aantallen, groot }) {
   const uitslag = stand.phase === 'uitslag'
   const max = Math.max(1, ...aantallen)
   return (
-    <div className={'vq-antwoorden n' + stand.opties.length + (groot ? ' groot' : '')}>
+    <div className={'vq-antwoorden n' + stand.opties.length + (groot ? ' groot' : '') + (uitslag ? ' doorzichtig' : '')}>
       {stand.opties.map((o, i) => (
         <div key={i} className={'vq-antw a' + i + (uitslag ? (i === stand.goed ? ' goed' : ' fout') : '')} style={{ '--vk': KLEUREN[i] }}>
           <Vorm i={i} />
@@ -174,7 +197,7 @@ export default function VloerQuiz({ onBack }) {
 }
 
 function LeerlingSpel({ room, onStop }) {
-  const { canvasRef, hudRef, joyRef, klokRef, balkRef, stand, aantallen } = useVloer(room, room.sessionId)
+  const { canvasRef, hudRef, joyRef, klokRef, balkRef, stand, aantallen, herstart, beeldFout } = useVloer(room, room.sessionId)
   const [gestopt, setGestopt] = useState(false)
   const zelfWeg = useRef(false)
   const aanraak = heeftAanraak()
@@ -194,11 +217,14 @@ function LeerlingSpel({ room, onStop }) {
   const plek = stand.spelers.findIndex(s => s.ik) + 1
   const goedTekst = stand.opties[stand.goed] ?? ''
   const [emotes] = useState(mijnEmotes)
-  const emoteMag = stand.phase === 'lobby' || stand.phase === 'uitslag' || stand.phase === 'einde'
+  // op het podium kiest alleen de top drie een dansje
+  const opPodium = stand.phase === 'einde' && plek >= 1 && plek <= 3
+  const emoteMag = stand.phase === 'lobby' || stand.phase === 'uitslag' || opPodium
 
   return (
     <div className="vq-spel" style={{ '--on-accent': ACCENT }}>
-      <canvas ref={canvasRef} className="vq-canvas" />
+      <canvas key={herstart} ref={canvasRef} className="vq-canvas" />
+      {beeldFout && <BeeldWeg />}
       <div ref={hudRef} className="vq-hud">
         <HudKnoppen>
           <HudKnop icoon="vol" aria-label="Volledig scherm" onClick={schermVol} />
@@ -230,7 +256,8 @@ function LeerlingSpel({ room, onStop }) {
         )}
         {emoteMag && ik && (
           // key: bij elke uitslag springen de knoppen opnieuw in beeld
-          <div key={stand.phase + stand.nr} className={'vq-emotes' + (stand.phase === 'uitslag' && ik.goed === 1 ? ' aandacht' : '')} role="group" aria-label="Dansjes">
+          <div key={stand.phase + stand.nr} className={'vq-emotes' + ((stand.phase === 'uitslag' && ik.goed === 1) || opPodium ? ' aandacht' : '') + (opPodium ? ' podium p' + plek : '')} role="group" aria-label="Dansjes">
+            {opPodium && <span className="vq-emotes-kop">Kies je dansje!</span>}
             {emotes.map((k, i) => (
               <button key={k} type="button" className="vq-emote" style={{ '--ek': EMOTES[k].kleur, '--i': i }} onClick={() => room.send('emote', k)}>
                 <Icoon naam={EMOTES[k].icoon} />
@@ -249,7 +276,7 @@ function LeerlingSpel({ room, onStop }) {
           <span className="on-embleem"><Icoon naam="beker" /></span>
           <span className="on-label">Eindstand</span>
           <h1 className="on-titel">{plek === 1 ? <>Jij <span>wint!</span></> : <>Plek <span>{plek}</span></>}</h1>
-          <p className="on-sub">{ik?.score ?? 0} punten</p>
+          <p className="on-sub">{ik?.score ?? 0} punten{opPodium ? ' · je staat op het podium!' : ''}</p>
           <Ranglijst spelers={stand.spelers} />
           <button type="button" className="on-btn lijn" onClick={stop}><Icoon naam="terug" />Stoppen</button>
         </aside>
@@ -271,12 +298,12 @@ function LeerlingSpel({ room, onStop }) {
 
 // ── Leerkracht (op het bord) ─────────────────────────────────────────────
 // vragen: [{ vraag, goed, fout }], tijd: seconden per vraag.
-export function VloerHost({ vragen, tijd, onBack }) {
+export function VloerHost({ vragen, tijd, handmatig = false, onBack }) {
   const [room, setRoom] = useState(null)
   const [status, setStatus] = useState('verbinden')
   const [fout, setFout] = useState('')
   const [code] = useState(() => nieuweCode(4))
-  const opties = useRef({ vragen, tijd, joinCode: code })
+  const opties = useRef({ vragen, tijd, handmatig, joinCode: code })
 
   useEffect(() => {
     let weg = false, r = null
@@ -300,7 +327,7 @@ export function VloerHost({ vragen, tijd, onBack }) {
 }
 
 function HostSpel({ room, code, onBack }) {
-  const { canvasRef, hudRef, klokRef, balkRef, doorRef, stand, aantallen } = useVloer(room, null)
+  const { canvasRef, hudRef, klokRef, balkRef, doorRef, stand, aantallen, herstart, beeldFout } = useVloer(room, null)
   const s = stand
   const laatste = s.nr >= s.aantal
   const goedAantal = s.spelers.filter(p => p.goed === 1).length
@@ -312,7 +339,8 @@ function HostSpel({ room, code, onBack }) {
 
   return (
     <div className="vq-spel host" style={{ '--on-accent': ACCENT }}>
-      <canvas ref={canvasRef} className="vq-canvas" />
+      <canvas key={herstart} ref={canvasRef} className="vq-canvas" />
+      {beeldFout && <BeeldWeg />}
       <div ref={hudRef} className="vq-hud">
         <HudKnoppen>
           <HudKnop icoon="vol" aria-label="Volledig scherm" onClick={schermVol} />
@@ -336,11 +364,23 @@ function HostSpel({ room, code, onBack }) {
         {s.phase === 'uitslag' && (
           <div className="vq-bediening">
             <span className="vq-teller"><Icoon naam="vink" /><b>{goedAantal}</b> van {s.spelers.length} goed</span>
-            <div className="vq-door">
-              <span>{s.pauze ? 'Gepauzeerd' : laatste ? 'Zo naar de eindstand' : 'Zo de volgende vraag'}</span>
-              <div className="vq-tijdbalk"><div ref={doorRef} /></div>
-            </div>
-            {pauzeKnop}
+            {s.handmatig ? (
+              <button type="button" className="on-btn vq-verder" onClick={() => room.send('volgende')}>
+                {laatste ? 'Naar de eindstand' : 'Volgende vraag'}<Icoon naam="speel" />
+              </button>
+            ) : (
+              <>
+                <div className="vq-door">
+                  <span>{s.pauze ? 'Gepauzeerd' : laatste ? 'Zo naar de eindstand' : 'Zo de volgende vraag'}</span>
+                  <div className="vq-tijdbalk"><div ref={doorRef} /></div>
+                </div>
+                {pauzeKnop}
+              </>
+            )}
+            <label className="vq-schakel">
+              <input type="checkbox" checked={!s.handmatig} onChange={e => room.send('handmatig', !e.target.checked)} />
+              <span>Vanzelf door na 8 seconden</span>
+            </label>
           </div>
         )}
         {s.phase === 'einde' && (

@@ -21,6 +21,7 @@ export default function VloerQuizTab({ klas }) {
   const [aantal, setAantal] = useState(10)
   const [tijd, setTijd] = useState(20)
   const [door, setDoor] = useState(true)
+  const [handmatig, setHandmatig] = useState(() => { try { return localStorage.getItem('kk_vloer_handmatig') === '1' } catch { return false } })
   const [spel, setSpel] = useState(null)
 
   useEffect(() => {
@@ -50,7 +51,7 @@ export default function VloerQuizTab({ klas }) {
   if (spel) {
     return (
       <Suspense fallback={null}>
-        <VloerHost vragen={spel.vragen} tijd={spel.tijd} onBack={() => setSpel(null)} />
+        <VloerHost vragen={spel.vragen} tijd={spel.tijd} handmatig={handmatig} onBack={() => setSpel(null)} />
       </Suspense>
     )
   }
@@ -121,6 +122,18 @@ export default function VloerQuizTab({ klas }) {
             <select value={tijd} onChange={e => setTijd(Number(e.target.value))}>
               {TIJDEN.map(t => <option key={t} value={t}>{t} seconden</option>)}
             </select>
+          </label>
+          <label className="portaal-veld">
+            <span className="portaal-veld-label">Na het goede antwoord</span>
+            <select value={handmatig ? '1' : '0'} onChange={e => {
+              const aan = e.target.value === '1'
+              setHandmatig(aan)
+              try { localStorage.setItem('kk_vloer_handmatig', aan ? '1' : '0') } catch { /* geen opslag */ }
+            }}>
+              <option value="0">Vanzelf door na 8 seconden</option>
+              <option value="1">Ik klik zelf op verder (eerst bespreken)</option>
+            </select>
+            <span className="portaal-veld-hint">Kan tijdens het spel ook nog om.</span>
           </label>
         </div>
         <label className="portaal-vinkje kk-mt-2">

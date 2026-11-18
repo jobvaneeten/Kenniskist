@@ -116,7 +116,7 @@ export default function KlasScherm({ klas, alleKlassen, onBack, onKlasGewijzigd 
 
         {!leerlingId && tab === 'groep' && <GroepsOverzicht key={klas.id} klas={klas} leerlingen={leerlingen} />}
 
-        {!leerlingId && !['leerlingen', 'werkblad', 'week', 'groep', 'eigen', 'vloer'].includes(tab) && (
+        {!leerlingId && !['leerlingen', 'werkblad', 'week', 'groep', 'eigen', 'dictee', 'vloer'].includes(tab) && (
           <WeektaakTab key={tab} klas={klas} soort={tab} onKiesLeerling={setLeerlingId} />
         )}
       </div>
