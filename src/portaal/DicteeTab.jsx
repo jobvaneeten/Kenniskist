@@ -247,7 +247,7 @@ function Afname({ dictee, leerlingen, onTerug, onVeranderd }) {
                   </div>
                 )
               })}
-              {a.overig > 0 && <p className="portaal-zacht pd-klein">Daarnaast {a.overig} {a.overig === 1 ? 'fout' : 'fouten'} buiten de getoetste categorieën (slordig, of een andere regel).</p>}
+              {a.overig > 0 && <p className="portaal-zacht pd-klein">Daarnaast {a.overig} {a.overig === 1 ? 'fout' : 'fouten'} buiten de getoetste categorieën (slordig, een andere regel, een heel ander woord of niets ingevuld).</p>}
             </div>
           </section>
 

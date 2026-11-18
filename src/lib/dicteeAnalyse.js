@@ -101,8 +101,17 @@ export function kijkWoordNa(woord, gegeven, correctie) {
   const cats = [...new Set(woord.c.map(p => p.id))]
   if (goed) return { goed: true, ingevuld, stukken: [], fout: [], overig: false, cats, handmatig: correctie != null && correctie !== precies }
   if (precies) return { goed: false, ingevuld, stukken: [], fout: [], overig: true, cats, handmatig: true }
-  if (!ingevuld) return { goed: false, ingevuld, leeg: true, stukken: [], fout: cats, overig: false, cats, handmatig: false }
+  if (!ingevuld) return { goed: false, ingevuld, leeg: true, stukken: [], fout: [], overig: true, cats, handmatig: false }
   const stukken = verschil(woord.w, ingevuld)
+  // Een heel ander woord zegt niets over de regels: alleen "overig".
+  // Minder dan de helft klopt en minstens drie letters anders ("bei" voor
+  // "bij" blijft dus gewoon een ei/ij-fout).
+  const n = [...woord.w].length, m = [...ingevuld].length
+  const behouden = n - stukken.reduce((t, s) => t + (s.tot - s.van), 0)
+  const langste = Math.max(n, m)
+  if (behouden / langste < 0.5 && langste - behouden >= 3) {
+    return { goed: false, ingevuld, anders: true, stukken: [{ van: 0, tot: n, goed: woord.w, gegeven: ingevuld, cats: [] }], fout: [], overig: true, cats, handmatig: correctie != null }
+  }
   const fout = new Set()
   let overig = false
   for (const s of stukken) {
