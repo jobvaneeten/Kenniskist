@@ -5,11 +5,15 @@ import './index.css'
 import Root from './Root.jsx'
 import Vangnet from './Vangnet.jsx'
 import { herlaadEenKeer } from './lib/herladen.js'
+import { toetsenbordHulpUit } from './lib/toetsenbord.js'
 import { hydrateer, heeftOngesyncteWijzigingen } from './lib/voortgangSync.js'
 
 // Is de site vernieuwd terwijl dit tabblad openstond, dan bestaan de oude
 // stukjes niet meer: één keer herladen haalt de nieuwe versie op.
 window.addEventListener('vite:preloadError', (e) => { if (herlaadEenKeer()) e.preventDefault() })
+
+// Geen spellingcontrole, autocorrectie of suggesties op de hele site.
+toetsenbordHulpUit()
 
 // Nooit de hele site laten hangen op Supabase: als hydrateren faalt of traag is,
 // starten we gewoon met de localStorage-voortgang die er al staat.
