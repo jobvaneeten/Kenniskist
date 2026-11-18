@@ -105,7 +105,7 @@ function download(dictee, rijen, leerlingen, nrs) {
     const s = String(v ?? '')
     return /[;"\n\r]/.test(s) || /^[=+\-@]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
   }
-  const kop = ['Leerling', 'Ingeleverd', 'Goed', ...dictee.woorden.map((w, i) => `${nrs[i]} ${w.w}`),
+  const kop = ['Leerling', 'Ingeleverd', 'Keer weg uit dictee', 'Goed', ...dictee.woorden.map((w, i) => `${nrs[i]} ${w.w}`),
     ...a.catIds.map(id => `fouten ${categorieNaam(id)}`), 'fouten overig']
   const regels = [...leerlingen.filter(l => rijen.some(r => r.leerling_id === l.id)).map(l => rijen.find(r => r.leerling_id === l.id))]
     .map(r => {
@@ -114,6 +114,7 @@ function download(dictee, rijen, leerlingen, nrs) {
       return [
         naam,
         r.ingeleverd_op ? new Date(r.ingeleverd_op).toLocaleString('nl-NL') : 'nog niet ingeleverd',
+        r.weg ?? 0,
         `${p.score} van ${p.aantal}`,
         ...p.per.map(x => x.leeg ? '(leeg)' : x.ingevuld + (x.goed ? '' : ' (fout)')),
         ...a.catIds.map(id => p.cat[id] || 0),
@@ -211,9 +212,10 @@ function Afname({ dictee, leerlingen, onTerug, onVeranderd }) {
 
       <section className="pd-blok">
         <h3>Ingeleverd: {ingeleverd.length} van {leerlingen.length}</h3>
+        {(rijen ?? []).some(r => r.weg > 0) && <p className="portaal-zacht pd-klein">"weg" betekent dat een leerling tijdens het dictee naar een ander tabblad of een andere app ging (bijvoorbeeld om iets op te zoeken).</p>}
         <div className="pd-namen">
-          {ingeleverd.map(r => <span key={r.leerling_id} className="pd-naam klaar">{naam(r.leerling_id)}</span>)}
-          {bezig.map(r => <span key={r.leerling_id} className="pd-naam bezig" title="Is bezig">{naam(r.leerling_id)}</span>)}
+          {ingeleverd.map(r => <span key={r.leerling_id} className="pd-naam klaar">{naam(r.leerling_id)}{wegTekst(r.weg)}</span>)}
+          {bezig.map(r => <span key={r.leerling_id} className="pd-naam bezig" title="Is bezig">{naam(r.leerling_id)}{wegTekst(r.weg)}</span>)}
           {nogNiet.map(l => <span key={l.id} className="pd-naam" title="Nog niet begonnen">{l.weergavenaam}</span>)}
         </div>
       </section>
@@ -322,7 +324,7 @@ function Afdruk({ soort, dictee, rijen, a, cats, nrs, naam, aantalKlas }) {
         const p = a.perLeerling[r.leerling_id]
         return (
           <section key={r.leerling_id} className="pdp-kind">
-            <h2>{naam(r.leerling_id)} <span>{p.score} van {p.aantal} goed · ingeleverd {new Date(r.ingeleverd_op).toLocaleString('nl-NL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span></h2>
+            <h2>{naam(r.leerling_id)} <span>{p.score} van {p.aantal} goed{r.weg ? ` · ${r.weg} keer weg uit het dictee` : ''} · ingeleverd {new Date(r.ingeleverd_op).toLocaleString('nl-NL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span></h2>
             <table>
               <thead><tr><th>Nr</th><th>Geschreven</th><th /><th>Goed woord</th><th>Categorie fout</th></tr></thead>
               <tbody>
@@ -406,6 +408,9 @@ function Afdruk({ soort, dictee, rijen, a, cats, nrs, naam, aantalKlas }) {
   )
 }
 
+// "· 2× weg": hoe vaak een leerling het dictee verliet
+const wegTekst = (weg) => weg > 0 ? <b className="pd-weg" title="Ging tijdens het dictee naar een ander tabblad of een andere app"> · {weg}× weg</b> : null
+
 function Kind({ dictee, open, rij, naam, nrs, onTerug, onVeranderd }) {
   const [correcties, setCorrecties] = useState(rij.correcties ?? {})
   const [zeker, setZeker] = useState(false)
@@ -432,6 +437,7 @@ function Kind({ dictee, open, rij, naam, nrs, onTerug, onVeranderd }) {
         <h2>{naam}</h2>
         <span className="pd-cat-pct">{score} van {per.length} goed</span>
       </div>
+      {rij.weg > 0 && <p className="pd-weg-melding">{naam} ging tijdens het dictee {rij.weg} keer naar een ander tabblad of een andere app.</p>}
       <p className="portaal-zacht pd-klein">{dictee.titel}. Rood is de plek van de fout in het goede woord. Klopt het nakijken niet (bijvoorbeeld een tikfout die je goed wilt rekenen), pas het dan per woord aan.</p>
       {fout && <p className="portaal-fout">{fout}</p>}
       <table className="pd-tabel pd-kindtabel">

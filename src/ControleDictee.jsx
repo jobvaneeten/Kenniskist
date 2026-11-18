@@ -20,6 +20,11 @@ export default function ControleDictee({ onBack }) {
   const velden = useRef([])
   const laatste = useRef(null)                      // laatst gebruikte vakje (voor é ë ...)
   const bewaard = useRef('')
+  // Hoe vaak het kind het dictee verliet (ander tabblad, andere app): de
+  // leerkracht ziet dat. Opzoeken kunnen we niet tegenhouden, wel zichtbaar maken.
+  const [weg, setWeg] = useState(0)
+  const [wegMelding, setWegMelding] = useState(false)
+  const wegRef = useRef(0)
 
   useEffect(() => {
     haalMijnDictee().then(d => {
@@ -31,7 +36,10 @@ export default function ControleDictee({ onBack }) {
       try { lokaal = JSON.parse(localStorage.getItem(sleutel(d.id)) || 'null') } catch {}
       const bron = Array.isArray(lokaal) ? lokaal : d.antwoorden ?? []
       setAntw(Array.from({ length: n }, (_, i) => typeof bron[i] === 'string' ? bron[i] : ''))
-      bewaard.current = JSON.stringify(d.antwoorden ?? [])
+      let w = 0
+      try { w = Number(localStorage.getItem(sleutel(d.id) + '_weg')) || 0 } catch { /* geen opslag */ }
+      wegRef.current = w; setWeg(w)
+      bewaard.current = JSON.stringify([d.antwoorden ?? [], w])
     }).catch(() => setDictee(null))
   }, [])
 
@@ -44,16 +52,39 @@ export default function ControleDictee({ onBack }) {
     return () => clearInterval(t)
   }, [dictee, stap])
 
+  // Weg uit het dictee: tabblad verborgen of venster kwijt (andere app).
+  useEffect(() => {
+    if (!dictee || (stap !== 'maken' && stap !== 'zeker')) return
+    let laatst = 0
+    const weggegaan = () => {
+      const nu = Date.now()
+      if (nu - laatst < 2000) return            // verbergen + venster kwijt is één keer
+      laatst = nu
+      const w = wegRef.current + 1
+      wegRef.current = w; setWeg(w); setWegMelding(true)
+      try { localStorage.setItem(sleutel(dictee.id) + '_weg', String(w)) } catch {}
+    }
+    const zicht = () => { if (document.visibilityState === 'hidden') weggegaan() }
+    document.addEventListener('visibilitychange', zicht)
+    window.addEventListener('blur', weggegaan)
+    return () => { document.removeEventListener('visibilitychange', zicht); window.removeEventListener('blur', weggegaan) }
+  }, [dictee, stap])
+  // terug: meteen doorgeven aan de server
+  useEffect(() => {
+    if (weg && dictee && stap === 'maken') bewaarDictee(dictee.id, antw, false, weg).catch(() => {})
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [weg])
+
   // Lokaal bij elke letter, op de server bij het verlaten van een vakje.
   const zet = (i, waarde) => {
     const nieuw = antw.slice(); nieuw[i] = waarde.slice(0, 60); setAntw(nieuw)
     try { localStorage.setItem(sleutel(dictee.id), JSON.stringify(nieuw)) } catch {}
   }
   const tussendoor = () => {
-    const tekst = JSON.stringify(antw)
+    const tekst = JSON.stringify([antw, weg])
     if (!dictee || tekst === bewaard.current) return
     bewaard.current = tekst
-    bewaarDictee(dictee.id, antw).catch(() => { bewaard.current = '' })
+    bewaarDictee(dictee.id, antw, false, weg).catch(() => { bewaard.current = '' })
   }
   const teken = (t) => {
     const i = laatste.current ?? 0
@@ -72,9 +103,9 @@ export default function ControleDictee({ onBack }) {
   const inleveren = async () => {
     setBezig(true); setFout('')
     try {
-      const ok = await bewaarDictee(dictee.id, antw, true)
+      const ok = await bewaarDictee(dictee.id, antw, true, wegRef.current)
       if (!ok) { setFout('Het dictee is al gesloten. Zeg het tegen je juf of meester.'); setBezig(false); return }
-      try { localStorage.removeItem(sleutel(dictee.id)) } catch {}
+      try { localStorage.removeItem(sleutel(dictee.id)); localStorage.removeItem(sleutel(dictee.id) + '_weg') } catch {}
       setStap('klaar')
     } catch {
       setFout('Inleveren lukt nu niet. Je antwoorden staan nog op dit apparaat: probeer het zo nog eens.')
@@ -124,8 +155,15 @@ export default function ControleDictee({ onBack }) {
       <TerugKnop onClick={() => { tussendoor(); onBack() }} />
       <header className="cd-kop">
         <h1>{dictee.titel}</h1>
-        <p className="cd-zacht">Schrijf het woord dat je juf of meester zegt in het goede vakje. Bij een zin schrijf je alleen de woorden die worden genoemd.</p>
+        <p className="cd-zacht">Schrijf het woord dat je juf of meester zegt in het goede vakje. Bij een zin schrijf je alleen de woorden die worden genoemd. Blijf in het dictee: ga je naar iets anders, dan ziet je juf of meester dat.</p>
       </header>
+
+      {wegMelding && (
+        <div className="cd-weg" role="alert">
+          <span>Je ging weg uit het dictee{weg > 1 ? ` (${weg} keer)` : ''}. Je juf of meester kan dat zien.</span>
+          <button type="button" onClick={() => setWegMelding(false)}>Oké</button>
+        </div>
+      )}
 
       <div className="cd-tekens" role="toolbar" aria-label="Letters met tekens">
         {TEKENS.map(t => (
@@ -146,12 +184,16 @@ export default function ControleDictee({ onBack }) {
                 onFocus={() => { laatste.current = i }}
                 onBlur={tussendoor}
                 onKeyDown={e => volgende(e, i)}
+                onPaste={e => e.preventDefault()}
+                onDrop={e => e.preventDefault()}
                 disabled={stap !== 'maken'}
                 maxLength={60}
                 spellCheck={false}
                 autoCorrect="off"
-                autoCapitalize="off"
+                autoCapitalize="none"
                 autoComplete="off"
+                writingsuggestions="false"
+                name={`dictee-${dictee.id.slice(0, 8)}-${i}`}
                 data-gramm="false"
                 data-gramm_editor="false"
                 data-enable-grammarly="false"

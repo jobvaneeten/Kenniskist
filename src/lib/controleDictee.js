@@ -11,8 +11,9 @@ export async function haalMijnDictee() {
   return data?.[0] ?? null
 }
 
-export async function bewaarDictee(id, antwoorden, inleveren = false) {
-  const { data, error } = await supabase.rpc('bewaar_dictee', { p_dictee: id, p_antwoorden: antwoorden, p_inleveren: inleveren })
+// weg: hoe vaak de leerling het dictee verliet (ander tabblad of andere app)
+export async function bewaarDictee(id, antwoorden, inleveren = false, weg = 0) {
+  const { data, error } = await supabase.rpc('bewaar_dictee', { p_dictee: id, p_antwoorden: antwoorden, p_inleveren: inleveren, p_weg: weg })
   if (error) throw error
   return data === true
 }
@@ -69,7 +70,7 @@ export async function verwijderDictee(id) {
 
 export async function haalAntwoorden(dicteeId) {
   const { data, error } = await supabase.from('dictee_antwoorden')
-    .select('leerling_id, antwoorden, correcties, ingeleverd_op').eq('dictee_id', dicteeId)
+    .select('leerling_id, antwoorden, correcties, ingeleverd_op, weg').eq('dictee_id', dicteeId)
   if (error) throw error
   return data ?? []
 }
