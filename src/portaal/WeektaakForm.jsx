@@ -5,7 +5,7 @@ import { SOORT_TEKST, ZONDER_EIND } from './soortTekst.js'
 import ToolKiezer from './ToolKiezer.jsx'
 import DoelKiezer from './DoelKiezer.jsx'
 import OpdrachtRij from './OpdrachtRij.jsx'
-import { slaWeektaakOp } from './weektaakOpslaan.js'
+import { slaWeektaakOp, controleerOpdrachten } from './weektaakOpslaan.js'
 import { DOELWERK } from '../lib/doelwerk.js'
 import { Knop } from '../ui/index.jsx'
 
@@ -23,26 +23,6 @@ const STAP1 = {
   taak: { kop: 'Wat is de taak?', label: 'Taak', placeholder: 'bv. Oefen de tafel van 7', hint: 'Leeg laten mag; dan heet hij zoals de oefening.' },
   huiswerk: { kop: 'Wat is het huiswerk en wanneer moet het af?', label: 'Titel', placeholder: 'bv. Huiswerk tafels', hint: 'Leeg laten mag; dan heet het zoals de oefening.' },
   doel: { kop: 'Wat is het doel?', label: 'Doel', placeholder: 'bv. Ik kan het lijdend voorwerp vinden', hint: 'Leeg laten mag; dan heet hij zoals het doel dat je bij stap 2 kiest.' },
-}
-
-// Controleert de instellingen die een tool verplicht stelt (bv. minstens twee
-// woordsoorten). Zonder deze check sla je een opdracht op die bij de leerling
-// nergens op uitkomt.
-function controleerOpdrachten(opdrachten) {
-  for (const o of opdrachten) {
-    const info = TOOL_BY_ID[o.toolId]
-    if (!info) continue
-    for (const veld of info.configVelden) {
-      // Alleen aanvinklijsten hebben een minimum aantal keuzes; bij een
-      // getalveld betekent `min` de laagste toegestane waarde en mag leeg.
-      if (veld.type !== 'checkboxes' || !veld.min) continue
-      const gekozen = o.config?.[veld.key] ?? []
-      if (gekozen.length < veld.min) {
-        return `${info.label}: kies minstens ${veld.min} bij "${veld.label}".`
-      }
-    }
-  }
-  return null
 }
 
 // bestaand: null voor een nieuwe weektaak, anders { id, titel, start_op,

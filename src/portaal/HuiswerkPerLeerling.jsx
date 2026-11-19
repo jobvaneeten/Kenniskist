@@ -2,15 +2,17 @@ import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase.js'
 import { TOOL_BY_ID } from '../lib/tools.js'
 import { doelStandVan } from '../lib/weektaak.js'
-import { vaardigheid, kleurVan, doelSleutel, MIN_OPGAVEN } from '../lib/vaardigheden.js'
-import { slaWeektaakOp } from './weektaakOpslaan.js'
+import { doelSleutel } from '../lib/vaardigheden.js'
+import { slaWeektaakOp, controleerOpdrachten } from './weektaakOpslaan.js'
+import ToolKiezer from './ToolKiezer.jsx'
+import OpdrachtRij from './OpdrachtRij.jsx'
 import { Knop, TerugKnop } from '../ui/index.jsx'
 
-// Huiswerk → Per leerling. Klik een kind aan en zie zijn doelen in drie
-// bakjes: open (klaargezet, nog niet aan begonnen), nog niet behaald en
-// behaald. Daar komen ook de vaardigheden bij uit het gemaakte werk van de
-// laatste 8 weken (zelfde bron en grenzen als het groepsoverzicht). Alles wat
-// nog niet behaald is zet je met één knop in het huiswerk van dit kind.
+// Huiswerk → Per leerling. Klik een kind aan en zie de doelen die je voor hem
+// klaargezet hebt (tabblad Doelen) in drie bakjes: open (nog niet aan
+// begonnen), nog niet behaald en behaald. Wat nog niet behaald is zet je met
+// één knop in zijn huiswerk. Daaronder kies je zelf andere oefeningen, net als
+// bij een weektaak.
 
 const vandaag = () => new Date().toLocaleDateString('sv-SE')
 const overDagen = (n) => { const d = new Date(); d.setDate(d.getDate() + n); return d.toLocaleDateString('sv-SE') }
@@ -25,10 +27,8 @@ function huiswerkOpdracht(doel) {
   }
 }
 
-async function laadLeerling(klasId, leerlingId) {
-  const vanaf = new Date(Date.now() - 8 * 7 * 864e5).toISOString()
-  const [{ data: rijen }, { data: tw }] = await Promise.all([
-    supabase.rpc('klas_vaardigheden', { p_klas: klasId, p_vanaf: vanaf }),
+async function laadLeerling(leerlingId) {
+  const [{ data: tw }] = await Promise.all([
     supabase.from('toewijzingen').select('opdracht_id, status, opdrachten(id, tool_id, config, aantal, weektaak_id)').eq('leerling_id', leerlingId),
   ])
   const opdrachten = (tw ?? []).filter(t => t.status !== 'vrijgesteld' && t.opdrachten).map(t => t.opdrachten)
@@ -54,24 +54,6 @@ async function laadLeerling(klasId, leerlingId) {
     }
   })
 
-  const per = new Map()
-  for (const r of (rijen ?? []).filter(r => r.leerling_id === leerlingId)) {
-    const key = `${r.tool_id}|${r.cat ?? ''}`
-    if (!per.has(key)) per.set(key, { goed: 0, totaal: 0, r })
-    const v = per.get(key); v.goed += Number(r.goed); v.totaal += Number(r.totaal)
-  }
-  const werk = [...per.entries()].map(([key, v]) => {
-    const info = vaardigheid(v.r.tool_id, v.r.cat, v.r.cat_label)
-    const kleur = kleurVan(100 * v.goed / v.totaal, v.totaal)
-    const pct = Math.round(100 * v.goed / v.totaal)
-    return {
-      sleutel: 'v' + key, titel: info.label,
-      sub: `${info.sub} · ${v.totaal} gemaakt · ${pct}% goed`,
-      status: kleur === 'groen' ? 'behaald' : kleur === 'rood' || kleur === 'oranje' ? 'niet' : null,
-      kleur, doel: info.doel,
-    }
-  }).filter(x => x.status)
-
   const huiswerk = huisOpd.map(o => {
     const v = vgBij.get(o.id), wt = wtBij.get(o.weektaak_id)
     const doel = v?.doel_aantal ?? o.aantal
@@ -81,7 +63,7 @@ async function laadLeerling(klasId, leerlingId) {
     }
   }).filter(h => !h.eind || h.eind >= vandaag())
 
-  return { doelen, werk, huiswerk }
+  return { doelen, huiswerk }
 }
 
 const BAKJES = [
@@ -99,12 +81,14 @@ function Leerling({ klas, leerling, onTerug }) {
 
   useEffect(() => {
     let actief = true
-    laadLeerling(klas.id, leerling.id).then(d => { if (actief) setData(d) }).catch(() => { if (actief) setData({ fout: true }) })
+    laadLeerling(leerling.id).then(d => { if (actief) setData(d) }).catch(() => { if (actief) setData({ fout: true }) })
     return () => { actief = false }
   }, [klas.id, leerling.id, teller])
 
   const inHuiswerk = useMemo(() => new Set((data?.huiswerk ?? []).filter(h => !h.af).map(h => h.sleutel)), [data])
-  const items = useMemo(() => [...(data?.doelen ?? []), ...(data?.werk ?? [])], [data])
+  const items = data?.doelen ?? []
+  const [eigen, setEigen] = useState([])          // zelf gekozen oefeningen
+  const [kiezer, setKiezer] = useState(false)
   const staatErIn = (x) => x.doel && inHuiswerk.has(doelSleutel(x.doel.toolId, x.doel.config))
   const kanErbij = items.filter(x => x.status !== 'behaald' && x.doel && !staatErIn(x))
 
@@ -113,15 +97,17 @@ function Leerling({ klas, leerling, onTerug }) {
     try {
       // dubbele doelen (zelfde oefening en instellingen) maar één keer
       const uniek = [...new Map(lijst.map(x => [doelSleutel(x.doel.toolId, x.doel.config), x])).values()]
+      const opdrachten = uniek.map(x => x.opdracht ?? huiswerkOpdracht(x.doel))
       await slaWeektaakOp({
         weektaakId: null, schoolId: klas.school_id, klasId: klas.id,
         titel: uniek.length === 1 ? (uniek[0].doel.titel || uniek[0].titel) : `Huiswerk voor ${leerling.weergavenaam}`,
         startOp: vandaag(), eindOp: eind,
-        opdrachten: uniek.map(x => huiswerkOpdracht(x.doel)),
+        opdrachten,
         leerlingIds: [leerling.id],
       })
       setMelding(`${uniek.length === 1 ? 'Staat' : `${uniek.length} oefeningen staan`} in het huiswerk van ${leerling.weergavenaam}, tot en met ${korteDatum(eind)}.`)
       setTeller(t => t + 1)
+      return true
     } catch {
       setMelding('Klaarzetten is niet gelukt. Probeer het nog eens.')
     } finally {
@@ -167,7 +153,7 @@ function Leerling({ klas, leerling, onTerug }) {
               </div>
             )}
 
-          {items.length === 0 && <p className="portaal-leeg kk-mt-3">Nog geen doelen klaargezet en nog te weinig gemaakt om iets te zeggen. Zet huiswerk klaar via "Hele klas", of zet eerst een doel klaar.</p>}
+          {items.length === 0 && <p className="portaal-leeg kk-mt-3">Voor {leerling.weergavenaam} staan nog geen doelen klaar. Zet ze klaar bij het tabblad Doelen, of kies hieronder zelf iets.</p>}
           <div className="hw-bakjes">
             {BAKJES.map(b => {
               const lijst = items.filter(x => x.status === b.key)
@@ -190,7 +176,37 @@ function Leerling({ klas, leerling, onTerug }) {
               )
             })}
           </div>
-          <p className="portaal-zacht kk-mt-3">Uit het gemaakte werk tellen alleen onderdelen met minstens {MIN_OPGAVEN} opgaven in de laatste 8 weken.</p>
+          <div className="hw-zelf">
+            <h3 className="kk-m-0">Zelf iets kiezen</h3>
+            <p className="portaal-zacht kk-mt-0">Kies uit alle oefeningen, net als bij een weektaak. Stel per oefening in hoeveel en wat, en zet het daarna in het huiswerk van {leerling.weergavenaam}.</p>
+            <div className="portaal-opdrachtlijst">
+              {eigen.map((o, i) => (
+                <OpdrachtRij key={i} opdracht={o} nummer={i + 1}
+                  onWijzig={nieuw => setEigen(l => l.map((x, j) => j === i ? nieuw : x))}
+                  onVerwijder={() => setEigen(l => l.filter((_, j) => j !== i))} />
+              ))}
+            </div>
+            {!kiezer && (
+              <div className="kk-rij kk-mt-3">
+                <Knop variant="secundair" maat="sm" onClick={() => setKiezer(true)}>+ Opdracht toevoegen</Knop>
+                {eigen.length > 0 && (
+                  <Knop variant="primair" maat="sm" disabled={!!bezig} onClick={async () => {
+                    const fout = controleerOpdrachten(eigen)
+                    if (fout) { setMelding('Klaarzetten is niet gelukt: ' + fout); return }
+                    const ok = await zetInHuiswerk(eigen.map((o, i) => ({ doel: { toolId: o.toolId, config: o.config, titel: TOOL_BY_ID[o.toolId]?.label }, opdracht: { ...o, config: { ...o.config, persoonlijk: 'huiswerk' } }, titel: String(i) })), 'eigen')
+                    if (ok) setEigen([])
+                  }}>{bezig === 'eigen' ? 'Bezig…' : `In huiswerk zetten (${eigen.length})`}</Knop>
+                )}
+              </div>
+            )}
+            {kiezer && (
+              <ToolKiezer klasGroepen={klas.groepen} onSluiten={() => setKiezer(false)} onKies={({ toolId, config = {} }) => {
+                const info = TOOL_BY_ID[toolId]
+                setEigen(l => [...l, { toolId, aantal: info?.eenheid === 'minuten' ? null : info?.standaardAantal ?? 1, config }])
+                setKiezer(false)
+              }} />
+            )}
+          </div>
         </>
       )}
     </div>

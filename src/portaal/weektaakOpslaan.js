@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase.js'
+import { TOOL_BY_ID } from '../lib/tools.js'
 
 // Slaat een weektaak + opdrachten + toewijzingen op. PostgREST kent geen
 // multi-statement transacties, dus de volgorde is bewust idempotent: bij een
@@ -151,4 +152,24 @@ export async function kopieerWeektaak({ bronId, schoolId, klasId, titel, startOp
   }
 
   return { id: nieuwId, opdrachten: idKaart.size, toewijzingen: nieuweToewijzingen.length }
+}
+
+// Controleert de instellingen die een tool verplicht stelt (bv. minstens twee
+// woordsoorten). Zonder deze check sla je een opdracht op die bij de leerling
+// nergens op uitkomt.
+export function controleerOpdrachten(opdrachten) {
+  for (const o of opdrachten) {
+    const info = TOOL_BY_ID[o.toolId]
+    if (!info) continue
+    for (const veld of info.configVelden) {
+      // Alleen aanvinklijsten hebben een minimum aantal keuzes; bij een
+      // getalveld betekent `min` de laagste toegestane waarde en mag leeg.
+      if (veld.type !== 'checkboxes' || !veld.min) continue
+      const gekozen = o.config?.[veld.key] ?? []
+      if (gekozen.length < veld.min) {
+        return `${info.label}: kies minstens ${veld.min} bij "${veld.label}".`
+      }
+    }
+  }
+  return null
 }

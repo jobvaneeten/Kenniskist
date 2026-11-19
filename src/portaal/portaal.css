@@ -790,3 +790,4 @@
 .hw-af { opacity: 0.65; }
 .hw-status { font-size: 0.78rem; font-weight: 800; padding: 3px 9px; border-radius: 999px; background: color-mix(in srgb, var(--kk-cyan) 18%, transparent); color: var(--kk-cyan); white-space: nowrap; }
 .hw-status.af { background: color-mix(in srgb, var(--kk-success) 18%, transparent); color: var(--kk-success); }
+.hw-zelf { margin-top: 26px; padding-top: 18px; border-top: 1px solid var(--kk-border); }
