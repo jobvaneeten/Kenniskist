@@ -21,6 +21,7 @@
     "drift": "node tools/neondriftTest.js",
     "monster": "node tools/monsterteamTest.js",
     "boer": "node tools/boerenlevenTest.js",
+    "stad": "node tools/stadsbouwerTest.js",
     "steen": "node tools/steenknallerTest.js",
     "vlot": "node tools/vlotstrijdTest.js snel",
     "tijd": "node tools/tijdstrijdTest.js snel",

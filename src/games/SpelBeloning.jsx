@@ -95,6 +95,7 @@ const SPELLEN = [
   { key: 'monster',    name: 'Monsterteam',    desc: '45 seconden spelen, de volgende keer ga je verder', img: '/scenes/games/monsterteam.svg' },
   { key: 'drift',      name: 'Neondrift',      desc: '45 seconden rijden, de volgende keer ga je verder', img: '/scenes/games/neondrift.svg' },
   { key: 'boer',       name: 'Boerenleven',    desc: '45 seconden boeren, de volgende keer ga je verder', img: '/scenes/games/boerenleven.svg' },
+  { key: 'stad',       name: 'Stadsbouwer',    desc: '45 seconden bouwen, de volgende keer ga je verder', img: '/scenes/games/stadsbouwer.png' },
   { key: 'stapel',     name: 'Stapeltoren',    desc: 'Bouw 1 toren in 45 seconden',        img: '/scenes/games/stapeltoren.svg' },
   { key: 'steen',      name: 'Steenknaller',   desc: 'Speel 1 level',                   img: '/scenes/games/steenknaller.svg' },
   { key: 'vlot',       name: 'Vlotstrijd',     desc: 'Speel 45 seconden, de volgende keer ga je verder', img: '/scenes/games/vlotstrijd.svg' },
@@ -161,6 +162,7 @@ export default function SpelBeloning({ title, sub, geld, addCuruntie, onDone }) 
   if (picked === 'kristal')    return <IframeEmbed src="/kristalsmelt/" title="Kristalsmelt" doneType="kristalsmelt-gameover" seconds={45} hint="45 seconden spelen, de volgende keer ga je verder waar je was" onDone={onDone} />
   if (picked === 'monster')    return <IframeEmbed src="/monsterteam/" title="Monsterteam" doneType="monsterteam-gameover" seconds={45} hint="45 seconden spelen, de volgende keer ga je verder waar je was" onDone={onDone} />
   if (picked === 'drift')      return <IframeEmbed src="/neondrift/" title="Neondrift" doneType="neondrift-gameover" seconds={45} hint="45 seconden rijden, de volgende keer ga je verder waar je was" onDone={onDone} />
+  if (picked === 'stad')       return <IframeEmbed src="/stadsbouwer/" title="Stadsbouwer" doneType="stadsbouwer-gameover" seconds={45} hint="45 seconden bouwen, de volgende keer ga je verder waar je was" onDone={onDone} />
   if (picked === 'boer')       return <IframeEmbed src="/boerenleven/" title="Boerenleven" doneType="boerenleven-gameover" seconds={45} hint="45 seconden boeren, de volgende keer ga je verder waar je was" onDone={onDone} />
   if (picked === 'stapel')     return <IframeEmbed src="/stapeltoren/" title="Stapeltoren" doneType="stapeltoren-gameover" hint="Bouw 1 toren — daarna tik je op Klaar" onDone={onDone} />
   // Het volgende level, dan Klaar.

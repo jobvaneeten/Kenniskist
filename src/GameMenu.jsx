@@ -259,6 +259,9 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
     return vrij(<IframeSpel src="/neondrift/" titel="Neondrift" terugType="neondrift-terug" achtergrond="#05040f" onBack={onBack} />)
   }
 
+  if (directGame === 'stadsbouwer') {
+    return vrij(<IframeSpel src="/stadsbouwer/" titel="Stadsbouwer" terugType="stadsbouwer-terug" achtergrond="#7ec8ff" onBack={onBack} />)
+  }
   if (directGame === 'boerenleven') {
     return vrij(<IframeSpel src="/boerenleven/" titel="Boerenleven" terugType="boerenleven-terug" achtergrond="#5aa8ff" onBack={onBack} />)
   }

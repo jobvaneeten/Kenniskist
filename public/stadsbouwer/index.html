@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Stadsbouwer</title>
+<link href="/fonts/fonts.css" rel="stylesheet">
+<link href="/neonkit/neonkit.css" rel="stylesheet">
+<style>
+  :root{ --accent:#3ef0ff; --titel1:#3ef0ff; --titel2:#ffc83d; }
+  h1{font-size:clamp(36px,10.5vw,72px);}
+  #menu{background:radial-gradient(ellipse 90% 60% at 50% 35%,rgba(6,6,24,.78),rgba(6,6,24,.35) 80%);backdrop-filter:none;}
+  #top{position:fixed;left:0;right:0;top:0;z-index:5;display:none;gap:8px;padding:calc(8px + var(--boven)) 10px 0;align-items:flex-start;flex-wrap:wrap;pointer-events:none;}
+  #top.aan{display:flex;}
+  #top > *{pointer-events:auto;}
+  .pil{display:flex;align-items:center;gap:6px;padding:8px 12px;border-radius:999px;background:rgba(16,18,44,.82);border:1px solid rgba(255,255,255,.16);backdrop-filter:blur(8px);font-weight:800;font-size:14px;}
+  .pil svg{width:18px;height:18px;}
+  .pil b{font-family:var(--disp);font-size:16px;font-variant-numeric:tabular-nums;}
+  #vraag{display:flex;gap:4px;align-items:flex-end;height:30px;padding:6px 10px;}
+  #vraag i{display:block;width:8px;border-radius:3px;background:var(--k);position:relative;}
+  #vraag span{font-size:10px;font-weight:800;color:var(--dim);margin-left:4px;align-self:center;}
+  #tempo{display:flex;gap:4px;padding:4px;}
+  #tempo button{padding:5px 9px;font-size:13px;border-radius:999px;background:transparent;display:flex;}
+  #tempo svg{width:16px;height:16px;}
+  #mijlpaal{color:inherit;cursor:pointer;}
+  #stadlijst{display:grid;gap:8px;width:min(480px,100%);}
+  .stat{display:flex;justify-content:space-between;padding:10px 14px;border-radius:14px;background:rgba(255,255,255,.05);font-weight:700;}
+  .doelrij{display:flex;gap:10px;align-items:center;padding:9px 12px;border-radius:14px;background:rgba(255,255,255,.05);font-size:13px;}
+  .doelrij i{flex:none;width:22px;height:22px;border-radius:50%;border:2px solid rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;font-style:normal;}
+  .doelrij.klaar{opacity:.55}.doelrij.klaar i{background:var(--accent);border-color:var(--accent);}
+  .doelrij.nu{border:1.5px solid var(--goud);}
+  #belasting{display:flex;align-items:center;gap:12px;justify-content:center;}
+  #belasting b{font-family:var(--disp);font-size:28px;min-width:70px;text-align:center;}
+  #tempo button.aan{background:var(--accent);color:#071018;}
+  #mijlpaal{margin-left:auto;}
+  #gereed{position:fixed;left:0;right:0;bottom:0;z-index:5;display:none;padding:0 0 calc(8px + var(--onder));flex-direction:column;gap:6px;}
+  #gereed.aan{display:flex;}
+  #uitleg{align-self:center;padding:8px 14px;border-radius:14px;background:rgba(16,18,44,.88);border:1px solid rgba(255,255,255,.16);font-size:13px;font-weight:700;max-width:min(92vw,560px);text-align:center;}
+  #knoppen{display:flex;gap:6px;overflow-x:auto;padding:4px 10px;scrollbar-width:none;touch-action:pan-x;}
+  #knoppen::-webkit-scrollbar{display:none;}
+  #knoppen button{flex:none;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:70px;padding:7px 8px;border-radius:14px;font-size:12px;
+     background:rgba(16,18,44,.88);border:1.5px solid rgba(255,255,255,.16);backdrop-filter:blur(8px);}
+  #knoppen button.aan{border-color:var(--k,var(--accent));box-shadow:0 0 16px color-mix(in srgb,var(--k,var(--accent)) 45%,transparent);}
+  #knoppen button:disabled{opacity:.4;}
+  #knoppen button i{width:26px;height:26px;border-radius:8px;background:var(--k,#3ef0ff);display:flex;align-items:center;justify-content:center;font-style:normal;}
+  #knoppen button i svg{width:18px;height:18px;color:#0a0a1a;}
+  #knoppen small{color:var(--dim);font-size:10px;}
+  #zoom{position:fixed;right:10px;bottom:calc(140px + var(--onder));z-index:5;display:none;flex-direction:column;gap:8px;}
+  #zoom.aan{display:flex;}
+  #zoom button{font-size:24px;font-weight:800;}
+  #banner{position:fixed;left:50%;top:30%;transform:translate(-50%,-50%) scale(.6);z-index:7;opacity:0;pointer-events:none;text-align:center;transition:all .4s cubic-bezier(.3,1.6,.5,1);
+     padding:18px 30px;border-radius:24px;background:rgba(16,18,44,.92);border:2px solid var(--goud);box-shadow:0 0 40px rgba(255,200,61,.4);}
+  #banner.aan{opacity:1;transform:translate(-50%,-50%) scale(1);}
+  #banner b{display:block;font-family:var(--disp);font-size:clamp(24px,7vw,40px);color:var(--goud);text-transform:uppercase;letter-spacing:.05em;}
+  #banner span{font-weight:800;}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div id="top">
+  <button class="rond" id="naarmenu" aria-label="Naar het menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+  <div class="pil"><span class="munt"><b id="geld">0</b></span><small id="inkomen" style="color:var(--dim)"></small></div>
+  <div class="pil"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="8" r="3.5"/><circle cx="17" cy="9" r="2.8"/><path d="M2 20c0-4 3-6.5 7-6.5s7 2.5 7 6.5zM15 20c.3-2.6-.6-4.6-2-6 4.5-.8 9 1.3 9 6z"/></svg><b id="inwoners">0</b></div>
+  <div class="pil" id="gelukpil" title="Hoe blij de mensen zijn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9.5"/><circle cx="9" cy="10" r="1" fill="currentColor"/><circle cx="15" cy="10" r="1" fill="currentColor"/><path id="mond" d="M8 15q4 3 8 0"/></svg><b id="geluk">0</b></div>
+  <div class="pil" id="vraag" title="Wat de stad nodig heeft"><i id="v-wonen" style="--k:#5be37a"></i><i id="v-winkel" style="--k:#3fa8ff"></i><i id="v-industrie" style="--k:#ffd23d"></i><span>vraag</span></div>
+  <div class="pil" id="tempo"><button data-t="0" aria-label="Pauze"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></button><button data-t="1" class="aan" aria-label="Gewone snelheid"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 5l12 7-12 7z"/></svg></button><button data-t="3" aria-label="Snel"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 5l9 7-9 7zM12 5l9 7-9 7z"/></svg></button></div>
+  <button class="pil" id="mijlpaal" aria-label="Je stad"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 21V10l5-3v14M8 21V4l7 3v14M15 21v-9l6 2v7M2 21h20"/></svg><b id="mijlnaam">Gehucht</b></button>
+</div>
+<div id="zoom"><button class="rond" id="z-in" aria-label="Inzoomen">+</button><button class="rond" id="z-uit" aria-label="Uitzoomen">−</button><button class="rond" id="z-net" aria-label="Stroom en water laten zien"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg></button></div>
+<div id="gereed">
+  <div id="uitleg">Kies hieronder wat je wilt bouwen.</div>
+  <div id="knoppen"></div>
+</div>
+<div id="banner"><b id="bannerkop">Dorp!</b><span id="bannertekst"></span></div>
+<div class="melding" id="melding" role="status" style="bottom:calc(200px + var(--onder))"></div>
+
+<div class="menutop" id="menutop"><button class="terug" id="terug">‹ Menu</button></div>
+<div class="scherm" id="menu">
+  <h1>Stads&shy;bouwer</h1>
+  <p class="onder">Leg wegen aan, kies waar mensen wonen, winkelen en werken, en zorg voor stroom en water. Zie je stad groeien!</p>
+  <div class="menuknoppen">
+    <button class="knop" id="speel">Spelen</button>
+    <button class="knop2" id="naaruitleg">Hoe werkt het?</button>
+    <button class="knop2" id="nieuw">Nieuwe stad</button>
+  </div>
+  <div class="instel">
+    <button class="schakel" id="s-geluid"><i></i>Geluid</button>
+    <button class="schakel" id="s-rustig"><i></i>Rustig beeld</button>
+  </div>
+</div>
+
+<div class="scherm dicht" id="stad">
+  <h2 id="stadnaam">Jouw stad</h2>
+  <div id="stadlijst"></div>
+  <p class="onder" style="margin-bottom:0">Belasting: hoger geeft meer geld, maar mensen worden minder blij.</p>
+  <div id="belasting"><button class="rond" id="bel-min" aria-label="Lagere belasting">−</button><b id="belwaarde">9%</b><button class="rond" id="bel-plus" aria-label="Hogere belasting">+</button></div>
+  <h2 style="font-size:22px;margin-top:8px">Doelen</h2>
+  <div id="doellijst" class="lijstje" style="display:grid;gap:6px;width:min(480px,100%)"></div>
+  <button class="knop" id="stadterug">Terug naar de stad</button>
+</div>
+
+<script src="/neonkit/neonkit.js"></script>
+<script src="kern.js"></script>
+<script src="spel.js"></script>
+</body>
+</html>
