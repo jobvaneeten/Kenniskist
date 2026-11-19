@@ -63,6 +63,8 @@
      background:rgba(16,18,44,.85);border:1px solid rgba(255,255,255,.2);font-family:var(--disp);letter-spacing:.06em;text-transform:uppercase;transition:opacity .4s;}
   #wterug{position:absolute;top:calc(12px + var(--boven));left:12px;pointer-events:auto;}
   #wmenu{position:absolute;top:calc(12px + var(--boven));right:12px;pointer-events:auto;}
+  #wrugzak{position:absolute;top:calc(12px + var(--boven));right:70px;pointer-events:auto;}
+  .aantal{display:inline-block;min-width:28px;padding:2px 8px;border-radius:999px;background:rgba(255,255,255,.12);font-size:13px;text-align:center;margin-left:4px;}
   #dpad{position:fixed;left:0;right:0;bottom:calc(14px + var(--onder));z-index:6;display:none;justify-content:space-between;align-items:flex-end;padding:0 16px;pointer-events:none;}
   #dpad.aan{display:flex;}
   .kruis{display:grid;grid-template-columns:repeat(3,52px);grid-template-rows:repeat(3,52px);pointer-events:auto;opacity:.85;}
@@ -140,6 +142,12 @@
   <div id="winkellijst" style="display:grid;gap:8px;justify-items:center;width:100%"></div>
 </div>
 
+<div class="scherm dicht" id="rugzak">
+  <h2>Rugzak</h2>
+  <p class="onder" id="rugzaksub"></p>
+  <div id="rugzaklijst" style="display:grid;gap:8px;justify-items:center;width:100%"></div>
+</div>
+
 <div class="scherm dicht midden" id="kies">
   <h2 id="kieskop">Kies een wezen</h2>
   <div class="wezens" id="kieslijst"></div>
@@ -147,12 +155,13 @@
 </div>
 
 <div class="onderknoppen" id="onderknoppen">
-  <button id="naarkaart">Terug naar de wereld</button><button id="naarteam">Team</button><button id="naardex">Wezenboek</button><button id="naarwinkel" class="verborgen">Winkel</button>
+  <button id="naarkaart">Terug naar de wereld</button><button id="naarteam">Team</button><button id="naarrugzak">Rugzak</button><button id="naardex">Wezenboek</button><button id="naarwinkel" class="verborgen">Winkel</button>
 </div>
 
 <div id="wereldhud">
   <button class="rond" id="wterug" aria-label="Terug naar het menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
   <div id="gebiednaam">Morgenrood</div>
+  <button class="rond" id="wrugzak" aria-label="Rugzak"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 0 1 12 0v10a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2z"/><path d="M9 5.5V4a3 3 0 0 1 6 0v1.5"/><path d="M9 14h6v4H9z"/></svg></button>
   <button class="rond" id="wmenu" aria-label="Menu: team en wezenboek"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
 </div>
 <div id="dpad">
@@ -184,9 +193,9 @@ window.addEventListener('error', function (e) {
 })
 </script>
 <script src="/neonkit/neonkit.js"></script>
-<script src="kern.js"></script>
-<script src="wereld.js"></script>
-<script src="wezens.js"></script>
-<script src="spel.js"></script>
+<script src="kern.js?v=mwnsktjj"></script>
+<script src="wereld.js?v=mwnsktjj"></script>
+<script src="wezens.js?v=mwnsktjj"></script>
+<script src="spel.js?v=mwnsktjj"></script>
 </body>
 </html>

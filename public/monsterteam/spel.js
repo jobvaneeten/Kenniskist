@@ -599,7 +599,7 @@ function opgeven() {
 
 // ── wezen kiezen (wisselen, drankje, flauw) ──
 var kiesTerug = null
-function kiesWezen(kop, mag, gekozen, terugMag) {
+function kiesWezen(kop, mag, gekozen, terugMag, terug) {
   $('kieskop').textContent = kop
   var l = $('kieslijst'); l.innerHTML = ''
   D.team.forEach(function (w, i) {
@@ -609,7 +609,7 @@ function kiesWezen(kop, mag, gekozen, terugMag) {
     l.appendChild(b)
   })
   $('kiesterug').classList.toggle('verborgen', !terugMag)
-  kiesTerug = function () { $('kies').classList.remove('aan'); hoofdMenu() }
+  kiesTerug = function () { $('kies').classList.remove('aan'); (terug || hoofdMenu)() }
   $('kies').classList.add('aan')
 }
 $('kiesterug').onclick = function () { Geluid.klik(); if (kiesTerug) kiesTerug() }
@@ -1038,6 +1038,39 @@ function naarWinkel() {
   toonScherm('winkel')
 }
 
+// ── rugzak: kijken wat je hebt, en drankjes gebruiken buiten een gevecht ──
+function naarRugzak() {
+  var l = $('rugzaklijst'); l.innerHTML = ''
+  var soorten = Object.keys(SPULLEN).filter(function (k) { return D.tas[k] > 0 })
+  $('rugzaksub').textContent = soorten.length ? 'Je hebt ' + D.munten + ' munten.' : 'Je rugzak is leeg. In de winkel koop je spullen, en op de routes liggen soms spullen op de grond.'
+  soorten.forEach(function (k) {
+    var sp = SPULLEN[k], d = document.createElement('div'); d.className = 'winkelrij'
+    d.appendChild(spulIcoon(k, 22))
+    var info = document.createElement('div'); info.style.flex = '1'
+    info.innerHTML = '<b>' + sp.naam + '</b> <span class="aantal">' + D.tas[k] + '</span><div class="klein">' + sp.uitleg + '</div>'
+    d.appendChild(info)
+    if (sp.kracht) { var s = document.createElement('div'); s.className = 'klein'; s.style.maxWidth = '110px'; s.textContent = 'Gebruik je in een gevecht met een wild wezen'; d.appendChild(s) }
+    else {
+      var b = document.createElement('button'); b.className = 'knop2'; b.textContent = 'Gebruik'
+      var mag = function (w) { return sp.wek ? w.hp <= 0 : (w.hp > 0 && w.hp < MT.maxHp(w)) }
+      b.disabled = !D.team.some(mag)
+      b.onclick = function () {
+        Geluid.klik()
+        kiesWezen(sp.naam + ' voor wie?', mag, function (i) {
+          var w = D.team[i], voor = w.hp
+          if (sp.wek) w.hp = Math.round(MT.maxHp(w) / 2); else w.hp = Math.min(MT.maxHp(w), w.hp + sp.heel)
+          D.tas[k]--; D.bewaar(); G.heel()
+          melding(S[w.id].naam + (sp.wek ? ' is weer wakker!' : ' krijgt ' + (w.hp - voor) + ' leven terug.'))
+          naarRugzak()
+        }, true, naarRugzak)
+      }
+      d.appendChild(b)
+    }
+    l.appendChild(d)
+  })
+  toonScherm('rugzak')
+}
+
 // ── starter ──
 function naarStarter() {
   var l = $('startkeuze'); l.innerHTML = ''
@@ -1060,8 +1093,8 @@ function naarStarter() {
 var huidig = 'menu'
 function toonScherm(id) {
   huidig = id
-  ;['menu', 'starter', 'team', 'details', 'dex', 'winkel'].forEach(function (x) { $(x).classList.toggle('aan', x === id) })
-  var hub = id === 'team' || id === 'details' || id === 'dex' || id === 'winkel'
+  ;['menu', 'starter', 'team', 'details', 'dex', 'winkel', 'rugzak'].forEach(function (x) { $(x).classList.toggle('aan', x === id) })
+  var hub = id === 'team' || id === 'details' || id === 'dex' || id === 'winkel' || id === 'rugzak'
   if (id !== null) { $('wereldhud').classList.remove('aan'); $('dpad').classList.remove('aan') }
   if (id !== null) modus = 'scherm'
   $('onderknoppen').classList.toggle('aan', hub)
@@ -1075,6 +1108,8 @@ function melding(t) {
 $('naarkaart').onclick = function () { Geluid.klik(); naarWereld() }
 $('naarteam').onclick = function () { Geluid.klik(); naarTeam() }
 $('naardex').onclick = function () { Geluid.klik(); naarDex() }
+$('naarrugzak').onclick = function () { Geluid.klik(); naarRugzak() }
+$('wrugzak').onclick = function () { Geluid.klik(); bewaarPos(); houd = null; W8.pad = []; naarRugzak() }
 $('naarwinkel').onclick = function () { Geluid.klik(); naarWinkel() }
 $('terug').onclick = function () { Geluid.klik(); bewaarPos(); NK.naarOuder(BELONING ? 'monsterteam-gameover' : 'monsterteam-terug') }
 $('speel').onclick = function () { Geluid.klik(); verder() }
