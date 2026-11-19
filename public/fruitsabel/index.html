@@ -209,12 +209,14 @@ window.addEventListener('resize', meet);
 
 // ── Fruit ───────────────────────────────────────────────────────────────────
 var SOORTEN = [
-  { naam:'appel',       buiten:'#ff5c7a', binnen:'#ffdfe6', r:34, blad:true },
-  { naam:'meloen',      buiten:'#6bd08a', binnen:'#e6ffe9', r:40, blad:false },
-  { naam:'sinaasappel', buiten:'#ffa33f', binnen:'#ffe4bd', r:33, blad:false },
-  { naam:'pruim',       buiten:'#a06bff', binnen:'#e7dcff', r:29, blad:true },
-  { naam:'citroen',     buiten:'#ffd93d', binnen:'#fff6cc', r:31, blad:false },
-  { naam:'watermeloen', buiten:'#3fbf6f', binnen:'#ff8095', r:44, blad:false },
+  { naam:'appel',       buiten:'#ff5c7a', sap:'#ffe08a', r:34 },
+  { naam:'meloen',      buiten:'#6bd08a', sap:'#d8ff9a', r:40 },
+  { naam:'sinaasappel', buiten:'#ffa33f', sap:'#ffa020', r:33 },
+  { naam:'pruim',       buiten:'#a06bff', sap:'#ffc040', r:29 },
+  { naam:'citroen',     buiten:'#ffd93d', sap:'#fff060', r:31 },
+  { naam:'watermeloen', buiten:'#3fbf6f', sap:'#ff2e4a', r:44 },
+  { naam:'kiwi',        buiten:'#8a5a2e', sap:'#8ee04a', r:30 },
+  { naam:'aardbei',     buiten:'#ec1c32', sap:'#ff2e4a', r:28 },
 ];
 
 // Elke omgeving heeft zijn eigen sfeerdeeltjes: sneeuw dwarrelt naar beneden,
@@ -299,7 +301,7 @@ function maakDing(){
 }
 
 function startSpel(){
-  dingen = []; spetters = []; halven = []; spoor = [];
+  dingen = []; spetters = []; halven = []; spoor = []; vlekken = []; streepjes = []; pops = []; schud = 0;
   tijd = speeltijd(); score = 0; aantalFruit = 0; combo = 0; besteCombo = 0;
   schild = schilden(); traag = 0; volgende = 0.4; flits = 0;
   toonScherm(null); bezig = true; laatste = performance.now();
@@ -351,20 +353,23 @@ function snij(x1,y1,x2,y2){
     if (afstandPuntLijn(d.x,d.y,x1,y1,x2,y2) > d.r + lemmet()) continue;
     dingen.splice(i,1);
     if (d.bom){
-      if (schild > 0){ schild--; spat(d.x,d.y,'#8ee06a',26); }
-      else { tijd = Math.max(0, tijd - bomKosten()); flits = 1; spat(d.x,d.y,'#ff6b6b',34); }
+      if (schild > 0){ schild--; schud = 0.4; spat(d.x,d.y,'#8ee06a',26); pop(d.x, d.y - 30, 'schild!', '#8ee06a', false); }
+      else { tijd = Math.max(0, tijd - bomKosten()); flits = 1; schud = 1; spat(d.x,d.y,'#ff6b6b',34); spat(d.x,d.y,'#ffd166',24); pop(d.x, d.y - 30, '-' + bomKosten() + ' sec', '#ff6b6b', true); }
       combo = 0;
       continue;
     }
-    if (d.banaan){ traag = 4; spat(d.x,d.y,'#9fe8ff',30); continue; }
+    if (d.banaan){ traag = 4; spat(d.x,d.y,'#9fe8ff',30); pop(d.x, d.y - 30, 'alles trager!', '#9fe8ff', false); continue; }
     geraakt++;
     aantalFruit++;
     score += puntPer() * (d.goud ? 5 : 1);
-    spat(d.x, d.y, d.goud ? '#ffd166' : d.soort.buiten, d.goud ? 30 : 16);
     var hoek = Math.atan2(y2-y1, x2-x1);
+    spat(d.x, d.y, d.goud ? '#ffd166' : d.soort.sap, d.goud ? 30 : 18);
+    nieuweVlek(d.x, d.y, d.goud ? '#ffd166' : d.soort.sap, d.r * 1.3);
+    streepjes.push({ x:d.x, y:d.y, a:hoek, r:d.r, t:0 });
+    pop(d.x, d.y - d.r, '+' + puntPer() * (d.goud ? 5 : 1), d.goud ? '#ffd166' : '#ffffff', false);
     for (var k=0;k<2;k++){
       halven.push({
-        x:d.x, y:d.y, r:d.r, soort:d.soort, kant:k, snij:hoek,
+        x:d.x, y:d.y, r:d.r, soort:d.soort, kant:k, snij:hoek, lok:hoek - d.hoek, goud:d.goud,
         vx:d.vx + Math.cos(hoek + (k?1.57:-1.57))*190,
         vy:d.vy*0.5 + Math.sin(hoek + (k?1.57:-1.57))*190 - 60,
         hoek:d.hoek, draai:(k?1:-1)*2.4, leven:1,
@@ -374,7 +379,7 @@ function snij(x1,y1,x2,y2){
   if (geraakt > 0){
     combo += geraakt;
     if (combo > besteCombo) besteCombo = combo;
-    if (geraakt >= 3){ score += geraakt * comboWaarde(); }   // meerdere in één veeg = bonus
+    if (geraakt >= 3){ score += geraakt * comboWaarde(); pop(W/2, H*0.3, geraakt + ' tegelijk! +' + geraakt * comboWaarde(), '#ffd166', true); schud = Math.max(schud, 0.35); }   // meerdere in één veeg = bonus
     toonHud();
   }
 }
@@ -433,88 +438,282 @@ function stap(nu){
   requestAnimationFrame(stap);
 }
 
-function tekenFruit(d){
-  ctx.save(); ctx.translate(d.x,d.y); ctx.rotate(d.hoek);
-  if (d.bom){
-    ctx.fillStyle = '#1b1b26'; ctx.shadowColor = '#ff6b6b'; ctx.shadowBlur = 20;
-    ctx.beginPath(); ctx.arc(0,0,d.r,0,6.2832); ctx.fill(); ctx.shadowBlur = 0;
-    ctx.fillStyle = '#3a3a4d'; ctx.beginPath(); ctx.arc(-d.r*0.3,-d.r*0.3,d.r*0.3,0,6.2832); ctx.fill();
-    ctx.strokeStyle = '#c9c9d6'; ctx.lineWidth = 4; ctx.lineCap='round';
-    ctx.beginPath(); ctx.moveTo(0,-d.r); ctx.quadraticCurveTo(d.r*0.5,-d.r*1.5,d.r*0.15,-d.r*1.8); ctx.stroke();
-    ctx.fillStyle = '#ffd166'; ctx.shadowColor='#ffb020'; ctx.shadowBlur=16;
-    ctx.beginPath(); ctx.arc(d.r*0.15,-d.r*1.85,4.5,0,6.2832); ctx.fill();
-  } else if (d.banaan){
-    ctx.fillStyle = '#9fe8ff'; ctx.shadowColor='#9fe8ff'; ctx.shadowBlur=22;
-    ctx.beginPath(); ctx.ellipse(0,0,d.r*0.95,d.r*0.55,0.5,0,6.2832); ctx.fill();
-    ctx.shadowBlur=0; ctx.fillStyle='#e8fbff';
-    ctx.beginPath(); ctx.ellipse(-4,-5,d.r*0.5,d.r*0.24,0.5,0,6.2832); ctx.fill();
-  } else {
-    ctx.fillStyle = d.goud ? '#ffd166' : d.soort.buiten;
-    ctx.shadowColor = d.goud ? '#ffb020' : d.soort.buiten; ctx.shadowBlur = d.goud ? 26 : 16;
-    ctx.beginPath(); ctx.arc(0,0,d.r,0,6.2832); ctx.fill(); ctx.shadowBlur = 0;
-    if (d.goud){
-      ctx.strokeStyle = '#fff3c4'; ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.arc(0,0,d.r*0.72,0,6.2832); ctx.stroke();
-    }
-    ctx.fillStyle = 'rgba(255,255,255,0.35)';
-    ctx.beginPath(); ctx.ellipse(-d.r*0.32,-d.r*0.34,d.r*0.3,d.r*0.2,-0.6,0,6.2832); ctx.fill();
-    if (d.soort.blad){
-      ctx.fillStyle = '#6bd08a';
-      ctx.beginPath(); ctx.ellipse(d.r*0.4,-d.r*0.9,d.r*0.34,d.r*0.15,-0.5,0,6.2832); ctx.fill();
-      ctx.fillStyle = '#8b5a3c'; ctx.fillRect(-2,-d.r-8,4,10);
-    }
+// ── Tekenen: echte vruchten, sap, een scherpe sabelstreep ──────────────────
+// Elke vrucht (buitenkant en doorsnede) wordt één keer op een eigen canvasje
+// getekend en daarna als plaatje hergebruikt: mooi én licht voor oude laptops.
+var sprites = {};
+function zaadRng(z){ return function(){ z = (z * 16807) % 2147483647; return (z - 1) / 2147483646; }; }
+function rg(g, x, y, r, stops){ var gr = g.createRadialGradient(x, y, 0, x, y, r); stops.forEach(function(s){ gr.addColorStop(s[0], s[1]); }); return gr; }
+function glans(g, r, a){ g.fillStyle = 'rgba(255,255,255,' + a + ')'; g.beginPath(); g.ellipse(-r*0.36, -r*0.4, r*0.26, r*0.15, -0.7, 0, 6.2832); g.fill(); g.fillStyle = 'rgba(255,255,255,' + (a*0.6) + ')'; g.beginPath(); g.arc(-r*0.12, -r*0.58, r*0.05, 0, 6.2832); g.fill(); }
+function puntjes(g, r, n, kleur, z){ var R = zaadRng(z); g.fillStyle = kleur; for (var i=0;i<n;i++){ var a = R()*6.2832, d = Math.sqrt(R())*r*0.92; g.beginPath(); g.arc(Math.cos(a)*d, Math.sin(a)*d, r*0.018 + R()*r*0.012, 0, 6.2832); g.fill(); } }
+function steeltje(g, r, lengte, blad){
+  g.strokeStyle = '#6b4226'; g.lineWidth = r*0.09; g.lineCap = 'round';
+  g.beginPath(); g.moveTo(0, -r*0.72); g.quadraticCurveTo(r*0.04, -r*0.95, r*0.14, -r*(0.72 + lengte)); g.stroke();
+  if (blad){
+    g.save(); g.translate(r*0.1, -r*0.86); g.rotate(-0.5)
+    var bg = g.createLinearGradient(0, -r*0.15, r*0.6, r*0.15); bg.addColorStop(0, '#9be86a'); bg.addColorStop(1, '#2f9a3a');
+    g.fillStyle = bg; g.beginPath(); g.moveTo(0, 0); g.quadraticCurveTo(r*0.3, -r*0.26, r*0.62, 0); g.quadraticCurveTo(r*0.3, r*0.2, 0, 0); g.fill();
+    g.strokeStyle = 'rgba(30,90,30,0.6)'; g.lineWidth = r*0.025; g.beginPath(); g.moveTo(r*0.04, 0); g.lineTo(r*0.56, 0); g.stroke();
+    g.restore();
   }
+}
+var BUITEN = {
+  appel: function(g, r){
+    var vorm = function(){ g.beginPath(); g.moveTo(0, -r*0.66); g.bezierCurveTo(r*0.4, -r*1.02, r*1.05, -r*0.82, r*0.98, -r*0.04); g.bezierCurveTo(r*0.93, r*0.68, r*0.46, r*1.0, 0, r*0.88); g.bezierCurveTo(-r*0.46, r*1.0, -r*0.93, r*0.68, -r*0.98, -r*0.04); g.bezierCurveTo(-r*1.05, -r*0.82, -r*0.4, -r*1.02, 0, -r*0.66); g.closePath(); };
+    vorm(); g.fillStyle = rg(g, -r*0.3, -r*0.3, r*1.3, [[0, '#ff8f8f'], [0.45, '#e8283f'], [1, '#7a0a1c']]); g.fill();
+    g.save(); vorm(); g.clip(); g.globalAlpha = 0.35; g.strokeStyle = '#ffd36a'; g.lineWidth = r*0.05;
+    for (var i=0;i<5;i++){ g.beginPath(); g.moveTo(r*(0.15 + i*0.13), -r*0.6); g.quadraticCurveTo(r*(0.5 + i*0.08), 0, r*(0.2 + i*0.1), r*0.75); g.stroke(); }
+    g.restore();
+    g.fillStyle = 'rgba(60,0,10,0.35)'; g.beginPath(); g.ellipse(0, -r*0.62, r*0.16, r*0.07, 0, 0, 6.2832); g.fill();
+    glans(g, r, 0.55); steeltje(g, r, 0.32, true);
+  },
+  watermeloen: function(g, r){
+    var vorm = function(){ g.beginPath(); g.ellipse(0, 0, r, r*0.84, 0, 0, 6.2832); };
+    vorm(); g.fillStyle = rg(g, -r*0.3, -r*0.3, r*1.2, [[0, '#7fe08a'], [0.5, '#2f9e48'], [1, '#145a26']]); g.fill();
+    g.save(); vorm(); g.clip(); g.strokeStyle = '#0f4a1e'; g.lineWidth = r*0.13; g.lineJoin = 'round';
+    for (var s=-3;s<=3;s++){ g.beginPath(); for (var y=-r; y<=r; y+=r*0.12){ var x = s*r*0.3 + Math.sin(y/r*9 + s)*r*0.05; if (y === -r) g.moveTo(x, y); else g.lineTo(x, y); } g.stroke(); }
+    g.restore();
+    glans(g, r, 0.4);
+  },
+  sinaasappel: function(g, r){
+    g.beginPath(); g.arc(0, 0, r, 0, 6.2832); g.fillStyle = rg(g, -r*0.3, -r*0.3, r*1.25, [[0, '#ffd27a'], [0.45, '#ff9a1f'], [1, '#c45200']]); g.fill();
+    g.save(); g.beginPath(); g.arc(0, 0, r, 0, 6.2832); g.clip(); puntjes(g, r, 90, 'rgba(150,60,0,0.22)', 7); puntjes(g, r, 40, 'rgba(255,230,160,0.25)', 9); g.restore();
+    g.fillStyle = '#4a8a2a'; g.beginPath(); g.ellipse(0, -r*0.92, r*0.12, r*0.07, 0, 0, 6.2832); g.fill();
+    glans(g, r, 0.45);
+  },
+  citroen: function(g, r){
+    var vorm = function(){ g.beginPath(); g.moveTo(-r*1.05, 0); g.quadraticCurveTo(-r*0.95, -r*0.78, 0, -r*0.8); g.quadraticCurveTo(r*0.95, -r*0.78, r*1.05, 0); g.quadraticCurveTo(r*0.95, r*0.78, 0, r*0.8); g.quadraticCurveTo(-r*0.95, r*0.78, -r*1.05, 0); g.closePath(); };
+    vorm(); g.fillStyle = rg(g, -r*0.3, -r*0.3, r*1.2, [[0, '#fff8a8'], [0.45, '#ffdc2e'], [1, '#c99400']]); g.fill();
+    g.save(); vorm(); g.clip(); puntjes(g, r, 70, 'rgba(160,110,0,0.2)', 11); g.restore();
+    glans(g, r, 0.5);
+  },
+  pruim: function(g, r){
+    g.beginPath(); g.ellipse(0, 0, r*0.96, r, 0, 0, 6.2832); g.fillStyle = rg(g, -r*0.3, -r*0.3, r*1.25, [[0, '#d6a8ff'], [0.45, '#7a34d8'], [1, '#2e0a6a']]); g.fill();
+    g.strokeStyle = 'rgba(40,0,80,0.45)'; g.lineWidth = r*0.06; g.beginPath(); g.moveTo(r*0.05, -r*0.92); g.bezierCurveTo(r*0.42, -r*0.4, r*0.42, r*0.4, r*0.1, r*0.95); g.stroke();
+    g.fillStyle = 'rgba(230,220,255,0.16)'; g.beginPath(); g.ellipse(-r*0.1, -r*0.1, r*0.8, r*0.85, 0, 0, 6.2832); g.fill();
+    glans(g, r, 0.35); steeltje(g, r, 0.22, false);
+  },
+  meloen: function(g, r){
+    g.beginPath(); g.arc(0, 0, r, 0, 6.2832); g.fillStyle = rg(g, -r*0.3, -r*0.3, r*1.25, [[0, '#e6ff9a'], [0.5, '#9ccc4a'], [1, '#4a7a1f']]); g.fill();
+    g.save(); g.beginPath(); g.arc(0, 0, r, 0, 6.2832); g.clip(); var R = zaadRng(21);
+    g.strokeStyle = 'rgba(250,255,220,0.55)'; g.lineWidth = r*0.035;
+    for (var i=0;i<26;i++){ var x = (R()-0.5)*2*r, y = (R()-0.5)*2*r; g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + (R()-0.5)*r*0.5, y + (R()-0.5)*r*0.5, x + (R()-0.5)*r*0.6, y + (R()-0.5)*r*0.6); g.stroke(); }
+    g.restore(); glans(g, r, 0.4);
+  },
+  kiwi: function(g, r){
+    var vorm = function(){ g.beginPath(); g.ellipse(0, 0, r, r*0.84, 0, 0, 6.2832); };
+    vorm(); g.fillStyle = rg(g, -r*0.3, -r*0.3, r*1.2, [[0, '#c8955a'], [0.55, '#8a5a2e'], [1, '#4a2c14']]); g.fill();
+    g.save(); vorm(); g.clip(); var R = zaadRng(33); g.strokeStyle = 'rgba(230,200,150,0.45)'; g.lineWidth = r*0.02;
+    for (var i=0;i<140;i++){ var a = R()*6.2832, d = Math.sqrt(R())*r, x = Math.cos(a)*d, y = Math.sin(a)*d*0.84; g.beginPath(); g.moveTo(x, y); g.lineTo(x + (R()-0.5)*r*0.08, y + (R()-0.5)*r*0.08); g.stroke(); }
+    g.restore(); glans(g, r, 0.22);
+  },
+  aardbei: function(g, r){
+    var vorm = function(){ g.beginPath(); g.moveTo(0, -r*0.72); g.bezierCurveTo(r*0.7, -r*0.95, r*1.15, -r*0.4, r*0.8, r*0.25); g.bezierCurveTo(r*0.55, r*0.75, r*0.15, r*1.05, 0, r*1.05); g.bezierCurveTo(-r*0.15, r*1.05, -r*0.55, r*0.75, -r*0.8, r*0.25); g.bezierCurveTo(-r*1.15, -r*0.4, -r*0.7, -r*0.95, 0, -r*0.72); g.closePath(); };
+    vorm(); g.fillStyle = rg(g, -r*0.3, -r*0.25, r*1.3, [[0, '#ff8a8a'], [0.45, '#ec1c32'], [1, '#7a0012']]); g.fill();
+    g.fillStyle = '#ffe38a';
+    for (var y=-0.45; y<0.9; y+=0.22) for (var x=-0.8; x<=0.8; x+=0.26){ var xx = x + (Math.round(y/0.22) % 2 ? 0.13 : 0); if (Math.abs(xx) > 0.85 - Math.max(0, y)*0.75) continue; g.beginPath(); g.ellipse(xx*r, y*r, r*0.035, r*0.055, 0, 0, 6.2832); g.fill(); }
+    g.fillStyle = '#2f9a3a';
+    for (var k=0;k<6;k++){ var a = -Math.PI/2 + (k - 2.5)*0.48; g.beginPath(); g.moveTo(-r*0.12, -r*0.68); g.quadraticCurveTo(Math.cos(a)*r*0.35, -r*0.72 + Math.sin(a)*r*0.35 + r*0.2, Math.cos(a)*r*0.6, -r*0.72 + Math.sin(a)*r*0.25 + r*0.25); g.quadraticCurveTo(Math.cos(a)*r*0.3, -r*0.6, r*0.12, -r*0.68); g.fill(); }
+    glans(g, r, 0.45);
+  },
+};
+function partjes(g, r, schil, pit, vrucht, licht){
+  g.beginPath(); g.arc(0, 0, r, 0, 6.2832); g.fillStyle = schil; g.fill();
+  g.beginPath(); g.arc(0, 0, r*0.9, 0, 6.2832); g.fillStyle = pit; g.fill();
+  for (var i=0;i<10;i++){ var a0 = i/10*6.2832 + 0.04, a1 = (i+1)/10*6.2832 - 0.04; g.beginPath(); g.moveTo(Math.cos((a0+a1)/2)*r*0.08, Math.sin((a0+a1)/2)*r*0.08); g.arc(0, 0, r*0.84, a0, a1); g.closePath(); g.fillStyle = rg(g, 0, 0, r*0.84, [[0, licht], [1, vrucht]]); g.fill(); }
+  puntjes(g, r*0.8, 50, 'rgba(255,255,255,0.3)', 5);
+  g.fillStyle = pit; g.beginPath(); g.arc(0, 0, r*0.1, 0, 6.2832); g.fill();
+}
+var BINNEN = {
+  appel: function(g, r){ g.beginPath(); g.arc(0,0,r,0,6.2832); g.fillStyle = '#c0182e'; g.fill(); g.beginPath(); g.arc(0,0,r*0.93,0,6.2832); g.fillStyle = rg(g, 0, 0, r, [[0, '#fff8e0'], [1, '#ffe2a0']]); g.fill();
+    g.strokeStyle = 'rgba(200,160,80,0.5)'; g.lineWidth = r*0.03; g.beginPath(); for (var i=0;i<=5;i++){ var a = i/5*6.2832 - Math.PI/2; g.lineTo(Math.cos(a)*r*0.32, Math.sin(a)*r*0.32); g.lineTo(Math.cos(a + 0.63)*r*0.14, Math.sin(a + 0.63)*r*0.14); } g.stroke();
+    g.fillStyle = '#5a3216'; for (var k=0;k<5;k++){ var b = k/5*6.2832 - Math.PI/2; g.save(); g.translate(Math.cos(b)*r*0.2, Math.sin(b)*r*0.2); g.rotate(b); g.beginPath(); g.ellipse(0, 0, r*0.08, r*0.045, 0, 0, 6.2832); g.fill(); g.restore(); } },
+  watermeloen: function(g, r){ g.beginPath(); g.arc(0,0,r,0,6.2832); g.fillStyle = '#1e7a34'; g.fill(); g.beginPath(); g.arc(0,0,r*0.93,0,6.2832); g.fillStyle = '#e8ffd8'; g.fill();
+    g.beginPath(); g.arc(0,0,r*0.84,0,6.2832); g.fillStyle = rg(g, 0, 0, r*0.84, [[0, '#ff7a8a'], [1, '#ff2d4a']]); g.fill();
+    g.fillStyle = '#1a0a0a'; for (var i=0;i<11;i++){ var a = i/11*6.2832, d = r*(i % 2 ? 0.5 : 0.62); g.save(); g.translate(Math.cos(a)*d, Math.sin(a)*d); g.rotate(a); g.beginPath(); g.ellipse(0, 0, r*0.07, r*0.04, 0, 0, 6.2832); g.fill(); g.restore(); } },
+  sinaasappel: function(g, r){ partjes(g, r, '#ff8a1a', '#fff2dc', '#ff9a1f', '#ffd27a'); },
+  citroen: function(g, r){ partjes(g, r, '#ffd21f', '#fffbe6', '#ffe44a', '#fff8b0'); },
+  pruim: function(g, r){ g.beginPath(); g.arc(0,0,r,0,6.2832); g.fillStyle = '#5a1aa8'; g.fill(); g.beginPath(); g.arc(0,0,r*0.92,0,6.2832); g.fillStyle = rg(g, 0, 0, r, [[0, '#ffe58a'], [1, '#ffaa2a']]); g.fill();
+    g.fillStyle = rg(g, -r*0.08, -r*0.08, r*0.4, [[0, '#c8865a'], [1, '#6a3a1a']]); g.beginPath(); g.ellipse(0, 0, r*0.28, r*0.36, 0.3, 0, 6.2832); g.fill(); },
+  meloen: function(g, r){ g.beginPath(); g.arc(0,0,r,0,6.2832); g.fillStyle = '#6a9a2a'; g.fill(); g.beginPath(); g.arc(0,0,r*0.92,0,6.2832); g.fillStyle = rg(g, 0, 0, r, [[0, '#ffd890'], [0.45, '#d8ffa0'], [1, '#bff07a']]); g.fill();
+    g.fillStyle = '#fff4d0'; for (var i=0;i<9;i++){ var a = i/9*6.2832; g.save(); g.translate(Math.cos(a)*r*0.22, Math.sin(a)*r*0.22); g.rotate(a); g.beginPath(); g.ellipse(0, 0, r*0.08, r*0.035, 0, 0, 6.2832); g.fill(); g.restore(); } },
+  kiwi: function(g, r){ g.beginPath(); g.arc(0,0,r,0,6.2832); g.fillStyle = '#7a4a22'; g.fill(); g.beginPath(); g.arc(0,0,r*0.93,0,6.2832); g.fillStyle = rg(g, 0, 0, r, [[0, '#d8ffb0'], [0.35, '#8ee04a'], [1, '#4aa82a']]); g.fill();
+    g.strokeStyle = 'rgba(230,255,200,0.35)'; g.lineWidth = r*0.02; for (var i=0;i<30;i++){ var a = i/30*6.2832; g.beginPath(); g.moveTo(Math.cos(a)*r*0.3, Math.sin(a)*r*0.3); g.lineTo(Math.cos(a)*r*0.85, Math.sin(a)*r*0.85); g.stroke(); }
+    g.fillStyle = '#fbfff0'; g.beginPath(); g.ellipse(0, 0, r*0.24, r*0.16, 0, 0, 6.2832); g.fill();
+    g.fillStyle = '#141414'; for (var k=0;k<26;k++){ var b = k/26*6.2832; g.save(); g.translate(Math.cos(b)*r*0.36, Math.sin(b)*r*0.3); g.rotate(b); g.beginPath(); g.ellipse(0, 0, r*0.045, r*0.022, 0, 0, 6.2832); g.fill(); g.restore(); } },
+  aardbei: function(g, r){ g.beginPath(); g.arc(0,0,r,0,6.2832); g.fillStyle = '#d8102a'; g.fill(); g.beginPath(); g.arc(0,0,r*0.9,0,6.2832); g.fillStyle = rg(g, 0, 0, r, [[0, '#fff0f0'], [0.35, '#ff9aa8'], [1, '#ff2e4a']]); g.fill();
+    g.strokeStyle = 'rgba(255,255,255,0.5)'; g.lineWidth = r*0.03; for (var i=0;i<12;i++){ var a = i/12*6.2832; g.beginPath(); g.moveTo(Math.cos(a)*r*0.2, Math.sin(a)*r*0.2); g.lineTo(Math.cos(a)*r*0.75, Math.sin(a)*r*0.75); g.stroke(); } },
+};
+function sprite(soort, kant, r, goud){
+  var sl = soort + kant + Math.round(r) + (goud ? 'g' : '') + DPR, c = sprites[sl];
+  if (c) return c;
+  c = sprites[sl] = document.createElement('canvas');
+  var maat = Math.ceil(r * 2.8 * DPR); c.width = c.height = maat;
+  var g = c.getContext('2d'); g.setTransform(DPR, 0, 0, DPR, maat/2, maat/2);
+  (kant === 'b' ? BUITEN : BINNEN)[soort](g, r);
+  if (goud){
+    g.globalCompositeOperation = 'source-atop';
+    g.fillStyle = rg(g, -r*0.3, -r*0.3, r*1.3, [[0, 'rgba(255,250,200,0.85)'], [0.5, 'rgba(255,200,40,0.8)'], [1, 'rgba(170,110,0,0.85)']]); g.fillRect(-r*1.4, -r*1.4, r*2.8, r*2.8);
+    g.globalCompositeOperation = 'source-over'; glans(g, r, 0.7);
+  }
+  return c;
+}
+function tekenSprite(c, r){ var m = r * 1.4; ctx.drawImage(c, -m, -m, m*2, m*2); }
+
+function tekenBom(d, nu){
+  var r = d.r, puls = 0.5 + 0.5*Math.sin(nu/90);
+  ctx.save(); ctx.translate(d.x, d.y);
+  var gl = ctx.createRadialGradient(0, 0, r*0.6, 0, 0, r*1.9); gl.addColorStop(0, 'rgba(255,60,60,' + (0.25 + puls*0.25) + ')'); gl.addColorStop(1, 'rgba(255,60,60,0)');
+  ctx.fillStyle = gl; ctx.fillRect(-r*2, -r*2, r*4, r*4);
+  ctx.rotate(d.hoek);
+  ctx.fillStyle = rg(ctx, -r*0.35, -r*0.35, r*1.2, [[0, '#6a6a82'], [0.5, '#24242f'], [1, '#08080c']]); ctx.beginPath(); ctx.arc(0, 0, r, 0, 6.2832); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,80,80,' + (0.5 + puls*0.5) + ')'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(0, 0, r*0.97, 0, 6.2832); ctx.stroke();
+  ctx.fillStyle = '#9a9ab0'; ctx.fillRect(-r*0.28, -r*1.08, r*0.56, r*0.24);
+  ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.beginPath(); ctx.ellipse(-r*0.38, -r*0.38, r*0.24, r*0.13, -0.7, 0, 6.2832); ctx.fill();
+  ctx.strokeStyle = '#c8b090'; ctx.lineWidth = 3.5; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(0, -r*1.08); ctx.quadraticCurveTo(r*0.5, -r*1.5, r*0.2, -r*1.75); ctx.stroke();
+  ctx.restore();
+  // vonk aan het lontje (draait niet mee, zodat hij altijd omhoog spat)
+  var lx = d.x + Math.cos(d.hoek) * r*0.2 - Math.sin(d.hoek) * (-r*1.78), ly = d.y + Math.sin(d.hoek) * r*0.2 + Math.cos(d.hoek) * (-r*1.78);
+  var vg = ctx.createRadialGradient(lx, ly, 0, lx, ly, 14 + puls*6); vg.addColorStop(0, '#ffffff'); vg.addColorStop(0.3, '#ffd166'); vg.addColorStop(1, 'rgba(255,120,30,0)');
+  ctx.fillStyle = vg; ctx.beginPath(); ctx.arc(lx, ly, 14 + puls*6, 0, 6.2832); ctx.fill();
+  if (Math.random() < 0.5) spetters.push({ x:lx, y:ly, vx:(Math.random()-0.5)*120, vy:-60 - Math.random()*80, r:1.5 + Math.random()*1.5, kleur: Math.random() < 0.5 ? '#ffd166' : '#ff8a3d', leven:0.5 });
+}
+function tekenBanaan(d){
+  var r = d.r;
+  ctx.save(); ctx.translate(d.x, d.y); ctx.rotate(d.hoek);
+  ctx.shadowColor = '#9fe8ff'; ctx.shadowBlur = 24;
+  var bg = ctx.createLinearGradient(0, -r, 0, r); bg.addColorStop(0, '#e8fbff'); bg.addColorStop(0.5, '#9fe8ff'); bg.addColorStop(1, '#3fa8d8');
+  ctx.fillStyle = bg; ctx.beginPath(); ctx.moveTo(-r*1.05, -r*0.2); ctx.quadraticCurveTo(0, r*1.05, r*1.05, -r*0.25); ctx.quadraticCurveTo(r*0.95, r*0.05, r*0.8, r*0.05); ctx.quadraticCurveTo(0, r*0.62, -r*0.85, -r*0.05); ctx.closePath(); ctx.fill();
+  ctx.shadowBlur = 0; ctx.strokeStyle = '#2a6a9a'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(r*1.02, -r*0.25); ctx.lineTo(r*1.18, -r*0.42); ctx.moveTo(-r*1.02, -r*0.2); ctx.lineTo(-r*1.1, -r*0.3); ctx.stroke();
+  ctx.fillStyle = '#ffffff'; for (var i=0;i<4;i++){ var a = -2.6 + i*0.9; ctx.beginPath(); ctx.arc(Math.cos(a)*r*0.7, Math.sin(a)*r*0.15 + r*0.4, 2, 0, 6.2832); ctx.fill(); }
   ctx.restore();
 }
-
+function tekenFruit(d, nu){
+  if (d.bom) return tekenBom(d, nu);
+  if (d.banaan) return tekenBanaan(d);
+  ctx.save(); ctx.translate(d.x, d.y);
+  if (d.goud){ var gg = ctx.createRadialGradient(0, 0, d.r*0.8, 0, 0, d.r*1.9); gg.addColorStop(0, 'rgba(255,210,80,0.45)'); gg.addColorStop(1, 'rgba(255,210,80,0)'); ctx.fillStyle = gg; ctx.fillRect(-d.r*2, -d.r*2, d.r*4, d.r*4); }
+  ctx.fillStyle = 'rgba(0,0,0,0.22)'; ctx.beginPath(); ctx.ellipse(d.r*0.12, d.r*0.16, d.r, d.r*0.9, 0, 0, 6.2832); ctx.fill();
+  ctx.rotate(d.hoek); tekenSprite(sprite(d.soort.naam, 'b', d.r, d.goud), d.r);
+  ctx.restore();
+}
 function tekenHelft(h){
-  ctx.save(); ctx.translate(h.x,h.y); ctx.rotate(h.hoek);
-  var a0 = h.snij + (h.kant ? 0 : Math.PI);
-  ctx.fillStyle = h.soort.buiten;
-  ctx.beginPath(); ctx.arc(0,0,h.r,a0,a0+Math.PI); ctx.closePath(); ctx.fill();
-  ctx.fillStyle = h.soort.binnen;
-  ctx.beginPath(); ctx.ellipse(0,0,h.r*0.94,h.r*0.3,a0+Math.PI/2,0,6.2832); ctx.fill();
+  ctx.save(); ctx.translate(h.x, h.y); ctx.rotate(h.hoek + h.lok);
+  // de helft van de schil
+  ctx.save(); ctx.beginPath(); if (h.kant) ctx.rect(-h.r*1.5, 0, h.r*3, h.r*1.6); else ctx.rect(-h.r*1.5, -h.r*1.6, h.r*3, h.r*1.6); ctx.clip();
+  ctx.rotate(-h.lok); tekenSprite(sprite(h.soort.naam, 'b', h.r, h.goud), h.r); ctx.restore();
+  // het snijvlak: de doorsnede, iets naar je toe gekanteld
+  ctx.save(); ctx.scale(1, 0.42); tekenSprite(sprite(h.soort.naam, 'i', h.r, false), h.r); ctx.restore();
   ctx.restore();
 }
-
+// sapvlekken op de achtergrond, met druppels die langzaam naar beneden lopen
+var vlekken = [], streepjes = [], pops = [], schud = 0;
+function nieuweVlek(x, y, kleur, r){
+  var R = zaadRng(1 + Math.floor(Math.random()*1e6)), druppels = [], spik = [];
+  for (var i=0;i<9;i++){ var a = R()*6.2832; spik.push([Math.cos(a)*r*(0.5 + R()*0.7), Math.sin(a)*r*(0.5 + R()*0.7), r*(0.1 + R()*0.22)]); }
+  for (var k=0;k<4;k++) druppels.push([(R()-0.5)*r*1.2, r*(0.2 + R()*0.6), r*(0.06 + R()*0.07)]);
+  vlekken.push({ x:x, y:y, r:r, kleur:kleur, t:0, spik:spik, druppels:druppels });
+  if (vlekken.length > 14) vlekken.shift();
+}
+function tekenVlekken(dt){
+  for (var i=vlekken.length-1;i>=0;i--){
+    var v = vlekken[i]; v.t += dt;
+    var a = v.t < 2.2 ? 0.55 : 0.55 * (1 - (v.t - 2.2) / 1.6);
+    if (a <= 0){ vlekken.splice(i,1); continue; }
+    ctx.globalAlpha = a; ctx.fillStyle = v.kleur; ctx.strokeStyle = v.kleur; ctx.lineCap = 'round';
+    var groei = Math.min(1, v.t * 8);
+    ctx.beginPath(); ctx.arc(v.x, v.y, v.r*0.62*groei, 0, 6.2832);
+    v.spik.forEach(function(s){ ctx.moveTo(v.x + s[0]*groei + s[2], v.y + s[1]*groei); ctx.arc(v.x + s[0]*groei, v.y + s[1]*groei, s[2], 0, 6.2832); });
+    ctx.fill();
+    v.druppels.forEach(function(dp){ var len = Math.min(v.r*1.6, v.t * v.r * 0.5); ctx.lineWidth = dp[2]*2; ctx.beginPath(); ctx.moveTo(v.x + dp[0], v.y + dp[1]); ctx.lineTo(v.x + dp[0], v.y + dp[1] + len); ctx.stroke(); ctx.beginPath(); ctx.arc(v.x + dp[0], v.y + dp[1] + len, dp[2]*1.3, 0, 6.2832); ctx.fill(); });
+  }
+  ctx.globalAlpha = 1;
+}
+function pop(x, y, tekst, kleur, groot){ pops.push({ x:x, y:y, s:tekst, k:kleur, t:0, groot:groot }); }
+function tekenPops(dt){
+  for (var i=pops.length-1;i>=0;i--){
+    var p = pops[i]; p.t += dt; var f = p.t / (p.groot ? 1.1 : 0.7);
+    if (f >= 1){ pops.splice(i,1); continue; }
+    var sc = f < 0.15 ? 0.5 + f/0.15*0.7 : f < 0.25 ? 1.2 - (f-0.15)/0.1*0.2 : 1;
+    ctx.save(); ctx.translate(p.x, p.y - f*(p.groot ? 30 : 45)); ctx.scale(sc, sc); ctx.globalAlpha = f > 0.7 ? (1-f)/0.3 : 1;
+    ctx.font = (p.groot ? '900 34px' : '800 20px') + ' Outfit, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.lineJoin = 'round'; ctx.lineWidth = p.groot ? 7 : 5; ctx.strokeStyle = 'rgba(10,6,20,0.85)'; ctx.strokeText(p.s, 0, 0);
+    ctx.shadowColor = p.k; ctx.shadowBlur = 14; ctx.fillStyle = p.k; ctx.fillText(p.s, 0, 0);
+    ctx.restore();
+  }
+}
+// achtergrond per omgeving: kleurverloop, zachte lichtbollen en donkere randen (één keer getekend)
+var achterC = document.createElement('canvas'), achterSl = '';
+function tekenAchtergrond(){
+  var o = omgeving(), sl = o.id + W + 'x' + H + DPR;
+  if (sl !== achterSl){
+    achterSl = sl; achterC.width = Math.round(W*DPR); achterC.height = Math.round(H*DPR);
+    var g = achterC.getContext('2d'); g.setTransform(DPR, 0, 0, DPR, 0, 0);
+    var kl = o.kleuren, gr = g.createRadialGradient(W*0.5, H*0.3, 0, W*0.5, H*0.3, Math.max(W, H)*0.8);
+    gr.addColorStop(0, kl[0]); gr.addColorStop(0.55, kl[1]); gr.addColorStop(1, kl[2]); g.fillStyle = gr; g.fillRect(0, 0, W, H);
+    var R = zaadRng(o.id.length * 97 + 3);
+    for (var i=0;i<16;i++){ var x = R()*W, y = R()*H, r = 30 + R()*110; var b = g.createRadialGradient(x, y, 0, x, y, r); b.addColorStop(0, 'rgba(255,255,255,' + (0.03 + R()*0.06).toFixed(3) + ')'); b.addColorStop(0.7, 'rgba(255,255,255,0.02)'); b.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = b; g.beginPath(); g.arc(x, y, r, 0, 6.2832); g.fill(); }
+    // een houten snijplank onderaan
+    var py = H*0.86, pg = g.createLinearGradient(0, py, 0, H); pg.addColorStop(0, 'rgba(120,70,40,0.55)'); pg.addColorStop(1, 'rgba(40,20,10,0.75)');
+    g.fillStyle = pg; g.fillRect(0, py, W, H - py);
+    g.fillStyle = 'rgba(255,220,180,0.18)'; g.fillRect(0, py, W, 2);
+    g.strokeStyle = 'rgba(30,15,5,0.35)'; g.lineWidth = 1; for (var n=0;n<6;n++){ var ly = py + 8 + n*(H - py)/6; g.beginPath(); g.moveTo(0, ly); for (var xx=0; xx<=W; xx+=40) g.lineTo(xx, ly + Math.sin(xx*0.02 + n)*2); g.stroke(); }
+    var vg = g.createRadialGradient(W/2, H*0.45, Math.min(W, H)*0.3, W/2, H*0.45, Math.max(W, H)*0.75); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,0.5)');
+    g.fillStyle = vg; g.fillRect(0, 0, W, H);
+  }
+  ctx.drawImage(achterC, 0, 0, W, H);
+}
+var laatsteTeken = 0;
 function teken(){
+  var nu = performance.now(), dt = laatsteTeken ? Math.min(0.05, (nu - laatsteTeken)/1000) : 0.016; laatsteTeken = nu;
+  ctx.setTransform(DPR,0,0,DPR,0,0);
   ctx.clearRect(0,0,W,H);
-  var kl = omgeving().kleuren;
-  var g = ctx.createRadialGradient(W*0.5,H*0.3,0,W*0.5,H*0.3,Math.max(W,H)*0.8);
-  g.addColorStop(0,kl[0]); g.addColorStop(0.55,kl[1]); g.addColorStop(1,kl[2]);
-  ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+  tekenAchtergrond();
+  schud = Math.max(0, schud - dt*1.8);
+  var k2 = schud*schud; ctx.save(); ctx.translate(k2*14*Math.sin(nu/23), k2*10*Math.sin(nu/31));
   tekenDeeltjes();
-  if (traag > 0){ ctx.fillStyle = 'rgba(120,200,255,0.10)'; ctx.fillRect(0,0,W,H); }
-  if (flits > 0){ ctx.fillStyle = 'rgba(255,80,80,' + (flits*0.35) + ')'; ctx.fillRect(0,0,W,H); }
+  tekenVlekken(dt);
+  if (traag > 0){ ctx.fillStyle = 'rgba(120,200,255,0.10)'; ctx.fillRect(-20,-20,W+40,H+40); }
 
   for (var j=0;j<halven.length;j++) tekenHelft(halven[j]);
-  for (var i=0;i<dingen.length;i++) tekenFruit(dingen[i]);
+  for (var i=0;i<dingen.length;i++) tekenFruit(dingen[i], nu);
 
   for (var k=0;k<spetters.length;k++){
     var s = spetters[k];
-    ctx.globalAlpha = Math.max(0, s.leven); ctx.fillStyle = s.kleur;
-    ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,6.2832); ctx.fill();
+    ctx.globalAlpha = Math.max(0, Math.min(1, s.leven)); ctx.fillStyle = s.kleur;
+    ctx.beginPath(); ctx.ellipse(s.x,s.y,s.r,s.r*(1 + Math.min(1.5, Math.abs(s.vy)/400)),Math.atan2(s.vy, s.vx) - Math.PI/2,0,6.2832); ctx.fill();
   }
   ctx.globalAlpha = 1;
-
-  // sabelspoor
-  if (spoor.length > 1){
-    var sb = sabel(), tijdNu = performance.now();
-    for (var t=1;t<spoor.length;t++){
-      var a = spoor[t-1], b = spoor[t];
-      var kleurSabel = sb.kleur === 'regen' ? regenKleur(tijdNu + t*90) : sb.kleur;
-      ctx.globalAlpha = 0.35 + 0.65*b.leven;
-      ctx.strokeStyle = kleurSabel;
-      ctx.lineWidth = 2 + (9 + lemmet()*0.6)*b.leven; ctx.lineCap = 'round';
-      ctx.shadowColor = sb.gloed === 'regen' ? kleurSabel : sb.gloed; ctx.shadowBlur = 14;
-      ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
-    }
-    ctx.shadowBlur = 0; ctx.globalAlpha = 1;
+  // witte snijstreep over de vrucht
+  for (var q=streepjes.length-1;q>=0;q--){
+    var st = streepjes[q]; st.t += dt; if (st.t > 0.18){ streepjes.splice(q,1); continue; }
+    var f = st.t/0.18, L = st.r*1.8*(0.6 + f*0.6);
+    ctx.globalAlpha = 1 - f; ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 5*(1-f) + 1; ctx.lineCap = 'round'; ctx.shadowColor = '#ffffff'; ctx.shadowBlur = 12;
+    ctx.beginPath(); ctx.moveTo(st.x - Math.cos(st.a)*L, st.y - Math.sin(st.a)*L); ctx.lineTo(st.x + Math.cos(st.a)*L, st.y + Math.sin(st.a)*L); ctx.stroke();
   }
+  ctx.shadowBlur = 0; ctx.globalAlpha = 1;
+  ctx.restore();
+  if (flits > 0){ ctx.fillStyle = 'rgba(255,80,80,' + (flits*0.35) + ')'; ctx.fillRect(0,0,W,H); }
 
+  // sabelspoor: een spits lemmet met gloed en een witte kern
+  if (spoor.length > 1){
+    var sb = sabel(), kleurSabel = sb.kleur === 'regen' ? regenKleur(nu) : sb.kleur, gloed = sb.gloed === 'regen' ? kleurSabel : sb.gloed;
+    var breed = 8 + lemmet()*0.6, links = [], rechts = [];
+    for (var t=0;t<spoor.length;t++){
+      var a = spoor[Math.max(0, t-1)], b = spoor[Math.min(spoor.length-1, t+1)], p = spoor[t];
+      var dx = b.x - a.x, dy = b.y - a.y, l = Math.hypot(dx, dy) || 1, w = breed * (t/(spoor.length-1)) * Math.max(0.2, p.leven);
+      links.push([p.x - dy/l*w, p.y + dx/l*w]); rechts.push([p.x + dy/l*w, p.y - dx/l*w]);
+    }
+    var pad = function(f){ ctx.beginPath(); ctx.moveTo(links[0][0], links[0][1]); for (var u=1;u<links.length;u++) ctx.lineTo(spoor[u].x + (links[u][0]-spoor[u].x)*f, spoor[u].y + (links[u][1]-spoor[u].y)*f); for (var v=rechts.length-1;v>=1;v--) ctx.lineTo(spoor[v].x + (rechts[v][0]-spoor[v].x)*f, spoor[v].y + (rechts[v][1]-spoor[v].y)*f); ctx.closePath(); };
+    ctx.shadowColor = gloed; ctx.shadowBlur = 22; ctx.fillStyle = kleurSabel; ctx.globalAlpha = 0.9; pad(1); ctx.fill();
+    ctx.shadowBlur = 0; ctx.globalAlpha = 1; ctx.fillStyle = '#ffffff'; pad(0.45); ctx.fill();
+  }
+  tekenPops(dt);
   if (combo >= 3 && bezig){
-    ctx.font = '800 22px Outfit, sans-serif'; ctx.textAlign = 'center';
-    ctx.fillStyle = '#ffd166'; ctx.fillText('combo ' + combo + '!', W/2, 92);
+    ctx.font = '800 20px Outfit, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = '#ffd166'; ctx.fillText('reeks ' + combo, W/2, 92);
   }
 }
 
