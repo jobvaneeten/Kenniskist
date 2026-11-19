@@ -72,10 +72,10 @@ const BAKJES = [
   { key: 'behaald', titel: 'Behaald', uitleg: '80% of meer goed' },
 ]
 
-function Leerling({ klas, leerling, onTerug }) {
+function Leerling({ klas, leerling, leerlingen, onKies, onTerug, eind, setEind }) {
   const [data, setData] = useState(null)
+  const idx = leerlingen.findIndex(l => l.id === leerling.id)
   const [teller, setTeller] = useState(0)
-  const [eind, setEind] = useState(overDagen(7))
   const [bezig, setBezig] = useState(null)
   const [melding, setMelding] = useState('')
 
@@ -117,7 +117,16 @@ function Leerling({ klas, leerling, onTerug }) {
 
   return (
     <div className="portaal-kaart">
-      <TerugKnop vast={false} onClick={onTerug}>Alle leerlingen</TerugKnop>
+      <div className="hw-nav">
+        <TerugKnop vast={false} onClick={onTerug}>Alle leerlingen</TerugKnop>
+        <div className="hw-nav-knoppen">
+          <Knop variant="secundair" maat="sm" disabled={idx <= 0} onClick={() => onKies(leerlingen[idx - 1])}>‹ {idx > 0 ? leerlingen[idx - 1].weergavenaam : 'Vorige'}</Knop>
+          <select value={leerling.id} onChange={e => onKies(leerlingen.find(l => l.id === e.target.value))} aria-label="Kies een leerling">
+            {leerlingen.map((l, i) => <option key={l.id} value={l.id}>{i + 1}. {l.weergavenaam}</option>)}
+          </select>
+          <Knop variant="secundair" maat="sm" disabled={idx >= leerlingen.length - 1} onClick={() => onKies(leerlingen[idx + 1])}>{idx < leerlingen.length - 1 ? leerlingen[idx + 1].weergavenaam : 'Volgende'} ›</Knop>
+        </div>
+      </div>
       <div className="portaal-sectiekop">
         <h2 className="kk-m-0">{leerling.weergavenaam}</h2>
         <label className="portaal-veld" style={{ maxWidth: 200 }}>
@@ -216,6 +225,7 @@ function Leerling({ klas, leerling, onTerug }) {
 export default function HuiswerkPerLeerling({ klas }) {
   const [leerlingen, setLeerlingen] = useState(null)
   const [gekozen, setGekozen] = useState(null)
+  const [eind, setEind] = useState(overDagen(7))   // blijft staan als je naar de volgende leerling gaat
   useEffect(() => {
     let actief = true
     supabase.from('profielen').select('id, weergavenaam').eq('klas_id', klas.id).eq('rol', 'leerling').order('weergavenaam')
@@ -223,7 +233,7 @@ export default function HuiswerkPerLeerling({ klas }) {
     return () => { actief = false }
   }, [klas.id])
 
-  if (gekozen) return <Leerling klas={klas} leerling={gekozen} onTerug={() => setGekozen(null)} />
+  if (gekozen) return <Leerling key={gekozen.id} klas={klas} leerling={gekozen} leerlingen={leerlingen ?? []} onKies={(l) => { if (l) { setGekozen(l); window.scrollTo({ top: 0, behavior: 'smooth' }) } }} onTerug={() => setGekozen(null)} eind={eind} setEind={setEind} />
   return (
     <div className="portaal-kaart">
       <h2>Per leerling</h2>

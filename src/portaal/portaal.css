@@ -791,3 +791,6 @@
 .hw-status { font-size: 0.78rem; font-weight: 800; padding: 3px 9px; border-radius: 999px; background: color-mix(in srgb, var(--kk-cyan) 18%, transparent); color: var(--kk-cyan); white-space: nowrap; }
 .hw-status.af { background: color-mix(in srgb, var(--kk-success) 18%, transparent); color: var(--kk-success); }
 .hw-zelf { margin-top: 26px; padding-top: 18px; border-top: 1px solid var(--kk-border); }
+.hw-nav { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+.hw-nav-knoppen { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.hw-nav-knoppen select { min-height: 36px; border-radius: 10px; padding: 0 10px; background: rgba(255,255,255,0.06); color: var(--kk-text); border: 1px solid var(--kk-border); font: inherit; }
