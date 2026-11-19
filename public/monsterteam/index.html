@@ -94,7 +94,7 @@
 
 <div class="scherm" id="menu">
   <h1>Monster&shy;team</h1>
-  <p class="onder">Vang wezens, train ze, laat ze veranderen en versla de acht gymleiders!</p>
+  <p class="onder">Vang wezens, train ze, laat ze veranderen en versla de acht arenaleiders!</p>
   <div class="menuknoppen">
     <button class="knop" id="speel">Spelen</button>
     <button class="knop2" id="naaruitleg">Hoe werkt het?</button>
@@ -171,6 +171,18 @@
   <div id="acties"></div>
 </div>
 
+<script>
+// lukt het starten niet, laat dan een melding zien in plaats van een zwart scherm
+window.addEventListener('error', function (e) {
+  if (window.MT_KLAAR || document.getElementById('foutmelding')) return
+  var d = document.createElement('div'); d.id = 'foutmelding'
+  d.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:99;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;background:#05040f;color:#eef3ff;font:700 17px system-ui,sans-serif'
+  d.innerHTML = '<div style="margin-bottom:14px">Monsterteam kon niet starten. Probeer het opnieuw. Lukt het dan nog niet, werk de browser bij.</div><button style="padding:12px 22px;border-radius:14px;border:0;font:800 16px system-ui;background:#8dff4f;color:#0a0a1a">Opnieuw</button><small style="opacity:.5;font-size:11px;margin-top:12px"></small>'
+  d.querySelector('small').textContent = String(e.message || '').slice(0, 140)
+  d.querySelector('button').onclick = function () { location.reload() }
+  document.body.appendChild(d)
+})
+</script>
 <script src="/neonkit/neonkit.js"></script>
 <script src="kern.js"></script>
 <script src="wereld.js"></script>

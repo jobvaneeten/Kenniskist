@@ -14,7 +14,18 @@ var D = NK.opslag('kk_mt', {
 })
 Geluid.zetAan(function () { return D.geluid })
 // wezens met een (nieuw) tweede element leren daar meteen een aanval van
-;(D.team || []).concat(D.opslag || []).forEach(function (w) { if (MT.SOORTEN[w.id]) MT.bijleren(w) })
+// opslag nalopen: onbekende wezens of aanvallen mogen het spel nooit laten vastlopen
+try {
+  var goedWezen = function (w) { return w && MT.SOORTEN[w.id] }
+  D.team = (D.team || []).filter(goedWezen); D.opslag = (D.opslag || []).filter(goedWezen)
+  D.team.concat(D.opslag).forEach(function (w) {
+    w.aanvallen = (w.aanvallen || []).filter(function (a) { return MT.AANVALLEN[a] })
+    if (!w.aanvallen.length) w.aanvallen = MT.maak(w.id, w.lvl || 5).aanvallen
+    if (!w.st) w.st = { aanval: 0, verdediging: 0 }
+    MT.bijleren(w)
+  })
+  if (D.gevecht && (!D.gevecht.zij || !D.gevecht.zij.every(goedWezen) || !D.team.length)) D.gevecht = null
+} catch (e) { console.error(e); D.gevecht = null }
 function typeLabels(id) {
   var s = MT.SOORTEN[id], l = function (t) { return '<span class="type t-' + t + '">' + MT.TYPENAAM[t] + '</span>' }
   return l(s.type) + (s.type2 ? ' ' + l(s.type2) : '')
@@ -29,11 +40,11 @@ if (!D.versie) {
   D.opgepakt = {}; D.gevecht = null; D.versie = 2; D.bewaar()
 }
 var SPULLEN = {
-  glimbol: { naam: 'Glimbol', uitleg: 'Vang een wild wezen. Hoe zwakker het is, hoe makkelijker.', prijs: 20, kracht: 1 },
-  superbol: { naam: 'Superbol', uitleg: 'Vangt veel beter dan een glimbol.', prijs: 60, kracht: 1.8 },
+  glimbol: { naam: 'Vangkristal', uitleg: 'Vang een wild wezen. Hoe zwakker het is, hoe makkelijker.', prijs: 20, kracht: 1 },
+  superbol: { naam: 'Superkristal', uitleg: 'Vangt veel beter dan een gewoon vangkristal.', prijs: 60, kracht: 1.8 },
   drankje: { naam: 'Drankje', uitleg: 'Geeft 25 leven terug.', prijs: 15, heel: 25 },
   superdrank: { naam: 'Superdrank', uitleg: 'Geeft 80 leven terug.', prijs: 45, heel: 80 },
-  wekker: { naam: 'Wekker', uitleg: 'Maakt een flauwgevallen wezen weer wakker.', prijs: 80, wek: true },
+  wekker: { naam: 'Wekker', uitleg: 'Maakt een uitgeput wezen weer wakker.', prijs: 80, wek: true },
 }
 
 // ── geluid ──
@@ -65,11 +76,17 @@ function spulIcoon(soort, maat) {
   var c = document.createElement('canvas'); c.width = maat * 2; c.height = maat * 2
   var g = c.getContext('2d'), m = maat
   if (soort === 'glimbol' || soort === 'superbol') {
-    var kl = soort === 'glimbol' ? '#5be37a' : '#3fa8ff'
-    g.fillStyle = kl; g.beginPath(); g.arc(m, m, m * 0.7, Math.PI, 0); g.fill()
-    g.fillStyle = '#eef3ff'; g.beginPath(); g.arc(m, m, m * 0.7, 0, Math.PI); g.fill()
-    g.fillStyle = '#14142a'; g.fillRect(m * 0.3, m * 0.94, m * 1.4, m * 0.12)
-    g.beginPath(); g.arc(m, m, m * 0.2, 0, 7); g.fill(); g.fillStyle = '#fff'; g.beginPath(); g.arc(m, m, m * 0.11, 0, 7); g.fill()
+    // een vangkristal: geslepen steen die van binnen gloeit
+    var kk = soort === 'glimbol' ? ['#d8ffe4', '#5be37a', '#1f8a4a'] : ['#e0f2ff', '#3fa8ff', '#1f4fb8']
+    var gl = g.createRadialGradient(m, m, 0, m, m, m); gl.addColorStop(0, NK.hexA(kk[1], 0.55)); gl.addColorStop(1, NK.hexA(kk[1], 0)); g.fillStyle = gl; g.fillRect(0, 0, m * 2, m * 2)
+    var P = [[m, m * 0.18], [m * 1.5, m * 0.62], [m * 1.4, m * 1.38], [m, m * 1.82], [m * 0.6, m * 1.38], [m * 0.5, m * 0.62]]
+    var vul = g.createLinearGradient(m * 0.5, m * 0.2, m * 1.5, m * 1.8); vul.addColorStop(0, kk[0]); vul.addColorStop(0.5, kk[1]); vul.addColorStop(1, kk[2])
+    g.fillStyle = vul; g.strokeStyle = '#14142a'; g.lineWidth = Math.max(1, m * 0.08); g.lineJoin = 'round'
+    g.beginPath(); P.forEach(function (p) { g.lineTo(p[0], p[1]) }); g.closePath(); g.fill(); g.stroke()
+    g.strokeStyle = 'rgba(255,255,255,0.55)'; g.lineWidth = Math.max(0.6, m * 0.05)
+    g.beginPath(); g.moveTo(P[5][0], P[5][1]); g.lineTo(m, m * 0.85); g.lineTo(P[1][0], P[1][1]); g.moveTo(m, m * 0.85); g.lineTo(m, m * 1.82); g.stroke()
+    g.fillStyle = 'rgba(255,255,255,0.75)'; g.beginPath(); g.moveTo(m * 0.78, m * 0.5); g.lineTo(m * 0.95, m * 0.38); g.lineTo(m * 0.9, m * 0.75); g.closePath(); g.fill()
+    if (soort === 'superbol') NK.ster(g, m, m * 1.15, m * 0.22, '#ffffff')
   } else if (soort === 'wekker') {
     g.fillStyle = '#ffd23d'; g.beginPath(); g.arc(m, m * 1.05, m * 0.6, 0, 7); g.fill(); g.strokeStyle = '#14142a'; g.lineWidth = m * 0.1
     g.beginPath(); g.moveTo(m, m * 1.05); g.lineTo(m, m * 0.7); g.moveTo(m, m * 1.05); g.lineTo(m * 1.3, m * 1.15); g.stroke()
@@ -89,91 +106,148 @@ var ctx = C.ctx, tijd = 0, fx = NK.deeltjes(), schok = NK.schok()
 var vis = null           // wat er te zien is: { wij: {...}, zij: {...} }
 var anim = {}            // lopende effecten per kant
 var bezig = false, wachtrij = [], tekstKlaar = null
-function zichtVan(w, kant) { return { uid: w.uid, id: w.id, lvl: w.lvl, hp: w.hp, toon: w.hp, max: MT.maxHp(w), schaal: 1, alfa: 1, kant: kant } }
+function zichtVan(w, kant) { return { uid: w.uid, id: w.id, lvl: w.lvl, hp: w.hp, toon: w.hp, xp: w.xp, max: MT.maxHp(w), schaal: 1, alfa: 1, kant: kant } }
 function naamVan(w, kant) {
   var n = S[w.id].naam, g = D.gevecht
   if (kant === 'wij') return n
   return g && g.soort === 'wild' ? 'Wilde ' + n : (g.naam + "'s " + n)
 }
 function plekVan(kant) {
-  var klein = Math.min(C.W, C.H)
-  var breed = C.W > C.H * 1.4
-  return kant === 'wij' ? { x: C.W * 0.28, y: C.H * (breed ? 0.4 : 0.5), r: klein * (breed ? 0.15 : 0.17) } : { x: C.W * 0.72, y: C.H * (breed ? 0.2 : 0.24), r: klein * 0.13 }
+  // naast elkaar op dezelfde grond, oog in oog
+  var r = Math.min(Math.min(C.W, C.H) * 0.16, C.W * 0.13, 150), y = Math.max(C.H * 0.42 + r * 0.2, Math.min(C.H * 0.52, C.H - 230 - r * 0.9))
+  return { x: C.W * (kant === 'wij' ? 0.27 : 0.73), y: y, r: r }
 }
-// achtergrond van het gevecht: een landschap in de kleuren van het gebied
-var heuvels = null
+// achtergrond van het gevecht: een geschilderd landschap, één keer getekend en daarna als plaatje gebruikt
+var arenaC = document.createElement('canvas'), arenaSleutel = '', plateauC = {}
 function tekenGevechtDecor(gebied) {
-  var th = MTW.THEMA[gebied], H = C.H, W = C.W, hor = H * 0.42
-  var lucht = ctx.createLinearGradient(0, 0, 0, hor)
-  var donker = !!th.nacht
-  lucht.addColorStop(0, donker ? 'hsl(' + th.lucht + ',55%,10%)' : 'hsl(' + (th.lucht + 60) + ',70%,62%)')
-  lucht.addColorStop(1, donker ? 'hsl(' + th.lucht + ',50%,24%)' : 'hsl(' + (th.lucht + 30) + ',75%,82%)')
-  ctx.fillStyle = lucht; ctx.fillRect(0, 0, W, hor + 2)
-  // zon/maan en sterren
-  if (donker) { for (var i = 0; i < 40; i++) { ctx.globalAlpha = 0.4 + Math.sin(tijd * 2 + i) * 0.3; ctx.fillStyle = '#fff'; ctx.fillRect((i * 97.3) % W, (i * 53.1) % hor, 2, 2) } ctx.globalAlpha = 1; NK.vlek(ctx, W * 0.82, hor * 0.3, H * 0.12, '#ffe8c8', 0.45) }
-  else NK.vlek(ctx, W * 0.82, hor * 0.25, H * 0.18, '#fff6c8', 0.7)
-  // wolkjes die langzaam schuiven
-  if (!donker) for (var w = 0; w < 4; w++) {
-    var wx = ((tijd * 8 + w * W * 0.33) % (W + 200)) - 100, wy = hor * (0.18 + (w % 3) * 0.18)
-    ctx.fillStyle = 'rgba(255,255,255,0.75)'; ctx.beginPath(); ctx.ellipse(wx, wy, 44, 12, 0, 0, 7); ctx.ellipse(wx + 26, wy - 8, 26, 14, 0, 0, 7); ctx.ellipse(wx - 22, wy - 4, 20, 10, 0, 0, 7); ctx.fill()
+  var sl = gebied + '|' + C.W + '|' + C.H + '|' + C.dpr
+  if (sl !== arenaSleutel) {
+    arenaSleutel = sl; arenaC.width = Math.max(1, Math.round(C.W * C.dpr)); arenaC.height = Math.max(1, Math.round(C.H * C.dpr))
+    var ag = arenaC.getContext('2d'); ag.setTransform(C.dpr, 0, 0, C.dpr, 0, 0); MTW.arena(ag, C.W, C.H, gebied)
   }
-  // heuvels in twee lagen
-  ;[[0.62, th.boom, 0.9], [0.8, th.boom2, 1]].forEach(function (laag, n) {
-    ctx.fillStyle = laag[1]; ctx.globalAlpha = n ? 0.85 : 0.55
-    ctx.beginPath(); ctx.moveTo(0, hor + 4)
-    for (var x = 0; x <= W; x += 20) ctx.lineTo(x, hor - Math.abs(Math.sin(x * 0.006 * laag[2] + n * 2)) * H * 0.09 * laag[0] - (n ? 0 : H * 0.03))
-    ctx.lineTo(W, hor + 4); ctx.fill()
+  ctx.drawImage(arenaC, 0, 0, C.W, C.H)
+  MTW.arenaLeven(ctx, C.W, C.H, gebied, D.rustig ? 0 : tijd)
+}
+function tekenPlateau(gebied, x, y, r) {
+  var sl = gebied + '|' + Math.round(r) + '|' + C.dpr, c = plateauC[sl]
+  if (!c) {
+    c = plateauC[sl] = document.createElement('canvas'); c.width = Math.ceil(r * 3.3 * C.dpr); c.height = Math.ceil(r * 1.05 * C.dpr)
+    var pg = c.getContext('2d'); pg.setTransform(C.dpr, 0, 0, C.dpr, 0, 0); MTW.plateau(pg, r * 1.65, r * 0.45, r, gebied)
+  }
+  ctx.drawImage(c, x - r * 1.65, y - r * 0.45, r * 3.3, r * 1.05)
+}
+function wisGevechtCache() { arenaSleutel = ''; plateauC = {} }
+// infokaart met naam, element, niveau, levensbalk (met een rood spoor dat achterloopt) en bij jouw wezen XP
+function tekenKaart(v, kant, bx, by, bw) {
+  var s = S[v.id], kleur = MT.KLEUR[s.type], wij = kant === 'wij', bh = wij ? 78 : 60
+  ctx.save()
+  ctx.fillStyle = 'rgba(0,0,0,0.35)'; NK.rondRect(ctx, bx + 2, by + 5, bw, bh, 16); ctx.fill()
+  var kg = ctx.createLinearGradient(0, by, 0, by + bh); kg.addColorStop(0, 'rgba(34,36,82,0.95)'); kg.addColorStop(1, 'rgba(12,12,34,0.95)')
+  ctx.fillStyle = kg; NK.rondRect(ctx, bx, by, bw, bh, 16); ctx.fill()
+  ctx.save(); NK.rondRect(ctx, bx, by, bw, bh, 16); ctx.clip()
+  var sg = ctx.createLinearGradient(bx, 0, bx + bw * 0.6, 0); sg.addColorStop(0, NK.hexA(kleur, 0.3)); sg.addColorStop(1, NK.hexA(kleur, 0))
+  ctx.fillStyle = sg; ctx.fillRect(bx, by, bw, bh)
+  ctx.fillStyle = 'rgba(255,255,255,0.07)'; ctx.fillRect(bx, by, bw, bh * 0.42)
+  ctx.restore()
+  ctx.strokeStyle = NK.hexA(kleur, 0.8); ctx.lineWidth = 1.5; NK.rondRect(ctx, bx, by, bw, bh, 16); ctx.stroke()
+  // element-tekens
+  var types = [s.type].concat(s.type2 ? [s.type2] : [])
+  types.forEach(function (t, i) {
+    var ex = bx + 20 + i * 22, ey = by + 18
+    ctx.fillStyle = 'rgba(8,8,24,0.85)'; ctx.beginPath(); ctx.arc(ex, ey, 10, 0, 7); ctx.fill()
+    ctx.strokeStyle = NK.hexA(MT.KLEUR[t], 0.9); ctx.lineWidth = 1.5; ctx.stroke()
+    MTW.embleem(ctx, t, ex, ey, 6, MT.KLEUR[t])
   })
-  ctx.globalAlpha = 1
-  if (th.lava) { ctx.fillStyle = 'rgba(255,90,20,0.25)'; ctx.fillRect(0, hor - 30, W, 30) }
-  // grond met perspectief
-  var grond = ctx.createLinearGradient(0, hor, 0, H)
-  grond.addColorStop(0, th.gras2); grond.addColorStop(1, th.gras)
-  ctx.fillStyle = grond; ctx.fillRect(0, hor, W, H - hor)
-  ctx.strokeStyle = 'rgba(0,0,0,0.08)'; ctx.lineWidth = 2
-  for (var r = 1; r < 9; r++) { var y = hor + (H - hor) * Math.pow(r / 9, 1.6); ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke() }
-  // sprieten
-  ctx.fillStyle = th.hoog2
-  for (var g = 0; g < 70; g++) { var gx = (g * 137.7) % W, gy = hor + 10 + ((g * 61.3) % (H - hor - 10)), hh = 4 + (gy - hor) * 0.03; ctx.fillRect(gx, gy - hh, 2, hh); ctx.fillRect(gx + 3, gy - hh * 0.7, 2, hh * 0.7) }
+  var tx = bx + 14 + types.length * 22
+  ctx.fillStyle = '#ffffff'; ctx.font = '700 16px Outfit, system-ui'; ctx.textBaseline = 'middle'; ctx.textAlign = 'left'
+  ctx.fillText(s.naam, tx, by + 19)
+  // niveau als pilletje
+  var lt = 'niv. ' + v.lvl; ctx.font = '800 12px Outfit, system-ui'; var lw = ctx.measureText(lt).width + 14
+  ctx.fillStyle = NK.hexA(kleur, 0.25); NK.rondRect(ctx, bx + bw - lw - 10, by + 10, lw, 18, 9); ctx.fill()
+  ctx.fillStyle = '#eef3ff'; ctx.textAlign = 'center'; ctx.fillText(lt, bx + bw - lw / 2 - 10, by + 19.5)
+  // levensbalk
+  var pr = Math.max(0, Math.min(1, v.toon / v.max)), sp = Math.max(pr, Math.min(1, v.spoor / v.max))
+  var hx = bx + 40, hy = by + 36, hw = bw - 52, hh = 11
+  ctx.fillStyle = '#ffd23d'; ctx.font = '900 11px Outfit, system-ui'; ctx.textAlign = 'left'; ctx.fillText('HP', bx + 14, hy + hh / 2 + 0.5)
+  ctx.fillStyle = 'rgba(0,0,0,0.5)'; NK.rondRect(ctx, hx, hy, hw, hh, 5.5); ctx.fill()
+  if (sp > pr + 0.002) { ctx.fillStyle = 'rgba(255,90,110,0.85)'; NK.rondRect(ctx, hx, hy, Math.max(hh, hw * sp), hh, 5.5); ctx.fill() }
+  if (pr > 0) {
+    var kl = pr > 0.5 ? ['#a8ffb0', '#2fbf5a'] : pr > 0.2 ? ['#fff0a0', '#e8a820'] : ['#ffb0b8', '#e83a50']
+    var hg = ctx.createLinearGradient(0, hy, 0, hy + hh); hg.addColorStop(0, kl[0]); hg.addColorStop(1, kl[1])
+    if (pr <= 0.2 && !D.rustig) { ctx.shadowColor = '#ff3a50'; ctx.shadowBlur = 8 + Math.sin(tijd * 8) * 6 }
+    ctx.fillStyle = hg; NK.rondRect(ctx, hx, hy, Math.max(hh, hw * pr), hh, 5.5); ctx.fill(); ctx.shadowBlur = 0
+    ctx.fillStyle = 'rgba(255,255,255,0.4)'; NK.rondRect(ctx, hx + 3, hy + 2, Math.max(4, hw * pr - 6), 3, 1.5); ctx.fill()
+  }
+  ctx.strokeStyle = 'rgba(0,0,0,0.25)'; ctx.lineWidth = 1
+  for (var t = 1; t < 10; t++) { ctx.beginPath(); ctx.moveTo(hx + hw * t / 10, hy + 2); ctx.lineTo(hx + hw * t / 10, hy + hh - 2); ctx.stroke() }
+  if (wij) {
+    ctx.fillStyle = '#c8d0f0'; ctx.font = '800 12px Outfit, system-ui'; ctx.textAlign = 'right'; ctx.fillText(Math.ceil(v.toon) + ' / ' + v.max, bx + bw - 12, by + 58)
+    var xp = Math.max(0, Math.min(1, (v.xp || 0) / MT.xpNodig(v.lvl))), xw = bw - 110
+    ctx.fillStyle = '#7fc8ff'; ctx.font = '900 10px Outfit, system-ui'; ctx.textAlign = 'left'; ctx.fillText('XP', bx + 14, by + 66)
+    ctx.fillStyle = 'rgba(0,0,0,0.5)'; NK.rondRect(ctx, bx + 34, by + 63, xw, 6, 3); ctx.fill()
+    if (xp > 0) { var xg = ctx.createLinearGradient(bx + 34, 0, bx + 34 + xw, 0); xg.addColorStop(0, '#3fa8ff'); xg.addColorStop(1, '#8ae0ff'); ctx.fillStyle = xg; NK.rondRect(ctx, bx + 34, by + 63, Math.max(6, xw * xp), 6, 3); ctx.fill() }
+  }
+  ctx.restore()
+}
+// een grote tekst bij super effectief, en heel even stilstaan bij een harde klap
+var stilstand = 0, banner = null
+function toonBanner(tekst, kleur, x, y) { banner = { s: tekst, k: kleur, x: x, y: y, t: 0 } }
+function tekenBanner(dt) {
+  if (!banner) return
+  banner.t += dt
+  var b = banner, f = b.t / 1.1
+  if (f >= 1) { banner = null; return }
+  var sc = f < 0.18 ? 0.4 + (f / 0.18) * 0.8 : f < 0.3 ? 1.2 - (f - 0.18) / 0.12 * 0.2 : 1
+  ctx.save(); ctx.translate(Math.max(120, Math.min(C.W - 120, b.x)), Math.max(40, b.y) - f * 24); ctx.rotate(-0.06); ctx.scale(sc, sc)
+  ctx.globalAlpha = f > 0.75 ? (1 - f) / 0.25 : 1
+  ctx.font = '900 28px "Russo One", Outfit, system-ui'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
+  ctx.lineJoin = 'round'; ctx.lineWidth = 7; ctx.strokeStyle = '#14142a'; ctx.strokeText(b.s, 0, 0)
+  ctx.shadowColor = b.k; ctx.shadowBlur = 16; ctx.fillStyle = b.k; ctx.fillText(b.s, 0, 0)
+  ctx.restore()
 }
 function tekenGevecht(dt) {
-  tekenGevechtDecor(D.gevecht ? D.gevecht.gebied : 0)
+  var gebied = D.gevecht ? D.gevecht.gebied : 0
+  tekenGevechtDecor(gebied)
   if (anim.intro == null) anim.intro = 0
-  anim.intro = Math.min(1, anim.intro + dt * 1.8)
+  anim.intro = Math.min(1, anim.intro + dt * 1.6)
   var inschuif = 1 - Math.pow(1 - anim.intro, 3)
-
+  // snelheidsstrepen bij het begin
+  if (anim.intro < 1 && !D.rustig) {
+    ctx.save(); ctx.globalAlpha = (1 - anim.intro) * 0.8; ctx.fillStyle = '#ffffff'
+    for (var sl = 0; sl < 14; sl++) { var sy = (sl * 0.0731 % 1) * C.H, sx = ((sl * 0.383 % 1) * C.W + anim.intro * C.W * 2) % (C.W * 1.4) - C.W * 0.2; ctx.fillRect(sx, sy, C.W * (0.1 + (sl % 3) * 0.06), 2 + (sl % 2)) }
+    ctx.restore()
+  }
   ;['zij', 'wij'].forEach(function (kant) {
     var v = vis[kant], p0 = plekVan(kant), a = anim[kant] || {}
     var p = { x: p0.x + (kant === 'wij' ? -1 : 1) * (1 - inschuif) * C.W * 0.6, y: p0.y, r: p0.r }
-    // grasplateau
-    var th = MTW.THEMA[D.gevecht ? D.gevecht.gebied : 0]
-    ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.beginPath(); ctx.ellipse(p.x, p.y + p.r * 0.98, p.r * 1.55, p.r * 0.4, 0, 0, 7); ctx.fill()
-    ctx.fillStyle = th.hoog; ctx.beginPath(); ctx.ellipse(p.x, p.y + p.r * 0.9, p.r * 1.5, p.r * 0.38, 0, 0, 7); ctx.fill()
-    ctx.fillStyle = th.gras2; ctx.beginPath(); ctx.ellipse(p.x, p.y + p.r * 0.84, p.r * 1.38, p.r * 0.3, 0, 0, 7); ctx.fill()
-    var pg = ctx.createRadialGradient(p.x, p.y + p.r * 0.85, 0, p.x, p.y + p.r * 0.85, p.r * 1.5)
-    pg.addColorStop(0, NK.hexA(MT.KLEUR[S[v.id].type], 0.25)); pg.addColorStop(1, 'rgba(0,0,0,0)')
-    ctx.fillStyle = pg; ctx.beginPath(); ctx.ellipse(p.x, p.y + p.r * 0.85, p.r * 1.5, p.r * 0.38, 0, 0, 7); ctx.fill()
-    ctx.strokeStyle = NK.hexA(MT.KLEUR[S[v.id].type], 0.6); ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(p.x, p.y + p.r * 0.85, p.r * 1.2, p.r * 0.28, 0, 0, 7); ctx.stroke()
+    tekenPlateau(gebied, p.x, p.y + p.r * 0.86, p.r)
+    // gloeiende ring in de kleur van het element
+    var kleur = MT.KLEUR[S[v.id].type], gl = 0.45 + Math.sin(tijd * 2.4 + (kant === 'wij' ? 0 : 1.5)) * 0.2 + (a.aanval > 0 ? 0.35 : 0)
+    ctx.save(); ctx.globalCompositeOperation = 'lighter'
+    ctx.strokeStyle = NK.hexA(kleur, gl); ctx.lineWidth = 2.5; ctx.beginPath(); ctx.ellipse(p.x, p.y + p.r * 0.86, p.r * 1.1, p.r * 0.26, 0, 0, 7); ctx.stroke()
+    ctx.strokeStyle = NK.hexA(kleur, gl * 0.35); ctx.lineWidth = 7; ctx.stroke()
+    ctx.restore()
     // effecten
-    var dx = 0, dy = 0, wit = 0
-    if (a.aanval > 0) { a.aanval -= dt; var f = Math.sin((1 - a.aanval / 0.35) * Math.PI); dx = (kant === 'wij' ? 1 : -1) * f * p.r * 0.5; dy = (kant === 'wij' ? -1 : 1) * f * p.r * 0.25 }
-    if (a.raak > 0) { a.raak -= dt; dx += Math.sin(a.raak * 60) * p.r * 0.08; wit = Math.max(0, a.raak / 0.4) }
+    var dx = 0, dy = 0, wit = 0, sch = v.schaal
+    if (a.in != null && a.in < 1) { a.in = Math.min(1, a.in + dt * 2.6); var e1 = a.in - 1, ob = 1 + 2.7 * e1 * e1 * e1 + 1.7 * e1 * e1; sch = v.schaal * Math.max(0, ob); wit = Math.max(wit, Math.min(1, 1 - a.in)) }
+    if (a.aanval > 0) { a.aanval -= dt; var f = Math.sin((1 - a.aanval / 0.35) * Math.PI); dx = (kant === 'wij' ? 1 : -1) * f * p.r * 0.6; dy = -f * p.r * 0.18 }
+    if (a.raak > 0) { a.raak -= dt; var rk = Math.max(0, a.raak / 0.4); dx += Math.sin(a.raak * 60) * p.r * 0.08 * rk - (kant === 'wij' ? 1 : -1) * p.r * 0.12 * rk; wit = Math.max(wit, rk) }
     if (a.flauw > 0) { a.flauw = Math.min(1, a.flauw + dt * 1.6); v.alfa = 1 - a.flauw; dy += a.flauw * p.r * 0.6 }
     if (a.evo > 0) { a.evo -= dt; wit = Math.min(1, Math.sin((1 - a.evo / 2.2) * Math.PI) * 1.3) }
     if (a.terug != null) v.schaal = Math.max(0, v.schaal - dt * 3)
-    if (v.alfa > 0.02 && v.schaal > 0.02) tekenWezen(ctx, v.id, p.x + dx, p.y + dy, p.r, { t: tijd + (kant === 'wij' ? 0 : 1.3), kijk: kant === 'wij' ? 1 : -1, alfa: v.alfa, wit: wit, schaal: v.schaal })
-    // levensbalk
+    // schaduw die meebeweegt
+    if (v.alfa > 0.02 && sch > 0.02) {
+      ctx.fillStyle = 'rgba(0,0,0,' + (0.28 * v.alfa * Math.min(1, sch)).toFixed(3) + ')'; ctx.beginPath(); ctx.ellipse(p.x + dx * 0.6, p.y + p.r * 0.86, p.r * 0.7 * sch * (1 - Math.min(0.4, Math.abs(dy) / p.r)), p.r * 0.14 * sch, 0, 0, 7); ctx.fill()
+      tekenWezen(ctx, v.id, p.x + dx, p.y + dy, p.r, { t: tijd + (kant === 'wij' ? 0 : 1.3), kijk: kant === 'wij' ? 1 : -1, alfa: v.alfa, wit: wit, schaal: sch })
+    }
+    if (a.in != null && a.in < 1) { ctx.save(); ctx.globalAlpha = 1 - a.in; ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 4 * (1 - a.in); ctx.beginPath(); ctx.ellipse(p.x, p.y + p.r * 0.4, p.r * (0.4 + a.in * 1.2), p.r * (0.3 + a.in * 0.9), 0, 0, 7); ctx.stroke(); ctx.restore() }
+    // infokaart
     v.toon += (v.hp - v.toon) * Math.min(1, dt * 5)
-    var bx = (kant === 'wij' ? C.W * 0.52 : C.W * 0.06) + (kant === 'wij' ? 1 : -1) * (1 - inschuif) * C.W * 0.6, by = kant === 'wij' ? C.H * 0.42 : C.H * 0.08, bw = Math.min(C.W * 0.42, 260)
-    ctx.fillStyle = 'rgba(16,18,44,0.85)'; NK.rondRect(ctx, bx, by, bw, 58, 14); ctx.fill()
-    ctx.strokeStyle = NK.hexA(MT.KLEUR[S[v.id].type], 0.7); ctx.lineWidth = 1.5; ctx.stroke()
-    ctx.fillStyle = '#eef3ff'; ctx.font = '700 15px Outfit, system-ui'; ctx.textBaseline = 'top'; ctx.textAlign = 'left'
-    ctx.fillText(S[v.id].naam, bx + 12, by + 8)
-    ctx.textAlign = 'right'; ctx.fillStyle = '#8f9bc4'; ctx.fillText('niv. ' + v.lvl, bx + bw - 12, by + 8)
-    var pr = Math.max(0, v.toon / v.max)
-    ctx.fillStyle = 'rgba(255,255,255,0.12)'; NK.rondRect(ctx, bx + 12, by + 32, bw - 24, 9, 5); ctx.fill()
-    ctx.fillStyle = pr > 0.5 ? '#5be37a' : pr > 0.2 ? '#ffd23d' : '#ff5a7a'; NK.rondRect(ctx, bx + 12, by + 32, Math.max(0, (bw - 24) * pr), 9, 5); ctx.fill()
-    if (kant === 'wij') { ctx.textAlign = 'right'; ctx.fillStyle = '#8f9bc4'; ctx.font = '700 11px Outfit'; ctx.fillText(Math.ceil(v.toon) + ' / ' + v.max, bx + bw - 12, by + 44) }
+    if (v.spoor == null || v.spoor < v.toon) v.spoor = v.toon
+    if (!(a.raak > 0)) v.spoor += (v.toon - v.spoor) * Math.min(1, dt * 2.2)
+    var bw = Math.min(C.W * 0.44, 280), rand = Math.max(12, C.W * 0.04)
+    var bx = (kant === 'wij' ? rand : C.W - bw - rand) + (kant === 'wij' ? -1 : 1) * (1 - inschuif) * C.W * 0.6, by = Math.max(12, C.H * 0.05)
+    tekenKaart(v, kant, bx, by, bw)
   })
   tekenEffecten(dt)
   // bal
@@ -184,8 +258,10 @@ function tekenGevecht(dt) {
     if (f2 >= 1) { y = pz.y + pz.r * 0.6; x = pz.x + Math.sin(b.schudT * 20) * 8 * Math.max(0, b.schudT) }
     b.schudT = Math.max(0, (b.schudT || 0) - dt)
     var ic = spulIcoon(b.soort, 18)
-    ctx.drawImage(ic, x - 18, y - 18, 36, 36)
+    ctx.save(); ctx.translate(x, y); if (f2 < 1) ctx.rotate(f2 * 12)
+    ctx.drawImage(ic, -18, -18, 36, 36); ctx.restore()
   }
+  tekenBanner(dt)
 }
 
 // ── aanvalsanimaties: elk element ziet er anders uit, sterker = groter ──
@@ -362,13 +438,13 @@ function startGevecht(g) {
   g.zij.forEach(function (w) { D.gezien[w.id] = true })
   var wi = MT.actiefWij(D.team)
   vis = { wij: zichtVan(D.team[wi], 'wij'), zij: zichtVan(g.zij[g.zi], 'zij') }
-  anim = { intro: g.intro === false ? 1 : 0 }
+  anim = { intro: g.intro === false ? 1 : 0, wij: { in: g.intro === false ? 0 : -0.9 } }
   toonScherm(null); $('paneel').classList.add('aan'); $('wereldhud').classList.remove('aan'); $('dpad').classList.remove('aan'); modus = 'gevecht'
   var zij = g.zij[g.zi]
   if (g.intro !== false) {
-    stap(g.soort === 'wild' ? 'Een wilde ' + S[zij.id].naam + ' verschijnt!' : (g.soort === 'leider' ? 'Leider ' : 'Trainer ') + g.naam + ' daagt je uit!', 1.3, function () { Geluid.toon(440, 0.3, 'triangle', 0.12, 0, 880) })
+    stap(g.soort === 'wild' ? S[zij.id].naam + ' springt tevoorschijn!' : (g.soort === 'leider' ? 'Leider ' : 'Trainer ') + g.naam + ' wil met je vechten!', 1.3, function () { Geluid.toon(440, 0.3, 'triangle', 0.12, 0, 880) })
     if (g.soort !== 'wild') stap(g.naam + ' stuurt ' + S[zij.id].naam + '!', 1.0)
-    stap('Ga, ' + S[D.team[wi].id].naam + '!', 0.9)
+    stap('Kom op, ' + S[D.team[wi].id].naam + '!', 0.9)
     g.intro = false; D.bewaar()
   }
   speelWachtrij(hoofdMenu)
@@ -377,10 +453,10 @@ function hoofdMenu() {
   var g = D.gevecht
   $('tekst').textContent = 'Wat doet ' + S[D.team[MT.actiefWij(D.team)].id].naam + '?'
   toonActies([
-    { t: 'Vechten', s: 'kies een aanval', doe: aanvalMenu },
-    { t: 'Tas', s: tasTekst(), doe: tasMenu },
-    { t: 'Wissel', s: 'ander wezen', doe: function () { kiesWezen('Wie gaat er vechten?', function (w, i) { return i !== MT.actiefWij(D.team) && w.hp > 0 }, function (i) { doe({ t: 'wissel', i: i }) }, true) } },
-    { t: g.soort === 'wild' ? 'Vluchten' : 'Opgeven', s: g.soort === 'wild' ? 'weg uit het gevecht' : 'terug naar de kaart', doe: function () { if (g.soort === 'wild') doe({ t: 'vlucht' }); else opgeven() } },
+    { t: 'Aanval', s: 'kies een aanval', doe: aanvalMenu },
+    { t: 'Rugzak', s: tasTekst(), doe: tasMenu },
+    { t: 'Team', s: 'ander wezen', doe: function () { kiesWezen('Wie gaat er vechten?', function (w, i) { return i !== MT.actiefWij(D.team) && w.hp > 0 }, function (i) { doe({ t: 'wissel', i: i }) }, true) } },
+    { t: g.soort === 'wild' ? 'Wegrennen' : 'Opgeven', s: g.soort === 'wild' ? 'weg uit het gevecht' : 'terug naar de kaart', doe: function () { if (g.soort === 'wild') doe({ t: 'vlucht' }); else opgeven() } },
   ])
 }
 function tasTekst() { var n = 0; for (var k in D.tas) n += D.tas[k]; return n + ' spullen' }
@@ -388,7 +464,7 @@ function aanvalMenu() {
   var wij = D.team[MT.actiefWij(D.team)], zij = D.gevecht.zij[D.gevecht.zi]
   var lijst = wij.aanvallen.map(function (a) {
     var m = AV[a], mult = m.kracht ? MT.mult(m.type, zij.id) : 1
-    var hint = m.kracht ? (mult > 2 ? '<span class="sterk">Mega effectief</span>' : mult > 1 ? '<span class="sterk">Super effectief</span>' : mult < 1 ? '<span class="zwak">Niet zo effectief</span>' : 'kracht ' + m.kracht) : (m.heel ? 'genezen' : m.zij ? 'verzwakt de ander' : 'beschermt jezelf')
+    var hint = m.kracht ? (mult > 2 ? '<span class="sterk">Dubbele voltreffer</span>' : mult > 1 ? '<span class="sterk">Voltreffer</span>' : mult < 1 ? '<span class="zwak">Weinig effect</span>' : 'kracht ' + m.kracht) : (m.heel ? 'genezen' : m.zij ? 'verzwakt de ander' : 'beschermt jezelf')
     return { t: m.naam, s: hint, type: m.type, doe: function () { doe({ t: 'aanval', a: a }) } }
   })
   lijst.push({ t: 'Terug', s: '', doe: hoofdMenu })
@@ -441,34 +517,36 @@ function verwerk(e, balSoort) {
   }
   if (e.t === 'mis') stap('Mis!', 0.7)
   if (e.t === 'schade') {
-    stap(e.mult > 2 ? 'Mega effectief!' : e.mult > 1 ? 'Super effectief!' : e.mult < 1 ? 'Niet zo effectief...' : null, e.mult !== 1 ? 0.9 : 0.45, function () {
+    stap(e.mult > 2 ? 'Dubbele voltreffer!' : e.mult > 1 ? 'Voltreffer!' : e.mult < 1 ? 'Dat doet weinig...' : null, e.mult !== 1 ? 0.9 : 0.45, function () {
       var kant = e.wie
       vis[kant].hp = e.hp; anim[kant] = anim[kant] || {}; anim[kant].raak = 0.4
-      G.raak(e.mult); schok.voeg(e.mult > 1 ? 0.35 : 0.15)
+      G.raak(e.mult); schok.voeg(e.mult > 2 ? 0.6 : e.mult > 1 ? 0.4 : 0.18); stilstand = e.mult > 1 ? 0.1 : 0.05
       var p = plekVan(kant)
       fx.spat(p.x, p.y, e.mult > 1 ? 24 : 12, MT.KLEUR[S[vis[kant === 'wij' ? 'zij' : 'wij'].id].type], p.r * 3, { ster: e.mult > 1 })
-      fx.tekst(p.x, p.y - p.r, '-' + e.n, e.mult > 1 ? '#ffe08a' : '#ffffff', 24)
+      fx.tekst(p.x, p.y - p.r, '-' + e.n, e.mult > 1 ? '#ffe08a' : '#ffffff', e.mult > 1 ? 34 : 26)
+      if (e.mult > 1) toonBanner(e.mult > 2 ? 'DUBBELE VOLTREFFER!' : 'VOLTREFFER!', e.mult > 2 ? '#ff7ae0' : '#ffd23d', p.x, p.y - p.r * 1.7)
+      else if (e.mult < 1) toonBanner('weinig effect', '#a8b4d8', p.x, p.y - p.r * 1.6)
     })
   }
   if (e.t === 'stat') stap(naamVan(vis[e.wie], e.wie) + (e.k === 'aanval' ? (e.n < 0 ? ' wordt minder sterk!' : ' wordt sterker!') : (e.n > 0 ? ' is beter beschermd!' : ' is minder beschermd!')), 0.9)
   if (e.t === 'heel') stap((e.wie === 'team' ? 'Je wezen' : naamVan(vis[e.wie === 'team' ? 'wij' : e.wie], e.wie === 'team' ? 'wij' : e.wie)) + ' krijgt ' + e.n + ' leven terug.', 0.9, function () { if (e.wie !== 'team') vis[e.wie].hp = e.hp; G.heel() })
-  if (e.t === 'wissel') stap('Kom terug! Ga, ' + S[D.team[0].id].naam + '!', 1.0, function () { vis.wij = zichtVan(D.team[0], 'wij'); anim.wij = {} })
-  if (e.t === 'flauw') stap(naamVan(vis[e.wie], e.wie) + ' valt flauw!', 1.1, function () { anim[e.wie] = anim[e.wie] || {}; anim[e.wie].flauw = 0.001; G.flauw() })
-  if (e.t === 'xp') { var wx = D.team.find(function (w) { return w.uid === e.uid }); stap((wx ? S[wx.id].naam : 'Je wezen') + ' krijgt ' + e.n + ' XP.', 0.8) }
-  if (e.t === 'niveau') stap(S[D.team.find(function (w) { return w.uid === e.uid }).id].naam + ' is nu niveau ' + e.lvl + '!', 1.0, function () { if (vis.wij.uid === e.uid) { var w = D.team.find(function (x) { return x.uid === e.uid }); vis.wij.lvl = e.lvl; vis.wij.max = MT.maxHp(w); vis.wij.hp = w.hp } G.niveau() })
+  if (e.t === 'wissel') stap('Wissel! Kom op, ' + S[D.team[0].id].naam + '!', 1.0, function () { vis.wij = zichtVan(D.team[0], 'wij'); anim.wij = { in: 0 }; G.bal() })
+  if (e.t === 'flauw') stap(naamVan(vis[e.wie], e.wie) + ' is uitgeput!', 1.1, function () { anim[e.wie] = anim[e.wie] || {}; anim[e.wie].flauw = 0.001; G.flauw(); var pf = plekVan(e.wie); fx.spat(pf.x, pf.y + pf.r * 0.8, 18, '#e8e0d0', pf.r * 1.6, { duur: 0.8, maat: 4 }) })
+  if (e.t === 'xp') { var wx = D.team.find(function (w) { return w.uid === e.uid }); stap((wx ? S[wx.id].naam : 'Je wezen') + ' krijgt ' + e.n + ' XP.', 0.8, function () { if (wx && vis.wij.uid === wx.uid) vis.wij.xp = wx.xp }) }
+  if (e.t === 'niveau') stap(S[D.team.find(function (w) { return w.uid === e.uid }).id].naam + ' is nu niveau ' + e.lvl + '!', 1.0, function () { if (vis.wij.uid === e.uid) { var w = D.team.find(function (x) { return x.uid === e.uid }); vis.wij.lvl = e.lvl; vis.wij.max = MT.maxHp(w); vis.wij.hp = w.hp; vis.wij.xp = w.xp; var pn = plekVan('wij'); fx.spat(pn.x, pn.y, 24, '#8ae0ff', pn.r * 2.5, { ster: true }) } G.niveau() })
   if (e.t === 'leer') stap('Leert ' + AV[e.aanval].naam + '!' + (e.vergeet ? ' (vergeet ' + AV[e.vergeet].naam + ')' : ''), 1.2)
   if (e.t === 'evolutie') {
-    stap('Wat? ' + S[e.van].naam + ' verandert...', 2.2, function () { anim.wij = anim.wij || {}; anim.wij.evo = 2.2; G.evolutie() })
-    stap('... in ' + S[e.naar].naam + '!', 1.4, function () { if (vis.wij.uid === e.uid) vis.wij.id = e.naar; D.gezien[e.naar] = D.gevangen[e.naar] = true; var p = plekVan('wij'); fx.spat(p.x, p.y, 40, '#ffffff', p.r * 4, { ster: true }) })
+    stap(S[e.van].naam + ' begint te gloeien...', 2.2, function () { anim.wij = anim.wij || {}; anim.wij.evo = 2.2; G.evolutie() })
+    stap('... en wordt ' + S[e.naar].naam + '!', 1.4, function () { if (vis.wij.uid === e.uid) vis.wij.id = e.naar; D.gezien[e.naar] = D.gevangen[e.naar] = true; var p = plekVan('wij'); fx.spat(p.x, p.y, 40, '#ffffff', p.r * 4, { ster: true }) })
   }
-  if (e.t === 'volgende') stap(g.naam + ' stuurt ' + S[e.id].naam + '!', 1.0, function () { vis.zij = zichtVan(g.zij[g.zi], 'zij'); anim.zij = {}; D.gezien[e.id] = true })
+  if (e.t === 'volgende') stap(g.naam + ' stuurt ' + S[e.id].naam + '!', 1.0, function () { vis.zij = zichtVan(g.zij[g.zi], 'zij'); anim.zij = { in: 0 }; D.gezien[e.id] = true })
   if (e.t === 'bal') {
     stap('Je gooit een ' + SPULLEN[balSoort].naam + '...', 0.7, function () { anim.bal = { t: 0, soort: balSoort, schudT: 0 }; G.bal() })
     stap(null, 0.35, function () { vis.zij.alfa = 1; anim.zij = anim.zij || {}; anim.zij.terug = 1 })
     for (var s = 0; s < Math.max(1, e.schud); s++) stap('...', 0.6, function () { anim.bal.schudT = 0.3; G.schud() })
     if (!e.gelukt) stap('Oh nee, hij ontsnapt!', 1.0, function () { anim.bal = null; anim.zij.terug = null; vis.zij.schaal = 1 })
   }
-  if (e.t === 'gevangen') stap('Gevangen! ' + S[e.id].naam + ' hoort bij jou!', 1.6, function () { G.gevangen(); var p = plekVan('zij'); fx.spat(p.x, p.y + p.r * 0.6, 30, '#ffe08a', p.r * 3, { ster: true }) })
+  if (e.t === 'gevangen') stap('Gelukt! ' + S[e.id].naam + ' gaat met je mee!', 1.6, function () { G.gevangen(); var p = plekVan('zij'); fx.spat(p.x, p.y + p.r * 0.6, 30, '#ffe08a', p.r * 3, { ster: true }) })
   if (e.t === 'gevlucht') stap('Je bent weggekomen!', 0.9)
 }
 function naBeurt() {
@@ -479,8 +557,8 @@ function naBeurt() {
   // eigen wezen flauw: kies een ander (verplicht)
   kiesWezen('Wie gaat er nu vechten?', function (w) { return w.hp > 0 }, function (i) {
     var w = D.team.splice(i, 1)[0]; D.team.unshift(w); D.bewaar()
-    vis.wij = zichtVan(w, 'wij'); anim.wij = {}
-    stap('Ga, ' + S[w.id].naam + '!', 0.9); speelWachtrij(hoofdMenu)
+    vis.wij = zichtVan(w, 'wij'); anim.wij = { in: 0 }
+    stap('Kom op, ' + S[w.id].naam + '!', 0.9); speelWachtrij(hoofdMenu)
   }, false)
 }
 function eindeGevecht() {
@@ -490,7 +568,7 @@ function eindeGevecht() {
     D.munten += munten; D.versl[g.sleutel] = true
     bericht = 'Je wint van ' + g.naam + '! +' + munten + ' munten'
     if (g.soort === 'leider') {
-      bericht += '. Je krijgt de ' + MT.GEBIEDEN[g.gebied].leider.badge + '!'
+      bericht += '. Je krijgt het ' + MT.GEBIEDEN[g.gebied].leider.badge + '!'
       if (g.gebied === D.gebied && D.gebied < MT.GEBIEDEN.length - 1) { D.gebied++; bericht += ' Een nieuw gebied is open!' }
       Geluid.win()
     }
@@ -505,7 +583,7 @@ function eindeGevecht() {
     var kwijt = Math.floor(D.munten * 0.1)
     D.munten -= kwijt
     MT.heelAlles(D.team)
-    bericht = 'Al je wezens zijn flauw. Je rent naar het wezenhuis' + (kwijt ? ' en verliest ' + kwijt + ' munten.' : '.')
+    bericht = 'Al je wezens zijn uitgeput. Je rent naar het wezenhuis' + (kwijt ? ' en verliest ' + kwijt + ' munten.' : '.')
   }
   D.team.forEach(function (x) { x.st = { aanval: 0, verdediging: 0 } })
   D.gevecht = null; D.bewaar()
@@ -540,7 +618,7 @@ function wezenRij(w, eerste) {
   b.appendChild(wezenCanvas(w.id, 64, { alfa: w.hp > 0 ? 1 : 0.45 }))
   var max = MT.maxHp(w), pr = w.hp / max, info = document.createElement('div'); info.className = 'info'
   info.innerHTML = '<div class="naam">' + S[w.id].naam + ' ' + typeLabels(w.id) + '</div>' +
-    '<div class="klein">niveau ' + w.lvl + ' · ' + (w.hp > 0 ? w.hp + ' / ' + max + ' leven' : 'flauw') + '</div>' +
+    '<div class="klein">niveau ' + w.lvl + ' · ' + (w.hp > 0 ? w.hp + ' / ' + max + ' leven' : 'uitgeput') + '</div>' +
     '<div class="balkje"><i style="width:' + Math.round(pr * 100) + '%;background:' + (pr > 0.5 ? '#5be37a' : pr > 0.2 ? '#ffd23d' : '#ff5a7a') + '"></i></div>' +
     '<div class="balkje xp"><i style="width:' + Math.round(w.xp / MT.xpNodig(w.lvl) * 100) + '%"></i></div>'
   b.appendChild(info)
@@ -668,13 +746,13 @@ function praat(d) {
   if (d.soort === 'trainer') zeg(d.naam, verslagen(d.sleutel) ? 'Wat een goed gevecht was dat! Train je wezens goed.' : 'Hé! Een gevecht?', verslagen(d.sleutel) ? null : function () { trainerKlaarMetLopen(d) })
   if (d.soort === 'wachter') {
     var gl = MT.GEBIEDEN[d.gym].leider
-    if (verslagen('l' + d.gym)) { D.versl['w' + d.gym] = true; D.bewaar(); zeg('Wachter', 'Je hebt de ' + gl.badge + '! Ga maar verder, succes op de route.') }
-    else zeg('Wachter', 'Hier mag je nog niet langs. Versla eerst leider ' + gl.naam + ' in de gym van dit dorp!')
+    if (verslagen('l' + d.gym)) { D.versl['w' + d.gym] = true; D.bewaar(); zeg('Wachter', 'Je hebt het ' + gl.badge + '! Ga maar verder, succes op de route.') }
+    else zeg('Wachter', 'Hier mag je nog niet langs. Versla eerst leider ' + gl.naam + ' in de arena van dit dorp!')
   }
   if (d.soort === 'legende') {
     var alle = MT.GEBIEDEN.every(function (g, i) { return verslagen('l' + i) })
     if (D.sterrenkat) zeg(null, 'Het is stil bij de poort. De Sterrenkat zit nu in jouw team.')
-    else if (!alle) zeg(null, 'Een vreemd licht schijnt hier... Kom terug als je alle acht badges hebt.')
+    else if (!alle) zeg(null, 'Een vreemd licht schijnt hier... Kom terug als je alle acht emblemen hebt.')
     else zeg(null, 'Er verschijnt een wezen van sterrenlicht!', function () { overgangNaar(function () { klaarVoorGevecht(); startGevecht(MT.gevecht('wild', [MT.maak('sterrenkat', 42)], { gebied: MT.GEBIEDEN.length - 1, sleutel: 'ster', vangkans: 0.3 })) }) })
   }
 }
@@ -687,11 +765,11 @@ function gaNaarBinnen(b) {
     })
   }
   if (b.soort === 'winkel') { naarWinkel() }
-  if (b.soort === 'huis') zeg('Bewoner', ['Mijn opa ving vroeger een Sterrenkat... zegt hij.', 'Wist je dat Herstel je wezen midden in een gevecht beter maakt?', 'Superbollen vangen veel beter dan glimbollen!', 'Een wezen leert nieuwe aanvallen als het een niveau omhoog gaat.', 'Aardewezens zijn sterk tegen vuur en bliksem, maar water spoelt ze weg.', 'Op elke route ligt wel iets op de grond. Kijk goed!', 'Luchtwezens? Neem een bliksem- of ijswezen mee!', 'IJs smelt door vuur. Neem een vuurwezen mee naar de gym!', 'Dit is het laatste dorp. Leider Nox is de sterkste van allemaal.'][W8.a / 2])
+  if (b.soort === 'huis') zeg('Bewoner', ['Mijn opa ving vroeger een Sterrenkat... zegt hij.', 'Wist je dat Herstel je wezen midden in een gevecht beter maakt?', 'Superkristallen vangen veel beter dan gewone vangkristallen!', 'Een wezen leert nieuwe aanvallen als het een niveau omhoog gaat.', 'Aardewezens zijn sterk tegen vuur en bliksem, maar water spoelt ze weg.', 'Op elke route ligt wel iets op de grond. Kijk goed!', 'Luchtwezens? Neem een bliksem- of ijswezen mee!', 'IJs smelt door vuur. Neem een vuurwezen mee naar de arena!', 'Dit is het laatste dorp. Leider Nox is de sterkste van allemaal.'][W8.a / 2])
   if (b.soort === 'gym') {
     var gl = MT.GEBIEDEN[b.gym].leider
     if (verslagen('l' + b.gym)) zeg('Leider ' + gl.naam, 'Je hebt mijn ' + gl.badge + ' al verdiend. Op naar het volgende dorp!')
-    else zeg('Leider ' + gl.naam, 'Welkom in mijn gym! Ik ben ' + gl.naam + '. Win van mij en je krijgt de ' + gl.badge + '.', function () {
+    else zeg('Leider ' + gl.naam, 'Welkom in mijn arena! Ik ben ' + gl.naam + '. Win van mij en je krijgt het ' + gl.badge + '.', function () {
       overgangNaar(function () { klaarVoorGevecht(); trainerGevecht(b.gym, 'leider') })
     })
   }
@@ -792,6 +870,8 @@ function wereldSchaal() { return Math.max(1.6, Math.min(C.W / (13 * MTW.T), C.H 
 // de vaste laag op een resolutie die past bij het scherm (scherp, maar niet te groot)
 function bouwLaag(sch) {
   var k = W8.kaart, R = Math.max(2, Math.min(5, Math.ceil(sch * C.dpr)))
+  // niet groter dan zwakke tablets aankunnen (ongeveer 4 miljoen pixels)
+  R = Math.max(1, Math.min(R, Math.floor(Math.sqrt(4e6 / (k.w * k.h * MTW.T * MTW.T)))))
   if (W8.laagR === R) return
   W8.laagR = R
   vastLaag.width = k.w * MTW.T * R; vastLaag.height = k.h * MTW.T * R
@@ -828,7 +908,7 @@ function tekenWereld(dt) {
   lijst.sort(function (a, b) { return a.y - b.y })
   lijst.forEach(function (o) {
     if (o.speler) {
-      MTW.persoon(ctx, sp[0], sp[1] - 3, W8.r, W8.van ? W8.stap : 0, { pet: '#e83a3a', jas: '#2f6fe0' })
+      MTW.persoon(ctx, sp[0], sp[1] - 3, W8.r, W8.van ? W8.stap : 0, { pet: '#1fbfa8', jas: '#ff8a3d' })
       // in hoog gras: onderkant van het poppetje in het gras
       if (k.t[W8.y][W8.x] === 'g' && (!W8.van || W8.t > LOOP * 0.5)) {
         MTW.gras(ctx, k, W8.x, W8.y, tijd, 1, 1)
@@ -889,7 +969,7 @@ function tekenWereld(dt) {
 }
 
 function klaarVoorGevecht() {
-  if (MT.actiefWij(D.team) < 0) { melding('Je wezens zijn flauw. Ga eerst naar het wezenhuis.'); return false }
+  if (MT.actiefWij(D.team) < 0) { melding('Je wezens zijn uitgeput. Ga eerst naar het wezenhuis.'); return false }
   // het eerste levende wezen vooraan
   var i = MT.actiefWij(D.team); if (i > 0) { var w = D.team.splice(i, 1)[0]; D.team.unshift(w) }
   return true
@@ -1000,10 +1080,29 @@ $('terug').onclick = function () { Geluid.klik(); bewaarPos(); NK.naarOuder(BELO
 $('speel').onclick = function () { Geluid.klik(); verder() }
 $('s-geluid').onclick = function () { D.geluid = !D.geluid; D.bewaar(); this.classList.toggle('aan', D.geluid); Geluid.klik() }
 $('s-rustig').onclick = function () { D.rustig = !D.rustig; D.bewaar(); this.classList.toggle('aan', D.rustig); Geluid.klik() }
+// een half afgemaakt gevecht (bijvoorbeeld afgesloten terwijl je wezens flauw vielen) netjes opruimen
+function gevechtHerstelbaar(g) {
+  return g && g.zij && !g.klaar && g.zij[g.zi] && g.zij[g.zi].hp > 0 && MT.actiefWij(D.team) >= 0
+}
+function ruimOp() {
+  D.gevecht = null; $('paneel').classList.remove('aan'); vis = null; anim = {}; wachtrij = []; bezig = false
+  if (MT.actiefWij(D.team) < 0) { MT.heelAlles(D.team); D.pos = { a: D.huis.a, x: D.huis.x, y: D.huis.y, r: 2 } }
+  D.team.forEach(function (x) { x.st = { aanval: 0, verdediging: 0 } })
+  D.bewaar()
+}
 function verder() {
-  if (!D.team.length) { if (!D.uitlegGezien) { D.uitlegGezien = true; D.bewaar(); return toonUitleg(naarStarter) } return naarStarter() }
-  if (D.gevecht && D.gevecht.zij) return startGevecht(D.gevecht)
-  naarWereld()
+  try {
+    if (!D.team.length) { if (!D.uitlegGezien) { D.uitlegGezien = true; D.bewaar(); return toonUitleg(naarStarter) } return naarStarter() }
+    if (D.gevecht && !gevechtHerstelbaar(D.gevecht)) ruimOp()
+    if (MT.actiefWij(D.team) < 0) ruimOp()
+    if (D.gevecht) return startGevecht(D.gevecht)
+    naarWereld()
+  } catch (err) {
+    // lukt het toch niet: gevecht weg, team beter en terug naar het eerste dorp
+    console.error(err)
+    try { ruimOp(); MT.heelAlles(D.team); D.pos = { a: 0, x: 9, y: 11, r: 2 }; D.huis = { a: 0, x: 4, y: 14 }; W8.kaart = null; D.bewaar(); naarWereld() }
+    catch (err2) { toonFout(err2) }
+  }
 }
 
 // ── besturing in de wereld ──
@@ -1049,8 +1148,21 @@ function controller() {
 
 // ── hoofdlus ──
 var vorige = performance.now()
+var fouten = 0, laatsteCheck = 0
 function frame(nu) {
-  var dt = Math.min(0.05, (nu - vorige) / 1000); vorige = nu; tijd += dt
+  requestAnimationFrame(frame)
+  try { frameStap(nu); fouten = 0 } catch (err) {
+    fouten++
+    if (fouten === 1) console.error(err)
+    W8.laagR = 0; wisGevechtCache(); MTW.wisCache()
+    if (fouten === 40) toonFout(err)
+  }
+}
+function frameStap(nu) {
+  var dt = Math.min(0.05, (nu - vorige) / 1000); vorige = nu
+  if (stilstand > 0) { stilstand -= dt; dt *= 0.1 }
+  tijd += dt
+  if (nu - laatsteCheck > 2000) { laatsteCheck = nu; controleerLagen() }
   ctx.setTransform(C.dpr, 0, 0, C.dpr, 0, 0)
   schok.rustig = D.rustig
   controller()
@@ -1070,7 +1182,29 @@ function frame(nu) {
     var ids = ['vlamvos', 'golfling', 'bladbeer'], r = Math.min(C.W, C.H) * 0.12
     ids.forEach(function (id, i) { tekenWezen(ctx, id, C.W * (0.25 + i * 0.25), C.H * 0.78 + Math.sin(tijd * 2 + i) * 6, r, { t: tijd + i }) })
   }
-  requestAnimationFrame(frame)
+}
+// sommige tablets en Chromebooks maken verborgen tekenlagen leeg (na slaapstand, ander tabblad of te weinig geheugen).
+// Dan bleef de wereld zwart. We kijken af en toe of een laag leeg is en tekenen hem dan opnieuw.
+function leegDoek(c) {
+  if (!c.width || !c.height) return true
+  try { return c.getContext('2d').getImageData(c.width >> 1, c.height >> 1, 1, 1).data[3] === 0 } catch (e) { return false }
+}
+function controleerLagen() {
+  if (modus === 'wereld' && W8.kaart && W8.laagR && leegDoek(vastLaag)) { W8.laagR = 0; MTW.wisCache() }
+  if (arenaSleutel && leegDoek(arenaC)) { wisGevechtCache(); MTW.wisCache() }
+}
+function allesOpnieuw() { W8.laagR = 0; wisGevechtCache(); MTW.wisCache(); laatsteCheck = 0 }
+document.addEventListener('visibilitychange', function () { if (!document.hidden) allesOpnieuw() })
+window.addEventListener('pageshow', allesOpnieuw)
+;[vastLaag, arenaC, C.cv].forEach(function (c) { c.addEventListener('contextrestored', allesOpnieuw) })
+function toonFout(err) {
+  if (document.getElementById('foutmelding')) return
+  var d = document.createElement('div'); d.id = 'foutmelding'
+  d.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:99;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center;background:rgba(5,4,15,.92);color:#eef3ff;font:700 17px Outfit,system-ui'
+  d.innerHTML = '<div>Er ging iets mis met het beeld. Je spel is bewaard.</div><button class="knop">Opnieuw starten</button><small style="opacity:.5;font-size:11px"></small>'
+  d.querySelector('small').textContent = String(err && err.message || err).slice(0, 140)
+  d.querySelector('button').onclick = function () { location.reload() }
+  document.body.appendChild(d)
 }
 
 // ── start ──
@@ -1087,12 +1221,13 @@ function toonUitleg(klaar) {
     [wezen('vonkel'), 'Kies je eerste wezen. Loop met de pijltjes of tik op de plek waar je heen wilt. Met de A-knop praat je en bekijk je dingen.'],
     [function (g, w) { for (var i = 0; i < 9; i++) { var x = 14 + i * 6.5; g.strokeStyle = i % 2 ? '#3fbf5a' : '#2a9a46'; g.lineWidth = 4; g.beginPath(); g.moveTo(x, 64); g.quadraticCurveTo(x + 3, 42, x + (i % 3 - 1) * 5, 20 + (i % 2) * 8); g.stroke() } }, 'In het hoge gras wonen wilde wezens. Loop erdoor en je komt ze tegen.'],
     [function (g, w) { MTW.embleem(g, 'water', 28, 40, 13, MT.KLEUR.water); MTW.embleem(g, 'vuur', 54, 40, 13, MT.KLEUR.vuur); g.strokeStyle = '#fff'; g.lineWidth = 3; g.beginPath(); g.moveTo(36, 40); g.lineTo(45, 40); g.moveTo(41, 35); g.lineTo(46, 40); g.lineTo(41, 45); g.stroke() }, 'In een gevecht kies je een aanval. Elk element is sterk tegen een ander: water wint van vuur, vuur van plant, plant van water. Kijk wat de mensen in de dorpen erover zeggen.'],
-    [spul('glimbol'), 'Is een wild wezen zwak? Gooi een bol om het te vangen. Een superbol vangt beter.'],
+    [spul('glimbol'), 'Is een wild wezen zwak? Gooi een vangkristal en het gaat misschien met je mee. Een superkristal werkt beter.'],
     [spul('drankje'), 'Een drankje maakt je wezen beter. In het wezenhuis van elk dorp wordt je hele team gratis weer gezond.'],
     [wezen('vlamvos'), 'Door te vechten worden je wezens sterker. Op een bepaald niveau veranderen ze in een nieuwe, stoere vorm.'],
-    [function (g, w) { NK.ster(g, w / 2, w / 2, 24, '#ffd23d') }, 'In elk dorp is een gym. Versla de leider en je krijgt een badge. De wachter laat je pas door als je die badge hebt. Met acht badges mag je naar de Sterrenpoort.'],
+    [function (g, w) { NK.ster(g, w / 2, w / 2, 24, '#ffd23d') }, 'In elk dorp is een arena. Versla de leider en je krijgt een embleem. De wachter laat je pas door als je dat embleem hebt. Met acht emblemen mag je naar de Sterrenpoort.'],
     [function (g, w) { g.save(); g.translate(16, 10); g.scale(3, 3); MTW.persoon(g, 0, 0, 2, 0, { pet: '#7a3ad8', jas: '#e8443a' }); g.restore() }, 'Trainers die je zien, dagen je uit. Winnen geeft munten voor de winkel.'],
   ], klaar)
 }
 $('naaruitleg').onclick = function () { Geluid.klik(); toonUitleg() }
+window.MT_KLAAR = true
 })()

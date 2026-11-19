@@ -92,7 +92,7 @@ const SPELLEN = [
   { key: 'lichtlab',   name: 'Lichtlab',       desc: '45 seconden puzzelen, de volgende keer ga je verder', img: '/scenes/games/lichtlab.svg' },
   { key: 'komeet',     name: 'Komeetstaart',   desc: '45 seconden spelen, de volgende keer ga je verder', img: '/scenes/games/komeetstaart.svg' },
   { key: 'kristal',    name: 'Kristalsmelt',   desc: '45 seconden spelen, de volgende keer ga je verder', img: '/scenes/games/kristalsmelt.svg' },
-  { key: 'monster',    name: 'Monsterteam',    desc: '45 seconden spelen, de volgende keer ga je verder', img: '/scenes/games/monsterteam.svg' },
+  { key: 'monster',    name: 'Monsterteam',    desc: '45 seconden spelen, de volgende keer ga je verder', img: '/scenes/games/monsterteam.webp' },
   { key: 'drift',      name: 'Neondrift',      desc: '45 seconden rijden, de volgende keer ga je verder', img: '/scenes/games/neondrift.svg' },
   { key: 'boer',       name: 'Boerenleven',    desc: '45 seconden boeren, de volgende keer ga je verder', img: '/scenes/games/boerenleven.svg' },
   { key: 'stad',       name: 'Stadsbouwer',    desc: '45 seconden bouwen, de volgende keer ga je verder', img: '/scenes/games/stadsbouwer.png' },

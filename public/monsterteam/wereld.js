@@ -73,7 +73,7 @@ var MTW = (function () {
         'Kom je vast te zitten? Het wezenhuis maakt je wezens gratis beter.',
         'Trainers dagen je uit als je in hun zicht loopt. Na een gevecht krijg je munten.',
         'Een wezen dat sterker wordt, kan veranderen in iets heel anders!',
-        'In de winkel koop je glimbollen en drankjes.',
+        'In de winkel koop je vangkristallen en drankjes.',
         'In de Rotskloof wonen aardewezens. Water en plant zijn sterk tegen aarde!',
         'Luchtwezens vliegen boven het gras. Bliksem en ijs zijn sterk tegen lucht.',
         'Achter het laatste dorp ligt een geheime poort. Daar woont iets heel bijzonders.',
@@ -131,7 +131,7 @@ var MTW = (function () {
       for (var r2 = 0; r2 < 30; r2++) { var cx = 1 + (R() * 18 | 0), cy = 1 + (R() * 14 | 0); if (t[cy][cx] === '.') t[cy][cx] = R() < 0.5 ? 'f' : 'r' }
       for (var hy = 2; hy <= 5; hy++) for (var hx = 7; hx <= 12; hx++) zet(hx, hy, '=')
       k.dingen.push({ soort: 'legende', x: 9, y: 3, breed: 2 })
-      k.dingen.push({ soort: 'bord', x: 12, y: H - 3, tekst: 'De Sterrenpoort. Alleen wie alle acht badges heeft, mag hier komen.' })
+      k.dingen.push({ soort: 'bord', x: 12, y: H - 3, tekst: 'De Sterrenpoort. Alleen wie alle acht emblemen heeft, mag hier komen.' })
     }
     cache[a] = k
     return k
@@ -382,7 +382,7 @@ var MTW = (function () {
   // ── gebouwen: muur, dak met dakpannen, ramen met bloembakken, een deur met boog ──
   function gebouw(g, b, k) {
     var X = b.x * T, Y = b.y * T, W = b.w * T, H = b.h * T, gym = b.soort === 'gym'
-    var dak = gym ? MTDATA().KLEUR[gymType(b.gym)] : { wezenhuis: '#ff5a8a', winkel: '#3f7fff', thuis: '#c2503a', huis: b.dak || '#5a8aff' }[b.soort]
+    var dak = gym ? MTDATA().KLEUR[gymType(b.gym)] : { wezenhuis: '#2fae8a', winkel: '#e8962a', thuis: '#c2503a', huis: b.dak || '#5a8aff' }[b.soort]
     var muur = gym ? kl(dak, 0.8) : b.soort === 'winkel' ? '#f2ecdf' : '#f6e9d2'
     var muurHex = gym ? '#eeeeee' : b.soort === 'winkel' ? '#f2ecdf' : '#f6e9d2'
     var top = Y + T * 1.55, voet = Y + H
@@ -483,7 +483,7 @@ var MTW = (function () {
     g.strokeStyle = 'rgba(0,0,0,0.25)'; g.lineWidth = 0.5; g.beginPath(); g.moveTo(dx + 5, dy + 0); g.lineTo(dx + 5, dy + 14.4); g.stroke()
     g.fillStyle = 'rgba(255,255,255,0.25)'; g.beginPath(); rr(g, dx + 1.2, dy + 5, 2.6, 3.6, 0.8); rr(g, dx + 6.2, dy + 5, 2.6, 3.6, 0.8); g.fill()
     g.fillStyle = '#ffd23d'; g.beginPath(); rond(g, dx + 7.8, dy + 9.6, 0.7); rond(g, dx + 2.2, dy + 9.6, 0.7); g.fill()
-    g.fillStyle = soort === 'wezenhuis' ? '#ff7aa0' : soort === 'gym' ? kl(dak, 0) : '#c8584a'
+    g.fillStyle = soort === 'wezenhuis' ? '#5ad8b8' : soort === 'gym' ? kl(dak, 0) : '#c8584a'
     g.beginPath(); rr(g, dx - 1.5, dy + 15, 13, 2, 0.8); g.fill()
   }
   function gymType(i) { var t = MTDATA().GEBIEDEN[i].leider.type; return t === 'alles' ? 'schaduw' : t }
@@ -596,6 +596,220 @@ var MTW = (function () {
     g.strokeStyle = 'rgba(255,79,216,' + (0.5 + gl * 0.5).toFixed(2) + ')'; g.lineWidth = 0.8; g.beginPath(); g.ellipse(X + T, Y + 9.5, 9, 2.4, 0, 0, 7); g.stroke()
   }
 
+  // ── gevecht: een geschilderd landschap in de kleuren van het gebied (één keer getekend, daarna een plaatje) ──
+  function boomVan(g, cx, Y, th, gb, v) {
+    if (th.lava) basalt(g, cx, Y, v)
+    else if (th.sneeuw || ((gb === 1 || gb === 6) && v < 0.55) || (gb === 3 && v < 0.25)) den(g, cx, Y, th, v)
+    else loofboom(g, cx, Y, th, v)
+  }
+  function hsl(h, s, l, a) { return 'hsla(' + h + ',' + s + '%,' + l + '%,' + (a == null ? 1 : a) + ')' }
+  function bergen(g, W, hor, r, n, hMin, hMax, kleur, donker, sneeuw) {
+    for (var i = 0; i < n; i++) {
+      var x = (i + r() * 0.6 - 0.3) / (n - 1) * W, h = hMin + r() * (hMax - hMin), w = h * (1.1 + r() * 0.7)
+      var pad = function () { g.beginPath(); g.moveTo(x - w, hor + 2); g.quadraticCurveTo(x - w * 0.35, hor - h * 0.9, x, hor - h); g.quadraticCurveTo(x + w * 0.35, hor - h * 0.9, x + w, hor + 2); g.closePath() }
+      pad(); g.fillStyle = kleur; g.fill()
+      g.save(); pad(); g.clip()
+      g.fillStyle = donker; g.beginPath(); g.moveTo(x, hor - h); g.quadraticCurveTo(x + w * 0.05, hor - h * 0.4, x - w * 0.15, hor + 2); g.lineTo(x + w, hor + 2); g.closePath(); g.fill()
+      if (sneeuw) {
+        var sy = hor - h * 0.62
+        g.fillStyle = 'rgba(255,255,255,0.95)'; g.beginPath(); g.moveTo(x - w, sy)
+        for (var s = 0; s <= 8; s++) g.lineTo(x - w + s * w / 4, sy + (s % 2 ? h * 0.07 : -h * 0.02))
+        g.lineTo(x + w, hor - h * 1.2); g.lineTo(x - w, hor - h * 1.2); g.closePath(); g.fill()
+        g.fillStyle = 'rgba(150,180,230,0.35)'; g.beginPath(); g.moveTo(x, hor - h); g.quadraticCurveTo(x + w * 0.05, hor - h * 0.75, x - w * 0.05, sy + h * 0.05); g.lineTo(x + w, sy); g.lineTo(x + w, hor - h * 1.2); g.closePath(); g.fill()
+      }
+      g.restore()
+    }
+  }
+  function heuvel(g, W, hor, r, hoogte, kleur, licht) {
+    var f1 = 0.004 + r() * 0.004, f2 = 0.011 + r() * 0.006, p1 = r() * 9, p2 = r() * 9, pts = []
+    for (var x = -10; x <= W + 10; x += 10) pts.push([x, hor - hoogte * (0.55 + 0.3 * Math.sin(x * f1 + p1) + 0.15 * Math.sin(x * f2 + p2))])
+    g.beginPath(); g.moveTo(-10, hor + 4); pts.forEach(function (p) { g.lineTo(p[0], p[1]) }); g.lineTo(W + 10, hor + 4); g.closePath()
+    var hg = g.createLinearGradient(0, hor - hoogte, 0, hor); hg.addColorStop(0, licht); hg.addColorStop(1, kleur); g.fillStyle = hg; g.fill()
+    return pts
+  }
+  function wolkPad(g, x, y, s) {
+    g.beginPath(); rond(g, x - 30 * s, y, 16 * s); rond(g, x - 8 * s, y - 12 * s, 22 * s); rond(g, x + 18 * s, y - 6 * s, 18 * s); rond(g, x + 36 * s, y + 2 * s, 12 * s)
+    g.moveTo(x - 44 * s, y + 6 * s); rr(g, x - 46 * s, y - 2 * s, 94 * s, 16 * s, 8 * s)
+  }
+  var wolkCache = null
+  function wolkSprite() {
+    if (wolkCache) return wolkCache
+    var c = document.createElement('canvas'); c.width = 240; c.height = 120; var g = c.getContext('2d')
+    g.translate(120, 66)
+    g.fillStyle = 'rgba(190,210,240,0.9)'; wolkPad(g, 2, 6, 2); g.fill()
+    g.fillStyle = '#ffffff'; wolkPad(g, 0, 0, 2); g.fill()
+    g.fillStyle = 'rgba(255,255,255,0.9)'; g.beginPath(); rond(g, -22, -30, 18); rond(g, 26, -20, 12); g.fill()
+    wolkCache = c; return c
+  }
+  function arena(g, W, H, gb) {
+    var th = THEMA[gb], hor = H * 0.42, nacht = !!th.nacht, r = rng(gb * 977 + 13), L = th.lucht, schaal = Math.max(0.6, Math.min(1.6, H / 700))
+    var bergKl = th.sneeuw || gb === 5 || gb === 1
+    // lucht
+    var lu = g.createLinearGradient(0, 0, 0, hor)
+    if (nacht) { lu.addColorStop(0, hsl(L, 55, 6)); lu.addColorStop(0.55, hsl(L, 50, 15)); lu.addColorStop(1, th.lava ? hsl(12, 75, 32) : hsl(L + 15, 55, 30)) }
+    else { lu.addColorStop(0, hsl(212, 72, 54)); lu.addColorStop(0.6, hsl(200, 80, 74)); lu.addColorStop(1, hsl(L, 70, 88)) }
+    g.fillStyle = lu; g.fillRect(0, 0, W, hor + 4)
+    if (nacht) {
+      for (var i = 0; i < 140; i++) { var sx = r() * W, sy = r() * hor * 0.95, sa = 0.25 + r() * 0.75; g.fillStyle = 'rgba(255,255,255,' + sa.toFixed(2) + ')'; g.beginPath(); rond(g, sx, sy, r() < 0.1 ? 1.6 : 0.8); g.fill() }
+      for (var j = 0; j < 6; j++) { g.fillStyle = 'rgba(255,255,255,0.9)'; ster4(g, r() * W, r() * hor * 0.7, 4 + r() * 3) }
+      if (th.sterren || th.paddo) { zachteVlek(g, W * 0.3, hor * 0.35, W * 0.35, th.sterren ? 'rgba(255,90,216,0.22)' : 'rgba(140,90,255,0.2)'); zachteVlek(g, W * 0.7, hor * 0.2, W * 0.25, 'rgba(90,140,255,0.18)') }
+      if (!th.lava) {
+        var mx = W * 0.8, my = hor * 0.3, mr = Math.min(W, H) * 0.06
+        zachteVlek(g, mx, my, mr * 4, 'rgba(255,240,210,0.25)')
+        g.fillStyle = '#fff4dc'; g.beginPath(); rond(g, mx, my, mr); g.fill()
+        g.fillStyle = 'rgba(200,190,160,0.45)'; g.beginPath(); rond(g, mx - mr * 0.3, my - mr * 0.2, mr * 0.22); rond(g, mx + mr * 0.35, my + mr * 0.25, mr * 0.16); rond(g, mx + mr * 0.1, my - mr * 0.45, mr * 0.1); g.fill()
+      }
+    } else {
+      var zx = W * 0.82, zy = hor * 0.26, zr = Math.min(W, H) * 0.07
+      g.save(); g.globalAlpha = 0.07; g.fillStyle = '#ffffff'
+      for (var s = 0; s < 9; s++) { var a = Math.PI * (0.45 + s * 0.13); g.beginPath(); g.moveTo(zx, zy); g.lineTo(zx + Math.cos(a) * W * 1.2, zy + Math.sin(a) * W * 1.2); g.lineTo(zx + Math.cos(a + 0.05) * W * 1.2, zy + Math.sin(a + 0.05) * W * 1.2); g.closePath(); g.fill() }
+      g.restore()
+      zachteVlek(g, zx, zy, zr * 6, 'rgba(255,250,215,0.55)')
+      zachteVlek(g, zx, zy, zr * 2.2, 'rgba(255,255,235,0.9)')
+      g.fillStyle = '#fffbea'; g.beginPath(); rond(g, zx, zy, zr); g.fill()
+    }
+    // verre bergen
+    if (th.lava) {
+      bergen(g, W, hor, r, 4, hor * 0.25, hor * 0.45, '#3a2626', '#241616', false)
+      var vx = W * 0.32, vh = hor * 0.62, vw = vh * 1.3
+      g.fillStyle = '#2e1c1c'; g.beginPath(); g.moveTo(vx - vw, hor + 2); g.quadraticCurveTo(vx - vw * 0.3, hor - vh * 0.7, vx - vw * 0.16, hor - vh); g.lineTo(vx + vw * 0.16, hor - vh); g.quadraticCurveTo(vx + vw * 0.3, hor - vh * 0.7, vx + vw, hor + 2); g.closePath(); g.fill()
+      zachteVlek(g, vx, hor - vh, vw * 0.5, 'rgba(255,110,30,0.55)')
+      g.strokeStyle = 'rgba(255,140,40,0.85)'; g.lineWidth = 3 * schaal; g.lineCap = 'round'
+      ;[[-0.1, 0.35], [0.08, 0.5], [0.02, 0.2]].forEach(function (s) { g.beginPath(); g.moveTo(vx + s[0] * vw, hor - vh + 2); g.quadraticCurveTo(vx + s[0] * vw * 2.4, hor - vh * (1 - s[1] * 0.5), vx + s[0] * vw * 3, hor - vh * (1 - s[1])); g.stroke() })
+    } else if (nacht) bergen(g, W, hor, r, 5, hor * 0.2, hor * 0.42, hsl(L, 30, 20), hsl(L, 35, 14), false)
+    else bergen(g, W, hor, r, 5, hor * 0.22, hor * (bergKl ? 0.55 : 0.4), hsl(215, 28, bergKl ? 72 : 70), hsl(220, 30, bergKl ? 60 : 62), bergKl)
+    // nevel tussen bergen en heuvels
+    var nv = g.createLinearGradient(0, hor - hor * 0.35, 0, hor)
+    nv.addColorStop(0, 'rgba(255,255,255,0)'); nv.addColorStop(1, nacht ? (th.lava ? 'rgba(255,90,40,0.3)' : hsl(L, 50, 40, 0.35)) : 'rgba(255,255,255,0.55)')
+    g.fillStyle = nv; g.fillRect(0, hor - hor * 0.35, W, hor * 0.35 + 4)
+    // heuvels met een rij bomen erop
+    var bs = 2.6 * schaal
+    var achter = heuvel(g, W, hor, r, hor * 0.16, kl(th.boom, nacht ? -0.25 : 0.15), kl(th.boom2, nacht ? -0.2 : 0.3))
+    for (var b = 0; b < achter.length; b += 2) {
+      var p = achter[b], v = r()
+      g.save(); g.translate(p[0] + r() * 8, p[1] + 6); g.scale(bs * 0.75, bs * 0.75); boomVan(g, 0, -15, th, gb, v); g.restore()
+    }
+    g.fillStyle = nacht ? hsl(L, 40, 20, 0.35) : 'rgba(225,240,255,0.35)'; g.fillRect(0, hor - hor * 0.3, W, hor * 0.3 + 4)
+    var voor = heuvel(g, W, hor + 2, r, hor * 0.08, kl(th.boom, nacht ? -0.15 : 0), kl(th.boom2, nacht ? -0.1 : 0.15))
+    for (var b2 = 0; b2 < voor.length; b2 += 3) {
+      var q = voor[b2]
+      g.save(); g.translate(q[0] + r() * 14, q[1] + 8); g.scale(bs, bs); boomVan(g, 0, -15, th, gb, r()); if (th.paddo && r() < 0.5) paddo(g, 5, 0); g.restore()
+    }
+    // grond met perspectief
+    var gr = g.createLinearGradient(0, hor, 0, H)
+    gr.addColorStop(0, kl(th.gras2, nacht ? -0.05 : 0.08)); gr.addColorStop(0.5, th.gras2); gr.addColorStop(1, kl(th.gras, -0.18))
+    g.fillStyle = gr; g.fillRect(0, hor, W, H - hor)
+    g.save(); g.beginPath(); g.rect(0, hor, W, H - hor); g.clip()
+    for (var vl = 0; vl < 26; vl++) {
+      var vy = hor + Math.pow(r(), 0.8) * (H - hor), d = (vy - hor) / (H - hor), vr = (30 + r() * 60) * (0.4 + d * 1.6) * schaal
+      g.save(); g.translate(r() * W, vy); g.scale(1, 0.32); zachteVlek(g, 0, 0, vr, r() < 0.5 ? kl(th.gras2, 0.3, 0.35) : kl(th.gras, -0.3, 0.3)); g.restore()
+    }
+    // een kronkelpad naar de horizon
+    if (!th.lava) {
+      g.fillStyle = kl(th.pad, nacht ? -0.15 : 0, 0.9)
+      g.beginPath(); g.moveTo(W * 0.36, H); g.bezierCurveTo(W * 0.5, H * 0.78, W * 0.36, H * 0.6, W * 0.5, hor + 1); g.lineTo(W * 0.53, hor + 1); g.bezierCurveTo(W * 0.46, H * 0.6, W * 0.72, H * 0.78, W * 0.66, H); g.closePath(); g.fill()
+      g.strokeStyle = kl(th.pad2, -0.2, 0.6); g.lineWidth = 2; g.stroke()
+      for (var kk = 0; kk < 30; kk++) {
+        var ky = hor + Math.pow(r(), 0.7) * (H - hor), kd = (ky - hor) / (H - hor)
+        g.fillStyle = kl(th.pad2, -0.1 - r() * 0.2, 0.8); g.beginPath(); g.ellipse(W * (0.5 + (r() - 0.5) * 0.18 * (0.3 + kd)), ky, (1.5 + kd * 4) * schaal, (0.8 + kd * 2) * schaal, 0, 0, 7); g.fill()
+      }
+    } else {
+      // gloeiende lavarivier
+      g.lineCap = 'round'
+      ;[[18, 'rgba(255,90,20,0.35)'], [9, '#ff6a1a'], [4, '#ffd84a']].forEach(function (l) {
+        g.strokeStyle = l[1]; g.lineWidth = l[0] * schaal; g.beginPath(); g.moveTo(W * 0.42, H); g.bezierCurveTo(W * 0.55, H * 0.75, W * 0.4, H * 0.6, W * 0.52, hor + 2); g.stroke()
+      })
+      for (var sc = 0; sc < 14; sc++) { var sxx = r() * W, syy = hor + 10 + r() * (H - hor); g.strokeStyle = 'rgba(255,150,40,0.7)'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(sxx, syy); g.lineTo(sxx + 10 + r() * 20, syy + (r() - 0.5) * 6); g.lineTo(sxx + 20 + r() * 25, syy + (r() - 0.5) * 8); g.stroke() }
+    }
+    // bloemen, stenen en plukjes gras
+    var bloemKl = nacht ? ['#ff6ad8', '#8affea', '#ffd23d', '#c8a0ff'] : th.sneeuw ? ['#8ac8ff', '#ffffff', '#c8b0ff'] : ['#ff5a8a', '#ffd23d', '#ffffff', '#8ac8ff', '#ff8a3d']
+    var dingen = []
+    for (var di = 0; di < 70; di++) dingen.push({ y: hor + 6 + Math.pow(r(), 0.75) * (H - hor - 6), x: r() * W, s: r(), v: r() })
+    dingen.sort(function (a, b) { return a.y - b.y }).forEach(function (o) {
+      var d = (o.y - hor) / (H - hor), sch = (0.6 + d * 2.6) * schaal
+      if (Math.abs(o.x - W * 0.51) < W * 0.08 * (0.3 + d)) return
+      g.save(); g.translate(o.x, o.y); g.scale(sch, sch)
+      if (o.s < 0.12) { g.translate(-8, -14); steen(g, 0, 0, th, o.v) }
+      else if (o.s < 0.4 && !th.lava) bloem(g, 0, -2, bloemKl[(o.v * bloemKl.length) | 0], th, 1.1)
+      else {
+        for (var sp = 0; sp < 5; sp++) {
+          var bx = (sp - 2) * 1.6, bh = 5 + ((sp * 7 + o.v * 10) % 4)
+          g.strokeStyle = sp % 2 ? th.hoog2 : th.hoog; g.lineWidth = 1.1; g.lineCap = 'round'
+          g.beginPath(); g.moveTo(bx, 0); g.quadraticCurveTo(bx + (sp - 2) * 0.4, -bh * 0.6, bx + (sp - 2) * 1.1, -bh); g.stroke()
+        }
+      }
+      g.restore()
+    })
+    g.restore()
+    // donkere randen zodat het midden oplicht
+    var vg = g.createRadialGradient(W / 2, H * 0.45, Math.min(W, H) * 0.35, W / 2, H * 0.45, Math.max(W, H) * 0.8)
+    vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, nacht ? 'rgba(0,0,10,0.5)' : 'rgba(10,20,40,0.28)')
+    g.fillStyle = vg; g.fillRect(0, 0, W, H)
+  }
+  // wat in het gevecht beweegt: wolken en zwevende deeltjes per gebied
+  function arenaLeven(g, W, H, gb, tijd) {
+    var th = THEMA[gb], hor = H * 0.42, i
+    if (!th.nacht) {
+      var ws = wolkSprite()
+      for (i = 0; i < 4; i++) {
+        var s = (0.35 + (i % 3) * 0.12) * Math.max(0.7, W / 1000), ww = 240 * s
+        var x = ((tijd * (6 + i * 2) + i * (W + ww) / 4) % (W + ww)) - ww, y = hor * (0.12 + (i * 0.37 % 1) * 0.45)
+        g.globalAlpha = 0.9; g.drawImage(ws, x, y - 66 * s, ww, 120 * s)
+      }
+      g.globalAlpha = 1
+    }
+    var n = th.sneeuw ? 50 : 26
+    for (i = 0; i < n; i++) {
+      var h = Math.sin(i * 91.7) * 43758.5453, f = h - Math.floor(h), f2 = (f * 7.13) % 1
+      if (th.sneeuw) {
+        var sy = ((tijd * (18 + f * 22) + f2 * H) % (H + 20)) - 10, sx = (f * W + Math.sin(tijd * 0.8 + i) * 18 + W) % W
+        g.fillStyle = 'rgba(255,255,255,0.85)'; g.beginPath(); rond(g, sx, sy, 1.2 + f2 * 2.2); g.fill()
+      } else if (th.lava) {
+        var ly = H - ((tijd * (25 + f * 30) + f2 * H) % (H * 0.9)), lx = f * W + Math.sin(tijd + i) * 12, la = Math.max(0, Math.min(1, (ly - H * 0.1) / (H * 0.5)))
+        zachteVlek(g, lx, ly, 6, 'rgba(255,120,30,' + (0.5 * la).toFixed(2) + ')')
+        g.fillStyle = 'rgba(255,220,120,' + la.toFixed(2) + ')'; g.fillRect(lx - 1, ly - 1, 2, 2)
+      } else if (th.nacht) {
+        var vx = f * W + Math.sin(tijd * 0.6 + i * 2) * 30, vy = hor + f2 * (H - hor) * 0.8 + Math.cos(tijd * 0.7 + i) * 16, va = 0.5 + Math.sin(tijd * 3 + i * 1.7) * 0.5
+        zachteVlek(g, vx, vy, 9, th.sterren ? 'rgba(255,140,240,' + (0.5 * va).toFixed(2) + ')' : 'rgba(200,255,120,' + (0.5 * va).toFixed(2) + ')')
+        g.fillStyle = 'rgba(255,255,220,' + va.toFixed(2) + ')'; g.beginPath(); rond(g, vx, vy, 1.6); g.fill()
+      } else {
+        var px2 = (f * W + tijd * (6 + f2 * 8)) % W, py = H * 0.95 - ((tijd * (8 + f * 10) + f2 * H) % (H * 0.85)), pa = 0.25 + Math.sin(tijd * 2 + i) * 0.2
+        g.fillStyle = 'rgba(255,250,210,' + pa.toFixed(2) + ')'; g.beginPath(); rond(g, px2, py, 1.4 + f2 * 1.4); g.fill()
+      }
+    }
+  }
+  // het plateau waar een wezen op staat: grasschijf met een rand aarde, plukjes gras en een paar bloemetjes
+  function plateau(g, cx, cy, r, gb) {
+    var th = THEMA[gb], rx = r * 1.45, ry = r * 0.36, dik = r * 0.13, rn = rng(gb * 31 + Math.round(r))
+    g.fillStyle = 'rgba(0,0,0,0.28)'; g.beginPath(); g.ellipse(cx + r * 0.08, cy + dik + r * 0.06, rx * 1.06, ry * 1.08, 0, 0, 7); g.fill()
+    var zij = th.lava ? ['#4a3030', '#1e1212'] : th.sneeuw ? ['#bfe0f8', '#6a98c8'] : th.sterren ? ['#6a4ab8', '#2a1a5a'] : ['#8a6240', '#4a3020']
+    var zg = g.createLinearGradient(0, cy, 0, cy + ry + dik); zg.addColorStop(0, zij[0]); zg.addColorStop(1, zij[1])
+    g.fillStyle = zg; g.beginPath(); g.ellipse(cx, cy, rx, ry, 0, 0, Math.PI); g.lineTo(cx - rx, cy + dik); g.ellipse(cx, cy + dik, rx, ry, 0, Math.PI, 0, true); g.closePath(); g.fill()
+    g.beginPath(); g.ellipse(cx, cy + dik, rx, ry, 0, 0, Math.PI); g.fill()
+    if (th.lava) { g.strokeStyle = 'rgba(255,140,40,0.8)'; g.lineWidth = Math.max(1, r * 0.02); for (var l = 0; l < 4; l++) { var lx = cx - rx * 0.8 + l * rx * 0.5; g.beginPath(); g.moveTo(lx, cy + ry * 0.7); g.lineTo(lx + r * 0.05, cy + ry * 0.7 + dik * 0.8); g.stroke() } }
+    var top = th.lava ? ['#5a4040', '#3a2828'] : [kl(th.gras2, 0.15), kl(th.gras, -0.12)]
+    var tg = g.createRadialGradient(cx - rx * 0.2, cy - ry * 0.3, 0, cx, cy, rx); tg.addColorStop(0, top[0]); tg.addColorStop(1, top[1])
+    g.fillStyle = tg; g.beginPath(); g.ellipse(cx, cy, rx, ry, 0, 0, 7); g.fill()
+    g.strokeStyle = th.lava ? 'rgba(255,150,60,0.35)' : 'rgba(255,255,255,0.28)'; g.lineWidth = Math.max(1, r * 0.025); g.beginPath(); g.ellipse(cx, cy - r * 0.01, rx * 0.97, ry * 0.94, 0, Math.PI * 1.05, Math.PI * 1.95); g.stroke()
+    // plukjes gras langs de voorrand
+    for (var p = 0; p < 22; p++) {
+      var a = Math.PI * (0.04 + p / 21 * 0.92), bx = cx + Math.cos(a) * rx * 0.97, by = cy + Math.sin(a) * ry * 0.97, bh = r * (0.09 + rn() * 0.08)
+      g.strokeStyle = th.lava ? (p % 2 ? '#7a5a4a' : '#5a4038') : p % 2 ? th.hoog2 : th.hoog; g.lineWidth = Math.max(1, r * 0.022); g.lineCap = 'round'
+      for (var s = -1; s <= 1; s++) { g.beginPath(); g.moveTo(bx + s * r * 0.025, by); g.quadraticCurveTo(bx + s * r * 0.03, by - bh * 0.6, bx + s * r * 0.06 + (rn() - 0.5) * r * 0.03, by - bh * (s ? 0.75 : 1)); g.stroke() }
+    }
+    // een paar bloemetjes of kristallen achteraan
+    var deco = th.nacht ? ['#ff6ad8', '#8affea'] : th.sneeuw ? ['#8ac8ff', '#ffffff'] : ['#ff5a8a', '#ffd23d', '#ffffff']
+    for (var f = 0; f < 3; f++) {
+      var fa = Math.PI * (1.15 + f * 0.33 + rn() * 0.1), fx = cx + Math.cos(fa) * rx * 0.8, fy = cy + Math.sin(fa) * ry * 0.75
+      g.save(); g.translate(fx, fy); g.scale(r / 55, r / 55)
+      if (th.lava) { g.fillStyle = '#ffb03a'; g.beginPath(); g.moveTo(0, -6); g.lineTo(2.4, 0); g.lineTo(-2.4, 0); g.fill(); zachteVlek(g, 0, -2, 7, 'rgba(255,140,40,0.5)') }
+      else bloem(g, 0, -1.5, deco[f % deco.length], th, 1)
+      g.restore()
+    }
+  }
+  function wisCache() { grasCache = {}; wolkCache = null }
+
   return { T: T, DX: DX, DY: DY, AANTAL: AANTAL, GYMS: GYMS, DORPEN: DORPEN, THEMA: THEMA, kaart: kaart, gebiedVan: gebiedVan, opGebouw: opGebouw, dingOp: dingOp,
-    laag: laag, gras: gras, golf: golf, gebouw: gebouw, persoon: persoon, bord: bord, hek: hek, uitroep: uitroep, sokkel: sokkel, embleem: embleem, gymType: gymType, px: px, kl: kl, rng: rng }
+    laag: laag, gras: gras, golf: golf, gebouw: gebouw, persoon: persoon, bord: bord, hek: hek, uitroep: uitroep, sokkel: sokkel, embleem: embleem, gymType: gymType, px: px, kl: kl, rng: rng,
+    arena: arena, arenaLeven: arenaLeven, plateau: plateau, wisCache: wisCache }
 })()

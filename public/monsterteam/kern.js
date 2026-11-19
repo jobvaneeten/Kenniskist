@@ -302,7 +302,7 @@ var MT = (function () {
     if (actie.t === 'drank') {
       var doel = team[actie.i], oud = doel.hp
       if (actie.wek) { if (doel.hp > 0) { g.beurt--; return [{ t: 'tekst', s: 'Dat wezen is wakker.' }] } doel.hp = Math.round(maxHp(doel) / 2) }
-      else { if (doel.hp <= 0) { g.beurt--; return [{ t: 'tekst', s: 'Dit wezen is flauwgevallen.' }] } doel.hp = Math.min(maxHp(doel), doel.hp + actie.heel) }
+      else { if (doel.hp <= 0) { g.beurt--; return [{ t: 'tekst', s: 'Dit wezen is uitgeput.' }] } doel.hp = Math.min(maxHp(doel), doel.hp + actie.heel) }
       ev.push({ t: 'heel', wie: actie.i === actiefWij(team) ? 'wij' : 'team', uid: doel.uid, n: doel.hp - oud, hp: doel.hp })
     }
     if (actie.t === 'bal') {
@@ -340,21 +340,21 @@ var MT = (function () {
   // ── wereld: 8 gebieden, elk met een leider en een badge ──
   var GEBIEDEN = [
     { naam: 'Gloeiweide', kleur: '#5be37a', wild: [['mosmuis', 2, 4], ['zaadje', 2, 4], ['veertje', 2, 5], ['poelpad', 3, 5], ['knopje', 3, 4, 0.04], ['klavertje', 4, 5, 0.03], ['lianaap', 4, 5, 0.02]],
-      trainer: { naam: 'Sam', team: [['mosmuis', 4], ['veertje', 5]] }, leider: { naam: 'Mira', type: 'plant', team: [['zaadje', 8], ['sporie', 8], ['bladbeer', 10]], badge: 'Bladbadge' } },
+      trainer: { naam: 'Sam', team: [['mosmuis', 4], ['veertje', 5]] }, leider: { naam: 'Mira', type: 'plant', team: [['zaadje', 8], ['sporie', 8], ['bladbeer', 10]], badge: 'Bladembleem' } },
     { naam: 'Bliksembergen', kleur: '#ffd23d', wild: [['batterat', 5, 8], ['gloeislak', 5, 8], ['rotsbol', 6, 9], ['stormvink', 6, 9], ['magnetje', 7, 9, 0.08], ['statiek', 8, 9, 0.03]],
-      trainer: { naam: 'Kai', team: [['batterat', 9], ['rotsbol', 10]] }, leider: { naam: 'Volt', type: 'bliksem', team: [['batterat', 13], ['gloeislak', 13], ['flitskat', 15]], badge: 'Flitsbadge' } },
+      trainer: { naam: 'Kai', team: [['batterat', 9], ['rotsbol', 10]] }, leider: { naam: 'Volt', type: 'bliksem', team: [['batterat', 13], ['gloeislak', 13], ['flitskat', 15]], badge: 'Flitsembleem' } },
     { naam: 'Nevelmeer', kleur: '#3fa8ff', wild: [['spatvis', 9, 13], ['kwalletje', 9, 13], ['schelpie', 10, 13], ['poelpad', 10, 14], ['druppie', 10, 12, 0.04], ['dolfijntje', 12, 14, 0.03], ['neonaal', 12, 14, 0.02]],
-      trainer: { naam: 'Lotte', team: [['spatvis', 13], ['kwalletje', 14]] }, leider: { naam: 'Marin', type: 'water', team: [['spatvis', 17], ['kwalletje', 17], ['golfling', 19]], badge: 'Golfbadge' } },
+      trainer: { naam: 'Lotte', team: [['spatvis', 13], ['kwalletje', 14]] }, leider: { naam: 'Marin', type: 'water', team: [['spatvis', 17], ['kwalletje', 17], ['golfling', 19]], badge: 'Golfembleem' } },
     { naam: 'Rotskloof', kleur: '#c8904a', wild: [['graafje', 13, 17], ['zandje', 13, 17], ['fossi', 14, 17], ['cactie', 14, 18], ['kleipop', 15, 18], ['wroeter', 16, 18, 0.04], ['kristalrots', 17, 18, 0.02]],
-      trainer: { naam: 'Ravi', team: [['graafmol', 18], ['cactie', 18]] }, leider: { naam: 'Rotsa', type: 'aarde', team: [['graafmol', 21], ['duinslang', 21], ['keibol', 23]], badge: 'Rotsbadge' } },
+      trainer: { naam: 'Ravi', team: [['graafmol', 18], ['cactie', 18]] }, leider: { naam: 'Rotsa', type: 'aarde', team: [['graafmol', 21], ['duinslang', 21], ['keibol', 23]], badge: 'Rotsembleem' } },
     { naam: 'Lavakrater', kleur: '#ff6a3d', wild: [['sintel', 17, 21], ['lavaslak', 17, 21], ['pyropup', 18, 21], ['fakkelmot', 18, 22], ['vonkel', 18, 20, 0.04], ['vuurvlieg', 19, 22, 0.05], ['feniksje', 21, 22, 0.015]],
-      trainer: { naam: 'Noor', team: [['brandhond', 22], ['magmaslak', 22]] }, leider: { naam: 'Blaze', type: 'vuur', team: [['brandhond', 25], ['magmaslak', 25], ['vlamvos', 27]], badge: 'Vlambadge' } },
+      trainer: { naam: 'Noor', team: [['brandhond', 22], ['magmaslak', 22]] }, leider: { naam: 'Blaze', type: 'vuur', team: [['brandhond', 25], ['magmaslak', 25], ['vlamvos', 27]], badge: 'Vlamembleem' } },
     { naam: 'Wolkenkliffen', kleur: '#a8c8ff', wild: [['wolkje', 21, 25], ['pluisje', 21, 25], ['libeltje', 22, 25], ['blaasje', 22, 26], ['veertje', 22, 25], ['prisma', 24, 26, 0.03], ['hemeldraak', 25, 26, 0.015]],
-      trainer: { naam: 'Jesse', team: [['zwaluwing', 26], ['wolkendans', 26]] }, leider: { naam: 'Zefier', type: 'lucht', team: [['zwaluwing', 29], ['wolkendans', 29], ['libellio', 30], ['windvalk', 31]], badge: 'Windbadge' } },
+      trainer: { naam: 'Jesse', team: [['zwaluwing', 26], ['wolkendans', 26]] }, leider: { naam: 'Zefier', type: 'lucht', team: [['zwaluwing', 29], ['wolkendans', 29], ['libellio', 30], ['windvalk', 31]], badge: 'Windembleem' } },
     { naam: 'Vriesveld', kleur: '#7fe0ff', wild: [['sneeuwpluis', 25, 29], ['pingel', 25, 29], ['ijspegel', 26, 29], ['ijskever', 26, 30], ['rijpvlinder', 26, 29], ['hagelbeer', 28, 30, 0.04], ['noorderlichtje', 29, 30, 0.015], ['waterdraak', 29, 30, 0.01]],
-      trainer: { naam: 'Elin', team: [['sneeuwvos', 30], ['glijpin', 30], ['vriesschild', 31]] }, leider: { naam: 'Frida', type: 'ijs', team: [['sneeuwvos', 33], ['glijpin', 33], ['kristalpegel', 34], ['poolvos', 35]], badge: 'IJsbadge' } },
+      trainer: { naam: 'Elin', team: [['sneeuwvos', 30], ['glijpin', 30], ['vriesschild', 31]] }, leider: { naam: 'Frida', type: 'ijs', team: [['sneeuwvos', 33], ['glijpin', 33], ['kristalpegel', 34], ['poolvos', 35]], badge: 'IJsembleem' } },
     { naam: 'Schaduwwoud', kleur: '#a56bff', wild: [['fladder', 29, 33], ['schimpoes', 29, 33], ['spookje', 30, 33], ['nachtje', 29, 33], ['spookvis', 30, 34], ['nevelgeest', 32, 34, 0.04]],
-      trainer: { naam: 'Mees', team: [['nachtfladder', 34], ['nachtpoes', 34], ['schimvis', 35]] }, leider: { naam: 'Nox', type: 'schaduw', team: [['nachtpoes', 37], ['nevelhaai', 37], ['duistervleugel', 38], ['maanuil', 40]], badge: 'Nachtbadge' } },
+      trainer: { naam: 'Mees', team: [['nachtfladder', 34], ['nachtpoes', 34], ['schimvis', 35]] }, leider: { naam: 'Nox', type: 'schaduw', team: [['nachtpoes', 37], ['nevelhaai', 37], ['duistervleugel', 38], ['maanuil', 40]], badge: 'Nachtembleem' } },
   ]
   // een wild wezen voor dit gebied (zeldzame met hun eigen kans)
   function wild(gebied, toeval1, toeval2, toeval3) {
