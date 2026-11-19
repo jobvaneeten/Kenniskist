@@ -13,6 +13,12 @@ var D = NK.opslag('kk_mt', {
   pos: { a: 0, x: 9, y: 11, r: 2 }, huis: { a: 0, x: 4, y: 14 }, opgepakt: {}, versie: 0,
 })
 Geluid.zetAan(function () { return D.geluid })
+// wezens met een (nieuw) tweede element leren daar meteen een aanval van
+;(D.team || []).concat(D.opslag || []).forEach(function (w) { if (MT.SOORTEN[w.id]) MT.bijleren(w) })
+function typeLabels(id) {
+  var s = MT.SOORTEN[id], l = function (t) { return '<span class="type t-' + t + '">' + MT.TYPENAAM[t] + '</span>' }
+  return l(s.type) + (s.type2 ? ' ' + l(s.type2) : '')
+}
 if (!D.versie) {
   // vroeger: 6 gyms (plant, bliksem, water, vuur, schaduw, alles). Nu 8.
   var oudNaarNieuw = { 0: 0, 1: 1, 2: 2, 3: 4, 4: 7 }, nieuw = {}
@@ -33,7 +39,7 @@ var SPULLEN = {
 // ── geluid ──
 var G = {
   raak: function (m) { Geluid.ruis(0.15, 0.16, m > 1 ? 1800 : 900, 0.8); Geluid.toon(m > 1 ? 220 : 160, 0.15, 'square', 0.08, 0, 80) },
-  aanval: function (type) { var f = { vuur: 300, water: 500, plant: 420, bliksem: 900, schaduw: 200, normaal: 350 }[type]; Geluid.toon(f, 0.25, type === 'bliksem' ? 'sawtooth' : 'triangle', 0.1, 0, f * 1.8) },
+  aanval: function (type) { var f = { vuur: 300, water: 500, plant: 420, bliksem: 900, schaduw: 200, ijs: 760, aarde: 160, lucht: 620, normaal: 350 }[type] || 350; Geluid.toon(f, 0.25, type === 'bliksem' ? 'sawtooth' : 'triangle', 0.1, 0, f * 1.8) },
   flauw: function () { Geluid.toon(400, 0.6, 'sine', 0.15, 0, 90) },
   niveau: function () { [523, 659, 784, 1047].forEach(function (f, i) { Geluid.toon(f, 0.15, 'triangle', 0.13, i * 0.07) }) },
   bal: function () { Geluid.toon(700, 0.08, 'triangle', 0.1) },
@@ -381,8 +387,8 @@ function tasTekst() { var n = 0; for (var k in D.tas) n += D.tas[k]; return n + 
 function aanvalMenu() {
   var wij = D.team[MT.actiefWij(D.team)], zij = D.gevecht.zij[D.gevecht.zi]
   var lijst = wij.aanvallen.map(function (a) {
-    var m = AV[a], mult = m.kracht ? MT.EFFECT[m.type][S[zij.id].type] : 1
-    var hint = m.kracht ? (mult > 1 ? '<span class="sterk">Super effectief</span>' : mult < 1 ? '<span class="zwak">Niet zo effectief</span>' : 'kracht ' + m.kracht) : (m.heel ? 'genezen' : m.zij ? 'verzwakt de ander' : 'beschermt jezelf')
+    var m = AV[a], mult = m.kracht ? MT.mult(m.type, zij.id) : 1
+    var hint = m.kracht ? (mult > 2 ? '<span class="sterk">Mega effectief</span>' : mult > 1 ? '<span class="sterk">Super effectief</span>' : mult < 1 ? '<span class="zwak">Niet zo effectief</span>' : 'kracht ' + m.kracht) : (m.heel ? 'genezen' : m.zij ? 'verzwakt de ander' : 'beschermt jezelf')
     return { t: m.naam, s: hint, type: m.type, doe: function () { doe({ t: 'aanval', a: a }) } }
   })
   lijst.push({ t: 'Terug', s: '', doe: hoofdMenu })
@@ -435,7 +441,7 @@ function verwerk(e, balSoort) {
   }
   if (e.t === 'mis') stap('Mis!', 0.7)
   if (e.t === 'schade') {
-    stap(e.mult > 1 ? 'Super effectief!' : e.mult < 1 ? 'Niet zo effectief...' : null, e.mult !== 1 ? 0.9 : 0.45, function () {
+    stap(e.mult > 2 ? 'Mega effectief!' : e.mult > 1 ? 'Super effectief!' : e.mult < 1 ? 'Niet zo effectief...' : null, e.mult !== 1 ? 0.9 : 0.45, function () {
       var kant = e.wie
       vis[kant].hp = e.hp; anim[kant] = anim[kant] || {}; anim[kant].raak = 0.4
       G.raak(e.mult); schok.voeg(e.mult > 1 ? 0.35 : 0.15)
@@ -533,7 +539,7 @@ function wezenRij(w, eerste) {
   var b = document.createElement('button'); b.className = 'wezen' + (eerste ? ' eerste' : '')
   b.appendChild(wezenCanvas(w.id, 64, { alfa: w.hp > 0 ? 1 : 0.45 }))
   var max = MT.maxHp(w), pr = w.hp / max, info = document.createElement('div'); info.className = 'info'
-  info.innerHTML = '<div class="naam">' + S[w.id].naam + ' <span class="type t-' + S[w.id].type + '">' + MT.TYPENAAM[S[w.id].type] + '</span></div>' +
+  info.innerHTML = '<div class="naam">' + S[w.id].naam + ' ' + typeLabels(w.id) + '</div>' +
     '<div class="klein">niveau ' + w.lvl + ' · ' + (w.hp > 0 ? w.hp + ' / ' + max + ' leven' : 'flauw') + '</div>' +
     '<div class="balkje"><i style="width:' + Math.round(pr * 100) + '%;background:' + (pr > 0.5 ? '#5be37a' : pr > 0.2 ? '#ffd23d' : '#ff5a7a') + '"></i></div>' +
     '<div class="balkje xp"><i style="width:' + Math.round(w.xp / MT.xpNodig(w.lvl) * 100) + '%"></i></div>'
@@ -549,9 +555,7 @@ function ruis(x, y, q) { var h = Math.sin(x * 127.1 + y * 311.7 + q * 74.7 + W8.
 function laadGebied(a) {
   W8.kaart = MTW.kaart(a); W8.a = a
   var k = W8.kaart
-  vastLaag.width = k.w * MTW.T; vastLaag.height = k.h * MTW.T
-  for (var y = 0; y < k.h; y++) for (var x = 0; x < k.w; x++) { var c = k.t[y][x]; MTW.tegel(vastCtx, k, c === 'g' || c === '~' ? '.' : c, x, y, 0, ruis) }
-  k.gebouwen.forEach(function (b) { MTW.gebouw(vastCtx, b, k) })
+  W8.laagR = 0
   W8.banner = 3
   $('gebiednaam').textContent = k.naam
 }
@@ -563,7 +567,7 @@ function naarWereld() {
   modus = 'wereld'
 }
 var modus = 'menu'
-function bewaarPos() { D.pos = { a: W8.a, x: W8.x, y: W8.y, r: W8.r }; D.bewaar() }
+function bewaarPos() { if (!W8.kaart) return; D.pos = { a: W8.a, x: W8.x, y: W8.y, r: W8.r }; D.bewaar() }
 function verslagen(sl) { return !!D.versl[sl] }
 function dingVrij(d) {
   if (d.soort === 'spul') return true
@@ -784,7 +788,15 @@ function zoekPad(doelen) {
 }
 
 // ── tekenen ──
-function wereldSchaal() { return Math.max(2, Math.round(Math.min(C.W / (13 * MTW.T), C.H / (12 * MTW.T)))) }
+function wereldSchaal() { return Math.max(1.6, Math.min(C.W / (13 * MTW.T), C.H / (11 * MTW.T))) }
+// de vaste laag op een resolutie die past bij het scherm (scherp, maar niet te groot)
+function bouwLaag(sch) {
+  var k = W8.kaart, R = Math.max(2, Math.min(5, Math.ceil(sch * C.dpr)))
+  if (W8.laagR === R) return
+  W8.laagR = R
+  vastLaag.width = k.w * MTW.T * R; vastLaag.height = k.h * MTW.T * R
+  MTW.laag(vastCtx, k, R, ruis)
+}
 function spelerPx() {
   var f = W8.van ? Math.min(1, W8.t / LOOP) : 1
   var x = W8.van ? W8.van[0] + (W8.x - W8.van[0]) * f : W8.x, y = W8.van ? W8.van[1] + (W8.y - W8.van[1]) * f : W8.y
@@ -801,13 +813,14 @@ function camera(sch) {
 var wereldFx = []
 function tekenWereld(dt) {
   var k = W8.kaart, T = MTW.T, sch = wereldSchaal(), cam = camera(sch)
-  ctx.fillStyle = '#05040f'; ctx.fillRect(0, 0, C.W, C.H)
-  ctx.save(); ctx.translate(cam[0], cam[1]); ctx.scale(sch, sch); ctx.imageSmoothingEnabled = false
-  ctx.drawImage(vastLaag, 0, 0)
+  bouwLaag(sch)
+  ctx.fillStyle = MTW.kl(k.thema.boom, -0.55); ctx.fillRect(0, 0, C.W, C.H)
+  ctx.save(); ctx.translate(cam[0], cam[1]); ctx.scale(sch, sch); ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high'
+  ctx.drawImage(vastLaag, 0, 0, k.w * T, k.h * T)
   // zichtbare vakjes met beweging: hoog gras en water
   var x0 = Math.max(0, Math.floor(-cam[0] / (T * sch)) - 1), y0 = Math.max(0, Math.floor(-cam[1] / (T * sch)) - 1)
   var x1 = Math.min(k.w, x0 + Math.ceil(C.W / (T * sch)) + 3), y1 = Math.min(k.h, y0 + Math.ceil(C.H / (T * sch)) + 3)
-  for (var y = y0; y < y1; y++) for (var x = x0; x < x1; x++) { var c = k.t[y][x]; if (c === 'g' || c === '~') MTW.tegel(ctx, k, c, x, y, tijd, ruis) }
+  for (var y = y0; y < y1; y++) for (var x = x0; x < x1; x++) { var c = k.t[y][x]; if (c === 'g') MTW.gras(ctx, k, x, y, tijd, null, x === W8.x && y === W8.y ? 1 : 0); else if (c === '~') MTW.golf(ctx, k, x, y, tijd) }
   // dingen en poppetjes, van boven naar onder
   var lijst = k.dingen.filter(function (d) { return !(d.soort === 'spul' && D.opgepakt[d.sleutel]) && !(d.soort === 'wachter' && dingVrij(d)) }).map(function (d) { var p = d.soort === 'trainer' ? trainerPlek(d) : [d.x, d.y]; return { y: p[1], d: d, p: p } })
   var sp = spelerPx()
@@ -818,28 +831,26 @@ function tekenWereld(dt) {
       MTW.persoon(ctx, sp[0], sp[1] - 3, W8.r, W8.van ? W8.stap : 0, { pet: '#e83a3a', jas: '#2f6fe0' })
       // in hoog gras: onderkant van het poppetje in het gras
       if (k.t[W8.y][W8.x] === 'g' && (!W8.van || W8.t > LOOP * 0.5)) {
-        ctx.save(); ctx.beginPath(); ctx.rect(W8.x * T, W8.y * T + 8, T, 8); ctx.clip(); MTW.tegel(ctx, k, 'g', W8.x, W8.y, tijd, ruis); ctx.restore()
+        MTW.gras(ctx, k, W8.x, W8.y, tijd, 1, 1)
       }
       return
     }
     var d = o.d, X = o.p[0] * T, Y = o.p[1] * T
-    if (d.soort === 'bord') { MTW.px(ctx, X + 7, Y + 8, 2, 7, '#6b4426'); MTW.px(ctx, X + 2, Y + 3, 12, 7, '#a8784a'); MTW.px(ctx, X + 3, Y + 4, 10, 5, '#c8985a'); MTW.px(ctx, X + 4, Y + 5, 8, 1, '#6b4426'); MTW.px(ctx, X + 4, Y + 7, 6, 1, '#6b4426') }
+    if (d.soort === 'bord') MTW.bord(ctx, X, Y)
     if (d.soort === 'spul') { var bob = Math.sin(tijd * 4) * 1; ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.beginPath(); ctx.ellipse(X + 8, Y + 13, 4, 1.5, 0, 0, 7); ctx.fill(); ctx.drawImage(spulIcoon(d.spul, 6), X + 2, Y + 2 + bob, 12, 12); if (Math.sin(tijd * 5 + d.x) > 0.7) NK.ster(ctx, X + 13, Y + 3, 2, '#ffffff') }
     if (d.soort === 'mens') MTW.persoon(ctx, X, Y - 3, d.r, 0, { pet: d.kleur, jas: '#6a5a8a', haar: '#8a5a2a' })
     if (d.soort === 'trainer') {
       var loopt = W8.uitroep && W8.uitroep.d === d && W8.uitroep.t <= 0
       MTW.persoon(ctx, X, Y - 3, d.r, loopt ? (Math.floor(tijd * 8) % 2) + 1 : 0, { pet: d.kleur, jas: '#2a2a3a', haar: '#1a1a1a' })
-      if (W8.uitroep && W8.uitroep.d === d && W8.uitroep.t > 0) { MTW.px(ctx, X + 5, Y - 16, 7, 11, '#ffffff'); MTW.px(ctx, X + 7, Y - 14, 3, 5, '#ff3a3a'); MTW.px(ctx, X + 7, Y - 8, 3, 2, '#ff3a3a') }
+      if (W8.uitroep && W8.uitroep.d === d && W8.uitroep.t > 0) MTW.uitroep(ctx, X, Y)
     }
     if (d.soort === 'wachter') {
       MTW.persoon(ctx, X, Y - 3, 2, 0, { pet: '#1f3f8f', jas: '#1f3f8f', haar: '#1a1a1a' })
-      for (var b2 = 0; b2 < 16; b2 += 4) MTW.px(ctx, X + T + b2, Y + 6, 4, 3, b2 % 8 ? '#ffffff' : '#ff3a3a')
-      MTW.px(ctx, X + T + 14, Y + 4, 2, 10, '#6a6a7a')
+      MTW.hek(ctx, X + T, Y)
     }
     if (d.soort === 'legende') {
       var gl = 0.5 + Math.sin(tijd * 2) * 0.3
-      ctx.save(); ctx.globalCompositeOperation = 'lighter'; NK.vlek(ctx, X + T, Y + 8, 28, '#ff4fd8', gl * 0.6); ctx.restore()
-      MTW.px(ctx, X + 4, Y + 10, 24, 6, '#7a6ab8'); MTW.px(ctx, X + 6, Y + 8, 20, 2, '#9a8ad8')
+      MTW.sokkel(ctx, X, Y, tijd)
       if (!D.sterrenkat) tekenWezen(ctx, 'sterrenkat', X + T, Y + 2, 10, { t: tijd, alfa: 0.55 + gl * 0.4 })
     }
   })
@@ -903,10 +914,14 @@ function details(w, waar, i) {
   detailsWezen = w
   g.clearRect(0, 0, 320, 320)
   $('d-naam').textContent = S[w.id].naam
-  $('d-type').innerHTML = '<span class="type t-' + S[w.id].type + '">' + MT.TYPENAAM[S[w.id].type] + '</span> <span class="klein">niveau ' + w.lvl + (S[w.id].evo ? ' · verandert op niveau ' + S[w.id].evo[1] : '') + '</span>'
+  $('d-type').innerHTML = typeLabels(w.id) + ' <span class="klein">niveau ' + w.lvl + (S[w.id].evo ? ' · verandert op niveau ' + S[w.id].evo[1] : '') + '</span>'
   var b = S[w.id].b, st = function (n, v) { return '<div class="stat"><b>' + v + '</b><span>' + n + '</span></div>' }
   $('d-stats').innerHTML = st('leven', w.hp + '/' + MT.maxHp(w)) + st('aanval', Math.floor(b[1] * 2 * w.lvl / 100) + 5) + st('verdediging', Math.floor(b[2] * 2 * w.lvl / 100) + 5) + st('snelheid', Math.floor(b[3] * 2 * w.lvl / 100) + 5)
-  $('d-aanvallen').innerHTML = w.aanvallen.map(function (a) { var m = AV[a]; return '<div class="wezen"><div class="info"><div class="naam">' + m.naam + ' <span class="type t-' + m.type + '">' + MT.TYPENAAM[m.type] + '</span></div><div class="klein">' + (m.kracht ? 'kracht ' + m.kracht + ' · raakt ' + m.kans + '%' : m.heel ? 'geneest 40%' : m.zij ? 'maakt de ander minder sterk' : 'beter beschermd') + '</div></div></div>' }).join('')
+  $('d-aanvallen').innerHTML = w.aanvallen.map(function (a) { var m = AV[a]; return '<div class="wezen"><div class="info"><div class="naam">' + m.naam + ' <span class="type t-' + m.type + '">' + MT.TYPENAAM[m.type] + '</span></div><div class="klein">' + (m.kracht ? 'kracht ' + m.kracht + ' · raakt ' + m.kans + '%' : m.heel ? 'geneest 40%' : m.zij ? 'maakt de ander minder sterk' : 'beter beschermd') + '</div></div></div>' }).join('') +
+    (function () {
+      var nog = MT.leerlijst(w.id).filter(function (r) { return r[0] > w.lvl && w.aanvallen.indexOf(r[1]) < 0 })
+      return nog.length ? '<div class="klein" style="margin:10px 4px 2px;opacity:.8">Leert nog: ' + nog.map(function (r) { var m = AV[r[1]]; return '<span class="type t-' + m.type + '" style="text-transform:none;letter-spacing:0">' + m.naam + ' (niv. ' + r[0] + ')</span>' }).join(' ') + '</div>' : ''
+    })()
   var k = $('d-knoppen'); k.innerHTML = ''
   var knop = function (t, f, hoofd) { var x = document.createElement('button'); x.className = hoofd ? 'knop' : 'knop2'; x.textContent = t; x.onclick = function () { Geluid.klik(); f() }; k.appendChild(x) }
   if (waar === 'team' && i > 0) knop('Zet vooraan', function () { D.team.splice(i, 1); D.team.unshift(w); D.bewaar(); naarTeam() }, true)
@@ -949,7 +964,7 @@ function naarStarter() {
   MT.STARTERS.forEach(function (id) {
     var b = document.createElement('button'); b.className = 'start t-' + S[id].type
     b.appendChild(wezenCanvas(id, 130))
-    b.insertAdjacentHTML('beforeend', '<b>' + S[id].naam + '</b><span class="type t-' + S[id].type + '">' + MT.TYPENAAM[S[id].type] + '</span>')
+    b.insertAdjacentHTML('beforeend', '<b>' + S[id].naam + '</b><span>' + typeLabels(id) + '</span>')
     b.onclick = function () {
       Geluid.koop()
       D.team = [MT.maak(id, 5)]; D.gezien[id] = D.gevangen[id] = true; D.bewaar()
@@ -970,7 +985,7 @@ function toonScherm(id) {
   if (id !== null) { $('wereldhud').classList.remove('aan'); $('dpad').classList.remove('aan') }
   if (id !== null) modus = 'scherm'
   $('onderknoppen').classList.toggle('aan', hub)
-  $('menutop').classList.toggle('aan', id === 'menu' && !BELONING)
+  $('menutop').classList.toggle('aan', id === 'menu')
   $('topmunten').textContent = D.munten
 }
 function melding(t) {
@@ -981,7 +996,7 @@ $('naarkaart').onclick = function () { Geluid.klik(); naarWereld() }
 $('naarteam').onclick = function () { Geluid.klik(); naarTeam() }
 $('naardex').onclick = function () { Geluid.klik(); naarDex() }
 $('naarwinkel').onclick = function () { Geluid.klik(); naarWinkel() }
-$('terug').onclick = function () { Geluid.klik(); NK.naarOuder('monsterteam-terug') }
+$('terug').onclick = function () { Geluid.klik(); bewaarPos(); NK.naarOuder(BELONING ? 'monsterteam-gameover' : 'monsterteam-terug') }
 $('speel').onclick = function () { Geluid.klik(); verder() }
 $('s-geluid').onclick = function () { D.geluid = !D.geluid; D.bewaar(); this.classList.toggle('aan', D.geluid); Geluid.klik() }
 $('s-rustig').onclick = function () { D.rustig = !D.rustig; D.bewaar(); this.classList.toggle('aan', D.rustig); Geluid.klik() }
@@ -1017,7 +1032,6 @@ $('aknop').addEventListener('pointerdown', function (e) { e.preventDefault(); aK
 $('c').addEventListener('pointerdown', function (e) { Geluid.audio(); if (modus === 'wereld') tikWereld(e.clientX, e.clientY) })
 $('wmenu').onclick = function () { Geluid.klik(); bewaarPos(); naarTeam() }
 $('wterug').onclick = function () { Geluid.klik(); bewaarPos(); houd = null; W8.pad = []; toonScherm('menu'); $('speel').textContent = 'Verder spelen' }
-if (BELONING) $('wterug').style.display = 'none'
 // controller
 var padOud = {}
 function controller() {
@@ -1047,6 +1061,10 @@ function frame(nu) {
   else if (D.gevecht && vis && huidig === null) {
     var sk = schok.stap(dt)
     ctx.save(); ctx.translate(sk[0], sk[1]); tekenGevecht(dt); fx.teken(ctx, dt); ctx.restore()
+  } else if (huidig === 'details' && detailsWezen) {
+    var dc = $('c-details'), dg = dc.getContext('2d')
+    dg.clearRect(0, 0, dc.width, dc.height)
+    tekenWezen(dg, detailsWezen.id, dc.width / 2, dc.height * 0.56, dc.width * 0.27, { t: tijd })
   } else if (huidig === 'menu') {
     // drie wezens dansen achter het titelscherm
     var ids = ['vlamvos', 'golfling', 'bladbeer'], r = Math.min(C.W, C.H) * 0.12
@@ -1057,7 +1075,8 @@ function frame(nu) {
 
 // ── start ──
 if (BELONING) verder()
-else { $('s-geluid').classList.toggle('aan', D.geluid); $('s-rustig').classList.toggle('aan', D.rustig); toonScherm('menu') }
+else toonScherm('menu')
+$('s-geluid').classList.toggle('aan', D.geluid); $('s-rustig').classList.toggle('aan', D.rustig)
 requestAnimationFrame(frame)
 
 // ── uitleg ──
@@ -1072,7 +1091,7 @@ function toonUitleg(klaar) {
     [spul('drankje'), 'Een drankje maakt je wezen beter. In het wezenhuis van elk dorp wordt je hele team gratis weer gezond.'],
     [wezen('vlamvos'), 'Door te vechten worden je wezens sterker. Op een bepaald niveau veranderen ze in een nieuwe, stoere vorm.'],
     [function (g, w) { NK.ster(g, w / 2, w / 2, 24, '#ffd23d') }, 'In elk dorp is een gym. Versla de leider en je krijgt een badge. De wachter laat je pas door als je die badge hebt. Met acht badges mag je naar de Sterrenpoort.'],
-    [function (g, w) { g.save(); g.imageSmoothingEnabled = false; g.translate(16, 12); g.scale(3, 3); MTW.persoon(g, 0, 0, 2, 0, { pet: '#7a3ad8', jas: '#e8443a' }); g.restore() }, 'Trainers die je zien, dagen je uit. Winnen geeft munten voor de winkel.'],
+    [function (g, w) { g.save(); g.translate(16, 10); g.scale(3, 3); MTW.persoon(g, 0, 0, 2, 0, { pet: '#7a3ad8', jas: '#e8443a' }); g.restore() }, 'Trainers die je zien, dagen je uit. Winnen geeft munten voor de winkel.'],
   ], klaar)
 }
 $('naaruitleg').onclick = function () { Geluid.klik(); toonUitleg() }

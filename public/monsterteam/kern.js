@@ -121,15 +121,26 @@ var MT = (function () {
     ['lucht', ['Prisma'], [], [66, 72, 60, 96], { vorm: 'vogel', v: 'paradijs', lijf: 'vogel', oor: 'pluim', staart: 'veer', x: ['vleugel'], snavel: true }],
     ['lucht', ['Hemeldraak'], [], [90, 100, 86, 96], { vorm: 'draak', v: 'hemel', lijf: 'lang', oor: 'pluim', staart: 'veer', x: ['vleugel'] }],
   ]
+  // een tweede element: [element, vanaf welk stadium]. Ze leren er ook aanvallen van.
+  var TWEEDE = {
+    vonkel: ['lucht', 3], sintel: ['aarde', 1], lavaslak: ['aarde', 2], pyropup: ['schaduw', 2], fakkelmot: ['lucht', 1], feniksje: ['lucht', 1], vuurvlieg: ['bliksem', 1],
+    druppie: ['ijs', 3], poelpad: ['aarde', 1], spatvis: ['schaduw', 3], kwalletje: ['bliksem', 2], schelpie: ['aarde', 1], dolfijntje: ['ijs', 1], waterdraak: ['lucht', 1],
+    knopje: ['aarde', 3], zaadje: ['lucht', 3], sporie: ['schaduw', 1], cactie: ['aarde', 1], lianaap: ['aarde', 1],
+    stormvink: ['lucht', 1], gloeislak: ['aarde', 3], magnetje: ['aarde', 1], neonaal: ['water', 1], statiek: ['lucht', 1],
+    nachtje: ['lucht', 1], spookvis: ['water', 1], fladder: ['lucht', 1], spookje: ['lucht', 2], nevelgeest: ['ijs', 1], sterrenkat: ['lucht', 1],
+    ijskever: ['aarde', 1], pingel: ['water', 1], ijspegel: ['aarde', 3], rijpvlinder: ['lucht', 1], hagelbeer: ['aarde', 1], noorderlichtje: ['bliksem', 1],
+    zandje: ['vuur', 3], fossi: ['water', 1], kleipop: ['schaduw', 2], kristalrots: ['ijs', 1],
+    wolkje: ['bliksem', 3], pluisje: ['plant', 1], libeltje: ['water', 2], hemeldraak: ['bliksem', 1],
+  }
   var SOORTEN = {}
   function idVan(naam) { return naam.toLowerCase().replace(/[^a-z]/g, '') }
   FAMILIES.forEach(function (f) {
-    var type = f[0], namen = f[1], evo = f[2], b = f[3], look = f[4]
+    var type = f[0], namen = f[1], evo = f[2], b = f[3], look = f[4], t2 = TWEEDE[idVan(namen[0])]
     namen.forEach(function (naam, st) {
       var factor = [1, 1.35, 1.72][st]
       var maat = namen.length === 1 ? 0.95 : [0.72, 0.9, 1.08][st]
       SOORTEN[idVan(naam)] = {
-        naam: naam, type: type, stadium: st + 1,
+        naam: naam, type: type, type2: t2 && st + 1 >= t2[1] ? t2[0] : null, stadium: st + 1,
         b: b.map(function (v) { return Math.round(v * factor) }),
         evo: st < namen.length - 1 ? [idVan(namen[st + 1]), evo[st]] : null,
         look: { vorm: look.vorm, v: look.v, fase: namen.length === 1 ? (b.reduce(function (s, x) { return s + x }, 0) >= 300 ? 3 : 2) : namen.length === 2 ? [1, 3][st] : st + 1, lijf: look.lijf, oor: look.oor, staart: look.staart, extra: look.x[st] || '', maat: maat, snavel: !!look.snavel, stip: look.stip && st > 0, streep: look.streep && st > 0 },
@@ -142,8 +153,10 @@ var MT = (function () {
   function leerlijst(id) {
     var t = SOORTEN[id].type, m = PER_TYPE[t]
     var l = [[1, 'stoot'], [1, m[0]], [6, t === 'water' || t === 'plant' || t === 'aarde' || t === 'ijs' ? 'schild' : 'grauw'], [10, 'snel'], [15, m[1]], [22, 'herstel'], [29, m[2]]]
-    if (SOORTEN[id].stadium >= 2 || !SOORTEN[id].evo) l.push([18, BIJ[t]])
-    return l
+    var t2 = SOORTEN[id].type2
+    if (t2) { var m2 = PER_TYPE[t2]; l.push([12, m2[0]], [25, m2[1]], [38, m2[2]]) }
+    else if (SOORTEN[id].stadium >= 2 || !SOORTEN[id].evo) l.push([18, BIJ[t]])
+    return l.sort(function (a, b) { return a[0] - b[0] })
   }
 
   // ── wezens maken ──
@@ -165,14 +178,16 @@ var MT = (function () {
   function xpNodig(lvl) { return 15 + lvl * lvl * 2 }
 
   // ── schade ──
-  function effect(aanval, verdediger) { return EFFECT[AANVALLEN[aanval].type][SOORTEN[verdediger.id].type] }
+  // met twee elementen tellen beide mee: 2 x 2 = 4 keer zo sterk
+  function mult(type, id) { var s = SOORTEN[id]; return EFFECT[type][s.type] * (s.type2 ? EFFECT[type][s.type2] : 1) }
+  function effect(aanval, verdediger) { return mult(AANVALLEN[aanval].type, verdediger.id) }
   function schade(a, d, aanval, toeval) {
     var m = AANVALLEN[aanval]
     if (!m.kracht) return { n: 0, mult: 1 }
-    var mult = EFFECT[m.type][SOORTEN[d.id].type]
-    var stab = m.type === SOORTEN[a.id].type ? 1.25 : 1
+    var mu = mult(m.type, d.id)
+    var stab = m.type === SOORTEN[a.id].type || m.type === SOORTEN[a.id].type2 ? 1.25 : 1
     var basis = ((2 * a.lvl / 5 + 2) * m.kracht * waarde(a, 1) / waarde(d, 2)) / 50 + 2
-    return { n: Math.max(1, Math.floor(basis * mult * stab * (0.85 + toeval * 0.15))), mult: mult }
+    return { n: Math.max(1, Math.floor(basis * mu * stab * (0.85 + toeval * 0.15))), mult: mu }
   }
 
   // ── gevecht ──
@@ -226,25 +241,36 @@ var MT = (function () {
       w.lvl++
       w.hp += maxHp(w) - oudMax
       ev.push({ t: 'niveau', uid: w.uid, lvl: w.lvl })
-      leerlijst(w.id).forEach(function (r) {
-        if (r[0] === w.lvl && w.aanvallen.indexOf(r[1]) < 0) {
-          var weg = null
-          if (w.aanvallen.length >= 4) {
-            // de zwakste aanval maakt plaats
-            var zw = w.aanvallen.slice().sort(function (x, y) { return (AANVALLEN[x].kracht || 35) - (AANVALLEN[y].kracht || 35) })[0]
-            weg = zw; w.aanvallen.splice(w.aanvallen.indexOf(zw), 1)
-          }
-          w.aanvallen.push(r[1])
-          ev.push({ t: 'leer', uid: w.uid, aanval: r[1], vergeet: weg })
-        }
-      })
+      leerlijst(w.id).forEach(function (r) { if (r[0] === w.lvl) leer(w, r[1], ev) })
       var evo = SOORTEN[w.id].evo
       if (evo && w.lvl >= evo[1]) {
         var van = w.id, oud2 = maxHp(w)
         w.id = evo[0]; w.hp += maxHp(w) - oud2
         ev.push({ t: 'evolutie', uid: w.uid, van: van, naar: w.id })
+        // nieuw tweede element? dan meteen een aanval daarvan
+        if (SOORTEN[w.id].type2 !== SOORTEN[van].type2) bijleren(w, ev)
       }
     }
+  }
+  function leer(w, aanval, ev) {
+    if (w.aanvallen.indexOf(aanval) >= 0) return
+    var weg = null
+    if (w.aanvallen.length >= 4) {
+      // de zwakste aanval maakt plaats (nooit de enige van het tweede element)
+      var t2 = SOORTEN[w.id].type2
+      var kies = w.aanvallen.filter(function (a) { return !(t2 && AANVALLEN[a].type === t2 && w.aanvallen.filter(function (b) { return AANVALLEN[b].type === t2 }).length === 1) })
+      var zw = kies.sort(function (x, y) { return (AANVALLEN[x].kracht || 35) - (AANVALLEN[y].kracht || 35) })[0]
+      weg = zw; w.aanvallen.splice(w.aanvallen.indexOf(zw), 1)
+    }
+    w.aanvallen.push(aanval)
+    if (ev) ev.push({ t: 'leer', uid: w.uid, aanval: aanval, vergeet: weg })
+  }
+  // kent een wezen met een tweede element daar nog geen aanval van? Dan leert het de sterkste die past bij zijn niveau.
+  function bijleren(w, ev) {
+    var t2 = SOORTEN[w.id].type2
+    if (!t2 || w.aanvallen.some(function (a) { return AANVALLEN[a].type === t2 })) return
+    var kan = leerlijst(w.id).filter(function (r) { return AANVALLEN[r[1]].type === t2 && r[0] <= w.lvl })
+    if (kan.length) leer(w, kan[kan.length - 1][1], ev)
   }
   function xpVoor(versl) { return Math.round(SOORTEN[versl.id].b.reduce(function (a, b) { return a + b }, 0) * versl.lvl / 16) }
 
@@ -343,6 +369,6 @@ var MT = (function () {
   return {
     TYPES: TYPES, FAMILIES: FAMILIES, idVan: idVan, TYPENAAM: TYPENAAM, KLEUR: KLEUR, EFFECT: EFFECT, AANVALLEN: AANVALLEN, SOORTEN: SOORTEN, STARTERS: STARTERS, GEBIEDEN: GEBIEDEN,
     maak: maak, maxHp: maxHp, xpNodig: xpNodig, schade: schade, effect: effect, gevecht: gevecht, beurt: beurt, actiefWij: actiefWij,
-    wild: wild, heelAlles: heelAlles, leerlijst: leerlijst, geefXp: geefXp,
+    wild: wild, heelAlles: heelAlles, leerlijst: leerlijst, geefXp: geefXp, mult: mult, bijleren: bijleren,
   }
 })()
