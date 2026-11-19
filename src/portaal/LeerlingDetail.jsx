@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase.js'
-import { roepWorkerAan } from '../lib/worker.js'
 import { toolLabel } from '../lib/tools.js'
 import FoutenLijst from './FoutenLijst.jsx'
 import LeerlingDoelen from './LeerlingDoelen.jsx'
 import GegevensWissen from './GegevensWissen.jsx'
 import LeerlingVerwijderen from './LeerlingVerwijderen.jsx'
+import WachtwoordWijzigen from './WachtwoordWijzigen.jsx'
 import Balk from './Balk.jsx'
 import { groepeerSessies, scoreKlasse, kortMoment } from './resultaatHelpers.js'
 import { Knop, Icoon } from '../ui/index.jsx'
@@ -233,46 +233,6 @@ function Sessies({ sessies }) {
   )
 }
 
-function WachtwoordResetten({ leerlingId }) {
-  const [open, setOpen] = useState(false)
-  const [wachtwoord, setWachtwoord] = useState('')
-  const [fout, setFout] = useState('')
-  const [succes, setSucces] = useState('')
-  const [bezig, setBezig] = useState(false)
-
-  const submit = async (e) => {
-    e.preventDefault()
-    setFout(''); setSucces(''); setBezig(true)
-    try {
-      await roepWorkerAan('wachtwoord-reset', { gebruikerId: leerlingId, nieuwWachtwoord: wachtwoord })
-      setSucces('Wachtwoord gewijzigd')
-      setWachtwoord('')
-    } catch (err) {
-      setFout(err.message)
-    } finally {
-      setBezig(false)
-    }
-  }
-
-  if (!open) {
-    return <Knop variant="secundair" maat="sm" onClick={() => setOpen(true)}>Wachtwoord resetten</Knop>
-  }
-
-  return (
-    <form className="portaal-form kk-m-0" onSubmit={submit}>
-      <label>Nieuw wachtwoord
-        <input type="password" value={wachtwoord} onChange={e => setWachtwoord(e.target.value)} required minLength={6} autoFocus autoComplete="new-password" />
-      </label>
-      {fout && <p className="portaal-fout">{fout}</p>}
-      {succes && <p className="portaal-succes">{succes}</p>}
-      <div className="kk-rij">
-        <Knop type="submit" variant="primair" maat="sm" disabled={bezig}>{bezig ? 'Bezig…' : 'Opslaan'}</Knop>
-        <Knop type="button" variant="secundair" maat="sm" onClick={() => setOpen(false)}>Sluiten</Knop>
-      </div>
-    </form>
-  )
-}
-
 // Embeddable: geen eigen .portaal-wrapper. Alleen werk dat bij een opdracht
 // hoort (weektaak, taak of doel) — wat een kind vrij oefent ziet de leerkracht
 // bewust niet. Terug gaat via de kruimelbalk daarboven.
@@ -323,7 +283,7 @@ export default function LeerlingDetail({ leerlingId, opdrachtIds = null, kop = n
           </div>
           {leerling && beheer && (
             <div className="kk-rij">
-              <WachtwoordResetten leerlingId={leerlingId} />
+              <WachtwoordWijzigen leerlingId={leerlingId} naam={leerling.weergavenaam} />
               <GegevensWissen
                 leerlingIds={[leerlingId]} wie={leerling.weergavenaam}
                 onGewist={() => setTeller(t => t + 1)}

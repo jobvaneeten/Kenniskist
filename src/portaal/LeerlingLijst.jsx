@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase.js'
-import { Knop } from '../ui/index.jsx'
+import { Knop, Icoon } from '../ui/index.jsx'
 import LeerlingVerwijderen from './LeerlingVerwijderen.jsx'
+import WachtwoordWijzigen from './WachtwoordWijzigen.jsx'
 
 function Verplaatsen({ klas, alleKlassen, geselecteerd, onKlaar }) {
   const [doelKlasId, setDoelKlasId] = useState('')
@@ -44,6 +45,7 @@ export default function LeerlingLijst({ klas, alleKlassen, leerlingen, onKiesLee
   const [modus, setModus] = useState(null)   // null | 'verplaatsen' | 'verwijderen'
   const [geselecteerd, setGeselecteerd] = useState(new Set())
   const [bevestig, setBevestig] = useState(false)
+  const [wwVoor, setWwVoor] = useState(null)
 
   const kanVerplaatsen = alleKlassen.length > 1
 
@@ -52,7 +54,7 @@ export default function LeerlingLijst({ klas, alleKlassen, leerlingen, onKiesLee
     next.has(id) ? next.delete(id) : next.add(id)
     return next
   })
-  const zetModus = (m) => { setModus(huidig => huidig === m ? null : m); setGeselecteerd(new Set()); setBevestig(false) }
+  const zetModus = (m) => { setWwVoor(null); setModus(huidig => huidig === m ? null : m); setGeselecteerd(new Set()); setBevestig(false) }
   const alles = geselecteerd.size === leerlingen.length
 
   return (
@@ -90,9 +92,20 @@ export default function LeerlingLijst({ klas, alleKlassen, leerlingen, onKiesLee
               <span className="portaal-naamknop-naam">{l.weergavenaam}</span>
               <span className="portaal-zacht">{l.gebruikersnaam}</span>
             </button>
+            {!modus && (
+              <button className="portaal-rijknop" title={`Wachtwoord van ${l.weergavenaam} wijzigen`} aria-label={`Wachtwoord van ${l.weergavenaam} wijzigen`} onClick={() => setWwVoor(l)}><Icoon naam="sleutel" /></button>
+            )}
           </div>
         ))}
       </div>
+
+      {!modus && wwVoor && (
+        <div className="portaal-actiebalk" style={{ display: 'block' }}>
+          <WachtwoordWijzigen key={wwVoor.id} leerlingId={wwVoor.id} naam={wwVoor.weergavenaam} open onSluit={() => setWwVoor(null)} />
+        </div>
+      )}
+
+      {!modus && !wwVoor && <p className="portaal-zacht" style={{ margin: '10px 0 0' }}>Met het sleuteltje naast een naam geef je een leerling een nieuw wachtwoord.</p>}
 
       {modus === 'verplaatsen' && geselecteerd.size > 0 && (
         <Verplaatsen
