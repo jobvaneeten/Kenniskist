@@ -256,8 +256,29 @@ var NK = (function () {
     }
   }
 
+  // uitlegscherm over alles heen: regels = [[tekenFunctie(g, 80), tekst], ...]
+  function uitleg(regels, klaar, titel) {
+    var s = document.createElement('div'); s.className = 'scherm dicht aan'; s.style.zIndex = 60
+    var h = document.createElement('h2'); h.textContent = titel || 'Hoe werkt het?'; s.appendChild(h)
+    var l = document.createElement('div'); l.className = 'uitleg'
+    regels.forEach(function (rg) {
+      var d = document.createElement('div'); d.className = 'regel'
+      var c = document.createElement('canvas'); c.width = 80; c.height = 80
+      var g = c.getContext('2d'); g.fillStyle = 'rgba(255,255,255,0.06)'; rondRect(g, 3, 3, 74, 74, 14); g.fill()
+      g.lineCap = 'round'; g.lineJoin = 'round'
+      try { if (rg[0]) rg[0](g, 80) } catch (e) {}
+      var t = document.createElement('span'); t.textContent = rg[1]
+      d.appendChild(c); d.appendChild(t); l.appendChild(d)
+    })
+    s.appendChild(l)
+    var k = document.createElement('button'); k.className = 'knop'; k.textContent = 'Ik snap het'
+    k.onclick = function () { s.remove(); if (klaar) klaar() }
+    s.appendChild(k); document.body.appendChild(s)
+    return s
+  }
+
   return {
-    BELONING: BELONING, naarOuder: naarOuder, opslag: opslag, Geluid: Geluid, canvas: canvas,
+    uitleg: uitleg, BELONING: BELONING, naarOuder: naarOuder, opslag: opslag, Geluid: Geluid, canvas: canvas,
     hexA: hexA, rondRect: rondRect, ster: ster, vlek: vlek, achtergrond: achtergrond,
     deeltjes: deeltjes, schok: schok, invoer: invoer, winkel: winkel, rng: rng,
   }

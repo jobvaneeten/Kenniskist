@@ -10,17 +10,20 @@
 // ═══════════════════════════════════════════════════════════════════════════
 var MTW = (function () {
   var T = 16, DX = [0, 1, 0, -1], DY = [-1, 0, 1, 0]
-  var DORPEN = ['Morgenrood', 'Bladerdorp', 'Vonkstad', 'Meerhaven', 'Askrater', 'Nevelwoud', 'Sterrendal']
-  var EXTRA = ['Wandelaar Tim', 'Kampeerder Ivy', 'Visser Joep', 'Klimmer Sara', 'Verkenner Bo', 'Sterrenkijker Lin']
-  var AANTAL = 14
+  var DORPEN = ['Morgenrood', 'Bladerdorp', 'Vonkstad', 'Meerhaven', 'Rotsdal', 'Askrater', 'Windhoek', 'Vriesveld', 'Nevelwoud']
+  var EXTRA = ['Wandelaar Tim', 'Kampeerder Ivy', 'Visser Joep', 'Graver Wouter', 'Verkenner Bo', 'Vliegeraar Fien', 'Skiër Lars', 'Sterrenkijker Lin']
+  var GYMS = 8, AANTAL = 1 + GYMS * 2 + 1
   // kleuren per gebied: gras, gras2, hoog gras, pad, boom, boom2, water, rots
   var THEMA = [
     { gras: '#4fae4a', gras2: '#5fc05a', hoog: '#2f8f3a', hoog2: '#46b04a', pad: '#d8c08a', pad2: '#c4a874', boom: '#2a7d3a', boom2: '#3e9e48', water: '#3f8fff', rots: '#8a8a9a', lucht: 140 },
     { gras: '#9aa84a', gras2: '#aab85a', hoog: '#7a8a2a', hoog2: '#c4c45a', pad: '#c8b48a', pad2: '#b49a6a', boom: '#2f5a3a', boom2: '#3f7048', water: '#3f8fff', rots: '#9a9088', lucht: 50 },
     { gras: '#3fae7a', gras2: '#4fc08a', hoog: '#1f8a5a', hoog2: '#3fb07a', pad: '#e8d8a8', pad2: '#d4c08a', boom: '#2a7a5a', boom2: '#3a9a6a', water: '#2f8fff', rots: '#7a8a9a', lucht: 200 },
-    { gras: '#6a4a3a', gras2: '#7a5848', hoog: '#b8622a', hoog2: '#e08a3a', pad: '#4a3a3a', pad2: '#3a2c2c', boom: '#3a2a2a', boom2: '#5a3a2a', water: '#ff6a1a', rots: '#5a4a4a', lucht: 15, lava: true },
-    { gras: '#3a3a6a', gras2: '#46467a', hoog: '#5a3a8a', hoog2: '#8a5ab8', pad: '#6a6a8a', pad2: '#5a5a7a', boom: '#1f1f3f', boom2: '#2f2f5a', water: '#5a4aff', rots: '#4a4a6a', lucht: 270, paddo: true },
-    { gras: '#2a2a5a', gras2: '#36366e', hoog: '#a03ab8', hoog2: '#e05ad8', pad: '#5a5a9a', pad2: '#4a4a86', boom: '#1a1a44', boom2: '#3a2a7a', water: '#6a5aff', rots: '#7a6ab8', lucht: 300, sterren: true },
+    { gras: '#c8a060', gras2: '#d8b070', hoog: '#a8783a', hoog2: '#d8a850', pad: '#9a7a5a', pad2: '#8a6a4a', boom: '#5a8a3a', boom2: '#7aaa4a', water: '#3f8fff', rots: '#a0704a', lucht: 30 },
+    { gras: '#6a4a3a', gras2: '#7a5848', hoog: '#b8622a', hoog2: '#e08a3a', pad: '#4a3a3a', pad2: '#3a2c2c', boom: '#3a2a2a', boom2: '#5a3a2a', water: '#ff6a1a', rots: '#5a4a4a', lucht: 15, lava: true, nacht: true },
+    { gras: '#9ad0a0', gras2: '#b0e0b8', hoog: '#5ab0c0', hoog2: '#a0e0f0', pad: '#ece4d4', pad2: '#d8d0c0', boom: '#4a9a8a', boom2: '#6abaa8', water: '#8ad8ff', rots: '#f4f8ff', lucht: 195 },
+    { gras: '#e4eef8', gras2: '#f4f8fc', hoog: '#8ac0e4', hoog2: '#d0ecff', pad: '#b8c8d8', pad2: '#a8b8c8', boom: '#3a6a5a', boom2: '#e8f4ff', water: '#6ab8ff', rots: '#b8e0ff', lucht: 205, sneeuw: true },
+    { gras: '#3a3a6a', gras2: '#46467a', hoog: '#5a3a8a', hoog2: '#8a5ab8', pad: '#6a6a8a', pad2: '#5a5a7a', boom: '#1f1f3f', boom2: '#2f2f5a', water: '#5a4aff', rots: '#4a4a6a', lucht: 270, paddo: true, nacht: true },
+    { gras: '#2a2a5a', gras2: '#36366e', hoog: '#a03ab8', hoog2: '#e05ad8', pad: '#5a5a9a', pad2: '#4a4a86', boom: '#1a1a44', boom2: '#3a2a7a', water: '#6a5aff', rots: '#7a6ab8', lucht: 300, sterren: true, nacht: true },
   ]
 
   function rng(zaad) {
@@ -33,8 +36,8 @@ var MTW = (function () {
       return ((t ^ (t >>> 14)) >>> 0) / 4294967296
     }
   }
-  function gebiedVan(a) { return a === 0 ? 0 : a >= 13 ? 5 : Math.floor((a - 1) / 2) }
-  function soortVan(a) { return a === 13 ? 'poort' : a % 2 === 0 ? 'dorp' : 'route' }
+  function gebiedVan(a) { return a === 0 ? 0 : a >= AANTAL - 1 ? GYMS : Math.floor((a - 1) / 2) }   // GYMS = de sterrenpoort
+  function soortVan(a) { return a === AANTAL - 1 ? 'poort' : a % 2 === 0 ? 'dorp' : 'route' }
 
   var cache = {}
   function kaart(a) {
@@ -56,7 +59,7 @@ var MTW = (function () {
       k.gebouwen.push({ soort: 'winkel', x: 13, y: 5, w: 5, h: 4, deur: [15, 8] })
       if (gym >= 0) k.gebouwen.push({ soort: 'gym', x: 2, y: 10, w: 6, h: 4, deur: [5, 13], gym: gym })
       else k.gebouwen.push({ soort: 'thuis', x: 2, y: 10, w: 5, h: 4, deur: [4, 13] })
-      k.gebouwen.push({ soort: 'huis', x: 13, y: 10, w: 5, h: 4, deur: [15, 13], dak: ['#5a8aff', '#ff8a3d', '#8a5aff', '#3fbf8a', '#ff5a8a', '#ffd23d', '#5ac8ff'][a / 2] })
+      k.gebouwen.push({ soort: 'huis', x: 13, y: 10, w: 5, h: 4, deur: [15, 13], dak: ['#5a8aff', '#ff8a3d', '#8a5aff', '#3fbf8a', '#c8904a', '#ff5a8a', '#5ac8ff', '#9ab8d8', '#8a5ab8'][a / 2] })
       // bloemen en een paar bomen
       for (var b = 0; b < 26; b++) { var fx = 1 + (R() * 18 | 0), fy = 1 + (R() * 14 | 0); if (t[fy][fx] === '.' && !opGebouw(k, fx, fy)) t[fy][fx] = R() < 0.75 ? 'f' : 'T' }
       ;[[1, 1], [2, 1], [17, 1], [18, 1], [1, 2], [18, 2]].forEach(function (p) { if (t[p[1]][p[0]] === '.') t[p[1]][p[0]] = 'T' })
@@ -71,9 +74,11 @@ var MTW = (function () {
         'Trainers dagen je uit als je in hun zicht loopt. Na een gevecht krijg je munten.',
         'Een wezen dat sterker wordt, kan veranderen in iets heel anders!',
         'In de winkel koop je glimbollen en drankjes.',
+        'In de Rotskloof wonen aardewezens. Water en plant zijn sterk tegen aarde!',
+        'Luchtwezens vliegen boven het gras. Bliksem en ijs zijn sterk tegen lucht.',
         'Achter het laatste dorp ligt een geheime poort. Daar woont iets heel bijzonders.',
       ]
-      k.dingen.push({ soort: 'mens', x: 7, y: 11 + (a % 2), r: 2, tekst: tips[a / 2], kleur: ['#ff8a3d', '#3fa8ff', '#ff5fb0', '#8dff4f', '#ffd23d', '#c77dff', '#5ae0ff'][a / 2] })
+      k.dingen.push({ soort: 'mens', x: 7, y: 11 + (a % 2), r: 2, tekst: tips[a / 2], kleur: ['#ff8a3d', '#3fa8ff', '#ff5fb0', '#8dff4f', '#c8904a', '#ffd23d', '#a8c8ff', '#5ae0ff', '#c77dff'][a / 2] })
     } else if (soort === 'route') {
       var i = (a - 1) / 2
       k.naam = 'Route ' + (i + 1)
@@ -96,7 +101,7 @@ var MTW = (function () {
       // landschap per gebied
       var th = THEMA[i]
       for (var q = 0; q < 12; q++) { var bx = 1 + (R() * 18 | 0), by = 2 + (R() * 22 | 0); if (t[by][bx] === '.') t[by][bx] = 'T' }
-      var extra = th.lava || i === 2 ? '~' : 'r'
+      var extra = th.lava || i === 2 || i === 6 ? '~' : 'r'
       for (var p2 = 0; p2 < (i === 2 || th.lava ? 3 : 5); p2++) {
         var ex = 2 + (R() * 15 | 0), ey = 3 + (R() * 19 | 0), er = extra === '~' ? 1 + (R() * 2 | 0) : 0
         for (var e1 = -er; e1 <= er; e1++) for (var e2 = -er; e2 <= er; e2++) if (t[ey + e1] && t[ey + e1][ex + e2] && t[ey + e1][ex + e2] !== '=' && t[ey + e1][ex + e2] !== 'T') t[ey + e1][ex + e2] = extra
@@ -126,7 +131,7 @@ var MTW = (function () {
       for (var r2 = 0; r2 < 30; r2++) { var cx = 1 + (R() * 18 | 0), cy = 1 + (R() * 14 | 0); if (t[cy][cx] === '.') t[cy][cx] = R() < 0.5 ? 'f' : 'r' }
       for (var hy = 2; hy <= 5; hy++) for (var hx = 7; hx <= 12; hx++) zet(hx, hy, '=')
       k.dingen.push({ soort: 'legende', x: 9, y: 3, breed: 2 })
-      k.dingen.push({ soort: 'bord', x: 12, y: H - 3, tekst: 'De Sterrenpoort. Alleen wie alle zes badges heeft, mag hier komen.' })
+      k.dingen.push({ soort: 'bord', x: 12, y: H - 3, tekst: 'De Sterrenpoort. Alleen wie alle acht badges heeft, mag hier komen.' })
     }
     cache[a] = k
     return k
@@ -222,6 +227,9 @@ var MTW = (function () {
     else if (type === 'water') { g.beginPath(); g.moveTo(x, y - r); g.quadraticCurveTo(x + r, y + r * 0.4, x, y + r); g.quadraticCurveTo(x - r, y + r * 0.4, x, y - r); g.fill() }
     else if (type === 'plant') { g.beginPath(); g.ellipse(x, y, r * 0.5, r, 0.6, 0, 7); g.fill() }
     else if (type === 'bliksem') { g.beginPath(); g.moveTo(x + 1, y - r); g.lineTo(x - 3, y + 1); g.lineTo(x, y + 1); g.lineTo(x - 1, y + r); g.lineTo(x + 3, y - 1); g.lineTo(x, y - 1); g.closePath(); g.fill() }
+    else if (type === 'ijs') { g.lineWidth = 1.6; g.beginPath(); for (var a = 0; a < 3; a++) { var h = a * Math.PI / 3; g.moveTo(x - Math.cos(h) * r, y - Math.sin(h) * r); g.lineTo(x + Math.cos(h) * r, y + Math.sin(h) * r) } g.stroke() }
+    else if (type === 'aarde') { g.beginPath(); g.moveTo(x - r, y + r * 0.6); g.lineTo(x - r * 0.3, y - r * 0.6); g.lineTo(x + r * 0.1, y); g.lineTo(x + r * 0.5, y - r * 0.4); g.lineTo(x + r, y + r * 0.6); g.closePath(); g.fill() }
+    else if (type === 'lucht') { g.lineWidth = 1.6; g.beginPath(); g.moveTo(x - r, y - r * 0.3); g.quadraticCurveTo(x + r * 0.3, y - r * 0.6, x + r * 0.5, y - r * 0.1); g.moveTo(x - r * 0.8, y + r * 0.3); g.quadraticCurveTo(x + r * 0.6, y + r * 0.1, x + r, y + r * 0.5); g.stroke() }
     else { g.beginPath(); g.arc(x, y, r * 0.8, 0, 7); g.fill(); g.fillStyle = '#14142a'; g.beginPath(); g.arc(x + 2, y - 1, r * 0.65, 0, 7); g.fill() }
   }
   function shade(hex, f) {
@@ -257,6 +265,6 @@ var MTW = (function () {
     px(g, X + 6, Y - bob, 2, 1, '#ffffff')
   }
 
-  return { T: T, DX: DX, DY: DY, AANTAL: AANTAL, DORPEN: DORPEN, THEMA: THEMA, kaart: kaart, gebiedVan: gebiedVan, opGebouw: opGebouw, dingOp: dingOp,
+  return { T: T, DX: DX, DY: DY, AANTAL: AANTAL, GYMS: GYMS, DORPEN: DORPEN, THEMA: THEMA, kaart: kaart, gebiedVan: gebiedVan, opGebouw: opGebouw, dingOp: dingOp,
     tegel: tegel, gebouw: gebouw, persoon: persoon, embleem: embleem, gymType: gymType, px: px, rng: rng }
 })()

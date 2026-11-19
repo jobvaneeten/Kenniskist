@@ -10,9 +10,18 @@ var S = MT.SOORTEN, AV = MT.AANVALLEN
 var D = NK.opslag('kk_mt', {
   munten: 100, team: [], opslag: [], tas: { glimbol: 5, superbol: 0, drankje: 3, superdrank: 0, wekker: 0 },
   gebied: 0, versl: {}, gezien: {}, gevangen: {}, gevecht: null, sterrenkat: false, geluid: true, rustig: false,
-  pos: { a: 0, x: 9, y: 11, r: 2 }, huis: { a: 0, x: 4, y: 14 }, opgepakt: {},
+  pos: { a: 0, x: 9, y: 11, r: 2 }, huis: { a: 0, x: 4, y: 14 }, opgepakt: {}, versie: 0,
 })
 Geluid.zetAan(function () { return D.geluid })
+if (!D.versie) {
+  // vroeger: 6 gyms (plant, bliksem, water, vuur, schaduw, alles). Nu 8.
+  var oudNaarNieuw = { 0: 0, 1: 1, 2: 2, 3: 4, 4: 7 }, nieuw = {}
+  Object.keys(D.versl || {}).forEach(function (k) { var n = +k.slice(1); if (oudNaarNieuw[n] != null) nieuw[k[0] + oudNaarNieuw[n]] = true })
+  D.versl = nieuw
+  var hoogste = -1; for (var gg = 0; gg < 8; gg++) if (D.versl['l' + gg]) hoogste = gg
+  D.pos = { a: Math.max(0, hoogste * 2 + 2), x: 9, y: 11, r: 2 }; D.huis = { a: D.pos.a, x: 4, y: 9 }
+  D.opgepakt = {}; D.gevecht = null; D.versie = 2; D.bewaar()
+}
 var SPULLEN = {
   glimbol: { naam: 'Glimbol', uitleg: 'Vang een wild wezen. Hoe zwakker het is, hoe makkelijker.', prijs: 20, kracht: 1 },
   superbol: { naam: 'Superbol', uitleg: 'Vangt veel beter dan een glimbol.', prijs: 60, kracht: 1.8 },
@@ -40,199 +49,7 @@ function licht(hex, f) {
   var t = f < 0 ? 0 : 255, p = Math.abs(f)
   return 'rgb(' + Math.round((t - r) * p + r) + ',' + Math.round((t - g) * p + g) + ',' + Math.round((t - b) * p + b) + ')'
 }
-// stadium (1, 2 of 3) uit de veranderketen
-var STADIUM = (function () {
-  var st = {}
-  Object.keys(S).forEach(function (id) { st[id] = st[id] || 1; var e = S[id].evo; if (e) st[e[0]] = (st[id] || 1) + 1 })
-  Object.keys(S).forEach(function (id) { var e = S[id].evo; if (e && S[e[0]].evo) st[S[e[0]].evo[0]] = st[e[0]] + 1 })
-  return st
-})()
-// eigen kleur per wezen: het element, iets verschoven zodat soortgenoten verschillen
-function wezenKleur(id) {
-  var basis = MT.KLEUR[S[id].type], h = 0
-  for (var i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) % 997
-  var n = parseInt(basis.slice(1), 16), r = n >> 16, g = n >> 8 & 255, b = n & 255
-  var f = 0.88 + (h % 30) / 100
-  return '#' + [r, g, b].map(function (c) { return ('0' + Math.min(255, Math.round(c * f)).toString(16)).slice(-2) }).join('')
-}
-var witDoek = document.createElement('canvas')
-function tekenWezen(g, id, x, y, r, o) {
-  o = o || {}
-  // geraakt of veranderen: het wezen zelf licht wit op (niet een vierkant eromheen)
-  if (o.wit && !o.binnen) {
-    var m = Math.ceil(r * 4.4)
-    witDoek.width = m; witDoek.height = m
-    var wg = witDoek.getContext('2d')
-    tekenWezen(wg, id, m / 2, m / 2, r, Object.assign({}, o, { wit: 0, binnen: true, alfa: 1 }))
-    wg.globalCompositeOperation = 'source-atop'; wg.fillStyle = 'rgba(255,255,255,' + Math.min(1, o.wit) + ')'; wg.fillRect(0, 0, m, m)
-    g.save(); g.globalAlpha = o.alfa == null ? 1 : o.alfa; g.drawImage(witDoek, x - m / 2, y - m / 2); g.restore()
-    return
-  }
-  var sp = S[id], L = sp.look, type = sp.type, t = o.t || 0, stad = STADIUM[id] || 1
-  r *= L.maat * (o.schaal == null ? 1 : o.schaal)
-  if (r <= 0.5) return
-  var k = o.silhouet ? '#22223e' : wezenKleur(id)
-  var donker = o.silhouet ? '#16162a' : licht(k, -0.32), hel = o.silhouet ? '#2a2a4a' : licht(k, 0.45), lijn = o.silhouet ? '#0e0e1e' : licht(k, -0.62)
-  var adem = o.stil ? 0 : Math.sin(t * 2.6) * 0.025
-  var bob = o.stil ? 0 : Math.sin(t * 2.6) * r * 0.03
-  var lw = Math.max(1.2, r * 0.055)
-  g.save(); g.translate(x, y + bob); if (o.kijk === -1) g.scale(-1, 1)
-  g.globalAlpha = o.alfa == null ? 1 : o.alfa
-  g.lineJoin = 'round'; g.lineCap = 'round'
-  var vul = function (pad, kleur) { g.fillStyle = kleur; g.fill(pad); if (!o.silhouet || true) { g.strokeStyle = lijn; g.lineWidth = lw; g.stroke(pad) } }
-  // schaduw op de grond
-  g.fillStyle = 'rgba(0,0,0,0.28)'; g.beginPath(); g.ellipse(0, r * 0.98, r * 0.78 * (1 - adem * 2), r * 0.15, 0, 0, 7); g.fill()
-
-  // ── staart (achter) ──
-  var st = L.staart, P
-  if (st === 'vlam') {
-    var fl = Math.sin(t * 9) * r * 0.06
-    P = new Path2D(); P.moveTo(r * 0.5, r * 0.45); P.quadraticCurveTo(r * 1.35, r * 0.35, r * 1.15 + fl, -r * 0.55); P.quadraticCurveTo(r * 1.0, -r * 0.05, r * 0.62, r * 0.1); P.closePath()
-    vul(P, o.silhouet ? k : '#ff8a3d')
-    if (!o.silhouet) { P = new Path2D(); P.moveTo(r * 0.7, r * 0.32); P.quadraticCurveTo(r * 1.12, r * 0.25, r * 1.08 + fl, -r * 0.3); P.quadraticCurveTo(r * 0.98, r * 0.02, r * 0.75, r * 0.15); P.closePath(); g.fillStyle = '#ffe14f'; g.fill(P) }
-  } else if (st === 'vis') {
-    var zw = Math.sin(t * 4) * 0.15
-    g.save(); g.translate(r * 0.62, r * 0.35); g.rotate(-0.4 + zw)
-    P = new Path2D(); P.moveTo(0, 0); P.quadraticCurveTo(r * 0.4, -r * 0.1, r * 0.62, -r * 0.42); P.quadraticCurveTo(r * 0.5, 0, r * 0.66, r * 0.34); P.quadraticCurveTo(r * 0.35, r * 0.12, 0, 0.001); vul(P, donker)
-    g.restore()
-  } else if (st === 'blad') {
-    g.save(); g.translate(r * 0.7, r * 0.3); g.rotate(-0.8 + Math.sin(t * 2) * 0.12)
-    P = new Path2D(); P.moveTo(0, 0); P.quadraticCurveTo(r * 0.3, -r * 0.3, r * 0.7, 0); P.quadraticCurveTo(r * 0.3, r * 0.3, 0, 0); vul(P, o.silhouet ? k : '#3fbf5a')
-    if (!o.silhouet) { g.strokeStyle = '#2a8a42'; g.lineWidth = lw * 0.7; g.beginPath(); g.moveTo(r * 0.05, 0); g.lineTo(r * 0.6, 0); g.stroke() }
-    g.restore()
-  } else if (st === 'flits') {
-    P = new Path2D(); P.moveTo(r * 0.55, r * 0.5); P.lineTo(r * 0.95, r * 0.1); P.lineTo(r * 0.82, r * 0.02); P.lineTo(r * 1.3, -r * 0.6); P.lineTo(r * 1.0, -r * 0.05); P.lineTo(r * 1.12, r * 0.02); P.lineTo(r * 0.7, r * 0.55); P.closePath()
-    vul(P, o.silhouet ? k : '#ffe14f')
-  } else if (st === 'dun') {
-    g.strokeStyle = lijn; g.lineWidth = r * 0.11; g.beginPath(); g.moveTo(r * 0.6, r * 0.6); g.quadraticCurveTo(r * 1.4, r * 0.65, r * 1.15, -r * 0.1 + Math.sin(t * 3) * r * 0.05); g.stroke()
-    g.strokeStyle = donker; g.lineWidth = r * 0.06; g.stroke()
-  } else if (st === 'veer') {
-    for (var v = 0; v < 3; v++) { g.save(); g.translate(r * 0.6, r * (0.3 + v * 0.12)); g.rotate(-0.3 + v * 0.3); P = new Path2D(); P.ellipse(r * 0.3, 0, r * 0.34, r * 0.1, 0, 0, 7); vul(P, v % 2 ? donker : k); g.restore() }
-  } else if (st === 'huis') {
-    P = new Path2D(); P.arc(r * 0.32, -r * 0.18, r * 0.66, 0, 7); vul(P, o.silhouet ? k : licht(k, -0.15))
-    if (!o.silhouet) { g.strokeStyle = hel; g.lineWidth = r * 0.08; g.beginPath(); for (var a = 0; a < 20; a++) { var hh = a * 0.6, rr = r * 0.05 + a * r * 0.028; g.lineTo(r * 0.32 + Math.cos(hh) * rr, -r * 0.18 + Math.sin(hh) * rr) } g.stroke() }
-  } else if (st === 'ster') {
-    g.strokeStyle = lijn; g.lineWidth = r * 0.12; g.beginPath(); g.moveTo(r * 0.6, r * 0.45); g.quadraticCurveTo(r * 1.35, r * 0.35, r * 1.15, -r * 0.4); g.stroke()
-    g.strokeStyle = donker; g.lineWidth = r * 0.07; g.stroke()
-    g.save(); g.shadowColor = '#ffd23d'; g.shadowBlur = o.silhouet ? 0 : r * 0.4; NK.ster(g, r * 1.15, -r * 0.45, r * 0.26, o.silhouet ? k : '#ffd23d'); g.restore()
-  }
-  // vleugels achter het lijf
-  if (L.extra === 'vleugel') {
-    var fl2 = Math.sin(t * 9) * 0.3
-    g.save(); g.translate(-r * 0.45, -r * 0.1); g.rotate(-0.5 + fl2)
-    P = new Path2D(); P.moveTo(0, 0); P.quadraticCurveTo(-r * 0.7, -r * 0.5, -r * 0.95, -r * 0.05); P.quadraticCurveTo(-r * 0.6, r * 0.05, -r * 0.7, r * 0.25); P.quadraticCurveTo(-r * 0.35, r * 0.15, 0, r * 0.2); P.closePath()
-    vul(P, donker); g.restore()
-  }
-
-  // ── lijf ──
-  g.save(); g.scale(1 - adem, 1 + adem)
-  var lijf = L.lijf, B = new Path2D()
-  if (lijf === 'ovaal') B.ellipse(0, r * 0.12, r * 0.88, r * 0.72, 0, 0, 7)
-  else if (lijf === 'druppel') { B.moveTo(0, -r * 0.98); B.bezierCurveTo(r * 0.78, -r * 0.3, r * 0.88, r * 0.86, 0, r * 0.86); B.bezierCurveTo(-r * 0.88, r * 0.86, -r * 0.78, -r * 0.3, 0, -r * 0.98) }
-  else if (lijf === 'peer') { B.moveTo(0, -r * 0.88); B.bezierCurveTo(r * 0.62, -r * 0.88, r * 0.98, r * 0.92, 0, r * 0.9); B.bezierCurveTo(-r * 0.98, r * 0.92, -r * 0.62, -r * 0.88, 0, -r * 0.88) }
-  else if (lijf === 'breed') B.ellipse(0, r * 0.3, r * 0.98, r * 0.6, 0, 0, 7)
-  else if (lijf === 'rots') { [[-0.82, 0.22], [-0.6, -0.55], [-0.1, -0.84], [0.48, -0.66], [0.86, -0.1], [0.78, 0.6], [0.2, 0.88], [-0.55, 0.82]].forEach(function (q, i) { if (i) B.lineTo(q[0] * r, q[1] * r); else B.moveTo(q[0] * r, q[1] * r) }); B.closePath() }
-  else B.arc(0, r * 0.06, r * 0.84, 0, 7)
-  // oren achter de kop (ronde oren, pluimen en antennes)
-  var oor = L.oor, oy = lijf === 'breed' ? -r * 0.12 : -r * 0.6
-  var oren = function (voor) {
-    ;[-1, 1].forEach(function (z) {
-      g.save(); g.scale(z, 1)
-      if (oor === 'punt' && voor) { P = new Path2D(); P.moveTo(r * 0.22, oy + r * 0.08); P.quadraticCurveTo(r * 0.42, oy - r * 0.42, r * 0.62, oy - r * 0.62); P.quadraticCurveTo(r * 0.78, oy - r * 0.2, r * 0.7, oy + r * 0.18); P.closePath(); vul(P, k); if (!o.silhouet) { P = new Path2D(); P.moveTo(r * 0.36, oy + r * 0.02); P.quadraticCurveTo(r * 0.5, oy - r * 0.3, r * 0.6, oy - r * 0.42); P.quadraticCurveTo(r * 0.66, oy - r * 0.15, r * 0.6, oy + r * 0.08); P.closePath(); g.fillStyle = '#ffb8c8'; g.fill(P) } }
-      if (oor === 'rond' && !voor) { P = new Path2D(); P.arc(r * 0.52, oy, r * 0.24, 0, 7); vul(P, k); if (!o.silhouet) { g.fillStyle = hel; g.beginPath(); g.arc(r * 0.52, oy + r * 0.02, r * 0.12, 0, 7); g.fill() } }
-      if (oor === 'vin' && !voor) { P = new Path2D(); P.moveTo(r * 0.55, oy + r * 0.25); P.quadraticCurveTo(r * 0.9, oy - r * 0.05, r * 1.02, oy - r * 0.22); P.quadraticCurveTo(r * 0.9, oy + r * 0.25, r * 0.7, oy + r * 0.5); P.closePath(); vul(P, donker) }
-      if (oor === 'blad' && voor) { g.save(); g.translate(r * 0.25, oy - r * 0.05); g.rotate(-0.9 + z * 0); P = new Path2D(); P.moveTo(0, 0); P.quadraticCurveTo(r * 0.25, -r * 0.25, r * 0.55, 0); P.quadraticCurveTo(r * 0.25, r * 0.22, 0, 0); vul(P, o.silhouet ? k : '#3fbf5a'); g.restore() }
-      if (oor === 'antenne' && !voor) { g.strokeStyle = lijn; g.lineWidth = r * 0.06; g.beginPath(); g.moveTo(r * 0.18, oy + r * 0.05); g.quadraticCurveTo(r * 0.3, oy - r * 0.5, r * 0.52, oy - r * 0.62); g.stroke(); P = new Path2D(); P.arc(r * 0.52, oy - r * 0.62, r * 0.11, 0, 7); vul(P, o.silhouet ? k : '#ffe14f'); if (!o.silhouet) { g.save(); g.globalCompositeOperation = 'lighter'; NK.vlek(g, r * 0.52, oy - r * 0.62, r * 0.3, '#ffe14f', 0.4 + Math.sin(t * 6) * 0.2); g.restore() } }
-      if (oor === 'pluim' && voor) { P = new Path2D(); P.moveTo(r * 0.18, oy + r * 0.12); P.quadraticCurveTo(r * 0.32, oy - r * 0.3, r * 0.5, oy - r * 0.45); P.quadraticCurveTo(r * 0.5, oy - r * 0.05, r * 0.56, oy + r * 0.12); P.closePath(); vul(P, donker) }
-      g.restore()
-    })
-  }
-  oren(false)
-  // lijf met licht van linksboven en schaduw rechtsonder
-  var gr = g.createRadialGradient(-r * 0.35, -r * 0.45, r * 0.08, 0, 0, r * 1.15)
-  gr.addColorStop(0, hel); gr.addColorStop(0.5, k); gr.addColorStop(1, donker)
-  g.fillStyle = o.silhouet ? k : gr; g.fill(B)
-  if (!o.silhouet) {
-    g.save(); g.clip(B)
-    g.fillStyle = 'rgba(0,0,30,0.18)'; g.beginPath(); g.ellipse(r * 0.45, r * 0.45, r * 0.9, r * 0.75, -0.4, 0, 7); g.fill()
-    g.fillStyle = 'rgba(255,255,255,0.22)'; g.beginPath(); g.ellipse(-r * 0.38, -r * 0.42, r * 0.32, r * 0.16, -0.6, 0, 7); g.fill()
-    // buik
-    var bg = g.createLinearGradient(0, r * 0.05, 0, r * 0.9); bg.addColorStop(0, 'rgba(255,255,240,0.55)'); bg.addColorStop(1, 'rgba(255,255,240,0.25)')
-    g.fillStyle = bg; g.beginPath(); g.ellipse(0, r * 0.48, r * 0.46, r * 0.36, 0, 0, 7); g.fill()
-    // tekening op de huid vanaf het tweede stadium
-    if (stad >= 2) {
-      g.fillStyle = 'rgba(0,0,30,0.22)'; g.strokeStyle = 'rgba(0,0,30,0.25)'; g.lineWidth = r * 0.07
-      if (type === 'vuur') { g.fillStyle = 'rgba(255,230,80,0.55)'; g.beginPath(); g.moveTo(0, r * 0.05); g.quadraticCurveTo(r * 0.3, r * 0.4, 0, r * 0.75); g.quadraticCurveTo(-r * 0.3, r * 0.4, 0, r * 0.05); g.fill() }
-      if (type === 'water') { g.strokeStyle = 'rgba(255,255,255,0.5)'; for (var wv = 0; wv < 2; wv++) { g.beginPath(); for (var q = -4; q <= 4; q++) g.lineTo(q * r * 0.15, -r * 0.25 + wv * r * 0.2 + Math.sin(q) * r * 0.05); g.stroke() } }
-      if (type === 'plant') { g.fillStyle = 'rgba(30,140,60,0.5)'; [[-0.5, -0.1], [0.55, 0.05], [0.4, -0.45]].forEach(function (q) { g.beginPath(); g.ellipse(q[0] * r, q[1] * r, r * 0.12, r * 0.07, 0.6, 0, 7); g.fill() }) }
-      if (type === 'bliksem') { g.strokeStyle = 'rgba(40,30,0,0.45)'; [-0.55, 0.55].forEach(function (zx) { g.beginPath(); g.moveTo(zx * r, -r * 0.4); g.lineTo(zx * r * 0.8, -r * 0.15); g.lineTo(zx * r, 0); g.lineTo(zx * r * 0.8, r * 0.2); g.stroke() }) }
-      if (type === 'schaduw') { g.fillStyle = 'rgba(255,220,255,0.3)'; [[-0.48, -0.15], [0.5, 0.0]].forEach(function (q) { g.beginPath(); g.arc(q[0] * r, q[1] * r, r * 0.12, 0, 7); g.fill(); g.fillStyle = k; g.beginPath(); g.arc(q[0] * r + r * 0.05, q[1] * r - r * 0.03, r * 0.1, 0, 7); g.fill(); g.fillStyle = 'rgba(255,220,255,0.3)' }) }
-    }
-    g.restore()
-  }
-  g.strokeStyle = lijn; g.lineWidth = lw; g.stroke(B)
-  oren(true)
-  // pootjes en armpjes
-  var voetY = lijf === 'breed' ? r * 0.82 : r * 0.84
-  ;[-1, 1].forEach(function (z) {
-    P = new Path2D(); P.ellipse(z * r * 0.38, voetY, r * 0.22, r * 0.12, 0, 0, 7); vul(P, donker)
-    if (!o.silhouet) { g.strokeStyle = lijn; g.lineWidth = lw * 0.6; g.beginPath(); g.moveTo(z * r * 0.32, voetY - r * 0.05); g.lineTo(z * r * 0.32, voetY + r * 0.04); g.moveTo(z * r * 0.44, voetY - r * 0.05); g.lineTo(z * r * 0.44, voetY + r * 0.04); g.stroke() }
-    if (lijf !== 'breed' && lijf !== 'rots') { var zw2 = Math.sin(t * 2.6 + z) * 0.15; g.save(); g.translate(z * r * 0.72, r * 0.25); g.rotate(z * (0.5 + zw2)); P = new Path2D(); P.ellipse(0, 0, r * 0.1, r * 0.2, 0, 0, 7); vul(P, k); g.restore() }
-  })
-  g.restore()   // einde adem
-
-  // ── extra's ──
-  var ex = L.extra
-  if (ex === 'manen') { for (var mm = 0; mm < 11; mm++) { var hm = Math.PI * 1.08 + mm / 10 * Math.PI * 0.84; P = new Path2D(); P.moveTo(Math.cos(hm - 0.12) * r * 0.62, -r * 0.08 + Math.sin(hm - 0.12) * r * 0.62); P.lineTo(Math.cos(hm) * r * 0.98, -r * 0.08 + Math.sin(hm) * r * 0.98); P.lineTo(Math.cos(hm + 0.12) * r * 0.62, -r * 0.08 + Math.sin(hm + 0.12) * r * 0.62); P.closePath(); vul(P, o.silhouet ? k : (type === 'vuur' ? '#ffb02e' : licht(k, 0.25))) } }
-  if (ex === 'kroon') { P = new Path2D(); P.moveTo(-r * 0.32, -r * 0.74); P.lineTo(-r * 0.34, -r * 1.06); P.lineTo(-r * 0.16, -r * 0.9); P.lineTo(0, -r * 1.16); P.lineTo(r * 0.16, -r * 0.9); P.lineTo(r * 0.34, -r * 1.06); P.lineTo(r * 0.32, -r * 0.74); P.closePath(); vul(P, o.silhouet ? k : '#ffd23d'); if (!o.silhouet) { g.fillStyle = '#ff4f7a'; g.beginPath(); g.arc(0, -r * 0.86, r * 0.06, 0, 7); g.fill() } }
-  if (ex === 'bloem') { for (var bl = 0; bl < 5; bl++) { var hb = bl * 1.257 + t * 0.5; P = new Path2D(); P.arc(Math.cos(hb) * r * 0.17, -r * 0.84 + Math.sin(hb) * r * 0.17, r * 0.13, 0, 7); vul(P, o.silhouet ? k : '#ff8ad8') } P = new Path2D(); P.arc(0, -r * 0.84, r * 0.1, 0, 7); vul(P, o.silhouet ? k : '#ffe14f') }
-  if (ex === 'boom') { [[-0.32, -0.86, 0.3], [0.28, -0.9, 0.32], [0, -1.12, 0.36]].forEach(function (q) { P = new Path2D(); P.arc(q[0] * r, q[1] * r, q[2] * r, 0, 7); vul(P, o.silhouet ? k : '#2f9a4a') }); if (!o.silhouet) { g.fillStyle = '#ff5a5a'; g.beginPath(); g.arc(r * 0.15, -r * 1.0, r * 0.06, 0, 7); g.arc(-r * 0.2, -r * 0.82, r * 0.05, 0, 7); g.fill() } }
-  if (ex === 'schelp' || ex === 'golfkam') { P = new Path2D(); P.moveTo(-r * 0.42, -r * 0.7); P.quadraticCurveTo(-r * 0.2, -r * 1.25, 0, -r * 1.02); P.quadraticCurveTo(r * 0.2, -r * 1.3, r * 0.42, -r * 0.7); P.quadraticCurveTo(0, -r * 0.86, -r * 0.42, -r * 0.7); vul(P, o.silhouet ? k : hel) }
-  if (ex === 'maan') { P = new Path2D(); P.arc(0, -r * 0.3, r * 0.17, 0, 7); vul(P, o.silhouet ? k : '#fff6cf'); if (!o.silhouet) { g.fillStyle = k; g.beginPath(); g.arc(r * 0.08, -r * 0.35, r * 0.14, 0, 7); g.fill() } }
-  // vuur: een vlammetje bovenop de kop
-  if (type === 'vuur' && stad >= 2 && ex !== 'kroon' && !o.silhouet) { var vf = Math.sin(t * 10) * r * 0.04; P = new Path2D(); P.moveTo(-r * 0.12, -r * 0.7); P.quadraticCurveTo(-r * 0.05, -r * 1.0, vf, -r * 1.08); P.quadraticCurveTo(r * 0.15, -r * 0.9, r * 0.12, -r * 0.7); P.closePath(); g.fillStyle = '#ffb02e'; g.fill(P) }
-
-  if (!o.silhouet) {
-    // ── gezicht ──
-    var ogenY = lijf === 'breed' ? r * 0.12 : -r * 0.14, ogenX = r * 0.3, oo = r * (0.2 - L.maat * 0.025)
-    var knip = !o.stil && (t % 3.7) > 3.58
-    var iris = type === 'schaduw' ? '#ff4fd8' : type === 'vuur' ? '#c25a14' : type === 'water' ? '#1f4fa8' : type === 'plant' ? '#2a7a3a' : '#a87a00'
-    ;[-1, 1].forEach(function (z) {
-      var ex2 = z * ogenX
-      if (knip) { g.strokeStyle = lijn; g.lineWidth = lw * 1.2; g.beginPath(); g.moveTo(ex2 - oo, ogenY); g.quadraticCurveTo(ex2, ogenY + oo * 0.5, ex2 + oo, ogenY); g.stroke(); return }
-      g.fillStyle = '#ffffff'; g.beginPath(); g.ellipse(ex2, ogenY, oo, oo * 1.2, 0, 0, 7); g.fill()
-      g.strokeStyle = lijn; g.lineWidth = lw * 0.8; g.stroke()
-      if (type === 'schaduw') { g.save(); g.shadowColor = '#ff4fd8'; g.shadowBlur = r * 0.2 }
-      g.fillStyle = iris; g.beginPath(); g.ellipse(ex2 + r * 0.035, ogenY + r * 0.03, oo * 0.68, oo * 0.85, 0, 0, 7); g.fill()
-      if (type === 'schaduw') g.restore()
-      g.fillStyle = '#0e0e1e'; g.beginPath(); g.ellipse(ex2 + r * 0.045, ogenY + r * 0.04, oo * 0.38, oo * 0.52, 0, 0, 7); g.fill()
-      g.fillStyle = '#ffffff'; g.beginPath(); g.arc(ex2 + r * 0.09, ogenY - r * 0.06, oo * 0.28, 0, 7); g.fill()
-      g.beginPath(); g.arc(ex2 - r * 0.01, ogenY + r * 0.08, oo * 0.13, 0, 7); g.fill()
-      // wenkbrauwen bij het laatste stadium: stoerder
-      if (stad >= 3) { g.strokeStyle = lijn; g.lineWidth = lw * 1.1; g.beginPath(); g.moveTo(ex2 - z * oo * 0.9, ogenY - oo * 1.45); g.lineTo(ex2 + z * oo * 0.7, ogenY - oo * 1.2); g.stroke() }
-    })
-    // wangen
-    g.fillStyle = 'rgba(255,110,150,0.4)'; g.beginPath(); g.ellipse(-r * 0.52, ogenY + r * 0.24, r * 0.12, r * 0.07, 0, 0, 7); g.ellipse(r * 0.52, ogenY + r * 0.24, r * 0.12, r * 0.07, 0, 0, 7); g.fill()
-    // mond: lief, of stoer met een tandje
-    g.strokeStyle = lijn; g.lineWidth = lw
-    if (stad >= 3) {
-      P = new Path2D(); P.moveTo(-r * 0.14, ogenY + r * 0.2); P.quadraticCurveTo(0, ogenY + r * 0.36, r * 0.14, ogenY + r * 0.2); P.closePath()
-      g.fillStyle = '#5a1a2a'; g.fill(P); g.stroke(P)
-      g.fillStyle = '#ffffff'; g.beginPath(); g.moveTo(r * 0.05, ogenY + r * 0.21); g.lineTo(r * 0.1, ogenY + r * 0.21); g.lineTo(r * 0.075, ogenY + r * 0.27); g.fill()
-    } else { g.beginPath(); g.arc(0, ogenY + r * 0.18, r * 0.1, 0.25, Math.PI - 0.25); g.stroke() }
-    // elementdeeltjes rond het wezen
-    if (!o.stil && r > 30) {
-      g.save(); g.globalCompositeOperation = 'lighter'
-      for (var dd = 0; dd < 5; dd++) {
-        var fase = (t * 0.6 + dd / 5) % 1, ax = Math.sin(dd * 2.3 + t) * r * 0.9, ay = r * 0.6 - fase * r * 1.8
-        var dk = type === 'vuur' ? '#ff9a3d' : type === 'water' ? '#9fe0ff' : type === 'plant' ? '#9aff7a' : type === 'bliksem' ? '#ffe14f' : '#c88aff'
-        NK.vlek(g, ax, ay, r * 0.08, dk, (1 - fase) * 0.8)
-      }
-      g.restore()
-    }
-  }
-  g.restore()
-}
+var tekenWezen = MTZ.teken
 function wezenCanvas(id, maat, o) {
   var c = document.createElement('canvas'); c.width = maat * 2; c.height = maat * 2
   tekenWezen(c.getContext("2d"), id, maat, maat * 1.0, maat * 0.82, Object.assign({ stil: true }, o || {}))
@@ -274,14 +91,15 @@ function naamVan(w, kant) {
 }
 function plekVan(kant) {
   var klein = Math.min(C.W, C.H)
-  return kant === 'wij' ? { x: C.W * 0.28, y: C.H * 0.5, r: klein * 0.17 } : { x: C.W * 0.72, y: C.H * 0.24, r: klein * 0.13 }
+  var breed = C.W > C.H * 1.4
+  return kant === 'wij' ? { x: C.W * 0.28, y: C.H * (breed ? 0.4 : 0.5), r: klein * (breed ? 0.15 : 0.17) } : { x: C.W * 0.72, y: C.H * (breed ? 0.2 : 0.24), r: klein * 0.13 }
 }
 // achtergrond van het gevecht: een landschap in de kleuren van het gebied
 var heuvels = null
 function tekenGevechtDecor(gebied) {
   var th = MTW.THEMA[gebied], H = C.H, W = C.W, hor = H * 0.42
   var lucht = ctx.createLinearGradient(0, 0, 0, hor)
-  var donker = gebied >= 3
+  var donker = !!th.nacht
   lucht.addColorStop(0, donker ? 'hsl(' + th.lucht + ',55%,10%)' : 'hsl(' + (th.lucht + 60) + ',70%,62%)')
   lucht.addColorStop(1, donker ? 'hsl(' + th.lucht + ',50%,24%)' : 'hsl(' + (th.lucht + 30) + ',75%,82%)')
   ctx.fillStyle = lucht; ctx.fillRect(0, 0, W, hor + 2)
@@ -351,6 +169,7 @@ function tekenGevecht(dt) {
     ctx.fillStyle = pr > 0.5 ? '#5be37a' : pr > 0.2 ? '#ffd23d' : '#ff5a7a'; NK.rondRect(ctx, bx + 12, by + 32, Math.max(0, (bw - 24) * pr), 9, 5); ctx.fill()
     if (kant === 'wij') { ctx.textAlign = 'right'; ctx.fillStyle = '#8f9bc4'; ctx.font = '700 11px Outfit'; ctx.fillText(Math.ceil(v.toon) + ' / ' + v.max, bx + bw - 12, by + 44) }
   })
+  tekenEffecten(dt)
   // bal
   if (anim.bal) {
     var b = anim.bal, pz = plekVan('zij'), pw = plekVan('wij')
@@ -361,6 +180,159 @@ function tekenGevecht(dt) {
     var ic = spulIcoon(b.soort, 18)
     ctx.drawImage(ic, x - 18, y - 18, 36, 36)
   }
+}
+
+// ── aanvalsanimaties: elk element ziet er anders uit, sterker = groter ──
+var effecten = []
+function startEffect(aanval, wie) {
+  var m = AV[aanval], van = plekVan(wie), naar = plekVan(wie === 'wij' ? 'zij' : 'wij')
+  var kracht = m.kracht >= 100 ? 3 : m.kracht >= 70 ? 2 : 1
+  var soort = m.heel ? 'herstel' : m.wij ? 'schild' : m.zij ? 'grauw' : m.type
+  effecten.push({ soort: soort, kracht: kracht, van: { x: van.x, y: van.y - van.r * 0.2, r: van.r }, naar: { x: naar.x, y: naar.y - naar.r * 0.2, r: naar.r }, t: 0, dur: soort === 'bliksem' ? 0.7 : 0.75, zaad: Math.random() * 1000 })
+  if (kracht === 3 && !D.rustig) flitsKleur = { k: MT.KLEUR[m.type] || '#ffffff', t: 0.35 }
+}
+var flitsKleur = null
+function ruisE(e, i) { var h = Math.sin(e.zaad + i * 12.9898) * 43758.5453; return h - Math.floor(h) }
+function tekenEffecten(dt) {
+  effecten = effecten.filter(function (e) {
+    e.t += dt
+    var f = Math.min(1, e.t / e.dur), van = e.van, naar = e.naar, R = naar.r, k = e.kracht
+    var reis = Math.min(1, f / 0.55), inslag = Math.max(0, (f - 0.5) / 0.5)
+    var punt = function (q, boog) { return [van.x + (naar.x - van.x) * q, van.y + (naar.y - van.y) * q - Math.sin(q * Math.PI) * (boog || 0)] }
+    ctx.save()
+    switch (e.soort) {
+      case 'vuur':
+        for (var i = 0; i < k; i++) {
+          var q = Math.max(0, Math.min(1, reis * 1.15 - i * 0.12)); if (q <= 0 || q >= 1) continue
+          var p = punt(q, R * (0.6 + i * 0.3))
+          for (var s = 5; s >= 0; s--) { var pp = punt(Math.max(0, q - s * 0.035), R * (0.6 + i * 0.3)); NK.vlek(ctx, pp[0], pp[1], R * (0.18 - s * 0.022) * (1 + k * 0.15), s < 2 ? '#ffe14f' : '#ff5a1a', 0.9 - s * 0.12) }
+          var vb = ctx.createRadialGradient(p[0], p[1], 0, p[0], p[1], R * 0.2 * (1 + k * 0.2)); vb.addColorStop(0, '#ffffff'); vb.addColorStop(0.4, '#ffe14f'); vb.addColorStop(1, 'rgba(255,90,20,0)')
+          ctx.fillStyle = vb; ctx.beginPath(); ctx.arc(p[0], p[1], R * 0.2 * (1 + k * 0.2), 0, 7); ctx.fill()
+        }
+        if (inslag > 0) {
+          ctx.globalCompositeOperation = 'lighter'
+          for (var v = 0; v < 6 + k * 3; v++) { var h = v / (6 + k * 3) * 6.28 + e.zaad, l = R * (0.3 + inslag * (0.8 + k * 0.25)); ctx.save(); ctx.translate(naar.x + Math.cos(h) * l * 0.6, naar.y + Math.sin(h) * l * 0.5); ctx.rotate(h + Math.PI / 2); ctx.globalAlpha = 1 - inslag; ctx.fillStyle = v % 2 ? '#ffb02e' : '#ff5a1a'; ctx.beginPath(); ctx.moveTo(0, -R * 0.25); ctx.quadraticCurveTo(R * 0.12, 0, 0, R * 0.12); ctx.quadraticCurveTo(-R * 0.12, 0, 0, -R * 0.25); ctx.fill(); ctx.restore() }
+          NK.vlek(ctx, naar.x, naar.y, R * (0.6 + inslag), '#ff8a3d', (1 - inslag) * 0.8)
+        }
+        break
+      case 'water':
+        for (var d = 0; d < 10 + k * 8; d++) {
+          var q2 = reis * 1.3 - d * 0.03; if (q2 <= 0 || q2 >= 1) continue
+          var p2 = punt(q2, R * 0.3), zw = Math.sin(q2 * 12 + d) * R * 0.08
+          ctx.fillStyle = d % 3 ? 'rgba(90,180,255,0.85)' : 'rgba(220,245,255,0.95)'; ctx.beginPath(); ctx.arc(p2[0], p2[1] + zw, R * (0.05 + (d % 3) * 0.02) * (1 + k * 0.15), 0, 7); ctx.fill()
+        }
+        if (inslag > 0) {
+          ctx.strokeStyle = 'rgba(160,220,255,' + (1 - inslag) + ')'; ctx.lineWidth = 4
+          for (var w = 0; w < k; w++) { ctx.beginPath(); ctx.ellipse(naar.x, naar.y + R * 0.6, R * (0.4 + inslag * (1 + w * 0.4)), R * (0.12 + inslag * 0.3), 0, 0, 7); ctx.stroke() }
+          for (var sp = 0; sp < 10 + k * 4; sp++) { var hs = -Math.PI * (0.1 + 0.8 * ruisE(e, sp)), ls = R * inslag * (0.6 + ruisE(e, sp + 50) * 0.8); ctx.fillStyle = 'rgba(200,240,255,' + (1 - inslag) + ')'; ctx.beginPath(); ctx.arc(naar.x + Math.cos(hs) * ls, naar.y + Math.sin(hs) * ls + inslag * inslag * R * 0.6, R * 0.05, 0, 7); ctx.fill() }
+        }
+        break
+      case 'plant':
+        for (var b = 0; b < 3 + k * 2; b++) {
+          var q3 = reis * 1.2 - b * 0.06; if (q3 <= 0 || q3 >= 1) continue
+          var p3 = punt(q3, R * (0.2 + ruisE(e, b) * 0.8)), off = (ruisE(e, b + 9) - 0.5) * R * 0.8
+          ctx.save(); ctx.translate(p3[0], p3[1] + off * Math.sin(q3 * Math.PI)); ctx.rotate(e.t * 18 + b)
+          ctx.fillStyle = b % 2 ? '#5be37a' : '#3fbf5a'; ctx.beginPath(); ctx.moveTo(-R * 0.14, 0); ctx.quadraticCurveTo(0, -R * 0.1, R * 0.14, 0); ctx.quadraticCurveTo(0, R * 0.1, -R * 0.14, 0); ctx.fill()
+          ctx.strokeStyle = '#2a8a42'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(-R * 0.12, 0); ctx.lineTo(R * 0.12, 0); ctx.stroke(); ctx.restore()
+        }
+        if (inslag > 0) {
+          if (k >= 2) { ctx.strokeStyle = 'rgba(60,170,80,' + (1 - inslag) + ')'; ctx.lineWidth = R * 0.08; for (var rk = 0; rk < k; rk++) { ctx.beginPath(); ctx.moveTo(naar.x - R * (0.9 - rk * 0.3), naar.y + R * 0.9); ctx.quadraticCurveTo(naar.x, naar.y - R * (0.5 + inslag * 0.4), naar.x + R * (0.9 - rk * 0.3), naar.y + R * 0.4); ctx.stroke() } }
+          for (var gs = 0; gs < 8; gs++) NK.ster(ctx, naar.x + (ruisE(e, gs) - 0.5) * R * 1.6, naar.y + (ruisE(e, gs + 20) - 0.5) * R * 1.2 - inslag * R * 0.4, R * 0.06 * (1 - inslag), '#c8ff9a')
+        }
+        break
+      case 'bliksem':
+        if (f > 0.25 && f < 0.75) {
+          var bovenY = k >= 2 ? -20 : van.y, bovenX = k >= 2 ? naar.x : van.x
+          ctx.globalCompositeOperation = 'lighter'
+          for (var z = 0; z < (k >= 2 ? 2 : 1); z++) {
+            ctx.strokeStyle = z ? 'rgba(255,255,255,0.95)' : 'rgba(255,225,80,0.9)'; ctx.lineWidth = z ? 2.5 : 7 + k * 2; ctx.shadowColor = '#ffe14f'; ctx.shadowBlur = 18
+            ctx.beginPath(); ctx.moveTo(bovenX, bovenY)
+            var stukken = 9
+            for (var j = 1; j <= stukken; j++) { var qq = j / stukken; ctx.lineTo(bovenX + (naar.x - bovenX) * qq + (j < stukken ? (Math.random() - 0.5) * R * 0.5 : 0), bovenY + (naar.y - bovenY) * qq) }
+            ctx.stroke()
+          }
+          ctx.shadowBlur = 0
+          NK.vlek(ctx, naar.x, naar.y, R * (0.8 + k * 0.2), '#ffe14f', 0.6)
+        }
+        if (inslag > 0) for (var vk = 0; vk < 6 + k * 2; vk++) { var hv = ruisE(e, vk) * 6.28, lv = R * (0.4 + inslag * 0.8); ctx.strokeStyle = 'rgba(255,240,120,' + (1 - inslag) + ')'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(naar.x + Math.cos(hv) * lv * 0.5, naar.y + Math.sin(hv) * lv * 0.5); ctx.lineTo(naar.x + Math.cos(hv + 0.3) * lv * 0.8, naar.y + Math.sin(hv - 0.2) * lv * 0.8); ctx.lineTo(naar.x + Math.cos(hv) * lv, naar.y + Math.sin(hv) * lv); ctx.stroke() }
+        break
+      case 'schaduw':
+        if (reis < 1) { var p4 = punt(reis, R * 0.3), orb = R * (0.18 + k * 0.05); var og = ctx.createRadialGradient(p4[0], p4[1], 0, p4[0], p4[1], orb * 1.6); og.addColorStop(0, '#1a0a2a'); og.addColorStop(0.5, '#5a2a9a'); og.addColorStop(1, 'rgba(165,107,255,0)'); ctx.fillStyle = og; ctx.beginPath(); ctx.arc(p4[0], p4[1], orb * 1.6, 0, 7); ctx.fill(); for (var sw = 0; sw < 4; sw++) { var pw = punt(Math.max(0, reis - sw * 0.06), R * 0.3); NK.vlek(ctx, pw[0], pw[1], orb * (1 - sw * 0.2), '#a56bff', 0.3) } }
+        if (inslag > 0) {
+          for (var kl = 0; kl < 3; kl++) {
+            var start = kl * 0.15; if (inslag < start) continue
+            var q5 = Math.min(1, (inslag - start) / 0.3), fade = Math.max(0, 1 - (inslag - start) / 0.7)
+            ctx.strokeStyle = 'rgba(200,120,255,' + fade + ')'; ctx.lineWidth = R * 0.07; ctx.shadowColor = '#a56bff'; ctx.shadowBlur = 14
+            ctx.beginPath(); ctx.moveTo(naar.x - R * 0.6 + kl * R * 0.3, naar.y - R * 0.7); ctx.lineTo(naar.x - R * 0.6 + kl * R * 0.3 + R * 0.6 * q5, naar.y - R * 0.7 + R * 1.2 * q5); ctx.stroke(); ctx.shadowBlur = 0
+          }
+          NK.vlek(ctx, naar.x, naar.y, R * 0.9, '#5a2a9a', (1 - inslag) * 0.5)
+        }
+        break
+      case 'ijs':
+        for (var ijs = 0; ijs < 3 + k * 2; ijs++) {
+          var q6 = reis * 1.2 - ijs * 0.05; if (q6 <= 0 || q6 >= 1) continue
+          var p6 = punt(q6, R * 0.2), o6 = (ruisE(e, ijs) - 0.5) * R * 0.7 * Math.sin(q6 * Math.PI), hoek = Math.atan2(naar.y - van.y, naar.x - van.x)
+          ctx.save(); ctx.translate(p6[0], p6[1] + o6); ctx.rotate(hoek); ctx.fillStyle = 'rgba(210,245,255,0.95)'; ctx.strokeStyle = '#7fe0ff'; ctx.lineWidth = 1.5
+          ctx.beginPath(); ctx.moveTo(R * 0.2, 0); ctx.lineTo(-R * 0.06, -R * 0.06); ctx.lineTo(-R * 0.14, 0); ctx.lineTo(-R * 0.06, R * 0.06); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore()
+        }
+        if (inslag > 0) {
+          ctx.strokeStyle = 'rgba(200,240,255,' + (1 - inslag) + ')'; ctx.lineWidth = 2
+          for (var sf = 0; sf < 4 + k * 2; sf++) { var hx = naar.x + (ruisE(e, sf) - 0.5) * R * 1.8, hy = naar.y + (ruisE(e, sf + 7) - 0.5) * R * 1.4, sr = R * 0.12 * (0.5 + inslag); for (var a3 = 0; a3 < 3; a3++) { var h3 = a3 * Math.PI / 3 + inslag; ctx.beginPath(); ctx.moveTo(hx - Math.cos(h3) * sr, hy - Math.sin(h3) * sr); ctx.lineTo(hx + Math.cos(h3) * sr, hy + Math.sin(h3) * sr); ctx.stroke() } }
+          if (k >= 2) { ctx.fillStyle = 'rgba(160,230,255,' + (0.5 * (1 - inslag)) + ')'; for (var kr = 0; kr < 5; kr++) { var hk = -Math.PI * (0.15 + kr * 0.17); ctx.save(); ctx.translate(naar.x + Math.cos(hk) * R * 0.7, naar.y + R * 0.7); ctx.rotate(hk + Math.PI / 2); ctx.beginPath(); ctx.moveTo(0, -R * 0.4 * Math.min(1, inslag * 3)); ctx.lineTo(R * 0.08, 0); ctx.lineTo(-R * 0.08, 0); ctx.fill(); ctx.restore() } }
+        }
+        break
+      case 'aarde':
+        for (var rs = 0; rs < k + 1; rs++) {
+          var q7 = reis * 1.15 - rs * 0.12; if (q7 <= 0 || q7 >= 1) continue
+          var p7 = punt(q7, R * (0.9 + rs * 0.2)), rr = R * (0.13 + k * 0.03)
+          ctx.save(); ctx.translate(p7[0], p7[1]); ctx.rotate(e.t * 8 + rs); ctx.fillStyle = '#8a6a4a'; ctx.strokeStyle = '#4a3420'; ctx.lineWidth = 2
+          ctx.beginPath(); for (var pt = 0; pt < 7; pt++) { var hp = pt / 7 * 6.28, lr = rr * (0.75 + ruisE(e, pt + rs * 10) * 0.4); ctx.lineTo(Math.cos(hp) * lr, Math.sin(hp) * lr) } ctx.closePath(); ctx.fill(); ctx.stroke()
+          ctx.fillStyle = 'rgba(255,255,255,0.25)'; ctx.beginPath(); ctx.arc(-rr * 0.3, -rr * 0.3, rr * 0.25, 0, 7); ctx.fill(); ctx.restore()
+        }
+        if (inslag > 0) {
+          for (var st2 = 0; st2 < 6 + k * 2; st2++) { var hd = -Math.PI * ruisE(e, st2), ld = R * inslag * (0.6 + ruisE(e, st2 + 3) * 0.6); ctx.fillStyle = 'rgba(190,150,100,' + (0.7 * (1 - inslag)) + ')'; ctx.beginPath(); ctx.arc(naar.x + Math.cos(hd) * ld, naar.y + R * 0.6 + Math.sin(hd) * ld * 0.4, R * (0.1 + inslag * 0.15), 0, 7); ctx.fill() }
+          if (k >= 3) { ctx.strokeStyle = 'rgba(60,40,20,' + (1 - inslag) + ')'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(naar.x - R, naar.y + R * 0.85); ctx.lineTo(naar.x - R * 0.4, naar.y + R * 0.75); ctx.lineTo(naar.x, naar.y + R * 0.9); ctx.lineTo(naar.x + R * 0.5, naar.y + R * 0.75); ctx.lineTo(naar.x + R, naar.y + R * 0.88); ctx.stroke() }
+        }
+        break
+      case 'lucht':
+        for (var wb = 0; wb < k + 1; wb++) {
+          var q8 = reis * 1.15 - wb * 0.1; if (q8 <= 0 || q8 >= 1) continue
+          var p8 = punt(q8, R * 0.1 * wb)
+          ctx.save(); ctx.translate(p8[0], p8[1] + (wb - k / 2) * R * 0.2); ctx.rotate(e.t * 14 + wb)
+          ctx.strokeStyle = 'rgba(230,245,255,0.95)'; ctx.lineWidth = R * 0.06; ctx.beginPath(); ctx.arc(0, 0, R * (0.2 + k * 0.04), 0, Math.PI * 1.1); ctx.stroke()
+          ctx.strokeStyle = 'rgba(168,200,255,0.7)'; ctx.lineWidth = R * 0.03; ctx.beginPath(); ctx.arc(0, 0, R * (0.28 + k * 0.04), 0.4, Math.PI * 1.3); ctx.stroke(); ctx.restore()
+        }
+        if (inslag > 0) {
+          ctx.strokeStyle = 'rgba(220,240,255,' + (1 - inslag) + ')'; ctx.lineWidth = 2.5
+          for (var tor = 0; tor < 5 + k; tor++) { var yy = naar.y + R * 0.8 - tor * R * 0.28, br = R * (0.15 + tor * 0.1) * (1 + inslag * 0.3); ctx.beginPath(); ctx.ellipse(naar.x + Math.sin(e.t * 10 + tor) * R * 0.1, yy, br, br * 0.28, 0, inslag * 10 + tor, inslag * 10 + tor + 4.5); ctx.stroke() }
+        }
+        break
+      case 'grauw':
+        ctx.strokeStyle = 'rgba(255,255,255,0.8)'; ctx.lineWidth = 3
+        for (var gr2 = 0; gr2 < 4; gr2++) { var q9 = (f * 1.5 - gr2 * 0.15); if (q9 <= 0 || q9 >= 1) continue; var p9 = punt(q9, 0); ctx.globalAlpha = 1 - q9; ctx.beginPath(); ctx.arc(p9[0], p9[1], R * (0.2 + q9 * 0.5), -0.9, 0.9); ctx.stroke(); ctx.beginPath(); ctx.arc(p9[0], p9[1], R * (0.2 + q9 * 0.5), Math.PI - 0.9, Math.PI + 0.9); ctx.stroke() }
+        break
+      case 'schild':
+        var sR = van.r * 1.15 * Math.min(1, f * 3), sa = f < 0.7 ? 0.8 : (1 - f) / 0.3 * 0.8
+        ctx.strokeStyle = 'rgba(127,224,255,' + sa + ')'; ctx.fillStyle = 'rgba(127,224,255,' + sa * 0.18 + ')'; ctx.lineWidth = 3
+        ctx.beginPath(); for (var hx2 = 0; hx2 < 6; hx2++) { var hh2 = hx2 / 6 * 6.28 + Math.PI / 6; ctx.lineTo(van.x + Math.cos(hh2) * sR, van.y + Math.sin(hh2) * sR * 1.05) } ctx.closePath(); ctx.fill(); ctx.stroke()
+        ctx.fillStyle = 'rgba(255,255,255,' + sa * 0.6 + ')'; ctx.beginPath(); ctx.ellipse(van.x - sR * 0.35, van.y - sR * 0.45, sR * 0.25, sR * 0.1, -0.6, 0, 7); ctx.fill()
+        break
+      case 'herstel':
+        for (var hl = 0; hl < 10; hl++) { var qh = (f * 1.4 - ruisE(e, hl) * 0.4); if (qh <= 0 || qh >= 1) continue; var hxp = van.x + (ruisE(e, hl + 5) - 0.5) * van.r * 1.6, hyp = van.y + van.r * 0.6 - qh * van.r * 1.6, hr = van.r * 0.08; ctx.globalAlpha = 1 - qh; ctx.fillStyle = '#7dff9a'; ctx.fillRect(hxp - hr, hyp - hr * 0.3, hr * 2, hr * 0.6); ctx.fillRect(hxp - hr * 0.3, hyp - hr, hr * 0.6, hr * 2) }
+        ctx.globalAlpha = 1; NK.vlek(ctx, van.x, van.y, van.r * 1.3, '#7dff9a', 0.35 * Math.sin(f * Math.PI))
+        break
+      default:
+        // normale stoot: een klap-ster met snelheidsstreepjes
+        if (inslag > 0) {
+          ctx.fillStyle = 'rgba(255,255,255,' + (1 - inslag) + ')'
+          ctx.beginPath(); for (var ns = 0; ns < 16; ns++) { var hn = ns / 16 * 6.28, ln = (ns % 2 ? 0.25 : 0.6) * R * (0.6 + inslag * 0.6); ctx.lineTo(naar.x + Math.cos(hn) * ln, naar.y + Math.sin(hn) * ln) } ctx.closePath(); ctx.fill()
+          ctx.fillStyle = 'rgba(255,225,100,' + (1 - inslag) + ')'; ctx.beginPath(); ctx.arc(naar.x, naar.y, R * 0.18 * (1 - inslag * 0.5), 0, 7); ctx.fill()
+        }
+    }
+    ctx.restore()
+    return f < 1
+  })
+  if (flitsKleur) { flitsKleur.t -= dt; if (flitsKleur.t <= 0) flitsKleur = null; else { ctx.fillStyle = NK.hexA(flitsKleur.k, flitsKleur.t * 0.7); ctx.fillRect(0, 0, C.W, C.H) } }
 }
 
 // ── gevecht: verloop ──
@@ -458,8 +430,7 @@ function verwerk(e, balSoort) {
     var m = AV[e.aanval], w = vis[e.wie]
     stap(naamVan(w, e.wie) + ' gebruikt ' + m.naam + '!', 0.75, function () {
       anim[e.wie] = anim[e.wie] || {}; anim[e.wie].aanval = 0.35; G.aanval(m.type)
-      var van = plekVan(e.wie), naar = plekVan(e.wie === 'wij' ? 'zij' : 'wij')
-      if (m.kracht) for (var i = 0; i < 14; i++) fx.punt({ x: van.x, y: van.y, vx: (naar.x - van.x) * (1.4 + Math.random() * 0.6), vy: (naar.y - van.y) * (1.4 + Math.random() * 0.6) + (Math.random() - 0.5) * 80, t: 0, max: 0.55, r: 3 + Math.random() * 4, col: MT.KLEUR[m.type], zwaarte: 0 })
+      startEffect(e.aanval, e.wie)
     })
   }
   if (e.t === 'mis') stap('Mis!', 0.7)
@@ -656,7 +627,7 @@ function aangekomen() {
   // wild gras
   if (k.t[W8.y][W8.x] === 'g' && Math.random() < 0.11 && MT.actiefWij(D.team) >= 0) {
     W8.pad = []
-    var gb = k.soort === 'poort' ? 5 : k.gebied
+    var gb = k.soort === 'poort' ? MT.GEBIEDEN.length - 1 : k.gebied
     var w = MT.wild(gb, Math.random(), Math.random(), Math.random())
     overgangNaar(function () { klaarVoorGevecht(); startGevecht(MT.gevecht('wild', [w], { gebied: gb, sleutel: 'wild' })) })
   }
@@ -699,8 +670,8 @@ function praat(d) {
   if (d.soort === 'legende') {
     var alle = MT.GEBIEDEN.every(function (g, i) { return verslagen('l' + i) })
     if (D.sterrenkat) zeg(null, 'Het is stil bij de poort. De Sterrenkat zit nu in jouw team.')
-    else if (!alle) zeg(null, 'Een vreemd licht schijnt hier... Kom terug als je alle zes badges hebt.')
-    else zeg(null, 'Er verschijnt een wezen van sterrenlicht!', function () { overgangNaar(function () { klaarVoorGevecht(); startGevecht(MT.gevecht('wild', [MT.maak('sterrenkat', 40)], { gebied: 5, sleutel: 'ster', vangkans: 0.3 })) }) })
+    else if (!alle) zeg(null, 'Een vreemd licht schijnt hier... Kom terug als je alle acht badges hebt.')
+    else zeg(null, 'Er verschijnt een wezen van sterrenlicht!', function () { overgangNaar(function () { klaarVoorGevecht(); startGevecht(MT.gevecht('wild', [MT.maak('sterrenkat', 42)], { gebied: MT.GEBIEDEN.length - 1, sleutel: 'ster', vangkans: 0.3 })) }) })
   }
 }
 function gaNaarBinnen(b) {
@@ -712,7 +683,7 @@ function gaNaarBinnen(b) {
     })
   }
   if (b.soort === 'winkel') { naarWinkel() }
-  if (b.soort === 'huis') zeg('Bewoner', ['Mijn opa ving vroeger een Sterrenkat... zegt hij.', 'Wist je dat Herstel je wezen midden in een gevecht beter maakt?', 'Superballen vangen veel beter dan glimbollen!', 'Een wezen leert nieuwe aanvallen als het een niveau omhoog gaat.', 'Schaduwwezens zijn sterk tegen vuur en plant.', 'Op elke route ligt wel iets op de grond. Kijk goed!', 'De leider van dit dorp is erg sterk.'][W8.a / 2])
+  if (b.soort === 'huis') zeg('Bewoner', ['Mijn opa ving vroeger een Sterrenkat... zegt hij.', 'Wist je dat Herstel je wezen midden in een gevecht beter maakt?', 'Superbollen vangen veel beter dan glimbollen!', 'Een wezen leert nieuwe aanvallen als het een niveau omhoog gaat.', 'Aardewezens zijn sterk tegen vuur en bliksem, maar water spoelt ze weg.', 'Op elke route ligt wel iets op de grond. Kijk goed!', 'Luchtwezens? Neem een bliksem- of ijswezen mee!', 'IJs smelt door vuur. Neem een vuurwezen mee naar de gym!', 'Dit is het laatste dorp. Leider Nox is de sterkste van allemaal.'][W8.a / 2])
   if (b.soort === 'gym') {
     var gl = MT.GEBIEDEN[b.gym].leider
     if (verslagen('l' + b.gym)) zeg('Leider ' + gl.naam, 'Je hebt mijn ' + gl.badge + ' al verdiend. Op naar het volgende dorp!')
@@ -1015,7 +986,7 @@ $('speel').onclick = function () { Geluid.klik(); verder() }
 $('s-geluid').onclick = function () { D.geluid = !D.geluid; D.bewaar(); this.classList.toggle('aan', D.geluid); Geluid.klik() }
 $('s-rustig').onclick = function () { D.rustig = !D.rustig; D.bewaar(); this.classList.toggle('aan', D.rustig); Geluid.klik() }
 function verder() {
-  if (!D.team.length) return naarStarter()
+  if (!D.team.length) { if (!D.uitlegGezien) { D.uitlegGezien = true; D.bewaar(); return toonUitleg(naarStarter) } return naarStarter() }
   if (D.gevecht && D.gevecht.zij) return startGevecht(D.gevecht)
   naarWereld()
 }
@@ -1069,8 +1040,8 @@ function frame(nu) {
   ctx.setTransform(C.dpr, 0, 0, C.dpr, 0, 0)
   schok.rustig = D.rustig
   controller()
-  var gb = D.gevecht ? MT.GEBIEDEN[D.gevecht.gebied] : MT.GEBIEDEN[MTW.gebiedVan(D.pos.a)]
-  var hue = { '#5be37a': 140, '#ffd23d': 45, '#3fa8ff': 210, '#ff6a3d': 15, '#a56bff': 270, '#ff4fd8': 320 }[gb.kleur] || 200
+  var gb = D.gevecht ? MT.GEBIEDEN[D.gevecht.gebied] : MT.GEBIEDEN[Math.min(MT.GEBIEDEN.length - 1, MTW.gebiedVan(D.pos.a))]
+  var hue = { '#5be37a': 140, '#ffd23d': 45, '#3fa8ff': 210, '#c8904a': 30, '#ff6a3d': 15, '#a8c8ff': 210, '#7fe0ff': 195, '#a56bff': 270 }[gb.kleur] || 200
   if (modus !== 'gevecht') NK.achtergrond(ctx, C.W, C.H, tijd, hue, D.rustig)
   if (modus === 'wereld' && W8.kaart) { wereldStap(dt); tekenWereld(dt) }
   else if (D.gevecht && vis && huidig === null) {
@@ -1088,4 +1059,21 @@ function frame(nu) {
 if (BELONING) verder()
 else { $('s-geluid').classList.toggle('aan', D.geluid); $('s-rustig').classList.toggle('aan', D.rustig); toonScherm('menu') }
 requestAnimationFrame(frame)
+
+// ── uitleg ──
+function toonUitleg(klaar) {
+  var wezen = function (id) { return function (g, w) { MTZ.teken(g, id, w / 2, w / 2 + 4, 36, { stil: true }) } }
+  var spul = function (soort) { return function (g, w) { g.drawImage(spulIcoon(soort, 28), w / 2 - 28, w / 2 - 28) } }
+  NK.uitleg([
+    [wezen('vonkel'), 'Kies je eerste wezen. Loop met de pijltjes of tik op de plek waar je heen wilt. Met de A-knop praat je en bekijk je dingen.'],
+    [function (g, w) { for (var i = 0; i < 9; i++) { var x = 14 + i * 6.5; g.strokeStyle = i % 2 ? '#3fbf5a' : '#2a9a46'; g.lineWidth = 4; g.beginPath(); g.moveTo(x, 64); g.quadraticCurveTo(x + 3, 42, x + (i % 3 - 1) * 5, 20 + (i % 2) * 8); g.stroke() } }, 'In het hoge gras wonen wilde wezens. Loop erdoor en je komt ze tegen.'],
+    [function (g, w) { MTW.embleem(g, 'water', 28, 40, 13, MT.KLEUR.water); MTW.embleem(g, 'vuur', 54, 40, 13, MT.KLEUR.vuur); g.strokeStyle = '#fff'; g.lineWidth = 3; g.beginPath(); g.moveTo(36, 40); g.lineTo(45, 40); g.moveTo(41, 35); g.lineTo(46, 40); g.lineTo(41, 45); g.stroke() }, 'In een gevecht kies je een aanval. Elk element is sterk tegen een ander: water wint van vuur, vuur van plant, plant van water. Kijk wat de mensen in de dorpen erover zeggen.'],
+    [spul('glimbol'), 'Is een wild wezen zwak? Gooi een bol om het te vangen. Een superbol vangt beter.'],
+    [spul('drankje'), 'Een drankje maakt je wezen beter. In het wezenhuis van elk dorp wordt je hele team gratis weer gezond.'],
+    [wezen('vlamvos'), 'Door te vechten worden je wezens sterker. Op een bepaald niveau veranderen ze in een nieuwe, stoere vorm.'],
+    [function (g, w) { NK.ster(g, w / 2, w / 2, 24, '#ffd23d') }, 'In elk dorp is een gym. Versla de leider en je krijgt een badge. De wachter laat je pas door als je die badge hebt. Met acht badges mag je naar de Sterrenpoort.'],
+    [function (g, w) { g.save(); g.imageSmoothingEnabled = false; g.translate(16, 12); g.scale(3, 3); MTW.persoon(g, 0, 0, 2, 0, { pet: '#7a3ad8', jas: '#e8443a' }); g.restore() }, 'Trainers die je zien, dagen je uit. Winnen geeft munten voor de winkel.'],
+  ], klaar)
+}
+$('naaruitleg').onclick = function () { Geluid.klik(); toonUitleg() }
 })()

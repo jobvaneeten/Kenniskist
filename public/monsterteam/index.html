@@ -9,7 +9,7 @@
 <style>
   :root{ --accent:#5be37a; --titel1:#5be37a; --titel2:#ffd23d; }
   #menu{background:radial-gradient(ellipse 80% 45% at 50% 20%,rgba(6,6,24,.55),transparent 75%);backdrop-filter:none;}
-  .t-vuur{--k:#ff6a3d} .t-water{--k:#3fa8ff} .t-plant{--k:#5be37a} .t-bliksem{--k:#ffd23d} .t-schaduw{--k:#a56bff} .t-normaal{--k:#c9cfe8}
+  .t-vuur{--k:#ff6a3d} .t-water{--k:#3fa8ff} .t-plant{--k:#5be37a} .t-bliksem{--k:#ffd23d} .t-schaduw{--k:#a56bff} .t-ijs{--k:#7fe0ff} .t-aarde{--k:#c8904a} .t-lucht{--k:#a8c8ff} .t-normaal{--k:#c9cfe8}
   .type{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
         color:#0a0a1a;background:var(--k);}
   .kopbalk{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;}
@@ -94,9 +94,10 @@
 
 <div class="scherm" id="menu">
   <h1>Monster&shy;team</h1>
-  <p class="onder">Vang wezens, train ze, laat ze veranderen en versla de zes leiders!</p>
+  <p class="onder">Vang wezens, train ze, laat ze veranderen en versla de acht gymleiders!</p>
   <div class="menuknoppen">
     <button class="knop" id="speel">Spelen</button>
+    <button class="knop2" id="naaruitleg">Hoe werkt het?</button>
   </div>
   <div class="instel">
     <button class="schakel" id="s-geluid"><i></i>Geluid</button>
@@ -173,6 +174,7 @@
 <script src="/neonkit/neonkit.js"></script>
 <script src="kern.js"></script>
 <script src="wereld.js"></script>
+<script src="wezens.js"></script>
 <script src="spel.js"></script>
 </body>
 </html>

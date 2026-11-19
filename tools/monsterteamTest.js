@@ -29,7 +29,7 @@ for (const id of Object.keys(MT.SOORTEN)) {
 }
 // groeien en veranderen
 const g0 = MT.maak('vonkel', 5), ev = []
-MT.geefXp(g0, 20000, ev)
+MT.geefXp(g0, 100000, ev)
 if (g0.id !== 'zonnevos') fout('vonkel moet via vlamvos zonnevos worden, is ' + g0.id)
 if (g0.aanvallen.length > 4) fout('meer dan 4 aanvallen')
 if (!ev.some(e => e.t === 'evolutie')) fout('geen evolutie-gebeurtenis')

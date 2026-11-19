@@ -19,6 +19,10 @@ var G = {
   oogst: function () { Geluid.toon(660, 0.1, 'triangle', 0.12); Geluid.toon(990, 0.14, 'triangle', 0.1, 0.07) },
   kip: function () { Geluid.toon(900, 0.06, 'square', 0.05); Geluid.toon(1200, 0.08, 'square', 0.04, 0.07) },
   koe: function () { Geluid.toon(140, 0.5, 'sawtooth', 0.06, 0, 110) },
+  varken: function () { Geluid.toon(260, 0.12, 'sawtooth', 0.05, 0, 200); Geluid.toon(240, 0.14, 'sawtooth', 0.05, 0.14, 180) },
+  plons: function () { Geluid.ruis(0.25, 0.1, 1200, 0.7) },
+  beet: function () { Geluid.toon(880, 0.08, 'square', 0.07); Geluid.toon(1320, 0.1, 'square', 0.06, 0.08) },
+  niveau: function () { [523, 659, 784, 1047, 1319].forEach(function (f, i) { Geluid.toon(f, 0.22, 'triangle', 0.09, i * 0.09) }) },
   schaap: function () { Geluid.toon(420, 0.4, 'sawtooth', 0.04, 0, 380) },
   munt: function () { [988, 1319].forEach(function (f, i) { Geluid.toon(f, 0.1, 'triangle', 0.1, i * 0.06) }) },
   niet: function () { Geluid.toon(180, 0.1, 'sine', 0.1, 0, 140) },
@@ -261,6 +265,66 @@ function lerp(a, b, f) { return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) 
 function schaduw(x0, y0, x1, y1) { vlak([iso(x0 + 0.2, y1, 0), iso(x1 + 0.2, y1, 0), iso(x1 + 0.4, y1 + 0.35, 0), iso(x0 + 0.4, y1 + 0.35, 0)], 'rgba(0,0,0,0.15)') }
 function schaduwRond(x, y, r) { var c = iso(x + 0.1, y + 0.1); ellips(ctx, c[0], c[1], A * r * 1.2, A * r * 0.55, 'rgba(0,0,0,0.16)') }
 
+// ── bijenkasten, appelbomen en vissen ──
+var KAST = [[13.35, 1.55], [13.35, 2.45]], BOOMPLEK = [[3.5, 13.05], [7.4, 13.1], [11.0, 13.0]], VISPLEK = [13.85, 12.25], DOBBER = [14.9, 12.25]
+function bijenkast(n) {
+  var p = KAST[n], kast = s.kasten[n], x = p[0], y = p[1], winter = PB.seizoen(s) === 3
+  schaduwRond(x, y, 0.3)
+  blok(ctx, x - 0.22, y - 0.22, x + 0.22, y + 0.22, 0, 0.08, '#8a5a32', '#6b4426', '#5a3a22')
+  blok(ctx, x - 0.2, y - 0.2, x + 0.2, y + 0.2, 0.08, 0.3, '#ffe9a0', '#f4d070', '#e0b850')
+  blok(ctx, x - 0.2, y - 0.2, x + 0.2, y + 0.2, 0.3, 0.52, '#fff4c8', '#ffe08a', '#ecc460')
+  blok(ctx, x - 0.26, y - 0.26, x + 0.26, y + 0.26, 0.52, 0.6, winter ? '#ffffff' : '#c2502a', '#a83a20', '#8a2e18')
+  var gat = iso(x, y + 0.2, 0.18); ellips(ctx, gat[0], gat[1], A * 0.06, A * 0.03, '#3a2412')
+  if (!winter && !D.rustig) for (var b = 0; b < 4; b++) { var hk = tijd * (2 + b * 0.3) + b * 1.7, c = iso(x + Math.cos(hk) * 0.45, y + Math.sin(hk * 1.3) * 0.45, 0.4 + Math.sin(hk * 2) * 0.15); ellips(ctx, c[0], c[1], A * 0.035, A * 0.025, '#ffd23d'); ellips(ctx, c[0] - A * 0.01, c[1] - A * 0.03, A * 0.025, A * 0.015, 'rgba(255,255,255,0.8)') }
+  if (kast && kast.vol) { var c2 = iso(x, y, 1.0); cirkel(ctx, c2[0], c2[1], A * 0.17, 'rgba(255,255,255,0.92)'); productIcoon(ctx, 'honing', c2[0], c2[1], A * 0.1) }
+}
+function appelboom(n) {
+  var p = BOOMPLEK[n], b = s.bomen[n], x = p[0], y = p[1], sz = SEIZ[PB.seizoen(s)], c = iso(x, y)
+  var gr = Math.min(1, 0.45 + b.leeftijd * 0.11)
+  schaduwRond(x, y, 0.5 * gr)
+  ctx.fillStyle = '#6b4426'; ctx.fillRect(c[0] - A * 0.07 * gr, c[1] - A * 0.65 * gr, A * 0.14 * gr, A * 0.65 * gr)
+  var r = A * 0.55 * gr, cy = c[1] - A * 1.0 * gr, blad = PB.seizoen(s) === 2 ? ['#d88a2a', '#f0b04a'] : sz.blad
+  bol(ctx, c[0], cy, r, blad[0], blad[1]); bol(ctx, c[0] - r * 0.5, cy + r * 0.3, r * 0.7, blad[0], blad[1]); bol(ctx, c[0] + r * 0.5, cy + r * 0.25, r * 0.68, blad[0], blad[1])
+  if (sz.bloesem && b.leeftijd >= 3) for (var q = 0; q < 7; q++) cirkel(ctx, c[0] + Math.cos(q * 2.3 + n) * r * 0.75, cy + Math.sin(q * 1.9) * r * 0.5, A * 0.05, '#ffe0ee')
+  if (sz.sneeuw) ellips(ctx, c[0], cy - r * 0.6, r * 0.7, r * 0.25, '#ffffff')
+  if (b.vol) [[-0.4, 0.1], [0.3, -0.2], [0.1, 0.4], [-0.1, -0.45], [0.55, 0.25]].forEach(function (a) { bol(ctx, c[0] + a[0] * r, cy + a[1] * r, A * 0.075, '#e8302a', '#ff9a8a') })
+}
+var hengel = null
+function tekenDobber() {
+  if (!hengel) return
+  var d = iso(DOBBER[0], DOBBER[1]), beet = hengel.fase === 'beet', dip = beet ? A * 0.07 : Math.sin(tijd * 3) * A * 0.02
+  if (beet) for (var w = 0; w < 2; w++) { var f = (tijd * 2 + w / 2) % 1; ctx.strokeStyle = 'rgba(255,255,255,' + (1 - f) + ')'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.ellipse(d[0], d[1], A * (0.1 + f * 0.3), A * (0.05 + f * 0.15), 0, 0, TAU); ctx.stroke() }
+  cirkel(ctx, d[0], d[1] - A * 0.05 + dip, A * 0.07, '#ffffff'); ctx.fillStyle = '#e8302a'; ctx.beginPath(); ctx.arc(d[0], d[1] - A * 0.05 + dip, A * 0.07, Math.PI, 0); ctx.fill()
+}
+function tekenUitroep() {
+  if (!hengel || hengel.fase !== 'beet') return
+  var d = iso(DOBBER[0], DOBBER[1]), bx = d[0], by = d[1] - A * 0.75, sp = 1 + Math.sin(tijd * 20) * 0.08
+  ctx.save(); ctx.translate(bx, by); ctx.scale(sp, sp)
+  NK.rondRect(ctx, -A * 0.18, -A * 0.24, A * 0.36, A * 0.4, A * 0.1); ctx.fillStyle = '#ffffff'; ctx.fill()
+  ctx.fillStyle = '#e8302a'; ctx.font = '900 ' + Math.round(A * 0.34) + 'px Outfit, system-ui'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('!', 0, -A * 0.03)
+  ctx.restore()
+}
+function startVissen() {
+  if (s.visVandaag >= 6) { melding('De vissen zijn moe. Morgen bijten ze weer.'); return }
+  hengel = { fase: 'wacht', t: 0, beet: 1.6 + Math.random() * 3.2 }; boer.kijk = 1; G.plons()
+  melding('Wacht tot de dobber onder gaat. Zie je het uitroepteken? Tik dan snel!')
+}
+function hengelLoop(dt) {
+  hengel.t += dt
+  if (hengel.fase === 'wacht' && hengel.t > hengel.beet) { hengel.fase = 'beet'; hengel.t = 0; G.beet() }
+  else if (hengel.fase === 'beet' && hengel.t > 0.95) { hengel = null; G.niet(); melding('Te laat! De vis is weggezwommen. Tik op de vijver om het nog eens te proberen.') }
+}
+function haalIn() {
+  var hg = hengel; hengel = null
+  if (hg.fase !== 'beet') { G.niet(); melding('Te vroeg! Wacht tot je het uitroepteken ziet.'); return }
+  var r = PB.vis(s, 1 - hg.t / 0.95), d = iso(DOBBER[0], DOBBER[1])
+  if (r.t === 'moe') { melding('De vissen zijn moe. Morgen bijten ze weer.'); return }
+  G.plons(); G.oogst(); fx.spat(d[0], d[1], 16, '#7fd0ff', 140, { ster: true }); fx.tekst(d[0], d[1] - A, '+1 ' + PB.naamVan(r.id), r.id === 'goudvis' ? '#ffd23d' : '#ffffff', 18)
+  if (r.id === 'goudvis') melding('Wauw, een goudvis! Die is heel veel waard.')
+  else if (r.id === 'karper') melding('Een dikke karper!')
+  bewaar(); hudBij()
+}
+
 // ── dieren en de boer ──
 var dierPlek = []
 function dierLoop(dt) {
@@ -290,6 +354,13 @@ function tekenDier(soort, x, y, kijk, loopt) {
     ctx.fillStyle = '#3a3a3a'; [-0.12, -0.04, 0.06, 0.14].forEach(function (q, i) { ctx.fillRect(q * u, -u * 0.12 + (i % 2 ? st : -st), u * 0.035, u * 0.12) })
     ;[[-0.12, -0.28], [0, -0.32], [0.12, -0.28], [-0.06, -0.2], [0.06, -0.2], [0, -0.38]].forEach(function (q) { bol(ctx, q[0] * u, q[1] * u, u * 0.12, '#f4f0e8', '#ffffff') })
     ellips(ctx, u * 0.24, -u * 0.32, u * 0.08, u * 0.1, '#3a3a3a'); cirkel(ctx, u * 0.27, -u * 0.35, u * 0.015, '#ffffff')
+  } else if (soort === 'varken') {
+    ctx.fillStyle = '#e8909a'; [-0.15, -0.06, 0.08, 0.17].forEach(function (q, i) { ctx.fillRect(q * u, -u * 0.12 + (i % 2 ? st : -st), u * 0.05, u * 0.12) })
+    ctx.strokeStyle = '#e8909a'; ctx.lineWidth = u * 0.025; ctx.beginPath(); ctx.arc(-u * 0.27, -u * 0.27, u * 0.04, 0, TAU * 0.8); ctx.stroke()
+    bol(ctx, 0, -u * 0.25, u * 0.22, '#ffb0b8', '#ffd8dc'); bol(ctx, u * 0.2, -u * 0.32, u * 0.13, '#ffb0b8', '#ffd8dc')
+    ellips(ctx, u * 0.31, -u * 0.3, u * 0.05, u * 0.06, '#ff8a98'); cirkel(ctx, u * 0.32, -u * 0.32, u * 0.012, '#8a3a4a'); cirkel(ctx, u * 0.32, -u * 0.28, u * 0.012, '#8a3a4a')
+    ctx.fillStyle = '#ff8a98'; ctx.beginPath(); ctx.moveTo(u * 0.12, -u * 0.42); ctx.lineTo(u * 0.17, -u * 0.52); ctx.lineTo(u * 0.21, -u * 0.43); ctx.fill()
+    cirkel(ctx, u * 0.24, -u * 0.36, u * 0.018, '#14142a')
   } else {
     ctx.fillStyle = '#e8e4dc'; [-0.18, -0.08, 0.1, 0.2].forEach(function (q, i) { ctx.fillRect(q * u, -u * 0.18 + (i % 2 ? st : -st), u * 0.05, u * 0.18) })
     ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.ellipse(0, -u * 0.3, u * 0.3, u * 0.17, 0, 0, TAU); ctx.fill()
@@ -321,6 +392,11 @@ function tekenBoer() {
   cirkel(ctx, k * u * 0.05, -u * 0.75, u * 0.018, '#14142a'); ellips(ctx, k * u * 0.08, -u * 0.7, u * 0.03, u * 0.018, 'rgba(255,120,120,0.5)')
   // strohoed
   ellips(ctx, 0, -u * 0.82, u * 0.24, u * 0.07, '#e8c45a'); ellips(ctx, 0, -u * 0.88, u * 0.12, u * 0.08, '#e8c45a'); ctx.fillStyle = '#c84a3a'; ctx.fillRect(-u * 0.12, -u * 0.87, u * 0.24, u * 0.025)
+  if (hengel) {
+    var tip = [k * u * 0.7, -u * 1.0], dd = iso(DOBBER[0], DOBBER[1])
+    ctx.strokeStyle = '#8a5a32'; ctx.lineWidth = Math.max(1.5, u * 0.035); ctx.beginPath(); ctx.moveTo(k * u * 0.15, -u * 0.42); ctx.lineTo(tip[0], tip[1]); ctx.stroke()
+    ctx.strokeStyle = 'rgba(255,255,255,0.75)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(tip[0], tip[1]); ctx.quadraticCurveTo((tip[0] + dd[0] - c[0]) / 2, (tip[1] + dd[1] - c[1]) / 2 + u * 0.3, dd[0] - c[0], dd[1] - c[1] - u * 0.05); ctx.stroke()
+  }
   // gereedschap
   if (boer.werk > 0 && boer.gereedschap) {
     var gx = k * u * 0.2, gy = -u * 0.35 + arm
@@ -342,17 +418,21 @@ function gereedschapVoor(i) {
 }
 function taakPlek(t) {
   if (t.soort === 'veld') return [FX + t.i % PB.W + 0.5, FY + (t.i / PB.W | 0) + 1.05]
+  if (t.soort === 'kast') return [KAST[t.n][0] - 0.1, KAST[t.n][1] + 0.55]
+  if (t.soort === 'boom') return [BOOMPLEK[t.n][0] + 0.1, BOOMPLEK[t.n][1] + 0.6]
+  if (t.soort === 'vis') return VISPLEK
   var d = dierPlek[t.n]
   return d ? [d.x - 0.45, d.y + 0.15] : [boer.x, boer.y]
 }
 function boerLoop(dt) {
   if (boer.werk > 0) { boer.werk -= dt; if (boer.werk <= 0) { var t = boer.bezig; boer.bezig = null; if (t) voerUit(t) } return }
+  if (hengel) { hengelLoop(dt); boer.loop = 0; return }
   var taak = boer.rij[0]
   if (!taak) { boer.loop = 0; return }
   var doel = taakPlek(taak), dx = doel[0] - boer.x, dy = doel[1] - boer.y, l = Math.hypot(dx, dy)
   if (l < 0.05) {
     boer.rij.shift(); boer.loop = 0
-    boer.gereedschap = taak.soort === 'veld' ? gereedschapVoor(taak.i) : 'mand'
+    boer.gereedschap = taak.soort === 'veld' ? gereedschapVoor(taak.i) : taak.soort === 'vis' ? null : 'mand'
     boer.werk = taak.soort === 'veld' ? 0.32 : 0.2; boer.bezig = taak
     return
   }
@@ -396,12 +476,14 @@ var weer = [], rook = []
 function sfeer(dt) {
   var sz = PB.seizoen(s), dk = nachtDonker()
   if (!D.rustig) {
-    var soort = sz === 3 ? 'sneeuw' : sz === 2 ? 'blad' : sz === 0 ? 'bloesem' : (dk > 0.3 ? 'vuurvlieg' : null)
-    if (soort && weer.length < 45 && Math.random() < 0.5) weer.push({ x: Math.random() * C.W, y: soort === 'vuurvlieg' ? C.H * (0.3 + Math.random() * 0.5) : -6, s: soort, t: 0, f: Math.random() * 6 })
+    var soort = s.weer === 'regen' ? 'regen' : sz === 3 ? 'sneeuw' : sz === 2 ? 'blad' : sz === 0 ? 'bloesem' : (dk > 0.3 ? 'vuurvlieg' : null)
+    var veel = soort === 'regen' ? 140 : s.weer === 'sneeuw' ? 110 : 45
+    for (var nw = 0; nw < (soort === 'regen' ? 4 : s.weer === 'sneeuw' ? 2 : 1); nw++) if (soort && weer.length < veel && Math.random() < 0.5) weer.push({ x: Math.random() * C.W, y: soort === 'vuurvlieg' ? C.H * (0.3 + Math.random() * 0.5) : -6, s: soort, t: 0, f: Math.random() * 6 })
   }
   weer = weer.filter(function (w) {
     w.t += dt
     if (w.s === 'vuurvlieg') { w.x += Math.sin(w.t + w.f) * dt * 20; w.y += Math.cos(w.t * 0.7 + w.f) * dt * 15; return w.t < 6 }
+    if (w.s === 'regen') { w.y += dt * 520; w.x -= dt * 90; return w.y < C.H + 10 }
     w.y += dt * (w.s === 'sneeuw' ? 40 : 55); w.x += Math.sin(w.t * 2 + w.f) * dt * 30
     return w.y < C.H + 10
   })
@@ -411,7 +493,8 @@ function sfeer(dt) {
 function tekenWeer() {
   rook.forEach(function (r) { ctx.fillStyle = 'rgba(230,230,240,' + (0.4 * (1 - r.t / 3)) + ')'; ctx.beginPath(); ctx.arc(r.x, r.y, A * (0.08 + r.t * 0.08), 0, TAU); ctx.fill() })
   weer.forEach(function (w) {
-    if (w.s === 'sneeuw') cirkel(ctx, w.x, w.y, 2.4, '#ffffff')
+    if (w.s === 'regen') { ctx.strokeStyle = 'rgba(190,220,255,0.6)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(w.x, w.y); ctx.lineTo(w.x + 4, w.y - 14); ctx.stroke() }
+    else if (w.s === 'sneeuw') cirkel(ctx, w.x, w.y, 2.4, '#ffffff')
     else if (w.s === 'blad') { ctx.save(); ctx.translate(w.x, w.y); ctx.rotate(w.t * 3); ellips(ctx, 0, 0, 4, 2, Math.floor(w.f) % 2 ? '#e0702a' : '#c2502a'); ctx.restore() }
     else if (w.s === 'bloesem') ellips(ctx, w.x, w.y, 2.5, 1.6, '#ffc8e4')
     else { ctx.save(); ctx.globalCompositeOperation = 'lighter'; NK.vlek(ctx, w.x, w.y, 7, '#d8ff6a', 0.5 + Math.sin(w.t * 4 + w.f) * 0.4); ctx.restore() }
@@ -425,12 +508,15 @@ function tekenWereld(dt) {
   tekenLucht()
   tekenGrond()
   for (var i = 0; i < PB.W * PB.H; i++) tekenAkker(i)
+  tekenDobber()
   // alles met hoogte, van achter naar voor
   var lijst = []
   var voeg = function (diepte, f) { lijst.push({ d: diepte, f: f }) }
   voeg(1.2 + 2.6, huis); voeg(9.2 + 2.6, schuur); voeg(7.5 + 1.4, put); voeg(14.5 + 2.4, brievenbus)
   voeg(1 + 3.3, function () { lantaarn(1, 3.3) }); voeg(13.6 + 3.3, function () { lantaarn(13.6, 3.3) })
   BOMEN.forEach(function (b, n) { voeg(b[0] + b[1], function () { boom(b[0], b[1], n) }) })
+  s.kasten.forEach(function (q, n) { if (KAST[n]) voeg(KAST[n][0] + KAST[n][1], function () { bijenkast(n) }) })
+  s.bomen.forEach(function (q, n) { if (BOOMPLEK[n]) voeg(BOOMPLEK[n][0] + BOOMPLEK[n][1], function () { appelboom(n) }) })
   // hekken om de akker en de wei
   voeg(FX + FY - 0.2, function () { hekLijn(FX - 0.15, FY - 0.15, FX + 12.15, FY - 0.15); hekLijn(FX - 0.15, FY - 0.15, FX - 0.15, FY + 8.15) })
   voeg(FX + 12 + FY + 8 + 0.3, function () { hekLijn(FX - 0.15, FY + 8.15, FX + 12.15, FY + 8.15); hekLijn(FX + 12.15, FY - 0.15, FX + 12.15, FY + 8.15) })
@@ -466,6 +552,7 @@ function tekenWereld(dt) {
   if (s === D.s) voeg(boer.x + boer.y, tekenBoer)
   lijst.sort(function (a, b) { return a.d - b.d })
   lijst.forEach(function (o) { o.f() })
+  tekenUitroep()
   // tikmarkeringen en geplande klusjes
   doelFlits = doelFlits.filter(function (f) { f.t += dt; ruitRand(f.i, 'rgba(255,255,255,' + (1 - f.t / 0.5) + ')'); return f.t < 0.5 })
   boer.rij.forEach(function (q) { if (q.soort === 'veld') ruitRand(q.i, 'rgba(255,230,120,0.7)', true) })
@@ -473,6 +560,7 @@ function tekenWereld(dt) {
   var t = s.tijd
   var tint = t < 0.33 && t > 0.2 ? 'rgba(255,170,200,' + (0.14 * (1 - Math.abs(t - 0.27) / 0.07)) + ')' : t > 0.62 && t < 0.85 ? 'rgba(255,140,50,' + (0.18 * (1 - Math.abs(t - 0.72) / 0.13)) + ')' : null
   if (tint) { ctx.fillStyle = tint; ctx.fillRect(0, 0, C.W, C.H) }
+  if (s.weer === 'regen') { ctx.fillStyle = 'rgba(40,60,100,0.2)'; ctx.fillRect(0, 0, C.W, C.H) }
   var dk = nachtDonker()
   if (dk > 0) {
     ctx.fillStyle = 'rgba(10,12,48,' + dk * 0.75 + ')'; ctx.fillRect(0, 0, C.W, C.H)
@@ -492,7 +580,28 @@ function hartje(g, x, y, r, k) { g.fillStyle = k; g.beginPath(); g.arc(x - r * 0
 function productIcoon(g, p, x, y, r) {
   if (p === 'ei') { var eg = g.createRadialGradient(x - r * 0.3, y - r * 0.4, r * 0.1, x, y, r); eg.addColorStop(0, '#ffffff'); eg.addColorStop(1, '#e8d8b8'); g.fillStyle = eg; g.beginPath(); g.ellipse(x, y, r * 0.72, r, 0, 0, TAU); g.fill() }
   else if (p === 'melk') { NK.rondRect(g, x - r * 0.55, y - r * 0.7, r * 1.1, r * 1.5, r * 0.2); g.fillStyle = '#ffffff'; g.fill(); g.strokeStyle = '#b8c8d8'; g.lineWidth = 1; g.stroke(); g.fillStyle = '#3fa8ff'; g.fillRect(x - r * 0.55, y - r * 0.15, r * 1.1, r * 0.35) }
-  else { [[-0.35, 0], [0.35, 0.05], [0, -0.3], [0, 0.3]].forEach(function (q) { bol(g, x + q[0] * r, y + q[1] * r, r * 0.55, '#f4f0e8', '#ffffff') }) }
+  else if (p === 'wol') { [[-0.35, 0], [0.35, 0.05], [0, -0.3], [0, 0.3]].forEach(function (q) { bol(g, x + q[0] * r, y + q[1] * r, r * 0.55, '#f4f0e8', '#ffffff') }) }
+  else if (p === 'honing') { NK.rondRect(g, x - r * 0.6, y - r * 0.5, r * 1.2, r * 1.3, r * 0.3); g.fillStyle = '#ffb02e'; g.fill(); g.fillStyle = 'rgba(255,255,255,0.45)'; g.fillRect(x - r * 0.4, y - r * 0.35, r * 0.15, r * 0.8); NK.rondRect(g, x - r * 0.68, y - r * 0.8, r * 1.36, r * 0.35, r * 0.1); g.fillStyle = '#c2502a'; g.fill(); NK.rondRect(g, x - r * 0.35, y, r * 0.7, r * 0.4, r * 0.08); g.fillStyle = '#fff4c8'; g.fill() }
+  else if (p === 'truffel') { bol(g, x - r * 0.2, y + r * 0.1, r * 0.6, '#5a3a2a', '#9a7a5a'); bol(g, x + r * 0.3, y - r * 0.1, r * 0.45, '#5a3a2a', '#9a7a5a') }
+  else if (p === 'appel') { bol(g, x, y + r * 0.1, r * 0.8, '#e8302a', '#ff9a8a'); g.strokeStyle = '#6b4426'; g.lineWidth = r * 0.12; g.beginPath(); g.moveTo(x, y - r * 0.6); g.lineTo(x + r * 0.1, y - r * 0.95); g.stroke(); ellips(g, x + r * 0.35, y - r * 0.8, r * 0.3, r * 0.14, '#3fbf5a') }
+  else if (PB.SPUL[p] && PB.SPUL[p].vis) {
+    var vk = { voorn: ['#b8c8d8', '#e8f0f8'], baars: ['#7aa84a', '#c8e08a'], karper: ['#c8903a', '#f0c87a'], goudvis: ['#ff8a1a', '#ffd23d'] }[p]
+    g.fillStyle = vk[0]; g.beginPath(); g.moveTo(x - r * 0.6, y); g.lineTo(x - r * 1.0, y - r * 0.4); g.lineTo(x - r * 1.0, y + r * 0.4); g.closePath(); g.fill()
+    var vg = g.createLinearGradient(0, y - r * 0.5, 0, y + r * 0.5); vg.addColorStop(0, vk[0]); vg.addColorStop(1, vk[1]); g.fillStyle = vg; g.beginPath(); g.ellipse(x + r * 0.05, y, r * 0.75, r * 0.45, 0, 0, TAU); g.fill()
+    if (p === 'baars') { g.fillStyle = 'rgba(40,60,20,0.5)'; for (var bs = 0; bs < 3; bs++) g.fillRect(x - r * 0.3 + bs * r * 0.3, y - r * 0.4, r * 0.1, r * 0.7) }
+    cirkel(g, x + r * 0.5, y - r * 0.1, r * 0.1, '#14142a'); cirkel(g, x + r * 0.53, y - r * 0.13, r * 0.04, '#ffffff')
+  }
+  else if (PB.RECEPTEN[p]) {
+    var rc = PB.RECEPTEN[p], kl = rc.kleur
+    if (rc.vorm === 'kom') { ellips(g, x, y - r * 0.1, r * 0.95, r * 0.35, kl); g.fillStyle = '#f4f0e8'; g.beginPath(); g.moveTo(x - r * 0.95, y - r * 0.1); g.quadraticCurveTo(x, y + r * 1.2, x + r * 0.95, y - r * 0.1); g.fill(); ellips(g, x - r * 0.3, y - r * 0.18, r * 0.2, r * 0.07, 'rgba(255,255,255,0.4)') }
+    else if (rc.vorm === 'bord') { ellips(g, x, y + r * 0.2, r, r * 0.45, '#f4f0e8'); ellips(g, x, y + r * 0.2, r * 0.75, r * 0.32, '#dcd8d0'); bol(g, x - r * 0.15, y, r * 0.42, kl); bol(g, x + r * 0.25, y + r * 0.05, r * 0.32, kl) }
+    else if (rc.vorm === 'pot') { NK.rondRect(g, x - r * 0.6, y - r * 0.5, r * 1.2, r * 1.3, r * 0.25); g.fillStyle = kl; g.fill(); g.fillStyle = 'rgba(255,255,255,0.4)'; g.fillRect(x - r * 0.4, y - r * 0.35, r * 0.15, r * 0.8); NK.rondRect(g, x - r * 0.68, y - r * 0.8, r * 1.36, r * 0.35, r * 0.1); g.fillStyle = '#f4f0e8'; g.fill(); g.fillStyle = '#e8302a'; for (var ru = 0; ru < 4; ru++) g.fillRect(x - r * 0.6 + ru * r * 0.34, y - r * 0.8, r * 0.17, r * 0.35) }
+    else if (rc.vorm === 'bak') { for (var pk = 0; pk < 7; pk++) bol(g, x + ((pk * 0.37) % 1 - 0.5) * r * 1.1, y - r * 0.45 + (pk % 3) * r * 0.12, r * 0.25, kl); g.fillStyle = '#e8302a'; g.beginPath(); g.moveTo(x - r * 0.75, y - r * 0.3); g.lineTo(x + r * 0.75, y - r * 0.3); g.lineTo(x + r * 0.55, y + r * 0.85); g.lineTo(x - r * 0.55, y + r * 0.85); g.closePath(); g.fill(); g.fillStyle = '#ffffff'; for (var st2 = 0; st2 < 3; st2++) g.fillRect(x - r * 0.5 + st2 * r * 0.4, y - r * 0.3, r * 0.18, r * 1.15) }
+    else if (rc.vorm === 'fles') { NK.rondRect(g, x - r * 0.45, y - r * 0.3, r * 0.9, r * 1.2, r * 0.25); g.fillStyle = kl; g.fill(); g.fillStyle = kl; g.fillRect(x - r * 0.18, y - r * 0.85, r * 0.36, r * 0.6); g.fillStyle = '#8a5a32'; g.fillRect(x - r * 0.2, y - r * 0.98, r * 0.4, r * 0.18); NK.rondRect(g, x - r * 0.35, y + r * 0.05, r * 0.7, r * 0.45, r * 0.08); g.fillStyle = '#fff4c8'; g.fill() }
+    else if (rc.vorm === 'kaas') { g.fillStyle = kl; g.beginPath(); g.moveTo(x - r * 0.9, y + r * 0.5); g.lineTo(x + r * 0.9, y + r * 0.5); g.lineTo(x + r * 0.9, y - r * 0.1); g.lineTo(x - r * 0.9, y - r * 0.55); g.closePath(); g.fill(); g.fillStyle = '#e8a82a'; [[-0.3, 0.1, 0.14], [0.35, 0.2, 0.1], [0.5, -0.02, 0.08], [-0.6, 0.3, 0.08]].forEach(function (q) { cirkel(g, x + q[0] * r, y + q[1] * r, q[2] * r, '#e8a82a') }) }
+    else if (rc.vorm === 'sjaal') { for (var sj = 0; sj < 5; sj++) { g.fillStyle = sj % 2 ? '#ffffff' : kl; g.fillRect(x - r * 0.9 + sj * r * 0.36, y - r * 0.3, r * 0.36, r * 0.6) } g.fillStyle = kl; g.fillRect(x + r * 0.5, y + r * 0.3, r * 0.3, r * 0.6) }
+    else { g.fillStyle = '#e8c48a'; g.beginPath(); g.moveTo(x - r * 0.9, y + r * 0.5); g.lineTo(x + r * 0.9, y + r * 0.5); g.lineTo(x + r * 0.2, y - r * 0.6); g.closePath(); g.fill(); g.fillStyle = kl; g.beginPath(); g.moveTo(x - r * 0.65, y + r * 0.3); g.lineTo(x + r * 0.65, y + r * 0.3); g.lineTo(x + r * 0.18, y - r * 0.4); g.closePath(); g.fill(); cirkel(g, x + r * 0.2, y - r * 0.6, r * 0.18, '#ffffff') }
+  }
 }
 // klein plaatje voor knoppen en lijsten
 function plaatje(id, zakje) {
@@ -540,11 +649,16 @@ $('z-uit').onclick = function () { zoom = Math.max(1, zoom / 1.3); begrens(); pa
 $('z-pas').onclick = function () { zoom = 1; panX = panY = 0; pasIn() }
 
 function tik(sx, sy) {
+  if (hengel) { haalIn(); return }
   // eerst een dier?
   for (var n = 0; n < dierPlek.length; n++) {
     var c = iso(dierPlek[n].x, dierPlek[n].y)
     if (Math.hypot(c[0] - sx, c[1] - A * 0.3 - sy) < A * 0.45) { zetInRij({ soort: 'dier', n: n }); return }
   }
+  for (var kn = 0; kn < s.kasten.length; kn++) { var kc = iso(KAST[kn][0], KAST[kn][1]); if (Math.hypot(kc[0] - sx, kc[1] - A * 0.35 - sy) < A * 0.45) { zetInRij({ soort: 'kast', n: kn }); return } }
+  for (var bn = 0; bn < s.bomen.length; bn++) { var bc = iso(BOOMPLEK[bn][0], BOOMPLEK[bn][1]); if (Math.hypot(bc[0] - sx, bc[1] - A * 0.95 - sy) < A * 0.75) { zetInRij({ soort: 'boom', n: bn }); return } }
+  var vm = iso(15.6, 12.1); if (Math.pow((sx - vm[0]) / (A * 1.7), 2) + Math.pow((sy - vm[1]) / (A * 0.85), 2) < 1) { boer.rij = boer.rij.filter(function (q) { return q.soort !== 'vis' }); zetInRij({ soort: 'vis' }); return }
+  for (var hh = 0; hh <= 1.8; hh += 0.3) { var hw = terug(sx, sy + hh * A); if (hw[0] > 1.1 && hw[0] < 4.3 && hw[1] > 0.3 && hw[1] < 2.7) { Geluid.klik(); paneel('keuken'); return } }
   var w = terug(sx, sy + A * 0.09), fx2 = Math.floor(w[0]) - FX, fy2 = Math.floor(w[1]) - FY
   if (fx2 < 0 || fy2 < 0 || fx2 >= PB.W || fy2 >= PB.H) return
   var i = fy2 * PB.W + fx2
@@ -557,6 +671,19 @@ function zetInRij(t) {
   boer.rij.push(t); Geluid.toon(1100, 0.03, 'triangle', 0.04)
 }
 function voerUit(taak) {
+  if (taak.soort === 'vis') { startVissen(); return }
+  if (taak.soort === 'kast') {
+    var rk = PB.raapKast(s, taak.n), pk = iso(KAST[taak.n][0], KAST[taak.n][1], 0.6)
+    if (rk) { G.oogst(); fx.spat(pk[0], pk[1], 12, '#ffb02e', 100, { ster: true }); fx.tekst(pk[0], pk[1] - 20, '+' + rk.n + ' Honing', '#ffd23d', 16) }
+    else melding(PB.seizoen(s) === 3 ? 'In de winter rusten de bijen.' : 'De bijen zijn nog bezig. Morgenochtend is er weer honing.')
+    bewaar(); hudBij(); return
+  }
+  if (taak.soort === 'boom') {
+    var rb = PB.plukBoom(s, taak.n), pb = iso(BOOMPLEK[taak.n][0], BOOMPLEK[taak.n][1], 1.0)
+    if (rb && rb.t === 'appel') { G.oogst(); fx.spat(pb[0], pb[1], 12, '#e8302a', 100, { ster: true }); fx.tekst(pb[0], pb[1] - 20, '+3 Appel', '#ffffff', 16) }
+    else if (rb) melding(PB.seizoen(s) === 3 ? 'In de winter groeien er geen appels.' : rb.nog ? 'Je boom moet nog ' + rb.nog + (rb.nog === 1 ? ' dag' : ' dagen') + ' groeien.' : 'Er hangen nu geen appels. Kom morgen terug!')
+    bewaar(); hudBij(); return
+  }
   if (taak.soort === 'dier') {
     var n = taak.n, r = PB.aai(s, n), d = dierPlek[n]
     if (!r || !d) return
@@ -603,7 +730,9 @@ function frame(nu) {
 
 // ── gebeurtenissen van de tijd ──
 function gebeurtenis(e) {
-  if (e.t === 'dag') { G.ochtend(); melding('Goedemorgen! Dag ' + PB.dagInSeizoen(s) + ' van de ' + PB.SEIZOENEN[PB.seizoen(s)].toLowerCase() + '.'); if (!D.zaad || !s.zaden[D.zaad] || PB.GEWASSEN[D.zaad].seizoen !== PB.seizoen(s)) kiesVolgendZaad() }
+  if (e.t === 'niveau') { G.niveau(); fx.spat(C.W / 2, C.H * 0.35, 40, '#8dff4f', 260, { ster: true }); fx.tekst(C.W / 2, C.H * 0.3, 'Niveau ' + e.niveau + '!', '#ffd23d', 34); melding('Niveau ' + e.niveau + '! ' + e.tekst) }
+  if (e.t === 'gekookt') setTimeout(function () { melding('Je ' + PB.naamVan(e.id).toLowerCase() + ' is klaar! Kijk in de schuur.') }, 1800)
+  if (e.t === 'dag') { G.ochtend(); melding(e.weer === 'regen' ? 'Het regent! Al je planten krijgen vandaag vanzelf water.' : 'Goedemorgen! Dag ' + PB.dagInSeizoen(s) + ' van de ' + PB.SEIZOENEN[PB.seizoen(s)].toLowerCase() + '.'); if (!D.zaad || !s.zaden[D.zaad] || PB.GEWASSEN[D.zaad].seizoen !== PB.seizoen(s)) kiesVolgendZaad() }
   if (e.t === 'seizoen') { melding('De ' + PB.SEIZOENEN[e.seizoen].toLowerCase() + ' is begonnen! Wat niet bij dit seizoen hoort, is verwelkt.'); D.zaad = null; kiesVolgendZaad() }
   if (e.t === 'cadeau') melding('Het dorp geeft je ' + e.n + ' zakjes ' + PB.GEWASSEN[e.id].naam.toLowerCase() + '-zaad. Succes!')
   bewaar()
@@ -616,6 +745,8 @@ function hudBij() {
   $('dagtekst').textContent = PB.SEIZOENEN[PB.seizoen(s)] + ' · dag ' + PB.dagInSeizoen(s) + ' · ' + uur + ':' + (min < 10 ? '0' : '') + min
   $('tijdvul').style.width = (s.tijd * 100).toFixed(1) + '%'
   $('hudmunten').textContent = s.munten
+  $('nivtal').textContent = 'Niv. ' + PB.niveau(s); $('nivvul').style.width = (PB.voortgang(s) * 100).toFixed(0) + '%'
+  if (s.ev && s.ev.length && huidig === null && s === D.s) gebeurtenis(s.ev.shift())
   var zc = $('c-zaad').getContext('2d'); zc.clearRect(0, 0, 64, 64)
   if (D.zaad && s.zaden[D.zaad]) { zc.drawImage(plaatje(D.zaad, true), 0, 0, 64, 64); $('zaadtekst').textContent = PB.GEWASSEN[D.zaad].naam + ' (' + s.zaden[D.zaad] + ')' }
   else $('zaadtekst').textContent = 'Kies zaad'
@@ -660,13 +791,19 @@ function paneel(soort) {
       Object.keys(PB.DIEREN).forEach(function (k) {
         var d = PB.DIEREN[k], ic = document.createElement('canvas'); ic.width = 96; ic.height = 96
         var oud = ctx, oA = A, oOX = OX, oOY = OY; ctx = ic.getContext('2d'); A = 110; OX = 48; OY = 80; tekenDier(k, 0, 0, 1, false); ctx = oud; A = oA; OX = oOX; OY = oOY
-        rij(ic, d.naam, 'Aai hem elke dag: dan geeft hij de volgende ochtend ' + d.productNaam.toLowerCase() + ' (waard ' + d.waarde + ').', { t: '<span class="munt" style="color:inherit">' + d.prijs + '</span>', uit: s.munten < d.prijs || s.dieren.length >= PB.maxDieren(s) },
-          function () { if (PB.koopDier(s, k)) { G[k](); bewaar(); paneel('winkel'); hudBij() } })
+        var dslot = PB.niveau(s) < (d.niveau || 1)
+        rij(ic, d.naam, (dslot ? 'Vanaf niveau ' + d.niveau + '. ' : '') + 'Aai hem elke dag: dan geeft hij de volgende ochtend ' + d.productNaam.toLowerCase() + ' (waard ' + d.waarde + ').', { t: '<span class="munt" style="color:inherit">' + d.prijs + '</span>', uit: dslot || s.munten < d.prijs || s.dieren.length >= PB.maxDieren(s) },
+          function () { if (PB.koopDier(s, k)) { G[k](); bewaar(); paneel('winkel'); hudBij() } }, dslot)
       })
     }
+    if (winkelTab === 'upgrades') Object.keys(PB.EXTRA).forEach(function (k) {
+      var e = PB.EXTRA[k], heb = (k === 'bijenkast' ? s.kasten : s.bomen).length, slot = PB.niveau(s) < e.niveau
+      rij(plaatje(k === 'bijenkast' ? 'honing' : 'appel'), e.naam + ' (' + heb + '/' + e.max + ')', (slot ? 'Vanaf niveau ' + e.niveau + '. ' : '') + e.uitleg, heb >= e.max ? { t: 'Maximaal', k: 'kies aan', uit: true } : { t: '<span class="munt" style="color:inherit">' + e.prijs + '</span>', uit: slot || s.munten < e.prijs },
+        function () { if (PB.koopExtra(s, k)) { Geluid.koop(); bewaar(); paneel('winkel'); hudBij(); melding(k === 'bijenkast' ? 'Je bijenkast staat naast de schuur. Morgen is er honing!' : 'Je appelboom staat onder de akker. Over 5 dagen hangen er appels aan.') } }, slot)
+    })
     if (winkelTab === 'upgrades') Object.keys(PB.UPGRADES).forEach(function (k) {
-      var u = PB.UPGRADES[k], nv = s.upg[k], prijs = u.prijzen[nv]
-      rij(null, u.naam + ' (' + nv + '/' + u.prijzen.length + ')', u.uitleg, prijs == null ? { t: 'Maximaal', k: 'kies aan', uit: true } : { t: '<span class="munt" style="color:inherit">' + prijs + '</span>', uit: s.munten < prijs },
+      var u = PB.UPGRADES[k], nv = s.upg[k], prijs = u.prijzen[nv], uslot = PB.niveau(s) < (u.niveau || 1)
+      rij(null, u.naam + ' (' + nv + '/' + u.prijzen.length + ')', (uslot ? 'Vanaf niveau ' + u.niveau + '. ' : '') + u.uitleg, prijs == null ? { t: 'Maximaal', k: 'kies aan', uit: true } : { t: '<span class="munt" style="color:inherit">' + prijs + '</span>', uit: uslot || s.munten < prijs },
         function () { if (PB.koopUpgrade(s, k)) { Geluid.koop(); bewaar(); paneel('winkel'); hudBij() } })
     })
   }
@@ -676,6 +813,22 @@ function paneel(soort) {
       var bak = PB.GEWASSEN[o.id] ? s.oogst : s.producten, heb = bak[o.id] || 0
       rij(plaatje(o.id), o.wie + ' wil ' + o.n + ' × ' + PB.naamVan(o.id), 'Je hebt er ' + heb + ' · beloning ' + o.beloning + ' munten',
         { t: 'Breng', uit: heb < o.n }, function () { var w = PB.lever(s, k); if (w) { G.munt(); Geluid.win(); melding(o.wie + ' is blij! +' + w + ' munten'); bewaar(); paneel('dorp'); hudBij() } })
+    })
+  }
+  if (soort === 'keuken') {
+    var nv = PB.niveau(s), max = 1 + s.upg.fornuis
+    kop.textContent = 'Keuken'
+    if (nv < 2) sub.textContent = 'De keuken gaat open op niveau 2. Oogst, aai je dieren, vis en help het dorp om ervaring te krijgen.'
+    else {
+      sub.textContent = s.pannen.length ? 'Op het fornuis: ' + s.pannen.map(function (p) { return PB.naamVan(p.id).toLowerCase() }).join(' en ') + '. Morgenochtend is het klaar!' : 'Kies een recept. Wat je kookt is morgenochtend klaar en is meer waard dan de losse spullen.'
+      if (s.pannen.length >= max) sub.textContent += ' Je fornuis is vol.'
+    }
+    Object.keys(PB.RECEPTEN).sort(function (x, y) { return (PB.kanKoken(s, y) ? 1 : 0) - (PB.kanKoken(s, x) ? 1 : 0) || PB.RECEPTEN[x].niveau - PB.RECEPTEN[y].niveau }).forEach(function (id) {
+      var r = PB.RECEPTEN[id], slot = nv < r.niveau
+      var wat = Object.keys(r.nodig).map(function (n) { return r.nodig[n] + ' ' + PB.naamVan(n).toLowerCase() + ' (je hebt ' + PB.hoeveel(s, n) + ')' }).join(' + ')
+      var gevraagd = s.opdrachten.some(function (o) { return o.id === id })
+      rij(plaatje(id), r.naam, slot ? 'Vanaf niveau ' + r.niveau : wat + ' · waard ' + r.waarde + (gevraagd ? ' · het dorp vraagt hierom!' : ''), slot ? null : { t: r.vorm === 'sjaal' ? 'Breien' : r.vorm === 'kaas' ? 'Maken' : 'Koken', uit: !PB.kanKoken(s, id) || s.pannen.length >= max },
+        function () { if (PB.kook(s, id)) { G.zaai(); melding(r.naam + ' staat op het fornuis. Morgenochtend is het klaar!'); bewaar(); paneel('keuken'); hudBij() } }, slot || !PB.kanKoken(s, id))
     })
   }
   if (soort === 'schuur') {
@@ -698,6 +851,7 @@ $('b-zaad').onclick = function () { Geluid.klik(); paneel('zaad') }
 $('b-winkel').onclick = function () { Geluid.klik(); paneel('winkel') }
 $('b-dorp').onclick = function () { Geluid.klik(); paneel('dorp') }
 $('b-schuur').onclick = function () { Geluid.klik(); paneel('schuur') }
+$('b-keuken').onclick = function () { Geluid.klik(); paneel('keuken') }
 $('b-slaap').onclick = function () {
   Geluid.klik()
   if (s.tijd > 0.25 && s.tijd < 0.6) { melding('Het is nog dag! Slapen kan vanaf de middag.'); return }
@@ -716,7 +870,9 @@ function toonScherm(id) {
 }
 function melding(t) { var m = $('melding'); m.textContent = t; m.classList.remove('aan'); void m.offsetWidth; m.classList.add('aan'); clearTimeout(melding.t); melding.t = setTimeout(function () { m.classList.remove('aan') }, 3000) }
 function start() {
+  if (!D.s && !D.uitlegGezien) { D.uitlegGezien = true; D.bewaar(); toonUitleg(start); return }
   s = D.s
+  if (s) PB.herstel(s)
   if (!s) { s = PB.nieuw((Math.random() * 4294967296) >>> 0); D.zaad = 'radijs'; bewaar(); melding('Welkom op je boerderij! Tik op de akker: de boer gaat zaaien en water geven.') }
   else melding('Je gaat verder op dag ' + PB.dagInSeizoen(s) + ' van de ' + PB.SEIZOENEN[PB.seizoen(s)].toLowerCase() + '.')
   dierPlek = []
@@ -740,8 +896,25 @@ function toonMenu() {
 }
 document.addEventListener('visibilitychange', function () { if (document.hidden && D.s) bewaar() })
 
+// ── uitleg ──
+function toonUitleg(klaar) {
+  var ic = function (id, zakje) { return function (g, w) { g.drawImage(plaatje(id, zakje), 8, 8, 64, 64) } }
+  NK.uitleg([
+    [ic('radijs', true), 'Tik op de akker. De boer ploegt het gras om, zaait, geeft water en oogst. Je kunt een paar vakjes achter elkaar aantikken.'],
+    [function (g) { g.fillStyle = '#50aaff'; g.beginPath(); g.moveTo(40, 14); g.quadraticCurveTo(60, 42, 40, 62); g.quadraticCurveTo(20, 42, 40, 14); g.fill() }, 'Een plant groeit alleen als hij die dag water kreeg. Zie je een blauwe druppel? Dan heeft hij dorst. Als het regent, krijgt alles vanzelf water.'],
+    [ic('zonnebloem'), 'Elk seizoen duurt 10 dagen. Wat niet bij het nieuwe seizoen hoort, verwelkt. In de winkel zie je wat er nu groeit.'],
+    [ic('ei'), 'Koop dieren en aai ze elke dag. De volgende ochtend hebben ze iets voor je.'],
+    [ic('karper'), 'Tik op de vijver om te vissen. Gaat de dobber onder en zie je een uitroepteken? Tik dan snel!'],
+    [ic('pannenkoek'), 'Vanaf niveau 2 kun je koken: tik op je huis of op Keuken. Wat je kookt is de volgende ochtend klaar en meer waard.'],
+    [ic('jam'), 'Het dorp vraagt om spullen. Breng ze bij Opdrachten voor extra munten en veel ervaring. Verkoop de rest in de schuur.'],
+    [ic('honing'), 'Hoe hoger je niveau, hoe meer je kunt: bijenkasten (niveau 3), een varken dat truffels zoekt (4) en appelbomen (5).'],
+    [function (g) { g.fillStyle = '#c8b8ff'; g.beginPath(); g.arc(40, 40, 22, 0, 7); g.fill(); g.fillStyle = '#1c1c3a'; g.beginPath(); g.arc(50, 34, 20, 0, 7); g.fill() }, 'Is het al middag? Tik op Slapen en de volgende dag begint meteen.'],
+  ], klaar)
+}
+$('naaruitleg').onclick = function () { Geluid.klik(); toonUitleg() }
+
 // ── start ──
 if (BELONING) start()
-else { s = D.s; toonMenu() }
+else { s = D.s; if (s) PB.herstel(s); toonMenu() }
 requestAnimationFrame(frame)
 })()

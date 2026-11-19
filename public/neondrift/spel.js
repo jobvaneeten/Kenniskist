@@ -618,7 +618,7 @@ function toonMenu() {
 }
 $('terug').onclick = function () { Geluid.klik(); if (huidig === 'menu') NK.naarOuder('neondrift-terug'); else toonMenu() }
 $('verder').onclick = function () { Geluid.klik(); s = null; hervat() }
-$('speel').onclick = function () { Geluid.klik(); s = null; nieuweRit() }
+$('speel').onclick = function () { Geluid.klik(); s = null; if (!D.uitlegGezien) { D.uitlegGezien = true; D.bewaar(); return toonUitleg(nieuweRit) } nieuweRit() }
 $('nogeens').onclick = function () { Geluid.klik(); s = null; nieuweRit() }
 $('eindmenu').onclick = function () { Geluid.klik(); s = null; toonMenu() }
 $('eindgarage').onclick = function () { Geluid.klik(); s = null; naarGarage() }
@@ -664,4 +664,18 @@ zorgVoorMissies()
 if (BELONING) { if (!hervat()) nieuweRit() }
 else toonMenu()
 requestAnimationFrame(frame)
+
+// ── uitleg ──
+function toonUitleg(klaar) {
+  var weg = function (g, w, bocht) { g.strokeStyle = '#2a2a5a'; g.lineWidth = 16; g.beginPath(); g.moveTo(10, 62); g.lineTo(40, 62); if (bocht) g.lineTo(40, 14); else g.lineTo(70, 62); g.stroke(); g.strokeStyle = '#ff4fd8'; g.lineWidth = 2; g.beginPath(); g.moveTo(10, 54); g.lineTo(32, 54); g.lineTo(32, 14); g.moveTo(10, 70); g.lineTo(48, 70); g.lineTo(48, 14); g.stroke() }
+  NK.uitleg([
+    [function (g, w) { g.fillStyle = 'rgba(77,232,255,0.25)'; g.beginPath(); g.arc(40, 40, 26, 0, 7); g.fill(); g.fillStyle = '#4de8ff'; g.beginPath(); g.arc(40, 40, 13, 0, 7); g.fill() }, 'Je auto rijdt vanzelf. Houd het scherm (of de spatiebalk) ingedrukt om de ene kant op te sturen. Laat los en je stuurt weer de andere kant op.'],
+    [function (g, w) { weg(g, w, true); g.fillStyle = '#ffd23d'; g.beginPath(); g.arc(40, 62, 5, 0, 7); g.fill() }, 'De weg slingert. Druk op tijd bij elke bocht. Kom je naast de weg, dan val je eraf.'],
+    [function (g, w) { g.save(); g.shadowColor = '#4de8ff'; g.shadowBlur = 12; g.strokeStyle = '#4de8ff'; g.lineWidth = 4; g.beginPath(); g.arc(40, 40, 22, 0, 7); g.stroke(); g.restore() }, 'Ga netjes door het midden van een bocht: dat is een perfecte bocht. Meer perfecte bochten achter elkaar geeft meer punten.'],
+    [function (g, w) { NK.ster(g, 40, 40, 20, '#ffd23d') }, 'Pak de sterren op de weg. Daarmee koop je in de garage nieuwe auto’s en betere onderdelen.'],
+    [function (g, w) { g.strokeStyle = '#7fe0ff'; g.lineWidth = 4; g.beginPath(); g.moveTo(40, 14); g.lineTo(62, 22); g.lineTo(60, 44); g.quadraticCurveTo(54, 60, 40, 68); g.quadraticCurveTo(26, 60, 20, 44); g.lineTo(18, 22); g.closePath(); g.stroke() }, 'Een schild vangt je één keer op als je van de weg raakt. Een magneet trekt sterren naar je toe. Meer grip laat je auto strakker sturen.'],
+    [function (g, w) { g.fillStyle = '#5be37a'; g.beginPath(); g.moveTo(22, 42); g.lineTo(34, 54); g.lineTo(58, 28); g.lineTo(52, 22); g.lineTo(34, 42); g.lineTo(28, 36); g.closePath(); g.fill() }, 'Doe de drie opdrachten in het menu voor extra sterren. Daarna krijg je nieuwe, moeilijkere opdrachten.'],
+  ], klaar)
+}
+$('naaruitleg').onclick = function () { Geluid.klik(); toonUitleg() }
 })()

@@ -25,6 +25,9 @@
   #balk button canvas{width:32px;height:32px;}
   #balk button svg{width:30px;height:30px;}
   #balk .stip{position:absolute;top:-4px;right:-4px;min-width:20px;height:20px;border-radius:99px;background:var(--rood);font-size:12px;display:flex;align-items:center;justify-content:center;padding:0 5px;}
+  #niv{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 10px;border-radius:14px;background:rgba(16,18,44,.78);border:1px solid rgba(255,255,255,.18);font-family:var(--disp);font-size:13px;}
+  #niv i{display:block;width:46px;height:5px;border-radius:9px;background:rgba(255,255,255,.15);overflow:hidden;}
+  #niv u{display:block;height:100%;width:0;background:var(--accent);}
   .lijstje{display:grid;gap:8px;width:min(480px,100%);}
   .rijtje{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:16px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);}
   .rijtje canvas{width:40px;height:40px;flex:none;}
@@ -42,6 +45,7 @@
 <div class="hud" id="hud">
   <div class="hudrij" id="hudrij">
     <button class="rond" id="naarmenu" aria-label="Naar het menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <div id="niv" aria-label="Jouw niveau"><span id="nivtal">Niv. 1</span><i><u id="nivvul"></u></i></div>
     <div id="klok"><div id="dagtekst">Lente · dag 1</div><div id="tijdbalk"><i id="tijdvul"></i></div></div>
     <span class="munt hudmunt" id="hudmunten">0</span>
   </div>
@@ -51,6 +55,7 @@
   <button id="b-winkel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 9l2-5h12l2 5M4 9v11h16V9M4 9h16M9 20v-6h6v6"/></svg>Winkel</button>
   <button id="b-dorp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M5 4h14v16l-7-4-7 4z"/><path d="M9 9h6M9 12h4"/></svg>Opdrachten<span class="stip verborgen" id="dorpstip">0</span></button>
   <button id="b-schuur"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 10l9-6 9 6v10H3z"/><path d="M8 20v-6h8v6M8 14l8 6M16 14l-8 6"/></svg>Schuur</button>
+  <button id="b-keuken"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11h14v3a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5z"/><path d="M17 12h4"/><path d="M8 4c0 2 2 2 2 4M12 4c0 2 2 2 2 4"/></svg>Keuken</button>
   <button id="b-slaap"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 15A8 8 0 1 1 9 4a7 7 0 0 0 11 11z"/></svg>Slapen</button>
 </div>
 <div id="zoom"><button class="rond" id="z-in" aria-label="Inzoomen">+</button><button class="rond" id="z-uit" aria-label="Uitzoomen">−</button><button class="rond" id="z-pas" aria-label="Alles in beeld"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button></div>
@@ -63,6 +68,7 @@
   <p class="onder">Zaai, geef water, oogst en help het dorp. Elk seizoen groeit er iets anders!</p>
   <div class="menuknoppen">
     <button class="knop" id="speel">Spelen</button>
+    <button class="knop2" id="naaruitleg">Hoe werkt het?</button>
     <button class="knop2" id="nieuw">Opnieuw beginnen</button>
   </div>
   <div class="instel">
