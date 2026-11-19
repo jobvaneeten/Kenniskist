@@ -86,7 +86,7 @@ export default function KlasScherm({ klas, alleKlassen, onBack, onKlasGewijzigd 
               <span>›</span>
               <strong>{naam}</strong>
             </div>
-            <LeerlingDetail leerlingId={leerlingId} />
+            <LeerlingDetail leerlingId={leerlingId} onVerwijderd={() => { setLeerlingId(null); herlaad() }} />
           </>
         )}
 

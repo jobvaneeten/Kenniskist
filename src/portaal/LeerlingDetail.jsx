@@ -5,6 +5,7 @@ import { toolLabel } from '../lib/tools.js'
 import FoutenLijst from './FoutenLijst.jsx'
 import LeerlingDoelen from './LeerlingDoelen.jsx'
 import GegevensWissen from './GegevensWissen.jsx'
+import LeerlingVerwijderen from './LeerlingVerwijderen.jsx'
 import Balk from './Balk.jsx'
 import { groepeerSessies, scoreKlasse, kortMoment } from './resultaatHelpers.js'
 import { Knop, Icoon } from '../ui/index.jsx'
@@ -277,7 +278,8 @@ function WachtwoordResetten({ leerlingId }) {
 // bewust niet. Terug gaat via de kruimelbalk daarboven.
 // opdrachtIds: alleen het werk van die opdrachten (één doel of taak), met
 // `kop` als titel; dan geen beheer (wachtwoord, wissen) erbij.
-export default function LeerlingDetail({ leerlingId, opdrachtIds = null, kop = null }) {
+export default function LeerlingDetail({ leerlingId, opdrachtIds = null, kop = null, onVerwijderd = null }) {
+  const [verwijderen, setVerwijderen] = useState(false)
   const [leerling, setLeerling] = useState(null)
   const [resultaten, setResultaten] = useState(null)
   const [teller, setTeller] = useState(0)
@@ -326,9 +328,17 @@ export default function LeerlingDetail({ leerlingId, opdrachtIds = null, kop = n
                 leerlingIds={[leerlingId]} wie={leerling.weergavenaam}
                 onGewist={() => setTeller(t => t + 1)}
               />
+              {onVerwijderd && <Knop variant="secundair" maat="sm" onClick={() => setVerwijderen(true)}>Leerling verwijderen</Knop>}
             </div>
           )}
         </div>
+        {verwijderen && leerling && (
+          <LeerlingVerwijderen
+            leerlingen={[{ id: leerlingId, weergavenaam: leerling.weergavenaam }]}
+            onAnnuleer={() => setVerwijderen(false)}
+            onVerwijderd={(gelukt) => { if (gelukt) onVerwijderd() }}
+          />
+        )}
       </div>
 
       {beheer && <LeerlingDoelen leerlingId={leerlingId} teller={teller} />}
