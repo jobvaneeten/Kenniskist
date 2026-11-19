@@ -1,6 +1,7 @@
 import { TOOL_BY_ID, VAKKEN } from '../lib/tools.js'
 import VerhaaltjesSommenConfig from './VerhaaltjesSommenConfig.jsx'
 import { Knop } from '../ui/index.jsx'
+import { optieLabel } from '../lib/methodes.js'
 
 // Eén opdrachtregel binnen een weektaak-formulier: wat de leerling gaat doen,
 // hoeveel, en de instellingen van die tool. `opdracht` is het lokale
@@ -144,7 +145,7 @@ export default function OpdrachtRij({ opdracht, nummer, onWijzig, onVerwijder, z
               <div className="portaal-keuzevakjes">
                 {veld.opties.map(o => {
                   const waarde = typeof o === 'string' ? o : o.value
-                  const weergave = typeof o === 'string' ? o : o.label
+                  const weergave = optieLabel(veld.key, o)
                   return (
                     <label key={waarde} className={gekozen.has(waarde) ? 'portaal-vakje aan' : 'portaal-vakje'}>
                       <input type="checkbox" checked={gekozen.has(waarde)} onChange={() => toggelCheckbox(veld.key, waarde)} />

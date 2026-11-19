@@ -9,6 +9,7 @@
 // Puur data, net als tools.js — het portaal importeert dit zonder games.
 
 import { TOOL_BY_ID } from './tools.js'
+import { heeftMethode, spellingLabel } from './methodes.js'
 
 const d = (titel, toolId, config = {}) => ({ titel, toolId, config })
 
@@ -50,7 +51,7 @@ export const DOEL_VAKKEN = [
       { titel: 'Gebiedende wijs', doelen: [
         d('De gebiedende wijs herkennen', 'taal-gebiedende-wijs'),
       ] },
-      { titel: 'Woordenschat', doelen: Array.from({ length: 8 }, (_, i) =>
+      { titel: 'Woordenschat', methode: 'taal-actief', doelen: Array.from({ length: 8 }, (_, i) =>
         d(`Woordenschat blok ${i + 1}`, `woordenschat-blok${i + 1}`)) },
     ],
   },
@@ -64,7 +65,7 @@ export const DOEL_VAKKEN = [
         d('Alle werkwoordsvormen door elkaar', 'werkwoordspelling', { categorieen: ['tt', 'vtZwak', 'vtSterk', 'vd'] }),
       ] },
       { titel: 'Spellingcategorieën', doelen: SPELLING_CATS.map(c => d(c.label, 'dictee-categorie', { cats: [c.value] })) },
-      { titel: 'Dictee per blok', doelen: Array.from({ length: 8 }, (_, i) => d(`Dictee blok ${i + 1}`, `dictee-thema${i + 1}`)) },
+      { titel: 'Dictee per blok', methode: 'taal-actief', doelen: Array.from({ length: 8 }, (_, i) => d(`Dictee blok ${i + 1}`, `dictee-thema${i + 1}`)) },
     ],
   },
   {
@@ -108,7 +109,9 @@ export function doelVakkenVoor(klasGroepen) {
   }
   return DOEL_VAKKEN
     .map(v => ({ ...v, onderwerpen: v.onderwerpen
-      .map(o => ({ ...o, doelen: o.doelen.filter(x => past(x.toolId)) }))
+      .filter(o => !o.methode || heeftMethode(o.methode))
+      .map(o => ({ ...o, doelen: o.doelen.filter(x => past(x.toolId))
+        .map(x => x.toolId === 'dictee-categorie' ? { ...x, titel: spellingLabel(x.titel) } : x) }))
       .filter(o => o.doelen.length) }))
     .filter(v => v.onderwerpen.length || v.vak === 'rekenen')
 }

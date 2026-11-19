@@ -19,6 +19,8 @@
 //               zodat de leerkracht "12 woorden" leest in plaats van
 //               "12 opgaven"; de voortgang telt precies zo.
 
+import { heeftMethode } from './methodes.js'
+
 export const VAKKEN = [
   { key: 'taal',       label: 'Taal' },
   { key: 'spelling',   label: 'Spelling' },
@@ -75,7 +77,7 @@ export const TOOL_FAMILIES = [
   {
     // Blok 1-8 = thema 1-8 van groep 7 (zie src/games/woordenschatData.js
     // en woordenschatBlokken.js), 45 woorden per blok.
-    familie: 'woordenschat', label: 'Woordenschat', vak: 'taal', groepen: [7],
+    familie: 'woordenschat', label: 'Woordenschat', vak: 'taal', groepen: [7], methode: 'taal-actief',
     aantalInstelbaar: true, standaardAantal: 20, eenheid: 'opgaven', configVelden: [],
     varianten: Array.from({ length: 8 }, (_, i) => ({
       toolId: `woordenschat-blok${i + 1}`, label: `Woordenschat blok ${i + 1}`, blok: i + 1,
@@ -92,7 +94,7 @@ export const TOOL_FAMILIES = [
     ],
   },
   {
-    familie: 'dictee-thema', label: 'Dictee', vak: 'spelling', groepen: [7],
+    familie: 'dictee-thema', label: 'Dictee', vak: 'spelling', groepen: [7], methode: 'taal-actief',
     // `aantal` is hier het aantal woorden: het dictee stopt erna en rapporteert
     // één regel per sessie met max_score = het aantal gemaakte woorden. Zo telt
     // de weektaak "0/12" in plaats van "0/1 keer gemaakt".
@@ -308,7 +310,8 @@ export function toolLabel(toolId) {
 // groepen van de klas. Lege lijst (klas.groepen = geen beperking, zie
 // migratie 0006) betekent: alles tonen.
 export function toolsVoorGroepen(groepen) {
-  const kiesbaar = TOOL_FAMILIES.filter(fam => !fam.verborgen)
+  // methode: alleen voor scholen die die lesmethode hebben (src/lib/methodes.js)
+  const kiesbaar = TOOL_FAMILIES.filter(fam => !fam.verborgen && (!fam.methode || heeftMethode(fam.methode)))
   if (!groepen?.length) return kiesbaar
   return kiesbaar.filter(fam => fam.groepen.some(g => groepen.includes(g)))
 }

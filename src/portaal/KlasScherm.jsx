@@ -11,6 +11,7 @@ import EigenOefeningen from './EigenOefeningen.jsx'
 import VloerQuizTab from './VloerQuizTab.jsx'
 import DicteeTab from './DicteeTab.jsx'
 import { TerugKnop, Icoon } from '../ui/index.jsx'
+import { heeftTaalActief } from '../lib/methodes.js'
 
 // De leerkracht ziet alleen wat hij zelf klaarzet: de weektaak voor de klas en
 // de taken en doelen per leerling ("Speciaal voor mij" aan de leerlingkant).
@@ -66,7 +67,7 @@ export default function KlasScherm({ klas, alleKlassen, onBack, onKlasGewijzigd 
         </div>
 
         <nav className="portaal-tabs-nav">
-          {TABS.map(t => (
+          {TABS.filter(t => t.key !== 'dictee' || heeftTaalActief()).map(t => (
             <button
               key={t.key}
               className={tab === t.key && !leerlingId ? 'portaal-tab-knop actief' : 'portaal-tab-knop'}

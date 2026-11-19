@@ -3,6 +3,39 @@ import { supabase } from '../lib/supabase.js'
 import { roepWorkerAan } from '../lib/worker.js'
 import { useSessie } from '../lib/sessie.jsx'
 import { Knop } from '../ui/index.jsx'
+import { METHODES } from '../lib/methodes.js'
+
+// Per school de lesmethodes aanvinken. Zonder methode ziet de school de
+// neutrale versie: rekenen alleen doelen, spelling de regels in plaats van
+// de dieren. Wijzigen mag alleen de beheerder (RLS scholen_admin).
+function Methodes({ school, onGewijzigd }) {
+  const [fout, setFout] = useState('')
+  const vakken = [...new Set(METHODES.map(m => m.vak))]
+  const zet = async (id) => {
+    const huidig = school.methodes ?? []
+    const nieuw = huidig.includes(id) ? huidig.filter(x => x !== id) : [...huidig, id]
+    setFout('')
+    onGewijzigd({ ...school, methodes: nieuw })
+    const { error } = await supabase.from('scholen').update({ methodes: nieuw }).eq('id', school.id)
+    if (error) { setFout('Opslaan mislukt'); onGewijzigd(school) }
+  }
+  return (
+    <div className="kk-rij" style={{ alignItems: 'flex-start', gap: 24, flexWrap: 'wrap' }}>
+      {vakken.map(vak => (
+        <div key={vak}>
+          <div className="portaal-zacht" style={{ fontWeight: 800, marginBottom: 4 }}>{vak}</div>
+          {METHODES.filter(m => m.vak === vak).map(m => (
+            <label key={m.id} style={{ display: 'flex', gap: 8, alignItems: 'center', margin: '2px 0' }}>
+              <input type="checkbox" checked={(school.methodes ?? []).includes(m.id)} onChange={() => zet(m.id)} />
+              {m.naam}{!m.inhoud && <span className="portaal-zacht">(nog geen eigen inhoud)</span>}
+            </label>
+          ))}
+        </div>
+      ))}
+      {fout && <p className="portaal-fout">{fout}</p>}
+    </div>
+  )
+}
 
 export default function AdminScholen() {
   const { profiel, uitloggen } = useSessie()
@@ -18,7 +51,7 @@ export default function AdminScholen() {
   const [bezig, setBezig] = useState(false)
 
   const laadScholen = async () => {
-    const { data } = await supabase.from('scholen').select('id, naam, code').order('naam')
+    const { data } = await supabase.from('scholen').select('id, naam, code, methodes').order('naam')
     setScholen(data ?? [])
   }
   useEffect(() => { laadScholen() }, [])
@@ -58,10 +91,17 @@ export default function AdminScholen() {
           {scholen === null && <p className="portaal-leeg">Laden…</p>}
           {scholen?.length === 0 && <p className="portaal-leeg">Nog geen scholen.</p>}
           {scholen?.length > 0 && (
-            <table className="portaal-tabel">
-              <thead><tr><th>Naam</th><th>Code</th></tr></thead>
-              <tbody>{scholen.map(s => <tr key={s.id}><td>{s.naam}</td><td>{s.code}</td></tr>)}</tbody>
-            </table>
+            <>
+              <p className="portaal-zacht">Vink per school de lesmethodes aan. Niets aangevinkt: bij rekenen alleen de doelen (geen blokken) en bij spelling de spellingregels in plaats van de dieren. Een wijziging is na opnieuw inloggen of verversen zichtbaar.</p>
+              {scholen.map(s => (
+                <details key={s.id} className="portaal-vak-chip" style={{ padding: '10px 14px', marginBottom: 8 }}>
+                  <summary style={{ cursor: 'pointer', fontWeight: 800 }}>
+                    {s.naam} <span className="portaal-zacht">({s.code}) · {(s.methodes ?? []).length ? (s.methodes ?? []).map(id => METHODES.find(m => m.id === id)?.naam ?? id).join(', ') : 'geen methode'}</span>
+                  </summary>
+                  <div className="kk-mt-2"><Methodes school={s} onGewijzigd={(nieuw) => setScholen(lijst => lijst.map(x => x.id === nieuw.id ? nieuw : x))} /></div>
+                </details>
+              ))}
+            </>
           )}
         </div>
 

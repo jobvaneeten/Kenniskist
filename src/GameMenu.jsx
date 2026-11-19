@@ -7,6 +7,7 @@ import { TerugKnop, Icoon } from './ui/index.jsx'
 import { useSessie } from './lib/sessie.jsx'
 import { haalEigenOefeningen } from './lib/eigenOefeningen.js'
 import './game.css'
+import { heeftPluspunt, heeftTaalActief } from './lib/methodes.js'
 
 // Spellen laden pas bij openen (Suspense staat in Root.jsx).
 const FootballGame       = lazy(() => import('./games/FootballGame'))
@@ -492,7 +493,7 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
                 <RewardChips rewards={['💵 briefgeld']} />
               </button>
             )}
-            {year === 7 && (
+            {year === 7 && heeftPluspunt() && (
               <button className="mode-card" onClick={() => setRekenKeuze('denkvragen')}>
                 <MenuScene name="denkvragen" />
                 <span className="mode-name">Denkvragen</span>
@@ -562,7 +563,7 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
         return <DicteeThema thema={dicteeNr} onBack={() => setSpellingKeuze('blokken')} addCuruntie={addCuruntie} addBriefgeld={addBriefgeld} />
       }
       if (spellingKeuze === 'categorie') {
-        return <DicteeThema file="dictees/dictee-categorie.html" onBack={() => setSpellingKeuze('nietww')} addCuruntie={addCuruntie} addBriefgeld={addBriefgeld} />
+        return <DicteeThema file="dictees/dictee-categorie.html" onBack={() => setSpellingKeuze(heeftTaalActief() ? 'nietww' : null)} addCuruntie={addCuruntie} addBriefgeld={addBriefgeld} />
       }
       if (spellingKeuze === 'werkwoord') {
         return (
@@ -669,11 +670,11 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
                 <RewardChips rewards={['💵 briefgeld']} />
               </button>
             )}
-            <button className="mode-card" onClick={() => setSpellingKeuze('nietww')}>
+            <button className="mode-card" onClick={() => setSpellingKeuze(heeftTaalActief() ? 'nietww' : 'categorie')}>
               <MenuScene name="dictee" />
               <span className="mode-name">Niet-werkwoordspelling</span>
-              <span className="mode-desc">Per blok of per categorie oefenen</span>
-              <span className="vb-line">Spellingblokken of een spellingregel</span>
+              <span className="mode-desc">{heeftTaalActief() ? 'Per blok of per categorie oefenen' : 'Kies een spellingregel en oefen die woorden'}</span>
+              <span className="vb-line">{heeftTaalActief() ? 'Spellingblokken of een spellingregel' : '"open lettergreep", "ei/ij", "verkleinwoord -je", ...'}</span>
               <RewardChips rewards={['💵 briefgeld']} />
             </button>
             {eigenKaarten()}
@@ -754,9 +755,9 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
                     : game === 'rekenen'
                     ? 'Verhaaltjes- en kale sommen'
                     : s.key === 'spelling'
-                    ? (game === 'werkwoord' ? 'Werkwoord + spellingblok' : 'Spellingblokken')
+                    ? (heeftTaalActief() ? (game === 'werkwoord' ? 'Werkwoord + spellingblok' : 'Spellingblokken') : (game === 'werkwoord' ? 'Werkwoord + spellingregels' : 'Spellingregels'))
                     : game === 'taal'
-                    ? (year === 7 ? 'Taalverkennen + woordenschat' : 'Taalverkennen + toets')
+                    ? (year === 7 && heeftTaalActief() ? 'Taalverkennen + woordenschat' : 'Taalverkennen + toets')
                     : game === 'topo'
                     ? 'Europa — kaart A'
                     : game === 'begrijpend'

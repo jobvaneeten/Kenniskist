@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { onderdelenVan, HEEFT_ROUTE, GROEPEN } from '../games/redactiesommen.js'
 import { Knop, Icoon } from '../ui/index.jsx'
+import { heeftPluspunt } from '../lib/methodes.js'
 
 // Speciale config-editor voor verhaaltjessommen — kan niet generiek via
 // OpdrachtRij's configVelden: welke doelen geldig zijn hangt cascaderend af
@@ -14,7 +15,8 @@ export default function VerhaaltjesSommenConfig({ config, onWijzig }) {
   const [mode, setMode] = useState('leerlijn')
   const gekozen = new Set(config?.doelen ?? [])
 
-  const onderdelen = onderdelenVan(groep, route, mode)
+  const pp = heeftPluspunt()
+  const onderdelen = onderdelenVan(groep, route, pp ? mode : 'leerlijn')
 
   const zetGroep = (g) => onWijzig({ ...config, groep: g, route: HEEFT_ROUTE(g) ? 'FS' : null, doelen: [] })
   const zetRoute = (r) => onWijzig({ ...config, route: r, doelen: [] })
@@ -52,7 +54,7 @@ export default function VerhaaltjesSommenConfig({ config, onWijzig }) {
         )}
       </div>
 
-      <div className="kk-rij">
+      {pp && <div className="kk-rij">
         <button
           type="button"
           className={mode === 'leerlijn' ? 'portaal-tab-knop actief' : 'portaal-tab-knop'}
@@ -63,7 +65,7 @@ export default function VerhaaltjesSommenConfig({ config, onWijzig }) {
           className={mode === 'blok' ? 'portaal-tab-knop actief' : 'portaal-tab-knop'}
           onClick={() => setMode('blok')}
         >Per blok</button>
-      </div>
+      </div>}
 
       <p className="portaal-leeg kk-m-0">
         Leeg = alle doelen van deze groep/route (zonder herhaling uit eerdere groepen).

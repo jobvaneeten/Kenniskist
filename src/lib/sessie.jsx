@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react'
 import { supabase } from './supabase.js'
 import { flush, wisAlles } from './voortgangSync.js'
+import { zetMethodes } from './methodes.js'
 
 const SessieContext = createContext(null)
 
@@ -29,6 +30,7 @@ export function SessieProvider({ children }) {
   const [profiel, setProfiel] = useState(null)
   const [toegestaneGroepen, setToegestaneGroepen] = useState(null)
   const [laden, setLaden] = useState(true)
+  const [methodes, setMethodes] = useState([])
 
   const haalProfiel = useCallback(async (uid) => {
     const { data } = await supabase.from('profielen').select('*').eq('id', uid).single()
@@ -37,11 +39,20 @@ export function SessieProvider({ children }) {
     if (data?.rol === 'leerling' && data.klas_id) {
       ;({ data: klas } = await supabase.from('klassen').select('groepen, spel_na').eq('id', data.klas_id).single())
     }
+    // Lesmethodes van de school (Pluspunt, Taal actief, ...): bepalen of je
+    // blokken en dieren ziet of de neutrale versie (src/lib/methodes.js).
+    let methodes = []
+    if (data?.school_id && data.rol !== 'admin') {
+      const { data: school } = await supabase.from('scholen').select('methodes').eq('id', data.school_id).single()
+      methodes = school?.methodes ?? []
+    }
+    zetMethodes(methodes)
     // voorlezen en spel_na gaan mee de spiegel in: de losse HTML-tools (begrijpend
     // lezen, dictees) lezen ze daaruit, en src/lib/beloning.js ook.
-    if (data) localStorage.setItem('kk_profiel_cache', JSON.stringify({ id: data.id, weergavenaam: data.weergavenaam, voorlezen: !!data.voorlezen, spelNa: klas?.spel_na ?? null }))
+    if (data) localStorage.setItem('kk_profiel_cache', JSON.stringify({ id: data.id, weergavenaam: data.weergavenaam, voorlezen: !!data.voorlezen, spelNa: klas?.spel_na ?? null, methodes }))
     else localStorage.removeItem('kk_profiel_cache')
     setToegestaneGroepen(klas?.groepen?.length ? klas.groepen : null)
+    setMethodes(methodes)
     setProfiel(data ?? null)
     setLaden(false)
   }, [])
@@ -59,7 +70,7 @@ export function SessieProvider({ children }) {
       setSessie(session)
       schrijfSessieSpiegel(session)
       if (session) haalProfiel(session.user.id)
-      else { setProfiel(null); setLaden(false) }
+      else { zetMethodes([]); setMethodes([]); setProfiel(null); setLaden(false) }
     })
     return () => { actief = false; sub.subscription.unsubscribe() }
   }, [haalProfiel])
@@ -106,7 +117,7 @@ export function SessieProvider({ children }) {
   }, [])
 
   return (
-    <SessieContext.Provider value={{ sessie, profiel, toegestaneGroepen, laden, inloggenLeerling, inloggenLeerkracht, wachtwoordVergeten, uitloggen }}>
+    <SessieContext.Provider value={{ sessie, profiel, toegestaneGroepen, methodes, laden, inloggenLeerling, inloggenLeerkracht, wachtwoordVergeten, uitloggen }}>
       {children}
     </SessieContext.Provider>
   )

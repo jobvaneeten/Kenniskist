@@ -3,6 +3,7 @@ import { WOORDSOORTEN, ZINSDELEN, VRAGEN, TIP_WOORDSOORT, splitZin, woordIndexen
 import SpelBeloning from './SpelBeloning'
 import Woordenschat from './Woordenschat.jsx'
 import { BLOK_NUMMERS, WOORDEN_PER_BLOK } from './woordenschatData.js'
+import { heeftTaalActief } from '../lib/methodes.js'
 import Zinsdelen from './Zinsdelen.jsx'
 import { Interpunctie, GebiedendeWijs } from './ZinKeuze.jsx'
 import { useGebruikOpdracht } from './gebruikOpdracht.js'
@@ -471,7 +472,7 @@ export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
           <span className="tv-mode-desc">Zinsdelen, woordsoorten, interpunctie en gebiedende wijs</span>
         </button>
         {/* Alleen groep 7: de woordkaartjes zijn die van de groep 7-methode. */}
-        {groep === 7 && (
+        {groep === 7 && heeftTaalActief() && (
           <button className="tv-mode-card" onClick={() => setScreen('woordenschat')}>
             <span className="tv-mode-emoji"><Icoon naam="boek" /></span>
             <span className="tv-mode-name">Woordenschat</span>

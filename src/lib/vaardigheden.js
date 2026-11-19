@@ -5,6 +5,7 @@
 
 import { DOEL_VAKKEN } from './doelen.js'
 import { TOOL_BY_ID, toolLabel } from './tools.js'
+import { heeftPluspunt, spellingLabel } from './methodes.js'
 import { onderdelenVan, HEEFT_ROUTE } from '../games/redactiesommen.js'
 
 export const GRENS_ROOD = 60   // onder 60% goed: verlengde instructie
@@ -23,7 +24,7 @@ function rekendoel(toolId, cat) {
   if (!m) return null
   const groep = Number(m[1]), tekst = m[2]
   for (const route of HEEFT_ROUTE(groep) ? ['FS', 'S+'] : [null]) {
-    for (const blok of onderdelenVan(groep, route, 'blok')) {
+    for (const blok of onderdelenVan(groep, route, heeftPluspunt() ? 'blok' : 'leerlijn')) {
       if (blok.key.startsWith('herh-')) continue
       const gen = blok.gens.find(g => g.doel === tekst)
       if (gen) {
@@ -60,7 +61,8 @@ export function vaardigheid(toolId, cat, catLabel) {
   const sub = TOOL_BY_ID[toolId] ? toolLabel(toolId) : toolId
   if (gevonden) {
     const titel = gevonden.titel.startsWith(gevonden.onderwerp) ? gevonden.titel : `${gevonden.onderwerp} — ${gevonden.titel}`
-    return { label: gevonden.titel, sub, doel: { toolId, config: gevonden.config, titel } }
+    const sp = (x) => toolId === 'dictee-categorie' ? spellingLabel(x) : x
+    return { label: sp(gevonden.titel), sub, doel: { toolId, config: gevonden.config, titel: sp(titel) } }
   }
   return { label: catLabel || cat || sub, sub: cat || catLabel ? sub : 'hele oefening', doel: null }
 }

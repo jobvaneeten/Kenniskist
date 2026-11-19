@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { VAKKEN } from '../lib/tools.js'
 import { doelVakkenVoor } from '../lib/doelen.js'
+import { heeftPluspunt } from '../lib/methodes.js'
 import { onderdelenVan, HEEFT_ROUTE, GROEPEN } from '../games/redactiesommen.js'
 import { Knop, TerugKnop, Icoon } from '../ui/index.jsx'
 
@@ -98,7 +99,7 @@ export default function DoelKiezer({ klasGroepen, onKies, onSluiten, onZelfKieze
   // Stap 3a: verhaaltjessommen — de doelen per blok van de gekozen groep/route
   if (onderwerp?.verhaaltjes) {
     const r = HEEFT_ROUTE(groep) ? route : null
-    const blokken = onderdelenVan(groep, r, 'blok').filter(b => !b.key.startsWith('herh-'))
+    const blokken = onderdelenVan(groep, r, heeftPluspunt() ? 'blok' : 'leerlijn').filter(b => !b.key.startsWith('herh-'))
     return (
       <div className="portaal-kaart kk-mt-3">
         {kop(onderwerp.titel, () => setOnderwerp(null))}
@@ -163,7 +164,7 @@ export default function DoelKiezer({ klasGroepen, onKies, onSluiten, onZelfKieze
         {kop(vakLabel(vak.vak), () => setVak(null))}
         <div className="portaal-naamlijst">
           {onderwerpen.map(o => doelKnop(o.titel, o.titel,
-            o.verhaaltjes ? 'doelen per blok, per groep en route' : `${o.doelen.length} ${o.doelen.length === 1 ? 'doel' : 'doelen'}`,
+            o.verhaaltjes ? (heeftPluspunt() ? 'doelen per blok, per groep en route' : 'doelen per leerlijn, per groep en route') : `${o.doelen.length} ${o.doelen.length === 1 ? 'doel' : 'doelen'}`,
             () => setOnderwerp(o)))}
         </div>
         {keuzeBalk}

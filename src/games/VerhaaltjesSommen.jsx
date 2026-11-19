@@ -7,6 +7,7 @@ import OpdrachtKlaarScherm from './OpdrachtKlaarScherm.jsx'
 import './verhaaltjes-sommen.css'
 import { Knop, TerugKnop, VoortgangsBalk, Icoon } from '../ui/index.jsx'
 import { spelNa, heeftSpel } from '../lib/beloning.js'
+import { heeftPluspunt } from '../lib/methodes.js'
 
 const PER_BELONING_STD = 5
 // De leerkracht kan dit per klas anders zetten (src/lib/beloning.js). Een oefening
@@ -607,10 +608,11 @@ function VraagKaart({ opgave, onNext, kaal = false }) {
     setPhase(antwOk && restOk ? 'good' : 'bad')
   }
 
-  const blokLabel = opgave.blok === 0 ? 'Instap' : `Blok ${opgave.blok}`
-  const label = opgave.groep === 7 ? `${blokLabel} · ${opgave.doel}`
-    : opgave.groep === 8 ? `Groep 8 · ${blokLabel} · ${opgave.doel}`
-    : `Herhaling groep ${opgave.groep} · ${blokLabel} · ${opgave.doel}`
+  // Zonder Pluspunt geen blokken: alleen het doel (src/lib/methodes.js)
+  const blokLabel = !heeftPluspunt() ? '' : (opgave.blok === 0 ? 'Instap' : `Blok ${opgave.blok}`) + ' · '
+  const label = opgave.groep === 7 ? `${blokLabel}${opgave.doel}`
+    : opgave.groep === 8 ? `Groep 8 · ${blokLabel}${opgave.doel}`
+    : `Herhaling groep ${opgave.groep} · ${blokLabel}${opgave.doel}`
 
   // Schaal zoals in de toets: meten, tabel en schaallijntje invullen (SchaalToets.jsx)
   if (opgave.schaalToets) return (
@@ -763,7 +765,8 @@ function Overzicht({ stats, terugLabel, onTerug, onWis }) {
     return { goed, fout, totaal: goed + fout, geoefend }
   }
 
-  const secties = mode === 'blok'
+  const pp = heeftPluspunt()
+  const secties = mode === 'blok' && pp
     ? [...new Set(info.doelen.map(d => d.blok))].sort((a, b) => a - b).map(nr => ({
         key: 'b' + nr, label: nr === 0 ? 'Instap' : 'Blok ' + nr,
         doelen: info.doelen.filter(d => d.blok === nr),
@@ -792,10 +795,10 @@ function Overzicht({ stats, terugLabel, onTerug, onWis }) {
         ))}
       </div>
 
-      <div className="rs-mode-toggle">
+      {pp && <div className="rs-mode-toggle">
         <button className={`rs-mode-btn${mode === 'leerlijn' ? ' actief' : ''}`} onClick={() => setMode('leerlijn')}>Per leerlijn</button>
         <button className={`rs-mode-btn${mode === 'blok' ? ' actief' : ''}`} onClick={() => setMode('blok')}>Per blok</button>
-      </div>
+      </div>}
 
       <p className="rs-ov-tip">
         {c.totaal > 0 ? `${c.totaal} opgaven gemaakt · ${c.goed} goed · ${c.fout} fout · ${c.geoefend}/${info.doelen.length} doelen geoefend` : 'Nog niet geoefend in deze groep'}
@@ -808,7 +811,7 @@ function Overzicht({ stats, terugLabel, onTerug, onWis }) {
             <div className="rs-ov-lijst">
               {s.doelen.map(d => (
                 <DoelBalk key={d.doel} groep={groepTab} doel={d.doel} stats={stats}
-                  badge={mode === 'leerlijn' ? (d.blok === 0 ? 'instap' : 'blok ' + d.blok) : LEERLIJN_LABEL[d.lijn]} />
+                  badge={mode === 'leerlijn' || !pp ? (pp ? (d.blok === 0 ? 'instap' : 'blok ' + d.blok) : null) : LEERLIJN_LABEL[d.lijn]} />
               ))}
             </div>
           </div>
@@ -1032,7 +1035,8 @@ export default function VerhaaltjesSommen({ groep: eigenGroep = 7, onBack, addBr
 
   // ── 3. Doel-keuze: tabs bovenaan, per leerlijn of per blok ──
   if (screen === 'kies') {
-    const onderdelen = onderdelenVan(klas, route, kiesMode)
+    const pp = heeftPluspunt()
+    const onderdelen = onderdelenVan(klas, route, pp ? kiesMode : 'leerlijn')
     const actief = onderdelen.find(o => o.key === kiesTab) || onderdelen[0]
     const titel = `Groep ${klas}${route ? ' · ' + route : ''}`
     const wisselMode = (m) => { setKiesMode(m); setKiesTab(null) }
@@ -1044,12 +1048,12 @@ export default function VerhaaltjesSommen({ groep: eigenGroep = 7, onBack, addBr
         <div className="rs-header">
           <span className="rs-icon"><Icoon naam="rekenen" /></span>
           <h1 className="rs-title">{titel}</h1>
-          <p className="rs-sub">Vink aan wat je wilt oefenen — achter elk doel zie je jaar en blok. Doelen van eerdere groepen staan er (uitgevinkt) tussen.</p>
+          <p className="rs-sub">Vink aan wat je wilt oefenen{pp ? ' — achter elk doel zie je jaar en blok' : ''}. Doelen van eerdere groepen staan er (uitgevinkt) tussen.</p>
         </div>
 
         <div className="rs-mode-toggle">
-          <button className={`rs-mode-btn${kiesMode === 'leerlijn' ? ' actief' : ''}`} onClick={() => wisselMode('leerlijn')}>Per leerlijn</button>
-          <button className={`rs-mode-btn${kiesMode === 'blok' ? ' actief' : ''}`} onClick={() => wisselMode('blok')}>Per blok</button>
+          {pp && <button className={`rs-mode-btn${kiesMode === 'leerlijn' ? ' actief' : ''}`} onClick={() => wisselMode('leerlijn')}>Per leerlijn</button>}
+          {pp && <button className={`rs-mode-btn${kiesMode === 'blok' ? ' actief' : ''}`} onClick={() => wisselMode('blok')}>Per blok</button>}
           <button className="rs-mode-btn rs-alles-btn" onClick={() => setGekozen(new Set(onderdelen.flatMap(o => o.gens.map(g => g.key))))}>Alles aan</button>
           <button className="rs-mode-btn rs-alles-btn" onClick={() => setGekozen(new Set())}>Alles uit</button>
         </div>
@@ -1074,7 +1078,7 @@ export default function VerhaaltjesSommen({ groep: eigenGroep = 7, onBack, addBr
             <div className="rs-doel-lijst">
               {actief.gens.map((g, i) => {
                 const aan = gekozen.has(g.key)
-                const badge = `Groep ${g.groep} · ${g.blok === 0 ? 'instap' : 'blok ' + g.blok}`
+                const badge = pp ? `Groep ${g.groep} · ${g.blok === 0 ? 'instap' : 'blok ' + g.blok}` : `Groep ${g.groep}`
                 return (
                   <button key={g.key} className={`rs-doel-rij${aan ? ' aan' : ''}${g.herhaling ? ' rs-doel-herh' : ''}`} onClick={() => toggleKeuze(g.key)}>
                     <span className={`kk-vink${aan ? ' aan' : ''}`}>{aan && <Icoon naam="goed" />}</span>

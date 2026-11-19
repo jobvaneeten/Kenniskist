@@ -185,6 +185,8 @@
   .animal:active{transform:scale(.97)}
   .animal .pic{height:90px;display:flex;align-items:center;justify-content:center}
   .animal .pic img{max-height:90px;max-width:100%;object-fit:contain;pointer-events:none;filter:drop-shadow(0 2px 6px rgba(0,0,0,.5))}
+  .animal .pic:empty{display:none}
+  .animal .rl:empty{display:none}
   .animal .nm{font-family:'Baloo 2';font-weight:700;font-size:12px;margin-top:4px;color:#fff}
   .animal .rl{font-size:9.5px;color:var(--ink-soft);line-height:1.2;margin-top:1px;font-weight:600}
   .animal.sel{border-color:var(--primary);background:rgba(155,77,202,0.22);box-shadow:0 0 0 1px var(--primary)}
@@ -297,7 +299,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 5V4L8 9H4z" fill="currentColor" stroke="none"/></svg>Alleen het woord
           </button>
           <button class="chip" id="helpBtn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 4.5 1.5c0 1.5-2 2-2 3.5"/><path d="M12 17h.01"/></svg>Hulp: welke dieren?
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 4.5 1.5c0 1.5-2 2-2 3.5"/><path d="M12 17h.01"/></svg><span id="helpTekst">Hulp: welke dieren?</span>
           </button>
         </div>
         <div class="helpbox" id="helpBox"></div>
@@ -314,7 +316,7 @@
         <div class="word-feedback" id="correctWord"></div>
         <div class="you-typed" id="youTyped"></div>
       </div>
-      <p class="phase-title">Welke dieren zitten in dit woord?</p>
+      <p class="phase-title" id="phaseTitle">Welke dieren zitten in dit woord?</p>
       <p class="phase-sub" id="phaseSub">Klik alle dieren waarvan de regel in het woord voorkomt.</p>
       <div class="grid" id="animalGrid"></div>
       <div class="why hide" id="whyBox"></div>
@@ -406,6 +408,14 @@ const ANIMALS = [
   {id:"zee_egel",         nm:"zee-egel",         rule:"koppelteken"},
   {id:"pinguin",          nm:"pingu\u00efn",     rule:"trema bij klinkerbotsing (op de i)"},
 ];
+// Zonder de methode Taal actief (school-instelling, zie src/lib/methodes.js)
+// geen dieren: elke categorie heet dan gewoon naar zijn spellingregel.
+const KK_NEUTRAAL = (function(){ try { var p = JSON.parse(localStorage.getItem('kk_profiel_cache') || 'null'); return !(p && p.methodes && p.methodes.indexOf('taal-actief') >= 0); } catch(e){ return true; } })();
+const KK_WOORD = KK_NEUTRAAL ? { een:'regel', veel:'regels' } : { een:'dier', veel:'dieren' };
+if (KK_NEUTRAAL) {
+  ANIMALS.forEach(function(a){ a.nm = a.rule.charAt(0).toUpperCase() + a.rule.slice(1); a.rule = ''; });
+  Object.keys(IMAGES).forEach(function(k){ delete IMAGES[k]; });
+}
 const ANIMAL_BY_ID = Object.fromEntries(ANIMALS.map(a=>[a.id,a]));
 
 const WORDS = [
@@ -933,7 +943,7 @@ function buildGrid(){
     const d=document.createElement('div');
     d.className='animal';d.dataset.id=an.id;
     const src=IMAGES[an.id];
-    const pic=src?`<img src="${src}" alt="${an.nm}">`:an.id;
+    const pic=src?`<img src="${src}" alt="${an.nm}">`:(KK_NEUTRAAL?'':an.id);
     d.innerHTML=`<div class="pic">${pic}</div><div class="nm">${an.nm}</div><div class="rl">${an.rule}</div>`;
     d.onclick=()=>{ if(locked)return; if(selected.has(an.id)){selected.delete(an.id);d.classList.remove('sel');}else{selected.add(an.id);d.classList.add('sel');} };
     grid.appendChild(d);
@@ -959,6 +969,7 @@ function showWord(){
   $('legend').classList.add('hide');
   $('whyBox').classList.add('hide');$('whyBox').innerHTML='';
   grid.classList.remove('hide');
+  $('phaseSub').textContent = KK_NEUTRAAL ? 'Klik alle regels die in het woord voorkomen.' : 'Klik alle dieren waarvan de regel in het woord voorkomt.';
   answerEl.focus();
   speakPrompt();
 }
@@ -1005,7 +1016,7 @@ function checkAnimals(){
   $('legend').classList.add('hide');
   grid.classList.add('hide');
   const why=$('whyBox');
-  why.innerHTML='<div class="why-head">Waarom deze dieren?</div>'+item.a.map(x=>{
+  why.innerHTML='<div class="why-head">Waarom deze '+KK_WOORD.veel+'?</div>'+item.a.map(x=>{
     const an=ANIMAL_BY_ID[x[0]],src=IMAGES[an.id],miss=!selected.has(an.id);
     return `<div class="why-item${miss?' miss':''}">${src?`<img src="${src}" alt="">`:''}`+
       `<div class="wt"><b>${an.nm}</b><span>${x[1]||an.rule}${miss?' — deze had je gemist':''}</span></div></div>`;
@@ -1057,7 +1068,7 @@ $('wordBtn').onclick=speakWord;
 $('helpBtn').onclick=()=>{
   const names=queue[idx].a.filter(x=>!x[2]).map(x=>ANIMAL_BY_ID[x[0]].nm);
   const box=$('helpBox');
-  box.innerHTML=`In dit woord ${names.length>1?'zitten':'zit'} <b>${names.length}</b> dier${names.length>1?'en':''}: <b>${names.join(', ')}</b>.`;
+  box.innerHTML=`In dit woord ${names.length>1?'zitten':'zit'} <b>${names.length}</b> ${names.length>1?KK_WOORD.veel:KK_WOORD.een}: <b>${names.join(', ')}</b>.`;
   box.classList.add('show');
   speakSeq([{t:"In dit woord "+(names.length>1?"zitten":"zit")+" "+names.join(', '),r:0.95}]);
 };
@@ -1079,7 +1090,8 @@ answerEl.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();e
 // Geen document-brede Enter: dieren kijk je na met de knop; na het nakijken
 // staat de focus op 'Volgende', zodat Enter dan netjes doorgaat.
 
-$('startInfo').textContent=`${WORDS.length} woorden \u00b7 ${ANIMALS.length} dieren als zoekplaat`;
+if (KK_NEUTRAAL) { $('helpTekst').textContent = 'Hulp: welke regels?'; $('phaseTitle').textContent = 'Welke spellingregels zitten in dit woord?'; $('phaseSub').textContent = 'Klik alle regels die in het woord voorkomen.'; }
+$('startInfo').textContent=`${WORDS.length} woorden \u00b7 ${ANIMALS.length} ${KK_NEUTRAAL?'spellingregels':'dieren als zoekplaat'}`;
 /* ===== Oefenen per categorie ===== */
 (function(){
   var __catFilter = null;
@@ -1102,7 +1114,7 @@ $('startInfo').textContent=`${WORDS.length} woorden \u00b7 ${ANIMALS.length} die
     d.className = 'animal';
     d.style.cursor = 'pointer';
     var src = (typeof IMAGES !== 'undefined') ? IMAGES[id] : null;
-    var pic = src ? '<img src="'+src+'" alt="'+nm+'">' : (id||'📚');
+    var pic = src ? '<img src="'+src+'" alt="'+nm+'">' : (KK_NEUTRAAL ? '' : (id||'📚'));
     d.innerHTML = '<div class="pic">'+pic+'</div><div class="nm">'+nm+'</div><div class="rl">'+rule+'</div>'+(n?'<div class="rl" style="opacity:.55;margin-top:2px">'+n+' woorden</div>':'');
     d.onclick = onclick;
     grid.appendChild(d);
