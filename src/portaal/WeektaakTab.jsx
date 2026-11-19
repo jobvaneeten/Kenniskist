@@ -6,6 +6,7 @@ import WeektaakForm from './WeektaakForm.jsx'
 import WeektaakVoortgang from './WeektaakVoortgang.jsx'
 import WeektaakDifferentiatie from './WeektaakDifferentiatie.jsx'
 import PersoonlijkPerLeerling from './PersoonlijkPerLeerling.jsx'
+import HuiswerkPerLeerling from './HuiswerkPerLeerling.jsx'
 import LeerlingDetail from './LeerlingDetail.jsx'
 import { SOORT_TEKST, ZONDER_EIND } from './soortTekst.js'
 import { Knop, TerugKnop } from '../ui/index.jsx'
@@ -295,10 +296,12 @@ export default function WeektaakTab({ klas, soort = 'weektaak', onKiesLeerling }
 
   const keuze = persoonlijk && (
     <div className="portaal-keuze">
-      <Knop variant={kijk === 'items' ? 'primair' : 'secundair'} maat="sm" onClick={() => setKijk('items')}>Per {tekst.enkel}</Knop>
+      <Knop variant={kijk === 'items' ? 'primair' : 'secundair'} maat="sm" onClick={() => setKijk('items')}>{soort === 'huiswerk' ? 'Hele klas' : `Per ${tekst.enkel}`}</Knop>
       <Knop variant={kijk === 'leerlingen' ? 'primair' : 'secundair'} maat="sm" onClick={() => setKijk('leerlingen')}>Per leerling</Knop>
     </div>
   )
+
+  if (soort === 'huiswerk' && kijk === 'leerlingen') return <>{keuze}<HuiswerkPerLeerling klas={klas} /></>
 
   if (persoonlijk && kijk === 'leerlingen') {
     return (
@@ -318,7 +321,9 @@ export default function WeektaakTab({ klas, soort = 'weektaak', onKiesLeerling }
       <h2>{tekst.meervoud}</h2>
       {soort !== 'weektaak' && (
         <p className="portaal-zacht kk-mt-0">
-          {soort === 'taak'
+          {soort === 'huiswerk'
+            ? 'Huiswerk zet je klaar voor de hele klas, of via Per leerling voor één kind. Ze vinden het thuis bij "Huiswerk". Het verdwijnt na de einddatum.'
+            : soort === 'taak'
             ? 'Een taak zet je voor één of een paar leerlingen klaar. Ze vinden hem bij "Speciaal voor mij".'
             : 'Een doel is een leerdoel, bv. een doel uit verhaaltjessommen of één zinsdeel. De leerling oefent erop bij "Speciaal voor mij".'}
         </p>

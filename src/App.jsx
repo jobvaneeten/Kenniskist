@@ -415,6 +415,13 @@ export default function App({ gast = false }) {
     </>
   )
 
+  if (screen === 'huiswerk') return (
+    <>
+      <CurrencyBadge munten={curuntie} briefgeld={briefgeld} hideMunten />
+      <Weektaak onBack={goMenu} addCuruntie={addCuruntie} addBriefgeld={addBriefgeld} huiswerk />
+    </>
+  )
+
   if (screen === 'mijnweek') return <MijnWeek onBack={goMenu} />
 
   if (screen === 'dictee') return <ControleDictee onBack={goMenu} />
@@ -569,6 +576,15 @@ export default function App({ gast = false }) {
           <span className="zijkaart-emoji"><Icoon naam="klembord" /></span>
           <span className="zijkaart-titel">Mijn weektaak</span>
           <span className="zijkaart-desc">De opdrachten van deze week voor de hele klas</span>
+          <span className="zijkaart-pijl"><Icoon naam="verder" /></span>
+        </button>
+      )}
+
+      {isLeerling && (
+        <button className="zijkaart zijkaart-huiswerk" onClick={() => setScreen('huiswerk')}>
+          <span className="zijkaart-emoji"><Icoon naam="huis" /></span>
+          <span className="zijkaart-titel">Huiswerk</span>
+          <span className="zijkaart-desc">Wat je thuis maakt, met de datum waarop het af moet</span>
           <span className="zijkaart-pijl"><Icoon naam="verder" /></span>
         </button>
       )}

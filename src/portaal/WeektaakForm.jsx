@@ -21,6 +21,7 @@ function overDagen(n) {
 const STAP1 = {
   weektaak: { kop: 'Wanneer loopt hij?', label: 'Titel', placeholder: 'bv. Week 36', hint: 'Leeg laten mag; dan heet hij "Weektaak".' },
   taak: { kop: 'Wat is de taak?', label: 'Taak', placeholder: 'bv. Oefen de tafel van 7', hint: 'Leeg laten mag; dan heet hij zoals de oefening.' },
+  huiswerk: { kop: 'Wat is het huiswerk en wanneer moet het af?', label: 'Titel', placeholder: 'bv. Huiswerk tafels', hint: 'Leeg laten mag; dan heet het zoals de oefening.' },
   doel: { kop: 'Wat is het doel?', label: 'Doel', placeholder: 'bv. Ik kan het lijdend voorwerp vinden', hint: 'Leeg laten mag; dan heet hij zoals het doel dat je bij stap 2 kiest.' },
 }
 
@@ -51,12 +52,15 @@ function controleerOpdrachten(opdrachten) {
 // eerst doet: wanneer loopt hij, wat moeten ze doen, en wat er gebeurt als je
 // opslaat.
 export default function WeektaakForm({ klas, soort = 'weektaak', bestaand, onKlaar, onAnnuleren }) {
-  const persoonlijk = soort !== 'weektaak'
+  // Taak en doel zijn per leerling en lopen door; huiswerk is (zoals een
+  // weektaak) standaard voor de hele klas en heeft een einddatum.
+  const persoonlijk = soort === 'taak' || soort === 'doel'
+  const gemarkeerd = soort !== 'weektaak'
   const tekst = SOORT_TEKST[soort]
   const stap1 = STAP1[soort]
   const [titel, setTitel] = useState(bestaand?.titel ?? '')
   const [startOp, setStartOp] = useState(bestaand?.start_op ?? vandaag())
-  const [eindOp, setEindOp] = useState(bestaand?.eind_op ?? (persoonlijk ? ZONDER_EIND : overDagen(6)))
+  const [eindOp, setEindOp] = useState(bestaand?.eind_op ?? (persoonlijk ? ZONDER_EIND : overDagen(soort === 'huiswerk' ? 7 : 6)))
   const [opdrachten, setOpdrachten] = useState(() =>
     (bestaand?.opdrachten ?? []).map(o => ({ id: o.id, toolId: o.tool_id, aantal: o.aantal, config: o.config ?? {} }))
   )
@@ -129,10 +133,10 @@ export default function WeektaakForm({ klas, soort = 'weektaak', bestaand, onKla
       await slaWeektaakOp({
         weektaakId: bestaand?.id ?? null,
         schoolId: klas.school_id, klasId: klas.id,
-        titel: titel.trim() || (persoonlijk ? toolLabel(opdrachten[0].toolId) : 'Weektaak'), startOp, eindOp,
+        titel: titel.trim() || (soort === 'weektaak' ? 'Weektaak' : toolLabel(opdrachten[0].toolId)), startOp, eindOp,
         // Een doel heeft geen aantal: het is behaald bij 80% goed van de
         // laatste 20 opgaven (zie migratie 0016_doel_voortgang.sql).
-        opdrachten: persoonlijk
+        opdrachten: gemarkeerd
           ? opdrachten.map(o => ({ ...o, aantal: soort === 'doel' ? null : o.aantal, config: { ...o.config, persoonlijk: soort } }))
           : opdrachten,
         leerlingIds: [...gekozen],
@@ -239,7 +243,9 @@ export default function WeektaakForm({ klas, soort = 'weektaak', bestaand, onKla
             <p className="portaal-zacht">
               {persoonlijk
                 ? `Vink aan voor wie deze ${tekst.enkel} is. Alleen zij zien hem, bij "Speciaal voor mij".`
-                : 'Standaard krijgt de hele klas hem. Vink uit wie hem niet hoeft te maken — bijvoorbeeld een kind dat aan iets anders werkt.'}
+                : soort === 'huiswerk'
+                  ? 'Standaard krijgt de hele klas het. Vink uit wie het niet hoeft te maken. Ze vinden het thuis bij "Huiswerk".'
+                  : 'Standaard krijgt de hele klas hem. Vink uit wie hem niet hoeft te maken — bijvoorbeeld een kind dat aan iets anders werkt.'}
             </p>
             {gekozen === null && <p className="portaal-leeg">Laden…</p>}
             {gekozen !== null && leerlingen.length === 0 && (

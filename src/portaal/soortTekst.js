@@ -9,4 +9,5 @@ export const SOORT_TEKST = {
   weektaak: { meervoud: 'Weektaken', enkel: 'weektaak', nieuw: '+ Nieuwe weektaak', leeg: 'Nog geen weektaken.' },
   taak: { meervoud: 'Taken', enkel: 'taak', nieuw: '+ Nieuwe taak', leeg: 'Nog geen taken klaargezet.' },
   doel: { meervoud: 'Doelen', enkel: 'doel', nieuw: '+ Nieuw doel', leeg: 'Nog geen doelen klaargezet.' },
+  huiswerk: { meervoud: 'Huiswerk', enkel: 'huiswerk', nieuw: '+ Huiswerk voor de klas', leeg: 'Nog geen huiswerk klaargezet.' },
 }

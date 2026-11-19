@@ -21,6 +21,7 @@ const TABS = [
   { key: 'weektaak', label: 'Weektaak', hint: 'hele klas', icoon: 'klembord', accent: 'var(--kk-cyan)' },
   { key: 'taak', label: 'Taken', hint: 'per leerling', icoon: 'potlood', accent: 'var(--kk-pink)' },
   { key: 'doel', label: 'Doelen', hint: 'per leerling', icoon: 'doel', accent: 'var(--kk-gold)' },
+  { key: 'huiswerk', label: 'Huiswerk', hint: 'klas of leerling', icoon: 'huis', accent: 'var(--kk-success)' },
   { key: 'week', label: 'Weekoverzicht', hint: 'per leerling', icoon: 'grafiek', accent: 'var(--kk-primary-hi)' },
   { key: 'groep', label: 'Groepsoverzicht', hint: 'hulp per doel', icoon: 'menu', accent: 'var(--kk-error)' },
   { key: 'werkblad', label: 'Werkblad', hint: 'printen', icoon: 'printer', accent: 'var(--kk-success)' },

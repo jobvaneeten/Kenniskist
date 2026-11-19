@@ -23,7 +23,9 @@ export function zetActieveOpdracht(opdracht, via = null) {
 // weektaak in een vaste vorm, net als een lescheck: elke opdracht erin draagt
 // `persoonlijk: 'taak' | 'doel'` in zijn config. Zo werken voortgang,
 // herkansing en differentiatie precies als bij een gewone weektaak.
-export const SOORTEN = ['weektaak', 'taak', 'doel']
+// Huiswerk werkt net zo: `persoonlijk: 'huiswerk'`, voor de hele klas of voor
+// één leerling, met een einddatum (inleveren vóór).
+export const SOORTEN = ['weektaak', 'taak', 'doel', 'huiswerk']
 export const soortVan = (opdracht) => opdracht?.config?.persoonlijk ?? 'weektaak'
 
 export function wisActieveOpdracht() {

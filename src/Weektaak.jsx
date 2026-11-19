@@ -112,7 +112,7 @@ const PERSOONLIJK = {
   doel: { icoon: 'doel',    meervoud: 'Doelen', leeg: 'Je hebt nu geen doelen.' },
 }
 
-export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId = null, persoonlijk = false }) {
+export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId = null, persoonlijk = false, huiswerk = false }) {
   const { profiel, toegestaneGroepen } = useSessie()
   const [opdrachten, setOpdrachten] = useState(null)
   const [gekozen, setGekozen] = useState(null)
@@ -130,7 +130,7 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
   const [herhaling, setHerhaling] = useState(null)       // { id, titel, stand } — herhaling loopt
   const [tijdFeest, setTijdFeest] = useState(null)       // de tijd van Werk aan je doelen is net vol (minuten)
   const tijdGevierd = useRef(new Set())
-  const soort = persoonlijk ? tab : 'weektaak'
+  const soort = huiswerk ? 'huiswerk' : persoonlijk ? tab : 'weektaak'
 
   useEffect(() => {
     let actief = true
@@ -348,9 +348,9 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
       <button
         key={m.id} className={`mode-card wt-map${goud ? ' wt-behaald' : ''}`}
         style={goud ? { '--kk-accent': 'var(--kk-gold)' } : alles ? { '--kk-accent': 'var(--kk-success)' } : undefined}
-        onClick={() => (persoonlijk && m.opdrachten.length === 1 ? kies(m.opdrachten[0], m.titel) : setOpenMap(m.id))}
+        onClick={() => ((persoonlijk || huiswerk) && m.opdrachten.length === 1 ? kies(m.opdrachten[0], m.titel) : setOpenMap(m.id))}
       >
-        <span className="mode-icoon"><Icoon naam={goud ? 'trofee' : alles ? 'goed' : persoonlijk ? PERSOONLIJK[tab].icoon : 'klembord'} /></span>
+        <span className="mode-icoon"><Icoon naam={goud ? 'trofee' : alles ? 'goed' : huiswerk ? 'huis' : persoonlijk ? PERSOONLIJK[tab].icoon : 'klembord'} /></span>
         <span className="mode-name">{m.titel}</span>
         <span className="mode-desc">
           {goud
@@ -384,7 +384,7 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
       <div className="game-screen">
         <TerugKnop onClick={() => (direct ? onBack() : setOpenMap(null))} />
         <div className="game-header" style={{ '--kk-accent': 'var(--kk-cyan)' }}>
-          <span className="game-header-icon"><Icoon naam={persoonlijk ? PERSOONLIJK[tab].icoon : 'klembord'} /></span>
+          <span className="game-header-icon"><Icoon naam={huiswerk ? 'huis' : persoonlijk ? PERSOONLIJK[tab].icoon : 'klembord'} /></span>
           <h1 className="game-header-title">{map.titel}</h1>
           <p className="game-header-sub">
             {af} van de {map.opdrachten.length} opdracht{map.opdrachten.length === 1 ? '' : 'en'} af
@@ -443,6 +443,12 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
             ))}
           </div>
         </div>
+      ) : huiswerk ? (
+        <div className="game-header" style={{ '--kk-accent': 'var(--kk-success)' }}>
+          <span className="game-header-icon"><Icoon naam="huis" /></span>
+          <h1 className="game-header-title">Huiswerk</h1>
+          <p className="game-header-sub">Maak dit thuis. Achter elke opdracht staat wanneer hij af moet zijn.</p>
+        </div>
       ) : (
         <div className="game-header" style={{ '--kk-accent': 'var(--kk-cyan)' }}>
           <span className="game-header-icon"><Icoon naam="klembord" /></span>
@@ -454,7 +460,7 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
       {opdrachten === null && <p className="mode-desc">Laden…</p>}
       {opdrachten !== null && zichtbaar.length === 0 && (
         <p className="mode-desc">
-          {persoonlijk ? PERSOONLIJK[tab].leeg : 'Nog geen weektaak — vraag het aan je juf of meester.'}
+          {huiswerk ? 'Je hebt geen huiswerk. Lekker!' : persoonlijk ? PERSOONLIJK[tab].leeg : 'Nog geen weektaak — vraag het aan je juf of meester.'}
         </p>
       )}
       {soort === 'doel' && !doelVak && <HerhaalKaarten mappen={mappen} onKies={kiesHerhaling} />}
