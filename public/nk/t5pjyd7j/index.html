@@ -421,13 +421,16 @@ function eindeKnoppen(terug, opnieuw) {
   $('nog-een-keer').onclick = function () { geluidKlik(); opnieuw() }
 }
 // ── Beloning: 45 seconden een spelletje van Kenniskist, in een iframe ──
+// [naam, adres, plaatje, game-over-bericht]. Met een game-over-bericht is het
+// een spel met één leven (runners): dat duurt tot je af bent, zonder klok.
+// De rest speel je 45 seconden.
 var SPELLETJES = [
   ['towerdefense','/towerdefense/?terug=1','towerdefense.svg'],
-  ['jetpack','/jetpack/?terug=1','jetpack.png'],
+  ['jetpack','/jetpack/index.html','jetpack.png','jetpack-gameover'],
   ['astrokatapult','/astrokatapult/?terug=1','astrokatapult.png'],
-  ['sterrenstroom','/sterrenstroom/?terug=1','sterrenstroom.png'],
-  ['doodlesprong','/doodlesprong/?terug=1','doodlesprong.png'],
-  ['meteoorvlucht','/meteoorvlucht/?terug=1','meteoorvlucht.svg'],
+  ['sterrenstroom','/sterrenstroom/','sterrenstroom.png','spacerunner-gameover'],
+  ['doodlesprong','/doodlesprong/','doodlesprong.png','doodlesprong-gameover'],
+  ['meteoorvlucht','/meteoorvlucht/','meteoorvlucht.svg','meteoorvlucht-gameover'],
   ['evolutie','/evolutie/?terug=1','evolutie.png'],
   ['dierentuin','/dierentuin/?terug=1','dierentuin.svg'],
   ['planeet','/planeet/?terug=1','planeet.svg'],
@@ -462,12 +465,21 @@ function toonBeloning(terug) {
   })
   naar('s-beloning'); geluidGoed(); setTimeout(function () { confetti(innerWidth / 2, innerHeight / 3, 140) }, 150)
 }
+var eenLeven = null
 function speel(sp) {
   stil()
   $('speel-iframe').src = sp[1]; $('speelvak').classList.add('aan')
+  clearInterval(klokId)
+  if (sp[3]) {
+    // een leven: geen klok; voor de zekerheid wel na 4 minuten klaar
+    eenLeven = sp[3]; $('klok').hidden = true
+    var veilig = 240
+    klokId = setInterval(function () { if (--veilig <= 0) stopSpel() }, 1000)
+    return
+  }
+  eenLeven = null
   var over = SPEELTIJD, klok = $('klok'), ring = $('klok-ring')
   klok.hidden = false; klok.classList.remove('krap'); $('klok-tijd').textContent = over; ring.style.strokeDashoffset = 0
-  clearInterval(klokId)
   klokId = setInterval(function () {
     over--
     $('klok-tijd').textContent = Math.max(0, over); ring.style.strokeDashoffset = (201 * (1 - over / SPEELTIJD)).toFixed(1)
@@ -476,12 +488,17 @@ function speel(sp) {
   }, 1000)
 }
 function stopSpel() {
-  clearInterval(klokId); klokId = null
+  clearInterval(klokId); klokId = null; eenLeven = null
   $('klok').hidden = true; $('speelvak').classList.remove('aan'); $('speel-iframe').src = 'about:blank'
   if (naBeloning) naBeloning()
 }
 // Het menuknopje in het spelletje zelf stopt het spelen ook
-addEventListener('message', function (e) { if (klokId && e.data && /-terug$/.test(e.data.type || '')) stopSpel() })
+addEventListener('message', function (e) {
+  if (!klokId || !e.data) return
+  if (/-terug$/.test(e.data.type || '')) stopSpel()
+  // af bij een spel met één leven: even het eindscherm laten zien, dan verder
+  else if (eenLeven && e.data.type === eenLeven) { eenLeven = null; clearInterval(klokId); klokId = setInterval(function () {}, 1000); setTimeout(stopSpel, 2000) }
+})
 
 $('spel-terug').onclick = function () { geluidKlik(); naar('s-taal') }
 
