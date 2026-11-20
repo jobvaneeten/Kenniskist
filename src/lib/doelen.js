@@ -19,6 +19,9 @@ const ZD = ['persoonsvorm', 'onderwerp', 'gezegde', 'lijdend voorwerp', 'meewerk
 const zinsdelenTot = (n) => ({ zinsdelen: ZD.slice(0, n) })
 
 const SPELLING_CATS = TOOL_BY_ID['dictee-categorie'].configVelden[0].opties
+const SPELLING_G4 = TOOL_BY_ID['spelling-groep4'].configVelden[0].opties
+
+const SPELLING_TOOLS = ['dictee-categorie', 'spelling-groep4']
 
 export const DOEL_VAKKEN = [
   {
@@ -64,6 +67,7 @@ export const DOEL_VAKKEN = [
         d('Voltooid deelwoord', 'werkwoordspelling', { categorieen: ['vd'] }),
         d('Alle werkwoordsvormen door elkaar', 'werkwoordspelling', { categorieen: ['tt', 'vtZwak', 'vtSterk', 'vd'] }),
       ] },
+      { titel: 'Spelling groep 4', doelen: SPELLING_G4.map(c => d(c.label, 'spelling-groep4', { cats: [c.value] })) },
       { titel: 'Spellingcategorieën', doelen: SPELLING_CATS.map(c => d(c.label, 'dictee-categorie', { cats: [c.value] })) },
       { titel: 'Dictee per blok', methode: 'taal-actief', doelen: Array.from({ length: 8 }, (_, i) => d(`Dictee blok ${i + 1}`, `dictee-thema${i + 1}`)) },
     ],
@@ -111,7 +115,7 @@ export function doelVakkenVoor(klasGroepen) {
     .map(v => ({ ...v, onderwerpen: v.onderwerpen
       .filter(o => !o.methode || heeftMethode(o.methode))
       .map(o => ({ ...o, doelen: o.doelen.filter(x => past(x.toolId))
-        .map(x => x.toolId === 'dictee-categorie' ? { ...x, titel: spellingLabel(x.titel) } : x) }))
+        .map(x => SPELLING_TOOLS.includes(x.toolId) ? { ...x, titel: spellingLabel(x.titel) } : x) }))
       .filter(o => o.doelen.length) }))
     .filter(v => v.onderwerpen.length || v.vak === 'rekenen')
 }

@@ -31,6 +31,10 @@ def teksten():
     for f in glob.glob(os.path.join(DICTEES, "dictee-*.html")):
         for w, s in PAAR.findall(open(f, encoding="utf-8").read()):
             woorden.add(js(w)); zinnen.add(js(s))
+    # spelling groep 4 (losse woorden, gedeeld met de nieuwkomers)
+    g4 = open(os.path.join(DICTEES, "..", "spelling", "groep4.js"), encoding="utf-8").read()
+    for blok in re.findall(r'"woorden":\[([^\]]*)\]', g4):
+        woorden.update(json.loads("[" + blok + "]"))
     alles = [(t, "-12%") for t in sorted(woorden)] + [(t, "-4%") for t in sorted(zinnen - woorden)]
     namen = {}
     for t, _ in alles:

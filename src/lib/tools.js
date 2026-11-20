@@ -160,6 +160,38 @@ export const TOOL_FAMILIES = [
     ],
   },
   {
+    // Groep 4: luisteren en het woord typen, 40 woorden per categorie
+    // (public/spelling/groep4.js, gedeeld met de nieuwkomers).
+    familie: 'spelling-groep4', toolId: 'spelling-groep4', label: 'Spelling groep 4',
+    vak: 'spelling', groepen: [4], aantalInstelbaar: true, standaardAantal: 12, eenheid: 'woorden',
+    configVelden: [
+      { key: 'cats', type: 'checkboxes', label: 'Categorieën (leeg = allemaal door elkaar)', min: 0, opties: [
+        { value: 'mier', label: 'mier — hakwoord: schrijf wat je hoort' },
+        { value: 'worm', label: 'worm — geen e tussen l of r en de medeklinker' },
+        { value: 'slang', label: 'slang — ng' },
+        { value: 'stinkdier', label: 'stinkdier — nk' },
+        { value: 'geit_bij', label: 'geit / bij — ei of ij' },
+        { value: 'pauw_goudvis', label: 'pauw / goudvis — au of ou' },
+        { value: 'specht', label: 'specht — cht' },
+        { value: 'pechvogel', label: 'pechvogel — ch' },
+        { value: 'beer', label: 'beer — ee, oo of eu voor de r' },
+        { value: 'haai', label: 'haai — aai, ooi of oei' },
+        { value: 'leeuw', label: 'leeuw — uw, eeuw of ieuw' },
+        { value: 'hond_hert', label: 'hond / hert — d of t aan het eind: maak langer' },
+        { value: 'stokstaart', label: 'stokstaart — samengesteld woord' },
+        { value: 'gestreept', label: 'gestreept — be-, ge- of ver-' },
+        { value: 'toekan', label: 'toekan — oe, ie, eu of ui in een langer woord' },
+        { value: 'panter', label: 'panter — twee medeklinkers in het midden' },
+        { value: 'krekel', label: 'krekel — lange klank aan het eind van een klankgroep: 1 letter' },
+        { value: 'kikker', label: 'kikker — korte klank: dubbele medeklinker' },
+        { value: 'muisje', label: 'muisje — verkleinwoord -je, -tje of -pje' },
+        { value: 'ara', label: 'ara — eindigt op a, o of u: 1 letter' },
+        { value: 'duiven_ganzen', label: 'duiven / ganzen — f wordt v, s wordt z' },
+        { value: 'gevaarlijk', label: 'giftig / gevaarlijk — -ig en -lijk' },
+      ] },
+    ],
+  },
+  {
     familie: 'tafels', toolId: 'tafels', label: 'Tafels & deelsommen',
     vak: 'rekenen', groepen: [4, 5, 6], aantalInstelbaar: false, standaardAantal: 1, eenheid: 'sessies',
     configVelden: [

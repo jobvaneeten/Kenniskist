@@ -152,10 +152,9 @@
       <span class="beeld"><svg viewBox="0 0 200 200"><rect width="200" height="200" fill="#e0f2fe"/><text x="100" y="92" font-family="Arial Rounded MT Bold, Arial" font-weight="900" font-size="64" text-anchor="middle" fill="#0284c7">1+2</text><g fill="#f59e0b"><circle cx="48" cy="140" r="16"/><circle cx="100" cy="140" r="16"/><circle cx="152" cy="140" r="16"/></g></svg></span>
       <span class="naam">Rekenen</span>
     </button>
-    <button class="tegel dicht" style="--k: var(--spel)" data-vak="spelling" aria-label="Spelling">
+    <button class="tegel" style="--k: var(--spel)" data-vak="spelling" aria-label="Spelling">
       <span class="beeld"><svg viewBox="0 0 200 200"><rect width="200" height="200" fill="#ede9fe"/><text x="100" y="112" font-family="Arial Rounded MT Bold, Arial" font-weight="900" font-size="70" text-anchor="middle" fill="#7c3aed">abc</text><path d="M40 150 L150 150" stroke="#f59e0b" stroke-width="10" stroke-linecap="round"/><path d="M150 150 l14 -6 l0 12 z" fill="#1f2937"/></svg></span>
       <span class="naam">Spelling</span>
-      <span class="slot" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fde047" stroke-width="2.4" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>
     </button>
     <button class="tegel" style="--k: var(--taal)" data-vak="taal" aria-label="Taal">
       <span class="beeld"><img src="plaatjes/sint.webp" alt=""></span>
@@ -322,7 +321,7 @@ document.querySelectorAll('[data-naar]').forEach(function (b) { b.onclick = func
 document.querySelectorAll('.tegel').forEach(function (t) {
   t.onclick = function () {
     if (t.classList.contains('dicht')) { geluidFout(); t.classList.remove('wiebel'); void t.offsetWidth; t.classList.add('wiebel'); return }
-    geluidKlik(); naar(t.dataset.vak === 'rekenen' ? 's-reken' : 's-taal')
+    geluidKlik(); naar({ rekenen: 's-reken', spelling: 's-spelkies' }[t.dataset.vak] || 's-taal')
   }
 })
 var STER = '<svg viewBox="0 0 24 24"><path d="M12 2l3 6.5 7 .8-5.2 4.8 1.5 7L12 17.6 5.7 21.1l1.5-7L2 9.3l7-.8z" fill="#fde047" stroke="#f59e0b" stroke-width="1.2" stroke-linejoin="round"/></svg>'
@@ -507,5 +506,7 @@ $('spel-terug').onclick = function () { geluidKlik(); naar('s-taal') }
 setTimeout(function () { THEMAS.forEach(function (th) { th.woorden.forEach(function (w) { var i = new Image(); i.src = 'plaatjes/' + w[0] + '.webp' }) }) }, 800)
 </script>
 <script src="rekenen.js"></script>
+<script src="/spelling/groep4.js"></script>
+<script src="spelling.js"></script>
 </body>
 </html>

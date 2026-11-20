@@ -70,6 +70,7 @@ const GAMES = {
   '7-taal': 'taal',
   '8-taal': 'taal',
   '4-rekenen': 'tafels',
+  '4-spelling': 'spelling4',
   '5-rekenen': 'rekenen',
   '6-rekenen': 'rekenen',
   '7-rekenen': 'rekenen',
@@ -559,6 +560,9 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
     }
 
     if (subject === 'spelling') {
+      if (GAMES[gameId] === 'spelling4') {
+        return <DicteeThema file="dictees/spelling-groep4.html" onBack={() => setSubject(null)} addCuruntie={addCuruntie} addBriefgeld={addBriefgeld} />
+      }
       if (spellingKeuze === 'dictee') {
         return <DicteeThema thema={dicteeNr} onBack={() => setSpellingKeuze('blokken')} addCuruntie={addCuruntie} addBriefgeld={addBriefgeld} />
       }
@@ -754,6 +758,8 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
                     ? 'Tafels oefenen'
                     : game === 'rekenen'
                     ? 'Verhaaltjes- en kale sommen'
+                    : game === 'spelling4'
+                    ? 'Luisteren en schrijven'
                     : s.key === 'spelling'
                     ? (heeftTaalActief() ? (game === 'werkwoord' ? 'Werkwoord + spellingblok' : 'Spellingblokken') : (game === 'werkwoord' ? 'Werkwoord + spellingregels' : 'Spellingregels'))
                     : game === 'taal'

@@ -61,7 +61,7 @@ export function vaardigheid(toolId, cat, catLabel) {
   const sub = TOOL_BY_ID[toolId] ? toolLabel(toolId) : toolId
   if (gevonden) {
     const titel = gevonden.titel.startsWith(gevonden.onderwerp) ? gevonden.titel : `${gevonden.onderwerp} — ${gevonden.titel}`
-    const sp = (x) => toolId === 'dictee-categorie' ? spellingLabel(x) : x
+    const sp = (x) => toolId === 'dictee-categorie' || toolId === 'spelling-groep4' ? spellingLabel(x) : x
     return { label: sp(gevonden.titel), sub, doel: { toolId, config: gevonden.config, titel: sp(titel) } }
   }
   return { label: catLabel || cat || sub, sub: cat || catLabel ? sub : 'hele oefening', doel: null }

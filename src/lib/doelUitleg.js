@@ -134,8 +134,8 @@ export function uitlegVoor({ toolId, config = {} }) {
     const cats = config.categorieen?.length ? config.categorieen : Object.keys(WERKWOORD)
     return { regels: cats.flatMap(c => WERKWOORD[c] ?? []), voorbeeld: WERKWOORD_VB[cats[0]] }
   }
-  if (familie === 'dictee-categorie' && config.cats?.length) {
-    const opties = TOOL_BY_ID['dictee-categorie'].configVelden[0].opties
+  if ((familie === 'dictee-categorie' || familie === 'spelling-groep4') && config.cats?.length) {
+    const opties = TOOL_BY_ID[familie].configVelden[0].opties
     return { regels: config.cats.map(c => {
       const label = opties.find(o => o.value === c)?.label ?? c
       return `${label.split(' — ')[1] ?? label}${SPELLING_VB[c] ? ` (zoals: ${SPELLING_VB[c]})` : ''}`

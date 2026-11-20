@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spelling groep 4</title>
+<link href="/fonts/fonts.css" rel="stylesheet">
+<style>
+  :root { --bg: #0d0d1a; --kaart: rgba(255,255,255,.05); --rand: rgba(255,255,255,.12); --ink: #fff; --zacht: rgba(255,255,255,.55);
+    --paars: #a78bfa; --paars-d: #7c3aed; --goed: #34d399; --fout: #fb7185; --goud: #fde047; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body { font-family: 'Nunito', system-ui, sans-serif; color: var(--ink); background: radial-gradient(1000px 600px at 15% -10%, rgba(124,58,237,.28), transparent 60%), radial-gradient(900px 500px at 110% 110%, rgba(56,189,248,.16), transparent 60%), var(--bg); padding: 56px 16px 32px; }
+  button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; }
+  .hide { display: none !important; }
+  .scherm { max-width: 980px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 18px; }
+  h1 { margin: 0; font-size: clamp(1.6rem, 4vw, 2.2rem); font-weight: 900; text-align: center; }
+  .sub { margin: -8px 0 0; color: var(--zacht); font-weight: 700; text-align: center; }
+  .knop { padding: 14px 28px; border-radius: 16px; font-weight: 900; font-size: 1.1rem; background: linear-gradient(160deg, var(--paars), var(--paars-d)); box-shadow: 0 10px 26px rgba(124,58,237,.35); transition: transform .1s, opacity .2s; }
+  .knop:active { transform: scale(.96); }
+  .knop:disabled { opacity: .35; cursor: default; }
+  .knop.licht { background: var(--kaart); border: 2px solid var(--rand); box-shadow: none; }
+  .rij { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+
+  /* categorieën */
+  .cats { width: 100%; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+  .cats.neutraal { grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); }
+  .cat { position: relative; text-align: center; padding: 10px; border-radius: 18px; background: var(--kaart); border: 2px solid var(--rand); display: flex; flex-direction: column; align-items: center; gap: 4px; transition: border-color .2s, transform .1s, background .2s; }
+  .cat:active { transform: scale(.97); }
+  .cat img { width: 76px; height: 76px; border-radius: 14px; background: #f5f3ff; padding: 6px; opacity: .5; filter: grayscale(.6); transition: opacity .2s, filter .2s; }
+  .cat b { font-size: 1.05rem; }
+  .cat small { color: var(--zacht); font-weight: 700; font-size: .78rem; line-height: 1.2; }
+  .cat.aan { border-color: var(--paars); background: rgba(167,139,250,.14); box-shadow: 0 0 20px rgba(167,139,250,.3); }
+  .cat.aan img { opacity: 1; filter: none; }
+  .cat .vink { position: absolute; top: 8px; right: 8px; width: 24px; height: 24px; border-radius: 8px; border: 2px solid var(--rand); display: grid; place-items: center; }
+  .cat.aan .vink { background: var(--paars); border-color: var(--paars); }
+  .cat .vink svg { width: 16px; height: 16px; opacity: 0; }
+  .cat.aan .vink svg { opacity: 1; }
+  .cats.neutraal .cat { padding: 16px 40px 16px 16px; align-items: flex-start; text-align: left; }
+
+  /* oefenen */
+  .bovenbalk { width: 100%; max-width: 640px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .punten { display: flex; gap: 6px; flex-wrap: wrap; }
+  .punt { width: 14px; height: 14px; border-radius: 50%; background: rgba(255,255,255,.14); }
+  .punt.nu { background: #fff; transform: scale(1.2); } .punt.goed { background: var(--goed); } .punt.half { background: var(--goud); } .punt.fout { background: var(--fout); }
+  .tag { display: flex; align-items: center; gap: 8px; padding: 6px 12px 6px 6px; border-radius: 14px; background: var(--kaart); border: 2px solid var(--rand); font-weight: 800; font-size: .9rem; }
+  .tag img { width: 34px; height: 34px; border-radius: 9px; background: #f5f3ff; padding: 3px; }
+  .tag.zonderplaatje { padding: 8px 12px; }
+  .hoor { width: 120px; height: 120px; border-radius: 34px; display: grid; place-items: center; color: var(--paars); background: rgba(167,139,250,.16); border: 3px solid var(--paars); box-shadow: 0 12px 30px rgba(0,0,0,.4); margin-top: 10px; }
+  .hoor svg { width: 62px; height: 62px; }
+  .hoor.speelt svg { animation: puls .6s infinite alternate; }
+  @keyframes puls { to { transform: scale(1.18); } }
+  .invoer { width: min(100%, 460px); padding: 14px 20px; border-radius: 20px; border: 4px solid var(--paars); background: #fff; color: #14122e; font: inherit; font-size: 2.2rem; font-weight: 900; text-align: center; letter-spacing: .04em; outline: none; }
+  .invoer.goed { border-color: var(--goed); background: #d1fae5; animation: pop .45s; }
+  .invoer.fout { border-color: var(--fout); background: #ffe4e6; animation: schud .4s; }
+  @keyframes pop { 40% { transform: scale(1.06); } }
+  @keyframes schud { 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
+  .melding { min-height: 1.6em; font-weight: 800; font-size: 1.1rem; text-align: center; }
+  .melding.goed { color: var(--goed); } .melding.fout { color: var(--fout); }
+  .juist { font-size: 2rem; font-weight: 900; color: var(--goed); letter-spacing: .04em; }
+
+  /* pauze en einde */
+  .laag { position: fixed; inset: 0; z-index: 10; background: rgba(8,8,20,.8); display: grid; place-items: center; padding: 16px; }
+  .doos { width: min(100%, 440px); padding: 28px 24px; border-radius: 24px; background: #16152e; border: 2px solid var(--rand); text-align: center; display: flex; flex-direction: column; gap: 14px; align-items: center; box-shadow: 0 24px 60px rgba(0,0,0,.6); }
+  .groot { font-size: 3rem; font-weight: 900; color: var(--goud); line-height: 1; }
+  .foutjes { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  .foutjes span { padding: 6px 12px; border-radius: 12px; background: rgba(251,113,133,.14); border: 1px solid rgba(251,113,133,.4); font-weight: 800; }
+</style>
+</head>
+<body>
+<script src="/kenniskist-login.js"></script>
+<script src="/spelling/groep4.js"></script>
+
+<section class="scherm" id="s-kies">
+  <h1>Spelling groep 4</h1>
+  <p class="sub" id="kies-sub">Luister naar het woord en schrijf het op. Kies wat je wilt oefenen.</p>
+  <div class="rij"><button class="knop licht" id="alles">Alles aan</button><button class="knop" id="start">Start</button></div>
+  <div class="cats" id="cats"></div>
+</section>
+
+<section class="scherm hide" id="s-oefen">
+  <div class="bovenbalk"><div class="punten" id="punten"></div><div class="tag" id="tag"></div></div>
+  <button class="hoor" id="hoor" aria-label="Luister nog een keer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9z" fill="currentColor"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg></button>
+  <p class="sub">Klik op de luidspreker om het woord nog een keer te horen.</p>
+  <input class="invoer" id="invoer" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="Schrijf het woord">
+  <div class="melding" id="melding"></div>
+  <div class="juist hide" id="juist"></div>
+  <div class="rij"><button class="knop" id="nakijken">Nakijken</button><button class="knop hide" id="volgende">Volgende</button></div>
+</section>
+
+<div class="laag hide" id="pauze"><div class="doos">
+  <div class="groot">10</div>
+  <b>Tien woorden in een keer goed!</b>
+  <span class="sub" style="margin:0">Tijd voor een spelletje.</span>
+  <div class="rij"><button class="knop" id="pauze-spel">Kies een spelletje</button><button class="knop licht" id="pauze-verder">Verder oefenen</button></div>
+</div></div>
+
+<div class="laag hide" id="einde"><div class="doos">
+  <div class="groot" id="einde-score"></div>
+  <b id="einde-tekst"></b>
+  <div class="foutjes" id="foutjes"></div>
+  <div class="rij"><button class="knop" id="opnieuw">Nog een keer</button><button class="knop licht" id="anders">Ander onderdeel</button></div>
+</div></div>
+
+<script>
+'use strict'
+var CATS = window.SPELLING_G4 || [], OOK = window.SPELLING_G4_OOK_GOED || {}
+var BY_ID = {}; CATS.forEach(function (c) { BY_ID[c.id] = c })
+var $ = function (id) { return document.getElementById(id) }
+var KK_TOOL = 'spelling-groep4', HIST = 'kk_dictee_' + KK_TOOL, KEUZE = 'kk_sp4_cats', PER_RONDE = 12, BELONING_NA = 10
+// Zonder de methode Taal actief geen dieren: een categorie heet dan naar zijn regel.
+var NEUTRAAL = (function () { try { var p = JSON.parse(localStorage.getItem('kk_profiel_cache') || 'null'); return !(p && p.methodes && p.methodes.indexOf('taal-actief') >= 0) } catch (e) { return true } })()
+var params = new URLSearchParams(location.search)
+var VAST = (params.get('cats') || '').split(',').filter(function (c) { return BY_ID[c] })   // door de leerkracht gekozen
+var AANTAL = parseInt(params.get('woorden'), 10) > 0 ? parseInt(params.get('woorden'), 10) : PER_RONDE
+function naam(c) { return NEUTRAAL ? c.regel.charAt(0).toUpperCase() + c.regel.slice(1) : c.dier }
+function lees(k, d) { try { return JSON.parse(localStorage.getItem(k)) || d } catch (e) { return d } }
+function schrijf(k, v) { try { localStorage.setItem(k, JSON.stringify(v)) } catch (e) {} }
+
+// ── voorlezen: opname van Fenna (/dictees/audio, scripts/dictee-audio.py), anders de browserstem ──
+function kkHash(t) { var h = 0x811c9dc5, b = new TextEncoder().encode(t); for (var i = 0; i < b.length; i++) { h ^= b[i]; h = Math.imul(h, 0x01000193) >>> 0 } return h.toString(16).padStart(8, '0') }
+var stem = null, speler = null
+function kiesStem() { var s = window.speechSynthesis ? speechSynthesis.getVoices() : []; stem = s.find(function (v) { return v.lang === 'nl-NL' }) || s.find(function (v) { return /^nl/.test(v.lang) }) || null }
+if (window.speechSynthesis) { kiesStem(); speechSynthesis.onvoiceschanged = kiesStem }
+function stil() { if (speler) { speler.pause(); speler = null } if (window.speechSynthesis) speechSynthesis.cancel() }
+function zeg(w) {
+  stil()
+  var knop = $('hoor'), klaar = function () { knop.classList.remove('speelt') }
+  knop.classList.add('speelt')
+  var a = new Audio('audio/' + kkHash(w) + '.mp3'); speler = a
+  a.onended = klaar
+  a.onerror = function () {
+    if (speler !== a) return; speler = null
+    if (!window.speechSynthesis) return klaar()
+    var u = new SpeechSynthesisUtterance(w); u.lang = 'nl-NL'; u.rate = 0.85; if (stem) u.voice = stem
+    u.onend = u.onerror = klaar; speechSynthesis.speak(u)
+  }
+  a.play().catch(function (e) { if (e.name !== 'AbortError') a.onerror() })
+}
+
+// ── categorieën kiezen ──
+var keuze = lees(KEUZE, ['mier'])
+var VINK = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>'
+function tekenCats() {
+  var l = $('cats'); l.innerHTML = ''; l.classList.toggle('neutraal', NEUTRAAL)
+  CATS.forEach(function (c) {
+    var b = document.createElement('button')
+    b.className = 'cat' + (keuze.indexOf(c.id) >= 0 ? ' aan' : '')
+    b.innerHTML = '<span class="vink">' + VINK + '</span>' + (NEUTRAAL ? '<b>' + naam(c) + '</b>'
+      : '<img src="/spelling/plaatjes/' + c.id + '.svg" alt=""><b>' + c.dier + '</b><small>' + c.regel + '</small>')
+    b.onclick = function () {
+      var k = keuze.indexOf(c.id)
+      if (k >= 0) keuze.splice(k, 1); else keuze.push(c.id)
+      b.classList.toggle('aan', k < 0); schrijf(KEUZE, keuze); knoppen()
+    }
+    l.appendChild(b)
+  })
+  knoppen()
+}
+function knoppen() {
+  $('start').disabled = !keuze.length
+  $('alles').textContent = keuze.length === CATS.length ? 'Alles uit' : 'Alles aan'
+}
+$('alles').onclick = function () { keuze = keuze.length === CATS.length ? [] : CATS.map(function (c) { return c.id }); schrijf(KEUZE, keuze); tekenCats() }
+$('start').onclick = function () { start(keuze) }
+if (NEUTRAAL) $('kies-sub').textContent = 'Luister naar het woord en schrijf het op. Kies welke spellingregels je wilt oefenen.'
+
+// ── een ronde ──
+var r = null, goedSindsPauze = 0
+function volgorde(lijst) {
+  // eerst woorden die je nog niet (goed) gemaakt hebt, dan de rest; allebei door elkaar
+  var h = lees(HIST, {}), eerst = [], later = []
+  lijst.forEach(function (x) { var s = h[x.w]; (s && s[1] ? later : eerst).push(x) })
+  var mix = function (a) { for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t } return a }
+  return mix(eerst).concat(mix(later))
+}
+function start(cats) {
+  var lijst = []
+  cats.forEach(function (id) { BY_ID[id].woorden.forEach(function (w) { lijst.push({ w: w, c: id }) }) })
+  if (!lijst.length) return
+  r = { cats: cats, woorden: volgorde(lijst).slice(0, AANTAL), i: 0, uitslag: [] }
+  $('s-kies').classList.add('hide'); $('einde').classList.add('hide'); $('s-oefen').classList.remove('hide')
+  vraag()
+}
+function vraag() {
+  var x = r.woorden[r.i], c = BY_ID[x.c]
+  r.fout = 0; r.klaar = false
+  $('tag').className = 'tag' + (NEUTRAAL ? ' zonderplaatje' : '')
+  $('tag').innerHTML = NEUTRAAL ? naam(c) : '<img src="/spelling/plaatjes/' + c.id + '.svg" alt="">' + c.dier
+  var inv = $('invoer'); inv.value = ''; inv.className = 'invoer'; inv.readOnly = false; inv.focus()
+  $('melding').textContent = ''; $('melding').className = 'melding'
+  $('juist').classList.add('hide'); $('nakijken').classList.remove('hide'); $('volgende').classList.add('hide')
+  punten()
+  setTimeout(function () { if (r && r.woorden[r.i] === x) zeg(x.w) }, 300)
+}
+function punten() {
+  var p = $('punten'); p.innerHTML = ''
+  r.woorden.forEach(function (_, i) {
+    var u = r.uitslag[i], s = document.createElement('span')
+    s.className = 'punt' + (i === r.i && u == null ? ' nu' : u === 2 ? ' goed' : u === 1 ? ' half' : u === 0 ? ' fout' : '')
+    p.appendChild(s)
+  })
+}
+function bewaar(x, getypt, ok) {
+  var h = lees(HIST, {}); h[x.w] = [(h[x.w] ? h[x.w][0] : 0) + 1, ok ? 1 : 0]; schrijf(HIST, h)
+  window.KennisKist && window.KennisKist.slaResultaatOp && window.KennisKist.slaResultaatOp(KK_TOOL, ok ? 1 : 0, 1, { opgaven: [{ vraag: x.w, antwoord: getypt, juist: x.w, goed: ok, cat: x.c }] })
+}
+function nakijken() {
+  if (!r || r.klaar) return
+  var x = r.woorden[r.i], inv = $('invoer'), getypt = inv.value.trim().toLowerCase()
+  if (!getypt) return inv.focus()
+  var m = $('melding')
+  if (getypt === x.w || (OOK[x.w] || []).indexOf(getypt) >= 0) {
+    r.klaar = true; inv.value = x.w; inv.className = 'invoer goed'; inv.readOnly = true
+    m.textContent = r.fout ? 'Goed zo, nu klopt het!' : 'Goed!'; m.className = 'melding goed'
+    r.uitslag[r.i] = r.fout ? 1 : 2
+    if (!r.fout) { bewaar(x, getypt, true); goedSindsPauze++ }
+    punten(); setTimeout(volgende, 1000)
+  } else if (!r.fout) {
+    // eerste keer fout: telt als fout, maar je mag het nog een keer proberen
+    r.fout = 1; bewaar(x, getypt, false)
+    inv.className = 'invoer fout'; m.textContent = 'Nog niet goed. Luister nog een keer en probeer het opnieuw.'; m.className = 'melding fout'
+    setTimeout(function () { inv.className = 'invoer'; inv.select(); zeg(x.w) }, 600)
+  } else {
+    r.klaar = true; r.uitslag[r.i] = 0; inv.className = 'invoer fout'; inv.readOnly = true
+    m.textContent = 'Zo schrijf je het:'; m.className = 'melding fout'
+    $('juist').textContent = x.w; $('juist').classList.remove('hide')
+    $('nakijken').classList.add('hide'); $('volgende').classList.remove('hide'); $('volgende').focus()
+    punten(); zeg(x.w)
+  }
+}
+function volgende() {
+  r.i++
+  // na 10 woorden in een keer goed: een spelletje (alleen in Kenniskist zelf)
+  if (goedSindsPauze >= BELONING_NA && window.parent !== window) { goedSindsPauze = 0; stil(); $('pauze').classList.remove('hide'); return }
+  verder()
+}
+function verder() {
+  $('pauze').classList.add('hide')
+  if (r.i < r.woorden.length) return vraag()
+  stil()
+  var goed = r.uitslag.filter(function (u) { return u === 2 }).length
+  $('einde-score').textContent = goed + ' / ' + r.woorden.length
+  $('einde-tekst').textContent = goed === r.woorden.length ? 'Alles in een keer goed!' : goed >= r.woorden.length * 0.8 ? 'Heel goed gedaan!' : 'Goed geoefend! Deze woorden waren lastig:'
+  var f = $('foutjes'); f.innerHTML = ''
+  r.woorden.forEach(function (x, i) { if (r.uitslag[i] !== 2) { var s = document.createElement('span'); s.textContent = x.w; f.appendChild(s) } })
+  $('anders').classList.toggle('hide', VAST.length > 0)
+  $('einde').classList.remove('hide')
+}
+$('invoer').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); if (r && r.klaar && !$('volgende').classList.contains('hide')) volgende(); else nakijken() } })
+$('nakijken').onclick = nakijken
+$('volgende').onclick = volgende
+$('hoor').onclick = function () { if (r) { zeg(r.woorden[r.i].w); $('invoer').focus() } }
+$('pauze-spel').onclick = function () { parent.postMessage({ type: 'dictee-game' }, '*') }
+$('pauze-verder').onclick = verder
+addEventListener('message', function (e) { if (e.data && e.data.type === 'dictee-resume') verder() })
+$('opnieuw').onclick = function () { start(r.cats) }
+$('anders').onclick = function () { $('einde').classList.add('hide'); $('s-oefen').classList.add('hide'); $('s-kies').classList.remove('hide'); r = null; tekenCats() }
+
+if (VAST.length) { $('s-kies').classList.add('hide'); start(VAST) } else tekenCats()
+</script>
+<script>
+// Achtergrondmuziek dempen zolang deze oefening open staat (zie kenniskist-muziek.js).
+window.KennisKist && window.KennisKist.muziekDemp(true);
+window.addEventListener('pagehide', function () { window.KennisKist && window.KennisKist.muziekDemp(false); });
+</script>
+</body>
+</html>
