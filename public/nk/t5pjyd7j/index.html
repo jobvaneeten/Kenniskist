@@ -181,12 +181,23 @@ function kiesStem() {
   stem = s.find(function (v) { return v.lang === 'nl-NL' && v.localService }) || s.find(function (v) { return v.lang === 'nl-NL' }) || s.find(function (v) { return /^nl/.test(v.lang) }) || null
 }
 if (window.speechSynthesis) { kiesStem(); speechSynthesis.addEventListener && speechSynthesis.addEventListener('voiceschanged', kiesStem) }
-function zeg(tekst, knop) {
-  if (!window.speechSynthesis) return
-  speechSynthesis.cancel()
+// Eerst de opname van Fenna (audio/<id>.mp3, zie scripts/nk-audio.py), net als
+// bij de dictees. Alleen als die er niet is: de stem van de browser.
+var speler = null
+function zegBrowser(tekst, klaar) {
+  if (!window.speechSynthesis) return klaar()
   var u = new SpeechSynthesisUtterance(tekst); u.lang = 'nl-NL'; u.rate = 0.85; if (stem) u.voice = stem
-  if (knop) { knop.classList.add('speelt'); u.onend = u.onerror = function () { knop.classList.remove('speelt') } }
-  speechSynthesis.speak(u)
+  u.onend = u.onerror = klaar; speechSynthesis.speak(u)
+}
+function stil() { if (speler) { speler.pause(); speler = null } if (window.speechSynthesis) speechSynthesis.cancel() }
+function zeg(woord, knop) {
+  stil()
+  var klaar = function () { if (knop) knop.classList.remove('speelt') }
+  if (knop) knop.classList.add('speelt')
+  var a = new Audio('audio/' + woord[0] + '.mp3'); speler = a
+  a.onended = klaar
+  a.onerror = function () { if (speler !== a) return; speler = null; zegBrowser(woord[1], klaar) }
+  a.play().catch(function (e) { if (e.name !== 'AbortError') a.onerror() })
 }
 var ac = null
 function toon(f, start, duur, vol, soort) {
@@ -223,7 +234,7 @@ var $ = function (id) { return document.getElementById(id) }
 function naar(id) {
   document.querySelectorAll('.scherm').forEach(function (s) { s.classList.toggle('aan', s.id === id) })
   if (id === 's-taal') tekenThemas()
-  if (window.speechSynthesis) speechSynthesis.cancel()
+  stil()
   scrollTo(0, 0)
 }
 document.querySelectorAll('[data-naar]').forEach(function (b) { b.onclick = function () { geluidKlik(); naar(b.dataset.naar) } })
@@ -273,7 +284,7 @@ function toonVraag() {
     var d = document.createElement('div'); d.className = 'keuze'
     d.innerHTML = '<button class="luister" aria-label="Luister"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9z" fill="currentColor"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg></button><button class="woord"></button>'
     d.querySelector('.woord').textContent = x[1]
-    d.querySelector('.luister').onclick = function (e) { e.stopPropagation(); zeg(x[1], this) }
+    d.querySelector('.luister').onclick = function (e) { e.stopPropagation(); zeg(x, this) }
     d.querySelector('.woord').onclick = function () { kies(x, d) }
     k.appendChild(d)
   })
