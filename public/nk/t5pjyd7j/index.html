@@ -422,17 +422,40 @@ function eindeKnoppen(terug, opnieuw) {
 }
 // ── Beloning: 45 seconden een spelletje van Kenniskist, in een iframe ──
 var SPELLETJES = [
-  ['fruitsabel', '/fruitsabel/?terug=1', 'fruitsabel.svg'], ['stapeltoren', '/stapeltoren/?terug=1', 'stapeltoren.svg'],
-  ['komeetstaart', '/komeetstaart/?terug=1', 'komeetstaart.svg'], ['doodlesprong', '/doodlesprong/?terug=1', 'doodlesprong.png'],
-  ['meteoorvlucht', '/meteoorvlucht/?terug=1', 'meteoorvlucht.svg'], ['kristalsmelt', '/kristalsmelt/?terug=1', 'kristalsmelt.svg'],
-  ['neonhockey', '/neonhockey/?terug=1', 'neonhockey.svg'], ['blokkenblitz', '/blokkenblitz/?terug=1', 'blokkenblitz.svg'],
+  ['towerdefense','/towerdefense/?terug=1','towerdefense.svg'],
+  ['jetpack','/jetpack/?terug=1','jetpack.png'],
+  ['astrokatapult','/astrokatapult/?terug=1','astrokatapult.png'],
+  ['sterrenstroom','/sterrenstroom/?terug=1','sterrenstroom.png'],
+  ['doodlesprong','/doodlesprong/?terug=1','doodlesprong.png'],
+  ['meteoorvlucht','/meteoorvlucht/?terug=1','meteoorvlucht.svg'],
+  ['evolutie','/evolutie/?terug=1','evolutie.png'],
+  ['dierentuin','/dierentuin/?terug=1','dierentuin.svg'],
+  ['planeet','/planeet/?terug=1','planeet.svg'],
+  ['fruitsabel','/fruitsabel/?terug=1','fruitsabel.svg'],
+  ['graven','/graven/?terug=1','graven.svg'],
+  ['neongolf','/neongolf/?terug=1','neongolf.svg'],
+  ['blokkenblitz','/blokkenblitz/?terug=1','blokkenblitz.svg'],
+  ['neonhockey','/neonhockey/?terug=1','neonhockey.svg'],
+  ['pijlenregen','/pijlenregen/?terug=1','pijlenregen.svg'],
+  ['neonglij','/neonglij/?terug=1','neonglij.svg'],
+  ['lichtlab','/lichtlab/?terug=1','lichtlab.svg'],
+  ['komeetstaart','/komeetstaart/?terug=1','komeetstaart.svg'],
+  ['kristalsmelt','/kristalsmelt/?terug=1','kristalsmelt.svg'],
+  ['monsterteam','/monsterteam/?terug=1','monsterteam.webp'],
+  ['neondrift','/neondrift/?terug=1','neondrift.svg'],
+  ['boerenleven','/boerenleven/?terug=1','boerenleven.svg'],
+  ['stadsbouwer','/stadsbouwer/?terug=1','stadsbouwer.png'],
+  ['stapeltoren','/stapeltoren/?terug=1','stapeltoren.svg'],
+  ['steenknaller','/steenknaller/?terug=1','steenknaller.svg'],
+  ['vlotstrijd','/vlotstrijd/?terug=1','vlotstrijd.svg'],
+  ['tijdstrijd','/tijdstrijd/?terug=1','tijdstrijd.png'],
 ]
 var klokId = null, naBeloning = null
 function toonBeloning(terug) {
   naBeloning = terug
   var l = $('spellen'); l.innerHTML = ''
   SPELLETJES.forEach(function (sp, i) {
-    var b = document.createElement('button'); b.className = 'spelkaart'; b.style.animationDelay = (i * 0.05) + 's'; b.setAttribute('aria-label', sp[0])
+    var b = document.createElement('button'); b.className = 'spelkaart'; b.style.animationDelay = (i * 0.025) + 's'; b.setAttribute('aria-label', sp[0])
     b.innerHTML = '<img src="/scenes/games/' + sp[2] + '" alt="">'
     b.onclick = function () { geluidKlik(); speel(sp) }
     l.appendChild(b)
