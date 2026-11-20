@@ -42,6 +42,9 @@ var SP_WIS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-
     '.spwoord.leeg::after { content: "|"; color: #c7c3e6; animation: puls .7s infinite alternate; }',
     '.spwoord.goed { border-color: var(--goed); background: #d1fae5; animation: pop .5s; }',
     '.spwoord.fout { border-color: var(--fout); background: #ffe4e6; animation: schud .4s; }',
+    '.sphulp { width: 84px; height: 84px; border-radius: 26px; display: grid; place-items: center; background: rgba(253,224,71,.14); border: 3px solid var(--goud); color: var(--goud); font-size: 3rem; font-weight: 900; box-shadow: 0 10px 26px rgba(0,0,0,.35); }',
+    '.sphulp:active { transform: scale(.94); }',
+    '.spwoord.kijk { border-color: var(--goud); background: #fef9c3; animation: pop .4s; }',
     '.spwoord.toon { border-color: var(--goed); background: #d1fae5; }',
     '.letters { width: 100%; max-width: 640px; display: flex; flex-direction: column; gap: 7px; }',
     '.letters div { display: flex; gap: 6px; justify-content: center; }',
@@ -60,7 +63,7 @@ var SP_WIS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-
     '<div class="spcats" id="spcats"></div><button class="spstart" id="spstart" aria-label="Start">' + SP_START + '</button>'
   var typ = document.createElement('section'); typ.className = 'scherm'; typ.id = 's-spelling'
   typ.innerHTML = '<div class="kop"><button class="rond" id="spt-terug" aria-label="Terug">' + huis + '</button><div class="punten" id="sp-punten"></div>' + cadeau + '</div>' +
-    '<div class="spveld"><div class="sprij"><img id="sp-dier" alt=""><button class="sphoor" id="sp-hoor" aria-label="Luister">' + SP_LUIDSPREKER + '</button></div>' +
+    '<div class="spveld"><div class="sprij"><img id="sp-dier" alt=""><button class="sphoor" id="sp-hoor" aria-label="Luister">' + SP_LUIDSPREKER + '</button><button class="sphulp" id="sp-hulp" aria-label="Laat het woord even zien">?</button></div>' +
     '<div class="spwoord leeg" id="sp-woord"></div><div class="letters" id="sp-letters"></div></div>'
   var na = $('s-einde'); na.parentNode.insertBefore(kies, na); na.parentNode.insertBefore(typ, na)
 })()
@@ -111,7 +114,7 @@ function startSpelling() {
 }
 function spVraag() {
   var x = spr.woorden[spr.i]
-  spr.invoer = ''; spr.fout = 0; spr.klaar = false
+  spr.invoer = ''; spr.fout = 0; spr.klaar = false; spr.hulp = false; clearTimeout(spr.kijkId); spr.kijkt = false
   $('sp-dier').src = '/spelling/plaatjes/' + x.c + '.svg'
   spToon(); spPunten(); tekenCadeau(false)
   setTimeout(function () { if (spr && spr.woorden[spr.i] === x) spZeg(x.w) }, 350)
@@ -129,7 +132,7 @@ function spPunten() {
   }
 }
 function spTyp(c) {
-  if (!spr || spr.klaar) return
+  if (!spr || spr.klaar || spr.kijkt) return
   if (c === 'wis') spr.invoer = spr.invoer.slice(0, -1)
   else if (c === 'ok') return spControleer()
   else if (spr.invoer.length < 20) spr.invoer += c
@@ -143,8 +146,9 @@ function spControleer() {
     spr.klaar = true; spr.invoer = x.w; spToon('goed'); geluidGoed()
     var r = $('sp-woord').getBoundingClientRect(); confetti(r.left + r.width / 2, r.top + r.height / 2, spr.fout ? 30 : 70)
     st.keer++
-    if (!spr.fout) { st.goed++; st.reeks++; D.teller = (D.teller || 0) + 1; tekenCadeau(true) } else st.reeks = 0
-    spr.uitslag[spr.i] = spr.fout ? 1 : 2; bewaar(); spPunten()
+    // met hulp (vraagteken) of na een fout: wel goed, maar niet voor het cadeau
+    if (!spr.fout && !spr.hulp) { st.goed++; st.reeks++; D.teller = (D.teller || 0) + 1; tekenCadeau(true) } else st.reeks = 0
+    spr.uitslag[spr.i] = spr.fout || spr.hulp ? 1 : 2; bewaar(); spPunten()
     setTimeout(spVolgende, 1300)
   } else {
     spr.fout++; geluidFout(); spToon('fout')
@@ -197,6 +201,14 @@ function spVerder() {
 })()
 
 $('sp-hoor').onclick = function () { if (spr) spZeg(spr.woorden[spr.i].w) }
+// vraagteken: het woord heel even laten zien
+$('sp-hulp').onclick = function () {
+  if (!spr || spr.klaar || spr.kijkt) return
+  var x = spr.woorden[spr.i]
+  geluidKlik(); spr.hulp = true; spr.kijkt = true
+  var a = $('sp-woord'); a.className = 'spwoord kijk'; a.textContent = x.w
+  spr.kijkId = setTimeout(function () { spr.kijkt = false; spToon() }, 1500)
+}
 $('spt-terug').onclick = function () { geluidKlik(); naar('s-spelkies') }
 $('spk-terug').onclick = function () { geluidKlik(); naar('s-start') }
 $('spstart').onclick = function () { geluidKlik(); startSpelling() }
