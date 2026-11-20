@@ -422,7 +422,8 @@ function eindeKnoppen(terug, opnieuw) {
 }
 // ── Beloning: 45 seconden een spelletje van Kenniskist, in een iframe ──
 // [naam, adres, plaatje, game-over-bericht]. Met een game-over-bericht is het
-// een spel met één leven (runners): dat duurt tot je af bent, zonder klok.
+// een spel met één leven (runners) of één potje: dat duurt tot je af bent of op
+// Klaar tikt ('knop'), zonder klok.
 // De rest speel je 45 seconden.
 var SPELLETJES = [
   ['towerdefense','/towerdefense/?terug=1','towerdefense.svg'],
@@ -438,7 +439,7 @@ var SPELLETJES = [
   ['graven','/graven/?terug=1','graven.svg'],
   ['neongolf','/neongolf/?terug=1','neongolf.svg'],
   ['blokkenblitz','/blokkenblitz/?terug=1','blokkenblitz.svg'],
-  ['neonhockey','/neonhockey/?terug=1','neonhockey.svg'],
+  ['neonhockey','/neonhockey/','neonhockey.svg','neonhockey-gameover','knop'],
   ['pijlenregen','/pijlenregen/?terug=1','pijlenregen.svg'],
   ['neonglij','/neonglij/?terug=1','neonglij.svg'],
   ['lichtlab','/lichtlab/?terug=1','lichtlab.svg'],
@@ -448,8 +449,8 @@ var SPELLETJES = [
   ['neondrift','/neondrift/?terug=1','neondrift.svg'],
   ['boerenleven','/boerenleven/?terug=1','boerenleven.svg'],
   ['stadsbouwer','/stadsbouwer/?terug=1','stadsbouwer.png'],
-  ['stapeltoren','/stapeltoren/?terug=1','stapeltoren.svg'],
-  ['steenknaller','/steenknaller/?terug=1','steenknaller.svg'],
+  ['stapeltoren','/stapeltoren/','stapeltoren.svg','stapeltoren-gameover','knop'],
+  ['steenknaller','/steenknaller/','steenknaller.svg','steenknaller-gameover','knop'],
   ['vlotstrijd','/vlotstrijd/?terug=1','vlotstrijd.svg'],
   ['tijdstrijd','/tijdstrijd/?terug=1','tijdstrijd.png'],
 ]
@@ -465,14 +466,14 @@ function toonBeloning(terug) {
   })
   naar('s-beloning'); geluidGoed(); setTimeout(function () { confetti(innerWidth / 2, innerHeight / 3, 140) }, 150)
 }
-var eenLeven = null
+var eenLeven = null, metKnop = false
 function speel(sp) {
   stil()
   $('speel-iframe').src = sp[1]; $('speelvak').classList.add('aan')
   clearInterval(klokId)
   if (sp[3]) {
     // een leven: geen klok; voor de zekerheid wel na 4 minuten klaar
-    eenLeven = sp[3]; $('klok').hidden = true
+    eenLeven = sp[3]; metKnop = sp[4] === 'knop'; $('klok').hidden = true
     var veilig = 240
     klokId = setInterval(function () { if (--veilig <= 0) stopSpel() }, 1000)
     return
@@ -497,7 +498,7 @@ addEventListener('message', function (e) {
   if (!klokId || !e.data) return
   if (/-terug$/.test(e.data.type || '')) stopSpel()
   // af bij een spel met één leven: even het eindscherm laten zien, dan verder
-  else if (eenLeven && e.data.type === eenLeven) { eenLeven = null; clearInterval(klokId); klokId = setInterval(function () {}, 1000); setTimeout(stopSpel, 2000) }
+  else if (eenLeven && e.data.type === eenLeven) { eenLeven = null; clearInterval(klokId); klokId = setInterval(function () {}, 1000); setTimeout(stopSpel, metKnop ? 150 : 2000) }
 })
 
 $('spel-terug').onclick = function () { geluidKlik(); naar('s-taal') }
