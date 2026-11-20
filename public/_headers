@@ -11,3 +11,7 @@ https://kenniskist.jobvaneeten.workers.dev/*
   Cache-Control: public, max-age=86400
 /handleiding/videos/*
   Cache-Control: public, max-age=86400
+
+# Nieuwkomers: alleen via de QR-code, niet in zoekmachines
+/nk/*
+  X-Robots-Tag: noindex, nofollow

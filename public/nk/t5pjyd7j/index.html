@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0b0a1f">
+<title>Kenniskist · Nieuwkomers</title>
+<link rel="icon" href="/logo-rond.png">
+<link rel="apple-touch-icon" href="/logo-rond.png">
+<style>
+  /* Nieuwkomers (NK): alleen bereikbaar via de QR-code, zonder inloggen.
+     Alles werkt met plaatjes en voorlezen; de voortgang staat in de browser
+     van dit apparaat (localStorage kk_nk). */
+  :root { --bg: #0b0a1f; --kaart: #17153a; --rand: rgba(255,255,255,.12); --tekst: #f4f2ff; --zacht: #a9a3d6;
+    --goed: #34d399; --fout: #fb7185; --taal: #f59e0b; --reken: #38bdf8; --spel: #a78bfa; --goud: #fde047; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--tekst); font-family: 'Baloo 2', 'Nunito', system-ui, sans-serif; overscroll-behavior: none; }
+  body { background: radial-gradient(1000px 600px at 15% -10%, #3b1d6e 0, transparent 60%), radial-gradient(900px 600px at 110% 110%, #0f3b5e 0, transparent 60%), var(--bg); background-attachment: fixed; user-select: none; -webkit-user-select: none; }
+  button { font: inherit; color: inherit; border: 0; background: none; cursor: pointer; touch-action: manipulation; }
+  .scherm { display: none; min-height: 100%; padding: max(16px, env(safe-area-inset-top)) 16px max(20px, env(safe-area-inset-bottom)); flex-direction: column; align-items: center; }
+  .scherm.aan { display: flex; }
+  .kop { width: 100%; max-width: 900px; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 64px; }
+  .rond { width: 60px; height: 60px; border-radius: 20px; display: grid; place-items: center; background: var(--kaart); border: 2px solid var(--rand); box-shadow: 0 6px 18px rgba(0,0,0,.35); transition: transform .12s; }
+  .rond:active { transform: scale(.92); }
+  .rond svg { width: 32px; height: 32px; }
+  .logo { width: 64px; height: 64px; border-radius: 50%; box-shadow: 0 0 24px rgba(167,139,250,.5); }
+
+  /* ── Start: drie grote tegels ── */
+  .tegels { flex: 1; width: 100%; max-width: 960px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; align-content: center; padding: 10px 0 30px; }
+  @media (max-width: 700px) { .tegels { grid-template-columns: 1fr; gap: 16px; } }
+  .tegel { position: relative; border-radius: 30px; padding: 18px 18px 14px; background: linear-gradient(160deg, color-mix(in srgb, var(--k) 30%, #1d1a48), #141233); border: 3px solid color-mix(in srgb, var(--k) 70%, transparent); box-shadow: 0 12px 30px rgba(0,0,0,.4), 0 0 30px color-mix(in srgb, var(--k) 25%, transparent); display: flex; flex-direction: column; align-items: center; gap: 10px; transition: transform .15s; animation: in .45s both; }
+  .tegel:nth-child(2) { animation-delay: .08s; } .tegel:nth-child(3) { animation-delay: .16s; }
+  .tegel:active { transform: scale(.96); }
+  .tegel .beeld { width: 100%; aspect-ratio: 1; max-height: 34vh; border-radius: 22px; background: #fffaf0; display: grid; place-items: center; overflow: hidden; }
+  @media (max-width: 700px) { .tegel { flex-direction: row; padding: 12px; } .tegel .beeld { width: 110px; height: 110px; flex: none; } }
+  .tegel .beeld img, .tegel .beeld svg { width: 100%; height: 100%; object-fit: contain; }
+  .tegel .naam { font-size: 1.6rem; font-weight: 800; letter-spacing: .02em; }
+  .tegel.dicht .beeld { filter: grayscale(.7) brightness(.75); }
+  .slot { position: absolute; top: 12px; right: 12px; width: 52px; height: 52px; border-radius: 50%; background: #0b0a1f; border: 3px solid var(--rand); display: grid; place-items: center; }
+  .slot svg { width: 28px; height: 28px; }
+  .wiebel { animation: wiebel .5s; }
+  @keyframes wiebel { 20% { transform: rotate(-4deg); } 40% { transform: rotate(4deg); } 60% { transform: rotate(-3deg); } 80% { transform: rotate(2deg); } }
+  @keyframes in { from { opacity: 0; transform: translateY(18px) scale(.97); } }
+
+  /* ── Thema's ── */
+  .themas { flex: 1; width: 100%; max-width: 900px; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; align-content: center; }
+  .thema { border-radius: 28px; padding: 14px; background: var(--kaart); border: 3px solid var(--taal); box-shadow: 0 10px 28px rgba(0,0,0,.35), 0 0 26px rgba(245,158,11,.25); display: flex; flex-direction: column; gap: 10px; align-items: center; animation: in .4s both; }
+  .thema:active { transform: scale(.96); }
+  .thema img { width: 100%; aspect-ratio: 1; object-fit: contain; border-radius: 20px; background: #fffaf0; }
+  .sterren { display: flex; align-items: center; gap: 8px; font-size: 1.3rem; font-weight: 800; color: var(--goud); }
+  .sterren svg { width: 28px; height: 28px; }
+  .balk { width: 100%; height: 14px; border-radius: 99px; background: rgba(255,255,255,.1); overflow: hidden; }
+  .balk i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, #fbbf24, var(--goud)); transition: width .6s; }
+
+  /* ── Spel ── */
+  .punten { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+  .punt { width: 16px; height: 16px; border-radius: 50%; background: rgba(255,255,255,.14); transition: background .3s, transform .3s; }
+  .punt.nu { background: #fff; transform: scale(1.25); }
+  .punt.goed { background: var(--goed); } .punt.half { background: var(--goud); } .punt.fout { background: var(--fout); }
+  .speelveld { flex: 1; width: 100%; max-width: 900px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; }
+  .plaat { width: min(62vw, 42vh, 360px); aspect-ratio: 1; border-radius: 32px; background: #fffaf0; border: 6px solid #fff; box-shadow: 0 16px 40px rgba(0,0,0,.45), 0 0 0 4px rgba(245,158,11,.5); overflow: hidden; }
+  .plaat img { width: 100%; height: 100%; object-fit: contain; }
+  .plaat.pop { animation: pop .5s; }
+  @keyframes pop { 40% { transform: scale(1.08) rotate(-2deg); } 70% { transform: scale(.98); } }
+  .keuzes { width: 100%; max-width: 760px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 520px) { .keuzes { grid-template-columns: 1fr; } }
+  .keuze { display: flex; align-items: stretch; border-radius: 22px; background: var(--kaart); border: 3px solid var(--rand); box-shadow: 0 8px 20px rgba(0,0,0,.3); overflow: hidden; animation: in .3s both; }
+  .keuze:nth-child(2) { animation-delay: .05s; } .keuze:nth-child(3) { animation-delay: .1s; } .keuze:nth-child(4) { animation-delay: .15s; }
+  .luister { flex: none; width: 76px; display: grid; place-items: center; background: rgba(56,189,248,.16); border-right: 3px solid var(--rand); }
+  .luister svg { width: 36px; height: 36px; color: var(--reken); }
+  .luister.speelt svg { animation: puls .6s infinite alternate; }
+  @keyframes puls { to { transform: scale(1.2); } }
+  .woord { flex: 1; min-height: 80px; padding: 10px 16px; font-size: clamp(1.5rem, 4.2vw, 2.1rem); font-weight: 800; text-align: center; display: grid; place-items: center; line-height: 1.1; }
+  .keuze.goed { border-color: var(--goed); background: color-mix(in srgb, var(--goed) 28%, var(--kaart)); box-shadow: 0 0 30px rgba(52,211,153,.5); }
+  .keuze.fout { border-color: var(--fout); background: color-mix(in srgb, var(--fout) 22%, var(--kaart)); animation: schud .4s; opacity: .55; }
+  .keuze.fout .woord { text-decoration: line-through; text-decoration-thickness: 3px; }
+  @keyframes schud { 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
+
+  /* ── Einde ── */
+  .einde { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; text-align: center; }
+  .beker { width: 150px; height: 150px; animation: pop .8s; filter: drop-shadow(0 0 30px rgba(253,224,71,.6)); }
+  .rijsterren { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; max-width: 520px; }
+  .rijsterren svg { width: 44px; height: 44px; animation: in .4s both; }
+  .groot { width: 92px; height: 92px; border-radius: 28px; }
+  .groot svg { width: 46px; height: 46px; }
+  .knoppen { display: flex; gap: 18px; }
+  .knop-groen { background: linear-gradient(160deg, #34d399, #059669); border-color: transparent; box-shadow: 0 10px 26px rgba(16,185,129,.45); }
+  .confetti { position: fixed; inset: 0; pointer-events: none; z-index: 50; }
+</style>
+</head>
+<body>
+<canvas class="confetti" id="confetti"></canvas>
+
+<!-- Start: kies een vak -->
+<section class="scherm aan" id="s-start">
+  <div class="kop"><img class="logo" src="/logo-rond.png" alt="Kenniskist"><span></span></div>
+  <div class="tegels">
+    <button class="tegel dicht" style="--k: var(--reken)" data-vak="rekenen" aria-label="Rekenen">
+      <span class="beeld"><svg viewBox="0 0 200 200"><rect width="200" height="200" fill="#e0f2fe"/><text x="100" y="92" font-family="Arial Rounded MT Bold, Arial" font-weight="900" font-size="64" text-anchor="middle" fill="#0284c7">1+2</text><g fill="#f59e0b"><circle cx="48" cy="140" r="16"/><circle cx="100" cy="140" r="16"/><circle cx="152" cy="140" r="16"/></g></svg></span>
+      <span class="naam">Rekenen</span>
+      <span class="slot" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fde047" stroke-width="2.4" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>
+    </button>
+    <button class="tegel dicht" style="--k: var(--spel)" data-vak="spelling" aria-label="Spelling">
+      <span class="beeld"><svg viewBox="0 0 200 200"><rect width="200" height="200" fill="#ede9fe"/><text x="100" y="112" font-family="Arial Rounded MT Bold, Arial" font-weight="900" font-size="70" text-anchor="middle" fill="#7c3aed">abc</text><path d="M40 150 L150 150" stroke="#f59e0b" stroke-width="10" stroke-linecap="round"/><path d="M150 150 l14 -6 l0 12 z" fill="#1f2937"/></svg></span>
+      <span class="naam">Spelling</span>
+      <span class="slot" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fde047" stroke-width="2.4" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>
+    </button>
+    <button class="tegel" style="--k: var(--taal)" data-vak="taal" aria-label="Taal">
+      <span class="beeld"><img src="plaatjes/sint.webp" alt=""></span>
+      <span class="naam">Taal</span>
+    </button>
+  </div>
+</section>
+
+<!-- Taal: thema's -->
+<section class="scherm" id="s-taal">
+  <div class="kop"><button class="rond" data-naar="s-start" aria-label="Terug"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg></button><span></span></div>
+  <div class="themas" id="themas"></div>
+</section>
+
+<!-- Spel: 1 plaatje, 4 woorden -->
+<section class="scherm" id="s-spel">
+  <div class="kop">
+    <button class="rond" id="spel-terug" aria-label="Terug"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg></button>
+    <div class="punten" id="punten"></div>
+    <span style="width:60px"></span>
+  </div>
+  <div class="speelveld">
+    <div class="plaat" id="plaat"><img id="plaat-img" alt=""></div>
+    <div class="keuzes" id="keuzes"></div>
+  </div>
+</section>
+
+<!-- Einde van een ronde -->
+<section class="scherm" id="s-einde">
+  <div class="einde">
+    <svg class="beker" viewBox="0 0 64 64"><path d="M18 8h28v10a14 14 0 0 1-28 0z" fill="#fde047"/><path d="M18 12H8a8 8 0 0 0 10 10M46 12h10a8 8 0 0 1-10 10" fill="none" stroke="#fde047" stroke-width="4"/><rect x="28" y="32" width="8" height="12" fill="#f59e0b"/><rect x="18" y="44" width="28" height="8" rx="3" fill="#f59e0b"/></svg>
+    <div class="rijsterren" id="eind-sterren"></div>
+    <div class="knoppen">
+      <button class="rond groot" data-naar="s-taal" aria-label="Terug"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg></button>
+      <button class="rond groot knop-groen" id="nog-een-keer" aria-label="Nog een keer"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></button>
+    </div>
+  </div>
+</section>
+
+<script>
+'use strict'
+// ── Woorden. "groep": woorden die op elkaar lijken komen nooit samen als keuze
+// (pepernoot en kruidnoot, cadeau en pakje, ...), anders is het plaatje niet eerlijk.
+var THEMAS = [
+  { id: 'sinterklaas', plaatje: 'sint', woorden: [
+    ['sint', 'Sint', 'sint'], ['piet', 'Piet', 'sint'], ['ozosnel', 'Ozosnel', 'paard'], ['paard', 'paard', 'paard'],
+    ['stoomboot', 'stoomboot', 'boot'], ['spanje', 'Spanje', 'boot'], ['intocht', 'intocht', 'boot'], ['pakjesavond', 'pakjesavond', 'pakjes'],
+    ['cadeau', 'cadeau', 'pakjes'], ['pakje', 'pakje', 'pakjes'], ['verrassing', 'verrassing', 'pakjes'], ['surprise', 'surprise', 'knutsel'],
+    ['gedicht', 'gedicht', 'papier'], ['schoen', 'schoen', 'schoen'], ['schoen-zetten', 'schoen zetten', 'schoen'], ['verlanglijstje', 'verlanglijstje', 'papier'],
+    ['pepernoot', 'pepernoot', 'noot'], ['kruidnoot', 'kruidnoot', 'noot'], ['chocoladeletter', 'chocoladeletter', 'lekker'], ['speculaas', 'speculaas', 'koek'],
+    ['marsepein', 'marsepein', 'lekker'], ['taaitaai', 'taaitaai', 'koek'], ['schuimpjes', 'schuimpjes', 'snoep'], ['snoepgoed', 'snoepgoed', 'snoep'],
+    ['strooigoed', 'strooigoed', 'snoep'], ['mandarijn', 'mandarijn', 'fruit'], ['mijter', 'mijter', 'sint'], ['staf', 'staf', 'sint'],
+    ['mantel', 'mantel', 'sint'], ['baard', 'baard', 'sint'], ['grote-boek', 'het Grote Boek', 'boek'], ['zak', 'zak', 'pakjes'],
+    ['dak', 'dak', 'dak'], ['schoorsteen', 'schoorsteen', 'dak'], ['nacht', 'nacht', 'dak'], ['december', 'december', 'kalender'],
+    ['liedje', 'liedje', 'muziek'], ['zingen', 'zingen', 'muziek'], ['feest', 'feest', 'feest'], ['kinderen', 'kinderen', 'feest'],
+    ['knutselen', 'knutselen', 'knutsel'], ['tekening', 'tekening', 'knutsel'], ['pakpapier', 'pakpapier', 'pakjes'], ['strik', 'strik', 'pakjes'],
+    ['uitpakken', 'uitpakken', 'pakjes'], ['verrassen', 'verrassen', 'pakjes'], ['gezelligheid', 'gezelligheid', 'feest'],
+  ] },
+]
+var PER_RONDE = 10, GELEERD = 2   // een woord is geleerd na 2 keer in een keer goed
+
+// ── Opslag op dit apparaat ──
+var SLEUTEL = 'kk_nk'
+function laad() { try { return JSON.parse(localStorage.getItem(SLEUTEL)) || {} } catch (e) { return {} } }
+var D = laad(); if (!D.woorden) D.woorden = {}
+function bewaar() { try { localStorage.setItem(SLEUTEL, JSON.stringify(D)) } catch (e) {} }
+function stand(id) { return D.woorden[id] || (D.woorden[id] = { goed: 0, reeks: 0, keer: 0 }) }
+function geleerd(thema) { return thema.woorden.filter(function (w) { return (D.woorden[w[0]] || {}).reeks >= GELEERD }).length }
+
+// ── Geluid: voorlezen (Nederlandse stem) en kleine geluidjes ──
+var stem = null
+function kiesStem() {
+  var s = window.speechSynthesis ? speechSynthesis.getVoices() : []
+  stem = s.find(function (v) { return v.lang === 'nl-NL' && v.localService }) || s.find(function (v) { return v.lang === 'nl-NL' }) || s.find(function (v) { return /^nl/.test(v.lang) }) || null
+}
+if (window.speechSynthesis) { kiesStem(); speechSynthesis.addEventListener && speechSynthesis.addEventListener('voiceschanged', kiesStem) }
+function zeg(tekst, knop) {
+  if (!window.speechSynthesis) return
+  speechSynthesis.cancel()
+  var u = new SpeechSynthesisUtterance(tekst); u.lang = 'nl-NL'; u.rate = 0.85; if (stem) u.voice = stem
+  if (knop) { knop.classList.add('speelt'); u.onend = u.onerror = function () { knop.classList.remove('speelt') } }
+  speechSynthesis.speak(u)
+}
+var ac = null
+function toon(f, start, duur, vol, soort) {
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)()
+    var o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime + start
+    o.type = soort || 'sine'; o.frequency.setValueAtTime(f, t)
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + duur)
+    o.connect(g).connect(ac.destination); o.start(t); o.stop(t + duur + 0.05)
+  } catch (e) {}
+}
+function geluidGoed() { [523, 659, 784, 1046].forEach(function (f, i) { toon(f, i * 0.08, 0.25, 0.18, 'triangle') }) }
+function geluidFout() { toon(220, 0, 0.18, 0.15, 'square'); toon(180, 0.12, 0.22, 0.12, 'square') }
+function geluidKlik() { toon(660, 0, 0.06, 0.08, 'sine') }
+
+// ── Confetti ──
+var cv = document.getElementById('confetti'), cx = cv.getContext('2d'), deeltjes = [], loopt = false
+function maat() { cv.width = innerWidth * devicePixelRatio; cv.height = innerHeight * devicePixelRatio; cx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0) }
+addEventListener('resize', maat); maat()
+function confetti(x, y, n) {
+  var kl = ['#fde047', '#34d399', '#38bdf8', '#f472b6', '#a78bfa', '#fb923c']
+  for (var i = 0; i < n; i++) { var a = Math.random() * Math.PI * 2, v = 4 + Math.random() * 9; deeltjes.push({ x: x, y: y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 6, r: 4 + Math.random() * 5, k: kl[i % kl.length], t: 0, d: Math.random() * 6 }) }
+  if (!loopt) { loopt = true; requestAnimationFrame(stap) }
+}
+function stap() {
+  cx.clearRect(0, 0, innerWidth, innerHeight)
+  deeltjes = deeltjes.filter(function (p) { p.t++; p.vy += 0.35; p.vx *= 0.99; p.x += p.vx; p.y += p.vy; return p.t < 120 && p.y < innerHeight + 20 })
+  deeltjes.forEach(function (p) { cx.save(); cx.translate(p.x, p.y); cx.rotate(p.t * 0.1 + p.d); cx.globalAlpha = Math.min(1, (120 - p.t) / 30); cx.fillStyle = p.k; cx.fillRect(-p.r, -p.r / 2, p.r * 2, p.r); cx.restore() })
+  if (deeltjes.length) requestAnimationFrame(stap); else { loopt = false; cx.clearRect(0, 0, innerWidth, innerHeight) }
+}
+
+// ── Schermen ──
+var $ = function (id) { return document.getElementById(id) }
+function naar(id) {
+  document.querySelectorAll('.scherm').forEach(function (s) { s.classList.toggle('aan', s.id === id) })
+  if (id === 's-taal') tekenThemas()
+  if (window.speechSynthesis) speechSynthesis.cancel()
+  scrollTo(0, 0)
+}
+document.querySelectorAll('[data-naar]').forEach(function (b) { b.onclick = function () { geluidKlik(); naar(b.dataset.naar) } })
+document.querySelectorAll('.tegel').forEach(function (t) {
+  t.onclick = function () {
+    if (t.classList.contains('dicht')) { geluidFout(); t.classList.remove('wiebel'); void t.offsetWidth; t.classList.add('wiebel'); return }
+    geluidKlik(); naar('s-taal')
+  }
+})
+var STER = '<svg viewBox="0 0 24 24"><path d="M12 2l3 6.5 7 .8-5.2 4.8 1.5 7L12 17.6 5.7 21.1l1.5-7L2 9.3l7-.8z" fill="#fde047" stroke="#f59e0b" stroke-width="1.2" stroke-linejoin="round"/></svg>'
+var STER_LEEG = '<svg viewBox="0 0 24 24"><path d="M12 2l3 6.5 7 .8-5.2 4.8 1.5 7L12 17.6 5.7 21.1l1.5-7L2 9.3l7-.8z" fill="rgba(255,255,255,.12)" stroke="rgba(255,255,255,.25)" stroke-width="1.2" stroke-linejoin="round"/></svg>'
+function tekenThemas() {
+  var l = $('themas'); l.innerHTML = ''
+  THEMAS.forEach(function (th) {
+    var n = geleerd(th), b = document.createElement('button'); b.className = 'thema'; b.setAttribute('aria-label', th.id)
+    b.innerHTML = '<img src="plaatjes/' + th.plaatje + '.webp" alt=""><div class="sterren">' + STER + n + ' / ' + th.woorden.length + '</div><div class="balk"><i style="width:' + Math.round(100 * n / th.woorden.length) + '%"></i></div>'
+    b.onclick = function () { geluidKlik(); startRonde(th) }
+    l.appendChild(b)
+  })
+}
+
+// ── Een ronde: 10 plaatjes. Eerst de woorden die nog niet geleerd zijn;
+// nieuwe en vaak foute woorden komen vaker langs. ──
+var ronde = null
+function schud(a) { for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t } return a }
+function kiesWoorden(th) {
+  var lijst = schud(th.woorden.slice()).map(function (w) { var s = D.woorden[w[0]] || { reeks: 0, keer: 0 }; return { w: w, gewicht: (s.reeks >= GELEERD ? 10 : s.reeks * 2) + (s.keer ? 0 : -1) + Math.random() * 1.5 } })
+  lijst.sort(function (a, b) { return a.gewicht - b.gewicht })
+  return lijst.slice(0, PER_RONDE).map(function (x) { return x.w })
+}
+function startRonde(th) {
+  ronde = { th: th, woorden: kiesWoorden(th), i: 0, uitslag: [] }
+  D.laatste = th.id; bewaar()
+  naar('s-spel'); toonVraag()
+}
+function toonVraag() {
+  var th = ronde.th, w = ronde.woorden[ronde.i]
+  ronde.foutNu = 0; ronde.klaar = false
+  // drie andere woorden, niet uit dezelfde groep en niet uit dezelfde groep als elkaar
+  var anderen = [], groepen = {}; groepen[w[2]] = 1
+  schud(th.woorden.slice()).forEach(function (x) { if (anderen.length < 3 && x[0] !== w[0] && !groepen[x[2]]) { anderen.push(x); groepen[x[2]] = 1 } })
+  var keuzes = schud([w].concat(anderen))
+  var img = $('plaat-img'); img.src = 'plaatjes/' + w[0] + '.webp'
+  var pl = $('plaat'); pl.classList.remove('pop'); void pl.offsetWidth
+  var k = $('keuzes'); k.innerHTML = ''
+  keuzes.forEach(function (x) {
+    var d = document.createElement('div'); d.className = 'keuze'
+    d.innerHTML = '<button class="luister" aria-label="Luister"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9z" fill="currentColor"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg></button><button class="woord"></button>'
+    d.querySelector('.woord').textContent = x[1]
+    d.querySelector('.luister').onclick = function (e) { e.stopPropagation(); zeg(x[1], this) }
+    d.querySelector('.woord').onclick = function () { kies(x, d) }
+    k.appendChild(d)
+  })
+  tekenPunten()
+}
+function tekenPunten() {
+  var p = $('punten'); p.innerHTML = ''
+  ronde.woorden.forEach(function (_, i) {
+    var u = ronde.uitslag[i], s = document.createElement('span')
+    s.className = 'punt' + (i === ronde.i && u == null ? ' nu' : u === 2 ? ' goed' : u === 1 ? ' half' : u === 0 ? ' fout' : '')
+    p.appendChild(s)
+  })
+}
+function kies(x, el) {
+  if (ronde.klaar || el.classList.contains('fout')) return
+  var w = ronde.woorden[ronde.i], s = stand(w[0])
+  if (x[0] === w[0]) {
+    ronde.klaar = true
+    el.classList.add('goed'); geluidGoed()
+    var r = $('plaat').getBoundingClientRect(); confetti(r.left + r.width / 2, r.top + r.height / 2, ronde.foutNu ? 30 : 70)
+    $('plaat').classList.add('pop')
+    s.keer++
+    if (ronde.foutNu === 0) { s.goed++; s.reeks++ } else s.reeks = 0
+    ronde.uitslag[ronde.i] = ronde.foutNu === 0 ? 2 : 1
+    bewaar(); tekenPunten()
+    setTimeout(volgende, 1300)
+  } else {
+    ronde.foutNu++; el.classList.add('fout'); geluidFout()
+    if (ronde.foutNu === 1) { s.reeks = 0; bewaar() }
+  }
+}
+function volgende() {
+  ronde.i++
+  if (ronde.i < ronde.woorden.length) return toonVraag()
+  // einde: een ster per plaatje dat in een keer goed was
+  var n = ronde.uitslag.filter(function (u) { return u === 2 }).length
+  var rij = $('eind-sterren'); rij.innerHTML = ''
+  for (var i = 0; i < ronde.woorden.length; i++) { var sp = document.createElement('span'); sp.innerHTML = i < n ? STER : STER_LEEG; sp.firstChild.style.animationDelay = (i * 0.08) + 's'; rij.appendChild(sp.firstChild) }
+  naar('s-einde'); geluidGoed(); setTimeout(function () { confetti(innerWidth / 2, innerHeight / 3, 120) }, 200)
+}
+$('nog-een-keer').onclick = function () { geluidKlik(); startRonde(ronde.th) }
+$('spel-terug').onclick = function () { geluidKlik(); naar('s-taal') }
+
+// plaatjes alvast laden zodat de volgende vraag meteen verschijnt
+setTimeout(function () { THEMAS.forEach(function (th) { th.woorden.forEach(function (w) { var i = new Image(); i.src = 'plaatjes/' + w[0] + '.webp' }) }) }, 800)
+</script>
+</body>
+</html>
