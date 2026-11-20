@@ -88,6 +88,23 @@
   .knop-groen { background: linear-gradient(160deg, #34d399, #059669); border-color: transparent; box-shadow: 0 10px 26px rgba(16,185,129,.45); }
   .confetti { position: fixed; inset: 0; pointer-events: none; z-index: 50; }
 
+  /* ── Mijn taal ── */
+  .taalknop { height: 60px; min-width: 60px; padding: 0 14px; border-radius: 20px; display: flex; align-items: center; justify-content: center; gap: 8px; background: var(--kaart); border: 2px solid var(--goud); color: var(--goud); font-weight: 800; font-size: 1.15rem; box-shadow: 0 6px 18px rgba(0,0,0,.35); }
+  .taalknop svg { width: 30px; height: 30px; flex: none; }
+  .taalknop span:empty { display: none; }
+  .taallaag { position: fixed; inset: 0; z-index: 30; background: rgba(8,8,20,.88); display: none; place-items: center; padding: 16px; }
+  .taallaag.aan { display: grid; }
+  .taallijst { width: min(100%, 360px); display: flex; flex-direction: column; gap: 10px; }
+  .taallijst button { padding: 16px; border-radius: 18px; background: var(--kaart); border: 3px solid var(--rand); font-size: 1.7rem; font-weight: 800; animation: in .3s both; }
+  .taallijst button.aan { border-color: var(--goud); color: var(--goud); box-shadow: 0 0 20px rgba(253,224,71,.3); }
+  .taallijst .nl { display: flex; align-items: center; justify-content: center; gap: 10px; }
+  .taallijst .nl svg { width: 34px; height: 24px; border-radius: 4px; }
+  .vertaal { flex: none; width: 70px; display: grid; place-items: center; background: rgba(253,224,71,.16); border-left: 3px solid var(--rand); }
+  .vertaal svg { width: 34px; height: 34px; color: var(--goud); }
+  .vertaal.speelt svg { animation: puls .6s infinite alternate; }
+  .woord .vt { display: block; margin-top: 6px; font-size: 1.05rem; font-weight: 700; color: var(--goud); line-height: 1.3; }
+  .woord .vt:empty { display: none; }
+
   /* ── Rekenen ── */
   .onderdelen { flex: 1; width: 100%; max-width: 980px; display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 18px; align-content: center; }
   .onderdeel { border-radius: 26px; padding: 12px; background: var(--kaart); border: 3px solid var(--reken); box-shadow: 0 10px 26px rgba(0,0,0,.35), 0 0 24px rgba(56,189,248,.2); display: flex; flex-direction: column; align-items: center; gap: 8px; animation: in .4s both; }
@@ -143,10 +160,12 @@
 </head>
 <body>
 <canvas class="confetti" id="confetti"></canvas>
+<!-- Mijn taal: kies je eigen taal, dan krijgt elk woord een geel luidsprekertje -->
+<div class="taallaag" id="taallaag"><div class="taallijst" id="taallijst"></div></div>
 
 <!-- Start: kies een vak -->
 <section class="scherm aan" id="s-start">
-  <div class="kop"><img class="logo" src="/logo-rond.png" alt="Kenniskist"><span></span></div>
+  <div class="kop"><img class="logo" src="/logo-rond.png" alt="Kenniskist"><button class="taalknop" hidden aria-label="Mijn taal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9.5"/><path d="M2.5 12h19M12 2.5c3 3.2 3 15.8 0 19M12 2.5c-3 3.2-3 15.8 0 19"/></svg><span></span></button></div>
   <div class="tegels">
     <button class="tegel" style="--k: var(--reken)" data-vak="rekenen" aria-label="Rekenen">
       <span class="beeld"><svg viewBox="0 0 200 200"><rect width="200" height="200" fill="#e0f2fe"/><text x="100" y="92" font-family="Arial Rounded MT Bold, Arial" font-weight="900" font-size="64" text-anchor="middle" fill="#0284c7">1+2</text><g fill="#f59e0b"><circle cx="48" cy="140" r="16"/><circle cx="100" cy="140" r="16"/><circle cx="152" cy="140" r="16"/></g></svg></span>
@@ -186,7 +205,7 @@
 
 <!-- Taal: thema's -->
 <section class="scherm" id="s-taal">
-  <div class="kop"><button class="rond" data-naar="s-start" aria-label="Terug"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg></button><span></span></div>
+  <div class="kop"><button class="rond" data-naar="s-start" aria-label="Terug"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg></button><button class="taalknop" hidden aria-label="Mijn taal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9.5"/><path d="M2.5 12h19M12 2.5c3 3.2 3 15.8 0 19M12 2.5c-3 3.2-3 15.8 0 19"/></svg><span></span></button></div>
   <div class="themas" id="themas"></div>
 </section>
 
@@ -345,6 +364,49 @@ function kiesWoorden(th) {
   lijst.sort(function (a, b) { return a.gewicht - b.gewicht })
   return lijst.slice(0, PER_RONDE).map(function (x) { return x.w })
 }
+// ── Mijn taal: vertaling of uitleg van het woord, voorgelezen in de eigen taal ──
+// (vertaling.json; audio/<taal>/<id>.mp3 via scripts/nk-audio.py. Tigrinya heeft
+// geen stem: dan alleen de geschreven tekst. Tadzjieks spreekt in het Perzisch.)
+var VT = null
+fetch('vertaling.json').then(function (r) { return r.json() }).then(function (j) { VT = j; tekenTaalknop() }).catch(function () {})
+var LUIDSPREKER = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9z" fill="currentColor"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>'
+var VLAG_NL = '<svg viewBox="0 0 9 6"><rect width="9" height="2" fill="#ae1c28"/><rect y="2" width="9" height="2" fill="#fff"/><rect y="4" width="9" height="2" fill="#21468b"/></svg>'
+function mijnTaal() { return VT && D.taal ? VT.talen.filter(function (t) { return t.id === D.taal })[0] || null : null }
+function tekenTaalknop() {
+  var t = mijnTaal()
+  document.querySelectorAll('.taalknop').forEach(function (b) { b.hidden = !VT; b.querySelector('span').textContent = t ? t.naam : '' })
+}
+function kiesTaal() {
+  var l = $('taallijst'); l.innerHTML = ''
+  var opties = [{ id: null, naam: VLAG_NL + 'Nederlands' }].concat(VT.talen)
+  opties.forEach(function (t, i) {
+    var b = document.createElement('button'); b.style.animationDelay = (i * 0.04) + 's'
+    b.className = (t.id || null) === (D.taal || null) ? 'aan' : ''
+    if (t.id) { b.textContent = t.naam; b.dir = 'auto' } else { b.className += ' nl'; b.innerHTML = t.naam }
+    b.onclick = function (e) { e.stopPropagation(); geluidKlik(); D.taal = t.id; bewaar(); $('taallaag').classList.remove('aan'); tekenTaalknop() }
+    l.appendChild(b)
+  })
+  $('taallaag').classList.add('aan')
+}
+document.querySelectorAll('.taalknop').forEach(function (b) { b.onclick = function () { if (VT) { geluidKlik(); kiesTaal() } } })
+$('taallaag').onclick = function () { $('taallaag').classList.remove('aan') }
+function voegVertalingToe(d, x) {
+  var t = mijnTaal(), tekst = t && VT.woorden[x[0]] && VT.woorden[x[0]][t.id]
+  if (!tekst) return
+  var vt = document.createElement('span'); vt.className = 'vt'; vt.dir = 'auto'
+  d.querySelector('.woord').appendChild(vt)
+  var b = document.createElement('button'); b.className = 'vertaal'; b.setAttribute('aria-label', t.naam); b.innerHTML = LUIDSPREKER
+  b.onclick = function (e) {
+    e.stopPropagation(); vt.textContent = tekst
+    if (!t.stem) return
+    stil(); b.classList.add('speelt')
+    var a = new Audio('audio/' + t.id + '/' + x[0] + '.mp3'); speler = a
+    a.onended = a.onerror = function () { b.classList.remove('speelt') }
+    a.play().catch(function () { b.classList.remove('speelt') })
+  }
+  d.appendChild(b)
+}
+
 function startRonde(th) {
   ronde = { th: th, woorden: kiesWoorden(th), i: 0, uitslag: [] }
   D.laatste = th.id; bewaar()
@@ -364,6 +426,7 @@ function toonVraag() {
     var d = document.createElement('div'); d.className = 'keuze'
     d.innerHTML = '<button class="luister" aria-label="Luister"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9z" fill="currentColor"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg></button><button class="woord"></button>'
     d.querySelector('.woord').textContent = x[1]
+    voegVertalingToe(d, x)
     d.querySelector('.luister').onclick = function (e) { e.stopPropagation(); zeg(x, this) }
     d.querySelector('.woord').onclick = function () { kies(x, d) }
     k.appendChild(d)
