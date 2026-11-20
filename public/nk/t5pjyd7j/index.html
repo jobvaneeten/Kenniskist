@@ -88,6 +88,35 @@
   .knop-groen { background: linear-gradient(160deg, #34d399, #059669); border-color: transparent; box-shadow: 0 10px 26px rgba(16,185,129,.45); }
   .confetti { position: fixed; inset: 0; pointer-events: none; z-index: 50; }
 
+  /* ── Rekenen ── */
+  .onderdelen { flex: 1; width: 100%; max-width: 980px; display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 18px; align-content: center; }
+  .onderdeel { border-radius: 26px; padding: 12px; background: var(--kaart); border: 3px solid var(--reken); box-shadow: 0 10px 26px rgba(0,0,0,.35), 0 0 24px rgba(56,189,248,.2); display: flex; flex-direction: column; align-items: center; gap: 8px; animation: in .4s both; }
+  .onderdeel:active { transform: scale(.96); }
+  .onderdeel .beeld { width: 100%; aspect-ratio: 1; border-radius: 18px; background: #f0f9ff; display: grid; place-items: center; overflow: hidden; }
+  .onderdeel .beeld svg { width: 100%; height: 100%; }
+  .niveau { display: flex; gap: 4px; } .niveau svg { width: 26px; height: 26px; }
+  .somveld { flex: 1; width: 100%; max-width: 640px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; }
+  .hulp { min-height: 0; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; align-items: center; }
+  .hulp:empty { display: none; }
+  .stip { width: 26px; height: 26px; border-radius: 50%; box-shadow: inset 0 -3px 0 rgba(0,0,0,.25); animation: in .3s both; }
+  .groepje { display: grid; gap: 6px; padding: 8px; border-radius: 14px; background: rgba(255,255,255,.06); }
+  .plus-teken { font-size: 2rem; font-weight: 800; color: var(--zacht); }
+  .maatplaat { width: 120px; height: 90px; }
+  .som { font-size: clamp(2.6rem, 9vw, 4.4rem); font-weight: 800; letter-spacing: .02em; text-align: center; line-height: 1.1; }
+  .som .eenheid { color: var(--reken); }
+  .antwoord { min-width: 220px; min-height: 84px; padding: 6px 22px; border-radius: 22px; background: #fff; color: #14122e; font-size: 3.2rem; font-weight: 800; display: grid; place-items: center; border: 5px solid var(--reken); box-shadow: 0 10px 26px rgba(0,0,0,.35); }
+  .antwoord.leeg::after { content: '?'; color: #c7c3e6; }
+  .antwoord.goed { border-color: var(--goed); background: #d1fae5; animation: pop .5s; }
+  .antwoord.fout { border-color: var(--fout); background: #ffe4e6; animation: schud .4s; }
+  .antwoord.toon { border-color: var(--goed); background: #d1fae5; }
+  .toetsen { width: 100%; max-width: 420px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .toets { height: 66px; border-radius: 18px; background: var(--kaart); border: 3px solid var(--rand); font-size: 2rem; font-weight: 800; box-shadow: 0 6px 16px rgba(0,0,0,.3); transition: transform .08s; }
+  .toets:active { transform: scale(.93); background: #262257; }
+  .toets svg { width: 34px; height: 34px; }
+  .toets.ok { background: linear-gradient(160deg, #34d399, #059669); border-color: transparent; color: #fff; }
+  .toets.wis { color: var(--fout); }
+  @media (max-height: 700px) { .toets { height: 54px; } .antwoord { min-height: 70px; font-size: 2.6rem; } .som { font-size: 2.6rem; } }
+
   /* ── Cadeaumeter: 10 woorden in een keer goed = 45 seconden spelen ── */
   .cadeau { position: relative; width: 60px; height: 60px; flex: none; }
   .cadeau svg { position: absolute; inset: 0; width: 60px; height: 60px; }
@@ -119,10 +148,9 @@
 <section class="scherm aan" id="s-start">
   <div class="kop"><img class="logo" src="/logo-rond.png" alt="Kenniskist"><span></span></div>
   <div class="tegels">
-    <button class="tegel dicht" style="--k: var(--reken)" data-vak="rekenen" aria-label="Rekenen">
+    <button class="tegel" style="--k: var(--reken)" data-vak="rekenen" aria-label="Rekenen">
       <span class="beeld"><svg viewBox="0 0 200 200"><rect width="200" height="200" fill="#e0f2fe"/><text x="100" y="92" font-family="Arial Rounded MT Bold, Arial" font-weight="900" font-size="64" text-anchor="middle" fill="#0284c7">1+2</text><g fill="#f59e0b"><circle cx="48" cy="140" r="16"/><circle cx="100" cy="140" r="16"/><circle cx="152" cy="140" r="16"/></g></svg></span>
       <span class="naam">Rekenen</span>
-      <span class="slot" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fde047" stroke-width="2.4" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>
     </button>
     <button class="tegel dicht" style="--k: var(--spel)" data-vak="spelling" aria-label="Spelling">
       <span class="beeld"><svg viewBox="0 0 200 200"><rect width="200" height="200" fill="#ede9fe"/><text x="100" y="112" font-family="Arial Rounded MT Bold, Arial" font-weight="900" font-size="70" text-anchor="middle" fill="#7c3aed">abc</text><path d="M40 150 L150 150" stroke="#f59e0b" stroke-width="10" stroke-linecap="round"/><path d="M150 150 l14 -6 l0 12 z" fill="#1f2937"/></svg></span>
@@ -133,6 +161,27 @@
       <span class="beeld"><img src="plaatjes/sint.webp" alt=""></span>
       <span class="naam">Taal</span>
     </button>
+  </div>
+</section>
+
+<!-- Rekenen: kies wat je wilt oefenen -->
+<section class="scherm" id="s-reken">
+  <div class="kop"><button class="rond" data-naar="s-start" aria-label="Terug"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg></button><span></span></div>
+  <div class="onderdelen" id="onderdelen"></div>
+</section>
+
+<!-- Rekenen: een som -->
+<section class="scherm" id="s-som">
+  <div class="kop">
+    <button class="rond" id="som-terug" aria-label="Terug"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg></button>
+    <div class="punten" id="som-punten"></div>
+    <div class="cadeau" aria-label="Cadeau"><svg class="ring" viewBox="0 0 60 60"><circle cx="30" cy="30" r="26" stroke="rgba(255,255,255,.14)"/><circle class="vol" cx="30" cy="30" r="26" stroke-dasharray="163.4" stroke-dashoffset="163.4"/></svg><svg viewBox="0 0 60 60"><rect x="17" y="27" width="26" height="17" rx="3" fill="#f472b6"/><rect x="15" y="21" width="30" height="8" rx="2" fill="#fb7185"/><rect x="28" y="21" width="4" height="23" fill="#fde047"/><path d="M30 21c-4-7-11-5-8 0M30 21c4-7 11-5 8 0" fill="none" stroke="#fde047" stroke-width="3" stroke-linecap="round"/></svg></div>
+  </div>
+  <div class="somveld">
+    <div class="hulp" id="som-hulp"></div>
+    <div class="som" id="som-tekst"></div>
+    <div class="antwoord" id="som-antwoord"></div>
+    <div class="toetsen" id="toetsen"></div>
   </div>
 </section>
 
@@ -147,7 +196,7 @@
   <div class="kop">
     <button class="rond" id="spel-terug" aria-label="Terug"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg></button>
     <div class="punten" id="punten"></div>
-    <div class="cadeau" id="cadeau" aria-label="Cadeau"><svg class="ring" viewBox="0 0 60 60"><circle cx="30" cy="30" r="26" stroke="rgba(255,255,255,.14)"/><circle class="vol" id="cadeau-vol" cx="30" cy="30" r="26" stroke-dasharray="163.4" stroke-dashoffset="163.4"/></svg><svg viewBox="0 0 60 60"><rect x="17" y="27" width="26" height="17" rx="3" fill="#f472b6"/><rect x="15" y="21" width="30" height="8" rx="2" fill="#fb7185"/><rect x="28" y="21" width="4" height="23" fill="#fde047"/><path d="M30 21c-4-7-11-5-8 0M30 21c4-7 11-5 8 0" fill="none" stroke="#fde047" stroke-width="3" stroke-linecap="round"/></svg></div>
+    <div class="cadeau" aria-label="Cadeau"><svg class="ring" viewBox="0 0 60 60"><circle cx="30" cy="30" r="26" stroke="rgba(255,255,255,.14)"/><circle class="vol" cx="30" cy="30" r="26" stroke-dasharray="163.4" stroke-dashoffset="163.4"/></svg><svg viewBox="0 0 60 60"><rect x="17" y="27" width="26" height="17" rx="3" fill="#f472b6"/><rect x="15" y="21" width="30" height="8" rx="2" fill="#fb7185"/><rect x="28" y="21" width="4" height="23" fill="#fde047"/><path d="M30 21c-4-7-11-5-8 0M30 21c4-7 11-5 8 0" fill="none" stroke="#fde047" stroke-width="3" stroke-linecap="round"/></svg></div>
   </div>
   <div class="speelveld">
     <div class="plaat" id="plaat"><img id="plaat-img" alt=""></div>
@@ -169,7 +218,7 @@
     <svg class="beker" viewBox="0 0 64 64"><path d="M18 8h28v10a14 14 0 0 1-28 0z" fill="#fde047"/><path d="M18 12H8a8 8 0 0 0 10 10M46 12h10a8 8 0 0 1-10 10" fill="none" stroke="#fde047" stroke-width="4"/><rect x="28" y="32" width="8" height="12" fill="#f59e0b"/><rect x="18" y="44" width="28" height="8" rx="3" fill="#f59e0b"/></svg>
     <div class="rijsterren" id="eind-sterren"></div>
     <div class="knoppen">
-      <button class="rond groot" data-naar="s-taal" aria-label="Terug"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg></button>
+      <button class="rond groot" id="einde-terug" aria-label="Terug"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg></button>
       <button class="rond groot knop-groen" id="nog-een-keer" aria-label="Nog een keer"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></button>
     </div>
   </div>
@@ -273,7 +322,7 @@ document.querySelectorAll('[data-naar]').forEach(function (b) { b.onclick = func
 document.querySelectorAll('.tegel').forEach(function (t) {
   t.onclick = function () {
     if (t.classList.contains('dicht')) { geluidFout(); t.classList.remove('wiebel'); void t.offsetWidth; t.classList.add('wiebel'); return }
-    geluidKlik(); naar('s-taal')
+    geluidKlik(); naar(t.dataset.vak === 'rekenen' ? 's-reken' : 's-taal')
   }
 })
 var STER = '<svg viewBox="0 0 24 24"><path d="M12 2l3 6.5 7 .8-5.2 4.8 1.5 7L12 17.6 5.7 21.1l1.5-7L2 9.3l7-.8z" fill="#fde047" stroke="#f59e0b" stroke-width="1.2" stroke-linejoin="round"/></svg>'
@@ -324,8 +373,8 @@ function toonVraag() {
 }
 function tekenCadeau(wip) {
   var n = Math.min(BELONING_NA, D.teller || 0)
-  $('cadeau-vol').style.strokeDashoffset = (163.4 * (1 - n / BELONING_NA)).toFixed(1)
-  var c = $('cadeau'); if (wip) { c.classList.remove('wip'); void c.offsetWidth; c.classList.add('wip') }
+  document.querySelectorAll('.cadeau .vol').forEach(function (v) { v.style.strokeDashoffset = (163.4 * (1 - n / BELONING_NA)).toFixed(1) })
+  if (wip) document.querySelectorAll('.cadeau').forEach(function (c) { c.classList.remove('wip'); void c.offsetWidth; c.classList.add('wip') })
 }
 function tekenPunten() {
   var p = $('punten'); p.innerHTML = ''
@@ -355,7 +404,7 @@ function kies(x, el) {
 }
 function volgende() {
   ronde.i++
-  if ((D.teller || 0) >= BELONING_NA) { D.teller -= BELONING_NA; bewaar(); return toonBeloning() }
+  if ((D.teller || 0) >= BELONING_NA) { D.teller -= BELONING_NA; bewaar(); return toonBeloning(verderNaBeloning) }
   verderNaBeloning()
 }
 function verderNaBeloning() {
@@ -364,7 +413,12 @@ function verderNaBeloning() {
   var n = ronde.uitslag.filter(function (u) { return u === 2 }).length
   var rij = $('eind-sterren'); rij.innerHTML = ''
   for (var i = 0; i < ronde.woorden.length; i++) { var sp = document.createElement('span'); sp.innerHTML = i < n ? STER : STER_LEEG; sp.firstChild.style.animationDelay = (i * 0.08) + 's'; rij.appendChild(sp.firstChild) }
+  eindeKnoppen(function () { naar('s-taal') }, function () { startRonde(ronde.th) })
   naar('s-einde'); geluidGoed(); setTimeout(function () { confetti(innerWidth / 2, innerHeight / 3, 120) }, 200)
+}
+function eindeKnoppen(terug, opnieuw) {
+  $('einde-terug').onclick = function () { geluidKlik(); terug() }
+  $('nog-een-keer').onclick = function () { geluidKlik(); opnieuw() }
 }
 // ── Beloning: 45 seconden een spelletje van Kenniskist, in een iframe ──
 var SPELLETJES = [
@@ -373,8 +427,9 @@ var SPELLETJES = [
   ['meteoorvlucht', '/meteoorvlucht/?terug=1', 'meteoorvlucht.svg'], ['kristalsmelt', '/kristalsmelt/?terug=1', 'kristalsmelt.svg'],
   ['neonhockey', '/neonhockey/?terug=1', 'neonhockey.svg'], ['blokkenblitz', '/blokkenblitz/?terug=1', 'blokkenblitz.svg'],
 ]
-var klokId = null
-function toonBeloning() {
+var klokId = null, naBeloning = null
+function toonBeloning(terug) {
+  naBeloning = terug
   var l = $('spellen'); l.innerHTML = ''
   SPELLETJES.forEach(function (sp, i) {
     var b = document.createElement('button'); b.className = 'spelkaart'; b.style.animationDelay = (i * 0.05) + 's'; b.setAttribute('aria-label', sp[0])
@@ -400,16 +455,16 @@ function speel(sp) {
 function stopSpel() {
   clearInterval(klokId); klokId = null
   $('klok').hidden = true; $('speelvak').classList.remove('aan'); $('speel-iframe').src = 'about:blank'
-  verderNaBeloning()
+  if (naBeloning) naBeloning()
 }
 // Het menuknopje in het spelletje zelf stopt het spelen ook
 addEventListener('message', function (e) { if (klokId && e.data && /-terug$/.test(e.data.type || '')) stopSpel() })
 
-$('nog-een-keer').onclick = function () { geluidKlik(); startRonde(ronde.th) }
 $('spel-terug').onclick = function () { geluidKlik(); naar('s-taal') }
 
 // plaatjes alvast laden zodat de volgende vraag meteen verschijnt
 setTimeout(function () { THEMAS.forEach(function (th) { th.woorden.forEach(function (w) { var i = new Image(); i.src = 'plaatjes/' + w[0] + '.webp' }) }) }, 800)
 </script>
+<script src="rekenen.js"></script>
 </body>
 </html>
