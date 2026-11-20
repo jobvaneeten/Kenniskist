@@ -9,6 +9,9 @@ import edge_tts
 
 STEM = "nl-NL-FennaNeural"
 HIER = os.path.dirname(os.path.abspath(__file__))
+# Woorden die de stem anders verkeerd (bv. Engels) uitspreekt: zo schrijven
+# we ze voor de stem. Na een wijziging het mp3-bestand weggooien en opnieuw draaien.
+UITSPRAAK = {"surprise": "surprieze", "ozosnel": "Ozo snel"}
 WOORD = re.compile(r"\['([a-z0-9-]+)',\s*'([^']+)',\s*'[a-z]+'\]")
 
 async def main():
@@ -19,7 +22,7 @@ async def main():
         for wid, tekst in WOORD.findall(open(pagina, encoding="utf-8").read()):
             pad = os.path.join(uit, wid + ".mp3")
             if not os.path.exists(pad):
-                werk.append((tekst, pad))
+                werk.append((UITSPRAAK.get(wid, tekst), pad))
     print(f"{len(werk)} nieuwe opnames")
     sem = asyncio.Semaphore(6)
     async def een(tekst, pad):
