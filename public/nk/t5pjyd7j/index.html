@@ -87,6 +87,29 @@
   .knoppen { display: flex; gap: 18px; }
   .knop-groen { background: linear-gradient(160deg, #34d399, #059669); border-color: transparent; box-shadow: 0 10px 26px rgba(16,185,129,.45); }
   .confetti { position: fixed; inset: 0; pointer-events: none; z-index: 50; }
+
+  /* ── Cadeaumeter: 10 woorden in een keer goed = 45 seconden spelen ── */
+  .cadeau { position: relative; width: 60px; height: 60px; flex: none; }
+  .cadeau svg { position: absolute; inset: 0; width: 60px; height: 60px; }
+  .cadeau .ring { transform: rotate(-90deg); }
+  .cadeau .ring circle { fill: none; stroke-width: 6; }
+  .cadeau .vol { stroke: var(--goud); stroke-linecap: round; transition: stroke-dashoffset .6s; }
+  .cadeau.wip { animation: pop .5s; }
+  .spellen { flex: 1; width: 100%; max-width: 960px; display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 18px; align-content: center; }
+  .spelkaart { border-radius: 26px; overflow: hidden; background: var(--kaart); border: 3px solid var(--goud); box-shadow: 0 10px 26px rgba(0,0,0,.4), 0 0 24px rgba(253,224,71,.25); animation: in .4s both; }
+  .spelkaart:active { transform: scale(.96); }
+  .spelkaart img { display: block; width: 100%; aspect-ratio: 16 / 10; object-fit: cover; }
+  .feestkop { display: flex; align-items: center; gap: 14px; font-size: 2.2rem; font-weight: 800; color: var(--goud); }
+  .feestkop svg { width: 64px; height: 64px; animation: pop .8s; }
+  .speelvak { position: fixed; inset: 0; z-index: 40; background: #000; display: none; }
+  .speelvak.aan { display: block; }
+  .speelvak iframe { width: 100%; height: 100%; border: 0; }
+  .klok { position: fixed; right: max(14px, env(safe-area-inset-right)); bottom: max(14px, env(safe-area-inset-bottom)); z-index: 41; opacity: .92; width: 74px; height: 74px; pointer-events: none; }
+  .klok svg { width: 74px; height: 74px; transform: rotate(-90deg); }
+  .klok circle { fill: rgba(11,10,31,.85); stroke-width: 7; }
+  .klok .loopt { fill: none; stroke: var(--goed); stroke-linecap: round; transition: stroke-dashoffset 1s linear, stroke .3s; }
+  .klok span { position: absolute; inset: 0; display: grid; place-items: center; font-size: 1.6rem; font-weight: 800; }
+  .klok.krap .loopt { stroke: var(--fout); }
 </style>
 </head>
 <body>
@@ -124,13 +147,21 @@
   <div class="kop">
     <button class="rond" id="spel-terug" aria-label="Terug"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg></button>
     <div class="punten" id="punten"></div>
-    <span style="width:60px"></span>
+    <div class="cadeau" id="cadeau" aria-label="Cadeau"><svg class="ring" viewBox="0 0 60 60"><circle cx="30" cy="30" r="26" stroke="rgba(255,255,255,.14)"/><circle class="vol" id="cadeau-vol" cx="30" cy="30" r="26" stroke-dasharray="163.4" stroke-dashoffset="163.4"/></svg><svg viewBox="0 0 60 60"><rect x="17" y="27" width="26" height="17" rx="3" fill="#f472b6"/><rect x="15" y="21" width="30" height="8" rx="2" fill="#fb7185"/><rect x="28" y="21" width="4" height="23" fill="#fde047"/><path d="M30 21c-4-7-11-5-8 0M30 21c4-7 11-5 8 0" fill="none" stroke="#fde047" stroke-width="3" stroke-linecap="round"/></svg></div>
   </div>
   <div class="speelveld">
     <div class="plaat" id="plaat"><img id="plaat-img" alt=""></div>
     <div class="keuzes" id="keuzes"></div>
   </div>
 </section>
+
+<!-- Beloning: kies een spelletje -->
+<section class="scherm" id="s-beloning">
+  <div class="kop"><span></span><div class="feestkop"><svg viewBox="0 0 60 60"><rect x="17" y="27" width="26" height="17" rx="3" fill="#f472b6"/><rect x="15" y="21" width="30" height="8" rx="2" fill="#fb7185"/><rect x="28" y="21" width="4" height="23" fill="#fde047"/><path d="M30 21c-4-7-11-5-8 0M30 21c4-7 11-5 8 0" fill="none" stroke="#fde047" stroke-width="3" stroke-linecap="round"/></svg>45</div><span></span></div>
+  <div class="spellen" id="spellen"></div>
+</section>
+<div class="speelvak" id="speelvak"><iframe id="speel-iframe" title="Spelletje" allow="autoplay; fullscreen"></iframe></div>
+<div class="klok" id="klok" hidden><svg viewBox="0 0 74 74"><circle cx="37" cy="37" r="32" stroke="rgba(255,255,255,.15)"/><circle class="loopt" id="klok-ring" cx="37" cy="37" r="32" stroke-dasharray="201" stroke-dashoffset="0"/></svg><span id="klok-tijd">45</span></div>
 
 <!-- Einde van een ronde -->
 <section class="scherm" id="s-einde">
@@ -165,6 +196,7 @@ var THEMAS = [
   ] },
 ]
 var PER_RONDE = 10, GELEERD = 2   // een woord is geleerd na 2 keer in een keer goed
+var BELONING_NA = 10, SPEELTIJD = 45   // 10 woorden in een keer goed = 45 seconden een spelletje
 
 // ── Opslag op dit apparaat ──
 var SLEUTEL = 'kk_nk'
@@ -288,7 +320,12 @@ function toonVraag() {
     d.querySelector('.woord').onclick = function () { kies(x, d) }
     k.appendChild(d)
   })
-  tekenPunten()
+  tekenPunten(); tekenCadeau(false)
+}
+function tekenCadeau(wip) {
+  var n = Math.min(BELONING_NA, D.teller || 0)
+  $('cadeau-vol').style.strokeDashoffset = (163.4 * (1 - n / BELONING_NA)).toFixed(1)
+  var c = $('cadeau'); if (wip) { c.classList.remove('wip'); void c.offsetWidth; c.classList.add('wip') }
 }
 function tekenPunten() {
   var p = $('punten'); p.innerHTML = ''
@@ -307,7 +344,7 @@ function kies(x, el) {
     var r = $('plaat').getBoundingClientRect(); confetti(r.left + r.width / 2, r.top + r.height / 2, ronde.foutNu ? 30 : 70)
     $('plaat').classList.add('pop')
     s.keer++
-    if (ronde.foutNu === 0) { s.goed++; s.reeks++ } else s.reeks = 0
+    if (ronde.foutNu === 0) { s.goed++; s.reeks++; D.teller = (D.teller || 0) + 1; tekenCadeau(true) } else s.reeks = 0
     ronde.uitslag[ronde.i] = ronde.foutNu === 0 ? 2 : 1
     bewaar(); tekenPunten()
     setTimeout(volgende, 1300)
@@ -318,13 +355,56 @@ function kies(x, el) {
 }
 function volgende() {
   ronde.i++
-  if (ronde.i < ronde.woorden.length) return toonVraag()
+  if ((D.teller || 0) >= BELONING_NA) { D.teller -= BELONING_NA; bewaar(); return toonBeloning() }
+  verderNaBeloning()
+}
+function verderNaBeloning() {
+  if (ronde.i < ronde.woorden.length) { naar('s-spel'); return toonVraag() }
   // einde: een ster per plaatje dat in een keer goed was
   var n = ronde.uitslag.filter(function (u) { return u === 2 }).length
   var rij = $('eind-sterren'); rij.innerHTML = ''
   for (var i = 0; i < ronde.woorden.length; i++) { var sp = document.createElement('span'); sp.innerHTML = i < n ? STER : STER_LEEG; sp.firstChild.style.animationDelay = (i * 0.08) + 's'; rij.appendChild(sp.firstChild) }
   naar('s-einde'); geluidGoed(); setTimeout(function () { confetti(innerWidth / 2, innerHeight / 3, 120) }, 200)
 }
+// ── Beloning: 45 seconden een spelletje van Kenniskist, in een iframe ──
+var SPELLETJES = [
+  ['fruitsabel', '/fruitsabel/?terug=1', 'fruitsabel.svg'], ['stapeltoren', '/stapeltoren/?terug=1', 'stapeltoren.svg'],
+  ['komeetstaart', '/komeetstaart/?terug=1', 'komeetstaart.svg'], ['doodlesprong', '/doodlesprong/?terug=1', 'doodlesprong.png'],
+  ['meteoorvlucht', '/meteoorvlucht/?terug=1', 'meteoorvlucht.svg'], ['kristalsmelt', '/kristalsmelt/?terug=1', 'kristalsmelt.svg'],
+  ['neonhockey', '/neonhockey/?terug=1', 'neonhockey.svg'], ['blokkenblitz', '/blokkenblitz/?terug=1', 'blokkenblitz.svg'],
+]
+var klokId = null
+function toonBeloning() {
+  var l = $('spellen'); l.innerHTML = ''
+  SPELLETJES.forEach(function (sp, i) {
+    var b = document.createElement('button'); b.className = 'spelkaart'; b.style.animationDelay = (i * 0.05) + 's'; b.setAttribute('aria-label', sp[0])
+    b.innerHTML = '<img src="/scenes/games/' + sp[2] + '" alt="">'
+    b.onclick = function () { geluidKlik(); speel(sp) }
+    l.appendChild(b)
+  })
+  naar('s-beloning'); geluidGoed(); setTimeout(function () { confetti(innerWidth / 2, innerHeight / 3, 140) }, 150)
+}
+function speel(sp) {
+  stil()
+  $('speel-iframe').src = sp[1]; $('speelvak').classList.add('aan')
+  var over = SPEELTIJD, klok = $('klok'), ring = $('klok-ring')
+  klok.hidden = false; klok.classList.remove('krap'); $('klok-tijd').textContent = over; ring.style.strokeDashoffset = 0
+  clearInterval(klokId)
+  klokId = setInterval(function () {
+    over--
+    $('klok-tijd').textContent = Math.max(0, over); ring.style.strokeDashoffset = (201 * (1 - over / SPEELTIJD)).toFixed(1)
+    if (over <= 10) klok.classList.add('krap')
+    if (over <= 0) stopSpel()
+  }, 1000)
+}
+function stopSpel() {
+  clearInterval(klokId); klokId = null
+  $('klok').hidden = true; $('speelvak').classList.remove('aan'); $('speel-iframe').src = 'about:blank'
+  verderNaBeloning()
+}
+// Het menuknopje in het spelletje zelf stopt het spelen ook
+addEventListener('message', function (e) { if (klokId && e.data && /-terug$/.test(e.data.type || '')) stopSpel() })
+
 $('nog-een-keer').onclick = function () { geluidKlik(); startRonde(ronde.th) }
 $('spel-terug').onclick = function () { geluidKlik(); naar('s-taal') }
 
