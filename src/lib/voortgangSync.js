@@ -19,6 +19,11 @@ import { supabase, SUPABASE_URL, SUPABASE_ANON } from './supabase.js'
 const SYNC_PREFIXES = ['kk_', 'jj_', 'td_', 'bl_']
 const SYNC_LOSSE_SLEUTELS = ['astro_progress', 'glitch_de_linde_v2', 'ds_munten', 'mv_munten']
 const WACHTRIJ = 'kk_sync_wachtrij'
+// Meer sleutels tegelijk wissen is nooit een speler die iets weggooit, maar
+// altijd het leegmaken van het apparaat (uitloggen, ander kind, verlopen
+// sessie) dat ergens als 'verwijderd' is opgevat. Dat mag nooit naar de server:
+// zo raakte een leerling al haar kleren en munten kwijt (20 nov 2026).
+const MAX_VERWIJDER = 5
 const NIET_SYNCEN = new Set([
   'kk_lootbox_muted', // apparaatvoorkeur, geen voortgang
   'kk_playername',    // het profiel bezit de naam zodra ingelogd
@@ -104,11 +109,16 @@ export async function flush() {
 
   const schrijf = [...vuileSleutels].map((k) => [k, versie.get(k)])
   const verwijder = [...verwijderdeSleutels].map((k) => [k, versie.get(k)])
-  const rijen = [], weg = verwijder.map(([k]) => k)
+  const rijen = []
+  let weg = verwijder.map(([k]) => k)
   for (const [k] of schrijf) {
     const data = localStorage.getItem(k)
     if (data === null) weg.push(k)   // intussen weg (bv. localStorage.clear in een iframe)
     else rijen.push({ leerling_id: leerlingId, sleutel: k, data })
+  }
+  if (weg.length > MAX_VERWIJDER) {
+    console.warn('Voortgang: ' + weg.length + ' sleutels tegelijk weg, dat is leegmaken en geen speler: niet van de server gewist')
+    weg = []
   }
 
   bezig = (async () => {
@@ -179,7 +189,13 @@ if (typeof document !== 'undefined') {
   // storage-event vuurt op elk ander venster dan degene die schreef, dus de
   // shell hoort alle iframe-writes zonder dat de tools zelf iets weten.
   window.addEventListener('storage', (e) => {
+    // Een ander venster logt uit of wisselt van kind: wat hier nog op
+    // verwijderen stond hoort bij het leegmaken, niet bij de speler.
+    if (e.key === 'kk_actieve_leerling' && e.newValue !== e.oldValue) {
+      verwijderdeSleutels.clear(); bewaarWachtrij(); return
+    }
     if (!e.key || !moetSyncen(e.key)) return
+    if (e.newValue === null && !localStorage.getItem('kk_actieve_leerling')) return
     plan(e.key, e.newValue === null)
   })
 
@@ -199,11 +215,14 @@ function wisSleutels() {
   vuileSleutels.clear(); verwijderdeSleutels.clear()
   clearTimeout(herprobeerTimer)
   metInterneSchrijfactie(() => {
+    // eerst wie er ingelogd is en de wachtrij: andere tabbladen en iframes
+    // horen het wissen hieronder via het storage-event en moeten dan al zien
+    // dat er niemand meer ingelogd is (zie de storage-listener)
+    localStorage.removeItem('kk_actieve_leerling')
+    localStorage.removeItem(WACHTRIJ)
     for (const key of Object.keys(localStorage)) {
       if (moetSyncen(key)) localStorage.removeItem(key)
     }
-    localStorage.removeItem('kk_actieve_leerling')
-    localStorage.removeItem(WACHTRIJ)
     // Zit in NIET_SYNCEN, dus overleeft anders dit wissen — op een gedeeld
     // apparaat (Chromebook) zou het volgende kind dan de opdracht van het
     // vorige kind erven.
@@ -242,7 +261,10 @@ export async function hydrateer() {
   if (actieveLeerling && actieveLeerling !== uid) wisSleutels()
   const wachtrij = leesWachtrij()
   const eigen = wachtrij && wachtrij.leerling === uid ? wachtrij : null
-  const lokaalNieuwer = new Set(eigen ? [...eigen.schrijf, ...eigen.verwijder] : [])
+  // Alleen opgeslagen schrijfacties gaan voor; een verwijdering uit de wachtrij
+  // niet. Zo'n lijst kan van het leegmaken van het apparaat komen (zie
+  // MAX_VERWIJDER), en dan moet de voortgang juist van de server komen.
+  const lokaalNieuwer = new Set(eigen ? eigen.schrijf : [])
 
   const { data: rijen, error } = await supabase
     .from('game_voortgang')
@@ -265,7 +287,6 @@ export async function hydrateer() {
   // wat de vorige keer niet aankwam, alsnog versturen
   if (eigen) {
     eigen.schrijf.forEach((k) => { if (!vuileSleutels.has(k)) plan(k, false) })
-    eigen.verwijder.forEach((k) => { if (!verwijderdeSleutels.has(k)) plan(k, true) })
   }
   return gewijzigd
 }

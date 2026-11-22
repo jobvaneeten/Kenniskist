@@ -174,4 +174,32 @@ describe('voortgang laden bij het opstarten', () => {
     await sync.hydrateer()
     expect(localStorage.getItem('kk_curuntie')).toBe(null)
   })
+
+  it('wist nooit veel sleutels tegelijk op de server (leegmaken is geen spelen)', async () => {
+    localStorage.setItem('kk_actieve_leerling', 'kind-1')
+    server = { kk_curuntie: '900', kk_unlocked: '{}', kk_shirt: 'rood', kk_briefgeld: '50', kk_wearing: '{}', kk_tijd: '1' }
+    for (const k of Object.keys(server)) { localStorage.setItem(k, server[k]); localStorage.removeItem(k) }
+    await sync.flush()
+    expect(server.kk_curuntie).toBe('900')
+    expect(server.kk_unlocked).toBe('{}')
+  })
+
+  it('haalt na inloggen de voortgang van de server, ook als de wachtrij alles als verwijderd had', async () => {
+    server = { kk_curuntie: '900', kk_unlocked: '{"shirt":["rood"]}' }
+    localStorage.setItem('kk_sync_wachtrij', JSON.stringify({ leerling: 'kind-1', schrijf: [], verwijder: ['kk_curuntie', 'kk_unlocked'] }))
+    await sync.hydrateer()
+    expect(localStorage.getItem('kk_curuntie')).toBe('900')
+    await vi.runAllTimersAsync()
+    expect(server.kk_curuntie).toBe('900')
+    expect(server.kk_unlocked).toBe('{"shirt":["rood"]}')
+  })
+
+  it('één verwijderde sleutel gaat gewoon naar de server', async () => {
+    localStorage.setItem('kk_actieve_leerling', 'kind-1')
+    server = { kk_hs_reward: '1', kk_curuntie: '5' }
+    localStorage.setItem('kk_hs_reward', '1'); localStorage.removeItem('kk_hs_reward')
+    await sync.flush()
+    expect(server.kk_hs_reward).toBeUndefined()
+    expect(server.kk_curuntie).toBe('5')
+  })
 })
