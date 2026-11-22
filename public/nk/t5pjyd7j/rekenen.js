@@ -6,7 +6,7 @@
 // (D, bewaar, naar, confetti, geluiden, cadeaumeter en beloning).
 
 if (!D.reken) D.reken = {}
-var MAX_NIVEAU = 3, OMHOOG_BIJ = 8
+var MAX_NIVEAU = 5, OMHOOG_BIJ = 8   // 5 niveaus: van groep 3 tot groep 6 (rekenen-extra.js)
 
 function rnd(a, b) { return a + Math.floor(Math.random() * (b - a + 1)) }
 function kiesUit(lijst) { return lijst[Math.floor(Math.random() * lijst.length)] }
@@ -84,8 +84,9 @@ function tekenOnderdelen() {
 }
 
 var sr = null   // de rekenronde
-function startSommen(o) {
-  sr = { o: o, n: standVan(o.id).niveau, i: 0, uitslag: [], vorige: '' }
+// n: het gekozen niveau (makkelijkere niveaus blijven te oefenen)
+function startSommen(o, n) {
+  sr = { o: o, n: Math.min(n || standVan(o.id).niveau, MAX_NIVEAU), i: 0, uitslag: [], vorige: '' }
   naar('s-som'); nieuweSom()
 }
 function nieuweSom() {
@@ -143,11 +144,13 @@ function volgendeSom() {
 function verderNaSommen() {
   if (sr.i < PER_RONDE) { naar('s-som'); return nieuweSom() }
   var n = sr.uitslag.filter(function (u) { return u === 2 }).length, st = standVan(sr.o.id)
-  if (n >= OMHOOG_BIJ && st.niveau < MAX_NIVEAU) { st.niveau++; bewaar() }
+  // alleen omhoog als je op je hoogste niveau oefende; dan meteen door op het nieuwe
+  var verder = sr.n
+  if (n >= OMHOOG_BIJ && sr.n === st.niveau && st.niveau < MAX_NIVEAU) { st.niveau++; verder = st.niveau; bewaar() }
   var rij = $('eind-sterren'); rij.innerHTML = ''
   for (var i = 0; i < PER_RONDE; i++) { var sp = document.createElement('span'); sp.innerHTML = i < n ? STER : STER_LEEG; sp.firstChild.style.animationDelay = (i * 0.08) + 's'; rij.appendChild(sp.firstChild) }
   var o = sr.o
-  eindeKnoppen(function () { naar('s-reken') }, function () { startSommen(o) })
+  eindeKnoppen(function () { naar('s-reken') }, function () { startSommen(o, verder) })
   naar('s-einde'); geluidGoed(); setTimeout(function () { confetti(innerWidth / 2, innerHeight / 3, 120) }, 200)
 }
 

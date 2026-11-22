@@ -104,6 +104,9 @@
   .vertaal { flex: none; width: 70px; display: grid; place-items: center; background: rgba(253,224,71,.16); border-left: 3px solid var(--rand); }
   .vertaal svg { width: 34px; height: 34px; color: var(--goud); }
   .vertaal.speelt svg { animation: puls .6s infinite alternate; }
+  .vertaal { transition: opacity .3s, filter .3s; }
+  .vertaal.dicht { opacity: .3; filter: grayscale(1); }
+  .vertaal.open { animation: pop .5s; }
   .woord .vt { display: block; margin-top: 6px; font-size: 1.05rem; font-weight: 700; color: var(--goud); line-height: 1.3; }
   .woord .vt:empty { display: none; }
 
@@ -399,14 +402,32 @@ function vernieuwVertalingen() {
     if (d._woord) voegVertalingToe(d, d._woord)
   })
 }
+// Eerst alle Nederlandse woorden van de vraag beluisteren (blauw), dan pas
+// gaan de gele knopjes in de eigen taal open.
+var vtGehoord = {}
+function vertalingOpen() { return Object.keys(vtGehoord).length >= document.querySelectorAll('#keuzes .keuze').length }
 function voegVertalingToe(d, x) {
   var t = mijnTaal(), tekst = t && VT.woorden[x[0]] && VT.woorden[x[0]][t.id]
+  if (!$('keuzes').children.length) vtGehoord = {}   // nieuwe vraag
+  if (!d._luisterTeller) {
+    d._luisterTeller = true
+    d.querySelector('.luister').addEventListener('click', function () {
+      var was = vertalingOpen(); vtGehoord[x[0]] = 1
+      if (!was && vertalingOpen()) document.querySelectorAll('#keuzes .vertaal.dicht').forEach(function (v) { v.classList.remove('dicht'); v.classList.add('open') })
+    })
+  }
   if (!tekst) return
   var vt = document.createElement('span'); vt.className = 'vt'; vt.dir = 'auto'
   d.querySelector('.woord').appendChild(vt)
-  var b = document.createElement('button'); b.className = 'vertaal'; b.setAttribute('aria-label', t.naam); b.innerHTML = LUIDSPREKER
+  var b = document.createElement('button'); b.className = 'vertaal' + (vertalingOpen() && $('keuzes').children.length ? '' : ' dicht'); b.setAttribute('aria-label', t.naam); b.innerHTML = LUIDSPREKER
   b.onclick = function (e) {
-    e.stopPropagation(); vt.textContent = tekst
+    e.stopPropagation()
+    if (b.classList.contains('dicht')) {
+      // eerst de blauwe luidsprekers: laat ze even wiebelen
+      geluidFout(); document.querySelectorAll('#keuzes .luister').forEach(function (l) { l.classList.remove('wiebel'); void l.offsetWidth; l.classList.add('wiebel') })
+      return
+    }
+    vt.textContent = tekst
     if (!t.stem) return
     stil(); b.classList.add('speelt')
     var a = new Audio('audio/' + t.id + '/' + x[0] + '.mp3'); speler = a
