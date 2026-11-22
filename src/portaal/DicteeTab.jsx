@@ -5,6 +5,7 @@ import {
   haalAntwoorden, zetCorrecties, wisAntwoordenVan,
 } from '../lib/controleDictee.js'
 import { analyseer, kijkWoordNa, markeer, categorieNaam, categorieRegel, NORM } from '../lib/dicteeAnalyse.js'
+import { bouwSpellingExport, downloadSpellingExport } from '../lib/spellingExport.js'
 import { Knop, Icoon } from '../ui/index.jsx'
 import './dicteetab.css'
 
@@ -191,6 +192,7 @@ function Afname({ dictee, leerlingen, onTerug, onVeranderd }) {
         {(rijen ?? []).length > 0 && <Knop variant="secundair" icoon="uit" onClick={() => download(dictee, rijen, leerlingen, nrs)}>Download alle antwoorden</Knop>}
         {ingeleverd.length > 0 && <Knop variant="subtiel" icoon="printer" onClick={() => setPrinten('antwoorden')}>Antwoorden printen</Knop>}
         {ingeleverd.length > 0 && <Knop variant="subtiel" icoon="printer" onClick={() => setPrinten('analyse')}>Analyse printen</Knop>}
+        {ingeleverd.length > 0 && <Knop variant="subtiel" icoon="uit" onClick={() => downloadSpellingExport(bouwSpellingExport({ dictee, rijen, leerlingen, a }))}>Exporteer voor Spellingvolger</Knop>}
         {!zeker
           ? <Knop variant="subtiel" icoon="prullenbak" onClick={() => setZeker(true)}>Verwijderen</Knop>
           : <span className="pd-zeker">Alles van dit dictee wissen? <Knop variant="subtiel" onClick={() => setZeker(false)}>Nee</Knop> <Knop variant="secundair" onClick={weg}>Ja, wissen</Knop></span>}
