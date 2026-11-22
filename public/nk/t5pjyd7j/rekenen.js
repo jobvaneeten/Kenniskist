@@ -144,9 +144,9 @@ function volgendeSom() {
 function verderNaSommen() {
   if (sr.i < PER_RONDE) { naar('s-som'); return nieuweSom() }
   var n = sr.uitslag.filter(function (u) { return u === 2 }).length, st = standVan(sr.o.id)
-  // alleen omhoog als je op je hoogste niveau oefende; dan meteen door op het nieuwe
+  // omhoog als je op of boven je niveau oefende; dan meteen door op het volgende
   var verder = sr.n
-  if (n >= OMHOOG_BIJ && sr.n === st.niveau && st.niveau < MAX_NIVEAU) { st.niveau++; verder = st.niveau; bewaar() }
+  if (n >= OMHOOG_BIJ && sr.n >= st.niveau && sr.n < MAX_NIVEAU) { st.niveau = sr.n + 1; verder = st.niveau; bewaar() }
   var rij = $('eind-sterren'); rij.innerHTML = ''
   for (var i = 0; i < PER_RONDE; i++) { var sp = document.createElement('span'); sp.innerHTML = i < n ? STER : STER_LEEG; sp.firstChild.style.animationDelay = (i * 0.08) + 's'; rij.appendChild(sp.firstChild) }
   var o = sr.o
