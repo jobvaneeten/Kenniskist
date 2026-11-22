@@ -105,6 +105,11 @@
   .vertaal svg { width: 34px; height: 34px; color: var(--goud); }
   .vertaal.speelt svg { animation: puls .6s infinite alternate; }
   .vertaal { transition: opacity .3s, filter .3s; }
+  /* lange woorden (chocoladeletter) mogen de knopjes niet uit de balk duwen */
+  .woord { min-width: 0; overflow-wrap: anywhere; hyphens: auto; }
+  .woord.lang { font-size: clamp(1.25rem, 5.2vw, 1.6rem); }
+  @media (max-width: 520px) { .luister, .vertaal { width: 60px; } }
+  .luister, .vertaal { flex: none; }
   .vertaal.dicht { opacity: .3; filter: grayscale(1); }
   .vertaal.open { animation: pop .5s; }
   .woord .vt { display: block; margin-top: 6px; font-size: 1.05rem; font-weight: 700; color: var(--goud); line-height: 1.3; }
@@ -456,6 +461,7 @@ function toonVraag() {
     var d = document.createElement('div'); d.className = 'keuze'
     d.innerHTML = '<button class="luister" aria-label="Luister"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9z" fill="currentColor"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg></button><button class="woord"></button>'
     d.querySelector('.woord').textContent = x[1]
+    if (x[1].length > 11) d.querySelector('.woord').classList.add('lang')
     d._woord = x; voegVertalingToe(d, x)
     d.querySelector('.luister').onclick = function (e) { e.stopPropagation(); zeg(x, this) }
     d.querySelector('.woord').onclick = function () { kies(x, d) }
