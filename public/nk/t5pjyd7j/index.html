@@ -493,14 +493,14 @@ function startVoorlezen() {
     if (i >= keuzes.length) { openVertalingen(); keuzes.forEach(function (k) { if (k._woord) vtGehoord[k._woord[0]] = 1 }); return }
     var d = keuzes[i++], x = d._woord, knop = d.querySelector('.luister')
     d.classList.add('leest'); knop.classList.add('speelt')
-    var klaar = function () { if (id === voorleesId) setTimeout(volgende, 900) }   // rustig: even stil tussen de woorden
+    var klaar = function () { if (id === voorleesId) setTimeout(volgende, 400) }   // rustig: even stil tussen de woorden
     stil()
     var a = new Audio('audio/' + x[0] + '.mp3'); speler = a
     a.onended = klaar
     a.onerror = function () { if (speler !== a) return; speler = null; zegBrowser(x[1], klaar) }
     a.play().catch(function (e) { if (e.name !== 'AbortError') a.onerror() })
   }
-  setTimeout(volgende, 700)   // eerst het plaatje laten zien
+  setTimeout(volgende, 500)   // eerst het plaatje laten zien
 }
 function tekenCadeau(wip) {
   var n = Math.min(BELONING_NA, D.teller || 0)
