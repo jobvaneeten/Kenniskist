@@ -46,6 +46,7 @@ beforeEach(async () => {
   vi.resetModules()
   server = {}; verstuurd = []; fout = null; sessie = { user: { id: 'kind-1' }, access_token: 't' }
   sync = await import('./voortgangSync.js')
+  await sync.hydrateer()   // zoals main.jsx: eerst de stand van de server, dan pas opslaan
 })
 
 describe('voortgang opslaan', () => {
@@ -101,6 +102,7 @@ describe('voortgang opslaan', () => {
   })
 
   it('stuurt in gastmodus niets', async () => {
+    localStorage.removeItem('kk_actieve_leerling')   // niet ingelogd
     localStorage.setItem('kk_curuntie', '9')
     expect(await sync.flush()).toBe(true)
     expect(verstuurd).toEqual([])
@@ -201,5 +203,20 @@ describe('voortgang laden bij het opstarten', () => {
     await sync.flush()
     expect(server.kk_hs_reward).toBeUndefined()
     expect(server.kk_curuntie).toBe('5')
+  })
+
+  it('stuurt niets voordat de stand van de server binnen is, en dan wint de server', async () => {
+    maakStorage(); vi.resetModules()
+    server = { kk_curuntie: '900' }
+    const vers = await import('./voortgangSync.js')
+    localStorage.setItem('kk_curuntie', '5')   // traag netwerk: er wordt al gespeeld op een lege stand
+    localStorage.setItem('kk_nieuw', '1')
+    await vi.advanceTimersByTimeAsync(15000)
+    expect(server.kk_curuntie).toBe('900')
+    await vers.hydrateer()
+    expect(localStorage.getItem('kk_curuntie')).toBe('900')
+    await vi.runAllTimersAsync()
+    expect(server.kk_curuntie).toBe('900')
+    expect(server.kk_nieuw).toBe('1')   // wat de server nog niet kende gaat wel mee
   })
 })

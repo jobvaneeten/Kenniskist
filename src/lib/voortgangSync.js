@@ -75,7 +75,17 @@ function leesWachtrij() {
   } catch { return null }
 }
 
+// Zolang de voortgang van de server nog niet binnen is, gaat er niets heen:
+// anders kan een lege of lage stand op dit apparaat (traag netwerk bij het
+// opstarten) de echte stand overschrijven. Wat in die tijd verandert, wacht
+// in 'voorlopig'; daarna wint de server, en wat de server niet kent gaat alsnog mee.
+let hydratieKlaar = false
+const voorlopig = new Set()
+let hydratieTimer = null
+let hydratiePogingen = 0
+
 function plan(key, verwijderd) {
+  if (!hydratieKlaar) { if (!verwijderd) voorlopig.add(key); return }
   versie.set(key, (versie.get(key) || 0) + 1)
   const doel = verwijderd ? verwijderdeSleutels : vuileSleutels
   const ander = verwijderd ? vuileSleutels : verwijderdeSleutels
@@ -236,6 +246,12 @@ export function wisAlles() {
   wisSleutels()
 }
 
+// Lukte het ophalen bij het opstarten niet, dan later opnieuw. Komt er dan een
+// andere stand binnen, dan herladen: de schermen staan nog op de oude waarden.
+async function laatHydrateren() {
+  try { if (await hydrateer() > 0) window.location.reload() } catch { /* volgende poging staat al klaar */ }
+}
+
 // Wordt vóór de eerste render aangeroepen (src/main.jsx). Haalt bestaande
 // voortgang op en zet die in localStorage, zodat App.jsx (die synchroon bij
 // render leest) meteen de juiste waarden ziet. Sleutels die hier nog op
@@ -246,6 +262,7 @@ export async function hydrateer() {
   const actieveLeerling = localStorage.getItem('kk_actieve_leerling')
 
   if (!session) {
+    hydratieKlaar = true; voorlopig.clear()   // gast: er wordt toch niets opgeslagen
     // Sessie weg maar er stond nog een actieve leerling: waarschijnlijk
     // verlopen/gewist zonder uit te loggen. Wissen, maar een apparaat dat
     // nooit ingelogd was (actieveLeerling leeg) houdt zijn gast-voortgang.
@@ -271,18 +288,27 @@ export async function hydrateer() {
     .select('sleutel, data')
     .eq('leerling_id', uid)
 
+  if (error || !rijen) {
+    // Server nu niet bereikbaar: niets versturen en het later opnieuw proberen.
+    clearTimeout(hydratieTimer)
+    hydratieTimer = setTimeout(laatHydrateren, Math.min(60000, 5000 * 2 ** hydratiePogingen++))
+    return 0
+  }
+
   let gewijzigd = 0
+  const opServer = new Set(rijen.map((rij) => rij.sleutel))
   metInterneSchrijfactie(() => {
-    if (!error && rijen) {
-      for (const rij of rijen) {
-        // ook niet overschrijven wat er sinds het opstarten al veranderd is
-        // (als dit antwoord pas binnenkomt terwijl er al gespeeld wordt)
-        if (lokaalNieuwer.has(rij.sleutel) || vuileSleutels.has(rij.sleutel) || verwijderdeSleutels.has(rij.sleutel)) continue
-        if (localStorage.getItem(rij.sleutel) !== rij.data) { localStorage.setItem(rij.sleutel, rij.data); gewijzigd++ }
-      }
+    for (const rij of rijen) {
+      // niet overschrijven wat de vorige keer niet aankwam (de wachtrij)
+      if (lokaalNieuwer.has(rij.sleutel) || vuileSleutels.has(rij.sleutel) || verwijderdeSleutels.has(rij.sleutel)) continue
+      if (localStorage.getItem(rij.sleutel) !== rij.data) { localStorage.setItem(rij.sleutel, rij.data); gewijzigd++ }
     }
     localStorage.setItem('kk_actieve_leerling', uid)
   })
+  hydratieKlaar = true
+  // in de tussentijd veranderd: alleen wat de server nog niet kent gaat mee
+  for (const k of voorlopig) if (!opServer.has(k) && localStorage.getItem(k) !== null) plan(k, false)
+  voorlopig.clear()
 
   // wat de vorige keer niet aankwam, alsnog versturen
   if (eigen) {
