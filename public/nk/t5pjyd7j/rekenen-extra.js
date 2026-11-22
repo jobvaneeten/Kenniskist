@@ -98,6 +98,24 @@ function liniaal(max, l) {
   s += '<path d="M30 10v36" stroke="#ef4444" stroke-width="2" stroke-dasharray="4 3"/><path d="M' + (30 + l * cm) + ' 10v36" stroke="#ef4444" stroke-width="2" stroke-dasharray="4 3"/>'
   return s + '</svg>'
 }
+// ── tips: een stap op weg, nooit het antwoord ──
+var PIJL = ' <span class="tippijl">→</span> '
+function waarden(g) { return [1000, 100, 10, 1].map(function (p) { return Math.floor(g / p) % 10 * p }).filter(function (x) { return x }) }
+// rekenen in stappen: eerst de grote delen, de laatste stap blijft open (?)
+function stappen(a, b, plus) {
+  var t = plus ? ' + ' : ' − ', delen = waarden(b), regels = [], cur = a
+  if (delen.length < 2) {
+    // b is één rond getal: splits a (62 − 20: 60 − 20 = 40, 40 + 2 = ?)
+    var ad = waarden(a)
+    if (ad.length < 2) return a + t + b + ' = ?'
+    var groot = ad[0], rest = a - groot, tus = plus ? groot + b : groot - b
+    return groot + t + b + ' = ' + tus + PIJL + tus + ' + ' + rest + ' = ?'
+  }
+  for (var i = 0; i < delen.length - 1; i++) { var nw = plus ? cur + delen[i] : cur - delen[i]; regels.push(cur + t + delen[i] + ' = ' + nw); cur = nw }
+  regels.push(cur + t + delen[delen.length - 1] + ' = ?')
+  return regels.join(PIJL)
+}
+function telReeks(a, stap) { return [a, a + stap, a + 2 * stap].join(PIJL) + PIJL + '…' }
 function breukHtml(teller, noemer) { return '<span class="breuk"><b>' + teller + '</b><i>' + noemer + '</i></span>' }
 var ehd = function (t) { return '<span class="eenheid">' + t + '</span>' }
 
@@ -109,7 +127,8 @@ var OEFENINGEN = [
     plaat: tegelPlaat('#e0f2fe', '#0284c7', '', '<g fill="#38bdf8"><circle cx="40" cy="45" r="13"/><circle cx="80" cy="45" r="13"/><circle cx="120" cy="45" r="13"/><circle cx="60" cy="85" r="13"/><circle cx="100" cy="85" r="13"/></g><text x="80" y="145" font-family="Arial" font-weight="900" font-size="36" text-anchor="middle" fill="#0284c7">5</text>'),
     maak: function (n) {
       var k = [0, rnd(1, 5), rnd(3, 10), rnd(11, 20), rnd(21, 50), rnd(51, 100)][n]
-      return { tekst: '?', antwoord: k, hulp: n === 1 ? vijfRij(stipjes(k, KLEUR_A)) : n <= 3 ? tienveld(k, KLEUR_A) : staven(k) }
+      var tip = n === 1 ? telReeks(1, 1) : n === 2 ? vijfRij(stipjes(5, KLEUR_A)) + ' = 5' : n === 3 ? tienveld(10, KLEUR_A) + ' = 10' : '<span class="staaf mini"></span> = 10' + PIJL + '10, 20, 30, …'
+      return { tekst: '?', antwoord: k, hulp: n === 1 ? vijfRij(stipjes(k, KLEUR_A)) : n <= 3 ? tienveld(k, KLEUR_A) : staven(k), tip: tip }
     } },
   { id: 'getallenlijn', domein: 'getallen', niveaus: ['0–10', '0–20', '0–100', '0–100', '0–1000'],
     plaat: tegelPlaat('#e0f2fe', '#0284c7', '', '<path d="M18 100h124" stroke="#0284c7" stroke-width="5"/><path d="M18 88v24M49 94v12M80 88v24M111 94v12M142 88v24" stroke="#0284c7" stroke-width="4"/><path d="M95 62l-10-14h20z" fill="#ef4444"/><text x="95" y="42" font-family="Arial" font-weight="900" font-size="30" text-anchor="middle" fill="#ef4444">?</text>'),
@@ -126,7 +145,8 @@ var OEFENINGEN = [
         if (groot) s += '<text x="' + x(v) + '" y="114" font-family="Arial" font-weight="800" font-size="18" text-anchor="middle" fill="#e5e7eb">' + v + '</text>'
       }
       s += '<path d="M' + x(doel) + ' 62l-11-18h22z" fill="#ef4444"/><text x="' + x(doel) + '" y="36" font-family="Arial" font-weight="900" font-size="28" text-anchor="middle" fill="#ef4444">?</text></svg>'
-      return { tekst: '?', antwoord: doel, hulp: s }
+      var lo = Math.floor(doel / c[2]) * c[2]
+      return { tekst: '?', antwoord: doel, hulp: s, tip: lo + ' &lt; ? &lt; ' + (lo + c[2]) + '<br><b>|</b> = ' + c[1] }
     } },
   { id: 'splitsen', domein: 'getallen', niveaus: ['5 = 2 + ?', '9 = 4 + ?', '10 = 3 + ?', '16 = 9 + ?', '100 = 40 + ?'],
     plaat: tegelPlaat('#e0f2fe', '#0284c7', '7', '<path d="M80 82l-30 26M80 82l30 26" stroke="#0284c7" stroke-width="5"/><text x="46" y="145" font-family="Arial" font-weight="900" font-size="34" text-anchor="middle" fill="#0284c7">3</text><text x="114" y="145" font-family="Arial" font-weight="900" font-size="34" text-anchor="middle" fill="#ef4444">?</text>'),
@@ -134,7 +154,10 @@ var OEFENINGEN = [
       var t = [0, rnd(2, 5), rnd(5, 10), 10, rnd(11, 20), 100][n]
       var a = n === 5 ? rnd(1, 9) * 10 + (Math.random() < 0.4 ? 5 : 0) : rnd(1, t - 1)
       var hulp = n <= 3 ? vijfRij(stipjes(a, KLEUR_A) + new Array(t - a + 1).join('<span class="stip leeg"></span>')) : ''
-      return { tekst: t + ' = ' + a + ' + ?', antwoord: t - a, hulp: hulp }
+      var tip = t <= 10 || (t <= 20 && a >= 10) ? a + ' + ? = ' + t : a < 10 ? a + ' + ' + (10 - a) + ' = 10' + PIJL + '10 + ? = ' + t
+        : a % 10 ? a + ' + ' + (10 - a % 10) + ' = ' + (a + 10 - a % 10) + PIJL + (a + 10 - a % 10) + ' + ? = ' + t
+        : t >= 100 ? (a / 10) + ' + ? = ' + (t / 10) + PIJL + '× 10' : a + ' + ? = ' + t
+      return { tekst: t + ' = ' + a + ' + ?', antwoord: t - a, hulp: hulp, tip: tip }
     } },
   // plus: van tot 10 (groep 3) tot 1000 (groep 6), één tegel
   { id: 'plus10', domein: 'getallen', niveaus: ['5 + 3', '12 + 5', '8 + 5', '34 + 25', '345 + 278'],
@@ -147,7 +170,8 @@ var OEFENINGEN = [
       else { a = Math.random() < 0.4 ? rnd(11, 89) * 10 : rnd(101, 899); b = a % 10 ? rnd(11, 1000 - a) : rnd(1, (1000 - a) / 10) * 10 }
       if (n === 1) hulp = vijfRij(stipjes(a, KLEUR_A)) + plusTeken('+') + vijfRij(stipjes(b, KLEUR_B))
       else if (n <= 3) hulp = tienveld(a, KLEUR_A) + plusTeken('+') + vijfRij(stipjes(b, KLEUR_B))
-      return { tekst: a + ' + ' + b, antwoord: a + b, hulp: hulp }
+      var tip = n <= 2 ? telReeks(a, 1) : n === 3 ? a + ' + ' + (10 - a) + ' = 10' + PIJL + '10 + ' + (b - 10 + a) + ' = ?' : stappen(a, b, true)
+      return { tekst: a + ' + ' + b, antwoord: a + b, hulp: hulp, tip: tip }
     } },
   // min: zelfde opbouw als plus
   { id: 'min', domein: 'getallen', niveaus: ['9 − 3', '17 − 4', '13 − 5', '62 − 27', '812 − 356'],
@@ -159,21 +183,24 @@ var OEFENINGEN = [
       else if (n === 3) { a = rnd(11, 17); b = rnd(a - 9, 9) }   // over het tiental heen
       else if (n === 4) { a = rnd(30, 99); b = rnd(11, a - 5) }
       else { a = rnd(200, 999); b = a % 10 && Math.random() < 0.6 ? rnd(101, a - 50) : rnd(1, Math.floor(a / 10) - 5) * 10 }
-      return { tekst: a + ' − ' + b, antwoord: a - b, hulp: n <= 3 ? vijfRij(stipjes(a, KLEUR_A, a - b)) : '' }
+      var tip = n <= 2 ? telReeks(a, -1) : n === 3 ? a + ' − ' + (a - 10) + ' = 10' + PIJL + '10 − ' + (b - a + 10) + ' = ?' : stappen(a, b, false)
+      return { tekst: a + ' − ' + b, antwoord: a - b, hulp: n <= 3 ? vijfRij(stipjes(a, KLEUR_A, a - b)) : '', tip: tip }
     } },
   // keer: tafels in de volgorde van de leerlijn, op niveau 5 met tientallen (3 × 40)
   { id: 'keer', domein: 'getallen', niveaus: ['2 × 4', '5 × 3', '4 × 6', '7 × 8', '3 × 40'],
     maak: function (n) {
       var t = kiesUit([0, [1, 2, 10], [2, 5, 10], [3, 4], [6, 7, 8, 9], [2, 3, 4, 5, 6, 7, 8, 9]][n]), a = rnd(1, 10)
-      if (n === 5) { var tien = rnd(2, 9) * 10; return { tekst: t + ' × ' + tien, antwoord: t * tien, hulp: '' } }
-      return { tekst: a + ' × ' + t, antwoord: a * t, hulp: a * t <= 30 && n <= 3 ? raster(a, t, KLEUR_A) : '' }
+      if (n === 5) { var tien = rnd(2, 9) * 10; return { tekst: t + ' × ' + tien, antwoord: t * tien, hulp: '', tip: t + ' × ' + (tien / 10) + ' = ' + (t * tien / 10) + PIJL + '× 10' } }
+      var vb10 = [4, 6, 7, 8, 9].filter(function (x) { return x !== t }).slice(0, 2)
+      var tip = a === 1 ? [4, 7, 9].filter(function (x) { return x !== t }).slice(0, 2).map(function (x) { return '1 × ' + x + ' = ' + x }).join(', ') : a === 10 ? vb10.map(function (x) { return '10 × ' + x + ' = ' + 10 * x }).join(', ') : a <= 5 ? new Array(a + 1).join(t + ' + ').slice(0, -3) : '5 × ' + t + ' = ' + (5 * t) + PIJL + '+ ' + (a - 5) + ' × ' + t
+      return { tekst: a + ' × ' + t, antwoord: a * t, hulp: a * t <= 30 && n <= 3 ? raster(a, t, KLEUR_A) : '', tip: tip }
     } },
   // delen: zelfde tafels, op niveau 5 met tientallen (120 : 4)
   { id: 'delen', domein: 'getallen', niveaus: ['8 : 2', '15 : 5', '12 : 3', '56 : 8', '120 : 4'],
     maak: function (n) {
       var t = kiesUit([0, [2], [2, 5, 10], [3, 4], [6, 7, 8, 9], [2, 3, 4, 5, 6, 7, 8, 9]][n]), uit = rnd(1, 10)
-      if (n === 5) { var u = rnd(2, 9) * 10; return { tekst: (u * t) + ' : ' + t, antwoord: u, hulp: '' } }
-      return { tekst: (uit * t) + ' : ' + t, antwoord: uit, hulp: uit * t <= 30 && n <= 3 ? raster(uit, t, KLEUR_B) : '' }
+      if (n === 5) { var u = rnd(2, 9) * 10; return { tekst: (u * t) + ' : ' + t, antwoord: u, hulp: '', tip: (u * t / 10) + ' : ' + t + ' = ?' + PIJL + '× 10' } }
+      return { tekst: (uit * t) + ' : ' + t, antwoord: uit, hulp: uit * t <= 30 && n <= 3 ? raster(uit, t, KLEUR_B) : '', tip: '? × ' + t + ' = ' + (uit * t) }
     } },
   // Verhoudingen (leerlijn: twee keer zoveel en half zoveel, eerlijk verdelen,
   // deel van een geheel, daarna verhoudingstabel, breuken en procenten)
@@ -181,12 +208,16 @@ var OEFENINGEN = [
     plaat: tegelPlaat('#fce7f3', '#be185d', '', '<g fill="#f472b6"><circle cx="38" cy="60" r="12"/><circle cx="38" cy="94" r="12"/><circle cx="38" cy="128" r="12"/></g><g fill="#be185d"><circle cx="122" cy="60" r="12"/><circle cx="122" cy="94" r="12"/><circle cx="122" cy="128" r="12"/></g><path d="M60 94h40" stroke="#be185d" stroke-width="5"/><text x="80" y="36" font-family="Arial" font-weight="900" font-size="28" text-anchor="middle" fill="#be185d">2×</text>'),
     maak: function (n) {
       var w = function (t) { return '<span class="woordje">' + t + '</span> ' }
-      if (n === 1) { var a = rnd(1, 5); return { tekst: w('dubbel') + a, antwoord: 2 * a, hulp: vijfRij(stipjes(a, KLEUR_A)) + plusTeken('+') + vijfRij(stipjes(a, KLEUR_A)) } }
-      if (n === 2) { var b = rnd(4, 10); return { tekst: w('dubbel') + b, antwoord: 2 * b, hulp: tienveld(b, KLEUR_A) + plusTeken('+') + tienveld(b, KLEUR_A) } }
-      if (n === 3) { var c = rnd(2, 10) * 2; return { tekst: w('helft') + c, antwoord: c / 2, hulp: raster(2, c / 2, KLEUR_B) } }
-      if (n === 4) { var d = Math.random() < 0.5 ? rnd(11, 49) : rnd(1, 10) * 10; return Math.random() < 0.5 ? { tekst: w('dubbel') + d, antwoord: 2 * d, hulp: '' } : { tekst: w('helft') + 2 * d, antwoord: d, hulp: '' } }
+      var dub = function (x) { var d = waarden(x); return d.length < 2 ? x + ' + ' + x : d.map(function (p) { return p + ' + ' + p }).join(PIJL) }
+      var hel = function (x) { var d = waarden(x); return d.length < 2 || x <= 20 ? '? + ? = ' + x : d.map(function (p) { return '½ ' + p }).join(' + ') }
+      var DUB = function (x) { return { tekst: w('dubbel') + x, antwoord: 2 * x, hulp: '', tip: dub(x) } }
+      var HEL = function (x) { return { tekst: w('helft') + x, antwoord: x / 2, hulp: '', tip: hel(x) } }
+      if (n === 1) { var a = rnd(1, 5), o1 = DUB(a); o1.hulp = vijfRij(stipjes(a, KLEUR_A)) + plusTeken('+') + vijfRij(stipjes(a, KLEUR_A)); return o1 }
+      if (n === 2) { var b = rnd(4, 10), o2 = DUB(b); o2.hulp = tienveld(b, KLEUR_A) + plusTeken('+') + tienveld(b, KLEUR_A); return o2 }
+      if (n === 3) { var c = rnd(2, 10) * 2, o3 = HEL(c); o3.hulp = raster(2, c / 2, KLEUR_B); return o3 }
+      if (n === 4) { var d = Math.random() < 0.5 ? rnd(11, 49) : rnd(1, 10) * 10; return Math.random() < 0.5 ? DUB(d) : HEL(2 * d) }
       var e = Math.random() < 0.5 ? rnd(11, 49) * 10 : rnd(101, 499)
-      return Math.random() < 0.5 ? { tekst: w('dubbel') + e, antwoord: 2 * e, hulp: '' } : { tekst: w('helft') + 2 * e, antwoord: e, hulp: '' }
+      return Math.random() < 0.5 ? DUB(e) : HEL(2 * e)
     } },
   { id: 'verhouding', domein: 'verhoudingen', niveaus: ['6 : 2 kinderen', '12 : 4 kinderen', '1 zak = 4', '1→7  6→?', '4→60  3→?'],
     plaat: tegelPlaat('#fce7f3', '#be185d', '', '<g transform="translate(20 30) scale(1.2)">' + APPEL.replace('class="icoon"', 'width="40" height="40"') + '</g><text x="110" y="72" font-family="Arial" font-weight="900" font-size="38" text-anchor="middle" fill="#be185d">1</text><g transform="translate(20 92) scale(1.2)">' + MUNT.replace('class="icoon"', 'width="40" height="40"') + '</g><text x="110" y="134" font-family="Arial" font-weight="900" font-size="38" text-anchor="middle" fill="#be185d">3</text>'),
@@ -196,13 +227,14 @@ var OEFENINGEN = [
         var k = n === 1 ? 2 : rnd(3, 5), per = rnd(1, 5)
         var kinderen = ''; for (var i = 0; i < k; i++) kinderen += KIND
         return { tekst: '? ' + SNOEP + ' <span class="woordje">per</span> ' + KIND, antwoord: per,
-          hulp: vijfRij(stipjes(k * per, '#f472b6')) + plusTeken('→') + '<span class="kinderen">' + kinderen + '</span>' }
+          hulp: vijfRij(stipjes(k * per, '#f472b6')) + plusTeken('→') + '<span class="kinderen">' + kinderen + '</span>', tip: (k * per) + ' : ' + k }
       }
       var a = n === 5 ? rnd(2, 5) : 1, u = [0, 0, 0, rnd(2, 5), rnd(2, 10), kiesUit([5, 10, 15, 20, 25])][n], c
       do { c = rnd(2, n === 3 ? 5 : 10) } while (c === a)
       var boven = n === 3 ? ZAK : APPEL, onder = n === 3 ? SNOEP : MUNT
       return { tekst: '<table class="vtabel"><tr><th>' + boven + '</th><td>' + a + '</td><td>' + c + '</td></tr><tr><th>' + onder + '</th><td>' + (a * u) + '</td><td class="vraag">?</td></tr></table>', antwoord: c * u,
-        hulp: n === 3 ? '<span class="zakje">' + ZAK + '</span>' + plusTeken('=') + vijfRij(stipjes(u, '#f472b6')) : '' }
+        hulp: n === 3 ? '<span class="zakje">' + ZAK + '</span>' + plusTeken('=') + vijfRij(stipjes(u, '#f472b6')) : '',
+        tip: a === 1 ? '1' + PIJL + c + ' = × ' + c : (a * u) + ' : ' + a + ' = ? voor 1' + PIJL + '× ' + c }
     } },
   { id: 'breuk', domein: 'verhoudingen', niveaus: ['? / 2', '? / 6', '½ van 8', '⅕ van 35', '¾ van 20'],
     plaat: tegelPlaat('#fce7f3', '#be185d', '', '<circle cx="80" cy="80" r="52" fill="#fff" stroke="#be185d" stroke-width="5"/><path d="M80 80V28a52 52 0 0 1 0 104z" fill="#f472b6"/><path d="M80 28v104" stroke="#be185d" stroke-width="5"/>'),
@@ -210,17 +242,18 @@ var OEFENINGEN = [
       if (n <= 2) {
         // deel van een geheel: hoeveel stukken zijn gekleurd?
         var noem = n === 1 ? kiesUit([2, 4]) : rnd(3, 8), tel = rnd(1, noem - 1)
-        return { tekst: breukHtml('?', noem), antwoord: tel, hulp: n === 1 ? taart(noem, tel) : strook(noem, tel) }
+        return { tekst: breukHtml('?', noem), antwoord: tel, hulp: n === 1 ? taart(noem, tel) : strook(noem, tel), tip: noem + ' = <span class="woordje">alle stukken</span>' + PIJL + '<span class="roze">■</span> = ?' }
       }
       if (n === 5 && Math.random() < 0.4) {
         // gelijkwaardig: 1/2 = ?/8
         var basis = kiesUit([[1, 2], [1, 4], [3, 4], [1, 3], [2, 5]]), f = rnd(2, 5)
-        return { tekst: breukHtml(basis[0], basis[1]) + ' = ' + breukHtml('?', basis[1] * f), antwoord: basis[0] * f, hulp: '' }
+        return { tekst: breukHtml(basis[0], basis[1]) + ' = ' + breukHtml('?', basis[1] * f), antwoord: basis[0] * f, hulp: '', tip: basis[1] + ' × ' + f + ' = ' + (basis[1] * f) + PIJL + basis[0] + ' × ' + f }
       }
       var noemer = [0, 0, 0, kiesUit([2, 4]), kiesUit([3, 5, 10]), kiesUit([4, 3, 5])][n]
       var teller = n === 5 ? rnd(2, noemer - 1) : 1, deel = rnd(1, 10)
       return { tekst: breukHtml(teller, noemer) + ' van ' + (deel * noemer), antwoord: teller * deel,
-        hulp: n === 3 && deel * noemer <= 40 ? raster(noemer, deel, KLEUR_B) : '' }
+        hulp: n === 3 && deel * noemer <= 40 ? raster(noemer, deel, KLEUR_B) : '',
+        tip: teller === 1 ? (deel * noemer) + ' : ' + noemer : (deel * noemer) + ' : ' + noemer + PIJL + '× ' + teller }
     } },
   { id: 'procent', domein: 'verhoudingen', niveaus: ['? %', '50% van 80', '25% van 40', '10% van 70', '75% van 40'],
     plaat: tegelPlaat('#fce7f3', '#be185d', '50%', '<rect x="20" y="100" width="120" height="26" rx="6" fill="#fff" stroke="#be185d" stroke-width="4"/><rect x="22" y="102" width="58" height="22" rx="4" fill="#f472b6"/>'),
@@ -229,14 +262,15 @@ var OEFENINGEN = [
         // honderdveld: hoeveel procent is gekleurd?
         var tien = rnd(1, 9), s = '<svg class="honderd" viewBox="0 0 202 202">'
         for (var r = 0; r < 10; r++) for (var k = 0; k < 10; k++) s += '<rect x="' + (1 + k * 20) + '" y="' + (1 + r * 20) + '" width="20" height="20" fill="' + (r < tien ? KLEUR_B : '#fff') + '" stroke="#1f2937" stroke-opacity=".3"/>'
-        return { tekst: '? %', antwoord: tien * 10, hulp: s + '</svg>' }
+        return { tekst: '? %', antwoord: tien * 10, hulp: s + '</svg>', tip: '1 <span class="woordje">rij</span> = 10%' }
       }
       var p = [0, 0, kiesUit([50, 100]), kiesUit([25, 50]), kiesUit([10, 20]), kiesUit([75, 20, 5])][n]
       var deler = { 100: 1, 50: 2, 25: 4, 75: 4, 10: 10, 20: 5, 5: 20 }[p]
       var basis = n === 2 ? 10 * rnd(1, 10) : n === 4 ? 10 * rnd(1, 20) : deler * rnd(1, Math.floor((n === 3 ? 100 : 200) / deler))
       var balk = '<svg class="procentplaat" viewBox="0 0 320 40"><rect x="2" y="2" width="316" height="36" rx="8" fill="#fff"/><rect x="4" y="4" width="' + (3.12 * p) + '" height="32" rx="6" fill="' + KLEUR_B + '"/>'
       for (var i = 1; i < 10; i++) balk += '<path d="M' + (4 + 31.2 * i) + ' 4v32" stroke="#1f2937" stroke-opacity=".2" stroke-width="2"/>'
-      return { tekst: p + '% van ' + basis, antwoord: basis * p / 100, hulp: balk + '</svg>' }
+      var PT = { 100: '100% = <span class="woordje">alles</span>', 50: '50% = ½' + PIJL + basis + ' : 2', 25: '25% = ¼' + PIJL + basis + ' : 4', 10: '10%' + PIJL + basis + ' : 10', 20: '20% = 2 × 10%', 75: '75% = 3 × 25%', 5: '5% = ½ × 10%' }
+      return { tekst: p + '% van ' + basis, antwoord: basis * p / 100, hulp: balk + '</svg>', tip: PT[p] }
     } },
   // Meten en meetkunde
   { id: 'geld', domein: 'meten', niveaus: ['€ 5', '€ 10', '€ 20', '€ 50', '€ 200'],
@@ -247,7 +281,7 @@ var OEFENINGEN = [
       for (var p = 0; stukken.length < aantal && p < 40; p++) { var w = kiesUit(soorten); if (som + w <= max) { stukken.push(w); som += w } }
       if (stukken.length < 2) { stukken = [2, 1]; som = 3 }
       stukken.sort(function (x, y) { return y - x })
-      return { tekst: '€ ?', antwoord: som, hulp: '<span class="geldrij">' + stukken.map(geldStuk).join('') + '</span>' }
+      return { tekst: '€ ?', antwoord: som, hulp: '<span class="geldrij">' + stukken.map(geldStuk).join('') + '</span>', tip: stukken.map(function (x) { return '€' + x }).join(' + ') }
     } },
   // tijd: klokkijken (hele, halve uren, kwartieren), daarna tijdseenheden
   { id: 'tijd', domein: 'meten', niveaus: ['3 uur', 'half 4', 'kwart over 2', '1 uur = ? min', '120 min = ? uur'],
@@ -255,26 +289,29 @@ var OEFENINGEN = [
     maak: function (n) {
       if (n <= 3) {
         var h = rnd(1, 12), na = function (u) { return u % 12 + 1 }
-        if (n === 1) return { tekst: '? ' + ehd('uur'), antwoord: h, hulp: klok(h, 0) }
-        if (n === 2) return { tekst: '<span class="woordje">half</span> ?', antwoord: na(h), hulp: klok(h, 30) }
+        var KORT = '<span class="woordje">korte wijzer</span> = <span class="woordje">uur</span>'
+        if (n === 1) return { tekst: '? ' + ehd('uur'), antwoord: h, hulp: klok(h, 0), tip: KORT }
+        if (n === 2) return { tekst: '<span class="woordje">half</span> ?', antwoord: na(h), hulp: klok(h, 30), tip: '<span class="woordje">half</span> = 30 <span class="woordje">minuten voor het volgende uur</span>' }
         return Math.random() < 0.5
-          ? { tekst: '<span class="woordje">kwart over</span> ?', antwoord: h, hulp: klok(h, 15) }
-          : { tekst: '<span class="woordje">kwart voor</span> ?', antwoord: na(h), hulp: klok(h, 45) }
+          ? { tekst: '<span class="woordje">kwart over</span> ?', antwoord: h, hulp: klok(h, 15), tip: '<span class="woordje">kwart over</span> = 15 <span class="woordje">minuten na</span>' }
+          : { tekst: '<span class="woordje">kwart voor</span> ?', antwoord: na(h), hulp: klok(h, 45), tip: '<span class="woordje">kwart voor</span> = 15 <span class="woordje">minuten voor</span>' }
       }
       // [eenheid, meervoud, kleinere eenheid, hoeveel]
       var WEEK = ['week', 'weken', 'dagen', 7], UUR = ['uur', 'uur', 'minuten', 60], DAG = ['dag', 'dagen', 'uur', 24], JAAR = ['jaar', 'jaar', 'maanden', 12]
       var MIN = ['minuut', 'minuten', 'seconden', 60], KWART = ['kwartier', 'kwartier', 'minuten', 15], HALF = ['half uur', 'half uur', 'minuten', 30]
       var f = kiesUit(n === 4 ? [WEEK, UUR, DAG, JAAR, KWART, HALF] : [WEEK, UUR, DAG, JAAR, MIN])
       var k = f === KWART || f === HALF ? 1 : rnd(n === 4 ? 1 : 2, n === 4 ? 3 : 10)
-      if (n === 5 && Math.random() < 0.5) return { tekst: (k * f[3]) + ' ' + ehd(f[2]) + ' = ? ' + ehd(f[1]), antwoord: k, hulp: '' }
-      return { tekst: k + ' ' + ehd(k === 1 ? f[0] : f[1]) + ' = ? ' + ehd(f[2]), antwoord: k * f[3], hulp: '' }
+      var feit = '1 ' + ehd(f[0]) + ' = ' + f[3] + ' ' + ehd(f[2])
+      var EERST = { week: 'ma di wo do vr za zo', uur: '4 × 15', dag: '12 + 12', jaar: 'jan feb mrt apr mei jun jul aug sep okt nov dec', kwartier: '¼ × 60', 'half uur': '½ × 60' }
+      if (n === 5 && Math.random() < 0.5) return { tekst: (k * f[3]) + ' ' + ehd(f[2]) + ' = ? ' + ehd(f[1]), antwoord: k, hulp: '', tip: feit }
+      return { tekst: k + ' ' + ehd(k === 1 ? f[0] : f[1]) + ' = ? ' + ehd(f[2]), antwoord: k * f[3], hulp: '', tip: k === 1 ? EERST[f[0]] : feit }
     } },
   // maten: eerst meten met een liniaal, daarna omrekenen
   { id: 'maten', domein: 'meten', niveaus: ['liniaal 10', 'liniaal 20', '4 m = ? cm', '3 km = ? m', '80 mm = ? cm'],
     maak: function (n) {
       if (n <= 2) {
         var max = n === 1 ? 10 : 20, l = rnd(2, max - 1)
-        return { tekst: '? ' + ehd('cm'), antwoord: l, hulp: liniaal(max, l) }
+        return { tekst: '? ' + ehd('cm'), antwoord: l, hulp: liniaal(max, l), tip: '0' + PIJL + '<span class="woordje">punt van het potlood</span>' }
       }
       n = n - 1   // de omrekenniveaus hieronder lopen van 2 tot 4
       // [groot, klein, factor, soort]
@@ -282,9 +319,11 @@ var OEFENINGEN = [
       var m = M[kiesUit([0, 0, ['m', 'kg'], ['m', 'kg', 'km', 'l'], ['m', 'kg', 'km', 'l', 'cm', 'dm']][n])]
       var k = rnd(n === 2 ? 1 : 2, n === 2 ? 5 : 9)
       var naarKlein = n === 2 || Math.random() < 0.5
+      var EEN = { 'm,cm': '1 m = 10 dm' + PIJL + '1 dm = 10 cm', 'kg,g': '½ kg = 500 g', 'km,m': '1 km = 10 × 100 m', 'l,ml': '1 l = 4 × 250 ml', 'cm,mm': '<span class="woordje">kleine streepjes op de liniaal</span>', 'm,dm': '1 dm = 10 cm' + PIJL + '1 m = 100 cm' }
+      var mtip = k === 1 ? EEN[m[0] + ',' + m[1]] : '1 ' + ehd(m[0]) + ' = ' + m[2] + ' ' + ehd(m[1])
       return naarKlein
-        ? { tekst: k + ' ' + ehd(m[0]) + ' = ? ' + ehd(m[1]), antwoord: k * m[2], hulp: MAATPLAAT[m[3]] }
-        : { tekst: (k * m[2]) + ' ' + ehd(m[1]) + ' = ? ' + ehd(m[0]), antwoord: k, hulp: MAATPLAAT[m[3]] }
+        ? { tekst: k + ' ' + ehd(m[0]) + ' = ? ' + ehd(m[1]), antwoord: k * m[2], hulp: MAATPLAAT[m[3]], tip: mtip }
+        : { tekst: (k * m[2]) + ' ' + ehd(m[1]) + ' = ? ' + ehd(m[0]), antwoord: k, hulp: MAATPLAAT[m[3]], tip: mtip }
     } },
   { id: 'oppervlakte', domein: 'meten', niveaus: ['6', '12', '30', '8 × 5', '12 × 9 m²'],
     plaat: tegelPlaat('#fef9c3', '#b45309', '', (function () { var s = ''; for (var r = 0; r < 3; r++) for (var k = 0; k < 4; k++) s += '<rect x="' + (24 + k * 28) + '" y="' + (38 + r * 28) + '" width="28" height="28" fill="#fde047" stroke="#b45309" stroke-width="3"/>'; return s })()),
@@ -299,10 +338,10 @@ var OEFENINGEN = [
       if (n <= 4) {
         for (var r = 0; r < h; r++) for (var k = 0; k < b; k++) s += '<rect x="' + (k * cel) + '" y="' + (r * cel) + '" width="' + cel + '" height="' + cel + '" fill="#fde047" stroke="#b45309" stroke-opacity="' + (n === 4 ? .35 : 1) + '" stroke-width="2"/>'
         if (n === 4) s += maat('')
-        return { tekst: '? <span class="hokje"></span>', antwoord: b * h, hulp: s + '</svg>' }
+        return { tekst: '? <span class="hokje"></span>', antwoord: b * h, hulp: s + '</svg>', tip: n === 4 ? b + ' × ' + h : h === 1 ? telReeks(1, 1) : new Array(h + 1).join(b + ' + ').slice(0, -3) }
       }
       s += '<rect x="0" y="0" width="' + w + '" height="' + hh + '" fill="#fde047" stroke="#b45309" stroke-width="3"/>' + maat(' m')
-      return { tekst: '? ' + ehd('m²'), antwoord: b * h, hulp: s + '</svg>' }
+      return { tekst: '? ' + ehd('m²'), antwoord: b * h, hulp: s + '</svg>', tip: b + ' × ' + h }
     } },
   // Verbanden
   { id: 'patroon', domein: 'verbanden', niveaus: ['1 2 3 ?', '2 4 6 ?', '10 20 30 ?', '20 18 16 ?', '50 100 150 ?'],
@@ -314,7 +353,8 @@ var OEFENINGEN = [
         var start = stap === -10 ? 10 * rnd(4, 10) : stap < 0 ? rnd(-stap * 4, n === 4 ? 30 : 100) : stap >= 5 ? stap * rnd(0, 5) : rnd(0, n === 1 ? 5 : 10)
         for (var i = 0; i < 5; i++) t.push(start + i * stap)
       }
-      return { tekst: '<span class="lang">' + t.slice(0, 4).join(', ') + ', ?</span>', antwoord: t[4], hulp: '' }
+      var sprong = stap === 'x2' ? '× 2' : (stap > 0 ? '+ ' : '− ') + Math.abs(stap)
+      return { tekst: '<span class="lang">' + t.slice(0, 4).join(', ') + ', ?</span>', antwoord: t[4], hulp: '', tip: t[0] + ' <span class="sprong">' + sprong + '</span> ' + t[1] + ' <span class="sprong">' + sprong + '</span> ' + t[2] + ' …' }
     } },
   { id: 'grafiek', domein: 'verbanden', niveaus: ['5', '10', '20', '50', '100'],
     plaat: tegelPlaat('#d1fae5', '#047857', '', '<path d="M24 132h116M24 132V24" stroke="#047857" stroke-width="5"/><rect x="38" y="84" width="22" height="48" fill="#38bdf8"/><rect x="70" y="50" width="22" height="82" fill="#f472b6"/><rect x="102" y="70" width="22" height="62" fill="#fbbf24"/><text x="81" y="40" font-family="Arial" font-weight="900" font-size="26" text-anchor="middle" fill="#ef4444">?</text>'),
@@ -335,7 +375,8 @@ var OEFENINGEN = [
         s += '<rect x="' + x + '" y="' + y(w) + '" width="' + (bw * 0.6) + '" height="' + (H * w / max) + '" fill="' + kleuren[i] + '"/>'
         if (i === doel) s += '<text x="' + (x + bw * 0.3) + '" y="' + (y(w) - 8) + '" font-family="Arial" font-weight="900" font-size="26" text-anchor="middle" fill="#ef4444">?</text>'
       })
-      return { tekst: '?', antwoord: waarden[doel], hulp: s + '</svg>' }
+      var hulplijn = '<path d="M44 ' + y(waarden[doel]) + 'H' + (44 + doel * bw + bw * 0.2) + '" stroke="#ef4444" stroke-width="3" stroke-dasharray="6 5"/>'
+      return { tekst: '?', antwoord: waarden[doel], hulp: s + '</svg>', tipHulp: s + hulplijn + '</svg>', tip: '<span class="woordje">volg de rode lijn</span>' }
     } },
 ]
 
@@ -389,6 +430,26 @@ function kiesNiveau(o) {
   laag.classList.add('aan')
 }
 
+// Vraagteken bij de som: toont de tip (geen antwoord). Telt niet als fout.
+;(function () {
+  var tekst = $('som-tekst')
+  var rij = document.createElement('div'); rij.className = 'somrij'
+  tekst.parentNode.insertBefore(rij, tekst); rij.appendChild(tekst)
+  var knop = document.createElement('button'); knop.className = 'tipknop'; knop.id = 'tipknop'; knop.textContent = '?'; knop.setAttribute('aria-label', 'Tip')
+  rij.appendChild(knop)
+  var vak = document.createElement('div'); vak.className = 'tipvak'; vak.id = 'tipvak'; vak.hidden = true
+  rij.parentNode.insertBefore(vak, rij.nextSibling)
+  knop.onclick = function () {
+    if (!sr || !sr.som || sr.klaar) return
+    geluidKlik()
+    vak.innerHTML = '<svg viewBox="0 0 24 24" class="lamp"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>' + (sr.som.tip || '') + '</span>'
+    vak.hidden = !sr.som.tip; vak.classList.remove('pop'); void vak.offsetWidth; vak.classList.add('pop')
+    if (sr.som.tipHulp) $('som-hulp').innerHTML = sr.som.tipHulp
+  }
+  var oud = nieuweSom
+  nieuweSom = function () { vak.hidden = true; vak.innerHTML = ''; oud() }
+})()
+
 ;(function () {
   var laag = document.createElement('div'); laag.className = 'niveaulaag'; laag.id = 'niveaulaag'
   laag.innerHTML = '<div class="niveaudoos"><div class="niveaubeeld" id="niveaubeeld"></div><div class="niveaulijst" id="niveaulijst"></div></div>'
@@ -441,6 +502,23 @@ function kiesNiveau(o) {
     '.vtabel .icoon { width: 1.1em; height: 1.1em; vertical-align: middle; }',
     '.vtabel .vraag { color: #ef4444; }',
     '.som .eenheid { font-size: .7em; }',
+    '.somrij { display: flex; align-items: center; justify-content: center; gap: 14px; max-width: 100%; }',
+    '.somrij .som { min-width: 0; }',
+    '.tipknop { flex: none; width: 54px; height: 54px; border-radius: 18px; background: rgba(253,224,71,.14); border: 3px solid var(--goud); color: var(--goud); font-size: 1.9rem; font-weight: 900; box-shadow: 0 6px 16px rgba(0,0,0,.3); }',
+    '.tipknop:active { transform: scale(.92); }',
+    '.tipvak { display: flex; align-items: center; gap: 10px; max-width: 100%; padding: 10px 16px; border-radius: 16px; background: rgba(253,224,71,.12); border: 2px solid rgba(253,224,71,.5); color: #fef9c3; font-size: 1.35rem; font-weight: 800; line-height: 1.5; text-align: center; flex-wrap: wrap; justify-content: center; }',
+    '.tipvak[hidden] { display: none; }',
+    '.tipvak.pop { animation: pop .4s; }',
+    '.tipvak .lamp { width: 30px; height: 30px; color: var(--goud); flex: none; }',
+    '.tipvak .woordje { color: var(--reken); }',
+    '.tipvak .tippijl { color: var(--goud); }',
+    '.tipvak .sprong { display: inline-block; padding: 0 8px; border-radius: 10px; background: rgba(52,211,153,.2); color: var(--goed); }',
+    '.tipvak .roze { color: #f472b6; }',
+    '.tipvak .groepje { vertical-align: middle; display: inline-grid; }',
+    '.tipvak .breuk { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; font-size: .8em; line-height: 1; }',
+    '.tipvak .breuk b { border-bottom: 2px solid currentColor; }',
+    '.tipvak .breuk i { font-style: normal; }',
+    '.staaf.mini { display: inline-block; height: 60px; vertical-align: middle; }',
     '.som .woordje { font-size: .62em; color: var(--reken); }',
     '.som .icoon { width: .9em; height: .9em; vertical-align: middle; }',
     '.kinderen { display: flex; gap: 4px; } .kinderen .icoon, .zakje .icoon { width: 44px; height: 44px; }',
