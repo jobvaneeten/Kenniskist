@@ -417,6 +417,11 @@ if (KK_NEUTRAAL) {
   Object.keys(IMAGES).forEach(function(k){ delete IMAGES[k]; });
 }
 const ANIMAL_BY_ID = Object.fromEntries(ANIMALS.map(a=>[a.id,a]));
+// Subcategorieën (woordenlijsten groep 7): de leerkracht kan bv. 'jaguar:eau'
+// klaarzetten (?cats=jaguar:eau). Het kind klikt daarna gewoon het dier aan.
+// Resultaten gaan met de subcategorie als cat mee naar het groepsoverzicht.
+const SUBS = {"jaguar:e":{"nm":"leenwoord met é","w":["oké","taugé","satésaus","logé","privéterrein","eetcafé","café","privé","saté","treincoupé","hé","comité","coupé","paté"]},"jaguar:eau":{"nm":"leenwoord met eau","w":["cadeau","plumeau","politiebureau","architectenbureau","bureau","niveau","reisbureau","plateau"]},"jaguar:ou":{"nm":"leenwoord met ou","w":["douche","route","coureur","camouflage","couplet","courgette","couveuse","douane","tournee","autocoureur","tour","gouverneur","douchen","routine","retour"]},"jaguar:air":{"nm":"leenwoord met air","w":["primaire","literair","familiair","flair","meubilair","miljonair","spectaculair","populaire","prairie","sanitair","ordinair","populair","primair","militair","solidair"]},"jaguar:oir":{"nm":"leenwoord met oir","w":["dressoir","trottoir","memoires","waterreservoir","urinoir","zoutreservoir","reservoir","inktreservoir","trottoirtegel"]},"jaguar:leen":{"nm":"overige leenwoorden","w":["yoghurt","poncho","banjo","banjootje","drumstel","cello","brunch","chorizo","chips","aardbeienyoghurt","bananenmilkshake","keeper","racket","milkshake","hockeystick","goal","club","jaguar","finish","cracker","pizzaatje","pizza","penalty","yoga","computer","laptop","interview"]},"weetwoord:ds":{"nm":"ds aan het eind","w":["steeds","sinds","reeds","fonds","gids","loods","ginds","loodsbazen","scheidsrechter"]},"weetwoord:tion":{"nm":"tion","w":["internationaal","nationaal","emotioneel","operationeel","revolutionair","rationeel","evolutionair","lotion","stationair","conditioneel"]},"weetwoord:absub":{"nm":"ab-, ad-, ob-, sub-","w":["absoluut","subjectief","obsessie","abrupt","absent","obstakels","subtropisch","abnormaal","absurd","advies","subsidie","object","administratie","objectief","admiraal"]},"weetwoord:erd":{"nm":"-erd","w":["knapperd","stiekemerd","dommerd","snoeperd","hebberd","stommerd","goeierd","lieverd","sufferd","slimmerd","bangerd","engerd"]},"zee_egel:klinker":{"nm":"koppelteken bij klinkerbotsing","w":["tosti-ijzer","media-aandacht","zee-eend","ski-instructeur","zo-even","mee-eten","auto-onderdeel","auto-ongeluk","bureau-inhoud","café-eigenaar","privé-eigendom","thee-ei","garage-eigenaar","solo-optreden"]},"zee_egel:aardrijk":{"nm":"koppelteken in aardrijkskundige naam","w":["Zuid-Holland","Zuid-Europa","Zuid-Frankrijk","Zuid-Afrika","Zuid-Amerika","Noord-Afrika","Noord-Holland","Midden-Oosten","Oost-Duitsland","Nieuw-Zeeland","Oost-Afrika","Noord-Limburg","West-Turkije","Zuid-Korea","Noord-Korea"]},"zee_egel:afk":{"nm":"koppelteken na afkorting","w":["wc-papier","tv-programma","tv-zender","tv-gids","tv-presentator","wc-bril","vwo-examen"]},"zee_egel:oud":{"nm":"koppelteken na oud- en ex-","w":["ex-man","ex-vrouw","oud-burgemeester","oud-collega","ex-collega","ex-kandidaat","oud-leerling","oud-militair","ex-voetballer","oud-monteur","ex-kunstenares","ex-fruitteler"]},"reuzenschildpad:geen":{"nm":"geen tussen-n","w":["zonnepanelen","gemeentehuis","hopeloos","zonnebril","zonneschijn","zonnestelsel","zorgeloos","boordevol","zonnestralen","ziektekosten","hoogtevrees","Koninginnedag","grenzeloos","gedachtegang"]},"reuzenschildpad:wel":{"nm":"tussen-n","w":["leeuwenrots","spinnenweb","aardbeienyoghurt","bananenmilkshake","puntenslijper","prentenboek","paardenbloem","pannenkoek","kippenhok","ruggengraat","prullenbak","paddenstoelen","poppenhuis","kippensoep","rozengeur"]},"hond_hert:hond":{"nm":"hond: hoor /t/, schrijf d","w":["vermoeid","thuiswedstrijd","zingend","lieverd","vliegend","sufferd","vernieuwend","slimmerd","blozend","bangerd","geroosterde","engerd","rennend","vanzelfsprekend","geëxporteerd","geëmotioneerd","geïnteresseerd","absurd","zee-eend"]},"hond_hert:hert":{"nm":"hert: hoor /t/, schrijf t","w":["kandidaat","ontbijt","appartement","kabinet","talent","klimaat","monument","assistent","tekort","docent","verdriet","constant","triest"]},"geit_bij:geit":{"nm":"geit: ei","w":["eigenlijk","afleiding","keizerspinguïn","veiligheid","privéterrein","scheidsrechter","inleiding","kapitein","opleiding","treincoupé","reisbureau","allebei","veilige","afscheid","geheim"]},"geit_bij:bij":{"nm":"bij: ij","w":["tapijt","ijslolly's","thuiswedstrijd","slijtage","gietijzeren","cijfers","medicijnen","abdij","Frankrijk","ijzeren","abdijen","ravijn","puntenslijper","chagrijnig","radijzen","verrekijker","secondewijzer","tosti-ijzer"]},"pauw_goudvis:pauw":{"nm":"pauw: auw of ouw","w":["vertrouw","betrouwbaar","zelfvertrouwen","verbouwing","vertrouwd","mouwen","vertrouwelijk","rouwen","klauwen","bebouwing","bouwer","kauwen","touwen","vouwen","flauwe"]},"pauw_goudvis:goudvis":{"nm":"goudvis: au of ou","w":["taugé","applaus","audio","dinosaurus","astronaut","goudstaven","kabouter","satésaus","auteur","koudste","automatisch","auto's","oudste","zoutreservoir","Australië","schouder"]},"duiven_ganzen:duiven":{"nm":"duiven: f wordt v","w":["goudstaven","schroeven","halve","schroevendraaier","brieven","durven","graven","streven","proeven","drijven","schreven","schuiven","duiven","verven","druiven"]},"duiven_ganzen:ganzen":{"nm":"ganzen: s wordt z","w":["grenzen","laarzen","bronzen","frambozenpuddinkje","rozen","frambozenjam","adviezen","glazenwasser","radijzen","wijzen","grijze","blazen","verbazen","muizen","buizen"]},"gevaarlijk:giftig":{"nm":"giftig: -ig","w":["veertig","voorzichtig","verstandig","eeuwigheid","aardig","nauwkeurig","nieuwsgierig","tweeënzestig","gezellige","drieëndertig","chagrijnig","drieëntwintig","drieënzeventig","handig","toevallig"]},"gevaarlijk:gevaarlijk":{"nm":"gevaarlijk: -lijk","w":["behoorlijk","eigenlijk","nauwelijks","vertrouwelijke","moeilijke","heerlijk","besmettelijk","christelijk","vreselijk","letterlijk","vriendelijk","verschrikkelijk","vrolijk","menselijk","landelijk"]},"baviaan_leguaan:baviaan":{"nm":"baviaan: verborgen /j/","w":["diamanten","pianootje","baviaan","geniale","filiaal","Europeaan","biologisch","violen","lianen","sociale","speciaal","officieel","sociaal","materiaal","financieel"]},"baviaan_leguaan:leguaan":{"nm":"leguaan: verborgen /w/","w":["leguaan","Peruaan","individuele","actuele","eventuele","actueel","individueel","visuele","ritueel","rituelen","visueel","procentueel","leguanen"]}};
+const SUB_VAN = {"oké":{"jaguar":"jaguar:e"},"taugé":{"jaguar":"jaguar:e","pauw_goudvis":"pauw_goudvis:goudvis"},"satésaus":{"jaguar":"jaguar:e","pauw_goudvis":"pauw_goudvis:goudvis"},"logé":{"jaguar":"jaguar:e"},"privéterrein":{"jaguar":"jaguar:e","geit_bij":"geit_bij:geit"},"eetcafé":{"jaguar":"jaguar:e"},"café":{"jaguar":"jaguar:e"},"privé":{"jaguar":"jaguar:e"},"saté":{"jaguar":"jaguar:e"},"treincoupé":{"jaguar":"jaguar:e","geit_bij":"geit_bij:geit"},"hé":{"jaguar":"jaguar:e"},"comité":{"jaguar":"jaguar:e"},"coupé":{"jaguar":"jaguar:e"},"paté":{"jaguar":"jaguar:e"},"cadeau":{"jaguar":"jaguar:eau"},"plumeau":{"jaguar":"jaguar:eau"},"politiebureau":{"jaguar":"jaguar:eau"},"architectenbureau":{"jaguar":"jaguar:eau"},"bureau":{"jaguar":"jaguar:eau"},"niveau":{"jaguar":"jaguar:eau"},"reisbureau":{"jaguar":"jaguar:eau","geit_bij":"geit_bij:geit"},"plateau":{"jaguar":"jaguar:eau"},"douche":{"jaguar":"jaguar:ou"},"route":{"jaguar":"jaguar:ou"},"coureur":{"jaguar":"jaguar:ou"},"camouflage":{"jaguar":"jaguar:ou"},"couplet":{"jaguar":"jaguar:ou"},"courgette":{"jaguar":"jaguar:ou"},"couveuse":{"jaguar":"jaguar:ou"},"douane":{"jaguar":"jaguar:ou"},"tournee":{"jaguar":"jaguar:ou"},"autocoureur":{"jaguar":"jaguar:ou"},"tour":{"jaguar":"jaguar:ou"},"gouverneur":{"jaguar":"jaguar:ou"},"douchen":{"jaguar":"jaguar:ou"},"routine":{"jaguar":"jaguar:ou"},"retour":{"jaguar":"jaguar:ou"},"primaire":{"jaguar":"jaguar:air"},"literair":{"jaguar":"jaguar:air"},"familiair":{"jaguar":"jaguar:air"},"flair":{"jaguar":"jaguar:air"},"meubilair":{"jaguar":"jaguar:air"},"miljonair":{"jaguar":"jaguar:air"},"spectaculair":{"jaguar":"jaguar:air"},"populaire":{"jaguar":"jaguar:air"},"prairie":{"jaguar":"jaguar:air"},"sanitair":{"jaguar":"jaguar:air"},"ordinair":{"jaguar":"jaguar:air"},"populair":{"jaguar":"jaguar:air"},"primair":{"jaguar":"jaguar:air"},"militair":{"jaguar":"jaguar:air"},"solidair":{"jaguar":"jaguar:air"},"dressoir":{"jaguar":"jaguar:oir"},"trottoir":{"jaguar":"jaguar:oir"},"memoires":{"jaguar":"jaguar:oir"},"waterreservoir":{"jaguar":"jaguar:oir"},"urinoir":{"jaguar":"jaguar:oir"},"zoutreservoir":{"jaguar":"jaguar:oir","pauw_goudvis":"pauw_goudvis:goudvis"},"reservoir":{"jaguar":"jaguar:oir"},"inktreservoir":{"jaguar":"jaguar:oir"},"trottoirtegel":{"jaguar":"jaguar:oir"},"yoghurt":{"jaguar":"jaguar:leen"},"poncho":{"jaguar":"jaguar:leen"},"banjo":{"jaguar":"jaguar:leen"},"banjootje":{"jaguar":"jaguar:leen"},"drumstel":{"jaguar":"jaguar:leen"},"cello":{"jaguar":"jaguar:leen"},"brunch":{"jaguar":"jaguar:leen"},"chorizo":{"jaguar":"jaguar:leen"},"chips":{"jaguar":"jaguar:leen"},"aardbeienyoghurt":{"jaguar":"jaguar:leen","reuzenschildpad":"reuzenschildpad:wel"},"bananenmilkshake":{"jaguar":"jaguar:leen","reuzenschildpad":"reuzenschildpad:wel"},"keeper":{"jaguar":"jaguar:leen"},"racket":{"jaguar":"jaguar:leen"},"milkshake":{"jaguar":"jaguar:leen"},"hockeystick":{"jaguar":"jaguar:leen"},"goal":{"jaguar":"jaguar:leen"},"club":{"jaguar":"jaguar:leen"},"jaguar":{"jaguar":"jaguar:leen"},"finish":{"jaguar":"jaguar:leen"},"cracker":{"jaguar":"jaguar:leen"},"pizzaatje":{"jaguar":"jaguar:leen"},"pizza":{"jaguar":"jaguar:leen"},"penalty":{"jaguar":"jaguar:leen"},"yoga":{"jaguar":"jaguar:leen"},"computer":{"jaguar":"jaguar:leen"},"laptop":{"jaguar":"jaguar:leen"},"interview":{"jaguar":"jaguar:leen"},"steeds":{"weetwoord":"weetwoord:ds"},"sinds":{"weetwoord":"weetwoord:ds"},"reeds":{"weetwoord":"weetwoord:ds"},"fonds":{"weetwoord":"weetwoord:ds"},"gids":{"weetwoord":"weetwoord:ds"},"loods":{"weetwoord":"weetwoord:ds"},"ginds":{"weetwoord":"weetwoord:ds"},"loodsbazen":{"weetwoord":"weetwoord:ds"},"internationaal":{"weetwoord":"weetwoord:tion"},"nationaal":{"weetwoord":"weetwoord:tion"},"emotioneel":{"weetwoord":"weetwoord:tion"},"operationeel":{"weetwoord":"weetwoord:tion"},"revolutionair":{"weetwoord":"weetwoord:tion"},"rationeel":{"weetwoord":"weetwoord:tion"},"evolutionair":{"weetwoord":"weetwoord:tion"},"lotion":{"weetwoord":"weetwoord:tion"},"stationair":{"weetwoord":"weetwoord:tion"},"conditioneel":{"weetwoord":"weetwoord:tion"},"absoluut":{"weetwoord":"weetwoord:absub"},"subjectief":{"weetwoord":"weetwoord:absub"},"obsessie":{"weetwoord":"weetwoord:absub"},"abrupt":{"weetwoord":"weetwoord:absub"},"absent":{"weetwoord":"weetwoord:absub"},"obstakels":{"weetwoord":"weetwoord:absub"},"subtropisch":{"weetwoord":"weetwoord:absub"},"abnormaal":{"weetwoord":"weetwoord:absub"},"absurd":{"weetwoord":"weetwoord:absub","hond_hert":"hond_hert:hond"},"advies":{"weetwoord":"weetwoord:absub"},"subsidie":{"weetwoord":"weetwoord:absub"},"object":{"weetwoord":"weetwoord:absub"},"administratie":{"weetwoord":"weetwoord:absub"},"objectief":{"weetwoord":"weetwoord:absub"},"admiraal":{"weetwoord":"weetwoord:absub"},"knapperd":{"weetwoord":"weetwoord:erd"},"stiekemerd":{"weetwoord":"weetwoord:erd"},"dommerd":{"weetwoord":"weetwoord:erd"},"snoeperd":{"weetwoord":"weetwoord:erd"},"hebberd":{"weetwoord":"weetwoord:erd"},"stommerd":{"weetwoord":"weetwoord:erd"},"goeierd":{"weetwoord":"weetwoord:erd"},"tosti-ijzer":{"zee_egel":"zee_egel:klinker","geit_bij":"geit_bij:bij"},"media-aandacht":{"zee_egel":"zee_egel:klinker"},"zee-eend":{"zee_egel":"zee_egel:klinker","hond_hert":"hond_hert:hond"},"ski-instructeur":{"zee_egel":"zee_egel:klinker"},"zo-even":{"zee_egel":"zee_egel:klinker"},"mee-eten":{"zee_egel":"zee_egel:klinker"},"auto-onderdeel":{"zee_egel":"zee_egel:klinker"},"auto-ongeluk":{"zee_egel":"zee_egel:klinker"},"bureau-inhoud":{"zee_egel":"zee_egel:klinker"},"café-eigenaar":{"zee_egel":"zee_egel:klinker"},"privé-eigendom":{"zee_egel":"zee_egel:klinker"},"thee-ei":{"zee_egel":"zee_egel:klinker"},"garage-eigenaar":{"zee_egel":"zee_egel:klinker"},"solo-optreden":{"zee_egel":"zee_egel:klinker"},"Zuid-Holland":{"zee_egel":"zee_egel:aardrijk"},"Zuid-Europa":{"zee_egel":"zee_egel:aardrijk"},"Zuid-Frankrijk":{"zee_egel":"zee_egel:aardrijk"},"Zuid-Afrika":{"zee_egel":"zee_egel:aardrijk"},"Zuid-Amerika":{"zee_egel":"zee_egel:aardrijk"},"Noord-Afrika":{"zee_egel":"zee_egel:aardrijk"},"Noord-Holland":{"zee_egel":"zee_egel:aardrijk"},"Midden-Oosten":{"zee_egel":"zee_egel:aardrijk"},"Oost-Duitsland":{"zee_egel":"zee_egel:aardrijk"},"Nieuw-Zeeland":{"zee_egel":"zee_egel:aardrijk"},"Oost-Afrika":{"zee_egel":"zee_egel:aardrijk"},"Noord-Limburg":{"zee_egel":"zee_egel:aardrijk"},"West-Turkije":{"zee_egel":"zee_egel:aardrijk"},"Zuid-Korea":{"zee_egel":"zee_egel:aardrijk"},"Noord-Korea":{"zee_egel":"zee_egel:aardrijk"},"wc-papier":{"zee_egel":"zee_egel:afk"},"tv-programma":{"zee_egel":"zee_egel:afk"},"tv-zender":{"zee_egel":"zee_egel:afk"},"tv-gids":{"zee_egel":"zee_egel:afk"},"tv-presentator":{"zee_egel":"zee_egel:afk"},"wc-bril":{"zee_egel":"zee_egel:afk"},"vwo-examen":{"zee_egel":"zee_egel:afk"},"ex-man":{"zee_egel":"zee_egel:oud"},"ex-vrouw":{"zee_egel":"zee_egel:oud"},"oud-burgemeester":{"zee_egel":"zee_egel:oud"},"oud-collega":{"zee_egel":"zee_egel:oud"},"ex-collega":{"zee_egel":"zee_egel:oud"},"ex-kandidaat":{"zee_egel":"zee_egel:oud"},"oud-leerling":{"zee_egel":"zee_egel:oud"},"oud-militair":{"zee_egel":"zee_egel:oud"},"ex-voetballer":{"zee_egel":"zee_egel:oud"},"oud-monteur":{"zee_egel":"zee_egel:oud"},"ex-kunstenares":{"zee_egel":"zee_egel:oud"},"ex-fruitteler":{"zee_egel":"zee_egel:oud"},"zonnepanelen":{"reuzenschildpad":"reuzenschildpad:geen"},"gemeentehuis":{"reuzenschildpad":"reuzenschildpad:geen"},"hopeloos":{"reuzenschildpad":"reuzenschildpad:geen"},"zonnebril":{"reuzenschildpad":"reuzenschildpad:geen"},"zonneschijn":{"reuzenschildpad":"reuzenschildpad:geen"},"zonnestelsel":{"reuzenschildpad":"reuzenschildpad:geen"},"zorgeloos":{"reuzenschildpad":"reuzenschildpad:geen"},"boordevol":{"reuzenschildpad":"reuzenschildpad:geen"},"zonnestralen":{"reuzenschildpad":"reuzenschildpad:geen"},"ziektekosten":{"reuzenschildpad":"reuzenschildpad:geen"},"hoogtevrees":{"reuzenschildpad":"reuzenschildpad:geen"},"Koninginnedag":{"reuzenschildpad":"reuzenschildpad:geen"},"grenzeloos":{"reuzenschildpad":"reuzenschildpad:geen"},"gedachtegang":{"reuzenschildpad":"reuzenschildpad:geen"},"leeuwenrots":{"reuzenschildpad":"reuzenschildpad:wel"},"spinnenweb":{"reuzenschildpad":"reuzenschildpad:wel"},"puntenslijper":{"reuzenschildpad":"reuzenschildpad:wel","geit_bij":"geit_bij:bij"},"prentenboek":{"reuzenschildpad":"reuzenschildpad:wel"},"paardenbloem":{"reuzenschildpad":"reuzenschildpad:wel"},"pannenkoek":{"reuzenschildpad":"reuzenschildpad:wel"},"kippenhok":{"reuzenschildpad":"reuzenschildpad:wel"},"ruggengraat":{"reuzenschildpad":"reuzenschildpad:wel"},"prullenbak":{"reuzenschildpad":"reuzenschildpad:wel"},"paddenstoelen":{"reuzenschildpad":"reuzenschildpad:wel"},"poppenhuis":{"reuzenschildpad":"reuzenschildpad:wel"},"kippensoep":{"reuzenschildpad":"reuzenschildpad:wel"},"rozengeur":{"reuzenschildpad":"reuzenschildpad:wel"},"vermoeid":{"hond_hert":"hond_hert:hond"},"thuiswedstrijd":{"hond_hert":"hond_hert:hond","geit_bij":"geit_bij:bij"},"zingend":{"hond_hert":"hond_hert:hond"},"lieverd":{"hond_hert":"hond_hert:hond"},"vliegend":{"hond_hert":"hond_hert:hond"},"sufferd":{"hond_hert":"hond_hert:hond"},"vernieuwend":{"hond_hert":"hond_hert:hond"},"slimmerd":{"hond_hert":"hond_hert:hond"},"blozend":{"hond_hert":"hond_hert:hond"},"bangerd":{"hond_hert":"hond_hert:hond"},"geroosterde":{"hond_hert":"hond_hert:hond"},"engerd":{"hond_hert":"hond_hert:hond"},"rennend":{"hond_hert":"hond_hert:hond"},"vanzelfsprekend":{"hond_hert":"hond_hert:hond"},"geëxporteerd":{"hond_hert":"hond_hert:hond"},"geëmotioneerd":{"hond_hert":"hond_hert:hond"},"geïnteresseerd":{"hond_hert":"hond_hert:hond"},"kandidaat":{"hond_hert":"hond_hert:hert"},"ontbijt":{"hond_hert":"hond_hert:hert"},"appartement":{"hond_hert":"hond_hert:hert"},"kabinet":{"hond_hert":"hond_hert:hert"},"talent":{"hond_hert":"hond_hert:hert"},"klimaat":{"hond_hert":"hond_hert:hert"},"monument":{"hond_hert":"hond_hert:hert"},"assistent":{"hond_hert":"hond_hert:hert"},"tekort":{"hond_hert":"hond_hert:hert"},"docent":{"hond_hert":"hond_hert:hert"},"verdriet":{"hond_hert":"hond_hert:hert"},"constant":{"hond_hert":"hond_hert:hert"},"triest":{"hond_hert":"hond_hert:hert"},"eigenlijk":{"geit_bij":"geit_bij:geit","gevaarlijk":"gevaarlijk:gevaarlijk"},"afleiding":{"geit_bij":"geit_bij:geit"},"keizerspinguïn":{"geit_bij":"geit_bij:geit"},"veiligheid":{"geit_bij":"geit_bij:geit"},"scheidsrechter":{"geit_bij":"geit_bij:geit"},"inleiding":{"geit_bij":"geit_bij:geit"},"kapitein":{"geit_bij":"geit_bij:geit"},"opleiding":{"geit_bij":"geit_bij:geit"},"allebei":{"geit_bij":"geit_bij:geit"},"veilige":{"geit_bij":"geit_bij:geit"},"afscheid":{"geit_bij":"geit_bij:geit"},"geheim":{"geit_bij":"geit_bij:geit"},"tapijt":{"geit_bij":"geit_bij:bij"},"ijslolly's":{"geit_bij":"geit_bij:bij"},"slijtage":{"geit_bij":"geit_bij:bij"},"gietijzeren":{"geit_bij":"geit_bij:bij"},"cijfers":{"geit_bij":"geit_bij:bij"},"medicijnen":{"geit_bij":"geit_bij:bij"},"abdij":{"geit_bij":"geit_bij:bij"},"Frankrijk":{"geit_bij":"geit_bij:bij"},"ijzeren":{"geit_bij":"geit_bij:bij"},"abdijen":{"geit_bij":"geit_bij:bij"},"ravijn":{"geit_bij":"geit_bij:bij"},"chagrijnig":{"geit_bij":"geit_bij:bij","gevaarlijk":"gevaarlijk:giftig"},"radijzen":{"geit_bij":"geit_bij:bij","duiven_ganzen":"duiven_ganzen:ganzen"},"verrekijker":{"geit_bij":"geit_bij:bij"},"secondewijzer":{"geit_bij":"geit_bij:bij"},"vertrouw":{"pauw_goudvis":"pauw_goudvis:pauw"},"betrouwbaar":{"pauw_goudvis":"pauw_goudvis:pauw"},"zelfvertrouwen":{"pauw_goudvis":"pauw_goudvis:pauw"},"verbouwing":{"pauw_goudvis":"pauw_goudvis:pauw"},"vertrouwd":{"pauw_goudvis":"pauw_goudvis:pauw"},"mouwen":{"pauw_goudvis":"pauw_goudvis:pauw"},"vertrouwelijk":{"pauw_goudvis":"pauw_goudvis:pauw"},"rouwen":{"pauw_goudvis":"pauw_goudvis:pauw"},"klauwen":{"pauw_goudvis":"pauw_goudvis:pauw"},"bebouwing":{"pauw_goudvis":"pauw_goudvis:pauw"},"bouwer":{"pauw_goudvis":"pauw_goudvis:pauw"},"kauwen":{"pauw_goudvis":"pauw_goudvis:pauw"},"touwen":{"pauw_goudvis":"pauw_goudvis:pauw"},"vouwen":{"pauw_goudvis":"pauw_goudvis:pauw"},"flauwe":{"pauw_goudvis":"pauw_goudvis:pauw"},"applaus":{"pauw_goudvis":"pauw_goudvis:goudvis"},"audio":{"pauw_goudvis":"pauw_goudvis:goudvis"},"dinosaurus":{"pauw_goudvis":"pauw_goudvis:goudvis"},"astronaut":{"pauw_goudvis":"pauw_goudvis:goudvis"},"goudstaven":{"pauw_goudvis":"pauw_goudvis:goudvis","duiven_ganzen":"duiven_ganzen:duiven"},"kabouter":{"pauw_goudvis":"pauw_goudvis:goudvis"},"auteur":{"pauw_goudvis":"pauw_goudvis:goudvis"},"koudste":{"pauw_goudvis":"pauw_goudvis:goudvis"},"automatisch":{"pauw_goudvis":"pauw_goudvis:goudvis"},"auto's":{"pauw_goudvis":"pauw_goudvis:goudvis"},"oudste":{"pauw_goudvis":"pauw_goudvis:goudvis"},"Australië":{"pauw_goudvis":"pauw_goudvis:goudvis"},"schouder":{"pauw_goudvis":"pauw_goudvis:goudvis"},"schroeven":{"duiven_ganzen":"duiven_ganzen:duiven"},"halve":{"duiven_ganzen":"duiven_ganzen:duiven"},"schroevendraaier":{"duiven_ganzen":"duiven_ganzen:duiven"},"brieven":{"duiven_ganzen":"duiven_ganzen:duiven"},"durven":{"duiven_ganzen":"duiven_ganzen:duiven"},"graven":{"duiven_ganzen":"duiven_ganzen:duiven"},"streven":{"duiven_ganzen":"duiven_ganzen:duiven"},"proeven":{"duiven_ganzen":"duiven_ganzen:duiven"},"drijven":{"duiven_ganzen":"duiven_ganzen:duiven"},"schreven":{"duiven_ganzen":"duiven_ganzen:duiven"},"schuiven":{"duiven_ganzen":"duiven_ganzen:duiven"},"duiven":{"duiven_ganzen":"duiven_ganzen:duiven"},"verven":{"duiven_ganzen":"duiven_ganzen:duiven"},"druiven":{"duiven_ganzen":"duiven_ganzen:duiven"},"grenzen":{"duiven_ganzen":"duiven_ganzen:ganzen"},"laarzen":{"duiven_ganzen":"duiven_ganzen:ganzen"},"bronzen":{"duiven_ganzen":"duiven_ganzen:ganzen"},"frambozenpuddinkje":{"duiven_ganzen":"duiven_ganzen:ganzen"},"rozen":{"duiven_ganzen":"duiven_ganzen:ganzen"},"frambozenjam":{"duiven_ganzen":"duiven_ganzen:ganzen"},"adviezen":{"duiven_ganzen":"duiven_ganzen:ganzen"},"glazenwasser":{"duiven_ganzen":"duiven_ganzen:ganzen"},"wijzen":{"duiven_ganzen":"duiven_ganzen:ganzen"},"grijze":{"duiven_ganzen":"duiven_ganzen:ganzen"},"blazen":{"duiven_ganzen":"duiven_ganzen:ganzen"},"verbazen":{"duiven_ganzen":"duiven_ganzen:ganzen"},"muizen":{"duiven_ganzen":"duiven_ganzen:ganzen"},"buizen":{"duiven_ganzen":"duiven_ganzen:ganzen"},"veertig":{"gevaarlijk":"gevaarlijk:giftig"},"voorzichtig":{"gevaarlijk":"gevaarlijk:giftig"},"verstandig":{"gevaarlijk":"gevaarlijk:giftig"},"eeuwigheid":{"gevaarlijk":"gevaarlijk:giftig"},"aardig":{"gevaarlijk":"gevaarlijk:giftig"},"nauwkeurig":{"gevaarlijk":"gevaarlijk:giftig"},"nieuwsgierig":{"gevaarlijk":"gevaarlijk:giftig"},"tweeënzestig":{"gevaarlijk":"gevaarlijk:giftig"},"gezellige":{"gevaarlijk":"gevaarlijk:giftig"},"drieëndertig":{"gevaarlijk":"gevaarlijk:giftig"},"drieëntwintig":{"gevaarlijk":"gevaarlijk:giftig"},"drieënzeventig":{"gevaarlijk":"gevaarlijk:giftig"},"handig":{"gevaarlijk":"gevaarlijk:giftig"},"toevallig":{"gevaarlijk":"gevaarlijk:giftig"},"behoorlijk":{"gevaarlijk":"gevaarlijk:gevaarlijk"},"nauwelijks":{"gevaarlijk":"gevaarlijk:gevaarlijk"},"vertrouwelijke":{"gevaarlijk":"gevaarlijk:gevaarlijk"},"moeilijke":{"gevaarlijk":"gevaarlijk:gevaarlijk"},"heerlijk":{"gevaarlijk":"gevaarlijk:gevaarlijk"},"besmettelijk":{"gevaarlijk":"gevaarlijk:gevaarlijk"},"christelijk":{"gevaarlijk":"gevaarlijk:gevaarlijk"},"vreselijk":{"gevaarlijk":"gevaarlijk:gevaarlijk"},"letterlijk":{"gevaarlijk":"gevaarlijk:gevaarlijk"},"vriendelijk":{"gevaarlijk":"gevaarlijk:gevaarlijk"},"verschrikkelijk":{"gevaarlijk":"gevaarlijk:gevaarlijk"},"vrolijk":{"gevaarlijk":"gevaarlijk:gevaarlijk"},"menselijk":{"gevaarlijk":"gevaarlijk:gevaarlijk"},"landelijk":{"gevaarlijk":"gevaarlijk:gevaarlijk"},"diamanten":{"baviaan_leguaan":"baviaan_leguaan:baviaan"},"pianootje":{"baviaan_leguaan":"baviaan_leguaan:baviaan"},"baviaan":{"baviaan_leguaan":"baviaan_leguaan:baviaan"},"geniale":{"baviaan_leguaan":"baviaan_leguaan:baviaan"},"filiaal":{"baviaan_leguaan":"baviaan_leguaan:baviaan"},"Europeaan":{"baviaan_leguaan":"baviaan_leguaan:baviaan"},"biologisch":{"baviaan_leguaan":"baviaan_leguaan:baviaan"},"violen":{"baviaan_leguaan":"baviaan_leguaan:baviaan"},"lianen":{"baviaan_leguaan":"baviaan_leguaan:baviaan"},"sociale":{"baviaan_leguaan":"baviaan_leguaan:baviaan"},"speciaal":{"baviaan_leguaan":"baviaan_leguaan:baviaan"},"officieel":{"baviaan_leguaan":"baviaan_leguaan:baviaan"},"sociaal":{"baviaan_leguaan":"baviaan_leguaan:baviaan"},"materiaal":{"baviaan_leguaan":"baviaan_leguaan:baviaan"},"financieel":{"baviaan_leguaan":"baviaan_leguaan:baviaan"},"leguaan":{"baviaan_leguaan":"baviaan_leguaan:leguaan"},"Peruaan":{"baviaan_leguaan":"baviaan_leguaan:leguaan"},"individuele":{"baviaan_leguaan":"baviaan_leguaan:leguaan"},"actuele":{"baviaan_leguaan":"baviaan_leguaan:leguaan"},"eventuele":{"baviaan_leguaan":"baviaan_leguaan:leguaan"},"actueel":{"baviaan_leguaan":"baviaan_leguaan:leguaan"},"individueel":{"baviaan_leguaan":"baviaan_leguaan:leguaan"},"visuele":{"baviaan_leguaan":"baviaan_leguaan:leguaan"},"ritueel":{"baviaan_leguaan":"baviaan_leguaan:leguaan"},"rituelen":{"baviaan_leguaan":"baviaan_leguaan:leguaan"},"visueel":{"baviaan_leguaan":"baviaan_leguaan:leguaan"},"procentueel":{"baviaan_leguaan":"baviaan_leguaan:leguaan"},"leguanen":{"baviaan_leguaan":"baviaan_leguaan:leguaan"}};
 
 const WORDS = [
   {w:"beweging",s:"Elke beweging die ik maak, doet pijn.",a:[["krekel","we- open lettergreep"],["slang","-ing = ng"]]},
@@ -837,6 +842,191 @@ const WORDS = [
   {w:"primair",s:"Iets wat op de eerste plaats komt, noem je primair.",a:[["jaguar","leenwoord -air"]]},
   {w:"interview",s:"Ik heb het interview met de kroonprinses gezien.",a:[["jaguar","leenwoord"]]},
   {w:"Zuid-Holland",s:"Rotterdam ligt in de provincie Zuid-Holland.",a:[["zee_egel","koppelteken, aardrijkskundige naam"],["kikker","Hol→ll"]]},
+  // Extra woorden voor de subcategorieën (woordenlijsten groep 7). los:1: alleen
+  // de hoofdcategorie staat erbij, dus andere aangeklikte dieren tellen niet als fout.
+  {w:"hé",s:"Hé, kijk eens wie daar loopt!",a:[["jaguar","leenwoord met é"]],los:1},
+  {w:"comité",s:"Het comité organiseert het schoolfeest.",a:[["jaguar","leenwoord met é"]],los:1},
+  {w:"coupé",s:"Opa reist graag in een rustige coupé van de trein.",a:[["jaguar","leenwoord met é"]],los:1},
+  {w:"paté",s:"Op mijn broodje zit een plakje paté.",a:[["jaguar","leenwoord met é"]],los:1},
+  {w:"plateau",s:"De ober brengt de drankjes op een plateau.",a:[["jaguar","leenwoord met eau"]],los:1},
+  {w:"tour",s:"We maken een tour door de oude stad.",a:[["jaguar","leenwoord met ou"]],los:1},
+  {w:"gouverneur",s:"De gouverneur hield een lange toespraak.",a:[["jaguar","leenwoord met ou"]],los:1},
+  {w:"douchen",s:"Na de gymles gaan we douchen.",a:[["jaguar","leenwoord met ou"]],los:1},
+  {w:"routine",s:"Tandenpoetsen hoort bij mijn vaste routine.",a:[["jaguar","leenwoord met ou"]],los:1},
+  {w:"retour",s:"Mama koopt een retour naar Amsterdam.",a:[["jaguar","leenwoord met ou"]],los:1},
+  {w:"militair",s:"Mijn oom werkt als militair bij het leger.",a:[["jaguar","leenwoord met air"]],los:1},
+  {w:"solidair",s:"De klas was solidair met het zieke meisje.",a:[["jaguar","leenwoord met air"]],los:1},
+  {w:"reservoir",s:"Het reservoir zit vol met regenwater.",a:[["jaguar","leenwoord met oir"]],los:1},
+  {w:"inktreservoir",s:"Het inktreservoir van de printer is leeg.",a:[["jaguar","leenwoord met oir"]],los:1},
+  {w:"trottoirtegel",s:"Ik struikelde over een losse trottoirtegel.",a:[["jaguar","leenwoord met oir"]],los:1},
+  {w:"steeds",s:"Het wordt steeds kouder buiten.",a:[["weetwoord","ds aan het eind"]],los:1},
+  {w:"sinds",s:"Sinds vorig jaar woon ik in deze straat.",a:[["weetwoord","ds aan het eind"]],los:1},
+  {w:"reeds",s:"De trein was reeds vertrokken.",a:[["weetwoord","ds aan het eind"]],los:1},
+  {w:"fonds",s:"Het geld gaat naar een fonds voor zieke kinderen.",a:[["weetwoord","ds aan het eind"]],los:1},
+  {w:"gids",s:"De gids vertelt alles over het kasteel.",a:[["weetwoord","ds aan het eind"]],los:1},
+  {w:"loods",s:"De tractor staat in de loods.",a:[["weetwoord","ds aan het eind"]],los:1},
+  {w:"ginds",s:"Ginds aan de horizon zie je de zee.",a:[["weetwoord","ds aan het eind"]],los:1},
+  {w:"loodsbazen",s:"De loodsbazen geven de werkers hun taken.",a:[["weetwoord","ds aan het eind"]],los:1},
+  {w:"internationaal",s:"Op onze school werken we internationaal samen.",a:[["weetwoord","tion"]],los:1},
+  {w:"nationaal",s:"Morgen is er een nationaal voetbalfeest.",a:[["weetwoord","tion"]],los:1},
+  {w:"emotioneel",s:"Bij het afscheid werd juf heel emotioneel.",a:[["weetwoord","tion"]],los:1},
+  {w:"operationeel",s:"De nieuwe brandweerauto is operationeel.",a:[["weetwoord","tion"]],los:1},
+  {w:"revolutionair",s:"Die uitvinding was echt revolutionair.",a:[["weetwoord","tion"]],los:1},
+  {w:"rationeel",s:"Probeer rationeel te denken en blijf rustig.",a:[["weetwoord","tion"]],los:1},
+  {w:"evolutionair",s:"Er zijn evolutionair veel veranderingen geweest bij vogels.",a:[["weetwoord","tion"]],los:1},
+  {w:"lotion",s:"Na het zwemmen smeer ik lotion op mijn huid.",a:[["weetwoord","tion"]],los:1},
+  {w:"stationair",s:"De motor van de bus draait stationair.",a:[["weetwoord","tion"]],los:1},
+  {w:"conditioneel",s:"Na de zomer is ze conditioneel sterker.",a:[["weetwoord","tion"]],los:1},
+  {w:"advies",s:"De dokter geeft me een goed advies.",a:[["weetwoord","ab-, ad-, ob-, sub-"]],los:1},
+  {w:"subsidie",s:"De club krijgt subsidie voor nieuwe ballen.",a:[["weetwoord","ab-, ad-, ob-, sub-"]],los:1},
+  {w:"object",s:"Er vliegt een vreemd object door de lucht.",a:[["weetwoord","ab-, ad-, ob-, sub-"]],los:1},
+  {w:"administratie",s:"Mijn moeder doet de administratie van de winkel.",a:[["weetwoord","ab-, ad-, ob-, sub-"]],los:1},
+  {w:"objectief",s:"Een scheidsrechter moet objectief zijn.",a:[["weetwoord","ab-, ad-, ob-, sub-"]],los:1},
+  {w:"admiraal",s:"De admiraal staat op het dek van het schip.",a:[["weetwoord","ab-, ad-, ob-, sub-"]],los:1},
+  {w:"knapperd",s:"Jij bent een echte knapperd met rekenen!",a:[["weetwoord","-erd"]],los:1},
+  {w:"stiekemerd",s:"Die stiekemerd heeft al mijn snoep opgegeten.",a:[["weetwoord","-erd"]],los:1},
+  {w:"dommerd",s:"Ik voelde me een dommerd toen ik mijn sleutel vergat.",a:[["weetwoord","-erd"]],los:1},
+  {w:"snoeperd",s:"Mijn broertje is een snoeperd.",a:[["weetwoord","-erd"]],los:1},
+  {w:"hebberd",s:"Wees geen hebberd en deel je chips.",a:[["weetwoord","-erd"]],los:1},
+  {w:"stommerd",s:"Wat ben ik een stommerd, ik ben mijn tas vergeten!",a:[["weetwoord","-erd"]],los:1},
+  {w:"goeierd",s:"Opa is een goeierd die iedereen helpt.",a:[["weetwoord","-erd"]],los:1},
+  {w:"zo-even",s:"Ik heb je zo-even nog gebeld.",a:[["zee_egel","koppelteken bij klinkerbotsing"]],los:1},
+  {w:"mee-eten",s:"Mag mijn vriend vanavond mee-eten?",a:[["zee_egel","koppelteken bij klinkerbotsing"]],los:1},
+  {w:"auto-onderdeel",s:"De garage bestelt een nieuw auto-onderdeel.",a:[["zee_egel","koppelteken bij klinkerbotsing"]],los:1},
+  {w:"auto-ongeluk",s:"Er was een auto-ongeluk op de snelweg.",a:[["zee_egel","koppelteken bij klinkerbotsing"]],los:1},
+  {w:"bureau-inhoud",s:"De hele bureau-inhoud viel op de grond.",a:[["zee_egel","koppelteken bij klinkerbotsing"]],los:1},
+  {w:"café-eigenaar",s:"De café-eigenaar zet de stoelen buiten.",a:[["zee_egel","koppelteken bij klinkerbotsing"]],los:1},
+  {w:"privé-eigendom",s:"Dit bos is privé-eigendom.",a:[["zee_egel","koppelteken bij klinkerbotsing"]],los:1},
+  {w:"thee-ei",s:"Doe de thee in het thee-ei.",a:[["zee_egel","koppelteken bij klinkerbotsing"]],los:1},
+  {w:"garage-eigenaar",s:"De garage-eigenaar repareert de fiets.",a:[["zee_egel","koppelteken bij klinkerbotsing"]],los:1},
+  {w:"solo-optreden",s:"Na het concert gaf de zangeres een solo-optreden.",a:[["zee_egel","koppelteken bij klinkerbotsing"]],los:1},
+  {w:"Zuid-Europa",s:"In Zuid-Europa is het in de zomer erg warm.",a:[["zee_egel","koppelteken in aardrijkskundige naam"]],los:1},
+  {w:"Zuid-Frankrijk",s:"We gaan op vakantie naar Zuid-Frankrijk.",a:[["zee_egel","koppelteken in aardrijkskundige naam"]],los:1},
+  {w:"Zuid-Afrika",s:"In Zuid-Afrika leven veel wilde dieren.",a:[["zee_egel","koppelteken in aardrijkskundige naam"]],los:1},
+  {w:"Zuid-Amerika",s:"De Amazone stroomt door Zuid-Amerika.",a:[["zee_egel","koppelteken in aardrijkskundige naam"]],los:1},
+  {w:"Noord-Afrika",s:"In Noord-Afrika ligt een grote woestijn.",a:[["zee_egel","koppelteken in aardrijkskundige naam"]],los:1},
+  {w:"Noord-Holland",s:"Amsterdam ligt in Noord-Holland.",a:[["zee_egel","koppelteken in aardrijkskundige naam"]],los:1},
+  {w:"Midden-Oosten",s:"Mijn buurvrouw komt uit het Midden-Oosten.",a:[["zee_egel","koppelteken in aardrijkskundige naam"]],los:1},
+  {w:"Oost-Duitsland",s:"Opa reisde vroeger door Oost-Duitsland.",a:[["zee_egel","koppelteken in aardrijkskundige naam"]],los:1},
+  {w:"Nieuw-Zeeland",s:"In Nieuw-Zeeland wonen veel schapen.",a:[["zee_egel","koppelteken in aardrijkskundige naam"]],los:1},
+  {w:"Oost-Afrika",s:"In Oost-Afrika kun je giraffen zien.",a:[["zee_egel","koppelteken in aardrijkskundige naam"]],los:1},
+  {w:"Noord-Limburg",s:"Mijn tante woont in Noord-Limburg.",a:[["zee_egel","koppelteken in aardrijkskundige naam"]],los:1},
+  {w:"West-Turkije",s:"Ze bezochten een oude stad in West-Turkije.",a:[["zee_egel","koppelteken in aardrijkskundige naam"]],los:1},
+  {w:"Zuid-Korea",s:"Mijn nicht doet een uitwisseling in Zuid-Korea.",a:[["zee_egel","koppelteken in aardrijkskundige naam"]],los:1},
+  {w:"Noord-Korea",s:"Noord-Korea ligt in Azië.",a:[["zee_egel","koppelteken in aardrijkskundige naam"]],los:1},
+  {w:"tv-programma",s:"Wat is jouw favoriete tv-programma?",a:[["zee_egel","koppelteken na afkorting"]],los:1},
+  {w:"tv-zender",s:"Op die tv-zender is alleen sport.",a:[["zee_egel","koppelteken na afkorting"]],los:1},
+  {w:"tv-gids",s:"Oma zoekt de film op in de tv-gids.",a:[["zee_egel","koppelteken na afkorting"]],los:1},
+  {w:"tv-presentator",s:"De tv-presentator stelt een moeilijke vraag.",a:[["zee_egel","koppelteken na afkorting"]],los:1},
+  {w:"wc-bril",s:"Doe de wc-bril omlaag als je klaar bent.",a:[["zee_egel","koppelteken na afkorting"]],los:1},
+  {w:"vwo-examen",s:"Mijn zus doet dit jaar haar vwo-examen.",a:[["zee_egel","koppelteken na afkorting"]],los:1},
+  {w:"ex-man",s:"Haar ex-man woont nu in Utrecht.",a:[["zee_egel","koppelteken na oud- en ex-"]],los:1},
+  {w:"ex-vrouw",s:"Zijn ex-vrouw kwam ook naar het feest.",a:[["zee_egel","koppelteken na oud- en ex-"]],los:1},
+  {w:"oud-burgemeester",s:"De oud-burgemeester opende de nieuwe brug.",a:[["zee_egel","koppelteken na oud- en ex-"]],los:1},
+  {w:"oud-collega",s:"Papa kwam een oud-collega tegen in de winkel.",a:[["zee_egel","koppelteken na oud- en ex-"]],los:1},
+  {w:"ex-collega",s:"Mijn ex-collega stuurde me een kaartje.",a:[["zee_egel","koppelteken na oud- en ex-"]],los:1},
+  {w:"ex-kandidaat",s:"De ex-kandidaat van de quiz zat in het publiek.",a:[["zee_egel","koppelteken na oud- en ex-"]],los:1},
+  {w:"oud-leerling",s:"Een oud-leerling kwam juf gedag zeggen.",a:[["zee_egel","koppelteken na oud- en ex-"]],los:1},
+  {w:"oud-militair",s:"De oud-militair vertelde over de oorlog.",a:[["zee_egel","koppelteken na oud- en ex-"]],los:1},
+  {w:"ex-voetballer",s:"De ex-voetballer geeft nu training aan kinderen.",a:[["zee_egel","koppelteken na oud- en ex-"]],los:1},
+  {w:"oud-monteur",s:"De oud-monteur kan nog steeds alles maken.",a:[["zee_egel","koppelteken na oud- en ex-"]],los:1},
+  {w:"ex-kunstenares",s:"De ex-kunstenares verkocht haar laatste schilderij.",a:[["zee_egel","koppelteken na oud- en ex-"]],los:1},
+  {w:"ex-fruitteler",s:"De ex-fruitteler heeft nog een paar appelbomen.",a:[["zee_egel","koppelteken na oud- en ex-"]],los:1},
+  {w:"zonnepanelen",s:"Op ons dak liggen zonnepanelen.",a:[["reuzenschildpad","geen tussen-n"]],los:1},
+  {w:"gemeentehuis",s:"Mijn ouders trouwden in het gemeentehuis.",a:[["reuzenschildpad","geen tussen-n"]],los:1},
+  {w:"hopeloos",s:"De situatie leek hopeloos, maar het kwam goed.",a:[["reuzenschildpad","geen tussen-n"]],los:1},
+  {w:"zonnebril",s:"Vergeet je zonnebril niet op het strand.",a:[["reuzenschildpad","geen tussen-n"]],los:1},
+  {w:"zonneschijn",s:"We genieten van de zonneschijn in de tuin.",a:[["reuzenschildpad","geen tussen-n"]],los:1},
+  {w:"zonnestelsel",s:"De aarde hoort bij ons zonnestelsel.",a:[["reuzenschildpad","geen tussen-n"]],los:1},
+  {w:"zorgeloos",s:"In de vakantie speelden we zorgeloos buiten.",a:[["reuzenschildpad","geen tussen-n"]],los:1},
+  {w:"boordevol",s:"De bus zat boordevol met kinderen.",a:[["reuzenschildpad","geen tussen-n"]],los:1},
+  {w:"zonnestralen",s:"De eerste zonnestralen vallen door het raam.",a:[["reuzenschildpad","geen tussen-n"]],los:1},
+  {w:"ziektekosten",s:"De ziektekosten worden betaald door de verzekering.",a:[["reuzenschildpad","geen tussen-n"]],los:1},
+  {w:"hoogtevrees",s:"Met hoogtevrees durf ik niet in de klimtoren.",a:[["reuzenschildpad","geen tussen-n"]],los:1},
+  {w:"Koninginnedag",s:"Vroeger heette Koningsdag nog Koninginnedag.",a:[["reuzenschildpad","geen tussen-n"]],los:1},
+  {w:"grenzeloos",s:"Haar fantasie is grenzeloos.",a:[["reuzenschildpad","geen tussen-n"]],los:1},
+  {w:"gedachtegang",s:"Kun je je gedachtegang uitleggen?",a:[["reuzenschildpad","geen tussen-n"]],los:1},
+  {w:"ruggengraat",s:"Je ruggengraat houdt je lichaam rechtop.",a:[["reuzenschildpad","tussen-n"]],los:1},
+  {w:"prullenbak",s:"Gooi je papiertje in de prullenbak.",a:[["reuzenschildpad","tussen-n"]],los:1},
+  {w:"paddenstoelen",s:"In het bos groeien veel paddenstoelen.",a:[["reuzenschildpad","tussen-n"]],los:1},
+  {w:"poppenhuis",s:"Mijn zusje speelt met haar poppenhuis.",a:[["reuzenschildpad","tussen-n"]],los:1},
+  {w:"kippensoep",s:"Als ik ziek ben, maakt papa kippensoep.",a:[["reuzenschildpad","tussen-n"]],los:1},
+  {w:"rozengeur",s:"In de tuin hangt een heerlijke rozengeur.",a:[["reuzenschildpad","tussen-n"]],los:1},
+  {w:"kandidaat",s:"Elke kandidaat mag drie vragen beantwoorden.",a:[["hond_hert","hert: hoor /t/, schrijf t"]],los:1},
+  {w:"ontbijt",s:"Ik eet havermout bij mijn ontbijt.",a:[["hond_hert","hert: hoor /t/, schrijf t"]],los:1},
+  {w:"appartement",s:"Mijn oma woont in een klein appartement.",a:[["hond_hert","hert: hoor /t/, schrijf t"]],los:1},
+  {w:"kabinet",s:"Het kabinet neemt een belangrijk besluit.",a:[["hond_hert","hert: hoor /t/, schrijf t"]],los:1},
+  {w:"talent",s:"Zij heeft veel talent voor tekenen.",a:[["hond_hert","hert: hoor /t/, schrijf t"]],los:1},
+  {w:"klimaat",s:"Het klimaat op aarde wordt warmer.",a:[["hond_hert","hert: hoor /t/, schrijf t"]],los:1},
+  {w:"monument",s:"Bij het monument leggen we bloemen.",a:[["hond_hert","hert: hoor /t/, schrijf t"]],los:1},
+  {w:"assistent",s:"De assistent van de dokter roept mijn naam.",a:[["hond_hert","hert: hoor /t/, schrijf t"]],los:1},
+  {w:"tekort",s:"Er is een tekort aan stoelen in de zaal.",a:[["hond_hert","hert: hoor /t/, schrijf t"]],los:1},
+  {w:"docent",s:"Mijn broer is docent op een middelbare school.",a:[["hond_hert","hert: hoor /t/, schrijf t"]],los:1},
+  {w:"verdriet",s:"Na het afscheid had ik veel verdriet.",a:[["hond_hert","hert: hoor /t/, schrijf t"]],los:1},
+  {w:"constant",s:"Het regent al constant sinds vanochtend.",a:[["hond_hert","hert: hoor /t/, schrijf t"]],los:1},
+  {w:"triest",s:"Het was een triest bericht in de krant.",a:[["hond_hert","hert: hoor /t/, schrijf t"]],los:1},
+  {w:"allebei",s:"We willen allebei het laatste koekje.",a:[["geit_bij","geit: ei"]],los:1},
+  {w:"veilige",s:"Zoek een veilige plek om over te steken.",a:[["geit_bij","geit: ei"]],los:1},
+  {w:"afscheid",s:"Op het vliegveld namen we afscheid van opa.",a:[["geit_bij","geit: ei"]],los:1},
+  {w:"geheim",s:"Kun jij een geheim bewaren?",a:[["geit_bij","geit: ei"]],los:1},
+  {w:"vertrouw",s:"Ik vertrouw mijn beste vriendin.",a:[["pauw_goudvis","pauw: auw of ouw"]],los:1},
+  {w:"betrouwbaar",s:"Een goede vriend is betrouwbaar.",a:[["pauw_goudvis","pauw: auw of ouw"]],los:1},
+  {w:"zelfvertrouwen",s:"Na de training had hij meer zelfvertrouwen.",a:[["pauw_goudvis","pauw: auw of ouw"]],los:1},
+  {w:"verbouwing",s:"Door de verbouwing is de keuken niet te gebruiken.",a:[["pauw_goudvis","pauw: auw of ouw"]],los:1},
+  {w:"vertrouwd",s:"Het huis van oma voelt vertrouwd.",a:[["pauw_goudvis","pauw: auw of ouw"]],los:1},
+  {w:"mouwen",s:"Doe je mouwen omhoog voor je gaat verven.",a:[["pauw_goudvis","pauw: auw of ouw"]],los:1},
+  {w:"vertrouwelijk",s:"Deze brief is vertrouwelijk.",a:[["pauw_goudvis","pauw: auw of ouw"]],los:1},
+  {w:"rouwen",s:"Na de begrafenis bleef de familie lang rouwen.",a:[["pauw_goudvis","pauw: auw of ouw"]],los:1},
+  {w:"klauwen",s:"De beer heeft scherpe klauwen.",a:[["pauw_goudvis","pauw: auw of ouw"]],los:1},
+  {w:"bebouwing",s:"Achter het park staat nieuwe bebouwing.",a:[["pauw_goudvis","pauw: auw of ouw"]],los:1},
+  {w:"bouwer",s:"De bouwer zet de muren recht.",a:[["pauw_goudvis","pauw: auw of ouw"]],los:1},
+  {w:"kauwen",s:"Je moet je eten goed kauwen.",a:[["pauw_goudvis","pauw: auw of ouw"]],los:1},
+  {w:"touwen",s:"De boot ligt vast met dikke touwen.",a:[["pauw_goudvis","pauw: auw of ouw"]],los:1},
+  {w:"vouwen",s:"We vouwen een vliegtuigje van papier.",a:[["pauw_goudvis","pauw: auw of ouw"]],los:1},
+  {w:"flauwe",s:"Hij vertelde een flauwe grap.",a:[["pauw_goudvis","pauw: auw of ouw"]],los:1},
+  {w:"brieven",s:"De postbode brengt veel brieven.",a:[["duiven_ganzen","duiven: f wordt v"]],los:1},
+  {w:"durven",s:"Wie zou durven springen van de hoge plank?",a:[["duiven_ganzen","duiven: f wordt v"]],los:1},
+  {w:"graven",s:"De hond is in de tuin aan het graven.",a:[["duiven_ganzen","duiven: f wordt v"]],los:1},
+  {w:"streven",s:"We streven ernaar om op tijd klaar te zijn.",a:[["duiven_ganzen","duiven: f wordt v"]],los:1},
+  {w:"proeven",s:"Mag ik van je taart proeven?",a:[["duiven_ganzen","duiven: f wordt v"]],los:1},
+  {w:"drijven",s:"Bladeren drijven op het water.",a:[["duiven_ganzen","duiven: f wordt v"]],los:1},
+  {w:"schreven",s:"Vorige week schreven we een gedicht.",a:[["duiven_ganzen","duiven: f wordt v"]],los:1},
+  {w:"schuiven",s:"Kun je je stoel een stukje schuiven?",a:[["duiven_ganzen","duiven: f wordt v"]],los:1},
+  {w:"duiven",s:"Op het plein zitten veel duiven.",a:[["duiven_ganzen","duiven: f wordt v"]],los:1},
+  {w:"verven",s:"Morgen gaan we de schutting verven.",a:[["duiven_ganzen","duiven: f wordt v"]],los:1},
+  {w:"druiven",s:"In mijn lunchtrommel zitten druiven.",a:[["duiven_ganzen","duiven: f wordt v"]],los:1},
+  {w:"wijzen",s:"Het is niet netjes om naar mensen te wijzen.",a:[["duiven_ganzen","ganzen: s wordt z"]],los:1},
+  {w:"grijze",s:"Opa heeft grijze haren.",a:[["duiven_ganzen","ganzen: s wordt z"]],los:1},
+  {w:"blazen",s:"We blazen de kaarsjes uit op mijn verjaardag.",a:[["duiven_ganzen","ganzen: s wordt z"]],los:1},
+  {w:"verbazen",s:"Die goocheltruc zal je verbazen.",a:[["duiven_ganzen","ganzen: s wordt z"]],los:1},
+  {w:"muizen",s:"De kat jaagt op muizen.",a:[["duiven_ganzen","ganzen: s wordt z"]],los:1},
+  {w:"buizen",s:"Het water stroomt door de buizen.",a:[["duiven_ganzen","ganzen: s wordt z"]],los:1},
+  {w:"handig",s:"Een zakmes is heel handig op kamp.",a:[["gevaarlijk","giftig: -ig"]],los:1},
+  {w:"toevallig",s:"Ik kwam mijn juf toevallig tegen in de winkel.",a:[["gevaarlijk","giftig: -ig"]],los:1},
+  {w:"vreselijk",s:"Het onweer maakte een vreselijk lawaai.",a:[["gevaarlijk","gevaarlijk: -lijk"]],los:1},
+  {w:"letterlijk",s:"Hij nam mijn grap letterlijk.",a:[["gevaarlijk","gevaarlijk: -lijk"]],los:1},
+  {w:"vriendelijk",s:"De buurvrouw is altijd vriendelijk.",a:[["gevaarlijk","gevaarlijk: -lijk"]],los:1},
+  {w:"verschrikkelijk",s:"Ik had verschrikkelijk veel dorst.",a:[["gevaarlijk","gevaarlijk: -lijk"]],los:1},
+  {w:"vrolijk",s:"Ze zong heel vrolijk een liedje.",a:[["gevaarlijk","gevaarlijk: -lijk"]],los:1},
+  {w:"menselijk",s:"Fouten maken is menselijk.",a:[["gevaarlijk","gevaarlijk: -lijk"]],los:1},
+  {w:"landelijk",s:"Er is een landelijk dictee voor alle scholen.",a:[["gevaarlijk","gevaarlijk: -lijk"]],los:1},
+  {w:"sociale",s:"Wolven zijn sociale dieren.",a:[["baviaan_leguaan","baviaan: verborgen /j/"]],los:1},
+  {w:"speciaal",s:"Vandaag is een speciaal feest.",a:[["baviaan_leguaan","baviaan: verborgen /j/"]],los:1},
+  {w:"officieel",s:"De nieuwe sporthal wordt officieel geopend.",a:[["baviaan_leguaan","baviaan: verborgen /j/"]],los:1},
+  {w:"sociaal",s:"Mijn moeder werkt als sociaal werker.",a:[["baviaan_leguaan","baviaan: verborgen /j/"]],los:1},
+  {w:"materiaal",s:"We gebruiken oud materiaal voor het knutselen.",a:[["baviaan_leguaan","baviaan: verborgen /j/"]],los:1},
+  {w:"financieel",s:"De club heeft financieel hulp nodig.",a:[["baviaan_leguaan","baviaan: verborgen /j/"]],los:1},
+  {w:"individuele",s:"Elk kind krijgt individuele hulp.",a:[["baviaan_leguaan","leguaan: verborgen /w/"]],los:1},
+  {w:"actuele",s:"In de krant staat actuele informatie.",a:[["baviaan_leguaan","leguaan: verborgen /w/"]],los:1},
+  {w:"eventuele",s:"Schrijf eventuele vragen op een briefje.",a:[["baviaan_leguaan","leguaan: verborgen /w/"]],los:1},
+  {w:"actueel",s:"Het nieuws op tv is altijd actueel.",a:[["baviaan_leguaan","leguaan: verborgen /w/"]],los:1},
+  {w:"individueel",s:"We werken vandaag individueel aan onze opdracht.",a:[["baviaan_leguaan","leguaan: verborgen /w/"]],los:1},
+  {w:"visuele",s:"Een tekening is een visuele uitleg.",a:[["baviaan_leguaan","leguaan: verborgen /w/"]],los:1},
+  {w:"ritueel",s:"Elke avond lezen is ons vaste ritueel.",a:[["baviaan_leguaan","leguaan: verborgen /w/"]],los:1},
+  {w:"rituelen",s:"Elk land heeft eigen rituelen bij een bruiloft.",a:[["baviaan_leguaan","leguaan: verborgen /w/"]],los:1},
+  {w:"visueel",s:"Ik onthoud dingen beter als ik het visueel zie.",a:[["baviaan_leguaan","leguaan: verborgen /w/"]],los:1},
+  {w:"procentueel",s:"Procentueel deden meer meisjes mee dan jongens.",a:[["baviaan_leguaan","leguaan: verborgen /w/"]],los:1},
+  {w:"leguanen",s:"In de dierentuin liggen leguanen onder een lamp.",a:[["baviaan_leguaan","leguaan: verborgen /w/"]],los:1},
 ];
 
 /* ===== SPRAAK ===== */
@@ -909,12 +1099,20 @@ let queue=[],idx=0,spellPts=0,animalPts=0,goodAnswers=0,lastBreakAt=0,spellOk=fa
 // Het portaal maakt daar het overzicht per categorie van ("ei/ij 8/10") en de
 // foutenlijst eronder; tot nu toe gingen er helemaal geen opgaven mee.
 const kkOpgaven=[];
+function kkSubVoor(item){
+  const sv=SUB_VAN[item.w]; if(!sv) return null;
+  const gekozen=(new URLSearchParams(location.search).get('cats')||'').split(',').filter(k=>k.indexOf(':')>0);
+  for(const k of gekozen) if(SUBS[k]&&SUBS[k].w.indexOf(item.w)>=0) return k;
+  const eerste=item.a&&item.a[0]&&item.a[0][0];
+  return (eerste&&sv[eerste])||null;
+}
 function kkNoteer(item,getypt,ok){
   const catId=(item.a&&item.a[0]&&item.a[0][0])||null;
   const cat=catId?ANIMALS.find(a=>a.id===catId):null;
+  const sub=kkSubVoor(item);
   kkOpgaven.push({
     vraag:item.w, antwoord:getypt, juist:item.w, goed:ok,
-    cat:catId||undefined, catLabel:cat?(cat.rule||cat.nm):undefined,
+    cat:sub||catId||undefined, catLabel:sub?SUBS[sub].nm:(cat?(cat.rule||cat.nm):undefined),
   });
 }
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
@@ -1006,7 +1204,7 @@ function checkAnimals(){
     const id=c.dataset.id,isSel=selected.has(id);
     c.classList.add('locked');
     if(isSel&&acceptable.has(id))c.classList.add('correct');
-    else if(isSel&&!acceptable.has(id)){c.classList.add('wrong');allGood=false;}
+    else if(isSel&&!acceptable.has(id)){ if(!item.los){c.classList.add('wrong');allGood=false;} }
     else if(!isSel&&required.has(id)){c.classList.add('missed');allGood=false;}
   });
   if(allGood){animalPts++;animalOk=true;}
@@ -1156,7 +1354,10 @@ $('startInfo').textContent=`${WORDS.length} woorden \u00b7 ${ANIMALS.length} ${K
   var lijst = catsParam.split(',').filter(Boolean);
   if (!lijst.length) return;
   startGame = function(){
-    var words = WORDS.filter(function(w){ return w.a.some(function(x){ return lijst.indexOf(x[0]) !== -1; }); });
+    var words = WORDS.filter(function(w){
+      return w.a.some(function(x){ return lijst.indexOf(x[0]) !== -1; }) ||
+        lijst.some(function(k){ return SUBS[k] && SUBS[k].w.indexOf(w.w) !== -1; });
+    });
     if (!words.length) words = WORDS;
     queue = kkBeperk(kkVolgorde(words)); idx=0; kkOpgaven.length=0; spellPts=0; animalPts=0; goodAnswers=0; lastBreakAt=0; spellOk=false; animalOk=false;
     screenStart.classList.add('hide'); screenEnd.classList.add('hide');
