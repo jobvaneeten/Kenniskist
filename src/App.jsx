@@ -53,6 +53,7 @@ const HTML_CODES = {
   morteun: { src: '/morteun.html', titel: 'Road Rush', achtergrond: '#0a081c' },
   senndjim: { src: '/voetbal-2-tegen-2.html', titel: 'Voetbal 2 tegen 2', achtergrond: '#0b1226' },
   daantijn: { src: '/bijlengooien.html', titel: 'Bijlengooien', achtergrond: '#0b0826' },
+  blink: { src: '/blink.html', titel: 'Tijdlijnspel: van taboe naar trots', achtergrond: '#f4f5fb' },
 }
 const HTML_BELONING = 50
 

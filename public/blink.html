@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tijdlijnspel: van taboe naar trots</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* VOICE: speels maar rustig, voor groep 7, werkt op chromebook en digibord
+   IDEA: de uitgeknipte kaartjes uit het werkboek op tafel, met een stapel en een tijdlijn
+   PICTURE: de tijdlijn zelf met kaartjes, groot in beeld
+   COLOUR and TYPE: navy en lavendel uit het werkboek, regenboogstreep als accent; Figtree
+   LAYOUT: beurt en stapel boven, scorebord ernaast, tijdlijn in het midden, knoppen eronder */
+:root{color-scheme:light dark;
+--bg:light-dark(#f4f5fb,#11152a);--vlak:light-dark(#ffffff,#1a2040);--ink:light-dark(#1b2340,#e8ebf7);--zacht:light-dark(#56607e,#a9b1cf);
+--navy:light-dark(#1d3a78,#9fb6f0);--knop:#1d3a78;--lav:light-dark(#e9ecf8,#252d55);--lijn:light-dark(#c8cfe8,#38416c);
+--goed:light-dark(#23874c,#5fd08f);--goedbg:light-dark(#e2f4e9,#183a2a);--fout:light-dark(#c76a00,#f0a650);--foutbg:light-dark(#fdeed9,#43301a)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 Figtree,"Segoe UI",system-ui,sans-serif;overflow-x:clip;min-height:100vh}
+.regenboog{height:7px;background:linear-gradient(90deg,#e40303 0 16.6%,#ff8c00 0 33.3%,#ffed00 0 50%,#008026 0 66.6%,#004dff 0 83.3%,#750787 0)}
+.wrap{max-width:1500px;margin:0 auto;padding:14px clamp(12px,2.5vw,32px) 28px;display:flex;flex-direction:column;gap:16px}
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+h1{margin:0;font-size:clamp(24px,2.6vw,34px);line-height:1.05;color:var(--navy);font-weight:800}
+h2{margin:0 0 10px;font-size:22px;color:var(--navy)}
+.sub{margin:4px 0 0;color:var(--zacht);font-size:15px}
+.klein{font:inherit;font-weight:700;font-size:14px;color:var(--navy);background:none;border:2px solid var(--lijn);border-radius:10px;padding:8px 14px;cursor:pointer;min-height:40px}
+.klein:hover{border-color:var(--navy)}
+.paneel{background:var(--vlak);border:1px solid var(--lijn);border-radius:18px;padding:14px 18px}
+
+/* startscherm */
+.start{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+.start .paneel{padding:22px 26px}
+.veld{display:flex;align-items:center;gap:12px;margin:10px 0}
+.veld label{width:84px;font-weight:700;color:var(--navy);flex:none}
+.veld input{flex:1;font:inherit;font-size:18px;padding:10px 14px;border-radius:10px;border:2px solid var(--lijn);background:var(--bg);color:var(--ink);min-height:48px}
+.veld input:focus{outline:3px solid #ff8c00;outline-offset:1px;border-color:var(--navy)}
+.hulp{color:var(--zacht);font-size:14px;margin:0 0 14px 96px}
+.uitleg{margin:0;padding-left:22px;font-size:17px}
+.uitleg li{margin:6px 0}
+.uitleg strong{color:var(--navy)}
+@media (max-width:760px){.start{grid-template-columns:1fr}.hulp{margin-left:0}}
+
+/* spel */
+.boven{display:flex;gap:16px;flex-wrap:wrap}
+.stapelzone{flex:1 1 560px;display:flex;align-items:center;gap:22px;min-height:168px;transition:outline-color .15s;outline:3px solid transparent}
+.stapelzone.doel{outline-color:var(--lijn)}
+.stapel{position:relative;width:104px;height:122px;flex:none;border:none;background:none;padding:0;cursor:pointer;font:inherit}
+.stapel .rug{position:absolute;inset:0;border-radius:12px;background:#1d3a78;border:3px solid #fff;box-shadow:0 0 0 1px #1d3a78,4px 4px 0 -1px #2d4f96,4px 4px 0 0 #1d3a78,8px 8px 0 -1px #3d60a8,8px 8px 0 0 #1d3a78;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:15px;text-align:center;padding:8px;transition:transform .15s;
+background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.07) 0 8px,transparent 8px 16px)}
+.stapel:disabled{cursor:default}
+.stapel:disabled:not(.leeg) .rug{opacity:.55}
+.stapel.leeg .rug{background:none;border:2px dashed var(--lijn);box-shadow:none;color:var(--zacht);font-weight:600}
+.stapel:not(:disabled):hover .rug{transform:translate(-2px,-3px)}
+.stapel.wenk .rug{animation:wenk 1.6s ease-in-out infinite}
+@keyframes wenk{50%{transform:translate(-2px,-5px)}}
+.teller{display:block;text-align:center;color:var(--zacht);font-size:14px;margin-top:14px;font-weight:600}
+.hand{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.hand:empty{display:none}
+.hand .kaart{width:112px;flex:none}
+.melding{font-size:17px;max-width:460px;margin:0}
+.melding b{color:var(--navy)}
+.melding .beurt{display:block;font-size:clamp(22px,2.2vw,30px);font-weight:800;color:var(--navy);line-height:1.1;margin-bottom:6px}
+.melding .beurt.goed{color:var(--goed)}.melding .beurt.fout{color:var(--fout)}
+.scorebord{flex:0 1 340px}
+.scorebord h2{font-size:18px;margin-bottom:8px}
+.spelers{display:flex;flex-direction:column;gap:8px}
+.speler{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 14px;border-radius:12px;border:2px solid var(--lijn);font-weight:700;font-size:18px}
+.speler .naam{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.speler .pt{font-size:22px;font-weight:800;color:var(--navy);white-space:nowrap}
+.speler .pt small{font-size:13px;font-weight:600;color:var(--zacht)}
+.speler.aan{border-color:var(--navy);background:var(--lav)}
+.speler.aan .naam::before{content:"▶ ";color:var(--navy)}
+
+.tijdlijnzone{position:relative;padding:22px 16px 52px;transition:outline-color .15s;outline:3px solid transparent}
+.tijdlijnzone.doel{outline-color:#8fa6e6}
+.tijdlijn{display:flex;gap:6px;justify-content:center;align-items:center;min-height:122px}
+.pijl{position:absolute;left:16px;right:30px;bottom:24px;height:5px;background:var(--navy);border-radius:3px}
+.pijl::after{content:"";position:absolute;right:-16px;top:-8px;border:10px solid transparent;border-left:16px solid var(--navy);border-right:0}
+.kaart{flex:0 1 112px;height:122px;border-radius:12px;background:var(--lav);border:2px solid var(--lijn);display:flex;align-items:center;justify-content:center;text-align:center;padding:6px 5px;font-weight:700;color:var(--navy);font-size:clamp(12px,1.12vw,16px);line-height:1.2;hyphens:manual;user-select:none;-webkit-user-select:none;touch-action:none;position:relative;box-shadow:0 3px 0 rgba(29,58,120,.15)}
+.kaart.pakbaar{cursor:grab;border-color:var(--navy);border-width:3px;background:var(--vlak);box-shadow:0 0 0 4px rgba(95,127,208,.25),0 3px 0 rgba(29,58,120,.15)}
+.kaart.anker{background:var(--vlak);border-color:var(--navy);font-weight:800;font-size:clamp(15px,1.5vw,22px);box-shadow:none}
+.kaart.goed{border-color:var(--goed);background:var(--goedbg);border-width:3px}
+.kaart.fout{border-color:var(--fout);background:var(--foutbg);border-width:3px}
+.kaart .teken{position:absolute;top:-11px;right:-8px;width:26px;height:26px;border-radius:50%;color:#fff;font-size:15px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.kaart.goed .teken{background:var(--goed)}.kaart.fout .teken{background:var(--fout)}
+.kaart .jaar{position:absolute;left:50%;bottom:-15px;transform:translateX(-50%);background:#1d3a78;color:#fff;font-size:12px;font-weight:700;padding:3px 8px;border-radius:999px;white-space:nowrap}
+.plek{flex:0 1 112px;height:122px;border:3px dashed #5f7fd0;border-radius:12px;background:rgba(95,127,208,.12);min-width:20px}
+.sleep{position:fixed;z-index:100;pointer-events:none;transform:rotate(-3deg) scale(1.06);box-shadow:0 14px 28px rgba(0,0,0,.25);margin:0}
+body.slepen,body.slepen *{cursor:grabbing!important}
+.onder{display:flex;gap:16px;flex-wrap:wrap;align-items:stretch}
+.acties{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.knop{font:inherit;font-weight:800;font-size:18px;padding:13px 24px;border-radius:12px;border:none;background:var(--knop);color:#fff;cursor:pointer;min-height:50px}
+.knop:hover:not(:disabled){filter:brightness(1.15)}
+.knop:disabled{opacity:.35;cursor:not-allowed}
+.knop.licht{background:var(--vlak);color:var(--navy);border:2px solid var(--navy)}
+button:focus-visible{outline:3px solid #ff8c00;outline-offset:2px}
+.uitslag{flex:1 1 420px}
+.uitslag:empty{display:none}
+.score{font-size:clamp(24px,2.8vw,34px);font-weight:800;color:var(--navy);line-height:1.1;margin:0 0 6px}
+.uitslag p{margin:4px 0}
+.zacht{color:var(--zacht);font-size:15px}
+.vragen{margin:10px 0 0;padding-left:22px}
+.vragen li{margin:6px 0;font-size:17px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+@media (max-width:760px){.stapelzone{flex-wrap:wrap}.tijdlijn{flex-wrap:wrap}.pijl{display:none}}
+</style>
+</head>
+<body>
+<div class="regenboog"></div>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Tijdlijnspel: van taboe naar trots</h1>
+      <p class="sub">Les 6 Nieuwe gezinnen · Gebruik de bron: bladzijde 60 en 61</p>
+    </div>
+    <button class="klein" id="reset" type="button" hidden>Opnieuw beginnen</button>
+  </header>
+
+  <!-- startscherm -->
+  <form class="start" id="start" autocomplete="off">
+    <section class="paneel">
+      <h2>Wie spelen er mee?</h2>
+      <div class="veld"><label for="s1">Speler 1</label><input id="s1" maxlength="20" placeholder="Naam"></div>
+      <div class="veld"><label for="s2">Speler 2</label><input id="s2" maxlength="20" placeholder="Naam"></div>
+      <div class="veld"><label for="s3">Speler 3</label><input id="s3" maxlength="20" placeholder="Naam"></div>
+      <p class="hulp">Spelen jullie met z'n tweeën? Laat speler 3 dan leeg.</p>
+      <button class="knop" type="submit">Start het spel</button>
+    </section>
+    <section class="paneel">
+      <h2>Zo speel je het</h2>
+      <ol class="uitleg">
+        <li>Om de beurt pak je een kaartje van de stapel. Lees het <strong>hardop</strong> voor.</li>
+        <li>Overleg samen: waar hoort het op de tijdlijn? Zoek het op in de bron.</li>
+        <li>Wie aan de beurt is, <strong>sleept</strong> het kaartje naar de goede plek.</li>
+        <li>Klik op <strong>Controleer</strong>. Ligt het goed? Dan krijg je een punt.</li>
+        <li>Ligt het niet goed? Dan schuift het kaartje naar de goede plek.</li>
+      </ol>
+    </section>
+  </form>
+
+  <!-- spel -->
+  <div class="boven" id="spel1" hidden>
+    <section class="paneel stapelzone" id="stapelzone" aria-label="Stapel kaartjes">
+      <div>
+        <button class="stapel" id="stapel" type="button"><span class="rug" id="rug">Pak een kaartje</span></button>
+        <span class="teller" id="teller"></span>
+      </div>
+      <div class="hand" id="hand"></div>
+      <p class="melding" id="melding" aria-live="polite"></p>
+    </section>
+    <section class="paneel scorebord" aria-label="Scorebord">
+      <h2>Punten</h2>
+      <div class="spelers" id="spelers"></div>
+    </section>
+  </div>
+
+  <section class="paneel tijdlijnzone" id="tijdlijnzone" aria-label="Tijdlijn" hidden>
+    <div class="tijdlijn" id="tijdlijn"></div>
+    <div class="pijl"></div>
+  </section>
+
+  <div class="onder" id="spel2" hidden>
+    <div class="acties" id="acties"></div>
+    <section class="paneel uitslag" id="uitslag" aria-live="polite"></section>
+  </div>
+</div>
+
+<script>
+{
+const SH = '­';
+const KAARTEN = {
+  '1960':       { t: '1960' },
+  'benno':      { t: 'Benno op tv', jaar: '1964' },
+  'protest':    { t: 'Protest op straat', jaar: '1969–1971' },
+  'kus':        { t: 'Eerste kus op tv', jaar: '1970' },
+  'wet':        { t: 'Oneer' + SH + 'lijke wet afge' + SH + 'schaft', jaar: '1971' },
+  'discr':      { t: 'Discri' + SH + 'minatie straf' + SH + 'baar', jaar: '1994' },
+  'pride':      { t: 'Eerste Gay Pride', jaar: '1996' },
+  '2000':       { t: '2000' },
+  'huwelijk':   { t: 'Homo' + SH + 'huwelijk', jaar: '2001' },
+  'nog':        { t: 'Nog geen twee ouders', jaar: 'tot 2014' },
+  'ouderschap': { t: 'Nieuwe wet ouder' + SH + 'schap', jaar: '2014' },
+  'vaders':     { t: 'Twee vaders, één gezin', jaar: 'vanaf 2015' },
+  'lhbtiq':     { t: 'LHBTIQ+', jaar: 'tegenwoordig' },
+  'nu':         { t: 'nu' }
+};
+const VOLGORDE = ['1960','benno','protest','kus','wet','discr','pride','2000','huwelijk','nog','ouderschap','vaders','lhbtiq','nu'];
+const ANKERS = new Set(['1960','2000','nu']);
+const AANTAL = VOLGORDE.length - ANKERS.size; // 11 kaartjes
+const pos = id => VOLGORDE.indexOf(id);
+
+const $ = id => document.getElementById(id);
+const tlEl = $('tijdlijn'), handEl = $('hand'), stapelBtn = $('stapel');
+
+let spelers = [], beurt = 0;
+let tijdlijn, stapel, hand, fase, huidig, uitkomst, sleep = null;
+// fase: 'pakken' | 'leggen' | 'gecheckt' | 'einde'
+
+function schud(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function esc(s){ return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+const naam = () => esc(spelers[beurt].naam);
+
+function toonStart(){
+  $('start').hidden = false;
+  ['spel1','tijdlijnzone','spel2','reset'].forEach(id => $(id).hidden = true);
+  $('s1').focus();
+}
+$('start').addEventListener('submit', e => {
+  e.preventDefault();
+  const namen = ['s1','s2','s3'].map(id => $(id).value.trim());
+  spelers = [];
+  namen.forEach((n, i) => { if (n || i < 2) spelers.push({ naam: n || 'Speler ' + (i + 1), punten: 0 }); });
+  $('start').hidden = true;
+  ['spel1','tijdlijnzone','spel2','reset'].forEach(id => $(id).hidden = false);
+  nieuwSpel();
+});
+
+function nieuwSpel(){
+  spelers.forEach(s => s.punten = 0);
+  beurt = 0;
+  tijdlijn = ['1960','2000','nu'];
+  stapel = schud(VOLGORDE.filter(id => !ANKERS.has(id)));
+  hand = []; huidig = null; uitkomst = null; fase = 'pakken';
+  render();
+}
+
+/* ---------- tekenen ---------- */
+function maakKaart(id, bron){
+  const el = document.createElement('div');
+  el.className = 'kaart' + (ANKERS.has(id) ? ' anker' : '');
+  el.dataset.id = id;
+  const s = document.createElement('span'); s.textContent = KAARTEN[id].t; el.appendChild(s);
+  const isHuidig = id === huidig;
+  if (isHuidig && fase === 'gecheckt'){
+    el.classList.add(uitkomst ? 'goed' : 'fout');
+    const t = document.createElement('span'); t.className = 'teken'; t.textContent = uitkomst ? '✓' : '↔'; el.appendChild(t);
+  }
+  const gelegd = !ANKERS.has(id) && (!isHuidig || fase === 'gecheckt' || fase === 'einde');
+  if (gelegd && bron === 'tl'){
+    const j = document.createElement('span'); j.className = 'jaar'; j.textContent = KAARTEN[id].jaar; el.appendChild(j);
+  }
+  if (isHuidig && fase === 'leggen'){
+    el.classList.add('pakbaar');
+    el.addEventListener('pointerdown', e => beginSleep(e, id, bron));
+  }
+  return el;
+}
+function maakPlek(){ const p = document.createElement('div'); p.className = 'plek'; return p; }
+function renderTijdlijn(plek = null){
+  tlEl.innerHTML = '';
+  tijdlijn.forEach((id, i) => {
+    if (plek === i) tlEl.appendChild(maakPlek());
+    tlEl.appendChild(maakKaart(id, 'tl'));
+  });
+}
+function renderSpelers(){
+  const box = $('spelers'); box.innerHTML = '';
+  spelers.forEach((s, i) => {
+    const d = document.createElement('div');
+    d.className = 'speler' + (i === beurt && fase !== 'einde' ? ' aan' : '');
+    const n = document.createElement('span'); n.className = 'naam'; n.textContent = s.naam;
+    const p = document.createElement('span'); p.className = 'pt'; p.innerHTML = s.punten + ' <small>' + (s.punten === 1 ? 'punt' : 'punten') + '</small>';
+    d.append(n, p); box.appendChild(d);
+  });
+}
+function renderStapel(){
+  handEl.innerHTML = '';
+  hand.forEach(id => handEl.appendChild(maakKaart(id, 'hand')));
+  const leeg = stapel.length === 0;
+  stapelBtn.classList.toggle('leeg', leeg);
+  stapelBtn.classList.toggle('wenk', fase === 'pakken');
+  stapelBtn.disabled = leeg || fase !== 'pakken';
+  $('rug').textContent = leeg ? 'Stapel is leeg' : 'Pak een kaartje';
+  $('teller').textContent = leeg ? '' : 'nog ' + stapel.length + (stapel.length === 1 ? ' kaartje' : ' kaartjes');
+
+  const m = $('melding');
+  const jaar = huidig ? KAARTEN[huidig].jaar : '';
+  if (fase === 'pakken')
+    m.innerHTML = '<span class="beurt">' + naam() + ' is aan de beurt</span>Klik op de stapel en lees het kaartje hardop voor.';
+  else if (fase === 'leggen' && hand.length)
+    m.innerHTML = '<span class="beurt">' + naam() + ' is aan de beurt</span><b>Overleg samen:</b> waar hoort dit kaartje? Zoek het op in de bron. Sleep het daarna naar de tijdlijn.';
+  else if (fase === 'leggen')
+    m.innerHTML = '<span class="beurt">' + naam() + ' is aan de beurt</span>Ligt het kaartje goed? Je mag het nog verschuiven. Klaar? Klik op <b>Controleer</b>.';
+  else if (fase === 'gecheckt' && uitkomst)
+    m.innerHTML = '<span class="beurt goed">Goed zo, ' + naam() + '!</span>Dit hoort bij <b>' + jaar + '</b>. Je krijgt 1 punt.';
+  else if (fase === 'gecheckt')
+    m.innerHTML = '<span class="beurt fout">Helaas, ' + naam() + '.</span>Dit hoort bij <b>' + jaar + '</b>. Het kaartje schuift naar de goede plek.';
+  else
+    m.innerHTML = '<span class="beurt">Klaar!</span>Alle kaartjes liggen op de tijdlijn, met de jaartallen erbij.';
+}
+function renderActies(){
+  const a = $('acties'), u = $('uitslag');
+  a.innerHTML = ''; u.innerHTML = '';
+  const knop = (tekst, fn, licht, uit) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'knop' + (licht ? ' licht' : ''); b.textContent = tekst; b.disabled = !!uit; b.onclick = fn; a.appendChild(b); return b; };
+
+  if (fase === 'pakken' || fase === 'leggen'){
+    knop('Controleer', controleer, false, !(fase === 'leggen' && tijdlijn.includes(huidig)));
+  } else if (fase === 'gecheckt'){
+    const laatste = stapel.length === 0;
+    const volgende = spelers[(beurt + 1) % spelers.length].naam;
+    knop(laatste ? 'Bekijk de uitslag' : 'Volgende beurt: ' + volgende, volgendeBeurt);
+  } else {
+    knop('Nog een keer spelen', nieuwSpel);
+    knop('Andere spelers', toonStart, true);
+    const totaal = spelers.reduce((t, s) => t + s.punten, 0);
+    u.innerHTML = '<p class="score">Samen ' + totaal + ' van de ' + AANTAL + ' kaartjes goed</p>' +
+      '<p class="zacht">' + spelers.map(s => esc(s.naam) + ': ' + s.punten + (s.punten === 1 ? ' punt' : ' punten')).join(' · ') + '</p>' +
+      '<ol class="vragen"><li>Welk kaartje lag op een plek die jullie verraste? Leg uit waarom.</li>' +
+      '<li>Hoe komt het dat gezinnen er nu anders uitzien dan vroeger?</li></ol>';
+  }
+}
+function render(){ renderStapel(); renderSpelers(); renderTijdlijn(); renderActies(); }
+
+/* ---------- spelverloop ---------- */
+stapelBtn.addEventListener('click', () => {
+  if (fase !== 'pakken' || !stapel.length) return;
+  huidig = stapel.pop(); hand = [huidig]; fase = 'leggen';
+  render();
+});
+
+function controleer(){
+  const i = tijdlijn.indexOf(huidig);
+  if (i < 0) return;
+  uitkomst = pos(tijdlijn[i - 1]) < pos(huidig) && pos(huidig) < pos(tijdlijn[i + 1]);
+  if (uitkomst) spelers[beurt].punten++;
+  fase = 'gecheckt';
+  render();
+  if (!uitkomst) setTimeout(schuifNaarGoedePlek, 1100);
+}
+function schuifNaarGoedePlek(){
+  if (fase !== 'gecheckt' || uitkomst) return;
+  const voor = {};
+  tlEl.querySelectorAll('.kaart').forEach(k => voor[k.dataset.id] = k.getBoundingClientRect().left);
+  tijdlijn.sort((a, b) => pos(a) - pos(b));
+  renderTijdlijn();
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  tlEl.querySelectorAll('.kaart').forEach(k => {
+    const dx = voor[k.dataset.id] - k.getBoundingClientRect().left;
+    if (!dx) return;
+    k.style.transition = 'none'; k.style.transform = 'translateX(' + dx + 'px)';
+    requestAnimationFrame(() => requestAnimationFrame(() => { k.style.transition = 'transform .7s cubic-bezier(.2,.8,.2,1)'; k.style.transform = ''; }));
+  });
+}
+function volgendeBeurt(){
+  if (!uitkomst) tijdlijn.sort((a, b) => pos(a) - pos(b));
+  huidig = null; uitkomst = null;
+  if (stapel.length === 0){ fase = 'einde'; render(); return; }
+  beurt = (beurt + 1) % spelers.length;
+  fase = 'pakken';
+  render();
+}
+
+/* ---------- slepen ---------- */
+function binnen(el, x, y, marge){
+  const r = el.getBoundingClientRect();
+  return x >= r.left - marge && x <= r.right + marge && y >= r.top - marge && y <= r.bottom + marge;
+}
+function berekenIndex(x){
+  let i = 0;
+  tlEl.querySelectorAll('.kaart').forEach(k => { const r = k.getBoundingClientRect(); if (x > r.left + r.width / 2) i++; });
+  return Math.min(Math.max(i, 1), tijdlijn.length - 1);
+}
+function beginSleep(e, id, bron){
+  if (sleep || fase !== 'leggen' || (e.pointerType === 'mouse' && e.button !== 0)) return;
+  e.preventDefault();
+  const el = e.currentTarget, r = el.getBoundingClientRect();
+  try { el.releasePointerCapture(e.pointerId); } catch(_) {}
+  const ghost = el.cloneNode(true);
+  ghost.classList.add('sleep'); ghost.style.width = r.width + 'px'; ghost.style.height = r.height + 'px';
+  document.body.appendChild(ghost); document.body.classList.add('slepen');
+  let oud = null;
+  if (bron === 'tl'){ oud = tijdlijn.indexOf(id); tijdlijn.splice(oud, 1); } else hand = [];
+  sleep = { id, bron, oud, ghost, dx: e.clientX - r.left, dy: e.clientY - r.top, index: null, pid: e.pointerId };
+  renderStapel(); renderTijdlijn();
+  beweeg(e);
+  window.addEventListener('pointermove', beweeg);
+  window.addEventListener('pointerup', los);
+  window.addEventListener('pointercancel', annuleer);
+}
+function beweeg(e){
+  if (!sleep || e.pointerId !== sleep.pid) return;
+  sleep.ghost.style.left = (e.clientX - sleep.dx) + 'px';
+  sleep.ghost.style.top = (e.clientY - sleep.dy) + 'px';
+  const zone = $('tijdlijnzone'), sz = $('stapelzone');
+  const opTl = binnen(zone, e.clientX, e.clientY, 30);
+  zone.classList.toggle('doel', opTl);
+  sz.classList.toggle('doel', !opTl && binnen(sz, e.clientX, e.clientY, 10));
+  if (opTl){
+    const i = berekenIndex(e.clientX);
+    if (i !== sleep.index){ sleep.index = i; renderTijdlijn(i); }
+  } else if (sleep.index !== null){ sleep.index = null; renderTijdlijn(); }
+}
+function opruimen(){
+  window.removeEventListener('pointermove', beweeg);
+  window.removeEventListener('pointerup', los);
+  window.removeEventListener('pointercancel', annuleer);
+  sleep.ghost.remove(); document.body.classList.remove('slepen');
+  $('tijdlijnzone').classList.remove('doel'); $('stapelzone').classList.remove('doel');
+}
+function terug(){ if (sleep.bron === 'tl') tijdlijn.splice(sleep.oud, 0, sleep.id); else hand = [sleep.id]; }
+function los(e){
+  if (!sleep || e.pointerId !== sleep.pid) return;
+  const opStapel = binnen($('stapelzone'), e.clientX, e.clientY, 10);
+  opruimen();
+  if (sleep.index !== null) tijdlijn.splice(sleep.index, 0, sleep.id);
+  else if (opStapel) hand = [sleep.id];
+  else terug();
+  sleep = null; render();
+}
+function annuleer(){ if (!sleep) return; opruimen(); terug(); sleep = null; render(); }
+
+/* ---------- opnieuw beginnen ---------- */
+const reset = $('reset'); let resetTimer = null;
+reset.addEventListener('click', () => {
+  if (reset.dataset.zeker){ clearTimeout(resetTimer); delete reset.dataset.zeker; reset.textContent = 'Opnieuw beginnen'; toonStart(); return; }
+  reset.dataset.zeker = '1'; reset.textContent = 'Zeker weten? Klik nog een keer';
+  resetTimer = setTimeout(() => { delete reset.dataset.zeker; reset.textContent = 'Opnieuw beginnen'; }, 3000);
+});
+
+toonStart();
+}
+</script>
+</body>
+</html>
