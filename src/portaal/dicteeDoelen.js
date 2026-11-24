@@ -5,7 +5,7 @@ import { spellingLabel } from '../lib/methodes.js'
 import { doelSleutel } from '../lib/vaardigheden.js'
 
 // Hulpjes voor DicteeDoelKlaarzetten.jsx (een categorie uit de dicteeanalyse als doel klaarzetten).
-export const GRENS = 0.8
+export const GRENS = 0.8   // aangevinkt: minder dan 80% goed in die categorie
 export const vandaag = () => new Date().toLocaleDateString('sv-SE')
 
 export function doelTitel(catId) {

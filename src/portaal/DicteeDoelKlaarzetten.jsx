@@ -6,8 +6,8 @@ import { ZONDER_EIND } from './soortTekst.js'
 import { Knop } from '../ui/index.jsx'
 
 // Bij een categorie in de dicteeanalyse (DicteeTab.jsx): die categorie meteen
-// als doel klaarzetten. Aangevinkt staan de leerlingen die meer dan 80% van de
-// plekken in die categorie fout hadden; de leerkracht kan er zelf nog bij
+// als doel klaarzetten. Aangevinkt staan de leerlingen die minder dan 80% van
+// de plekken in die categorie goed hadden; de leerkracht kan er zelf nog bij
 // vinken. Leerlingen die dit doel al hebben, kunnen niet nog een keer.
 
 export default function DicteeDoelKlaarzetten({ catId, kansen, leerlingen, naam, klas, bestaand, onKlaargezet }) {
@@ -17,7 +17,7 @@ export default function DicteeDoelKlaarzetten({ catId, kansen, leerlingen, naam,
   const lijst = [...leerlingen]
     .map(l => ({ ...l, deel: kansen ? l.fout / kansen : 0 }))
     .sort((x, y) => y.deel - x.deel)
-  const [gekozen, setGekozen] = useState(() => new Set(lijst.filter(l => l.deel > GRENS).map(l => l.id)))
+  const [gekozen, setGekozen] = useState(() => new Set(lijst.filter(l => 1 - l.deel < GRENS).map(l => l.id)))
   const [status, setStatus] = useState('')
 
   if (!lijst.length) return null
@@ -41,7 +41,7 @@ export default function DicteeDoelKlaarzetten({ catId, kansen, leerlingen, naam,
   }
 
   if (!open) {
-    const aantal = lijst.filter(l => l.deel > GRENS && !heeftAl.has(l.id)).length
+    const aantal = lijst.filter(l => 1 - l.deel < GRENS && !heeftAl.has(l.id)).length
     return (
       <div className="pd-doel">
         <Knop variant="secundair" maat="sm" icoon="doel" onClick={() => setOpen(true)}>
@@ -54,7 +54,7 @@ export default function DicteeDoelKlaarzetten({ catId, kansen, leerlingen, naam,
   return (
     <div className="pd-doel open">
       <p className="portaal-zacht pd-klein">
-        Aangevinkt: wie meer dan 80% van deze categorie fout had. Je kunt zelf nog leerlingen aan- of uitvinken.
+        Aangevinkt: wie minder dan 80% van deze categorie goed had. Je kunt zelf nog leerlingen aan- of uitvinken.
       </p>
       <div className="pd-doel-lijst">
         {lijst.map(l => {
@@ -62,7 +62,7 @@ export default function DicteeDoelKlaarzetten({ catId, kansen, leerlingen, naam,
           return (
             <label key={l.id} className={'portaal-vinkje' + (al ? ' pd-al' : '')}>
               <input type="checkbox" disabled={al} checked={al || gekozen.has(l.id)} onChange={() => wissel(l.id)} />
-              {naam(l.id)} <span className="portaal-zacht">{l.fout} van {kansen} fout{al ? ' · heeft dit doel al' : ''}</span>
+              {naam(l.id)} <span className="portaal-zacht">{Math.round(100 * (1 - l.deel))}% goed ({l.fout} van {kansen} fout){al ? ' · heeft dit doel al' : ''}</span>
             </label>
           )
         })}
