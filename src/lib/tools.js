@@ -107,9 +107,13 @@ export const TOOL_FAMILIES = [
   },
   {
     familie: 'dictee-categorie', toolId: 'dictee-categorie', label: 'Spelling per categorie',
-    vak: 'spelling', groepen: [7], aantalInstelbaar: true, standaardAantal: 12, eenheid: 'woorden',
+    vak: 'spelling', groepen: [5, 6, 7, 8], aantalInstelbaar: true, standaardAantal: 12, eenheid: 'woorden',
     configVelden: [
       { key: 'cats', type: 'checkboxes', label: 'Categorieën (leeg = allemaal door elkaar). Met een · erin: alleen dat subkopje', min: 0, opties: [
+        { value: 'mier', label: 'mier — hakwoord: schrijf wat je hoort' },
+        { value: 'worm', label: 'worm — geen e tussen l of r en de medeklinker' },
+        { value: 'toekan', label: 'toekan — oe, ie, eu of ui in een langer woord' },
+        { value: 'panter', label: 'panter — twee medeklinkers in het midden' },
         { value: 'slang', label: 'slang — ng' },
         { value: 'stinkdier', label: 'stinkdier — nk' },
         { value: 'specht', label: 'specht — cht' },
@@ -185,6 +189,7 @@ export const TOOL_FAMILIES = [
         { value: 'zee_egel:afk', label: 'zee-egel · afkorting — koppelteken na afkorting' },
         { value: 'zee_egel:oud', label: 'zee-egel · oud/ex — koppelteken na oud- en ex-' },
         { value: 'pinguin', label: 'pinguïn — trema bij klinkerbotsing' },
+        { value: 'haviken', label: 'haviken — -ik, -erik, -es: één medeklinker in het meervoud' },
       ] },
     ],
   },

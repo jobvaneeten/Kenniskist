@@ -7,7 +7,7 @@ import { TerugKnop } from '../ui/index.jsx'
 // toolRender.jsx) — welke spellingcategorieën de leerkracht heeft aangevinkt.
 // Gaat als ?cats=... mee in de iframe-src; dictee-categorie.html leest die
 // query-param zelf uit om het categoriescherm over te slaan (zie aldaar).
-export default function DicteeThema({ onBack, addCuruntie, addBriefgeld, thema = 8, file, cats, woorden }) {
+export default function DicteeThema({ onBack, addCuruntie, addBriefgeld, thema = 8, file, cats, woorden, groep }) {
   // Tweede slot op het dempen: de pagina in het iframe zet de muziek zelf uit
   // en bij pagehide weer aan. Blijft dat event ooit uit, dan zou de muziek
   // stil blijven staan; bij het sluiten van dit scherm dus sowieso weer aan.
@@ -19,6 +19,8 @@ export default function DicteeThema({ onBack, addCuruntie, addBriefgeld, thema =
   // woorden: door de leerkracht ingesteld aantal woorden voor deze opdracht.
   // Zonder deze parameter draait het dictee gewoon de hele lijst af.
   if (woorden > 0) params.set('woorden', String(woorden))
+  // groep 5 t/m 8: alleen de categorieën en woorden van die groep (dictee-categorie.html)
+  if (groep >= 5 && groep <= 8) params.set('groep', String(groep))
   const query = params.toString()
   const src = query ? `${basis}?${query}` : basis
   const frameRef   = useRef(null)

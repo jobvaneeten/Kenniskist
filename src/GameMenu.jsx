@@ -75,6 +75,7 @@ const GAMES = {
   '6-rekenen': 'rekenen',
   '7-rekenen': 'rekenen',
   '8-rekenen': 'rekenen',
+  '5-spelling': 'spelling5',
   '6-spelling': 'werkwoord',
   '7-spelling': 'werkwoord',
   '8-spelling': 'werkwoord',
@@ -567,7 +568,7 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
         return <DicteeThema thema={dicteeNr} onBack={() => setSpellingKeuze('blokken')} addCuruntie={addCuruntie} addBriefgeld={addBriefgeld} />
       }
       if (spellingKeuze === 'categorie') {
-        return <DicteeThema file="dictees/dictee-categorie.html" onBack={() => setSpellingKeuze(heeftTaalActief() ? 'nietww' : null)} addCuruntie={addCuruntie} addBriefgeld={addBriefgeld} />
+        return <DicteeThema file="dictees/dictee-categorie.html" groep={year} onBack={() => setSpellingKeuze(heeftTaalActief() ? 'nietww' : null)} addCuruntie={addCuruntie} addBriefgeld={addBriefgeld} />
       }
       if (spellingKeuze === 'werkwoord') {
         return (

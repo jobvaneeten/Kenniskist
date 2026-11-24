@@ -35,6 +35,11 @@ def teksten():
     g4 = open(os.path.join(DICTEES, "..", "spelling", "groep4.js"), encoding="utf-8").read()
     for blok in re.findall(r'"woorden":\[([^\]]*)\]', g4):
         woorden.update(json.loads("[" + blok + "]"))
+    # woorden per groep (groep 5 t/m 8, losse woorden)
+    gw = open(os.path.join(DICTEES, "groepwoorden.js"), encoding="utf-8").read()
+    for groep in json.loads(gw[gw.index("{"):gw.rindex("}") + 1]).values():
+        for lijst in groep.values():
+            woorden.update(lijst)
     alles = [(t, "-12%") for t in sorted(woorden)] + [(t, "-4%") for t in sorted(zinnen - woorden)]
     namen = {}
     for t, _ in alles:

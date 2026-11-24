@@ -144,7 +144,7 @@ export default function RenderTool({ opdracht, groep, onBack, addBriefgeld, addC
       return (
         <DicteeThema
           onBack={onBack} addBriefgeld={addBriefgeld} addCuruntie={addCuruntie}
-          file="dictees/dictee-categorie.html" cats={config?.cats} woorden={aantal}
+          file="dictees/dictee-categorie.html" cats={config?.cats} woorden={aantal} groep={groep}
         />
       )
     case 'spelling-groep4':

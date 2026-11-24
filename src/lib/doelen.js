@@ -9,6 +9,7 @@
 // Puur data, net als tools.js — het portaal importeert dit zonder games.
 
 import { TOOL_BY_ID } from './tools.js'
+import spellingGroepen from '../data/spellingGroepen.json'
 import { heeftMethode, spellingLabel } from './methodes.js'
 
 const d = (titel, toolId, config = {}) => ({ titel, toolId, config })
@@ -22,6 +23,13 @@ const SPELLING_CATS = TOOL_BY_ID['dictee-categorie'].configVelden[0].opties
 const SPELLING_G4 = TOOL_BY_ID['spelling-groep4'].configVelden[0].opties
 
 const SPELLING_TOOLS = ['dictee-categorie', 'spelling-groep4']
+// welke spellingcategorieën bij welke groep horen (Taal actief, woordenlijsten groep 5-8)
+const CATS_PER_GROEP = Object.fromEntries(Object.entries(spellingGroepen).map(([g, l]) => [g, new Set(l)]))
+const catPast = (doel, klasGroepen) => {
+  if (doel.toolId !== 'dictee-categorie' || !klasGroepen?.length) return true
+  const cat = String(doel.config?.cats?.[0] ?? '').split(':')[0]
+  return !cat || klasGroepen.some(g => !CATS_PER_GROEP[g] || CATS_PER_GROEP[g].has(cat))
+}
 
 export const DOEL_VAKKEN = [
   {
@@ -114,7 +122,7 @@ export function doelVakkenVoor(klasGroepen) {
   return DOEL_VAKKEN
     .map(v => ({ ...v, onderwerpen: v.onderwerpen
       .filter(o => !o.methode || heeftMethode(o.methode))
-      .map(o => ({ ...o, doelen: o.doelen.filter(x => past(x.toolId))
+      .map(o => ({ ...o, doelen: o.doelen.filter(x => past(x.toolId) && catPast(x, klasGroepen))
         .map(x => SPELLING_TOOLS.includes(x.toolId) ? { ...x, titel: spellingLabel(x.titel) } : x) }))
       .filter(o => o.doelen.length) }))
     .filter(v => v.onderwerpen.length || v.vak === 'rekenen')
