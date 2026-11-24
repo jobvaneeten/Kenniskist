@@ -15,6 +15,39 @@ export const CATEGORIEEN = Object.fromEntries(categorieen.map(c => [c.id, c]))
 export const categorieNaam = (id) => CATEGORIEEN[id]?.naam ?? id
 export const categorieRegel = (id) => CATEGORIEEN[id]?.regel ?? ''
 
+// Subcategorie van één plek in een woord ('jaguar:eau', 'geit_bij:bij', ...),
+// dezelfde sleutels als in tools.js (dictee-categorie). Bepaald uit de letters
+// op die plek, of uit het hele woord als de plek daar te klein voor is.
+// null als de categorie geen subcategorieën heeft of het niet duidelijk is.
+export function subVan(woord, plek) {
+  const t = [...woord], lw = woord.toLowerCase()
+  const deel = t.slice(plek.van, plek.tot).join('').toLowerCase()
+  const rond = t.slice(Math.max(0, plek.van - 1), plek.tot + 1).join('').toLowerCase()
+  const voor = (t[plek.van - 1] ?? '').toLowerCase()
+  const k = (s) => (s ? plek.id + ':' + s : null)
+  switch (plek.id) {
+    case 'jaguar':
+      return k(/[éè]/.test(lw) ? 'e' : lw.includes('eau') ? 'eau' : lw.includes('oir') ? 'oir' : /air|ai/.test(lw) ? 'air' : lw.includes('ou') ? 'ou' : 'leen')
+    case 'weetwoord':
+      return k(/ds/.test(lw) ? 'ds' : lw.includes('tion') ? 'tion' : /^(ab|ad|ob|sub)/.test(lw) ? 'absub' : /erd$/.test(lw) ? 'erd' : null)
+    case 'zee_egel': {
+      if (/^(ex|oud)-/.test(lw)) return k('oud')
+      if (/^[A-Z]/.test(woord)) return k('aardrijk')
+      const i = woord.indexOf('-')
+      if (i > 0 && /[aeiouy]/.test(lw[i - 1] ?? '') && /[aeiouyé]/.test(lw[i + 1] ?? '')) return k('klinker')
+      return i > 0 && i <= 3 ? k('afk') : null
+    }
+    case 'reuzenschildpad': return k(/n/.test(deel) ? 'wel' : 'geen')
+    case 'hond_hert': return k(deel.includes('d') ? 'hond' : deel.includes('t') ? 'hert' : null)
+    case 'geit_bij': return k(rond.includes('ei') ? 'geit' : rond.includes('ij') ? 'bij' : null)
+    case 'pauw_goudvis': return k(/[ao]uw/.test(rond) ? 'pauw' : /[ao]u/.test(rond) ? 'goudvis' : null)
+    case 'duiven_ganzen': return k(deel.includes('v') ? 'duiven' : deel.includes('z') ? 'ganzen' : null)
+    case 'gevaarlijk': return k(lw.slice(plek.van, plek.van + 5).includes('lijk') || deel.includes('l') ? 'gevaarlijk' : 'giftig')
+    case 'baviaan_leguaan': return k(voor === 'i' || deel.startsWith('i') ? 'baviaan' : voor === 'u' || deel.startsWith('u') ? 'leguaan' : null)
+    default: return null
+  }
+}
+
 const LIDWOORD = /^(de|het|een|'t)\s+/
 
 // Hoe het kind het bedoelde: spaties en aanhalingstekens gelijk trekken, een
@@ -112,15 +145,15 @@ export function kijkWoordNa(woord, gegeven, correctie) {
   if (behouden / langste < 0.5 && langste - behouden >= 3) {
     return { goed: false, ingevuld, anders: true, stukken: [{ van: 0, tot: n, goed: woord.w, gegeven: ingevuld, cats: [] }], fout: [], overig: true, cats, handmatig: correctie != null }
   }
-  const fout = new Set()
+  const fout = new Set(), foutSub = new Set()
   let overig = false
   for (const s of stukken) {
     const geraakt = woord.c.filter(p => raakt(s, p, [...woord.w]))
-    geraakt.forEach(p => fout.add(p.id))
+    geraakt.forEach(p => { fout.add(p.id); const sub = subVan(woord.w, p); if (sub) foutSub.add(sub) })
     s.cats = [...new Set(geraakt.map(p => p.id))]
     if (!geraakt.length) overig = true
   }
-  return { goed: false, ingevuld, stukken, fout: cats.filter(c => fout.has(c)), overig, cats, handmatig: correctie != null }
+  return { goed: false, ingevuld, stukken, fout: cats.filter(c => fout.has(c)), foutSub: [...foutSub], overig, cats, handmatig: correctie != null }
 }
 
 // Het goede woord in stukjes, met de foute plekken gemarkeerd (voor de weergave).
@@ -148,18 +181,31 @@ export function analyseer(woorden, rijen) {
   const perLeerling = {}
   const perWoord = woorden.map(() => ({ fout: 0, varianten: {} }))
   const groepCat = Object.fromEntries(catIds.map(id => [id, { fout: 0, kansen: 0, leerlingen: [] }]))
+  // subcategorieën: per woord welke er in zitten (een woord telt één keer per sub)
+  const subsPerWoord = woorden.map(w => [...new Set(w.c.map(p => subVan(w.w, p)).filter(Boolean))])
+  const subIds = [...new Set(subsPerWoord.flat())]
+  const kansenSub = Object.fromEntries(subIds.map(k => [k, subsPerWoord.filter(l => l.includes(k)).length]))
+  const groepSub = Object.fromEntries(subIds.map(k => [k, { fout: 0, kansen: 0, leerlingen: [] }]))
+  const subsVan = Object.fromEntries(catIds.map(id => [id, subIds.filter(k => k.startsWith(id + ':'))]))
   let overig = 0
   for (const r of rijen) {
     const per = woorden.map((w, i) => kijkWoordNa(w, r.antwoorden?.[i] ?? '', r.correcties?.[String(i)]))
     const cat = Object.fromEntries(catIds.map(id => [id, 0]))
+    const sub = Object.fromEntries(subIds.map(k => [k, 0]))
     per.forEach((p, i) => {
       if (p.goed) return
       perWoord[i].fout++
       const v = p.ingevuld || '(leeg)'
       perWoord[i].varianten[v] = (perWoord[i].varianten[v] || 0) + 1
       p.fout.forEach(id => { cat[id]++ })
+      ;(p.foutSub ?? []).forEach(k => { if (k in sub) sub[k]++ })
       if (p.overig) overig++
     })
+    for (const k of subIds) {
+      groepSub[k].kansen += kansenSub[k]
+      groepSub[k].fout += sub[k]
+      if (sub[k]) groepSub[k].leerlingen.push({ id: r.leerling_id, fout: sub[k] })
+    }
     const score = per.filter(p => p.goed).length
     perLeerling[r.leerling_id] = { per, score, aantal: woorden.length, cat, oordeel: oordeel(score / woorden.length) }
     for (const id of catIds) {
@@ -168,5 +214,5 @@ export function analyseer(woorden, rijen) {
       if (cat[id]) groepCat[id].leerlingen.push({ id: r.leerling_id, fout: cat[id] })
     }
   }
-  return { catIds, kansen, perLeerling, perWoord, groepCat, overig }
+  return { catIds, kansen, perLeerling, perWoord, groepCat, overig, subsVan, kansenSub, groepSub }
 }

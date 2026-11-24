@@ -8,7 +8,7 @@ import { analyseer, kijkWoordNa, markeer, categorieNaam, categorieRegel, NORM } 
 import { bouwSpellingExport, downloadSpellingExport } from '../lib/spellingExport.js'
 import { Knop, Icoon } from '../ui/index.jsx'
 import DicteeDoelKlaarzetten from './DicteeDoelKlaarzetten.jsx'
-import { useBestaandeDoelen } from './dicteeDoelen.js'
+import { useBestaandeDoelen, subNaam } from './dicteeDoelen.js'
 import './dicteetab.css'
 
 // Tab "Dictee": het controledictee van Taal actief. De leerkracht zet een
@@ -256,6 +256,25 @@ function Afname({ dictee, klas, leerlingen, onTerug, onVeranderd }) {
                     )}
                     <DicteeDoelKlaarzetten catId={id} kansen={a.kansen[id]} leerlingen={g.leerlingen} naam={naam}
                       klas={klas} bestaand={bestaandeDoelen} onKlaargezet={doelErbij} />
+                    {(a.subsVan[id] ?? []).length > 0 && (
+                      <div className="pd-subs">
+                        {a.subsVan[id].map(k => {
+                          const gs = a.groepSub[k]
+                          const sg = 100 - pct(gs.fout, gs.kansen)
+                          return (
+                            <div key={k} className="pd-sub">
+                              <div className="pd-sub-kop">
+                                <span>{subNaam(k)}</span>
+                                <span className={'pd-sub-pct ' + (sg >= 85 ? 'goed' : sg >= 70 ? 'matig' : 'slecht')}>{sg}% goed</span>
+                                <span className="portaal-zacht pd-klein">{a.kansenSub[k]} {a.kansenSub[k] === 1 ? 'woord' : 'woorden'}</span>
+                              </div>
+                              <DicteeDoelKlaarzetten catId={k} kansen={a.kansenSub[k]} leerlingen={gs.leerlingen} naam={naam}
+                                klas={klas} bestaand={bestaandeDoelen} onKlaargezet={doelErbij} />
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
                   </div>
                 )
               })}

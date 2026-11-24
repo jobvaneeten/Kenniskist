@@ -110,3 +110,10 @@
 .pd-doel-lijst .pd-al { opacity: .6; }
 .pd-doel-knoppen { display: flex; gap: 8px; flex-wrap: wrap; }
 @media print { .pd-doel { display: none; } }
+
+/* subcategorieën onder een categorie in de analyse */
+.pd-subs { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; padding-left: 12px; border-left: 3px solid var(--kk-border, rgba(255,255,255,.12)); }
+.pd-sub-kop { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; font-weight: 700; }
+.pd-sub-pct { font-weight: 800; }
+.pd-sub-pct.goed { color: var(--kk-success, #34d399); } .pd-sub-pct.matig { color: var(--kk-warning, #fbbf24); } .pd-sub-pct.slecht { color: var(--kk-danger, #fb7185); }
+.pd-sub .pd-doel { margin-top: 4px; }

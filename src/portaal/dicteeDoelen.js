@@ -8,6 +8,17 @@ import { doelSleutel } from '../lib/vaardigheden.js'
 export const GRENS = 0.8   // aangevinkt: minder dan 80% goed in die categorie
 export const vandaag = () => new Date().toLocaleDateString('sv-SE')
 
+// Korte naam van een subcategorie in de analyse: "eau: leenwoord met eau" wordt
+// "leenwoord met eau"; bij de dubbele dieren het dier erbij ("hond: /t/ ...").
+export function subNaam(subId) {
+  const optie = TOOL_BY_ID['dictee-categorie']?.configVelden?.[0]?.opties?.find(o => o.value === subId)
+  if (!optie) return subId.split(':')[1]
+  const [dier, regel] = optie.label.split(' — ')
+  const kaal = spellingLabel(optie.label)
+  if (kaal !== optie.label) return kaal          // zonder Taal actief: alleen de regel
+  return dier.includes(' · ') ? regel : `${dier}: ${regel}`
+}
+
 export function doelTitel(catId) {
   const optie = TOOL_BY_ID['dictee-categorie']?.configVelden?.[0]?.opties?.find(o => o.value === catId)
   return spellingLabel(optie?.label ?? catId)
