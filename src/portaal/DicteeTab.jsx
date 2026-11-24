@@ -7,6 +7,8 @@ import {
 import { analyseer, kijkWoordNa, markeer, categorieNaam, categorieRegel, NORM } from '../lib/dicteeAnalyse.js'
 import { bouwSpellingExport, downloadSpellingExport } from '../lib/spellingExport.js'
 import { Knop, Icoon } from '../ui/index.jsx'
+import DicteeDoelKlaarzetten from './DicteeDoelKlaarzetten.jsx'
+import { useBestaandeDoelen } from './dicteeDoelen.js'
 import './dicteetab.css'
 
 // Tab "Dictee": het controledictee van Taal actief. De leerkracht zet een
@@ -54,7 +56,7 @@ export default function DicteeTab({ klas, leerlingen }) {
 
   const dictee = dictees?.find(d => d.id === openId)
   if (dictee) return (
-    <Afname dictee={dictee} leerlingen={leerlingen ?? []} onTerug={() => { setOpenId(null); laad() }} onVeranderd={laad} />
+    <Afname dictee={dictee} klas={klas} leerlingen={leerlingen ?? []} onTerug={() => { setOpenId(null); laad() }} onVeranderd={laad} />
   )
 
   return (
@@ -131,7 +133,11 @@ function download(dictee, rijen, leerlingen, nrs) {
   setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
-function Afname({ dictee, leerlingen, onTerug, onVeranderd }) {
+function Afname({ dictee, klas, leerlingen, onTerug, onVeranderd }) {
+  const [bestaandeDoelen, setBestaandeDoelen] = useBestaandeDoelen(leerlingen.map(l => l.id))
+  const doelErbij = (sleutel, ids) => setBestaandeDoelen(m => {
+    const n = new Map(m ?? []); n.set(sleutel, new Set([...(n.get(sleutel) ?? []), ...ids])); return n
+  })
   const [rijen, setRijen] = useState(null)
   const [open, setOpen] = useState(dictee.open)
   const [toonWoorden, setToonWoorden] = useState(false)
@@ -248,6 +254,8 @@ function Afname({ dictee, leerlingen, onTerug, onVeranderd }) {
                         ))}
                       </div>
                     )}
+                    <DicteeDoelKlaarzetten catId={id} kansen={a.kansen[id]} leerlingen={g.leerlingen} naam={naam}
+                      klas={klas} bestaand={bestaandeDoelen} onKlaargezet={doelErbij} />
                   </div>
                 )
               })}

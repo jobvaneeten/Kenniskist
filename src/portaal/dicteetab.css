@@ -102,3 +102,11 @@
 
 .pd-weg { color: var(--kk-warning); font-weight: 800; }
 .pd-weg-melding { margin: 0 0 10px; padding: 8px 12px; border-radius: 10px; font-weight: 700; border: 1px solid color-mix(in srgb, var(--kk-warning) 55%, transparent); background: color-mix(in srgb, var(--kk-warning) 12%, transparent); }
+
+/* categorie als doel klaarzetten (DicteeDoelKlaarzetten.jsx) */
+.pd-doel { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+.pd-doel.open { flex-direction: column; align-items: stretch; padding: 10px 12px; border-radius: 12px; background: var(--kk-surface-2, rgba(255,255,255,.04)); }
+.pd-doel-lijst { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 4px 14px; }
+.pd-doel-lijst .pd-al { opacity: .6; }
+.pd-doel-knoppen { display: flex; gap: 8px; flex-wrap: wrap; }
+@media print { .pd-doel { display: none; } }
