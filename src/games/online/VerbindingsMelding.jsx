@@ -21,17 +21,22 @@ export function VerbindStatus({ status }) {
 // Over het spel heen: de wifi viel even weg. De SDK probeert zelf opnieuw te
 // verbinden (de server houdt je plek 30 seconden vast). Lukt dat niet, dan
 // een melding met een knop terug.
-export default function VerbindingsMelding({ room, onTerug }) {
+// opnieuw: lukt terugkomen op dezelfde plek niet, dan meteen opnieuw meedoen
+// met dezelfde code (Vloerquiz) in plaats van de melding met de terugknop.
+export default function VerbindingsMelding({ room, onTerug, opnieuw }) {
   const [stand, setStand] = useState('ok')   // ok | kwijt | weg
 
   useEffect(() => {
     if (!room?.onDrop) return   // solo-oefenpotje: geen server
     const drop = () => setStand('kwijt')
     const terug = () => setStand('ok')
-    const weg = (code) => { if (code !== 1000 && code !== 4000) setStand('weg') }
+    const weg = (code) => {
+      if (code === 1000 || code === 4000 || code === 4001) return
+      if (opnieuw) { setStand('kwijt'); opnieuw() } else setStand('weg')
+    }
     room.onDrop(drop); room.onReconnect(terug); room.onLeave(weg)
     return () => { room.onDrop.remove(drop); room.onReconnect.remove(terug); room.onLeave.remove(weg) }
-  }, [room])
+  }, [room, opnieuw])
 
   if (stand === 'ok') return null
   return (

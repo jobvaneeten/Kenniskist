@@ -31,7 +31,9 @@ export async function maakOfJoin(roomType, opties, { maak, onStatus } = {}) {
 
   const client = new Colyseus.Client(SERVER_URL)
   let laatste
-  for (let poging = 0; poging < 3; poging++) {
+  // Meedoen probeert het vaker (een klas die tegelijk inlogt op trage wifi).
+  const pogingen = maak ? 3 : 6
+  for (let poging = 0; poging < pogingen; poging++) {
     try {
       return maak ? await client.create(roomType, opties) : await client.join(roomType, opties)
     } catch (e) {
@@ -43,7 +45,7 @@ export async function maakOfJoin(roomType, opties, { maak, onStatus } = {}) {
         throw Object.assign(new Error('potje niet gevonden'), { soort: 'niet-gevonden' })
       }
       if (/full|locked/i.test(tekst)) throw Object.assign(new Error('potje is vol'), { soort: 'vol' })
-      await wacht(1200 * (poging + 1))
+      await wacht(Math.min(5000, 1200 * (poging + 1)))
     }
   }
   throw Object.assign(new Error(String(laatste?.message ?? 'verbinden mislukt')), { soort: 'server' })

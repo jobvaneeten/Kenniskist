@@ -107,11 +107,12 @@ function maakSegmenten(zin, alleGroepen, plekken) {
 // Elke plek wordt daarna nog opgeknipt in doelen: één per woordgroep waar de
 // plek overheen loopt. Een gezegde als "heeft … gekocht" staat in twee groepen
 // en is dus twee doelen — beide stukken moeten aangeklikt worden.
-function bouwZinnen(labels, metSamengesteld) {
+function bouwZinnen(labels, metSamengesteld, alleenSamengesteld = false) {
   const perZin = new Map()
   for (const r of ZINSDEEL_VRAGEN) {
     if (!r.zinsdeel) continue
     if (!metSamengesteld && ZINSDEEL_SAMENGESTELD.has(r.zin)) continue
+    if (alleenSamengesteld && !ZINSDEEL_SAMENGESTELD.has(r.zin)) continue
     const indexen = woordIndexen(r.zin, zinsdeelFrase(r))
     if (!indexen.size) continue
     if (!perZin.has(r.zin)) perZin.set(r.zin, [])
@@ -170,9 +171,9 @@ const STAP_MIN_MS = 2000
 const nu = () => Date.now()
 
 export default function Zinsdelen({
-  labels, metSamengesteld = false, onBack, addBriefgeld, addCuruntie, aantal, beloning = BRIEFGELD,
+  labels, metSamengesteld = false, alleenSamengesteld = false, onBack, addBriefgeld, addCuruntie, aantal, beloning = BRIEFGELD,
 }) {
-  const zinnen = useMemo(() => bouwZinnen(labels, metSamengesteld), [labels, metSamengesteld])
+  const zinnen = useMemo(() => bouwZinnen(labels, metSamengesteld || alleenSamengesteld, alleenSamengesteld), [labels, metSamengesteld, alleenSamengesteld])
   const [pool, setPool] = useState(() => shuffle(zinnen))
   const [poolIdx, setPoolIdx] = useState(0)
   const [stapIdx, setStapIdx] = useState(0)

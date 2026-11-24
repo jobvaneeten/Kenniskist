@@ -9,6 +9,7 @@ const PAD = {
   plus: <path d="M12 5v14M5 12h14" />,
   vink: <path d="M4.5 12.5l5 5L19.5 7" />,
   min: <path d="M5 12h14" />,
+  kruis: <path d="M6 6l12 12M18 6L6 18" />,
   speel: <path d="M7 4.5v15l12.5-7.5z" fill="currentColor" />,
   pauze: <path d="M8.5 5v14M15.5 5v14" />,
   muziek: <><path d="M9 18V5.5l11-2.5v13" /><circle cx="6.5" cy="18" r="2.5" /><circle cx="17.5" cy="16" r="2.5" /></>,

@@ -302,3 +302,9 @@
 @media (prefers-reduced-motion: reduce) {
   .on-scherm::before, .on-paneel.einde > .on-stralen, .on-paneel, .on-speler, .on-code span, .on-embleem.groot { animation: none; }
 }
+
+/* Wachtkamer: de leerkracht haalt een kind eruit (Vloerquiz) */
+.on-eruit { flex: none; width: 30px; height: 30px; border-radius: 10px; display: grid; place-items: center; background: rgba(255,77,109,.14); border: 1px solid rgba(255,77,109,.5); color: #ff8fa3; cursor: pointer; }
+.on-eruit:hover, .on-eruit:focus-visible { background: rgba(255,77,109,.3); outline: none; }
+.on-eruit .on-icoon { width: 16px; height: 16px; stroke-width: 2.6; }
+.on-invoer.vast { opacity: .8; cursor: default; }

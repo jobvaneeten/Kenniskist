@@ -8,6 +8,7 @@ import { NeonScherm, Titel, StartScherm, Wachtkamer, Aftelling, HudKnoppen, HudK
 import { KLEUREN, VORMEN } from './online/gedeeld/vloerArena.js'
 import { maakVloerScene } from './vloerScene.js'
 import { EMOTES, mijnEmotes } from './online/emotes.js'
+import { useSessie } from '../lib/sessie.jsx'
 import './vloerquiz.css'
 
 // Vloerquiz: Kahoot met je eigen poppetje. De leerkracht zet in het portaal
@@ -163,40 +164,54 @@ function Ranglijst({ spelers, max = 5 }) {
 
 // ── Leerling ──────────────────────────────────────────────────────────────
 export default function VloerQuiz({ onBack }) {
-  const [naam, setNaam] = useState(() => localStorage.getItem('kk_playername') || '')
+  // Ingelogd: de naam van het account, niet aan te passen.
+  const { profiel } = useSessie()
+  const accountNaam = profiel?.weergavenaam?.trim() || ''
+  const [eigenNaam, setNaam] = useState(() => localStorage.getItem('kk_playername') || '')
+  const naam = accountNaam || eigenNaam
   const [room, setRoom] = useState(null)
   const [laden, setLaden] = useState(false)
   const [status, setStatus] = useState('')
   const [fout, setFout] = useState('')
+  const [eruit, setEruit] = useState(false)
+  const laatsteCode = useRef('')
 
   const meedoen = async (code) => {
-    setLaden(true); setFout('')
+    setLaden(true); setFout(''); setEruit(false)
+    laatsteCode.current = code
     try {
-      if (naam) localStorage.setItem('kk_playername', naam)
+      if (!accountNaam && naam) localStorage.setItem('kk_playername', naam)
       const r = await maakOfJoin('vloer', {
         joinCode: code, name: naam || 'Speler',
         shirt: localStorage.getItem('kk_shirt') || '', wearing: localStorage.getItem('kk_wearing') || '{}',
       }, { onStatus: setStatus })
       setRoom(r)
     } catch (e) {
+      setRoom(null)
       setFout(FOUT_TEKST[e.soort] ?? FOUT_TEKST.server)
     } finally {
       setLaden(false); setStatus('')
     }
   }
+  // Verbinding helemaal weg (niet terug op dezelfde plek): gewoon opnieuw meedoen.
+  const opnieuw = () => { setRoom(null); meedoen(laatsteCode.current) }
 
   if (!room) {
     return (
       <StartScherm accent={ACCENT} icoon="vraag" titel={<>Vloer<span>quiz</span></>}
-        sub="Typ de code die je leerkracht op het bord laat zien."
-        onBack={onBack} naam={naam} setNaam={setNaam} codeLengte={4}
+        sub={eruit ? 'Je leerkracht heeft je uit de wachtkamer gehaald. Kijk je naam na en doe opnieuw mee.' : 'Typ de code die je leerkracht op het bord laat zien.'}
+        onBack={onBack} naam={naam} setNaam={setNaam} naamVast={!!accountNaam} codeLengte={4}
         laden={laden} status={status} fout={fout} onJoin={meedoen} />
     )
   }
-  return <LeerlingSpel room={room} onStop={() => { if (room.connection?.isOpen) room.leave(); setRoom(null) }} />
+  return (
+    <LeerlingSpel room={room} opnieuw={opnieuw}
+      onEruit={() => { setEruit(true); setRoom(null) }}
+      onStop={() => { if (room.connection?.isOpen) room.leave(); setRoom(null) }} />
+  )
 }
 
-function LeerlingSpel({ room, onStop }) {
+function LeerlingSpel({ room, onStop, onEruit, opnieuw }) {
   const { canvasRef, hudRef, joyRef, klokRef, balkRef, stand, aantallen, herstart, beeldFout } = useVloer(room, room.sessionId)
   const [gestopt, setGestopt] = useState(false)
   const zelfWeg = useRef(false)
@@ -207,10 +222,13 @@ function LeerlingSpel({ room, onStop }) {
   useEffect(() => {
     const stopt = () => { zelfWeg.current = true; setGestopt(true); room.leave() }
     const weg = (code) => { if (!zelfWeg.current && (code === 1000 || code === 4000)) setGestopt(true) }
+    // de leerkracht haalt je uit de wachtkamer: terug naar het beginscherm
+    const eruit = () => { zelfWeg.current = true; room.leave(); onEruit?.() }
     const uit = room.onMessage('gestopt', stopt)
+    const uit2 = room.onMessage('eruit', eruit)
     room.onLeave(weg)
-    return () => { uit?.(); room.onLeave.remove(weg) }
-  }, [room])
+    return () => { uit?.(); uit2?.(); room.onLeave.remove(weg) }
+  }, [room, onEruit])
   const stop = () => { zelfWeg.current = true; onStop() }
 
   const ik = stand.spelers.find(s => s.ik)
@@ -291,7 +309,7 @@ function LeerlingSpel({ room, onStop }) {
           </div>
         </div>
       )}
-      {!gestopt && <VerbindingsMelding room={room} onTerug={stop} />}
+      {!gestopt && <VerbindingsMelding room={room} onTerug={stop} opnieuw={opnieuw} />}
     </div>
   )
 }
@@ -401,6 +419,7 @@ function HostSpel({ room, code, onBack }) {
         <Wachtkamer accent={ACCENT} over code={code} room={room} niveaus
           uitleg="Kinderen: Kledingkast, Speel een spel, Vloerquiz en typ deze code."
           spelers={s.spelers.map(p => ({ sid: p.sid, naam: p.naam, bot: p.bot, kleur: ACCENT }))}
+          onEruit={(sid) => room.send('eruit', sid)}
           onStart={() => room.send('start')} onBack={onBack} terugTekst="Stoppen" />
       )}
     </div>

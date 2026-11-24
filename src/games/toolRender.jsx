@@ -72,7 +72,7 @@ export default function RenderTool({ opdracht, groep, onBack, addBriefgeld, addC
         <TaalOefenen
           onBack={onBack} addBriefgeld={addBriefgeld} addCuruntie={addCuruntie}
           aantal={aantal}
-          config={{ mode: 'zinsdelen', zinsdelen: config?.zinsdelen, samengesteld: config?.samengesteld }}
+          config={{ mode: 'zinsdelen', zinsdelen: config?.zinsdelen, samengesteld: config?.samengesteld, alleenSamengesteld: config?.alleenSamengesteld }}
         />
       )
     case 'taal-interpunctie':

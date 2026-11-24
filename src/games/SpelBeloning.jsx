@@ -109,7 +109,11 @@ export default function SpelBeloning({ title, sub, geld, addCuruntie, onDone }) 
   // haalt. Telt o.a. voor "Werk aan je doelen".
   useEffect(() => {
     const van = Date.now()
-    return () => window.KennisKist?.spelPauze?.(van, Date.now())
+    window.kkSpelBezig = (window.kkSpelBezig || 0) + 1   // de klok van Werk aan je doelen pauzeert
+    return () => {
+      window.kkSpelBezig = Math.max(0, (window.kkSpelBezig || 1) - 1)
+      window.KennisKist?.spelPauze?.(van, Date.now())
+    }
   }, [])
   // Briefgeld wordt door de ouder-component uitgekeerd (via onDone); hier kies
   // je alleen het spel. Elk spel speelt één potje/ronde/level en gaat dan terug.

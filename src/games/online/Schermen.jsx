@@ -40,7 +40,7 @@ export function Titel({ icoon, children, sub }) {
 // alleen meedoen (de leerkracht maakt het potje, Vloerquiz).
 export function StartScherm({
   accent, icoon, titel, sub, onBack, naam, setNaam, codeLengte = 5,
-  laden, status, fout, onMaak, onJoin, children,
+  laden, status, fout, onMaak, onJoin, children, naamVast = false,
 }) {
   const [code, setCode] = useState('')
   const klaar = code.length >= 4
@@ -50,8 +50,10 @@ export function StartScherm({
         <Titel icoon={icoon} sub={sub}>{titel}</Titel>
         <div className="on-veld">
           <label htmlFor="on-naam">Jouw naam</label>
-          <input id="on-naam" className="on-invoer" placeholder="Speler" value={naam} maxLength={12}
-            autoComplete="off" onChange={e => setNaam(e.target.value)} />
+          {/* ingelogd: het is gewoon de naam van het kind, niet aan te passen */}
+          <input id="on-naam" className={'on-invoer' + (naamVast ? ' vast' : '')} placeholder="Speler" value={naam} maxLength={12}
+            autoComplete="off" readOnly={naamVast} aria-readonly={naamVast}
+            onChange={e => { if (!naamVast) setNaam(e.target.value) }} />
         </div>
         {children}
         {onMaak ? (
@@ -79,13 +81,17 @@ export function StartScherm({
 // De server zet een robotje voor de naam van een bot; wij tonen een eigen icoon.
 const kaal = (naam) => String(naam || 'Speler').replace(/^\u{1F916}\s*/u, '')
 
-function SpelerKaart({ s }) {
+function SpelerKaart({ s, onEruit }) {
   return (
     <li className={'on-speler' + (s.ik ? ' ik' : '')} style={{ '--sp': s.kleur }}>
       <span className="on-speler-kop"><Icoon naam={s.bot ? 'bot' : 'speler'} /></span>
       <span className="on-speler-naam">{kaal(s.naam)}</span>
       {s.ik && <span className="on-chip">Jij</span>}
       {s.bot && <span className="on-chip bot">Bot</span>}
+      {onEruit && !s.bot && (
+        <button type="button" className="on-eruit" aria-label={'Haal ' + kaal(s.naam) + ' eruit'} title="Uit het spel halen"
+          onClick={() => onEruit(s.sid)}><Icoon naam="kruis" /></button>
+      )}
     </li>
   )
 }
@@ -93,7 +99,7 @@ function SpelerKaart({ s }) {
 // Wachtkamer. spelers = [{ sid, naam, kleur, ik, bot, team }]. Met `teams`
 // staan ze in twee kolommen (rood tegen blauw). `niveaus`: de server kent
 // makkelijke/normale/moeilijke bots (voetbal en paintball).
-export function Wachtkamer({ accent, over, code, spelers, teams, niveaus, room, onStart, onBack, terugTekst, uitleg }) {
+export function Wachtkamer({ accent, over, code, spelers, teams, niveaus, room, onStart, onBack, terugTekst, uitleg, onEruit }) {
   const [niveau, setNiveau] = useState('normaal')
   const cijfers = String(code || '').split('')
   return (
@@ -119,7 +125,7 @@ export function Wachtkamer({ accent, over, code, spelers, teams, niveaus, room, 
             ))}
           </div>
         ) : (
-          <ul className="on-spelers">{spelers.map(s => <SpelerKaart key={s.sid} s={s} />)}</ul>
+          <ul className="on-spelers">{spelers.map(s => <SpelerKaart key={s.sid} s={s} onEruit={onEruit} />)}</ul>
         )}
 
         <div className="on-bots">

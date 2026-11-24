@@ -75,6 +75,7 @@ export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
   const [feedback, setFeedback] = useState(null) // { correct, gekozen, uitleg, juistAntwoord }
   const [showReward, setShowReward] = useState(false)
   const [samengesteld, setSamengesteld] = useState(false) // zinsdelen: ook zinnen met twee deelzinnen
+  const [alleenSamengesteld, setAlleenSamengesteld] = useState(false) // zinsdelen: alleen zinnen met twee deelzinnen
   const [tipOpen, setTipOpen] = useState(false)
   const [fijn, setFijn] = useState({})            // werkwoord/voornaamwoord: fijner oefenen?
   const [vasteLabels, setVasteLabels] = useState(null) // woordsoorten vanuit een opdracht
@@ -113,6 +114,7 @@ export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
     setChecked(init)
     if (config.mode === 'zinsdelen') {
       setSamengesteld(!!config.samengesteld)
+      setAlleenSamengesteld(!!config.alleenSamengesteld)
       setScreen('zinsdelen')
       return
     }
@@ -263,7 +265,8 @@ export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
     return (
       <Zinsdelen
         labels={checkedLabels}
-        metSamengesteld={samengesteld}
+        metSamengesteld={samengesteld || alleenSamengesteld}
+        alleenSamengesteld={alleenSamengesteld}
         beloning={beloning}
         onBack={() => (config ? onBack() : setScreen('filter'))}
         addBriefgeld={addBriefgeld} addCuruntie={addCuruntie}
@@ -403,6 +406,19 @@ export default function TaalOefenen({ onBack, addBriefgeld, addCuruntie, aantal,
             <span className="tv-filter-label">
               Ook samengestelde zinnen
               <span className="tv-filter-hint">zinnen met twee stukjes, dus twee keer een onderwerp en een persoonsvorm</span>
+            </span>
+          </label>
+        )}
+        {mode === 'zinsdelen' && (
+          <label className="tv-filter-item tv-filter-extra">
+            <input
+              type="checkbox"
+              checked={alleenSamengesteld}
+              onChange={e => setAlleenSamengesteld(e.target.checked)}
+            />
+            <span className="tv-filter-label">
+              Alleen samengestelde zinnen
+              <span className="tv-filter-hint">je krijgt alleen zinnen met twee stukjes</span>
             </span>
           </label>
         )}

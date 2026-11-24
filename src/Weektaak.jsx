@@ -15,6 +15,7 @@ import { groepeer, korteDatum } from './lib/weektaakMapjes.js'
 import RenderTool from './games/toolRender.jsx'
 import GameMenu from './GameMenu.jsx'
 import DoelenWerken, { TijdBalk, DoelwerkKlok } from './DoelenWerken.jsx'
+import { useDoelwerkKlok } from './lib/doelwerkKlok.js'
 import { isDoelwerk } from './lib/doelwerk.js'
 import { Knop, TerugKnop, Icoon } from './ui/index.jsx'
 import './game.css'
@@ -259,12 +260,13 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
     tijdGevierd.current.add(doelwerk.opdrachtId)
     setTijdFeest(stand.nodig)
   }
+  const klokStand = useDoelwerkKlok(doelwerk, profiel?.id, tijdVol)
   const klok = (doelwerk || doelStandNu || herhaling) && (
     <>
       <div className="wt-pillen">
         {herhaling && gekozen && <HerhalingPil stand={herhaling.stand} />}
         {doelStandNu && <div className="dw-klok wt-doelpil"><Icoon naam="doel" /><DoelBalk stand={doelStandNu} /></div>}
-        {doelwerk && <DoelwerkKlok opdracht={doelwerk} profielId={profiel?.id} onKlaar={tijdVol} />}
+        {doelwerk && <DoelwerkKlok stand={klokStand} />}
       </div>
       {tijdFeest && (
         <DoelFeest kop="Je tijd zit erop!" knopTekst="Verder oefenen" onKlaar={() => setTijdFeest(null)}
@@ -316,13 +318,19 @@ export default function Weektaak({ onBack, addBriefgeld, addCuruntie, openMapId 
 
   if (doelwerk) {
     return (
+      <>
       <DoelenWerken
-        opdracht={doelwerk} alle={opdrachten ?? []}
+        opdracht={doelwerk} alle={opdrachten ?? []} stand={klokStand}
         onKiesDoel={(o, titel) => setUitleg({ opdracht: o, titel })}
         onKiesHerhaling={kiesHerhaling}
         onVrij={() => setVrij(true)}
-        onBack={() => setDoelwerkId(null)}
+        onBack={() => { setDoelwerkId(null); setVervers(v => v + 1) }}
       />
+      {tijdFeest && (
+        <DoelFeest kop="Je tijd zit erop!" knopTekst="Verder" onKlaar={() => setTijdFeest(null)}
+          tekst={`Je hebt ${tijdFeest} minuten aan je doelen gewerkt. Goed gedaan! Je mag stoppen of nog even doorgaan.`} />
+      )}
+      </>
     )
   }
 

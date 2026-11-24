@@ -133,17 +133,16 @@ export async function kopieerWeektaak({ bronId, schoolId, klasId, titel, startOp
     idKaart.set(o.id, data.id)
   }
 
-  // status gaat wél mee: "hoeft deze opdracht niet te maken" is een afspraak
-  // over de leerling, niet over die ene week — zet je de weektaak opnieuw klaar,
-  // dan geldt hij nog steeds. Herkansingen blijven op 0: die hoorden bij het
-  // werk van de vorige week.
+  // "Hoeft niet te maken" (vrijgesteld) gaat niet mee: dat gold voor die ene
+  // week. In de kopie staat elke opdracht weer open voor iedereen. Herkansingen
+  // blijven op 0: die hoorden bij het werk van de vorige week.
   const nieuweToewijzingen = bronToewijzingen
     .filter(t => idKaart.has(t.opdracht_id))
     .map(t => ({
       opdracht_id: idKaart.get(t.opdracht_id),
       leerling_id: t.leerling_id,
       aantal_override: t.aantal_override,
-      status: t.status ?? 'open',
+      status: 'open',
       school_id: schoolId,
     }))
   if (nieuweToewijzingen.length) {

@@ -1,8 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
 import DoelBalk from './DoelBalk.jsx'
 import { soortVan } from './lib/weektaak.js'
 import { groepeer } from './lib/weektaakMapjes.js'
-import { haalDoelwerkStand, tijdStandVan } from './lib/doelwerk.js'
 import { toolLabel } from './lib/tools.js'
 import { Knop, TerugKnop, Icoon } from './ui/index.jsx'
 import { HerhaalKaarten } from './Herhaling.jsx'
@@ -26,10 +24,10 @@ export function TijdBalk({ stand }) {
 // "Werk aan je doelen" aan de leerlingkant: de open doelen om uit te kiezen,
 // of, als ze allemaal behaald zijn, zelf een oefening kiezen. De tijd telt
 // alleen als er echt geoefend wordt (zie migratie 0021).
-export default function DoelenWerken({ opdracht, alle, onKiesDoel, onKiesHerhaling, onVrij, onBack }) {
+export default function DoelenWerken({ opdracht, alle, stand: liveStand, onKiesDoel, onKiesHerhaling, onVrij, onBack }) {
   const doelen = alle.filter(o => soortVan(o) === 'doel')
   const open = groepeer(doelen.filter(o => !o.klaar))
-  const stand = opdracht.tijdStand
+  const stand = liveStand ?? opdracht.tijdStand
   return (
     <div className="game-screen">
       <TerugKnop onClick={onBack} />
@@ -39,7 +37,7 @@ export default function DoelenWerken({ opdracht, alle, onKiesDoel, onKiesHerhali
         <p className="game-header-sub">
           {stand?.klaar
             ? 'Je tijd zit erop. Je mag nog doorgaan als je wilt.'
-            : `Oefen ${minuten(stand?.nodig ?? 15)}. Alleen oefenen telt, spelletjes niet.`}
+            : `Werk ${minuten(stand?.nodig ?? 15)} aan je doelen. De klok loopt, behalve tijdens een spelletje.`}
         </p>
         <div className="dw-tijd"><TijdBalk stand={stand} /></div>
       </div>
@@ -73,32 +71,15 @@ export default function DoelenWerken({ opdracht, alle, onKiesDoel, onKiesHerhali
   )
 }
 
-// Klein klokje in beeld tijdens het oefenen: hoeveel minuten er nog liggen. Na
-// elk opgeslagen antwoord (seintje uit kenniskist-login.js) halen we de stand
-// opnieuw op, dus dit is de echte oefentijd zonder spelletjes.
-// onKlaar: de tijd is net vol geraakt (Weektaak.jsx laat dan een feestje zien).
-export function DoelwerkKlok({ opdracht, profielId, onKlaar }) {
-  const [stand, setStand] = useState(opdracht.tijdStand)
-  const wasKlaar = useRef(!!opdracht.tijdStand?.klaar)
-  const meld = useRef(onKlaar)
-  useEffect(() => { meld.current = onKlaar })
-  useEffect(() => {
-    let actief = true
-    const bijOpslaan = async () => {
-      const rij = await haalDoelwerkStand(opdracht.opdrachtId, profielId)
-      if (!actief || !rij) return
-      const nieuw = tijdStandVan(rij, opdracht.config)
-      setStand(nieuw)
-      if (nieuw.klaar && !wasKlaar.current) { wasKlaar.current = true; meld.current?.(nieuw) }
-    }
-    window.addEventListener('kk-resultaat-opgeslagen', bijOpslaan)
-    return () => { actief = false; window.removeEventListener('kk-resultaat-opgeslagen', bijOpslaan) }
-  }, [opdracht.opdrachtId, opdracht.config, profielId])
+const mmss = (ms) => { const s = Math.max(0, Math.ceil(ms / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}` }
+
+// Klein klokje in beeld tijdens het werken: hoeveel tijd er nog ligt, per seconde.
+export function DoelwerkKlok({ stand }) {
   if (!stand) return null
   return (
     <div className={`dw-klok${stand.klaar ? ' klaar' : ''}`}>
       <Icoon naam={stand.klaar ? 'goed' : 'doel'} />
-      {stand.klaar ? 'Je tijd zit erop! Je mag terug.' : `Doelen · nog ${stand.nodig - stand.gewerkt} min`}
+      {stand.klaar ? 'Je tijd zit erop! Je mag terug.' : `Doelen · nog ${mmss(stand.nodig * 60000 - stand.ms)}`}
     </div>
   )
 }

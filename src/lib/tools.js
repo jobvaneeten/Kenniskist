@@ -54,6 +54,7 @@ export const TOOL_FAMILIES = [
         'onderwerp', 'persoonsvorm', 'gezegde', 'lijdend voorwerp', 'meewerkend voorwerp', 'bepaling',
       ] },
       { key: 'samengesteld', type: 'bool', label: 'Ook samengestelde zinnen' },
+      { key: 'alleenSamengesteld', type: 'bool', label: 'Alleen samengestelde zinnen' },
     ],
   },
   {
