@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Begrijpend Lezen – Nieuwe gezinnen</title>
+<title>Begrijpend lezen – Regenbooggezinnen</title>
 <link href="/fonts/fonts.css" rel="stylesheet">
 <style>
   :root {
@@ -270,7 +270,7 @@
   .bl-fig { margin:0 0 14px; }
   .bl-fig img { display:block; max-width:100%; max-height:300px; border-radius:12px; margin:0 auto; box-shadow:0 8px 24px -10px rgba(0,0,0,.6); }
   .bl-fig figcaption { font-size:.85rem; color:var(--ink-soft); text-align:center; margin-top:6px; font-style:italic; }
-  .bl-cover { display:block; max-width:min(320px,100%); max-height:220px; margin:0 auto 14px; border-radius:14px; box-shadow:0 10px 28px -12px rgba(0,0,0,.7); }
+  .bl-cover { display:block; width:min(360px,100%); aspect-ratio:4/3; object-fit:cover; margin:0 auto 14px; border-radius:16px; box-shadow:0 10px 28px -12px rgba(0,0,0,.7); }
   @media(min-width:1000px){ .q-breed > .bl-fig { grid-column:1; } }
 </style>
 <style>.order-item,.drag-item{touch-action:none}.order-item.dragging,.drag-item.dragging{opacity:.6}</style>
@@ -279,9 +279,9 @@
 <body>
 
 <header>
-  <p class="eyebrow" id="bl-eyebrow">Begrijpend lezen · Les 6</p>
-  <h1>Nieuwe gezinnen</h1>
-  <p>Thema: Fantastische families</p>
+  <p class="eyebrow" id="bl-eyebrow">Begrijpend lezen</p>
+  <h1>Regenbooggezinnen</h1>
+  <p>Thema: Strijd om vrijheid</p>
 </header>
 <div id="progress-bar-wrap"><div id="progress-bar"></div></div>
 <div id="score-badge">⭐ <span id="score-num">0</span> pt</div>
@@ -289,14 +289,13 @@
 <main>
 
 <div id="intro-screen" class="screen active">
-  <div class="compass">🌈</div>
-  <img class="bl-cover" src="families/l6-regenboog.jpg" alt="">
+  
   <h2>Klaar om te lezen?</h2>
-  <p>Je leest een tijdlijn: "Van taboe naar trots". Hij laat zien hoe er in Nederland steeds meer ruimte kwam voor homo’s, lesbiennes en regenbooggezinnen. Je beantwoordt tien vragen. Bij <strong>letterlijke vragen</strong> markeer je het antwoord <em>in de tekst zelf</em>. Klik woorden aan om ze te selecteren.</p>
+  <p>Sem uit groep 8 houdt een spreekbeurt over regenbooggezinnen. Hij heeft zelf twee moeders. Sem is verzonnen, de geschiedenis waarover hij vertelt niet. Je beantwoordt tien vragen. Bij <strong>letterlijke vragen</strong> markeer je het antwoord <em>in de tekst zelf</em>. Klik woorden aan om ze te selecteren.</p>
   <div class="legend">
-    <span style="background:#d0e8ff;color:#0a3a6e;">🔍 Letterlijk – markeer in de tekst</span>
-    <span style="background:#fde8c0;color:#7a3d00;">💡 Afleidend</span>
-    <span style="background:#dff0e2;color:#1a5c2a;">💬 Evaluerend</span>
+    <span style="background:#d0e8ff;color:#0a3a6e;">Letterlijk – markeer in de tekst</span>
+    <span style="background:#fde8c0;color:#7a3d00;">Afleidend</span>
+    <span style="background:#dff0e2;color:#1a5c2a;">Evaluerend</span>
   </div>
   <button class="btn btn-primary" onclick="startQuiz()">Begin de oefening →</button>
 </div>
@@ -309,7 +308,7 @@
 
 <div id="finish-screen" class="screen">
   <div class="medal" id="finish-medal">🏅</div>
-  <h2>Goed gedaan, tijdlijnlezer!</h2>
+  <h2>Mooi gelezen, spreekbeurtluisteraar!</h2>
   <div class="score-big" id="finish-score">0/0</div>
   <p id="finish-msg"></p>
   <div id="finish-overview"></div>
@@ -336,198 +335,161 @@
 const VRAGEN = {
  "7": [
   {
-   "type": "mc",
-   "qtype": "inferring",
-   "label": "💡 Afleidend",
-   "labelClass": "label-inferring",
-   "question": "Wat betekent \"taboe\" in deze tekst?",
-   "passage": "Jaren 60 – Taboe. Over homoseksualiteit wordt bijna niet openlijk gepraat. Veel homo’s en lesbiennes durven niet te zeggen op wie ze verliefd zijn. In veel gezinnen is het een taboe. Ook op televisie komt het onderwerp bijna nooit voorbij.",
-   "feedback": "In de tekst staat dat er \"bijna niet openlijk\" over gepraat wordt. Een taboe is een onderwerp waar je liever niet over praat.",
-   "img": "families/l6-taboe.jpg",
-   "bijschrift": "Jaren 60",
-   "options": [
-    "Iets wat verboden is in de wet",
-    "Iets waar mensen liever niet over praten",
-    "Een programma op televisie",
-    "Een ander woord voor verliefd"
-   ],
-   "correct": 1,
-   "points": 1
-  },
-  {
    "type": "mark",
    "qtype": "literal",
-   "label": "🔍 Letterlijk",
+   "label": "Letterlijk",
    "labelClass": "label-literal",
-   "question": "Markeer in de tekst wat er in artikel 248bis stond.",
-   "passage": "1969-1971 – Protest artikel 248bis. Sinds 1911 staat er in de wet dat jongeren onder de 21 jaar geen verkering mogen hebben met iemand van hetzelfde geslacht. Voor jongeren die heteroseksueel zijn, geldt deze wet niet. Studenten vinden deze wet, die artikel 248bis wordt genoemd, oneerlijk. Ze protesteren. En met succes! De wet wordt in 1971 afgeschaft.",
-   "feedback": "Het staat in de eerste zin: \"... dat jongeren onder de 21 jaar geen verkering mogen hebben met iemand van hetzelfde geslacht.\"",
-   "img": "families/l6-protest.jpg",
-   "bijschrift": "1969-1971: protest tegen artikel 248bis",
+   "question": "Markeer in de tekst wat een regenbooggezin is.",
+   "passage": "Goedemorgen allemaal. Mijn spreekbeurt gaat over regenbooggezinnen. Ik woon zelf in zo’n gezin: ik heb twee moeders, mama Lotte en mama Ines. Een regenbooggezin is een gezin waarin minstens één ouder homo, lesbisch, bi of transgender is. Er zijn heel veel soorten gezinnen: met een vader en een moeder, met één ouder, met stiefouders of met twee vaders. Ze lijken allemaal op elkaar in één ding: er wordt voor de kinderen gezorgd.",
+   "feedback": "Het staat in de zin: \"Een regenbooggezin is een gezin waarin minstens één ouder homo, lesbisch, bi of transgender is.\"",
    "correctSpan": {
-    "start": 13,
-    "end": 26
+    "start": 22,
+    "end": 36
    },
    "coreWords": [
-    16,
-    19,
-    26
-   ],
-   "points": 2
-  },
-  {
-   "type": "mc",
-   "qtype": "inferring",
-   "label": "💡 Afleidend",
-   "labelClass": "label-inferring",
-   "question": "Hoe reageerden de kijkers op Benno Premsela?",
-   "passage": "1964 – Openlijk homoseksueel. Op televisie vertelt binnenhuisarchitect Benno Premsela openlijk dat hij homoseksueel is. Veel kijkers schrikken daarvan. Voor anderen voelt het juist als een belangrijke stap: eindelijk zegt iemand hardop wat veel mensen geheimhouden.",
-   "feedback": "\"Veel kijkers schrikken daarvan. Voor anderen voelt het juist als een belangrijke stap.\" Er waren dus twee soorten reacties.",
-   "img": "families/l6-premsela.jpg",
-   "bijschrift": "1964: Benno Premsela",
-   "options": [
-    "Iedereen vond het heel normaal",
-    "Veel kijkers schrokken, maar voor anderen was het juist een belangrijke stap",
-    "Niemand keek naar het programma",
-    "Alle kijkers werden boos"
-   ],
-   "correct": 1,
-   "points": 1
-  },
-  {
-   "type": "mark",
-   "qtype": "literal",
-   "label": "🔍 Letterlijk",
-   "labelClass": "label-literal",
-   "question": "Markeer in de tekst wat de roze beweging is.",
-   "passage": "1970 – Eerste mannenzoen op tv. Op de Nederlandse televisie gebeurt iets wat kijkers nog nooit hebben gezien: twee mannen zoenen elkaar. Sommige mensen vinden dat vreemd of ongemakkelijk. Maar homoseksualiteit wordt daardoor wel zichtbaarder. Jaren 70-80 – De roze beweging groeit. Steeds meer homo’s en lesbiennes komen in actie. Ze protesteren, vragen om gelijke rechten en durven vaker openlijk zichzelf te zijn. Al die mensen en organisaties samen worden de roze beweging genoemd.",
-   "feedback": "Het staat in de laatste zin: \"Al die mensen en organisaties samen worden de roze beweging genoemd.\"",
-   "img": "families/l6-tv.jpg",
-   "bijschrift": "1970: de eerste mannenzoen op tv",
-   "correctSpan": {
-    "start": 63,
-    "end": 73
-   },
-   "coreWords": [
-    65,
-    67,
-    68
+    23,
+    30
    ],
    "points": 2
   },
   {
    "type": "mark",
    "qtype": "literal",
-   "label": "🔍 Letterlijk",
+   "label": "Letterlijk",
    "labelClass": "label-literal",
-   "question": "Markeer in de tekst wat de Algemene wet gelijke behandeling zegt.",
-   "passage": "1994 – Bescherming tegen discriminatie. Er komt een nieuwe wet die homo’s, lesbiennes en bi’s beter beschermt tegen discriminatie: de Algemene wet gelijke behandeling. Die wet zegt dat iemand niet oneerlijk behandeld mag worden omdat diegene homo, lesbisch of bi is.",
-   "feedback": "Het staat in de laatste zin: \"Die wet zegt dat iemand niet oneerlijk behandeld mag worden omdat diegene homo, lesbisch of bi is.\"",
-   "img": "families/l6-wet.jpg",
-   "bijschrift": "1994: krantenkop over de nieuwe wet",
+   "question": "Markeer in de tekst wat een taboe is.",
+   "passage": "Dat zo’n gezin heel gewoon is, was vroeger anders. Ik ga jullie meenemen terug in de tijd. Rond 1950 werd er bijna nergens over homoseksualiteit gepraat. Het was een taboe: iets waar je niet over hoorde te praten. Veel homo’s en lesbiennes hielden geheim op wie ze verliefd waren. Ze waren bang om hun baan, hun vrienden of zelfs hun familie kwijt te raken. Mijn oma zegt dat ze toen niemand kende die openlijk homo was.",
+   "feedback": "De uitleg staat na de dubbele punt: \"iets waar je niet over hoorde te praten.\"",
    "correctSpan": {
-    "start": 28,
-    "end": 40
+    "start": 30,
+    "end": 37
    },
    "coreWords": [
-    29,
-    30,
-    31
+    33,
+    37
    ],
    "points": 2
   },
   {
-   "type": "mc",
-   "qtype": "inferring",
-   "label": "💡 Afleidend",
-   "labelClass": "label-inferring",
-   "question": "Wat is het verschil tussen de Gay Pride in Amsterdam en de Pride-marsen in andere landen?",
-   "passage": "1996 – Eerste Gay Pride. Amsterdam krijgt zijn eerste Gay Pride: een optocht van versierde boten door de grachten. Mensen zwaaien met regenboogvlaggen en vieren dat ze zichzelf mogen zijn. In andere landen bestaan al langer Pride-marsen als protest voor gelijke rechten. De Amsterdamse Gay Pride is vooral ook een feest: trots zijn op wie je bent.",
-   "feedback": "In andere landen zijn het marsen \"als protest voor gelijke rechten\". De Amsterdamse Gay Pride is \"vooral ook een feest\".",
-   "img": "families/l6-pride.jpg",
-   "bijschrift": "1996: de eerste Gay Pride in Amsterdam",
-   "options": [
-    "In Amsterdam varen boten, in andere landen rijden auto’s",
-    "In andere landen waren het vooral protesten, in Amsterdam is het vooral ook een feest",
-    "In Amsterdam mag je geen vlag gebruiken",
-    "Er is geen verschil"
-   ],
-   "correct": 1,
-   "points": 1
-  },
-  {
    "type": "mark",
    "qtype": "literal",
-   "label": "🔍 Letterlijk",
+   "label": "Letterlijk",
    "labelClass": "label-literal",
-   "question": "Markeer in de tekst waarom Nederland in 2001 wereldgeschiedenis schreef.",
-   "passage": "2001 – Eerste homohuwelijk ter wereld. In de nacht van 1 april 2001 trouwen in Amsterdam vier homoseksuele stellen. Burgemeester Job Cohen sluit de huwelijken in het stadhuis. Daarmee schrijft Nederland wereldgeschiedenis: het is het eerste land waar twee mannen of twee vrouwen officieel met elkaar mogen trouwen. (Artikel 248bis werd in 1971 afgeschaft.)",
-   "feedback": "Het staat na de dubbele punt: \"het is het eerste land waar twee mannen of twee vrouwen officieel met elkaar mogen trouwen.\"",
-   "img": "families/l6-huwelijk.jpg",
-   "bijschrift": "2001: het eerste homohuwelijk ter wereld",
+   "question": "Markeer in de tekst wanneer artikel 248bis werd afgeschaft.",
+   "passage": "Er bestond zelfs een oneerlijke wet. Sinds 1911 stond in artikel 248bis dat volwassenen geen relatie mochten hebben met iemand van hetzelfde geslacht onder de 21 jaar. Voor een relatie tussen een jongen en een meisje gold dat niet: daar was de grens zestien jaar. Er werden dus andere regels gemaakt voor homo’s dan voor hetero’s. Rond 1969 kwamen studenten daartegen in actie. Ze protesteerden in Den Haag. Met succes: in 1971 werd het artikel afgeschaft.",
+   "feedback": "Het staat aan het eind: \"in 1971 werd het artikel afgeschaft.\"",
    "correctSpan": {
-    "start": 32,
-    "end": 47
+    "start": 70,
+    "end": 75
    },
    "coreWords": [
-    35,
-    36,
-    47
+    71,
+    75
    ],
    "points": 2
   },
   {
-   "type": "mc",
-   "qtype": "inferring",
-   "label": "💡 Afleidend",
-   "labelClass": "label-inferring",
-   "question": "Wat veranderde er in 2014 voor lesbische stellen?",
-   "passage": "2014 – Samen ouders. Voor lesbische stellen wordt het makkelijker om samen officieel ouder te zijn. Tot 2014 werd alleen de moeder die het kind kreeg automatisch als ouder geregistreerd. Vanaf 2014 kan ook de andere moeder veel makkelijker officieel als ouder worden erkend.",
-   "feedback": "\"Vanaf 2014 kan ook de andere moeder veel makkelijker officieel als ouder worden erkend.\" Trouwen mocht al sinds 2001.",
-   "img": "families/l6-samenouders.jpg",
-   "bijschrift": "2014: samen ouders",
-   "options": [
-    "Ze mochten voor het eerst trouwen",
-    "Ook de moeder die het kind niet zelf kreeg, kon makkelijker officieel ouder worden",
-    "Ze kregen meer kinderbijslag",
-    "Ze mochten voor het eerst samenwonen"
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst waarom sommige kijkers opgelucht waren.",
+   "passage": "Langzaam werd het onderwerp bespreekbaar. In 1964 vertelde de ontwerper Benno Premsela op de televisie dat hij homoseksueel was. Dat had in Nederland nog nooit iemand op tv gedaan. Veel kijkers schrokken ervan. Anderen waren juist opgelucht: eindelijk zei iemand hardop wat zij zelf geheimhielden. Ook de vereniging COC, die al in 1946 was opgericht, kwam steeds vaker openlijk op voor de rechten van homo’s en lesbiennes.",
+   "feedback": "Het staat na de dubbele punt: \"eindelijk zei iemand hardop wat zij zelf geheimhielden.\"",
+   "correctSpan": {
+    "start": 37,
+    "end": 44
+   },
+   "coreWords": [
+    40,
+    44
    ],
-   "correct": 1,
-   "points": 1
+   "points": 2
   },
   {
    "type": "mark",
    "qtype": "literal",
-   "label": "🔍 Letterlijk",
+   "label": "Letterlijk",
    "labelClass": "label-literal",
-   "question": "Markeer in de tekst welke voorbeelden van een regenbooggezin genoemd worden in de zin met \"Denk bijvoorbeeld aan\".",
-   "passage": "Vanaf 2015 – Regenbooggezinnen. Steeds meer kinderen groeien op in een regenbooggezin. Dat is een gezin dat net even anders is dan een gezin met een vader en een moeder. Denk bijvoorbeeld aan twee moeders, twee vaders, één ouder. Maar het kan ook gaan om een samengesteld gezin of een gezin met ouders die samen op een andere manier een kind opvoeden. Op scholen, in kinderboeken en op televisie worden deze gezinnen steeds zichtbaarder.",
-   "feedback": "Na \"Denk bijvoorbeeld aan\" staan de voorbeelden: \"twee moeders, twee vaders, één ouder.\"",
-   "img": "families/l6-regenboog.jpg",
-   "bijschrift": "Vanaf 2015: regenbooggezinnen",
+   "question": "Markeer in de tekst wat het Homomonument herdenkt.",
+   "passage": "In de jaren zeventig en tachtig gingen steeds meer mensen de straat op voor gelijke rechten. Ze organiseerden demonstraties en feesten. In 1987 kwam in Amsterdam het Homomonument: drie grote roze driehoeken langs de gracht. Het monument herdenkt homo’s en lesbiennes die vervolgd zijn, bijvoorbeeld in de Tweede Wereldoorlog. Het was het eerste monument ter wereld voor deze groep. Nog steeds leggen mensen er bloemen neer.",
+   "feedback": "Het staat in de zin: \"Het monument herdenkt homo’s en lesbiennes die vervolgd zijn, bijvoorbeeld in de Tweede Wereldoorlog.\"",
+   "correctSpan": {
+    "start": 35,
+    "end": 48
+   },
+   "coreWords": [
+    37,
+    42
+   ],
+   "points": 2
+  },
+  {
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst wat een werkgever volgens deze wet niet mag.",
+   "passage": "Een belangrijke wet kwam in 1994: de Algemene wet gelijke behandeling. Die wet zegt dat je iemand niet anders mag behandelen vanwege zijn geloof, huidskleur, geslacht of vanwege op wie hij verliefd is. Een werkgever mag bijvoorbeeld niemand weigeren omdat diegene homo of lesbisch is. Wie zich toch oneerlijk behandeld voelt, kan een klacht indienen. Zo werden homo’s en lesbiennes voor het eerst goed beschermd tegen discriminatie.",
+   "feedback": "Het staat in de zin: \"Een werkgever mag bijvoorbeeld niemand weigeren omdat diegene homo of lesbisch is.\"",
    "correctSpan": {
     "start": 33,
-    "end": 38
+    "end": 44
    },
    "coreWords": [
     34,
-    36,
     38
+   ],
+   "points": 2
+  },
+  {
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst wat de Canal Parade is.",
+   "passage": "Vanaf 1996 is er in Amsterdam elk jaar de Pride. Hoogtepunt is de Canal Parade: een optocht van versierde boten door de grachten. Honderdduizenden mensen kijken vanaf de kades en de bruggen. Op de boten varen niet alleen clubs en verenigingen mee, maar ook politie, het leger en bedrijven. Voor veel mensen is de Pride een groot feest. Tegelijk is het ook een protest: in veel landen hebben homo’s en lesbiennes nog steeds geen gelijke rechten.",
+   "feedback": "De uitleg staat na de dubbele punt: \"een optocht van versierde boten door de grachten.\"",
+   "correctSpan": {
+    "start": 15,
+    "end": 22
+   },
+   "coreWords": [
+    16,
+    19
+   ],
+   "points": 2
+  },
+  {
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst wat een wereldprimeur betekent.",
+   "passage": "Een wereldprimeur kwam op 1 april 2001. Om middernacht trouwden in het stadhuis van Amsterdam vier stellen van twee mannen of twee vrouwen. De burgemeester sloot zelf de huwelijken. Nederland was het eerste land ter wereld waar dat officieel mocht. Journalisten uit allerlei landen kwamen kijken. Een wereldprimeur betekent dat iets voor het eerst op de hele wereld gebeurt. Sindsdien zijn veel andere landen het Nederlandse voorbeeld gevolgd.",
+   "feedback": "Het staat in de zin: \"Een wereldprimeur betekent dat iets voor het eerst op de hele wereld gebeurt.\"",
+   "correctSpan": {
+    "start": 46,
+    "end": 58
+   },
+   "coreWords": [
+    53,
+    57
    ],
    "points": 2
   },
   {
    "type": "order",
    "qtype": "inferring",
-   "label": "💡 Afleidend – Volgorde",
+   "label": "Afleidend – Volgorde",
    "labelClass": "label-inferring",
-   "question": "Zet deze gebeurtenissen van de tijdlijn op volgorde. Wat gebeurde het eerst?",
-   "passage": "In 2001 trouwden in Amsterdam de eerste homostellen ter wereld. Vijf jaar eerder was de eerste Gay Pride. In 1994 kwam de Algemene wet gelijke behandeling. Al in 1964 vertelde Benno Premsela op tv dat hij homo was. Zes jaar later was op tv de eerste mannenzoen te zien. Artikel 248bis werd in 1971 afgeschaft. In de jaren 60 werd er nog bijna niet over homoseksualiteit gepraat.",
-   "feedback": "Jaren 60 taboe → 1971 artikel 248bis afgeschaft → 1994 wet gelijke behandeling → 2001 eerste homohuwelijk.",
+   "question": "Zet de gebeurtenissen uit de spreekbeurt in de goede volgorde. Begin met wat het eerst gebeurde.",
+   "passage": "En dan mijn eigen gezin. Toen ik in 2012 werd geboren, was alleen mama Lotte automatisch mijn ouder, omdat zij mij gekregen had. Mama Ines moest mij eerst adopteren voordat zij officieel ook mijn moeder was. Dat was een lange en dure procedure. Sinds 2014 is dat makkelijker. Als twee getrouwde moeders een kind krijgen, zijn ze nu vanaf de geboorte allebei de ouder. Mama Ines vindt het nog steeds raar dat zij vroeger haar eigen zoon moest adopteren.",
+   "feedback": "1964: Premsela op tv. 1971: artikel 248bis afgeschaft. 1996: de eerste Pride. 2001: het eerste huwelijk.",
    "items": [
     {
      "id": "o0",
-     "text": "Er wordt bijna niet over homoseksualiteit gepraat"
+     "text": "Benno Premsela vertelt op tv dat hij homo is"
     },
     {
      "id": "o1",
@@ -535,11 +497,11 @@ const VRAGEN = {
     },
     {
      "id": "o2",
-     "text": "De Algemene wet gelijke behandeling komt er"
+     "text": "De eerste Pride in Amsterdam"
     },
     {
      "id": "o3",
-     "text": "Het eerste homohuwelijk ter wereld"
+     "text": "Het eerste huwelijk van twee mannen of twee vrouwen"
     }
    ],
    "correctOrder": [
@@ -549,24 +511,40 @@ const VRAGEN = {
     "o3"
    ],
    "points": 2
+  },
+  {
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst waarom leerlingen op Paarse Vrijdag iets paars dragen.",
+   "passage": "Ten slotte. Op veel scholen in Nederland is elk jaar Paarse Vrijdag. Leerlingen en leraren dragen dan iets paars. Zo laten ze zien dat iedereen zichzelf mag zijn op school, ook wie lhbti is. Lhbti staat voor lesbisch, homo, bi, transgender en intersekse. Ik vind het fijn dat dat nu kan. Maar ik word ook nog weleens gepest om mijn twee moeders. Daarom vind ik het belangrijk om hierover te vertellen. Zijn er nog vragen?",
+   "feedback": "Het staat in de zin: \"Zo laten ze zien dat iedereen zichzelf mag zijn op school, ook wie lhbti is.\"",
+   "correctSpan": {
+    "start": 19,
+    "end": 33
+   },
+   "coreWords": [
+    24,
+    25
+   ],
+   "points": 2
   }
  ],
  "8": [
   {
    "type": "mc",
    "qtype": "inferring",
-   "label": "💡 Afleidend",
+   "label": "Afleidend",
    "labelClass": "label-inferring",
-   "question": "Waarom durfden veel homo’s en lesbiennes in de jaren 60 niet te zeggen op wie ze verliefd waren?",
-   "passage": "Jaren 60 – Taboe. Over homoseksualiteit wordt bijna niet openlijk gepraat. Veel homo’s en lesbiennes durven niet te zeggen op wie ze verliefd zijn. In veel gezinnen is het een taboe. Ook op televisie komt het onderwerp bijna nooit voorbij.",
-   "feedback": "Als niemand erover praat, ook thuis niet en op tv niet, is het moeilijk om eerlijk te zijn over wie je bent.",
-   "img": "families/l6-taboe.jpg",
-   "bijschrift": "Jaren 60",
+   "question": "Wat wil Sem duidelijk maken met de laatste zin?",
+   "passage": "Goedemorgen allemaal. Mijn spreekbeurt gaat over regenbooggezinnen. Ik woon zelf in zo’n gezin: ik heb twee moeders, mama Lotte en mama Ines. Een regenbooggezin is een gezin waarin minstens één ouder homo, lesbisch, bi of transgender is. Er zijn heel veel soorten gezinnen: met een vader en een moeder, met één ouder, met stiefouders of met twee vaders. Ze lijken allemaal op elkaar in één ding: er wordt voor de kinderen gezorgd.",
+   "feedback": "Gezinnen verschillen, \"ze lijken allemaal op elkaar in één ding: er wordt voor de kinderen gezorgd\".",
    "options": [
-    "Omdat ze nog niet wisten wat verliefd was",
-    "Omdat er bijna niet over gepraat werd en het in veel gezinnen een taboe was",
-    "Omdat het op televisie werd afgeraden",
-    "Omdat ze het liever geheim hielden voor de lol"
+    "Dat alle gezinnen precies hetzelfde zijn",
+    "Dat gezinnen er heel verschillend uitzien, maar dat het belangrijkste in elk gezin hetzelfde is",
+    "Dat kinderen voor hun ouders moeten zorgen",
+    "Dat een gezin met twee moeders beter is"
    ],
    "correct": 1,
    "points": 1
@@ -574,56 +552,16 @@ const VRAGEN = {
   {
    "type": "mc",
    "qtype": "inferring",
-   "label": "💡 Afleidend",
+   "label": "Afleidend",
    "labelClass": "label-inferring",
-   "question": "Waarom vonden de studenten artikel 248bis oneerlijk?",
-   "passage": "1969-1971 – Protest artikel 248bis. Sinds 1911 staat er in de wet dat jongeren onder de 21 jaar geen verkering mogen hebben met iemand van hetzelfde geslacht. Voor jongeren die heteroseksueel zijn, geldt deze wet niet. Studenten vinden deze wet, die artikel 248bis wordt genoemd, oneerlijk. Ze protesteren. En met succes! De wet wordt in 1971 afgeschaft.",
-   "feedback": "\"Voor jongeren die heteroseksueel zijn, geldt deze wet niet.\" De ene groep mocht iets wat de andere groep niet mocht.",
-   "img": "families/l6-protest.jpg",
-   "bijschrift": "1969-1971: protest tegen artikel 248bis",
+   "question": "Waarom kende de oma van Sem vroeger niemand die openlijk homo was?",
+   "passage": "Dat zo’n gezin heel gewoon is, was vroeger anders. Ik ga jullie meenemen terug in de tijd. Rond 1950 werd er bijna nergens over homoseksualiteit gepraat. Het was een taboe: iets waar je niet over hoorde te praten. Veel homo’s en lesbiennes hielden geheim op wie ze verliefd waren. Ze waren bang om hun baan, hun vrienden of zelfs hun familie kwijt te raken. Mijn oma zegt dat ze toen niemand kende die openlijk homo was.",
+   "feedback": "Er waren wel homo’s en lesbiennes, maar ze \"hielden geheim op wie ze verliefd waren\", omdat ze bang waren voor de gevolgen.",
    "options": [
-    "Omdat alle jongeren onder de 21 geen verkering mochten hebben",
-    "Omdat de wet alleen gold voor jongeren die verliefd werden op iemand van hetzelfde geslacht",
-    "Omdat studenten geen verkering mochten hebben",
-    "Omdat de wet pas in 1971 was gemaakt"
-   ],
-   "correct": 1,
-   "points": 1
-  },
-  {
-   "type": "mc",
-   "qtype": "inferring",
-   "label": "💡 Afleidend",
-   "labelClass": "label-inferring",
-   "question": "Waarom was het voor sommige mensen \"een belangrijke stap\"?",
-   "passage": "1964 – Openlijk homoseksueel. Op televisie vertelt binnenhuisarchitect Benno Premsela openlijk dat hij homoseksueel is. Veel kijkers schrikken daarvan. Voor anderen voelt het juist als een belangrijke stap: eindelijk zegt iemand hardop wat veel mensen geheimhouden.",
-   "feedback": "\"Eindelijk zegt iemand hardop wat veel mensen geheimhouden.\" Voor wie zelf een geheim had, betekende dat veel.",
-   "img": "families/l6-premsela.jpg",
-   "bijschrift": "1964: Benno Premsela",
-   "options": [
-    "Omdat Benno Premsela een beroemde architect was",
-    "Omdat eindelijk iemand hardop zei wat veel mensen geheim moesten houden",
-    "Omdat het de eerste keer was dat er televisie was",
-    "Omdat hij een prijs won"
-   ],
-   "correct": 1,
-   "points": 1
-  },
-  {
-   "type": "mc",
-   "qtype": "inferring",
-   "label": "💡 Afleidend",
-   "labelClass": "label-inferring",
-   "question": "Sommige mensen vonden de mannenzoen ongemakkelijk. Waarom was hij volgens de tekst toch belangrijk?",
-   "passage": "1970 – Eerste mannenzoen op tv. Op de Nederlandse televisie gebeurt iets wat kijkers nog nooit hebben gezien: twee mannen zoenen elkaar. Sommige mensen vinden dat vreemd of ongemakkelijk. Maar homoseksualiteit wordt daardoor wel zichtbaarder. Jaren 70-80 – De roze beweging groeit. Steeds meer homo’s en lesbiennes komen in actie. Ze protesteren, vragen om gelijke rechten en durven vaker openlijk zichzelf te zijn. Al die mensen en organisaties samen worden de roze beweging genoemd.",
-   "feedback": "\"Maar homoseksualiteit wordt daardoor wel zichtbaarder.\" Het woord \"maar\" laat zien dat dit het belangrijkste is.",
-   "img": "families/l6-tv.jpg",
-   "bijschrift": "1970: de eerste mannenzoen op tv",
-   "options": [
-    "Omdat de kijkcijfers hoog waren",
-    "Omdat homoseksualiteit daardoor zichtbaarder werd",
-    "Omdat het een grap was",
-    "Omdat er daarna een nieuwe wet kwam"
+    "Omdat er toen geen homo’s bestonden",
+    "Omdat homo’s en lesbiennes het geheimhielden uit angst voor de gevolgen",
+    "Omdat oma in het buitenland woonde",
+    "Omdat het verboden was om vrienden te hebben"
    ],
    "correct": 1,
    "points": 1
@@ -631,18 +569,118 @@ const VRAGEN = {
   {
    "type": "mc",
    "qtype": "evaluating",
-   "label": "💬 Evaluerend",
+   "label": "Evaluerend",
    "labelClass": "label-evaluating",
-   "question": "Iemand zegt: \"Sinds deze wet wordt niemand meer gediscrimineerd.\" Klopt dat volgens de tekst?",
-   "passage": "1994 – Bescherming tegen discriminatie. Er komt een nieuwe wet die homo’s, lesbiennes en bi’s beter beschermt tegen discriminatie: de Algemene wet gelijke behandeling. Die wet zegt dat iemand niet oneerlijk behandeld mag worden omdat diegene homo, lesbisch of bi is.",
-   "feedback": "De wet \"beschermt beter\" en zegt wat niet mag. Dat is iets anders dan dat het nooit meer gebeurt.",
-   "img": "families/l6-wet.jpg",
-   "bijschrift": "1994: krantenkop over de nieuwe wet",
+   "question": "Waarom noemt Sem artikel 248bis een \"oneerlijke wet\"?",
+   "passage": "Er bestond zelfs een oneerlijke wet. Sinds 1911 stond in artikel 248bis dat volwassenen geen relatie mochten hebben met iemand van hetzelfde geslacht onder de 21 jaar. Voor een relatie tussen een jongen en een meisje gold dat niet: daar was de grens zestien jaar. Er werden dus andere regels gemaakt voor homo’s dan voor hetero’s. Rond 1969 kwamen studenten daartegen in actie. Ze protesteerden in Den Haag. Met succes: in 1971 werd het artikel afgeschaft.",
+   "feedback": "Voor homo’s was de leeftijdsgrens 21 jaar, voor hetero’s zestien. Twee verschillende regels voor hetzelfde: dat is ongelijke behandeling.",
    "options": [
-    "Ja, dat staat in de tekst",
-    "Nee, de tekst zegt alleen dat de wet mensen beter beschermt, niet dat discriminatie helemaal weg is",
-    "Ja, want een wet is altijd meteen klaar",
-    "Nee, want de wet geldt alleen voor bi’s"
+    "Omdat het een heel oude wet was",
+    "Omdat er voor homo’s andere, strengere regels golden dan voor hetero’s",
+    "Omdat de studenten de wet hadden gemaakt",
+    "Omdat de wet alleen in Den Haag gold"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Wat betekent \"Langzaam werd het onderwerp bespreekbaar\"?",
+   "passage": "Langzaam werd het onderwerp bespreekbaar. In 1964 vertelde de ontwerper Benno Premsela op de televisie dat hij homoseksueel was. Dat had in Nederland nog nooit iemand op tv gedaan. Veel kijkers schrokken ervan. Anderen waren juist opgelucht: eindelijk zei iemand hardop wat zij zelf geheimhielden. Ook de vereniging COC, die al in 1946 was opgericht, kwam steeds vaker openlijk op voor de rechten van homo’s en lesbiennes.",
+   "feedback": "\"Bespreekbaar\" betekent dat je erover kunt praten. \"Langzaam\" laat zien dat het stap voor stap ging.",
+   "options": [
+    "Er mocht steeds minder over gepraat worden",
+    "Er kon stap voor stap steeds meer openlijk over gepraat worden",
+    "Het onderwerp werd verboden op tv",
+    "Iedereen praatte er ineens over"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Wat zegt de laatste zin, \"Nog steeds leggen mensen er bloemen neer\", over het monument?",
+   "passage": "In de jaren zeventig en tachtig gingen steeds meer mensen de straat op voor gelijke rechten. Ze organiseerden demonstraties en feesten. In 1987 kwam in Amsterdam het Homomonument: drie grote roze driehoeken langs de gracht. Het monument herdenkt homo’s en lesbiennes die vervolgd zijn, bijvoorbeeld in de Tweede Wereldoorlog. Het was het eerste monument ter wereld voor deze groep. Nog steeds leggen mensen er bloemen neer.",
+   "feedback": "Bloemen neerleggen doe je om iemand te herdenken. Dat mensen dat nog steeds doen, laat zien dat het monument nog altijd betekenis heeft.",
+   "options": [
+    "Dat het monument vaak kapot is",
+    "Dat het monument nog steeds belangrijk is voor veel mensen",
+    "Dat er een bloemenwinkel naast staat",
+    "Dat het monument nieuw is"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Waarom heet de wet de Algemene wet gelijke behandeling?",
+   "passage": "Een belangrijke wet kwam in 1994: de Algemene wet gelijke behandeling. Die wet zegt dat je iemand niet anders mag behandelen vanwege zijn geloof, huidskleur, geslacht of vanwege op wie hij verliefd is. Een werkgever mag bijvoorbeeld niemand weigeren omdat diegene homo of lesbisch is. Wie zich toch oneerlijk behandeld voelt, kan een klacht indienen. Zo werden homo’s en lesbiennes voor het eerst goed beschermd tegen discriminatie.",
+   "feedback": "De wet gaat over geloof, huidskleur, geslacht en verliefdheid: hij geldt dus \"algemeen\", voor iedereen. En hij zegt dat iedereen gelijk behandeld moet worden.",
+   "options": [
+    "Omdat hij alleen voor generaals geldt",
+    "Omdat hij voor iedereen geldt en zegt dat iedereen gelijk behandeld moet worden",
+    "Omdat hij alleen over homo’s gaat",
+    "Omdat iedereen dezelfde kleren moet dragen"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "Afleidend",
+   "labelClass": "label-inferring",
+   "question": "De Pride is een feest én een protest. Waarom ook een protest?",
+   "passage": "Vanaf 1996 is er in Amsterdam elk jaar de Pride. Hoogtepunt is de Canal Parade: een optocht van versierde boten door de grachten. Honderdduizenden mensen kijken vanaf de kades en de bruggen. Op de boten varen niet alleen clubs en verenigingen mee, maar ook politie, het leger en bedrijven. Voor veel mensen is de Pride een groot feest. Tegelijk is het ook een protest: in veel landen hebben homo’s en lesbiennes nog steeds geen gelijke rechten.",
+   "feedback": "\"In veel landen hebben homo’s en lesbiennes nog steeds geen gelijke rechten.\" Daar vragen de deelnemers aandacht voor.",
+   "options": [
+    "Omdat het weer vaak slecht is",
+    "Omdat er in veel landen nog geen gelijke rechten zijn voor homo’s en lesbiennes",
+    "Omdat de boten te duur zijn",
+    "Omdat de politie niet mee mag varen"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Waarom kwamen er journalisten uit allerlei landen kijken?",
+   "passage": "Een wereldprimeur kwam op 1 april 2001. Om middernacht trouwden in het stadhuis van Amsterdam vier stellen van twee mannen of twee vrouwen. De burgemeester sloot zelf de huwelijken. Nederland was het eerste land ter wereld waar dat officieel mocht. Journalisten uit allerlei landen kwamen kijken. Een wereldprimeur betekent dat iets voor het eerst op de hele wereld gebeurt. Sindsdien zijn veel andere landen het Nederlandse voorbeeld gevolgd.",
+   "feedback": "Het was een wereldprimeur: nog nooit eerder vertoond. Daarom was het nieuws over de hele wereld.",
+   "options": [
+    "Omdat het een grap was op 1 april",
+    "Omdat het nog nergens anders ter wereld was gebeurd en dus groot nieuws was",
+    "Omdat de burgemeester beroemd was",
+    "Omdat het stadhuis net nieuw was"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Waarom vindt mama Ines het \"raar\" dat ze Sem moest adopteren?",
+   "passage": "En dan mijn eigen gezin. Toen ik in 2012 werd geboren, was alleen mama Lotte automatisch mijn ouder, omdat zij mij gekregen had. Mama Ines moest mij eerst adopteren voordat zij officieel ook mijn moeder was. Dat was een lange en dure procedure. Sinds 2014 is dat makkelijker. Als twee getrouwde moeders een kind krijgen, zijn ze nu vanaf de geboorte allebei de ouder. Mama Ines vindt het nog steeds raar dat zij vroeger haar eigen zoon moest adopteren.",
+   "feedback": "Zij voedde Sem vanaf zijn geboorte op, maar volgens de wet was ze nog geen ouder. Pas na de adoptie was dat officieel.",
+   "options": [
+    "Omdat ze helemaal geen kinderen wilde",
+    "Omdat ze vanaf het begin zijn moeder was, maar dat volgens de wet nog niet telde",
+    "Omdat adopteren in Nederland verboden was",
+    "Omdat Sem in het buitenland geboren is"
    ],
    "correct": 1,
    "points": 1
@@ -650,146 +688,19 @@ const VRAGEN = {
   {
    "type": "mc",
    "qtype": "evaluating",
-   "label": "💬 Evaluerend",
+   "label": "Evaluerend",
    "labelClass": "label-evaluating",
-   "question": "De tijdlijn heet \"Van taboe naar trots\". Hoe past de Gay Pride bij die titel?",
-   "passage": "1996 – Eerste Gay Pride. Amsterdam krijgt zijn eerste Gay Pride: een optocht van versierde boten door de grachten. Mensen zwaaien met regenboogvlaggen en vieren dat ze zichzelf mogen zijn. In andere landen bestaan al langer Pride-marsen als protest voor gelijke rechten. De Amsterdamse Gay Pride is vooral ook een feest: trots zijn op wie je bent.",
-   "feedback": "In de jaren 60 werd er niet over gepraat (taboe). Bij de Gay Pride vieren mensen in het openbaar dat ze zichzelf mogen zijn (trots).",
-   "img": "families/l6-pride.jpg",
-   "bijschrift": "1996: de eerste Gay Pride in Amsterdam",
+   "question": "Wat is het doel van Sem met deze spreekbeurt?",
+   "passage": "Ten slotte. Op veel scholen in Nederland is elk jaar Paarse Vrijdag. Leerlingen en leraren dragen dan iets paars. Zo laten ze zien dat iedereen zichzelf mag zijn op school, ook wie lhbti is. Lhbti staat voor lesbisch, homo, bi, transgender en intersekse. Ik vind het fijn dat dat nu kan. Maar ik word ook nog weleens gepest om mijn twee moeders. Daarom vind ik het belangrijk om hierover te vertellen. Zijn er nog vragen?",
+   "feedback": "Sem laat zien hoeveel er veranderd is. Maar hij wordt \"nog weleens gepest\". Daarom vindt hij het \"belangrijk om hierover te vertellen\".",
    "options": [
-    "Het is een voorbeeld van taboe: mensen verstoppen zich",
-    "Het is een voorbeeld van trots: mensen vieren openlijk wie ze zijn",
-    "Het past niet, want de Gay Pride gaat over boten",
-    "Het is het begin van de tijdlijn"
+    "Zijn klasgenoten overhalen om twee moeders te willen",
+    "Uitleggen dat er veel veranderd is, en laten zien dat het belangrijk blijft om iedereen te accepteren",
+    "Vertellen dat Paarse Vrijdag niet meer nodig is",
+    "Laten zien dat vroeger alles beter was"
    ],
    "correct": 1,
    "points": 1
-  },
-  {
-   "type": "mc",
-   "qtype": "inferring",
-   "label": "💡 Afleidend",
-   "labelClass": "label-inferring",
-   "question": "Hoeveel jaar zat er tussen het afschaffen van artikel 248bis en het eerste homohuwelijk?",
-   "passage": "2001 – Eerste homohuwelijk ter wereld. In de nacht van 1 april 2001 trouwen in Amsterdam vier homoseksuele stellen. Burgemeester Job Cohen sluit de huwelijken in het stadhuis. Daarmee schrijft Nederland wereldgeschiedenis: het is het eerste land waar twee mannen of twee vrouwen officieel met elkaar mogen trouwen. (Artikel 248bis werd in 1971 afgeschaft.)",
-   "feedback": "Artikel 248bis werd in 1971 afgeschaft, het eerste homohuwelijk was in 2001. 2001 − 1971 = 30 jaar.",
-   "img": "families/l6-huwelijk.jpg",
-   "bijschrift": "2001: het eerste homohuwelijk ter wereld",
-   "options": [
-    "20 jaar",
-    "30 jaar",
-    "37 jaar",
-    "90 jaar"
-   ],
-   "correct": 1,
-   "points": 1
-  },
-  {
-   "type": "mc",
-   "qtype": "inferring",
-   "label": "💡 Afleidend",
-   "labelClass": "label-inferring",
-   "question": "Wat betekent \"automatisch als ouder geregistreerd\"?",
-   "passage": "2014 – Samen ouders. Voor lesbische stellen wordt het makkelijker om samen officieel ouder te zijn. Tot 2014 werd alleen de moeder die het kind kreeg automatisch als ouder geregistreerd. Vanaf 2014 kan ook de andere moeder veel makkelijker officieel als ouder worden erkend.",
-   "feedback": "Automatisch betekent: vanzelf. De moeder die het kind kreeg, stond meteen officieel als ouder ingeschreven. De andere moeder moest daar eerst veel voor regelen.",
-   "img": "families/l6-samenouders.jpg",
-   "bijschrift": "2014: samen ouders",
-   "options": [
-    "Dat een computer bepaalt wie je ouders zijn",
-    "Dat je officieel als ouder bent ingeschreven, zonder dat je er iets extra voor hoeft te regelen",
-    "Dat je kind een automatische naam krijgt",
-    "Dat je elk jaar opnieuw moet laten weten dat je ouder bent"
-   ],
-   "correct": 1,
-   "points": 1
-  },
-  {
-   "type": "drag",
-   "qtype": "inferring",
-   "label": "💡 Afleidend – Sorteren",
-   "labelClass": "label-inferring",
-   "question": "Kan dit volgens de tekst een regenbooggezin zijn? Sleep het naar de goede kant.",
-   "passage": "Vanaf 2015 – Regenbooggezinnen. Steeds meer kinderen groeien op in een regenbooggezin. Dat is een gezin dat net even anders is dan een gezin met een vader en een moeder. Denk bijvoorbeeld aan twee moeders, twee vaders, één ouder. Maar het kan ook gaan om een samengesteld gezin of een gezin met ouders die samen op een andere manier een kind opvoeden. Op scholen, in kinderboeken en op televisie worden deze gezinnen steeds zichtbaarder.",
-   "feedback": "Een regenbooggezin is \"net even anders dan een gezin met een vader en een moeder\". De andere vier voorbeelden noemt de tekst wél.",
-   "img": "families/l6-regenboog.jpg",
-   "bijschrift": "Vanaf 2015: regenbooggezinnen",
-   "categories": [
-    "Kan een regenbooggezin zijn",
-    "Noemt de tekst geen regenbooggezin"
-   ],
-   "items": [
-    {
-     "id": "i0",
-     "text": "Twee moeders",
-     "correct": "Kan een regenbooggezin zijn"
-    },
-    {
-     "id": "i1",
-     "text": "Eén ouder",
-     "correct": "Kan een regenbooggezin zijn"
-    },
-    {
-     "id": "i2",
-     "text": "Een samengesteld gezin",
-     "correct": "Kan een regenbooggezin zijn"
-    },
-    {
-     "id": "i3",
-     "text": "Twee vaders",
-     "correct": "Kan een regenbooggezin zijn"
-    },
-    {
-     "id": "i4",
-     "text": "Een vader en een moeder",
-     "correct": "Noemt de tekst geen regenbooggezin"
-    }
-   ],
-   "points": 2
-  },
-  {
-   "type": "order",
-   "qtype": "inferring",
-   "label": "💡 Afleidend – Volgorde",
-   "labelClass": "label-inferring",
-   "question": "Zet deze gebeurtenissen op volgorde. Niet alle jaartallen staan erbij: reken ze uit!",
-   "passage": "In 2001 trouwden in Amsterdam de eerste homostellen ter wereld. Vijf jaar eerder was de eerste Gay Pride. In 1994 kwam de Algemene wet gelijke behandeling. Al in 1964 vertelde Benno Premsela op tv dat hij homo was. Zes jaar later was op tv de eerste mannenzoen te zien. Artikel 248bis werd in 1971 afgeschaft. In de jaren 60 werd er nog bijna niet over homoseksualiteit gepraat.",
-   "feedback": "1964 Premsela → 1970 mannenzoen (zes jaar later) → 1971 artikel 248bis weg → 1994 wet → 1996 Gay Pride (vijf jaar vóór 2001) → 2001 homohuwelijk.",
-   "items": [
-    {
-     "id": "o0",
-     "text": "Benno Premsela vertelt op tv dat hij homo is"
-    },
-    {
-     "id": "o1",
-     "text": "De eerste mannenzoen op tv"
-    },
-    {
-     "id": "o2",
-     "text": "Artikel 248bis wordt afgeschaft"
-    },
-    {
-     "id": "o3",
-     "text": "De Algemene wet gelijke behandeling komt er"
-    },
-    {
-     "id": "o4",
-     "text": "De eerste Gay Pride in Amsterdam"
-    },
-    {
-     "id": "o5",
-     "text": "Het eerste homohuwelijk ter wereld"
-    }
-   ],
-   "correctOrder": [
-    "o0",
-    "o1",
-    "o2",
-    "o3",
-    "o4",
-    "o5"
-   ],
-   "points": 2
   }
  ]
 };
@@ -799,7 +710,7 @@ const GROEP = (function () {
 })();
 const questions = VRAGEN[GROEP];
 const SLEUTEL = 'bl_families-les6_g' + GROEP;
-document.getElementById('bl-eyebrow').textContent = 'Begrijpend lezen · Groep ' + GROEP + ' · Les 6';
+document.getElementById('bl-eyebrow').textContent = 'Begrijpend lezen · Groep ' + GROEP;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // STATE

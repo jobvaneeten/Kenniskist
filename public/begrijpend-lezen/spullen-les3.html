@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Begrijpend Lezen – Leve de fabriek?</title>
+<title>Begrijpend lezen – De eerste fabrieken</title>
 <link href="/fonts/fonts.css" rel="stylesheet">
 <style>
   :root {
@@ -267,6 +267,11 @@
     .drag-container { flex-direction:column; }
   }
   @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  .bl-fig { margin:0 0 14px; }
+  .bl-fig img { display:block; max-width:100%; max-height:300px; border-radius:12px; margin:0 auto; box-shadow:0 8px 24px -10px rgba(0,0,0,.6); }
+  .bl-fig figcaption { font-size:.85rem; color:var(--ink-soft); text-align:center; margin-top:6px; font-style:italic; }
+  .bl-cover { display:block; width:min(360px,100%); aspect-ratio:4/3; object-fit:cover; margin:0 auto 14px; border-radius:16px; box-shadow:0 10px 28px -12px rgba(0,0,0,.7); }
+  @media(min-width:1000px){ .q-breed > .bl-fig { grid-column:1; } }
 </style>
 <style>.order-item,.drag-item{touch-action:none}.order-item.dragging,.drag-item.dragging{opacity:.6}</style>
 <script src="/kenniskist-login.js"></script>
@@ -274,9 +279,9 @@
 <body>
 
 <header>
-  <p class="eyebrow">Begrijpend lezen · Groep 7 · Les 3</p>
-  <h1>Leve de fabriek?</h1>
-  <p>Thema: Duurzaam design</p>
+  <p class="eyebrow" id="bl-eyebrow">Begrijpend lezen</p>
+  <h1>De eerste fabrieken</h1>
+  <p>Thema: Van grondstof tot product</p>
 </header>
 <div id="progress-bar-wrap"><div id="progress-bar"></div></div>
 <div id="score-badge">⭐ <span id="score-num">0</span> pt</div>
@@ -284,13 +289,13 @@
 <main>
 
 <div id="intro-screen" class="screen active">
-  <div class="compass">🏭</div>
-  <h2>Toen de machines het werk overnamen</h2>
-  <p>Je leest teksten over de tijd waarin de eerste fabrieken kwamen, en beantwoordt tien vragen. Bij <strong>letterlijke vragen</strong> markeer je het antwoord <em>in de tekst zelf</em>. Klik woorden aan om ze te selecteren.</p>
+  
+  <h2>Klaar om te lezen?</h2>
+  <p>Je loopt mee met gids Marieke op een stadswandeling door een textielstad in Twente. Ze vertelt hoe de eerste fabrieken het leven rond 1880 veranderden. Je beantwoordt tien vragen. Bij <strong>letterlijke vragen</strong> markeer je het antwoord <em>in de tekst zelf</em>. Klik woorden aan om ze te selecteren.</p>
   <div class="legend">
-    <span style="background:#d0e8ff;color:#0a3a6e;">🔍 Letterlijk – markeer in de tekst</span>
-    <span style="background:#fde8c0;color:#7a3d00;">💡 Afleidend</span>
-    <span style="background:#dff0e2;color:#1a5c2a;">💬 Evaluerend</span>
+    <span style="background:#d0e8ff;color:#0a3a6e;">Letterlijk – markeer in de tekst</span>
+    <span style="background:#fde8c0;color:#7a3d00;">Afleidend</span>
+    <span style="background:#dff0e2;color:#1a5c2a;">Evaluerend</span>
   </div>
   <button class="btn btn-primary" onclick="startQuiz()">Begin de oefening →</button>
 </div>
@@ -303,7 +308,7 @@
 
 <div id="finish-screen" class="screen">
   <div class="medal" id="finish-medal">🏅</div>
-  <h2>Goed gedaan, geschiedkundige!</h2>
+  <h2>Goed meegelopen en gelezen!</h2>
   <div class="score-big" id="finish-score">0/0</div>
   <p id="finish-msg"></p>
   <div id="finish-overview"></div>
@@ -327,145 +332,436 @@
 // correctSpan: [startWordIndex, endWordIndex] (inclusive) = de juiste selectie.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const questions = [
-
+const VRAGEN = {
+ "7": [
   {
-    type: 'mark',
-    qtype: 'literal',
-    label: '🔍 Letterlijk',
-    labelClass: 'label-literal',
-    question: "Markeer in de tekst hoe mensen vóór 1850 aan hun spullen kwamen.",
-    passage: "Stel je een dorp voor zonder fabrieken en zonder supermarkt. Zo zag Nederland er rond 1800 uit. Bijna alles wat je nodig had, maakten mensen zelf of kochten ze bij een ambachtsman in het dorp: de bakker, de smid en de schoenmaker. Kleding werd thuis geweven en genaaid, vaak door het hele gezin. Dat kostte veel tijd, dus had bijna niemand meer dan een paar kledingstukken. Pas na 1850 veranderde dat, toen machines het werk begonnen over te nemen.",
-    correctSpan: { start: 23, end: 34 },
-    coreWords: [25, 27, 31],
-    feedback: "Het antwoord staat in de zin: \"Bijna alles wat je nodig had, maakten mensen zelf of kochten ze bij een ambachtsman in het dorp.\"",
-    points: 2
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst wat een ambacht is.",
+   "passage": "Welkom bij deze wandeling! We beginnen bij een oude boerderij. Rond 1830 werd hier nog alles met de hand gedaan. In veel boerderijen stond een weefgetouw. Boeren weefden in de winter linnen en katoen. Dat verkochten ze aan een handelaar, die het weer doorverkocht in de stad. Het hele gezin hielp mee. Zo’n vak dat je met de hand uitoefent, noemen we een ambacht. Eén lap stof weven kostte dagen.",
+   "feedback": "Het staat in de zin: \"Zo’n vak dat je met de hand uitoefent, noemen we een ambacht.\"",
+   "correctSpan": {
+    "start": 52,
+    "end": 63
+   },
+   "coreWords": [
+    53,
+    58,
+    63
+   ],
+   "points": 2
   },
-
   {
-    type: 'mark',
-    qtype: 'literal',
-    label: '🔍 Letterlijk',
-    labelClass: 'label-literal',
-    question: "Markeer in de tekst wat de stoommachine mogelijk maakte.",
-    passage: "De uitvinding die alles veranderde, was de stoommachine. Door kolen te verbranden werd water aan de kook gebracht, en met de kracht van die stoom konden machines dag en nacht draaien. Daardoor kon één fabriek in een dag meer stof weven dan honderd thuiswevers samen. De machines waren groot en duur, dus stonden ze in grote gebouwen: de eerste fabrieken. Rond die fabrieken groeiden steden hard, want er was werk te vinden.",
-    correctSpan: { start: 19, end: 30 },
-    coreWords: [24, 26, 30],
-    feedback: "Het antwoord staat in de zin: \"Door kolen te verbranden werd water aan de kook gebracht, en met de kracht van die stoom konden machines dag en nacht draaien.\"",
-    points: 2
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst wat de industriële revolutie is.",
+   "passage": "We lopen naar het museum met de grote stoommachine. Deze uitvinding veranderde alles. In een ketel werd water verhit met brandende steenkool. De stoom zette een groot vliegwiel in beweging, en dat wiel liet tientallen weefmachines tegelijk draaien. Een machine kon in een uur weven wat een thuiswever in een week deed. Deze periode, waarin machines het handwerk overnamen, heet de industriële revolutie.",
+   "feedback": "Het staat in de zin: \"Deze periode, waarin machines het handwerk overnamen, heet de industriële revolutie.\"",
+   "correctSpan": {
+    "start": 52,
+    "end": 62
+   },
+   "coreWords": [
+    55,
+    57,
+    62
+   ],
+   "points": 2
   },
-
   {
-    type: 'mark',
-    qtype: 'literal',
-    label: '🔍 Letterlijk',
-    labelClass: 'label-literal',
-    question: "Markeer in de tekst waarom de thuiswevers het niet konden volhouden.",
-    passage: "Jantine en haar man weefden jarenlang mooie lappen stof bij hen thuis op het platteland. Toen de weverijen kwamen, liep hun werk terug. De fabrieken weefden veel sneller en veel goedkoper dan zij met de hand konden, dus kochten de winkeliers hun stof daar. Uiteindelijk verhuisden Jantine en haar man naar de stad en gingen ze in de weverij werken. Ze verdienden er iets meer dan vroeger, maar hun dagen waren lang en ze waren nu afhankelijk van de fabrieksbaas.",
-    correctSpan: { start: 23, end: 36 },
-    coreWords: [27, 30, 35],
-    feedback: "Het antwoord staat in de zin: \"De fabrieken weefden veel sneller en veel goedkoper dan zij met de hand konden, dus kochten de winkeliers hun stof daar.\"",
-    points: 2
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst waarom thuiswevers naar de stad trokken.",
+   "passage": "Hier stond vroeger de eerste grote weverij van de stad. De eigenaar, de fabrikant, had veel geld nodig om machines en een gebouw te kopen. Maar daarna verdiende hij flink, want hij kon veel meer stof maken dan vroeger, en goedkoper. De thuiswevers op het platteland konden niet tegen die lage prijzen op. Niemand wilde hun dure, handgeweven stof nog kopen. Veel van hen trokken naar de stad om in de fabriek te gaan werken.",
+   "feedback": "Het staat in de zin: \"Niemand wilde hun dure, handgeweven stof nog kopen.\" Daarom zochten ze werk in de fabriek.",
+   "correctSpan": {
+    "start": 53,
+    "end": 60
+   },
+   "coreWords": [
+    53,
+    60
+   ],
+   "points": 2
   },
-
   {
-    type: 'mc',
-    qtype: "inferring",
-    label: "💡 Afleidend",
-    labelClass: "label-inferring",
-    question: "Waarom was de winkelier blij met de fabrieken?",
-    passage: "Marten heeft een kledingwinkel in de stad. Vroeger kocht hij lappen stof bij thuiswerkers, maar nu koopt hij hele stapels broeken bij de fabriek. Hij kan er meer verkopen en ze zijn goedkoper, waardoor ook gewone arbeiders zich een broek kunnen veroorloven. Zijn winst is gegroeid en hij denkt erover om een tweede winkel te openen.",
-    options: ["Omdat hij nu zelf broeken kan naaien in zijn winkel", "Omdat hij meer en goedkopere kleding kan verkopen en dus meer winst maakt", "Omdat hij van de fabrieksbaas een gratis stoommachine kreeg", "Omdat er in de stad niemand anders een winkel had"],
-    correct: 1,
-    feedback: "De tekst zegt dat hij meer én goedkopere broeken kan verkopen, dat ook arbeiders die kunnen kopen en dat zijn winst daardoor groeit.",
-    points: 1
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst wat hygiëne betekent.",
+   "passage": "We staan nu in een smal straatje. Rond 1880 woonden hier de fabrieksarbeiders. De stad groeide zo snel dat er te weinig huizen waren. Hele gezinnen woonden in één of twee kamers, zonder stromend water en zonder wc. Het water kwam uit een pomp op straat en de wc was een gemeenschappelijk hokje. Door de slechte hygiëne verspreidden ziektes zich snel. Hygiëne betekent dat je dingen schoon houdt, zodat je niet ziek wordt.",
+   "feedback": "Het staat in de laatste zin: \"Hygiëne betekent dat je dingen schoon houdt, zodat je niet ziek wordt.\"",
+   "correctSpan": {
+    "start": 61,
+    "end": 72
+   },
+   "coreWords": [
+    66,
+    71
+   ],
+   "points": 2
   },
-
   {
-    type: 'mark',
-    qtype: 'literal',
-    label: '🔍 Letterlijk',
-    labelClass: 'label-literal',
-    question: "Markeer in de tekst waardoor de lucht in de fabriekssteden zo vies was.",
-    passage: "Klaas werkte eerst op het platteland en woont nu in de stad. Hij mist de frisse lucht van vroeger. In de stad hangt op werkdagen een grijze mist boven de daken, want de schoorstenen van de fabrieken stoten roet en stofdeeltjes uit. Zelfs sneeuw is er niet wit maar bruingrijs. Het roet dringt de huizen binnen en veel arbeiders krijgen last van hun longen. Aan het eind van de dag zit het stof in je kleren, je haar en je keel.",
-    correctSpan: { start: 32, end: 41 },
-    coreWords: [33, 38, 40],
-    feedback: "Het antwoord staat in de zin: \"In de stad hangt op werkdagen een grijze mist boven de daken, want de schoorstenen van de fabrieken stoten roet en stofdeeltjes uit.\"",
-    points: 2
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst hoeveel arbeiders werkten.",
+   "passage": "Kijk eens naar die hoge fabriekshal. Daarbinnen was het lawaaiig, heet en stoffig. Arbeiders werkten twaalf uur per dag, zes dagen per week. Van de herrie van de machines werden veel mensen doof. Er waren geen beschermkappen, dus raakten er regelmatig mensen gewond. Wie ziek werd, kreeg geen loon. En wie klaagde, kon worden ontslagen: er stonden genoeg anderen te wachten op werk.",
+   "feedback": "Het staat in de zin: \"Arbeiders werkten twaalf uur per dag, zes dagen per week.\"",
+   "correctSpan": {
+    "start": 13,
+    "end": 22
+   },
+   "coreWords": [
+    15,
+    19
+   ],
+   "points": 2
   },
-
   {
-    type: 'mc',
-    qtype: "inferring",
-    label: "💡 Afleidend",
-    labelClass: "label-inferring",
-    question: "De weefster Annigje zegt: \"Voor jou tien anderen.\" Wat bedoelt de fabrieksbaas daarmee?",
-    passage: "Annigje werkt in een weverij. Ze vindt haar loon te laag en het werk te zwaar, maar klagen durft ze niet. Wie klaagt, wordt ontslagen. \"Voor jou tien anderen,\" zegt de baas dan, want er staan elke ochtend mensen bij de poort te wachten op werk. Er waren in die tijd geen regels die arbeiders beschermden en er bestond nog geen uitkering.",
-    options: ["Dat er tien mensen nodig zijn om haar werk te doen", "Dat hij haar tien keer meer wil betalen als ze blijft", "Dat er genoeg anderen klaarstaan die haar baan direct willen overnemen", "Dat de fabriek binnenkort tien nieuwe machines krijgt"],
-    correct: 2,
-    feedback: "De tekst legt het uit: er stonden elke ochtend mensen bij de poort te wachten op werk. Wie klaagde, was zo vervangen — en er bestond geen uitkering.",
-    points: 1
+   "type": "drag",
+   "qtype": "inferring",
+   "label": "Afleidend – Sorteren",
+   "labelClass": "label-inferring",
+   "question": "Is het een voordeel of een nadeel voor de arbeiders? Sleep elke zin naar de goede groep.",
+   "passage": "Niet elke fabrikant was hetzelfde. Sommige fabrikanten lieten nette huizen bouwen voor hun arbeiders, met een tuintje. Ze richtten een spaarkas op en zorgden voor een school voor de kinderen. Zo’n fabrikant vond dat hij verantwoordelijk was voor zijn mensen. Maar hij bepaalde ook veel: wie in zijn huizen woonde, moest zich aan zijn regels houden. En wie ontslagen werd, raakte meteen ook zijn huis kwijt.",
+   "feedback": "Voordelen: een net huis, een school en een spaarkas. Nadelen: de regels van de baas en je huis kwijt bij ontslag.",
+   "categories": [
+    "Voordeel",
+    "Nadeel"
+   ],
+   "items": [
+    {
+     "id": "i0",
+     "text": "Een net huis met een tuintje",
+     "correct": "Voordeel"
+    },
+    {
+     "id": "i1",
+     "text": "Een school voor de kinderen",
+     "correct": "Voordeel"
+    },
+    {
+     "id": "i2",
+     "text": "Je moet je aan de regels van de baas houden",
+     "correct": "Nadeel"
+    },
+    {
+     "id": "i3",
+     "text": "Bij ontslag ben je ook je huis kwijt",
+     "correct": "Nadeel"
+    },
+    {
+     "id": "i4",
+     "text": "Een spaarkas",
+     "correct": "Voordeel"
+    }
+   ],
+   "points": 2
   },
-
   {
-    type: 'mark',
-    qtype: 'literal',
-    label: '🔍 Letterlijk',
-    labelClass: 'label-literal',
-    question: "Markeer in de tekst waarom de fabrikant vindt dat hij goed voor zijn arbeiders zorgt.",
-    passage: "Charles bouwt stoommachines en is trots op zijn fabriek. Zijn werknemers werken tien uur per dag, maar niet ’s avonds en niet op zondag. Hij vindt dat hij goed voor zijn mensen zorgt, want er is een spaarkas, een pensioenfonds en er zijn woningen voor de arbeiders. Er is zelfs een sportclub, een muziekkorps en een bibliotheek. Volgens hem heerst er een tevreden sfeer in zijn bedrijf. Niet elke fabrikant deed dat; veel arbeiders werkten langer voor minder.",
-    correctSpan: { start: 34, end: 46 },
-    coreWords: [37, 39, 43],
-    feedback: "Het antwoord staat in de zin: \"want er is een spaarkas, een pensioenfonds en er zijn woningen voor de arbeiders\". De sportclub en bibliotheek noemt hij daarna als extra.",
-    points: 2
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst wat het roet deed.",
+   "passage": "Kijk omhoog naar die hoge schoorsteen. Rond 1880 stonden er in deze stad tientallen. Ze stootten dag en nacht rook en roet uit. Het roet viel als een zwart laagje op de daken, de was en de straten. Veel mensen kregen last van hun longen. In de rivier werd het afvalwater van de ververijen geloosd. Op sommige dagen kon je aan de kleur van het water zien welke kleur stof er die dag geverfd was.",
+   "feedback": "Het staat in de zin: \"Het roet viel als een zwart laagje op de daken, de was en de straten.\"",
+   "correctSpan": {
+    "start": 23,
+    "end": 37
+   },
+   "coreWords": [
+    24,
+    28,
+    29
+   ],
+   "points": 2
   },
-
   {
-    type: 'drag',
-    qtype: 'inferring',
-    label: '💡 Afleidend – Sorteren',
-    labelClass: 'label-inferring',
-    question: "Wie was blij met de komst van de fabrieken en wie niet? Sleep de personen naar de juiste groep.",
-    passage: "Gerrit Jan de textielfabrikant kan veel meer stof maken dan vroeger. Marten de winkelier verkoopt meer en verdient meer. Harm de boekhouder heeft een goed salaris en zijn kinderen gaan naar school. Jantine de weefster verloor haar thuiswerk en is nu afhankelijk van de fabrieksbaas. Klaas de fabrieksarbeider mist de frisse lucht van het platteland en ademt nu roet in.",
-    categories: ["Blij met de fabriek", "Niet blij met de fabriek"],
-    items: [
-      { id: "i0", text: "Gerrit Jan, textielfabrikant", correct: "Blij met de fabriek" },
-      { id: "i1", text: "Marten, winkelier", correct: "Blij met de fabriek" },
-      { id: "i2", text: "Harm, boekhouder", correct: "Blij met de fabriek" },
-      { id: "i3", text: "Jantine, weefster", correct: "Niet blij met de fabriek" },
-      { id: "i4", text: "Klaas, fabrieksarbeider", correct: "Niet blij met de fabriek" }
-    ],
-    feedback: "De fabrikant, de winkelier en de boekhouder verdienen meer door de fabriek. De weefster verloor haar eigen werk en de arbeider kreeg vieze lucht en lange dagen.",
-    points: 2
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst wat een vakbond is.",
+   "passage": "Arbeiders kwamen steeds vaker samen in actie. Ze richtten vakbonden op: verenigingen die opkomen voor de belangen van werknemers. Als onderhandelen niet hielp, gingen ze staken. Bij een staking legt iedereen tegelijk het werk neer. Dan staan de machines stil en verdient de fabrikant niets. Zo hoopten de arbeiders op een hoger loon en kortere werkdagen. Staken was riskant: soms werden alle stakers ontslagen.",
+   "feedback": "De uitleg staat na de dubbele punt: \"verenigingen die opkomen voor de belangen van werknemers.\"",
+   "correctSpan": {
+    "start": 11,
+    "end": 18
+   },
+   "coreWords": [
+    11,
+    18
+   ],
+   "points": 2
   },
-
   {
-    type: 'mc',
-    qtype: "evaluating",
-    label: "💬 Evaluerend",
-    labelClass: "label-evaluating",
-    question: "De titel van deze les is \"Leve de fabriek?\" met een vraagteken. Waarom staat dat vraagteken er?",
-    passage: "De fabrieken brachten goedkope spullen, werk en nieuwe uitvindingen. Ze brachten ook lange werkdagen, vieze lucht, ongelukken met machines en mensen die zomaar ontslagen konden worden. Wie je het vraagt, bepaalt het antwoord: de fabrikant vertelt een heel ander verhaal dan de weefster of de arbeider. Daarom is er geen simpel ja of nee te geven.",
-    options: ["Omdat de schrijver niet weet wat een fabriek is", "Omdat de fabriek zowel goede als slechte kanten had, afhankelijk van wie je het vraagt", "Omdat er in die tijd bijna geen fabrieken waren", "Omdat een titel altijd een vraag moet zijn"],
-    correct: 1,
-    feedback: "De tekst noemt eerst de voordelen, dan de nadelen, en zegt dat het antwoord afhangt van wie je het vraagt. Het vraagteken laat zien dat er geen simpel ja of nee is.",
-    points: 1
+   "type": "drag",
+   "qtype": "inferring",
+   "label": "Afleidend – Sorteren",
+   "labelClass": "label-inferring",
+   "question": "Was het een gevolg dat goed of slecht was voor de mensen? Sleep elke zin naar de goede groep.",
+   "passage": "Wat brachten de fabrieken nu eigenlijk? Kleding en andere spullen werden veel goedkoper, zodat ook gewone mensen meer konden kopen. Er kwamen banen en nieuwe uitvindingen, zoals de trein. Maar er waren ook lange werkdagen, armoede, vieze lucht en vervuild water. Of de fabrieken een vooruitgang waren, hangt af van wie je het vraagt: een fabrikant vertelt een ander verhaal dan een wever die zijn ambacht kwijtraakte.",
+   "feedback": "Goed: goedkopere kleding, banen en uitvindingen. Slecht: lange werkdagen, armoede, vieze lucht en vervuild water.",
+   "categories": [
+    "Goed",
+    "Slecht"
+   ],
+   "items": [
+    {
+     "id": "i0",
+     "text": "Kleding werd goedkoper",
+     "correct": "Goed"
+    },
+    {
+     "id": "i1",
+     "text": "Er kwamen nieuwe uitvindingen",
+     "correct": "Goed"
+    },
+    {
+     "id": "i2",
+     "text": "Lange werkdagen",
+     "correct": "Slecht"
+    },
+    {
+     "id": "i3",
+     "text": "Vieze lucht en vervuild water",
+     "correct": "Slecht"
+    },
+    {
+     "id": "i4",
+     "text": "Er kwamen banen",
+     "correct": "Goed"
+    }
+   ],
+   "points": 2
   },
-
   {
-    type: 'mc',
-    qtype: "evaluating",
-    label: "💬 Evaluerend",
-    labelClass: "label-evaluating",
-    question: "Charles vertelt zelf dat er een \"tevreden sfeer\" heerst in zijn fabriek. Hoe kun je die uitspraak het beste beoordelen?",
-    passage: "Charles is de baas van de fabriek. Hij vertelt over de spaarkas, de woningen en de tevreden sfeer in zijn bedrijf. Zijn arbeiders vertellen een ander verhaal: lange dagen, weinig loon en ontslag als je klaagt. Wie iets vertelt over zijn eigen bedrijf, laat vaak vooral de mooie kant zien. Daarom is het slim om ook te lezen wat anderen zeggen.",
-    options: ["Het is zeker waar, want hij is de baas en weet het het beste", "Het is zeker onwaar, want bazen liegen altijd", "Het is zijn eigen kijk op zijn bedrijf; om te weten hoe het echt was, lees je ook de verhalen van de arbeiders", "Het maakt niet uit wat hij zegt, want het is lang geleden"],
-    correct: 2,
-    feedback: "De tekst waarschuwt dat iemand die over zijn eigen bedrijf vertelt vooral de mooie kant laat zien. Een goede lezer vergelijkt zijn verhaal met dat van de arbeiders.",
-    points: 1
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst waarom de laatste textielfabriek sloot.",
+   "passage": "Einde van de wandeling. De laatste textielfabriek in deze stad sloot in de jaren zeventig van de vorige eeuw. Stof maken was in andere landen goedkoper geworden. Sommige oude fabrieksgebouwen zijn afgebroken, andere hebben een nieuwe bestemming gekregen: er zitten nu woningen, kantoren, een school en dit museum in. Zo blijft er iets over van de tijd waarin hier dag en nacht de machines ratelden. Bedankt voor het meelopen!",
+   "feedback": "Het staat in de zin: \"Stof maken was in andere landen goedkoper geworden.\"",
+   "correctSpan": {
+    "start": 19,
+    "end": 26
+   },
+   "coreWords": [
+    23,
+    24,
+    25
+   ],
+   "points": 2
   }
-
-];
+ ],
+ "8": [
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Waarom weefden boeren vooral in de winter?",
+   "passage": "Welkom bij deze wandeling! We beginnen bij een oude boerderij. Rond 1830 werd hier nog alles met de hand gedaan. In veel boerderijen stond een weefgetouw. Boeren weefden in de winter linnen en katoen. Dat verkochten ze aan een handelaar, die het weer doorverkocht in de stad. Het hele gezin hielp mee. Zo’n vak dat je met de hand uitoefent, noemen we een ambacht. Eén lap stof weven kostte dagen.",
+   "feedback": "Boeren werken in het voorjaar en de zomer op het land. In de winter is daar weinig te doen, dus hadden ze tijd om te weven.",
+   "options": [
+    "Omdat het weefgetouw in de zomer kapot was",
+    "Omdat er in de winter weinig werk op het land was",
+    "Omdat stof in de zomer niet verkocht mocht worden",
+    "Omdat het in de winter lichter was"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "order",
+   "qtype": "inferring",
+   "label": "Afleidend – Volgorde",
+   "labelClass": "label-inferring",
+   "question": "Hoe werkte de stoommachine? Zet de stappen in de goede volgorde.",
+   "passage": "We lopen naar het museum met de grote stoommachine. Deze uitvinding veranderde alles. In een ketel werd water verhit met brandende steenkool. De stoom zette een groot vliegwiel in beweging, en dat wiel liet tientallen weefmachines tegelijk draaien. Een machine kon in een uur weven wat een thuiswever in een week deed. Deze periode, waarin machines het handwerk overnamen, heet de industriële revolutie.",
+   "feedback": "Steenkool verbranden, water verhitten tot stoom, de stoom laat het vliegwiel draaien en dat zet de weefmachines in beweging.",
+   "items": [
+    {
+     "id": "o0",
+     "text": "Steenkool wordt verbrand"
+    },
+    {
+     "id": "o1",
+     "text": "Het water in de ketel wordt heet en er ontstaat stoom"
+    },
+    {
+     "id": "o2",
+     "text": "De stoom zet het vliegwiel in beweging"
+    },
+    {
+     "id": "o3",
+     "text": "De weefmachines gaan draaien"
+    }
+   ],
+   "correctOrder": [
+    "o0",
+    "o1",
+    "o2",
+    "o3"
+   ],
+   "points": 2
+  },
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Wat betekent \"konden niet tegen die lage prijzen op\"?",
+   "passage": "Hier stond vroeger de eerste grote weverij van de stad. De eigenaar, de fabrikant, had veel geld nodig om machines en een gebouw te kopen. Maar daarna verdiende hij flink, want hij kon veel meer stof maken dan vroeger, en goedkoper. De thuiswevers op het platteland konden niet tegen die lage prijzen op. Niemand wilde hun dure, handgeweven stof nog kopen. Veel van hen trokken naar de stad om in de fabriek te gaan werken.",
+   "feedback": "De fabriek maakte stof veel goedkoper. Met de hand kun je niet zo goedkoop weven. Daardoor verloren de thuiswevers hun klanten.",
+   "options": [
+    "Ze konden hun stof niet zo goedkoop maken als de fabriek",
+    "Ze vonden de prijzen te laag om te betalen",
+    "Ze mochten geen stof meer verkopen",
+    "Ze waren sneller dan de fabriek"
+   ],
+   "correct": 0,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Wat was de oorzaak van de krappe woningen?",
+   "passage": "We staan nu in een smal straatje. Rond 1880 woonden hier de fabrieksarbeiders. De stad groeide zo snel dat er te weinig huizen waren. Hele gezinnen woonden in één of twee kamers, zonder stromend water en zonder wc. Het water kwam uit een pomp op straat en de wc was een gemeenschappelijk hokje. Door de slechte hygiëne verspreidden ziektes zich snel. Hygiëne betekent dat je dingen schoon houdt, zodat je niet ziek wordt.",
+   "feedback": "\"De stad groeide zo snel dat er te weinig huizen waren.\" Daardoor moesten gezinnen op een paar kamers wonen.",
+   "options": [
+    "De arbeiders wilden graag klein wonen",
+    "De stad groeide zo snel dat er te weinig huizen waren",
+    "Grote huizen waren verboden",
+    "De fabriek stond in de weg"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Waarom durfden arbeiders bijna niet te klagen?",
+   "passage": "Kijk eens naar die hoge fabriekshal. Daarbinnen was het lawaaiig, heet en stoffig. Arbeiders werkten twaalf uur per dag, zes dagen per week. Van de herrie van de machines werden veel mensen doof. Er waren geen beschermkappen, dus raakten er regelmatig mensen gewond. Wie ziek werd, kreeg geen loon. En wie klaagde, kon worden ontslagen: er stonden genoeg anderen te wachten op werk.",
+   "feedback": "\"Wie klaagde, kon worden ontslagen: er stonden genoeg anderen te wachten op werk.\" Ze waren bang hun inkomen kwijt te raken.",
+   "options": [
+    "Omdat ze tevreden waren",
+    "Omdat ze konden worden ontslagen en er genoeg anderen klaarstonden om hun werk over te nemen",
+    "Omdat de baas doof was",
+    "Omdat klagen verboden was op zondag"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "evaluating",
+   "label": "Evaluerend",
+   "labelClass": "label-evaluating",
+   "question": "Waarom zegt de gids \"Niet elke fabrikant was hetzelfde\"?",
+   "passage": "Niet elke fabrikant was hetzelfde. Sommige fabrikanten lieten nette huizen bouwen voor hun arbeiders, met een tuintje. Ze richtten een spaarkas op en zorgden voor een school voor de kinderen. Zo’n fabrikant vond dat hij verantwoordelijk was voor zijn mensen. Maar hij bepaalde ook veel: wie in zijn huizen woonde, moest zich aan zijn regels houden. En wie ontslagen werd, raakte meteen ook zijn huis kwijt.",
+   "feedback": "De gids laat een andere kant zien: sommige fabrikanten zorgden beter voor hun mensen. Maar ook die hadden veel macht over hun leven.",
+   "options": [
+    "Om te laten zien dat er ook fabrikanten waren die beter voor hun arbeiders zorgden, al hadden ook zij veel macht",
+    "Om te zeggen dat alle fabrikanten slecht waren",
+    "Omdat sommige fabrikanten geen fabriek hadden",
+    "Omdat fabrikanten in verschillende steden woonden"
+   ],
+   "correct": 0,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Wat laat het voorbeeld van de gekleurde rivier zien?",
+   "passage": "Kijk omhoog naar die hoge schoorsteen. Rond 1880 stonden er in deze stad tientallen. Ze stootten dag en nacht rook en roet uit. Het roet viel als een zwart laagje op de daken, de was en de straten. Veel mensen kregen last van hun longen. In de rivier werd het afvalwater van de ververijen geloosd. Op sommige dagen kon je aan de kleur van het water zien welke kleur stof er die dag geverfd was.",
+   "feedback": "Als je aan het water ziet welke kleur er geverfd is, gaat het afvalwater rechtstreeks de rivier in. Dat is vervuiling.",
+   "options": [
+    "Dat de rivier mooi versierd was",
+    "Dat de fabrieken hun vervuilde water zomaar in de rivier loosden",
+    "Dat er verf in de rivier groeide",
+    "Dat vissen kleuren konden veranderen"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Waarom kon een staking werken om iets te bereiken?",
+   "passage": "Arbeiders kwamen steeds vaker samen in actie. Ze richtten vakbonden op: verenigingen die opkomen voor de belangen van werknemers. Als onderhandelen niet hielp, gingen ze staken. Bij een staking legt iedereen tegelijk het werk neer. Dan staan de machines stil en verdient de fabrikant niets. Zo hoopten de arbeiders op een hoger loon en kortere werkdagen. Staken was riskant: soms werden alle stakers ontslagen.",
+   "feedback": "\"Dan staan de machines stil en verdient de fabrikant niets.\" Zo konden arbeiders druk zetten.",
+   "options": [
+    "Omdat de arbeiders dan meer loon kregen tijdens de staking",
+    "Omdat de fabrikant niets verdiende als de machines stilstonden",
+    "Omdat staken verplicht was",
+    "Omdat de fabrikant dan op vakantie kon"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "evaluating",
+   "label": "Evaluerend",
+   "labelClass": "label-evaluating",
+   "question": "Waarom hangt het antwoord op \"Waren de fabrieken een vooruitgang?\" af van wie je het vraagt?",
+   "passage": "Wat brachten de fabrieken nu eigenlijk? Kleding en andere spullen werden veel goedkoper, zodat ook gewone mensen meer konden kopen. Er kwamen banen en nieuwe uitvindingen, zoals de trein. Maar er waren ook lange werkdagen, armoede, vieze lucht en vervuild water. Of de fabrieken een vooruitgang waren, hangt af van wie je het vraagt: een fabrikant vertelt een ander verhaal dan een wever die zijn ambacht kwijtraakte.",
+   "feedback": "De fabrikant verdiende veel. De wever raakte zijn ambacht kwijt. Hun ervaringen zijn heel verschillend, dus hun antwoorden ook.",
+   "options": [
+    "Omdat niet iedereen de vraag begrijpt",
+    "Omdat de fabrieken voor de ene groep vooral voordelen brachten en voor de andere vooral nadelen",
+    "Omdat fabrikanten altijd liegen",
+    "Omdat wevers geen mening mochten hebben"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Welke vergelijking kun je maken tussen 1880 en de jaren zeventig?",
+   "passage": "Einde van de wandeling. De laatste textielfabriek in deze stad sloot in de jaren zeventig van de vorige eeuw. Stof maken was in andere landen goedkoper geworden. Sommige oude fabrieksgebouwen zijn afgebroken, andere hebben een nieuwe bestemming gekregen: er zitten nu woningen, kantoren, een school en dit museum in. Zo blijft er iets over van de tijd waarin hier dag en nacht de machines ratelden. Bedankt voor het meelopen!",
+   "feedback": "In 1880 verloren thuiswevers hun werk door de goedkope fabriek. In de jaren zeventig verloren fabrieksarbeiders hun werk doordat stof in andere landen goedkoper werd.",
+   "options": [
+    "In beide gevallen verloren mensen hun werk doordat stof ergens anders goedkoper gemaakt werd",
+    "In beide gevallen werden er nieuwe fabrieken gebouwd",
+    "In beide gevallen werd de stad kleiner",
+    "Er is geen vergelijking te maken"
+   ],
+   "correct": 0,
+   "points": 1
+  }
+ ]
+};
+const GROEP = (function () {
+  try { const g = new URLSearchParams(location.search).get('groep'); if (g === '7' || g === '8') return g; } catch (e) {}
+  return '7';
+})();
+const questions = VRAGEN[GROEP];
+const SLEUTEL = 'bl_spullen-les3_g' + GROEP;
+document.getElementById('bl-eyebrow').textContent = 'Begrijpend lezen · Groep ' + GROEP;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // STATE
@@ -483,8 +779,8 @@ let markState = questions.map(() => new Set());
 // PERSISTENCE
 // ─────────────────────────────────────────────────────────────────────────────
 let paidSet = new Set();
-function loadPaid() { try { const s = localStorage.getItem('bl_spullen_les3_paid'); if (s) paidSet = new Set(JSON.parse(s)); } catch(e){} }
-function savePaid() { try { localStorage.setItem('bl_spullen_les3_paid', JSON.stringify([...paidSet])); } catch(e){} }
+function loadPaid() { try { const s = localStorage.getItem(SLEUTEL + '_paid'); if (s) paidSet = new Set(JSON.parse(s)); } catch(e){} }
+function savePaid() { try { localStorage.setItem(SLEUTEL + '_paid', JSON.stringify([...paidSet])); } catch(e){} }
 function loadProgress() {
   loadPaid();
   try {
@@ -493,7 +789,7 @@ function loadProgress() {
     // zodat die stand nooit meer in een les terechtkomt.
     localStorage.removeItem('bl_wereld_v2');
     localStorage.removeItem('bl_wereld_v2_paid');
-    const saved = localStorage.getItem('bl_spullen_les3');
+    const saved = localStorage.getItem(SLEUTEL);
     if (saved) {
       const d = JSON.parse(saved);
       // Alleen een stand die bij déze les hoort: evenveel vragen, anders weg.
@@ -503,7 +799,7 @@ function loadProgress() {
         answered = d.answered;
         score    = scores.reduce((a,b)=>a+b,0);
       } else {
-        localStorage.removeItem('bl_spullen_les3');
+        localStorage.removeItem(SLEUTEL);
       }
     }
   } catch(e){}
@@ -511,7 +807,7 @@ function loadProgress() {
 
 function saveProgress() {
   try {
-    localStorage.setItem('bl_spullen_les3', JSON.stringify({ scores, answered }));
+    localStorage.setItem(SLEUTEL, JSON.stringify({ scores, answered }));
   } catch(e){}
 }
 
@@ -608,10 +904,11 @@ function renderQuestion() {
   const area = document.getElementById('question-area');
   const nav  = document.getElementById('nav-row');
 
-  let html = `<div class="q-card${q.type === 'mc' && q.passage ? ' q-breed' : ''}">`;
+  let html = `<div class="q-card${(q.type === 'mc' || q.type === 'order') && q.passage ? ' q-breed' : ''}">`;
   html += `<span class="q-type-label ${q.labelClass}">${q.label}</span>`;
   html += `<h3>${q.question}</h3>`;
 
+  if (q.img) html += `<figure class="bl-fig"><img src="${q.img}" alt=""><figcaption>${q.bijschrift || ''}</figcaption></figure>`;
   if      (q.type === 'mark')  html += renderMark(q);
   else if (q.type === 'mc')    html += renderMC(q);
   else if (q.type === 'order') html += renderOrder(q);
@@ -802,7 +1099,8 @@ function answerMC(i) {
 // ─────────────────────────────────────────────────────────────────────────────
 function renderOrder(q) {
   const shuffled = [...q.items].sort(() => Math.random() - .5);
-  let html = '<div class="order-list" id="order-list">';
+  let html = q.passage ? `<div class="passage">${q.passage}</div>` : '';
+  html += '<div class="order-list" id="order-list">';
   shuffled.forEach(item => {
     html += `<div class="order-item" draggable="true" data-id="${item.id}">
       <span class="handle">⠿</span><span>${item.text}</span>
@@ -1013,7 +1311,7 @@ function showFinish() {
     `<div class="ov-title">${goed} van ${questions.length} vragen goed</div>` + rows;
   show('finish-screen');
   const opgaven = questions.map((q,i) => ({ vraag: q.question.replace(/<[^>]*>/g,''), puntenBehaald: scores[i], puntenMax: q.points }));
-  window.KennisKist?.slaResultaatOp?.('spullen-les3', score, total, { opgaven });
+  window.KennisKist?.slaResultaatOp?.('spullen-les3', score, total, { opgaven, groep: +GROEP });
   window.KennisKist?.toonInlogstatus?.(document.getElementById('kkStatus'));
 }
 
@@ -1022,7 +1320,7 @@ function restartQuiz() {
   scores   = new Array(questions.length).fill(0);
   answered = new Array(questions.length).fill(false);
   markState= questions.map(() => new Set());
-  localStorage.removeItem('bl_spullen_les3');
+  localStorage.removeItem(SLEUTEL);
   document.getElementById('score-num').textContent = 0;
   show('quiz-screen');
   renderQuestion();
@@ -1033,7 +1331,7 @@ function restartQuiz() {
 // eerste vraag die nog open staat.
 (function hervatNaVerversen() {
   try {
-    const d = JSON.parse(localStorage.getItem('bl_spullen_les3') || 'null');
+    const d = JSON.parse(localStorage.getItem(SLEUTEL) || 'null');
     if (d && Array.isArray(d.answered) && d.answered.length === questions.length
         && d.answered.some(Boolean)) startQuiz();
   } catch (e) {}

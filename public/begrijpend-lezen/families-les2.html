@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Begrijpend Lezen – Dappere Drucker</title>
+<title>Begrijpend lezen – Vrouwenkiesrecht</title>
 <link href="/fonts/fonts.css" rel="stylesheet">
 <style>
   :root {
@@ -270,7 +270,7 @@
   .bl-fig { margin:0 0 14px; }
   .bl-fig img { display:block; max-width:100%; max-height:300px; border-radius:12px; margin:0 auto; box-shadow:0 8px 24px -10px rgba(0,0,0,.6); }
   .bl-fig figcaption { font-size:.85rem; color:var(--ink-soft); text-align:center; margin-top:6px; font-style:italic; }
-  .bl-cover { display:block; max-width:min(320px,100%); max-height:220px; margin:0 auto 14px; border-radius:14px; box-shadow:0 10px 28px -12px rgba(0,0,0,.7); }
+  .bl-cover { display:block; width:min(360px,100%); aspect-ratio:4/3; object-fit:cover; margin:0 auto 14px; border-radius:16px; box-shadow:0 10px 28px -12px rgba(0,0,0,.7); }
   @media(min-width:1000px){ .q-breed > .bl-fig { grid-column:1; } }
 </style>
 <style>.order-item,.drag-item{touch-action:none}.order-item.dragging,.drag-item.dragging{opacity:.6}</style>
@@ -279,9 +279,9 @@
 <body>
 
 <header>
-  <p class="eyebrow" id="bl-eyebrow">Begrijpend lezen · Les 2</p>
-  <h1>Dappere Drucker</h1>
-  <p>Thema: Fantastische families</p>
+  <p class="eyebrow" id="bl-eyebrow">Begrijpend lezen</p>
+  <h1>Vrouwenkiesrecht</h1>
+  <p>Thema: Strijd om vrijheid</p>
 </header>
 <div id="progress-bar-wrap"><div id="progress-bar"></div></div>
 <div id="score-badge">⭐ <span id="score-num">0</span> pt</div>
@@ -289,14 +289,13 @@
 <main>
 
 <div id="intro-screen" class="screen active">
-  <div class="compass">✊</div>
-  <img class="bl-cover" src="families/l2-krant.jpg" alt="">
+  
   <h2>Klaar om te lezen?</h2>
-  <p>Je leest het maandblad Voorwaarts! uit 1930. Daarin staat hoe Wilhelmina Drucker en andere vrouwen streden voor gelijke rechten. Je beantwoordt tien vragen. Bij <strong>letterlijke vragen</strong> markeer je het antwoord <em>in de tekst zelf</em>. Klik woorden aan om ze te selecteren.</p>
+  <p>Je leest een informatieve tekst over de lange strijd van vrouwen in Nederland om te mogen stemmen. Twee bekende strijders waren Wilhelmina Drucker en Aletta Jacobs. Je beantwoordt tien vragen. Bij <strong>letterlijke vragen</strong> markeer je het antwoord <em>in de tekst zelf</em>. Klik woorden aan om ze te selecteren.</p>
   <div class="legend">
-    <span style="background:#d0e8ff;color:#0a3a6e;">🔍 Letterlijk – markeer in de tekst</span>
-    <span style="background:#fde8c0;color:#7a3d00;">💡 Afleidend</span>
-    <span style="background:#dff0e2;color:#1a5c2a;">💬 Evaluerend</span>
+    <span style="background:#d0e8ff;color:#0a3a6e;">Letterlijk – markeer in de tekst</span>
+    <span style="background:#fde8c0;color:#7a3d00;">Afleidend</span>
+    <span style="background:#dff0e2;color:#1a5c2a;">Evaluerend</span>
   </div>
   <button class="btn btn-primary" onclick="startQuiz()">Begin de oefening →</button>
 </div>
@@ -309,7 +308,7 @@
 
 <div id="finish-screen" class="screen">
   <div class="medal" id="finish-medal">🏅</div>
-  <h2>Goed gedaan, krantenlezer!</h2>
+  <h2>Sterk gelezen, vrijheidsstrijder!</h2>
   <div class="score-big" id="finish-score">0/0</div>
   <p id="finish-msg"></p>
   <div id="finish-overview"></div>
@@ -338,338 +337,132 @@ const VRAGEN = {
   {
    "type": "mark",
    "qtype": "literal",
-   "label": "🔍 Letterlijk",
+   "label": "Letterlijk",
    "labelClass": "label-literal",
-   "question": "Markeer in de tekst waarom meisjes niet veel hoefden te leren.",
-   "passage": "Rond 1850 vonden veel mensen dat een vrouw vooral thuis hoorde te zijn. Zij moest voor het huishouden, haar man en de kinderen zorgen. Meisjes hoefden niet veel te leren, omdat zij later toch zouden trouwen. Sommige mannen zeiden zelfs dat vrouwen minder slim waren dan mannen. Daarom zouden vrouwen ook minder rechten nodig hebben.",
-   "feedback": "Het staat in de zin: \"Meisjes hoefden niet veel te leren, omdat zij later toch zouden trouwen.\"",
-   "img": "families/l2-was.jpg",
-   "bijschrift": "Een vrouw doet de was. Het huishouden was vooral een taak van vrouwen.",
+   "question": "Markeer in de tekst wat het woord handelingsonbekwaam betekent.",
+   "passage": "Een vrouw hoort thuis. Rond 1870 vonden de meeste mensen in Nederland dat de plaats van een vrouw in huis was. Zij moest koken, wassen en voor de kinderen zorgen. Haar man verdiende het geld en nam de belangrijke beslissingen. Een getrouwde vrouw mocht zelfs geen contract tekenen zonder toestemming van haar man. Volgens de wet was zij handelingsonbekwaam: ze werd behandeld alsof ze geen eigen beslissingen kon nemen.",
+   "feedback": "De uitleg staat na de dubbele punt: \"ze werd behandeld alsof ze geen eigen beslissingen kon nemen.\"",
    "correctSpan": {
-    "start": 30,
-    "end": 35
+    "start": 59,
+    "end": 68
    },
    "coreWords": [
-    32,
-    35
+    64,
+    65,
+    66
    ],
    "points": 2
   },
   {
    "type": "mark",
    "qtype": "literal",
-   "label": "🔍 Letterlijk",
+   "label": "Letterlijk",
    "labelClass": "label-literal",
-   "question": "Markeer in de tekst waardoor Wilhelmina volgens de wet minder rechten had.",
-   "passage": "Wilhelmina Drucker was het daar niet mee eens. Zij wist zelf hoe oneerlijk vrouwen vaak behandeld werden. Haar moeder was niet getrouwd toen Wilhelmina werd geboren. Daardoor had Wilhelmina volgens de wet minder rechten dan kinderen van getrouwde ouders. Toen haar vader stierf, had zij bijna geen recht op zijn erfenis. Dat zat zo: Wilhelmina’s vader kreeg na Wilhelmina nog meer kinderen, met een vrouw met wie hij wél trouwde. Die halfbroers en halfzussen van Wilhelmina erfden wél, omdat hun moeder getrouwd was.",
-   "feedback": "Het staat in de zin: \"Haar moeder was niet getrouwd toen Wilhelmina werd geboren.\" De zin erna begint met \"Daardoor\".",
-   "img": "families/l2-drucker.jpg",
-   "bijschrift": "Wilhelmina Drucker (1847-1925) streed voor gelijkheid tussen mannen en vrouwen.",
+   "question": "Markeer in de tekst waarom veel ouders verder leren voor meisjes niet nodig vonden.",
+   "passage": "Weinig kansen op school. Jongens konden na de lagere school verder leren voor een vak of gaan studeren. Voor meisjes was dat veel moeilijker. Er waren nauwelijks middelbare scholen voor meisjes, en een universiteit liet geen vrouwen toe. Veel ouders vonden dat ook niet nodig: een meisje ging toch trouwen. Vrouwen die moesten werken, deden meestal zwaar en slecht betaald werk, als dienstbode, wasvrouw of in een fabriek. Voor hetzelfde werk kregen ze vaak minder loon dan mannen.",
+   "feedback": "Het staat na de dubbele punt: \"een meisje ging toch trouwen.\"",
    "correctSpan": {
-    "start": 17,
-    "end": 25
+    "start": 45,
+    "end": 49
+   },
+   "coreWords": [
+    46,
+    49
+   ],
+   "points": 2
+  },
+  {
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst wat Aletta Jacobs aan de minister vroeg.",
+   "passage": "Een doorbraak: Aletta Jacobs. In 1871 schreef de zeventienjarige Aletta Jacobs een brief aan de minister. Ze wilde geneeskunde studeren aan de universiteit van Groningen. Dat was nog nooit gebeurd. Tot ieders verbazing kreeg ze toestemming. Aletta werd de eerste vrouwelijke student van Nederland en later de eerste vrouwelijke arts. Ze opende een gratis spreekuur voor arme vrouwen. Daar zag ze hoe zwaar hun leven was, en dat maakte haar strijdlustig.",
+   "feedback": "Het staat in de zin: \"Ze wilde geneeskunde studeren aan de universiteit van Groningen.\"",
+   "correctSpan": {
+    "start": 16,
+    "end": 24
    },
    "coreWords": [
     18,
-    20,
-    21
-   ],
-   "points": 2
-  },
-  {
-   "type": "mc",
-   "qtype": "inferring",
-   "label": "💡 Afleidend",
-   "labelClass": "label-inferring",
-   "question": "Wat deed Wilhelmina om te laten zien dat ze het oneerlijk vond?",
-   "passage": "Wilhelmina vond dat onrechtvaardig. Ze begon een rechtszaak en schreef samen met haar zus het boek George David. Daarin liet ze zien hoe oneerlijk vrouwen en hun kinderen soms werden behandeld. Met haar boek, rechtszaak en scherpe woorden liet Wilhelmina duidelijk van zich horen. Ook andere vrouwen gingen steeds vaker protesteren. Ze wilden niet langer dat mannen alles voor hen bepaalden. De boodschap werd steeds sterker: een vrouw was geen bezit van een man, maar een vrij mens.",
-   "feedback": "Ze begon een rechtszaak en schreef met haar zus het boek George David.",
-   "options": [
-    "Ze verhuisde naar het buitenland",
-    "Ze begon een rechtszaak en schreef een boek",
-    "Ze ging in de Tweede Kamer werken",
-    "Ze schreef een brief aan de koning"
-   ],
-   "correct": 1,
-   "points": 1
-  },
-  {
-   "type": "mark",
-   "qtype": "literal",
-   "label": "🔍 Letterlijk",
-   "labelClass": "label-literal",
-   "question": "Markeer in de tekst waarom Wilhelmina vond dat vrouwen zelf geld moesten kunnen verdienen.",
-   "passage": "Halverwege de 19e eeuw hadden meisjes veel minder kansen dan jongens. Veel meisjes mochten niet lang naar school. Studeren was voor vrouwen bijna onmogelijk. Ook goede banen waren vooral voor mannen. Vrouwen die wel werkten, deden vaak zwaar of slecht betaald werk. Ook kregen ze minder loon. Wilhelmina Drucker vond dat vrouwen zelf hun geld moesten kunnen verdienen. Dan waren ze minder afhankelijk van een man.",
-   "feedback": "Het staat in de zin: \"Dan waren ze minder afhankelijk van een man.\"",
-   "correctSpan": {
-    "start": 58,
-    "end": 65
-   },
-   "coreWords": [
-    61,
-    62,
-    65
+    19
    ],
    "points": 2
   },
   {
    "type": "mark",
    "qtype": "literal",
-   "label": "🔍 Letterlijk",
+   "label": "Letterlijk",
    "labelClass": "label-literal",
-   "question": "Markeer in de tekst waarvoor het weekblad Evolutie bedoeld was.",
-   "passage": "Ze schreef artikelen in kranten en tijdschriften over werk, onderwijs en gelijke rechten voor vrouwen. Zo konden veel mensen haar ideeën lezen. In 1893 begon ze samen met Dora Haver het weekblad Evolutie. Dat tijdschrift was speciaal bedoeld om ideeën over vrouwenrechten te verspreiden. Stap voor stap veranderde er iets. Meer meisjes kregen onderwijs. Sommige vrouwen werden arts, lerares, schrijfster of winkelbediende. Toch bleef er veel ongelijkheid. Vrouwen kregen vaak minder loon en minder kansen.",
-   "feedback": "Het staat in de zin: \"Dat tijdschrift was speciaal bedoeld om ideeën over vrouwenrechten te verspreiden.\"",
+   "question": "Markeer in de tekst waarom vrouwen volgens Drucker hun eigen geld moesten verdienen.",
+   "passage": "Een scherpe pen: Wilhelmina Drucker. Wilhelmina Drucker wist uit eigen ervaring hoe oneerlijk de wet kon zijn. Haar ouders waren niet getrouwd en daardoor had zij als kind minder rechten dan andere kinderen. Ze werd een fel spreker en schrijver. In kranten en tijdschriften schreef ze dat vrouwen hun eigen geld moesten kunnen verdienen, zodat ze niet afhankelijk waren van een man. Tegenstanders noemden haar lastig en veel te fel. Zij liet zich daardoor niet uit het veld slaan.",
+   "feedback": "Het staat in de zin: vrouwen moesten hun eigen geld verdienen \"zodat ze niet afhankelijk waren van een man.\"",
    "correctSpan": {
-    "start": 38,
-    "end": 43
+    "start": 54,
+    "end": 61
    },
    "coreWords": [
-    39,
-    41,
-    43
+    56,
+    57,
+    61
    ],
    "points": 2
-  },
-  {
-   "type": "mc",
-   "qtype": "inferring",
-   "label": "💡 Afleidend",
-   "labelClass": "label-inferring",
-   "question": "Waarom vonden vrouwen het oneerlijk dat ze niet mochten stemmen?",
-   "passage": "Lange tijd mochten vrouwen niet stemmen. Mannen in de politiek beslisten over wetten, onderwijs, werk en gezin. Die beslissingen golden ook voor vrouwen, maar vrouwen mochten er niet over meepraten of meebeslissen. Veel politici vonden dat lange tijd normaal. Vaak luisterden zij niet naar vrouwen die meer rechten wilden.",
-   "feedback": "\"Die beslissingen golden ook voor vrouwen, maar vrouwen mochten er niet over meepraten of meebeslissen.\"",
-   "options": [
-    "Omdat stemmen leuk is",
-    "Omdat de wetten ook voor hen golden, maar ze er niet over mochten meebeslissen",
-    "Omdat mannen niet goed konden stemmen",
-    "Omdat vrouwen meer belasting betaalden dan mannen"
-   ],
-   "correct": 1,
-   "points": 1
   },
   {
    "type": "mark",
    "qtype": "literal",
-   "label": "🔍 Letterlijk",
+   "label": "Letterlijk",
    "labelClass": "label-literal",
-   "question": "Markeer in de tekst het doel van de Vereeniging voor Vrouwenkiesrecht.",
-   "passage": "Wilhelmina Drucker vond dat onrechtvaardig. Zij hield toespraken voor grote groepen mensen en werkte samen met andere vrouwen. In 1889 hielp zij de Vrije Vrouwenvereeniging oprichten, die streed voor gelijke rechten voor vrouwen. In 1894 richtte zij samen met onder anderen Aletta Jacobs de Vereeniging voor Vrouwenkiesrecht op. Die vereniging streed voor één duidelijk doel: vrouwen moesten kiesrecht krijgen.",
-   "feedback": "Het staat na de dubbele punt: \"vrouwen moesten kiesrecht krijgen.\"",
-   "img": "families/l2-congres.jpg",
-   "bijschrift": "Wilhelmina Drucker (links op de stoel) op een congres voor vrouwenkiesrecht in 1911. In het midden zit Aletta Jacobs.",
+   "question": "Markeer in de tekst wat Drucker en Jacobs vonden.",
+   "passage": "Waarom stemrecht zo belangrijk was. In het parlement werden wetten gemaakt over school, werk en het gezin. Die wetten golden ook voor vrouwen, maar vrouwen mochten niet stemmen en ook niet gekozen worden. Er zat dus geen enkele vrouw in het parlement. \"Hoe kunnen mannen alleen beslissen over het leven van vrouwen?\" vroegen Drucker en Jacobs zich af. Zij vonden: wie zich aan de wet moet houden, moet ook mee kunnen beslissen over die wet.",
+   "feedback": "Het staat na \"Zij vonden:\": \"wie zich aan de wet moet houden, moet ook mee kunnen beslissen over die wet.\"",
    "correctSpan": {
-    "start": 55,
-    "end": 58
+    "start": 60,
+    "end": 74
    },
    "coreWords": [
-    55,
-    57
+    64,
+    71
    ],
    "points": 2
-  },
-  {
-   "type": "mc",
-   "qtype": "inferring",
-   "label": "💡 Afleidend",
-   "labelClass": "label-inferring",
-   "question": "Wat mochten vrouwen in 1917 nog níet?",
-   "passage": "In 1894 werd de Vereeniging voor Vrouwenkiesrecht opgericht. De strijd duurde lang. In 1917 mochten vrouwen gekozen worden in de Tweede Kamer. Zelf stemmen mochten zij toen nog niet. Dat veranderde in 1919: vrouwen kregen stemrecht. In 1922 mochten vrouwen voor het eerst stemmen bij de Tweede Kamerverkiezingen. Daarmee was niet alle ongelijkheid verdwenen, maar vrouwen mochten eindelijk meebeslissen over hun land.",
-   "feedback": "\"In 1917 mochten vrouwen gekozen worden in de Tweede Kamer. Zelf stemmen mochten zij toen nog niet.\"",
-   "img": "families/l2-straat.jpg",
-   "bijschrift": "Vrouwen gingen de straat op om te strijden voor het stemrecht.",
-   "options": [
-    "Gekozen worden in de Tweede Kamer",
-    "Zelf stemmen",
-    "Een vereniging oprichten",
-    "Toespraken houden"
-   ],
-   "correct": 1,
-   "points": 1
-  },
-  {
-   "type": "mc",
-   "qtype": "inferring",
-   "label": "💡 Afleidend",
-   "labelClass": "label-inferring",
-   "question": "Wat betekent het hele symbool samen?",
-   "passage": "Dit is het symbool van de strijd voor vrouwenrechten. De cirkel met het kruisje betekent vrouw. De gebalde vuist staat voor strijd. Samen betekent het: vrouwen die strijden voor gelijke rechten. Het symbool staat in het maandblad Voorwaarts!, een blad voor en door vrouwen.",
-   "feedback": "De cirkel met het kruisje is \"vrouw\" en de vuist is \"strijd\". Samen: vrouwen die strijden voor gelijke rechten.",
-   "img": "families/l2-symbool.jpg",
-   "bijschrift": "Het symbool van de strijd voor vrouwenrechten.",
-   "options": [
-    "Vrouwen zijn sterker dan mannen",
-    "Vrouwen die strijden voor gelijke rechten",
-    "Vrouwen die graag sporten",
-    "Vrouwen die boos zijn op de koning"
-   ],
-   "correct": 1,
-   "points": 1
-  },
-  {
-   "type": "mc",
-   "qtype": "inferring",
-   "label": "💡 Afleidend",
-   "labelClass": "label-inferring",
-   "question": "Waarover lees je in dit maandblad?",
-   "passage": "VOORWAARTS! Maandblad voor en door vrouwen. Waar strijden wij voor? Juist, voor meer rechten voor de vrouw! Wat daarvan terecht is gekomen in de afgelopen jaren, leest u in dit maandblad. 1e jaargang, november 1930, nummer 11. In dit nummer: een groot stuk over Wilhelmina Drucker (1847-1925).",
-   "feedback": "\"Wat daarvan terecht is gekomen in de afgelopen jaren, leest u in dit maandblad.\" Met \"daarvan\" bedoelen ze de strijd voor meer rechten.",
-   "options": [
-    "Over het nieuws van de koning",
-    "Over wat er de afgelopen jaren is bereikt in de strijd voor vrouwenrechten",
-    "Over de nieuwste mode uit Parijs",
-    "Over hoe je het huishouden goed doet"
-   ],
-   "correct": 1,
-   "points": 1
-  }
- ],
- "8": [
-  {
-   "type": "mc",
-   "qtype": "inferring",
-   "label": "💡 Afleidend",
-   "labelClass": "label-inferring",
-   "question": "In de laatste zin staat \"zouden\": \"Daarom zouden vrouwen ook minder rechten nodig hebben.\" Waarom schrijft de schrijver dat zo?",
-   "passage": "Rond 1850 vonden veel mensen dat een vrouw vooral thuis hoorde te zijn. Zij moest voor het huishouden, haar man en de kinderen zorgen. Meisjes hoefden niet veel te leren, omdat zij later toch zouden trouwen. Sommige mannen zeiden zelfs dat vrouwen minder slim waren dan mannen. Daarom zouden vrouwen ook minder rechten nodig hebben.",
-   "feedback": "Met \"zouden\" laat de schrijver zien dat dit is wat die mannen beweerden. De schrijver van een maandblad vóór vrouwenrechten is het daar zeker niet mee eens.",
-   "img": "families/l2-was.jpg",
-   "bijschrift": "Een vrouw doet de was. Het huishouden was vooral een taak van vrouwen.",
-   "options": [
-    "Om te laten zien dat dit de mening van die mannen was, en niet de waarheid",
-    "Omdat het in de toekomst gaat gebeuren",
-    "Omdat de schrijver het er helemaal mee eens is",
-    "Omdat vrouwen later minder rechten kregen"
-   ],
-   "correct": 0,
-   "points": 1
-  },
-  {
-   "type": "mc",
-   "qtype": "inferring",
-   "label": "💡 Afleidend",
-   "labelClass": "label-inferring",
-   "question": "Waarom kreeg Wilhelmina bijna niets van de erfenis, en haar halfbroers en halfzussen wel?",
-   "passage": "Wilhelmina Drucker was het daar niet mee eens. Zij wist zelf hoe oneerlijk vrouwen vaak behandeld werden. Haar moeder was niet getrouwd toen Wilhelmina werd geboren. Daardoor had Wilhelmina volgens de wet minder rechten dan kinderen van getrouwde ouders. Toen haar vader stierf, had zij bijna geen recht op zijn erfenis. Dat zat zo: Wilhelmina’s vader kreeg na Wilhelmina nog meer kinderen, met een vrouw met wie hij wél trouwde. Die halfbroers en halfzussen van Wilhelmina erfden wél, omdat hun moeder getrouwd was.",
-   "feedback": "Het ging niet om jongen of meisje, maar om getrouwd of niet: de halfbroers en halfzussen erfden wél, \"omdat hun moeder getrouwd was\".",
-   "img": "families/l2-drucker.jpg",
-   "bijschrift": "Wilhelmina Drucker (1847-1925) streed voor gelijkheid tussen mannen en vrouwen.",
-   "options": [
-    "Omdat zij de oudste was",
-    "Omdat haar moeder niet met haar vader getrouwd was, en hun moeder wel",
-    "Omdat haar vader boos op haar was",
-    "Omdat meisjes in die tijd nooit mochten erven"
-   ],
-   "correct": 1,
-   "points": 1
-  },
-  {
-   "type": "mc",
-   "qtype": "inferring",
-   "label": "💡 Afleidend",
-   "labelClass": "label-inferring",
-   "question": "Wat betekent \"scherpe woorden\" in deze tekst?",
-   "passage": "Wilhelmina vond dat onrechtvaardig. Ze begon een rechtszaak en schreef samen met haar zus het boek George David. Daarin liet ze zien hoe oneerlijk vrouwen en hun kinderen soms werden behandeld. Met haar boek, rechtszaak en scherpe woorden liet Wilhelmina duidelijk van zich horen. Ook andere vrouwen gingen steeds vaker protesteren. Ze wilden niet langer dat mannen alles voor hen bepaalden. De boodschap werd steeds sterker: een vrouw was geen bezit van een man, maar een vrij mens.",
-   "feedback": "Met \"scherpe woorden liet Wilhelmina duidelijk van zich horen\": ze zei fel en duidelijk wat er mis was.",
-   "options": [
-    "Woorden die pijn doen aan je oren",
-    "Duidelijke, felle woorden die mensen niet kunnen negeren",
-    "Heel nette en beleefde woorden",
-    "Woorden die met een mes in papier zijn gekrast"
-   ],
-   "correct": 1,
-   "points": 1
-  },
-  {
-   "type": "mc",
-   "qtype": "inferring",
-   "label": "💡 Afleidend",
-   "labelClass": "label-inferring",
-   "question": "Welke uitspraak past het best bij wat Wilhelmina vond?",
-   "passage": "Halverwege de 19e eeuw hadden meisjes veel minder kansen dan jongens. Veel meisjes mochten niet lang naar school. Studeren was voor vrouwen bijna onmogelijk. Ook goede banen waren vooral voor mannen. Vrouwen die wel werkten, deden vaak zwaar of slecht betaald werk. Ook kregen ze minder loon. Wilhelmina Drucker vond dat vrouwen zelf hun geld moesten kunnen verdienen. Dan waren ze minder afhankelijk van een man.",
-   "feedback": "Met eigen geld ben je \"minder afhankelijk van een man\". Dan kun je dus meer zelf beslissen.",
-   "options": [
-    "Wie zijn eigen geld verdient, kan meer zelf beslissen",
-    "Vrouwen moeten zwaar werk doen om sterk te worden",
-    "Mannen horen meer loon te krijgen dan vrouwen",
-    "Meisjes hoeven niet lang naar school als ze later gaan werken"
-   ],
-   "correct": 0,
-   "points": 1
-  },
-  {
-   "type": "mc",
-   "qtype": "evaluating",
-   "label": "💬 Evaluerend",
-   "labelClass": "label-evaluating",
-   "question": "In de krant staat bij elk stuk een meter: \"Hoeveel is er veranderd? weinig – veel\". Waar zet jij de meter na deze tekst?",
-   "passage": "Ze schreef artikelen in kranten en tijdschriften over werk, onderwijs en gelijke rechten voor vrouwen. Zo konden veel mensen haar ideeën lezen. In 1893 begon ze samen met Dora Haver het weekblad Evolutie. Dat tijdschrift was speciaal bedoeld om ideeën over vrouwenrechten te verspreiden. Stap voor stap veranderde er iets. Meer meisjes kregen onderwijs. Sommige vrouwen werden arts, lerares, schrijfster of winkelbediende. Toch bleef er veel ongelijkheid. Vrouwen kregen vaak minder loon en minder kansen.",
-   "feedback": "\"Stap voor stap veranderde er iets\": meer meisjes kregen onderwijs. \"Toch bleef er veel ongelijkheid.\" Dus ergens in het midden.",
-   "options": [
-    "Helemaal bij \"weinig\": er veranderde niets",
-    "Ergens in het midden: er veranderde iets, maar er bleef ook veel ongelijk",
-    "Helemaal bij \"veel\": vrouwen en mannen waren gelijk",
-    "Dat kun je niet zeggen, want de tekst gaat alleen over tijdschriften"
-   ],
-   "correct": 1,
-   "points": 1
-  },
-  {
-   "type": "mc",
-   "qtype": "inferring",
-   "label": "💡 Afleidend",
-   "labelClass": "label-inferring",
-   "question": "Welk woord past het best bij hoe veel politici zich gedroegen?",
-   "passage": "Lange tijd mochten vrouwen niet stemmen. Mannen in de politiek beslisten over wetten, onderwijs, werk en gezin. Die beslissingen golden ook voor vrouwen, maar vrouwen mochten er niet over meepraten of meebeslissen. Veel politici vonden dat lange tijd normaal. Vaak luisterden zij niet naar vrouwen die meer rechten wilden.",
-   "feedback": "Ze vonden het \"normaal\" en \"luisterden niet\" naar vrouwen. Het kon hun niet zoveel schelen: onverschillig.",
-   "options": [
-    "Behulpzaam",
-    "Onverschillig",
-    "Nieuwsgierig",
-    "Bang"
-   ],
-   "correct": 1,
-   "points": 1
   },
   {
    "type": "drag",
    "qtype": "inferring",
-   "label": "💡 Afleidend – Sorteren",
+   "label": "Afleidend – Sorteren",
    "labelClass": "label-inferring",
-   "question": "Bij welke vereniging hoort het? Sleep het naar de goede vereniging.",
-   "passage": "Wilhelmina Drucker vond dat onrechtvaardig. Zij hield toespraken voor grote groepen mensen en werkte samen met andere vrouwen. In 1889 hielp zij de Vrije Vrouwenvereeniging oprichten, die streed voor gelijke rechten voor vrouwen. In 1894 richtte zij samen met onder anderen Aletta Jacobs de Vereeniging voor Vrouwenkiesrecht op. Die vereniging streed voor één duidelijk doel: vrouwen moesten kiesrecht krijgen.",
-   "feedback": "1889: Vrije Vrouwenvereeniging, voor gelijke rechten. 1894: Vereeniging voor Vrouwenkiesrecht, met Aletta Jacobs, voor één doel: kiesrecht.",
-   "img": "families/l2-congres.jpg",
-   "bijschrift": "Wilhelmina Drucker (links op de stoel) op een congres voor vrouwenkiesrecht in 1911. In het midden zit Aletta Jacobs.",
+   "question": "Wat deed de Vereniging voor Vrouwenkiesrecht wel, en wat staat er niet in de tekst? Sleep elke zin naar de goede groep.",
+   "passage": "Samen sterker. Alleen kon je weinig bereiken, dat begrepen de vrouwen goed. In 1894 richtten Aletta Jacobs, Wilhelmina Drucker en anderen de Vereniging voor Vrouwenkiesrecht op. De vereniging groeide snel, tot meer dan tienduizend leden. Ze organiseerden bijeenkomsten, verspreidden pamfletten en schreven brieven aan politici. Ook hielden ze grote optochten door de straten, met spandoeken en vlaggen. Zo konden de politici hun boodschap niet langer negeren.",
+   "feedback": "De vereniging hield bijeenkomsten, verspreidde pamfletten, schreef brieven en hield optochten. Over televisie of ramen ingooien staat niets in de tekst.",
    "categories": [
-    "Vrije Vrouwenvereeniging",
-    "Vereeniging voor Vrouwenkiesrecht"
+    "Staat in de tekst",
+    "Staat niet in de tekst"
    ],
    "items": [
     {
      "id": "i0",
-     "text": "Opgericht in 1889",
-     "correct": "Vrije Vrouwenvereeniging"
+     "text": "Pamfletten verspreiden",
+     "correct": "Staat in de tekst"
     },
     {
      "id": "i1",
-     "text": "Opgericht in 1894",
-     "correct": "Vereeniging voor Vrouwenkiesrecht"
+     "text": "Brieven schrijven aan politici",
+     "correct": "Staat in de tekst"
     },
     {
      "id": "i2",
-     "text": "Streed voor gelijke rechten voor vrouwen",
-     "correct": "Vrije Vrouwenvereeniging"
+     "text": "Optochten houden met spandoeken",
+     "correct": "Staat in de tekst"
     },
     {
      "id": "i3",
-     "text": "Had één doel: kiesrecht voor vrouwen",
-     "correct": "Vereeniging voor Vrouwenkiesrecht"
+     "text": "Een eigen krant op de televisie",
+     "correct": "Staat niet in de tekst"
     },
     {
      "id": "i4",
-     "text": "Aletta Jacobs hielp oprichten",
-     "correct": "Vereeniging voor Vrouwenkiesrecht"
+     "text": "Ramen ingooien bij het parlement",
+     "correct": "Staat niet in de tekst"
     }
    ],
    "points": 2
@@ -677,29 +470,27 @@ const VRAGEN = {
   {
    "type": "order",
    "qtype": "inferring",
-   "label": "💡 Afleidend – Volgorde",
+   "label": "Afleidend – Volgorde",
    "labelClass": "label-inferring",
-   "question": "Zet de stappen in de strijd voor vrouwenkiesrecht op volgorde.",
-   "passage": "In 1894 werd de Vereeniging voor Vrouwenkiesrecht opgericht. De strijd duurde lang. In 1917 mochten vrouwen gekozen worden in de Tweede Kamer. Zelf stemmen mochten zij toen nog niet. Dat veranderde in 1919: vrouwen kregen stemrecht. In 1922 mochten vrouwen voor het eerst stemmen bij de Tweede Kamerverkiezingen. Daarmee was niet alle ongelijkheid verdwenen, maar vrouwen mochten eindelijk meebeslissen over hun land.",
-   "feedback": "1894 de vereniging → 1917 gekozen worden → 1919 stemrecht → 1922 voor het eerst stemmen.",
-   "img": "families/l2-straat.jpg",
-   "bijschrift": "Vrouwen gingen de straat op om te strijden voor het stemrecht.",
+   "question": "Zet de gebeurtenissen in de goede volgorde. Begin met wat het eerst gebeurde.",
+   "passage": "Eindelijk gewonnen. De strijd duurde tientallen jaren. In 1917 kregen vrouwen het recht om gekozen te worden: ze mochten in het parlement zitten. Een jaar later werd Suze Groeneweg de eerste vrouw in de Tweede Kamer. Toch mochten vrouwen zelf nog niet stemmen. Dat vond men een vreemde situatie. In 1919 kwam er een nieuwe wet en kregen vrouwen ook actief kiesrecht. In 1922 gingen vrouwen voor het eerst naar de stembus voor de Tweede Kamer.",
+   "feedback": "1871: Aletta studeert. 1894: de vereniging. 1917: vrouwen mogen gekozen worden. 1922: vrouwen stemmen voor het eerst.",
    "items": [
     {
      "id": "o0",
-     "text": "De Vereeniging voor Vrouwenkiesrecht wordt opgericht"
+     "text": "Aletta Jacobs gaat studeren in Groningen"
     },
     {
      "id": "o1",
-     "text": "Vrouwen mogen gekozen worden in de Tweede Kamer"
+     "text": "De Vereniging voor Vrouwenkiesrecht wordt opgericht"
     },
     {
      "id": "o2",
-     "text": "Vrouwen krijgen stemrecht"
+     "text": "Vrouwen mogen gekozen worden in het parlement"
     },
     {
      "id": "o3",
-     "text": "Vrouwen stemmen voor het eerst bij de Tweede Kamerverkiezingen"
+     "text": "Vrouwen stemmen voor het eerst voor de Tweede Kamer"
     }
    ],
    "correctOrder": [
@@ -711,20 +502,124 @@ const VRAGEN = {
    "points": 2
   },
   {
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst wat actief kiesrecht betekent.",
+   "passage": "Twee soorten kiesrecht. Bij kiesrecht zijn er eigenlijk twee rechten. Actief kiesrecht betekent dat je zelf mag stemmen bij verkiezingen. Passief kiesrecht betekent dat anderen op jou mogen stemmen, zodat je gekozen kunt worden. Vrouwen kregen in Nederland eerst passief kiesrecht en pas later actief kiesrecht. In sommige andere landen ging dat precies andersom. Tegenwoordig heeft iedere Nederlander van achttien jaar en ouder allebei.",
+   "feedback": "Het staat in de zin: \"Actief kiesrecht betekent dat je zelf mag stemmen bij verkiezingen.\"",
+   "correctSpan": {
+    "start": 10,
+    "end": 19
+   },
+   "coreWords": [
+    10,
+    15,
+    17
+   ],
+   "points": 2
+  },
+  {
    "type": "mc",
-   "qtype": "evaluating",
-   "label": "💬 Evaluerend",
-   "labelClass": "label-evaluating",
-   "question": "Waarom past dit symbool goed bij een maandblad met de naam Voorwaarts!?",
-   "passage": "Dit is het symbool van de strijd voor vrouwenrechten. De cirkel met het kruisje betekent vrouw. De gebalde vuist staat voor strijd. Samen betekent het: vrouwen die strijden voor gelijke rechten. Het symbool staat in het maandblad Voorwaarts!, een blad voor en door vrouwen.",
-   "feedback": "\"Voorwaarts!\" betekent: vooruit, ga door. Dat past bij een vuist die staat voor strijd.",
-   "img": "families/l2-symbool.jpg",
-   "bijschrift": "Het symbool van de strijd voor vrouwenrechten.",
+   "qtype": "inferring",
+   "label": "Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Wat is de belangrijkste boodschap van deze tekst?",
+   "passage": "De strijd ging door. Met het kiesrecht was niet alle ongelijkheid verdwenen. Tot 1956 werd een getrouwde vrouw nog steeds handelingsonbekwaam genoemd. Lerares of ambtenaar zijn mocht vaak niet meer zodra een vrouw trouwde: dan werd ze ontslagen. Pas in de jaren zeventig kwamen er wetten voor gelijk loon voor mannen en vrouwen. Daarover gingen nieuwe actiegroepen de straat op. Een bekende groep noemde zichzelf \"Dolle Mina\", als eerbetoon aan Wilhelmina Drucker.",
+   "feedback": "De tekst begint met \"Met het kiesrecht was niet alle ongelijkheid verdwenen\" en noemt daarna voorbeelden. De strijd ging dus door.",
    "options": [
-    "Omdat het blad over sport en vechten gaat",
-    "Omdat het blad, net als het symbool, oproept om door te gaan met de strijd voor vrouwenrechten",
-    "Omdat het blad door mannen werd gemaakt",
-    "Omdat het symbool het logo van de Tweede Kamer is"
+    "Na 1919 was alles eerlijk geregeld voor vrouwen",
+    "Na het kiesrecht bleef er nog veel ongelijkheid en ging de strijd door",
+    "Getrouwde vrouwen kregen in 1919 meer loon dan mannen",
+    "Wilhelmina Drucker richtte in de jaren zeventig een actiegroep op"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Hoeveel jaar zit er tussen de oprichting van de vereniging en het actief kiesrecht voor vrouwen?",
+   "passage": "Tijdlijn. 1871: Aletta Jacobs mag als eerste vrouw studeren. 1894: oprichting van de Vereniging voor Vrouwenkiesrecht. 1917: vrouwen krijgen passief kiesrecht. 1918: Suze Groeneweg wordt het eerste vrouwelijke Kamerlid. 1919: vrouwen krijgen actief kiesrecht. 1922: vrouwen stemmen voor het eerst voor de Tweede Kamer. 1956: getrouwde vrouwen zijn niet langer handelingsonbekwaam.",
+   "feedback": "De vereniging werd opgericht in 1894, actief kiesrecht kwam in 1919. 1919 - 1894 = 25 jaar.",
+   "options": [
+    "5 jaar",
+    "15 jaar",
+    "25 jaar",
+    "48 jaar"
+   ],
+   "correct": 2,
+   "points": 1
+  }
+ ],
+ "8": [
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Wat zegt de regel over het contract over de positie van een getrouwde vrouw?",
+   "passage": "Een vrouw hoort thuis. Rond 1870 vonden de meeste mensen in Nederland dat de plaats van een vrouw in huis was. Zij moest koken, wassen en voor de kinderen zorgen. Haar man verdiende het geld en nam de belangrijke beslissingen. Een getrouwde vrouw mocht zelfs geen contract tekenen zonder toestemming van haar man. Volgens de wet was zij handelingsonbekwaam: ze werd behandeld alsof ze geen eigen beslissingen kon nemen.",
+   "feedback": "Als je voor elk contract toestemming nodig hebt van je man, ben je van hem afhankelijk. Je mag niet zelf beslissen.",
+   "options": [
+    "Ze was afhankelijk van haar man, zelfs voor haar eigen zaken",
+    "Ze mocht meer dan haar man",
+    "Ze mocht alleen contracten tekenen als ze kon koken",
+    "Ze hoefde nooit iets te tekenen"
+   ],
+   "correct": 0,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Welk gevolg hadden de weinige schoolkansen voor meisjes later in hun leven?",
+   "passage": "Weinig kansen op school. Jongens konden na de lagere school verder leren voor een vak of gaan studeren. Voor meisjes was dat veel moeilijker. Er waren nauwelijks middelbare scholen voor meisjes, en een universiteit liet geen vrouwen toe. Veel ouders vonden dat ook niet nodig: een meisje ging toch trouwen. Vrouwen die moesten werken, deden meestal zwaar en slecht betaald werk, als dienstbode, wasvrouw of in een fabriek. Voor hetzelfde werk kregen ze vaak minder loon dan mannen.",
+   "feedback": "Zonder opleiding blijven alleen banen als dienstbode, wasvrouw of fabrieksarbeider over. Die zijn zwaar en slecht betaald.",
+   "options": [
+    "Ze konden alleen zwaar of slecht betaald werk krijgen",
+    "Ze werden allemaal arts",
+    "Ze verdienden meer dan mannen",
+    "Ze hoefden nooit te werken"
+   ],
+   "correct": 0,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Waarom werd Aletta \"strijdlustig\" door haar spreekuur?",
+   "passage": "Een doorbraak: Aletta Jacobs. In 1871 schreef de zeventienjarige Aletta Jacobs een brief aan de minister. Ze wilde geneeskunde studeren aan de universiteit van Groningen. Dat was nog nooit gebeurd. Tot ieders verbazing kreeg ze toestemming. Aletta werd de eerste vrouwelijke student van Nederland en later de eerste vrouwelijke arts. Ze opende een gratis spreekuur voor arme vrouwen. Daar zag ze hoe zwaar hun leven was, en dat maakte haar strijdlustig.",
+   "feedback": "Op het spreekuur zag ze \"hoe zwaar hun leven was\". Dat onrecht wilde ze bestrijden: daarom werd ze strijdlustig.",
+   "options": [
+    "Omdat de arme vrouwen haar niet wilden betalen",
+    "Omdat ze zag hoe zwaar het leven van arme vrouwen was en dat wilde veranderen",
+    "Omdat ze ruzie kreeg met de minister",
+    "Omdat ze liever in Groningen wilde wonen"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Wat betekent: \"Zij liet zich daardoor niet uit het veld slaan\"?",
+   "passage": "Een scherpe pen: Wilhelmina Drucker. Wilhelmina Drucker wist uit eigen ervaring hoe oneerlijk de wet kon zijn. Haar ouders waren niet getrouwd en daardoor had zij als kind minder rechten dan andere kinderen. Ze werd een fel spreker en schrijver. In kranten en tijdschriften schreef ze dat vrouwen hun eigen geld moesten kunnen verdienen, zodat ze niet afhankelijk waren van een man. Tegenstanders noemden haar lastig en veel te fel. Zij liet zich daardoor niet uit het veld slaan.",
+   "feedback": "Je niet uit het veld laten slaan betekent: je laat je niet ontmoedigen. Drucker ging door, ook al vonden anderen haar te fel.",
+   "options": [
+    "Ze stopte met schrijven",
+    "Ze ging gewoon door met haar strijd",
+    "Ze verhuisde naar het platteland",
+    "Ze werd zelf tegenstander"
    ],
    "correct": 1,
    "points": 1
@@ -732,16 +627,125 @@ const VRAGEN = {
   {
    "type": "mc",
    "qtype": "evaluating",
-   "label": "💬 Evaluerend",
+   "label": "Evaluerend",
    "labelClass": "label-evaluating",
-   "question": "Het maandblad is van november 1930. Wat betekent dat voor het stuk over Wilhelmina Drucker?",
-   "passage": "VOORWAARTS! Maandblad voor en door vrouwen. Waar strijden wij voor? Juist, voor meer rechten voor de vrouw! Wat daarvan terecht is gekomen in de afgelopen jaren, leest u in dit maandblad. 1e jaargang, november 1930, nummer 11. In dit nummer: een groot stuk over Wilhelmina Drucker (1847-1925).",
-   "feedback": "Wilhelmina Drucker overleed in 1925, vijf jaar vóór dit nummer. Het blad kijkt dus terug op wat zij heeft gedaan.",
+   "question": "Welke uitspraak past het best bij de mening van Drucker en Jacobs?",
+   "passage": "Waarom stemrecht zo belangrijk was. In het parlement werden wetten gemaakt over school, werk en het gezin. Die wetten golden ook voor vrouwen, maar vrouwen mochten niet stemmen en ook niet gekozen worden. Er zat dus geen enkele vrouw in het parlement. \"Hoe kunnen mannen alleen beslissen over het leven van vrouwen?\" vroegen Drucker en Jacobs zich af. Zij vonden: wie zich aan de wet moet houden, moet ook mee kunnen beslissen over die wet.",
+   "feedback": "Hun redenering: de wetten gelden ook voor vrouwen, dus moeten vrouwen ook meebeslissen.",
    "options": [
-    "Zij heeft het stuk zelf geschreven",
-    "Het is een terugblik: er wordt verteld wat zij in haar leven heeft gedaan",
-    "Het is verzonnen, want zij leefde toen niet meer",
-    "Het gaat over haar plannen voor de toekomst"
+    "Alleen mensen die belasting betalen, mogen stemmen",
+    "Mannen weten het beste wat goed is voor vrouwen",
+    "Iedereen voor wie een wet geldt, moet over die wet mee kunnen beslissen",
+    "Vrouwen moeten zich niet met wetten bemoeien"
+   ],
+   "correct": 2,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Waarom was het belangrijk dat de vereniging zoveel leden kreeg?",
+   "passage": "Samen sterker. Alleen kon je weinig bereiken, dat begrepen de vrouwen goed. In 1894 richtten Aletta Jacobs, Wilhelmina Drucker en anderen de Vereniging voor Vrouwenkiesrecht op. De vereniging groeide snel, tot meer dan tienduizend leden. Ze organiseerden bijeenkomsten, verspreidden pamfletten en schreven brieven aan politici. Ook hielden ze grote optochten door de straten, met spandoeken en vlaggen. Zo konden de politici hun boodschap niet langer negeren.",
+   "feedback": "\"Alleen kon je weinig bereiken.\" Met meer dan tienduizend leden konden politici hun boodschap \"niet langer negeren\".",
+   "options": [
+    "Omdat leden geld moesten betalen aan politici",
+    "Omdat een grote groep moeilijker te negeren is dan een paar mensen",
+    "Omdat elk lid zelf minister kon worden",
+    "Omdat er anders geen pamfletten gedrukt mochten worden"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Waarom was het een \"vreemde situatie\" tussen 1917 en 1919?",
+   "passage": "Eindelijk gewonnen. De strijd duurde tientallen jaren. In 1917 kregen vrouwen het recht om gekozen te worden: ze mochten in het parlement zitten. Een jaar later werd Suze Groeneweg de eerste vrouw in de Tweede Kamer. Toch mochten vrouwen zelf nog niet stemmen. Dat vond men een vreemde situatie. In 1919 kwam er een nieuwe wet en kregen vrouwen ook actief kiesrecht. In 1922 gingen vrouwen voor het eerst naar de stembus voor de Tweede Kamer.",
+   "feedback": "Suze Groeneweg zat in de Tweede Kamer, maar mocht zelf niet stemmen. Gekozen worden mocht wel, kiezen nog niet.",
+   "options": [
+    "Vrouwen mochten wel in het parlement zitten, maar zelf niet stemmen",
+    "Vrouwen mochten wel stemmen, maar niet naar school",
+    "Er zat helemaal niemand in het parlement",
+    "Mannen mochten niet meer stemmen"
+   ],
+   "correct": 0,
+   "points": 1
+  },
+  {
+   "type": "drag",
+   "qtype": "inferring",
+   "label": "Afleidend – Sorteren",
+   "labelClass": "label-inferring",
+   "question": "Hoort de zin bij actief of passief kiesrecht? Sleep elke zin naar de goede groep.",
+   "passage": "Twee soorten kiesrecht. Bij kiesrecht zijn er eigenlijk twee rechten. Actief kiesrecht betekent dat je zelf mag stemmen bij verkiezingen. Passief kiesrecht betekent dat anderen op jou mogen stemmen, zodat je gekozen kunt worden. Vrouwen kregen in Nederland eerst passief kiesrecht en pas later actief kiesrecht. In sommige andere landen ging dat precies andersom. Tegenwoordig heeft iedere Nederlander van achttien jaar en ouder allebei.",
+   "feedback": "Actief = zelf stemmen (vrouwen vanaf 1919). Passief = gekozen kunnen worden (vrouwen vanaf 1917, zoals Suze Groeneweg).",
+   "categories": [
+    "Actief kiesrecht",
+    "Passief kiesrecht"
+   ],
+   "items": [
+    {
+     "id": "i0",
+     "text": "Jij kiest wie er in de Tweede Kamer komt",
+     "correct": "Actief kiesrecht"
+    },
+    {
+     "id": "i1",
+     "text": "Jij mag zelf een stem uitbrengen",
+     "correct": "Actief kiesrecht"
+    },
+    {
+     "id": "i2",
+     "text": "Anderen mogen op jou stemmen",
+     "correct": "Passief kiesrecht"
+    },
+    {
+     "id": "i3",
+     "text": "Suze Groeneweg kreeg dit in 1917",
+     "correct": "Passief kiesrecht"
+    },
+    {
+     "id": "i4",
+     "text": "Vrouwen kregen dit in 1919",
+     "correct": "Actief kiesrecht"
+    }
+   ],
+   "points": 2
+  },
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Waarom noemde een actiegroep uit de jaren zeventig zich naar Wilhelmina Drucker?",
+   "passage": "De strijd ging door. Met het kiesrecht was niet alle ongelijkheid verdwenen. Tot 1956 werd een getrouwde vrouw nog steeds handelingsonbekwaam genoemd. Lerares of ambtenaar zijn mocht vaak niet meer zodra een vrouw trouwde: dan werd ze ontslagen. Pas in de jaren zeventig kwamen er wetten voor gelijk loon voor mannen en vrouwen. Daarover gingen nieuwe actiegroepen de straat op. Een bekende groep noemde zichzelf \"Dolle Mina\", als eerbetoon aan Wilhelmina Drucker.",
+   "feedback": "Het was een \"eerbetoon\". De groep vocht net als Drucker voor gelijke rechten. Drucker zelf leefde toen al lang niet meer.",
+   "options": [
+    "Omdat Drucker zelf lid was van die groep",
+    "Omdat ze haar wilden eren: zij voerden dezelfde soort strijd als zij",
+    "Omdat ze Drucker belachelijk wilden maken",
+    "Omdat Drucker de wet voor gelijk loon had gemaakt"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "evaluating",
+   "label": "Evaluerend",
+   "labelClass": "label-evaluating",
+   "question": "Waarom staat 1956 ook op deze tijdlijn, terwijl het niet over stemmen gaat?",
+   "passage": "Tijdlijn. 1871: Aletta Jacobs mag als eerste vrouw studeren. 1894: oprichting van de Vereniging voor Vrouwenkiesrecht. 1917: vrouwen krijgen passief kiesrecht. 1918: Suze Groeneweg wordt het eerste vrouwelijke Kamerlid. 1919: vrouwen krijgen actief kiesrecht. 1922: vrouwen stemmen voor het eerst voor de Tweede Kamer. 1956: getrouwde vrouwen zijn niet langer handelingsonbekwaam.",
+   "feedback": "De strijd ging over gelijke rechten in het algemeen. In 1956 werd weer een stuk ongelijkheid opgeheven.",
+   "options": [
+    "Omdat toen de vereniging stopte",
+    "Omdat de tijdlijn laat zien dat de strijd voor gelijke rechten breder was dan alleen stemrecht",
+    "Omdat vrouwen in 1956 voor het eerst mochten stemmen",
+    "Omdat Aletta Jacobs toen arts werd"
    ],
    "correct": 1,
    "points": 1
@@ -754,7 +758,7 @@ const GROEP = (function () {
 })();
 const questions = VRAGEN[GROEP];
 const SLEUTEL = 'bl_families-les2_g' + GROEP;
-document.getElementById('bl-eyebrow').textContent = 'Begrijpend lezen · Groep ' + GROEP + ' · Les 2';
+document.getElementById('bl-eyebrow').textContent = 'Begrijpend lezen · Groep ' + GROEP;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // STATE

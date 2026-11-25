@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Begrijpend Lezen – Kom in verzet</title>
+<title>Begrijpend lezen – Anton de Kom</title>
 <link href="/fonts/fonts.css" rel="stylesheet">
 <style>
   :root {
@@ -270,7 +270,7 @@
   .bl-fig { margin:0 0 14px; }
   .bl-fig img { display:block; max-width:100%; max-height:300px; border-radius:12px; margin:0 auto; box-shadow:0 8px 24px -10px rgba(0,0,0,.6); }
   .bl-fig figcaption { font-size:.85rem; color:var(--ink-soft); text-align:center; margin-top:6px; font-style:italic; }
-  .bl-cover { display:block; max-width:min(320px,100%); max-height:220px; margin:0 auto 14px; border-radius:14px; box-shadow:0 10px 28px -12px rgba(0,0,0,.7); }
+  .bl-cover { display:block; width:min(360px,100%); aspect-ratio:4/3; object-fit:cover; margin:0 auto 14px; border-radius:16px; box-shadow:0 10px 28px -12px rgba(0,0,0,.7); }
   @media(min-width:1000px){ .q-breed > .bl-fig { grid-column:1; } }
 </style>
 <style>.order-item,.drag-item{touch-action:none}.order-item.dragging,.drag-item.dragging{opacity:.6}</style>
@@ -279,9 +279,9 @@
 <body>
 
 <header>
-  <p class="eyebrow" id="bl-eyebrow">Begrijpend lezen · Les 4</p>
-  <h1>Kom in verzet</h1>
-  <p>Thema: Fantastische families</p>
+  <p class="eyebrow" id="bl-eyebrow">Begrijpend lezen</p>
+  <h1>Anton de Kom</h1>
+  <p>Thema: Strijd om vrijheid</p>
 </header>
 <div id="progress-bar-wrap"><div id="progress-bar"></div></div>
 <div id="score-badge">⭐ <span id="score-num">0</span> pt</div>
@@ -289,14 +289,13 @@
 <main>
 
 <div id="intro-screen" class="screen active">
-  <div class="compass">✒️</div>
-  <img class="bl-cover" src="families/l4-judith.jpg" alt="">
+  
   <h2>Klaar om te lezen?</h2>
-  <p>Je leest een interview met Judith de Kom over haar vader Anton de Kom: schrijver, vrijheidsstrijder en verzetsheld. Je beantwoordt tien vragen. Bij <strong>letterlijke vragen</strong> markeer je het antwoord <em>in de tekst zelf</em>. Klik woorden aan om ze te selecteren.</p>
+  <p>Je leest het levensverhaal van Anton de Kom: schrijver, vrijheidsstrijder en verzetsman. Het verhaal is verdeeld in korte hoofdstukjes. Je beantwoordt tien vragen. Bij <strong>letterlijke vragen</strong> markeer je het antwoord <em>in de tekst zelf</em>. Klik woorden aan om ze te selecteren.</p>
   <div class="legend">
-    <span style="background:#d0e8ff;color:#0a3a6e;">🔍 Letterlijk – markeer in de tekst</span>
-    <span style="background:#fde8c0;color:#7a3d00;">💡 Afleidend</span>
-    <span style="background:#dff0e2;color:#1a5c2a;">💬 Evaluerend</span>
+    <span style="background:#d0e8ff;color:#0a3a6e;">Letterlijk – markeer in de tekst</span>
+    <span style="background:#fde8c0;color:#7a3d00;">Afleidend</span>
+    <span style="background:#dff0e2;color:#1a5c2a;">Evaluerend</span>
   </div>
   <button class="btn btn-primary" onclick="startQuiz()">Begin de oefening →</button>
 </div>
@@ -309,7 +308,7 @@
 
 <div id="finish-screen" class="screen">
   <div class="medal" id="finish-medal">🏅</div>
-  <h2>Goed gedaan, interviewlezer!</h2>
+  <h2>Mooi gelezen, levensverhaalkenner!</h2>
   <div class="score-big" id="finish-score">0/0</div>
   <p id="finish-msg"></p>
   <div id="finish-overview"></div>
@@ -338,38 +337,52 @@ const VRAGEN = {
   {
    "type": "mark",
    "qtype": "literal",
-   "label": "🔍 Letterlijk",
+   "label": "Letterlijk",
    "labelClass": "label-literal",
-   "question": "Markeer in de tekst hoe Judith haar vader beschrijft.",
-   "passage": "Judith de Kom was dertien jaar oud toen haar vader Anton de Kom verdween. Pas veel later begreep ze hoe bijzonder hij was geweest. Hij kwam op voor mensen die slecht werden behandeld. Maar Judith kende hem niet als held uit een boek. Voor haar was hij vooral haar vader: lief, streng, slim en dapper.",
-   "feedback": "Het staat na de dubbele punt: \"lief, streng, slim en dapper.\"",
-   "img": "families/l4-judith.jpg",
-   "bijschrift": "Judith de Kom (1931-2024)",
+   "question": "Markeer in de tekst wat een kolonie is.",
+   "passage": "Hoofdstuk 1: een jongen uit Paramaribo. Anton de Kom werd in 1898 geboren in Paramaribo, de hoofdstad van Suriname. Zijn vader was nog geboren als tot slaaf gemaakt kind, vlak voordat de slavernij werd afgeschaft. Anton groeide op met de verhalen over die tijd. Hij was slim en leergierig en haalde op school zijn diploma als boekhouder. Suriname was toen een kolonie: een gebied dat bestuurd werd door Nederland.",
+   "feedback": "De uitleg staat na de dubbele punt: \"een gebied dat bestuurd werd door Nederland.\"",
    "correctSpan": {
-    "start": 50,
-    "end": 54
+    "start": 62,
+    "end": 68
    },
    "coreWords": [
-    50,
-    51,
-    52,
-    54
+    63,
+    65
+   ],
+   "points": 2
+  },
+  {
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst wat discriminatie is.",
+   "passage": "Hoofdstuk 2: geen eerlijke kansen. Na school ging Anton werken als boekhouder. Hij kon goed rekenen en schrijven. Toch merkte hij dat de beste banen in Suriname bijna altijd naar witte Nederlanders gingen. Surinamers met dezelfde opleiding kregen minder betaald of werden overgeslagen. Dat noemen we discriminatie: mensen oneerlijk behandelen vanwege hun huidskleur, afkomst of iets anders. Anton besloot zijn geluk elders te zoeken. In 1920, hij was toen 22 jaar, vertrok hij naar Nederland.",
+   "feedback": "De uitleg staat na de dubbele punt: \"mensen oneerlijk behandelen vanwege hun huidskleur, afkomst of iets anders.\"",
+   "correctSpan": {
+    "start": 47,
+    "end": 56
+   },
+   "coreWords": [
+    48,
+    49
    ],
    "points": 2
   },
   {
    "type": "mc",
    "qtype": "inferring",
-   "label": "💡 Afleidend",
+   "label": "Afleidend",
    "labelClass": "label-inferring",
-   "question": "Wat betekent \"In Suriname lagen mijn vaders wortels\"?",
-   "passage": "Uw vader werd geboren in Suriname. Wat betekende dat land voor hem? In Suriname lagen mijn vaders wortels, daar kwam hij vandaan. Hij kende de verhalen, de taal en de mensen en hij hield van dat land. Maar hij zag ook dat veel Surinamers niet eerlijk werden behandeld. Suriname was toen een kolonie van Nederland. Nederlandse bestuurders hadden veel macht, terwijl gewone Surinamers weinig te zeggen hadden.",
-   "feedback": "Judith legt het zelf uit: \"daar kwam hij vandaan\". Je wortels zijn de plek waar je vandaan komt.",
+   "question": "Wat betekent \"lieten zich niet tegenhouden\" in deze tekst?",
+   "passage": "Hoofdstuk 3: een nieuw leven in Den Haag. In Nederland vond Anton werk als vertegenwoordiger: hij reisde rond om producten te verkopen. Hij ontmoette Nel Borsumij en ze werden verliefd. In 1926 trouwden ze en ze kregen vier kinderen. Een getrouwd stel met een zwarte man en een witte vrouw was in die tijd ongewoon. Ze kregen soms nare opmerkingen te horen op straat. Maar Nel en Anton lieten zich niet tegenhouden. Thuis was het een warm en druk gezin.",
+   "feedback": "Ondanks de nare opmerkingen bleven ze bij elkaar en bouwden ze een gezin op.",
    "options": [
-    "Hij had in Suriname een moestuin",
-    "Hij kwam uit Suriname en voelde zich er thuis",
-    "Hij werkte in Suriname als boer",
-    "Hij wilde in Suriname bomen planten"
+    "Ze gingen uit elkaar door de opmerkingen",
+    "Ze bleven samen, ook al kregen ze nare opmerkingen",
+    "Ze verhuisden terug naar Suriname",
+    "Ze mochten niet trouwen"
    ],
    "correct": 1,
    "points": 1
@@ -377,158 +390,119 @@ const VRAGEN = {
   {
    "type": "mark",
    "qtype": "literal",
-   "label": "🔍 Letterlijk",
-   "labelClass": "label-literal",
-   "question": "Markeer in de tekst waarom Anton naar Nederland ging.",
-   "passage": "Hij verzamelde de verhalen van Surinamers over Suriname en schreef ze op. Hij vond dat zij hun eigen geschiedenis moesten kennen en doorvertellen, niet alleen de geschiedenis zoals Nederlanders die vertelden. Maar hij besloot in Nederland te gaan wonen … Klopt! In Suriname kreeg hij niet de kansen die hij verdiende. Mijn vader kon goed schrijven en rekenen, maar de betere banen waren vaak voor witte Nederlanders. In Nederland hoopte hij werk te vinden en een toekomst op te bouwen.",
-   "feedback": "Het staat in de laatste zin: \"In Nederland hoopte hij werk te vinden en een toekomst op te bouwen.\"",
-   "correctSpan": {
-    "start": 67,
-    "end": 79
-   },
-   "coreWords": [
-    71,
-    76
-   ],
-   "points": 2
-  },
-  {
-   "type": "mc",
-   "qtype": "inferring",
-   "label": "💡 Afleidend",
-   "labelClass": "label-inferring",
-   "question": "Waarom was de relatie van Anton en Nellie in die tijd bijzonder?",
-   "passage": "En toen ontmoette hij daar mijn moeder Nellie. Dat ze een relatie kregen, was heel bijzonder, want zij was wit en hij was zwart. In die tijd vonden veel mensen dat een witte vrouw niet met een zwarte man mocht trouwen. Gelukkig was mijn oma, de moeder van mijn moeder, dol op mijn vader. Maar er waren ook veel mensen die racistische opmerkingen maakten.",
-   "feedback": "\"... want zij was wit en hij was zwart. In die tijd vonden veel mensen dat een witte vrouw niet met een zwarte man mocht trouwen.\"",
-   "img": "families/l4-gezin.jpg",
-   "bijschrift": "Nellie, Anton en hun vier kinderen. Judith wordt vastgehouden door haar moeder.",
-   "options": [
-    "Omdat ze elkaar in Suriname ontmoetten",
-    "Omdat zij wit was en hij zwart, en veel mensen vonden dat dat niet mocht",
-    "Omdat ze allebei schrijver waren",
-    "Omdat haar moeder het verbood"
-   ],
-   "correct": 1,
-   "points": 1
-  },
-  {
-   "type": "mark",
-   "qtype": "literal",
-   "label": "🔍 Letterlijk",
-   "labelClass": "label-literal",
-   "question": "Markeer in de tekst wat je volgens Anton beter kunt als je veel weet.",
-   "passage": "Wat voor vader was Anton de Kom? Hij was lief, maar hij kon ook streng zijn. Hij wilde dat we goed leerden, veel lazen en nieuwsgierig bleven naar de wereld om ons heen. Kennis vond hij heel belangrijk. ‘Als je veel weet, begrijp je beter wat er in de wereld gebeurt. Dan kun je ook beter voor jezelf en voor anderen opkomen’, zei hij. Ik zie hem nog zitten, in zijn leunstoel met een stapel woordenboeken naast zich. Hij schreef met een stompje potlood op alles wat hij maar aan papier kon vinden. Voor een notitieboekje had hij geen geld.",
-   "feedback": "Anton zei: \"Als je veel weet, begrijp je beter wat er in de wereld gebeurt. Dan kun je ook beter voor jezelf en voor anderen opkomen.\"",
-   "correctSpan": {
-    "start": 51,
-    "end": 61
-   },
-   "coreWords": [
-    57,
-    60,
-    61
-   ],
-   "points": 2
-  },
-  {
-   "type": "mark",
-   "qtype": "literal",
-   "label": "🔍 Letterlijk",
+   "label": "Letterlijk",
    "labelClass": "label-literal",
    "question": "Markeer in de tekst wat Anton deed op zijn adviesbureau.",
-   "passage": "Toen u één jaar oud was, verhuisde jullie gezin naar Suriname. Ja, mijn vader besloot om naar Suriname te gaan, omdat zijn moeder ernstig ziek was. In Suriname ontdekte hij hoe Surinaamse arbeiders werden uitgebuit: ze werkten hard, verdienden weinig en zaten vaak vast aan strenge contracten. Wie protesteerde, kon boetes of straf krijgen. Daarom begon mijn vader een adviesbureau. Arbeiders konden daar hun verhaal doen. Hij schreef hun klachten op en wees hen op hun rechten. Zo kregen mensen die nooit werden gehoord ineens wél een stem.",
-   "feedback": "Het staat in de zin: \"Hij schreef hun klachten op en wees hen op hun rechten.\"",
+   "passage": "Hoofdstuk 4: terug in Suriname. Eind 1932 reisde Anton met zijn gezin naar Suriname, omdat zijn moeder ziek was. Daar zag hij hoe zwaar arbeiders het hadden. Ze werkten lange dagen voor heel weinig geld en zaten vast aan strenge contracten. Anton opende een adviesbureau in het huis van zijn ouders. Arbeiders konden er gratis hun verhaal doen. Anton luisterde, schreef hun klachten op en legde uit welke rechten ze hadden. Elke dag stond er een lange rij voor de deur.",
+   "feedback": "Het staat in de zin: \"Anton luisterde, schreef hun klachten op en legde uit welke rechten ze hadden.\"",
    "correctSpan": {
-    "start": 66,
-    "end": 76
+    "start": 58,
+    "end": 70
    },
    "coreWords": [
-    69,
-    76
+    59,
+    62,
+    68
    ],
    "points": 2
-  },
-  {
-   "type": "mc",
-   "qtype": "inferring",
-   "label": "💡 Afleidend",
-   "labelClass": "label-inferring",
-   "question": "Waarom werd Anton gevangengezet?",
-   "passage": "Maar al snel moesten jullie terugkeren naar Nederland. Waarom? De Nederlandse bestuurders in Suriname werden bang voor zijn invloed. Steeds meer arbeiders, arme mensen en andere Surinamers met klachten kwamen naar hem toe. De bestuurders zagen hem als een oproerkraaier: iemand die voor onrust zorgde. Maar mijn vader wilde geen herrie maken om de herrie. Hij wilde eerlijkheid. Toch werd hij gevangengezet. Daarna werd hij naar Nederland teruggestuurd.",
-   "feedback": "\"De Nederlandse bestuurders in Suriname werden bang voor zijn invloed. Steeds meer ... kwamen naar hem toe.\"",
-   "options": [
-    "Omdat hij iets had gestolen",
-    "Omdat de bestuurders bang waren voor zijn invloed, nu steeds meer mensen naar hem toe kwamen",
-    "Omdat hij geen werk had",
-    "Omdat hij terug wilde naar Nederland"
-   ],
-   "correct": 1,
-   "points": 1
   },
   {
    "type": "mark",
    "qtype": "literal",
-   "label": "🔍 Letterlijk",
+   "label": "Letterlijk",
    "labelClass": "label-literal",
-   "question": "Markeer in de tekst waarover Anton schreef in zijn boek.",
-   "passage": "Een jaar later verscheen zijn boek Wij slaven van Suriname. Waar ging dat boek over? Mijn vader schreef over slavernij, racisme en de manier waarop Surinamers door Nederlanders werden behandeld. Vaak werd die geschiedenis verteld door mensen met macht. Mijn vader draaide dat om: hij schreef vanuit de Surinamers zelf. Hij wilde dat lezers begrepen: dit is onrecht en daar mag je tegen opstaan.",
-   "feedback": "Het staat in de zin: \"Mijn vader schreef over slavernij, racisme en de manier waarop Surinamers door Nederlanders werden behandeld.\"",
-   "img": "families/l4-boek.jpg",
-   "bijschrift": "In 1934 verscheen het boek Wij slaven van Suriname.",
+   "question": "Markeer in de tekst wat een oproerkraaier is.",
+   "passage": "Hoofdstuk 5: gevangen. De Nederlandse bestuurders in Suriname werden ongerust. Steeds meer mensen kwamen naar Anton toe en hij werd heel populair. Het bestuur zag hem als een oproerkraaier: iemand die mensen aanzet tot verzet tegen de overheid. Op 1 februari 1933 werd Anton gearresteerd. Een week later verzamelden duizenden mensen zich om zijn vrijlating te eisen. De politie schoot op de menigte. Er vielen twee doden en veel gewonden.",
+   "feedback": "De uitleg staat na de dubbele punt: \"iemand die mensen aanzet tot verzet tegen de overheid.\"",
    "correctSpan": {
-    "start": 15,
-    "end": 29
+    "start": 29,
+    "end": 37
    },
    "coreWords": [
-    19,
-    20,
-    29
+    32,
+    34,
+    37
    ],
    "points": 2
   },
   {
-   "type": "mc",
-   "qtype": "inferring",
-   "label": "💡 Afleidend",
-   "labelClass": "label-inferring",
-   "question": "Waarom wist het gezin niets van het verzetswerk van Anton?",
-   "passage": "Judith de Kom werd in 1931 geboren. Toen de Tweede Wereldoorlog in 1940 uitbrak, sloot haar vader zich aan bij het verzet. Hij schreef teksten tegen de Duitse bezetters en werkte mee aan geheime kranten. Wij thuis wisten daar niets van. Dat was veiliger, voor hem én voor ons. Maar op 7 augustus 1944 werd hij opgepakt door de Duitse politie. Daarna hebben we nooit meer iets van hem gehoord. Pas jaren later hoorden we dat hij in verschillende Duitse concentratiekampen heeft gezeten. Toen ik 28 jaar was, ontdekte ik dat hij kort voor de bevrijding van Nederland was overleden aan tuberculose, een ernstige ziekte.",
-   "feedback": "\"Wij thuis wisten daar niets van. Dat was veiliger, voor hem én voor ons.\"",
-   "options": [
-    "Omdat Anton het vergeten was te vertellen",
-    "Omdat het veiliger was, voor hem én voor het gezin",
-    "Omdat het gezin in Suriname woonde",
-    "Omdat Judith nog niet kon lezen"
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst wat verbanning betekent.",
+   "passage": "Hoofdstuk 6: weggestuurd. Anton kreeg geen rechtszaak. Zonder dat een rechter naar zijn zaak had gekeken, werd hij in mei 1933 met zijn gezin op de boot naar Nederland gezet. Hij mocht niet meer terugkomen in Suriname. Dat noemen we verbanning. Anton zou zijn geboorteland nooit meer terugzien. In Nederland had hij het moeilijk. Hij kon nergens meer werk vinden, omdat werkgevers hem een onruststoker vonden. Het gezin leefde van heel weinig geld.",
+   "feedback": "Het staat vlak voor het woord verbanning: \"Hij mocht niet meer terugkomen in Suriname.\"",
+   "correctSpan": {
+    "start": 30,
+    "end": 36
+   },
+   "coreWords": [
+    32,
+    34
    ],
-   "correct": 1,
-   "points": 1
+   "points": 2
+  },
+  {
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst wat uitbuiting betekent.",
+   "passage": "Hoofdstuk 7: een boek als wapen. In 1934 verscheen het boek dat Anton al jaren in zijn hoofd had: Wij slaven van Suriname. Daarin vertelde hij de geschiedenis van Suriname vanuit de mensen die er hadden geleden, niet vanuit de Nederlanders met macht. Hij schreef over slavernij, uitbuiting en racisme. Uitbuiting betekent dat iemand misbruik maakt van het harde werk van een ander. Het boek werd in Nederland nauwelijks gelezen, maar in Suriname gaven mensen het stiekem aan elkaar door.",
+   "feedback": "Het staat in de zin: \"Uitbuiting betekent dat iemand misbruik maakt van het harde werk van een ander.\"",
+   "correctSpan": {
+    "start": 50,
+    "end": 62
+   },
+   "coreWords": [
+    54,
+    59
+   ],
+   "points": 2
+  },
+  {
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst waarom de kinderen van Anton niets wisten van zijn werk.",
+   "passage": "Hoofdstuk 8: in het verzet. In 1940 viel Duitsland Nederland binnen. Anton sloot zich aan bij het verzet: een groep mensen die in het geheim tegen de bezetter vocht. Hij schreef stukken voor illegale kranten. Die kranten werden stiekem gedrukt en verspreid, want ze waren verboden. Zijn kinderen wisten niets van dit werk. Dat was veiliger voor iedereen: wat je niet weet, kun je ook niet per ongeluk verraden. Op 7 augustus 1944 werd Anton toch opgepakt.",
+   "feedback": "Het staat na de dubbele punt: \"wat je niet weet, kun je ook niet per ongeluk verraden.\"",
+   "correctSpan": {
+    "start": 58,
+    "end": 68
+   },
+   "coreWords": [
+    60,
+    68
+   ],
+   "points": 2
   },
   {
    "type": "order",
    "qtype": "inferring",
-   "label": "💡 Afleidend – Volgorde",
+   "label": "Afleidend – Volgorde",
    "labelClass": "label-inferring",
-   "question": "Zet deze gebeurtenissen uit het leven van Anton de Kom op volgorde.",
-   "passage": "In 1934 verscheen Wij slaven van Suriname, een jaar nadat Anton uit Suriname was teruggestuurd. Hij was daar maar kort geweest: in 1932 was hij met zijn gezin naar Suriname gegaan. Geboren was hij er in 1898. Toen hij 22 jaar was, kwam hij naar Nederland om te werken. Hij overleed in 1945, kort voor de bevrijding.",
-   "feedback": "1898 geboren → 1920 naar Nederland → 1933 teruggestuurd → 1945 overleden.",
-   "img": "families/l4-anton.jpg",
-   "bijschrift": "Anton de Kom kwam op zijn 22e naar Nederland om te werken.",
+   "question": "Zet de gebeurtenissen uit het leven van Anton de Kom in de goede volgorde.",
+   "passage": "Hoofdstuk 9: geen thuiskomst. Na zijn arrestatie werd Anton naar verschillende concentratiekampen in Duitsland gebracht. Daar waren de omstandigheden verschrikkelijk: weinig eten, zware arbeid en veel ziektes. Anton werd ernstig ziek. In april 1945, een paar weken voordat Nederland werd bevrijd, overleed hij aan tuberculose, een besmettelijke longziekte. Zijn familie wist lange tijd niet wat er met hem gebeurd was. Pas jaren later kregen ze daar zekerheid over.",
+   "feedback": "1920: naar Nederland. 1932: adviesbureau. 1934: het boek. 1944: opgepakt.",
    "items": [
     {
      "id": "o0",
-     "text": "Anton wordt geboren in Suriname"
+     "text": "Anton vertrekt naar Nederland"
     },
     {
      "id": "o1",
-     "text": "Anton komt naar Nederland om te werken"
+     "text": "Anton opent een adviesbureau in Suriname"
     },
     {
      "id": "o2",
-     "text": "Anton wordt uit Suriname teruggestuurd"
+     "text": "Zijn boek Wij slaven van Suriname verschijnt"
     },
     {
      "id": "o3",
-     "text": "Anton overlijdt, kort voor de bevrijding"
+     "text": "Anton wordt opgepakt door de Duitse bezetter"
     }
    ],
    "correctOrder": [
@@ -538,24 +512,92 @@ const VRAGEN = {
     "o3"
    ],
    "points": 2
+  },
+  {
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst wat de Canon van Nederland is.",
+   "passage": "Hoofdstuk 10: niet vergeten. Lange tijd was Anton de Kom in Nederland bijna vergeten. In Suriname bleef zijn naam wel bekend: de universiteit in Paramaribo werd naar hem genoemd. Later kreeg hij ook in Nederland meer aandacht. Er kwamen straten en scholen met zijn naam, een standbeeld in Amsterdam, en zijn boek werd opnieuw uitgegeven en veel gelezen. Sinds 2020 staat hij in de Canon van Nederland: een lijst met de vijftig belangrijkste onderwerpen uit onze geschiedenis.",
+   "feedback": "De uitleg staat na de dubbele punt: \"een lijst met de vijftig belangrijkste onderwerpen uit onze geschiedenis.\"",
+   "correctSpan": {
+    "start": 67,
+    "end": 76
+   },
+   "coreWords": [
+    68,
+    72,
+    76
+   ],
+   "points": 2
   }
  ],
  "8": [
   {
    "type": "mc",
    "qtype": "inferring",
-   "label": "💡 Afleidend",
+   "label": "Afleidend",
    "labelClass": "label-inferring",
-   "question": "Wat bedoelt de schrijver met: \"Judith kende hem niet als held uit een boek\"?",
-   "passage": "Judith de Kom was dertien jaar oud toen haar vader Anton de Kom verdween. Pas veel later begreep ze hoe bijzonder hij was geweest. Hij kwam op voor mensen die slecht werden behandeld. Maar Judith kende hem niet als held uit een boek. Voor haar was hij vooral haar vader: lief, streng, slim en dapper.",
-   "feedback": "Anderen kennen hem als held. Judith kende hem van thuis: \"Voor haar was hij vooral haar vader.\"",
-   "img": "families/l4-judith.jpg",
-   "bijschrift": "Judith de Kom (1931-2024)",
+   "question": "Waarom is het belangrijk dat de vader van Anton nog als tot slaaf gemaakt kind geboren was?",
+   "passage": "Hoofdstuk 1: een jongen uit Paramaribo. Anton de Kom werd in 1898 geboren in Paramaribo, de hoofdstad van Suriname. Zijn vader was nog geboren als tot slaaf gemaakt kind, vlak voordat de slavernij werd afgeschaft. Anton groeide op met de verhalen over die tijd. Hij was slim en leergierig en haalde op school zijn diploma als boekhouder. Suriname was toen een kolonie: een gebied dat bestuurd werd door Nederland.",
+   "feedback": "De slavernij was maar één generatie eerder. Anton hoorde de verhalen thuis. Dat maakte het voor hem heel dichtbij.",
    "options": [
-    "Judith had nooit een boek over haar vader gelezen",
-    "Voor Judith was hij in de eerste plaats gewoon haar vader, niet een beroemd persoon",
-    "Anton de Kom was helemaal geen held",
-    "Judith vond boeken over helden saai"
+    "Omdat Anton daardoor rijk werd",
+    "Omdat de slavernij daardoor voor Anton geen verre geschiedenis was, maar iets uit zijn eigen familie",
+    "Omdat zijn vader daardoor in Nederland woonde",
+    "Omdat Anton daardoor niet naar school mocht"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Wat was de belangrijkste reden dat Anton naar Nederland vertrok?",
+   "passage": "Hoofdstuk 2: geen eerlijke kansen. Na school ging Anton werken als boekhouder. Hij kon goed rekenen en schrijven. Toch merkte hij dat de beste banen in Suriname bijna altijd naar witte Nederlanders gingen. Surinamers met dezelfde opleiding kregen minder betaald of werden overgeslagen. Dat noemen we discriminatie: mensen oneerlijk behandelen vanwege hun huidskleur, afkomst of iets anders. Anton besloot zijn geluk elders te zoeken. In 1920, hij was toen 22 jaar, vertrok hij naar Nederland.",
+   "feedback": "De beste banen gingen naar witte Nederlanders. Daarom \"besloot hij zijn geluk elders te zoeken\".",
+   "options": [
+    "Hij wilde de Nederlandse koning ontmoeten",
+    "Hij kreeg in Suriname geen eerlijke kansen op goed werk",
+    "Hij kon in Suriname niet naar school",
+    "Zijn vader stuurde hem weg"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Wat laat dit hoofdstuk zien over Nederland in de jaren twintig?",
+   "passage": "Hoofdstuk 3: een nieuw leven in Den Haag. In Nederland vond Anton werk als vertegenwoordiger: hij reisde rond om producten te verkopen. Hij ontmoette Nel Borsumij en ze werden verliefd. In 1926 trouwden ze en ze kregen vier kinderen. Een getrouwd stel met een zwarte man en een witte vrouw was in die tijd ongewoon. Ze kregen soms nare opmerkingen te horen op straat. Maar Nel en Anton lieten zich niet tegenhouden. Thuis was het een warm en druk gezin.",
+   "feedback": "Het stel was \"ongewoon\" en kreeg \"nare opmerkingen\". Ook in Nederland bestonden dus vooroordelen.",
+   "options": [
+    "Dat iedereen een gemengd stel heel normaal vond",
+    "Dat er in Nederland ook vooroordelen waren over huidskleur",
+    "Dat zwarte mannen niet mochten werken",
+    "Dat er in Nederland geen Surinamers woonden"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Wat zegt de \"lange rij voor de deur\" over de situatie in Suriname?",
+   "passage": "Hoofdstuk 4: terug in Suriname. Eind 1932 reisde Anton met zijn gezin naar Suriname, omdat zijn moeder ziek was. Daar zag hij hoe zwaar arbeiders het hadden. Ze werkten lange dagen voor heel weinig geld en zaten vast aan strenge contracten. Anton opende een adviesbureau in het huis van zijn ouders. Arbeiders konden er gratis hun verhaal doen. Anton luisterde, schreef hun klachten op en legde uit welke rechten ze hadden. Elke dag stond er een lange rij voor de deur.",
+   "feedback": "Als er elke dag een lange rij staat, hebben veel mensen hulp nodig. Kennelijk was er verder niemand bij wie ze terecht konden.",
+   "options": [
+    "Dat het adviesbureau te klein was gebouwd",
+    "Dat heel veel mensen problemen hadden en niemand anders hen hielp",
+    "Dat Anton te langzaam werkte",
+    "Dat de arbeiders vrij waren en niets te doen hadden"
    ],
    "correct": 1,
    "points": 1
@@ -563,86 +605,16 @@ const VRAGEN = {
   {
    "type": "mc",
    "qtype": "evaluating",
-   "label": "💬 Evaluerend",
+   "label": "Evaluerend",
    "labelClass": "label-evaluating",
-   "question": "Wat voor tekst is dit, en hoe zie je dat?",
-   "passage": "Uw vader werd geboren in Suriname. Wat betekende dat land voor hem? In Suriname lagen mijn vaders wortels, daar kwam hij vandaan. Hij kende de verhalen, de taal en de mensen en hij hield van dat land. Maar hij zag ook dat veel Surinamers niet eerlijk werden behandeld. Suriname was toen een kolonie van Nederland. Nederlandse bestuurders hadden veel macht, terwijl gewone Surinamers weinig te zeggen hadden.",
-   "feedback": "De tekst begint met een vraag (\"Wat betekende dat land voor hem?\") en daarna antwoordt Judith (\"mijn vaders wortels\").",
+   "question": "Het bestuur noemde Anton een oproerkraaier. Past dat woord bij wat je in hoofdstuk 4 over hem las?",
+   "passage": "Hoofdstuk 5: gevangen. De Nederlandse bestuurders in Suriname werden ongerust. Steeds meer mensen kwamen naar Anton toe en hij werd heel populair. Het bestuur zag hem als een oproerkraaier: iemand die mensen aanzet tot verzet tegen de overheid. Op 1 februari 1933 werd Anton gearresteerd. Een week later verzamelden duizenden mensen zich om zijn vrijlating te eisen. De politie schoot op de menigte. Er vielen twee doden en veel gewonden.",
+   "feedback": "In hoofdstuk 4 luisterde hij en legde hij uit welke rechten mensen hadden. Het bestuur was bang voor zijn populariteit en gaf hem daarom die naam.",
    "options": [
-    "Een dagboek: er staan datums boven",
-    "Een interview: er wordt een vraag gesteld en Judith geeft antwoord",
-    "Een gedicht: de zinnen rijmen",
-    "Een reclame: er wordt iets verkocht"
-   ],
-   "correct": 1,
-   "points": 1
-  },
-  {
-   "type": "mc",
-   "qtype": "inferring",
-   "label": "💡 Afleidend",
-   "labelClass": "label-inferring",
-   "question": "Waarom vond Anton het belangrijk dat Surinamers hun eigen verhalen opschreven?",
-   "passage": "Hij verzamelde de verhalen van Surinamers over Suriname en schreef ze op. Hij vond dat zij hun eigen geschiedenis moesten kennen en doorvertellen, niet alleen de geschiedenis zoals Nederlanders die vertelden. Maar hij besloot in Nederland te gaan wonen … Klopt! In Suriname kreeg hij niet de kansen die hij verdiende. Mijn vader kon goed schrijven en rekenen, maar de betere banen waren vaak voor witte Nederlanders. In Nederland hoopte hij werk te vinden en een toekomst op te bouwen.",
-   "feedback": "Ze moesten hun eigen geschiedenis kennen, \"niet alleen de geschiedenis zoals Nederlanders die vertelden\".",
-   "options": [
-    "Omdat hij zelf graag verhalen las",
-    "Omdat mensen anders alleen de geschiedenis kenden zoals Nederlanders die vertelden",
-    "Omdat de Nederlanders daarom vroegen",
-    "Omdat hij er een boek mee wilde verkopen"
-   ],
-   "correct": 1,
-   "points": 1
-  },
-  {
-   "type": "mc",
-   "qtype": "inferring",
-   "label": "💡 Afleidend",
-   "labelClass": "label-inferring",
-   "question": "Judith zegt: \"Gelukkig was mijn oma dol op mijn vader.\" Waarom gebruikt ze het woord \"gelukkig\"?",
-   "passage": "En toen ontmoette hij daar mijn moeder Nellie. Dat ze een relatie kregen, was heel bijzonder, want zij was wit en hij was zwart. In die tijd vonden veel mensen dat een witte vrouw niet met een zwarte man mocht trouwen. Gelukkig was mijn oma, de moeder van mijn moeder, dol op mijn vader. Maar er waren ook veel mensen die racistische opmerkingen maakten.",
-   "feedback": "Er waren \"veel mensen die racistische opmerkingen maakten\". Daarom was het een geluk dat de familie van Nellie wél achter Anton stond.",
-   "img": "families/l4-gezin.jpg",
-   "bijschrift": "Nellie, Anton en hun vier kinderen. Judith wordt vastgehouden door haar moeder.",
-   "options": [
-    "Omdat haar oma heel rijk was",
-    "Omdat veel andere mensen wél racistisch deden, en het fijn was dat haar oma hem steunde",
-    "Omdat haar oma ook uit Suriname kwam",
-    "Omdat haar oma de bruiloft betaalde"
-   ],
-   "correct": 1,
-   "points": 1
-  },
-  {
-   "type": "mc",
-   "qtype": "inferring",
-   "label": "💡 Afleidend",
-   "labelClass": "label-inferring",
-   "question": "Wat laat het \"stompje potlood\" zien over Anton?",
-   "passage": "Wat voor vader was Anton de Kom? Hij was lief, maar hij kon ook streng zijn. Hij wilde dat we goed leerden, veel lazen en nieuwsgierig bleven naar de wereld om ons heen. Kennis vond hij heel belangrijk. ‘Als je veel weet, begrijp je beter wat er in de wereld gebeurt. Dan kun je ook beter voor jezelf en voor anderen opkomen’, zei hij. Ik zie hem nog zitten, in zijn leunstoel met een stapel woordenboeken naast zich. Hij schreef met een stompje potlood op alles wat hij maar aan papier kon vinden. Voor een notitieboekje had hij geen geld.",
-   "feedback": "Hij schreef op \"alles wat hij maar aan papier kon vinden\", want \"voor een notitieboekje had hij geen geld\". Schrijven was hem heel veel waard.",
-   "options": [
-    "Dat hij slordig was met zijn spullen",
-    "Dat hij weinig geld had, maar toch heel graag wilde schrijven",
-    "Dat hij liever tekende dan schreef",
-    "Dat hij geen woordenboeken had"
-   ],
-   "correct": 1,
-   "points": 1
-  },
-  {
-   "type": "mc",
-   "qtype": "inferring",
-   "label": "💡 Afleidend",
-   "labelClass": "label-inferring",
-   "question": "Wat betekent \"uitgebuit\" in deze tekst?",
-   "passage": "Toen u één jaar oud was, verhuisde jullie gezin naar Suriname. Ja, mijn vader besloot om naar Suriname te gaan, omdat zijn moeder ernstig ziek was. In Suriname ontdekte hij hoe Surinaamse arbeiders werden uitgebuit: ze werkten hard, verdienden weinig en zaten vaak vast aan strenge contracten. Wie protesteerde, kon boetes of straf krijgen. Daarom begon mijn vader een adviesbureau. Arbeiders konden daar hun verhaal doen. Hij schreef hun klachten op en wees hen op hun rechten. Zo kregen mensen die nooit werden gehoord ineens wél een stem.",
-   "feedback": "Na de dubbele punt wordt het uitgelegd: hard werken, weinig verdienen, vastzitten aan strenge contracten, en straf als je protesteert.",
-   "options": [
-    "Dat ze buiten moesten werken",
-    "Dat ze hard moesten werken voor weinig geld en zich niet konden verzetten",
-    "Dat ze een vrije dag kregen",
-    "Dat ze naar een ander land werden gestuurd"
+    "Ja, want hij wilde geweld gebruiken",
+    "Nee, hij hielp arbeiders hun rechten te kennen; het bestuur gebruikte het woord omdat het bang was voor zijn invloed",
+    "Ja, want hij verkocht producten",
+    "Nee, want hij woonde niet in Suriname"
    ],
    "correct": 1,
    "points": 1
@@ -650,16 +622,16 @@ const VRAGEN = {
   {
    "type": "mc",
    "qtype": "evaluating",
-   "label": "💬 Evaluerend",
+   "label": "Evaluerend",
    "labelClass": "label-evaluating",
-   "question": "De bestuurders noemden Anton een \"oproerkraaier\". Hoe ziet Judith dat?",
-   "passage": "Maar al snel moesten jullie terugkeren naar Nederland. Waarom? De Nederlandse bestuurders in Suriname werden bang voor zijn invloed. Steeds meer arbeiders, arme mensen en andere Surinamers met klachten kwamen naar hem toe. De bestuurders zagen hem als een oproerkraaier: iemand die voor onrust zorgde. Maar mijn vader wilde geen herrie maken om de herrie. Hij wilde eerlijkheid. Toch werd hij gevangengezet. Daarna werd hij naar Nederland teruggestuurd.",
-   "feedback": "Judith zegt: \"Maar mijn vader wilde geen herrie maken om de herrie. Hij wilde eerlijkheid.\" Het woord \"maar\" laat zien dat zij het anders ziet.",
+   "question": "Wat is er vooral oneerlijk aan de manier waarop Anton werd weggestuurd?",
+   "passage": "Hoofdstuk 6: weggestuurd. Anton kreeg geen rechtszaak. Zonder dat een rechter naar zijn zaak had gekeken, werd hij in mei 1933 met zijn gezin op de boot naar Nederland gezet. Hij mocht niet meer terugkomen in Suriname. Dat noemen we verbanning. Anton zou zijn geboorteland nooit meer terugzien. In Nederland had hij het moeilijk. Hij kon nergens meer werk vinden, omdat werkgevers hem een onruststoker vonden. Het gezin leefde van heel weinig geld.",
+   "feedback": "Normaal beslist een rechter of iemand straf krijgt. Anton kreeg \"geen rechtszaak\", maar werd toch verbannen. Dat is oneerlijk.",
    "options": [
-    "Ze is het met de bestuurders eens",
-    "Volgens haar wilde hij geen onrust, maar eerlijkheid",
-    "Ze vindt dat hij nog meer herrie had moeten maken",
-    "Ze weet niet wat hij wilde"
+    "Dat de boot te klein was",
+    "Dat er geen rechter naar zijn zaak keek, terwijl hij zwaar gestraft werd",
+    "Dat zijn gezin mee moest",
+    "Dat het in mei was"
    ],
    "correct": 1,
    "points": 1
@@ -667,18 +639,16 @@ const VRAGEN = {
   {
    "type": "mc",
    "qtype": "inferring",
-   "label": "💡 Afleidend",
+   "label": "Afleidend",
    "labelClass": "label-inferring",
-   "question": "\"Mijn vader draaide dat om.\" Wat draaide hij om?",
-   "passage": "Een jaar later verscheen zijn boek Wij slaven van Suriname. Waar ging dat boek over? Mijn vader schreef over slavernij, racisme en de manier waarop Surinamers door Nederlanders werden behandeld. Vaak werd die geschiedenis verteld door mensen met macht. Mijn vader draaide dat om: hij schreef vanuit de Surinamers zelf. Hij wilde dat lezers begrepen: dit is onrecht en daar mag je tegen opstaan.",
-   "feedback": "\"Dat\" is: geschiedenis verteld door mensen met macht. Anton deed het andersom: \"hij schreef vanuit de Surinamers zelf\".",
-   "img": "families/l4-boek.jpg",
-   "bijschrift": "In 1934 verscheen het boek Wij slaven van Suriname.",
+   "question": "Waarom heet dit hoofdstuk \"een boek als wapen\"?",
+   "passage": "Hoofdstuk 7: een boek als wapen. In 1934 verscheen het boek dat Anton al jaren in zijn hoofd had: Wij slaven van Suriname. Daarin vertelde hij de geschiedenis van Suriname vanuit de mensen die er hadden geleden, niet vanuit de Nederlanders met macht. Hij schreef over slavernij, uitbuiting en racisme. Uitbuiting betekent dat iemand misbruik maakt van het harde werk van een ander. Het boek werd in Nederland nauwelijks gelezen, maar in Suriname gaven mensen het stiekem aan elkaar door.",
+   "feedback": "Een wapen gebruik je om te strijden. Anton streed met zijn boek: hij liet zien wat er mis was en wilde dat lezers dat onrecht zagen.",
    "options": [
-    "Hij schreef het boek van achteren naar voren",
-    "Hij vertelde de geschiedenis vanuit de Surinamers zelf, in plaats van vanuit de mensen met macht",
-    "Hij ging van Nederland terug naar Suriname",
-    "Hij maakte van slechte mensen goede mensen"
+    "Omdat het boek heel zwaar was",
+    "Omdat Anton met woorden vocht tegen onrecht, in plaats van met geweld",
+    "Omdat er in het boek over oorlog werd geschreven",
+    "Omdat het boek verboden wapens beschreef"
    ],
    "correct": 1,
    "points": 1
@@ -686,65 +656,53 @@ const VRAGEN = {
   {
    "type": "mc",
    "qtype": "inferring",
-   "label": "💡 Afleidend",
+   "label": "Afleidend",
    "labelClass": "label-inferring",
-   "question": "Judith was 28 toen ze ontdekte hoe haar vader was overleden. Hoeveel jaar na zijn arrestatie was dat ongeveer?",
-   "passage": "Judith de Kom werd in 1931 geboren. Toen de Tweede Wereldoorlog in 1940 uitbrak, sloot haar vader zich aan bij het verzet. Hij schreef teksten tegen de Duitse bezetters en werkte mee aan geheime kranten. Wij thuis wisten daar niets van. Dat was veiliger, voor hem én voor ons. Maar op 7 augustus 1944 werd hij opgepakt door de Duitse politie. Daarna hebben we nooit meer iets van hem gehoord. Pas jaren later hoorden we dat hij in verschillende Duitse concentratiekampen heeft gezeten. Toen ik 28 jaar was, ontdekte ik dat hij kort voor de bevrijding van Nederland was overleden aan tuberculose, een ernstige ziekte.",
-   "feedback": "Judith werd geboren in 1931, dus ze was 28 in 1959. Hij werd opgepakt in 1944. 1959 − 1944 = 15 jaar.",
+   "question": "Welk woord in de tekst laat zien dat Anton heel voorzichtig was, maar dat het toch misging?",
+   "passage": "Hoofdstuk 8: in het verzet. In 1940 viel Duitsland Nederland binnen. Anton sloot zich aan bij het verzet: een groep mensen die in het geheim tegen de bezetter vocht. Hij schreef stukken voor illegale kranten. Die kranten werden stiekem gedrukt en verspreid, want ze waren verboden. Zijn kinderen wisten niets van dit werk. Dat was veiliger voor iedereen: wat je niet weet, kun je ook niet per ongeluk verraden. Op 7 augustus 1944 werd Anton toch opgepakt.",
+   "feedback": "\"Op 7 augustus 1944 werd Anton toch opgepakt.\" Het woord \"toch\" laat zien dat het gebeurde ondanks al zijn voorzichtigheid.",
    "options": [
-    "1 jaar",
-    "5 jaar",
-    "15 jaar",
-    "28 jaar"
+    "\"stiekem\"",
+    "\"verboden\"",
+    "\"toch\"",
+    "\"geheim\""
    ],
    "correct": 2,
    "points": 1
   },
   {
-   "type": "order",
+   "type": "mc",
    "qtype": "inferring",
-   "label": "💡 Afleidend – Volgorde",
+   "label": "Afleidend",
    "labelClass": "label-inferring",
-   "question": "Zet deze gebeurtenissen op volgorde. Niet alle jaartallen staan erbij: reken ze uit!",
-   "passage": "In 1934 verscheen Wij slaven van Suriname, een jaar nadat Anton uit Suriname was teruggestuurd. Hij was daar maar kort geweest: in 1932 was hij met zijn gezin naar Suriname gegaan. Geboren was hij er in 1898. Toen hij 22 jaar was, kwam hij naar Nederland om te werken. Hij overleed in 1945, kort voor de bevrijding.",
-   "feedback": "1898 geboren → 1920 (22 jaar later) naar Nederland → 1932 naar Suriname → 1933 teruggestuurd (een jaar voor het boek) → 1934 het boek → 1945 overleden.",
-   "img": "families/l4-anton.jpg",
-   "bijschrift": "Anton de Kom kwam op zijn 22e naar Nederland om te werken.",
-   "items": [
-    {
-     "id": "o0",
-     "text": "Anton wordt geboren in Suriname"
-    },
-    {
-     "id": "o1",
-     "text": "Anton komt naar Nederland om te werken"
-    },
-    {
-     "id": "o2",
-     "text": "Anton gaat met zijn gezin naar Suriname"
-    },
-    {
-     "id": "o3",
-     "text": "Anton wordt uit Suriname teruggestuurd"
-    },
-    {
-     "id": "o4",
-     "text": "Het boek Wij slaven van Suriname verschijnt"
-    },
-    {
-     "id": "o5",
-     "text": "Anton overlijdt, kort voor de bevrijding"
-    }
+   "question": "Wat maakt het overlijden van Anton extra pijnlijk volgens deze tekst?",
+   "passage": "Hoofdstuk 9: geen thuiskomst. Na zijn arrestatie werd Anton naar verschillende concentratiekampen in Duitsland gebracht. Daar waren de omstandigheden verschrikkelijk: weinig eten, zware arbeid en veel ziektes. Anton werd ernstig ziek. In april 1945, een paar weken voordat Nederland werd bevrijd, overleed hij aan tuberculose, een besmettelijke longziekte. Zijn familie wist lange tijd niet wat er met hem gebeurd was. Pas jaren later kregen ze daar zekerheid over.",
+   "feedback": "Hij overleed \"een paar weken voordat Nederland werd bevrijd\". En zijn familie \"wist lange tijd niet wat er met hem gebeurd was\".",
+   "options": [
+    "Dat hij in Suriname begraven werd",
+    "Dat hij maar een paar weken voor de bevrijding overleed en zijn familie lang in onzekerheid bleef",
+    "Dat hij zijn boek nooit af had",
+    "Dat hij nooit in het verzet had gezeten"
    ],
-   "correctOrder": [
-    "o0",
-    "o1",
-    "o2",
-    "o3",
-    "o4",
-    "o5"
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "evaluating",
+   "label": "Evaluerend",
+   "labelClass": "label-evaluating",
+   "question": "Waarom kreeg Anton de Kom volgens jou pas laat aandacht in Nederland?",
+   "passage": "Hoofdstuk 10: niet vergeten. Lange tijd was Anton de Kom in Nederland bijna vergeten. In Suriname bleef zijn naam wel bekend: de universiteit in Paramaribo werd naar hem genoemd. Later kreeg hij ook in Nederland meer aandacht. Er kwamen straten en scholen met zijn naam, een standbeeld in Amsterdam, en zijn boek werd opnieuw uitgegeven en veel gelezen. Sinds 2020 staat hij in de Canon van Nederland: een lijst met de vijftig belangrijkste onderwerpen uit onze geschiedenis.",
+   "feedback": "Hij woonde wel in Nederland en schreef in het Nederlands. Maar zijn onderwerp, de koloniale geschiedenis, kreeg lang weinig aandacht. Daardoor bleef hij lang onbekend.",
+   "options": [
+    "Omdat zijn boek in een andere taal was geschreven",
+    "Omdat het slavernijverleden en de koloniale geschiedenis lang weinig aandacht kregen in Nederland",
+    "Omdat hij nooit in Nederland had gewoond",
+    "Omdat hij liever niet bekend wilde zijn"
    ],
-   "points": 2
+   "correct": 1,
+   "points": 1
   }
  ]
 };
@@ -754,7 +712,7 @@ const GROEP = (function () {
 })();
 const questions = VRAGEN[GROEP];
 const SLEUTEL = 'bl_families-les4_g' + GROEP;
-document.getElementById('bl-eyebrow').textContent = 'Begrijpend lezen · Groep ' + GROEP + ' · Les 4';
+document.getElementById('bl-eyebrow').textContent = 'Begrijpend lezen · Groep ' + GROEP;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // STATE

@@ -352,7 +352,7 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
       const gewoon = {
         tafels: ['Tafels oefenen', 'Keersommen en deelsommen'],
         topo: ['Topografie Europa', 'Landen, hoofdsteden en meer'],
-        begrijpend: ['Begrijpend lezen', 'Duurzaam design · Fantastische families'],
+        begrijpend: ['Begrijpend lezen', 'Strijd om vrijheid · Van grondstof tot product'],
       }[GAMES[gameId]]
       return (
         <div className="game-screen game-screen-center">
@@ -748,7 +748,7 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
                     : game === 'topo'
                     ? 'Europa — kaart A'
                     : game === 'begrijpend'
-                    ? 'Duurzaam design · Fantastische families'
+                    ? 'Strijd om vrijheid · Van grondstof tot product'
                     : 'Komt binnenkort'}
                 </span>
                 {(game || s.key === 'spelling') && <span className="vb-line">{s.vb}</span>}

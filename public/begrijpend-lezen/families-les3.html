@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Begrijpend Lezen – Ons verleden</title>
+<title>Begrijpend lezen – Slavernij in Suriname</title>
 <link href="/fonts/fonts.css" rel="stylesheet">
 <style>
   :root {
@@ -270,7 +270,7 @@
   .bl-fig { margin:0 0 14px; }
   .bl-fig img { display:block; max-width:100%; max-height:300px; border-radius:12px; margin:0 auto; box-shadow:0 8px 24px -10px rgba(0,0,0,.6); }
   .bl-fig figcaption { font-size:.85rem; color:var(--ink-soft); text-align:center; margin-top:6px; font-style:italic; }
-  .bl-cover { display:block; max-width:min(320px,100%); max-height:220px; margin:0 auto 14px; border-radius:14px; box-shadow:0 10px 28px -12px rgba(0,0,0,.7); }
+  .bl-cover { display:block; width:min(360px,100%); aspect-ratio:4/3; object-fit:cover; margin:0 auto 14px; border-radius:16px; box-shadow:0 10px 28px -12px rgba(0,0,0,.7); }
   @media(min-width:1000px){ .q-breed > .bl-fig { grid-column:1; } }
 </style>
 <style>.order-item,.drag-item{touch-action:none}.order-item.dragging,.drag-item.dragging{opacity:.6}</style>
@@ -279,9 +279,9 @@
 <body>
 
 <header>
-  <p class="eyebrow" id="bl-eyebrow">Begrijpend lezen · Les 3</p>
-  <h1>Ons verleden</h1>
-  <p>Thema: Fantastische families</p>
+  <p class="eyebrow" id="bl-eyebrow">Begrijpend lezen</p>
+  <h1>Slavernij in Suriname</h1>
+  <p>Thema: Strijd om vrijheid</p>
 </header>
 <div id="progress-bar-wrap"><div id="progress-bar"></div></div>
 <div id="score-badge">⭐ <span id="score-num">0</span> pt</div>
@@ -289,14 +289,13 @@
 <main>
 
 <div id="intro-screen" class="screen active">
-  <div class="compass">🧳</div>
-  <img class="bl-cover" src="families/l3-familie.jpg" alt="">
+  
   <h2>Klaar om te lezen?</h2>
-  <p>Maartje en Peggy hebben een koffer vol voorwerpen uit het verleden. Van wie is elk voorwerp? En welk verhaal vertelt het? Het gaat over de slavernij in Suriname. Je beantwoordt tien vragen. Bij <strong>letterlijke vragen</strong> markeer je het antwoord <em>in de tekst zelf</em>. Klik woorden aan om ze te selecteren.</p>
+  <p>Je maakt een rondleiding door een museumzaal over de slavernij in Suriname. Bij elk voorwerp hoor je een stukje uitleg van de audiotour. Je beantwoordt tien vragen. Bij <strong>letterlijke vragen</strong> markeer je het antwoord <em>in de tekst zelf</em>. Klik woorden aan om ze te selecteren.</p>
   <div class="legend">
-    <span style="background:#d0e8ff;color:#0a3a6e;">🔍 Letterlijk – markeer in de tekst</span>
-    <span style="background:#fde8c0;color:#7a3d00;">💡 Afleidend</span>
-    <span style="background:#dff0e2;color:#1a5c2a;">💬 Evaluerend</span>
+    <span style="background:#d0e8ff;color:#0a3a6e;">Letterlijk – markeer in de tekst</span>
+    <span style="background:#fde8c0;color:#7a3d00;">Afleidend</span>
+    <span style="background:#dff0e2;color:#1a5c2a;">Evaluerend</span>
   </div>
   <button class="btn btn-primary" onclick="startQuiz()">Begin de oefening →</button>
 </div>
@@ -309,7 +308,7 @@
 
 <div id="finish-screen" class="screen">
   <div class="medal" id="finish-medal">🏅</div>
-  <h2>Goed gedaan, verhalenspeurder!</h2>
+  <h2>Goed geluisterd en gelezen!</h2>
   <div class="score-big" id="finish-score">0/0</div>
   <p id="finish-msg"></p>
   <div id="finish-overview"></div>
@@ -336,221 +335,235 @@
 const VRAGEN = {
  "7": [
   {
-   "type": "mc",
-   "qtype": "inferring",
-   "label": "💡 Afleidend",
-   "labelClass": "label-inferring",
-   "question": "Wat hebben de families van Maartje en Peggy met elkaar te maken?",
-   "passage": "Maartje en Peggy maakten samen de podcast De plantage van onze voorouders. Ze hebben een koffer vol bijzondere voorwerpen uit het verleden verzameld. De bet-betovergrootmoeder van Maartje bezat een deel van plantage Tout Lui Faut in Suriname. De voorouders van Peggy waren tot slaaf gemaakt en moesten op die plantage werken.",
-   "feedback": "De bet-betovergrootmoeder van Maartje bezat een deel van de plantage. De voorouders van Peggy moesten er werken.",
-   "options": [
-    "Ze waren vroeger buren in Nederland",
-    "Ze hadden te maken met dezelfde plantage: de een als eigenaar, de ander als tot slaaf gemaakten",
-    "Ze werkten allebei als eigenaar op de plantage",
-    "Ze maakten vroeger ook al samen een podcast"
-   ],
-   "correct": 1,
-   "points": 1
-  },
-  {
    "type": "mark",
    "qtype": "literal",
-   "label": "🔍 Letterlijk",
+   "label": "Letterlijk",
    "labelClass": "label-literal",
-   "question": "Markeer in de tekst hoe lang de vrijgemaakten nog verplicht moesten werken.",
-   "passage": "In 1863 werd de slavernij in Suriname afgeschaft. Vanaf dat moment werden de mensen die tot slaaf waren gemaakt vrijgemaakten genoemd. Ze konden nog niet meteen hun eigen keuzes maken, maar moesten nog tien jaar verplicht blijven werken, de meesten op de plantages. De (plantage-)eigenaren kregen geld van de overheid. De vrijgemaakten kregen niets. In dit document staat hoeveel geld mijn bet-betovergrootmoeder kreeg toen de slavernij werd afgeschaft.",
-   "feedback": "Het staat in de zin: \"... maar moesten nog tien jaar verplicht blijven werken, de meesten op de plantages.\"",
-   "img": "families/l3-document.jpg",
-   "bijschrift": "Document: vergoeding voor plantage-eigenaren",
+   "question": "Markeer in de tekst wat een plantage is.",
+   "passage": "Welkom bij deze audiotour. In deze zaal gaat het over de slavernij in Suriname. Ruim tweehonderd jaar lang werden mensen uit Afrika gevangengenomen en naar Suriname gebracht. Daar moesten ze zonder loon werken op plantages: grote landbouwbedrijven waar suiker, koffie, cacao en katoen werden verbouwd. Veel plantages waren in handen van Nederlanders. In deze zaal spreken we van tot slaaf gemaakte mensen. Daarmee laten we zien dat niemand als slaaf geboren wordt: het werd hen aangedaan.",
+   "feedback": "De uitleg staat na de dubbele punt: \"grote landbouwbedrijven waar suiker, koffie, cacao en katoen werden verbouwd.\"",
    "correctSpan": {
-    "start": 32,
-    "end": 37
+    "start": 35,
+    "end": 44
    },
    "coreWords": [
-    33,
-    34,
-    35
+    35,
+    36
    ],
    "points": 2
   },
   {
    "type": "mark",
    "qtype": "literal",
-   "label": "🔍 Letterlijk",
+   "label": "Letterlijk",
    "labelClass": "label-literal",
-   "question": "Markeer in de tekst van welke plantage zij mede-eigenaar was.",
-   "passage": "Op deze foto zie je Antonia Elisabeth van Lynden-van der Heim (1804-1884), mijn bet-betovergrootmoeder. Zij was tot 1863 mede-eigenaar van de Surinaamse suikerplantage Tout Lui Faut.",
-   "feedback": "Het staat aan het eind: \"mede-eigenaar van de Surinaamse suikerplantage Tout Lui Faut.\"",
-   "img": "families/l3-oma.jpg",
-   "bijschrift": "Antonia Elisabeth van Lynden-van der Heim (1804-1884)",
+   "question": "Markeer in de tekst hoe de omstandigheden aan boord waren.",
+   "passage": "Voorwerp 1: een scheepsmodel. Met schepen als dit werden mensen van de westkust van Afrika naar Amerika gebracht. Die reis over de oceaan duurde weken tot maanden. De mensen lagen dicht op elkaar in het ruim, met weinig eten en water. Veel van hen overleefden de reis niet. Nederlandse handelaren hebben in totaal ongeveer zeshonderdduizend Afrikanen over de oceaan vervoerd. Dat noemen we de trans-Atlantische slavenhandel.",
+   "feedback": "Het staat in de zin: \"De mensen lagen dicht op elkaar in het ruim, met weinig eten en water.\"",
    "correctSpan": {
-    "start": 18,
-    "end": 25
+    "start": 27,
+    "end": 40
    },
    "coreWords": [
-    22,
-    23,
-    25
-   ],
-   "points": 2
-  },
-  {
-   "type": "mc",
-   "qtype": "inferring",
-   "label": "💡 Afleidend",
-   "labelClass": "label-inferring",
-   "question": "Wie vertelt over deze kaart: Maartje of Peggy?",
-   "passage": "Hier zie je een deel van de landkaart van de plantage Tout Lui Faut. De kaart is gemaakt door de Nederlandse beheerder van de plantage. Mijn bet-betovergrootmoeder bezat een deel van deze plantage. De voorouders van Peggy moesten hier werken.",
-   "feedback": "De verteller schrijft over \"de voorouders van Peggy\". Dan is de verteller zelf dus niet Peggy, maar Maartje.",
-   "img": "families/l3-kaart.jpg",
-   "bijschrift": "Kaart van plantage Tout Lui Faut",
-   "options": [
-    "Peggy, want haar voorouders werkten er",
-    "Maartje, want ze schrijft \"mijn bet-betovergrootmoeder bezat\" en \"de voorouders van Peggy\"",
-    "Allebei tegelijk",
-    "De beheerder van de plantage"
-   ],
-   "correct": 1,
-   "points": 1
-  },
-  {
-   "type": "mark",
-   "qtype": "literal",
-   "label": "🔍 Letterlijk",
-   "labelClass": "label-literal",
-   "question": "Markeer in de tekst wat de verteller ontdekte.",
-   "passage": "Op deze foto zie je familie van mij. Tijdens het maken van de podcast De plantage van onze voorouders zocht ik uit wie mijn voorouders waren en hoe zij leefden. Ik ontdekte dat een deel van mijn familie op een andere plantage leefde: de koffieplantage Dordrecht, vlak bij Paramaribo in Suriname.",
-   "feedback": "Het staat in de laatste zin, die begint met \"Ik ontdekte\".",
-   "img": "families/l3-familie.jpg",
-   "bijschrift": "Familiefoto",
-   "correctSpan": {
-    "start": 30,
-    "end": 50
-   },
-   "coreWords": [
-    40,
-    41,
-    45
-   ],
-   "points": 2
-  },
-  {
-   "type": "mc",
-   "qtype": "inferring",
-   "label": "💡 Afleidend",
-   "labelClass": "label-inferring",
-   "question": "Hoe staan de mensen op de verkooplijst?",
-   "passage": "Dit is een lijst van een scheepsverkoop uit 1768. Hierop staan mensen, waarschijnlijk ook mijn voorouders, niet bij hun naam, maar met een kwetsend woord en een prijs erachter. Zo werden tot slaaf gemaakte mensen toen behandeld: niet als mens, maar als koopwaar. Ik vind het nog steeds moeilijk om dit te lezen.",
-   "feedback": "\"... niet bij hun naam, maar met een kwetsend woord en een prijs erachter.\"",
-   "img": "families/l3-verkooplijst.jpg",
-   "bijschrift": "Verkooplijst van een scheepsverkoop uit 1768",
-   "options": [
-    "Met hun naam en hun leeftijd",
-    "Niet bij hun naam, maar met een kwetsend woord en een prijs",
-    "Met hun beroep en waar ze woonden",
-    "Met een foto en een nummer"
-   ],
-   "correct": 1,
-   "points": 1
-  },
-  {
-   "type": "mark",
-   "qtype": "literal",
-   "label": "🔍 Letterlijk",
-   "labelClass": "label-literal",
-   "question": "Markeer in de tekst waarvoor de voetring werd gebruikt.",
-   "passage": "Dit is een ijzeren voetring. De ring werd om de voeten van tot slaaf gemaakten gedaan, zodat ze niet konden weglopen. Of ze kregen hem om als straf. Waarschijnlijk waren ook mijn voorouders die op de plantage werkten met zo’n ring vastgeketend.",
-   "feedback": "Er staan twee redenen: \"zodat ze niet konden weglopen\" en \"Of ze kregen hem om als straf.\"",
-   "img": "families/l3-voetring.jpg",
-   "bijschrift": "Een ijzeren voetring",
-   "correctSpan": {
-    "start": 16,
-    "end": 27
-   },
-   "coreWords": [
-    20,
-    27
-   ],
-   "points": 2
-  },
-  {
-   "type": "mc",
-   "qtype": "inferring",
-   "label": "💡 Afleidend",
-   "labelClass": "label-inferring",
-   "question": "Wat heeft Jan van Borssele van der Hooghe met de familie van de verteller te maken?",
-   "passage": "En kijk, dit is een oude tekening van Jan van Borssele van der Hooghe (1707-1764). Het hangt normaal gesproken bij ons bovenaan de trap. Hij behoorde tot een adellijke familie in Zeeland, was directeur van de VOC en kende misschien mijn voorouders wel. Hij was kasteelheer van het landgoed Ter Hooge dat mijn familie honderd jaar later kocht.",
-   "feedback": "\"Hij was kasteelheer van het landgoed Ter Hooge dat mijn familie honderd jaar later kocht.\"",
-   "img": "families/l3-tekening.jpg",
-   "bijschrift": "Tekening van Jan van Borssele van der Hooghe (1707-1764)",
-   "options": [
-    "Hij was de opa van de verteller",
-    "De familie van de verteller kocht later zijn landgoed Ter Hooge",
-    "Hij werkte op de plantage van de familie",
-    "Hij maakte de tekening van de verteller"
-   ],
-   "correct": 1,
-   "points": 1
-  },
-  {
-   "type": "mark",
-   "qtype": "literal",
-   "label": "🔍 Letterlijk",
-   "labelClass": "label-literal",
-   "question": "Markeer in de tekst hoe je een plengoffer brengt.",
-   "passage": "Dit is een kalebas, een schaal voor een plengoffer. Voor veel mensen in Suriname is het belangrijk om hun voorouders te eren. Je schenkt hiervoor wat water of een andere drank in de kalebas, giet dit op de grond en denkt aan je voorouders of spreekt een groet of dankwoord uit. Toen ik in Suriname was, bracht ik ook een plengoffer, aan mijn voorouders die op de plantage moesten werken. Dat was voor mij een emotioneel moment van stilstaan, herinneren en respect tonen.",
-   "feedback": "Het staat in de zin die begint met \"Je schenkt hiervoor ...\".",
-   "img": "families/l3-plengoffer.jpg",
-   "bijschrift": "Een plengoffer met een kalebas",
-   "correctSpan": {
-    "start": 22,
-    "end": 50
-   },
-   "coreWords": [
-    23,
-    34,
+    30,
+    37,
     38
+   ],
+   "points": 2
+  },
+  {
+   "type": "order",
+   "qtype": "inferring",
+   "label": "Afleidend – Volgorde",
+   "labelClass": "label-inferring",
+   "question": "Zet de stappen van het suikerwerk in de goede volgorde.",
+   "passage": "Voorwerp 2: een bundel suikerriet. Suiker was in Europa heel populair en daardoor kostbaar. Op de plantages moesten tot slaaf gemaakte mensen van zonsopgang tot zonsondergang werken. Ze kapten het riet, sjouwden het naar de suikermolen en kookten het sap in grote ketels. Het werk was zwaar en gevaarlijk. Wie niet hard genoeg werkte of ongehoorzaam was, kreeg vaak een wrede straf. De opbrengst van de suiker ging naar de eigenaren, die vaak in Nederland woonden.",
+   "feedback": "Eerst werd het riet gekapt, dan naar de molen gesjouwd, en daarna werd het sap gekookt.",
+   "items": [
+    {
+     "id": "o0",
+     "text": "Het riet kappen"
+    },
+    {
+     "id": "o1",
+     "text": "Het riet naar de suikermolen sjouwen"
+    },
+    {
+     "id": "o2",
+     "text": "Het sap koken in grote ketels"
+    }
+   ],
+   "correctOrder": [
+    "o0",
+    "o1",
+    "o2"
+   ],
+   "points": 2
+  },
+  {
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst hoe tot slaaf gemaakte mensen werden behandeld.",
+   "passage": "Voorwerp 3: een inventarislijst. Dit is een lijst van een plantage uit 1790. Je ziet er gereedschap, dieren en gebouwen op staan. Maar ook mensen: met een voornaam, een leeftijd en een prijs. Tot slaaf gemaakte mensen werden behandeld als bezit, net als een kar of een koe. Ze konden worden verkocht en gezinnen werden soms uit elkaar gehaald. Veel bezoekers vinden het moeilijk om deze lijst te bekijken. Dat is begrijpelijk.",
+   "feedback": "Het staat in de zin: \"Tot slaaf gemaakte mensen werden behandeld als bezit, net als een kar of een koe.\"",
+   "correctSpan": {
+    "start": 33,
+    "end": 47
+   },
+   "coreWords": [
+    38,
+    40
+   ],
+   "points": 2
+  },
+  {
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst wie marrons waren.",
+   "passage": "Voorwerp 4: een houten kam met sierlijk snijwerk. Deze kam is gemaakt door marrons. Marrons waren mensen die van de plantages waren gevlucht. Ze trokken diep het regenwoud in en bouwden daar hun eigen dorpen. Het was gevaarlijk om te vluchten, want wie gepakt werd, kreeg een zware straf. Toch lukte het duizenden mensen. In het bos leefden ze in vrijheid. Hun nakomelingen wonen nog steeds in Suriname en houden hun eigen tradities levend.",
+   "feedback": "Het staat in de zin: \"Marrons waren mensen die van de plantages waren gevlucht.\"",
+   "correctSpan": {
+    "start": 14,
+    "end": 22
+   },
+   "coreWords": [
+    14,
+    22
+   ],
+   "points": 2
+  },
+  {
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst wat staatstoezicht inhield.",
+   "passage": "Voorwerp 5: een oude krant uit 1863. Op 1 juli 1863 werd de slavernij in Suriname officieel afgeschaft. Toch waren de mensen nog niet echt vrij. Ze moesten nog tien jaar verplicht doorwerken op de plantages, voor een klein loon. Dat heette staatstoezicht. De plantage-eigenaren kregen van de Nederlandse regering geld voor elke persoon die ze \"kwijtraakten\": driehonderd gulden. De vrijgemaakte mensen kregen zelf helemaal niets.",
+   "feedback": "Het staat in de zin: \"Ze moesten nog tien jaar verplicht doorwerken op de plantages, voor een klein loon.\"",
+   "correctSpan": {
+    "start": 26,
+    "end": 39
+   },
+   "coreWords": [
+    29,
+    30,
+    32
    ],
    "points": 2
   },
   {
    "type": "drag",
    "qtype": "inferring",
-   "label": "💡 Afleidend – Sorteren",
+   "label": "Afleidend – Sorteren",
    "labelClass": "label-inferring",
-   "question": "Van wie is elk voorwerp uit de koffer? Sleep het naar Maartje of Peggy.",
-   "passage": "In de koffer zitten: een document over geld voor plantage-eigenaren, een kaart van plantage Tout Lui Faut, een foto van een bet-betovergrootmoeder die mede-eigenaar was, een verkooplijst van een scheepsverkoop uit 1768, een ijzeren voetring, een kalebas voor een plengoffer en een tekening van een kasteelheer uit Zeeland.",
-   "feedback": "Maartje: de spullen van de eigenaren (document, kaart). Peggy: de spullen over haar tot slaaf gemaakte voorouders (verkooplijst, voetring, plengoffer).",
+   "question": "Wat gold na 1863 voor de eigenaren, en wat voor de vrijgemaakte mensen? Sleep elke zin naar de goede groep.",
+   "passage": "Uitleg: wie kreeg wat? Na de afschaffing van de slavernij betaalde de regering de eigenaren een vergoeding. Die vergoeding noemen we compensatie. De gedachte was: de eigenaren verliezen hun werkers, dus krijgen zij geld. Aan de mensen die al die jaren onbetaald hadden gewerkt, dacht de regering niet. Zij moesten hun nieuwe leven beginnen zonder geld, zonder land en vaak zonder te kunnen lezen en schrijven.",
+   "feedback": "De eigenaren kregen compensatie. De vrijgemaakte mensen kregen niets, moesten nog tien jaar doorwerken en hadden geen geld of land.",
    "categories": [
-    "Maartje",
-    "Peggy"
+    "Eigenaren",
+    "Vrijgemaakte mensen"
    ],
    "items": [
     {
      "id": "i0",
-     "text": "Document over geld voor eigenaren",
-     "correct": "Maartje"
+     "text": "Kregen geld van de regering",
+     "correct": "Eigenaren"
     },
     {
      "id": "i1",
-     "text": "Kaart van de plantage",
-     "correct": "Maartje"
+     "text": "Kregen compensatie voor hun \"verlies\"",
+     "correct": "Eigenaren"
     },
     {
      "id": "i2",
-     "text": "Verkooplijst uit 1768",
-     "correct": "Peggy"
+     "text": "Kregen geen geld",
+     "correct": "Vrijgemaakte mensen"
     },
     {
      "id": "i3",
-     "text": "IJzeren voetring",
-     "correct": "Peggy"
+     "text": "Moesten nog tien jaar doorwerken",
+     "correct": "Vrijgemaakte mensen"
     },
     {
      "id": "i4",
-     "text": "Kalebas voor een plengoffer",
-     "correct": "Peggy"
+     "text": "Begonnen zonder land aan een nieuw leven",
+     "correct": "Vrijgemaakte mensen"
     }
+   ],
+   "points": 2
+  },
+  {
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst wat je doet bij een plengoffer.",
+   "passage": "Voorwerp 6: een kalebas. Een kalebas is een schaal die gemaakt is van een uitgeholde vrucht. Veel Surinamers gebruiken een kalebas voor een plengoffer. Daarbij schenk je water of een ander drankje op de grond en denk je aan je voorouders. Zo eer je de mensen van wie je afstamt. Voor nakomelingen van tot slaaf gemaakte mensen is dat een manier om hun voorouders niet te vergeten. Een plengoffer wordt vaak gebracht bij herdenkingen.",
+   "feedback": "Het staat in de zin: \"Daarbij schenk je water of een ander drankje op de grond en denk je aan je voorouders.\"",
+   "correctSpan": {
+    "start": 24,
+    "end": 40
+   },
+   "coreWords": [
+    25,
+    34,
+    40
+   ],
+   "points": 2
+  },
+  {
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst wat Keti Koti betekent.",
+   "passage": "Uitleg: Keti Koti. Elk jaar op 1 juli wordt in Nederland en Suriname Keti Koti gevierd en herdacht. Keti Koti betekent \"de ketenen zijn gebroken\" in het Sranantongo, een taal die in Suriname veel gesproken wordt. Overdag zijn er herdenkingen, bijvoorbeeld bij het Nationaal Monument Slavernijverleden in Amsterdam. Daarna is er vaak een feest met muziek, dans en eten. Herdenken en vieren horen op deze dag bij elkaar.",
+   "feedback": "Keti Koti betekent \"de ketenen zijn gebroken\".",
+   "correctSpan": {
+    "start": 21,
+    "end": 24
+   },
+   "coreWords": [
+    22,
+    24
+   ],
+   "points": 2
+  },
+  {
+   "type": "order",
+   "qtype": "inferring",
+   "label": "Afleidend – Volgorde",
+   "labelClass": "label-inferring",
+   "question": "Zet de gebeurtenissen in de goede volgorde. Begin met wat het eerst gebeurde.",
+   "passage": "Einde van de tour. Lange tijd werd er in Nederland weinig over het slavernijverleden gepraat. In schoolboeken stond het er nauwelijks in. Dat is veranderd. In 2002 kwam er een nationaal monument. In 2022 bood de Nederlandse regering officieel excuses aan, en in 2023 deed koning Willem-Alexander dat ook, op Keti Koti. Veel mensen vinden dat het daar niet bij moet blijven: zij vinden dat iedereen deze geschiedenis moet kennen. Bedankt voor uw bezoek aan deze zaal.",
+   "feedback": "1863: afschaffing. 2002: het monument. 2022: excuses van de regering. 2023: excuses van de koning.",
+   "items": [
+    {
+     "id": "o0",
+     "text": "De slavernij in Suriname wordt afgeschaft"
+    },
+    {
+     "id": "o1",
+     "text": "Er komt een nationaal monument"
+    },
+    {
+     "id": "o2",
+     "text": "De regering biedt excuses aan"
+    },
+    {
+     "id": "o3",
+     "text": "De koning biedt excuses aan op Keti Koti"
+    }
+   ],
+   "correctOrder": [
+    "o0",
+    "o1",
+    "o2",
+    "o3"
    ],
    "points": 2
   }
@@ -558,17 +571,17 @@ const VRAGEN = {
  "8": [
   {
    "type": "mc",
-   "qtype": "evaluating",
-   "label": "💬 Evaluerend",
-   "labelClass": "label-evaluating",
-   "question": "Waarom is het bijzonder dat juist Maartje en Peggy samen een podcast maken?",
-   "passage": "Maartje en Peggy maakten samen de podcast De plantage van onze voorouders. Ze hebben een koffer vol bijzondere voorwerpen uit het verleden verzameld. De bet-betovergrootmoeder van Maartje bezat een deel van plantage Tout Lui Faut in Suriname. De voorouders van Peggy waren tot slaaf gemaakt en moesten op die plantage werken.",
-   "feedback": "Hun voorouders stonden tegenover elkaar: eigenaar en tot slaaf gemaakten. Nu zoeken Maartje en Peggy samen uit wat er gebeurd is.",
+   "qtype": "inferring",
+   "label": "Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Waarom zegt het museum \"tot slaaf gemaakte mensen\" en niet \"slaven\"?",
+   "passage": "Welkom bij deze audiotour. In deze zaal gaat het over de slavernij in Suriname. Ruim tweehonderd jaar lang werden mensen uit Afrika gevangengenomen en naar Suriname gebracht. Daar moesten ze zonder loon werken op plantages: grote landbouwbedrijven waar suiker, koffie, cacao en katoen werden verbouwd. Veel plantages waren in handen van Nederlanders. In deze zaal spreken we van tot slaaf gemaakte mensen. Daarmee laten we zien dat niemand als slaaf geboren wordt: het werd hen aangedaan.",
+   "feedback": "\"Niemand wordt als slaaf geboren: het werd hen aangedaan.\" Zo blijft zichtbaar dat het om mensen ging die onrecht werd aangedaan.",
    "options": [
-    "Omdat ze allebei uit Suriname komen",
-    "Omdat hun families vroeger op dezelfde plantage tegenover elkaar stonden, en zij nu samen het verhaal vertellen",
-    "Omdat ze allebei familie hebben die rijk was",
-    "Omdat podcasts in die tijd nog niet bestonden"
+    "Omdat het korter is",
+    "Om te laten zien dat slavernij mensen is aangedaan en niet bij wie ze waren hoorde",
+    "Omdat het woord slaaf in Suriname niet bestaat",
+    "Omdat de mensen zelf voor slavernij kozen"
    ],
    "correct": 1,
    "points": 1
@@ -576,18 +589,16 @@ const VRAGEN = {
   {
    "type": "mc",
    "qtype": "inferring",
-   "label": "💡 Afleidend",
+   "label": "Afleidend",
    "labelClass": "label-inferring",
-   "question": "Van wie uit de koffer is dit document, denk je?",
-   "passage": "In 1863 werd de slavernij in Suriname afgeschaft. Vanaf dat moment werden de mensen die tot slaaf waren gemaakt vrijgemaakten genoemd. Ze konden nog niet meteen hun eigen keuzes maken, maar moesten nog tien jaar verplicht blijven werken, de meesten op de plantages. De (plantage-)eigenaren kregen geld van de overheid. De vrijgemaakten kregen niets. In dit document staat hoeveel geld mijn bet-betovergrootmoeder kreeg toen de slavernij werd afgeschaft.",
-   "feedback": "In het document staat hoeveel geld \"mijn bet-betovergrootmoeder\" kreeg. Alleen de eigenaren kregen geld, en dat was de familie van Maartje.",
-   "img": "families/l3-document.jpg",
-   "bijschrift": "Document: vergoeding voor plantage-eigenaren",
+   "question": "Wat betekent \"trans-Atlantisch\" in \"trans-Atlantische slavenhandel\"?",
+   "passage": "Voorwerp 1: een scheepsmodel. Met schepen als dit werden mensen van de westkust van Afrika naar Amerika gebracht. Die reis over de oceaan duurde weken tot maanden. De mensen lagen dicht op elkaar in het ruim, met weinig eten en water. Veel van hen overleefden de reis niet. Nederlandse handelaren hebben in totaal ongeveer zeshonderdduizend Afrikanen over de oceaan vervoerd. Dat noemen we de trans-Atlantische slavenhandel.",
+   "feedback": "\"Trans\" betekent over of door heen. De schepen voeren over de Atlantische Oceaan, van Afrika naar Amerika.",
    "options": [
-    "Van Peggy, want haar voorouders werden vrijgemaakt",
-    "Van Maartje, want haar bet-betovergrootmoeder was eigenaar en kreeg dit geld",
-    "Van allebei, want hun families kregen allebei geld",
-    "Van de overheid, want die betaalde het geld"
+    "Handel binnen Suriname",
+    "Handel over de Atlantische Oceaan heen, van Afrika naar Amerika",
+    "Handel met treinen",
+    "Handel tussen Nederlandse steden"
    ],
    "correct": 1,
    "points": 1
@@ -595,18 +606,16 @@ const VRAGEN = {
   {
    "type": "mc",
    "qtype": "inferring",
-   "label": "💡 Afleidend",
+   "label": "Afleidend",
    "labelClass": "label-inferring",
-   "question": "Hoe oud was Antonia Elisabeth toen de slavernij in Suriname werd afgeschaft?",
-   "passage": "Op deze foto zie je Antonia Elisabeth van Lynden-van der Heim (1804-1884), mijn bet-betovergrootmoeder. Zij was tot 1863 mede-eigenaar van de Surinaamse suikerplantage Tout Lui Faut.",
-   "feedback": "Ze werd geboren in 1804. De slavernij werd afgeschaft in 1863 (tot dan was ze mede-eigenaar). 1863 − 1804 = 59.",
-   "img": "families/l3-oma.jpg",
-   "bijschrift": "Antonia Elisabeth van Lynden-van der Heim (1804-1884)",
+   "question": "Wat zegt de laatste zin over wie er voordeel had van het werk op de plantage?",
+   "passage": "Voorwerp 2: een bundel suikerriet. Suiker was in Europa heel populair en daardoor kostbaar. Op de plantages moesten tot slaaf gemaakte mensen van zonsopgang tot zonsondergang werken. Ze kapten het riet, sjouwden het naar de suikermolen en kookten het sap in grote ketels. Het werk was zwaar en gevaarlijk. Wie niet hard genoeg werkte of ongehoorzaam was, kreeg vaak een wrede straf. De opbrengst van de suiker ging naar de eigenaren, die vaak in Nederland woonden.",
+   "feedback": "\"De opbrengst van de suiker ging naar de eigenaren.\" De mensen die het werk deden, kregen geen loon.",
    "options": [
-    "49 jaar",
-    "59 jaar",
-    "63 jaar",
-    "80 jaar"
+    "De werkers kregen een groot deel van de winst",
+    "De eigenaren verdienden eraan, terwijl de werkers niets kregen",
+    "Het geld ging naar de mensen in Afrika",
+    "Niemand verdiende iets aan suiker"
    ],
    "correct": 1,
    "points": 1
@@ -614,37 +623,16 @@ const VRAGEN = {
   {
    "type": "mc",
    "qtype": "evaluating",
-   "label": "💬 Evaluerend",
+   "label": "Evaluerend",
    "labelClass": "label-evaluating",
-   "question": "De kaart is gemaakt door de Nederlandse beheerder. Wat kun je daarom níet van deze kaart te weten komen?",
-   "passage": "Hier zie je een deel van de landkaart van de plantage Tout Lui Faut. De kaart is gemaakt door de Nederlandse beheerder van de plantage. Mijn bet-betovergrootmoeder bezat een deel van deze plantage. De voorouders van Peggy moesten hier werken.",
-   "feedback": "Een kaart van de beheerder laat zien hoe de plantage eruitzag. Hoe de mensen die er moesten werken het beleefden, staat er niet op.",
-   "img": "families/l3-kaart.jpg",
-   "bijschrift": "Kaart van plantage Tout Lui Faut",
+   "question": "Waarom laat het museum deze lijst zien, ook al is hij moeilijk om te bekijken?",
+   "passage": "Voorwerp 3: een inventarislijst. Dit is een lijst van een plantage uit 1790. Je ziet er gereedschap, dieren en gebouwen op staan. Maar ook mensen: met een voornaam, een leeftijd en een prijs. Tot slaaf gemaakte mensen werden behandeld als bezit, net als een kar of een koe. Ze konden worden verkocht en gezinnen werden soms uit elkaar gehaald. Veel bezoekers vinden het moeilijk om deze lijst te bekijken. Dat is begrijpelijk.",
+   "feedback": "Op de lijst staan mensen tussen gereedschap en dieren, met een prijs. Dat laat zien hoe onmenselijk slavernij was. Daarom is het belangrijk om het te laten zien.",
    "options": [
-    "Waar de akkers en gebouwen lagen",
-    "Hoe groot de plantage was",
-    "Hoe de tot slaaf gemaakten zelf het leven op de plantage beleefden",
-    "Waar de plantage aan de rivier lag"
-   ],
-   "correct": 2,
-   "points": 1
-  },
-  {
-   "type": "mc",
-   "qtype": "inferring",
-   "label": "💡 Afleidend",
-   "labelClass": "label-inferring",
-   "question": "Van wie is deze familiefoto, denk je? En waarom?",
-   "passage": "Op deze foto zie je familie van mij. Tijdens het maken van de podcast De plantage van onze voorouders zocht ik uit wie mijn voorouders waren en hoe zij leefden. Ik ontdekte dat een deel van mijn familie op een andere plantage leefde: de koffieplantage Dordrecht, vlak bij Paramaribo in Suriname.",
-   "feedback": "De verteller zocht uit hoe haar voorouders \"leefden\" en ontdekte dat familie op een andere plantage leefde. Dat past bij Peggy, wier voorouders op plantages moesten werken.",
-   "img": "families/l3-familie.jpg",
-   "bijschrift": "Familiefoto",
-   "options": [
-    "Van Maartje, want haar familie had plantages",
-    "Van Peggy, want een deel van haar familie leefde en werkte op een plantage",
-    "Van Maartje, want de foto is oud",
-    "Dat kun je niet weten, want er staat geen naam bij"
+    "Omdat het museum de lijst mooi vindt",
+    "Omdat de lijst bewijst hoe onmenselijk mensen werden behandeld",
+    "Omdat bezoekers moeten leren hoe je een lijst maakt",
+    "Omdat het museum de plantage wil verkopen"
    ],
    "correct": 1,
    "points": 1
@@ -652,18 +640,16 @@ const VRAGEN = {
   {
    "type": "mc",
    "qtype": "inferring",
-   "label": "💡 Afleidend",
+   "label": "Afleidend",
    "labelClass": "label-inferring",
-   "question": "De verteller schrijft: \"Ik vind het nog steeds moeilijk om dit te lezen.\" Waarom?",
-   "passage": "Dit is een lijst van een scheepsverkoop uit 1768. Hierop staan mensen, waarschijnlijk ook mijn voorouders, niet bij hun naam, maar met een kwetsend woord en een prijs erachter. Zo werden tot slaaf gemaakte mensen toen behandeld: niet als mens, maar als koopwaar. Ik vind het nog steeds moeilijk om dit te lezen.",
-   "feedback": "Op de lijst staan \"waarschijnlijk ook mijn voorouders\", en zij werden behandeld \"niet als mens, maar als koopwaar\". Dat doet pijn om te lezen.",
-   "img": "families/l3-verkooplijst.jpg",
-   "bijschrift": "Verkooplijst van een scheepsverkoop uit 1768",
+   "question": "Waarom staat er \"Toch lukte het duizenden mensen\"?",
+   "passage": "Voorwerp 4: een houten kam met sierlijk snijwerk. Deze kam is gemaakt door marrons. Marrons waren mensen die van de plantages waren gevlucht. Ze trokken diep het regenwoud in en bouwden daar hun eigen dorpen. Het was gevaarlijk om te vluchten, want wie gepakt werd, kreeg een zware straf. Toch lukte het duizenden mensen. In het bos leefden ze in vrijheid. Hun nakomelingen wonen nog steeds in Suriname en houden hun eigen tradities levend.",
+   "feedback": "Eerst staat er dat vluchten gevaarlijk was. \"Toch\" laat zien dat het tegen dat gevaar in lukte. Dat laat zien hoe sterk de wil om vrij te zijn was.",
    "options": [
-    "Omdat het handschrift zo slecht te lezen is",
-    "Omdat waarschijnlijk haar eigen voorouders erop staan, behandeld als koopwaar",
-    "Omdat de lijst in een andere taal is geschreven",
-    "Omdat ze niet weet wat de prijzen betekenen"
+    "Omdat vluchten heel makkelijk was",
+    "Omdat het woord \"toch\" laat zien dat het lukte ondanks het grote gevaar",
+    "Omdat de eigenaren hen hielpen vluchten",
+    "Omdat er geen straf was voor vluchten"
    ],
    "correct": 1,
    "points": 1
@@ -671,110 +657,87 @@ const VRAGEN = {
   {
    "type": "mc",
    "qtype": "evaluating",
-   "label": "💬 Evaluerend",
+   "label": "Evaluerend",
    "labelClass": "label-evaluating",
-   "question": "De verteller schrijft \"waarschijnlijk\" waren ook haar voorouders vastgeketend. Waarom schrijft ze \"waarschijnlijk\"?",
-   "passage": "Dit is een ijzeren voetring. De ring werd om de voeten van tot slaaf gemaakten gedaan, zodat ze niet konden weglopen. Of ze kregen hem om als straf. Waarschijnlijk waren ook mijn voorouders die op de plantage werkten met zo’n ring vastgeketend.",
-   "feedback": "Ze weet dat zulke ringen werden gebruikt op plantages, maar niet zeker of háár voorouders er een droegen. Daarom: waarschijnlijk.",
-   "img": "families/l3-voetring.jpg",
-   "bijschrift": "Een ijzeren voetring",
+   "question": "De audiotour zet \"kwijtraakten\" tussen aanhalingstekens. Waarom?",
+   "passage": "Voorwerp 5: een oude krant uit 1863. Op 1 juli 1863 werd de slavernij in Suriname officieel afgeschaft. Toch waren de mensen nog niet echt vrij. Ze moesten nog tien jaar verplicht doorwerken op de plantages, voor een klein loon. Dat heette staatstoezicht. De plantage-eigenaren kregen van de Nederlandse regering geld voor elke persoon die ze \"kwijtraakten\": driehonderd gulden. De vrijgemaakte mensen kregen zelf helemaal niets.",
+   "feedback": "De eigenaren zagen het als verlies van bezit. Het museum laat met de aanhalingstekens zien dat die gedachte oneerlijk was: het ging om mensen die eindelijk vrij werden.",
    "options": [
-    "Omdat ze het niet zeker weet: het is niet over haar eigen voorouders opgeschreven",
-    "Omdat ze denkt dat het niet waar is",
-    "Omdat ze de voetring zelf heeft gemaakt",
-    "Omdat alleen eigenaren een voetring droegen"
+    "Omdat de eigenaren de mensen echt verloren waren in het bos",
+    "Om te laten zien dat het oneerlijk is om vrijheid van mensen te zien als een verlies voor de eigenaar",
+    "Omdat het woord in 1863 nog niet bestond",
+    "Omdat de krant dat woord fout had gespeld"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "evaluating",
+   "label": "Evaluerend",
+   "labelClass": "label-evaluating",
+   "question": "Wat vindt de schrijver van de manier waarop de compensatie geregeld werd?",
+   "passage": "Uitleg: wie kreeg wat? Na de afschaffing van de slavernij betaalde de regering de eigenaren een vergoeding. Die vergoeding noemen we compensatie. De gedachte was: de eigenaren verliezen hun werkers, dus krijgen zij geld. Aan de mensen die al die jaren onbetaald hadden gewerkt, dacht de regering niet. Zij moesten hun nieuwe leven beginnen zonder geld, zonder land en vaak zonder te kunnen lezen en schrijven.",
+   "feedback": "\"Aan de mensen die al die jaren onbetaald hadden gewerkt, dacht de regering niet.\" Met die zin laat de schrijver merken dat hij het oneerlijk vindt.",
+   "options": [
+    "De schrijver vindt het eerlijk geregeld",
+    "De schrijver vindt het oneerlijk, omdat alleen de eigenaren geld kregen",
+    "De schrijver heeft er geen mening over",
+    "De schrijver vindt dat de eigenaren te weinig kregen"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Waarom is een plengoffer voor veel nakomelingen extra belangrijk?",
+   "passage": "Voorwerp 6: een kalebas. Een kalebas is een schaal die gemaakt is van een uitgeholde vrucht. Veel Surinamers gebruiken een kalebas voor een plengoffer. Daarbij schenk je water of een ander drankje op de grond en denk je aan je voorouders. Zo eer je de mensen van wie je afstamt. Voor nakomelingen van tot slaaf gemaakte mensen is dat een manier om hun voorouders niet te vergeten. Een plengoffer wordt vaak gebracht bij herdenkingen.",
+   "feedback": "De tekst zegt dat het \"een manier is om hun voorouders niet te vergeten\". Zo blijft de herinnering aan wat hun is aangedaan levend.",
+   "options": [
+    "Omdat het een spelletje is voor kinderen",
+    "Omdat ze zo hun voorouders eren en de geschiedenis niet vergeten",
+    "Omdat het de planten water geeft",
+    "Omdat het verplicht is van de regering"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Waarom horen herdenken en vieren op deze dag bij elkaar?",
+   "passage": "Uitleg: Keti Koti. Elk jaar op 1 juli wordt in Nederland en Suriname Keti Koti gevierd en herdacht. Keti Koti betekent \"de ketenen zijn gebroken\" in het Sranantongo, een taal die in Suriname veel gesproken wordt. Overdag zijn er herdenkingen, bijvoorbeeld bij het Nationaal Monument Slavernijverleden in Amsterdam. Daarna is er vaak een feest met muziek, dans en eten. Herdenken en vieren horen op deze dag bij elkaar.",
+   "feedback": "Je denkt aan het onrecht en het leed van de slavernij, en je viert dat de ketenen gebroken zijn. Daarom horen ze allebei bij 1 juli.",
+   "options": [
+    "Omdat men het leed van vroeger herdenkt en de vrijheid viert",
+    "Omdat er die dag geen school is",
+    "Omdat het feest al eerder bestond dan de herdenking",
+    "Omdat het monument een feestzaal is"
    ],
    "correct": 0,
    "points": 1
   },
   {
    "type": "mc",
-   "qtype": "inferring",
-   "label": "💡 Afleidend",
-   "labelClass": "label-inferring",
-   "question": "Van wie is deze tekening, Maartje of Peggy? Welk stukje tekst helpt je het meest?",
-   "passage": "En kijk, dit is een oude tekening van Jan van Borssele van der Hooghe (1707-1764). Het hangt normaal gesproken bij ons bovenaan de trap. Hij behoorde tot een adellijke familie in Zeeland, was directeur van de VOC en kende misschien mijn voorouders wel. Hij was kasteelheer van het landgoed Ter Hooge dat mijn familie honderd jaar later kocht.",
-   "feedback": "Dat de familie later zijn kasteel kocht, past bij Maartje, uit een rijke familie van plantage-eigenaren. Dat Jan VOC-directeur was, zegt niets over van wie de tekening is.",
-   "img": "families/l3-tekening.jpg",
-   "bijschrift": "Tekening van Jan van Borssele van der Hooghe (1707-1764)",
+   "qtype": "evaluating",
+   "label": "Evaluerend",
+   "labelClass": "label-evaluating",
+   "question": "Wat is volgens de laatste tekst het doel van deze museumzaal?",
+   "passage": "Einde van de tour. Lange tijd werd er in Nederland weinig over het slavernijverleden gepraat. In schoolboeken stond het er nauwelijks in. Dat is veranderd. In 2002 kwam er een nationaal monument. In 2022 bood de Nederlandse regering officieel excuses aan, en in 2023 deed koning Willem-Alexander dat ook, op Keti Koti. Veel mensen vinden dat het daar niet bij moet blijven: zij vinden dat iedereen deze geschiedenis moet kennen. Bedankt voor uw bezoek aan deze zaal.",
+   "feedback": "Vroeger werd er weinig over gepraat. Nu vinden veel mensen dat \"iedereen deze geschiedenis moet kennen\". Daar draagt deze zaal aan bij.",
    "options": [
-    "Van Peggy: \"kende misschien mijn voorouders wel\"",
-    "Van Maartje: haar familie kocht het landgoed van deze adellijke kasteelheer",
-    "Van Peggy: de tekening hangt bovenaan de trap",
-    "Van Maartje: Jan was directeur van de VOC"
+    "Bezoekers laten zien hoe je suiker maakt",
+    "Ervoor zorgen dat mensen deze geschiedenis leren kennen en niet vergeten",
+    "Reclame maken voor reizen naar Suriname",
+    "Laten zien dat slavernij niet zo erg was"
    ],
    "correct": 1,
    "points": 1
-  },
-  {
-   "type": "mc",
-   "qtype": "inferring",
-   "label": "💡 Afleidend",
-   "labelClass": "label-inferring",
-   "question": "Wat betekende het plengoffer voor de verteller?",
-   "passage": "Dit is een kalebas, een schaal voor een plengoffer. Voor veel mensen in Suriname is het belangrijk om hun voorouders te eren. Je schenkt hiervoor wat water of een andere drank in de kalebas, giet dit op de grond en denkt aan je voorouders of spreekt een groet of dankwoord uit. Toen ik in Suriname was, bracht ik ook een plengoffer, aan mijn voorouders die op de plantage moesten werken. Dat was voor mij een emotioneel moment van stilstaan, herinneren en respect tonen.",
-   "feedback": "\"Dat was voor mij een emotioneel moment van stilstaan, herinneren en respect tonen.\"",
-   "img": "families/l3-plengoffer.jpg",
-   "bijschrift": "Een plengoffer met een kalebas",
-   "options": [
-    "Een feestje met familie en vrienden",
-    "Een emotioneel moment om haar voorouders te herinneren en respect te tonen",
-    "Een manier om de plantage-eigenaren te bedanken",
-    "Een gewoonte om de grond nat te houden"
-   ],
-   "correct": 1,
-   "points": 1
-  },
-  {
-   "type": "drag",
-   "qtype": "inferring",
-   "label": "💡 Afleidend – Sorteren",
-   "labelClass": "label-inferring",
-   "question": "Van wie is elk voorwerp uit de koffer? Sleep het naar Maartje of Peggy.",
-   "passage": "In de koffer zitten: een document over geld voor plantage-eigenaren, een kaart van plantage Tout Lui Faut, een foto van een bet-betovergrootmoeder die mede-eigenaar was, een verkooplijst van een scheepsverkoop uit 1768, een ijzeren voetring, een kalebas voor een plengoffer en een tekening van een kasteelheer uit Zeeland.",
-   "feedback": "Maartje: document, kaart, foto en tekening (haar familie was eigenaar en kocht later Ter Hooge). Peggy: verkooplijst, voetring en plengoffer.",
-   "categories": [
-    "Maartje",
-    "Peggy"
-   ],
-   "items": [
-    {
-     "id": "i0",
-     "text": "Document over geld voor eigenaren",
-     "correct": "Maartje"
-    },
-    {
-     "id": "i1",
-     "text": "Kaart van de plantage",
-     "correct": "Maartje"
-    },
-    {
-     "id": "i2",
-     "text": "Foto van de bet-betovergrootmoeder",
-     "correct": "Maartje"
-    },
-    {
-     "id": "i3",
-     "text": "Tekening van de kasteelheer",
-     "correct": "Maartje"
-    },
-    {
-     "id": "i4",
-     "text": "Verkooplijst uit 1768",
-     "correct": "Peggy"
-    },
-    {
-     "id": "i5",
-     "text": "IJzeren voetring",
-     "correct": "Peggy"
-    },
-    {
-     "id": "i6",
-     "text": "Kalebas voor een plengoffer",
-     "correct": "Peggy"
-    }
-   ],
-   "points": 2
   }
  ]
 };
@@ -784,7 +747,7 @@ const GROEP = (function () {
 })();
 const questions = VRAGEN[GROEP];
 const SLEUTEL = 'bl_families-les3_g' + GROEP;
-document.getElementById('bl-eyebrow').textContent = 'Begrijpend lezen · Groep ' + GROEP + ' · Les 3';
+document.getElementById('bl-eyebrow').textContent = 'Begrijpend lezen · Groep ' + GROEP;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // STATE

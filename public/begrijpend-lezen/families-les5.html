@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Begrijpend Lezen – Rebelse jongeren</title>
+<title>Begrijpend lezen – Jongeren in de jaren vijftig</title>
 <link href="/fonts/fonts.css" rel="stylesheet">
 <style>
   :root {
@@ -270,7 +270,7 @@
   .bl-fig { margin:0 0 14px; }
   .bl-fig img { display:block; max-width:100%; max-height:300px; border-radius:12px; margin:0 auto; box-shadow:0 8px 24px -10px rgba(0,0,0,.6); }
   .bl-fig figcaption { font-size:.85rem; color:var(--ink-soft); text-align:center; margin-top:6px; font-style:italic; }
-  .bl-cover { display:block; max-width:min(320px,100%); max-height:220px; margin:0 auto 14px; border-radius:14px; box-shadow:0 10px 28px -12px rgba(0,0,0,.7); }
+  .bl-cover { display:block; width:min(360px,100%); aspect-ratio:4/3; object-fit:cover; margin:0 auto 14px; border-radius:16px; box-shadow:0 10px 28px -12px rgba(0,0,0,.7); }
   @media(min-width:1000px){ .q-breed > .bl-fig { grid-column:1; } }
 </style>
 <style>.order-item,.drag-item{touch-action:none}.order-item.dragging,.drag-item.dragging{opacity:.6}</style>
@@ -279,9 +279,9 @@
 <body>
 
 <header>
-  <p class="eyebrow" id="bl-eyebrow">Begrijpend lezen · Les 5</p>
-  <h1>Rebelse jongeren</h1>
-  <p>Thema: Fantastische families</p>
+  <p class="eyebrow" id="bl-eyebrow">Begrijpend lezen</p>
+  <h1>Jongeren in de jaren vijftig</h1>
+  <p>Thema: Strijd om vrijheid</p>
 </header>
 <div id="progress-bar-wrap"><div id="progress-bar"></div></div>
 <div id="score-badge">⭐ <span id="score-num">0</span> pt</div>
@@ -289,14 +289,13 @@
 <main>
 
 <div id="intro-screen" class="screen active">
-  <div class="compass">🎸</div>
-  <img class="bl-cover" src="families/l5-poster.jpg" alt="">
+  
   <h2>Klaar om te lezen?</h2>
-  <p>Je bekijkt een archief met bronnen uit de jaren 50: posters, krantenartikelen, reclames en brieven. Jongeren en hun ouders dachten in die tijd heel verschillend over muziek, kleding, school en geld. Je beantwoordt tien vragen. Bij <strong>letterlijke vragen</strong> markeer je het antwoord <em>in de tekst zelf</em>. Klik woorden aan om ze te selecteren.</p>
+  <p>Noor uit groep 8 maakt een werkstuk over de jaren vijftig. Ze interviewt haar oma Ria, die toen een tiener was. Noor en oma Ria zijn verzonnen, de tijd waarover ze praten niet. Je beantwoordt tien vragen. Bij <strong>letterlijke vragen</strong> markeer je het antwoord <em>in de tekst zelf</em>. Klik woorden aan om ze te selecteren.</p>
   <div class="legend">
-    <span style="background:#d0e8ff;color:#0a3a6e;">🔍 Letterlijk – markeer in de tekst</span>
-    <span style="background:#fde8c0;color:#7a3d00;">💡 Afleidend</span>
-    <span style="background:#dff0e2;color:#1a5c2a;">💬 Evaluerend</span>
+    <span style="background:#d0e8ff;color:#0a3a6e;">Letterlijk – markeer in de tekst</span>
+    <span style="background:#fde8c0;color:#7a3d00;">Afleidend</span>
+    <span style="background:#dff0e2;color:#1a5c2a;">Evaluerend</span>
   </div>
   <button class="btn btn-primary" onclick="startQuiz()">Begin de oefening →</button>
 </div>
@@ -309,7 +308,7 @@
 
 <div id="finish-screen" class="screen">
   <div class="medal" id="finish-medal">🏅</div>
-  <h2>Goed gedaan, bronnenspeurder!</h2>
+  <h2>Super gelezen, interviewer!</h2>
   <div class="score-big" id="finish-score">0/0</div>
   <p id="finish-msg"></p>
   <div id="finish-overview"></div>
@@ -338,175 +337,191 @@ const VRAGEN = {
   {
    "type": "mark",
    "qtype": "literal",
-   "label": "🔍 Letterlijk",
+   "label": "Letterlijk",
    "labelClass": "label-literal",
-   "question": "Markeer in de tekst wat muziek voor jongeren betekent.",
-   "passage": "Bron 1 – Reclameposter (1958): aankondiging van The Tielman Brothers. Informatie over de bron: In de jaren 50 ontstaat een nieuwe jongerencultuur. Jongeren gaan naar dansavonden, ze dragen moderne kleding en ze luisteren naar nieuwe muziek uit Amerika, zoals rock-’n-roll. Voor jongeren hoort muziek bij vrijheid en het maken van eigen keuzes.",
-   "feedback": "Het staat in de laatste zin: \"Voor jongeren hoort muziek bij vrijheid en het maken van eigen keuzes.\"",
-   "img": "families/l5-poster.jpg",
-   "bijschrift": "Bron 1 – Reclameposter (1958)",
+   "question": "Markeer in de tekst waarom de ouders van oma Ria zo zuinig waren.",
+   "passage": "Noor: Oma, hoe was Nederland toen u jong was? Oma Ria: Ik ben geboren in 1940, in de oorlog. Daarna moest Nederland weer worden opgebouwd. Dat noemen we de wederopbouw. Overal werden huizen, bruggen en fabrieken gebouwd. Mijn ouders hadden in de oorlog honger en armoede meegemaakt. Daarom waren ze heel zuinig. Er werd niets weggegooid: kapotte sokken werden gestopt en van oude jurken maakte mijn moeder schortjes.",
+   "feedback": "Het staat in de zin ervoor: \"Mijn ouders hadden in de oorlog honger en armoede meegemaakt.\" Daarna volgt \"Daarom\".",
    "correctSpan": {
-    "start": 40,
-    "end": 51
+    "start": 37,
+    "end": 46
    },
    "coreWords": [
-    45,
-    50,
-    51
+    43,
+    45
    ],
    "points": 2
   },
   {
-   "type": "mc",
-   "qtype": "inferring",
-   "label": "💡 Afleidend",
-   "labelClass": "label-inferring",
-   "question": "Waarom maken ouders zich zorgen over de dansavonden?",
-   "passage": "Bron 2 – Krantenartikel (1958): Ouders bezorgd over moderne dansavonden. Informatie over de bron: Veel ouders maken zich zorgen over jongeren. Zij vinden rock-’n-rollmuziek en moderne dansen te wild. Ouders zijn opgegroeid met rust, orde en gehoorzaamheid. Doe maar gewoon, denken zij. Zij vinden dat jongeren zich netjes moeten gedragen. De nieuwe jongerencultuur is voor hen een grote verandering. Sommige ouders zijn bang dat jongeren zich minder aan regels zullen houden.",
-   "feedback": "Ouders vinden de muziek en de dansen \"te wild\" en zijn bang \"dat jongeren zich minder aan regels zullen houden\".",
-   "img": "families/l5-krant.jpg",
-   "bijschrift": "Bron 2 – Krantenartikel (1958)",
-   "options": [
-    "Omdat de kaartjes te duur zijn",
-    "Omdat ze de muziek en de dansen te wild vinden en bang zijn dat jongeren zich minder aan regels houden",
-    "Omdat de dansavonden te laat beginnen",
-    "Omdat ze zelf ook willen dansen"
-   ],
-   "correct": 1,
-   "points": 1
-  },
-  {
    "type": "mark",
    "qtype": "literal",
-   "label": "🔍 Letterlijk",
+   "label": "Letterlijk",
    "labelClass": "label-literal",
-   "question": "Markeer in de tekst waarom een brommer jongeren meer vrijheid geeft.",
-   "passage": "Bron 3 – Tijdschriftadvertentie (ca. 1957). Informatie over de bron: In de jaren 50 laten jongeren met hun uiterlijk zien wie ze zijn. Jongens dragen leren jacks en strakke broeken. Met Brylcreem, een haarcrème, wordt het haar strak in model gebracht, bijvoorbeeld in een vetkuif. Ook meisjes veranderen hun uiterlijk. Brommers geven jongeren meer vrijheid. Ze kunnen zo zelf op pad en vrienden opzoeken. Voor sommige jongens is een brommer ook stoer en belangrijk om indruk te maken. Volwassenen die zich eraan ergeren, noemen deze jongeren nozems.",
-   "feedback": "Het staat in de zin: \"Ze kunnen zo zelf op pad en vrienden opzoeken.\"",
-   "img": "families/l5-brommer.jpg",
-   "bijschrift": "Bron 3 – Tijdschriftadvertentie voor bromfietsen (ca. 1957)",
+   "question": "Markeer in de tekst wat de muziek voor jongeren betekende.",
+   "passage": "Noor: Wat voor muziek luisterde u? Oma Ria: Rock-’n-roll! Die muziek kwam uit Amerika en was snel en wild. Op de radio hoorde je het nauwelijks, maar in sommige cafés stond een jukebox. Voor een dubbeltje koos je een plaatje. Mijn ouders vonden het vreselijk. \"Dat is geen muziek, dat is herrie,\" zei mijn vader. Voor ons betekende die muziek vrijheid. Het was van ons, niet van onze ouders.",
+   "feedback": "Het staat in de zin: \"Voor ons betekende die muziek vrijheid.\"",
    "correctSpan": {
     "start": 55,
-    "end": 63
-   },
-   "coreWords": [
-    58,
-    60,
-    62
-   ],
-   "points": 2
-  },
-  {
-   "type": "mark",
-   "qtype": "literal",
-   "label": "🔍 Letterlijk",
-   "labelClass": "label-literal",
-   "question": "Markeer in de tekst waar er vooral overlast was.",
-   "passage": "Bron 4 – Krantenartikel (1959): overlast door nozems. Informatie over de bron: In de jaren 50 klagen veel volwassenen over nozems, jongeren uit die tijd die zich verzetten tegen hun ouders en een heel eigen kledingstijl hebben. Zij hangen rond op straat, maken herrie met hun brommers en gedragen zich brutaal. Vooral op pleinen, bij cafés en danszalen is er overlast. De politie grijpt regelmatig in. Volwassenen vinden het gedrag van nozems te vrij. Ze kennen geen grenzen, vinden zij.",
-   "feedback": "Het staat in de zin: \"Vooral op pleinen, bij cafés en danszalen is er overlast.\"",
-   "img": "families/l5-brylcreem.jpg",
-   "bijschrift": "Reclame voor Brylcreem, haarcrème voor een vetkuif",
-   "correctSpan": {
-    "start": 51,
     "end": 60
    },
    "coreWords": [
-    53,
-    55,
-    57
+    59,
+    60
    ],
    "points": 2
   },
   {
    "type": "mark",
    "qtype": "literal",
-   "label": "🔍 Letterlijk",
+   "label": "Letterlijk",
    "labelClass": "label-literal",
-   "question": "Markeer in de tekst waarom steeds meer jongeren willen doorleren.",
-   "passage": "Bron 5 – Schoolfolder (ca. 1957): voorlichting over doorleren. Informatie over de bron: Vóór de jaren 50 gingen de meeste kinderen na de lagere school meteen aan het werk. Maar in de jaren 50 verandert dat. Er komen meer scholen bij, zoals de ambachtsschool (waar jongens een vak leren, bijvoorbeeld timmerman) en de huishoudschool (waar meisjes leren koken en naaien). Steeds meer jongeren willen doorleren, omdat ze hopen op een beter beroep dan hun ouders. Dat is nieuw: voor het eerst kiezen jongeren een andere weg dan hun ouders.",
-   "feedback": "Het staat in de zin: \"Steeds meer jongeren willen doorleren, omdat ze hopen op een beter beroep dan hun ouders.\"",
-   "img": "families/l5-doorleren.jpg",
-   "bijschrift": "Bron 5 – Schoolfolder (ca. 1957)",
+   "question": "Markeer in de tekst hoe een nozem eruitzag.",
+   "passage": "Noor: Waren er ook nozems in uw straat? Oma Ria: Zeker! Nozems waren jongens met een vetkuif, een leren jack en een strakke spijkerbroek. Ze reden op een brommer en hingen rond op straat of bij de snackbar. Volwassenen ergerden zich aan hen. Ze vonden nozems brutaal en lawaaierig. Eigenlijk deden de meeste nozems niets ergs. Ze wilden vooral laten zien dat ze anders waren dan hun ouders. Mijn broer Henk was er ook een, tot grote schrik van mijn moeder.",
+   "feedback": "Het staat in de zin: \"Nozems waren jongens met een vetkuif, een leren jack en een strakke spijkerbroek.\"",
    "correctSpan": {
-    "start": 65,
-    "end": 74
+    "start": 11,
+    "end": 23
    },
    "coreWords": [
-    70,
-    71,
-    74
-   ],
-   "points": 2
-  },
-  {
-   "type": "mc",
-   "qtype": "inferring",
-   "label": "💡 Afleidend",
-   "labelClass": "label-inferring",
-   "question": "Waarom begrijpen ouders niet dat hun kinderen langer naar school willen?",
-   "passage": "Bron 6 – Loonzakje (ca. 1955). Informatie over de bron: Veel ouders van jongeren in de jaren 50 gingen zelf maar kort naar school. Doorleren was voor hen geen mogelijkheid. Na de lagere school gingen zij meteen aan het werk, bijvoorbeeld in een fabriek, winkel, kantoor of als hulp in de huishouding. Veel van dat werk was zwaar en het loon was laag. Sparen was daarom belangrijk. Ouders begrijpen niet waarom hun kinderen langer naar school willen. Een vak leer je toch op de werkvloer? En het gezin kan het geld goed gebruiken.",
-   "feedback": "\"Een vak leer je toch op de werkvloer? En het gezin kan het geld goed gebruiken.\"",
-   "img": "families/l5-loonzakje.jpg",
-   "bijschrift": "Bron 6 – Loonzakje (ca. 1955)",
-   "options": [
-    "Omdat school toen heel duur was",
-    "Omdat zij vinden dat je een vak op de werkvloer leert, en het gezin het geld goed kan gebruiken",
-    "Omdat er geen scholen in de buurt waren",
-    "Omdat ze willen dat hun kinderen beroemd worden"
-   ],
-   "correct": 1,
-   "points": 1
-  },
-  {
-   "type": "mark",
-   "qtype": "literal",
-   "label": "🔍 Letterlijk",
-   "labelClass": "label-literal",
-   "question": "Markeer in de tekst wat er gebeurt in een consumptiemaatschappij.",
-   "passage": "Bron 7 – Handgeschreven bon van een kledingwinkel (1958). Informatie over de bron: In de jaren 50 krijgen sommige jongeren meer geld te besteden. Ze kopen moderne kleding, grammofoonplaten (elpees) en kaartjes voor dansavonden. Nederland krijgt langzaam meer welvaart. Mensen kopen steeds meer spullen. Ook kopen zij vaker dingen voor plezier en vrije tijd. Dit heet een consumptiemaatschappij. Voor veel jongeren hoort geld uitgeven bij de nieuwe tijd.",
-   "feedback": "Vlak voor \"Dit heet een consumptiemaatschappij\" staat wat het is: \"Mensen kopen steeds meer spullen. Ook kopen zij vaker dingen voor plezier en vrije tijd.\"",
-   "img": "families/l5-bon.jpg",
-   "bijschrift": "Bron 7 – Bonnetje van een kledingwinkel (1958)",
-   "correctSpan": {
-    "start": 39,
-    "end": 53
-   },
-   "coreWords": [
-    42,
-    43,
-    50
+    16,
+    18,
+    23
    ],
    "points": 2
   },
   {
    "type": "mark",
    "qtype": "literal",
-   "label": "🔍 Letterlijk",
+   "label": "Letterlijk",
    "labelClass": "label-literal",
-   "question": "Markeer in de tekst waaraan de dochter haar geld uitgeeft.",
-   "passage": "Bron 8 – Lezersbrief (1957). Geachte redactie, onze dochter is zeventien jaar en verdient sinds kort haar eigen loon. Tot onze zorg geeft zij bijna alles uit aan grammofoonplaten, lippenstift, nieuwe kousen en dansavonden. Mijn man en ik vinden dat een meisje moet leren zuinig te zijn. Een bezorgde moeder. Informatie over de bron: Ouders van jongeren in de jaren 50 zijn opgegroeid in een tijd van oorlog en schaarste. Zij weten hoe het is om weinig te hebben. Sparen en zuinig leven is voor hen vanzelfsprekend.",
-   "feedback": "Het staat in de zin: \"... geeft zij bijna alles uit aan grammofoonplaten, lippenstift, nieuwe kousen en dansavonden.\"",
-   "img": "families/l5-brief.jpg",
-   "bijschrift": "Bron 8 – Lezersbrief in een tijdschrift (1957)",
+   "question": "Markeer in de tekst waarom oma Ria een petticoat droeg.",
+   "passage": "Noor: Mocht u als meisje ook zulke kleren dragen? Oma Ria: Niet als het aan mijn moeder lag! Zij vond dat een meisje netjes en bescheiden moest zijn. Ik droeg een wijde rok met een petticoat eronder, zodat hij mooi uitstond. Mijn haar deed ik in een paardenstaart. En ik wilde lippenstift, maar dat mocht pas toen ik zestien werd. Op zondag moest alles keurig: dan gingen we naar de kerk in onze beste kleren.",
+   "feedback": "Het staat in de zin over de petticoat: \"zodat hij mooi uitstond.\"",
    "correctSpan": {
-    "start": 28,
-    "end": 33
+    "start": 37,
+    "end": 40
    },
    "coreWords": [
-    28,
-    29,
-    33
+    39,
+    40
    ],
    "points": 2
   },
   {
    "type": "drag",
    "qtype": "inferring",
-   "label": "💡 Afleidend – Sorteren",
+   "label": "Afleidend – Sorteren",
    "labelClass": "label-inferring",
-   "question": "Wie denkt zo: jongeren of ouders in de jaren 50? Sleep het naar de goede kant.",
-   "passage": "In het archief over de jaren 50 vind je stemmen van jongeren en van ouders. Jongeren willen dansen op rock-’n-roll, met hun brommer zelf op pad, doorleren voor een beter beroep en hun eigen loon uitgeven. Ouders zijn opgegroeid met rust, orde en zuinigheid. Zij vinden dat je een vak op de werkvloer leert, dat geld bedoeld is om te sparen en dat jongeren zich netjes moeten kleden.",
-   "feedback": "Jongeren: dansen en doorleren. Ouders: netjes gekleed gaan en sparen.",
+   "question": "Wat leerde je op welke school? Sleep elke zin naar de goede groep.",
+   "passage": "Noor: Ging u na de lagere school nog naar school? Oma Ria: Ja, en dat was nieuw. Mijn ouders gingen allebei op hun twaalfde aan het werk. Ik ging naar de huishoudschool. Daar leerden meisjes koken, naaien, wassen en strijken. Jongens gingen vaak naar de ambachtsschool, waar ze een vak leerden, zoals timmerman of loodgieter. Mijn vader vond het maar onzin. \"Een vak leer je in de praktijk,\" zei hij. Maar ik wilde meer leren dan hij had gekund.",
+   "feedback": "Op de huishoudschool leerden meisjes koken, naaien, wassen en strijken. Op de ambachtsschool leerden jongens een vak, zoals timmerman of loodgieter.",
+   "categories": [
+    "Huishoudschool",
+    "Ambachtsschool"
+   ],
+   "items": [
+    {
+     "id": "i0",
+     "text": "Koken en naaien",
+     "correct": "Huishoudschool"
+    },
+    {
+     "id": "i1",
+     "text": "Wassen en strijken",
+     "correct": "Huishoudschool"
+    },
+    {
+     "id": "i2",
+     "text": "Timmerman worden",
+     "correct": "Ambachtsschool"
+    },
+    {
+     "id": "i3",
+     "text": "Een vak leren als loodgieter",
+     "correct": "Ambachtsschool"
+    }
+   ],
+   "points": 2
+  },
+  {
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst wat kostgeld was.",
+   "passage": "Noor: Had u ook eigen geld? Oma Ria: Op mijn vijftiende ging ik werken in een kledingwinkel. Elke vrijdag kreeg ik een loonzakje: een envelopje met mijn loon erin. Het grootste deel moest ik aan mijn moeder geven, voor het huishouden. Dat heette kostgeld. Wat overbleef, mocht ik zelf houden. Daar kocht ik grammofoonplaten en nylonkousen van. Mijn moeder vond dat ik beter kon sparen. Maar ik wilde ook weleens iets leuks.",
+   "feedback": "Het staat in de zin ervoor: \"Het grootste deel moest ik aan mijn moeder geven, voor het huishouden. Dat heette kostgeld.\"",
+   "correctSpan": {
+    "start": 29,
+    "end": 40
+   },
+   "coreWords": [
+    36,
+    40
+   ],
+   "points": 2
+  },
+  {
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst wat welvaart is.",
+   "passage": "Noor: Kochten mensen toen veel spullen? Oma Ria: Steeds meer. In de jaren vijftig ging het economisch beter met Nederland. De lonen stegen en mensen kregen meer te besteden. Dat noemen we welvaart. In veel huizen kwam een wasmachine, een stofzuiger en later een televisie. Wij kregen in 1958 onze eerste tv. De hele straat kwam kijken! Langzaam werd Nederland een land waarin mensen steeds meer spullen kochten, ook voor hun plezier.",
+   "feedback": "Het staat in de zin ervoor: \"De lonen stegen en mensen kregen meer te besteden. Dat noemen we welvaart.\"",
+   "correctSpan": {
+    "start": 20,
+    "end": 28
+   },
+   "coreWords": [
+    21,
+    28
+   ],
+   "points": 2
+  },
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Waarom waren de ouders van oma Ria bezorgd?",
+   "passage": "Noor: Waren uw ouders vaak boos? Oma Ria: Boos niet, wel bezorgd. Ze waren opgegroeid met gehoorzaamheid: je deed wat je ouders, de meester of de dominee zeiden. Ineens wilden jongeren zelf kiezen: welke muziek ze luisterden, wat ze droegen en wat ze met hun geld deden. In de krant stonden stukken over \"de jeugd van tegenwoordig\". Mijn ouders lazen die artikelen met gefronste wenkbrauwen. Ze vonden dat alles veel te snel veranderde.",
+   "feedback": "Zij waren \"opgegroeid met gehoorzaamheid\" en zagen jongeren ineens zelf kiezen. Dat vonden ze te snel gaan.",
+   "options": [
+    "Omdat jongeren steeds meer zelf wilden kiezen, terwijl zij gehoorzaamheid gewend waren",
+    "Omdat de krant te duur werd",
+    "Omdat ze geen tv hadden",
+    "Omdat Ria niet naar school wilde"
+   ],
+   "correct": 0,
+   "points": 1
+  },
+  {
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst wat de ouders van oma Ria vooral wilden.",
+   "passage": "Noor: Wat vindt u nu van die tijd? Oma Ria: Het was een spannende tijd. Wij waren de eerste generatie jongeren die echt een eigen jongerencultuur had, met eigen muziek, kleding en plekken om af te spreken. Mijn ouders vonden dat lastig, en dat snap ik nu beter. Zij hadden de oorlog meegemaakt en wilden vooral rust en zekerheid. Wij wilden vooruit. Grappig genoeg vond ik later de muziek van mijn eigen kinderen ook vreselijk!",
+   "feedback": "Het staat in de zin: \"Zij hadden de oorlog meegemaakt en wilden vooral rust en zekerheid.\"",
+   "correctSpan": {
+    "start": 48,
+    "end": 58
+   },
+   "coreWords": [
+    56,
+    58
+   ],
+   "points": 2
+  },
+  {
+   "type": "drag",
+   "qtype": "inferring",
+   "label": "Afleidend – Sorteren",
+   "labelClass": "label-inferring",
+   "question": "Wat vonden jongeren belangrijk, en wat hun ouders? Sleep elke zin naar de goede groep.",
+   "passage": "Uit het werkstuk van Noor: In de jaren vijftig ontstond in Nederland voor het eerst een echte jongerencultuur. Jongeren luisterden naar rock-’n-roll, droegen eigen kleding en reden op brommers. Door de groeiende welvaart hadden ze vaker eigen geld. Ook gingen meer jongeren na de lagere school verder leren. Hun ouders, die de oorlog hadden meegemaakt, vonden zuinigheid, rust en gehoorzaamheid belangrijk. Daardoor botsten de generaties regelmatig.",
+   "feedback": "Jongeren wilden muziek, eigen kleding en verder leren. Ouders vonden zuinigheid, rust en gehoorzaamheid belangrijk.",
    "categories": [
     "Jongeren",
     "Ouders"
@@ -514,80 +529,47 @@ const VRAGEN = {
    "items": [
     {
      "id": "i0",
-     "text": "Dansen op rock-’n-roll",
+     "text": "Rock-’n-roll luisteren",
      "correct": "Jongeren"
     },
     {
      "id": "i1",
-     "text": "Netjes gekleed gaan",
-     "correct": "Ouders"
-    },
-    {
-     "id": "i2",
-     "text": "Doorleren voor een beter beroep",
+     "text": "Eigen kleding dragen",
      "correct": "Jongeren"
     },
     {
-     "id": "i3",
-     "text": "Sparen voor later",
+     "id": "i2",
+     "text": "Zuinig leven",
      "correct": "Ouders"
+    },
+    {
+     "id": "i3",
+     "text": "Gehoorzaamheid",
+     "correct": "Ouders"
+    },
+    {
+     "id": "i4",
+     "text": "Verder leren na de lagere school",
+     "correct": "Jongeren"
     }
    ],
    "points": 2
-  },
-  {
-   "type": "mc",
-   "qtype": "inferring",
-   "label": "💡 Afleidend",
-   "labelClass": "label-inferring",
-   "question": "Wat is een \"gereconstrueerde bron\"?",
-   "passage": "Onder elke bron in dit archief staat: \"gereconstrueerde bron, gebaseerd op het tijdsbeeld\". Dat betekent dat de bron opnieuw is gemaakt voor dit lesboek. Hij lijkt op echte bronnen uit de jaren 50, maar het is geen echt voorwerp uit die tijd.",
-   "feedback": "De bron is \"opnieuw gemaakt voor dit lesboek\" en \"lijkt op echte bronnen uit de jaren 50\".",
-   "options": [
-    "Een bron die kapot is gegaan",
-    "Een bron die later opnieuw is gemaakt, zodat hij lijkt op echte bronnen uit die tijd",
-    "Een bron die in een museum ligt",
-    "Een bron die door een kind is gemaakt"
-   ],
-   "correct": 1,
-   "points": 1
   }
  ],
  "8": [
   {
    "type": "mc",
-   "qtype": "evaluating",
-   "label": "💬 Evaluerend",
-   "labelClass": "label-evaluating",
-   "question": "Op de poster staat: \"De nieuwste muziek uit Amerika!\" Waarom zet de maker dat erop?",
-   "passage": "Bron 1 – Reclameposter (1958): aankondiging van The Tielman Brothers. Informatie over de bron: In de jaren 50 ontstaat een nieuwe jongerencultuur. Jongeren gaan naar dansavonden, ze dragen moderne kleding en ze luisteren naar nieuwe muziek uit Amerika, zoals rock-’n-roll. Voor jongeren hoort muziek bij vrijheid en het maken van eigen keuzes.",
-   "feedback": "Een reclameposter wil mensen laten komen. Jongeren vonden nieuwe muziek uit Amerika juist spannend.",
-   "img": "families/l5-poster.jpg",
-   "bijschrift": "Bron 1 – Reclameposter (1958)",
+   "qtype": "inferring",
+   "label": "Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Wat is wederopbouw?",
+   "passage": "Noor: Oma, hoe was Nederland toen u jong was? Oma Ria: Ik ben geboren in 1940, in de oorlog. Daarna moest Nederland weer worden opgebouwd. Dat noemen we de wederopbouw. Overal werden huizen, bruggen en fabrieken gebouwd. Mijn ouders hadden in de oorlog honger en armoede meegemaakt. Daarom waren ze heel zuinig. Er werd niets weggegooid: kapotte sokken werden gestopt en van oude jurken maakte mijn moeder schortjes.",
+   "feedback": "\"Daarna moest Nederland weer worden opgebouwd. Dat noemen we de wederopbouw.\" Na de oorlog werden huizen, bruggen en fabrieken opnieuw gebouwd.",
    "options": [
-    "Om ouders gerust te stellen",
-    "Om jongeren te lokken: nieuw en Amerikaans klonk spannend en modern",
-    "Omdat de band uit Amerika kwam en geen Nederlands sprak",
-    "Om te waarschuwen voor wilde muziek"
-   ],
-   "correct": 1,
-   "points": 1
-  },
-  {
-   "type": "mc",
-   "qtype": "evaluating",
-   "label": "💬 Evaluerend",
-   "labelClass": "label-evaluating",
-   "question": "Bron 1 (de poster) en bron 2 (dit artikel) komen allebei uit 1958. Wat is het grootste verschil?",
-   "passage": "Bron 2 – Krantenartikel (1958): Ouders bezorgd over moderne dansavonden. Informatie over de bron: Veel ouders maken zich zorgen over jongeren. Zij vinden rock-’n-rollmuziek en moderne dansen te wild. Ouders zijn opgegroeid met rust, orde en gehoorzaamheid. Doe maar gewoon, denken zij. Zij vinden dat jongeren zich netjes moeten gedragen. De nieuwe jongerencultuur is voor hen een grote verandering. Sommige ouders zijn bang dat jongeren zich minder aan regels zullen houden.",
-   "feedback": "Dezelfde muziek, twee kanten: voor jongeren betekent het vrijheid, ouders vinden het te wild.",
-   "img": "families/l5-krant.jpg",
-   "bijschrift": "Bron 2 – Krantenartikel (1958)",
-   "options": [
-    "Bron 1 is ouder dan bron 2",
-    "Bron 1 laat zien wat jongeren aantrekt, bron 2 laat zien waar ouders bang voor zijn",
-    "Bron 1 gaat over Amerika, bron 2 over Frankrijk",
-    "Er is geen verschil, ze zeggen hetzelfde"
+    "Het afbreken van oude huizen",
+    "Het opnieuw opbouwen van een land na een oorlog",
+    "Een nieuwe sport uit Amerika",
+    "Een school voor bouwvakkers"
    ],
    "correct": 1,
    "points": 1
@@ -595,18 +577,16 @@ const VRAGEN = {
   {
    "type": "mc",
    "qtype": "inferring",
-   "label": "💡 Afleidend",
+   "label": "Afleidend",
    "labelClass": "label-inferring",
-   "question": "Wat betekent het woord \"nozems\" in deze tekst?",
-   "passage": "Bron 3 – Tijdschriftadvertentie (ca. 1957). Informatie over de bron: In de jaren 50 laten jongeren met hun uiterlijk zien wie ze zijn. Jongens dragen leren jacks en strakke broeken. Met Brylcreem, een haarcrème, wordt het haar strak in model gebracht, bijvoorbeeld in een vetkuif. Ook meisjes veranderen hun uiterlijk. Brommers geven jongeren meer vrijheid. Ze kunnen zo zelf op pad en vrienden opzoeken. Voor sommige jongens is een brommer ook stoer en belangrijk om indruk te maken. Volwassenen die zich eraan ergeren, noemen deze jongeren nozems.",
-   "feedback": "\"Volwassenen die zich eraan ergeren, noemen deze jongeren nozems.\" Het is dus geen vriendelijk woord.",
-   "img": "families/l5-brommer.jpg",
-   "bijschrift": "Bron 3 – Tijdschriftadvertentie voor bromfietsen (ca. 1957)",
+   "question": "Wat bedoelt oma Ria met \"Het was van ons, niet van onze ouders\"?",
+   "passage": "Noor: Wat voor muziek luisterde u? Oma Ria: Rock-’n-roll! Die muziek kwam uit Amerika en was snel en wild. Op de radio hoorde je het nauwelijks, maar in sommige cafés stond een jukebox. Voor een dubbeltje koos je een plaatje. Mijn ouders vonden het vreselijk. \"Dat is geen muziek, dat is herrie,\" zei mijn vader. Voor ons betekende die muziek vrijheid. Het was van ons, niet van onze ouders.",
+   "feedback": "Ouders vonden het \"herrie\". Juist daardoor voelde de muziek als iets van de jongeren zelf, waarmee ze lieten zien wie ze waren.",
    "options": [
-    "Jongeren die een brommer verkopen",
-    "Een naam die volwassenen gaven aan jongeren met een eigen stijl die hen ergerden",
-    "Een merk haarcrème",
-    "Jongens die in een fabriek werken"
+    "Dat jongeren de jukebox zelf hadden gekocht",
+    "Dat jongeren met deze muziek iets eigens hadden, waarmee ze anders waren dan hun ouders",
+    "Dat ouders de muziek niet mochten horen",
+    "Dat de muziek in Nederland was gemaakt"
    ],
    "correct": 1,
    "points": 1
@@ -614,18 +594,16 @@ const VRAGEN = {
   {
    "type": "mc",
    "qtype": "evaluating",
-   "label": "💬 Evaluerend",
+   "label": "Evaluerend",
    "labelClass": "label-evaluating",
-   "question": "Welke zin is een mening en geen feit?",
-   "passage": "Bron 4 – Krantenartikel (1959): overlast door nozems. Informatie over de bron: In de jaren 50 klagen veel volwassenen over nozems, jongeren uit die tijd die zich verzetten tegen hun ouders en een heel eigen kledingstijl hebben. Zij hangen rond op straat, maken herrie met hun brommers en gedragen zich brutaal. Vooral op pleinen, bij cafés en danszalen is er overlast. De politie grijpt regelmatig in. Volwassenen vinden het gedrag van nozems te vrij. Ze kennen geen grenzen, vinden zij.",
-   "feedback": "\"Ze kennen geen grenzen\" is wat volwassenen vínden. Daarom staat er in de tekst ook \"vinden zij\" achter.",
-   "img": "families/l5-brylcreem.jpg",
-   "bijschrift": "Reclame voor Brylcreem, haarcrème voor een vetkuif",
+   "question": "Volwassenen vonden nozems brutaal. Wat vindt oma Ria zelf van nozems?",
+   "passage": "Noor: Waren er ook nozems in uw straat? Oma Ria: Zeker! Nozems waren jongens met een vetkuif, een leren jack en een strakke spijkerbroek. Ze reden op een brommer en hingen rond op straat of bij de snackbar. Volwassenen ergerden zich aan hen. Ze vonden nozems brutaal en lawaaierig. Eigenlijk deden de meeste nozems niets ergs. Ze wilden vooral laten zien dat ze anders waren dan hun ouders. Mijn broer Henk was er ook een, tot grote schrik van mijn moeder.",
+   "feedback": "\"Eigenlijk deden de meeste nozems niets ergs.\" Oma Ria kijkt er milder naar dan de volwassenen van toen.",
    "options": [
-    "De politie grijpt regelmatig in.",
-    "Ze kennen geen grenzen.",
-    "Vooral op pleinen, bij cafés en danszalen is er overlast.",
-    "Nozems hebben een heel eigen kledingstijl."
+    "Ze vindt dat ze gevaarlijk waren en opgesloten moesten worden",
+    "Ze vindt dat ze meestal niets ergs deden en vooral anders wilden zijn",
+    "Ze vindt dat ze beter hadden moeten sparen",
+    "Ze heeft er geen mening over"
    ],
    "correct": 1,
    "points": 1
@@ -633,18 +611,16 @@ const VRAGEN = {
   {
    "type": "mc",
    "qtype": "inferring",
-   "label": "💡 Afleidend",
+   "label": "Afleidend",
    "labelClass": "label-inferring",
-   "question": "Wat was er volgens de tekst echt nieuw in de jaren 50?",
-   "passage": "Bron 5 – Schoolfolder (ca. 1957): voorlichting over doorleren. Informatie over de bron: Vóór de jaren 50 gingen de meeste kinderen na de lagere school meteen aan het werk. Maar in de jaren 50 verandert dat. Er komen meer scholen bij, zoals de ambachtsschool (waar jongens een vak leren, bijvoorbeeld timmerman) en de huishoudschool (waar meisjes leren koken en naaien). Steeds meer jongeren willen doorleren, omdat ze hopen op een beter beroep dan hun ouders. Dat is nieuw: voor het eerst kiezen jongeren een andere weg dan hun ouders.",
-   "feedback": "\"Dat is nieuw: voor het eerst kiezen jongeren een andere weg dan hun ouders.\" Werken na de lagere school was juist het oude.",
-   "img": "families/l5-doorleren.jpg",
-   "bijschrift": "Bron 5 – Schoolfolder (ca. 1957)",
+   "question": "Wat betekent \"Niet als het aan mijn moeder lag!\"?",
+   "passage": "Noor: Mocht u als meisje ook zulke kleren dragen? Oma Ria: Niet als het aan mijn moeder lag! Zij vond dat een meisje netjes en bescheiden moest zijn. Ik droeg een wijde rok met een petticoat eronder, zodat hij mooi uitstond. Mijn haar deed ik in een paardenstaart. En ik wilde lippenstift, maar dat mocht pas toen ik zestien werd. Op zondag moest alles keurig: dan gingen we naar de kerk in onze beste kleren.",
+   "feedback": "Dat betekent: als het aan haar moeder lag, als zij mocht beslissen, dan mocht het niet. Haar moeder wilde dat ze netjes en bescheiden was.",
    "options": [
-    "Dat er scholen bestonden",
-    "Dat jongeren voor het eerst een andere weg kozen dan hun ouders",
-    "Dat meisjes leerden koken",
-    "Dat kinderen na de lagere school gingen werken"
+    "Haar moeder lag ziek in bed",
+    "Als haar moeder het voor het zeggen had, mocht het niet",
+    "Haar moeder kocht alle kleren",
+    "Haar moeder droeg zelf zulke kleren"
    ],
    "correct": 1,
    "points": 1
@@ -652,18 +628,16 @@ const VRAGEN = {
   {
    "type": "mc",
    "qtype": "inferring",
-   "label": "💡 Afleidend",
+   "label": "Afleidend",
    "labelClass": "label-inferring",
-   "question": "Wat vertelt dit loonzakje over het leven van de ouders toen zij jong waren?",
-   "passage": "Bron 6 – Loonzakje (ca. 1955). Informatie over de bron: Veel ouders van jongeren in de jaren 50 gingen zelf maar kort naar school. Doorleren was voor hen geen mogelijkheid. Na de lagere school gingen zij meteen aan het werk, bijvoorbeeld in een fabriek, winkel, kantoor of als hulp in de huishouding. Veel van dat werk was zwaar en het loon was laag. Sparen was daarom belangrijk. Ouders begrijpen niet waarom hun kinderen langer naar school willen. Een vak leer je toch op de werkvloer? En het gezin kan het geld goed gebruiken.",
-   "feedback": "Ze gingen meteen na de lagere school werken, het loon was laag en \"sparen was daarom belangrijk\".",
-   "img": "families/l5-loonzakje.jpg",
-   "bijschrift": "Bron 6 – Loonzakje (ca. 1955)",
+   "question": "Waarom vond de vader van oma Ria verder leren \"onzin\"?",
+   "passage": "Noor: Ging u na de lagere school nog naar school? Oma Ria: Ja, en dat was nieuw. Mijn ouders gingen allebei op hun twaalfde aan het werk. Ik ging naar de huishoudschool. Daar leerden meisjes koken, naaien, wassen en strijken. Jongens gingen vaak naar de ambachtsschool, waar ze een vak leerden, zoals timmerman of loodgieter. Mijn vader vond het maar onzin. \"Een vak leer je in de praktijk,\" zei hij. Maar ik wilde meer leren dan hij had gekund.",
+   "feedback": "\"Een vak leer je in de praktijk,\" zei hij. Hij was zelf op zijn twaalfde gaan werken en vond school daarom niet nodig.",
    "options": [
-    "Dat ze al jong werkten, weinig verdienden en zuinig moesten zijn",
-    "Dat ze veel geld uitgaven aan kleding",
-    "Dat ze lang hebben doorgeleerd",
-    "Dat ze rijk werden in de fabriek"
+    "Hij vond dat je een vak het beste leert door het gewoon te doen",
+    "Hij had zelf heel lang gestudeerd",
+    "Hij vond de huishoudschool te ver weg",
+    "Hij wilde dat ze dokter werd"
    ],
    "correct": 0,
    "points": 1
@@ -671,18 +645,16 @@ const VRAGEN = {
   {
    "type": "mc",
    "qtype": "evaluating",
-   "label": "💬 Evaluerend",
+   "label": "Evaluerend",
    "labelClass": "label-evaluating",
-   "question": "Wat kun je met deze bron, een bonnetje van een kledingwinkel, het best laten zien?",
-   "passage": "Bron 7 – Handgeschreven bon van een kledingwinkel (1958). Informatie over de bron: In de jaren 50 krijgen sommige jongeren meer geld te besteden. Ze kopen moderne kleding, grammofoonplaten (elpees) en kaartjes voor dansavonden. Nederland krijgt langzaam meer welvaart. Mensen kopen steeds meer spullen. Ook kopen zij vaker dingen voor plezier en vrije tijd. Dit heet een consumptiemaatschappij. Voor veel jongeren hoort geld uitgeven bij de nieuwe tijd.",
-   "feedback": "Een bon laat zien wat er gekocht is. Dat past bij jongeren die hun geld uitgaven aan moderne kleding.",
-   "img": "families/l5-bon.jpg",
-   "bijschrift": "Bron 7 – Bonnetje van een kledingwinkel (1958)",
+   "question": "Oma Ria en haar moeder dachten verschillend over geld. Welke zin vat dat het best samen?",
+   "passage": "Noor: Had u ook eigen geld? Oma Ria: Op mijn vijftiende ging ik werken in een kledingwinkel. Elke vrijdag kreeg ik een loonzakje: een envelopje met mijn loon erin. Het grootste deel moest ik aan mijn moeder geven, voor het huishouden. Dat heette kostgeld. Wat overbleef, mocht ik zelf houden. Daar kocht ik grammofoonplaten en nylonkousen van. Mijn moeder vond dat ik beter kon sparen. Maar ik wilde ook weleens iets leuks.",
+   "feedback": "\"Mijn moeder vond dat ik beter kon sparen. Maar ik wilde ook weleens iets leuks.\" Twee verschillende meningen dus.",
    "options": [
-    "Hoeveel loon een fabrieksarbeider kreeg",
-    "Dat jongeren in de jaren 50 geld uitgaven aan kleding",
-    "Dat ouders hun kinderen verboden om kleding te kopen",
-    "Hoe een dansavond verliep"
+    "Allebei wilden ze alles sparen",
+    "Haar moeder wilde sparen, Ria wilde ook iets leuks kunnen kopen",
+    "Ria wilde sparen, haar moeder wilde alles uitgeven",
+    "Ze dachten er precies hetzelfde over"
    ],
    "correct": 1,
    "points": 1
@@ -690,81 +662,67 @@ const VRAGEN = {
   {
    "type": "mc",
    "qtype": "inferring",
-   "label": "💡 Afleidend",
+   "label": "Afleidend",
    "labelClass": "label-inferring",
-   "question": "Waarom vindt deze moeder sparen zo belangrijk? Gebruik ook de informatie over de bron.",
-   "passage": "Bron 8 – Lezersbrief (1957). Geachte redactie, onze dochter is zeventien jaar en verdient sinds kort haar eigen loon. Tot onze zorg geeft zij bijna alles uit aan grammofoonplaten, lippenstift, nieuwe kousen en dansavonden. Mijn man en ik vinden dat een meisje moet leren zuinig te zijn. Een bezorgde moeder. Informatie over de bron: Ouders van jongeren in de jaren 50 zijn opgegroeid in een tijd van oorlog en schaarste. Zij weten hoe het is om weinig te hebben. Sparen en zuinig leven is voor hen vanzelfsprekend.",
-   "feedback": "De brief zelf zegt alleen dát ze sparen belangrijk vindt. De informatie over de bron legt uit waaróm: zij maakte oorlog en schaarste mee.",
-   "img": "families/l5-brief.jpg",
-   "bijschrift": "Bron 8 – Lezersbrief in een tijdschrift (1957)",
+   "question": "Waarom kwam \"de hele straat\" kijken toen het gezin een tv kreeg?",
+   "passage": "Noor: Kochten mensen toen veel spullen? Oma Ria: Steeds meer. In de jaren vijftig ging het economisch beter met Nederland. De lonen stegen en mensen kregen meer te besteden. Dat noemen we welvaart. In veel huizen kwam een wasmachine, een stofzuiger en later een televisie. Wij kregen in 1958 onze eerste tv. De hele straat kwam kijken! Langzaam werd Nederland een land waarin mensen steeds meer spullen kochten, ook voor hun plezier.",
+   "feedback": "Een televisie was nieuw en nog zeldzaam. Daarom wilde iedereen het zien.",
    "options": [
-    "Omdat haar dochter te weinig verdient",
-    "Omdat zij opgroeide in een tijd van oorlog en schaarste en weet hoe het is om weinig te hebben",
-    "Omdat lippenstift in die tijd verboden was",
-    "Omdat de redactie dat had gezegd"
+    "Omdat er een feest was",
+    "Omdat bijna niemand toen nog een tv had en het heel bijzonder was",
+    "Omdat de tv kapot was",
+    "Omdat de buren de tv hadden betaald"
    ],
    "correct": 1,
    "points": 1
   },
   {
-   "type": "drag",
+   "type": "mc",
    "qtype": "inferring",
-   "label": "💡 Afleidend – Sorteren",
+   "label": "Afleidend",
    "labelClass": "label-inferring",
-   "question": "Wie denkt zo: jongeren of ouders in de jaren 50? Sleep het naar de goede kant.",
-   "passage": "In het archief over de jaren 50 vind je stemmen van jongeren en van ouders. Jongeren willen dansen op rock-’n-roll, met hun brommer zelf op pad, doorleren voor een beter beroep en hun eigen loon uitgeven. Ouders zijn opgegroeid met rust, orde en zuinigheid. Zij vinden dat je een vak op de werkvloer leert, dat geld bedoeld is om te sparen en dat jongeren zich netjes moeten kleden.",
-   "feedback": "Jongeren: dansen, brommer, eigen loon uitgeven. Ouders: vak op de werkvloer, sparen, rust en orde.",
-   "categories": [
-    "Jongeren",
-    "Ouders"
+   "question": "Wat zegt \"met gefronste wenkbrauwen\" over de ouders van oma Ria?",
+   "passage": "Noor: Waren uw ouders vaak boos? Oma Ria: Boos niet, wel bezorgd. Ze waren opgegroeid met gehoorzaamheid: je deed wat je ouders, de meester of de dominee zeiden. Ineens wilden jongeren zelf kiezen: welke muziek ze luisterden, wat ze droegen en wat ze met hun geld deden. In de krant stonden stukken over \"de jeugd van tegenwoordig\". Mijn ouders lazen die artikelen met gefronste wenkbrauwen. Ze vonden dat alles veel te snel veranderde.",
+   "feedback": "Als je je wenkbrauwen fronst, kijk je bezorgd of afkeurend. Zo lazen ze over \"de jeugd van tegenwoordig\".",
+   "options": [
+    "Ze lachten om de artikelen",
+    "Ze lazen de artikelen met zorg en afkeuring",
+    "Ze konden de kleine letters niet lezen",
+    "Ze waren blij met de jeugd van tegenwoordig"
    ],
-   "items": [
-    {
-     "id": "i0",
-     "text": "Dansen op rock-’n-roll",
-     "correct": "Jongeren"
-    },
-    {
-     "id": "i1",
-     "text": "Met de brommer zelf op pad",
-     "correct": "Jongeren"
-    },
-    {
-     "id": "i2",
-     "text": "Je eigen loon uitgeven",
-     "correct": "Jongeren"
-    },
-    {
-     "id": "i3",
-     "text": "Een vak leer je op de werkvloer",
-     "correct": "Ouders"
-    },
-    {
-     "id": "i4",
-     "text": "Geld is om te sparen",
-     "correct": "Ouders"
-    },
-    {
-     "id": "i5",
-     "text": "Rust, orde en gehoorzaamheid",
-     "correct": "Ouders"
-    }
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Waarom vertelt oma Ria aan het eind dat ze de muziek van haar eigen kinderen ook vreselijk vond?",
+   "passage": "Noor: Wat vindt u nu van die tijd? Oma Ria: Het was een spannende tijd. Wij waren de eerste generatie jongeren die echt een eigen jongerencultuur had, met eigen muziek, kleding en plekken om af te spreken. Mijn ouders vonden dat lastig, en dat snap ik nu beter. Zij hadden de oorlog meegemaakt en wilden vooral rust en zekerheid. Wij wilden vooruit. Grappig genoeg vond ik later de muziek van mijn eigen kinderen ook vreselijk!",
+   "feedback": "Eerst vonden haar ouders haar muziek vreselijk, later vond zij dat van haar kinderen. Zo laat ze met een grapje zien dat dat steeds terugkomt.",
+   "options": [
+    "Om te laten zien dat ze nooit van muziek heeft gehouden",
+    "Om te laten zien dat elke generatie ouders moeite heeft met wat nieuw is voor jongeren",
+    "Omdat haar kinderen rock-’n-roll luisterden",
+    "Omdat ze wil dat Noor geen muziek luistert"
    ],
-   "points": 2
+   "correct": 1,
+   "points": 1
   },
   {
    "type": "mc",
    "qtype": "evaluating",
-   "label": "💬 Evaluerend",
+   "label": "Evaluerend",
    "labelClass": "label-evaluating",
-   "question": "Wat kun je wél en níet met een gereconstrueerde bron?",
-   "passage": "Onder elke bron in dit archief staat: \"gereconstrueerde bron, gebaseerd op het tijdsbeeld\". Dat betekent dat de bron opnieuw is gemaakt voor dit lesboek. Hij lijkt op echte bronnen uit de jaren 50, maar het is geen echt voorwerp uit die tijd.",
-   "feedback": "Hij is \"gebaseerd op het tijdsbeeld\": goed om de tijd te begrijpen, maar het is geen echt voorwerp van iemand uit de jaren 50.",
+   "question": "Noor schrijft dat de generaties \"regelmatig botsten\". Welke reden geeft ze daarvoor?",
+   "passage": "Uit het werkstuk van Noor: In de jaren vijftig ontstond in Nederland voor het eerst een echte jongerencultuur. Jongeren luisterden naar rock-’n-roll, droegen eigen kleding en reden op brommers. Door de groeiende welvaart hadden ze vaker eigen geld. Ook gingen meer jongeren na de lagere school verder leren. Hun ouders, die de oorlog hadden meegemaakt, vonden zuinigheid, rust en gehoorzaamheid belangrijk. Daardoor botsten de generaties regelmatig.",
+   "feedback": "De ouders hadden de oorlog meegemaakt en vonden zuinigheid en rust belangrijk. Jongeren groeiden op in welvaart en wilden vrijheid. Daar zat het verschil.",
    "options": [
-    "Je kunt er niets van leren, want hij is nep",
-    "Je leert hoe het er toen ongeveer uitzag, maar je kunt niet zeggen dat precies dit voorwerp echt bestaan heeft",
-    "Hij is net zo echt als een voorwerp uit een museum",
-    "Je kunt er precies uit halen wat één bepaald gezin dacht"
+    "Ouders en jongeren woonden te dicht op elkaar",
+    "Ouders hadden door de oorlog andere waarden dan jongeren, die in een tijd van groei opgroeiden",
+    "Jongeren wilden allemaal nozem worden",
+    "Ouders luisterden ook naar rock-’n-roll"
    ],
    "correct": 1,
    "points": 1
@@ -777,7 +735,7 @@ const GROEP = (function () {
 })();
 const questions = VRAGEN[GROEP];
 const SLEUTEL = 'bl_families-les5_g' + GROEP;
-document.getElementById('bl-eyebrow').textContent = 'Begrijpend lezen · Groep ' + GROEP + ' · Les 5';
+document.getElementById('bl-eyebrow').textContent = 'Begrijpend lezen · Groep ' + GROEP;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // STATE

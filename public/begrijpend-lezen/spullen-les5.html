@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Begrijpend Lezen – Mobiel binnenstebuiten</title>
+<title>Begrijpend lezen – Grondstoffen in je telefoon</title>
 <link href="/fonts/fonts.css" rel="stylesheet">
 <style>
   :root {
@@ -267,6 +267,11 @@
     .drag-container { flex-direction:column; }
   }
   @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  .bl-fig { margin:0 0 14px; }
+  .bl-fig img { display:block; max-width:100%; max-height:300px; border-radius:12px; margin:0 auto; box-shadow:0 8px 24px -10px rgba(0,0,0,.6); }
+  .bl-fig figcaption { font-size:.85rem; color:var(--ink-soft); text-align:center; margin-top:6px; font-style:italic; }
+  .bl-cover { display:block; width:min(360px,100%); aspect-ratio:4/3; object-fit:cover; margin:0 auto 14px; border-radius:16px; box-shadow:0 10px 28px -12px rgba(0,0,0,.7); }
+  @media(min-width:1000px){ .q-breed > .bl-fig { grid-column:1; } }
 </style>
 <style>.order-item,.drag-item{touch-action:none}.order-item.dragging,.drag-item.dragging{opacity:.6}</style>
 <script src="/kenniskist-login.js"></script>
@@ -274,9 +279,9 @@
 <body>
 
 <header>
-  <p class="eyebrow">Begrijpend lezen · Groep 7 · Les 5</p>
-  <h1>Mobiel binnenstebuiten</h1>
-  <p>Thema: Duurzaam design</p>
+  <p class="eyebrow" id="bl-eyebrow">Begrijpend lezen</p>
+  <h1>Grondstoffen in je telefoon</h1>
+  <p>Thema: Van grondstof tot product</p>
 </header>
 <div id="progress-bar-wrap"><div id="progress-bar"></div></div>
 <div id="score-badge">⭐ <span id="score-num">0</span> pt</div>
@@ -284,13 +289,13 @@
 <main>
 
 <div id="intro-screen" class="screen active">
-  <div class="compass">📱</div>
-  <h2>Wat zit er in je telefoon?</h2>
-  <p>Je leest teksten over de grondstoffen in een telefoon en waar ze vandaan komen, en beantwoordt tien vragen. Bij <strong>letterlijke vragen</strong> markeer je het antwoord <em>in de tekst zelf</em>. Klik woorden aan om ze te selecteren.</p>
+  
+  <h2>Klaar om te lezen?</h2>
+  <p>In deze tekst vertelt een telefoon zelf over zijn reis: van de grondstoffen in de mijn tot de la waarin hij nu ligt. Je beantwoordt tien vragen. Bij <strong>letterlijke vragen</strong> markeer je het antwoord <em>in de tekst zelf</em>. Klik woorden aan om ze te selecteren.</p>
   <div class="legend">
-    <span style="background:#d0e8ff;color:#0a3a6e;">🔍 Letterlijk – markeer in de tekst</span>
-    <span style="background:#fde8c0;color:#7a3d00;">💡 Afleidend</span>
-    <span style="background:#dff0e2;color:#1a5c2a;">💬 Evaluerend</span>
+    <span style="background:#d0e8ff;color:#0a3a6e;">Letterlijk – markeer in de tekst</span>
+    <span style="background:#fde8c0;color:#7a3d00;">Afleidend</span>
+    <span style="background:#dff0e2;color:#1a5c2a;">Evaluerend</span>
   </div>
   <button class="btn btn-primary" onclick="startQuiz()">Begin de oefening →</button>
 </div>
@@ -303,7 +308,7 @@
 
 <div id="finish-screen" class="screen">
   <div class="medal" id="finish-medal">🏅</div>
-  <h2>Goed gedaan, techniekexpert!</h2>
+  <h2>Goed gelezen, grondstoffenspeurder!</h2>
   <div class="score-big" id="finish-score">0/0</div>
   <p id="finish-msg"></p>
   <div id="finish-overview"></div>
@@ -327,144 +332,452 @@
 // correctSpan: [startWordIndex, endWordIndex] (inclusive) = de juiste selectie.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const questions = [
-
+const VRAGEN = {
+ "7": [
   {
-    type: 'mark',
-    qtype: 'literal',
-    label: '🔍 Letterlijk',
-    labelClass: 'label-literal',
-    question: "Markeer in de tekst waarvan de buitenkant van een telefoon gemaakt wordt.",
-    passage: "Een telefoon lijkt één ding, maar bestaat uit tientallen onderdelen met elk hun eigen grondstof. In de behuizing, de buitenkant, zit aluminium. Aluminium wordt gemaakt van het gesteente bauxiet. In het glas van je touchscreen zit tin, in de bedrading zit koper en in de printplaat en de chip zit silicium. De camera bevat een klein beetje goud, de trilmotor bevat staal en in de luidspreker en de microfoon zit nikkel. De batterij ten slotte bevat kobalt.",
-    correctSpan: { start: 15, end: 21 },
-    coreWords: [17, 21],
-    feedback: "Het antwoord staat in de zin: \"In de behuizing, de buitenkant, zit aluminium.\" Daarna volgt waar aluminium zelf van gemaakt wordt: bauxiet.",
-    points: 2
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst wat een grondstof is.",
+   "passage": "Hallo, ik ben een telefoon. Je denkt misschien dat ik één ding ben, maar ik besta uit tientallen onderdelen. En in die onderdelen zitten meer dan dertig verschillende grondstoffen. Een grondstof is een stof uit de natuur waarvan je iets anders maakt, zoals hout, zand of metaal. Sommige van mijn grondstoffen komen van de andere kant van de wereld. Laat me je vertellen waar ik vandaan kom.",
+   "feedback": "Het staat in de zin: \"Een grondstof is een stof uit de natuur waarvan je iets anders maakt, zoals hout, zand of metaal.\"",
+   "correctSpan": {
+    "start": 29,
+    "end": 46
+   },
+   "coreWords": [
+    36,
+    41
+   ],
+   "points": 2
   },
-
   {
-    type: 'mark',
-    qtype: 'literal',
-    label: '🔍 Letterlijk',
-    labelClass: 'label-literal',
-    question: "Markeer in de tekst hoe silicium gewonnen wordt.",
-    passage: "Niet elke grondstof komt uit een mijn. Silicium is een halfmetaal dat met een chemisch proces uit zand wordt gehaald. Goud, nikkel en tin zitten juist in gesteente en worden door mijnbouw uit de aarde gehaald. Kobalt komt meestal uit ondergrondse mijnen. Voor bauxiet en ijzererts wordt de bovenste laag van grote stukken land afgegraven. Elke manier van winnen heeft gevolgen voor de natuur en voor de mensen die er werken.",
-    correctSpan: { start: 12, end: 19 },
-    coreWords: [14, 17, 19],
-    feedback: "Het antwoord staat in de zin: \"Silicium is een halfmetaal dat met een chemisch proces uit zand wordt gehaald.\" De andere zinnen gaan over mijnbouw en afgraven.",
-    points: 2
+   "type": "drag",
+   "qtype": "inferring",
+   "label": "Afleidend – Sorteren",
+   "labelClass": "label-inferring",
+   "question": "Welke grondstof zit in welk onderdeel? Sleep elke grondstof naar het goede onderdeel.",
+   "passage": "Mijn buitenkant, de behuizing, is van aluminium. Aluminium is licht en sterk. Het wordt gemaakt van bauxiet, een roodbruin gesteente. Mijn scherm is van speciaal glas met een heel dun laagje erop, zodat je het met je vinger kunt bedienen. In mijn draadjes zit koper, want koper geleidt stroom heel goed. In mijn chip zit silicium, gemaakt van zand. En in mijn batterij zitten lithium en kobalt.",
+   "feedback": "Behuizing: aluminium. Draadjes: koper. Chip: silicium. Batterij: lithium en kobalt.",
+   "categories": [
+    "Behuizing",
+    "Draadjes",
+    "Chip",
+    "Batterij"
+   ],
+   "items": [
+    {
+     "id": "i0",
+     "text": "Aluminium",
+     "correct": "Behuizing"
+    },
+    {
+     "id": "i1",
+     "text": "Koper",
+     "correct": "Draadjes"
+    },
+    {
+     "id": "i2",
+     "text": "Silicium",
+     "correct": "Chip"
+    },
+    {
+     "id": "i3",
+     "text": "Kobalt",
+     "correct": "Batterij"
+    },
+    {
+     "id": "i4",
+     "text": "Lithium",
+     "correct": "Batterij"
+    }
+   ],
+   "points": 2
   },
-
   {
-    type: 'mark',
-    qtype: 'literal',
-    label: '🔍 Letterlijk',
-    labelClass: 'label-literal',
-    question: "Markeer in de tekst wat er met het land gebeurt om bauxiet te winnen.",
-    passage: "Bauxiet is een gesteente waar aluminium van gemaakt wordt. Om bauxiet te krijgen, wordt de bovenste laag van grote stukken land afgegraven. Bossen verdwijnen daardoor en dieren verliezen hun leefgebied. Ook bij ijzererts gaat het zo. Guinee, Australië en Brazilië zijn de grootste producenten van bauxiet. Na het graven wordt het gesteente met schepen naar fabrieken over de hele wereld gebracht.",
-    correctSpan: { start: 13, end: 21 },
-    coreWords: [15, 16, 21],
-    feedback: "Het antwoord staat in de zin: \"Om bauxiet te krijgen, wordt de bovenste laag van grote stukken land afgegraven.\" Dat bossen verdwijnen, is het gevolg daarvan.",
-    points: 2
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst wat dagbouw is.",
+   "passage": "Het bauxiet voor mijn behuizing kwam uit Guinee, in West-Afrika. Bauxiet ligt vlak onder de grond. Om het eruit te halen, wordt eerst het bos gekapt en de bovenste laag aarde weggegraven. Dat heet dagbouw. Grote graafmachines scheppen het gesteente in vrachtwagens. Zo ontstaat een enorme kale vlakte. Dieren verliezen hun leefgebied en het stof waait over de dorpen in de buurt.",
+   "feedback": "Het staat in de zin voor het woord dagbouw: \"Om het eruit te halen, wordt eerst het bos gekapt en de bovenste laag aarde weggegraven.\"",
+   "correctSpan": {
+    "start": 16,
+    "end": 31
+   },
+   "coreWords": [
+    24,
+    25,
+    31
+   ],
+   "points": 2
   },
-
   {
-    type: 'mc',
-    qtype: "inferring",
-    label: "💡 Afleidend",
-    labelClass: "label-inferring",
-    question: "Waarom noemt de tekst een telefoon een \"wereldproduct\"?",
-    passage: "Voor één telefoon zijn grondstoffen uit heel veel landen nodig. Kobalt komt vooral uit de Democratische Republiek Congo, tin uit Indonesië en China, nikkel uit Indonesië en de Filipijnen, koper uit Chili en Peru, bauxiet uit Guinee en Australië. Die grondstoffen worden verscheept naar fabrieken in weer andere landen, waar de onderdelen gemaakt en in elkaar gezet worden. Pas daarna ligt het toestel in de winkel bij jou in de buurt.",
-    options: ["Omdat je er over de hele wereld mee kunt bellen", "Omdat de grondstoffen en onderdelen uit veel verschillende landen komen", "Omdat telefoons in elk land dezelfde prijs hebben", "Omdat de fabrieken allemaal in één land staan"],
-    correct: 1,
-    feedback: "De tekst somt landen op waar de grondstoffen vandaan komen en vertelt dat de onderdelen in weer andere landen gemaakt worden. Daarom is een telefoon een wereldproduct.",
-    points: 1
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst waarom het werk in sommige kobaltmijnen gevaarlijk is.",
+   "passage": "Het kobalt in mijn batterij kwam waarschijnlijk uit Congo, een land in Midden-Afrika. Daar wordt het grootste deel van al het kobalt op de wereld gewonnen. Een deel komt uit grote mijnen met machines. Maar een deel wordt met de hand gegraven, in smalle, onveilige tunnels. Daar werken volwassenen en soms ook kinderen, zonder goede bescherming. Bedrijven die telefoons maken, worden steeds vaker gevraagd te controleren waar hun kobalt vandaan komt.",
+   "feedback": "Het staat in de zin: \"Maar een deel wordt met de hand gegraven, in smalle, onveilige tunnels.\"",
+   "correctSpan": {
+    "start": 34,
+    "end": 45
+   },
+   "coreWords": [
+    40,
+    44,
+    45
+   ],
+   "points": 2
   },
-
   {
-    type: 'mark',
-    qtype: 'literal',
-    label: '🔍 Letterlijk',
-    labelClass: 'label-literal',
-    question: "Markeer in de tekst waar het kobalt in je batterij meestal vandaan komt.",
-    passage: "In de batterij van bijna elke telefoon zit kobalt. Verreweg het meeste kobalt komt uit de Democratische Republiek Congo. Het wordt daar uit ondergrondse mijnen gehaald. In sommige van die mijnen werken mensen onder gevaarlijke omstandigheden en met eenvoudig gereedschap. Daarom letten steeds meer bedrijven erop waar hun kobalt vandaan komt, en zoeken onderzoekers naar batterijen die minder of geen kobalt nodig hebben.",
-    correctSpan: { start: 9, end: 18 },
-    coreWords: [12, 16, 18],
-    feedback: "Het antwoord staat in de zin: \"Verreweg het meeste kobalt komt uit de Democratische Republiek Congo.\"",
-    points: 2
+   "type": "order",
+   "qtype": "inferring",
+   "label": "Afleidend – Volgorde",
+   "labelClass": "label-inferring",
+   "question": "Zet de stappen van de reis van de telefoon in de goede volgorde.",
+   "passage": "Mijn grondstoffen reisden eerst naar fabrieken in verschillende landen. Daar werden ze gezuiverd en tot onderdelen gemaakt. In Japan werd mijn camera gemaakt, in Zuid-Korea mijn scherm en in Taiwan mijn chip. Al die onderdelen gingen daarna naar een grote fabriek in China. Daar werd ik in elkaar gezet: dat heet assembleren. Toen ik af was, ging ik in een doosje, met duizenden anderen in een container, per schip naar Europa.",
+   "feedback": "Eerst de grondstoffen winnen, dan onderdelen maken, dan assembleren en tot slot per schip naar Europa.",
+   "items": [
+    {
+     "id": "o0",
+     "text": "De grondstoffen worden uit de grond gehaald"
+    },
+    {
+     "id": "o1",
+     "text": "De grondstoffen worden tot onderdelen gemaakt"
+    },
+    {
+     "id": "o2",
+     "text": "De telefoon wordt in elkaar gezet"
+    },
+    {
+     "id": "o3",
+     "text": "De telefoon gaat per schip naar Europa"
+    }
+   ],
+   "correctOrder": [
+    "o0",
+    "o1",
+    "o2",
+    "o3"
+   ],
+   "points": 2
   },
-
   {
-    type: 'mc',
-    qtype: "inferring",
-    label: "💡 Afleidend",
-    labelClass: "label-inferring",
-    question: "Waarom zoeken onderzoekers naar batterijen zonder kobalt?",
-    passage: "Kobalt is lastig te winnen. Het komt uit diepe mijnen en in sommige mijnen werken mensen onder gevaarlijke omstandigheden. Bovendien komt het grootste deel uit één land, dus als de handel daar stilvalt, zit de hele wereld zonder. Daarom werken onderzoekers aan batterijen die minder of geen kobalt nodig hebben.",
-    options: ["Omdat kobalt niet genoeg stroom kan opslaan", "Omdat het winnen gevaarlijk is en bijna alles uit één land komt", "Omdat kobalt in Nederland verboden is", "Omdat batterijen zonder kobalt lichter zijn"],
-    correct: 1,
-    feedback: "De tekst noemt twee redenen: de gevaarlijke omstandigheden in sommige mijnen én de afhankelijkheid van één land.",
-    points: 1
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst wat CO₂ volgens de tekst doet.",
+   "passage": "Weet je hoeveel kilometer ik heb afgelegd voordat ik in de winkel lag? Als je alle reizen van mijn grondstoffen en onderdelen bij elkaar optelt, zijn het tienduizenden kilometers. Dat is meer dan één keer rond de aarde. Al dat vervoer kost brandstof en zorgt voor uitstoot van CO₂, een gas dat bijdraagt aan de opwarming van de aarde. Bij het maken van een telefoon komt meer CO₂ vrij dan bij een jaar lang gebruiken ervan.",
+   "feedback": "Het staat na het woord CO₂: \"een gas dat bijdraagt aan de opwarming van de aarde.\"",
+   "correctSpan": {
+    "start": 49,
+    "end": 58
+   },
+   "coreWords": [
+    50,
+    55
+   ],
+   "points": 2
   },
-
   {
-    type: 'mark',
-    qtype: 'literal',
-    label: '🔍 Letterlijk',
-    labelClass: 'label-literal',
-    question: "Markeer in de tekst wat er gebeurt als je je oude telefoon inlevert.",
-    passage: "De meeste mensen kopen elke paar jaar een nieuwe telefoon. Oude toestellen belanden vaak in een la, terwijl er kostbare grondstoffen in zitten. Lever je je telefoon in, dan worden de metalen eruit gehaald en opnieuw gebruikt in nieuwe apparaten. Dat heet urban mining: mijnbouw in de stad in plaats van in de natuur. Uit een ton oude telefoons haal je meer goud dan uit een ton goudgesteente uit een mijn.",
-    correctSpan: { start: 28, end: 39 },
-    coreWords: [31, 35, 39],
-    feedback: "Het antwoord staat in de zin: \"Lever je je telefoon in, dan worden de metalen eruit gehaald en opnieuw gebruikt in nieuwe apparaten.\"",
-    points: 2
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst welke kostbare metalen er nog in een oude telefoon zitten.",
+   "passage": "Twee jaar lang was ik de telefoon van Lisa. Ik maakte foto’s, speelde muziek en stuurde berichtjes. Toen kreeg Lisa een nieuwe telefoon. Ik werd niet weggegooid, maar ik belandde in een la, samen met oude opladers en kabels. In Nederland liggen miljoenen oude telefoons ongebruikt in laden. Zonde, want in ons zitten nog kostbare metalen, zoals goud, zilver, koper en kobalt.",
+   "feedback": "Het staat in de laatste zin: \"zoals goud, zilver, koper en kobalt.\"",
+   "correctSpan": {
+    "start": 56,
+    "end": 61
+   },
+   "coreWords": [
+    57,
+    58,
+    59
+   ],
+   "points": 2
   },
-
   {
-    type: 'drag',
-    qtype: 'inferring',
-    label: '💡 Afleidend – Sorteren',
-    labelClass: 'label-inferring',
-    question: "In welk onderdeel zit welke grondstof? Sleep de grondstoffen naar het juiste onderdeel.",
-    passage: "In de behuizing zit aluminium, dat van bauxiet gemaakt wordt. In het glas van het touchscreen zit tin. In de bedrading zit koper. In de batterij zit kobalt. In de printplaat en de chip zit silicium.",
-    categories: ["Behuizing", "Touchscreen", "Bedrading", "Batterij"],
-    items: [
-      { id: "i0", text: "Aluminium", correct: "Behuizing" },
-      { id: "i1", text: "Tin", correct: "Touchscreen" },
-      { id: "i2", text: "Koper", correct: "Bedrading" },
-      { id: "i3", text: "Kobalt", correct: "Batterij" }
-    ],
-    feedback: "Aluminium zit in de buitenkant, tin in het glas van het scherm, koper in de draadjes en kobalt in de batterij.",
-    points: 2
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst wat urban mining is.",
+   "passage": "Als je een oude telefoon inlevert, wordt hij uit elkaar gehaald. De metalen worden er in speciale fabrieken uit gehaald en gezuiverd. Daarna kunnen ze opnieuw worden gebruikt in nieuwe apparaten. Dit heet ook wel urban mining: mijnbouw in de stad. Het bijzondere is dat er in een ton oude telefoons veel meer goud zit dan in een ton gesteente uit een goudmijn. Je hoeft er dus geen bos voor te kappen of tunnels voor te graven.",
+   "feedback": "De uitleg staat na de dubbele punt: \"Dit heet ook wel urban mining: mijnbouw in de stad.\"",
+   "correctSpan": {
+    "start": 37,
+    "end": 40
+   },
+   "coreWords": [
+    37,
+    40
+   ],
+   "points": 2
   },
-
   {
-    type: 'mc',
-    qtype: "evaluating",
-    label: "💬 Evaluerend",
-    labelClass: "label-evaluating",
-    question: "Iemand zegt: \"Recyclen van telefoons heeft geen zin, want er zit maar een klein beetje goud in.\" Wat is daarop het beste antwoord?",
-    passage: "In één telefoon zit maar een paar milligram goud. Toch loont recyclen: uit een ton oude telefoons komt meer goud dan uit een ton gesteente uit een goudmijn. Bovendien gaat het niet alleen om goud, maar ook om koper, kobalt, nikkel en tin. Elke kilo die je hergebruikt, hoeft niet uit de grond gehaald te worden.",
-    options: ["Klopt, want een paar milligram is te weinig om iets mee te doen", "Klopt niet, want samen leveren veel telefoons meer goud op dan gesteente uit een mijn, én er zitten nog andere metalen in", "Klopt niet, want er zit juist heel veel goud in één telefoon", "Klopt, want goud is het enige metaal dat je kunt recyclen"],
-    correct: 1,
-    feedback: "De tekst geeft twee tegenargumenten: een ton oude telefoons levert meer goud op dan een ton gesteente, en er zitten ook koper, kobalt, nikkel en tin in.",
-    points: 1
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst wat het voordeel is van een telefoon die je zelf kunt repareren.",
+   "passage": "Er zijn ook nieuwe ideeën. Er bestaan telefoons die je zelf makkelijk kunt repareren: de batterij, het scherm en de camera kun je los vervangen. Zo hoef je niet meteen een hele nieuwe telefoon te kopen als er iets kapotgaat. Ook zoeken onderzoekers naar batterijen zonder kobalt. En de Europese Unie heeft regels gemaakt zodat nieuwe telefoons dezelfde soort oplader gebruiken. Dat scheelt een hoop kabels en afval.",
+   "feedback": "Het staat in de zin: \"Zo hoef je niet meteen een hele nieuwe telefoon te kopen als er iets kapotgaat.\"",
+   "correctSpan": {
+    "start": 25,
+    "end": 39
+   },
+   "coreWords": [
+    32,
+    35,
+    39
+   ],
+   "points": 2
   },
-
   {
-    type: 'mc',
-    qtype: "evaluating",
-    label: "💬 Evaluerend",
-    labelClass: "label-evaluating",
-    question: "Waarom is het handig om te weten waar de grondstoffen van je telefoon vandaan komen?",
-    passage: "Als je weet dat het kobalt in je batterij uit diepe mijnen komt en dat er bos verdwijnt voor bauxiet, kijk je anders naar je toestel. Je kunt er dan voor kiezen om je telefoon langer te gebruiken, hem te laten repareren of hem in te leveren voor recycling. Sommige bedrijven laten zien waar hun grondstoffen vandaan komen; als koper kun je daar rekening mee houden.",
-    options: ["Dan weet je precies hoeveel je telefoon waard is bij verkoop", "Dan kun je bewuster kiezen: langer gebruiken, laten repareren, inleveren of letten op het merk", "Dan hoef je nooit meer een telefoon te kopen", "Dan kun je zelf een telefoon maken van zand en gesteente"],
-    correct: 1,
-    feedback: "De tekst noemt precies die keuzes: langer gebruiken, laten repareren, inleveren voor recycling en letten op bedrijven die laten zien waar hun grondstoffen vandaan komen.",
-    points: 1
+   "type": "order",
+   "qtype": "inferring",
+   "label": "Afleidend – Volgorde",
+   "labelClass": "label-inferring",
+   "question": "Welke volgorde van adviezen geeft de telefoon? Zet ze op volgorde zoals ze in de tekst staan.",
+   "passage": "Mijn advies aan jou. Gebruik je telefoon zo lang mogelijk. Doe er een hoesje om en bescherm het scherm, dan gaat hij minder snel kapot. Gaat er toch iets mis, laat hem dan repareren. En heb je een oude telefoon die je niet meer gebruikt? Laat hem niet in een la liggen, maar lever hem in bij een winkel of een inzamelpunt. Dan kunnen mijn metalen aan een nieuw leven beginnen. Dat zou ik heel fijn vinden!",
+   "feedback": "Eerst lang gebruiken, dan beschermen, dan repareren, en tot slot inleveren.",
+   "items": [
+    {
+     "id": "o0",
+     "text": "Gebruik je telefoon zo lang mogelijk"
+    },
+    {
+     "id": "o1",
+     "text": "Bescherm hem met een hoesje"
+    },
+    {
+     "id": "o2",
+     "text": "Laat hem repareren als er iets misgaat"
+    },
+    {
+     "id": "o3",
+     "text": "Lever een oude telefoon in"
+    }
+   ],
+   "correctOrder": [
+    "o0",
+    "o1",
+    "o2",
+    "o3"
+   ],
+   "points": 2
   }
-
-];
+ ],
+ "8": [
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Waarom laat de schrijver de telefoon zelf aan het woord?",
+   "passage": "Hallo, ik ben een telefoon. Je denkt misschien dat ik één ding ben, maar ik besta uit tientallen onderdelen. En in die onderdelen zitten meer dan dertig verschillende grondstoffen. Een grondstof is een stof uit de natuur waarvan je iets anders maakt, zoals hout, zand of metaal. Sommige van mijn grondstoffen komen van de andere kant van de wereld. Laat me je vertellen waar ik vandaan kom.",
+   "feedback": "Een voorwerp dat zelf vertelt, maakt een informatieve tekst levendig. Je reist als het ware met de telefoon mee.",
+   "options": [
+    "Omdat telefoons echt kunnen praten",
+    "Om de tekst persoonlijker en spannender te maken, zodat je de reis beter volgt",
+    "Omdat de schrijver geen mensen kende",
+    "Omdat het een gebruiksaanwijzing is"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst waarom er koper in de draadjes zit.",
+   "passage": "Mijn buitenkant, de behuizing, is van aluminium. Aluminium is licht en sterk. Het wordt gemaakt van bauxiet, een roodbruin gesteente. Mijn scherm is van speciaal glas met een heel dun laagje erop, zodat je het met je vinger kunt bedienen. In mijn draadjes zit koper, want koper geleidt stroom heel goed. In mijn chip zit silicium, gemaakt van zand. En in mijn batterij zitten lithium en kobalt.",
+   "feedback": "Het staat in de zin: \"In mijn draadjes zit koper, want koper geleidt stroom heel goed.\"",
+   "correctSpan": {
+    "start": 45,
+    "end": 50
+   },
+   "coreWords": [
+    47,
+    48
+   ],
+   "points": 2
+  },
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Welke gevolgen heeft dagbouw volgens de tekst voor de omgeving?",
+   "passage": "Het bauxiet voor mijn behuizing kwam uit Guinee, in West-Afrika. Bauxiet ligt vlak onder de grond. Om het eruit te halen, wordt eerst het bos gekapt en de bovenste laag aarde weggegraven. Dat heet dagbouw. Grote graafmachines scheppen het gesteente in vrachtwagens. Zo ontstaat een enorme kale vlakte. Dieren verliezen hun leefgebied en het stof waait over de dorpen in de buurt.",
+   "feedback": "De tekst noemt: een kale vlakte, dieren die hun leefgebied verliezen en stof dat over de dorpen waait.",
+   "options": [
+    "Er komt meer bos bij",
+    "Dieren verliezen hun leefgebied en dorpen krijgen last van stof",
+    "De dorpen krijgen gratis aluminium",
+    "Er ontstaat een nieuw meer om in te zwemmen"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Waarom staat er \"waarschijnlijk\" uit Congo?",
+   "passage": "Het kobalt in mijn batterij kwam waarschijnlijk uit Congo, een land in Midden-Afrika. Daar wordt het grootste deel van al het kobalt op de wereld gewonnen. Een deel komt uit grote mijnen met machines. Maar een deel wordt met de hand gegraven, in smalle, onveilige tunnels. Daar werken volwassenen en soms ook kinderen, zonder goede bescherming. Bedrijven die telefoons maken, worden steeds vaker gevraagd te controleren waar hun kobalt vandaan komt.",
+   "feedback": "Het grootste deel komt uit Congo, dus de kans is groot. Maar zeker weten doe je het niet: dat is precies waarom bedrijven moeten controleren waar het vandaan komt.",
+   "options": [
+    "Omdat de telefoon slecht kan onthouden",
+    "Omdat het meeste kobalt uit Congo komt, maar je niet zeker weet waar het kobalt in één telefoon vandaan komt",
+    "Omdat Congo geen kobalt heeft",
+    "Omdat kobalt in Nederland gemaakt wordt"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst wat assembleren betekent.",
+   "passage": "Mijn grondstoffen reisden eerst naar fabrieken in verschillende landen. Daar werden ze gezuiverd en tot onderdelen gemaakt. In Japan werd mijn camera gemaakt, in Zuid-Korea mijn scherm en in Taiwan mijn chip. Al die onderdelen gingen daarna naar een grote fabriek in China. Daar werd ik in elkaar gezet: dat heet assembleren. Toen ik af was, ging ik in een doosje, met duizenden anderen in een container, per schip naar Europa.",
+   "feedback": "Het staat in de zin: \"Daar werd ik in elkaar gezet: dat heet assembleren.\"",
+   "correctSpan": {
+    "start": 43,
+    "end": 51
+   },
+   "coreWords": [
+    47,
+    48,
+    51
+   ],
+   "points": 2
+  },
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Wat kun je afleiden uit de laatste zin?",
+   "passage": "Weet je hoeveel kilometer ik heb afgelegd voordat ik in de winkel lag? Als je alle reizen van mijn grondstoffen en onderdelen bij elkaar optelt, zijn het tienduizenden kilometers. Dat is meer dan één keer rond de aarde. Al dat vervoer kost brandstof en zorgt voor uitstoot van CO₂, een gas dat bijdraagt aan de opwarming van de aarde. Bij het maken van een telefoon komt meer CO₂ vrij dan bij een jaar lang gebruiken ervan.",
+   "feedback": "Het maken kost de meeste CO₂. Elke nieuwe telefoon brengt die uitstoot opnieuw met zich mee. Lang doen met één telefoon scheelt dus veel.",
+   "options": [
+    "Dat je je telefoon beter zo weinig mogelijk kunt opladen",
+    "Dat het beter is voor het milieu om een telefoon lang te gebruiken in plaats van vaak een nieuwe te kopen",
+    "Dat telefoons geen CO₂ uitstoten",
+    "Dat je telefoon in de winkel moet laten liggen"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "evaluating",
+   "label": "Evaluerend",
+   "labelClass": "label-evaluating",
+   "question": "Waarom vindt de telefoon het \"zonde\" dat hij in een la ligt?",
+   "passage": "Twee jaar lang was ik de telefoon van Lisa. Ik maakte foto’s, speelde muziek en stuurde berichtjes. Toen kreeg Lisa een nieuwe telefoon. Ik werd niet weggegooid, maar ik belandde in een la, samen met oude opladers en kabels. In Nederland liggen miljoenen oude telefoons ongebruikt in laden. Zonde, want in ons zitten nog kostbare metalen, zoals goud, zilver, koper en kobalt.",
+   "feedback": "In de la gebeurt er niets met de metalen. Als hij ingeleverd wordt, kunnen ze opnieuw gebruikt worden in nieuwe apparaten.",
+   "options": [
+    "Omdat hij liever in de prullenbak ligt",
+    "Omdat de kostbare metalen in hem niet opnieuw gebruikt worden, terwijl dat wel kan",
+    "Omdat de la te klein is",
+    "Omdat Lisa hem nog elke dag gebruikt"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Waarom noemen ze het recyclen van telefoons \"mijnbouw in de stad\"?",
+   "passage": "Als je een oude telefoon inlevert, wordt hij uit elkaar gehaald. De metalen worden er in speciale fabrieken uit gehaald en gezuiverd. Daarna kunnen ze opnieuw worden gebruikt in nieuwe apparaten. Dit heet ook wel urban mining: mijnbouw in de stad. Het bijzondere is dat er in een ton oude telefoons veel meer goud zit dan in een ton gesteente uit een goudmijn. Je hoeft er dus geen bos voor te kappen of tunnels voor te graven.",
+   "feedback": "Net als in een mijn haal je waardevolle metalen tevoorschijn. Alleen haal je ze uit oude apparaten, en die liggen in de stad.",
+   "options": [
+    "Omdat er mijnen onder de stad liggen",
+    "Omdat je in de stad, uit oude apparaten, waardevolle metalen haalt zoals in een mijn",
+    "Omdat mijnwerkers in de stad wonen",
+    "Omdat steden van metaal gemaakt zijn"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "drag",
+   "qtype": "inferring",
+   "label": "Afleidend – Sorteren",
+   "labelClass": "label-inferring",
+   "question": "Welk probleem lost elk idee op? Sleep elk idee naar het goede probleem.",
+   "passage": "Er zijn ook nieuwe ideeën. Er bestaan telefoons die je zelf makkelijk kunt repareren: de batterij, het scherm en de camera kun je los vervangen. Zo hoef je niet meteen een hele nieuwe telefoon te kopen als er iets kapotgaat. Ook zoeken onderzoekers naar batterijen zonder kobalt. En de Europese Unie heeft regels gemaakt zodat nieuwe telefoons dezelfde soort oplader gebruiken. Dat scheelt een hoop kabels en afval.",
+   "feedback": "Batterijen zonder kobalt zorgen dat er minder kobalt gewonnen hoeft te worden. Repareren en één soort oplader zorgen voor minder afval.",
+   "categories": [
+    "Minder kobalt nodig",
+    "Minder afval"
+   ],
+   "items": [
+    {
+     "id": "i0",
+     "text": "Batterijen zonder kobalt",
+     "correct": "Minder kobalt nodig"
+    },
+    {
+     "id": "i1",
+     "text": "Dezelfde oplader voor alle telefoons",
+     "correct": "Minder afval"
+    },
+    {
+     "id": "i2",
+     "text": "Een kapot scherm los vervangen",
+     "correct": "Minder afval"
+    },
+    {
+     "id": "i3",
+     "text": "Een telefoon langer gebruiken door reparatie",
+     "correct": "Minder afval"
+    }
+   ],
+   "points": 2
+  },
+  {
+   "type": "mc",
+   "qtype": "evaluating",
+   "label": "Evaluerend",
+   "labelClass": "label-evaluating",
+   "question": "Wat is het belangrijkste doel van deze hele tekst?",
+   "passage": "Mijn advies aan jou. Gebruik je telefoon zo lang mogelijk. Doe er een hoesje om en bescherm het scherm, dan gaat hij minder snel kapot. Gaat er toch iets mis, laat hem dan repareren. En heb je een oude telefoon die je niet meer gebruikt? Laat hem niet in een la liggen, maar lever hem in bij een winkel of een inzamelpunt. Dan kunnen mijn metalen aan een nieuw leven beginnen. Dat zou ik heel fijn vinden!",
+   "feedback": "De telefoon vertelt over grondstoffen, mijnen en reizen, en eindigt met advies om er zuinig mee om te gaan. Dat is het doel.",
+   "options": [
+    "Je overhalen om een nieuwe telefoon te kopen",
+    "Je laten nadenken over waar een telefoon vandaan komt en hoe je er zuinig mee omgaat",
+    "Uitleggen hoe je een telefoon in elkaar zet",
+    "Je leren hoe je een mijn graaft"
+   ],
+   "correct": 1,
+   "points": 1
+  }
+ ]
+};
+const GROEP = (function () {
+  try { const g = new URLSearchParams(location.search).get('groep'); if (g === '7' || g === '8') return g; } catch (e) {}
+  return '7';
+})();
+const questions = VRAGEN[GROEP];
+const SLEUTEL = 'bl_spullen-les5_g' + GROEP;
+document.getElementById('bl-eyebrow').textContent = 'Begrijpend lezen · Groep ' + GROEP;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // STATE
@@ -482,8 +795,8 @@ let markState = questions.map(() => new Set());
 // PERSISTENCE
 // ─────────────────────────────────────────────────────────────────────────────
 let paidSet = new Set();
-function loadPaid() { try { const s = localStorage.getItem('bl_spullen_les5_paid'); if (s) paidSet = new Set(JSON.parse(s)); } catch(e){} }
-function savePaid() { try { localStorage.setItem('bl_spullen_les5_paid', JSON.stringify([...paidSet])); } catch(e){} }
+function loadPaid() { try { const s = localStorage.getItem(SLEUTEL + '_paid'); if (s) paidSet = new Set(JSON.parse(s)); } catch(e){} }
+function savePaid() { try { localStorage.setItem(SLEUTEL + '_paid', JSON.stringify([...paidSet])); } catch(e){} }
 function loadProgress() {
   loadPaid();
   try {
@@ -492,7 +805,7 @@ function loadProgress() {
     // zodat die stand nooit meer in een les terechtkomt.
     localStorage.removeItem('bl_wereld_v2');
     localStorage.removeItem('bl_wereld_v2_paid');
-    const saved = localStorage.getItem('bl_spullen_les5');
+    const saved = localStorage.getItem(SLEUTEL);
     if (saved) {
       const d = JSON.parse(saved);
       // Alleen een stand die bij déze les hoort: evenveel vragen, anders weg.
@@ -502,7 +815,7 @@ function loadProgress() {
         answered = d.answered;
         score    = scores.reduce((a,b)=>a+b,0);
       } else {
-        localStorage.removeItem('bl_spullen_les5');
+        localStorage.removeItem(SLEUTEL);
       }
     }
   } catch(e){}
@@ -510,7 +823,7 @@ function loadProgress() {
 
 function saveProgress() {
   try {
-    localStorage.setItem('bl_spullen_les5', JSON.stringify({ scores, answered }));
+    localStorage.setItem(SLEUTEL, JSON.stringify({ scores, answered }));
   } catch(e){}
 }
 
@@ -607,10 +920,11 @@ function renderQuestion() {
   const area = document.getElementById('question-area');
   const nav  = document.getElementById('nav-row');
 
-  let html = `<div class="q-card${q.type === 'mc' && q.passage ? ' q-breed' : ''}">`;
+  let html = `<div class="q-card${(q.type === 'mc' || q.type === 'order') && q.passage ? ' q-breed' : ''}">`;
   html += `<span class="q-type-label ${q.labelClass}">${q.label}</span>`;
   html += `<h3>${q.question}</h3>`;
 
+  if (q.img) html += `<figure class="bl-fig"><img src="${q.img}" alt=""><figcaption>${q.bijschrift || ''}</figcaption></figure>`;
   if      (q.type === 'mark')  html += renderMark(q);
   else if (q.type === 'mc')    html += renderMC(q);
   else if (q.type === 'order') html += renderOrder(q);
@@ -801,7 +1115,8 @@ function answerMC(i) {
 // ─────────────────────────────────────────────────────────────────────────────
 function renderOrder(q) {
   const shuffled = [...q.items].sort(() => Math.random() - .5);
-  let html = '<div class="order-list" id="order-list">';
+  let html = q.passage ? `<div class="passage">${q.passage}</div>` : '';
+  html += '<div class="order-list" id="order-list">';
   shuffled.forEach(item => {
     html += `<div class="order-item" draggable="true" data-id="${item.id}">
       <span class="handle">⠿</span><span>${item.text}</span>
@@ -1012,7 +1327,7 @@ function showFinish() {
     `<div class="ov-title">${goed} van ${questions.length} vragen goed</div>` + rows;
   show('finish-screen');
   const opgaven = questions.map((q,i) => ({ vraag: q.question.replace(/<[^>]*>/g,''), puntenBehaald: scores[i], puntenMax: q.points }));
-  window.KennisKist?.slaResultaatOp?.('spullen-les5', score, total, { opgaven });
+  window.KennisKist?.slaResultaatOp?.('spullen-les5', score, total, { opgaven, groep: +GROEP });
   window.KennisKist?.toonInlogstatus?.(document.getElementById('kkStatus'));
 }
 
@@ -1021,7 +1336,7 @@ function restartQuiz() {
   scores   = new Array(questions.length).fill(0);
   answered = new Array(questions.length).fill(false);
   markState= questions.map(() => new Set());
-  localStorage.removeItem('bl_spullen_les5');
+  localStorage.removeItem(SLEUTEL);
   document.getElementById('score-num').textContent = 0;
   show('quiz-screen');
   renderQuestion();
@@ -1032,7 +1347,7 @@ function restartQuiz() {
 // eerste vraag die nog open staat.
 (function hervatNaVerversen() {
   try {
-    const d = JSON.parse(localStorage.getItem('bl_spullen_les5') || 'null');
+    const d = JSON.parse(localStorage.getItem(SLEUTEL) || 'null');
     if (d && Array.isArray(d.answered) && d.answered.length === questions.length
         && d.answered.some(Boolean)) startQuiz();
   } catch (e) {}

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Begrijpend Lezen – Coole constructies</title>
+<title>Begrijpend lezen – Sterke constructies</title>
 <link href="/fonts/fonts.css" rel="stylesheet">
 <style>
   :root {
@@ -267,6 +267,11 @@
     .drag-container { flex-direction:column; }
   }
   @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  .bl-fig { margin:0 0 14px; }
+  .bl-fig img { display:block; max-width:100%; max-height:300px; border-radius:12px; margin:0 auto; box-shadow:0 8px 24px -10px rgba(0,0,0,.6); }
+  .bl-fig figcaption { font-size:.85rem; color:var(--ink-soft); text-align:center; margin-top:6px; font-style:italic; }
+  .bl-cover { display:block; width:min(360px,100%); aspect-ratio:4/3; object-fit:cover; margin:0 auto 14px; border-radius:16px; box-shadow:0 10px 28px -12px rgba(0,0,0,.7); }
+  @media(min-width:1000px){ .q-breed > .bl-fig { grid-column:1; } }
 </style>
 <style>.order-item,.drag-item{touch-action:none}.order-item.dragging,.drag-item.dragging{opacity:.6}</style>
 <script src="/kenniskist-login.js"></script>
@@ -274,9 +279,9 @@
 <body>
 
 <header>
-  <p class="eyebrow">Begrijpend lezen · Groep 7 · Les 1</p>
-  <h1>Coole constructies</h1>
-  <p>Thema: Duurzaam design</p>
+  <p class="eyebrow" id="bl-eyebrow">Begrijpend lezen</p>
+  <h1>Sterke constructies</h1>
+  <p>Thema: Van grondstof tot product</p>
 </header>
 <div id="progress-bar-wrap"><div id="progress-bar"></div></div>
 <div id="score-badge">⭐ <span id="score-num">0</span> pt</div>
@@ -284,13 +289,13 @@
 <main>
 
 <div id="intro-screen" class="screen active">
-  <div class="compass">🏗️</div>
-  <h2>Klaar om te bouwen?</h2>
-  <p>Je leest teksten over constructies en krachten, en beantwoordt tien vragen. Bij <strong>letterlijke vragen</strong> markeer je het antwoord <em>in de tekst zelf</em>. Klik woorden aan om ze te selecteren.</p>
+  
+  <h2>Klaar om te lezen?</h2>
+  <p>Je leest uit een proefjesboek over bouwen. Je ontdekt waarom bruggen, daken en stoelen blijven staan. Je beantwoordt tien vragen. Bij <strong>letterlijke vragen</strong> markeer je het antwoord <em>in de tekst zelf</em>. Klik woorden aan om ze te selecteren.</p>
   <div class="legend">
-    <span style="background:#d0e8ff;color:#0a3a6e;">🔍 Letterlijk – markeer in de tekst</span>
-    <span style="background:#fde8c0;color:#7a3d00;">💡 Afleidend</span>
-    <span style="background:#dff0e2;color:#1a5c2a;">💬 Evaluerend</span>
+    <span style="background:#d0e8ff;color:#0a3a6e;">Letterlijk – markeer in de tekst</span>
+    <span style="background:#fde8c0;color:#7a3d00;">Afleidend</span>
+    <span style="background:#dff0e2;color:#1a5c2a;">Evaluerend</span>
   </div>
   <button class="btn btn-primary" onclick="startQuiz()">Begin de oefening →</button>
 </div>
@@ -303,7 +308,7 @@
 
 <div id="finish-screen" class="screen">
   <div class="medal" id="finish-medal">🏅</div>
-  <h2>Goed gedaan, bouwmeester!</h2>
+  <h2>Knap gelezen, ingenieur!</h2>
   <div class="score-big" id="finish-score">0/0</div>
   <p id="finish-msg"></p>
   <div id="finish-overview"></div>
@@ -327,145 +332,430 @@
 // correctSpan: [startWordIndex, endWordIndex] (inclusive) = de juiste selectie.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const questions = [
-
+const VRAGEN = {
+ "7": [
   {
-    type: 'mark',
-    qtype: 'literal',
-    label: '🔍 Letterlijk',
-    labelClass: 'label-literal',
-    question: "Markeer in de tekst wat een constructie precies is.",
-    passage: "Kijk eens om je heen. De stoel waar je op zit, de brug die je elke dag oversteekt en het dak boven je hoofd hebben iets gemeen. Een constructie is een bouwwerk van twee of meer delen die aan elkaar vastzitten. Bij een stoel zijn dat de poten, de zitting en de rugleuning. Bij een brug zijn dat de pilaren en de platen. Hoe die delen aan elkaar zitten, bepaalt of het bouwwerk blijft staan. Een goede constructie verdeelt het gewicht over alle delen, zodat er nergens te veel druk op één plek komt.",
-    correctSpan: { start: 30, end: 40 },
-    coreWords: [31, 36, 40],
-    feedback: "Het antwoord staat in de zin: \"Een constructie is een bouwwerk van twee of meer delen die aan elkaar vastzitten.\" De stoel en de brug zijn voorbeelden, geen uitleg.",
-    points: 2
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst wat een constructie is.",
+   "passage": "Wat is een constructie? Een constructie is een bouwwerk dat bestaat uit onderdelen die met elkaar verbonden zijn. Een stoel is een constructie, maar een brug, een dak en een fietsrek ook. Een goede constructie is stabiel: hij blijft staan en valt niet om. Dat lukt alleen als de onderdelen het gewicht samen dragen. Als één onderdeel alle druk moet opvangen, gaat het vroeg of laat mis.",
+   "feedback": "Het staat in de zin: \"Een constructie is een bouwwerk dat bestaat uit onderdelen die met elkaar verbonden zijn.\"",
+   "correctSpan": {
+    "start": 4,
+    "end": 17
+   },
+   "coreWords": [
+    8,
+    12,
+    16
+   ],
+   "points": 2
   },
-
   {
-    type: 'mark',
-    qtype: 'literal',
-    label: '🔍 Letterlijk',
-    labelClass: 'label-literal',
-    question: "Markeer in de tekst wat zwaartekracht doet.",
-    passage: "Een kracht is een duw of een trek op een voorwerp. Door een kracht kan de snelheid, de richting of de vorm van dat voorwerp veranderen. Er zijn verschillende soorten. Zwaartekracht trekt alles naar de aarde toe. Duwkracht ontstaat als je ergens tegenaan leunt of duwt. Trekkracht ontstaat als er ergens aan getrokken wordt, bijvoorbeeld aan een touw. Buigkracht zie je als iets doorbuigt, zoals de plank van een boekenplank die krom trekt onder een stapel zware boeken. Elke constructie moet sterk genoeg zijn om deze krachten op te vangen.",
-    correctSpan: { start: 30, end: 36 },
-    coreWords: [30, 31, 35],
-    feedback: "Het antwoord staat in de zin: \"Zwaartekracht trekt alles naar de aarde toe.\" De andere zinnen gaan over duw-, trek- en buigkracht.",
-    points: 2
+   "type": "drag",
+   "qtype": "inferring",
+   "label": "Afleidend – Sorteren",
+   "labelClass": "label-inferring",
+   "question": "Welke kracht hoort bij welk voorbeeld? Sleep elk voorbeeld naar de goede kracht.",
+   "passage": "Welke krachten werken er? Op elke constructie werken krachten. Een kracht is een duw of een trek. De zwaartekracht trekt alles naar beneden, ook het bouwwerk zelf. Als je op een stoel gaat zitten, duw je de stoel omlaag: dat is een drukkracht. Hangt er een lamp aan een kabel, dan trekt de lamp aan die kabel: dat is een trekkracht. Leg je zware boeken op een dunne plank, dan buigt hij door. Dat komt door buigkracht.",
+   "feedback": "Zitten duwt omlaag: drukkracht. Een lamp aan een kabel of trekken aan een touw: trekkracht. Een plank die doorbuigt: buigkracht.",
+   "categories": [
+    "Drukkracht",
+    "Trekkracht",
+    "Buigkracht"
+   ],
+   "items": [
+    {
+     "id": "i0",
+     "text": "Je gaat op een stoel zitten",
+     "correct": "Drukkracht"
+    },
+    {
+     "id": "i1",
+     "text": "Een lamp hangt aan een kabel",
+     "correct": "Trekkracht"
+    },
+    {
+     "id": "i2",
+     "text": "Een plank met boeken buigt door",
+     "correct": "Buigkracht"
+    },
+    {
+     "id": "i3",
+     "text": "Je trekt aan een touw",
+     "correct": "Trekkracht"
+    }
+   ],
+   "points": 2
   },
-
   {
-    type: 'mark',
-    qtype: 'literal',
-    label: '🔍 Letterlijk',
-    labelClass: 'label-literal',
-    question: "Markeer in de tekst waardoor een driehoek zo sterk is.",
-    passage: "Wie iets stevigs wil bouwen, gebruikt vaak een driehoek. Je maakt er een met drie stevige stokken of buizen. Een driehoek verandert niet van vorm als er kracht op komt, want de zijkanten steunen op elkaar en verdelen de kracht. Een vierkant doet dat niet: duw je tegen de bovenkant, dan zakt het scheef in elkaar. Daarom zie je driehoeken terug in de balken van bruggen en in de spanten van een dak. Je kunt het zelf testen met satéprikkers en klei.",
-    correctSpan: { start: 31, end: 39 },
-    coreWords: [32, 33, 37],
-    feedback: "Het antwoord staat in de zin: \"Een driehoek verandert niet van vorm als er kracht op komt, want de zijkanten steunen op elkaar en verdelen de kracht.\"",
-    points: 2
+   "type": "order",
+   "qtype": "inferring",
+   "label": "Afleidend – Volgorde",
+   "labelClass": "label-inferring",
+   "question": "Zet de stappen van proef 1 in de goede volgorde.",
+   "passage": "Proef 1: driehoek of vierkant? Je hebt nodig: zeven satéprikkers en een paar bolletjes klei. Maak met vier prikkers een vierkant en met drie prikkers een driehoek. Duw voorzichtig op een hoek van het vierkant. Je ziet dat het vierkant scheef zakt en een ruit wordt. Duw daarna op de driehoek. Die verandert niet van vorm. Een driehoek is dus veel steviger. Dat komt doordat de zijden elkaar steunen en de kracht over alle drie de zijden verdelen.",
+   "feedback": "Eerst de spullen pakken, dan de vormen maken, dan op het vierkant duwen en tot slot op de driehoek.",
+   "items": [
+    {
+     "id": "o0",
+     "text": "Pak zeven satéprikkers en wat klei"
+    },
+    {
+     "id": "o1",
+     "text": "Maak een vierkant en een driehoek"
+    },
+    {
+     "id": "o2",
+     "text": "Duw op een hoek van het vierkant"
+    },
+    {
+     "id": "o3",
+     "text": "Duw op de driehoek en vergelijk"
+    }
+   ],
+   "correctOrder": [
+    "o0",
+    "o1",
+    "o2",
+    "o3"
+   ],
+   "points": 2
   },
-
   {
-    type: 'mark',
-    qtype: 'literal',
-    label: '🔍 Letterlijk',
-    labelClass: 'label-literal',
-    question: "Markeer in de tekst waardoor een rol of buis veel gewicht kan dragen.",
-    passage: "Rol een vel papier op tot een strakke koker en zet hem rechtop. Je zult versteld staan van hoeveel boeken erop kunnen voordat de koker knikt. Dat komt doordat een rol of buis de druk rondom verdeelt, in plaats van op één punt. Daarom bestaan de mast van een windmolen, de poten van een tafel en de stang van je fietsstuur uit buizen. Een buis is bovendien lichter dan een massieve staaf, want het midden is hol. Zo bespaar je materiaal én gewicht.",
-    correctSpan: { start: 29, end: 42 },
-    coreWords: [34, 35, 36],
-    feedback: "Het antwoord staat in de zin: \"Dat komt doordat een rol of buis de druk rondom verdeelt, in plaats van op één punt.\"",
-    points: 2
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst wat spanten zijn.",
+   "passage": "Driehoeken in het echt. Omdat een driehoek zo stevig is, zie je hem overal terug. Kijk maar eens naar de spanten van een dak: dat zijn de houten balken die het dak dragen. Ze vormen samen een grote driehoek. Ook in hoogspanningsmasten, kranen en spoorbruggen zitten talloze driehoeken. Bouwers noemen zo’n constructie van driehoeken een vakwerk. Een vakwerk is licht, want er is weinig materiaal voor nodig, en toch erg sterk.",
+   "feedback": "De uitleg staat na de dubbele punt: \"dat zijn de houten balken die het dak dragen.\"",
+   "correctSpan": {
+    "start": 24,
+    "end": 32
+   },
+   "coreWords": [
+    28,
+    31,
+    32
+   ],
+   "points": 2
   },
-
   {
-    type: 'mc',
-    qtype: "inferring",
-    label: "💡 Afleidend",
-    labelClass: "label-inferring",
-    question: "Waarom kiezen bouwers voor een buis in plaats van een massieve staaf?",
-    passage: "Een buis is hol vanbinnen. Toch kan een buis bijna evenveel gewicht dragen als een massieve staaf van hetzelfde materiaal, omdat de druk aan de buitenkant wordt opgevangen. Een massieve staaf is wel veel zwaarder en er is meer staal voor nodig. Bij een hoge windmolen telt dat dubbel: hoe zwaarder de mast, hoe steviger het fundament moet zijn en hoe duurder de bouw wordt.",
-    options: ["Een buis is mooier om naar te kijken dan een staaf", "Een buis is bijna even sterk, maar lichter en er is minder materiaal voor nodig", "Een buis kan alleen krachten van boven opvangen en een staaf niet", "Een buis is de enige vorm die je van staal kunt maken"],
-    correct: 1,
-    feedback: "De tekst zegt dat een buis bijna evenveel draagt, maar lichter is en minder materiaal kost. Bij een windmolen scheelt dat ook in het fundament en in de prijs.",
-    points: 1
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst waarom een koker sterk is.",
+   "passage": "Proef 2: de sterke koker. Rol een vel papier op tot een koker en plak hem vast met een stukje plakband. Zet de koker rechtop en leg er voorzichtig boeken op, één voor één. Hoeveel boeken kan hij houden? Vaak meer dan je denkt! Een koker is sterk omdat de druk over de hele rand verdeeld wordt. Leg hetzelfde vel plat neer en probeer er een boek op te laten balanceren. Dat lukt niet: het papier zakt meteen in elkaar.",
+   "feedback": "Het staat in de zin: \"Een koker is sterk omdat de druk over de hele rand verdeeld wordt.\"",
+   "correctSpan": {
+    "start": 44,
+    "end": 56
+   },
+   "coreWords": [
+    50,
+    55
+   ],
+   "points": 2
   },
-
   {
-    type: 'mc',
-    qtype: "inferring",
-    label: "💡 Afleidend",
-    labelClass: "label-inferring",
-    question: "Waarom zitten er kruizen achterop een boekenkast en aan de zijkant van een tribune?",
-    passage: "Een kruisconstructie is een X van twee stevige latten of buizen. Zonder kruis kan een rechthoekig frame scheef zakken, zoals een kartonnen doos die je opzij duwt. Het kruis verdeelt de kracht naar twee kanten en houdt het frame in balans. Daarom vind je die dunne metalen kruizen achterop een boekenkast en zie je ze in het stalen frame van een tribune. Ze wegen weinig, maar houden de hele constructie recht.",
-    options: ["Om de kast of tribune zwaarder te maken zodat hij niet wegwaait", "Om te voorkomen dat het rechthoekige frame scheef zakt", "Om er meer boeken of mensen op te kunnen zetten", "Omdat een kruis mooier staat dan een driehoek"],
-    correct: 1,
-    feedback: "De tekst legt uit dat een rechthoek zonder kruis scheef kan zakken. Het kruis verdeelt de kracht naar twee kanten en houdt het frame recht.",
-    points: 1
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst wat het woord massief betekent.",
+   "passage": "Hol of massief? Een buis is vanbinnen hol. Een staaf is massief: helemaal gevuld met materiaal. Je zou denken dat een massieve staaf veel sterker is. Dat valt mee. Een buis draagt bijna net zoveel als een staaf van dezelfde dikte, maar hij is veel lichter. Er is minder staal of aluminium voor nodig, en dat scheelt geld. Daarom zijn fietsframes, steigers en de masten van windmolens van buizen gemaakt.",
+   "feedback": "De uitleg staat na de dubbele punt: \"Een staaf is massief: helemaal gevuld met materiaal.\"",
+   "correctSpan": {
+    "start": 12,
+    "end": 15
+   },
+   "coreWords": [
+    13,
+    15
+   ],
+   "points": 2
   },
-
   {
-    type: 'mark',
-    qtype: 'literal',
-    label: '🔍 Letterlijk',
-    labelClass: 'label-literal',
-    question: "Markeer in de tekst wat er gebeurt als een constructie de krachten niet kan opvangen.",
-    passage: "Bouwers rekenen precies uit hoeveel gewicht een constructie moet dragen. Ze tellen daarbij niet alleen het gewicht van de mensen mee, maar ook dat van sneeuw, wind en het bouwwerk zelf. Is de constructie te zwak, dan zakt het bouwwerk door of stort het in. Daarom worden bruggen en daken streng gekeurd voordat ze in gebruik worden genomen. Ook worden ze om de zoveel jaar opnieuw gecontroleerd, want roest en scheurtjes maken een constructie langzaam zwakker.",
-    correctSpan: { start: 36, end: 44 },
-    coreWords: [37, 40, 42],
-    feedback: "Het antwoord staat in de zin: \"Is de constructie te zwak, dan zakt het bouwwerk door of stort het in.\"",
-    points: 2
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst hoe een kruisverband een kast stevig maakt.",
+   "passage": "Het geheim van het kruis. Kijk eens achter een metalen kast of in een stellingkast in een magazijn. Vaak zie je daar twee dunne strippen die een X vormen. Dat heet een kruisverband. Zonder kruisverband kan de kast scheef zakken als je er opzij tegenaan duwt, net als een vierkant van satéprikkers. Het kruis maakt van één rechthoek twee driehoeken. Zo blijft de kast recht staan, ook al wegen de strippen bijna niets.",
+   "feedback": "Het staat in de zin: \"Het kruis maakt van één rechthoek twee driehoeken.\" En driehoeken zijn stevig, zoals je in proef 1 zag.",
+   "correctSpan": {
+    "start": 52,
+    "end": 59
+   },
+   "coreWords": [
+    57,
+    59
+   ],
+   "points": 2
   },
-
   {
-    type: 'drag',
-    qtype: 'inferring',
-    label: '💡 Afleidend – Sorteren',
-    labelClass: 'label-inferring',
-    question: "Bij welke constructie hoort elk voorbeeld? Sleep ze naar de juiste soort.",
-    passage: "Een driehoekconstructie zie je in de balken van een brug en in de spanten van een dak. Een kruisconstructie zit achterop een boekenkast en in het frame van een tribune. Een rol- of buisconstructie herken je aan de mast van een windmolen en aan de poten van een tafel.",
-    categories: ["Driehoek", "Kruis", "Rol of buis"],
-    items: [
-      { id: "i0", text: "Spanten van een dak", correct: "Driehoek" },
-      { id: "i1", text: "Achterkant van een boekenkast", correct: "Kruis" },
-      { id: "i2", text: "Mast van een windmolen", correct: "Rol of buis" },
-      { id: "i3", text: "Balken van een brug", correct: "Driehoek" },
-      { id: "i4", text: "Poten van een tafel", correct: "Rol of buis" }
-    ],
-    feedback: "Dak en brug → driehoek. Boekenkast → kruis. Windmolenmast en tafelpoten → rol of buis.",
-    points: 2
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst wat ingenieurs allemaal meetellen bij de belasting.",
+   "passage": "Bouwen met berekeningen. Voordat een brug wordt gebouwd, rekenen ingenieurs precies uit hoeveel gewicht hij moet kunnen dragen. Dat heet de belasting. Ze tellen het gewicht van auto’s, fietsers en vrachtwagens mee, maar ook dat van sneeuw, de kracht van de wind en het gewicht van de brug zelf. Daarna bouwen ze de brug nog een stuk sterker dan nodig. Zo heeft de brug een reserve voor onverwachte situaties.",
+   "feedback": "Het staat in de zin: \"Ze tellen het gewicht van auto’s, fietsers en vrachtwagens mee, maar ook dat van sneeuw, de kracht van de wind en het gewicht van de brug zelf.\"",
+   "correctSpan": {
+    "start": 22,
+    "end": 48
+   },
+   "coreWords": [
+    36,
+    41,
+    47
+   ],
+   "points": 2
   },
-
   {
-    type: 'mc',
-    qtype: "evaluating",
-    label: "💬 Evaluerend",
-    labelClass: "label-evaluating",
-    question: "Iemand zegt: \"Een sterke constructie is gewoon een constructie van heel veel materiaal.\" Wat is daarop het beste antwoord?",
-    passage: "Sterk bouwen is niet hetzelfde als veel materiaal gebruiken. Een driehoek van drie dunne latten is sterker dan een vierkant van vier dikke latten, omdat de vorm de kracht beter verdeelt. Een holle buis draagt bijna net zoveel als een massieve staaf. Slimme bouwers kiezen dus eerst de juiste vorm en pas daarna het materiaal. Dat scheelt gewicht, geld en grondstoffen.",
-    options: ["Klopt, want hoe dikker de latten, hoe sterker het bouwwerk altijd is", "Klopt niet, want de vorm bepaalt vooral hoe de kracht verdeeld wordt", "Klopt niet, want materiaal maakt helemaal niets uit voor de sterkte", "Klopt, want een driehoek van dunne latten zakt altijd in elkaar"],
-    correct: 1,
-    feedback: "De tekst geeft twee voorbeelden waarin de vorm belangrijker is dan de hoeveelheid materiaal: de driehoek van dunne latten en de holle buis. Materiaal doet er wel toe, maar de vorm bepaalt hoe de kracht verdeeld wordt.",
-    points: 1
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst waardoor een brug zwakker kan worden.",
+   "passage": "Controle blijft nodig. Ook een sterke brug wordt na verloop van tijd zwakker. IJzer kan gaan roesten, in beton kunnen scheurtjes ontstaan en door het verkeer slijt het wegdek. Daarom worden bruggen regelmatig gekeurd. Een inspecteur kijkt of alles nog veilig is. Soms moet een brug tijdelijk dicht voor zware vrachtwagens, totdat hij is gerepareerd. Dat is lastig voor het verkeer, maar veiligheid gaat voor.",
+   "feedback": "Het staat in de zin: \"IJzer kan gaan roesten, in beton kunnen scheurtjes ontstaan en door het verkeer slijt het wegdek.\"",
+   "correctSpan": {
+    "start": 13,
+    "end": 28
+   },
+   "coreWords": [
+    16,
+    20,
+    26
+   ],
+   "points": 2
   },
-
   {
-    type: 'mc',
-    qtype: "evaluating",
-    label: "💬 Evaluerend",
-    labelClass: "label-evaluating",
-    question: "In de tekst staat: \"Je zult versteld staan van hoeveel boeken erop kunnen.\" Waarom schrijft de maker dat zo?",
-    passage: "Rol een vel papier op tot een koker en zet er boeken op. Je zult versteld staan van hoeveel boeken erop kunnen. Zulke zinnen gebruiken schrijvers om je nieuwsgierig te maken, zodat je de proef zelf gaat doen. Hoeveel boeken het precies zijn, hangt af van het papier, de dikte van de rol en hoe recht je hem neerzet. Het is dus geen exact getal, maar een uitnodiging om te proberen.",
-    options: ["Om je nieuwsgierig te maken zodat je de proef zelf gaat doen", "Omdat de schrijver het precieze aantal boeken vergeten is op te zoeken", "Om te bewijzen dat papier sterker is dan staal", "Omdat er in een proef nooit iets te meten valt"],
-    correct: 0,
-    feedback: "De tekst zegt het zelf: zulke zinnen maken je nieuwsgierig, zodat je het gaat proberen. Het precieze aantal hangt van te veel dingen af om op te schrijven.",
-    points: 1
+   "type": "drag",
+   "qtype": "inferring",
+   "label": "Afleidend – Sorteren",
+   "labelClass": "label-inferring",
+   "question": "Welke eigenschap hoort bij welke vorm? Sleep elke zin naar de goede vorm.",
+   "passage": "Samenvatting. Slim bouwen begint met de juiste vorm. Een driehoek vervormt niet en een koker of buis verdeelt de druk over de hele rand. Een kruisverband maakt van een rechthoek twee stevige driehoeken. Met de goede vorm heb je minder materiaal nodig. Dat maakt een bouwwerk lichter en goedkoper, en er zijn minder grondstoffen voor nodig. Daarna komen de berekeningen en de keuringen, zodat een constructie jarenlang veilig blijft.",
+   "feedback": "Een driehoek vervormt niet. Een buis of koker verdeelt de druk en is hol. Een kruisverband maakt twee driehoeken van een rechthoek.",
+   "categories": [
+    "Driehoek",
+    "Buis of koker",
+    "Kruisverband"
+   ],
+   "items": [
+    {
+     "id": "i0",
+     "text": "Vervormt niet als je erop duwt",
+     "correct": "Driehoek"
+    },
+    {
+     "id": "i1",
+     "text": "Verdeelt de druk over de hele rand",
+     "correct": "Buis of koker"
+    },
+    {
+     "id": "i2",
+     "text": "Maakt van een rechthoek twee driehoeken",
+     "correct": "Kruisverband"
+    },
+    {
+     "id": "i3",
+     "text": "Is hol en daardoor licht",
+     "correct": "Buis of koker"
+    }
+   ],
+   "points": 2
   }
-
-];
+ ],
+ "8": [
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Wat gebeurt er volgens de tekst als één onderdeel alle druk moet opvangen?",
+   "passage": "Wat is een constructie? Een constructie is een bouwwerk dat bestaat uit onderdelen die met elkaar verbonden zijn. Een stoel is een constructie, maar een brug, een dak en een fietsrek ook. Een goede constructie is stabiel: hij blijft staan en valt niet om. Dat lukt alleen als de onderdelen het gewicht samen dragen. Als één onderdeel alle druk moet opvangen, gaat het vroeg of laat mis.",
+   "feedback": "\"Vroeg of laat gaat het mis.\" Het gewicht moet over de onderdelen verdeeld worden, anders bezwijkt het zwakke punt.",
+   "options": [
+    "De constructie wordt steeds sterker",
+    "Dat onderdeel kan het op den duur niet meer houden en de constructie bezwijkt",
+    "De andere onderdelen worden zwaarder",
+    "Er gebeurt niets"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst waaruit blijkt dat een bouwwerk ook zelf belasting veroorzaakt.",
+   "passage": "Welke krachten werken er? Op elke constructie werken krachten. Een kracht is een duw of een trek. De zwaartekracht trekt alles naar beneden, ook het bouwwerk zelf. Als je op een stoel gaat zitten, duw je de stoel omlaag: dat is een drukkracht. Hangt er een lamp aan een kabel, dan trekt de lamp aan die kabel: dat is een trekkracht. Leg je zware boeken op een dunne plank, dan buigt hij door. Dat komt door buigkracht.",
+   "feedback": "Het staat in de zin: \"De zwaartekracht trekt alles naar beneden, ook het bouwwerk zelf.\" Het eigen gewicht telt dus mee.",
+   "correctSpan": {
+    "start": 17,
+    "end": 26
+   },
+   "coreWords": [
+    18,
+    25,
+    26
+   ],
+   "points": 2
+  },
+  {
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst waarom een driehoek steviger is dan een vierkant.",
+   "passage": "Proef 1: driehoek of vierkant? Je hebt nodig: zeven satéprikkers en een paar bolletjes klei. Maak met vier prikkers een vierkant en met drie prikkers een driehoek. Duw voorzichtig op een hoek van het vierkant. Je ziet dat het vierkant scheef zakt en een ruit wordt. Duw daarna op de driehoek. Die verandert niet van vorm. Een driehoek is dus veel steviger. Dat komt doordat de zijden elkaar steunen en de kracht over alle drie de zijden verdelen.",
+   "feedback": "Het staat in de laatste zin: \"Dat komt doordat de zijden elkaar steunen en de kracht over alle drie de zijden verdelen.\"",
+   "correctSpan": {
+    "start": 62,
+    "end": 77
+   },
+   "coreWords": [
+    68,
+    77
+   ],
+   "points": 2
+  },
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Waarom gebruiken bouwers bij hoge kranen graag een vakwerk?",
+   "passage": "Driehoeken in het echt. Omdat een driehoek zo stevig is, zie je hem overal terug. Kijk maar eens naar de spanten van een dak: dat zijn de houten balken die het dak dragen. Ze vormen samen een grote driehoek. Ook in hoogspanningsmasten, kranen en spoorbruggen zitten talloze driehoeken. Bouwers noemen zo’n constructie van driehoeken een vakwerk. Een vakwerk is licht, want er is weinig materiaal voor nodig, en toch erg sterk.",
+   "feedback": "Een vakwerk is \"licht\" en \"toch erg sterk\". Bij een hoge kraan wil je weinig gewicht, maar wel veel stevigheid.",
+   "options": [
+    "Omdat een vakwerk mooier versierd kan worden",
+    "Omdat het licht is en toch heel sterk, en dat is handig bij een hoge constructie",
+    "Omdat vakwerk van klei gemaakt wordt",
+    "Omdat een kraan anders te weinig driehoeken heeft"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Waarom vergelijk je de koker met een plat vel van hetzelfde papier?",
+   "passage": "Proef 2: de sterke koker. Rol een vel papier op tot een koker en plak hem vast met een stukje plakband. Zet de koker rechtop en leg er voorzichtig boeken op, één voor één. Hoeveel boeken kan hij houden? Vaak meer dan je denkt! Een koker is sterk omdat de druk over de hele rand verdeeld wordt. Leg hetzelfde vel plat neer en probeer er een boek op te laten balanceren. Dat lukt niet: het papier zakt meteen in elkaar.",
+   "feedback": "Het is hetzelfde papier. Alleen de vorm verschilt. Zo zie je dat de vorm bepaalt hoe sterk iets is.",
+   "options": [
+    "Om te laten zien dat het om de vorm gaat, niet om het materiaal",
+    "Omdat plat papier zwaarder is",
+    "Omdat je anders te veel boeken nodig hebt",
+    "Om te oefenen met plakband"
+   ],
+   "correct": 0,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "evaluating",
+   "label": "Evaluerend",
+   "labelClass": "label-evaluating",
+   "question": "Een fietsenmaker zegt: \"Een massief fietsframe is veel beter.\" Wat zou je volgens de tekst antwoorden?",
+   "passage": "Hol of massief? Een buis is vanbinnen hol. Een staaf is massief: helemaal gevuld met materiaal. Je zou denken dat een massieve staaf veel sterker is. Dat valt mee. Een buis draagt bijna net zoveel als een staaf van dezelfde dikte, maar hij is veel lichter. Er is minder staal of aluminium voor nodig, en dat scheelt geld. Daarom zijn fietsframes, steigers en de masten van windmolens van buizen gemaakt.",
+   "feedback": "Volgens de tekst draagt een buis \"bijna net zoveel\" maar is hij \"veel lichter\". Voor een fiets die je zelf moet trappen is licht juist fijn.",
+   "options": [
+    "Klopt, massief is altijd sterker",
+    "Een buis is bijna net zo sterk, maar veel lichter en goedkoper; dat is juist handig voor een fiets",
+    "Een fiets heeft geen frame nodig",
+    "Klopt, want buizen roesten sneller"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Welke proef uit dit proefjesboek helpt je het kruisverband te begrijpen?",
+   "passage": "Het geheim van het kruis. Kijk eens achter een metalen kast of in een stellingkast in een magazijn. Vaak zie je daar twee dunne strippen die een X vormen. Dat heet een kruisverband. Zonder kruisverband kan de kast scheef zakken als je er opzij tegenaan duwt, net als een vierkant van satéprikkers. Het kruis maakt van één rechthoek twee driehoeken. Zo blijft de kast recht staan, ook al wegen de strippen bijna niets.",
+   "feedback": "Het kruis maakt driehoeken van een rechthoek. In proef 1 zag je dat een driehoek stevig is en een vierkant scheef zakt.",
+   "options": [
+    "Proef 2, met de papieren koker",
+    "Proef 1, met de driehoek en het vierkant",
+    "Geen enkele proef",
+    "De proef met de plank en de boeken"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Waarom bouwen ingenieurs een brug \"een stuk sterker dan nodig\"?",
+   "passage": "Bouwen met berekeningen. Voordat een brug wordt gebouwd, rekenen ingenieurs precies uit hoeveel gewicht hij moet kunnen dragen. Dat heet de belasting. Ze tellen het gewicht van auto’s, fietsers en vrachtwagens mee, maar ook dat van sneeuw, de kracht van de wind en het gewicht van de brug zelf. Daarna bouwen ze de brug nog een stuk sterker dan nodig. Zo heeft de brug een reserve voor onverwachte situaties.",
+   "feedback": "De extra sterkte is \"een reserve voor onverwachte situaties\", zoals een storm of een file met zware vrachtwagens.",
+   "options": [
+    "Omdat ze graag veel staal gebruiken",
+    "Zodat de brug ook veilig blijft als er iets onverwachts gebeurt",
+    "Omdat ze slecht kunnen rekenen",
+    "Omdat de brug dan mooier is"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "evaluating",
+   "label": "Evaluerend",
+   "labelClass": "label-evaluating",
+   "question": "Wat bedoelt de schrijver met \"veiligheid gaat voor\"?",
+   "passage": "Controle blijft nodig. Ook een sterke brug wordt na verloop van tijd zwakker. IJzer kan gaan roesten, in beton kunnen scheurtjes ontstaan en door het verkeer slijt het wegdek. Daarom worden bruggen regelmatig gekeurd. Een inspecteur kijkt of alles nog veilig is. Soms moet een brug tijdelijk dicht voor zware vrachtwagens, totdat hij is gerepareerd. Dat is lastig voor het verkeer, maar veiligheid gaat voor.",
+   "feedback": "Een gesloten brug is \"lastig voor het verkeer\". Maar het risico dat de brug bezwijkt, is erger. Daarom kiest men voor veiligheid.",
+   "options": [
+    "Dat vrachtwagens altijd voorrang hebben",
+    "Dat een veilige brug belangrijker is dan het ongemak van een omweg",
+    "Dat bruggen nooit dicht mogen",
+    "Dat inspecteurs voor de veiligheid moeten betalen"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "evaluating",
+   "label": "Evaluerend",
+   "labelClass": "label-evaluating",
+   "question": "Waarom past deze tekst bij het thema \"Van grondstof tot product\"?",
+   "passage": "Samenvatting. Slim bouwen begint met de juiste vorm. Een driehoek vervormt niet en een koker of buis verdeelt de druk over de hele rand. Een kruisverband maakt van een rechthoek twee stevige driehoeken. Met de goede vorm heb je minder materiaal nodig. Dat maakt een bouwwerk lichter en goedkoper, en er zijn minder grondstoffen voor nodig. Daarna komen de berekeningen en de keuringen, zodat een constructie jarenlang veilig blijft.",
+   "feedback": "\"Met de goede vorm heb je minder materiaal nodig ... er zijn minder grondstoffen voor nodig.\" Slim ontwerpen spaart grondstoffen.",
+   "options": [
+    "Omdat hij laat zien dat je met een slimme vorm minder grondstoffen nodig hebt",
+    "Omdat hij uitlegt hoe je een fiets repareert",
+    "Omdat hij over de geschiedenis van bruggen gaat",
+    "Omdat alle constructies van papier zijn"
+   ],
+   "correct": 0,
+   "points": 1
+  }
+ ]
+};
+const GROEP = (function () {
+  try { const g = new URLSearchParams(location.search).get('groep'); if (g === '7' || g === '8') return g; } catch (e) {}
+  return '7';
+})();
+const questions = VRAGEN[GROEP];
+const SLEUTEL = 'bl_spullen-les1_g' + GROEP;
+document.getElementById('bl-eyebrow').textContent = 'Begrijpend lezen · Groep ' + GROEP;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // STATE
@@ -483,8 +773,8 @@ let markState = questions.map(() => new Set());
 // PERSISTENCE
 // ─────────────────────────────────────────────────────────────────────────────
 let paidSet = new Set();
-function loadPaid() { try { const s = localStorage.getItem('bl_spullen_les1_paid'); if (s) paidSet = new Set(JSON.parse(s)); } catch(e){} }
-function savePaid() { try { localStorage.setItem('bl_spullen_les1_paid', JSON.stringify([...paidSet])); } catch(e){} }
+function loadPaid() { try { const s = localStorage.getItem(SLEUTEL + '_paid'); if (s) paidSet = new Set(JSON.parse(s)); } catch(e){} }
+function savePaid() { try { localStorage.setItem(SLEUTEL + '_paid', JSON.stringify([...paidSet])); } catch(e){} }
 function loadProgress() {
   loadPaid();
   try {
@@ -493,7 +783,7 @@ function loadProgress() {
     // zodat die stand nooit meer in een les terechtkomt.
     localStorage.removeItem('bl_wereld_v2');
     localStorage.removeItem('bl_wereld_v2_paid');
-    const saved = localStorage.getItem('bl_spullen_les1');
+    const saved = localStorage.getItem(SLEUTEL);
     if (saved) {
       const d = JSON.parse(saved);
       // Alleen een stand die bij déze les hoort: evenveel vragen, anders weg.
@@ -503,7 +793,7 @@ function loadProgress() {
         answered = d.answered;
         score    = scores.reduce((a,b)=>a+b,0);
       } else {
-        localStorage.removeItem('bl_spullen_les1');
+        localStorage.removeItem(SLEUTEL);
       }
     }
   } catch(e){}
@@ -511,7 +801,7 @@ function loadProgress() {
 
 function saveProgress() {
   try {
-    localStorage.setItem('bl_spullen_les1', JSON.stringify({ scores, answered }));
+    localStorage.setItem(SLEUTEL, JSON.stringify({ scores, answered }));
   } catch(e){}
 }
 
@@ -608,10 +898,11 @@ function renderQuestion() {
   const area = document.getElementById('question-area');
   const nav  = document.getElementById('nav-row');
 
-  let html = `<div class="q-card${q.type === 'mc' && q.passage ? ' q-breed' : ''}">`;
+  let html = `<div class="q-card${(q.type === 'mc' || q.type === 'order') && q.passage ? ' q-breed' : ''}">`;
   html += `<span class="q-type-label ${q.labelClass}">${q.label}</span>`;
   html += `<h3>${q.question}</h3>`;
 
+  if (q.img) html += `<figure class="bl-fig"><img src="${q.img}" alt=""><figcaption>${q.bijschrift || ''}</figcaption></figure>`;
   if      (q.type === 'mark')  html += renderMark(q);
   else if (q.type === 'mc')    html += renderMC(q);
   else if (q.type === 'order') html += renderOrder(q);
@@ -802,7 +1093,8 @@ function answerMC(i) {
 // ─────────────────────────────────────────────────────────────────────────────
 function renderOrder(q) {
   const shuffled = [...q.items].sort(() => Math.random() - .5);
-  let html = '<div class="order-list" id="order-list">';
+  let html = q.passage ? `<div class="passage">${q.passage}</div>` : '';
+  html += '<div class="order-list" id="order-list">';
   shuffled.forEach(item => {
     html += `<div class="order-item" draggable="true" data-id="${item.id}">
       <span class="handle">⠿</span><span>${item.text}</span>
@@ -1013,7 +1305,7 @@ function showFinish() {
     `<div class="ov-title">${goed} van ${questions.length} vragen goed</div>` + rows;
   show('finish-screen');
   const opgaven = questions.map((q,i) => ({ vraag: q.question.replace(/<[^>]*>/g,''), puntenBehaald: scores[i], puntenMax: q.points }));
-  window.KennisKist?.slaResultaatOp?.('spullen-les1', score, total, { opgaven });
+  window.KennisKist?.slaResultaatOp?.('spullen-les1', score, total, { opgaven, groep: +GROEP });
   window.KennisKist?.toonInlogstatus?.(document.getElementById('kkStatus'));
 }
 
@@ -1022,7 +1314,7 @@ function restartQuiz() {
   scores   = new Array(questions.length).fill(0);
   answered = new Array(questions.length).fill(false);
   markState= questions.map(() => new Set());
-  localStorage.removeItem('bl_spullen_les1');
+  localStorage.removeItem(SLEUTEL);
   document.getElementById('score-num').textContent = 0;
   show('quiz-screen');
   renderQuestion();
@@ -1033,7 +1325,7 @@ function restartQuiz() {
 // eerste vraag die nog open staat.
 (function hervatNaVerversen() {
   try {
-    const d = JSON.parse(localStorage.getItem('bl_spullen_les1') || 'null');
+    const d = JSON.parse(localStorage.getItem(SLEUTEL) || 'null');
     if (d && Array.isArray(d.answered) && d.answered.length === questions.length
         && d.answered.some(Boolean)) startQuiz();
   } catch (e) {}

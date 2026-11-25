@@ -1,31 +1,38 @@
-// Thema's en lessen voor Begrijpend Lezen (groep 7-8)
-// file: HTML-bestand in public/begrijpend-lezen/
+// Thema's en lessen voor Begrijpend lezen (groep 7-8)
+// file: HTML-bestand in public/begrijpend-lezen/. Elke les heeft een vragenset
+// voor groep 7 en een (moeilijkere) voor groep 8 en krijgt ?groep=7|8 mee.
+// De lessen worden gebouwd met scripts/begrijpend/maak-begrijpend.mjs; de
+// lesnamen hieronder zijn dezelfde als de titels in de databestanden daar.
+// De keys (spullen, families) en bestandsnamen blijven zo, omdat resultaten en
+// klaargezette taken eraan hangen.
+const lessen = (thema, namen) => namen.map((naam, i) => ({ key: `les${i + 1}`, naam, file: `${thema}-les${i + 1}.html`, klaar: true }))
+
 export const THEMAS = [
   {
     key: 'spullen',
-    naam: 'Duurzaam design',
-    emoji: '🏭',
+    naam: 'Van grondstof tot product',
     kleur: '#06D6A0',
-    lessen: [
-      { key: 'les1', naam: 'Les 1 — Coole constructies',     file: 'spullen-les1.html', klaar: true },
-      { key: 'les2', naam: 'Les 2 — De beste materialen',    file: 'spullen-les2.html', klaar: true },
-      { key: 'les3', naam: 'Les 3 — Leve de fabriek?',       file: 'spullen-les3.html', klaar: true },
-      { key: 'les4', naam: 'Les 4 — Kinderen aan het werk',  file: 'spullen-les4.html', klaar: true },
-      { key: 'les5', naam: 'Les 5 — Mobiel binnenstebuiten', file: 'spullen-les5.html', klaar: true },
-    ],
+    groepKeuze: true,
+    lessen: lessen('spullen', [
+      'Sterke constructies',
+      'Materialen',
+      'De eerste fabrieken',
+      'Kinderarbeid',
+      'Grondstoffen in je telefoon',
+    ]),
   },
   {
-    // Eén bestand per les met een vragenset voor groep 7 en een (moeilijkere)
-    // voor groep 8; de les krijgt ?groep=7|8 mee. Gebouwd met
-    // scripts/begrijpend/maak-families.mjs.
     key: 'families',
-    naam: 'Fantastische families',
-    emoji: '👪',
+    naam: 'Strijd om vrijheid',
     kleur: '#F9A826',
     groepKeuze: true,
-    lessen: [
-      'Een koninklijke ruzie', 'Dappere Drucker', 'Ons verleden',
-      'Kom in verzet', 'Rebelse jongeren', 'Nieuwe gezinnen',
-    ].map((naam, i) => ({ key: `les${i + 1}`, naam: `Les ${i + 1} — ${naam}`, file: `families-les${i + 1}.html`, klaar: true })),
+    lessen: lessen('families', [
+      'De grondwet van 1848',
+      'Vrouwenkiesrecht',
+      'Slavernij in Suriname',
+      'Anton de Kom',
+      'Jongeren in de jaren vijftig',
+      'Regenbooggezinnen',
+    ]),
   },
 ]

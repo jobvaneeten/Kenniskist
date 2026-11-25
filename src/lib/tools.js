@@ -275,20 +275,27 @@ export const TOOL_FAMILIES = [
     configVelden: [],
   },
   {
-    familie: 'spullen', label: 'Duurzaam design', vak: 'begrijpend', groepen: [7, 8],
+    familie: 'spullen', label: 'Van grondstof tot product', vak: 'begrijpend', groepen: [7, 8],
     aantalInstelbaar: false, standaardAantal: 1, eenheid: 'sessies', configVelden: [],
     varianten: [
-      'Coole constructies', 'De beste materialen', 'Leve de fabriek?',
-      'Kinderen aan het werk', 'Mobiel binnenstebuiten',
-    ].map((naam, i) => ({ toolId: `spullen-les${i + 1}`, label: `Les ${i + 1} — ${naam}`, les: i + 1 })),
+      'Sterke constructies',
+      'Materialen',
+      'De eerste fabrieken',
+      'Kinderarbeid',
+      'Grondstoffen in je telefoon',
+    ].map((naam, i) => ({ toolId: `spullen-les${i + 1}`, label: naam, les: i + 1 })),
   },
   {
-    familie: 'families', label: 'Fantastische families', vak: 'begrijpend', groepen: [7, 8],
+    familie: 'families', label: 'Strijd om vrijheid', vak: 'begrijpend', groepen: [7, 8],
     aantalInstelbaar: false, standaardAantal: 1, eenheid: 'sessies', configVelden: [],
     varianten: [
-      'Een koninklijke ruzie', 'Dappere Drucker', 'Ons verleden',
-      'Kom in verzet', 'Rebelse jongeren', 'Nieuwe gezinnen',
-    ].map((naam, i) => ({ toolId: `families-les${i + 1}`, label: `Les ${i + 1} — ${naam}`, les: i + 1 })),
+      'De grondwet van 1848',
+      'Vrouwenkiesrecht',
+      'Slavernij in Suriname',
+      'Anton de Kom',
+      'Jongeren in de jaren vijftig',
+      'Regenbooggezinnen',
+    ].map((naam, i) => ({ toolId: `families-les${i + 1}`, label: naam, les: i + 1 })),
   },
   {
     // Stil lezen met een timer: geen opgaven, alleen tijd. `aantal` telt dus

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Begrijpend Lezen – De beste materialen</title>
+<title>Begrijpend lezen – Materialen</title>
 <link href="/fonts/fonts.css" rel="stylesheet">
 <style>
   :root {
@@ -267,6 +267,11 @@
     .drag-container { flex-direction:column; }
   }
   @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  .bl-fig { margin:0 0 14px; }
+  .bl-fig img { display:block; max-width:100%; max-height:300px; border-radius:12px; margin:0 auto; box-shadow:0 8px 24px -10px rgba(0,0,0,.6); }
+  .bl-fig figcaption { font-size:.85rem; color:var(--ink-soft); text-align:center; margin-top:6px; font-style:italic; }
+  .bl-cover { display:block; width:min(360px,100%); aspect-ratio:4/3; object-fit:cover; margin:0 auto 14px; border-radius:16px; box-shadow:0 10px 28px -12px rgba(0,0,0,.7); }
+  @media(min-width:1000px){ .q-breed > .bl-fig { grid-column:1; } }
 </style>
 <style>.order-item,.drag-item{touch-action:none}.order-item.dragging,.drag-item.dragging{opacity:.6}</style>
 <script src="/kenniskist-login.js"></script>
@@ -274,9 +279,9 @@
 <body>
 
 <header>
-  <p class="eyebrow">Begrijpend lezen · Groep 7 · Les 2</p>
-  <h1>De beste materialen</h1>
-  <p>Thema: Duurzaam design</p>
+  <p class="eyebrow" id="bl-eyebrow">Begrijpend lezen</p>
+  <h1>Materialen</h1>
+  <p>Thema: Van grondstof tot product</p>
 </header>
 <div id="progress-bar-wrap"><div id="progress-bar"></div></div>
 <div id="score-badge">⭐ <span id="score-num">0</span> pt</div>
@@ -284,13 +289,13 @@
 <main>
 
 <div id="intro-screen" class="screen active">
-  <div class="compass">👜</div>
-  <h2>Waar is jouw tas van gemaakt?</h2>
-  <p>Je leest teksten over materialen en duurzaamheid, en beantwoordt tien vragen. Bij <strong>letterlijke vragen</strong> markeer je het antwoord <em>in de tekst zelf</em>. Klik woorden aan om ze te selecteren.</p>
+  
+  <h2>Klaar om te lezen?</h2>
+  <p>Groep 8 van basisschool De Wilg doet een tassentest. Welke tas is het duurzaamst? Je leest hun testverslag. De klas is verzonnen, de feiten over de materialen niet. Je beantwoordt tien vragen. Bij <strong>letterlijke vragen</strong> markeer je het antwoord <em>in de tekst zelf</em>. Klik woorden aan om ze te selecteren.</p>
   <div class="legend">
-    <span style="background:#d0e8ff;color:#0a3a6e;">🔍 Letterlijk – markeer in de tekst</span>
-    <span style="background:#fde8c0;color:#7a3d00;">💡 Afleidend</span>
-    <span style="background:#dff0e2;color:#1a5c2a;">💬 Evaluerend</span>
+    <span style="background:#d0e8ff;color:#0a3a6e;">Letterlijk – markeer in de tekst</span>
+    <span style="background:#fde8c0;color:#7a3d00;">Afleidend</span>
+    <span style="background:#dff0e2;color:#1a5c2a;">Evaluerend</span>
   </div>
   <button class="btn btn-primary" onclick="startQuiz()">Begin de oefening →</button>
 </div>
@@ -303,7 +308,7 @@
 
 <div id="finish-screen" class="screen">
   <div class="medal" id="finish-medal">🏅</div>
-  <h2>Goed gedaan, materiaalkenner!</h2>
+  <h2>Sterk getest en gelezen!</h2>
   <div class="score-big" id="finish-score">0/0</div>
   <p id="finish-msg"></p>
   <div id="finish-overview"></div>
@@ -327,145 +332,412 @@
 // correctSpan: [startWordIndex, endWordIndex] (inclusive) = de juiste selectie.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const questions = [
-
+const VRAGEN = {
+ "7": [
   {
-    type: 'mark',
-    qtype: 'literal',
-    label: '🔍 Letterlijk',
-    labelClass: 'label-literal',
-    question: "Markeer in de tekst waarvan katoen gemaakt wordt.",
-    passage: "Je spijkerbroek, je T-shirt en misschien ook je gymtas zijn van katoen. Katoen komt van de pluizige bollen van de katoenplant. Van die pluizen worden draden gesponnen en van die draden wordt een lap stof geweven. De katoenplant heeft veel water nodig om te groeien: voor één T-shirt is duizenden liters water nodig. Boeren gebruiken vaak ook bestrijdingsmiddelen tegen ziektes en insecten, en dat gif komt in de natuur terecht. Er zijn ook boeren die katoen kweken zonder die middelen. Dat heet biologisch katoen.",
-    correctSpan: { start: 12, end: 20 },
-    coreWords: [16, 17, 20],
-    feedback: "Het antwoord staat in de zin: \"Katoen komt van de pluizige bollen van de katoenplant.\" De rest van de tekst gaat over water, gif en biologisch katoen.",
-    points: 2
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst wat de levensduur van een tas is.",
+   "passage": "Onze onderzoeksvraag. Iedereen gebruikt tassen: voor boodschappen, voor gym of voor school. Maar welk materiaal is het beste voor de aarde? Wij hebben vijf tassen onderzocht: een katoenen tas, een papieren tas, een plastic tas, een leren tas en een tas van vrachtwagenzeil. We letten op drie dingen: waar het materiaal van gemaakt wordt, hoeveel water en energie het kost, en hoe lang de tas meegaat. Dat laatste noemen we de levensduur.",
+   "feedback": "Het staat vlak voor het woord levensduur: \"hoe lang de tas meegaat. Dat laatste noemen we de levensduur.\"",
+   "correctSpan": {
+    "start": 61,
+    "end": 65
+   },
+   "coreWords": [
+    62,
+    65
+   ],
+   "points": 2
   },
-
   {
-    type: 'mark',
-    qtype: 'literal',
-    label: '🔍 Letterlijk',
-    labelClass: 'label-literal',
-    question: "Markeer in de tekst wat het nadeel van een papieren tas is.",
-    passage: "Steeds meer winkels geven je een papieren tas mee. Papier wordt gemaakt van houtvezels of van vezels uit oud papier. In de fabriek worden die vezels met water gemengd en tot vellen geperst. Dat kost veel water en energie. Een papieren tas heeft als nadeel dat hij niet erg sterk is: papier scheurt snel, zeker als het nat wordt. Het voordeel is dat papier makkelijk te recyclen valt. In Europa wordt ongeveer zeventig procent van al het papier opnieuw gebruikt.",
-    correctSpan: { start: 46, end: 58 },
-    coreWords: [49, 52, 57],
-    feedback: "Het antwoord staat in de zin: \"Een papieren tas heeft als nadeel dat hij niet erg sterk is: papier scheurt snel, zeker als het nat wordt.\" De rest van die alinea noemt juist voordelen.",
-    points: 2
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst wat biologisch katoen is.",
+   "passage": "Tas 1: katoen. Katoen groeit aan de katoenplant. De witte pluizen worden geplukt, tot draad gesponnen en tot stof geweven. Katoen is zacht en sterk. Maar de plant heeft heel veel water nodig. Voor één katoenen tas kan wel duizenden liters water nodig zijn. Ook spuiten veel boeren bestrijdingsmiddelen tegen insecten en ziektes. Die middelen komen in de grond en in het water terecht. Biologisch katoen wordt verbouwd zonder die middelen.",
+   "feedback": "Het staat in de laatste zin: \"Biologisch katoen wordt verbouwd zonder die middelen.\"",
+   "correctSpan": {
+    "start": 64,
+    "end": 70
+   },
+   "coreWords": [
+    68,
+    70
+   ],
+   "points": 2
   },
-
   {
-    type: 'mark',
-    qtype: 'literal',
-    label: '🔍 Letterlijk',
-    labelClass: 'label-literal',
-    question: "Markeer in de tekst hoe je van oude plastic tassen kleding kunt maken.",
-    passage: "Een plastic tas is gemaakt van polyetheen, een kunststof uit aardolie. Het maken ervan kost veel energie. Meer dan de helft van de plastic tasjes gaat na één keer gebruiken de prullenbak in, terwijl je ze prima opnieuw kunt gebruiken. Van oude tasjes kun je zelfs stof maken: het plastic wordt gesmolten en tot draden gesponnen, en die draad heet polyester. Wel is er een nadeel: bij het wassen van polyester komen piepkleine plastic deeltjes in het water terecht.",
-    correctSpan: { start: 48, end: 60 },
-    coreWords: [51, 54, 60],
-    feedback: "Het antwoord staat in de zin: \"het plastic wordt gesmolten en tot draden gesponnen, en die draad heet polyester.\"",
-    points: 2
+   "type": "order",
+   "qtype": "inferring",
+   "label": "Afleidend – Volgorde",
+   "labelClass": "label-inferring",
+   "question": "Zet de stappen van het maken van papier in de goede volgorde.",
+   "passage": "Tas 2: papier. Papier wordt gemaakt van houtvezels of van oud papier. In de fabriek worden de vezels met heel veel water vermengd tot een papje. Dat papje wordt platgeperst en gedroogd. Ons testresultaat: de papieren tas scheurde al na drie keer boodschappen doen, en in de regen werd hij slap. Een voordeel is dat papier makkelijk te recyclen is. Uit oud papier wordt weer nieuw papier gemaakt.",
+   "feedback": "Eerst vezels verzamelen, dan vermengen met water, dan platpersen en tot slot drogen.",
+   "items": [
+    {
+     "id": "o0",
+     "text": "Houtvezels of oud papier verzamelen"
+    },
+    {
+     "id": "o1",
+     "text": "De vezels met water vermengen tot een papje"
+    },
+    {
+     "id": "o2",
+     "text": "Het papje platpersen"
+    },
+    {
+     "id": "o3",
+     "text": "Het papier drogen"
+    }
+   ],
+   "correctOrder": [
+    "o0",
+    "o1",
+    "o2",
+    "o3"
+   ],
+   "points": 2
   },
-
   {
-    type: 'mark',
-    qtype: 'literal',
-    label: '🔍 Letterlijk',
-    labelClass: 'label-literal',
-    question: "Markeer in de tekst waarom leer lang meegaat.",
-    passage: "Leer is de huid van een dier, meestal een koe. Na het slachten wordt de huid schoongemaakt en bewerkt; dat heet looien. Looien kan met plantaardige stoffen, maar het gebeurt ook met chemische middelen die gevaarlijk zijn voor de gezondheid van de arbeiders. Er is bovendien veel water voor nodig. Daarna wordt het leer geverfd, soepel gemaakt en met een laagje beschermd. Leer is erg sterk en gaat daardoor tientallen jaren mee. Wie een leren tas koopt, hoeft dus veel minder vaak een nieuwe tas te kopen.",
-    correctSpan: { start: 62, end: 71 },
-    coreWords: [65, 69, 71],
-    feedback: "Het antwoord staat in de zin: \"Leer is erg sterk en gaat daardoor tientallen jaren mee.\" Het looien en verven staan er als productiestappen, niet als reden.",
-    points: 2
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst wat microplastics zijn.",
+   "passage": "Tas 3: plastic. Een plastic tas is gemaakt van een kunststof die uit aardolie komt. Aardolie is een grondstof die diep uit de aarde wordt opgepompt en die niet terug kan groeien. Plastic is licht en waterdicht. Het probleem: veel plastic tassen worden maar één keer gebruikt en belanden daarna in de natuur. Daar vergaat plastic heel langzaam. Het valt uit elkaar in piepkleine stukjes, die we microplastics noemen. Dieren kunnen die per ongeluk opeten.",
+   "feedback": "Het staat in de zin: \"Het valt uit elkaar in piepkleine stukjes, die we microplastics noemen.\"",
+   "correctSpan": {
+    "start": 58,
+    "end": 68
+   },
+   "coreWords": [
+    63,
+    64,
+    67
+   ],
+   "points": 2
   },
-
   {
-    type: 'mc',
-    qtype: "inferring",
-    label: "💡 Afleidend",
-    labelClass: "label-inferring",
-    question: "Waarom noemt de tekst kunstleer niet echt milieuvriendelijk?",
-    passage: "Kunstleer maak je door een lap stof te bedekken met een dun laagje kunststof. Het is glad, waterdicht en makkelijk schoon te maken, en er komt geen dier aan te pas. Toch is kunstleer niet echt milieuvriendelijk: de kunststof wordt gemaakt van aardolie en er zitten chemische middelen in. Bovendien slijt kunstleer sneller dan echt leer, waardoor je eerder iets nieuws nodig hebt.",
-    options: ["Omdat er dieren voor nodig zijn", "Omdat het van aardolie wordt gemaakt, chemische middelen bevat en sneller slijt", "Omdat het niet waterdicht is en dus snel kapotgaat in de regen", "Omdat kunstleer nooit gerecycled kan worden tot papier"],
-    correct: 1,
-    feedback: "De tekst noemt drie redenen: aardolie als grondstof, chemische middelen en snellere slijtage. Juist dat er geen dier aan te pas komt, is een voordeel.",
-    points: 1
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst waarom de huid gelooid wordt.",
+   "passage": "Tas 4: leer. Leer is gemaakt van de huid van dieren, meestal koeien. De huid wordt schoongemaakt en daarna gelooid: zo wordt hij soepel en gaat hij niet rotten. Bij het looien worden vaak chemicaliën gebruikt die schadelijk kunnen zijn voor de mensen die ermee werken en voor het water in de buurt. Leer is wel heel sterk. De moeder van Daan heeft een leren tas die al dertig jaar meegaat! Een lange levensduur betekent dat je minder nieuwe tassen hoeft te kopen.",
+   "feedback": "Het staat na de dubbele punt: \"zo wordt hij soepel en gaat hij niet rotten.\"",
+   "correctSpan": {
+    "start": 20,
+    "end": 28
+   },
+   "coreWords": [
+    23,
+    28
+   ],
+   "points": 2
   },
-
   {
-    type: 'mc',
-    qtype: "inferring",
-    label: "💡 Afleidend",
-    labelClass: "label-inferring",
-    question: "Waarom kiezen ontwerpers voor vrachtwagenzeil als materiaal voor een tas?",
-    passage: "Steeds meer ontwerpers maken tassen van spullen die anders worden weggegooid. Een populair materiaal is vrachtwagenzeil: het doek dat om de laadbak van een vrachtwagen zit. Dat zeil is gemaakt om jarenlang wind, regen en zon te doorstaan, dus het is supersterk. Elke tas ziet er bovendien anders uit, want elk stuk zeil heeft eigen kleuren, letters en krassen. Zo wordt afval een uniek product.",
-    options: ["Omdat zeil goedkoop in de winkel te koop is", "Omdat het supersterk is en elke tas er anders uitziet", "Omdat zeil lichter is dan alle andere materialen", "Omdat vrachtwagens anders niet kunnen rijden"],
-    correct: 1,
-    feedback: "De tekst noemt twee redenen: het zeil is gemaakt om weer en wind te doorstaan (dus sterk) en elk stuk heeft eigen kleuren en sporen, waardoor elke tas uniek is.",
-    points: 1
+   "type": "drag",
+   "qtype": "inferring",
+   "label": "Afleidend – Sorteren",
+   "labelClass": "label-inferring",
+   "question": "Is het een voordeel of een nadeel van kunstleer? Sleep elke zin naar de goede groep.",
+   "passage": "En kunstleer dan? Kunstleer lijkt op leer, maar er komt geen dier aan te pas. Het is een stof met een laagje kunststof erop. Kunstleer is goedkoop, waterdicht en makkelijk schoon te maken. Toch is het niet per se beter voor het milieu. De kunststof wordt namelijk ook van aardolie gemaakt. Bovendien slijt kunstleer sneller dan echt leer: na een paar jaar gaan er barstjes in zitten en laat het laagje los.",
+   "feedback": "Voordelen: geen dier, waterdicht, makkelijk schoon te maken. Nadelen: gemaakt van aardolie en het slijt sneller.",
+   "categories": [
+    "Voordeel",
+    "Nadeel"
+   ],
+   "items": [
+    {
+     "id": "i0",
+     "text": "Er komt geen dier aan te pas",
+     "correct": "Voordeel"
+    },
+    {
+     "id": "i1",
+     "text": "Het is waterdicht",
+     "correct": "Voordeel"
+    },
+    {
+     "id": "i2",
+     "text": "De kunststof komt van aardolie",
+     "correct": "Nadeel"
+    },
+    {
+     "id": "i3",
+     "text": "Het slijt sneller dan leer",
+     "correct": "Nadeel"
+    },
+    {
+     "id": "i4",
+     "text": "Het is makkelijk schoon te maken",
+     "correct": "Voordeel"
+    }
+   ],
+   "points": 2
   },
-
   {
-    type: 'mark',
-    qtype: 'literal',
-    label: '🔍 Letterlijk',
-    labelClass: 'label-literal',
-    question: "Markeer in de tekst waarvan plantaardig leer gemaakt wordt.",
-    passage: "Een van de nieuwste ideeën in de modewereld is plantaardig leer. Dat wordt niet van dierenhuiden gemaakt, maar van ananasbladeren, appelresten en paddenstoelen. De stof is stevig, lijkt op echt leer en er hoeft geen dier voor te sterven. Ook worden er tassen gemaakt van gerecyclede cementzakken, van oude autobanden en zelfs van aan elkaar geweven snoeppapiertjes. Wat vroeger afval was, is nu grondstof.",
-    correctSpan: { start: 18, end: 22 },
-    coreWords: [19, 20, 22],
-    feedback: "Het antwoord staat in de zin: \"Dat wordt niet van dierenhuiden gemaakt, maar van ananasbladeren, appelresten en paddenstoelen.\"",
-    points: 2
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst wat upcycling is.",
+   "passage": "Tas 5: vrachtwagenzeil. Deze tas is gemaakt van het zeil dat om de laadbak van een vrachtwagen heeft gezeten. Dat zeil is gemaakt om jarenlang tegen regen, wind en zon te kunnen. Als een vrachtwagen wordt afgedankt, zou het zeil weggegooid worden. Ontwerpers knippen er tassen van. Iets nieuws maken van afval noemen we upcycling. Elke tas is uniek, want elk stuk zeil heeft andere kleuren en krassen.",
+   "feedback": "Het staat in de zin: \"Iets nieuws maken van afval noemen we upcycling.\"",
+   "correctSpan": {
+    "start": 47,
+    "end": 54
+   },
+   "coreWords": [
+    48,
+    51,
+    54
+   ],
+   "points": 2
   },
-
   {
-    type: 'drag',
-    qtype: 'inferring',
-    label: '💡 Afleidend – Sorteren',
-    labelClass: 'label-inferring',
-    question: "Waar komt elk materiaal vandaan? Sleep ze naar de juiste herkomst.",
-    passage: "Katoen groeit aan de katoenplant en papier wordt van houtvezels gemaakt. Leer is de huid van een koe. Plastic en polyester worden gemaakt van aardolie. Tassen van oude autobanden of van gerecyclede cementzakken zijn gemaakt van materiaal dat al eerder gebruikt is.",
-    categories: ["Uit een plant", "Van een dier", "Uit aardolie", "Hergebruikt afval"],
-    items: [
-      { id: "i0", text: "Katoen", correct: "Uit een plant" },
-      { id: "i1", text: "Papier", correct: "Uit een plant" },
-      { id: "i2", text: "Leer", correct: "Van een dier" },
-      { id: "i3", text: "Polyester", correct: "Uit aardolie" },
-      { id: "i4", text: "Tas van oude autobanden", correct: "Hergebruikt afval" }
-    ],
-    feedback: "Katoen en papier komen uit planten (katoenplant en hout), leer van een koe, polyester uit aardolie, en een tas van autobanden is gemaakt van afval dat opnieuw gebruikt wordt.",
-    points: 2
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst waarvan plantaardig leer gemaakt kan worden.",
+   "passage": "Nieuwe materialen. Onderzoekers en ontwerpers zoeken steeds naar nieuwe materialen. Zo bestaat er plantaardig leer, gemaakt van ananasbladeren, appelschillen of paddenstoelen. Het voelt bijna als echt leer, maar er is geen dier voor nodig en er gaat minder kunststof in. Ook worden er tassen gemaakt van oude autobanden, petflessen en zelfs koffiezakken. Zo krijgt afval een tweede leven. Wat eerst afval was, wordt een nieuwe grondstof.",
+   "feedback": "Het staat in de zin: plantaardig leer, \"gemaakt van ananasbladeren, appelschillen of paddenstoelen.\"",
+   "correctSpan": {
+    "start": 15,
+    "end": 20
+   },
+   "coreWords": [
+    17,
+    18,
+    20
+   ],
+   "points": 2
   },
-
   {
-    type: 'mc',
-    qtype: "evaluating",
-    label: "💬 Evaluerend",
-    labelClass: "label-evaluating",
-    question: "Twee kinderen ruziën over de beste tas. Welke redenering is het best onderbouwd?",
-    passage: "Sam zegt: \"Papier is het beste, want dat kun je recyclen.\" Nour zegt: \"Leer is het beste, want dat gaat tientallen jaren mee.\" Uit de teksten blijkt dat papier snel scheurt, dat leer veel water en soms gevaarlijke chemie kost bij het looien, en dat je van een plastic tas juist minder afval maakt als je hem heel vaak opnieuw gebruikt. Hoe duurzaam een tas is, hangt dus niet alleen af van het materiaal, maar ook van hoe lang je hem gebruikt.",
-    options: ["Sam heeft gelijk: recyclen is altijd beter dan lang gebruiken", "Nour heeft gelijk: leer is altijd het duurzaamst, wat je er ook mee doet", "Geen van beiden helemaal: hoe lang je een tas gebruikt telt net zo goed mee als het materiaal", "Allebei fout: alleen een plastic tas is duurzaam"],
-    correct: 2,
-    feedback: "De tekst zegt het zelf in de laatste zin: duurzaamheid hangt af van het materiaal én van hoe lang je de tas gebruikt. Beide kinderen kijken maar naar één kant.",
-    points: 1
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst welke tas het snelst kapotging.",
+   "passage": "Onze resultaten. Na vier weken testen kwamen we tot deze conclusie. De papieren tas ging het snelst kapot. De plastic tas bleef heel als we hem steeds opnieuw gebruikten, maar hij werd steeds slapper. De katoenen tas en de tas van zeil waren nog als nieuw. Over de leren tas zijn we het niet eens geworden: hij is erg sterk, maar het looien is slecht voor mens en milieu. De meeste stemmen in de klas gingen naar de tas van vrachtwagenzeil.",
+   "feedback": "Het staat in de zin: \"De papieren tas ging het snelst kapot.\"",
+   "correctSpan": {
+    "start": 11,
+    "end": 17
+   },
+   "coreWords": [
+    12,
+    16
+   ],
+   "points": 2
   },
-
   {
-    type: 'mc',
-    qtype: "evaluating",
-    label: "💬 Evaluerend",
-    labelClass: "label-evaluating",
-    question: "In de tekst staat: \"Wat vroeger afval was, is nu grondstof.\" Wat wil de schrijver daarmee zeggen?",
-    passage: "Een tas van snoeppapiertjes, van een oude autoband of van een cementzak: ontwerpers gebruiken materiaal dat eerst in de vuilnisbak verdween. Wat vroeger afval was, is nu grondstof. Zo hoeven er minder nieuwe grondstoffen uit de natuur gehaald te worden en verdwijnt er minder in de verbrandingsoven. Bovendien is elk product uniek, want geen enkele oude autoband is hetzelfde.",
-    options: ["Dat afval tegenwoordig duurder is dan nieuwe materialen", "Dat spullen die eerst werden weggegooid nu dienen als materiaal voor iets nieuws", "Dat alle tassen tegenwoordig van snoeppapiertjes gemaakt worden", "Dat je afval nooit meer in de vuilnisbak mag gooien"],
-    correct: 1,
-    feedback: "De zin vat de alinea samen: materiaal dat eerst werd weggegooid, wordt nu gebruikt om iets nieuws van te maken. Daardoor zijn er minder nieuwe grondstoffen nodig.",
-    points: 1
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst wat volgens groep 8 de duurzaamste tas is.",
+   "passage": "Ons advies. De duurzaamste tas is de tas die je het vaakst gebruikt. Ook een plastic tas is minder slecht als je hem tientallen keren gebruikt in plaats van één keer. Koop daarom niet steeds een nieuwe tas, maar neem je oude tas mee naar de winkel. En is een tas kapot? Probeer hem eerst te repareren. Dat is ons advies voor iedereen op De Wilg. Namens groep 8: Daan, Esra, Mila en Yusuf.",
+   "feedback": "Het staat in de eerste zin van het advies: \"De duurzaamste tas is de tas die je het vaakst gebruikt.\"",
+   "correctSpan": {
+    "start": 2,
+    "end": 12
+   },
+   "coreWords": [
+    3,
+    11,
+    12
+   ],
+   "points": 2
   }
-
-];
+ ],
+ "8": [
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Waarom kijkt de klas naar drie dingen en niet alleen naar het materiaal?",
+   "passage": "Onze onderzoeksvraag. Iedereen gebruikt tassen: voor boodschappen, voor gym of voor school. Maar welk materiaal is het beste voor de aarde? Wij hebben vijf tassen onderzocht: een katoenen tas, een papieren tas, een plastic tas, een leren tas en een tas van vrachtwagenzeil. We letten op drie dingen: waar het materiaal van gemaakt wordt, hoeveel water en energie het kost, en hoe lang de tas meegaat. Dat laatste noemen we de levensduur.",
+   "feedback": "Een tas kan van een goed materiaal zijn, maar toch snel kapotgaan. Daarom kijk je naar meer dingen tegelijk.",
+   "options": [
+    "Omdat drie een mooi getal is",
+    "Omdat duurzaamheid afhangt van grondstof, water en energie én van hoe lang je iets gebruikt",
+    "Omdat de juf dat verplicht stelde",
+    "Omdat ze de prijs wilden vergelijken"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Waarom is biologisch katoen beter voor de natuur?",
+   "passage": "Tas 1: katoen. Katoen groeit aan de katoenplant. De witte pluizen worden geplukt, tot draad gesponnen en tot stof geweven. Katoen is zacht en sterk. Maar de plant heeft heel veel water nodig. Voor één katoenen tas kan wel duizenden liters water nodig zijn. Ook spuiten veel boeren bestrijdingsmiddelen tegen insecten en ziektes. Die middelen komen in de grond en in het water terecht. Biologisch katoen wordt verbouwd zonder die middelen.",
+   "feedback": "Gewone katoenboeren gebruiken middelen die \"in de grond en in het water terechtkomen\". Biologisch katoen wordt zonder die middelen verbouwd.",
+   "options": [
+    "Omdat het minder water nodig heeft",
+    "Omdat er geen bestrijdingsmiddelen in de grond en het water terechtkomen",
+    "Omdat het zachter is",
+    "Omdat het sneller groeit"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "evaluating",
+   "label": "Evaluerend",
+   "labelClass": "label-evaluating",
+   "question": "Een winkel zegt: \"Onze papieren tas is het beste voor het milieu.\" Klopt dat volgens dit testverslag helemaal?",
+   "passage": "Tas 2: papier. Papier wordt gemaakt van houtvezels of van oud papier. In de fabriek worden de vezels met heel veel water vermengd tot een papje. Dat papje wordt platgeperst en gedroogd. Ons testresultaat: de papieren tas scheurde al na drie keer boodschappen doen, en in de regen werd hij slap. Een voordeel is dat papier makkelijk te recyclen is. Uit oud papier wordt weer nieuw papier gemaakt.",
+   "feedback": "Papier is goed te recyclen. Maar het maken kost veel water en de tas \"scheurde al na drie keer\". Er zijn dus ook nadelen.",
+   "options": [
+    "Ja, papier heeft alleen maar voordelen",
+    "Niet helemaal: papier is goed te recyclen, maar de tas gaat snel kapot en het maken kost veel water",
+    "Nee, papier kun je niet recyclen",
+    "Ja, want papier is gemaakt van hout"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Waarom vermeldt het verslag dat aardolie \"niet terug kan groeien\"?",
+   "passage": "Tas 3: plastic. Een plastic tas is gemaakt van een kunststof die uit aardolie komt. Aardolie is een grondstof die diep uit de aarde wordt opgepompt en die niet terug kan groeien. Plastic is licht en waterdicht. Het probleem: veel plastic tassen worden maar één keer gebruikt en belanden daarna in de natuur. Daar vergaat plastic heel langzaam. Het valt uit elkaar in piepkleine stukjes, die we microplastics noemen. Dieren kunnen die per ongeluk opeten.",
+   "feedback": "Katoen en hout kun je opnieuw laten groeien. Aardolie niet: wat je oppompt, is op. Dat maakt plastic minder duurzaam.",
+   "options": [
+    "Om te laten zien dat aardolie ooit opraakt, anders dan katoen of hout",
+    "Omdat aardolie een plant is",
+    "Omdat plastic daardoor sterker wordt",
+    "Omdat aardolie in Nederland groeit"
+   ],
+   "correct": 0,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "evaluating",
+   "label": "Evaluerend",
+   "labelClass": "label-evaluating",
+   "question": "Waarom vertelt het verslag over de tas van de moeder van Daan?",
+   "passage": "Tas 4: leer. Leer is gemaakt van de huid van dieren, meestal koeien. De huid wordt schoongemaakt en daarna gelooid: zo wordt hij soepel en gaat hij niet rotten. Bij het looien worden vaak chemicaliën gebruikt die schadelijk kunnen zijn voor de mensen die ermee werken en voor het water in de buurt. Leer is wel heel sterk. De moeder van Daan heeft een leren tas die al dertig jaar meegaat! Een lange levensduur betekent dat je minder nieuwe tassen hoeft te kopen.",
+   "feedback": "De tas gaat \"al dertig jaar mee\". Dat is een voorbeeld dat laat zien hoe lang leer meegaat.",
+   "options": [
+    "Om reclame te maken voor leren tassen",
+    "Als voorbeeld van de lange levensduur van leer",
+    "Omdat Daan zijn moeder wil bedanken",
+    "Om te laten zien dat leer snel kapotgaat"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Wat betekent \"niet per se beter\" in deze tekst?",
+   "passage": "En kunstleer dan? Kunstleer lijkt op leer, maar er komt geen dier aan te pas. Het is een stof met een laagje kunststof erop. Kunstleer is goedkoop, waterdicht en makkelijk schoon te maken. Toch is het niet per se beter voor het milieu. De kunststof wordt namelijk ook van aardolie gemaakt. Bovendien slijt kunstleer sneller dan echt leer: na een paar jaar gaan er barstjes in zitten en laat het laagje los.",
+   "feedback": "\"Niet per se\" betekent niet zonder meer. Kunstleer heeft voordelen, maar ook nadelen. Het is dus niet vanzelf beter.",
+   "options": [
+    "Zeker beter",
+    "Niet vanzelfsprekend beter: het hangt ervan af waar je op let",
+    "Altijd slechter",
+    "Precies hetzelfde"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Waarom is een tas van vrachtwagenzeil volgens de tekst extra sterk?",
+   "passage": "Tas 5: vrachtwagenzeil. Deze tas is gemaakt van het zeil dat om de laadbak van een vrachtwagen heeft gezeten. Dat zeil is gemaakt om jarenlang tegen regen, wind en zon te kunnen. Als een vrachtwagen wordt afgedankt, zou het zeil weggegooid worden. Ontwerpers knippen er tassen van. Iets nieuws maken van afval noemen we upcycling. Elke tas is uniek, want elk stuk zeil heeft andere kleuren en krassen.",
+   "feedback": "Het zeil \"is gemaakt om jarenlang tegen regen, wind en zon te kunnen\". Dat maakt het ook als tas heel sterk.",
+   "options": [
+    "Omdat het zeil gemaakt is om jarenlang regen, wind en zon te doorstaan",
+    "Omdat er een vrachtwagen in zit",
+    "Omdat elke tas uniek is",
+    "Omdat ontwerpers er goed in knippen"
+   ],
+   "correct": 0,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Wat bedoelt de schrijver met \"Wat eerst afval was, wordt een nieuwe grondstof\"?",
+   "passage": "Nieuwe materialen. Onderzoekers en ontwerpers zoeken steeds naar nieuwe materialen. Zo bestaat er plantaardig leer, gemaakt van ananasbladeren, appelschillen of paddenstoelen. Het voelt bijna als echt leer, maar er is geen dier voor nodig en er gaat minder kunststof in. Ook worden er tassen gemaakt van oude autobanden, petflessen en zelfs koffiezakken. Zo krijgt afval een tweede leven. Wat eerst afval was, wordt een nieuwe grondstof.",
+   "feedback": "Een grondstof is het materiaal waar je iets van maakt. Oude banden en koffiezakken worden nu zo gebruikt: afval wordt grondstof.",
+   "options": [
+    "Dat afval verbrand wordt",
+    "Dat afval wordt gebruikt om nieuwe producten van te maken",
+    "Dat grondstoffen afval worden",
+    "Dat je afval moet scheiden"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Waarom kreeg de tas van vrachtwagenzeil volgens jou de meeste stemmen?",
+   "passage": "Onze resultaten. Na vier weken testen kwamen we tot deze conclusie. De papieren tas ging het snelst kapot. De plastic tas bleef heel als we hem steeds opnieuw gebruikten, maar hij werd steeds slapper. De katoenen tas en de tas van zeil waren nog als nieuw. Over de leren tas zijn we het niet eens geworden: hij is erg sterk, maar het looien is slecht voor mens en milieu. De meeste stemmen in de klas gingen naar de tas van vrachtwagenzeil.",
+   "feedback": "De zeiltas was \"nog als nieuw\" na vier weken. En hij was gemaakt van afval. Op twee punten scoorde hij dus goed.",
+   "options": [
+    "Omdat hij het goedkoopst was",
+    "Omdat hij sterk bleef én gemaakt was van afval, zodat er geen nieuwe grondstoffen nodig waren",
+    "Omdat hij het mooist versierd was",
+    "Omdat hij het lichtst was"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "evaluating",
+   "label": "Evaluerend",
+   "labelClass": "label-evaluating",
+   "question": "Het advies van groep 8 gaat eigenlijk niet over één materiaal. Waar gaat het dan wel over?",
+   "passage": "Ons advies. De duurzaamste tas is de tas die je het vaakst gebruikt. Ook een plastic tas is minder slecht als je hem tientallen keren gebruikt in plaats van één keer. Koop daarom niet steeds een nieuwe tas, maar neem je oude tas mee naar de winkel. En is een tas kapot? Probeer hem eerst te repareren. Dat is ons advies voor iedereen op De Wilg. Namens groep 8: Daan, Esra, Mila en Yusuf.",
+   "feedback": "Het advies gaat over gedrag: vaak gebruiken, meenemen en repareren. Dat maakt volgens groep 8 het grootste verschil.",
+   "options": [
+    "Over welke winkel de beste tassen verkoopt",
+    "Over hoe je met een tas omgaat: lang gebruiken en repareren",
+    "Over welke tas het mooist is",
+    "Over hoe je zelf een tas naait"
+   ],
+   "correct": 1,
+   "points": 1
+  }
+ ]
+};
+const GROEP = (function () {
+  try { const g = new URLSearchParams(location.search).get('groep'); if (g === '7' || g === '8') return g; } catch (e) {}
+  return '7';
+})();
+const questions = VRAGEN[GROEP];
+const SLEUTEL = 'bl_spullen-les2_g' + GROEP;
+document.getElementById('bl-eyebrow').textContent = 'Begrijpend lezen · Groep ' + GROEP;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // STATE
@@ -483,8 +755,8 @@ let markState = questions.map(() => new Set());
 // PERSISTENCE
 // ─────────────────────────────────────────────────────────────────────────────
 let paidSet = new Set();
-function loadPaid() { try { const s = localStorage.getItem('bl_spullen_les2_paid'); if (s) paidSet = new Set(JSON.parse(s)); } catch(e){} }
-function savePaid() { try { localStorage.setItem('bl_spullen_les2_paid', JSON.stringify([...paidSet])); } catch(e){} }
+function loadPaid() { try { const s = localStorage.getItem(SLEUTEL + '_paid'); if (s) paidSet = new Set(JSON.parse(s)); } catch(e){} }
+function savePaid() { try { localStorage.setItem(SLEUTEL + '_paid', JSON.stringify([...paidSet])); } catch(e){} }
 function loadProgress() {
   loadPaid();
   try {
@@ -493,7 +765,7 @@ function loadProgress() {
     // zodat die stand nooit meer in een les terechtkomt.
     localStorage.removeItem('bl_wereld_v2');
     localStorage.removeItem('bl_wereld_v2_paid');
-    const saved = localStorage.getItem('bl_spullen_les2');
+    const saved = localStorage.getItem(SLEUTEL);
     if (saved) {
       const d = JSON.parse(saved);
       // Alleen een stand die bij déze les hoort: evenveel vragen, anders weg.
@@ -503,7 +775,7 @@ function loadProgress() {
         answered = d.answered;
         score    = scores.reduce((a,b)=>a+b,0);
       } else {
-        localStorage.removeItem('bl_spullen_les2');
+        localStorage.removeItem(SLEUTEL);
       }
     }
   } catch(e){}
@@ -511,7 +783,7 @@ function loadProgress() {
 
 function saveProgress() {
   try {
-    localStorage.setItem('bl_spullen_les2', JSON.stringify({ scores, answered }));
+    localStorage.setItem(SLEUTEL, JSON.stringify({ scores, answered }));
   } catch(e){}
 }
 
@@ -608,10 +880,11 @@ function renderQuestion() {
   const area = document.getElementById('question-area');
   const nav  = document.getElementById('nav-row');
 
-  let html = `<div class="q-card${q.type === 'mc' && q.passage ? ' q-breed' : ''}">`;
+  let html = `<div class="q-card${(q.type === 'mc' || q.type === 'order') && q.passage ? ' q-breed' : ''}">`;
   html += `<span class="q-type-label ${q.labelClass}">${q.label}</span>`;
   html += `<h3>${q.question}</h3>`;
 
+  if (q.img) html += `<figure class="bl-fig"><img src="${q.img}" alt=""><figcaption>${q.bijschrift || ''}</figcaption></figure>`;
   if      (q.type === 'mark')  html += renderMark(q);
   else if (q.type === 'mc')    html += renderMC(q);
   else if (q.type === 'order') html += renderOrder(q);
@@ -802,7 +1075,8 @@ function answerMC(i) {
 // ─────────────────────────────────────────────────────────────────────────────
 function renderOrder(q) {
   const shuffled = [...q.items].sort(() => Math.random() - .5);
-  let html = '<div class="order-list" id="order-list">';
+  let html = q.passage ? `<div class="passage">${q.passage}</div>` : '';
+  html += '<div class="order-list" id="order-list">';
   shuffled.forEach(item => {
     html += `<div class="order-item" draggable="true" data-id="${item.id}">
       <span class="handle">⠿</span><span>${item.text}</span>
@@ -1013,7 +1287,7 @@ function showFinish() {
     `<div class="ov-title">${goed} van ${questions.length} vragen goed</div>` + rows;
   show('finish-screen');
   const opgaven = questions.map((q,i) => ({ vraag: q.question.replace(/<[^>]*>/g,''), puntenBehaald: scores[i], puntenMax: q.points }));
-  window.KennisKist?.slaResultaatOp?.('spullen-les2', score, total, { opgaven });
+  window.KennisKist?.slaResultaatOp?.('spullen-les2', score, total, { opgaven, groep: +GROEP });
   window.KennisKist?.toonInlogstatus?.(document.getElementById('kkStatus'));
 }
 
@@ -1022,7 +1296,7 @@ function restartQuiz() {
   scores   = new Array(questions.length).fill(0);
   answered = new Array(questions.length).fill(false);
   markState= questions.map(() => new Set());
-  localStorage.removeItem('bl_spullen_les2');
+  localStorage.removeItem(SLEUTEL);
   document.getElementById('score-num').textContent = 0;
   show('quiz-screen');
   renderQuestion();
@@ -1033,7 +1307,7 @@ function restartQuiz() {
 // eerste vraag die nog open staat.
 (function hervatNaVerversen() {
   try {
-    const d = JSON.parse(localStorage.getItem('bl_spullen_les2') || 'null');
+    const d = JSON.parse(localStorage.getItem(SLEUTEL) || 'null');
     if (d && Array.isArray(d.answered) && d.answered.length === questions.length
         && d.answered.some(Boolean)) startQuiz();
   } catch (e) {}

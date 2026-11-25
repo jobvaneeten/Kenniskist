@@ -53,12 +53,21 @@ en wat de licentie toestaat. Bedoeld als checklist bij commercieel gebruik.
 
 ## Al verwijderd om deze reden
 
+- Begrijpend lezen: de thema's die op Blink waren gebaseerd ("Fantastische
+  families" en "Duurzaam design") zijn helemaal opnieuw geschreven als
+  "Strijd om vrijheid" en "Van grondstof tot product": eigen teksten, eigen
+  vragen en eigen vorm, alleen het onderwerp is hetzelfde. De 41 plaatjes uit
+  de Blink-lesbladen (`public/begrijpend-lezen/families/`) zijn weg; nieuwe
+  plaatjes maakt `scripts/begrijpend/maak-plaatjes.mjs` met AI.
+
 - `public/rekenen/` — originele uitgevers-PDF's van Pluspunt 4 (Malmberg),
   herkenbaar aan de InDesign-namen `570321_PP4_7_09_PB_EXTRA_FS.indd` en
   `570326_PP4_7_09_PB_EXTRA_S.indd`. Werden nergens in de app gebruikt.
 - `public/hulp/` — uitlegplaatjes uit hetzelfde werkboek (blok 10).
 - `public/iep_img/` en `src/games/IepOefenen.jsx` — vraagafbeeldingen uit de IEP
   Eindtoets (Bureau ICE). De tool was al onbereikbaar.
+- `scripts/gen_questions.cjs` en `scripts/add_answers.cjs` — 150 herschreven
+  IEP-sommen met antwoorden, de bron van die oude tool.
 - `public/blok10/` en `src/games/blok10.js` — werkbladscreenshots uit Pluspunt.
 - De clubtenues (`ajaxshirt.glb`, `psvshirt.glb`, `rbshirt.glb` met hun
   textures, `ajax_check.png`, `psv_check.png`, `logo_ajax.svg`, `logo_psv.svg`,

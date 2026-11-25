@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Begrijpend Lezen – Kinderen aan het werk</title>
+<title>Begrijpend lezen – Kinderarbeid</title>
 <link href="/fonts/fonts.css" rel="stylesheet">
 <style>
   :root {
@@ -267,6 +267,11 @@
     .drag-container { flex-direction:column; }
   }
   @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  .bl-fig { margin:0 0 14px; }
+  .bl-fig img { display:block; max-width:100%; max-height:300px; border-radius:12px; margin:0 auto; box-shadow:0 8px 24px -10px rgba(0,0,0,.6); }
+  .bl-fig figcaption { font-size:.85rem; color:var(--ink-soft); text-align:center; margin-top:6px; font-style:italic; }
+  .bl-cover { display:block; width:min(360px,100%); aspect-ratio:4/3; object-fit:cover; margin:0 auto 14px; border-radius:16px; box-shadow:0 10px 28px -12px rgba(0,0,0,.7); }
+  @media(min-width:1000px){ .q-breed > .bl-fig { grid-column:1; } }
 </style>
 <style>.order-item,.drag-item{touch-action:none}.order-item.dragging,.drag-item.dragging{opacity:.6}</style>
 <script src="/kenniskist-login.js"></script>
@@ -274,9 +279,9 @@
 <body>
 
 <header>
-  <p class="eyebrow">Begrijpend lezen · Groep 7 · Les 4</p>
-  <h1>Kinderen aan het werk</h1>
-  <p>Thema: Duurzaam design</p>
+  <p class="eyebrow" id="bl-eyebrow">Begrijpend lezen</p>
+  <h1>Kinderarbeid</h1>
+  <p>Thema: Van grondstof tot product</p>
 </header>
 <div id="progress-bar-wrap"><div id="progress-bar"></div></div>
 <div id="score-badge">⭐ <span id="score-num">0</span> pt</div>
@@ -284,13 +289,13 @@
 <main>
 
 <div id="intro-screen" class="screen active">
-  <div class="compass">🧒</div>
-  <h2>Werken in plaats van naar school</h2>
-  <p>Je leest teksten over kinderarbeid in de negentiende eeuw en de wetten daartegen, en beantwoordt tien vragen. Bij <strong>letterlijke vragen</strong> markeer je het antwoord <em>in de tekst zelf</em>. Klik woorden aan om ze te selecteren.</p>
+  
+  <h2>Klaar om te lezen?</h2>
+  <p>Je leest een dossier over kinderarbeid in Nederland. Het bestaat uit krantenberichten uit de negentiende eeuw en uitleg van nu. De krantenberichten zijn nagemaakt, de geschiedenis is echt. Je beantwoordt tien vragen. Bij <strong>letterlijke vragen</strong> markeer je het antwoord <em>in de tekst zelf</em>. Klik woorden aan om ze te selecteren.</p>
   <div class="legend">
-    <span style="background:#d0e8ff;color:#0a3a6e;">🔍 Letterlijk – markeer in de tekst</span>
-    <span style="background:#fde8c0;color:#7a3d00;">💡 Afleidend</span>
-    <span style="background:#dff0e2;color:#1a5c2a;">💬 Evaluerend</span>
+    <span style="background:#d0e8ff;color:#0a3a6e;">Letterlijk – markeer in de tekst</span>
+    <span style="background:#fde8c0;color:#7a3d00;">Afleidend</span>
+    <span style="background:#dff0e2;color:#1a5c2a;">Evaluerend</span>
   </div>
   <button class="btn btn-primary" onclick="startQuiz()">Begin de oefening →</button>
 </div>
@@ -303,7 +308,7 @@
 
 <div id="finish-screen" class="screen">
   <div class="medal" id="finish-medal">🏅</div>
-  <h2>Goed gedaan, onderzoeker!</h2>
+  <h2>Knap gelezen, onderzoeker!</h2>
   <div class="score-big" id="finish-score">0/0</div>
   <p id="finish-msg"></p>
   <div id="finish-overview"></div>
@@ -327,145 +332,408 @@
 // correctSpan: [startWordIndex, endWordIndex] (inclusive) = de juiste selectie.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const questions = [
-
+const VRAGEN = {
+ "7": [
   {
-    type: 'mark',
-    qtype: 'literal',
-    label: '🔍 Letterlijk',
-    labelClass: 'label-literal',
-    question: "Markeer in de tekst waarom kinderen in de negentiende eeuw moesten werken.",
-    passage: "Stel je voor: je bent elf jaar en in plaats van naar school gaan, werk je elke dag. Voor veel kinderen in de negentiende eeuw was dat gewoon. Gezinnen waren groot en de ouders verdienden te weinig geld om al die monden te voeden, dus moesten de kinderen meeverdienen. Op het platteland hielpen ze met aardappelen poten, onkruid wieden en koeien melken. In de stad gingen ze naar de fabriek. Van spelen, lezen of voetballen kwam weinig terecht.",
-    correctSpan: { start: 32, end: 48 },
-    coreWords: [36, 37, 48],
-    feedback: "Het antwoord staat in de zin: \"Gezinnen waren groot en de ouders verdienden te weinig geld om al die monden te voeden, dus moesten de kinderen meeverdienen.\"",
-    points: 2
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst waarom kinderen moesten meewerken.",
+   "passage": "Uitleg: werken in plaats van spelen. Rond 1850 was het in Nederland heel gewoon dat kinderen werkten. Gezinnen waren groot en de lonen van de ouders waren laag. Zonder het geld van de kinderen was er niet genoeg om eten en huur te betalen. Op het platteland hielpen kinderen met wieden, oogsten en het hoeden van vee. In de stad werkten ze in werkplaatsen en fabrieken. Naar school gaan was niet verplicht.",
+   "feedback": "Het staat in de zin: \"Zonder het geld van de kinderen was er niet genoeg om eten en huur te betalen.\"",
+   "correctSpan": {
+    "start": 28,
+    "end": 43
+   },
+   "coreWords": [
+    30,
+    39,
+    41
+   ],
+   "points": 2
   },
-
   {
-    type: 'mark',
-    qtype: 'literal',
-    label: '🔍 Letterlijk',
-    labelClass: 'label-literal',
-    question: "Markeer in de tekst waarom kinderen vaak het fijne priegelwerk deden.",
-    passage: "Niet alle kinderen werkten op het land of in de fabriek. In sommige streken maakten hele gezinnen thuis producten die ze daarna verkochten. Kinderen hielpen met het spinnen van draden, het weven van lappen stof of het vlechten van manden. Volwassenen zetten kinderen graag in voor dit fijne priegelwerk, omdat ze met hun kleine handen en vingers beter bij de draadjes konden. Soms hielpen kinderen van vijf jaar al mee met kleine klusjes.",
-    correctSpan: { start: 49, end: 61 },
-    coreWords: [53, 54, 56],
-    feedback: "Het antwoord staat in de zin: \"Volwassenen zetten kinderen graag in voor dit fijne priegelwerk, omdat ze met hun kleine handen en vingers beter bij de draadjes konden.\"",
-    points: 2
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst wat de kinderen in de spinnerij moesten doen.",
+   "passage": "Krantenbericht, 1863: \"In een spinnerij in Leiden zagen wij kinderen van acht en negen jaar aan het werk. Zij moesten onder de draaiende machines kruipen om pluisjes en afgebroken draadjes weg te halen. Volwassenen pasten daar niet. De kinderen werkten van zes uur ’s morgens tot acht uur ’s avonds, met maar een korte pauze. Velen zagen bleek en hoestten. Hun loon was een fractie van dat van een volwassene.\"",
+   "feedback": "Het staat in de zin: \"Zij moesten onder de draaiende machines kruipen om pluisjes en afgebroken draadjes weg te halen.\"",
+   "correctSpan": {
+    "start": 18,
+    "end": 32
+   },
+   "coreWords": [
+    24,
+    26,
+    29
+   ],
+   "points": 2
   },
-
   {
-    type: 'mark',
-    qtype: 'literal',
-    label: '🔍 Letterlijk',
-    labelClass: 'label-literal',
-    question: "Markeer in de tekst waarom fabrieksdirecteuren blij waren met kinderen.",
-    passage: "In de loop van de negentiende eeuw kwamen er steeds meer fabrieken met machines. In plaats van thuis te werken, gingen mensen naar de fabriek. De lonen waren laag, dus hielpen kinderen mee. Sommigen begonnen al op hun zevende. Fabrieksdirecteuren waren blij met die kinderen, want zij hoefden hen veel minder te betalen dan volwassenen. Zo hielden de directeuren meer geld over. Het werk zelf was zwaar: werkdagen van soms veertien uur, zes dagen per week.",
-    correctSpan: { start: 45, end: 54 },
-    coreWords: [50, 52, 54],
-    feedback: "Het antwoord staat in de zin: \"Fabrieksdirecteuren waren blij met die kinderen, want zij hoefden hen veel minder te betalen dan volwassenen.\"",
-    points: 2
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Waarom zorgde vermoeidheid voor meer ongelukken?",
+   "passage": "Uitleg: gevaarlijk werk. Fabriekswerk was zwaar en gevaarlijk voor kinderen. De machines hadden geen beschermkappen. Een mouw of een lok haar kon zomaar tussen de tandwielen raken. Door de lange dagen waren kinderen vaak oververmoeid, en wie moe is, let minder goed op. Ook was de lucht vol stof en pluis. Veel fabriekskinderen bleven klein, werden vaak ziek en konden niet lezen of schrijven, omdat ze nooit naar school gingen.",
+   "feedback": "De tekst zegt: \"wie moe is, let minder goed op.\" Bij gevaarlijke machines kan dat tot ongelukken leiden.",
+   "options": [
+    "Omdat moe zijn de machines sneller liet draaien",
+    "Omdat je minder goed oplet als je moe bent",
+    "Omdat vermoeide kinderen groter werden",
+    "Omdat er dan minder stof was"
+   ],
+   "correct": 1,
+   "points": 1
   },
-
   {
-    type: 'mark',
-    qtype: 'literal',
-    label: '🔍 Letterlijk',
-    labelClass: 'label-literal',
-    question: "Markeer in de tekst waarom het werk in de fabriek gevaarlijk was voor kinderen.",
-    passage: "Kinderen werkten ook ’s nachts, want de machines draaiden dag en nacht door. Door het harde werk en het gebrek aan slaap raakten veel kinderen uitgeput of werden ze ziek. Soms vielen ze tijdens het werk in slaap. Bovendien moesten kinderen vaak werken op plekken waar volwassenen niet bij konden, vlak bij draaiende tandwielen en riemen. Wie daar met een mouw of een haarlok in kwam, raakte zwaargewond. Beschermkappen om de machines waren er nog niet.",
-    correctSpan: { start: 40, end: 55 },
-    coreWords: [44, 52, 53],
-    feedback: "Het antwoord staat in de zin: \"Bovendien moesten kinderen vaak werken op plekken waar volwassenen niet bij konden, vlak bij draaiende tandwielen en riemen.\"",
-    points: 2
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst wat een wetsvoorstel is.",
+   "passage": "Krantenbericht, 1874: \"Het Kamerlid Samuel van Houten heeft een wetsvoorstel ingediend tegen kinderarbeid. Een wetsvoorstel is een plan voor een nieuwe wet, waarover het parlement moet stemmen. Volgens Van Houten horen kinderen op school en niet in de fabriek. Een land heeft niets aan arbeiders die nooit iets geleerd hebben, zegt hij. Het voorstel zorgt voor felle discussies in de Tweede Kamer.\"",
+   "feedback": "Het staat in de zin: \"Een wetsvoorstel is een plan voor een nieuwe wet, waarover het parlement moet stemmen.\"",
+   "correctSpan": {
+    "start": 13,
+    "end": 26
+   },
+   "coreWords": [
+    17,
+    21,
+    26
+   ],
+   "points": 2
   },
-
   {
-    type: 'mc',
-    qtype: "inferring",
-    label: "💡 Afleidend",
-    labelClass: "label-inferring",
-    question: "Waarom zaten de klassen in de oogsttijd vaak leeg?",
-    passage: "Op het platteland hielpen kinderen mee op het land van hun ouders of van de boer. Vooral in de zomer was er veel te doen: dan moest alles tegelijk geoogst worden voordat het weer omsloeg. In die periode gingen kinderen meestal niet naar school. Tijdens de oogst waren de klassen dan ook vaak helemaal leeg. School was in die tijd nog niet verplicht.",
-    options: ["Omdat de scholen in de zomer gesloten waren voor onderhoud", "Omdat kinderen op het land moesten helpen met de oogst en school nog niet verplicht was", "Omdat de meesters zelf in de fabriek werkten", "Omdat kinderen in de zomer bij familie logeerden"],
-    correct: 1,
-    feedback: "De tekst noemt twee dingen die samen het antwoord vormen: in de oogsttijd was er veel werk op het land, en school was toen nog niet verplicht.",
-    points: 1
+   "type": "drag",
+   "qtype": "inferring",
+   "label": "Afleidend – Sorteren",
+   "labelClass": "label-inferring",
+   "question": "Welke reden hoort bij wie? Sleep elke zin naar de goede groep.",
+   "passage": "Krantenbericht, 1874: \"Niet iedereen is blij met het plan van Van Houten. Fabrikanten zeggen dat zij zonder kinderen hun fabrieken niet goedkoop kunnen laten draaien. Ook veel ouders zijn ongerust. Een moeder van zes kinderen vertelde ons: Als mijn twee oudsten niet meer mogen werken, kunnen wij de huur niet betalen. Sommige tegenstanders stellen voor om de kinderen in de fabriek zelf een paar uur les te geven.\"",
+   "feedback": "Fabrikanten waren bang voor hogere kosten. Ouders waren bang dat ze te weinig geld hadden voor huur en eten.",
+   "categories": [
+    "Fabrikanten",
+    "Ouders"
+   ],
+   "items": [
+    {
+     "id": "i0",
+     "text": "Zonder kinderen kunnen we niet goedkoop produceren",
+     "correct": "Fabrikanten"
+    },
+    {
+     "id": "i1",
+     "text": "Zonder het loon van de kinderen kunnen we de huur niet betalen",
+     "correct": "Ouders"
+    },
+    {
+     "id": "i2",
+     "text": "De fabriek moet goedkoop blijven draaien",
+     "correct": "Fabrikanten"
+    },
+    {
+     "id": "i3",
+     "text": "Wij hebben het geld van onze oudsten nodig",
+     "correct": "Ouders"
+    }
+   ],
+   "points": 2
   },
-
   {
-    type: 'mark',
-    qtype: 'literal',
-    label: '🔍 Letterlijk',
-    labelClass: 'label-literal',
-    question: "Markeer in de tekst waarom Samuel van Houten kinderarbeid wilde verbieden.",
-    passage: "Niet iedereen vond kinderarbeid normaal. De politicus Samuel van Houten vond het onverstandig dat jonge kinderen moesten werken. Volgens hem had de samenleving, en zelfs de fabriekseigenaar zelf, veel meer aan kinderen met een opleiding. Daarom schreef hij een wet om kinderarbeid te verbieden. Veel mensen steunden hem: zij vonden de werkomstandigheden veel te zwaar voor kinderen. Na vijf dagen discussie in de Tweede Kamer werd de wet op 19 september 1874 aangenomen.",
-    correctSpan: { start: 21, end: 34 },
-    coreWords: [22, 31, 34],
-    feedback: "Het antwoord staat in de zin: \"Volgens hem had de samenleving, en zelfs de fabriekseigenaar zelf, veel meer aan kinderen met een opleiding.\"",
-    points: 2
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst wat er in het Kinderwetje stond.",
+   "passage": "Uitleg: het Kinderwetje. In 1874 werd de wet van Van Houten aangenomen. Hij werd al snel het Kinderwetje genoemd. In de wet stond dat kinderen onder de twaalf jaar niet meer in fabrieken mochten werken. Dat was een belangrijke stap. Maar de wet had ook grote gaten. Werken op het land, in de huishouding of thuis bleef gewoon toegestaan. En er stond niets in over naar school gaan.",
+   "feedback": "Het staat in de zin: \"In de wet stond dat kinderen onder de twaalf jaar niet meer in fabrieken mochten werken.\"",
+   "correctSpan": {
+    "start": 24,
+    "end": 34
+   },
+   "coreWords": [
+    27,
+    32
+   ],
+   "points": 2
   },
-
   {
-    type: 'mc',
-    qtype: "inferring",
-    label: "💡 Afleidend",
-    labelClass: "label-inferring",
-    question: "Waarom waren sommige ouders tegen de wet tegen kinderarbeid?",
-    passage: "Er waren ook tegenstanders van de nieuwe wet. Fabriekseigenaren wilden hun goedkope arbeidskrachten niet kwijt. Ouders waren bang dat ze zonder het loon van hun kinderen te weinig geld zouden overhouden voor eten en huur. Sommige tegenstanders stelden voor om de kinderen dan maar les te geven ín de fabriek, zodat ze konden blijven werken én iets leerden.",
-    options: ["Omdat ze vonden dat school te moeilijk was voor hun kinderen", "Omdat ze bang waren te weinig geld over te houden zonder het loon van hun kinderen", "Omdat ze zelf in de fabriek wilden werken", "Omdat ze het niet eens waren met Samuel van Houten als persoon"],
-    correct: 1,
-    feedback: "De tekst zegt: \"Ouders waren bang dat ze zonder het loon van hun kinderen te weinig geld zouden overhouden voor eten en huur.\"",
-    points: 1
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst wat een wet naleven betekent.",
+   "passage": "Uitleg: niemand controleerde. Na 1874 hielden veel fabrikanten zich niet aan het Kinderwetje. Er was namelijk niemand die controleerde of de wet werd nageleefd. Een wet naleven betekent dat je je eraan houdt. Pas in 1890 kwam de arbeidsinspectie. Inspecteurs gingen onverwacht langs bij fabrieken. Werkten daar toch jonge kinderen, dan kreeg de eigenaar een boete. Vanaf toen werd het Kinderwetje veel beter nageleefd.",
+   "feedback": "Het staat in de zin: \"Een wet naleven betekent dat je je eraan houdt.\"",
+   "correctSpan": {
+    "start": 24,
+    "end": 32
+   },
+   "coreWords": [
+    26,
+    32
+   ],
+   "points": 2
   },
-
   {
-    type: 'drag',
-    qtype: 'inferring',
-    label: '💡 Afleidend – Sorteren',
-    labelClass: 'label-inferring',
-    question: "Wat stond er wél en wat stond er níét in het Kinderwetje van Van Houten uit 1874? Sleep de zinnen naar de juiste groep.",
-    passage: "In het Kinderwetje van Van Houten stond dat kinderen onder de twaalf jaar niet meer in fabrieken mochten werken. Thuis werken, werken in de verzorging en werken op het land mocht nog wel. De wet zei niets over naar school gaan. Pas in 1901 kwam de Leerplichtwet, die alle kinderen van zes tot twaalf jaar verplichtte naar school te gaan.",
-    categories: ["Stond in het Kinderwetje", "Stond er niet in"],
-    items: [
-      { id: "i0", text: "Onder de twaalf niet in de fabriek", correct: "Stond in het Kinderwetje" },
-      { id: "i1", text: "Werken op het land mocht nog wel", correct: "Stond in het Kinderwetje" },
-      { id: "i2", text: "Alle kinderen moeten naar school", correct: "Stond er niet in" },
-      { id: "i3", text: "Thuis werken mocht nog wel", correct: "Stond in het Kinderwetje" },
-      { id: "i4", text: "Kinderen mogen helemaal niet meer werken", correct: "Stond er niet in" }
-    ],
-    feedback: "Het Kinderwetje verbood alleen fabriekswerk onder de twaalf. Thuis, in de verzorging en op het land mocht nog wel. De schoolplicht kwam pas met de Leerplichtwet van 1901.",
-    points: 2
+   "type": "order",
+   "qtype": "inferring",
+   "label": "Afleidend – Volgorde",
+   "labelClass": "label-inferring",
+   "question": "Zet de gebeurtenissen in de goede volgorde. Begin met wat het eerst gebeurde.",
+   "passage": "Uitleg: de leerplicht. In 1901 kwam de Leerplichtwet. Vanaf toen moesten alle kinderen van zes tot twaalf jaar naar school. Ouders die hun kinderen thuishielden om te werken, konden een boete krijgen. De leerplicht pakte kinderarbeid op een slimme manier aan: wie overdag op school zit, kan niet tegelijk op het land of in de fabriek werken. Langzaam verdween kinderarbeid zo uit bijna alle soorten werk.",
+   "feedback": "1863: het krantenbericht. 1874: het Kinderwetje. 1890: de arbeidsinspectie. 1901: de Leerplichtwet.",
+   "items": [
+    {
+     "id": "o0",
+     "text": "Een krant schrijft over kinderen in een spinnerij"
+    },
+    {
+     "id": "o1",
+     "text": "Het Kinderwetje wordt aangenomen"
+    },
+    {
+     "id": "o2",
+     "text": "De arbeidsinspectie begint met controleren"
+    },
+    {
+     "id": "o3",
+     "text": "De Leerplichtwet gaat in"
+    }
+   ],
+   "correctOrder": [
+    "o0",
+    "o1",
+    "o2",
+    "o3"
+   ],
+   "points": 2
   },
-
   {
-    type: 'mc',
-    qtype: "evaluating",
-    label: "💬 Evaluerend",
-    labelClass: "label-evaluating",
-    question: "Waarom veranderde er in het begin weinig na het Kinderwetje van 1874?",
-    passage: "In het begin hielden veel fabriekseigenaren zich niet aan de nieuwe wet. Er werd namelijk niet gecontroleerd, dus liepen ze weinig risico. Dat veranderde toen er arbeidsinspecteurs kwamen. Zij gingen in de fabrieken kijken of er nog jonge kinderen aan het werk waren. Was dat zo, dan kreeg de baas een hoge boete en soms moest hij zelfs de gevangenis in. Zo werd het steeds moeilijker om de wet te negeren.",
-    options: ["Omdat de wet pas in 1901 werd opgeschreven", "Omdat er niemand controleerde of de fabrieken zich aan de wet hielden", "Omdat de kinderen zelf graag in de fabriek bleven werken", "Omdat de boetes te laag waren om te innen"],
-    correct: 1,
-    feedback: "De tekst legt uit dat er in het begin niet werd gecontroleerd. Pas met de arbeidsinspecteurs, boetes en zelfs gevangenisstraf werd het moeilijk om de wet te negeren.",
-    points: 1
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst hoeveel kinderen er wereldwijd nog werken.",
+   "passage": "Uitleg: en nu? In Nederland is kinderarbeid nu verboden. Kinderen mogen alleen licht werk doen, zoals een krantenwijk vanaf dertien jaar, en niet te veel uren. Maar wereldwijd werken nog ongeveer honderdzestig miljoen kinderen. Ze werken bijvoorbeeld op plantages, in mijnen of in naaiateliers. Sommige van die producten belanden ook in onze winkels: denk aan chocolade, kleding of de grondstoffen in je telefoon.",
+   "feedback": "Het staat in de zin: \"Maar wereldwijd werken nog ongeveer honderdzestig miljoen kinderen.\"",
+   "correctSpan": {
+    "start": 26,
+    "end": 33
+   },
+   "coreWords": [
+    27,
+    31,
+    32
+   ],
+   "points": 2
   },
-
   {
-    type: 'mc',
-    qtype: "evaluating",
-    label: "💬 Evaluerend",
-    labelClass: "label-evaluating",
-    question: "Waarom hielp de Leerplichtwet van 1901 beter tegen kinderarbeid dan het Kinderwetje van 1874?",
-    passage: "Het Kinderwetje verbood alleen werk in de fabriek. Kinderen konden dus nog steeds de hele dag op het land of thuis werken. De Leerplichtwet van 1901 pakte het anders aan: alle kinderen van zes tot twaalf moesten naar school. Wie op school zit, kan niet tegelijk de hele dag werken. Daardoor verdween kinderarbeid langzaam uit alle soorten werk, niet alleen uit de fabriek.",
-    options: ["Omdat de Leerplichtwet hogere boetes gaf aan fabriekseigenaren", "Omdat kinderen die verplicht naar school gaan, niet tegelijk de hele dag kunnen werken", "Omdat de Leerplichtwet fabrieken helemaal verbood", "Omdat kinderen op school geld verdienden"],
-    correct: 1,
-    feedback: "De tekst redeneert zo: het Kinderwetje gold alleen voor fabrieken, maar wie verplicht op school zit, kan nergens de hele dag werken. Daardoor verdween kinderarbeid uit álle soorten werk.",
-    points: 1
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst wat een keurmerk is.",
+   "passage": "Uitleg: wat kun jij doen? Steeds meer bedrijven controleren of er in hun fabrieken en bij hun leveranciers kinderen werken. Sommige producten hebben een keurmerk: een logo dat laat zien dat het product aan bepaalde afspraken voldoet, bijvoorbeeld dat er geen kinderarbeid aan te pas kwam. Je kunt daarop letten als je iets koopt. Ook kun je vragen stellen aan een winkel. Hoe meer mensen dat doen, hoe meer bedrijven erop gaan letten.",
+   "feedback": "De uitleg staat na de dubbele punt: \"een logo dat laat zien dat het product aan bepaalde afspraken voldoet\".",
+   "correctSpan": {
+    "start": 25,
+    "end": 36
+   },
+   "coreWords": [
+    26,
+    35
+   ],
+   "points": 2
   }
-
-];
+ ],
+ "8": [
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Waarom vermeldt de tekst dat naar school gaan niet verplicht was?",
+   "passage": "Uitleg: werken in plaats van spelen. Rond 1850 was het in Nederland heel gewoon dat kinderen werkten. Gezinnen waren groot en de lonen van de ouders waren laag. Zonder het geld van de kinderen was er niet genoeg om eten en huur te betalen. Op het platteland hielpen kinderen met wieden, oogsten en het hoeden van vee. In de stad werkten ze in werkplaatsen en fabrieken. Naar school gaan was niet verplicht.",
+   "feedback": "Als school niet verplicht is, kun je je kind ook laten werken. Voor arme gezinnen was het loon van een kind dan vaak belangrijker.",
+   "options": [
+    "Omdat er geen scholen bestonden",
+    "Omdat ouders daardoor konden kiezen om hun kinderen te laten werken in plaats van te leren",
+    "Omdat kinderen niet wilden leren",
+    "Omdat scholen alleen in de zomer open waren"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Waarom zetten fabriekseigenaren graag kinderen aan het werk volgens dit bericht?",
+   "passage": "Krantenbericht, 1863: \"In een spinnerij in Leiden zagen wij kinderen van acht en negen jaar aan het werk. Zij moesten onder de draaiende machines kruipen om pluisjes en afgebroken draadjes weg te halen. Volwassenen pasten daar niet. De kinderen werkten van zes uur ’s morgens tot acht uur ’s avonds, met maar een korte pauze. Velen zagen bleek en hoestten. Hun loon was een fractie van dat van een volwassene.\"",
+   "feedback": "Kinderen pasten onder de machines, waar \"volwassenen niet pasten\". En hun loon was \"een fractie\" van dat van een volwassene: veel goedkoper dus.",
+   "options": [
+    "Omdat kinderen het werk leuk vonden",
+    "Omdat kinderen klein waren en veel minder loon kregen",
+    "Omdat kinderen sneller konden rekenen",
+    "Omdat de wet dat verplichtte"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mark",
+   "qtype": "literal",
+   "label": "Letterlijk",
+   "labelClass": "label-literal",
+   "question": "Markeer in de tekst welke gevolgen fabriekswerk op lange termijn had voor kinderen.",
+   "passage": "Uitleg: gevaarlijk werk. Fabriekswerk was zwaar en gevaarlijk voor kinderen. De machines hadden geen beschermkappen. Een mouw of een lok haar kon zomaar tussen de tandwielen raken. Door de lange dagen waren kinderen vaak oververmoeid, en wie moe is, let minder goed op. Ook was de lucht vol stof en pluis. Veel fabriekskinderen bleven klein, werden vaak ziek en konden niet lezen of schrijven, omdat ze nooit naar school gingen.",
+   "feedback": "Het staat in de laatste zin: ze \"bleven klein, werden vaak ziek en konden niet lezen of schrijven\".",
+   "correctSpan": {
+    "start": 51,
+    "end": 69
+   },
+   "coreWords": [
+    54,
+    57,
+    61
+   ],
+   "points": 2
+  },
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Welk argument gebruikt Van Houten om zijn wet te verdedigen?",
+   "passage": "Krantenbericht, 1874: \"Het Kamerlid Samuel van Houten heeft een wetsvoorstel ingediend tegen kinderarbeid. Een wetsvoorstel is een plan voor een nieuwe wet, waarover het parlement moet stemmen. Volgens Van Houten horen kinderen op school en niet in de fabriek. Een land heeft niets aan arbeiders die nooit iets geleerd hebben, zegt hij. Het voorstel zorgt voor felle discussies in de Tweede Kamer.\"",
+   "feedback": "\"Een land heeft niets aan arbeiders die nooit iets geleerd hebben.\" Hij vindt onderwijs voor iedereen nuttig.",
+   "options": [
+    "Dat kinderen te duur zijn voor fabrieken",
+    "Dat een land meer heeft aan mensen die iets geleerd hebben",
+    "Dat fabrieken gesloten moeten worden",
+    "Dat ouders meer loon moeten krijgen"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "evaluating",
+   "label": "Evaluerend",
+   "labelClass": "label-evaluating",
+   "question": "Tegenstanders stellen voor om kinderen in de fabriek les te geven. Wat is daar het probleem mee?",
+   "passage": "Krantenbericht, 1874: \"Niet iedereen is blij met het plan van Van Houten. Fabrikanten zeggen dat zij zonder kinderen hun fabrieken niet goedkoop kunnen laten draaien. Ook veel ouders zijn ongerust. Een moeder van zes kinderen vertelde ons: Als mijn twee oudsten niet meer mogen werken, kunnen wij de huur niet betalen. Sommige tegenstanders stellen voor om de kinderen in de fabriek zelf een paar uur les te geven.\"",
+   "feedback": "Met een paar uur les in de fabriek blijven kinderen vooral werken. Het eigenlijke probleem, kinderarbeid, wordt zo niet opgelost.",
+   "options": [
+    "Kinderen leren dan te veel",
+    "De kinderen zouden dan nog steeds de hele dag in de fabriek zijn en weinig echt kunnen leren",
+    "Er zijn geen leraren die in fabrieken willen werken",
+    "Fabrieken hebben geen stoelen"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Wat bedoelt de schrijver met \"de wet had ook grote gaten\"?",
+   "passage": "Uitleg: het Kinderwetje. In 1874 werd de wet van Van Houten aangenomen. Hij werd al snel het Kinderwetje genoemd. In de wet stond dat kinderen onder de twaalf jaar niet meer in fabrieken mochten werken. Dat was een belangrijke stap. Maar de wet had ook grote gaten. Werken op het land, in de huishouding of thuis bleef gewoon toegestaan. En er stond niets in over naar school gaan.",
+   "feedback": "Een gat in een wet is iets wat de wet niet regelt. Hier: werken op het land, in de huishouding of thuis mocht nog wel.",
+   "options": [
+    "Het papier van de wet was kapot",
+    "Veel soorten kinderarbeid waren nog steeds toegestaan",
+    "De wet was te lang",
+    "Niemand kon de wet lezen"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Waarom gingen de inspecteurs \"onverwacht\" langs?",
+   "passage": "Uitleg: niemand controleerde. Na 1874 hielden veel fabrikanten zich niet aan het Kinderwetje. Er was namelijk niemand die controleerde of de wet werd nageleefd. Een wet naleven betekent dat je je eraan houdt. Pas in 1890 kwam de arbeidsinspectie. Inspecteurs gingen onverwacht langs bij fabrieken. Werkten daar toch jonge kinderen, dan kreeg de eigenaar een boete. Vanaf toen werd het Kinderwetje veel beter nageleefd.",
+   "feedback": "Als een fabrikant weet dat er een inspecteur komt, kan hij de kinderen die dag thuislaten. Onverwacht langsgaan voorkomt dat.",
+   "options": [
+    "Omdat ze geen afspraak durfden te maken",
+    "Zodat fabrikanten de kinderen niet snel konden wegsturen of verstoppen",
+    "Omdat het onbeleefd was om te bellen",
+    "Omdat ze alleen ’s nachts werkten"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "evaluating",
+   "label": "Evaluerend",
+   "labelClass": "label-evaluating",
+   "question": "Waarom noemt de schrijver de aanpak van de leerplicht \"slim\"?",
+   "passage": "Uitleg: de leerplicht. In 1901 kwam de Leerplichtwet. Vanaf toen moesten alle kinderen van zes tot twaalf jaar naar school. Ouders die hun kinderen thuishielden om te werken, konden een boete krijgen. De leerplicht pakte kinderarbeid op een slimme manier aan: wie overdag op school zit, kan niet tegelijk op het land of in de fabriek werken. Langzaam verdween kinderarbeid zo uit bijna alle soorten werk.",
+   "feedback": "Het Kinderwetje ging alleen over fabrieken. Door de leerplicht zitten kinderen overdag op school en kunnen ze nergens meer werken.",
+   "options": [
+    "Omdat kinderen er slimmer van werden",
+    "Omdat de wet niet alleen fabrieksarbeid aanpakte, maar al het werk overdag, door kinderen op school te houden",
+    "Omdat de wet heel kort was",
+    "Omdat ouders er geld door verdienden"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "inferring",
+   "label": "Afleidend",
+   "labelClass": "label-inferring",
+   "question": "Waarom noemt de tekst chocolade, kleding en telefoons?",
+   "passage": "Uitleg: en nu? In Nederland is kinderarbeid nu verboden. Kinderen mogen alleen licht werk doen, zoals een krantenwijk vanaf dertien jaar, en niet te veel uren. Maar wereldwijd werken nog ongeveer honderdzestig miljoen kinderen. Ze werken bijvoorbeeld op plantages, in mijnen of in naaiateliers. Sommige van die producten belanden ook in onze winkels: denk aan chocolade, kleding of de grondstoffen in je telefoon.",
+   "feedback": "Die producten \"belanden ook in onze winkels\". Zo laat de tekst zien dat kinderarbeid ver weg toch met ons te maken heeft.",
+   "options": [
+    "Om reclame te maken voor die producten",
+    "Om te laten zien dat kinderarbeid elders ook met onze eigen aankopen te maken kan hebben",
+    "Omdat die producten in Nederland gemaakt worden",
+    "Omdat kinderen die producten graag kopen"
+   ],
+   "correct": 1,
+   "points": 1
+  },
+  {
+   "type": "mc",
+   "qtype": "evaluating",
+   "label": "Evaluerend",
+   "labelClass": "label-evaluating",
+   "question": "Wat bedoelt de schrijver met de laatste zin?",
+   "passage": "Uitleg: wat kun jij doen? Steeds meer bedrijven controleren of er in hun fabrieken en bij hun leveranciers kinderen werken. Sommige producten hebben een keurmerk: een logo dat laat zien dat het product aan bepaalde afspraken voldoet, bijvoorbeeld dat er geen kinderarbeid aan te pas kwam. Je kunt daarop letten als je iets koopt. Ook kun je vragen stellen aan een winkel. Hoe meer mensen dat doen, hoe meer bedrijven erop gaan letten.",
+   "feedback": "\"Hoe meer mensen dat doen, hoe meer bedrijven erop gaan letten.\" Samen hebben klanten invloed.",
+   "options": [
+    "Dat één klant alles kan veranderen",
+    "Dat bedrijven gaan veranderen als veel klanten erom vragen",
+    "Dat winkels geen vragen willen",
+    "Dat keurmerken niets betekenen"
+   ],
+   "correct": 1,
+   "points": 1
+  }
+ ]
+};
+const GROEP = (function () {
+  try { const g = new URLSearchParams(location.search).get('groep'); if (g === '7' || g === '8') return g; } catch (e) {}
+  return '7';
+})();
+const questions = VRAGEN[GROEP];
+const SLEUTEL = 'bl_spullen-les4_g' + GROEP;
+document.getElementById('bl-eyebrow').textContent = 'Begrijpend lezen · Groep ' + GROEP;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // STATE
@@ -483,8 +751,8 @@ let markState = questions.map(() => new Set());
 // PERSISTENCE
 // ─────────────────────────────────────────────────────────────────────────────
 let paidSet = new Set();
-function loadPaid() { try { const s = localStorage.getItem('bl_spullen_les4_paid'); if (s) paidSet = new Set(JSON.parse(s)); } catch(e){} }
-function savePaid() { try { localStorage.setItem('bl_spullen_les4_paid', JSON.stringify([...paidSet])); } catch(e){} }
+function loadPaid() { try { const s = localStorage.getItem(SLEUTEL + '_paid'); if (s) paidSet = new Set(JSON.parse(s)); } catch(e){} }
+function savePaid() { try { localStorage.setItem(SLEUTEL + '_paid', JSON.stringify([...paidSet])); } catch(e){} }
 function loadProgress() {
   loadPaid();
   try {
@@ -493,7 +761,7 @@ function loadProgress() {
     // zodat die stand nooit meer in een les terechtkomt.
     localStorage.removeItem('bl_wereld_v2');
     localStorage.removeItem('bl_wereld_v2_paid');
-    const saved = localStorage.getItem('bl_spullen_les4');
+    const saved = localStorage.getItem(SLEUTEL);
     if (saved) {
       const d = JSON.parse(saved);
       // Alleen een stand die bij déze les hoort: evenveel vragen, anders weg.
@@ -503,7 +771,7 @@ function loadProgress() {
         answered = d.answered;
         score    = scores.reduce((a,b)=>a+b,0);
       } else {
-        localStorage.removeItem('bl_spullen_les4');
+        localStorage.removeItem(SLEUTEL);
       }
     }
   } catch(e){}
@@ -511,7 +779,7 @@ function loadProgress() {
 
 function saveProgress() {
   try {
-    localStorage.setItem('bl_spullen_les4', JSON.stringify({ scores, answered }));
+    localStorage.setItem(SLEUTEL, JSON.stringify({ scores, answered }));
   } catch(e){}
 }
 
@@ -608,10 +876,11 @@ function renderQuestion() {
   const area = document.getElementById('question-area');
   const nav  = document.getElementById('nav-row');
 
-  let html = `<div class="q-card${q.type === 'mc' && q.passage ? ' q-breed' : ''}">`;
+  let html = `<div class="q-card${(q.type === 'mc' || q.type === 'order') && q.passage ? ' q-breed' : ''}">`;
   html += `<span class="q-type-label ${q.labelClass}">${q.label}</span>`;
   html += `<h3>${q.question}</h3>`;
 
+  if (q.img) html += `<figure class="bl-fig"><img src="${q.img}" alt=""><figcaption>${q.bijschrift || ''}</figcaption></figure>`;
   if      (q.type === 'mark')  html += renderMark(q);
   else if (q.type === 'mc')    html += renderMC(q);
   else if (q.type === 'order') html += renderOrder(q);
@@ -802,7 +1071,8 @@ function answerMC(i) {
 // ─────────────────────────────────────────────────────────────────────────────
 function renderOrder(q) {
   const shuffled = [...q.items].sort(() => Math.random() - .5);
-  let html = '<div class="order-list" id="order-list">';
+  let html = q.passage ? `<div class="passage">${q.passage}</div>` : '';
+  html += '<div class="order-list" id="order-list">';
   shuffled.forEach(item => {
     html += `<div class="order-item" draggable="true" data-id="${item.id}">
       <span class="handle">⠿</span><span>${item.text}</span>
@@ -1013,7 +1283,7 @@ function showFinish() {
     `<div class="ov-title">${goed} van ${questions.length} vragen goed</div>` + rows;
   show('finish-screen');
   const opgaven = questions.map((q,i) => ({ vraag: q.question.replace(/<[^>]*>/g,''), puntenBehaald: scores[i], puntenMax: q.points }));
-  window.KennisKist?.slaResultaatOp?.('spullen-les4', score, total, { opgaven });
+  window.KennisKist?.slaResultaatOp?.('spullen-les4', score, total, { opgaven, groep: +GROEP });
   window.KennisKist?.toonInlogstatus?.(document.getElementById('kkStatus'));
 }
 
@@ -1022,7 +1292,7 @@ function restartQuiz() {
   scores   = new Array(questions.length).fill(0);
   answered = new Array(questions.length).fill(false);
   markState= questions.map(() => new Set());
-  localStorage.removeItem('bl_spullen_les4');
+  localStorage.removeItem(SLEUTEL);
   document.getElementById('score-num').textContent = 0;
   show('quiz-screen');
   renderQuestion();
@@ -1033,7 +1303,7 @@ function restartQuiz() {
 // eerste vraag die nog open staat.
 (function hervatNaVerversen() {
   try {
-    const d = JSON.parse(localStorage.getItem('bl_spullen_les4') || 'null');
+    const d = JSON.parse(localStorage.getItem(SLEUTEL) || 'null');
     if (d && Array.isArray(d.answered) && d.answered.length === questions.length
         && d.answered.some(Boolean)) startQuiz();
   } catch (e) {}
