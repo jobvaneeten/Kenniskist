@@ -208,15 +208,31 @@
 }
 .vq-schakel input { width: 20px; height: 20px; accent-color: var(--on-accent); }
 
-/* ── Beeld doet het niet ─────────────────────────────────────────────── */
-.vq-beeldweg {
-  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 5;
-  width: min(440px, calc(100% - 32px)); box-sizing: border-box; padding: 22px; border-radius: 22px;
-  display: flex; flex-direction: column; gap: 10px; align-items: center; text-align: center;
-  background: rgba(11,10,26,0.94); border: 1px solid var(--on-accent); box-shadow: 0 0 40px -12px var(--on-accent);
+/* ── Zonder 3D: het apparaat kan het beeld niet aan, tikken in plaats van lopen ── */
+.vq-spel.zonder3d {
+  background:
+    radial-gradient(ellipse at 50% 120%, color-mix(in srgb, var(--on-accent) 22%, transparent), transparent 60%),
+    radial-gradient(ellipse at 50% -20%, #2a1260, transparent 65%), #05030f;
 }
-.vq-beeldweg b { font: 900 1.4rem/1.1 var(--kk-head); color: var(--on-accent); }
-.vq-beeldweg span { color: var(--kk-text-soft); font-weight: 700; line-height: 1.4; }
+.zonder3d .vq-canvas { display: none; }
+.vq-spel.zonder3d:not(.host) .vq-antwoorden {
+  left: 50%; right: auto; transform: translateX(-50%); top: 190px; bottom: 16px;
+  width: min(900px, calc(100% - 24px)); gap: 12px; grid-auto-rows: 1fr;
+}
+.vq-spel.zonder3d:not(.host) .vq-antwoorden.n2 { grid-template-columns: 1fr; }
+.vq-spel.zonder3d:not(.host) .vq-antw { min-height: 0; padding: 14px 18px; font-size: clamp(1.05rem, 3.4vw, 1.8rem); }
+.vq-spel.zonder3d .vq-vorm { width: 34px; height: 34px; }
+button.vq-antw { color: inherit; text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+button.vq-antw:active { transform: scale(0.97); }
+.vq-spel.zonder3d .vq-vraag { width: min(900px, calc(100% - 24px)); top: 64px; }
+.vq-spel.zonder3d .vq-uitslag { z-index: 2; }
+
+.vq-beeldweg {
+  position: absolute; left: 14px; bottom: 14px; z-index: 5; max-width: 320px;
+  display: flex; gap: 10px; align-items: center; padding: 10px 12px; border-radius: 14px;
+  background: rgba(11,10,26,0.9); border: 1px solid var(--kk-border-strong); pointer-events: auto;
+}
+.vq-beeldweg span { color: var(--kk-text-soft); font-weight: 700; font-size: 0.85rem; line-height: 1.3; }
 
 /* ── Podium: de top drie kiest een dansje ────────────────────────────── */
 .vq-emotes.podium {

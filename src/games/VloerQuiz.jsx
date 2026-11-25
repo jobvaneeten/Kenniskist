@@ -5,7 +5,7 @@ import Joystick from './online/Joystick.jsx'
 import Icoon from './online/Iconen.jsx'
 import { heeftAanraak, schermVol } from './online/apparaat.js'
 import { NeonScherm, Titel, StartScherm, Wachtkamer, Aftelling, HudKnoppen, HudKnop } from './online/Schermen.jsx'
-import { KLEUREN, VORMEN } from './online/gedeeld/vloerArena.js'
+import { KLEUREN, VORMEN, SNELHEID, vakVan, vakMidden } from './online/gedeeld/vloerArena.js'
 import { maakVloerScene } from './vloerScene.js'
 import { EMOTES, mijnEmotes } from './online/emotes.js'
 import { useSessie } from '../lib/sessie.jsx'
@@ -74,6 +74,7 @@ function useVloer(room, ikId) {
   }, [room, ikId])
 
   useEffect(() => {
+    if (beeldFout) return   // verder zonder 3D: de scene is opgeruimd
     let scene
     const opnieuw = () => setHerstart(n => { if (n >= 2) setBeeldFout(true); return n < 2 ? n + 1 : n })
     try {
@@ -86,6 +87,18 @@ function useVloer(room, ikId) {
       setBeeldFout(true)
       return
     }
+    return () => scene.dispose()
+  }, [room, ikId, herstart, beeldFout])
+
+  // Zonder 3D telt de scene de uitslag niet: dan hier
+  useEffect(() => {
+    if (!beeldFout || stand.phase !== 'uitslag') return
+    const s = room.state, tel = [...(s.opties ?? [])].map(() => 0)
+    s.players?.forEach(p => { const k = vakVan(p.x, p.z, tel.length); if (k >= 0) tel[k]++ })
+    setAantallen(tel)
+  }, [beeldFout, stand.phase, stand.nr, room])
+
+  useEffect(() => {
     // klok en tijdbalk: elk beeld, zonder React
     let raf
     const klok = () => {
@@ -96,17 +109,48 @@ function useVloer(room, ikId) {
       raf = requestAnimationFrame(klok)
     }
     raf = requestAnimationFrame(klok)
-    return () => { cancelAnimationFrame(raf); scene.dispose() }
-  }, [room, ikId, herstart])
+    return () => cancelAnimationFrame(raf)
+  }, [room])
 
   return { canvasRef, hudRef, joyRef, klokRef, balkRef, doorRef, stand, aantallen, herstart, beeldFout }
 }
 
+// Zonder 3D: tik op een antwoord en je poppetje loopt er vanzelf heen. In
+// stapjes op loopsnelheid, want de server laat niemand verder springen.
+function useTikLopen(room, aan, hudRef) {
+  const doelRef = useRef(null)
+  useEffect(() => {
+    if (!aan) return
+    let pos = null, seq = null, vorige = performance.now()
+    const t = setInterval(() => {
+      const s = room.state, p = s.players?.get(room.sessionId)
+      const nu = performance.now(), dt = Math.min(1, (nu - vorige) / 1000)
+      vorige = nu
+      if (!p) return
+      if (p.plekSeq !== seq) { seq = p.plekSeq; pos = { x: p.x, z: p.z } }   // de server zette je neer
+      const vak = s.phase === 'vraag' ? String(vakVan(pos.x, pos.z, s.opties?.length || 4)) : ''
+      if (hudRef.current && hudRef.current.dataset.vak !== vak) hudRef.current.dataset.vak = vak
+      const doel = doelRef.current
+      if (!doel || doel.nr !== s.nr || s.phase !== 'vraag') return
+      const dx = doel.x - pos.x, dz = doel.z - pos.z, d = Math.hypot(dx, dz), stap = SNELHEID * dt
+      const klaar = d <= stap
+      pos = klaar ? { x: doel.x, z: doel.z } : { x: pos.x + dx / d * stap, z: pos.z + dz / d * stap }
+      room.send('plek', { x: pos.x, z: pos.z, r: Math.atan2(dx, dz), l: !klaar, s: seq })
+      if (klaar) doelRef.current = null
+    }, 100)
+    return () => clearInterval(t)
+  }, [room, aan, hudRef])
+  return (i) => {
+    const s = room.state
+    doelRef.current = { ...vakMidden(i, s.opties?.length || 4), nr: s.nr }
+  }
+}
+
+// Alleen op het bord: de kinderen spelen zonder 3D gewoon door
 function BeeldWeg() {
   return (
-    <div className="vq-beeldweg" role="alert">
-      <b>Het beeld doet het niet</b>
-      <span>Dit apparaat kan het 3D-beeld nu niet laten zien. Laad de pagina opnieuw. Blijft het zwart, sluit dan dit tabblad helemaal (en andere tabbladen en apps) en open de site opnieuw.</span>
+    <div className="vq-beeldweg" role="status">
+      <span>Het 3D-beeld werkt niet op dit scherm. De quiz gaat gewoon door.</span>
       <button type="button" className="on-knop" onClick={() => window.location.reload()}>Opnieuw laden</button>
     </div>
   )
@@ -126,13 +170,15 @@ function VraagKop({ stand, klokRef, balkRef, groot }) {
   )
 }
 
-function Antwoorden({ stand, aantallen, groot }) {
+function Antwoorden({ stand, aantallen, groot, opKies }) {
   const uitslag = stand.phase === 'uitslag'
   const max = Math.max(1, ...aantallen)
+  const Tegel = opKies && stand.phase === 'vraag' ? 'button' : 'div'
   return (
     <div className={'vq-antwoorden n' + stand.opties.length + (groot ? ' groot' : '') + (uitslag ? ' doorzichtig' : '')}>
       {stand.opties.map((o, i) => (
-        <div key={i} className={'vq-antw a' + i + (uitslag ? (i === stand.goed ? ' goed' : ' fout') : '')} style={{ '--vk': KLEUREN[i] }}>
+        <Tegel key={i} type={Tegel === 'button' ? 'button' : undefined} onClick={Tegel === 'button' ? () => opKies(i) : undefined}
+          className={'vq-antw a' + i + (uitslag ? (i === stand.goed ? ' goed' : ' fout') : '')} style={{ '--vk': KLEUREN[i] }}>
           <Vorm i={i} />
           <span className="vq-antw-tekst">{o}</span>
           {uitslag && groot && (
@@ -142,7 +188,7 @@ function Antwoorden({ stand, aantallen, groot }) {
             </span>
           )}
           {uitslag && i === stand.goed && <Icoon naam="vink" className="vq-vink" />}
-        </div>
+        </Tegel>
       ))}
     </div>
   )
@@ -216,6 +262,8 @@ function LeerlingSpel({ room, onStop, onEruit, opnieuw }) {
   const [gestopt, setGestopt] = useState(false)
   const zelfWeg = useRef(false)
   const aanraak = heeftAanraak()
+  // 3D lukt niet op dit apparaat: verder met tikken, het kind doet gewoon mee
+  const kies = useTikLopen(room, beeldFout, hudRef)
 
   // De leerkracht stopt: de server stuurt 'gestopt' en we gaan zelf netjes weg
   // (anders blijft de SDK een minuut lang opnieuw verbinden).
@@ -240,9 +288,8 @@ function LeerlingSpel({ room, onStop, onEruit, opnieuw }) {
   const emoteMag = stand.phase === 'lobby' || stand.phase === 'uitslag' || opPodium
 
   return (
-    <div className="vq-spel" style={{ '--on-accent': ACCENT }}>
+    <div className={'vq-spel' + (beeldFout ? ' zonder3d' : '')} style={{ '--on-accent': ACCENT }}>
       <canvas key={herstart} ref={canvasRef} className="vq-canvas" />
-      {beeldFout && <BeeldWeg />}
       <div ref={hudRef} className="vq-hud">
         <HudKnoppen>
           <HudKnop icoon="vol" aria-label="Volledig scherm" onClick={schermVol} />
@@ -253,14 +300,15 @@ function LeerlingSpel({ room, onStop, onEruit, opnieuw }) {
         {stand.phase === 'lobby' && (
           <div className="vq-bericht">
             <b>Je doet mee!</b>
-            <span>Wachten tot je leerkracht start. Loop alvast rond{aanraak ? ' met de joystick' : ' met de pijltjes'}.</span>
+            <span>{beeldFout ? 'Wachten tot je leerkracht start. Tik straks op het goede antwoord.'
+              : `Wachten tot je leerkracht start. Loop alvast rond${aanraak ? ' met de joystick' : ' met de pijltjes'}.`}</span>
           </div>
         )}
         {stand.phase === 'aftellen' && <Aftelling n={stand.countdown} />}
         {(stand.phase === 'vraag' || stand.phase === 'uitslag') && (
           <>
             <VraagKop stand={stand} klokRef={klokRef} balkRef={balkRef} />
-            <Antwoorden stand={stand} aantallen={aantallen} />
+            <Antwoorden stand={stand} aantallen={aantallen} opKies={beeldFout ? kies : null} />
           </>
         )}
         {stand.phase === 'uitslag' && ik && (
@@ -285,7 +333,7 @@ function LeerlingSpel({ room, onStop, onEruit, opnieuw }) {
           </div>
         )}
         {stand.hostWeg && <div className="vq-bericht klein">De leerkracht is even weg. Even wachten…</div>}
-        {aanraak && stand.phase !== 'einde' && <Joystick joyRef={joyRef} hint={stand.phase === 'vraag' ? 'Lopen' : null} />}
+        {aanraak && !beeldFout && stand.phase !== 'einde' && <Joystick joyRef={joyRef} hint={stand.phase === 'vraag' ? 'Lopen' : null} />}
       </div>
 
       {stand.phase === 'einde' && (
@@ -356,7 +404,7 @@ function HostSpel({ room, code, onBack }) {
   )
 
   return (
-    <div className="vq-spel host" style={{ '--on-accent': ACCENT }}>
+    <div className={'vq-spel host' + (beeldFout ? ' zonder3d' : '')} style={{ '--on-accent': ACCENT }}>
       <canvas key={herstart} ref={canvasRef} className="vq-canvas" />
       {beeldFout && <BeeldWeg />}
       <div ref={hudRef} className="vq-hud">
