@@ -289,24 +289,14 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
   // Verder met een opgeslagen toernooi (buiten de opgaves)
   if (directGame === 'football' && gameMode === 'resume') {
     return vrij(
-      <FootballGame
-        noQuiz
-        resumeBracket={loadToernooi()}
-        onBack={onBack}
-        addCuruntie={makeGated('football', addCuruntie)}
-      />
+      <FootballGame resumeBracket={loadToernooi()} onBack={onBack} />
     )
   }
 
   // Direct game (no quiz)
   if (directGame === 'football' && gameMode) {
     return vrij(
-      <FootballGame
-        noQuiz
-        twoPlayer={gameMode === '2player'}
-        onBack={onBack}
-        addCuruntie={makeGated('football', addCuruntie)}
-      />
+      <FootballGame twoPlayer={gameMode === '2player'} onBack={onBack} />
     )
   }
 
@@ -685,16 +675,6 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
             {eigenKaarten()}
           </div>
         </div>
-      )
-    }
-
-    if (GAMES[gameId] === 'football') {
-      return (
-        <FootballGame
-          year={year}
-          onBack={onBack}
-          addCuruntie={makeGated('football', addCuruntie)}
-        />
       )
     }
 

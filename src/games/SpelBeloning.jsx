@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
-import FootballGame, { loadToernooi } from './FootballGame'
+import FootballGame from './FootballGame'
+import { loadToernooi } from './toernooiOpslag.js'
 import HeadSoccer from './HeadSoccer'
 import BrugBouwen from './BrugBouwen'
 import HillClimbGame from './HillClimbGame'
@@ -120,10 +121,10 @@ export default function SpelBeloning({ title, sub, geld, addCuruntie, onDone }) 
   // Wrapper = vast scherm-vullend overlay zodat het spel altijd bovenop het
   // (nog gemounte) oefenscherm valt en kliks goed opvangt.
   const wrap = (el) => <div className="sb-gamewrap">{el}</div>
-  if (picked === 'headsoccer') return wrap(<HeadSoccer reward onBack={onDone} addCuruntie={addCuruntie} />)
+  if (picked === 'headsoccer') return wrap(<HeadSoccer reward onBack={onDone} />)
   // rewardMode: precies één wedstrijd, dan (na de eindstand) automatisch terug.
   // initialBracket houdt het toernooi vast tussen beloningen door.
-  if (picked === 'voetbal')    return wrap(<FootballGame rewardMode noQuiz initialBracket={loadToernooi()} onMatchDone={() => onDone()} onBack={onDone} addCuruntie={addCuruntie} />)
+  if (picked === 'voetbal')    return wrap(<FootballGame rewardMode initialBracket={loadToernooi()} onMatchDone={() => onDone()} onBack={onDone} />)
   if (picked === 'jetpack')    return <IframeEmbed src="/jetpack/index.html" title="Jetpack" doneType="jetpack-gameover" hint="Je gaat automatisch verder na het spel" onDone={onDone} />
   if (picked === 'astro')      return <IframeEmbed src="/astrokatapult/?reward=1" title="Astro Katapult" doneType="astrokatapult-leveldone" hint="Speel 1 level — daarna ga je verder" onDone={onDone} />
   if (picked === 'space')      return <IframeEmbed src="/sterrenstroom/" title="Spacerunner" doneType="spacerunner-gameover" hint="Je gaat automatisch verder na het spel" onDone={onDone} />

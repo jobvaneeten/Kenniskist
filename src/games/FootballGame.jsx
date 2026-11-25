@@ -1,10 +1,9 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
-import { getQuestions } from './questions_rekenen'
 import { COUNTRIES, getCountry, generateBracket, DEFAULT_UNLOCKED } from './countries'
 import OrientationGate from '../OrientationGate'
 import './football.css'
-import { TerugKnop, Knop } from '../ui/index.jsx'
-import { TOERNOOI_KEY, loadToernooi } from './toernooiOpslag.js'
+import { TerugKnop, Knop, Icoon } from '../ui/index.jsx'
+import { TOERNOOI_KEY } from './toernooiOpslag.js'
 
 // ── Field constants ───────────────────────────────────────────────
 const W = 800, H = 450
@@ -47,6 +46,8 @@ const STARS = Array.from({ length: 90 }, (_, i) => ({
 // Lichtmasten staan op vaste plekken in het veld (niet in beeld), zodat ze
 // langsschuiven als de camera meebeweegt — dat geeft pas diepte.
 const PYLONS = [360, 1200, 2040]
+
+const NEON = ['#3df2ff', '#ff4fa3', '#ffd23f', '#7c5cff', '#3dff9a']
 
 // ── Kleurhulpjes ──────────────────────────────────────────────────
 function isLight(hex) {
@@ -654,16 +655,18 @@ function drawField(ctx, cam, t) {
   const eerste = Math.floor(cam / bordBreedte) * bordBreedte
   for (let bx = eerste; bx < cam + W; bx += bordBreedte) {
     const idx = Math.floor(bx / bordBreedte)
-    const hue = (idx * 47 + t * 26) % 360
-    const bg2 = ctx.createLinearGradient(0, BOARD_Y + 4, 0, GROUND_Y - 6)
-    bg2.addColorStop(0, `hsla(${hue},70%,52%,0.32)`)
-    bg2.addColorStop(1, `hsla(${hue},70%,32%,0.14)`)
-    ctx.fillStyle = bg2
+    const kleur = NEON[(((idx + Math.floor(t / 4)) % NEON.length) + NEON.length) % NEON.length]
+    ctx.fillStyle = '#0b0d1f'
     ctx.fillRect(bx + 4, BOARD_Y + 5, bordBreedte - 8, GROUND_Y - BOARD_Y - 11)
-    ctx.fillStyle = `hsla(${hue},80%,74%,0.34)`
-    ctx.font = 'bold 14px Nunito, Arial'
+    ctx.strokeStyle = kleur; ctx.globalAlpha = 0.55; ctx.lineWidth = 1.5
+    ctx.strokeRect(bx + 4.5, BOARD_Y + 5.5, bordBreedte - 9, GROUND_Y - BOARD_Y - 12)
+    ctx.globalAlpha = 1
+    ctx.shadowColor = kleur; ctx.shadowBlur = 10
+    ctx.fillStyle = kleur
+    ctx.font = '900 14px Nunito, Arial'
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
-    ctx.fillText(idx % 2 === 0 ? 'KENNISKIST' : '⚽ 1 TEGEN 1', bx + bordBreedte / 2, BOARD_Y + 17)
+    ctx.fillText(idx % 2 === 0 ? 'KENNISKIST' : '1 TEGEN 1', bx + bordBreedte / 2, BOARD_Y + 17)
+    ctx.shadowBlur = 0
   }
   ctx.fillStyle = 'rgba(0,0,0,0.55)'
   ctx.fillRect(cam, GROUND_Y - 6, W, 6)
@@ -701,12 +704,22 @@ function drawField(ctx, cam, t) {
   // ── Belijning ──
   // Alleen de zijlijn: middenlijn, middencirkel en de 16-meterlijnen stonden
   // in dit zij-aanzicht dwars door het speelveld en maakten het beeld onrustig.
-  ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 2.5
+  ctx.save()
+  ctx.shadowColor = '#bff8ff'; ctx.shadowBlur = 12
+  ctx.strokeStyle = 'rgba(220,250,255,0.75)'; ctx.lineWidth = 2.5
   ctx.beginPath(); ctx.moveTo(FIELD_L, GROUND_Y + 2); ctx.lineTo(FIELD_R, GROUND_Y + 2); ctx.stroke()
+  // middenstip
+  ctx.fillStyle = 'rgba(220,250,255,0.85)'
+  ctx.beginPath(); ctx.ellipse(FIELD_MID, GROUND_Y + 12, 5, 2.4, 0, 0, Math.PI * 2); ctx.fill()
+  ctx.restore()
+  const mid = ctx.createRadialGradient(FIELD_MID, GROUND_Y + 14, 4, FIELD_MID, GROUND_Y + 14, 170)
+  mid.addColorStop(0, 'rgba(61,242,255,0.10)'); mid.addColorStop(1, 'rgba(61,242,255,0)')
+  ctx.fillStyle = mid; ctx.beginPath(); ctx.ellipse(FIELD_MID, GROUND_Y + 14, 170, 34, 0, 0, Math.PI * 2); ctx.fill()
 
   // ── Doelen ──
   const doel = (kant) => {
     const links = kant === 'L'
+    const neon = links ? '#3df2ff' : '#ff4fa3'
     const x0 = links ? 0 : FIELD_R
     const paalX = links ? GOAL_NET : FIELD_R
 
@@ -724,40 +737,39 @@ function drawField(ctx, cam, t) {
     }
     ctx.restore()
 
-    // Paal + lat met een streepje glans
-    const paal = ctx.createLinearGradient(paalX, 0, paalX + 6, 0)
-    paal.addColorStop(0, '#ffffff'); paal.addColorStop(1, '#b9c4d6')
-    ctx.fillStyle = paal
+    // Gloed op het gras voor het doel
+    const vloer = ctx.createRadialGradient(paalX, GROUND_Y + 8, 2, paalX, GROUND_Y + 8, 120)
+    vloer.addColorStop(0, neon + '40'); vloer.addColorStop(1, neon + '00')
+    ctx.fillStyle = vloer; ctx.beginPath(); ctx.ellipse(paalX, GROUND_Y + 8, 120, 22, 0, 0, Math.PI * 2); ctx.fill()
+
+    // Paal + lat: neonbuis met een witte kern
+    ctx.save()
+    ctx.shadowColor = neon; ctx.shadowBlur = 18
+    ctx.fillStyle = neon
     ctx.fillRect(links ? paalX - 6 : paalX, G_TOP - 6, 6, GOAL_H + 6)
-    ctx.fillStyle = '#eef2f8'
     ctx.fillRect(x0, G_TOP - 6, GOAL_NET, 6)
-    ctx.fillStyle = 'rgba(0,0,0,0.25)'
-    ctx.fillRect(x0, G_TOP, GOAL_NET, 1.5)
+    ctx.restore()
+    ctx.fillStyle = 'rgba(255,255,255,0.85)'
+    ctx.fillRect(links ? paalX - 4 : paalX + 2, G_TOP - 4, 2, GOAL_H + 4)
+    ctx.fillRect(x0, G_TOP - 4, GOAL_NET, 2)
   }
   doel('L'); doel('R')
 }
 
 // ── Minimap ───────────────────────────────────────────────────────
-function drawMinimap(ctx, pX, aiX, ballX, pC, aiC) {
-  const mW = 160, mH = 14, mX = (W - mW) / 2, mY = 6
-  ctx.fillStyle = 'rgba(0,0,0,0.5)'
-  ctx.fillRect(mX, mY, mW, mH)
-  ctx.fillStyle = 'rgba(46,122,50,0.6)'
-  ctx.fillRect(mX + 2, mY + 2, mW - 4, mH - 4)
-  ctx.fillStyle = 'rgba(255,255,255,0.3)'
-  ctx.fillRect(mX + 2, mY + 2, 4, mH - 4)
-  ctx.fillRect(mX + mW - 6, mY + 2, 4, mH - 4)
-  ctx.fillRect(mX + mW / 2 - 1, mY + 2, 1, mH - 4)
-
-  const px = mX + 2 + (pX / FIELD_W) * (mW - 4)
-  ctx.fillStyle = pC.c1
-  ctx.beginPath(); ctx.arc(px, mY + mH / 2, 3.5, 0, Math.PI * 2); ctx.fill()
-  const ax = mX + 2 + (aiX / FIELD_W) * (mW - 4)
-  ctx.fillStyle = aiC.c1
-  ctx.beginPath(); ctx.arc(ax, mY + mH / 2, 3.5, 0, Math.PI * 2); ctx.fill()
-  const bx = mX + 2 + (ballX / FIELD_W) * (mW - 4)
-  ctx.fillStyle = '#fff'
-  ctx.beginPath(); ctx.arc(bx, mY + mH / 2, 3, 0, Math.PI * 2); ctx.fill()
+// Onderin: een neonbalkje met jouw doel (cyaan) links en dat van de ander (roze) rechts.
+function drawMinimap(ctx, pX, aiX, ballX) {
+  const mW = 180, mH = 12, mX = (W - mW) / 2, mY = H - 22
+  ctx.fillStyle = 'rgba(8,6,24,0.7)'
+  roundRect(ctx, mX, mY, mW, mH, 6); ctx.fill()
+  ctx.fillStyle = '#3df2ff'; ctx.fillRect(mX + 3, mY + 3, 3, mH - 6)
+  ctx.fillStyle = '#ff4fa3'; ctx.fillRect(mX + mW - 6, mY + 3, 3, mH - 6)
+  ctx.fillStyle = 'rgba(255,255,255,0.25)'; ctx.fillRect(mX + mW / 2 - 0.5, mY + 3, 1, mH - 6)
+  const op = x => mX + 6 + (x / FIELD_W) * (mW - 12)
+  const stip = (x, kleur, r) => { ctx.fillStyle = kleur; ctx.beginPath(); ctx.arc(op(x), mY + mH / 2, r, 0, Math.PI * 2); ctx.fill() }
+  stip(pX, '#3df2ff', 3.5)
+  stip(aiX, '#ff4fa3', 3.5)
+  stip(ballX, '#fff', 2.6)
 }
 
 // ── Collision physics ─────────────────────────────────────────────
@@ -819,10 +831,12 @@ const newState = (tp = false) => ({
   goalKickTeam: null,   // 'player' | 'ai'
   lastTs: null,
   running: false,
+  schok: 0,           // schermschok na een doelpunt
 })
 
-// ── Jersey preview (React component for UI) ───────────────────────
-function JerseyCircle({ country, size = 32 }) {
+// ── Vlag (rond, uit de landkleuren) ───────────────────────────────
+// Geen emoji-vlaggen: Windows toont die als letters ("NL").
+function Vlag({ country, size = 32, gloed = false }) {
   let bg
   const { c1, c2, c3, pattern } = country
   switch (pattern) {
@@ -858,13 +872,61 @@ function JerseyCircle({ country, size = 32 }) {
       bg = c1
   }
   return (
-    <div style={{ width: size, height: size, borderRadius: '50%', background: bg, border: '2px solid rgba(255,255,255,0.25)', flexShrink: 0 }} />
+    <span className={'fb-vlag' + (gloed ? ' gloed' : '')} style={{ width: size, height: size, background: bg }} />
+  )
+}
+
+// ── Schermonderdelen ──────────────────────────────────────────────
+function Sterren({ n }) {
+  return (
+    <span className="fb-sterren" aria-label={`${n} van 5 sterren`}>
+      {[1, 2, 3, 4, 5].map(i => <span key={i} className={i <= n ? 'aan' : ''}><Icoon naam="ster" /></span>)}
+    </span>
+  )
+}
+
+function Kop({ icoon, titel, sub }) {
+  return (
+    <header className="fb-kop">
+      <span className="fb-embleem"><Icoon naam={icoon} /></span>
+      <h1 className="fb-titel">{titel}</h1>
+      {sub && <p className="fb-sub">{sub}</p>}
+    </header>
+  )
+}
+
+function LandKaart({ c, open = true, onKies }) {
+  return (
+    <button className={'fb-land' + (open ? '' : ' dicht')} disabled={!open} onClick={() => open && onKies(c.key)}
+      title={open ? undefined : 'Win het toernooi om dit land te ontgrendelen'}>
+      {!open && <span className="fb-land-slot"><Icoon naam="slot" /></span>}
+      <Vlag country={c} size={46} />
+      <span className="fb-land-naam">{c.name}</span>
+      <Sterren n={c.diff} />
+    </button>
+  )
+}
+
+function Uitslag({ pl, opp, score, icoon, kleur, titel, tekst, children }) {
+  return (
+    <div className="fb-scherm midden">
+      <div className="fb-paneel" style={{ '--uk': kleur }}>
+        <span className="fb-embleem groot"><Icoon naam={icoon} /></span>
+        {pl && opp && (
+          <div className="fb-eindstand">
+            <Vlag country={pl} size={44} /><b>{score.p}</b><span>-</span><b>{score.ai}</b><Vlag country={opp} size={44} />
+          </div>
+        )}
+        <h2 className="fb-uitslag-titel">{titel}</h2>
+        {tekst && <p className="fb-uitleg">{tekst}</p>}
+        <div className="fb-knoppen">{children}</div>
+      </div>
+    </div>
   )
 }
 
 // ── Main component ────────────────────────────────────────────────
 // Toernooi-voortgang bewaren zodat je buiten de opgaves verder kunt spelen.
-export { loadToernooi }
 function saveToernooi(b) {
   // alleen echte 1-speler-toernooien (geen 2-speler-potje, niet uitgespeeld)
   try { if (b && !b.p2Key && b.opponents?.length && b.currentRound <= 3) localStorage.setItem(TOERNOOI_KEY, JSON.stringify(b)) } catch { /* ignore */ }
@@ -881,20 +943,14 @@ function saveUnlocked(arr) {
   try { localStorage.setItem(UNLOCK_KEY, JSON.stringify([...new Set(arr)])) } catch { /* ignore */ }
 }
 
-export default function FootballGame({ onBack, addCuruntie, noQuiz = false, twoPlayer = false,
+export default function FootballGame({ onBack, twoPlayer = false,
                                        rewardMode = false, initialBracket = null, resumeBracket = null, onMatchDone, onMatchEnd }) {
   const [phase,       setPhase]      = useState((rewardMode && initialBracket) || resumeBracket ? 'match_preview' : 'country_select')
   const [bracket,     setBracket]    = useState(rewardMode ? initialBracket : resumeBracket)
-  const [difficulty,  setDifficulty] = useState(null)
-  const [questions,   setQuestions]  = useState([])
-  const [qIndex,      setQIndex]     = useState(0)
-  const [input,       setInput]      = useState('')
-  const [feedback,    setFeedback]   = useState(null)
   const [score,       setScore]      = useState({ p: 0, ai: 0 })
   const gameDuration = rewardMode ? GAME_TIME_REWARD : twoPlayer ? GAME_TIME_TWOPLAYER : GAME_TIME_NORMAL
   const [timeLeft,    setTimeLeft]   = useState(gameDuration)
   const [goalInfo,    setGoalInfo]   = useState(null) // { isPlayer: bool }
-  const [earnedCoins, setEarnedCoins] = useState(0)
   const [unlocked,    setUnlocked]   = useState(loadUnlocked)
   const [newUnlock,   setNewUnlock]  = useState(null)
 
@@ -916,7 +972,6 @@ export default function FootballGame({ onBack, addCuruntie, noQuiz = false, twoP
   const gameRef   = useRef(null)
   const rafRef    = useRef(null)
   const keysRef   = useRef({})
-  const inputRef  = useRef(null)
 
   useEffect(() => {
     const dn = e => { keysRef.current[e.code] = true;  if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code)) e.preventDefault() }
@@ -946,34 +1001,6 @@ export default function FootballGame({ onBack, addCuruntie, noQuiz = false, twoP
     setBracket(b => ({ ...b, p2Key: key }))
     setPhase('match_preview')
   }
-
-  // ── Match preview → difficulty → quiz ─────────────────────────
-  const pickDifficulty = d => {
-    setDifficulty(d)
-    setQuestions(getQuestions(d, 3))
-    setQIndex(0); setInput(''); setFeedback(null); setEarnedCoins(0)
-    setPhase('quiz')
-    setTimeout(() => inputRef.current?.focus(), 80)
-  }
-
-  // ── Quiz answer ────────────────────────────────────────────────
-  const checkAnswer = useCallback(() => {
-    const q = questions[qIndex]; if (!q) return
-    const val = parseFloat(input.replace(',', '.'))
-    if (isNaN(val)) { setFeedback('err'); return }
-    if (Math.abs(val - q.a) <= 0.5) {
-      const coins = difficulty === 'moeilijk' ? 20 : difficulty === 'gemiddeld' ? 15 : 10
-      addCuruntie(coins); setEarnedCoins(p => p + coins); setFeedback('ok')
-      setTimeout(() => {
-        setFeedback(null); setInput('')
-        if (qIndex + 1 >= questions.length) setPhase('game')
-        else { setQIndex(p => p + 1); setTimeout(() => inputRef.current?.focus(), 60) }
-      }, 700)
-    } else {
-      setFeedback('err')
-      setTimeout(() => { setFeedback(null); inputRef.current?.focus() }, 1200)
-    }
-  }, [questions, qIndex, input, difficulty, addCuruntie])
 
   // ── Game loop ──────────────────────────────────────────────────
   const startGame = useCallback(() => {
@@ -1141,8 +1168,18 @@ export default function FootballGame({ onBack, addCuruntie, noQuiz = false, twoP
         const pCont = charContactDist(state.player, state.ball) < BR + 3
         const aCont = charContactDist(state.ai,     state.ball) < BR + 3
 
+        const voor = Math.hypot(state.ball.vx, state.ball.vy)
         resolveCharacterCollision(state.player, state.ball)
         resolveCharacterCollision(state.ai, state.ball)
+        // harde trap: vonken
+        const na = Math.hypot(state.ball.vx, state.ball.vy)
+        if (na - voor > 240) {
+          for (let i = 0; i < 12; i++) {
+            const a = Math.random() * Math.PI * 2, v = 90 + Math.random() * 260
+            state.particles.push({ x: state.ball.x, y: state.ball.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 60,
+              life: 0.35 + Math.random() * 0.25, maxLife: 0.6, color: na > 600 ? '#ffd23f' : '#bff8ff', size: 1.6 + Math.random() * 2 })
+          }
+        }
 
         // Contested → pop upward
         if (pCont && aCont) {
@@ -1170,7 +1207,7 @@ export default function FootballGame({ onBack, addCuruntie, noQuiz = false, twoP
 
         if (state.ball.x - BR < FIELD_L) {
           if (state.ball.y >= G_TOP) {
-            state.score.ai++; state.subPhase = 'goal'; state.goalTimer = 2
+            state.score.ai++; state.subPhase = 'goal'; state.goalTimer = 2; state.schok = 16
             spawnParticles([currentOpponent.c1, currentOpponent.c2 || '#fff', '#FF6B6B'])
             setScore({ ...state.score }); setGoalInfo({ isPlayer: false })
           } else {
@@ -1181,7 +1218,7 @@ export default function FootballGame({ onBack, addCuruntie, noQuiz = false, twoP
         }
         if (state.ball.x + BR > FIELD_R) {
           if (state.ball.y >= G_TOP) {
-            state.score.p++; state.subPhase = 'goal'; state.goalTimer = 2
+            state.score.p++; state.subPhase = 'goal'; state.goalTimer = 2; state.schok = 16
             spawnParticles([playerCountry.c1, playerCountry.c2 || '#fff', '#FFD23F', '#06D6A0'])
             setScore({ ...state.score }); setGoalInfo({ isPlayer: true })
           } else {
@@ -1191,14 +1228,6 @@ export default function FootballGame({ onBack, addCuruntie, noQuiz = false, twoP
           }
         }
 
-        // ── Particles ──
-        state.particles = state.particles.filter(p => {
-          p.x  += p.vx * dt
-          p.y  += p.vy * dt
-          p.vy += 500 * dt
-          p.life -= dt
-          return p.life > 0
-        })
 
         // ── Timer ──
         state.time -= dt
@@ -1209,6 +1238,12 @@ export default function FootballGame({ onBack, addCuruntie, noQuiz = false, twoP
         setTimeLeft(Math.ceil(state.time))
       }
 
+      // ── Deeltjes (ook tijdens het juichen) ──
+      state.particles = state.particles.filter(p => {
+        p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 500 * dt; p.life -= dt
+        return p.life > 0
+      })
+
       // ── Smooth camera ──
       const targetCam = Math.max(0, Math.min(FIELD_W - W, state.ball.x - W / 2))
       state.camera += (targetCam - state.camera) * Math.min(1, dt * 10)
@@ -1216,7 +1251,13 @@ export default function FootballGame({ onBack, addCuruntie, noQuiz = false, twoP
 
       // ── Draw ──
       const klok = ts / 1000
-      ctx.save(); ctx.translate(-cam, 0)
+      // zoveel pixels als het scherm echt laat zien (het spel rekent in 800x450)
+      const schaal = Math.min(3, Math.max(1, canvas.clientWidth * (window.devicePixelRatio || 1) / W))
+      if (canvas.width !== Math.round(W * schaal)) { canvas.width = Math.round(W * schaal); canvas.height = Math.round(H * schaal) }
+      ctx.setTransform(schaal, 0, 0, schaal, 0, 0)
+      state.schok = Math.max(0, state.schok - dt * 40)
+      const sx = (Math.random() - 0.5) * state.schok, sy = (Math.random() - 0.5) * state.schok
+      ctx.save(); ctx.translate(-cam + sx, sy)
       drawField(ctx, cam, klok)
       drawPlayer(ctx, state.player, playerCountry, 10)
       drawPlayer(ctx, state.ai,     currentOpponent, 7)
@@ -1224,24 +1265,29 @@ export default function FootballGame({ onBack, addCuruntie, noQuiz = false, twoP
       // Ball trail
       const spd = Math.sqrt(state.ball.vx ** 2 + state.ball.vy ** 2)
       if (spd > 80) {
+        ctx.globalCompositeOperation = 'lighter'
+        const spoorKleur = spd > 600 ? '#ffd23f' : spd > 350 ? '#ff4fa3' : '#3df2ff'
         state.trail.forEach((pt, i) => {
           const t = (i + 1) / state.trail.length
-          ctx.globalAlpha = t * 0.3
-          ctx.fillStyle = spd > 400 ? '#FFD23F' : '#fff'
-          ctx.beginPath(); ctx.arc(pt.x, pt.y, BR * (0.25 + t * 0.6), 0, Math.PI * 2); ctx.fill()
+          ctx.globalAlpha = t * 0.45
+          ctx.fillStyle = spoorKleur
+          ctx.beginPath(); ctx.arc(pt.x, pt.y, BR * (0.2 + t * 0.75), 0, Math.PI * 2); ctx.fill()
         })
         ctx.globalAlpha = 1
+        ctx.globalCompositeOperation = 'source-over'
       }
 
       drawBall(ctx, state.ball.x, state.ball.y, state.ball.angle, spd)
 
       // Particles
+      ctx.globalCompositeOperation = 'lighter'
       state.particles.forEach(p => {
         ctx.globalAlpha = Math.max(0, p.life / p.maxLife)
         ctx.fillStyle = p.color
         ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill()
       })
       ctx.globalAlpha = 1
+      ctx.globalCompositeOperation = 'source-over'
 
       ctx.restore()
 
@@ -1255,20 +1301,24 @@ export default function FootballGame({ onBack, addCuruntie, noQuiz = false, twoP
 
       if (state.subPhase === 'goal_kick') {
         const kickTeam = state.goalKickTeam === 'player' ? playerCountry : currentOpponent
-        ctx.fillStyle = 'rgba(0,0,0,0.42)'
-        ctx.fillRect(0, H / 2 - 54, W, 108)
+        const band = ctx.createLinearGradient(0, 0, W, 0)
+        band.addColorStop(0, 'rgba(8,6,24,0)'); band.addColorStop(0.5, 'rgba(8,6,24,0.78)'); band.addColorStop(1, 'rgba(8,6,24,0)')
+        ctx.fillStyle = band
+        ctx.fillRect(0, H / 2 - 50, W, 100)
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
-        ctx.fillStyle = '#FFD23F'; ctx.font = 'bold 40px Nunito, Arial'
-        ctx.fillText('⚽ DOELTRAP', W / 2, H / 2 - 14)
-        ctx.fillStyle = 'rgba(255,255,255,0.65)'; ctx.font = '700 20px Nunito, Arial'
-        ctx.fillText(`${kickTeam.flag}  ${kickTeam.name} krijgt de bal`, W / 2, H / 2 + 22)
+        ctx.shadowColor = '#ffd23f'; ctx.shadowBlur = 16
+        ctx.fillStyle = '#ffd23f'; ctx.font = '900 38px Nunito, Arial'
+        ctx.fillText('DOELTRAP', W / 2, H / 2 - 12)
+        ctx.shadowBlur = 0
+        ctx.fillStyle = 'rgba(255,255,255,0.75)'; ctx.font = '800 19px Nunito, Arial'
+        ctx.fillText(`${kickTeam.name} krijgt de bal`, W / 2, H / 2 + 22)
       }
 
-      drawMinimap(ctx, state.player.x, state.ai.x, state.ball.x, playerCountry, currentOpponent)
+      drawMinimap(ctx, state.player.x, state.ai.x, state.ball.x)
       rafRef.current = requestAnimationFrame(tick)
     }
     rafRef.current = requestAnimationFrame(tick)
-  }, [aiSpeed, playerCountry, currentOpponent, twoPlayer])
+  }, [aiSpeed, playerCountry, currentOpponent, twoPlayer, gameDuration])
 
   useEffect(() => {
     if (phase === 'game') startGame()
@@ -1281,38 +1331,32 @@ export default function FootballGame({ onBack, addCuruntie, noQuiz = false, twoP
   const restart = () => {
     if (rafRef.current) cancelAnimationFrame(rafRef.current)
     if (gameRef.current) gameRef.current.running = false
-    setScore({ p: 0, ai: 0 }); setTimeLeft(gameDuration); setGoalInfo(null); setEarnedCoins(0)
-    if (noQuiz) {
-      setPhase('match_preview')
-    } else {
-      setQuestions(getQuestions(difficulty, 3)); setQIndex(0); setInput(''); setFeedback(null)
-      setPhase('quiz')
-      setTimeout(() => inputRef.current?.focus(), 80)
-    }
+    setScore({ p: 0, ai: 0 }); setTimeLeft(gameDuration); setGoalInfo(null)
+    setPhase('match_preview')
   }
 
-  const advanceRound = won => {
-    const newResults = [...bracket.results, won ? 'win' : 'lose']
-    if (!won || bracket.currentRound >= 3) {
+  // Alleen na winst (of gelijkspel = strafschoppen gewonnen)
+  const advanceRound = () => {
+    const newResults = [...bracket.results, 'win']
+    if (bracket.currentRound >= 3) {
       setBracket(b => ({ ...b, results: newResults }))
       clearToernooi()
-      if (won && bracket.currentRound >= 3) {
-        const locked = COUNTRIES.filter(c => !unlocked.includes(c.key)).map(c => c.key)
-        if (locked.length) {
-          const win = locked[Math.floor(Math.random() * locked.length)]
-          const next = [...unlocked, win]
-          setUnlocked(next); saveUnlocked(next); setNewUnlock(win)
-        } else {
-          setNewUnlock(null)
-        }
+      // kampioen: een nog dicht land gaat open
+      const locked = COUNTRIES.filter(c => !unlocked.includes(c.key)).map(c => c.key)
+      if (locked.length) {
+        const win = locked[Math.floor(Math.random() * locked.length)]
+        const next = [...unlocked, win]
+        setUnlocked(next); saveUnlocked(next); setNewUnlock(win)
+      } else {
+        setNewUnlock(null)
       }
-      setPhase(won && bracket.currentRound >= 3 ? 'wk_won' : 'wk_lost')
+      setPhase('wk_won')
       return
     }
     const nextRound = bracket.currentRound + 1
     const nb = { ...bracket, currentRound: nextRound, results: newResults }
     setBracket(nb); saveToernooi(nb)
-    setScore({ p: 0, ai: 0 }); setTimeLeft(gameDuration); setGoalInfo(null); setEarnedCoins(0)
+    setScore({ p: 0, ai: 0 }); setTimeLeft(gameDuration); setGoalInfo(null)
     setPhase('match_preview')
   }
 
@@ -1335,340 +1379,167 @@ export default function FootballGame({ onBack, addCuruntie, noQuiz = false, twoP
     return () => clearTimeout(t)
   }, [phase, rewardMode])
 
-  // ── Renders ───────────────────────────────────────────────────────
-
-  // Country selection
   if (phase === 'pick_p2_country') return (
-    <div className="fb-screen">
+    <div className="fb-scherm">
       <TerugKnop onClick={() => setPhase('country_select')} />
-      <div className="wk-header">
-        <span className="wk-trophy">🎮</span>
-        <h1 className="wk-title" style={{ color: '#4FC3F7' }}>Speler 2</h1>
-        <p className="wk-sub">WASD — kies jouw land</p>
-      </div>
-      <div className="wk-country-grid">
+      <Kop icoon="spel" titel={<>Speler <span>2</span></>} sub="Speel met W A D. Kies jouw land." />
+      <div className="fb-landen">
         {COUNTRIES.filter(c => c.key !== bracket?.playerKey && unlocked.includes(c.key)).map(c => (
-          <button key={c.key} className="wk-country-card" onClick={() => pickP2Country(c.key)}>
-            <span className="wk-country-flag">{c.flag}</span>
-            <JerseyCircle country={c} size={30} />
-            <span className="wk-country-name">{c.name}</span>
-          </button>
+          <LandKaart key={c.key} c={c} onKies={pickP2Country} />
         ))}
       </div>
     </div>
   )
 
   if (phase === 'country_select') return (
-    <div className="fb-screen">
+    <div className="fb-scherm">
       <TerugKnop onClick={onBack} />
-      <div className="wk-header">
-        <span className="wk-trophy">{twoPlayer ? '🎮' : '🏆'}</span>
-        <h1 className="wk-title">{twoPlayer ? '2 Spelers' : '1 tegen 1 voetbal'}</h1>
-        <p className="wk-sub">{twoPlayer ? 'Pijltjes — kies jouw land (P1)' : 'Kies jouw land'}</p>
+      <Kop icoon={twoPlayer ? 'spel' : 'trofee'} titel={twoPlayer ? <>2 <span>spelers</span></> : <>1 tegen 1 <span>voetbal</span></>}
+        sub={twoPlayer ? 'Speler 1 speelt met de pijltjes. Kies jouw land.' : 'Kies jouw land en win het toernooi'} />
+      <div className="fb-landen">
+        {COUNTRIES.map(c => <LandKaart key={c.key} c={c} open={unlocked.includes(c.key)} onKies={pickCountry} />)}
       </div>
-      <div className="wk-country-grid">
-        {COUNTRIES.map(c => {
-          const open = unlocked.includes(c.key)
-          return (
-            <button key={c.key} className={`wk-country-card${open ? '' : ' wk-locked'}`} disabled={!open}
-              onClick={() => open && pickCountry(c.key)} title={open ? undefined : 'Win het toernooi om dit land te ontgrendelen'}>
-              {!open && <span className="wk-lock-badge">🔒</span>}
-              <span className="wk-country-flag">{c.flag}</span>
-              <JerseyCircle country={c} size={30} />
-              <span className="wk-country-name">{c.name}</span>
-              <span className="wk-country-stars">{'⭐'.repeat(c.diff)}</span>
-            </button>
-          )
-        })}
-      </div>
-      <p className="wk-unlock-progress">{unlocked.length}/{COUNTRIES.length} landen ontgrendeld</p>
+      <p className="fb-voortgang">
+        <span className="fb-voortgang-balk"><span style={{ width: `${(unlocked.length / COUNTRIES.length) * 100}%` }} /></span>
+        {unlocked.length} van {COUNTRIES.length} landen ontgrendeld
+      </p>
     </div>
   )
 
-  // Match preview
+  // Voorbeschouwing
   if (phase === 'match_preview' && bracket) {
-    const opp = currentOpponent
-    const pl  = playerCountry
-    const rnd = bracket.roundNames[bracket.currentRound]
+    const opp = currentOpponent, pl = playerCountry
     return (
-      <div className="fb-screen">
+      <div className="fb-scherm midden">
         <TerugKnop onClick={() => rewardMode ? onMatchDone?.(false, bracket, false) : setPhase('country_select')} />
-        <div className="wk-preview">
-          <div className="wk-round-badge">{rnd}</div>
-          <div className="wk-vs-row">
-            <div className="wk-vs-team">
-              <JerseyCircle country={pl} size={72} />
-              <span className="wk-vs-flag">{pl.flag}</span>
-              <span className="wk-vs-name">{pl.name}</span>
-            </div>
-            <div className="wk-vs-mid">VS</div>
-            <div className="wk-vs-team">
-              <JerseyCircle country={opp} size={72} />
-              <span className="wk-vs-flag">{opp.flag}</span>
-              <span className="wk-vs-name">{opp.name}</span>
-            </div>
-          </div>
-          <div className="wk-diff-row">
-            <p className="wk-diff-label">Tegenstander: {'⭐'.repeat(opp.diff)}</p>
-          </div>
-          {noQuiz ? (
-            <button className="fb-quiz-submit" style={{ marginTop: 8, maxWidth: 240 }} onClick={() => setPhase('game')}>
-              ▶ Spelen!
-            </button>
-          ) : (
-            <>
-            <p className="wk-preview-sub">Kies je quizmoeilijkheid</p>
-            <div className="fb-diff-grid" style={{ maxWidth: 360 }}>
-            {[
-              { key: 'makkelijk', icon: '🟢', name: 'Makkelijk', desc: 'Eind groep 6', cls: 'fb-diff-easy' },
-              { key: 'gemiddeld',  icon: '🟡', name: 'Gemiddeld',  desc: 'Eind groep 7', cls: 'fb-diff-med'  },
-              { key: 'moeilijk',   icon: '🔴', name: 'Moeilijk',   desc: 'Midden groep 8', cls: 'fb-diff-hard' },
-            ].map(d => (
-              <button key={d.key} className={`fb-diff-btn ${d.cls}`} onClick={() => pickDifficulty(d.key)}>
-                <span className="fb-diff-icon">{d.icon}</span>
-                <span className="fb-diff-info">
-                  <span className="fb-diff-name">{d.name}</span>
-                  <span className="fb-diff-desc">{d.desc}</span>
-                </span>
-              </button>
-            ))}
-          </div>
-            </>
-          )}
-        </div>
-      </div>
-    )
-  }
-
-  // Quiz
-  if (phase === 'quiz') {
-    const q = questions[qIndex]
-    return (
-      <div className="fb-screen">
-        <TerugKnop onClick={() => setPhase('match_preview')} />
-        <div className="fb-quiz-wrap">
-          <div className="fb-quiz-header">
-            <span>Los 3 sommen op om te mogen spelen!</span>
-            <div className="fb-quiz-progress">
-              {questions.map((_, i) => (
-                <div key={i} className={`fb-quiz-dot ${i < qIndex ? 'fb-quiz-dot-done' : i === qIndex ? 'fb-quiz-dot-cur' : ''}`} />
+        <div className="fb-paneel">
+          {!twoPlayer && (
+            <ol className="fb-rondes" aria-label="Toernooi">
+              {bracket.roundNames.map((r, i) => (
+                <li key={r} className={i < bracket.currentRound ? 'klaar' : i === bracket.currentRound ? 'nu' : ''}>{r}</li>
               ))}
+            </ol>
+          )}
+          <div className="fb-tegen">
+            <div className="fb-team" style={{ '--tk': pl.c1 }}>
+              <Vlag country={pl} size={96} gloed />
+              <b>{pl.name}</b>
+              <span>{twoPlayer ? 'Speler 1' : 'Jij'}</span>
+            </div>
+            <span className="fb-vs">VS</span>
+            <div className="fb-team" style={{ '--tk': opp.c1 }}>
+              <Vlag country={opp} size={96} gloed />
+              <b>{opp.name}</b>
+              {twoPlayer ? <span>Speler 2</span> : <Sterren n={opp.diff} />}
             </div>
           </div>
-          {q && (
-            <div className="fb-quiz-card">
-              <p className="fb-quiz-q">{q.q}</p>
-              <div className="fb-quiz-input-row">
-                <input
-                  ref={inputRef}
-                  className={`fb-quiz-input ${feedback === 'ok' ? 'fb-quiz-input-ok' : feedback === 'err' ? 'fb-quiz-input-err' : ''}`}
-                  type="text" inputMode="decimal" value={input}
-                  onChange={e => setInput(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && !feedback && checkAnswer()}
-                  placeholder="Jouw antwoord..." disabled={!!feedback}
-                />
-                {q.unit && <span className="fb-quiz-unit">{q.unit}</span>}
-              </div>
-              {feedback === 'ok'  && <p className="fb-quiz-feedback fb-quiz-feedback-ok">✓ Goed! +{difficulty === 'moeilijk' ? 20 : difficulty === 'gemiddeld' ? 15 : 10} 🪙</p>}
-              {feedback === 'err' && <p className="fb-quiz-feedback fb-quiz-feedback-err">✗ Probeer het nog eens!</p>}
-              {!feedback && <button className="fb-quiz-submit" onClick={checkAnswer}>Controleer →</button>}
-              <p className="fb-quiz-hint">Tip: antwoord in {q.unit}</p>
-            </div>
-          )}
+          <button className="fb-knop" onClick={() => setPhase('game')}><Icoon naam="spelen" />Aftrap!</button>
+          <p className="fb-uitleg">
+            {twoPlayer
+              ? <>Speler 1: <kbd>←</kbd> <kbd>→</kbd> lopen, <kbd>↑</kbd> springen. Speler 2: <kbd>A</kbd> <kbd>D</kbd> lopen, <kbd>W</kbd> springen.</>
+              : <><kbd>←</kbd> <kbd>→</kbd> lopen, <kbd>↑</kbd> springen. Spring op het hoofd van de ander: dan wordt hij duizelig.</>}
+          </p>
         </div>
       </div>
     )
   }
 
-  // Game
+  // Wedstrijd
   if (phase === 'game') {
-    const mins   = Math.floor(timeLeft / 60)
-    const secs   = String(timeLeft % 60).padStart(2, '0')
-    const urgent = timeLeft <= 20
+    const mins = Math.floor(timeLeft / 60)
+    const secs = String(timeLeft % 60).padStart(2, '0')
+    const urgent = timeLeft <= 10
     const pl = playerCountry, opp = currentOpponent
     return (
-      <div className="fb-screen" style={{ gap: 0, paddingTop: 56 }}>
+      <div className="fb-spel">
         <OrientationGate />
         <TerugKnop onClick={onBack} />
-        <div className="fb-hud">
-          <div style={{ display:'flex', alignItems:'center', gap:10, background:`${pl.c1}1a`, padding:'7px 16px', borderRadius:14, border:`1.5px solid ${pl.c1}50` }}>
-            <span style={{ fontSize:'1.4rem', lineHeight:1 }}>{pl.flag}</span>
-            <span style={{ fontSize:'0.75rem', fontWeight:900, color:pl.c1, opacity:0.85, letterSpacing:'0.06em' }}>{pl.abbr}</span>
-            <span style={{ fontSize:'2.4rem', fontWeight:900, lineHeight:1, color:pl.c1 }}>{score.p}</span>
+        <div className="fb-veld">
+          <div className="fb-scorebord">
+            <div className="fb-ploeg links"><Vlag country={pl} size={30} /><span>{pl.abbr}</span><b key={'p' + score.p}>{score.p}</b></div>
+            <div className={'fb-klok' + (urgent ? ' urgent' : '')}>{mins}:{secs}</div>
+            <div className="fb-ploeg rechts"><b key={'a' + score.ai}>{score.ai}</b><span>{opp.abbr}</span><Vlag country={opp} size={30} /></div>
           </div>
-          <div className={`fb-timer${urgent ? ' fb-timer-urgent' : ''}`}>{mins}:{secs}</div>
-          <div style={{ display:'flex', alignItems:'center', gap:10, background:`${opp.c1}1a`, padding:'7px 16px', borderRadius:14, border:`1.5px solid ${opp.c1}50` }}>
-            <span style={{ fontSize:'2.4rem', fontWeight:900, lineHeight:1, color:opp.c1 }}>{score.ai}</span>
-            <span style={{ fontSize:'0.75rem', fontWeight:900, color:opp.c1, opacity:0.85, letterSpacing:'0.06em' }}>{opp.abbr}</span>
-            <span style={{ fontSize:'1.4rem', lineHeight:1 }}>{opp.flag}</span>
-          </div>
-        </div>
-        <div className="fb-canvas-wrap">
           <canvas ref={canvasRef} className="fb-canvas" width={W} height={H} />
-        </div>
-        {goalInfo && (
-          <div className="fb-goal-overlay" style={{
-            background: goalInfo.isPlayer
-              ? 'radial-gradient(ellipse at center, rgba(255,210,63,0.28) 0%, rgba(0,0,0,0.9) 65%)'
-              : 'radial-gradient(ellipse at center, rgba(255,107,107,0.28) 0%, rgba(0,0,0,0.9) 65%)',
-          }}>
-            {confetti.map((c, i) => (
-              <div key={i} className="fb-confetti-piece" style={{
-                left: `${c.left}%`, width: c.size, height: c.size,
-                background: c.color, borderRadius: c.round ? '50%' : '3px',
-                animationDuration: `${c.dur}s`, animationDelay: `${c.delay}s`,
-                transform: `rotate(${c.rot}deg)`,
-              }} />
-            ))}
-            <span className="fb-goal-flag" style={{ animationName: 'goalFlagIn' }}>
-              {goalInfo.isPlayer ? pl.flag : opp.flag}
-            </span>
-            <div className="fb-goal-word" style={{ color: goalInfo.isPlayer ? '#FFD23F' : '#FF6B6B', textShadow: `0 0 60px ${goalInfo.isPlayer ? '#FFD23F' : '#FF6B6B'}88` }}>
-              {goalInfo.isPlayer ? 'DOELPUNT!' : 'TEGENDOEL!'}
-            </div>
-            <div className="fb-goal-team">
-              {goalInfo.isPlayer ? pl.name : opp.name}
-            </div>
-            <div className="fb-goal-scoreline">
-              <span style={{ fontSize:'3.5rem' }}>{pl.flag}</span>
-              <div className="fb-goal-score-box">
-                <span style={{ color:'#4FC3F7' }}>{score.p}</span>
-                <span style={{ color:'rgba(255,255,255,0.25)' }}>—</span>
-                <span style={{ color:'#FF6B6B' }}>{score.ai}</span>
+          {goalInfo && (
+            <div className={'fb-doelpunt' + (goalInfo.isPlayer || twoPlayer ? ' voor' : ' tegen')}>
+              {confetti.map((c, i) => (
+                <i key={i} className="fb-confetti" style={{
+                  left: `${c.left}%`, width: c.size, height: c.size, background: c.color,
+                  borderRadius: c.round ? '50%' : '3px', animationDuration: `${c.dur}s`, animationDelay: `${c.delay}s`,
+                }} />
+              ))}
+              <Vlag country={goalInfo.isPlayer ? pl : opp} size={84} gloed />
+              <div className="fb-doelpunt-woord">{goalInfo.isPlayer || twoPlayer ? 'GOAL!' : 'TEGENGOAL'}</div>
+              <div className="fb-doelpunt-stand">
+                <Vlag country={pl} size={34} /><b>{score.p}</b><span>-</span><b>{score.ai}</b><Vlag country={opp} size={34} />
               </div>
-              <span style={{ fontSize:'3.5rem' }}>{opp.flag}</span>
             </div>
-          </div>
-        )}
-        <p className="fb-controls-hint">
-          {twoPlayer
-            ? 'P1: ← → lopen · ↑ springen   |   P2: A D lopen · W springen   |   Stamp op hoofd = duizelig'
-            : '← → lopen · ↑ springen · Dribble = trager · Stamp op hoofd = duizelig'}
-        </p>
+          )}
+        </div>
       </div>
     )
   }
 
-  // Match end — reward-mode (auto terug naar spelling)
+  // Einde wedstrijd als beloning (automatisch terug naar het oefenen)
   if (phase === 'match_end' && bracket && rewardMode) {
-    const won  = score.p >= score.ai     // gelijk = strafschoppen gewonnen
-    const pl   = playerCountry
-    const opp  = currentOpponent
+    const won = score.p >= score.ai     // gelijk = strafschoppen gewonnen
     const { next } = rewardNextBracket()
     return (
-      <div className="fb-screen">
-        <div className="fb-end-card">
-          <div style={{ display:'flex', gap:12, alignItems:'center', justifyContent:'center' }}>
-            <span style={{ fontSize:'2rem' }}>{pl.flag}</span>
-            <span className="fb-end-score" style={{ fontSize:'1.8rem', color:'#fff' }}>{score.p} – {score.ai}</span>
-            <span style={{ fontSize:'2rem' }}>{opp.flag}</span>
-          </div>
-          <span className="fb-end-icon">{won ? '🏆' : '😢'}</span>
-          <h2 className="fb-end-title" style={{ color: won ? '#FFD23F' : '#FF6B6B' }}>
-            {won ? 'Gewonnen!' : 'Verloren'}
-          </h2>
-          <p style={{ color:'rgba(255,255,255,0.7)', fontSize:'0.9rem', margin:'4px 0' }}>
-            {won
-              ? (next ? 'Top! Bij je volgende spelletje speel je de volgende ronde 🏆' : '🎉 Je hebt het hele toernooi gewonnen!')
-              : 'Volgende keer een nieuw toernooi 💪'}
-          </p>
-          <div className="fb-end-coins"><span>💵</span><span>+ € 50 briefgeld!</span></div>
-          <div className="fb-end-btns">
-            <Knop variant="primair" maat="lg" icoonRechts="verder" onClick={() => onMatchDone?.(won, next, true)}>
-              Verder met oefenen
-            </Knop>
-          </div>
-          <p style={{ color:'rgba(255,255,255,0.4)', fontSize:'0.75rem', marginTop:6 }}>Je gaat zo automatisch verder…</p>
-        </div>
-      </div>
+      <Uitslag pl={playerCountry} opp={currentOpponent} score={score} icoon={won ? 'trofee' : 'opnieuw'} kleur={won ? '#ffd23f' : '#ff5f7e'} titel={won ? 'Gewonnen!' : 'Verloren'}
+        tekst={won ? (next ? 'Bij je volgende spelletje speel je de volgende ronde.' : 'Je hebt het hele toernooi gewonnen!') : 'Volgende keer begin je een nieuw toernooi.'}>
+        <Knop variant="primair" maat="lg" icoonRechts="verder" onClick={() => onMatchDone?.(won, next, true)}>Verder met oefenen</Knop>
+      </Uitslag>
     )
   }
 
-  // Match end
   if (phase === 'match_end' && bracket) {
-    const won  = score.p > score.ai
+    const won = score.p > score.ai
     const draw = score.p === score.ai
-    const pl   = playerCountry
-    const opp  = currentOpponent
-    const rnd  = bracket.roundNames[bracket.currentRound]
+    if (twoPlayer) {
+      const winnaar = won ? playerCountry : draw ? null : currentOpponent
+      return (
+        <Uitslag pl={playerCountry} opp={currentOpponent} score={score} icoon="trofee" kleur={winnaar ? '#ffd23f' : '#3df2ff'} titel={winnaar ? `${winnaar.name} wint!` : 'Gelijkspel!'}>
+          <Knop variant="primair" icoon="opnieuw" onClick={restart}>Nog een keer</Knop>
+          <Knop variant="secundair" icoon="terug" onClick={onBack}>Terug</Knop>
+        </Uitslag>
+      )
+    }
+    const rnd = bracket.roundNames[bracket.currentRound]
     const next = bracket.currentRound < 3 ? bracket.roundNames[bracket.currentRound + 1] : null
     return (
-      <div className="fb-screen">
-        <div className="fb-end-card">
-          <div style={{ display: 'flex', gap: 12, alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ fontSize: '2rem' }}>{pl.flag}</span>
-            <span className="fb-end-score" style={{ fontSize: '1.8rem', color: '#fff' }}>{score.p} – {score.ai}</span>
-            <span style={{ fontSize: '2rem' }}>{opp.flag}</span>
-          </div>
-          <span className="fb-end-icon">{won ? '🏆' : draw ? '🤝' : '😢'}</span>
-          <h2 className="fb-end-title" style={{ color: won ? '#FFD23F' : draw ? '#4FC3F7' : '#FF6B6B' }}>
-            {won ? `${rnd} gewonnen!` : draw ? 'Gelijkspel — strafschoppen...' : 'Uitgeschakeld'}
-          </h2>
-          {draw && <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem' }}>Bij gelijkspel win jij de strafschoppen 🎲</p>}
-          {earnedCoins > 0 && (
-            <div className="fb-end-coins"><span>🪙</span><span>+{earnedCoins} curuntie verdiend!</span></div>
-          )}
-          <div className="fb-end-btns">
-            {(won || draw) && next && (
-              <Knop variant="primair" maat="lg" icoonRechts="verder" onClick={() => advanceRound(true)}>
-                Naar de {next}
-              </Knop>
-            )}
-            {(won || draw) && !next && (
-              <Knop variant="beloning" maat="lg" icoon="trofee" onClick={() => advanceRound(true)}>
-                Claim de beker!
-              </Knop>
-            )}
-            {!won && !draw && (
-              <>
-                <Knop variant="primair" icoon="opnieuw" onClick={restart}>Wedstrijd herspelen</Knop>
-                <Knop variant="secundair" icoon="opnieuw" onClick={() => { clearToernooi(); setBracket(null); setPhase('country_select') }}>Nieuw toernooi</Knop>
-              </>
-            )}
-            {(won || draw) && (
-              <Knop variant="secundair" icoon="terug" onClick={onBack}>Terug</Knop>
-            )}
+      <Uitslag pl={playerCountry} opp={currentOpponent} score={score} icoon={won || draw ? 'trofee' : 'opnieuw'} kleur={won ? '#ffd23f' : draw ? '#3df2ff' : '#ff5f7e'}
+        titel={won ? `${rnd} gewonnen!` : draw ? 'Gelijkspel' : 'Uitgeschakeld'}
+        tekst={draw ? 'Je wint de strafschoppen en gaat door!' : null}>
+        {(won || draw) && next && <Knop variant="primair" maat="lg" icoonRechts="verder" onClick={() => advanceRound()}>Naar de {next}</Knop>}
+        {(won || draw) && !next && <Knop variant="beloning" maat="lg" icoon="trofee" onClick={() => advanceRound()}>Claim de beker!</Knop>}
+        {!won && !draw && <>
+          <Knop variant="primair" icoon="opnieuw" onClick={restart}>Wedstrijd herspelen</Knop>
+          <Knop variant="secundair" icoon="opnieuw" onClick={() => { clearToernooi(); setBracket(null); setPhase('country_select') }}>Nieuw toernooi</Knop>
+        </>}
+        {(won || draw) && <Knop variant="secundair" icoon="terug" onClick={onBack}>Terug</Knop>}
+      </Uitslag>
+    )
+  }
+
+  if (phase === 'wk_won') {
+    const nieuw = newUnlock && getCountry(newUnlock)
+    return (
+      <div className="fb-scherm midden">
+        <div className="fb-paneel kampioen" style={{ '--uk': '#ffd23f' }}>
+          <span className="fb-embleem groot"><Icoon naam="trofee" /></span>
+          <h1 className="fb-titel">Toernooi <span>gewonnen!</span></h1>
+          <Vlag country={playerCountry} size={110} gloed />
+          <p className="fb-uitleg">{playerCountry?.name} wint alle vier de wedstrijden.</p>
+          {nieuw && <p className="fb-nieuw">Nieuw land ontgrendeld: <Vlag country={nieuw} size={26} /> <b>{nieuw.name}</b></p>}
+          <div className="fb-knoppen">
+            <Knop variant="primair" icoon="opnieuw" onClick={() => { clearToernooi(); setBracket(null); setNewUnlock(null); setPhase('country_select') }}>Nieuw toernooi</Knop>
+            <Knop variant="secundair" icoon="terug" onClick={onBack}>Terug</Knop>
           </div>
         </div>
       </div>
     )
   }
-
-  // WK Won!
-  if (phase === 'wk_won') return (
-    <div className="fb-screen">
-      <div className="wk-champion-card">
-        <div className="wk-champ-trophy">🏆</div>
-        <h1 className="wk-champ-title">TOERNOOI GEWONNEN!</h1>
-        <div className="wk-champ-flag">{playerCountry?.flag}</div>
-        <p className="wk-champ-sub">{playerCountry?.name} wint alle vier de duels!</p>
-        {newUnlock && (
-          <p className="wk-champ-unlock">🔓 Nieuw land ontgrendeld: {getCountry(newUnlock)?.flag} {getCountry(newUnlock)?.name}!</p>
-        )}
-        <div className="fb-end-btns">
-        <Knop variant="primair" icoon="opnieuw" onClick={() => { clearToernooi(); setBracket(null); setNewUnlock(null); setPhase('country_select') }}>
-          Nieuw toernooi
-        </Knop>
-        <Knop variant="secundair" icoon="terug" onClick={onBack}>Terug</Knop>
-        </div>
-      </div>
-    </div>
-  )
-
-  // WK Lost
-  if (phase === 'wk_lost') return (
-    <div className="fb-screen">
-      <div className="fb-end-card">
-        <span className="fb-end-icon">😢</span>
-        <h2 className="fb-end-title" style={{ color: '#FF6B6B' }}>Uitgeschakeld</h2>
-        <p style={{ color: 'rgba(255,255,255,0.5)' }}>Je bent uitgeschakeld in de {bracket?.roundNames[bracket?.currentRound]}.</p>
-        <div className="fb-end-btns">
-          <Knop variant="primair" icoon="opnieuw" onClick={restart}>Wedstrijd herspelen</Knop>
-          <Knop variant="secundair" icoon="opnieuw" onClick={() => { clearToernooi(); setBracket(null); setPhase('country_select') }}>Nieuw toernooi</Knop>
-        </div>
-      </div>
-    </div>
-  )
 
   return null
 }

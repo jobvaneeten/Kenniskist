@@ -247,3 +247,57 @@ img.hs-flag-img { width: 1.25em; height: 1.25em; object-fit: contain; vertical-a
   .hs-special { width: 60px; height: 60px; }
   .hs-scoreboard { font-size: 1.5rem; }
 }
+
+/* ── Landkeuze en kampioen (was football.css) ── */
+.wk-header { text-align: center; margin-bottom: 20px; }
+.wk-trophy { font-size: 2.8rem; display: block; margin-bottom: 4px; }
+.wk-title  { font-size: 2rem; font-weight: 900; color: #FFD23F; margin: 0; letter-spacing: 0.05em; }
+.wk-sub    { font-size: 0.85rem; color: rgba(255,255,255,0.45); margin: 4px 0 0; }
+
+.wk-country-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  width: 100%;
+  max-width: 660px;
+}
+
+.wk-country-card {
+  position: relative;
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  padding: 12px 8px; border-radius: 14px;
+  background: rgba(255,255,255,0.06); border: 1.5px solid rgba(255,255,255,0.1);
+  cursor: pointer; font-family: inherit; color: #fff;
+  transition: transform 0.15s, border-color 0.15s, background 0.15s;
+}
+.wk-country-card:hover {
+  transform: translateY(-3px); border-color: #FFD23F;
+  background: rgba(255,210,63,0.12);
+}
+.wk-country-flag { font-size: 1.6rem; line-height: 1; }
+.wk-country-name { font-size: 0.7rem; font-weight: 700; text-align: center; }
+.wk-champion-card {
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+  background: linear-gradient(135deg, rgba(255,210,63,0.15), rgba(255,140,0,0.1));
+  border: 2px solid rgba(255,210,63,0.4);
+  border-radius: 26px; padding: 44px 32px;
+  max-width: 420px; width: 100%;
+  animation: fadeUp 0.5s ease-out;
+  box-shadow: 0 0 60px rgba(255,210,63,0.2);
+}
+.wk-champ-trophy { font-size: 5rem; animation: champ-bounce 1s ease-in-out infinite; }
+@keyframes champ-bounce {
+  0%,100% { transform: translateY(0) rotate(-5deg); }
+  50%     { transform: translateY(-10px) rotate(5deg); }
+}
+.wk-champ-title {
+  font-size: 2.2rem; font-weight: 900;
+  background: linear-gradient(90deg, #FFD23F, #FF8C00);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  text-align: center; letter-spacing: 0.05em;
+}
+.wk-champ-sub  { color: rgba(255,255,255,0.6); font-size: 0.95rem; text-align: center; }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

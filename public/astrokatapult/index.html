@@ -62,13 +62,15 @@
   .cell:not(.locked):hover{border-color:var(--cyan);box-shadow:0 0 18px rgba(55,230,255,.35);}
   .cell:active{transform:scale(.94);}
   .cell.locked{color:#454a86;cursor:not-allowed;background:#0c0e29;border-color:rgba(80,86,150,.25);}
-  .cell.locked::after{content:"🔒";position:absolute;font-size:20px;}
+  .cell.locked::after{content:"";position:absolute;width:22px;height:22px;background:currentColor;opacity:.75;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round'%3E%3Crect x='5' y='11' width='14' height='10' rx='2'/%3E%3Cpath d='M8 11V7a4 4 0 0 1 8 0v4'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round'%3E%3Crect x='5' y='11' width='14' height='10' rx='2'/%3E%3Cpath d='M8 11V7a4 4 0 0 1 8 0v4'/%3E%3C/svg%3E") center/contain no-repeat;}
   .cell.locked span{visibility:hidden;}
   .cell .stars{position:absolute;bottom:6px;font-size:11px;letter-spacing:1px;color:var(--gold);}
   .cell.cleared{border-color:rgba(125,255,138,.55);box-shadow:inset 0 0 14px rgba(125,255,138,.12);}
   .planet-head{grid-column:1/-1;display:flex;align-items:center;gap:10px;margin:6px 2px 0;
     font-weight:800;letter-spacing:.14em;text-transform:uppercase;font-size:13px;color:#cdd3ff;}
-  .planet-head::before{content:"🪐";font-size:16px;}
+  .planet-head::before{content:"";width:12px;height:12px;border-radius:50%;flex:none;background:radial-gradient(circle at 35% 35%,#fff,#ffb86b 35%,#c2410c);box-shadow:0 0 0 2px rgba(11,12,40,.9),0 0 0 3.5px rgba(255,200,150,.55),0 0 10px rgba(255,170,90,.7);}
+  .grid{scrollbar-width:thin;scrollbar-color:rgba(120,140,255,.55) transparent;}
+  .grid::-webkit-scrollbar{width:8px;} .grid::-webkit-scrollbar-thumb{background:rgba(120,140,255,.5);border-radius:8px;}
   .planet-head::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(120,130,220,.5),transparent);}
 
   /* ---- HUD ---- */
@@ -896,6 +898,13 @@ function resize(){
   canvas.width=Math.round(w*view.dpr); canvas.height=Math.round(h*view.dpr);
   view.scale=Math.min(w/WORLD_W, h/WORLD_H);
   view.ox=(w-WORLD_W*view.scale)/2; view.oy=(h-WORLD_H*view.scale)/2;
+  // Hoger dan breed genoeg: niet een grote lege grond onderin, maar de horizon
+  // op ruim driekwart van het scherm en meer lucht erboven (die loopt BG_PY door).
+  const over=h-WORLD_H*view.scale;
+  if(over>0){
+    const doel=h*0.8-G_TOP*view.scale;
+    view.oy=Math.max(view.oy, Math.min(doel, BG_PY*view.scale));
+  }
   bgCache=null;
 }
 function achtergrond(){
@@ -965,8 +974,34 @@ function achtergrond(){
   const gg=g.createLinearGradient(0,G_TOP,0,WORLD_H+BG_PY);
   gg.addColorStop(0,TH.gTop); gg.addColorStop(0.4,TH.gBot); gg.addColorStop(1,"#05040c");
   g.fillStyle=gg; g.fillRect(-BG_PX,G_TOP,WORLD_W+2*BG_PX,WORLD_H-G_TOP+BG_PY);
-  g.strokeStyle="rgba(0,0,0,.18)"; g.lineWidth=2;
-  for(let l=1;l<4;l++){ g.beginPath(); for(let x=-BG_PX;x<=WORLD_W+BG_PX;x+=30){ const yy=G_TOP+l*20+Math.sin(x*0.02+l)*3; x===-BG_PX?g.moveTo(x,yy):g.lineTo(x,yy); } g.stroke(); }
+  // gloed van de horizon op de grond (reflectie)
+  const rf=g.createLinearGradient(0,G_TOP,0,G_TOP+90);
+  rf.addColorStop(0,rgba(SF.gloed,0.16)); rf.addColorStop(1,rgba(SF.gloed,0));
+  g.fillStyle=rf; g.fillRect(-BG_PX,G_TOP,WORLD_W+2*BG_PX,90);
+  // gesteentelagen: donkere naden met een dun licht randje
+  for(let l=1;l<7;l++){
+    const yy0=G_TOP+l*l*9+8;
+    g.beginPath(); for(let x=-BG_PX;x<=WORLD_W+BG_PX;x+=30){ const yy=yy0+Math.sin(x*0.013+l*1.7)*(3+l); x===-BG_PX?g.moveTo(x,yy):g.lineTo(x,yy); }
+    g.strokeStyle="rgba(0,0,0,.22)"; g.lineWidth=3; g.stroke();
+    g.strokeStyle=rgba(SF.krater,0.22/l); g.lineWidth=1; g.translate(0,-2); g.stroke(); g.translate(0,2);
+  }
+  // gloeiende kristallen in de grond
+  for(let i=0;i<9;i++){
+    const x=-BG_PX*0.5+r()*(WORLD_W+BG_PX), y=G_TOP+30+r()*170, s=6+r()*10;
+    const gl=g.createRadialGradient(x,y,0,x,y,s*4);
+    gl.addColorStop(0,rgba(SF.gloed,0.35)); gl.addColorStop(1,rgba(SF.gloed,0));
+    g.fillStyle=gl; g.fillRect(x-s*4,y-s*4,s*8,s*8);
+    for(let k=0;k<3;k++){
+      const kx=x+(k-1)*s*0.8, kh=s*(1.2+r()*1.3), kb=s*0.45, sch=(k-1)*0.35;
+      g.save(); g.translate(kx,y); g.rotate(sch);
+      const kg=g.createLinearGradient(0,-kh,0,0); kg.addColorStop(0,"#ffffff"); kg.addColorStop(0.35,SF.gloed); kg.addColorStop(1,rgba(SF.gloed,0.35));
+      g.fillStyle=kg; g.beginPath(); g.moveTo(-kb,0); g.lineTo(0,-kh); g.lineTo(kb,0); g.closePath(); g.fill();
+      g.restore();
+    }
+  }
+  // glinsterende steentjes
+  for(let i=0;i<70;i++){ const x=-BG_PX+r()*(WORLD_W+2*BG_PX), y=G_TOP+12+r()*(WORLD_H-G_TOP+BG_PY*0.6);
+    g.fillStyle=rgba(r()<0.25?SF.gloed:"#ffffff",0.12+r()*0.25); g.fillRect(x,y,1.6,1.6); }
   for(let i=0;i<14;i++){ const x=r()*WORLD_W, y=G_TOP+18+r()*(WORLD_H-G_TOP-28), w=18+r()*34;
     g.fillStyle="rgba(0,0,0,.28)"; g.beginPath(); g.ellipse(x,y,w,w*0.3,0,0,7); g.fill();
     g.strokeStyle=rgba(SF.krater,0.9); g.lineWidth=2; g.beginPath(); g.ellipse(x,y-1,w,w*0.3,0,Math.PI,2*Math.PI); g.stroke(); }
@@ -1005,7 +1040,7 @@ function render(){
   drawTwinkle();
 
   if(state.screen==="play"||state.screen==="result"){
-    drawLauncher(); drawBlocks(); drawAliens(); drawShards(); drawProjectile(); drawLauncherFront();
+    drawSchaduwen(); drawLauncher(); drawBlocks(); drawAliens(); drawShards(); drawProjectile(); drawLauncherFront();
     if(aiming) drawTrajectory();
     drawRings(); drawParticles(); drawFloaters(); drawShots(); drawAbilityHint(); drawUitleg();
   } else {
@@ -1085,6 +1120,19 @@ function drawLauncherFront(){
 }
 
 /* ---------- blokken per materiaal ---------- */
+// Zachte schaduwen en gloed op de grond: blokken en aliens staan er echt op
+function drawSchaduwen(){
+  const SF=sfeer();
+  const schaduw=(x,bodem,breed,kleur)=>{
+    const d=G_TOP-bodem; if(d<-4||d>160) return;
+    const a=Math.max(0,1-d/160);
+    ctx.fillStyle=kleur?rgba(kleur,0.28*a):`rgba(0,0,0,${0.4*a})`;
+    ctx.beginPath(); ctx.ellipse(x,G_TOP+3,breed*(0.55+0.25*(1-a)),5+3*(1-a),0,0,7); ctx.fill();
+  };
+  for(const b of blocks){ const g=b.gameData, rp=g.rp||b.position; schaduw(rp.x, rp.y+Math.max(g.w,g.h)/2, g.w); }
+  for(const a of aliens){ const g=a.gameData, rp=g.rp||a.position; schaduw(rp.x, rp.y+g.r, g.r*2.4, "#7dff8a"); }
+  schaduw(ANCHOR.x, G_TOP, 70, SF.gloed);
+}
 function drawBlocks(){
   for(const b of blocks){
     const g=b.gameData, m=MAT[g.mat];

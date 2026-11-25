@@ -3,7 +3,6 @@ import { COUNTRIES, CLASS_COUNTRIES, getCountry, generateBracket, generateClassB
 import { getMove, getSuper, superDescOf, INSTANT_BEHAVIORS } from './headSoccerMoves'
 import { emojiUrl } from '../itemsCatalog'
 import OrientationGate from '../OrientationGate'
-import './football.css'
 import './headsoccer.css'
 import { TerugKnop } from '../ui/index.jsx'
 

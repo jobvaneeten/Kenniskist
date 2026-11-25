@@ -49,6 +49,9 @@
   .mbar i{display:block;height:100%;width:0;border-radius:4px;background:linear-gradient(90deg,#ffb02d,var(--red));
     box-shadow:0 0 10px rgba(255,90,77,.8);}
   #hudStatus{position:absolute;top:max(64px,calc(env(safe-area-inset-top) + 52px));right:14px;display:flex;flex-direction:column;gap:6px;align-items:flex-end;}
+  .ico{width:1.1em;height:1.1em;vertical-align:-0.18em;flex:none;}
+  .wallet .ico{color:var(--gold);filter:drop-shadow(0 0 4px rgba(255,211,77,.6));}
+  .ibtn .ico{width:13px;height:13px;}
   .status-chip{background:var(--panel);border:1px solid var(--line);border-radius:10px;
     padding:5px 11px;font-size:13px;font-weight:800;display:flex;align-items:center;gap:6px;}
   .status-chip .bar{width:44px;height:4px;border-radius:2px;background:rgba(255,255,255,.18);overflow:hidden;}
@@ -215,7 +218,7 @@
     <div class="shop-head">
       <button class="icon-btn" id="bBack">←</button>
       <h2>SHOP<small id="ownCount"></small></h2>
-      <div class="wallet">🪙 <span id="wCoins">0</span></div>
+      <div class="wallet"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 7l1.4 3 3.2.3-2.4 2.2.7 3.2L12 14l-2.9 1.7.7-3.2-2.4-2.2 3.2-.3z"/></svg> <span id="wCoins">0</span></div>
     </div>
     <div class="tabs">
       <button class="tab-btn active" data-tab="char">Poppetjes</button>
@@ -267,6 +270,24 @@ const Store = (() => {
   };
 })();
 function readJSON(k, fb){ try { const v = JSON.parse(Store.get(k) || 'null'); return v === null ? fb : v; } catch(e){ return fb; } }
+/* Eigen iconen (geen emoji): dezelfde paden voor de html en het canvas */
+const ICO = {
+  munt:    'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 7l1.4 3 3.2.3-2.4 2.2.7 3.2L12 14l-2.9 1.7.7-3.2-2.4-2.2 3.2-.3z',
+  magneet: 'M6 4h4v8a2 2 0 0 0 4 0V4h4v8a6 6 0 0 1-12 0zM6 4h4v3H6zM14 4h4v3h-4z',
+  schild:  'M12 2l8 3v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5z',
+  para:    'M3 11a9 7 0 0 1 18 0zM3 11l9 9 9-9M8.5 11L12 20l3.5-9M12 20v2',
+  raket:   'M12 2c3 2 5 6 5 10l-2 3H9l-2-3c0-4 2-8 5-10zM12 7.5a1.8 1.8 0 1 0 0 3.6 1.8 1.8 0 0 0 0-3.6zM9 15l-3 3 3 .5zM15 15l3 3-3 .5zM10.5 17h3l-1.5 4z',
+  cadeau:  'M4 9h16v4H4zM5 13h14v8H5zM12 9v12M12 9C9 9 7 7.5 8 6s4 0 4 3c0-3 3-4.5 4-3s-1 3-4 3',
+  sprong:  'M12 2l7 7h-4v3h-6V9H5zM12 11l7 7h-4v4H9v-4H5z',
+  geld:    'M7 7c-2 2-3 5-3 8a8 6 0 0 0 16 0c0-3-1-6-3-8zM8 3h8l-2 4h-4zM12 10v8M14 11.5c-.5-.8-1.3-1-2-1-1.2 0-2 .6-2 1.5 0 2 4 1 4 3 0 .9-.8 1.5-2 1.5-.8 0-1.6-.3-2-1',
+};
+const icoSvg = (n, kleur) => '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="' + ICO[n] + '" fill="' + (kleur || 'currentColor') + '" fill-rule="evenodd"/></svg>';
+const icoPad = {};
+function tekenIco(g, n, x, y, maat, kleur){
+  const pad = icoPad[n] || (icoPad[n] = new Path2D(ICO[n]));
+  g.save(); g.translate(x - maat/2, y - maat/2); g.scale(maat/24, maat/24);
+  g.fillStyle = kleur; g.fill(pad, 'evenodd'); g.restore();
+}
 const MUNTKEY = 'mv_munten';
 function getCoins(){ return parseInt(Store.get(MUNTKEY) || '0', 10) || 0; }
 function setCoins(v){ Store.set(MUNTKEY, String(Math.max(0, Math.round(v)))); }
@@ -360,12 +381,12 @@ const UPGRADES = [
   // voorsprong en herstel hielpen alleen bij meerdere botsingen; sinds één
   // botsing genoeg is doen ze iets anders, met dezelfde id's zodat gekochte
   // niveaus blijven staan.
-  { id:'voorsprong', name:'Meer power-ups', desc:'Power-ups komen vaker langs',   icon:'🎁', max:4, base:120 },
-  { id:'herstel',    name:'Muntbonus',      desc:'+10% munten aan het eind van elke run', icon:'💰', max:5, base:100 },
-  { id:'magneet',    name:'Sterke magneet', desc:'De muntmagneet duurt langer',     icon:'🧲', max:5, base:90 },
-  { id:'raket',      name:'Raketboost',     desc:'De raket duurt langer',           icon:'🚀', max:4, base:140 },
-  { id:'schild',     name:'Startschild',    desc:'Begin elke run met een schild',   icon:'🛡', max:1, base:600 },
-  { id:'dubbel',     name:'Dubbele sprong', desc:'Spring nog een keer in de lucht', icon:'⏫', max:1, base:1500 },
+  { id:'voorsprong', name:'Meer power-ups', desc:'Power-ups komen vaker langs',   icon:'cadeau', max:4, base:120 },
+  { id:'herstel',    name:'Muntbonus',      desc:'+10% munten aan het eind van elke run', icon:'geld', max:5, base:100 },
+  { id:'magneet',    name:'Sterke magneet', desc:'De muntmagneet duurt langer',     icon:'magneet', max:5, base:90 },
+  { id:'raket',      name:'Raketboost',     desc:'De raket duurt langer',           icon:'raket', max:4, base:140 },
+  { id:'schild',     name:'Startschild',    desc:'Begin elke run met een schild',   icon:'schild', max:1, base:600 },
+  { id:'dubbel',     name:'Dubbele sprong', desc:'Spring nog een keer in de lucht', icon:'sprong', max:1, base:1500 },
 ];
 const upCost = (base, lv) => Math.round(base * Math.pow(1.7, lv));
 
@@ -1522,13 +1543,39 @@ function drawZoneDeco(zi, dist, alpha){
     const mg = ctx.createRadialGradient(W*0.75, GROUND*0.28, 10, W*0.75, GROUND*0.28, 70);
     mg.addColorStop(0,'rgba(255,200,240,.9)'); mg.addColorStop(.5,'rgba(255,120,200,.35)'); mg.addColorStop(1,'transparent');
     ctx.fillStyle = mg; ctx.beginPath(); ctx.arc(W*0.75, GROUND*0.28, 70, 0, 7); ctx.fill();
-    [[0.08, '#1a0b36', 0.5], [0.22, '#0e0622', 0.8]].forEach(([par, kl, schaal]) => lagen(par, (x0, r) => {
+    [[0.04, '#24104a', 0.35, 0.5], [0.08, '#1a0b36', 0.5, 1], [0.22, '#0e0622', 0.8, 1]].forEach(([par, kl, schaal, dicht], laag) => lagen(par, (x0, r) => {
       for (let i = 0; i < 6; i++){
         const bw = 40 + r()*44, bh = (80 + r()*190)*schaal + 40, bx = x0 + i*70 + r()*20;
-        ctx.fillStyle = kl; ctx.fillRect(bx, GROUND - bh, bw, bh);
-        ctx.fillStyle = r() < .5 ? 'rgba(62,232,255,.45)' : 'rgba(255,79,163,.45)';
-        for (let yy = GROUND - bh + 10; yy < GROUND - 12; yy += 16) for (let xx = bx + 6; xx < bx + bw - 8; xx += 11) if (r() < .35) ctx.fillRect(xx, yy, 5, 7);
-        if (r() < .3){ ctx.fillStyle = Z.ac; ctx.fillRect(bx + 4, GROUND - bh - 3, bw - 8, 3); }
+        const top = GROUND - bh, neon = r() < .5 ? '#3ee8ff' : '#ff4fa3';
+        ctx.fillStyle = kl; ctx.fillRect(bx, top, bw, bh);
+        if (laag === 0){ ctx.globalAlpha = alpha*dicht; ctx.fillStyle = 'rgba(155,108,255,.25)'; ctx.fillRect(bx, top, bw, 2); ctx.globalAlpha = alpha; continue; }
+        // getrapt dak en een lichte rand aan de maankant
+        if (r() < .4){ ctx.fillStyle = kl; ctx.fillRect(bx + bw*0.2, top - 14, bw*0.6, 14); }
+        ctx.fillStyle = 'rgba(255,170,230,.07)'; ctx.fillRect(bx + bw - 3, top, 3, bh);
+        // ramen
+        ctx.fillStyle = neon === '#3ee8ff' ? 'rgba(62,232,255,.45)' : 'rgba(255,79,163,.45)';
+        for (let yy = top + 10; yy < GROUND - 12; yy += 16) for (let xx = bx + 6; xx < bx + bw - 8; xx += 11) if (r() < .35) ctx.fillRect(xx, yy, 5, 7);
+        // neon daklijn
+        if (r() < .55){
+          ctx.save(); ctx.shadowColor = neon; ctx.shadowBlur = 10; ctx.fillStyle = neon;
+          ctx.fillRect(bx, top - 1.5, bw, 2.5); ctx.restore();
+        }
+        // antenne met knipperlicht
+        if (r() < .35){
+          const ax = bx + bw*(0.3 + r()*0.4), ah = 16 + r()*26;
+          ctx.fillStyle = kl; ctx.fillRect(ax - 1, top - ah, 2, ah);
+          if (Math.sin(gt*3 + bx) > 0.2){
+            ctx.save(); ctx.shadowColor = '#ff3b5c'; ctx.shadowBlur = 12; ctx.fillStyle = '#ff6b80';
+            ctx.beginPath(); ctx.arc(ax, top - ah, 2.4, 0, 7); ctx.fill(); ctx.restore();
+          }
+        }
+        // lichtreclame
+        if (laag === 2 && r() < .25){
+          const sh = 26 + r()*30, sy = top + 18 + r()*Math.max(10, bh - sh - 40);
+          ctx.save(); ctx.shadowColor = Z.ac; ctx.shadowBlur = 14; ctx.strokeStyle = Z.ac; ctx.lineWidth = 2;
+          ctx.globalAlpha = alpha*(0.75 + 0.25*Math.sin(gt*5 + bx));
+          ctx.strokeRect(bx + bw/2 - 6, sy, 12, sh); ctx.restore();
+        }
       }
     }));
   } else if (mz === 1){
@@ -1611,6 +1658,12 @@ function draw(){
   drawZoneDeco(zi, dist, 1 - fade);
   if (fade > 0) drawZoneDeco(zi + 1, dist, fade);
 
+  // nevel boven de horizon in de kleur van de zone
+  const nv = ctx.createLinearGradient(0, GROUND - 130, 0, GROUND);
+  nv.addColorStop(0, 'rgba(' + hex2rgb(Z.ac).join(',') + ',0)');
+  nv.addColorStop(1, 'rgba(' + hex2rgb(fade > 0.5 ? Z2.ac : Z.ac).join(',') + ',.2)');
+  ctx.fillStyle = nv; ctx.fillRect(0, GROUND - 130, W, 130);
+
   ctx.save();
   if (S.shake > 0){ const k = S.shake*22; ctx.translate(rand(-k, k), rand(-k, k)); }
   ctx.translate(0, S.camY);
@@ -1658,8 +1711,8 @@ function draw(){
     ctx.save(); ctx.translate(x, y);
     ctx.shadowBlur = 20; ctx.shadowColor = kl; ctx.strokeStyle = kl; ctx.lineWidth = 3;
     ctx.fillStyle = 'rgba(10,12,30,.75)'; ctx.beginPath(); ctx.arc(0, 0, 18, 0, 7); ctx.fill(); ctx.stroke(); ctx.shadowBlur = 0;
-    ctx.font = '18px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText(p.type === 'magneet' ? '🧲' : p.type === 'schild' ? '🛡' : p.type === 'para' ? '🪂' : '🚀', 0, 1);
+    ctx.shadowBlur = 8; ctx.shadowColor = kl
+    tekenIco(ctx, p.type === 'magneet' ? 'magneet' : p.type === 'schild' ? 'schild' : p.type === 'para' ? 'para' : 'raket', 0, 0, 22, kl);
     ctx.restore();
   }
 
@@ -1679,6 +1732,16 @@ function draw(){
       ctx.fillStyle = fl; ctx.beginPath(); ctx.moveTo(PX - 16, feet - 34); ctx.lineTo(PX - 70 - Math.sin(gt*40)*10, feet - 22); ctx.lineTo(PX - 16, feet - 10); ctx.closePath(); ctx.fill();
     }
     if (S.paraT > 0) drawParachute(PX, feet - 52);
+    // stofwolkjes bij het rennen, een lichtspoor in de lucht
+    if (pose === 'run' && !S.demo && Math.random() < .45)
+      S.parts.push({ x:S.dist + PX - 8, y:feet - 3, vx:-rand(60, 150), vy:-rand(20, 70), life:.32, max:.32, col:'rgba(210,190,255,.55)', r:rand(1.5, 3) });
+    if (pose === 'jump' && !S.demo){
+      ctx.save(); ctx.globalCompositeOperation = 'lighter';
+      const kc = hex2rgb(/^#[0-9a-f]{6}$/i.test(ch.c1) ? ch.c1 : '#ffffff').join(',');
+      const sp = ctx.createLinearGradient(PX - 60, 0, PX, 0);
+      sp.addColorStop(0, 'rgba(' + kc + ',0)'); sp.addColorStop(1, 'rgba(' + kc + ',.35)');
+      ctx.fillStyle = sp; ctx.beginPath(); ctx.ellipse(PX - 28, feet - 24, 34, 13, 0, 0, 7); ctx.fill(); ctx.restore();
+    }
     drawChar(ctx, ch, { x:PX, y:feet, t:gt, pose, leg:S.leg });
     if (S.shield){
       ctx.save(); ctx.shadowBlur = 16; ctx.shadowColor = '#3ee8ff';
@@ -2001,10 +2064,10 @@ function updateHud(){
   elD.textContent = m + 'm'; elC.textContent = S.run;
   elMet.style.width = Math.round(clamp(1 - S.gap, 0, 1)*100) + '%';
   const chips = [];
-  if (S.shield) chips.push('<div class="status-chip">🛡 Schild</div>');
-  if (S.magnetT > 0) chips.push('<div class="status-chip">🧲 <div class="bar"><i style="width:' + Math.round(S.magnetT/(7 + 2*up('magneet'))*100) + '%"></i></div></div>');
-  if (S.paraT > 0) chips.push('<div class="status-chip">🪂 Parachute</div>');
-  if (S.boostT > 0) chips.push('<div class="status-chip">🚀 <div class="bar"><i style="width:' + Math.round(S.boostT/(3.2 + 0.8*up('raket'))*100) + '%"></i></div></div>');
+  if (S.shield) chips.push('<div class="status-chip">' + icoSvg('schild', '#3ee8ff') + ' Schild</div>');
+  if (S.magnetT > 0) chips.push('<div class="status-chip">' + icoSvg('magneet', '#ff4f6d') + ' <div class="bar"><i style="width:' + Math.round(S.magnetT/(7 + 2*up('magneet'))*100) + '%"></i></div></div>');
+  if (S.paraT > 0) chips.push('<div class="status-chip">' + icoSvg('para', '#57f2c8') + ' Parachute</div>');
+  if (S.boostT > 0) chips.push('<div class="status-chip">' + icoSvg('raket', '#ffb02d') + ' <div class="bar"><i style="width:' + Math.round(S.boostT/(3.2 + 0.8*up('raket'))*100) + '%"></i></div></div>');
   const html = chips.join('');
   if (html !== hudPrev){ elStatus.innerHTML = html; hudPrev = html; }
 }
@@ -2091,7 +2154,7 @@ function renderGrid(){
       d.innerHTML = '<i class="rarity"></i><div class="rlabel">' + RARITY[ch.rar].label + '</div>'
         + '<div class="nm">' + ch.name + '</div>'
         + (own ? '<button class="ibtn ' + (eq ? 'on' : 'eq') + '" data-a="ec" data-i="' + ch.id + '">' + (eq ? '✓ ACTIEF' : 'KIES') + '</button>'
-               : '<button class="ibtn buy" data-a="bc" data-i="' + ch.id + '"' + (coins < ch.cost ? ' disabled' : '') + '>🪙 ' + ch.cost + '</button>');
+               : '<button class="ibtn buy" data-a="bc" data-i="' + ch.id + '"' + (coins < ch.cost ? ' disabled' : '') + '>' + icoSvg('munt') + ' ' + ch.cost + '</button>');
       d.insertBefore(charPreview(ch, own), d.children[2]);
       grid.appendChild(d);
     });
@@ -2100,11 +2163,11 @@ function renderGrid(){
       const lv = up(p.id), maxed = lv >= p.max, cost = maxed ? 0 : upCost(p.base, lv);
       const d = document.createElement('div');
       d.className = 'item ' + (maxed ? 'r-legend' : lv > 0 ? 'r-rare' : 'r-common');
-      d.innerHTML = '<i class="rarity"></i><div class="prev" style="display:flex;align-items:center;justify-content:center;font-size:40px">' + p.icon + '</div>'
+      d.innerHTML = '<i class="rarity"></i><div class="prev" style="display:flex;align-items:center;justify-content:center;font-size:44px;color:var(--cyan)">' + icoSvg(p.icon) + '</div>'
         + '<div class="nm">' + p.name + '</div><div class="ds">' + p.desc + '</div>'
         + '<div class="dots">' + '●'.repeat(lv) + '○'.repeat(p.max - lv) + '</div>'
         + '<button class="ibtn ' + (maxed ? 'max' : 'buy') + '" data-a="up" data-i="' + p.id + '"' + (maxed || coins < cost ? ' disabled' : '') + '>'
-        + (maxed ? '✓ MAX' : '🪙 ' + cost) + '</button>';
+        + (maxed ? '✓ MAX' : icoSvg('munt') + ' ' + cost) + '</button>';
       grid.appendChild(d);
     });
   }
