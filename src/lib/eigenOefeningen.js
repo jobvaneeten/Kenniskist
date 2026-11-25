@@ -12,7 +12,7 @@ export const EIGEN_VAKKEN = [
   { key: 'topo',       label: 'Topografie' },
 ]
 
-const VELDEN = 'id, klas_id, groep, vak, onderwerp, vragen, schudden, spel_na, geld, aangemaakt_op'
+const VELDEN = 'id, klas_id, groep, vak, onderwerp, vragen, schudden, spel_na, geld, zichtbaar, aangemaakt_op'
 
 export async function haalEigenOefeningen(klasId) {
   if (!klasId) return []
@@ -26,7 +26,7 @@ export async function bewaarEigenOefening(oefening) {
   const rij = {
     klas_id: oefening.klas_id, groep: oefening.groep, vak: oefening.vak,
     onderwerp: oefening.onderwerp.trim(), vragen: oefening.vragen, schudden: oefening.schudden !== false,
-    spel_na: oefening.spel_na ?? null, geld: oefening.geld || 0,
+    spel_na: oefening.spel_na ?? null, geld: oefening.geld || 0, zichtbaar: oefening.zichtbaar !== false,
   }
   const { error } = oefening.id
     ? await supabase.from('eigen_oefeningen').update(rij).eq('id', oefening.id)
@@ -45,6 +45,12 @@ export function markeerBeloond(id) {
     const lijst = JSON.parse(localStorage.getItem(BELOOND) || '[]') || []
     if (!lijst.includes(id)) localStorage.setItem(BELOOND, JSON.stringify([...lijst, id]))
   } catch { /* niet op te slaan: dan geen geheugen, wel het geld */ }
+}
+
+// Verborgen oefeningen haalt een leerling niet op (RLS, migratie 0032)
+export async function zetZichtbaar(id, zichtbaar) {
+  const { error } = await supabase.from('eigen_oefeningen').update({ zichtbaar }).eq('id', id)
+  if (error) throw error
 }
 
 export async function verwijderEigenOefening(id) {

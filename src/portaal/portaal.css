@@ -703,6 +703,10 @@
 .portaal-eigen-weg svg { width: 14px; height: 14px; }
 .portaal-eigen-status { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: baseline; font-size: 0.85rem; }
 .portaal-eigen-kaartweg { position: absolute; top: 8px; right: 8px; width: 30px; height: 30px; border-radius: 8px; }
+.portaal-eigen-kaartoog { position: absolute; top: 42px; right: 8px; width: 30px; height: 30px; border-radius: 8px; }
+.portaal-eigen-kaartoog:hover { color: var(--kk-text); background: rgba(255,255,255,0.08); }
+.portaal-klaskaart-wrap .portaal-klaskaart span.portaal-eigen-verborgen { color: var(--kk-gold); font-weight: 700; }
+.portaal-klaskaart-wrap:has(.portaal-eigen-verborgen) .portaal-klaskaart { opacity: 0.75; }
 
 /* ── Groepsoverzicht (GroepsOverzicht.jsx) ───────────────────────────────── */
 .go-legenda { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 4px 0 16px; font-size: 0.82rem; color: var(--kk-text-soft); }

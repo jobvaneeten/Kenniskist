@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { haalEigenOefeningen, bewaarEigenOefening, verwijderEigenOefening, EIGEN_VAKKEN } from '../lib/eigenOefeningen.js'
+import { haalEigenOefeningen, bewaarEigenOefening, verwijderEigenOefening, zetZichtbaar, EIGEN_VAKKEN } from '../lib/eigenOefeningen.js'
 import { TOOL_FAMILIES } from '../lib/tools.js'
 import VragenTabel from './VragenTabel.jsx'
 import { Knop, Icoon } from '../ui/index.jsx'
@@ -29,6 +29,7 @@ function Formulier({ klas, bestaand, onKlaar, onAnnuleren }) {
   const [schudden, setSchudden] = useState(bestaand?.schudden !== false)
   const [spelNa, setSpelNa] = useState(bestaand?.spel_na == null ? '' : String(bestaand.spel_na))
   const [geld, setGeld] = useState(bestaand?.geld ?? 0)
+  const [zichtbaar, setZichtbaar] = useState(bestaand?.zichtbaar !== false)
   const [fout, setFout] = useState(null)
   const [bezig, setBezig] = useState(false)
 
@@ -46,7 +47,7 @@ function Formulier({ klas, bestaand, onKlaar, onAnnuleren }) {
     try {
       await bewaarEigenOefening({
         id: bestaand?.id, klas_id: klas.id, groep: Number(groep), vak, onderwerp, vragen, schudden,
-        spel_na: spelNa === '' ? null : Number(spelNa), geld: Math.min(1000, Math.max(0, Number(geld) || 0)),
+        spel_na: spelNa === '' ? null : Number(spelNa), geld: Math.min(1000, Math.max(0, Number(geld) || 0)), zichtbaar,
       })
       onKlaar()
     } catch {
@@ -93,6 +94,10 @@ function Formulier({ klas, bestaand, onKlaar, onAnnuleren }) {
       <label className="portaal-vinkje kk-mt-2" style={{ alignSelf: 'flex-start' }}>
         <input type="checkbox" checked={schudden} onChange={e => setSchudden(e.target.checked)} />
         Vragen in willekeurige volgorde
+      </label>
+      <label className="portaal-vinkje kk-mt-2" style={{ alignSelf: 'flex-start' }}>
+        <input type="checkbox" checked={zichtbaar} onChange={e => setZichtbaar(e.target.checked)} />
+        Zichtbaar voor leerlingen
       </label>
 
       <div className="portaal-veldrij kk-mt-3">
@@ -145,6 +150,12 @@ export default function EigenOefeningen({ klas }) {
     )
   }
 
+  const wisselZichtbaar = async (o) => {
+    const nieuw = o.zichtbaar === false
+    setLijst(l => l.map(x => x.id === o.id ? { ...x, zichtbaar: nieuw } : x))
+    try { await zetZichtbaar(o.id, nieuw) } catch { laad() }
+  }
+
   const bevestigVerwijderen = async () => {
     try { await verwijderEigenOefening(verwijder.id); setVerwijder(null); laad() }
     catch { setVerwijder(v => ({ ...v, fout: true })) }
@@ -169,6 +180,12 @@ export default function EigenOefeningen({ klas }) {
               {o.onderwerp}
               <span>Groep {o.groep} · {vakNaam(o.vak)}</span>
               <span>{o.vragen.length} {o.vragen.length === 1 ? 'vraag' : 'vragen'}{o.geld > 0 ? ` · € ${o.geld} briefgeld` : ''}</span>
+              {o.zichtbaar === false && <span className="portaal-eigen-verborgen">Verborgen voor leerlingen</span>}
+            </button>
+            <button className="portaal-eigen-weg portaal-eigen-kaartoog" onClick={() => wisselZichtbaar(o)}
+              aria-label={o.zichtbaar === false ? `${o.onderwerp} zichtbaar maken voor leerlingen` : `${o.onderwerp} verbergen voor leerlingen`}
+              title={o.zichtbaar === false ? 'Verborgen: klik om te laten zien' : 'Zichtbaar: klik om te verbergen'}>
+              <Icoon naam={o.zichtbaar === false ? 'oogDicht' : 'oog'} />
             </button>
             <button className="portaal-eigen-weg portaal-eigen-kaartweg" aria-label={`${o.onderwerp} verwijderen`} onClick={() => setVerwijder(o)}>
               <Icoon naam="prullenbak" />

@@ -121,7 +121,7 @@ export default function GameMenu({ onBack, addCuruntie, addBriefgeld, toegestane
     haalEigenOefeningen(profiel.klas_id).then(l => { if (actief) setEigenLijst(l) }).catch(() => {})
     return () => { actief = false }
   }, [profiel?.rol, profiel?.klas_id])
-  const eigenHier = year !== null && subject !== null ? eigenLijst.filter(o => o.groep === year && o.vak === subject) : []
+  const eigenHier = year !== null && subject !== null ? eigenLijst.filter(o => o.groep === year && o.vak === subject && o.zichtbaar !== false) : []
   const openEigen = (oefening) => setEigen({ oefening, ronde: 0 })
   const eigenKaarten = () => eigenHier.map(o => (
     <button key={o.id} className="mode-card" onClick={() => openEigen(o)}>
